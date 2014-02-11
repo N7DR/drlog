@@ -1,4 +1,0 @@
-drlog
-=====
-
-Contest logger
