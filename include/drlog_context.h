@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 49 2014-01-25 17:11:40Z  $
+// $Id: drlog_context.h 52 2014-03-01 16:17:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -111,6 +111,7 @@ protected:
   std::string                                  _cluster_username;         ///< username to use on the cluster
   std::string                                  _contest_name;             ///< name of the contest
   std::vector<std::pair<std::string, std::string>> _country_exceptions;   ///< calls to be placed in non-default country
+//  std::map<std::string, std::set<std::string>> _country_exchange;         ///< allowed exchanges values as a function of country
   enum country_list_type                       _country_list;             ///< DXCC or WAE list?
   std::string                                  _country_mults_filter;     ///< the command from the configuration file
   bool                                         _country_mults_per_band;   ///< are country mults per-band?
@@ -120,8 +121,6 @@ protected:
                                                _cq_memory;                ///< CQ memories, counted wrt 1
   std::string                                  _cq_menu;                  ///< menu displayed in CQ mode
   std::string                                  _cty_filename;             ///< filename of country file (default = "cty.dat")
-//  enum BAND                                    _current_band;             ///< on what band do we start?
-//  enum MODE                                    _current_mode;             ///< in what mode do we start?
   unsigned int                                 _cw_speed;                 ///< Speed in WPM
 
   std::vector<std::string>                     _do_not_show;           ///< do not show these calls when spotted (MY CALL is automatically not shown)
@@ -137,7 +136,6 @@ protected:
   std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                 ///< exchange memories
   std::string                                  _ex_menu;                   ///< menu displayed during an exchange
 
-//  unsigned int                                 _guard_band;                ///< guard band for bandmap, in Hz
   std::map<MODE, unsigned int>                 _guard_band;
 
   std::string                                  _individual_messages_file;  ///< file that contains per-call individual messages
@@ -169,8 +167,9 @@ protected:
 
   std::string                                  _qsl_message;         ///< confirm at end of QSO
   std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
-  bool                                         _qso_multiple_bands;   ///< whether OK to work station on another band
-  bool                                         _qso_multiple_modes;   ///< whether OK to work station on another mode
+  bool                                         _qso_multiple_bands;  ///< whether OK to work station on another band
+  bool                                         _qso_multiple_modes;  ///< whether OK to work station on another mode
+  std::map<std::string, std::set<std::string>> _qthx;         ///< allowed exchanges values as a function of country
 
   std::vector<unsigned int>                    _rate_periods;                    ///< periods (in minutes) over which rates should be calculated
   std::string                                  _rbn_server;                      ///< hostname or IP of RBN server
@@ -284,8 +283,6 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   CONTEXTREAD(cq_memory_type, cq_memory);
   CONTEXTREAD(std::string, cq_menu);
   CONTEXTREAD(std::string, cty_filename);
-//  CONTEXTREAD(enum BAND, current_band);
-//  CONTEXTREAD(enum MODE, current_mode);
   CONTEXTREAD(unsigned int, cw_speed);
 
   CONTEXTREAD(std::vector<std::string>, do_not_show);
@@ -332,6 +329,9 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
   CONTEXTREAD(std::vector<std::string>, path);
   CONTEXTREAD(unsigned int,             ptt_delay);
+
+  typedef std::map<std::string, std::set<std::string>> qthx_type;
+  CONTEXTREAD(qthx_type, qthx);         ///< allowed exchanges values as a function of country
 
   CONTEXTREAD(unsigned int, rbn_port);
   CONTEXTREAD(std::string, rbn_server);

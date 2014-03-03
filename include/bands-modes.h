@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 30 2013-07-28 21:50:59Z  $
+// $Id: bands-modes.h 52 2014-03-01 16:17:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,6 +87,89 @@ static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW",
 
 typedef std::pair<BAND, MODE> bandmode;    ///< tuple for encapsulating a band and mode
 
+// ----------------------------------------------------  frequency  -----------------------------------------------
+
+/*!     \class frequency
+        \brief A convenient class for handling frequencies
+*/
+
+class frequency
+{
+protected:
+
+  unsigned int _hz;      ///< the actual frequency, in Hz
+
+public:
+
+/// default constructor
+  frequency(void);
+
+/*! \brief      construct from a double
+    \param f    frequency in Hz, kHz or MHz
+*/
+  explicit frequency(const double f);
+
+/*! \brief      construct from a string
+    \param str  frequency in Hz, kHz or MHz
+*/
+  explicit frequency(const std::string& str)
+    { *this = frequency(from_string<double>(str)); }
+
+/// construct from a band
+  explicit frequency(const enum BAND);
+
+/// get frequency in Hz
+  inline const int Hz(void) const
+    { return static_cast<int>(_hz); }
+
+/// get frequency in Hz; provided only because g++ gives a compile-time error if one actually uses Hz()
+  inline const int hz(void) const
+    { return static_cast<int>(_hz); }
+
+/// get frequency in kHz
+  inline const float kHz(void) const
+    { return static_cast<float>(_hz) / 1000; }
+
+/// get frequency in kHz
+  inline const float khz(void) const
+    { return static_cast<float>(_hz) / 1000; }
+
+/// get frequency in MHz
+  inline const float MHz(void) const
+    { return static_cast<float>(_hz) / 1000000; }
+
+/// get frequency in MHz
+  inline const float mhz(void) const
+    { return static_cast<float>(_hz) / 1000000; }
+
+/// get frequency in kHz, rounded to the nearest kHz
+  inline const int rounded_kHz(void) const
+    { return static_cast<int>(kHz() + 0.5); }
+
+/// get frequency as a string for display: xxxxx.y kHz
+  const std::string display_string(void) const;
+
+/// get band that corresponds to the frequency
+  operator BAND(void) const;
+
+/// get lower band edge that corresponds to frequency
+  const frequency lower_band_edge(void) const;
+
+/// frequency == frequency
+  inline const bool operator==(const frequency& f) const
+    { return (_hz == f._hz); }
+
+/// frequency != frequency
+  inline const bool operator!=(const frequency& f) const
+    { return !(*this == f); }
+
+/// allow archiving
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version)
+    { ar & _hz;
+    }
+};
+
 /*!  \brief  convert a frequency to a band
      \param  f frequency
      \return band corresponding to <i>f</i>
@@ -137,86 +220,8 @@ template<class T> const BAND to_BAND(T f)
   return MIN_BAND;
 }
 
-// ----------------------------------------------------  frequency  -----------------------------------------------
-
-/*!     \class frequency
-        \brief A convenient class for handling frequencies
-*/
-
-class frequency
-{
-protected:
-
-  unsigned int _hz;      ///< the actual frequency, in Hz
-
-public:
-
-/// default constructor
-  frequency(void);
-
-/// construct from a double
-  explicit frequency(const double f);
-
-/// construct from a string
-  explicit frequency(const std::string& str)
-    { *this = frequency(from_string<double>(str)); }
-
-/// construct from a band
-  explicit frequency(const enum BAND);
-
-/// return frequency in Hz
-  inline const int Hz(void) const
-    { return static_cast<int>(_hz); }
-
-/// return frequency in Hz; provided only because g++ gives a compile-time error if one uses Hz()
-  inline const int hz(void) const
-    { return static_cast<int>(_hz); }
-
-/// return frequency in kHz
-  inline const float kHz(void) const
-    { return static_cast<float>(_hz) / 1000; }
-
-/// return frequency in kHz
-  inline const float khz(void) const
-    { return static_cast<float>(_hz) / 1000; }
-
-/// return frequency in MHz
-  inline const float MHz(void) const
-    { return static_cast<float>(_hz) / 1000000; }
-
-/// return frequency in MHz
-  inline const float mhz(void) const
-    { return static_cast<float>(_hz) / 1000000; }
-
-/// return frequency in kHz, rounded to the nearest kHz
-  inline const int rounded_kHz(void) const
-    { return static_cast<int>(kHz() + 0.5); }
-
-/// return frequency as a string for display
-  const std::string display_string(void) const;
-
-/// return band that corresponds to the frequency
-  operator BAND(void) const;
-
-/// return lower band edge that corresponds to frequency
-  const frequency lower_band_edge(void) const;
-
-/// frequency == frequency
-  inline const bool operator==(const frequency& f) const
-    { return (_hz == f._hz); }
-
-/// frequency != frequency
-  inline const bool operator!=(const frequency& f) const
-    { return !(*this == f); }
-
-/// allow archiving
-  template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _hz;
-    }
-};
-
-
-
+inline const BAND to_BAND(const std::string& str)
+{ return to_BAND(frequency(str));
+}
 
 #endif /* BANDSMODES_H */
