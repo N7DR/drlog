@@ -131,7 +131,8 @@ protected:
   std::string                                  _exchange_cq;               ///< exchange in CQ mode
   std::string                                  _exchange_fields_filename;  ///< file that holds regex templates of exchange fields
   std::string                                  _exchange_mults;            ///< comma-delimited exchange fields that are mults
-  bool                                         _exchange_mults_per_band;    ///< are exchange mults per-band?
+  bool                                         _exchange_mults_per_band;   ///< are exchange mults per-band?
+  std::map<std::string, std::string>           _exchange_per_country;      ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::string                                  _exchange_sap;              ///< exchange in SAP mode
   std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                 ///< exchange memories
   std::string                                  _ex_menu;                   ///< menu displayed during an exchange
@@ -169,7 +170,7 @@ protected:
   std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
   bool                                         _qso_multiple_bands;  ///< whether OK to work station on another band
   bool                                         _qso_multiple_modes;  ///< whether OK to work station on another mode
-  std::map<std::string, std::set<std::string>> _qthx;         ///< allowed exchanges values as a function of country
+  std::map<std::string, std::set<std::string>> _qthx;                ///< allowed exchanges values as a function of country
 
   std::vector<unsigned int>                    _rate_periods;                    ///< periods (in minutes) over which rates should be calculated
   std::string                                  _rbn_server;                      ///< hostname or IP of RBN server
@@ -295,6 +296,12 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
   CONTEXTREAD(std::string, exchange_cq);
   CONTEXTREAD(std::string, exchange_sap);
+
+  const std::map<std::string, std::string> exchange_per_country(void) const
+    { SAFELOCK(_context);
+
+      return _exchange_per_country;
+    }
 
 //  CONTEXTREAD(unsigned int, guard_band);
   const unsigned int guard_band(const MODE m)
