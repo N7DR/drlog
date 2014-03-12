@@ -1,4 +1,4 @@
-// $Id: exchange.h 50 2014-02-14 15:28:50Z  $
+// $Id: exchange.h 53 2014-03-08 18:29:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,12 +59,12 @@ protected:
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-const std::string _resolve_choice(const std::string& choice_name, const std::string& received_field, const contest_rules& rules);
+const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
 
 public:
 
 /// constructor
-  parsed_exchange(const contest_rules& rules, const std::vector<std::string>& received_values);
+  parsed_exchange(const std::string& callsign, const contest_rules& rules, const std::vector<std::string>& received_values);
 
   READ(std::string, replacement_call);              ///< a new callsign, intended to replace the one in the CALL window
   READ(bool, valid);                                ///< is the object valid? (i.e., was parsing successful?)
@@ -239,4 +239,10 @@ typedef const bool (*VALIDITY_FUNCTION_TYPE)(const std::string& field_name);
 */
 VALIDITY_FUNCTION_TYPE validity_function(const std::string& field_name);
 
+//const bool is_valid_value(const std::string& field_name, const std::string& putative_value, const contest_rules& rules);
+
+//inline const bool has_set_of_valid_values(const std::string& field_name, const contest_rules& rules)
+//  { return !(rules.exch_permitted_values(field_name).empty()); }
+
 #endif /* EXCHANGE_H */
+
