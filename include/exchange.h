@@ -182,43 +182,43 @@ public:
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of callsign
 */
-const bool is_valid_CALLSIGN(const std::string& str);
+const bool is_valid_CALLSIGN(const std::string& str, const contest_rules& rules);
 
 /*! \brief  Is a string a valid CQ zone?
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of CQ zone
 */
-const bool is_valid_CQZONE(const std::string& str);
+const bool is_valid_CQZONE(const std::string& str, const contest_rules& rules);
 
 /*! \brief  Is a string a valid CW power?
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of CW power
 */
-const bool is_valid_CWPOWER(const std::string& str);
+const bool is_valid_CWPOWER(const std::string& str, const contest_rules& rules);
 
 /*! \brief  Is a string a valid ITU zone?
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of ITU zone
 */
-const bool is_valid_ITUZONE(const std::string& str);
+const bool is_valid_ITUZONE(const std::string& str, const contest_rules& rules);
 
 /*! \brief  Is a string a valid RDA district?
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of RDA district
 */
-const bool is_valid_RDA(const std::string& str);
+const bool is_valid_RDA(const std::string& str, const contest_rules& rules);
 
 /*! \brief  Is a string a valid RS value?
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of RS
 */
-const bool is_valid_RS(const std::string& str);
+const bool is_valid_RS(const std::string& str, const contest_rules& rules);
 
 /*! \brief  Is a string a valid RST value?
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of RST
 */
-const bool is_valid_RST(const std::string& str);
+const bool is_valid_RST(const std::string& str, const contest_rules& rules);
 
 /*! \brief  Is a string a valid IARU society?
     \param  str   the string to test
@@ -226,18 +226,18 @@ const bool is_valid_RST(const std::string& str);
 
     Doesn't actually compare against known societies; merely tests whether <i>str</i> comprises only letters
 */
-const bool is_valid_SOCIETY(const std::string& str);
+const bool is_valid_SOCIETY(const std::string& str, const contest_rules& rules);
 
 /// match anything; simply returns true
-const bool is_valid_ANYTHING(const std::string&);
+const bool is_valid_ANYTHING(const std::string&, const contest_rules& rules);
 
-typedef const bool (*VALIDITY_FUNCTION_TYPE)(const std::string& field_name);
+typedef const bool (*VALIDITY_FUNCTION_TYPE)(const std::string& field_name, const contest_rules& rules);
 
 /*! \brief  Obtain the validity function corresponding to a particular exchange field name
     \param  field_name   name of the field for which the validity function is requested
     \return the validity function corresponding to <i>field_name</i>
 */
-VALIDITY_FUNCTION_TYPE validity_function(const std::string& field_name);
+VALIDITY_FUNCTION_TYPE validity_function(const std::string& field_name, const contest_rules& rules);
 
 //const bool is_valid_value(const std::string& field_name, const std::string& putative_value, const contest_rules& rules);
 
