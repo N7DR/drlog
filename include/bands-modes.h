@@ -221,7 +221,7 @@ template<class T> const BAND to_BAND(T f)
 }
 
 inline const BAND to_BAND(const std::string& str)
-{ return to_BAND(frequency(str));
+{ return to_BAND(frequency(str).hz());
 }
 
 #endif /* BANDSMODES_H */
