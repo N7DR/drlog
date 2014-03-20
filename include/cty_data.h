@@ -32,11 +32,6 @@
 enum country_list_type { COUNTRY_LIST_DXCC,     ///< DXCC list
                          COUNTRY_LIST_WAEDC     ///< DARC WAEDC list
                        };
-
-//enum zone_type { ZONE_NONE,                ///< unknown type of zone
-//                 ZONE_CQ,                  ///< CQ zones
-//                 ZONE_ITU                  ///< ITU zones
-//               };
                        
 // error numbers
 const int CTY_INCORRECT_NUMBER_OF_FIELDS       = -1,    ///< Wrong number of fields in a record
@@ -50,6 +45,8 @@ const int CTY_INCORRECT_NUMBER_OF_FIELDS       = -1,    ///< Wrong number of fie
           
 const int LOCATION_NO_PREFIX_MATCH             = -1,    ///< unable to find a prefix match in the database
           LOCATION_TOO_MANY_SLASHES            = -2;    ///< more than two slashes in the call
+
+const int RUSSIAN_INVALID_PREFIX               = -1;    ///< source prefix does not match target line in constructor
 
 // -----------  value ----------------
 
@@ -293,6 +290,47 @@ public:
     { return _data.at(n); }
 };
 
+// -----------  russian_data_per_prefix  ----------------
+
+/*! \class russian_data_per_prefix
+    \brief Encapsulate the data from a Russian data file, for a single prefix
+*/
+
+class russian_data_per_prefix
+{
+protected:
+  std::string _prefix;
+  std::string _region_name;
+  std::string _region_abbreviation;
+
+public:
+
+/// construct from a file
+  russian_data_per_prefix(const std::string& pfx, const std::string& line);
+
+  READ_AND_WRITE(std::string, prefix);
+  READ_AND_WRITE(std::string, region_name);
+  READ_AND_WRITE(std::string, region_abbreviation);
+
+};
+
+// -----------  russian_data  ----------------
+
+/*! \class russian_data
+    \brief Encapsulate the data from a Russian data file
+*/
+
+class russian_data
+{
+protected:
+
+public:
+
+/// construct from a file
+  russian_data(const std::string& filename);
+
+};
+
 // -----------  location_info  ----------------
 
 /*!     \class location_info
@@ -314,6 +352,10 @@ protected:
   int           _utc_offset;            ///< local-time offset from UTC, in minutes
   std::string   _canonical_prefix;      ///< official prefix
   
+// used by Russian stations
+  std::string  _region_name;            ///< name of region in which station resides
+  std::string  _region_abbreviation;    ///< abbreviation for region in which the station resides
+
 public:
 
 /// default constructir
@@ -337,6 +379,8 @@ public:
    READ_AND_WRITE(float, longitude);                 ///< longitude in degrees (+ve west)
    READ_AND_WRITE(int, utc_offset);                  ///< local-time offset from UTC, in minutes
    READ_AND_WRITE(std::string, canonical_prefix);    ///< official prefix
+   READ_AND_WRITE(std::string, region_name);         ///< (Russian) name of region
+   READ_AND_WRITE(std::string, region_abbreviation); ///< (Russian) abbreviation for region
 
 /// archive using boost
    template<typename Archive>
@@ -348,7 +392,9 @@ public:
           & _latitude
           & _longitude
           & _utc_offset
-          & _canonical_prefix;
+          & _canonical_prefix
+          & _region_name
+          & _region_abbreviation;
      }
 };
 
@@ -621,6 +667,25 @@ public:
         \param  s       Reason
 */
   inline location_error(const int n, const std::string& s) :
+    x_error(n, s)
+  { }
+};
+
+/*! \class  russian_error
+    \brief  Errors related to processing Russian data file
+*/
+
+class russian_error : public x_error
+{
+protected:
+
+public:
+
+/*! \brief  Construct from error code and reason
+  \param  n Error code
+  \param  s Reason
+*/
+  inline russian_error(const int n, const std::string& s) :
     x_error(n, s)
   { }
 };
