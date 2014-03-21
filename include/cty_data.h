@@ -46,7 +46,8 @@ const int CTY_INCORRECT_NUMBER_OF_FIELDS       = -1,    ///< Wrong number of fie
 const int LOCATION_NO_PREFIX_MATCH             = -1,    ///< unable to find a prefix match in the database
           LOCATION_TOO_MANY_SLASHES            = -2;    ///< more than two slashes in the call
 
-const int RUSSIAN_INVALID_PREFIX               = -1;    ///< source prefix does not match target line in constructor
+const int RUSSIAN_INVALID_SUBSTRING            = -1,    ///< source substring does not match target line in constructor
+          RUSSIAN_INVALID_FORMAT               = -2;    ///< format of file is invalid
 
 // -----------  value ----------------
 
@@ -141,10 +142,10 @@ public:
   inline virtual ~alternative_country_info(void)
     { }
 
-  READ(std::string, identifier);            ///< the alternative prefix or callsign
-  READ_AND_WRITE(unsigned int, cq_zone);    ///< alternative CQ zone
-  READ_AND_WRITE(unsigned int, itu_zone);   ///< alternative ITU zone
-  READ_AND_WRITE(std::string, country);     ///< canonical country prefix
+  READ(identifier);            ///< the alternative prefix or callsign
+  READ_AND_WRITE(cq_zone);    ///< alternative CQ zone
+  READ_AND_WRITE(itu_zone);   ///< alternative ITU zone
+  READ_AND_WRITE(country);     ///< canonical country prefix
 };
 
 /// ostream << alternative_country_info
@@ -194,20 +195,20 @@ public:
   inline virtual ~cty_record(void)
     { }
 
-  typedef std::map<std::string, alternative_country_info> aci_map_type;  ///< needed because of expansion in the READ() macro
+//  typedef std::map<std::string, alternative_country_info> aci_map_type;  ///< needed because of expansion in the READ() macro
 
 /// RO access
-  READ(bool, waedc_country_only);     ///< Is this only a country in the WAEDC (DARC) list?
-  READ(std::string, country_name);    ///< official name of the country
-  READ(unsigned int, cq_zone);        ///< CQ zone
-  READ(unsigned int, itu_zone);       ///< ITU zone
-  READ(std::string, continent);       ///< two-letter abbreviation for continent
-  READ(float, latitude);              ///< latitude in degrees (+ve north)
-  READ(float, longitude);             ///< longitude in degrees (+ve west)
-  READ(int, utc_offset);              ///< local-time offset from UTC, in minutes
-  READ(std::string, prefix);          ///< official DXCC prefix
-  READ(aci_map_type, alt_callsigns);  ///< alternative callsigns used by this country
-  READ(aci_map_type, alt_prefixes);   ///< alternative prefixes used by this country
+  READ(waedc_country_only);     ///< Is this only a country in the WAEDC (DARC) list?
+  READ(country_name);    ///< official name of the country
+  READ(cq_zone);        ///< CQ zone
+  READ(itu_zone);       ///< ITU zone
+  READ(continent);       ///< two-letter abbreviation for continent
+  READ(latitude);              ///< latitude in degrees (+ve north)
+  READ(longitude);             ///< longitude in degrees (+ve west)
+  READ(utc_offset);              ///< local-time offset from UTC, in minutes
+  READ(prefix);          ///< official DXCC prefix
+  READ(alt_callsigns);  ///< alternative callsigns used by this country
+  READ(alt_prefixes);   ///< alternative prefixes used by this country
 
 /// return the canonical prefix for this country
   inline const std::string canonical_prefix(void) const
@@ -290,27 +291,39 @@ public:
     { return _data.at(n); }
 };
 
-// -----------  russian_data_per_prefix  ----------------
+// -----------  russian_data_per_substring  ----------------
 
-/*! \class russian_data_per_prefix
-    \brief Encapsulate the data from a Russian data file, for a single prefix
+/*! \class russian_data_per_substring
+    \brief Encapsulate the data from a Russian data file, for a single substring
 */
 
-class russian_data_per_prefix
+class russian_data_per_substring
 {
 protected:
-  std::string _prefix;
+  std::string _substring;
   std::string _region_name;
   std::string _region_abbreviation;
+  std::string _cq_zone;
+  std::string _itu_zone;
+  std::string _continent;
+  std::string _utc_offset;
+  std::string _latitude;
+  std::string _longitude;
 
 public:
 
 /// construct from a file
-  russian_data_per_prefix(const std::string& pfx, const std::string& line);
+  russian_data_per_substring(const std::string& sbstring, const std::string& line);
 
-  READ_AND_WRITE(std::string, prefix);
-  READ_AND_WRITE(std::string, region_name);
-  READ_AND_WRITE(std::string, region_abbreviation);
+  READ_AND_WRITE(substring);
+  READ_AND_WRITE(region_name);
+  READ_AND_WRITE(region_abbreviation);
+  READ_AND_WRITE(cq_zone);
+  READ_AND_WRITE(itu_zone);
+  READ_AND_WRITE(continent);
+  READ_AND_WRITE(utc_offset);
+  READ_AND_WRITE(latitude);
+  READ_AND_WRITE(longitude);
 
 };
 
@@ -371,16 +384,17 @@ public:
   const bool operator==(const location_info& li) const;
 
 /// RW access
-   READ_AND_WRITE(std::string, country_name);        ///< official name of the country
-   READ_AND_WRITE(unsigned int, cq_zone);            ///< CQ zone
-   READ_AND_WRITE(unsigned int, itu_zone);           ///< ITU zone
-   READ_AND_WRITE(std::string, continent);           ///< two-letter abbreviation for continent
-   READ_AND_WRITE(float, latitude);                  ///< latitude in degrees (+ve north)
-   READ_AND_WRITE(float, longitude);                 ///< longitude in degrees (+ve west)
-   READ_AND_WRITE(int, utc_offset);                  ///< local-time offset from UTC, in minutes
-   READ_AND_WRITE(std::string, canonical_prefix);    ///< official prefix
-   READ_AND_WRITE(std::string, region_name);         ///< (Russian) name of region
-   READ_AND_WRITE(std::string, region_abbreviation); ///< (Russian) abbreviation for region
+   READ_AND_WRITE(country_name);        ///< official name of the country
+   READ_AND_WRITE(cq_zone);            ///< CQ zone
+   READ_AND_WRITE(itu_zone);           ///< ITU zone
+   READ_AND_WRITE(continent);           ///< two-letter abbreviation for continent
+   READ_AND_WRITE(latitude);                  ///< latitude in degrees (+ve north)
+   READ_AND_WRITE(longitude);                 ///< longitude in degrees (+ve west)
+   READ_AND_WRITE(utc_offset);                  ///< local-time offset from UTC, in minutes
+   READ_AND_WRITE(canonical_prefix);    ///< official prefix
+
+   READ_AND_WRITE(region_name);         ///< (Russian) name of region
+   READ_AND_WRITE(region_abbreviation); ///< (Russian) abbreviation for region
 
 /// archive using boost
    template<typename Archive>

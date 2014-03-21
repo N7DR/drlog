@@ -63,7 +63,7 @@ public:
     _values(mss)
   { }
 
-  READ_AND_WRITE(std::string, name);
+  READ_AND_WRITE(name);
 
   inline const std::map<std::string, std::set<std::string>> values(void) const
     { return _values; }
@@ -130,10 +130,10 @@ public:
 /// construct from name and multiplier status
   exchange_field(const std::string& nm, const bool mult);
 
-  READ_AND_WRITE(std::string, name);                          ///< name of field
-  READ_AND_WRITE(bool, is_mult);                              ///< is this field a multiplier?
-  READ_AND_WRITE(bool, is_optional);                          ///< is this an optional field?  *** not yet supported ***
-  READ_AND_WRITE(std::vector<exchange_field>, choice);        ///< is this field a choice?
+  READ_AND_WRITE(name);                          ///< name of field
+  READ_AND_WRITE(is_mult);                              ///< is this field a multiplier?
+  READ_AND_WRITE(is_optional);                          ///< is this an optional field?  *** not yet supported ***
+  READ_AND_WRITE(choice);        ///< is this field a choice?
 
 /// is this field a choice?
   inline const bool is_choice(void) const
@@ -174,10 +174,10 @@ public:
 /// constructor
   points_structure(void);
 
-  READ_AND_WRITE(unsigned int, default_points);      ///< default points
-  READ_AND_WRITE(MSI, country_points);               ///< per-country points
-  READ_AND_WRITE(MSI, continent_points);             ///< per-continent points
-  READ_AND_WRITE(enum points_type, points_type);     ///< is the points structure too complex for the configuration notation?
+  READ_AND_WRITE(default_points);      ///< default points
+  READ_AND_WRITE(country_points);               ///< per-country points
+  READ_AND_WRITE(continent_points);             ///< per-continent points
+  READ_AND_WRITE(points_type);     ///< is the points structure too complex for the configuration notation?
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -327,9 +327,9 @@ public:
 /// get the next band down
   const BAND next_band_down(const BAND current_band) const;
   
-  SAFEREAD(bool, work_if_different_band, rules);               ///< whether it is OK to work the same station on different bands
-  SAFEREAD(bool, work_if_different_mode, rules);               ///< whether it is OK to work the same station on different modes
-  SAFEREAD(std::vector<BAND>, permitted_bands, rules);         ///< bands allowed in this contest
+  SAFEREAD(work_if_different_band, rules);               ///< whether it is OK to work the same station on different bands
+  SAFEREAD(work_if_different_mode, rules);               ///< whether it is OK to work the same station on different modes
+  SAFEREAD(permitted_bands, rules);         ///< bands allowed in this contest
 
 //  SAFEREAD(std::vector<exchange_field>, exch, rules);          ///< names of the exchange fields, and whether each is a mult
 
@@ -339,20 +339,20 @@ public:
 
   const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix) const;
 
-  SAFEREAD(std::set<std::string>, country_mults, rules);       ///< collection of canonical prefixes of country multipliers
-  SAFEREAD(std::set<std::string>, callsign_mults, rules);      ///< collection of types of mults based on callsign (e.g., "WPXPX")
+  SAFEREAD(country_mults, rules);       ///< collection of canonical prefixes of country multipliers
+  SAFEREAD(callsign_mults, rules);      ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
-  SAFEREAD(bool, callsign_mults_per_band, rules);              ///< are callsign mults counted per-band?
-  SAFEREAD(bool, country_mults_per_band, rules);               ///< are country mults counted per-band?
-  SAFEREAD(bool, exchange_mults_per_band, rules);              ///< are exchange mults counted per-band?
+  SAFEREAD(callsign_mults_per_band, rules);              ///< are callsign mults counted per-band?
+  SAFEREAD(country_mults_per_band, rules);               ///< are country mults counted per-band?
+  SAFEREAD(exchange_mults_per_band, rules);              ///< are exchange mults counted per-band?
 
-  SAFEREAD(bool, callsign_mults_used, rules);                  ///< are callsign mults used?
-  SAFEREAD(bool, country_mults_used, rules);                   ///< are country mults used?
-  SAFEREAD(bool, exchange_mults_used, rules);                  ///< are exchange mults used?
+  SAFEREAD(callsign_mults_used, rules);                  ///< are callsign mults used?
+  SAFEREAD(country_mults_used, rules);                   ///< are country mults used?
+  SAFEREAD(exchange_mults_used, rules);                  ///< are exchange mults used?
 
-  SAFEREAD(std::set<BAND>, score_bands, rules);               ///< bands currently used to calculate score
-  SAFEREAD(std::set<BAND>, original_score_bands, rules);      ///< bands that were originally used to calculate score (from the configuration file)
-  SAFEREAD(std::vector<std::string>, exchange_mults, rules);  ///< the exchange multipliers, in the same order as in the configuration file
+  SAFEREAD(score_bands, rules);               ///< bands currently used to calculate score
+  SAFEREAD(original_score_bands, rules);      ///< bands that were originally used to calculate score (from the configuration file)
+  SAFEREAD(exchange_mults, rules);  ///< the exchange multipliers, in the same order as in the configuration file
 
   const std::set<std::string> all_known_field_names(void) const; ///< all the exchange field names
 

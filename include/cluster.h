@@ -66,7 +66,7 @@ public:
   
   void send(const std::string& msg = "\r\n"); 
 
-  READ(enum POSTING_SOURCE, source);
+  READ(source);
 
   void reset(void);
 };
@@ -105,17 +105,17 @@ public:
   inline virtual ~dx_post(void)
     { }
 
-  READ(bool,        valid);
-  READ(std::string, poster);
-  READ(frequency,   freq);
-  READ(std::string, frequency_str);
-  READ(std::string, callsign);
-  READ(std::string, canonical_prefix);
-  READ(std::string, continent);
-  READ(std::string, comment);
-  READ(enum BAND,   band);
-  READ(time_t,      time_processed);
-  READ(enum POSTING_SOURCE, source);
+  READ(valid);
+  READ(poster);
+  READ(freq);
+  READ(frequency_str);
+  READ(callsign);
+  READ(canonical_prefix);
+  READ(continent);
+  READ(comment);
+  READ(band);
+  READ(time_processed);
+  READ(source);
 };
 
 #endif    // CLUSTER_H

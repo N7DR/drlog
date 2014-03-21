@@ -21,45 +21,53 @@
 
 #include <tuple>
 
-//#define AUTO auto&
-
 #if (!defined(READ_AND_WRITE))
 
+#if 0
 /// Syntactic sugar for read/write access
 #define READ_AND_WRITE(x, y) \
 /*! Read access to _##y */ \
   inline const x& y(void) const { return _##y; } \
 /*! Write access to _##y */ \
   inline void y(const x& n) { _##y = n; }
+#endif
+
+/// Syntactic sugar for read/write access
+#define READ_AND_WRITE(y) \
+/*! Read access to _##y */ \
+  inline const decltype(_##y)& y(void) const { return _##y; } \
+/*! Write access to _##y */ \
+  inline void y(const decltype(_##y)& n) { _##y = n; }
+
 
 #endif    // !READ_AND_WRITE
 
 #if (!defined(SAFE_READ_AND_WRITE))
 
 /// Syntactic sugar for read/write access
-#define SAFE_READ_AND_WRITE(x, y, z) \
+#define SAFE_READ_AND_WRITE(y, z) \
 /*! Read access to _##y */ \
-  inline const x& y(void) const { SAFELOCK(z); return _##y; } \
+  inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; } \
 /*! Write access to _##y */ \
-  inline void y(const x& n) { SAFELOCK(z); _##y = n; }
+  inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
 #endif    // !SAFE_READ_AND_WRITE
 
 #if (!defined(READ))
 
 /// Syntactic sugar for read-only access
-#define READ(x, y) \
+#define READ(y) \
 /*! Read-only access to _##y */ \
-  inline const x& y(void) const { return _##y; }
+  inline const decltype(_##y)& y(void) const { return _##y; }
 
 #endif    // !READ
 
 #if (!defined(SAFEREAD))
 
 /// Syntactic sugar for read-only access
-#define SAFEREAD(x, y, z) \
+#define SAFEREAD(y, z) \
 /*! Read-only access to _##y */ \
-  inline const x& y(void) const { SAFELOCK(z); return _##y; }
+  inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD
 

@@ -96,26 +96,26 @@ public:
 /// destructor
   virtual ~trmaster_line(void);
 
-// convert to a string.
+/// convert to a string.
   const std::string to_string(void) const;
 
 // the usual get/set functions
-  READ_AND_WRITE(std::string, call);                       ///< callsign
-  READ_AND_WRITE(int, check);                              ///< Sweepstakes check
-  READ_AND_WRITE(int, cq_zone);                            ///< CQ zone
-  READ_AND_WRITE(int, foc);                                ///< FOC membership number
-  READ_AND_WRITE(std::string, grid);                       ///< Maidenhead grid locator
-  READ_AND_WRITE(int, hit_count);                          ///< nominal number of QSOs with this station
-  READ_AND_WRITE(std::string, itu_zone);                   ///< ITU zone (because TR treats HQ stations differently)
-  READ_AND_WRITE(std::string, name);                       ///< operator's name
-  READ_AND_WRITE(std::string, old_call);                   ///< operator's old call
-  READ_AND_WRITE(std::string, qth);                        ///< precise meaning depends on location of this station
-  READ_AND_WRITE(std::string, section);                    ///< ARRL section
-  READ_AND_WRITE(std::string, speed);                      ///< CW speed
-  READ_AND_WRITE(int, ten_ten);                            ///< 10-X membership number
+  READ_AND_WRITE(call);                       ///< callsign
+  READ_AND_WRITE(check);                              ///< Sweepstakes check
+  READ_AND_WRITE(cq_zone);                            ///< CQ zone
+  READ_AND_WRITE(foc);                                ///< FOC membership number
+  READ_AND_WRITE(grid);                       ///< Maidenhead grid locator
+  READ_AND_WRITE(hit_count);                          ///< nominal number of QSOs with this station
+  READ_AND_WRITE(itu_zone);                   ///< ITU zone (because TR treats HQ stations differently)
+  READ_AND_WRITE(name);                       ///< operator's name
+  READ_AND_WRITE(old_call);                   ///< operator's old call
+  READ_AND_WRITE(qth);                        ///< precise meaning depends on location of this station
+  READ_AND_WRITE(section);                    ///< ARRL section
+  READ_AND_WRITE(speed);                      ///< CW speed
+  READ_AND_WRITE(ten_ten);                            ///< 10-X membership number
 
 /// is the vector of calls empty?
-  const bool empty(void) const
+  inline const bool empty(void) const
     { return _call.empty(); }
 
 /*!     \brief  set a user parameter
@@ -230,19 +230,19 @@ public:
   const std::string to_string(void) const;
 
 // the usual get/set functions
-  READ_AND_WRITE(std::string, call);
-  READ_AND_WRITE(std::string, check);
-  READ_AND_WRITE(std::string, cq_zone);
-  READ_AND_WRITE(std::string, foc);
-  READ_AND_WRITE(std::string, grid);
-  READ_AND_WRITE(std::string, hit_count);
-  READ_AND_WRITE(std::string, itu_zone);
-  READ_AND_WRITE(std::string, name);
-  READ_AND_WRITE(std::string, qth);
-  READ_AND_WRITE(std::string, old_call);
-  READ_AND_WRITE(std::string, section);
-  READ_AND_WRITE(std::string, speed);
-  READ_AND_WRITE(std::string, ten_ten);
+  READ_AND_WRITE(call);
+  READ_AND_WRITE(check);
+  READ_AND_WRITE(cq_zone);
+  READ_AND_WRITE(foc);
+  READ_AND_WRITE(grid);
+  READ_AND_WRITE(hit_count);
+  READ_AND_WRITE(itu_zone);
+  READ_AND_WRITE(name);
+  READ_AND_WRITE(qth);
+  READ_AND_WRITE(old_call);
+  READ_AND_WRITE(section);
+  READ_AND_WRITE(speed);
+  READ_AND_WRITE(ten_ten);
 
 // user parameters; wrt 1
   inline void user(const int n, const std::string& v)
@@ -254,21 +254,13 @@ public:
   inline void hit_count(const int n)
     { hit_count(::to_string(n)); }
 
-  READ_AND_WRITE(std::string, cw_power);
-  READ_AND_WRITE(std::string, date);
-  READ_AND_WRITE(std::string, iota);
-  READ_AND_WRITE(std::string, precedence);
-  READ_AND_WRITE(std::string, society);
-  READ_AND_WRITE(std::string, ssb_power);
-  READ_AND_WRITE(std::string, state_10);
-
-//  inline void temporary(const string& s)
-//    { _temporary = s; }
-//  inline string temporary(void) const
-//    { return _temporary; }
-
-// the minimum length required to store the trmaster_line
-//  int length(void) const;
+  READ_AND_WRITE(cw_power);
+  READ_AND_WRITE(date);
+  READ_AND_WRITE(iota);
+  READ_AND_WRITE(precedence);
+  READ_AND_WRITE(society);
+  READ_AND_WRITE(ssb_power);
+  READ_AND_WRITE(state_10);
 
 // merge with another drmaster_line; new values take precedence if there's a conflict
   const drmaster_line operator+(const drmaster_line&) const;

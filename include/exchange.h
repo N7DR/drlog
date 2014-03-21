@@ -66,9 +66,9 @@ public:
 /// constructor
   parsed_exchange(const std::string& callsign, const contest_rules& rules, const std::vector<std::string>& received_values);
 
-  READ(std::string, replacement_call);              ///< a new callsign, intended to replace the one in the CALL window
-  READ(bool, valid);                                ///< is the object valid? (i.e., was parsing successful?)
-  READ(std::vector<parsed_exchange_field>, fields); ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
+  READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window
+  READ(valid);                                ///< is the object valid? (i.e., was parsing successful?)
+  READ(fields); ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
 
 /// is the object valid? (i.e., was parsing successful?)
   inline const bool is_valid(void) const

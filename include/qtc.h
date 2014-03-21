@@ -45,9 +45,9 @@ public:
 
   explicit qtc_entry(const QSO& qso);
 
-  READ_AND_WRITE(std::string, utc);
-  READ_AND_WRITE(std::string, callsign);
-  READ_AND_WRITE(std::string, serno);
+  READ_AND_WRITE(utc);
+  READ_AND_WRITE(callsign);
+  READ_AND_WRITE(serno);
 
   const bool operator==(const QSO& qso) const;
 
@@ -84,8 +84,8 @@ protected:
 
 public:
 
-  READ_AND_WRITE(std::string, target);
-  READ_AND_WRITE(std::string, id);
+  READ_AND_WRITE(target);
+  READ_AND_WRITE(id);
 
   inline const size_t size(void) const
     { return _qtcs.size(); }

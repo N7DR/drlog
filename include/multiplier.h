@@ -46,8 +46,8 @@ public:
 /// default constructor
   multiplier(void);
 
-  READ_AND_WRITE(bool, per_band);                       ///< get/set _per_band
-  READ_AND_WRITE(bool, used);                           ///< get/set _used
+  READ_AND_WRITE(per_band);                       ///< get/set _per_band
+  READ_AND_WRITE(used);                           ///< get/set _used
 
 /*! \brief  add a value to the set of known values
     \param  str value to add

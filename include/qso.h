@@ -93,12 +93,12 @@ public:
   virtual ~QSO(void)
     { }
 
-  READ_AND_WRITE(unsigned int, number);
-  READ_AND_WRITE(std::string, callsign);
-  READ_AND_WRITE(MODE, mode);
-  READ_AND_WRITE(BAND, band);
-  READ_AND_WRITE(std::string, date);
-  READ_AND_WRITE(std::string, utc);  
+  READ_AND_WRITE(number);
+  READ_AND_WRITE(callsign);
+  READ_AND_WRITE(mode);
+  READ_AND_WRITE(band);
+  READ_AND_WRITE(date);
+  READ_AND_WRITE(utc);
 
   inline const std::string freq(void) const
     { return _frequency; }
@@ -106,17 +106,16 @@ public:
   inline void freq(const std::string& str)
     { _frequency = str; }
 
-  READ_AND_WRITE(std::string, comment);
-  READ_AND_WRITE(std::string, canonical_prefix);
-  READ_AND_WRITE(unsigned int, points);
+  READ_AND_WRITE(comment);
+  READ_AND_WRITE(canonical_prefix);
+  READ_AND_WRITE(points);
   
-  READ_AND_WRITE(std::string, prefix);
-
-  READ_AND_WRITE(std::string, my_call);
+  READ_AND_WRITE(prefix);
+  READ_AND_WRITE(my_call);
   
-  READ(time_t, epoch_time);
+  READ(epoch_time);
 
-  READ_AND_WRITE(vector_pair_string_string, sent_exchange);
+  READ_AND_WRITE(sent_exchange);
 
   inline std::vector<received_field> received_exchange(void)
     { return _received_exchange; }
@@ -124,10 +123,10 @@ public:
   inline void received_exchange(const std::vector<received_field>& field)
     { _received_exchange = field; }
 
-  READ_AND_WRITE(bool, is_country_mult);
-  READ_AND_WRITE(bool, is_prefix_mult);
+  READ_AND_WRITE(is_country_mult);
+  READ_AND_WRITE(is_prefix_mult);
 
-  READ(bool, is_dupe);
+  READ(is_dupe);
   
 /// are any of the exchange fields a mult?
   const bool is_exchange_mult(void) const;

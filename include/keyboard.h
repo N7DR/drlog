@@ -64,15 +64,15 @@ protected:
 
 public:
 
-  READ_AND_WRITE(key_event_type, event);
-  READ_AND_WRITE(key_code, code);
-  READ_AND_WRITE(KeySym, symbol);
-  READ_AND_WRITE(std::string, str);
-  READ_AND_WRITE(unsigned int, xkey_state);
-  READ_AND_WRITE(Time, xkey_time);
+  READ_AND_WRITE(event);
+  READ_AND_WRITE(code);
+  READ_AND_WRITE(symbol);
+  READ_AND_WRITE(str);
+  READ_AND_WRITE(xkey_state);
+  READ_AND_WRITE(xkey_time);
 
-  // return values related to the state. These are the values immediately
-  // PRIOR to the event: http://www.tronche.com/gui/x/xlib/events/keyboard-pointer/keyboard-pointer.html#XKeyEvent
+// return values related to the state. These are the values immediately
+// PRIOR to the event: http://www.tronche.com/gui/x/xlib/events/keyboard-pointer/keyboard-pointer.html#XKeyEvent
 
   inline const bool is_shifted(void) const
     { return (_xkey_state bitand ShiftMask); }
@@ -152,7 +152,7 @@ public:
   virtual ~keyboard_queue(void)
   { }
 
-  READ_AND_WRITE(bool, x_multithreaded);
+  READ_AND_WRITE(x_multithreaded);
 
   const size_t size(void);
 

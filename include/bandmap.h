@@ -168,10 +168,10 @@ public:
     _hide(true)
   { }
 
-  READ_AND_WRITE(bool, enabled);                          ///< is bandmap filtering enabled?
-  READ_AND_WRITE(bool, hide);                             ///< are we in hide mode? (as opposed to show)
-  READ_AND_WRITE(std::vector<std::string>,  continents);  ///< continents to filter
-  READ_AND_WRITE(std::vector<std::string>,  prefixes);    ///< canonical country prefixes to filter
+  READ_AND_WRITE(enabled);                          ///< is bandmap filtering enabled?
+  READ_AND_WRITE(hide);                             ///< are we in hide mode? (as opposed to show)
+  READ_AND_WRITE(continents);  ///< continents to filter
+  READ_AND_WRITE(prefixes);    ///< canonical country prefixes to filter
 
 /// return all the canonical prefixes and continents that are currently being filtered
   const std::vector<std::string> filter(void) const;
@@ -240,21 +240,20 @@ public:
   inline const bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
-  READ(frequency,   freq);                    ///< QRG
-  READ(std::string, frequency_str);           ///< QRG (kHz)
+  READ(freq);                    ///< QRG
+  READ(frequency_str);           ///< QRG (kHz)
 
   void freq(const frequency& f);              ///< set _freq and _frequency_str
 
-  READ_AND_WRITE(std::string, callsign);                ///< call
-  READ_AND_WRITE(std::string, canonical_prefix);        ///< canonical prefix corresponding to the call
-  READ_AND_WRITE(std::string, continent);               ///< continent corresponding to the call
-  READ_AND_WRITE(enum BAND,   band);                    ///< band
-//  READ_AND_WRITE(enum MODE,   mode);                    ///< band
-  READ_AND_WRITE(time_t,      time);                    ///< time (in seconds since the epoch) at which the object was created
-  READ_AND_WRITE(time_t,      expiration_time);         ///< time at which this entry expires (in seconds since the epoch)
-  READ_AND_WRITE(enum BANDMAP_ENTRY_SOURCE, source);    ///< the source of this entry
+  READ_AND_WRITE(callsign);                ///< call
+  READ_AND_WRITE(canonical_prefix);        ///< canonical prefix corresponding to the call
+  READ_AND_WRITE(continent);               ///< continent corresponding to the call
+  READ_AND_WRITE(band);                    ///< band
+  READ_AND_WRITE(time);                    ///< time (in seconds since the epoch) at which the object was created
+  READ_AND_WRITE(expiration_time);         ///< time at which this entry expires (in seconds since the epoch)
+  READ_AND_WRITE(source);    ///< the source of this entry
 
-  READ_AND_WRITE(bool, is_needed);                      ///< do we need this call?
+  READ_AND_WRITE(is_needed);                      ///< do we need this call?
 
   void calculate_mult_status(contest_rules& rules, running_statistics& statistics);
 
@@ -620,25 +619,22 @@ public:
 /*!  \brief Add a call to the do-not-add list
      \param callsign    callsign to add
 
-     Call on the do-not-add list are never added to the bandmap
+     Calls in the do-not-add list are never added to the bandmap
 */
   inline void do_not_add(const std::string& callsign)
     { SAFELOCK(_bandmap);
       _do_not_add.insert(callsign);
     }
 
-/*!  \brief Remove a call to the do-not-add list
+/*!  \brief Remove a call from the do-not-add list
      \param callsign    callsign to add
 
-     Call on the do-not-add list are never added to the bandmap
+     Calls in the do-not-add list are never added to the bandmap
 */
   inline void remove_from_do_not_add(const std::string& callsign)
     { SAFELOCK(_bandmap);
       _do_not_add.erase(callsign);
     }
-
-// re-mark all entries as to their need/mult status
-//  void remark(void);
 
 /// serialize using boost
   template<typename Archive>
