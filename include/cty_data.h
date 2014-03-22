@@ -303,12 +303,12 @@ protected:
   std::string _substring;
   std::string _region_name;
   std::string _region_abbreviation;
-  std::string _cq_zone;
-  std::string _itu_zone;
+  unsigned int _cq_zone;
+  unsigned int _itu_zone;
   std::string _continent;
-  std::string _utc_offset;
-  std::string _latitude;
-  std::string _longitude;
+  int _utc_offset;
+  float _latitude;
+  float _longitude;
 
 public:
 
@@ -325,6 +325,19 @@ public:
   READ_AND_WRITE(latitude);
   READ_AND_WRITE(longitude);
 
+/// archive using boost
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version)
+    { ar & _substring
+         & _region_name
+         & _region_abbreviation
+         & _cq_zone
+         & _itu_zone
+         & _continent
+         & _utc_offset
+         & _latitude
+         & _longitude;
+    }
 };
 
 // -----------  russian_data  ----------------
@@ -336,6 +349,7 @@ public:
 class russian_data
 {
 protected:
+  std::map<std::string, russian_data_per_substring> _data;
 
 public:
 
