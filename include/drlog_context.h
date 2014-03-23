@@ -184,6 +184,7 @@ protected:
   std::string                                  _rig1_port;                       ///< port to communicate with rig
   unsigned int                                 _rig1_stop_bits;                  ///< number of stop bits for rig
   std::string                                  _rig1_type;                       ///< model name of rig
+  std::string                                  _russian_filename;                ///< filename of russian location file (default = "russian-data")
 
   std::set<BAND>                               _score_bands;         ///< which bands are going to be scored?
   std::vector<std::pair<std::string, std::string> > _sent_exchange;  ///< names and values of sent exchange fields
@@ -343,6 +344,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   CONTEXTREAD(unsigned int, rbn_port);
   CONTEXTREAD(std::string, rbn_server);
   CONTEXTREAD(std::string, rbn_username);
+  CONTEXTREAD(std::string, russian_filename);
 
   typedef std::map<BAND, std::string> MS;
   CONTEXTREAD(MS, per_band_points);

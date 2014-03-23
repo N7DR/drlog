@@ -1,4 +1,4 @@
-// $Id: qso.h 44 2013-12-13 17:45:49Z  $
+// $Id: qso.h 55 2014-03-22 20:32:08Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,23 +65,15 @@ protected:
   std::string  _prefix;        // may depend on contest
 
   std::vector<std::pair<std::string, std::string> >           _sent_exchange;                  // vector<name, value>; names do not include the TEXCH-
-//  std::map<std::string /* name */, std::string /* value */>   _received_exchange;              // names do not include the REXCH-
-//  std::vector<std::pair<std::string /* name */, std::string /* value */> >   _received_exchange;              // names do not include the REXCH-
-  std::vector<received_field>   _received_exchange;              // names do not include the REXCH-
+  std::vector<received_field>                                 _received_exchange;              // names do not include the REXCH-
 
   std::vector<std::string>  _log_line_fields;
 
 // mults
   bool _is_country_mult;
   bool _is_prefix_mult;
-
-  typedef enum MODE enum_MODE;
-  typedef enum BAND enum_BAND;
-  typedef std::vector<std::pair<std::string, std::string> > vector_pair_string_string;
-  typedef std::map<std::string, std::string> map_string_string;
   
   const std::pair<std::string, std::string> _next_name_value_pair(const std::string& str, size_t& posn);
-
   const time_t _to_epoch_time(const std::string& date_str, const std::string& utc_str) const;
 
 public:
@@ -100,10 +92,10 @@ public:
   READ_AND_WRITE(date);
   READ_AND_WRITE(utc);
 
-  inline const std::string freq(void) const
+  inline const decltype(_frequency) freq(void) const
     { return _frequency; }
 
-  inline void freq(const std::string& str)
+  inline void freq(const decltype(_frequency)& str)
     { _frequency = str; }
 
   READ_AND_WRITE(comment);
@@ -116,13 +108,7 @@ public:
   READ(epoch_time);
 
   READ_AND_WRITE(sent_exchange);
-
-  inline std::vector<received_field> received_exchange(void)
-    { return _received_exchange; }
-
-  inline void received_exchange(const std::vector<received_field>& field)
-    { _received_exchange = field; }
-
+  READ_AND_WRITE(received_exchange);
   READ_AND_WRITE(is_country_mult);
   READ_AND_WRITE(is_prefix_mult);
 
@@ -148,15 +134,8 @@ public:
     { return _date + "T" + _utc; }
     
 /// is this QSO earlier than another one? 
-  inline const bool earlier_by_number(const QSO& qso) const
-//    { return (number() < qso.number()); }
+  inline const bool earlier_than(const QSO& qso) const
     { return (_epoch_time < qso.epoch_time()); }
-
-  inline const bool earlier_by_clock(const QSO& qso) const
-    { return (date_and_time() < qso.date_and_time()); }
-
-  inline const bool earlier(const QSO& qso) const
-    { return earlier_by_clock(qso); }
     
 /// re-format according to a Cabrillo template
   const std::string cabrillo_format(const std::string& cabrillo_qso_template) const;
@@ -183,7 +162,7 @@ public:
 // does the sent exchange include a particular field?
   const bool sent_exchange_includes(const std::string& field_name);
 
-  std::string log_line(void);
+  const std::string log_line(void);
 
 /// read fields from a log_line
   void populate_from_log_line(const std::string& str);
@@ -206,7 +185,6 @@ public:
          & _canonical_prefix
          & _epoch_time;
     }
-
 };
 
 /// ostream << QSO
@@ -214,6 +192,6 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q);
 
 /// is one QSO earlier than another?
 inline const bool earlier(const QSO& qso_1, const QSO& qso_2)
-  { return (qso_1.earlier(qso_2)); }
+  { return (qso_1.earlier_than(qso_2)); }
 
 #endif    // QSO_H

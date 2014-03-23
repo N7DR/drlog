@@ -1,4 +1,4 @@
-// $Id: qtc.h 31 2013-08-18 21:46:21Z  $
+// $Id: qtc.h 55 2014-03-22 20:32:08Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,9 +45,9 @@ public:
 
   explicit qtc_entry(const QSO& qso);
 
-  READ_AND_WRITE(utc);
-  READ_AND_WRITE(callsign);
-  READ_AND_WRITE(serno);
+  READ(utc);
+  READ(callsign);
+  READ(serno);
 
   const bool operator==(const QSO& qso) const;
 
@@ -84,7 +84,7 @@ protected:
 
 public:
 
-  READ_AND_WRITE(target);
+  READ(target);
   READ_AND_WRITE(id);
 
   inline const size_t size(void) const
@@ -164,7 +164,6 @@ public:
     { ar & _unsent_qtcs
          & _sent_qtcs;
     }
-
 };
 
 

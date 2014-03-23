@@ -1,4 +1,4 @@
-// $Id: cty_data.h 49 2014-01-25 17:11:40Z  $
+// $Id: cty_data.h 55 2014-03-22 20:32:08Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -143,9 +143,9 @@ public:
     { }
 
   READ(identifier);            ///< the alternative prefix or callsign
-  READ_AND_WRITE(cq_zone);    ///< alternative CQ zone
-  READ_AND_WRITE(itu_zone);   ///< alternative ITU zone
-  READ_AND_WRITE(country);     ///< canonical country prefix
+  READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
+  READ_AND_WRITE(itu_zone);    ///< alternative ITU zone
+  READ(country);               ///< canonical country prefix
 };
 
 /// ostream << alternative_country_info
@@ -315,15 +315,15 @@ public:
 /// construct from a file
   russian_data_per_substring(const std::string& sbstring, const std::string& line);
 
-  READ_AND_WRITE(substring);
-  READ_AND_WRITE(region_name);
-  READ_AND_WRITE(region_abbreviation);
-  READ_AND_WRITE(cq_zone);
-  READ_AND_WRITE(itu_zone);
-  READ_AND_WRITE(continent);
-  READ_AND_WRITE(utc_offset);
-  READ_AND_WRITE(latitude);
-  READ_AND_WRITE(longitude);
+  READ(substring);
+  READ(region_name);
+  READ(region_abbreviation);
+  READ(cq_zone);
+  READ(itu_zone);
+  READ(continent);
+  READ(utc_offset);
+  READ(latitude);
+  READ(longitude);
 
 /// archive using boost
   template<typename Archive>
@@ -344,18 +344,21 @@ public:
 
 /*! \class russian_data
     \brief Encapsulate the data from a Russian data file
+
+    Russian data file is based on http://www.rdxc.org/asp/pages/regions.asp?ORDER=1
 */
 
 class russian_data
 {
 protected:
-  std::map<std::string, russian_data_per_substring> _data;
+  std::map<std::string /* substring */, russian_data_per_substring> _data;
 
 public:
 
 /// construct from a file
-  russian_data(const std::string& filename);
+  russian_data(const std::vector<std::string>& path, const std::string& filename);
 
+  READ(data);
 };
 
 // -----------  location_info  ----------------
@@ -398,17 +401,17 @@ public:
   const bool operator==(const location_info& li) const;
 
 /// RW access
-   READ_AND_WRITE(country_name);        ///< official name of the country
-   READ_AND_WRITE(cq_zone);            ///< CQ zone
-   READ_AND_WRITE(itu_zone);           ///< ITU zone
-   READ_AND_WRITE(continent);           ///< two-letter abbreviation for continent
-   READ_AND_WRITE(latitude);                  ///< latitude in degrees (+ve north)
-   READ_AND_WRITE(longitude);                 ///< longitude in degrees (+ve west)
-   READ_AND_WRITE(utc_offset);                  ///< local-time offset from UTC, in minutes
-   READ_AND_WRITE(canonical_prefix);    ///< official prefix
+   READ(country_name);          ///< official name of the country
+   READ_AND_WRITE(cq_zone);     ///< CQ zone
+   READ_AND_WRITE(itu_zone);    ///< ITU zone
+   READ(continent);             ///< two-letter abbreviation for continent
+   READ_AND_WRITE(latitude);    ///< latitude in degrees (+ve north)
+   READ_AND_WRITE(longitude);   ///< longitude in degrees (+ve west)
+   READ(utc_offset);            ///< local-time offset from UTC, in minutes
+   READ(canonical_prefix);      ///< official prefix
 
-   READ_AND_WRITE(region_name);         ///< (Russian) name of region
-   READ_AND_WRITE(region_abbreviation); ///< (Russian) abbreviation for region
+   READ(region_name);           ///< (Russian) name of region
+   READ(region_abbreviation);   ///< (Russian) abbreviation for region
 
 /// archive using boost
    template<typename Archive>
@@ -536,7 +539,6 @@ public:
   void serialize(Archive& ar, const unsigned version)
     { ar & _db;
     }
-
 };
 
 // -----------  location_database  ----------------
@@ -552,6 +554,8 @@ protected:
   std::map<std::string, location_info> _alt_call_db; ///< database of alternative calls
   std::map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
 
+  std::map<std::string, russian_data_per_substring> _russian_db;  ///< Russian substring-indexed info
+
 // unordered_map will not serialize with boost 1.49
 //   it still doesn't serialize in boost 1.53
 //  std::unordered_map<std::string, location_info> _alt_call_db; ///< database of alternative calls
@@ -560,7 +564,7 @@ protected:
   drlog_qth_database                   _qth_db;      ///< additional database
 
   void _init(const cty_data& cty, const enum country_list_type country_list);
-  void _insert_alternatives(location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
+  void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
 
   pt_mutex                             _location_database_mutex;  ///< to make location_database objects thread-safe;
    
@@ -584,6 +588,9 @@ public:
 /// prepare a default-constructed object for use
   void prepare(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary);
 
+// add Russian information
+  void add_russian_database(const std::vector<std::string>& path, const std::string& filename);
+
 /// how large is the main database?
   inline const size_t size(void)
     { return (SAFELOCK_GET( _location_database_mutex, _db.size() )); }
@@ -601,49 +608,28 @@ public:
   
 /// access individual items of information
   inline const std::string country_name(const std::string& callpart)
-    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).country_name() ));
-    }
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).country_name() )); }
 
   inline const unsigned int cq_zone(const std::string& callpart)
-    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).cq_zone() ));
-    }
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).cq_zone() )); }
 
   inline const unsigned int itu_zone(const std::string& callpart)
-    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).itu_zone() ));
-    }
-
-/// get the correct kind of zone
-//  const unsigned int zone(const std::string& callpart, const enum zone_type ztype);
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).itu_zone() )); }
 
   inline const std::string continent(const std::string& callpart)
-    { //SAFELOCK(_location_database);
-      //return info(callpart).continent();
-      return (SAFELOCK_GET( _location_database_mutex, info(callpart).continent() ));
-    }
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).continent() )); }
 
   inline const float latitude(const std::string& callpart)
-    { //SAFELOCK(_location_database);
-      //return info(callpart).latitude();
-      return (SAFELOCK_GET( _location_database_mutex, info(callpart).latitude() ));
-    }
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).latitude() )); }
 
   inline const float longitude(const std::string& callpart)
-    { //SAFELOCK(_location_database);
-      //return info(callpart).longitude();
-      return (SAFELOCK_GET( _location_database_mutex, info(callpart).longitude() ));
-    }
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).longitude() )); }
 
   inline const int utc_offset(const std::string& callpart)
-    { //SAFELOCK(_location_database);
-      //return info(callpart).utc_offset();
-      return (SAFELOCK_GET( _location_database_mutex, info(callpart).utc_offset() ));
-    }
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).utc_offset() )); }
 
   inline const std::string canonical_prefix(const std::string& callpart)
-    { //SAFELOCK(_location_database);
-      //return info(callpart).canonical_prefix();
-      return (SAFELOCK_GET( _location_database_mutex, info(callpart).canonical_prefix() ));
-    } 
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).canonical_prefix() )); }
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

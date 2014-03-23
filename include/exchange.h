@@ -1,4 +1,4 @@
-// $Id: exchange.h 54 2014-03-16 21:45:12Z  $
+// $Id: exchange.h 55 2014-03-22 20:32:08Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -67,8 +67,8 @@ public:
   parsed_exchange(const std::string& callsign, const contest_rules& rules, const std::vector<std::string>& received_values);
 
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window
-  READ(valid);                                ///< is the object valid? (i.e., was parsing successful?)
-  READ(fields); ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
+  READ(valid);                         ///< is the object valid? (i.e., was parsing successful?)
+  READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
 
 /// is the object valid? (i.e., was parsing successful?)
   inline const bool is_valid(void) const
@@ -134,6 +134,7 @@ class exchange_field_database
 protected:
 
   std::map< std::pair< std::string /* callsign */, std::string /* field name */>, std::string /* value */> _db;  ///< the actual database
+//          --------------------------------  key  -----------------------------  --------  value  -------
 
 public:
 
@@ -238,11 +239,6 @@ typedef const bool (*VALIDITY_FUNCTION_TYPE)(const std::string& field_name, cons
     \return the validity function corresponding to <i>field_name</i>
 */
 VALIDITY_FUNCTION_TYPE validity_function(const std::string& field_name, const contest_rules& rules);
-
-//const bool is_valid_value(const std::string& field_name, const std::string& putative_value, const contest_rules& rules);
-
-//inline const bool has_set_of_valid_values(const std::string& field_name, const contest_rules& rules)
-//  { return !(rules.exch_permitted_values(field_name).empty()); }
 
 #endif /* EXCHANGE_H */
 

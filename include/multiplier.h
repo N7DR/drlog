@@ -1,4 +1,4 @@
-// $Id: multiplier.h 43 2013-12-07 20:29:56Z  $
+// $Id: multiplier.h 55 2014-03-22 20:32:08Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -16,8 +16,8 @@
         Classes and functions related to managing multipliers
 */
 
-#include "macros.h"
 #include "log_message.h"
+#include "macros.h"
 #include "serialization.h"
 
 #include <array>
@@ -124,7 +124,7 @@ public:
     { return _known; }
 
   inline void clear(void)
-  { for (auto& ss : _worked)
+  { for (auto& ss : _worked)    // this is clearer than using for_each here
       ss.clear();
   }
 
@@ -134,7 +134,7 @@ public:
        & _per_band
        & _used
        & _worked;
- }
+  }
 };
 
 std::ostream& operator<<(std::ostream& ost, const multiplier& m);
