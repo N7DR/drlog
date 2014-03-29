@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 53 2014-03-08 18:29:37Z  $
+// $Id: drlog_context.h 56 2014-03-29 19:12:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,9 +44,9 @@ enum country_multiplier_type { COUNTRY_MULT_NONE,
 extern pt_mutex _context_mutex;
 
 /// Syntactic sugar for read-only access
-#define CONTEXTREAD(x, y) \
+#define CONTEXTREAD(y) \
 /*! Read-only access to _##y */ \
-  inline const x& y(void) const { SAFELOCK(_context); return _##y; }
+  inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }
 
 
 // -----------  drlog_context  ----------------
@@ -220,83 +220,82 @@ protected:
 
 typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
-  CONTEXTREAD(std::string, archive_name);
-  CONTEXTREAD(std::string, auto_backup);
-  CONTEXTREAD(bool, auto_remaining_callsign_mults);
-  CONTEXTREAD(bool, auto_remaining_country_mults);
+  SAFEREAD(archive_name, _context);
+  SAFEREAD(auto_backup, _context);
+  SAFEREAD(auto_remaining_callsign_mults, _context);
+  SAFEREAD(auto_remaining_country_mults, _context);
 
-  CONTEXTREAD(unsigned int, bandmap_decay_time_local);
-  CONTEXTREAD(unsigned int, bandmap_decay_time_cluster);
-  CONTEXTREAD(unsigned int, bandmap_decay_time_rbn);
-  CONTEXTREAD(std::string, bands);
-  CONTEXTREAD(std::vector<int>, bandmap_fade_colours);
-  CONTEXTREAD(int, bandmap_filter_foreground_colour);
-  CONTEXTREAD(int, bandmap_filter_hide_colour);
-  CONTEXTREAD(int, bandmap_filter_show_colour);
-  CONTEXTREAD(int, bandmap_filter_disabled_colour);
-  CONTEXTREAD(bool, bandmap_filter_enabled);
-  CONTEXTREAD(bool, bandmap_filter_show);
-  CONTEXTREAD(std::vector<std::string>, bandmap_filter);
+  SAFEREAD(bandmap_decay_time_local, _context);
+  SAFEREAD(bandmap_decay_time_cluster, _context);
+  SAFEREAD(bandmap_decay_time_rbn, _context);
+  SAFEREAD(bands, _context);
+  SAFEREAD(bandmap_fade_colours, _context);
+  SAFEREAD(bandmap_filter_foreground_colour, _context);
+  SAFEREAD(bandmap_filter_hide_colour, _context);
+  SAFEREAD(bandmap_filter_show_colour, _context);
+  SAFEREAD(bandmap_filter_disabled_colour, _context);
+  SAFEREAD(bandmap_filter_enabled, _context);
+  SAFEREAD(bandmap_filter_show, _context);
+  SAFEREAD(bandmap_filter, _context);
 
   inline const bool bandmap_filter_hide(void) const
     { return !bandmap_filter_show(); }
 
-  CONTEXTREAD(std::string, batch_messages_file);
+  SAFEREAD(batch_messages_file, _context);
 
-  CONTEXTREAD(std::string, cabrillo_address_1);
-  CONTEXTREAD(std::string, cabrillo_address_2);
-  CONTEXTREAD(std::string, cabrillo_address_3);
-  CONTEXTREAD(std::string, cabrillo_address_4);
-  CONTEXTREAD(std::string, cabrillo_address_city);
-  CONTEXTREAD(std::string, cabrillo_address_state_province);
-  CONTEXTREAD(std::string, cabrillo_address_postalcode);
-  CONTEXTREAD(std::string, cabrillo_address_country);
-  CONTEXTREAD(std::string, cabrillo_callsign);
-  CONTEXTREAD(std::string, cabrillo_category_assisted);
-  CONTEXTREAD(std::string, cabrillo_category_band);
-  CONTEXTREAD(std::string, cabrillo_category_mode);
-  CONTEXTREAD(std::string, cabrillo_category_operator);
-  CONTEXTREAD(std::string, cabrillo_category_overlay);
-  CONTEXTREAD(std::string, cabrillo_category_power);
-  CONTEXTREAD(std::string, cabrillo_category_station);
-  CONTEXTREAD(std::string, cabrillo_category_time);
-  CONTEXTREAD(std::string, cabrillo_category_transmitter);
-  CONTEXTREAD(std::string, cabrillo_club);
-  CONTEXTREAD(std::string, cabrillo_contest);
-  CONTEXTREAD(std::string, cabrillo_e_mail);
-  CONTEXTREAD(std::string, cabrillo_filename);
-  CONTEXTREAD(std::string, cabrillo_location);
-  CONTEXTREAD(std::string, cabrillo_name);
-  CONTEXTREAD(std::string, cabrillo_operators);
-  CONTEXTREAD(std::string, cabrillo_qso_template);
+  SAFEREAD(cabrillo_address_1, _context);
+  SAFEREAD(cabrillo_address_2, _context);
+  SAFEREAD(cabrillo_address_3, _context);
+  SAFEREAD(cabrillo_address_4, _context);
+  SAFEREAD(cabrillo_address_city, _context);
+  SAFEREAD(cabrillo_address_state_province, _context);
+  SAFEREAD(cabrillo_address_postalcode, _context);
+  SAFEREAD(cabrillo_address_country, _context);
+  SAFEREAD(cabrillo_callsign, _context);
+  SAFEREAD(cabrillo_category_assisted, _context);
+  SAFEREAD(cabrillo_category_band, _context);
+  SAFEREAD(cabrillo_category_mode, _context);
+  SAFEREAD(cabrillo_category_operator, _context);
+  SAFEREAD(cabrillo_category_overlay, _context);
+  SAFEREAD(cabrillo_category_power, _context);
+  SAFEREAD(cabrillo_category_station, _context);
+  SAFEREAD(cabrillo_category_time, _context);
+  SAFEREAD(cabrillo_category_transmitter, _context);
+  SAFEREAD(cabrillo_club, _context);
+  SAFEREAD(cabrillo_contest, _context);
+  SAFEREAD(cabrillo_e_mail, _context);
+  SAFEREAD(cabrillo_filename, _context);
+  SAFEREAD(cabrillo_location, _context);
+  SAFEREAD(cabrillo_name, _context);
+  SAFEREAD(cabrillo_operators, _context);
+  SAFEREAD(cabrillo_qso_template, _context);
 
-  CONTEXTREAD(std::string, call_ok_now_message);
-  CONTEXTREAD(std::set<std::string>, callsign_mults);
-  CONTEXTREAD(bool, callsign_mults_per_band);
-  CONTEXTREAD(enum country_list_type, country_list);
-  CONTEXTREAD(bool, country_mults_per_band);
-  CONTEXTREAD(bool, cq_auto_lock);
-  CONTEXTREAD(bool, cq_auto_rit);
-  CONTEXTREAD(unsigned int, cluster_port);
-  CONTEXTREAD(std::string, cluster_server);
-  CONTEXTREAD(std::string, cluster_username);
-  CONTEXTREAD(std::string, contest_name);
-  CONTEXTREAD(std::string, country_mults_filter);
-  CONTEXTREAD(cq_memory_type, cq_memory);
-  CONTEXTREAD(std::string, cq_menu);
-  CONTEXTREAD(std::string, cty_filename);
-  CONTEXTREAD(unsigned int, cw_speed);
+  SAFEREAD(call_ok_now_message, _context);
+  SAFEREAD(callsign_mults, _context);
+  SAFEREAD(callsign_mults_per_band, _context);
+  SAFEREAD(country_list, _context);
+  SAFEREAD(country_mults_per_band, _context);
+  SAFEREAD(cq_auto_lock, _context);
+  SAFEREAD(cq_auto_rit, _context);
+  SAFEREAD(cluster_port, _context);
+  SAFEREAD(cluster_server, _context);
+  SAFEREAD(cluster_username, _context);
+  SAFEREAD(contest_name, _context);
+  SAFEREAD(country_mults_filter, _context);
+  SAFEREAD(cq_memory, _context);
+  SAFEREAD(cq_menu, _context);
+  SAFEREAD(cty_filename, _context);
+  SAFEREAD(cw_speed, _context);
 
-  CONTEXTREAD(std::vector<std::string>, do_not_show);
-  CONTEXTREAD(std::string, do_not_show_filename);
-  CONTEXTREAD(std::string, drmaster_filename);
+  SAFEREAD(do_not_show, _context);
+  SAFEREAD(do_not_show_filename, _context);
+  SAFEREAD(drmaster_filename, _context);
 
-  CONTEXTREAD(std::string, exchange);
-  CONTEXTREAD(std::string, exchange_mults);
-  CONTEXTREAD(bool, exchange_mults_per_band);
-
-  CONTEXTREAD(std::string, exchange_cq);
-  CONTEXTREAD(std::string, exchange_sap);
+  SAFEREAD(exchange, _context);
+  SAFEREAD(exchange_mults, _context);
+  SAFEREAD(exchange_mults_per_band, _context);
+  SAFEREAD(exchange_cq, _context);
+  SAFEREAD(exchange_sap, _context);
 
   const std::map<std::string, std::string> exchange_per_country(void) const
     { SAFELOCK(_context);
@@ -316,78 +315,79 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
     return cit->second;
   }
 
-  CONTEXTREAD(std::string, individual_messages_file);
+  SAFEREAD(individual_messages_file, _context);
 
-  CONTEXTREAD(std::string, keyer_port);
+  SAFEREAD(keyer_port, _context);
 
-  CONTEXTREAD(std::string, logfile);
+  SAFEREAD(logfile, _context);
 
-  CONTEXTREAD(unsigned int, match_minimum);
-  CONTEXTREAD(std::string,  modes);
-  CONTEXTREAD(std::string,  my_call);
-  CONTEXTREAD(std::string,  my_continent);
-  CONTEXTREAD(unsigned int, my_cq_zone);
-  CONTEXTREAD(std::string,  my_ip);
-  CONTEXTREAD(unsigned int, my_itu_zone);
-  CONTEXTREAD(float,        my_latitude);
-  CONTEXTREAD(float,        my_longitude);
+  SAFEREAD(match_minimum, _context);
+  SAFEREAD(modes, _context);
+  SAFEREAD(my_call, _context);
+  SAFEREAD(my_continent, _context);
+  SAFEREAD(my_cq_zone, _context);
+  SAFEREAD(my_ip, _context);
+  SAFEREAD(my_itu_zone, _context);
+  SAFEREAD(my_latitude, _context);
+  SAFEREAD(my_longitude, _context);
 
-  CONTEXTREAD(bool,        normalise_rate);
-  CONTEXTREAD(std::string, not_country_mults);
+  SAFEREAD(normalise_rate, _context);
+  SAFEREAD(not_country_mults, _context);
 
-  CONTEXTREAD(std::vector<std::string>, path);
-  CONTEXTREAD(unsigned int,             ptt_delay);
+  SAFEREAD(path, _context);
+  SAFEREAD(ptt_delay, _context);
 
-  typedef std::map<std::string, std::set<std::string>> qthx_type;
-  CONTEXTREAD(qthx_type, qthx);         ///< allowed exchanges values as a function of country
+//  typedef std::map<std::string, std::set<std::string>> qthx_type;
+  SAFEREAD(qthx, _context);         ///< allowed exchanges values as a function of country
 
-  CONTEXTREAD(unsigned int, rbn_port);
-  CONTEXTREAD(std::string, rbn_server);
-  CONTEXTREAD(std::string, rbn_username);
-  CONTEXTREAD(std::string, russian_filename);
+  SAFEREAD(rbn_port, _context);
+  SAFEREAD(rbn_server, _context);
+  SAFEREAD(rbn_username, _context);
+  SAFEREAD(russian_filename, _context);
 
-  typedef std::map<BAND, std::string> MS;
-  CONTEXTREAD(MS, per_band_points);
+//  typedef std::map<BAND, std::string> MS;
+  SAFEREAD(per_band_points, _context);
 
   const std::string points(const BAND b) const
-    { if (_per_band_points.find(b) != _per_band_points.end())
+    { SAFELOCK(_context);
+
+      if (_per_band_points.find(b) != _per_band_points.end())
         return _per_band_points.at(b);
       else
         return std::string();
     }
 
-  CONTEXTREAD(std::string, quick_qsl_message);   ///< confirm at end of QSO
-  CONTEXTREAD(std::string, qsl_message);         ///< confirm at end of QSO
-  CONTEXTREAD(bool, qso_multiple_bands);
-  CONTEXTREAD(bool, qso_multiple_modes);
+  SAFEREAD(quick_qsl_message, _context);
+  SAFEREAD(qsl_message, _context);
+  SAFEREAD(qso_multiple_bands, _context);
+  SAFEREAD(qso_multiple_modes, _context);
 
-  CONTEXTREAD(std::vector<unsigned int>, rate_periods);
-  CONTEXTREAD(std::set<std::string>,     remaining_callsign_mults_list);
-  CONTEXTREAD(std::set<std::string>,     remaining_country_mults_list);
-  CONTEXTREAD(unsigned int,              rig1_baud);
-  CONTEXTREAD(unsigned int,              rig1_data_bits);
-  CONTEXTREAD(std::string,               rig1_port);
-  CONTEXTREAD(unsigned int,              rig1_stop_bits);
-  CONTEXTREAD(std::string,               rig1_type);
+  SAFEREAD(rate_periods, _context);
+  SAFEREAD(remaining_callsign_mults_list, _context);
+  SAFEREAD(remaining_country_mults_list, _context);
+  SAFEREAD(rig1_baud, _context);
+  SAFEREAD(rig1_data_bits, _context);
+  SAFEREAD(rig1_port, _context);
+  SAFEREAD(rig1_stop_bits, _context);
+  SAFEREAD(rig1_type, _context);
 
-  typedef std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > STATIC_WINDOWS;
+//  typedef std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > STATIC_WINDOWS;
 
-  CONTEXTREAD(std::set<BAND>, score_bands);
-  CONTEXTREAD(unsigned int,   shift_delta);         ///< how many Hertz to QSY per poll of the shift key
-  CONTEXTREAD(unsigned int,   shift_poll);          ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
-  CONTEXTREAD(BAND,           start_band);
-  CONTEXTREAD(MODE,           start_mode);
-  CONTEXTREAD(STATIC_WINDOWS, static_windows);
-  CONTEXTREAD(bool,           sync_keyer);
+  SAFEREAD(score_bands, _context);
+  SAFEREAD(sent_exchange, _context);
+  SAFEREAD(shift_delta, _context);
+  SAFEREAD(shift_poll, _context);
+  SAFEREAD(start_band, _context);
+  SAFEREAD(start_mode, _context);
+  SAFEREAD(static_windows, _context);
+  SAFEREAD(sync_keyer, _context);
 
-//  std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
+  SAFEREAD(test, _context);
 
-  CONTEXTREAD(bool,                  test);
+  SAFEREAD(worked_mults_colour, _context);
 
-  CONTEXTREAD(std::string, worked_mults_colour);
-
-  inline const std::vector<std::pair<std::string, std::string> >  sent_exchange(void) const
-    { return _sent_exchange; }
+//  inline const std::vector<std::pair<std::string, std::string> >  sent_exchange(void) const
+//    { return _sent_exchange; }
 
 
 /// location and size of a particular window
@@ -397,31 +397,37 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   const std::string message(const int symbol);    // we use the KeySymbol as the integer, although other I/O implementations could use something else
 
 // CQ messages
-  CONTEXTREAD(std::string, message_cq_1);
-  CONTEXTREAD(std::string, message_cq_2);
+  SAFEREAD(message_cq_1, _context);
+  SAFEREAD(message_cq_2, _context);
 
 /// vector of the names of bands (e.g., "160", "80", etc.)
   inline const std::vector<std::string> band_names(void) const
-    { return split_string(_bands, ","); }
+    { SAFELOCK(_context);
+      return split_string(_bands, ","); }
 
 /// vector of the names of modes (e.g., "CW", "SSB", etc.)
   inline const std::vector<std::string> mode_names(void) const
-    { return split_string(_modes, ","); }
+    { SAFELOCK(_context);
+      return split_string(_modes, ","); }
 
 /// how many bands are used in this contest?
   inline const unsigned int n_bands(void) const
-    { return band_names().size(); }
+    { SAFELOCK(_context);
+      return band_names().size(); }
 
 /// how many modes are used in this contest?
   inline const unsigned int n_modes(void) const
-    { return mode_names().size(); }
+    { SAFELOCK(_context);
+      return mode_names().size(); }
 
 /// a CQ memory
   inline const std::string cq_memory(const unsigned int n) const
-    { return (n < _cq_memory.size() ? _cq_memory[n] : std::string()); }
+    { SAFELOCK(_context);
+      return (n < _cq_memory.size() ? _cq_memory[n] : std::string()); }
 
-  inline const std::map<int, std::string >  messages(void)
-    { return _messages; }
+ // inline const std::map<int, std::string >  messages(void)
+ //   { return _messages; }
+  SAFEREAD(messages, _context);
 
   const std::vector<std::string> window_name_contains(const std::string& substr) const;
 

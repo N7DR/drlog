@@ -1,4 +1,4 @@
-// $Id: macros.h 55 2014-03-22 20:32:08Z  $
+// $Id: macros.h 56 2014-03-29 19:12:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,22 +23,12 @@
 
 #if (!defined(READ_AND_WRITE))
 
-#if 0
-/// Syntactic sugar for read/write access
-#define READ_AND_WRITE(x, y) \
-/*! Read access to _##y */ \
-  inline const x& y(void) const { return _##y; } \
-/*! Write access to _##y */ \
-  inline void y(const x& n) { _##y = n; }
-#endif
-
 /// Syntactic sugar for read/write access
 #define READ_AND_WRITE(y) \
 /*! Read access to _##y */ \
   inline const decltype(_##y)& y(void) const { return _##y; } \
 /*! Write access to _##y */ \
   inline void y(const decltype(_##y)& n) { _##y = n; }
-
 
 #endif    // !READ_AND_WRITE
 

@@ -1,4 +1,4 @@
-// $Id: cty_data.h 55 2014-03-22 20:32:08Z  $
+// $Id: cty_data.h 56 2014-03-29 19:12:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -410,8 +410,8 @@ public:
    READ(utc_offset);            ///< local-time offset from UTC, in minutes
    READ(canonical_prefix);      ///< official prefix
 
-   READ(region_name);           ///< (Russian) name of region
-   READ(region_abbreviation);   ///< (Russian) abbreviation for region
+   READ_AND_WRITE(region_name);           ///< (Russian) name of region
+   READ_AND_WRITE(region_abbreviation);   ///< (Russian) abbreviation for region
 
 /// archive using boost
    template<typename Archive>
@@ -630,6 +630,12 @@ public:
 
   inline const std::string canonical_prefix(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).canonical_prefix() )); }
+
+  inline const std::string region_name(const std::string& callpart)
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
+
+  inline const std::string region_abbreviation(const std::string& callpart)
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

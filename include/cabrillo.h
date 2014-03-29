@@ -1,4 +1,4 @@
-// $Id: cabrillo.h 41 2013-11-09 13:23:18Z  $
+// $Id: cabrillo.h 56 2014-03-29 19:12:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -18,8 +18,8 @@
         
         Just for the record, the "specification" at the above URL is grossly incomplete
         (even though the ARRL at http://www.arrl.org/contests/fileform.html
-        explicitly claims that they are complete. As a result, there are several places 
-        where I have to guess what is intended. 
+        explicitly claims that it is complete). As a result, there are several places
+        where one has to guess what might be intended.
 */
 
 #include <string>

@@ -1,4 +1,4 @@
-// $Id: rules.h 55 2014-03-22 20:32:08Z  $
+// $Id: rules.h 56 2014-03-29 19:12:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -130,10 +130,10 @@ public:
 /// construct from name and multiplier status
   exchange_field(const std::string& nm, const bool mult);
 
-  READ_AND_WRITE(name);                          ///< name of field
-  READ_AND_WRITE(is_mult);                              ///< is this field a multiplier?
-  READ_AND_WRITE(is_optional);                          ///< is this an optional field?  *** not yet supported ***
-  READ_AND_WRITE(choice);        ///< is this field a choice?
+  READ(name);                          ///< name of field
+  READ(is_mult);                       ///< is this field a multiplier?
+  READ(is_optional);                   ///< is this an optional field?  *** not yet supported ***
+  READ_AND_WRITE(choice);              ///< is this field a choice?
 
 /// is this field a choice?
   inline const bool is_choice(void) const
@@ -175,9 +175,9 @@ public:
   points_structure(void);
 
   READ_AND_WRITE(default_points);      ///< default points
-  READ_AND_WRITE(country_points);               ///< per-country points
-  READ_AND_WRITE(continent_points);             ///< per-continent points
-  READ_AND_WRITE(points_type);     ///< is the points structure too complex for the configuration notation?
+  READ_AND_WRITE(country_points);      ///< per-country points
+  READ_AND_WRITE(continent_points);    ///< per-continent points
+  READ_AND_WRITE(points_type);         ///< is the points structure too complex for the configuration notation?
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
