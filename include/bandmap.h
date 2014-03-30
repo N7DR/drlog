@@ -170,8 +170,8 @@ public:
 
   READ_AND_WRITE(enabled);                          ///< is bandmap filtering enabled?
   READ_AND_WRITE(hide);                             ///< are we in hide mode? (as opposed to show)
-  READ_AND_WRITE(continents);  ///< continents to filter
-  READ_AND_WRITE(prefixes);    ///< canonical country prefixes to filter
+  READ(continents);  ///< continents to filter
+  READ(prefixes);    ///< canonical country prefixes to filter
 
 /// return all the canonical prefixes and continents that are currently being filtered
   const std::vector<std::string> filter(void) const;

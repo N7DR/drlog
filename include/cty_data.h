@@ -300,7 +300,7 @@ public:
 class russian_data_per_substring
 {
 protected:
-  std::string _substring;
+  std::string _sstring;     // substring
   std::string _region_name;
   std::string _region_abbreviation;
   unsigned int _cq_zone;
@@ -315,7 +315,7 @@ public:
 /// construct from a file
   russian_data_per_substring(const std::string& sbstring, const std::string& line);
 
-  READ(substring);
+  READ(sstring);
   READ(region_name);
   READ(region_abbreviation);
   READ(cq_zone);
@@ -328,7 +328,7 @@ public:
 /// archive using boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-    { ar & _substring
+    { ar & _sstring
          & _region_name
          & _region_abbreviation
          & _cq_zone
@@ -339,6 +339,9 @@ public:
          & _longitude;
     }
 };
+
+/// ostream << location_info
+std::ostream& operator<<(std::ostream& ost, const russian_data_per_substring& info);
 
 // -----------  russian_data  ----------------
 
@@ -634,8 +637,16 @@ public:
   inline const std::string region_name(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
 
-  inline const std::string region_abbreviation(const std::string& callpart)
-    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
+//  inline const std::string region_abbreviation(const std::string& callpart)
+//    {
+//      { SAFELOCK(location_database);
+//        const auto i = info(callpart);
+//        ost << i << std::endl;
+//      }
+//
+//      return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
+
+  const std::string region_abbreviation(const std::string& callpart);
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
