@@ -165,6 +165,7 @@ protected:
   std::vector<std::string>                     _path;                ///< directories to search, in order
   std::map<BAND, std::string>                  _per_band_points;     ///< points structure for each band
   unsigned int                                 _ptt_delay;           ///< PTT delay in milliseconds ( 0 => PTT disabled)
+  std::string                                  _p3_snapshot_file;    ///< base name of file for P3 snapshot
 
   std::string                                  _qsl_message;         ///< confirm at end of QSO
   std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
@@ -336,8 +337,8 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
   SAFEREAD(path, _context);
   SAFEREAD(ptt_delay, _context);
+  SAFEREAD(p3_snapshot_file, _context);
 
-//  typedef std::map<std::string, std::set<std::string>> qthx_type;
   SAFEREAD(qthx, _context);         ///< allowed exchanges values as a function of country
 
   SAFEREAD(rbn_port, _context);
@@ -345,7 +346,6 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(rbn_username, _context);
   SAFEREAD(russian_filename, _context);
 
-//  typedef std::map<BAND, std::string> MS;
   SAFEREAD(per_band_points, _context);
 
   const std::string points(const BAND b) const
