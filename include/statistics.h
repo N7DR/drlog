@@ -60,11 +60,12 @@ protected:
 
 // copied from rules
   bool                                _callsign_mults_used;      ///< are callsign mults used?
-  bool                                _country_mults_used;      ///< are country mults used?
+  bool                                _country_mults_used;       ///< are country mults used?
   bool                                _exchange_mults_used;      ///< are country mults used?
 
 public:
 
+/// default constructor
   running_statistics(void);
 
   running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules);
@@ -75,13 +76,18 @@ public:
   SAFEREAD(country_mults_used, statistics);                   ///< are country mults used?
   SAFEREAD(exchange_mults_used, statistics);                  ///< are exchange mults used?
 
+/*! \brief  do we still need to work a particular callsign mult on a particular band?
+    \param  mult_name   name of mult
+    \param  mult_value  value of mult to test
+    \param  b           band to test
+*/
+  const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const;
+
 // return true if actually added
   const bool add_known_country_mult(const std::string& str);
 
 /// do we still need to work a particular country as a mult on a particular band?
   const bool is_needed_country_mult(const std::string& callsign, const BAND);
-
-  const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const;
 
 /// a string list of bands on which a country is needed
   const std::string country_mult_needed(const std::string& call, const contest_rules& rules);
