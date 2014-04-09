@@ -414,6 +414,8 @@ protected:
 */
   const std::string _nearby_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
 
+  const std::vector<std::string> _nearby_callsigns(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
+
 public:
 
 /// default constructor
@@ -569,6 +571,9 @@ public:
     inline const std::string nearby_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
       {  return _nearby_callsign(_entries, target_frequency_in_khz, guard_band_in_hz); }
 
+    inline const std::vector<std::string> nearby_callsigns(const float target_frequency_in_khz, const int guard_band_in_hz)
+      {  return _nearby_callsigns(_entries, target_frequency_in_khz, guard_band_in_hz); }
+
 /*!  \brief Return a callsign close to a particular frequency, using the filtered version of the bandmap
      \param target_frequency_in_khz the target frequency, in kHz
      \param guard_band_in_hz        how far from the target to search, in Hz
@@ -579,6 +584,9 @@ public:
 //    const std::string nearby_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz);
     inline const std::string nearby_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
       { return _nearby_callsign(filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
+
+    inline const std::vector<std::string> nearby_filtered_callsigns(const float target_frequency_in_khz, const int guard_band_in_hz)
+      { return _nearby_callsigns(filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
 /*!  \brief Find the next needed station up or down in frequency from the current loction
      \param fp      pointer to function to be used to determine whather a station is needed

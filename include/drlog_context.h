@@ -188,6 +188,7 @@ protected:
   std::string                                  _russian_filename;                ///< filename of russian location file (default = "russian-data")
 
   std::set<BAND>                               _score_bands;         ///< which bands are going to be scored?
+  std::string                                  _screen_snapshot_file;    ///< base name of file for screenshot
   std::vector<std::pair<std::string, std::string> > _sent_exchange;  ///< names and values of sent exchange fields
   unsigned int                                 _shift_delta;         ///< how many Hertz to QSY per poll of the shift key
   unsigned int                                 _shift_poll;          ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
@@ -374,6 +375,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 //  typedef std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > STATIC_WINDOWS;
 
   SAFEREAD(score_bands, _context);
+  SAFEREAD(screen_snapshot_file, _context);
   SAFEREAD(sent_exchange, _context);
   SAFEREAD(shift_delta, _context);
   SAFEREAD(shift_poll, _context);

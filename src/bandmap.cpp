@@ -224,7 +224,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
 
      Returns the lowest-frequency station within the guard band, or the null string if no call is found.
 */
-const std::string bandmap::_nearby_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
+const string bandmap::_nearby_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
 { const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
   bool finish_looking = false;
 
@@ -239,6 +239,24 @@ const std::string bandmap::_nearby_callsign(const BM_ENTRIES& bme, const float t
   }
 
   return string();
+}
+
+const vector<string> _nearby_callsigns(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
+{ const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
+  bool finish_looking = false;
+  vector<string> rv;
+
+  for (BM_ENTRIES::const_iterator cit = bme.cbegin(); (!finish_looking and cit != bme.cend()); ++cit)
+  { const float difference = cit->freq().kHz() - target_frequency_in_khz;
+
+    if (fabs(difference) <= guard_band_in_khz and (cit->callsign() != MY_MARKER))
+      rv.push_back(cit->callsign());
+
+    if (difference > guard_band_in_khz)
+      finish_looking = true;
+  }
+
+  return rv;
 }
 
 /// default constructor
