@@ -301,16 +301,15 @@ public:
 /// is the panel hidden?
   const bool hidden(void) const;
 
+/// is the panel hidden?
   inline const bool is_hidden(void) const
     { return hidden(); }
 
-  const bool common_processing(const keyboard_event& e);    // processing that is the same in multiple windows
-
-/*!     \brief  controls echoing of characters
-        \param  whether_to_echo  turns echoing on/off
+/*! \brief  character processing that is the same in multiple windows
+    \param  e   keyboard event to be processed
+    \return whether the event was processed
 */
-//  void echo(const bool whether_to_echo);
-
+  const bool common_processing(const keyboard_event& e);    // processing that is the same in multiple windows
 
 /// define the <= operator to be the same as <, except that it causes a refresh at the end of the operation
   template <class T>

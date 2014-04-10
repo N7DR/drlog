@@ -109,13 +109,16 @@ public:
 
   const std::pair<unsigned int, unsigned int> calculate_rate(const int seconds_in_past, const unsigned int normalisation_period = 3600);
 
+  const std::string to_string(void);
+
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(_rate);
 
       ar & _data;
     }
-
 };
+
+std::ostream& operator<<(std::ostream& ost, rate_meter& rate);
 
 #endif /* RATE_H */
