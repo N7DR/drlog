@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 57 2014-04-06 23:20:03Z  $
+// $Id: drlog_context.h 58 2014-04-12 17:23:28Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -174,9 +174,10 @@ protected:
   std::map<std::string, std::set<std::string>> _qthx;                ///< allowed exchanges values as a function of country
 
   std::vector<unsigned int>                    _rate_periods;                    ///< periods (in minutes) over which rates should be calculated
-  std::string                                  _rbn_server;                      ///< hostname or IP of RBN server
-  std::string                                  _rbn_username;                    ///< username to use on the RBN
   unsigned int                                 _rbn_port;                        ///< port number on the RBN server
+  std::string                                  _rbn_server;                      ///< hostname or IP of RBN server
+  unsigned int                                 _rbn_threshold;                   ///< number of different stations that have to post to RBN before it shows on the bandmap
+  std::string                                  _rbn_username;                    ///< username to use on the RBN
   std::set<std::string>                        _remaining_callsign_mults_list;   ///< callsign mults to display
   std::set<std::string>                        _remaining_country_mults_list;    ///< country mults to display
   unsigned int                                 _rig1_baud;                       ///< baud rate for rig
@@ -344,6 +345,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
   SAFEREAD(rbn_port, _context);
   SAFEREAD(rbn_server, _context);
+  SAFEREAD(rbn_threshold, _context);
   SAFEREAD(rbn_username, _context);
   SAFEREAD(russian_filename, _context);
 

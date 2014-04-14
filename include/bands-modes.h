@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 54 2014-03-16 21:45:12Z  $
+// $Id: bands-modes.h 58 2014-04-12 17:23:28Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -117,6 +117,10 @@ public:
 
 /// construct from a band
   explicit frequency(const enum BAND);
+
+/// set frequency in hz
+  inline void hz(const unsigned int n)
+    { _hz = n; }
 
 /// get frequency in Hz
   inline const int Hz(void) const

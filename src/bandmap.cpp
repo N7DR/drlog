@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 57 2014-04-06 23:20:03Z  $
+// $Id: bandmap.cpp 58 2014-04-12 17:23:28Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -78,7 +78,8 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 bandmap_entry::bandmap_entry(void) :
   _time(::time(NULL)),
   _source(BANDMAP_ENTRY_LOCAL),
-  _is_needed(true)
+  _is_needed(true),
+  _expiration_time(0)
   { }
 
 /*! \brief  Construct from some useful stuff
@@ -189,6 +190,16 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
            (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));
 }
 
+const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
+{ //const frequency& f1 = (_freq.hz() < be._freq.hz() ? _freq : be._freq);
+  //const frequency& f2 = (_freq.hz() < be._freq.hz() ? be._freq : _freq);
+  frequency rv;
+
+  rv.hz(abs(be._freq.hz() - _freq.hz()));
+
+  return rv;
+}
+
 ostream& operator<<(ostream& ost, const bandmap_entry& be)
 { ost << "frequency: " << be.freq() << endl
       << "frequency_str: " << be.frequency_str() << endl
@@ -278,10 +289,17 @@ void bandmap::operator+=(const bandmap_entry& be)
   if (add_it)
   { SAFELOCK(_bandmap);
 
+    bandmap_entry old_be;
+
+    if (be.source() == BANDMAP_ENTRY_RBN)
+    { old_be = (*this)[callsign];
+
+      if (old_be.valid())
+      {
+      }
+    }
+
 // first pass: delete entries with the same callsign or frequency
-// g++ doesn't seem to support any of the new ways to do this (using bind and mem_fn)
-//    _entries.remove_if(bind2nd(mem_fun_ref(&bandmap_entry::matches_bandmap_entry), be));  // old style; works; OK for lists
-//  remove_if(_entries.begin(), _entries.end(), bind2nd(mem_fun_ref(&bandmap_entry::matches_bandmap_entry), be));  // old style; works
     _entries.remove_if([=] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); });
 
 // now insert at the correct place

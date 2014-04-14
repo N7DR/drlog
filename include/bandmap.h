@@ -1,4 +1,4 @@
-// $Id: bandmap.h 57 2014-04-06 23:20:03Z  $
+// $Id: bandmap.h 58 2014-04-12 17:23:28Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -209,6 +209,8 @@ protected:
   bool                      _is_needed;               ///< do we need this call?
   bool                      _is_needed_mult;          ///< is this a needed mult?
 
+  std::set<std::string>     _posters;                 ///< stations that posted this entry
+
   typedef std::pair<std::string, std::string> pss_type;
 
   needed_mult_details<std::pair<std::string, std::string>> _is_needed_callsign_mult;
@@ -249,9 +251,10 @@ public:
   READ_AND_WRITE(canonical_prefix);        ///< canonical prefix corresponding to the call
   READ_AND_WRITE(continent);               ///< continent corresponding to the call
   READ_AND_WRITE(band);                    ///< band
+  READ_AND_WRITE(posters);                 ///< source(s) of posting (if the source is RBN)
   READ_AND_WRITE(time);                    ///< time (in seconds since the epoch) at which the object was created
   READ_AND_WRITE(expiration_time);         ///< time at which this entry expires (in seconds since the epoch)
-  READ_AND_WRITE(source);    ///< the source of this entry
+  READ_AND_WRITE(source);                  ///< the source of this entry
 
   READ_AND_WRITE(is_needed);                      ///< do we need this call?
 
@@ -323,6 +326,9 @@ public:
   inline const bool empty(void) const
     { return _callsign.empty(); }
 
+  inline const bool valid(void) const
+    { return !empty(); }
+
 /*! \brief  Does this object match another bandmap_entry?
     \param  be  target bandmap entry
     \return whether frequency_str or callsign match
@@ -353,13 +359,19 @@ public:
 // re-mark as to the need/mult status
   const bool remark(contest_rules& rules, call_history& q_history, running_statistics& statistics);
 
+  inline const unsigned int n_posters(void) const
+    { return _posters.size(); }
+
+  const frequency frequency_difference(const bandmap_entry& be) const;
+
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-    { ar & _freq
-         & _frequency_str
-         & _callsign
+    { ar & _callsign
          & _canonical_prefix
+         & _freq
+         & _frequency_str
+         & _posters
          & _continent
          & _band
 //         & _mode
@@ -376,7 +388,7 @@ public:
 
 std::ostream& operator<<(std::ostream& ost, const bandmap_entry& be);
 
-// you'd think that BM_EMTRIES should be std::multiset<bandmap_entry>, but that's a royal pain with g++...
+// you'd think that BM_ENTRIES should be std::multiset<bandmap_entry>, but that's a royal pain with g++...
 // remove_if internally calls the assignment operator, which is illegal... so basically means that in g++ set/multiset can't use remove_if
 // one can use complex workarounds (remove_copy_if and then re-assign back to the original container), but that's ugly and in any case
 // std::list seems to be fast enough
@@ -395,6 +407,14 @@ protected:
   
   BM_ENTRIES                _entries;          ///< all the entries
   
+//  auto lt = [] (const bandmap_entry& be1, const bandmap_entry& be2) { return be1.callsign() < be2.callsign(); };
+
+//  std::set<bandmap_entry, decltype<lt>>  _call_entries;
+
+  // recommended
+//  std::set< int, std::function< bool(int,int) > > set_two(
+//                                          [] ( int x, int y ) { return x>y ; } ) ; // fine
+
   std::set<std::string>     _recent_calls;     ///< calls recently added
   std::set<std::string>     _do_not_add;       ///< do not add these calls
   std::vector<int>          _fade_colours;     ///< the colours to use as entries age
