@@ -364,6 +364,12 @@ public:
 
   const frequency frequency_difference(const bandmap_entry& be) const;
 
+  inline const bool less_by_callsign(const bandmap_entry& be) const
+    { return (_callsign < be._callsign); }
+
+  inline const bool less_by_frequency(const bandmap_entry& be) const
+    { return (_freq.hz() < be._freq.hz()); }
+
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -435,6 +441,9 @@ protected:
   const std::string _nearby_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
 
   const std::vector<std::string> _nearby_callsigns(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
+
+// insert an entry at the right place
+  void _insert(const bandmap_entry& be);
 
 public:
 

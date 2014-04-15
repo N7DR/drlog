@@ -252,7 +252,7 @@ const string bandmap::_nearby_callsign(const BM_ENTRIES& bme, const float target
   return string();
 }
 
-const vector<string> _nearby_callsigns(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
+const vector<string> bandmap::_nearby_callsigns(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
 { const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
   bool finish_looking = false;
   vector<string> rv;
@@ -268,6 +268,24 @@ const vector<string> _nearby_callsigns(const BM_ENTRIES& bme, const float target
   }
 
   return rv;
+}
+
+// insert an entry at the right place
+void bandmap::_insert(const bandmap_entry& be)
+{ SAFELOCK(_bandmap);
+
+  bool inserted = false;
+
+  for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
+  { if (it->freq().hz() > be.freq().hz())
+    { _entries.insert(it, be);                  // inserts before
+
+       inserted = true;
+    }
+  }
+
+  if (!inserted)
+    _entries.push_back(be);    // this frequency is higher than any currently in the bandmap
 }
 
 /// default constructor
@@ -303,18 +321,19 @@ void bandmap::operator+=(const bandmap_entry& be)
     _entries.remove_if([=] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); });
 
 // now insert at the correct place
-    bool inserted = false;
+    _insert(be);
+//    bool inserted = false;
 
-    for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
-    { if (it->freq().hz() > be.freq().hz())
-      { _entries.insert(it, be);                  // inserts before
-
-         inserted = true;
-      }
-    }
-  
-    if (!inserted)
-      _entries.push_back(be);    // this frequency is higher than any current ones in the bandmap
+//    for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
+//    { if (it->freq().hz() > be.freq().hz())
+//      { _entries.insert(it, be);                  // inserts before
+//
+//         inserted = true;
+//      }
+//    }
+//
+//    if (!inserted)
+//      _entries.push_back(be);    // this frequency is higher than any current ones in the bandmap
 
     if (callsign != MY_MARKER)
       _recent_calls.insert(callsign);
