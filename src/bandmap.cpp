@@ -191,9 +191,7 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
 }
 
 const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
-{ //const frequency& f1 = (_freq.hz() < be._freq.hz() ? _freq : be._freq);
-  //const frequency& f2 = (_freq.hz() < be._freq.hz() ? be._freq : _freq);
-  frequency rv;
+{ frequency rv;
 
   rv.hz(abs(be._freq.hz() - _freq.hz()));
 
@@ -313,15 +311,22 @@ void bandmap::operator+=(const bandmap_entry& be)
     { old_be = (*this)[callsign];
 
       if (old_be.valid())
-      {
+      { if (be.frequency_difference(old_be).hz() > 250)  // if not within 250 Hz
+        { (*this) -= callsign;
+          _insert(be);
+        }
+      }
+      else
+      { _entries.remove_if([=] (bandmap_entry& bme) { return bme.frequency_str() == be.frequency_str(); } );  // remove any entries athis QRG
+        _insert(be);
       }
     }
 
 // first pass: delete entries with the same callsign or frequency
-    _entries.remove_if([=] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); });
+//    _entries.remove_if([=] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); } );
 
 // now insert at the correct place
-    _insert(be);
+//    _insert(be);
 //    bool inserted = false;
 
 //    for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)

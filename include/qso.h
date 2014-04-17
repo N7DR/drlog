@@ -44,36 +44,49 @@ class QSO
 {
 protected:
   
-  unsigned int _number;          ///< qso number
-  std::string  _date;            ///< yyyy-mm-dd
-  std::string  _utc;             ///< hh:mm:ss
-  std::string  _callsign;
-  enum MODE    _mode;
-  enum BAND    _band;
-  std::string  _frequency;
-  std::string  _comment;
+  unsigned int _number;            ///< qso number
+  std::string  _date;              ///< yyyy-mm-dd
+  std::string  _utc;               ///< hh:mm:ss
+  std::string  _callsign;          ///< call
+  enum MODE    _mode;              ///< mode
+  enum BAND    _band;              ///< band
+  std::string  _frequency;         ///< frequency in form xxxxx.y (kHz)
+  std::string  _comment;           ///< comment to be carried with QSO
   std::string  _canonical_prefix;  ///< NOT automatically set when callsign is set
   
-  time_t       _epoch_time;
+  time_t       _epoch_time;        ///< time in seconds since the UNIX epoch
 
-  std::string  _my_call;
+  std::string  _my_call;           ///< my call
 
 // contest-specific
-  unsigned int _points;        // points for this QSO
-  bool         _is_dupe;
+  unsigned int _points;            ///< points for this QSO
+  bool         _is_dupe;           ///< is this QSO a dupe?
 
-  std::string  _prefix;        // may depend on contest
+  std::string  _prefix;            ///< prefix, according to the contest's definition
 
-  std::vector<std::pair<std::string, std::string> >           _sent_exchange;                  // vector<name, value>; names do not include the TEXCH-
-  std::vector<received_field>                                 _received_exchange;              // names do not include the REXCH-
+  std::vector<std::pair<std::string, std::string> >           _sent_exchange;                  ///< vector<pair<name, value>>; names do not include the TEXCH-
+  std::vector<received_field>                                 _received_exchange;              ///< names do not include the REXCH-
 
-  std::vector<std::string>  _log_line_fields;
+  std::vector<std::string>  _log_line_fields;       ///< separate fields from the log line
 
 // mults
-  bool _is_country_mult;
-  bool _is_prefix_mult;
+  bool _is_country_mult;            ///< is this QSO a country mult?
+  bool _is_prefix_mult;             ///< is this QSO a prefix mult?
   
+/*! \brief  obtain the next name and value from a drlog-format line
+    \param  str     a drlog-format line
+    \param  posn    character position within line
+    \return         The next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
+
+    Correctly handles extraneous spaces in <i>str</i>
+*/
   const std::pair<std::string, std::string> _next_name_value_pair(const std::string& str, size_t& posn);
+
+/*! \brief  obtain the epoch time from a date and time in drlog format
+    \param  date_str     date string in drlog format
+    \param  utc_str      time string in drlog format
+    \return              time in seconds since the UNIX epoch
+*/
   const time_t _to_epoch_time(const std::string& date_str, const std::string& utc_str) const;
 
 public:
@@ -92,9 +105,11 @@ public:
   READ_AND_WRITE(date);
   READ_AND_WRITE(utc);
 
+/// get frequency as a string
   inline const decltype(_frequency) freq(void) const
     { return _frequency; }
 
+/// set frequency from a string of the form xxxxx.y
   inline void freq(const decltype(_frequency)& str)
     { _frequency = str; }
 
