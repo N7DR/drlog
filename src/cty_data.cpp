@@ -97,7 +97,7 @@ cty_record::cty_record(const string& record)
   if ( (_utc_offset < -24 * 60) or (_utc_offset > 24 * 60) )                 // check that it's reasonable
     throw cty_error(CTY_INVALID_UTC_OFFSET, "UTC offset = " + remove_leading_spaces(fields[6]) + " in record for " + _country_name);
 
-  _prefix = remove_leading_spaces(fields[7]);
+  _prefix = to_upper(remove_leading_spaces(fields[7]));  // so that, for example, JD/o -> JD/O
   
   if (_prefix.empty())
     throw cty_error(CTY_INVALID_PREFIX, "PREFIX is empty in record for " + _country_name);

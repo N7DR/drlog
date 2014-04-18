@@ -21,9 +21,7 @@
 #include <string>
 #include <vector>
 
-#if (defined(LINUX))
 #include <pthread.h>
-#endif
 
 /// Lock a mutex
 #define LOCK(z)  /* cout << ((std::string)("LOCK ") + #z ) << endl; */ z##_mutex.lock()
@@ -40,15 +38,6 @@
 //
 //  return v;
 //}
-
-/// Ordinary definition to catch all exceptions
-#if !defined(CATCHALL)
-
-#if (defined(LINUX))
-#define CATCHALL catch (...)
-#endif    // LINUX
-
-#endif    // !CATCHALL
 
 // errors
 const int PTHREAD_LOCK_ERROR            = -1,    ///< Error locking mutex
@@ -293,10 +282,6 @@ public:
 */
   ~safelock(void);
 };
-
-#if (defined(LINUX) || defined(SOLARIS))
-void SCHED_YIELD(void);
-#endif
 
 // -------------------------------------- Error messages  -----------------------------------
 

@@ -174,7 +174,7 @@ protected:
   float         _latitude;              ///< latitude in degrees (+ve north)
   float         _longitude;             ///< longitude in degrees (+ve west)
   int           _utc_offset;            ///< local-time offset from UTC, in minutes
-  std::string   _prefix;                ///< official DXCC prefix
+  std::string   _prefix;                ///< official DXCC prefix, in upper case
 
   bool          _waedc_country_only;    ///< Is this only a country in the WAEDC (DARC) list?
 
@@ -199,18 +199,18 @@ public:
 
 /// RO access
   READ(waedc_country_only);     ///< Is this only a country in the WAEDC (DARC) list?
-  READ(country_name);    ///< official name of the country
-  READ(cq_zone);        ///< CQ zone
-  READ(itu_zone);       ///< ITU zone
-  READ(continent);       ///< two-letter abbreviation for continent
-  READ(latitude);              ///< latitude in degrees (+ve north)
-  READ(longitude);             ///< longitude in degrees (+ve west)
-  READ(utc_offset);              ///< local-time offset from UTC, in minutes
-  READ(prefix);          ///< official DXCC prefix
-  READ(alt_callsigns);  ///< alternative callsigns used by this country
-  READ(alt_prefixes);   ///< alternative prefixes used by this country
+  READ(country_name);           ///< official name of the country
+  READ(cq_zone);                ///< CQ zone
+  READ(itu_zone);               ///< ITU zone
+  READ(continent);              ///< two-letter abbreviation for continent
+  READ(latitude);               ///< latitude in degrees (+ve north)
+  READ(longitude);              ///< longitude in degrees (+ve west)
+  READ(utc_offset);             ///< local-time offset from UTC, in minutes
+  READ(prefix);                 ///< official DXCC prefix
+  READ(alt_callsigns);          ///< alternative callsigns used by this country
+  READ(alt_prefixes);           ///< alternative prefixes used by this country
 
-/// return the canonical prefix for this country
+/// return the canonical prefix for this country; prefixes such as "GM/s" or "JD/o" are rendered in uppper case
   inline const std::string canonical_prefix(void) const
     { return prefix(); }
     
@@ -275,7 +275,10 @@ public:
 /// construct from a file
   cty_data(const std::string& filename = "cty.dat");   // somewhere along the way the default name changed from CTY.DAT
 
-/// construct from a file
+/*! \brief  construct from a file
+    \param  path        The directory path to be searched in order
+    \param  filename    The name of the file to be read
+*/
   cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat");   // somewhere along the way the default name changed from CTY.DA
 
 /// destructor
@@ -286,7 +289,7 @@ public:
   inline unsigned int n_countries(void) const
     { return _data.size(); }
   
-/// return a record by number
+/// return a record by number, wrt 0
   inline const cty_record operator[](const unsigned int n) const
     { return _data.at(n); }
 };
@@ -300,30 +303,30 @@ public:
 class russian_data_per_substring
 {
 protected:
-  std::string _sstring;     // substring
-  std::string _region_name;
-  std::string _region_abbreviation;
-  unsigned int _cq_zone;
-  unsigned int _itu_zone;
-  std::string _continent;
-  int _utc_offset;
-  float _latitude;
-  float _longitude;
+  std::string _sstring;               ///< substring that matches this district
+  std::string _region_name;           ///< name of district
+  std::string _region_abbreviation;   ///< abbreviation of district (2 letters)
+  unsigned int _cq_zone;              ///< CQ zone
+  unsigned int _itu_zone;             ///< ITU zone
+  std::string _continent;             ///< two-letter abbreviation for continent
+  int _utc_offset;                    ///< offset from UTC
+  float _latitude;                    ///< latitude in degrees (+ve north)
+  float _longitude;                   ///< longitude in degrees (+ve east)
 
 public:
 
 /// construct from a file
   russian_data_per_substring(const std::string& sbstring, const std::string& line);
 
-  READ(sstring);
-  READ(region_name);
-  READ(region_abbreviation);
-  READ(cq_zone);
-  READ(itu_zone);
-  READ(continent);
-  READ(utc_offset);
-  READ(latitude);
-  READ(longitude);
+  READ(sstring);               ///< substring that matches this district
+  READ(region_name);           ///< name of district
+  READ(region_abbreviation);   ///< abbreviation of district (2 letters)
+  READ(cq_zone);               ///< CQ zone
+  READ(itu_zone);              ///< ITU zone
+  READ(continent);             ///< two-letter abbreviation for continent
+  READ(utc_offset);            ///< offset from UTC
+  READ(latitude);              ///< latitude in degrees (+ve north)
+  READ(longitude);             ///< longitude in degrees (+ve east)
 
 /// archive using boost
   template<typename Archive>
@@ -354,14 +357,17 @@ std::ostream& operator<<(std::ostream& ost, const russian_data_per_substring& in
 class russian_data
 {
 protected:
-  std::map<std::string /* substring */, russian_data_per_substring> _data;
+  std::map<std::string /* substring */, russian_data_per_substring> _data;  ///< map substring to the matching data
 
 public:
 
-/// construct from a file
+/*! \brief  construct from a file
+    \param  path        The directory path to be searched in order
+    \param  filename    The name of the file to be read
+*/
   russian_data(const std::vector<std::string>& path, const std::string& filename);
 
-  READ(data);
+  READ(data);  ///< map substring to the matching data
 };
 
 // -----------  location_info  ----------------

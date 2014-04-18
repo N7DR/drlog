@@ -198,6 +198,12 @@ const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) con
   return rv;
 }
 
+const unsigned int bandmap_entry::add_poster(const string& call)
+{ _posters.insert(call);
+
+  return n_posters();
+}
+
 ostream& operator<<(ostream& ost, const bandmap_entry& be)
 { ost << "frequency: " << be.freq() << endl
       << "frequency_str: " << be.frequency_str() << endl
@@ -284,12 +290,15 @@ void bandmap::_insert(const bandmap_entry& be)
 
   if (!inserted)
     _entries.push_back(be);    // this frequency is higher than any currently in the bandmap
+
+  ost << "inserted " << be.callsign() << " from " << be.source() << " with n posters = " << be.n_posters() << endl;
 }
 
 /// default constructor
 bandmap::bandmap(void) :
   _filter_p(&bmf),
-  _column_offset(0)
+  _column_offset(0),
+  _rbn_threshold(1)
 { }
 
 /// add an entry to the bandmap
@@ -315,11 +324,47 @@ void bandmap::operator+=(const bandmap_entry& be)
         { (*this) -= callsign;
           _insert(be);
         }
+        else    // different frequency
+        { if (old_be.expiration_time() >= be.expiration_time())
+          { const unsigned int n_new_posters = be.n_posters();
+
+            if (n_new_posters != 1)
+              ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
+            else
+            { const string& poster = *(be.posters().cbegin());
+
+              old_be.add_poster(poster);
+              (*this) -= callsign;
+              _insert(old_be);
+            }
+          }
+          else    // new expiration is later
+          { old_be.source(BANDMAP_ENTRY_RBN);
+
+            const unsigned int n_new_posters = be.n_posters();
+
+            if (n_new_posters != 1)
+              ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
+            else
+            { const string& poster = *(be.posters().cbegin());
+
+              old_be.add_poster(poster);
+              old_be.expiration_time(be.expiration_time());
+
+              (*this) -= callsign;
+              _insert(old_be);
+            }
+          }
+        }
       }
       else
       { _entries.remove_if([=] (bandmap_entry& bme) { return bme.frequency_str() == be.frequency_str(); } );  // remove any entries athis QRG
         _insert(be);
       }
+    }
+    else    // not RBN
+    { _entries.remove_if([=] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); } );
+      _insert(be);
     }
 
 // first pass: delete entries with the same callsign or frequency
@@ -482,9 +527,7 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
   SAFELOCK(_bandmap);
 
   for (auto& be : _entries)
-  { be.remove_exchange_mult(mult_name, mult_value);
-  }
-
+    be.remove_exchange_mult(mult_name, mult_value);
 }
 
 /// all the entries, after filtering has been applied
@@ -523,6 +566,10 @@ const BM_ENTRIES bandmap::filtered_entries(void)
   }
 
   return rv;
+}
+
+const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
+{ return filtered_entries();
 }
 
 /*!  \brief Return a callsign close to a particular frequency
@@ -622,14 +669,6 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
 
   return bandmap_entry();
 }
-
-// re-mark all entries as to their need/mult status
-//void bandmap::remark(void)
-//{ SAFELOCK(_bandmap);
-//
-//  for (auto& be : _entries)
-//    be.remark();
-//}
 
 /// window < bandmap
 window&  operator<(window& win, bandmap& bm)

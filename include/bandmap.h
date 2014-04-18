@@ -245,7 +245,7 @@ public:
   READ(freq);                    ///< QRG
   READ(frequency_str);           ///< QRG (kHz)
 
-  void freq(const frequency& f);              ///< set _freq and _frequency_str
+  void freq(const frequency& f);           ///< set _freq and _frequency_str
 
   READ_AND_WRITE(callsign);                ///< call
   READ_AND_WRITE(canonical_prefix);        ///< canonical prefix corresponding to the call
@@ -370,6 +370,8 @@ public:
   inline const bool less_by_frequency(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz()); }
 
+  const unsigned int add_poster(const std::string& call);
+
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -430,6 +432,8 @@ protected:
 
   pt_mutex                  _bandmap_mutex;    ///< mutex for this bandmap
 
+  unsigned int _rbn_threshold;
+
 /*!  \brief Return a callsign close to a particular frequency
      \param bme                     band map entries
      \param target_frequency_in_khz the target frequency, in kHz
@@ -449,6 +453,11 @@ public:
 
 /// default constructor
   bandmap(void);
+
+  inline void rbn_threshold(const unsigned int n)
+  { SAFELOCK (_bandmap);
+    _rbn_threshold = n;
+  }
 
 /// the number of entries in the bandmap
   inline const size_t size(void)
@@ -578,6 +587,8 @@ public:
 
 /// all the entries, after filtering has been applied
   const BM_ENTRIES filtered_entries(void);
+
+  const BM_ENTRIES rbn_threshold_and_filtered_entries(void);
 
 /// the current column offset
   inline int column_offset(void) const
