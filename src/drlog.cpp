@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 58 2014-04-12 17:23:28Z  $
+// $Id: drlog.cpp 59 2014-04-19 20:17:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1725,7 +1725,7 @@ void* process_rbn_info(void* vp)
             const pair<string, BAND> target { dx_callsign, dx_band };
             const location_info li = location_db.info(dx_callsign);
 
-            bandmap_entry be;
+            bandmap_entry be(post.source() == POSTING_CLUSTER ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN);
 
             be.freq(post.freq());
             be.callsign(dx_callsign);
@@ -2750,7 +2750,7 @@ ost << "processing command: " << command << endl;
       update_known_callsign_mults(contents);
       update_known_country_mults(contents);
 
-      bandmap_entry be;
+      bandmap_entry be;                        // default source is BANDMAP_ENTRY_LOCAL
       const BAND cur_band = safe_get_band();
 
       { be.freq(rig.rig_frequency());
@@ -2959,6 +2959,21 @@ ost << "processing command: " << command << endl;
   if (!processed and e.is_ctrl() and e.symbol() == XK_KP_Subtract)
   { next_qso_number--;
     win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
+    processed = true;
+  }
+
+// KP Del -- remove from bandmap and add to do-not-add list (like .REMOVE)
+  if (!processed and e.symbol() == XK_KP_Delete)
+  { const string callsign = remove_peripheral_spaces(win.read());
+
+    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm -= callsign;
+                                                                   bm.do_not_add(callsign);
+                                                                 } );
+
+    bandmap& bm = bandmaps[safe_get_band()];
+
+    win_bandmap <= bm;
+
     processed = true;
   }
 

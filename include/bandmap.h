@@ -1,4 +1,4 @@
-// $Id: bandmap.h 58 2014-04-12 17:23:28Z  $
+// $Id: bandmap.h 59 2014-04-19 20:17:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -220,7 +220,10 @@ protected:
 public:
 
 /// default constructor
-  bandmap_entry(void);
+//  bandmap_entry(void);
+
+/// construct from particular source
+  bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
 
 /*! \brief  Construct from some useful stuff
     \param  post            a post from a cluster/RBN
@@ -372,6 +375,11 @@ public:
 
   const unsigned int add_poster(const std::string& call);
 
+  inline const bool is_poster(const std::string& call) const
+    { return (_posters < call); }
+
+  const std::string posters_string(void) const;
+
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -448,6 +456,8 @@ protected:
 
 // insert an entry at the right place
   void _insert(const bandmap_entry& be);
+
+  const bool _mark_as_recent(const bandmap_entry& be);
 
 public:
 

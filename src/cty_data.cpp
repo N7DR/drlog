@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 58 2014-04-12 17:23:28Z  $
+// $Id: cty_data.cpp 59 2014-04-19 20:17:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -618,7 +618,7 @@ const location_info location_database::info(const string& cs)
     return db_posn->second;
   }
   
-  ost << "There was no exact entry" << endl;
+//  ost << "There was no exact entry" << endl;
   
 // see if there's an exact match in the alternative call db
   db_posn = _alt_call_db.find(callsign);

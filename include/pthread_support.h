@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 44 2013-12-13 17:45:49Z  $
+// $Id: pthread_support.h 59 2014-04-19 20:17:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

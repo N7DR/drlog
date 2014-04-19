@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 58 2014-04-12 17:23:28Z  $
+// $Id: bandmap.cpp 59 2014-04-19 20:17:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -75,38 +75,12 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 // -----------  bandmap_entry  ----------------
 
 // default constructor
-bandmap_entry::bandmap_entry(void) :
+bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _time(::time(NULL)),
-  _source(BANDMAP_ENTRY_LOCAL),
+  _source(s),
   _is_needed(true),
   _expiration_time(0)
   { }
-
-/*! \brief  Construct from some useful stuff
-    \param  post            a post from a cluster/RBN
-    \param  expiration      time at which this entry will expire
-    \param  is_needed       do we need to work this station on this band?
-    \param  is_needed_mult  would this station be a mult on this band?
-*/
-/*
-bandmap_entry::bandmap_entry(const dx_post& post, const time_t expiration, const bool need, const bool need_callsign_mult, const bool need_country_mult, const bool need_exchange_mult)
-{ if (post.valid())
-  { _freq = frequency(post.freq());
-    _frequency_str = post.frequency_str();               // kHz
-    _callsign = post.callsign();
-    _canonical_prefix = post.canonical_prefix();
-    _continent = post.continent();
-    _band = post.band();
-    _time = post.time_processed();
-    _source = ( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN);
-    _expiration_time = expiration;
-    _is_needed = need;
-    _is_needed_callsign_mult = need_callsign_mult;
-    _is_needed_country_mult = need_country_mult;
-    _is_needed_exchange_mult = need_exchange_mult;
-  }
-}
-*/
 
 /// set _freq and _frequency_str
 void bandmap_entry::freq(const frequency& f)
@@ -204,6 +178,16 @@ const unsigned int bandmap_entry::add_poster(const string& call)
   return n_posters();
 }
 
+const string bandmap_entry::posters_string(void) const
+{ string rv;
+
+  for_each(_posters.cbegin(), _posters.cend(), [&rv] (const string& p) { rv += (p + " "); } );
+
+  rv = rv.substr(0, rv.length() - 1);
+
+  return rv;
+}
+
 ostream& operator<<(ostream& ost, const bandmap_entry& be)
 { ost << "frequency: " << be.freq() << endl
       << "frequency_str: " << be.frequency_str() << endl
@@ -291,7 +275,7 @@ void bandmap::_insert(const bandmap_entry& be)
   if (!inserted)
     _entries.push_back(be);    // this frequency is higher than any currently in the bandmap
 
-  ost << "inserted " << be.callsign() << " from " << be.source() << " with n posters = " << be.n_posters() << endl;
+  ost << "inserted " << be.callsign() << " from " << be.source() << " with n posters = " << be.n_posters() << "; posters = " << be.posters_string() << endl;
 }
 
 /// default constructor
@@ -301,9 +285,45 @@ bandmap::bandmap(void) :
   _rbn_threshold(1)
 { }
 
+
+// a call will be marked as recent if:
+// its source is LOCAL or CLUSTER
+// or
+// its source is RBN and the call is already present in the bandmap
+// at the same QRG with this poster
+const bool bandmap::_mark_as_recent(const bandmap_entry& be)
+{ if ( (be.source() == BANDMAP_ENTRY_LOCAL) or (be.source() == BANDMAP_ENTRY_CLUSTER) )
+    return true;
+
+// RBN poster
+  SAFELOCK(_bandmap);
+
+  bandmap_entry old_be = (*this)[be.callsign()];
+
+  if (!old_be.valid())    // not already present
+    return false;
+
+  if (be.frequency_difference(old_be).hz() > 250)
+    return false;         // we're going to write a new entry
+
+  const unsigned int n_new_posters = be.n_posters();
+
+  if (n_new_posters != 1)
+    ost << "in _mark_as_recent: Error: number of posters = " << n_new_posters << " for post for " << be.callsign() << endl;
+  else
+  { const string& poster = *(be.posters().cbegin());
+
+    return (old_be.is_poster(poster));
+  }
+
+  return false;    // should never get here
+}
+
 /// add an entry to the bandmap
 void bandmap::operator+=(const bandmap_entry& be)
-{ const string& callsign = be.callsign();
+{ ost << "inside += for " << be.callsign() << "; source = " << be.source() << endl;
+
+  const string& callsign = be.callsign();
 
 // do not add if it's already been done recently, or matches several other conditions
   bool add_it = !(_do_not_add < callsign);
@@ -312,12 +332,16 @@ void bandmap::operator+=(const bandmap_entry& be)
     add_it = !((be.source() != BANDMAP_ENTRY_LOCAL) and is_recent_call(callsign));
 
   if (add_it)
-  { SAFELOCK(_bandmap);
+  { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going got mark this as a recent call
+
+    SAFELOCK(_bandmap);
 
     bandmap_entry old_be;
 
     if (be.source() == BANDMAP_ENTRY_RBN)
-    { old_be = (*this)[callsign];
+    { //mark_as_recent = false;  // default for RBN entries, since a threshold may apply
+
+      old_be = (*this)[callsign];
 
       if (old_be.valid())
       { if (be.frequency_difference(old_be).hz() > 250)  // if not within 250 Hz
@@ -333,7 +357,12 @@ void bandmap::operator+=(const bandmap_entry& be)
             else
             { const string& poster = *(be.posters().cbegin());
 
+//              if (old_be.is_poster(poster))
+//                mark_as_recent = true;
+
               old_be.add_poster(poster);
+
+                ost << "added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
               (*this) -= callsign;
               _insert(old_be);
             }
@@ -348,7 +377,13 @@ void bandmap::operator+=(const bandmap_entry& be)
             else
             { const string& poster = *(be.posters().cbegin());
 
+//            if (old_be.is_poster(poster))
+//              mark_as_recent = true;
+
               old_be.add_poster(poster);
+
+              ost << "new expiration; added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
+
               old_be.expiration_time(be.expiration_time());
 
               (*this) -= callsign;
@@ -367,25 +402,7 @@ void bandmap::operator+=(const bandmap_entry& be)
       _insert(be);
     }
 
-// first pass: delete entries with the same callsign or frequency
-//    _entries.remove_if([=] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); } );
-
-// now insert at the correct place
-//    _insert(be);
-//    bool inserted = false;
-
-//    for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
-//    { if (it->freq().hz() > be.freq().hz())
-//      { _entries.insert(it, be);                  // inserts before
-//
-//         inserted = true;
-//      }
-//    }
-//
-//    if (!inserted)
-//      _entries.push_back(be);    // this frequency is higher than any current ones in the bandmap
-
-    if (callsign != MY_MARKER)
+    if ((callsign != MY_MARKER) and mark_as_recent)
       _recent_calls.insert(callsign);
   }
 }
@@ -569,7 +586,33 @@ const BM_ENTRIES bandmap::filtered_entries(void)
 }
 
 const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
-{ return filtered_entries();
+{ const BM_ENTRIES filtered = filtered_entries();
+  BM_ENTRIES rv;
+  unsigned int threshold;
+
+  { SAFELOCK(_bandmap);
+
+    threshold = _rbn_threshold;
+  }
+
+  ost << "filtering with rbn threshold = " << threshold << endl;
+
+  for (const auto& be : filtered)
+  { ost << "source for " << be.callsign() << " is " << be.source() << endl;
+
+    if (be.source() == BANDMAP_ENTRY_RBN)
+    { if (be.n_posters() >= threshold)
+        rv.push_back(be);
+    }
+    else  // not RBN
+    { rv.push_back(be);
+    }
+  }
+
+  ost << "size of filtered = " << filtered.size() << endl;
+  ost << "size of returned = " << rv.size() << endl;
+
+  return rv;
 }
 
 /*!  \brief Return a callsign close to a particular frequency
@@ -671,13 +714,14 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
 }
 
 /// window < bandmap
-window&  operator<(window& win, bandmap& bm)
+window& operator<(window& win, bandmap& bm)
 { static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
   const size_t maximum_number_of_displayable_entries = (win.width() / COLUMN_WIDTH) * win.height();
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-  const BM_ENTRIES entries = bm.filtered_entries();    // automatically filter
+//  const BM_ENTRIES entries = bm.filtered_entries();    // automatically filter
+  const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();
   const size_t start_entry = (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0;
 
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
