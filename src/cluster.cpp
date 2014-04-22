@@ -48,7 +48,8 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _connection(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server(),
               src == POSTING_CLUSTER ? context.cluster_port() :  context.rbn_port(),
               context.my_ip())
-{ 
+{ ost << "inside body of dx_cluster constructor" << endl;
+
 // set the keepalive option
   _connection.keep_alive(300, 60, 2);
   

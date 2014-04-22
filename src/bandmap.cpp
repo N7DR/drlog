@@ -183,7 +183,7 @@ const string bandmap_entry::posters_string(void) const
 
   for_each(_posters.cbegin(), _posters.cend(), [&rv] (const string& p) { rv += (p + " "); } );
 
-  rv = rv.substr(0, rv.length() - 1);
+  rv = rv.substr(0, rv.length() - 1);  // skip the final space
 
   return rv;
 }
@@ -291,8 +291,68 @@ bandmap::bandmap(void) :
 // or
 // its source is RBN and the call is already present in the bandmap
 // at the same QRG with this poster
+// ASCII art created with asciio
+/*
+                  .-----.
+                  | RBN |
+                  '-----'
+                     |
+                     |
+                     v
+             .----------------.             .-----------.
+             |                |             |           |
+             |  Call present? |      NO     |   POST    |
+             |                |------------>|           |
+             |                |             |           |
+             '----------------'             '-----------'
+                      | YES
+                      v
+                .-----------.               .-----------.          .-----------.
+                |           |               |           |          |           |
+                |QRG approx |        NO     |Delete old |          |    POST   |
+                |  same?    ---------------->   post    |--------->|           |
+                |           |               |           |          |           |
+                '-----------'               '-----------'          '-----------'
+                      | YES
+                      v
+                .---------------------.     .---------------.
+                | New expiration      |     | Add poster    |
+                | later than          |  NO | to posters    |
+                | current expiration? |---->|               |
+                |                     |     |               |
+                '---------------------'     '---------------'
+                        |
+                        | YES
+                        v
+                .--------------.
+                | Mark current |
+                |   as RBN     |
+                |              |
+                |              |
+                '--------------'
+                       |
+                       |
+                       v
+                .------------.
+                | Add poster |
+                | to posters |
+                |            |
+                |            |
+                '------------'
+                      |
+                      v
+                .---------------.
+                | POST with new |
+                | expiration    |
+                |               |
+                |               |
+                '---------------'
+ */
 const bool bandmap::_mark_as_recent(const bandmap_entry& be)
-{ if ( (be.source() == BANDMAP_ENTRY_LOCAL) or (be.source() == BANDMAP_ENTRY_CLUSTER) )
+{ if (_rbn_threshold == 1)
+    return true;
+
+  if ( (be.source() == BANDMAP_ENTRY_LOCAL) or (be.source() == BANDMAP_ENTRY_CLUSTER) )
     return true;
 
 // RBN poster

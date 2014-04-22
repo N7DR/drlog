@@ -281,14 +281,14 @@ public:
     \param  port_nr     Port of the far end
     \param  timeout timeout in seconds
 */
-//  inline void destination(const std::string& dotted_ip_address, const short port_nr, const unsigned long timeout_secs)
-//    { destination(socket_address(dotted_ip_address, port_nr), timeout_secs); }
+  inline void destination(const std::string& dotted_ip_address, const short port_nr, const unsigned long timeout_secs)
+    { destination(socket_address(dotted_ip_address, port_nr), timeout_secs); }
 
 /*! \brief  Connect to the far-end, with explicit time-out when trying to make connection
     \param  adr Address/port of the far end
     \param  timeout timeout in seconds
 */
-//  void destination(const sockaddr_storage& adr, const unsigned long timeout_secs);
+  void destination(const sockaddr_storage& adr, const unsigned long timeout_secs);
 
 /*! \brief  Mark as connected to the far-end
   \param  adr Address/port of the far end
