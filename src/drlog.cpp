@@ -1044,6 +1044,7 @@ int main(int argc, char** argv)
   //  win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= vec.size();
 
 // create the cluster, and package it for use by the process_cluster_info() thread
+// coinstructor for cluster has to be in a diffreent thread, so that we don't block this one
   if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
   { cluster_p = new dx_cluster(context, POSTING_CLUSTER);
 

@@ -362,9 +362,11 @@ public:
 // re-mark as to the need/mult status
   const bool remark(contest_rules& rules, call_history& q_history, running_statistics& statistics);
 
+/// the number of posters
   inline const unsigned int n_posters(void) const
     { return _posters.size(); }
 
+/// difference in frequency between two bandmap entries
   const frequency frequency_difference(const bandmap_entry& be) const;
 
   inline const bool less_by_callsign(const bandmap_entry& be) const

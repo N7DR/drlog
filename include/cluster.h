@@ -29,45 +29,60 @@ enum POSTING_SOURCE { POSTING_CLUSTER,
 // -----------  dx_cluster  ----------------
 
 /*!     \class dx_cluster
-        \brief A reverse beacon network
+        \brief A DX cluster or reverse beacon network
 */
 
 class dx_cluster
 {
 protected:
-  std::string     _server;                        ///< name or IP address of the server
-  unsigned int    _port;                          ///< server port
-  std::string     _my_ip;                         ///< my IP address
-  unsigned int    _timeout;                       ///< timeout in seconds (defaults to 1)
-  std::string     _login_id;                      ///< my login identifier
-  enum POSTING_SOURCE _source;                    ///< source for postings
+  std::string         _server;                        ///< name or IP address of the server
+  unsigned int        _port;                          ///< server port
+  std::string         _my_ip;                         ///< my IP address
+  unsigned int        _timeout;                       ///< timeout in seconds (defaults to 1)
+  std::string         _login_id;                      ///< my login identifier
+  enum POSTING_SOURCE _source;                        ///< source for postings
   
-  std::string     _unprocessed_input;             ///< buffer for messages from the network
+  std::string         _unprocessed_input;             ///< buffer for messages from the network
   
-  tcp_socket      _connection;                    ///< TCP socket for communication with the network
+  tcp_socket          _connection;                    ///< TCP socket for communication with the network
   
+/// process a read error
   void _process_error(void);
 
 //  pt_mutex        _rbn_mutex;
 
-/// forbid copying
+/// forbid copying: declared but never defined
   dx_cluster(const dx_cluster&);
     
 public:
-//  tcp_socket cluster_socket(context.cluster_server(), context.cluster_port(), context.my_ip());
-//  dx_cluster(const std::string& server_name, const unsigned int server_port, const std::string& ip_address, const std::string& id);
+
+/*! \brief  constructor
+    \param  context  the drlog context
+    \param  src      whether this is a real DX cluster or the RBN
+*/
   dx_cluster (const drlog_context& context, const POSTING_SOURCE src);
   
+/// destructor
   virtual ~dx_cluster(void);
   
+/*! \brief  read from the cluster socket
+    \return the current bytes waiting on the cluster socket
+*/
   const std::string read(void);
   
+/*! \brief  read from the cluster socket
+    \return the information that has been read from the socket but has not yet been processed
+*/
   const std::string get_unprocessed_input(void);
   
+/*! \brief      send a message to the cluster
+    \return msg the message to be sent
+*/
   void send(const std::string& msg = "\r\n"); 
 
-  READ(source);
+  READ(source);        ///< source for postings
 
+/// reset the cluster socket
   void reset(void);
 };
 
