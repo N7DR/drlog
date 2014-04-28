@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 48 2014-01-11 16:20:02Z  $
+// $Id: cluster.cpp 60 2014-04-26 22:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -71,10 +71,19 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
     { if (e.code() == SOCKET_SUPPORT_TIMEOUT)
         ost << "Timeout in dx_cluster constructor" << endl;
       else
+      { ost << "socket support error while reading cluster connection; error # = " << e.code() << "; reason = " << e.reason() << endl;
         throw;
+      }
+    }
+
+    catch (...)
+    { ost << "caught unknown exception in dx_cluster constructor" << endl;
+      throw;
     }
   }
   
+  ost << "about to send to cluster connection" << endl;
+
   _connection.send(_login_id + CRLF);
 
 // if it's a cluster, show the last 100 postings in order to populate bandmap

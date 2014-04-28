@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 59 2014-04-19 20:17:18Z  $
+// $Id: drlog.cpp 60 2014-04-26 22:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -134,6 +134,8 @@ void* process_rbn_info(void* vp);
 void* p3_screenshot_thread(void* vp);
 void* reset_connection(void* vp);
 void* simulator_thread(void* vp);
+void* spawn_dx_cluster(void*);
+void* spawn_rbn(void*);
 void* start_cluster_thread(void* vp);
 
 // functions that include thread safety
@@ -227,6 +229,8 @@ window win_band_mode,               ///< the band and mode indicator
        win_batch_messages,          ///< messages from the batch messages file
        win_call,                    ///< callsign of other station, or command
        win_call_needed,             ///< bands on which this call is needed
+       win_cluster_line,            ///< last line received from cluster
+       win_cluster_mult,            ///< mults received from cluster
        win_cluster_screen,          ///< interactive screen on to the cluster
        win_country_needed,          ///< bands on which this country is needed
 //       win_cw,
@@ -236,10 +240,10 @@ window win_band_mode,               ///< the band and mode indicator
        win_exchange,                ///< QSO exchange received from other station
        win_log_extract,             ///< to show prior QSOs
        win_fuzzy,                   ///< fuzzy lookups
-       win_individual_messages,     // messages from the individual messages file
-       win_info,                    // summary of info about current station being worked
-       win_local_time,              // window for local time
-       win_log,                     // main visible log
+       win_individual_messages,     ///< messages from the individual messages file
+       win_info,                    ///< summary of info about current station being worked
+       win_local_time,              ///< window for local time
+       win_log,                     ///< main visible log
 //       win_menu,
        win_message,                 // messages from drlog to the user
 //       win_note,                    // quick notes to go in the log
@@ -247,6 +251,7 @@ window win_band_mode,               ///< the band and mode indicator
        win_qrate,                   // recent QSO rates
        win_qso_number,              // number of the next QSO
        win_rate,
+       win_rbn_line,                ///< last line received from the RBN
        win_remaining_callsign_mults, // the remaining callsign mults
        win_remaining_country_mults, // the remaining country mults
 //       win_remaining_exch_mults,    // the remaining exchange mults
@@ -279,7 +284,7 @@ contest_rules rules;
 cw_buffer*                  cw_p  = nullptr;
 drmaster*                  drm_p  = nullptr;
 dx_cluster* cluster_p = nullptr;
-dx_cluster*    rbn_p  = nullptr;
+dx_cluster*     rbn_p = nullptr;
 
 location_database location_db;
 rig_interface rig;
@@ -731,7 +736,8 @@ int main(int argc, char** argv)
   win_call_needed.init(context.window_info("CALL NEEDED"), WINDOW_NO_CURSOR);
 
 // CLUSTER LINE window
-  window win_cluster_line(context.window_info("CLUSTER LINE"), WINDOW_NO_CURSOR);
+//  window win_cluster_line(context.window_info("CLUSTER LINE"), WINDOW_NO_CURSOR);
+  win_cluster_line.init(context.window_info("CLUSTER LINE"), WINDOW_NO_CURSOR);
 
 // COUNTRY NEEDED window; shows which bands we need this call's country on
   win_country_needed.init(context.window_info("COUNTRY NEEDED"), WINDOW_NO_CURSOR);
@@ -938,7 +944,7 @@ int main(int argc, char** argv)
   }
 
 // CLUSTER MULT window
-  window win_cluster_mult(context.window_info("CLUSTER MULT"), WINDOW_NO_CURSOR);
+  win_cluster_mult.init(context.window_info("CLUSTER MULT"), WINDOW_NO_CURSOR);
   win_cluster_mult.enable_scrolling();
 
 // CLUSTER SCREEN window
@@ -946,7 +952,7 @@ int main(int argc, char** argv)
   win_cluster_screen.enable_scrolling();
 
 // RBN LINE window
-  window win_rbn_line(context.window_info("RBN LINE"), WINDOW_NO_CURSOR);
+  win_rbn_line.init(context.window_info("RBN LINE"), WINDOW_NO_CURSOR);
 
 // BANDMAP window
   win_bandmap.init(context.window_info("BANDMAP"), WINDOW_NO_CURSOR);
@@ -1046,7 +1052,19 @@ int main(int argc, char** argv)
 // create the cluster, and package it for use by the process_cluster_info() thread
 // coinstructor for cluster has to be in a diffreent thread, so that we don't block this one
   if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
-  { cluster_p = new dx_cluster(context, POSTING_CLUSTER);
+  { static pthread_t spawn_thread_id;
+
+    try
+    { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_dx_cluster, nullptr, "cluster spawn");
+    }
+
+    catch (const pthread_error& e)
+    { ost << e.reason() << endl;
+      exit(-1);
+    }
+
+#if 0
+    cluster_p = new dx_cluster(context, POSTING_CLUSTER);
 
     static cluster_info cluster_info_for_thread(&win_cluster_line, &win_cluster_mult, cluster_p, &statistics, &location_db, &win_bandmap, &bandmaps);
     static pthread_t thread_id_2;
@@ -1061,11 +1079,24 @@ int main(int argc, char** argv)
     { ost << e.reason() << endl;
       exit(-1);
     }
+#endif
   }
 
 // ditto for the RBN
   if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
-  { ost << "about to create RBN" << endl;
+  { static pthread_t spawn_thread_id;
+
+    try
+    { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_rbn, nullptr, "RBN spawn");
+    }
+
+    catch (const pthread_error& e)
+    { ost << e.reason() << endl;
+      exit(-1);
+    }
+
+#if 0
+    ost << "about to create RBN" << endl;
     rbn_p = new dx_cluster(context, POSTING_RBN);
     ost << "RBN created" << endl;
 
@@ -1082,6 +1113,7 @@ int main(int argc, char** argv)
     { ost << e.reason() << endl;
       exit(-1);
     }
+#endif
   }
 
 // now we can restore data from the last run
@@ -5096,5 +5128,43 @@ void* p3_screenshot_thread(void* vp)
   }
 
   pthread_exit(nullptr);
+}
+
+void* spawn_dx_cluster(void* vp)
+{ cluster_p = new dx_cluster(context, POSTING_CLUSTER);
+
+  static cluster_info cluster_info_for_thread(&win_cluster_line, &win_cluster_mult, cluster_p, &statistics, &location_db, &win_bandmap, &bandmaps);
+  static pthread_t thread_id_2;
+  static pthread_t thread_id_3;
+
+  try
+  { create_thread(&thread_id_2, &(attr_detached.attr()), get_cluster_info, (void*)(cluster_p), "cluster read");
+    create_thread(&thread_id_3, &(attr_detached.attr()), process_rbn_info, (void*)(&cluster_info_for_thread), "cluster process");
+  }
+
+  catch (const pthread_error& e)
+  { ost << e.reason() << endl;
+    exit(-1);
+  }
+}
+
+void* spawn_rbn(void* vp)
+{ ost << "about to create RBN" << endl;
+  rbn_p = new dx_cluster(context, POSTING_RBN);
+  ost << "RBN created" << endl;
+
+  static cluster_info rbn_info_for_thread(&win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps);
+  static pthread_t   thread_id_2;
+  static pthread_t thread_id_3;
+
+  try
+  { create_thread(&thread_id_2, &(attr_detached.attr()), get_cluster_info, (void*)(rbn_p), "RBN read");
+    create_thread(&thread_id_3, &(attr_detached.attr()), process_rbn_info, (void*)(&rbn_info_for_thread), "RBN process");
+  }
+
+  catch (const pthread_error& e)
+  { ost << e.reason() << endl;
+    exit(-1);
+  }
 }
 

@@ -39,36 +39,50 @@ class rate_meter
 {
 protected:
 
-  std::map<time_t /* epoch time */, std::pair<unsigned int /* n_qsos */, unsigned int /* points */> > _data;
-//  time_t                                                                                              _earliest_time;  // time of first element
-  pt_mutex _rate_mutex;
+  std::map<time_t /* epoch time */, std::pair<unsigned int /* n_qsos */, unsigned int /* points */> > _data;    ///< number of QSOs and points at a particular time
+
+  pt_mutex _rate_mutex;                                  ///< In order to lock the object
 
 public:
 
-//  rate_meter(void) :
-//    _earliest_time(0)
-//  { }
-
+/*! \brief Insert information into <i>_data</i>
+    \param  t   epoch
+    \param  nq  number of qsos at epoch <i>t</i>
+    \param  np  number of points at epoch <i>t</i>
+    \return Whether insertion was successful
+*/
   inline const bool insert(const time_t t, const unsigned int nq, const unsigned int np)
   { SAFELOCK(_rate);
 
-    ost << "Inserting <fn 1> into rate: " << t << ", " << nq << ", " << np << std::endl;
+//    ost << "Inserting <fn 1> into rate: " << t << ", " << nq << ", " << np << std::endl;
 
     return _data.insert( { t, { nq, np } } ).second;
   }
 
+/*! \brief Insert information into <i>_data</i>
+    \param  t   epoch
+    \param  p  number of qsos and points at epoch <i>t</i>
+    \return Whether insertion was successful
+*/
   inline const bool insert(const time_t t, const std::pair<unsigned int, unsigned int>& p)
   { SAFELOCK(_rate);
 
-    ost << "Inserting <fn 2> into rate: " << t << ", " << p.first << ", " << p.second << std::endl;
+//    ost << "Inserting <fn 2> into rate: " << t << ", " << p.first << ", " << p.second << std::endl;
 
     return _data.insert( { t, p } ).second;
   }
 
+/*! \brief Insert information into <i>_data</i>
+    \param  t   epoch
+    \param  np  number of points at epoch <i>t</i>
+    \return Whether insertion was successful
+
+    Assumes that the number of QSOs is one greatert han the current number in <i>_data</i>
+*/
   const bool insert(const time_t t, const unsigned int np)
   { SAFELOCK(_rate);
 
-    ost << "Inserting <fn 3> into rate: " << t << ", " << (_data.size() + 1) << ", " << np << std::endl;
+//    ost << "Inserting <fn 3> into rate: " << t << ", " << (_data.size() + 1) << ", " << np << std::endl;
 
     return _data.insert( { t, { (_data.size() + 1), np } } ).second;
   }
@@ -78,33 +92,40 @@ public:
     return _data.size();
   }
 
+/// Empty <i>_data</i>
   inline void clear(void)
   { SAFELOCK(_rate);
     _data.clear();
   }
 
-//  const unsigned int current_q_value = (time_n_qsos.empty() ? 0 : prev(time_n_qsos.cend())->second);
+/// Return the number of QSOs at the current epoch
   inline const unsigned int current_qsos(void)
   { SAFELOCK(_rate);
 
     return (_data.empty() ? 0 : (prev(_data.cend())->second).first);
   }
 
+/// Return the number of points at the current epoch
   inline const unsigned int current_score(void)
   { SAFELOCK(_rate);
 
     return (_data.empty() ? 0 : (prev(_data.cend())->second).second);
   }
 
+/*!     \brief Return the number of QSOs and points at the current epoch
+        \return pair.first is the number of QSOs; pair.second is the number of points
+*/
   const std::pair<unsigned int, unsigned int> current_qsos_and_score(void);
 
-  //const auto qcit = time_n_qsos.lower_bound(now - rate * 60);
-  //const unsigned int q_value = (qcit == time_n_qsos.cbegin() ? 0 : prev(qcit)->second);
-
+/// Return the number of QSOs at the epoch <i>t</i>
   const unsigned int qsos(const time_t t);
 
+/// Return the number of points at the epoch <i>t</i>
   const unsigned int score(const time_t t);
 
+/*!     \brief Return the number of QSOs and points at the epoch <i>t</i>
+        \return pair.first is the number of QSOs; pair.second is the number of points
+*/
   const std::pair<unsigned int, unsigned int> qsos_and_score(const time_t t);
 
   const std::pair<unsigned int, unsigned int> calculate_rate(const int seconds_in_past, const unsigned int normalisation_period = 3600);
