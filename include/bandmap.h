@@ -382,6 +382,8 @@ public:
 
   const std::string posters_string(void) const;
 
+//  const std::string to_string(void) const;
+
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -696,6 +698,8 @@ public:
       _do_not_add.erase(callsign);
     }
 
+  const std::string to_str(void);
+
 /// serialize using boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -708,5 +712,7 @@ public:
 
 /// window < bandmap
 window& operator<(window& win, bandmap& bm);
+
+std::ostream& operator<<(std::ostream& ost, bandmap& be);
 
 #endif    // BANDMAP_H

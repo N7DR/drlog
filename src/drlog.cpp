@@ -74,9 +74,11 @@ const bool calculate_exchange_mults(QSO& qso,
                                     const contest_rules& rules);
 const string callsign_mult_value(const string& callsign_mult_name,
                                  const string& callsign);
+void debug_dump(void);
 void display_band_mode(window& win,
                        const BAND current_band,
                        const enum MODE current_mode);
+const string dump_screen(const string& filename = string());
 void enter_cq_mode(void);
 void enter_sap_mode(void);
 void exit_drlog(void);
@@ -2956,12 +2958,6 @@ ost << "processing command: " << command << endl;
     { win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
 
       display_call_info(new_callsign);
-
-//      populate_win_info( new_callsign );
-//      update_batch_messages_window( new_callsign );
-//      update_individual_messages_window( new_callsign );
-//      extract = logbk.worked( new_callsign );
-//      extract.display();
     }
 
     processed = true;
@@ -3027,7 +3023,10 @@ ost << "processing command: " << command << endl;
 // CTRL-P -- dump screen
 //  if (!processed and e.symbol() == XK_Print)
   if (!processed and e.is_control('p'))
-  { //ost << "Pressed Print key" << endl;
+  { dump_screen();
+
+#if 0
+    //ost << "Pressed Print key" << endl;
 
 
     Display* display_p = keyboard.display_p();
@@ -3095,24 +3094,18 @@ ost << "processing command: " << command << endl;
     }
 
 //    image.write("rgb.png");
+#endif
 
     processed = true;
   }
 
-//  if ( /* !processed and */ e.symbol() == XK_Sys_Req)
-//  { ost << "Pressed SysReq key" << endl;
-//
-//    processed = true;
-//  }
-
-//  if ( /* !processed and */ e.is_ctrl() and e.symbol() == XK_Sys_Req)
-//  { ost << "Pressed ctrl-Print key" << endl;
-//
-//    processed = true;
-//  }
+// ALT-D -- debug dump
+  if (!processed and e.is_alt('d'))
+  { debug_dump();
+    processed = true;
+  }
 
 // finished processing a keypress
-
   if (processed and win_call.empty())
   { win_info <= WINDOW_CLEAR;
     win_batch_messages <= WINDOW_CLEAR;
@@ -3659,6 +3652,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { swap_rit_xit();
     processed = true;
   }
+
+// ALT-D -- debug dump
+  if (!processed and e.is_alt('d'))
+  { debug_dump();
+    processed = true;
+  }
 }
 
 // function to process input to the (editable) LOG window
@@ -3965,6 +3964,12 @@ ost << hhmmss() << " completed rescore" << endl;
 
     win_call < WINDOW_REFRESH;
 
+    processed = true;
+  }
+
+// ALT-D -- debug dump
+  if (!processed and e.is_alt('d'))
+  { debug_dump();
     processed = true;
   }
 }
@@ -5168,3 +5173,86 @@ void* spawn_rbn(void* vp)
   }
 }
 
+void debug_dump(void)
+{ ost << "*** DEBUG DUMP ***" << endl;
+
+  ost << "Screenshot dumped to: " << dump_screen() << endl;
+
+  for (auto& bm : bandmaps)
+  { ost << "bandmap: " << endl;
+
+    const string str = bm.to_str();
+
+    ost << str;
+  }
+
+
+}
+
+const string dump_screen(const string& dump_filename)
+{ Display* display_p = keyboard.display_p();
+  const Window window_id = keyboard.window_id();
+  XWindowAttributes win_attr;
+
+//    alert("creating attributes");
+
+  XLockDisplay(display_p);
+  XGetWindowAttributes(display_p, window_id, &win_attr);
+  XUnlockDisplay(display_p);
+  const int width = win_attr.width;
+  const int height = win_attr.height;
+
+//    alert("acquiring screen image");
+
+  XLockDisplay(display_p);
+  XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
+  XUnlockDisplay(display_p);
+
+//    alert("acquired screen image");
+
+  png::image< png::rgb_pixel > image(width, height);
+
+//    alert("created PNG image");
+
+  static const unsigned int BLUE_MASK = 0xff;
+  static const unsigned int GREEN_MASK = 0xff << 8;
+  static const unsigned int RED_MASK = 0xff << 16;
+
+  for (size_t y = 0; y < image.get_height(); ++y)
+  { for (size_t x = 0; x < image.get_width(); ++x)
+    { const unsigned long pixel = XGetPixel (xim_p, x, y);
+      const unsigned char blue = pixel bitand BLUE_MASK;
+      const unsigned char green = (pixel bitand GREEN_MASK) >> 8;
+      const unsigned char red = (pixel bitand RED_MASK) >> 16;
+
+      image[y][x] = png::rgb_pixel(red, green, blue);
+    }
+
+//      static const string percent_str("%%");
+//      const int percent = ((y + 1) * 100.0) / image.get_height();
+
+//      alert(string("screendump progress: ") + to_string(percent) + percent_str);
+  }
+
+//    alert("screendump acquired");
+
+  string filename;
+
+  if (dump_filename.empty())
+  { const string base_filename = context.screen_snapshot_file();
+
+    int index = 0;
+//  bool file_written = false;
+    filename = base_filename + "-" + to_string(index++);
+
+    while (file_exists(filename))
+      filename = base_filename + "-" + to_string(index++);
+  }
+  else
+    filename = dump_filename;
+
+  image.write(filename);
+  alert("screenshot file " + filename + " written");
+
+  return filename;
+}

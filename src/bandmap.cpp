@@ -188,6 +188,31 @@ const string bandmap_entry::posters_string(void) const
   return rv;
 }
 
+#if 0
+const string bandmap_entry::to_string(void) const
+{ string rv;
+
+  rv += "frequency: " << be.freq() << endl
+      << "frequency_str: " << be.frequency_str() << endl
+      << "callsign: " << be.callsign() << endl
+      << "canonical_prefix: " << be.canonical_prefix() << endl
+      << "continent: " << be.continent() << endl
+      << "band: " << be.band() << endl
+      << "time: " << be.time() << endl
+      << "source: " << be.source() << endl
+      << "expiration_time: " << be.expiration_time() << endl
+      << "is needed: " << be.is_needed() << endl
+      << "is needed mult: " << be.is_needed_mult() << endl;
+
+//  const needed_mult_details<std::pair<std::string, std::string>> nmd_callsign = be.is_n_callsign_mult();
+
+  ost << "is needed callsign mult: " << be.is_needed_callsign_mult_details() << endl;
+  ost << "is needed country mult: " << be.is_needed_country_mult_details() << endl;
+  ost << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl;
+
+}
+#endif
+
 ostream& operator<<(ostream& ost, const bandmap_entry& be)
 { ost << "frequency: " << be.freq() << endl
       << "frequency_str: " << be.frequency_str() << endl
@@ -773,6 +798,42 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
   return bandmap_entry();
 }
 
+const string bandmap::to_str(void)
+{ string rv;
+  BM_ENTRIES raw;
+  BM_ENTRIES filtered;
+  BM_ENTRIES threshold_and_filtered;
+
+  { SAFELOCK(_bandmap);
+
+    raw = entries();
+    filtered = filtered_entries();
+    threshold_and_filtered = rbn_threshold_and_filtered_entries();
+  }
+
+  rv += "RAW bandmap:" + EOL;
+  rv += "number of entries = " + to_string(raw.size());
+
+  for (const auto& be : raw)
+    rv += to_string(be) + EOL;
+
+  rv += EOL + "FILTERED bandmap:" + EOL;
+
+  rv += "number of entries = " + to_string(filtered.size());
+
+  for (const auto& be : filtered)
+    rv += to_string(be) + EOL;
+
+  rv += EOL + "THRESHOLD AND FILTERED bandmap:" + EOL;
+
+  rv += "number of entries = " + to_string(threshold_and_filtered.size());
+
+  for (const auto& be : threshold_and_filtered)
+    rv += to_string(be) + EOL;
+
+  return rv;
+}
+
 /// window < bandmap
 window& operator<(window& win, bandmap& bm)
 { static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
@@ -854,4 +915,10 @@ window& operator<(window& win, bandmap& bm)
   }
   
   return win;
+}
+
+ostream& operator<<(ostream& ost, bandmap& be)
+{ ost << be.to_str(); // << endl;
+
+  return ost;
 }

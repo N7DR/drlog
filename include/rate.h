@@ -128,10 +128,22 @@ public:
 */
   const std::pair<unsigned int, unsigned int> qsos_and_score(const time_t t);
 
+
+/*!     \brief Return the difference in number of QSOs and points between now and some time in the past
+        \param  seconds_in_past Number of seconds in the past (i.e., from now) for which the result is desired
+        \param  normalisation_period    period in seconds over which the returned values are to be normalised
+        \return pair.first is the number of QSOs; pair.second is the number of points
+
+        If <i>normalisation_period</i> is zero, then performs no normalisation, and returns merely the difference
+        between now and the time represented by <i>seconds_in_past</i>. If <i>normalisation_period</i> is not zero,
+        then normalises the differences to per <i>normalisation_rate</i> seconds.
+*/
   const std::pair<unsigned int, unsigned int> calculate_rate(const int seconds_in_past, const unsigned int normalisation_period = 3600);
 
+/// convert to printable string
   const std::string to_string(void);
 
+  /// serialize using boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(_rate);
@@ -140,6 +152,7 @@ public:
     }
 };
 
+/// ostream << rate_meter
 std::ostream& operator<<(std::ostream& ost, rate_meter& rate);
 
 #endif /* RATE_H */

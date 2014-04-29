@@ -48,6 +48,14 @@ template <typename T>
     return *this;
   }
 
+//template <typename T>
+//  message_stream& operator<<(T& obj)
+//  { SAFELOCK(_message_stream);
+//
+//    _ost << obj;
+//    return *this;
+//  }
+
 // for manipulator (see "The C++ Standard Library", 13.6.1)
 // I have no idea why this is necessary, since it seems to me that the
 // (identical) generic version should work just fine
