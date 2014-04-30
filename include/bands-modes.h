@@ -228,4 +228,8 @@ inline const BAND to_BAND(const std::string& str)
 { return to_BAND(frequency(str).hz());
 }
 
+inline const std::string to_string(const frequency& f)
+{ return (comma_separated_string(f.hz()) + " Hz");
+}
+
 #endif /* BANDSMODES_H */

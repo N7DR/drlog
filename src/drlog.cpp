@@ -843,22 +843,27 @@ int main(int argc, char** argv)
   else
     win_remaining_country_mults <= (context.remaining_country_mults_list());
 
-// REMAINING EXCHANGE MULTS window(s)  &&&&
+// REMAINING EXCHANGE MULTS window(s)
   const vector<string> exchange_mult_window_names = context.window_name_contains("REMAINING EXCHANGE MULTS");
   const size_t n_remaining_exch_mult_windows = exchange_mult_window_names.size();
 
-//  ost << "number of exch_mult_windows = " << n_remaining_exch_mult_windows << endl;
+  ost << "number of exch_mult_windows = " << n_remaining_exch_mult_windows << endl;
 
   for (size_t n = 0; n < n_remaining_exch_mult_windows; ++n)
   { window* wp = new window();
     const string exchange_mult_name = substring(exchange_mult_window_names[n], 25);
 
-//    ost << "n = " << n << ", exchange_mult_name = " << exchange_mult_name << endl;
+    ost << "n = " << n << ", exchange_mult_name = " << exchange_mult_name << endl;
 
     wp->init(context.window_info(exchange_mult_window_names[n]), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
     win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
 
     const vector<string> canonical_exch_values = rules.exch_canonical_values(exchange_mult_name);
+
+    ost << "number of values = " << canonical_exch_values.size() << endl;
+
+    for (auto& value : canonical_exch_values)
+      ost << "value = " << value << endl;
 
     (*wp) <= canonical_exch_values;
   }

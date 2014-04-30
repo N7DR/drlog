@@ -40,6 +40,9 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
 
 extern const std::string MY_MARKER;                                ///< the string that marks my position in the bandmap
 
+const std::string to_string(const BANDMAP_ENTRY_SOURCE);
+
+
 // -----------   needed_mult_details ----------------
 
 /*!     \class needed_mult_details

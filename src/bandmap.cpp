@@ -32,6 +32,22 @@ extern BAND                current_band;
 
 const string MY_MARKER = "--------";
 
+const string to_string(const BANDMAP_ENTRY_SOURCE bes)
+{ switch (bes)
+  { case BANDMAP_ENTRY_LOCAL :
+      return "BANDMAP_ENTRY_LOCAL";
+
+    case BANDMAP_ENTRY_CLUSTER :
+      return "BANDMAP_ENTRY_CLUSTER";
+
+    case BANDMAP_ENTRY_RBN :
+      return "BANDMAP_ENTRY_RBN";
+
+    default :
+      return "UNKNOWN";
+  }
+}
+
 bandmap_filter_type bmf;
 
 // -----------   bandmap_filter_type ----------------
@@ -214,14 +230,14 @@ const string bandmap_entry::to_string(void) const
 #endif
 
 ostream& operator<<(ostream& ost, const bandmap_entry& be)
-{ ost << "frequency: " << be.freq() << endl
+{ ost << "frequency: " << to_string(be.freq()) << endl
       << "frequency_str: " << be.frequency_str() << endl
       << "callsign: " << be.callsign() << endl
       << "canonical_prefix: " << be.canonical_prefix() << endl
       << "continent: " << be.continent() << endl
       << "band: " << be.band() << endl
       << "time: " << be.time() << endl
-      << "source: " << be.source() << endl
+      << "source: " << to_string(be.source()) << endl
       << "expiration_time: " << be.expiration_time() << endl
       << "is needed: " << be.is_needed() << endl
       << "is needed mult: " << be.is_needed_mult() << endl;
