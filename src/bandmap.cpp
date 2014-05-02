@@ -493,8 +493,8 @@ void bandmap::operator+=(const bandmap_entry& be)
           }
         }
       }
-      else
-      { _entries.remove_if([=] (bandmap_entry& bme) { return bme.frequency_str() == be.frequency_str(); } );  // remove any entries athis QRG
+      else    // this call is not currently present
+      { _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (be.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
         _insert(be);
       }
     }
