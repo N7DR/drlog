@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 59 2014-04-19 20:17:18Z  $
+// $Id: exchange.cpp 61 2014-05-03 16:34:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,6 +22,11 @@ using namespace std;
 
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 
+/*!     \brief  constructor
+        \param  callsign    callsign of the station from which the exchange was received
+        \param  rules       rules for the contest
+        \param  received_values     the received values, in the order that they were received
+*/
 parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const contest_rules& rules, const vector<string>& received_values) :
   _replacement_call(),
   _valid(false)
@@ -220,6 +225,12 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   }
 }
 
+/*! \brief  Return the value of a particular field
+    \param  field_name  field for which the value is requested
+    \return value corresponding to <i>field_name</i>
+
+    Returns empty string if <i>field_name</i> does not exist
+*/
 const string parsed_exchange::field_value(const std::string& field_name) const
 { for (const auto& field : _fields)
     if (field.name() == field_name)
@@ -228,6 +239,7 @@ const string parsed_exchange::field_value(const std::string& field_name) const
   return string();
 }
 
+/// ostream << parsed_exchange
 ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 { ost << "parsed exchange object IS " << (pe.valid() ? "" : "NOT ") << "valid" << endl
       << "replacement call = " << pe.replacement_call() << endl;
@@ -262,12 +274,19 @@ pt_mutex exchange_field_database_mutex;
 
 /*!     \class exchange_field_database
         \brief used for estimating the exchange field
+
+        There can be only one of these, and it is thread safe
 */
 
-//std::map< std::pair< std::string /* callsign */, std::string /* field name */>, std::string /* value */> _db;
+/*! \brief  Guess the value of an exchange field
+    \param  callsign   callsign for the guess
+    \param  field_name name of the field for the guess
+    \return Guessed value of <i>field_name</i> for <i>callsign</i>
 
+    Returns empty string if no sensible guess can be made
+*/
 const string exchange_field_database::guess_value(const string& callsign, const string& field_name)
-{ //ost << "guessing value of " << field_name << " exchange field for " << callsign << endl;
+{ ost << "guessing value of " << field_name << " exchange field for " << callsign << endl;
 
   SAFELOCK(exchange_field_database);
 
@@ -277,7 +296,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   if (it != _db.end())
     return it->second;
 
-  //ost << "not in database" << endl;
+  ost << "not in database => no prior QSO" << endl;
 
 // no prior QSO; is it in the drmaster database?
   const drmaster_line drm_line = (*drm_p)[callsign];
@@ -453,6 +472,11 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   return empty_string;
 }
 
+/*! \brief  Set a value in the database
+    \param  callsign   callsign for the new entry
+    \param  field_name name of the field for the new entry
+    \param  value      the new entry
+*/
 void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
 { SAFELOCK(exchange_field_database);
 
@@ -465,6 +489,10 @@ void exchange_field_database::set_value(const string& callsign, const string& fi
         \brief used for managing and parsing exchange fields
 */
 
+/*! \brief  Fill the database
+    \param  path        directories to search (in order) for the filename
+    \param  filename    name of the file that holds regex expressions for fields
+*/
 void exchange_field_template::prepare(const vector<string>& path, const string& filename)
 { if (filename.empty())
     return;
@@ -493,6 +521,10 @@ void exchange_field_template::prepare(const vector<string>& path, const string& 
   }
 }
 
+/*! \brief  Is a particular received string a valid value for a named field?
+    \param  name        name of the exchange field
+    \param  str         string to test for validity
+*/
 const bool exchange_field_template::is_valid(const string& name /* field name */, const string& str)
 { const auto it = _db.find(name);
 
@@ -504,6 +536,10 @@ const bool exchange_field_template::is_valid(const string& name /* field name */
   return is_match;
 }
 
+/*! \brief      What fields are a valid match for a particular received string?
+    \param  str string to test
+    \return     Names of fields for which <i>str</i> is a valid value
+*/
 const vector<string> exchange_field_template::valid_matches(const string& str)
 { vector<string> rv;
 
@@ -515,6 +551,12 @@ const vector<string> exchange_field_template::valid_matches(const string& str)
   return rv;
 }
 
+/*! \brief          Replace cut numbers with real numbers
+    \param  input   string possibly containing cut numbers
+    \return         <i.input</i> but with cut numbers replaced by actual digits
+
+    Replaces [aA], [nN], [tT]
+*/
 const string process_cut_digits(const string& input)
 { string rv = input;
 
@@ -738,12 +780,4 @@ const string parsed_exchange::_resolve_choice(const string& choice_name, const s
   return string();
 }
 
-//const bool is_valid_value(const string& field_name, const string& putative_value, const contest_rules& rules)
-//{ const set<std::string>& permitted_values = rules.exch_permitted_values(field_name);
-//
-//  if (permitted_values.empty())
-//    return true;
-//
-//  return (permitted_values < putative_value);
-//}
 

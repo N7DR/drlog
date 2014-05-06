@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 60 2014-04-26 22:11:23Z  $
+// $Id: drlog.cpp 61 2014-05-03 16:34:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1175,12 +1175,22 @@ int main(int argc, char** argv)
 
 //          ost << "Adding QSO with " << qso.callsign() << "; is_country_mult = " << qso.is_country_mult() << endl;
 
+// add exchange info for this call to the exchange db
+            const vector<received_field>& received_exchange = qso.received_exchange();
+
+            for (const auto& exchange_field : received_exchange)
+            { if (!(variable_exchange_fields < exchange_field.name()))
+                exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
+            }
+
             statistics.add_qso(qso, logbk, rules);
             logbk += qso;
             rate.insert(qso.epoch_time(), statistics.points(rules));
 
             win_message <= WINDOW_CLEAR;
           }
+
+          ost << "size of exchange_db at 1 = " << exchange_db.size() << endl;
 
 // rebuild the history
           rebuild_history(logbk, rules, statistics, q_history, rate);
@@ -1257,6 +1267,8 @@ int main(int argc, char** argv)
 
       win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
     }
+
+    ost << "size of exchange_db at 2 = " << exchange_db.size() << endl;
 
 // now delete the file if it exists, regardless of whether we've used it
     if (file_exists(context.archive_name()))
@@ -2957,11 +2969,6 @@ ost << "processing command: " << command << endl;
     if (!new_callsign.empty())
     { win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
       display_call_info(new_callsign);
-//      populate_win_info( new_callsign );
-//      update_batch_messages_window( new_callsign );
-//      update_individual_messages_window( new_callsign );
-//      extract = logbk.worked( new_callsign );
-//      extract.display();
     }
 
     processed = true;
@@ -2972,9 +2979,7 @@ ost << "processing command: " << command << endl;
   { const string new_callsign = match_callsign(fuzzy_matches);
 
     if (!new_callsign.empty())
-//      win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
     { win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
-
       display_call_info(new_callsign);
     }
 
@@ -4264,11 +4269,11 @@ void populate_win_info(const string& callsign)
 
 // country mults
     const set<string>& country_mults = rules.country_mults();
-
+    const string canonical_prefix = location_db.canonical_prefix(callsign);
 //    ost << "n country mults = " << country_mults.size() << endl;
 
     if (!country_mults.empty() or context.auto_remaining_country_mults())
-    { const string canonical_prefix = location_db.canonical_prefix(callsign);
+    { // const string canonical_prefix = location_db.canonical_prefix(callsign);
 
       if ((country_mults < canonical_prefix) or context.auto_remaining_country_mults())
       { const set<string> known_country_mults = statistics.known_country_mults();
@@ -4296,18 +4301,29 @@ void populate_win_info(const string& callsign)
     ost << "about to guess exch mults for " << callsign << endl;
 
     for (const auto& exch_mult_field : exch_mults)
-    { ost << "guessing for mult field " << exch_mult_field << endl;
+    { bool output_this_mult = true;
 
-      const string exch_mult_value = exchange_db.guess_value(callsign, exch_mult_field);    // make best guess as to to value of this field
+// output QTHX mults only if they apply to this callsign
+      if (starts_with(exch_mult_field, "QTHX["))
+      { const string target_canonical_prefix = delimited_substring(exch_mult_field, '[', ']');
 
-      ost << "guessed value is " << exch_mult_value << endl;
+        output_this_mult = (target_canonical_prefix == canonical_prefix);
+      }
 
-      line = pad_string(exch_mult_field + " [" + exch_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+      if (output_this_mult)
+      { ost << "guessing for mult field " << exch_mult_field << endl;
 
-      for (const auto& b : permitted_bands)
-        line += pad_string( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b) ? BAND_NAME.at(b) : "-" ), FIELD_WIDTH);
+        const string exch_mult_value = exchange_db.guess_value(callsign, exch_mult_field);    // make best guess as to to value of this field
 
-      win_info < cursor(0, next_y_value-- ) < line;
+        ost << "guessed value is " << exch_mult_value << endl;
+
+        line = pad_string(exch_mult_field + " [" + exch_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+
+        for (const auto& b : permitted_bands)
+          line += pad_string( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b) ? BAND_NAME.at(b) : "-" ), FIELD_WIDTH);
+
+        win_info < cursor(0, next_y_value-- ) < line;
+      }
     }
 
 // callsign mults
