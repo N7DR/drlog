@@ -2738,6 +2738,9 @@ ost << "processing command: " << command << endl;
         enter_sap_mode();
       }
     }
+
+    populate_win_info(remove_peripheral_spaces(win.read()));
+
     processed = true;
   }
 
@@ -3369,14 +3372,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         ost << "added pexch: name = " << pexch.field_name(n) << ", value = " << pexch.field_value(n) << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
 
-//          static const set<string> variable_exchange_fields { "SERNO" };
-
- //         if (pexch.field_name(n) == "CQZONE" or
-//              pexch.field_name(n) == "CWPOWER" or
-//              pexch.field_name(n) == "ITUZONE" or
-//              pexch.field_name(n) == "JAPREF" or
-//              pexch.field_name(n) == "RDA" or
-//              pexch.field_name(n) == "SOCIETY")
           if (!(variable_exchange_fields < pexch.field_name(n)))
             exchange_db.set_value(callsign, pexch.field_name(n), pexch.field_value(n));   // add it to the database of exchange fields
 
