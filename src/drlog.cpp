@@ -2967,7 +2967,10 @@ ost << "processing command: " << command << endl;
 
 // CURSOR DOWN -- possibly replace call with SCP info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
   if (!processed and e.is_unmodified() and e.symbol() == XK_Down)
-  { const string new_callsign = match_callsign(scp_matches);
+  { string new_callsign = match_callsign(scp_matches);
+
+    if (new_callsign.empty())
+      new_callsign = match_callsign(fuzzy_matches);
 
     if (!new_callsign.empty())
     { win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
