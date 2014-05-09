@@ -5209,9 +5209,10 @@ void debug_dump(void)
 { ost << "*** DEBUG DUMP ***" << endl;
 
   ost << "Screenshot dumped to: " << dump_screen() << endl;
+  int index = 0;
 
   for (auto& bm : bandmaps)
-  { ost << "bandmap: " << endl;
+  { ost << "dumping bandmap # " << index++ << endl;
 
     const string str = bm.to_str();
 

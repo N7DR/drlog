@@ -424,6 +424,11 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
 void bandmap::operator+=(const bandmap_entry& be)
 { ost << "inside += for " << be.callsign() << "; source = " << be.source() << endl;
 
+  if ((*this)[MY_MARKER].valid())
+    ost << "MY MARKER appears to be present on entry" << endl;
+  else
+    ost << "MY MARKER appears NOT to be present on entry" << endl;
+
   const string& callsign = be.callsign();
 
 // do not add if it's already been done recently, or matches several other conditions
@@ -434,6 +439,11 @@ void bandmap::operator+=(const bandmap_entry& be)
 
   if (add_it)
   { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going got mark this as a recent call
+
+    if (mark_as_recent)
+      ost << "marked as recent" << endl;
+    else
+      ost << "NOT marked as recent" << endl;
 
     SAFELOCK(_bandmap);
 
@@ -494,7 +504,8 @@ void bandmap::operator+=(const bandmap_entry& be)
         }
       }
       else    // this call is not currently present
-      { _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (be.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
+      { //_entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (be.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
+        _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
         _insert(be);
       }
     }
@@ -506,6 +517,11 @@ void bandmap::operator+=(const bandmap_entry& be)
     if ((callsign != MY_MARKER) and mark_as_recent)
       _recent_calls.insert(callsign);
   }
+
+  if ((*this)[MY_MARKER].valid())
+    ost << "MY MARKER appears to be present on exit" << endl;
+  else
+    ost << "MY MARKER appears NOT to be present on exit" << endl;
 }
 
 /// prune the bandmap
@@ -627,15 +643,7 @@ void bandmap::not_needed_callsign_mult(const std::string& mult_type /* e.g., "WP
 
 // change status for all entries with this particular callsign mult
   for (auto& be : _entries)
-  { //if (be.is_needed_callsign_mult())
-    { //const string& callsign = be.callsign();
-      //const string this_callsign_mult = (*pf)(mult_type, callsign);
-
-      //if (this_callsign_mult == callsign_mult_string)
-//        be.is_needed_callsign_mult(false);              // be.is_needed_callsign_mult(this_callsign_mult == callsign_mult_string) might work
-        be.remove_callsign_mult(mult_type, callsign_mult_string);
-    }
-  }
+    be.remove_callsign_mult(mult_type, callsign_mult_string);
 }
 
 void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
@@ -687,7 +695,9 @@ const BM_ENTRIES bandmap::filtered_entries(void)
 }
 
 const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
-{ const BM_ENTRIES filtered = filtered_entries();
+{ ost << "inside bandmap::rbn_threshold_and_filtered_entries()" << endl;
+
+  const BM_ENTRIES filtered = filtered_entries();
   BM_ENTRIES rv;
   unsigned int threshold;
 
