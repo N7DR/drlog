@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 61 2014-05-03 16:34:34Z  $
+// $Id: bandmap.cpp 62 2014-05-10 14:51:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -782,10 +782,12 @@ const string bandmap::nearby_filtered_callsign(const float target_frequency_in_k
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
 
-     The return value can be tested with .empty() to see if a station was found
+     The return value can be tested with .empty() to see if a station was found.
+     Applies filtering and the RBN threshold before searching for the next station.
 */
 const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
-{ const BM_ENTRIES fe = filtered_entries();
+{ //const BM_ENTRIES fe = filtered_entries();
+  const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
 
   BM_ENTRIES::const_iterator cit = find_if(fe.cbegin(), fe.cend(), [=] (const bandmap_entry& be) { return (be.callsign() == MY_MARKER); } );  // find myself
 

@@ -650,7 +650,8 @@ public:
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
 
-     The return value can be tested with .empty() to see if a station was found
+     The return value can be tested with .empty() to see if a station was found.
+     Applies filtering and the RBN threshold before searching for the next station.
 */
   const bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn);
 
