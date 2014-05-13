@@ -611,7 +611,8 @@ const bool is_valid_RST(const string& str, const contest_rules& rules)
   }
 
   if (str.length() == 3)
-    return true;
+//    return true;
+    return (str == string("599"));
 
   return is_valid_RS(str, rules);
 

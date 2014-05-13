@@ -209,7 +209,6 @@ protected:
   std::map<std::string, std::vector<exchange_field>>                        _exch;             ///< details of the received exchange fields
 //  canonical prefix, vector of fields in the exchange for that prefix
 
-//  std::vector<exchange_field> _expanded_exch;    ///< details of the received exchange fields, with choices expanded (i.e., the leaves of the _exch element)
   std::map<std::string, std::vector<exchange_field>> _expanded_exch;    ///< details of the received exchange fields, with choices expanded (i.e., the leaves of the _exch element)
 
   std::vector<std::string>    _sent_exchange;    ///< names of fields in the sent exchange
@@ -238,18 +237,7 @@ protected:
 
 // structures to hold information about the possible values of exchange fields
 
-//  std::vector<exchange_field_values>  _qthx_vector;         ///< details of all the per-country exchanges
-
 /// all the equivalent values for all exchange fields; the map is empty if there are no canonical values
-//  std::vector                                              /* one entry for each exchange field */
-//    <std::pair
-//      <std::string,                                        /* exch field name */
-//          std::map
-//           <std::string,                                   /* a canonical field value */
-//             std::set                                      /* each equivalent value is a member of the vector, including the canonical value */
-//               <std::string                                /* indistinguishable legal values */
-//                  > > > >                       _exch_values;
-
   std::vector<exchange_field_values>  _exch_values;
 
 /// all the legal values for each exchange field that has defined legal values
@@ -283,7 +271,6 @@ protected:
 
         Uses the variable <i>_exch_values</i> to obtain the returned value
 */
-//  const std::set<std::string> _exch_all_values(const std::string& field_name) const;
   const std::set<std::string> _all_exchange_values(const std::string& field_name) const;
 
 //  const std::vector<exchange_field> _parse_context_exchange(const drlog_context& context /* const std::string& exchange_str, const std::string& exchange_mults_str */) const;  // parse the "exchange =" line from context

@@ -49,6 +49,9 @@ extern pt_mutex _context_mutex;
   inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }
 
 
+typedef std::string SINGLE_EXCHANGE;
+typedef std::vector<SINGLE_EXCHANGE> MULTIPLE_EXCHANGES;
+
 // -----------  drlog_context  ----------------
 
 class drlog_context
@@ -127,13 +130,15 @@ protected:
   std::string                                  _do_not_show_filename;  ///< filename of calls (one per line) not to be shown
   std::string                                  _drmaster_filename;     ///< filename of drmaster file (default = "drmaster")
 
-  std::string                                  _exchange;                  ///< comma-delimited received exchange
+//  std::string                                  _exchange;                  ///< comma-delimited received exchange
+  SINGLE_EXCHANGE                              _exchange;                  ///< comma-delimited received exchange
   std::string                                  _exchange_cq;               ///< exchange in CQ mode
   std::string                                  _exchange_fields_filename;  ///< file that holds regex templates of exchange fields
   std::string                                  _exchange_mults;            ///< comma-delimited exchange fields that are mults
   bool                                         _exchange_mults_per_band;   ///< are exchange mults per-band?
-  std::map<std::string, std::string>           _exchange_per_country;      ///< per-country exchanges; key = prefix-or-call; value = exchange
+  std::map<std::string, SINGLE_EXCHANGE>       _exchange_per_country;      ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::string                                  _exchange_sap;              ///< exchange in SAP mode
+  MULTIPLE_EXCHANGES                           _exchanges;                 ///< optional exchange choices
   std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                 ///< exchange memories
   std::string                                  _ex_menu;                   ///< menu displayed during an exchange
 
