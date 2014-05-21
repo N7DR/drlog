@@ -1,4 +1,4 @@
-// $Id: rules.h 56 2014-03-29 19:12:12Z  $
+// $Id: rules.h 63 2014-05-20 16:48:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,8 @@ protected:
   unsigned int                                 _my_cq_zone;          ///< CQ zone
   unsigned int                                 _my_itu_zone;         ///< ITU zone
 
+  bool                                         _send_qtcs;           ///< whether to send QTCs
+
 /// private function used to generate _permitted_exch_values
 
 /*!     \brief              private function used to obtain all the understood values for a particular exchange field
@@ -340,6 +342,8 @@ public:
   SAFEREAD(score_bands, rules);               ///< bands currently used to calculate score
   SAFEREAD(original_score_bands, rules);      ///< bands that were originally used to calculate score (from the configuration file)
   SAFEREAD(exchange_mults, rules);  ///< the exchange multipliers, in the same order as in the configuration file
+
+  SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?
 
   const std::set<std::string> all_known_field_names(void) const; ///< all the exchange field names
 

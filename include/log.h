@@ -1,4 +1,4 @@
-// $Id: log.h 30 2013-07-28 21:50:59Z  $
+// $Id: log.h 63 2014-05-20 16:48:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,6 +62,10 @@ public:
   
 // return qso number n (wrt 1)
   const QSO operator[](const size_t n);
+
+// return most recent qso
+  inline const QSO last_qso(void)
+    { return ( (*this)[size()] ); }
 
 /// add a qso
   void operator+=(const QSO& q);

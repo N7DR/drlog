@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 58 2014-04-12 17:23:28Z  $
+// $Id: drlog_context.cpp 63 2014-05-20 16:48:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -499,6 +499,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // QSO MULTIPLE MODES
     if (starts_with(testline, "QSO MULTIPLE MODES"))
       _qso_multiple_modes = is_true;
+
+// QTCS
+    if (starts_with(testline, "QTCS"))
+      _qtcs = is_true;
 
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
@@ -1080,10 +1084,11 @@ drlog_context::drlog_context(const std::string& filename) :
   _per_band_points( {} ),                     // no points awarded anywhere
   _ptt_delay(25),                             // PTT delay
   _p3_snapshot_file("P3"),                    // P3 snapshots will be in P3-<n>
+  _quick_qsl_message(),                       // no quick QSL message (default is changed once configuration file has been read)
   _qsl_message(),                             // no QSL message (default is changed once configuration file has been read)
   _qso_multiple_bands(false),                 // each station may be worked on only one band
   _qso_multiple_modes(false),                 // each station may be worked on only one mode
-  _quick_qsl_message(),                       // no quick QSL message (default is changed once configuration file has been read)
+  _qtcs(false),                               // QTCs are disabled
   _rate_periods( { 15, 30, 60 } ),            // 15-, 30-, 60-minute periods for rates
   _rbn_port(7000),                            // telnet port for the reverse beacon network
   _rbn_server("telnet.reversebeacon.net"),    // domain name of the reverse beacon network telnet server

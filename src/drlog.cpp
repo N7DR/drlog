@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 62 2014-05-10 14:51:51Z  $
+// $Id: drlog.cpp 63 2014-05-20 16:48:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -114,6 +114,7 @@ void update_individual_messages_window(const string& callsign = string());
 void update_known_callsign_mults(const string& callsign);
 void update_known_country_mults(const string& callsign);
 void update_local_time(void);
+void update_qtcs_sent_window(void);
 void update_rate_window(void);
 void update_scp_window(const string& callsign);
 
@@ -224,6 +225,11 @@ map<string, string> batch_messages;
 
 cached_data<string, string> WPX_DB(&wpx_prefix);
 
+qtc_database qtc_db;    ///< sent QTCs
+qtc_buffer   qtc_buf;   ///< all sent and unsent QTCs
+//pt_mutex     qtc_mutex;
+bool send_qtcs = false;  // set from rules later
+
 // windows -- these should be automatically thread_safe
 window win_band_mode,               ///< the band and mode indicator
        win_bandmap,                 ///< the bandmap for the current band
@@ -252,6 +258,7 @@ window win_band_mode,               ///< the band and mode indicator
        win_prior_qsos,              // earlier QSOs with the same station
        win_qrate,                   // recent QSO rates
        win_qso_number,              // number of the next QSO
+       win_qtcs_sent,               // number of QSOs sent as QTCs / total number of QSOs
        win_rate,
        win_rbn_line,                ///< last line received from the RBN
        win_remaining_callsign_mults, // the remaining callsign mults
@@ -295,7 +302,8 @@ thread_attribute attr_detached(PTHREAD_DETACHED);
 
 window* win_active_p = &win_call;             // start with the CALL window active
 
-message_stream ost("output.txt");
+const string OUTPUT_FILENAME("output.txt");
+message_stream ost(OUTPUT_FILENAME);
 
 typedef array<bandmap, NUMBER_OF_BANDS>  BM_ARRAY;
 
@@ -304,11 +312,6 @@ BM_ARRAY  bandmaps;
 
 // history of calls worked
 call_history q_history;
-
-// used for rates
-//map<time_t /* time */, unsigned int /* n_qsos */> time_n_qsos;
-//map<time_t /* time */, unsigned int /* score */>  time_points;
-//pt_mutex rates_mutex;
 
 rate_meter rate;
 
@@ -566,6 +569,8 @@ int main(int argc, char** argv)
     { cerr << "Error generating rules" << endl;
       exit(-1);
     }
+
+    send_qtcs = rules.send_qtcs();    // grab it once
 
 // define types of mults that are in use; after this point these should be treated as read-only
     callsign_mults_used = rules.callsign_mults_used();
@@ -1190,7 +1195,7 @@ int main(int argc, char** argv)
             win_message <= WINDOW_CLEAR;
           }
 
-          ost << "size of exchange_db at 1 = " << exchange_db.size() << endl;
+//          ost << "size of exchange_db at 1 = " << exchange_db.size() << endl;
 
 // rebuild the history
           rebuild_history(logbk, rules, statistics, q_history, rate);
@@ -1268,14 +1273,20 @@ int main(int argc, char** argv)
       win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
     }
 
-    ost << "size of exchange_db at 2 = " << exchange_db.size() << endl;
+//    ost << "size of exchange_db at 2 = " << exchange_db.size() << endl;
 
 // now delete the file if it exists, regardless of whether we've used it
     if (file_exists(context.archive_name()))
       file_delete(context.archive_name());
 
     if (cl.parameter_present("-clean"))                          // start with clean slate
-    { FILE* fp_log = fopen(context.logfile().c_str(), "w");
+    { int index = 0;
+      string target =  OUTPUT_FILENAME + "-" + to_string(index);
+
+      while (file_exists(target))
+        file_delete(OUTPUT_FILENAME + "-" + to_string(index++));
+
+      FILE* fp_log = fopen(context.logfile().c_str(), "w");
       fclose(fp_log);
 
       FILE* fp_archive = fopen(context.archive_name().c_str(), "w");
@@ -1359,14 +1370,6 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
   if ((b != last_band) or (m != last_mode))
   { last_band = b;
     last_mode = m;
-
-//    const string str1 = BAND_NAME[b] + " " + MODE_NAME[m];
-
-//  SAFELOCK(band_mode);  // assume that we're using this window
-
-
-  //ost << "str1 = " << str1 << endl;
-
 
     win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= string(BAND_NAME[b] + " " + MODE_NAME[m]);
 
@@ -3131,6 +3134,22 @@ ost << "processing command: " << command << endl;
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
   { debug_dump();
+    processed = true;
+  }
+
+// ALT-Q -- send QTC
+  if (!processed and e.is_alt('q') and rules.send_qtcs())
+  {
+// destination for the QTC is the callsign in the window; or, if the window is empty, the call of the last logged QSO
+    string destination_callsign = remove_peripheral_spaces(win.read());
+
+    if (destination_callsign.empty())
+      destination_callsign = logbk.last_qso().callsign();
+
+    if (!destination_callsign.empty())
+    {
+    }
+
     processed = true;
   }
 
@@ -5205,6 +5224,11 @@ void* spawn_rbn(void* vp)
   }
 }
 
+/*!     \brief  dump useful information to disk
+
+        Performs a screenshot dump, and then dumps useful information
+        to the debug file.
+ */
 void debug_dump(void)
 { ost << "*** DEBUG DUMP ***" << endl;
 
@@ -5218,16 +5242,19 @@ void debug_dump(void)
 
     ost << str;
   }
-
-
 }
 
+/*!     \brief  dump a screen image to PNG file
+        \param  dump_filename   name of the destination file
+        \return name of the file actually written
+
+        If <i>dump_filename</i> is empty, then a base name is taken
+        from the context, and a string "-<n>" is appended.
+ */
 const string dump_screen(const string& dump_filename)
 { Display* display_p = keyboard.display_p();
   const Window window_id = keyboard.window_id();
   XWindowAttributes win_attr;
-
-//    alert("creating attributes");
 
   XLockDisplay(display_p);
   XGetWindowAttributes(display_p, window_id, &win_attr);
@@ -5235,17 +5262,11 @@ const string dump_screen(const string& dump_filename)
   const int width = win_attr.width;
   const int height = win_attr.height;
 
-//    alert("acquiring screen image");
-
   XLockDisplay(display_p);
   XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
   XUnlockDisplay(display_p);
 
-//    alert("acquired screen image");
-
   png::image< png::rgb_pixel > image(width, height);
-
-//    alert("created PNG image");
 
   static const unsigned int BLUE_MASK = 0xff;
   static const unsigned int GREEN_MASK = 0xff << 8;
@@ -5260,14 +5281,7 @@ const string dump_screen(const string& dump_filename)
 
       image[y][x] = png::rgb_pixel(red, green, blue);
     }
-
-//      static const string percent_str("%%");
-//      const int percent = ((y + 1) * 100.0) / image.get_height();
-
-//      alert(string("screendump progress: ") + to_string(percent) + percent_str);
   }
-
-//    alert("screendump acquired");
 
   string filename;
 
@@ -5275,7 +5289,6 @@ const string dump_screen(const string& dump_filename)
   { const string base_filename = context.screen_snapshot_file();
 
     int index = 0;
-//  bool file_written = false;
     filename = base_filename + "-" + to_string(index++);
 
     while (file_exists(filename))
@@ -5289,3 +5302,43 @@ const string dump_screen(const string& dump_filename)
 
   return filename;
 }
+
+void update_qtcs_sent_window(void)
+{ if (!send_qtcs)
+    return;
+
+  const int n_qtcs_sent = qtc_db.n_qtcs();
+  const int n_qsos = logbk.size();
+
+  win_qtcs_sent < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(n_qtcs_sent) + " / " < to_string(n_qsos));
+}
+
+void send_qtc(const string& destination_call)
+{
+// check that it's OK to send a QTC to this call
+  const unsigned int n_already_sent = qtc_db.n_qtcs_sent_to(destination_call);
+
+  if (n_already_sent >= 10)
+  { alert(string("10 QTCs already sent to ") + destination_call);
+    return;
+  }
+
+  const unsigned int n_to_send = 10 - n_already_sent;
+  const vector<qtc_entry> qtcs_to_send = qtc_buf.get_next_unsent_qtc(destination_call, n_to_send);
+
+  if (qtcs_to_send.empty())
+  { alert(string("No QTCs available to send to ") + destination_call);
+    return;
+  }
+
+  const bool cw = (safe_get_mode() == MODE_CW);
+  const unsigned int number_of_qtc = qtc_db.size() + 1;
+  string qtc_id = to_string(number_of_qtc) + "/" + to_string(qtcs_to_send.size());
+
+  if (cw)
+    (*cw_p) << (string)"QTC " + qtc_id;
+
+// display the QTCs
+
+}
+

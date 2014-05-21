@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 58 2014-04-12 17:23:28Z  $
+// $Id: drlog_context.h 63 2014-05-20 16:48:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -74,8 +74,8 @@ protected:
   int                                          _bandmap_filter_hide_colour;        ///< background colour when bandmap filter is in hide mode
   bool                                         _bandmap_filter_show;               ///< is the bandmap filter set to show? (If not, then it's set to hide)
   int                                          _bandmap_filter_show_colour;        ///< background colour when bandmap filter is in show mode
-  std::string                                  _bands;                       ///< comma-delimited bands
-  std::string                                  _batch_messages_file;         ///< file that contains per-call batch messages
+  std::string                                  _bands;                             ///< comma-delimited bands
+  std::string                                  _batch_messages_file;               ///< file that contains per-call batch messages
 
   std::string                                  _cabrillo_filename;   ///< name of Cabrillo log
 
@@ -172,10 +172,11 @@ protected:
   unsigned int                                 _ptt_delay;           ///< PTT delay in milliseconds ( 0 => PTT disabled)
   std::string                                  _p3_snapshot_file;    ///< base name of file for P3 snapshot
 
-  std::string                                  _qsl_message;         ///< confirm at end of QSO
   std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
+  std::string                                  _qsl_message;         ///< confirm at end of QSO
   bool                                         _qso_multiple_bands;  ///< whether OK to work station on another band
   bool                                         _qso_multiple_modes;  ///< whether OK to work station on another mode
+  bool                                         _qtcs;                ///< whether QTCs are enabled
   std::map<std::string, std::set<std::string>> _qthx;                ///< allowed exchanges values as a function of country
 
   std::vector<unsigned int>                    _rate_periods;                    ///< periods (in minutes) over which rates should be calculated
@@ -346,6 +347,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(ptt_delay, _context);
   SAFEREAD(p3_snapshot_file, _context);
 
+  SAFEREAD(qtcs, _context);
   SAFEREAD(qthx, _context);         ///< allowed exchanges values as a function of country
 
   SAFEREAD(rbn_port, _context);
@@ -394,10 +396,6 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(test, _context);
 
   SAFEREAD(worked_mults_colour, _context);
-
-//  inline const std::vector<std::pair<std::string, std::string> >  sent_exchange(void) const
-//    { return _sent_exchange; }
-
 
 /// location and size of a particular window
   const window_information window_info(const std::string& name) const;

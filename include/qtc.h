@@ -1,4 +1,4 @@
-// $Id: qtc.h 56 2014-03-29 19:12:12Z  $
+// $Id: qtc.h 63 2014-05-20 16:48:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -106,6 +106,8 @@ public:
         \brief All QTCs
 */
 
+extern pt_mutex qtc_database_mutex;
+
 class qtc_database
 {
 protected:
@@ -117,16 +119,26 @@ public:
   void operator+=(const qtc& q);
 
   inline const size_t n_qtcs(void) const
-    { return _qtc_db.size(); }
+    { SAFELOCK(qtc_database);
+
+      return _qtc_db.size();
+    }
+
+  inline const size_t size(void) const
+    { return n_qtcs(); }
 
   inline const qtc operator[](size_t n)
-    { return _qtc_db.at(n); }
+    { SAFELOCK(qtc_database);
+
+      return _qtc_db.at(n);
+    }
+
+  const unsigned int n_qtcs_sent_to(const std::string& destination_callsign) const;
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _qtc_db;
     }
-
 };
 
 // -----------------------------------  qtc_buffer  ----------------------------
