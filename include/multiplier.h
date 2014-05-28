@@ -18,6 +18,7 @@
 
 #include "log_message.h"
 #include "macros.h"
+#include "pthread_support.h"
 #include "serialization.h"
 
 #include <array>
@@ -30,6 +31,8 @@ extern message_stream    ost;
 
 /*!     \class multiplier
         \brief encapsulate all the necessary stuff for a mult
+
+        Note that this is not a thread-safe object; I don't think that that matters
 */
 
 class multiplier
@@ -41,10 +44,14 @@ protected:
   std::set<std::string>                                            _known;     ///< all the (currently) known possible values
   bool                                                             _used;      ///< is this object in use?
 
+//  pt_mutex  _mult_mutex;
+
 public:
 
 /// default constructor
   multiplier(void);
+
+//  multiplier(const multiplier& obj);
 
   READ_AND_WRITE(per_band);                       ///< get/set _per_band
   READ_AND_WRITE(used);                           ///< get/set _used
@@ -98,6 +105,18 @@ public:
 */
   inline const bool add_worked(const std::string& str, const BAND b)
     { return (add_worked(str, static_cast<int>(b))); }
+
+/*! \brief  add a worked multiplier, even if it is unknown
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Makes <i>str</i> known if it was previously unknown
+*/
+  const bool unconditional_add_worked(const std::string& str, const int b);
+
+  inline const bool unconditional_add_worked(const std::string& str, const BAND b)
+    { return (unconditional_add_worked(str, static_cast<int>(b))); }
 
 /*! \brief  remove a worked multiplier
     \param  str value to be worked

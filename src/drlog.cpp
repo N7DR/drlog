@@ -68,6 +68,7 @@ const bool DISPLAY_EXTRACT = true,
 // some forward declarations; others, that depend on these, occur later
 void add_qso(const QSO& qso);
 void alert(const string& msg);
+void allow_for_callsign_mults(QSO& qso);  // may change qso
 void archive_data(void);
 const string bearing(const string& callsign);
 const bool calculate_exchange_mults(QSO& qso,
@@ -84,7 +85,6 @@ void enter_sap_mode(void);
 void exit_drlog(void);
 const string expand_cw_message(const string& msg);
 const string hhmmss(void);
-//const bool is_needed_qso(const string& callsign, const BAND b = safe_get_band());
 const string match_callsign(const vector<pair<string /* callsign */,
                                               int /* colour pair number */ > >& matches);
 const map<string, string> parse_exchange(const string& received_exchange,
@@ -601,51 +601,51 @@ int main(int argc, char** argv)
       rig.test(true);
 
 // possibly set up CW buffer
-  if (contains(to_upper(context.modes()), "CW") and !context.keyer_port().empty())
-  { const string cw_port = context.keyer_port();
-    const unsigned int ptt_delay = context.ptt_delay();
-    const unsigned int cw_speed = context.cw_speed();
+    if (contains(to_upper(context.modes()), "CW") and !context.keyer_port().empty())
+    { const string cw_port = context.keyer_port();
+      const unsigned int ptt_delay = context.ptt_delay();
+      const unsigned int cw_speed = context.cw_speed();
 
-    try
-    { cw_p = new cw_buffer(cw_port, ptt_delay, cw_speed);
+      try
+      { cw_p = new cw_buffer(cw_port, ptt_delay, cw_speed);
+      }
+
+      catch (const parallel_port_error& e)
+      { ost << "Failed to open CW port: ";
+        ost << e.reason() << endl;
+        exit(-1);
+      }
+
+      if (rig.valid())
+        cw_p->associate_rig(&rig);
+      cwm = cw_messages(context.messages());
     }
-
-    catch (const parallel_port_error& e)
-    { ost << "Failed to open CW port: ";
-      ost << e.reason() << endl;
-      exit(-1);
-    }
-
-    if (rig.valid())
-      cw_p->associate_rig(&rig);
-    cwm = cw_messages(context.messages());
-  }
 
 // set the initial band and mode from the configuration file
-  safe_set_band(context.start_band());
-  safe_set_mode(context.start_mode());
+    safe_set_band(context.start_band());
+    safe_set_mode(context.start_mode());
 
 // see if the rig is on the right band and mode (as defined in the configuration file), and if not then move it
-  { const frequency rf = rig.rig_frequency();
-    const MODE rm = rig.rig_mode();
+    { const frequency rf = rig.rig_frequency();
+      const MODE rm = rig.rig_mode();
 
 //    const rig_status rstat = rig.status();
-    const bool mode_matches = ((current_mode == MODE_CW and rm == MODE_CW ) or
-                               (current_mode == MODE_SSB and (rm == MODE_SSB )));
-    const bool band_matches = (current_band == static_cast<BAND>(rf));
+      const bool mode_matches = ((current_mode == MODE_CW and rm == MODE_CW ) or
+                                 (current_mode == MODE_SSB and (rm == MODE_SSB )));
+      const bool band_matches = (current_band == static_cast<BAND>(rf));
 
     ost << "current mode = " << current_mode << ", rstat = " << rm << endl;
     ost << "current band = " << current_band << ", rig = " << static_cast<BAND>(rf) << endl;
 
-    if (!band_matches or !mode_matches)
-    { ost << "mismatch; setting frequency" << endl;
+      if (!band_matches or !mode_matches)
+      { ost << "mismatch; setting frequency" << endl;
 
-      rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
+        rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
 
-      if (!mode_matches)
-        rig.rig_mode(current_mode);
+        if (!mode_matches)
+          rig.rig_mode(current_mode);
+      }
     }
-  }
 
 // configure bandmaps so user's call does not display
   { const string my_call = context.my_call();
@@ -1165,17 +1165,18 @@ int main(int argc, char** argv)
         if (!file.empty())
         { win_message < WINDOW_CLEAR <= "Rebuilding...";
 
-          const vector<string> lines = to_lines(file); //split_string(file, EOL);
+          const vector<string> lines = to_lines(file);
 
-//          for (size_t n = 0; n < lines.size(); ++n)
           for (const auto& line : lines)
           { QSO qso;
 
             qso.populate_from_verbose_format(line, rules, statistics);
-            update_known_country_mults(qso.callsign());
 
-// is this a country mult?
-//            const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), qso.band());
+// callsign mults
+            allow_for_callsign_mults(qso);
+
+// country mults
+            update_known_country_mults(qso.callsign());
             qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band()) );
 
 //          ost << "Adding QSO with " << qso.callsign() << "; is_country_mult = " << qso.is_country_mult() << endl;
@@ -3426,7 +3427,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           calculate_exchange_mults(qso, rules);  // may modify qso
 
 // if callsign mults matter, add more to the qso
-//        if (!rules.callsign_mults().empty())
+        allow_for_callsign_mults(qso);
+
+/*
         if (callsign_mults_used)
         { string mult_name;
 
@@ -3460,6 +3463,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
           }
         }
+*/
 
 // get the current list of country mults
         const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band);
@@ -5302,6 +5306,44 @@ const string dump_screen(const string& dump_filename)
 
   return filename;
 }
+
+// add info to QSO if callsign mults are in use
+void allow_for_callsign_mults(QSO& qso)
+{ if (callsign_mults_used)
+  { string mult_name;
+
+    if (rules.callsign_mults() < static_cast<string>("WPXPX"))
+    { qso.prefix(wpx_prefix(qso.callsign()));
+      ost << "added WPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      mult_name = "WPXPX";
+    }
+
+    if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") and qso.prefix().empty())  // All Asian
+    { qso.prefix(wpx_prefix(qso.callsign()));
+      ost << "added AAPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      mult_name = "AAPX";
+    }
+
+    if ( (rules.callsign_mults() < static_cast<string>("SACPX")) and (qso.prefix().empty()) )      // SAC
+    { qso.prefix(sac_prefix(qso.callsign()));
+      ost << "added SACPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      mult_name = "SACPX";
+    }
+
+// see if it's a mult... requires checking if mults are per-band
+    if (!qso.prefix().empty() and !mult_name.empty())
+    { if (rules.callsign_mults_per_band())
+      { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), qso.band()))
+          qso.is_prefix_mult(true);
+      }
+      else
+      { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), static_cast<BAND>(ALL_BANDS)) )
+          qso.is_prefix_mult(true);
+      }
+    }
+  }
+}
+
 
 void update_qtcs_sent_window(void)
 { if (!send_qtcs)
