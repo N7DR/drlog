@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 63 2014-05-20 16:48:18Z  $
+// $Id: drlog.cpp 64 2014-05-31 21:25:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3422,48 +3422,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           qso.is_country_mult(is_country_mult);
         }
 
-// is this an exchange mult
+// is this an exchange mult?
         if (exchange_mults_used)
           calculate_exchange_mults(qso, rules);  // may modify qso
 
 // if callsign mults matter, add more to the qso
         allow_for_callsign_mults(qso);
-
-/*
-        if (callsign_mults_used)
-        { string mult_name;
-
-          if (rules.callsign_mults() < static_cast<string>("WPXPX"))
-          { qso.prefix(wpx_prefix(qso.callsign()));
-            ost << "added WPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
-            mult_name = "WPXPX";
-          }
-
-          if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") and qso.prefix().empty())  // All Asian
-          { qso.prefix(wpx_prefix(qso.callsign()));
-            ost << "added AAPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
-            mult_name = "AAPX";
-          }
-
-          if ( (rules.callsign_mults() < static_cast<string>("SACPX")) and (qso.prefix().empty()) )      // SAC
-          { qso.prefix(sac_prefix(qso.callsign()));
-            ost << "added SACPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
-            mult_name = "SACPX";
-          }
-
-// see if it's a mult... requires checking if mults are per-band
-          if (!qso.prefix().empty() and !mult_name.empty())
-          { if (rules.callsign_mults_per_band())
-            { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), qso.band()))
-                qso.is_prefix_mult(true);
-            }
-            else
-            { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), static_cast<BAND>(ALL_BANDS)) )
-                qso.is_prefix_mult(true);
-            }
-          }
-        }
-*/
 
 // get the current list of country mults
         const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band);
@@ -3822,9 +3786,13 @@ ost << "Adding new QSO(s)" << endl;
             ost << "is_exchange_mult after QSO has been rebuilt: " << qso.is_exchange_mult() << endl;
 
 // exchange mults
-            calculate_exchange_mults(qso, rules);
+            if (exchange_mults_used)
+              calculate_exchange_mults(qso, rules);
 
 // if callsign mults matter, add more to the qso
+            allow_for_callsign_mults(qso);
+
+#if 0
             if (!rules.callsign_mults().empty())
             { string mult_name;
 
@@ -3858,6 +3826,7 @@ ost << "Adding new QSO(s)" << endl;
                 }
               }
             }
+#endif
 
 // get the current list of country mults
 //            const set<string> old_worked_country_mults = statistics.worked_country_mults(b);

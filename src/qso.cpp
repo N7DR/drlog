@@ -722,9 +722,16 @@ const string QSO::log_line(void)
     }
 
 // mults
+
+// callsign mult
+   if (_is_prefix_mult)
+     rv += pad_string(_prefix, 5);
+
+// country mult
    if (QSO_DISPLAY_COUNTRY_MULT)                                            // set in drlog_context when parsing the config file
      rv += (_is_country_mult ? pad_string(_canonical_prefix, 5) : "     "); // sufficient for VP2E
 
+// exchange mult
    for (const auto& field : _received_exchange)
    { unsigned int field_width = 5;
      const string& name = field.name();

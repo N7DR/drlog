@@ -1,4 +1,4 @@
-// $Id: log_message.cpp 3 2012-12-30 00:02:28Z  $
+// $Id: log_message.cpp 64 2014-05-31 21:25:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
