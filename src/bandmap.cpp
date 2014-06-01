@@ -299,6 +299,38 @@ const vector<string> bandmap::_nearby_callsigns(const BM_ENTRIES& bme, const flo
   return rv;
 }
 
+/*!  \brief Return a callsign close to a particular frequency
+     \param bme                     band map entries
+     \param target_frequency_in_khz the target frequency, in kHz
+     \param guard_band_in_hz        how far from the target to search, in Hz
+     \return                        Callsign of a station within the guard band
+
+     Returns the lowest-frequency station within the guard band, or the null string if no call is found.
+*/
+const string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
+{ const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
+  bool finish_looking = false;
+  float smallest_difference = 1000000;
+  string rv;
+
+  for (BM_ENTRIES::const_iterator cit = bme.cbegin(); (!finish_looking and cit != bme.cend()); ++cit)
+  { const float difference = cit->freq().kHz() - target_frequency_in_khz;
+    const float abs_difference = fabs(difference);
+
+    if (abs_difference <= guard_band_in_khz and (cit->callsign() != MY_MARKER))
+    { if (abs_difference < smallest_difference)
+      { smallest_difference = abs_difference;
+        rv = cit->callsign();
+      }
+    }
+
+    if (difference > guard_band_in_khz)
+      finish_looking = true;
+  }
+
+  return rv;
+}
+
 // insert an entry at the right place
 void bandmap::_insert(const bandmap_entry& be)
 { SAFELOCK(_bandmap);
@@ -323,7 +355,8 @@ void bandmap::_insert(const bandmap_entry& be)
 bandmap::bandmap(void) :
   _filter_p(&bmf),
   _column_offset(0),
-  _rbn_threshold(1)
+  _rbn_threshold(1),
+  _dirty(false)
 { }
 
 
@@ -597,13 +630,6 @@ void bandmap::not_needed(const string& callsign)
 void bandmap::not_needed_country_mult(const string& canonical_prefix)
 { SAFELOCK(_bandmap);
 
-// change status for all entries with this canonical prefix
-//  for (auto& be : _entries)
-//  {
-//    ost << "removing country mult: " << canonical_prefix << " from bandmap entry " << endl;
-//    be.remove_country_mult(canonical_prefix);
-//  }
-
   for_each(_entries.begin(), _entries.end(), [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
 }
 
@@ -869,8 +895,7 @@ window& operator<(window& win, bandmap& bm)
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-//  const BM_ENTRIES entries = bm.filtered_entries();    // automatically filter
-  const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();
+  const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();    // automatically filter
   const size_t start_entry = (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0;
 
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
@@ -878,9 +903,7 @@ window& operator<(window& win, bandmap& bm)
   size_t index = 0;    // keep track of where we are in the bandmap
   
   for (const auto& be : entries)
-  { // ost << "bandmap entry: " << be << endl;
-
-    if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
+  { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
     { const string entry_str = pad_string(pad_string(be.frequency_str(), 7)  + " " + be.callsign(), COLUMN_WIDTH, PAD_RIGHT);
       const string frequency_str = substring(entry_str, 0, 7);
       const string callsign_str = substring(entry_str, 8);

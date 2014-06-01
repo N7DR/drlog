@@ -1560,7 +1560,8 @@ void* display_rig_status(void* vp)
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
-          const string nearby_callsign = bandmap_this_band.nearby_filtered_callsign(f.khz(), context.guard_band(m));
+//          const string nearby_callsign = bandmap_this_band.nearby_filtered_callsign(f.khz(), context.guard_band(m));
+          const string nearby_callsign = bandmap_this_band.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
 
           if (!nearby_callsign.empty())
           { const bool dupe = logbk.is_dupe(nearby_callsign, safe_get_band(), safe_get_mode(), rules);
@@ -2062,22 +2063,16 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // clear the call window (since we're now on a new band)
       win < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
 
-//      ost << "displaying band/mode" << endl;
-
       display_band_mode(win_band_mode, cur_band, cur_mode);
 
 // update bandmap; note that it will be updated at the next poll anyway (typically within one second)
       bandmap& bm = bandmaps[cur_band];
 
-//      ost << "displaying bandmap" << endl;
-
-//      alert("About to display bandmap for " + BAND_NAME[cur_band] + "m");
       win_bandmap <= bm;
 
-//      ost << "done displaying bandmap" << endl;
-
 // is there a station close to our frequency?
-      const string nearby_callsign = bm.nearby_callsign(long_frequency, context.guard_band(cur_mode));
+//      const string nearby_callsign = bm.nearby_callsign(long_frequency, context.guard_band(cur_mode));
+      const string nearby_callsign = bm.nearest_rbn_threshold_and_filtered_callsign(long_frequency, context.guard_band(cur_mode));
 
       win_dupe_mult < WINDOW_CLEAR < CURSOR_START_OF_LINE <= nearby_callsign;
 
@@ -2086,11 +2081,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       update_remaining_exch_mults_windows(rules, statistics, cur_band);
       update_remaining_callsign_mults_window(statistics, cur_band);
 
-//      ost << "done updating windows" << endl;
-
       win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
-
-//      ost << "done updating filter" << endl;
 
       enter_sap_mode();
     }
