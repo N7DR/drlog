@@ -348,7 +348,7 @@ void bandmap::_insert(const bandmap_entry& be)
   if (!inserted)
     _entries.push_back(be);    // this frequency is higher than any currently in the bandmap
 
-  ost << "inserted " << be.callsign() << " from " << be.source() << " with n posters = " << be.n_posters() << "; posters = " << be.posters_string() << endl;
+//  ost << "inserted " << be.callsign() << " from " << be.source() << " with n posters = " << be.n_posters() << "; posters = " << be.posters_string() << endl;
 }
 
 /// default constructor
@@ -356,7 +356,8 @@ bandmap::bandmap(void) :
   _filter_p(&bmf),
   _column_offset(0),
   _rbn_threshold(1),
-  _dirty(false)
+  _filtered_entries_dirty(false),
+  _rbn_threshold_and_filtered_entries_dirty(false)
 { }
 
 
@@ -549,6 +550,9 @@ void bandmap::operator+=(const bandmap_entry& be)
 
     if ((callsign != MY_MARKER) and mark_as_recent)
       _recent_calls.insert(callsign);
+
+    _filtered_entries_dirty = true;
+    _rbn_threshold_and_filtered_entries_dirty = true;
   }
 
   if ((*this)[MY_MARKER].valid())
@@ -562,8 +566,15 @@ void bandmap::prune(void)
 { SAFELOCK(_bandmap);
 
   const time_t now = ::time(NULL);             // get the time from the kernel
+  const size_t initial_size = _entries.size();
 
   _entries.remove_if([=] (const bandmap_entry& be) { return (be.should_prune(now)); });  // OK for lists
+
+  if (_entries.size() != initial_size)
+  { _filtered_entries_dirty = true;
+    _rbn_threshold_and_filtered_entries_dirty = true;
+  }
+
   _recent_calls.clear();                       // empty the container of recent calls
 }
 
