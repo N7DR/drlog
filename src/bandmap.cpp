@@ -614,7 +614,14 @@ const bandmap_entry bandmap::substr(const string& str)
 void bandmap::operator-=(const string& callsign)
 { SAFELOCK(_bandmap);
 
+  const size_t initial_size = _entries.size();
+
   _entries.remove_if([=] (const bandmap_entry& be) { return (be.callsign() == callsign); });        // OK for lists
+
+  if (_entries.size() != initial_size)
+  { _filtered_entries_dirty = true;
+    _rbn_threshold_and_filtered_entries_dirty = true;
+  }
 }
 
 /*! \brief set the needed status of a call to false

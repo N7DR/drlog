@@ -2240,10 +2240,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
   if (!processed and e.is_alt() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
-                                     or(e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
+                                  or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
   { bandmap& bm = bandmaps[safe_get_band()];
 
-    bm.column_offset(bm.column_offset() + ( (e.symbol() == XK_KP_6 ) or (e.symbol() == XK_KP_Right ) ) ? 1 : -1);
+    bm.column_offset(bm.column_offset() + ( ( (e.symbol() == XK_KP_6 ) or (e.symbol() == XK_KP_Right ) ) ? 1 : -1 ) );
 
     alert(string("Bandmap column offset set to: ") + to_string(bm.column_offset()));
 
@@ -2620,67 +2620,7 @@ ost << "processing command: " << command << endl;
                 mult_exchange_field_value.insert( { exf.name(), guess } );
             }
           }
-/*
-          if (exf.name() == "CQZONE")
-          { const string cq_zone = rules.canonical_value("CQZONE", exchange_db.guess_value(contents, "CQZONE"));
-            exchange_str += cq_zone + " ";
 
-            if (exf.is_mult())                 // save the expected value of this field
-              mult_exchange_field_value.insert( { exf.name(), cq_zone } );
-          }
-
-          if (exf.name() == "CWPOWER")
-          { //ost << "Exchange is CWPOWER" << endl;
-
-            const string cw_power = rules.canonical_value("CWPOWER", exchange_db.guess_value(contents, "CWPOWER"));
-
-            //ost << "Value of CWPOWER is: " << cw_power << endl;
-
-            if (!cw_power.empty())
-              exchange_str += cw_power + " ";
-
-            if (exf.is_mult())                 // save the expected value of this field; this should never be true
-              mult_exchange_field_value.insert( { exf.name(), cw_power } );
-          }
-
-          if (exf.name() == "ITUZONE")
-          { const string itu_zone = rules.canonical_value("ITUZONE", exchange_db.guess_value(contents, "ITUZONE"));
-            exchange_str += itu_zone + " ";
-
-            if (exf.is_mult())                 // save the expected value of this field
-              mult_exchange_field_value.insert( { exf.name(), itu_zone } );
-          }
-
-          if (exf.name() == "JAPREF")
-          { const string ja_pref = rules.canonical_value("JAPREF", exchange_db.guess_value(contents, "JAPREF"));
-
-            if (!ja_pref.empty())
-              exchange_str += ja_pref + " ";
-
-            if (exf.is_mult())                 // save the expected value of this field
-              mult_exchange_field_value.insert( { exf.name(), ja_pref } );
-          }
-
-          if (exf.name() == "RDA")
-          { const string rda = rules.canonical_value("RDA", exchange_db.guess_value(contents, "RDA"));
-
-            if (!rda.empty())
-              exchange_str += rda + " ";
-
-            if (exf.is_mult())                 // save the expected value of this field
-              mult_exchange_field_value.insert( { exf.name(), rda } );
-          }
-
-          if (exf.name() == "SOCIETY")
-          { const string society = rules.canonical_value("SOCIETY", exchange_db.guess_value(contents, "SOCIETY"));
-
-            if (!society.empty())
-              exchange_str += society + " ";
-
-            if (exf.is_mult())                 // save the expected value of this field
-              mult_exchange_field_value.insert( { exf.name(), society } );
-          }
-*/
           processed = true;
         }
 
