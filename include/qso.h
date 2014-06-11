@@ -53,6 +53,7 @@ protected:
   std::string  _frequency;         ///< frequency in form xxxxx.y (kHz)
   std::string  _comment;           ///< comment to be carried with QSO
   std::string  _canonical_prefix;  ///< NOT automatically set when callsign is set
+  std::string  _continent;         ///< NOT automatically set when callsign is set
   
   time_t       _epoch_time;        ///< time in seconds since the UNIX epoch
 
@@ -115,6 +116,7 @@ public:
 
   READ_AND_WRITE(comment);
   READ_AND_WRITE(canonical_prefix);
+  READ_AND_WRITE(continent);
   READ_AND_WRITE(points);
   
   READ_AND_WRITE(prefix);
@@ -198,6 +200,7 @@ public:
          & _sent_exchange
          & _received_exchange
          & _canonical_prefix
+         & _continent
          & _epoch_time;
     }
 };

@@ -357,6 +357,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (context.country_mults_filter() == "ALL")
     copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
 
+  static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
+
+  if (continent_set < context.country_mults_filter())
+  { const string target_continent = context.country_mults_filter();
+
+    copy_if(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()), [=, &location_db] (const string& cp) {return (location_db.continent(cp) == target_continent); } );
+  }
+
 // remove any that are explicitly not allowed
   vector<string> not_country_mults_vec = remove_peripheral_spaces(split_string(context.not_country_mults(), ","));  // may not be actual canonical prefixes
 
@@ -367,6 +375,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   _country_mults_used = !_country_mults.empty();
   _country_mults_per_band = context.country_mults_per_band();
+  _per_band_country_mult_factor = context.per_band_country_mult_factor();
 
 // are any mults derived from callsigns?
   _callsign_mults = context.callsign_mults();                    // e.g., "WPXPX"

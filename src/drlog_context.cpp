@@ -216,6 +216,98 @@ void drlog_context::_process_configuration_file(const string& filename)
         _country_list = COUNTRY_LIST_WAEDC;
     }
 
+// COUNTRY MULT FACTOR
+    if (starts_with(testline, "COUNTRY MULT FACTOR"))  // there may be an "=" in the points definitions
+    { const vector<string> str_vec = split_string(line, "=");
+
+      if (!str_vec.empty())
+      { string tmp_str;
+        const string lhs = str_vec[0];
+
+        if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
+        { string new_str;
+
+          for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+          { new_str += str_vec[n];
+            if (n != str_vec.size() - 1)
+              new_str += "=";
+          }
+
+          tmp_str = to_upper(remove_peripheral_spaces(new_str));
+
+          for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
+            _per_band_country_mult_factor.insert( { static_cast<BAND>(n), from_string<int>(tmp_str) } );
+        }
+        else    // not all bands
+        { //size_t left_bracket_posn = lhs.find('[');
+          //size_t right_bracket_posn = lhs.find(']');
+
+          //const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
+
+          //if (valid)
+          { string bands_str = delimited_substring(lhs, '[', ']');
+            vector<string> bands = split_string(bands_str, ",");
+
+            for (size_t n = 0; n < bands.size(); ++n)
+              bands[n] = remove_peripheral_spaces(bands[n]);
+
+            for (size_t n = 0; n < bands.size(); ++n)
+            { int wavelength = from_string<size_t>(bands[n]);
+              BAND b;
+
+              switch (wavelength)
+              { case 160 :
+                  b = BAND_160;
+                  break;
+                case 80 :
+                  b = BAND_80;
+                  break;
+                case 60 :
+                  b = BAND_60;
+                  break;
+                case 40 :
+                  b = BAND_40;
+                  break;
+                case 30 :
+                  b = BAND_30;
+                  break;
+                case 20 :
+                  b = BAND_20;
+                  break;
+                case 17 :
+                  b = BAND_17;
+                  break;
+                case 15 :
+                  b = BAND_15;
+                  break;
+                case 12 :
+                  b = BAND_12;
+                  break;
+                case 10 :
+                  b = BAND_10;
+                  break;
+                default :
+                  continue;
+              }
+
+              string new_str;
+
+              for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+              { new_str += str_vec[n];
+
+                if (n != str_vec.size() - 1)
+                  new_str += "=";
+              }
+
+              tmp_str = to_upper(remove_peripheral_spaces(new_str));
+
+              _per_band_country_mult_factor.insert( { b, from_string<int>(tmp_str) } );
+            }
+          }
+        }
+      }
+    }
+
 // COUNTRY MULTS PER BAND
     if (starts_with(testline, "COUNTRY MULTS PER BAND"))
       _country_mults_per_band = is_true;
@@ -504,6 +596,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "QTCS"))
       _qtcs = is_true;
 
+// QTC FILENAME
+    if (starts_with(testline, "QTC FILENAME"))
+      _qtc_filename = rhs;
+
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
     if (starts_with(testline, "QTHX["))
@@ -649,6 +745,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // COUNTRY MULTS
 // Currently supported: ALL
 //                      NONE
+// any single continent
     if (starts_with(testline, "COUNTRY MULTS") and !starts_with(testline, "COUNTRY MULTS PER BAND"))
     { _country_mults_filter = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
@@ -666,9 +763,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const vector<string> mults = remove_peripheral_spaces(split_string(RHS, ","));
 
         _remaining_callsign_mults_list = set<string>(mults.cbegin(), mults.cend());
-
-//        for (vector<string>::const_iterator cit = mults.begin(); cit != mults.end(); ++cit)
-//          _remaining_callsign_mults_list.insert(*cit);
       }
     }
 
@@ -680,9 +774,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const vector<string> countries = remove_peripheral_spaces(split_string(RHS, ","));
 
         _remaining_country_mults_list = set<string>(countries.cbegin(), countries.cend());
-
-//        for (vector<string>::const_iterator cit = countries.begin(); cit != countries.end(); ++cit)
-//          _remaining_country_mults_list.insert(to_upper(remove_peripheral_spaces(*cit)));
       }
     }
 
@@ -1089,6 +1180,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _qso_multiple_bands(false),                 // each station may be worked on only one band
   _qso_multiple_modes(false),                 // each station may be worked on only one mode
   _qtcs(false),                               // QTCs are disabled
+  _qtc_filename("QTCs"),                      // QTC filename
   _rate_periods( { 15, 30, 60 } ),            // 15-, 30-, 60-minute periods for rates
   _rbn_port(7000),                            // telnet port for the reverse beacon network
   _rbn_server("telnet.reversebeacon.net"),    // domain name of the reverse beacon network telnet server
@@ -1109,7 +1201,10 @@ drlog_context::drlog_context(const std::string& filename) :
   _sync_keyer(false),                         // do not synchronise rig keyer with computer
   _test(false),                               // transmit is not disabled
   _worked_mults_colour("RED")                 // worked mults are in red
-{ _process_configuration_file(filename);
+{ for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
+    _per_band_country_mult_factor.insert( { static_cast<BAND>(n), 1 } );
+
+  _process_configuration_file(filename);
 
 // make sure that the default is to score all permitted bands
   if (_score_bands.empty())

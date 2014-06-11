@@ -1,4 +1,4 @@
-// $Id: qso.cpp 59 2014-04-19 20:17:18Z  $
+// $Id: qso.cpp 65 2014-06-07 17:15:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -176,6 +176,7 @@ void QSO::populate_from_verbose_format(const string& str, const contest_rules& r
 extern location_database location_db;
 
       _canonical_prefix = location_db.canonical_prefix(_callsign);
+      _continent = location_db.continent(_callsign);
       processed = true;
     }
 
@@ -298,6 +299,7 @@ void QSO::populate_from_log_line(const string& str)
   extern location_database location_db;
 
   _canonical_prefix = location_db.canonical_prefix(_callsign);
+  _continent = location_db.continent(_callsign);
 
 //ost << "in populate_from_log_line; about to set _epoch_time for " << _callsign << endl;
 

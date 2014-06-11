@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 64 2014-05-31 21:25:48Z  $
+// $Id: drlog.cpp 65 2014-06-07 17:15:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -101,6 +101,7 @@ void rescore(const contest_rules& rules);
 void restore_data(const string& archive_filename);
 void rit_control(const keyboard_event& e);
 void rig_error_alert(const string& msg);
+void send_qtc(const string& destination_callsign);
 const string serial_number_string(const unsigned int n);
 void start_of_thread(void);
 const string sunrise(const string& callsign,
@@ -230,7 +231,7 @@ qtc_buffer   qtc_buf;   ///< all sent and unsent QTCs
 //pt_mutex     qtc_mutex;
 bool send_qtcs = false;  // set from rules later
 
-// windows -- these should be automatically thread_safe
+// windows -- these should automatically be thread_safe
 window win_band_mode,               ///< the band and mode indicator
        win_bandmap,                 ///< the bandmap for the current band
        win_bandmap_filter,          ///< bandmap filter information
@@ -1373,20 +1374,6 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
     last_mode = m;
 
     win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= string(BAND_NAME[b] + " " + MODE_NAME[m]);
-
-  //ost << "locked" << endl;
-
-  //win < WINDOW_CLEAR;
-
-  //ost << "window cleared" << endl;
-
-  //win < CURSOR_START_OF_LINE;
-
-  //ost << "window start-of-line" << endl;
-
-  //win <= str1;
-
-  //ost << "window updated" << endl;
   }
 }
 
@@ -1434,17 +1421,36 @@ void* display_date_and_time(void* vp)
 
 // possibly run thread to perform auto backup
         if (!context.auto_backup().empty())
-        { static pair<string, string> pss;
+        { //static pair<string, string> pss;
+          static tuple<string, string, string> tsss;
           static pthread_t auto_backup_thread_id;
 
           const string filename = context.logfile();
           const string directory = context.auto_backup();
+          const string qtc_filename = (context.qtcs() ? context.qtc_filename() : string());
 
-          pss.first = filename;
-          pss.second = directory;
+//          ost << "before creating thread" << endl;
+//          ost << "directory = " << directory << endl;
+//          ost << "filename = " << filename << endl;
+//          ost << "qtc_filename = " << qtc_filename << endl;
+
+
+//          pss.first = filename;
+//          pss.second = directory;
+          get<0>(tsss) = directory;
+          get<1>(tsss) = filename;
+          get<2>(tsss) = qtc_filename;
+
+//          ost << "get<0>(tsss) = " << get<0>(tsss) << endl;
+//          ost << "get<1>(tsss) = " << get<1>(tsss) << endl;
+//          ost << "get<2>(tsss) = " << get<2>(tsss) << endl;
+
 
           try
-          { create_thread(&auto_backup_thread_id, &(attr_detached.attr()), auto_backup, static_cast<void*>(&pss), "backup");
+          { //ost << "about to create thread" << endl;
+            create_thread(&auto_backup_thread_id, &(attr_detached.attr()), auto_backup, static_cast<void*>(&tsss), "backup");
+            //ost << "after creating thread" << endl;
+            //sleep_for(seconds(5));
           }
 
           catch (const pthread_error& e)
@@ -3079,7 +3085,7 @@ ost << "processing command: " << command << endl;
       destination_callsign = logbk.last_qso().callsign();
 
     if (!destination_callsign.empty())
-    {
+    { send_qtc(destination_callsign);
     }
 
     processed = true;
@@ -3888,11 +3894,11 @@ ost << hhmmss() << " completed rescore" << endl;
   if (!processed and e.is_alt('y'))
   { const cursor posn = win.cursor_position();
 
-    win < CURSOR_START_OF_LINE < WINDOW_CLEAR_TO_EOL;
+    win < CURSOR_START_OF_LINE < WINDOW_CLEAR_TO_EOL <= posn;
 
-    win.move_cursor(posn);
+//    win.move_cursor(posn);
 
-    win < WINDOW_REFRESH;
+//    win < WINDOW_REFRESH;
 
     processed = true;
   }
@@ -4015,12 +4021,14 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   if (filter_remaining_country_mults)
   { set<string> copy;
 
-    for (set<string>::const_iterator cit = original.cbegin(); cit != original.cend(); ++cit)
-    { const bool is_needed = worked_callsign_mults.find(*cit) == worked_callsign_mults.end();
+    copy_if(original.cbegin(), original.cend(), inserter(copy, copy.begin()), [=] (const string& s) { return (worked_callsign_mults.find(s) == worked_callsign_mults.end()); } );
 
-      if (is_needed)
-        copy.insert(*cit);
-    }
+//    for (set<string>::const_iterator cit = original.cbegin(); cit != original.cend(); ++cit)
+//    { const bool is_needed = worked_callsign_mults.find(*cit) == worked_callsign_mults.end();
+
+//      if (is_needed)
+//        copy.insert(*cit);
+//    }
 
     original = copy;
   }
@@ -4028,8 +4036,10 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
 // put in right order and get the colours right
   vector<string> vec_str;
 
-  for (set<string>::const_iterator cit = original.begin(); cit != original.end(); ++cit)
-    vec_str.push_back(*cit);
+  copy(original.cbegin(), original.cend(), back_inserter(vec_str));
+
+//  for (set<string>::const_iterator cit = original.begin(); cit != original.end(); ++cit)
+//    vec_str.push_back(*cit);
 
   sort(vec_str.begin(), vec_str.end(), compare_calls);    // need to change the collation order
 
@@ -4038,11 +4048,12 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   for (const auto& canonical_prefix : vec_str)
   { ost << "updating callsign mults, processing: *" << canonical_prefix << "*" << endl;
 
-    const bool is_needed = worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end();
-    int colour_pair_number = colours.add(win_remaining_callsign_mults.fg(), win_remaining_callsign_mults.bg());
+    const bool is_needed = ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() );
+//    int colour_pair_number = colours.add(win_remaining_callsign_mults.fg(), win_remaining_callsign_mults.bg());
 
-    if (!is_needed)
-      colour_pair_number = colours.add(string_to_colour(context.worked_mults_colour()),  win_remaining_callsign_mults.bg());
+//    if (!is_needed)
+//      colour_pair_number = colours.add(string_to_colour(context.worked_mults_colour()),  win_remaining_callsign_mults.bg());
+    const int colour_pair_number = colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : string_to_colour(context.worked_mults_colour()) ), win_remaining_callsign_mults.bg());
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
   }
@@ -4054,17 +4065,13 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
 { const set<string> worked_country_mults = statistics.worked_country_mults(b);
   const set<string> known_country_mults = statistics.known_country_mults();
 
-  ost << "number of known country mults = " << known_country_mults.size() << endl;
+//  ost << "number of known country mults = " << known_country_mults.size() << endl;
 
 // put in right order and get the colours right
   vector<string> vec_str;
 
-//  for (set<string>::const_iterator cit = original.begin(); cit != original.end(); ++cit)
-//    for (set<string>::const_iterator cit = known_country_mults.cbegin(); cit != known_country_mults.cend(); ++cit)
-//      vec_str.push_back(*cit);
-
   copy(known_country_mults.cbegin(), known_country_mults.cend(), back_inserter(vec_str));
-  sort(vec_str.begin(), vec_str.end(), compare_calls);    // need to change the collation order
+  sort(vec_str.begin(), vec_str.end(), compare_calls);    // non-default collation order
 
   vector<pair<string /* country */, int /* colour pair number */ > > vec;
 
@@ -4191,12 +4198,9 @@ void populate_win_info(const string& callsign)
 // country mults
     const set<string>& country_mults = rules.country_mults();
     const string canonical_prefix = location_db.canonical_prefix(callsign);
-//    ost << "n country mults = " << country_mults.size() << endl;
 
     if (!country_mults.empty() or context.auto_remaining_country_mults())
-    { // const string canonical_prefix = location_db.canonical_prefix(callsign);
-
-      if ((country_mults < canonical_prefix) or context.auto_remaining_country_mults())
+    { if ((country_mults < canonical_prefix) or context.auto_remaining_country_mults())
       { const set<string> known_country_mults = statistics.known_country_mults();
 
         line = pad_string(string("Country [") + canonical_prefix +"]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
@@ -4627,10 +4631,7 @@ void rig_error_alert(const string& msg)
 
 /// update the Q and score values in the rate window
 void update_rate_window(void)
-{ ost << "in update_rate_window() at " << hhmmss() << endl;
-
-//  const time_t now = ::time(NULL);                                     // time in seconds since the epoch
-  const vector<unsigned int> rate_periods = context.rate_periods();    // in minutes
+{ const vector<unsigned int> rate_periods = context.rate_periods();    // in minutes
   string rate_str = pad_string("", 3) + pad_string("Qs", 3) + pad_string("Score", 10);
 
   if (rate_str.length() != static_cast<unsigned int>(win_rate.width()))    // LF is added automatically if a string fills a line
@@ -4672,7 +4673,7 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
   { if (field.is_possible_mult())                              // see if it's really a mult
     { const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), b);
 
-ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
+//ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 
       field.is_mult(is_needed_exchange_mult);
       if (is_needed_exchange_mult)
@@ -4728,14 +4729,30 @@ void* auto_backup(void* vp)
   { start_of_thread();
 
     try
-    { const pair<string /* filename */, string /* destination directory */>* pss_p = static_cast<pair<string, string>*>(vp);
-      const string& filename = pss_p->first;
-      const string& directory = pss_p->second;
+    { //const pair<string /* filename */, string /* destination directory */>* pss_p = static_cast<pair<string, string>*>(vp);
+      const tuple<string, string, string>* tsss_p = static_cast<tuple<string, string, string>*>(vp);;
+      const string& directory = get<0>(*tsss_p);
+      const string& filename = get<1>(*tsss_p);
+      const string& qtc_filename = get<2>(*tsss_p);
+
+//      ost << "in auto_backup()" << endl;
+//      ost << "directory = " << directory << endl;
+//      ost << "filename = " << filename << endl;
+//      ost << "qtc_filename = " << qtc_filename << endl;
+
+//      const string& filename = pss_p->first;
+//      const string& directory = pss_p->second;
       const string dts = date_time_string();
       const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
       const string complete_name = directory + "/" + filename + "-" + suffix;
 
       ofstream(complete_name) << ifstream(filename).rdbuf();
+
+      if (!qtc_filename.empty())
+      { const string qtc_complete_name = directory + "/" + qtc_filename + "-" + suffix;
+
+        ofstream(qtc_complete_name) << ifstream(qtc_filename).rdbuf();
+      }
     }
 
     catch (...)
@@ -5257,30 +5274,42 @@ void update_qtcs_sent_window(void)
 
 void send_qtc(const string& destination_call)
 {
+  window& win_qtc_detail = win_prior_qsos;    // we use the "prior QSOs" window
+
 // check that it's OK to send a QTC to this call
   const unsigned int n_already_sent = qtc_db.n_qtcs_sent_to(destination_call);
 
   if (n_already_sent >= 10)
-  { alert(string("10 QTCs already sent to ") + destination_call);
+  { alert(string("10 QSOs already sent to ") + destination_call);
     return;
   }
 
   const unsigned int n_to_send = 10 - n_already_sent;
-  const vector<qtc_entry> qtcs_to_send = qtc_buf.get_next_unsent_qtc(destination_call, n_to_send);
+  const vector<qtc_entry> qtc_entries_to_send = qtc_buf.get_next_unsent_qtc(destination_call, n_to_send);
 
-  if (qtcs_to_send.empty())
-  { alert(string("No QTCs available to send to ") + destination_call);
+  if (qtc_entries_to_send.empty())
+  { alert(string("No QSOs available to send to ") + destination_call);
+    return;
+  }
+
+  qtc this_qtc(qtc_entries_to_send);
+
+// check that we still have entries (this should always pass)
+  if (this_qtc.empty())
+  { alert(string("Error: empty QTC object for ") + destination_call);
     return;
   }
 
   const bool cw = (safe_get_mode() == MODE_CW);
   const unsigned int number_of_qtc = qtc_db.size() + 1;
-  string qtc_id = to_string(number_of_qtc) + "/" + to_string(qtcs_to_send.size());
+  string qtc_id = to_string(number_of_qtc) + "/" + to_string(qtc_entries_to_send.size());
 
   if (cw)
     (*cw_p) << (string)"QTC " + qtc_id;
 
-// display the QTCs
+// display the QTC entries; we use the "prior QSOs" window
+//  win_qtc_detail <
 
 }
+
 

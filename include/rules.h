@@ -222,10 +222,11 @@ protected:
   std::map<std::string, unsigned int>  _exchange_present_points;  ///< number of points if a particular exchange field is received
   std::map<std::string, unsigned int>  _exchange_value_points;    ///< number of points if a particular exchange field has a particular value
 
-  std::set<std::string>               _countries;               ///< collection of canonical prefixes for all the valid countries
-  std::set<std::string>               _country_mults;           ///< collection of canonical prefixes of country multipliers
-  bool                                _country_mults_per_band;  ///< are country mults counted per-band?
-  bool                                _country_mults_used;      ///< are country mults used?
+  std::set<std::string>               _countries;                     ///< collection of canonical prefixes for all the valid countries
+  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of country multipliers
+  bool                                _country_mults_per_band;        ///< are country mults counted per-band?
+  bool                                _country_mults_used;            ///< are country mults used?
+  std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
 
   std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
   bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
@@ -318,9 +319,7 @@ public:
   
   SAFEREAD(work_if_different_band, rules);               ///< whether it is OK to work the same station on different bands
   SAFEREAD(work_if_different_mode, rules);               ///< whether it is OK to work the same station on different modes
-  SAFEREAD(permitted_bands, rules);         ///< bands allowed in this contest
-
-//  SAFEREAD(std::vector<exchange_field>, exch, rules);          ///< names of the exchange fields, and whether each is a mult
+  SAFEREAD(permitted_bands, rules);                      ///< bands allowed in this contest
 
   const std::vector<exchange_field> exch(const std::string& canonical_prefix) const;
 
@@ -330,6 +329,8 @@ public:
 
   SAFEREAD(country_mults, rules);       ///< collection of canonical prefixes of country multipliers
   SAFEREAD(callsign_mults, rules);      ///< collection of types of mults based on callsign (e.g., "WPXPX")
+
+  SAFEREAD(per_band_country_mult_factor, rules);         ///< factor by which to multiply number of country mults, per band (see WAE rules)
 
   SAFEREAD(callsign_mults_per_band, rules);              ///< are callsign mults counted per-band?
   SAFEREAD(country_mults_per_band, rules);               ///< are country mults counted per-band?

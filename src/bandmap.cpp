@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 63 2014-05-20 16:48:18Z  $
+// $Id: bandmap.cpp 65 2014-06-07 17:15:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -705,6 +705,14 @@ const BM_ENTRIES bandmap::filtered_entries(void)
 { if (!filter_enabled())
     return entries();
 
+  { SAFELOCK (_bandmap);
+
+    if (!_filtered_entries_dirty)
+      return _filtered_entries;
+  }
+
+  SAFELOCK(_bandmap);
+
   const BM_ENTRIES tmp = entries();
   BM_ENTRIES rv;
 
@@ -735,20 +743,28 @@ const BM_ENTRIES bandmap::filtered_entries(void)
     }
   }
 
+  _filtered_entries = rv;
+  _filtered_entries_dirty = false;
+
   return rv;
 }
 
 const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 { ost << "inside bandmap::rbn_threshold_and_filtered_entries()" << endl;
 
+  { SAFELOCK (_bandmap);
+
+    if (!_rbn_threshold_and_filtered_entries_dirty)
+      return _rbn_threshold_and_filtered_entries;
+  }
+
   const BM_ENTRIES filtered = filtered_entries();
   BM_ENTRIES rv;
   unsigned int threshold;
 
-  { SAFELOCK(_bandmap);
+  SAFELOCK(_bandmap);
 
-    threshold = _rbn_threshold;
-  }
+  threshold = _rbn_threshold;
 
   ost << "filtering with rbn threshold = " << threshold << endl;
 
@@ -766,6 +782,9 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 
   ost << "size of filtered = " << filtered.size() << endl;
   ost << "size of returned = " << rv.size() << endl;
+
+  _rbn_threshold_and_filtered_entries = rv;
+  _rbn_threshold_and_filtered_entries_dirty = false;
 
   return rv;
 }

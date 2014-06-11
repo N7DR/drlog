@@ -167,16 +167,18 @@ protected:
   bool                                         _normalise_rate;      ///< whether to display rates as per-hour
   std::string                                  _not_country_mults;   ///< comma-separated list of countries that are explicitly NOT country mults
 
-  std::vector<std::string>                     _path;                ///< directories to search, in order
-  std::map<BAND, std::string>                  _per_band_points;     ///< points structure for each band
-  unsigned int                                 _ptt_delay;           ///< PTT delay in milliseconds ( 0 => PTT disabled)
-  std::string                                  _p3_snapshot_file;    ///< base name of file for P3 snapshot
+  std::vector<std::string>                     _path;                             ///< directories to search, in order
+  std::map<BAND, std::string>                  _per_band_points;                  ///< points structure for each band
+  std::map<BAND, int>                          _per_band_country_mult_factor;     ///< country mult factor structure for each band
+  unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
+  std::string                                  _p3_snapshot_file;                 ///< base name of file for P3 snapshot
 
   std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
   std::string                                  _qsl_message;         ///< confirm at end of QSO
   bool                                         _qso_multiple_bands;  ///< whether OK to work station on another band
   bool                                         _qso_multiple_modes;  ///< whether OK to work station on another mode
   bool                                         _qtcs;                ///< whether QTCs are enabled
+  std::string                                  _qtc_filename;        ///< name of file where QTCs are stored
   std::map<std::string, std::set<std::string>> _qthx;                ///< allowed exchanges values as a function of country
 
   std::vector<unsigned int>                    _rate_periods;                    ///< periods (in minutes) over which rates should be calculated
@@ -344,18 +346,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(not_country_mults, _context);
 
   SAFEREAD(path, _context);
-  SAFEREAD(ptt_delay, _context);
-  SAFEREAD(p3_snapshot_file, _context);
-
-  SAFEREAD(qtcs, _context);
-  SAFEREAD(qthx, _context);         ///< allowed exchanges values as a function of country
-
-  SAFEREAD(rbn_port, _context);
-  SAFEREAD(rbn_server, _context);
-  SAFEREAD(rbn_threshold, _context);
-  SAFEREAD(rbn_username, _context);
-  SAFEREAD(russian_filename, _context);
-
+  SAFEREAD(per_band_country_mult_factor, _context);
   SAFEREAD(per_band_points, _context);
 
   const std::string points(const BAND b) const
@@ -367,12 +358,22 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
         return std::string();
     }
 
-  SAFEREAD(quick_qsl_message, _context);
+  SAFEREAD(ptt_delay, _context);
+  SAFEREAD(p3_snapshot_file, _context);
+
   SAFEREAD(qsl_message, _context);
   SAFEREAD(qso_multiple_bands, _context);
   SAFEREAD(qso_multiple_modes, _context);
+  SAFEREAD(qtcs, _context);
+  SAFEREAD(qtc_filename, _context);
+  SAFEREAD(qthx, _context);         ///< allowed exchanges values as a function of country
+  SAFEREAD(quick_qsl_message, _context);
 
   SAFEREAD(rate_periods, _context);
+  SAFEREAD(rbn_port, _context);
+  SAFEREAD(rbn_server, _context);
+  SAFEREAD(rbn_threshold, _context);
+  SAFEREAD(rbn_username, _context);
   SAFEREAD(remaining_callsign_mults_list, _context);
   SAFEREAD(remaining_country_mults_list, _context);
   SAFEREAD(rig1_baud, _context);
@@ -380,6 +381,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(rig1_port, _context);
   SAFEREAD(rig1_stop_bits, _context);
   SAFEREAD(rig1_type, _context);
+  SAFEREAD(russian_filename, _context);
 
 //  typedef std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > STATIC_WINDOWS;
 
