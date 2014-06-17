@@ -1,4 +1,4 @@
-// $Id: qso.h 59 2014-04-19 20:17:18Z  $
+// $Id: qso.h 66 2014-06-14 19:22:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

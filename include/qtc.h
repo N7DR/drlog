@@ -1,4 +1,4 @@
-// $Id: qtc.h 65 2014-06-07 17:15:04Z  $
+// $Id: qtc.h 66 2014-06-14 19:22:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -80,32 +80,47 @@ public:
 
 };
 
-// -----------------------------------  qtc  ----------------------------
+// -----------------------------------  qtc_series  ----------------------------
 
-/*!     \class qtc
-        \brief A QTC
+/*!     \class qtc_series
+        \brief A QTC series as defines by the WAE rules
 */
 
-class qtc
+class qtc_series
 {
 protected:
 
   std::vector<std::pair<qtc_entry, bool>> _qtc_entries;    ///< the individual QTC entries, and whether each has been sent
 
-  std::string _target;             ///< to whom is the QTC to be sent?
+  std::string _target;             ///< to whom is the QTC series to be sent?
   std::string _id;                 ///< QTC ID (e.g., "1/10")
 
+  std::string  _date;              ///< yyyy-mm-dd
+  std::string  _utc;               ///< hh:mm:ss
+  std::string  _frequency;         ///< frequency in form xxxxx.y (kHz)
+
 public:
+
+  qtc_series(void)
+    { }
+
+  explicit qtc_series(const std::vector<qtc_entry>& vec_qe)
+    { for_each(vec_qe.cbegin(), vec_qe.cend(), [&] (const qtc_entry& qe) { (*this) += qe; } ); }
 
   READ_AND_WRITE(target);
   READ_AND_WRITE(id);
   READ_AND_WRITE(qtc_entries);
+  READ_AND_WRITE(date);
+  READ_AND_WRITE(utc);
 
-  qtc(void)
-    { }
+  inline const std::string frequency_str(void) const
+    { return _frequency; }
 
-  explicit qtc(const std::vector<qtc_entry>& vec_qe)
-    { for_each(vec_qe.cbegin(), vec_qe.cend(), [&] (const qtc_entry& qe) { (*this) += qe; } ); }
+  inline void frequency_str(const std::string& s)
+    { _frequency = s; }
+
+  inline void frequency_str(const frequency& f)
+    { _frequency = f.display_string(); }
 
   inline const size_t size(void) const
     { return _qtc_entries.size(); }
@@ -132,7 +147,7 @@ public:
 };
 
 /// window < qtc
-window& operator<(window& win, const qtc& q);
+window& operator<(window& win, const qtc_series& qs);
 
 // -----------------------------------  qtc_database  ----------------------------
 
@@ -146,7 +161,7 @@ class qtc_database
 {
 protected:
 
-  std::vector<qtc>    _qtc_db;    ///< the QTCs
+  std::vector<qtc_series>    _qtc_db;    ///< the QTCs
 
 public:
 
@@ -156,7 +171,9 @@ public:
 // read from file
   qtc_database(const std::string& filename);
 
-  void operator+=(const qtc& q);
+  SAFEREAD(qtc_db, qtc_database);
+
+  void operator+=(const qtc_series& q);
 
   inline const size_t n_qtcs(void) const
     { SAFELOCK(qtc_database);
@@ -167,13 +184,15 @@ public:
   inline const size_t size(void) const
     { return n_qtcs(); }
 
-  inline const qtc operator[](size_t n)
+  inline const qtc_series operator[](size_t n)
     { SAFELOCK(qtc_database);
 
       return _qtc_db.at(n);
     }
 
   const unsigned int n_qtcs_sent_to(const std::string& destination_callsign) const;
+
+  const unsigned int n_qtc_entries_sent(void) const;
 
 // write to file
   void write(const std::string& filename);
@@ -203,8 +222,8 @@ protected:
 
 public:
 
-  inline const size_t n_unsent(void) const
-    { return _unsent_qtcs.size(); }
+//  inline const size_t n_unsent(void) const
+//    { return _unsent_qtcs.size(); }
 
   const std::vector<qtc_entry> get_next_unsent_qtc(const std::string& target, const int max_entries = 10);
 
@@ -216,6 +235,17 @@ public:
 
   inline void unsent_to_sent(const std::vector<qtc_entry>& entries)
     { for_each(entries.cbegin(), entries.cend(), [this] (const qtc_entry& entry) { unsent_to_sent(entry); }); }
+
+  void unsent_to_sent(const qtc_series& qs);
+
+  inline const unsigned int n_sent_qsos(void) const
+    { return _sent_qtcs.size(); }
+
+  inline const unsigned int n_unsent_qsos(void) const
+    { return _unsent_qtcs.size(); }
+
+  inline const unsigned int size(void) const
+    { return n_sent_qsos() + n_unsent_qsos(); }
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

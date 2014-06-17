@@ -1030,6 +1030,16 @@ const set<string> location_database::countries(void)
   return rv;
 }
 
+/// create a set of all the canonical prefixes for a particular continent
+const set<string> location_database::countries(const string& cont_target)
+{ const set<string> all_countries = countries();
+  set <string> rv;
+
+  copy_if(all_countries.cbegin(), all_countries.cend(), inserter(rv, rv.begin()), [=, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
+
+  return rv;
+}
+
 const string location_database::region_abbreviation(const string& callpart)
 { SAFELOCK(_location_database);
 

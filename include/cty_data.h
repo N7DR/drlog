@@ -614,6 +614,9 @@ public:
 
 /// create a set of all the canonical prefixes for countries
   const std::set<std::string> countries(void);
+
+/// create a set of all the canonical prefixes for a particular continent
+  const std::set<std::string> countries(const std::string& cont_target);
   
 /// access individual items of information
   inline const std::string country_name(const std::string& callpart)
@@ -642,15 +645,6 @@ public:
 
   inline const std::string region_name(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
-
-//  inline const std::string region_abbreviation(const std::string& callpart)
-//    {
-//      { SAFELOCK(location_database);
-//        const auto i = info(callpart);
-//        ost << i << std::endl;
-//      }
-//
-//      return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
   const std::string region_abbreviation(const std::string& callpart);
 

@@ -1,4 +1,4 @@
-// $Id: statistics.h 58 2014-04-12 17:23:28Z  $
+// $Id: statistics.h 66 2014-06-14 19:22:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,9 +59,13 @@ protected:
   std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  // vector so we can keep the correct order
 
 // copied from rules
-  bool                                _callsign_mults_used;      ///< are callsign mults used?
-  bool                                _country_mults_used;       ///< are country mults used?
-  bool                                _exchange_mults_used;      ///< are country mults used?
+  bool                            _callsign_mults_used;      ///< are callsign mults used?
+  bool                            _country_mults_used;       ///< are country mults used?
+  bool                            _exchange_mults_used;      ///< are country mults used?
+
+  bool          _include_qtcs;
+  unsigned int  _qtc_qsos_sent;
+  unsigned int  _qtc_qsos_unsent;
 
 public:
 
@@ -136,6 +140,14 @@ public:
   const bool known_callsign_mult_name(const std::string& putative_callsign_mult_name) const;
 
   void clear_info(void);
+
+//  bool          _include_qtcs;
+//  unsigned int  _qtc_qsos_sent;
+//  unsigned int  _qtc_qsos_unsent;
+
+  void qtc_qsos_sent(const unsigned int n);
+  void qtc_qsos_unsent(const unsigned int n);
+
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

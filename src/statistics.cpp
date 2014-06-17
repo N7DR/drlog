@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 65 2014-06-07 17:15:04Z  $
+// $Id: statistics.cpp 66 2014-06-14 19:22:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,7 +65,10 @@ running_statistics::running_statistics(void) :
   _qso_points( {} ),
   _callsign_mults_used(false),
   _country_mults_used(false),
-  _exchange_mults_used(false)
+  _exchange_mults_used(false),
+  _qtc_qsos_sent(0),
+  _qtc_qsos_unsent(0),
+  _include_qtcs(false)
 {
 }
 
@@ -76,7 +79,10 @@ running_statistics::running_statistics(const cty_data& country_data, const drlog
   _location_db(country_data, context.country_list()),
   _callsign_mults_used(rules.callsign_mults_used()),
   _country_mults_used(rules.country_mults_used()),
-  _exchange_mults_used(rules.exchange_mults_used())
+  _exchange_mults_used(rules.exchange_mults_used()),
+  _qtc_qsos_sent(0),
+  _qtc_qsos_unsent(0),
+  _include_qtcs(rules.send_qtcs())
 { const vector<string> exchange_mults = rules.exchange_mults();
 
   for (const auto& exchange_mult : exchange_mults)
@@ -85,6 +91,10 @@ running_statistics::running_statistics(const cty_data& country_data, const drlog
 
 void running_statistics::prepare(const cty_data& country_data, const drlog_context& context, const contest_rules& rules)
 { SAFELOCK(statistics);
+
+  _include_qtcs = rules.send_qtcs();
+
+  ost << "in statistics::prepare, _include_qtcs = " << _include_qtcs << endl;
 
   _callsign_mults_used = rules.callsign_mults_used();
   _country_mults_used  = rules.country_mults_used();
@@ -137,8 +147,6 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
         em.per_band(true);
 
       const vector<string> canonical_values = rules.exch_canonical_values(exchange_mult_name);
-
-//      ost << "in prepare; number of canonical values for exchange field " << exchange_mult_name << " is " << canonical_values.size() << endl;
 
       em.add_known(canonical_values);
 
@@ -264,18 +272,6 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   }
 
 
-// country multipliers
-//  const set<string>& country_mults = rules.country_mults();
-  
-//  if (country_mults.find(canonical_prefix) != country_mults.cend())  // is this country a mult?
-//  { if (rules.country_mults_per_band())
-//      _worked_country_mults[band_nr].insert(canonical_prefix);
-//    else                             // insert into all bands if country mults aren't per-band
-//      for_each(_worked_country_mults.begin(), _worked_country_mults.end(), [=] (set<string>& ss) { ss.insert(canonical_prefix); } );
-//  }
-
-
-
 //  ost << "about to test callsign mults" << endl;
 
 // WPXPX
@@ -361,19 +357,7 @@ void running_statistics::add_worked_exchange_mult(const string& field_name, cons
     if (sm.first == field_name)
       sm.second.add_worked(field_value, b);
   }
-
-//  if (!field_value.empty())
-//  { SAFELOCK(statistics);
-//
-//    array<set<string>, N_BANDS>& s = _worked_exchange_mults[field_name];   // for each band, the set of exchange names (e.g., CQZONE)
-//
-//    if (b != ALL_BANDS)
-//      s[b].insert(field_value);
-//    else                             // insert into all bands if exchange mults aren't per-band
-//      for_each(s.begin(), s.end(), [=] (set<string>& ss) { ss.insert(field_value); } );
-//  }
 }
-
 
 /// rebuild
 void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
@@ -615,6 +599,13 @@ const string running_statistics::summary_string(const contest_rules& rules)
     line += pad_string(to_string(points), FIELD_WIDTH);
 
   rv += line; 
+
+  if (_include_qtcs)
+  { line = LF + pad_string("QTC QSOs", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+    line += pad_string((to_string(_qtc_qsos_sent) + "|" + to_string(_qtc_qsos_unsent)), FIELD_WIDTH * (permitted_bands.size() + 1));
+
+    rv += line;
+  }
   
   return rv;
 }
@@ -767,29 +758,22 @@ void running_statistics::clear_info(void)
   for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
   { pair<string, multiplier>& sm = _exchange_multipliers[n];
 
-//    ost << "clearing " << sm.first << endl;
-
-//    for (size_t n = 0; n <= ALL_BANDS; ++n)
-//    { ost << "n worked on band " << n << " = " << sm.second.n_worked(n) << endl;
-//    }
-
     sm.second.clear();
-
-//    ost << "cleared " << sm.first << endl;
-
-//    for (size_t n = 0; n <= ALL_BANDS; ++n)
-//    { ost << "n worked on band " << n << " = " << sm.second.n_worked(n) << endl;
-//    }
-
-
   }
+}
 
+void running_statistics::qtc_qsos_sent(const unsigned int n)
+{ SAFELOCK(statistics);
 
-//  _worked_exchange_mults.clear();
-//  _worked_country_mults.fill(set<string>());
+  if (_include_qtcs)
+    _qtc_qsos_sent = n;
+}
 
-//  _worked_callsign_mults.fill(set<string>());
-//  _global_worked_callsign_mults.clear();
+void running_statistics::qtc_qsos_unsent(const unsigned int n)
+{ SAFELOCK(statistics);
+
+  if (_include_qtcs)
+    _qtc_qsos_unsent = n;
 }
 
 // -----------  call history  ----------------

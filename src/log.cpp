@@ -1,4 +1,4 @@
-// $Id: log.cpp 57 2014-04-06 23:20:03Z  $
+// $Id: log.cpp 66 2014-06-14 19:22:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -182,7 +182,6 @@ const bool logbook::is_dupe(const string& call, const BAND b, const enum MODE m,
 /// calculate QSO points (i.e., mults = 1)
 const unsigned int logbook::qso_points(const contest_rules& rules, location_database& location_db) const
 { unsigned int rv = 0;
-  //const list<QSO> qso_list = as_list();
 
   logbook tmp_log;                       // we are going to rebuild a log qso by qso, in order to mark dupes correctly; this assumes that we aren't keeping the dupes properly marked as we go along, which may be a better way to go
   
@@ -218,14 +217,18 @@ const vector<QSO> logbook::as_vector(void) const
   return _log_vec;
 }
 
+//const vector<QSO> logbook::filter(UnaryPredicate pred) const
+//{ vector<QSO> rv;
+//
+//  copy_if(_log_vec.cbegin(), _log_vec.cend(), back_inserter(rv),
+//}
+
 /// recalculate the dupes
 const logbook logbook::recalculate_dupes(const contest_rules& rules) const
-{ //list<QSO> qso_list = as_list();          // put the log in chronological order
-  logbook rv;
+{ logbook rv;
   
   SAFELOCK(_log);
 
-//  for (list<QSO>::iterator it = qso_list.begin(); it != qso_list.end(); ++it)
   for (auto qso : _log_vec)
   { if (rv.is_dupe(qso, rules))
       qso.dupe();

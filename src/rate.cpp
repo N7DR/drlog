@@ -1,4 +1,4 @@
-// $Id: rate.cpp 61 2014-05-03 16:34:34Z  $
+// $Id: rate.cpp 66 2014-06-14 19:22:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

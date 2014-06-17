@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 65 2014-06-07 17:15:04Z  $
+// $Id: drlog.cpp 66 2014-06-14 19:22:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -115,7 +115,7 @@ void update_individual_messages_window(const string& callsign = string());
 void update_known_callsign_mults(const string& callsign);
 void update_known_country_mults(const string& callsign);
 void update_local_time(void);
-void update_qtcs_sent_window(void);
+//void update_qtcs_sent_window(void);
 void update_rate_window(void);
 void update_scp_window(const string& callsign);
 
@@ -256,10 +256,11 @@ window win_band_mode,               ///< the band and mode indicator
 //       win_menu,
        win_message,                 // messages from drlog to the user
 //       win_note,                    // quick notes to go in the log
-       win_prior_qsos,              // earlier QSOs with the same station
-       win_qrate,                   // recent QSO rates
+//       win_prior_qsos,              // earlier QSOs with the same station
+//       win_qrate,                   // recent QSO rates
        win_qso_number,              // number of the next QSO
-       win_qtcs_sent,               // number of QSOs sent as QTCs / total number of QSOs
+//       win_qtcs_sent,               // number of QSOs sent as QTCs / total number of QSOs
+       win_qtc_status,
        win_rate,
        win_rbn_line,                ///< last line received from the RBN
        win_remaining_callsign_mults, // the remaining callsign mults
@@ -825,11 +826,15 @@ int main(int argc, char** argv)
 //  win_note.hide();
 
 // PRIOR QSOS window
-  win_prior_qsos.init(context.window_info("PRIOR QSOS"), WINDOW_NO_CURSOR);
+//  win_prior_qsos.init(context.window_info("PRIOR QSOS"), WINDOW_NO_CURSOR);
 
 // QSO NUMBER window
   win_qso_number.init(context.window_info("QSO NUMBER"), WINDOW_NO_CURSOR);
   win_qso_number <= pad_string(to_string(next_qso_number), win_qso_number.width());
+
+// QTC STATUS window
+  win_qtc_status.init(context.window_info("QTC STATUS"), WINDOW_NO_CURSOR);
+  win_qtc_status <= "Last QTC: None";
 
 // RATE window
   win_rate.init(context.window_info("RATE"), WINDOW_NO_CURSOR);
@@ -847,35 +852,30 @@ int main(int argc, char** argv)
   if (restored_data)
     update_remaining_country_mults_window(statistics);
   else
-    win_remaining_country_mults <= (context.remaining_country_mults_list());
+  { const set<string> set_from_context = context.remaining_country_mults_list();
+    static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
+    const string& target_continent = *(set_from_context.cbegin());
+
+    if ((set_from_context.size() == 1) and (continent_set < target_continent))
+    { const set<string> countries_in_continent_set = location_db.countries(target_continent);
+      //vector<string> countries_in_continent_vec;
+
+      //copy(countries_in_continent_set.cbegin(), countries_in_continent_set.cend(), back_inserter(countries_in_continent_vec));
+      //sort(countries_in_continent_vec.begin(), countries_in_continent_vec.end(), compare_calls);    // need to change the collation order
+
+      //string cp_str;
+
+      //for_each(countries_in_continent_vec.cbegin(), countries_in_continent_vec.cend(), [&cp_str] (const string& str) { cp_str += (str + " "); } );
+      //cp_str = cp_str.substr(0, cp_str.size() - 1);
+      win_remaining_country_mults <= countries_in_continent_set;
+    }
+    else
+      win_remaining_country_mults <= (context.remaining_country_mults_list());
+  }
 
 // REMAINING EXCHANGE MULTS window(s)
   const vector<string> exchange_mult_window_names = context.window_name_contains("REMAINING EXCHANGE MULTS");
   const size_t n_remaining_exch_mult_windows = exchange_mult_window_names.size();
-
-//  ost << "number of exch_mult_windows = " << n_remaining_exch_mult_windows << endl;
-
-#if 0
-  for (size_t n = 0; n < n_remaining_exch_mult_windows; ++n)
-  { window* wp = new window();
-    const string exchange_mult_name = substring(exchange_mult_window_names[n], 25);
-
-//    ost << "n = " << n << ", exchange_mult_name = " << exchange_mult_name << endl;
-
-    wp->init(context.window_info(exchange_mult_window_names[n]), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-    win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
-
-//    const vector<string> canonical_exch_values = rules.exch_canonical_values(exchange_mult_name);
-
-//    ost << "number of values = " << canonical_exch_values.size() << endl;
-
-//    for (auto& value : canonical_exch_values)
-//      ost << "value = " << value << endl;
-
-//    (*wp) <= canonical_exch_values;
-    (*wp) <= rules.exch_canonical_values(exchange_mult_name);
-  }
-#endif
 
   for (auto& window_name : exchange_mult_window_names)
   { window* wp = new window();
@@ -1197,8 +1197,6 @@ int main(int argc, char** argv)
             win_message <= WINDOW_CLEAR;
           }
 
-//          ost << "size of exchange_db at 1 = " << exchange_db.size() << endl;
-
 // rebuild the history
           rebuild_history(logbk, rules, statistics, q_history, rate);
 
@@ -1211,21 +1209,15 @@ int main(int argc, char** argv)
 
           const vector<QSO> qso_vec = logbk.as_vector();
 
-          ost << hhmmss() << " about to re-fill databases" << endl;
-
           for (const auto& qso : qso_vec)
           { if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
               scp_dynamic_db.add_call(qso.callsign());
           }
 
-          ost << hhmmss() << " re-filled SCP database" << endl;
-
           for (const auto& qso : qso_vec)
           { if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
               fuzzy_dynamic_db.add_call(qso.callsign());
           }
-
-          ost << hhmmss() << " completed re-filling SCP and fuzzy databases" << endl;
         }
 
 // octothorpe
@@ -1238,13 +1230,11 @@ int main(int argc, char** argv)
           octothorpe = logbk.size() + 1;
       }
 
-//#endif
-
 // display most recent lines from log
       editable_log.recent_qsos(logbk, true);
 
 // display the current statistics
-      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
 // correct QSO number (and octothorpe)
       if (logbk.n_qsos() > 0)
@@ -1270,20 +1260,55 @@ int main(int argc, char** argv)
       update_remaining_exch_mults_windows(rules, statistics);
       update_remaining_callsign_mults_window(statistics, cur_band);
 
+// QTCs
+      if (send_qtcs)
+      {
+// number of EU QSOs from logbook
+        const unsigned int n_eu_qsos = logbk.filter([] (const QSO& q) { return (q.continent() == string("EU")); } ).size();
+        ost << "number of EU QSOs in log = " << n_eu_qsos << endl;
+
+        qtc_db.read(context.qtc_filename());
+
+        ost << "Number of QTCs read from QTC file= " << qtc_db.size() << endl;
+        ost << "Total number of QTC QSOs already sent = " << qtc_db.n_qtc_entries_sent() << endl;
+
+        qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
+
+        ost << "Total QTC-able QSOs in QTC buffer = " << qtc_buf.size() << endl;
+
+        if (n_eu_qsos != qtc_buf.size())
+          alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS");
+
+// move the sent ones to the sent buffer
+        const vector<qtc_series>& vec_qs = qtc_db.qtc_db();    ///< the QTCs
+
+        for_each(vec_qs.cbegin(), vec_qs.cend(), [&qtc_buf] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+
+        statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
+        statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+
+        if (!vec_qs.empty())
+        { const qtc_series& last_qs = vec_qs[vec_qs.size() - 1];
+
+          win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Last QTC: " < last_qs.id() < " to " <= last_qs.target();
+        }
+      }
+
+// display the current statistics
+      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+
       const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
 
       win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
     }
 
-//    ost << "size of exchange_db at 2 = " << exchange_db.size() << endl;
-
-// now delete the file if it exists, regardless of whether we've used it
+// now delete the archive file if it exists, regardless of whether we've used it
     if (file_exists(context.archive_name()))
       file_delete(context.archive_name());
 
     if (cl.parameter_present("-clean"))                          // start with clean slate
     { int index = 0;
-      string target =  OUTPUT_FILENAME + "-" + to_string(index);
+      string target = OUTPUT_FILENAME + "-" + to_string(index);
 
       while (file_exists(target))
         file_delete(OUTPUT_FILENAME + "-" + to_string(index++));
@@ -1293,6 +1318,11 @@ int main(int argc, char** argv)
 
       FILE* fp_archive = fopen(context.archive_name().c_str(), "w");
       fclose(fp_archive);
+
+      if (send_qtcs)
+      { FILE* fp_qtc = fopen(context.qtc_filename().c_str() , "w");
+        fclose(fp_qtc);
+      }
     }
 
 // explicitly enter SAP mode
@@ -3084,9 +3114,14 @@ ost << "processing command: " << command << endl;
     if (destination_callsign.empty())
       destination_callsign = logbk.last_qso().callsign();
 
-    if (!destination_callsign.empty())
-    { send_qtc(destination_callsign);
+    if (!destination_callsign.empty() and (location_db.continent(destination_callsign) != "EU") )  // got a call, but it's not EU
+    { vector<QSO> vec_q = logbk.filter([] (const QSO& q) { return (q.continent() == string("EU")); } );
+
+      destination_callsign = ( vec_q.empty() ? string() : (vec_q[vec_q.size() - 1].callsign()) );
     }
+
+    if (!destination_callsign.empty())
+      send_qtc(destination_callsign);
 
     processed = true;
   }
@@ -5261,20 +5296,24 @@ void allow_for_callsign_mults(QSO& qso)
   }
 }
 
-
-void update_qtcs_sent_window(void)
-{ if (!send_qtcs)
-    return;
-
-  const int n_qtcs_sent = qtc_db.n_qtcs();
-  const int n_qsos = logbk.size();
-
-  win_qtcs_sent < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(n_qtcs_sent) + " / " < to_string(n_qsos));
-}
+//void update_qtcs_sent_window(void)
+//{ if (!send_qtcs)
+//    return;
+//
+//  const int n_qtcs_sent = qtc_db.n_qtcs();
+//  const int n_qsos = logbk.size();
+//
+//  win_qtcs_sent < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(n_qtcs_sent) + " / " < to_string(n_qsos));
+//}
 
 void send_qtc(const string& destination_call)
-{
-  window& win_qtc_detail = win_prior_qsos;    // we use the "prior QSOs" window
+{ if (destination_call.empty())
+    return;
+
+  if (location_db.continent(destination_call) != "EU")    // send QTCs only to EU stations
+    return;
+
+  window& win_qtc_detail = win_log_extract;    // we use the "prior QSOs" window
 
 // check that it's OK to send a QTC to this call
   const unsigned int n_already_sent = qtc_db.n_qtcs_sent_to(destination_call);
@@ -5292,7 +5331,7 @@ void send_qtc(const string& destination_call)
     return;
   }
 
-  qtc this_qtc(qtc_entries_to_send);
+  qtc_series this_qtc(qtc_entries_to_send);
 
 // check that we still have entries (this should always pass)
   if (this_qtc.empty())
@@ -5307,8 +5346,10 @@ void send_qtc(const string& destination_call)
   if (cw)
     (*cw_p) << (string)"QTC " + qtc_id;
 
+  win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sending QTC " < qtc_id < " to " <= destination_call;
+
 // display the QTC entries; we use the "prior QSOs" window
-//  win_qtc_detail <
+  win_qtc_detail <= this_qtc;
 
 }
 

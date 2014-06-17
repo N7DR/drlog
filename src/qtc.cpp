@@ -80,13 +80,13 @@ const string qtc_entry::to_string(void) const
   return rv;
 }
 
-// -----------------------------------  qtc  ----------------------------
+// -----------------------------------  qtc_series  ----------------------------
 
-/*!     \class qtc
-        \brief A QTC
+/*!     \class qtc_series
+        \brief A QTC series as defines by the WAE rules
 */
 
-const bool qtc::operator+=(const qtc_entry& entry)
+const bool qtc_series::operator+=(const qtc_entry& entry)
 { if (entry.valid() and (entry.callsign() != _target))
   { _qtc_entries.push_back( { entry, false });
     return true;
@@ -96,13 +96,13 @@ const bool qtc::operator+=(const qtc_entry& entry)
 }
 
 // set a particular entry to sent
-void qtc::mark_as_sent(const unsigned int n)
+void qtc_series::mark_as_sent(const unsigned int n)
 { if (n < _qtc_entries.size())
     _qtc_entries[n].second = true;
 }
 
 // get first entry that has not been sent
-const qtc_entry qtc::first_not_sent(const unsigned int posn)
+const qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 { unsigned int index = posn;
 
   while (index < _qtc_entries.size())
@@ -117,7 +117,7 @@ const qtc_entry qtc::first_not_sent(const unsigned int posn)
 
 #include <array>
 
-const string qtc::to_string(const unsigned int n_rows) const
+const string qtc_series::to_string(const unsigned int n_rows) const
 {
 #if 0
   unsigned int column = 1;
@@ -148,21 +148,26 @@ const string qtc::to_string(const unsigned int n_rows) const
 
 }
 
-/// window < qtc
-window& operator<(window& win, const qtc& q)
-{ static const unsigned int COLUMN_WIDTH = qtc_entry().size();                                // width of a column
+/// window < qtc_series
+window& operator<(window& win, const qtc_series& qs)
+{ static const unsigned int COLUMN_WIDTH = qtc_entry().size();                           // width of a column
+  static const unsigned int COLUMN_GAP = 1;                                              // gap between columns
+  static const int GAP_COLOUR = COLOUR_YELLOW;
 
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
 
+// write the column separators
+
+
   size_t index = 0;    // keep track of where we are in vector of entries
-  const auto qtc_entries = q.qtc_entries();
+  const auto qtc_entries = qs.qtc_entries();
 
   for (const auto& pr : qtc_entries)
   { const string entry_str = pr.first.to_string();
-    int cpu = colours.add(win.fg(), pr.second ? COLOUR_RED : COLOUR_BLACK);
+    int cpu = colours.add(win.fg(), pr.second ? COLOUR_RED : win.bg());
 
 // work out where to start the display of this call
-    const unsigned int x = (index / win.height()) * COLUMN_WIDTH;
+    const unsigned int x = (index / win.height()) * (COLUMN_WIDTH + COLUMN_GAP);
     const unsigned int y = (win.height() - 1) - (index % win.height());
 
     win < cursor(x, y) < colour_pair(cpu);
@@ -182,8 +187,8 @@ window& operator<(window& win, const qtc& q)
 
 pt_mutex qtc_database_mutex;
 
-void qtc_database::operator+=(const qtc& q)
-{ qtc q_copy = q;
+void qtc_database::operator+=(const qtc_series& q)
+{ qtc_series q_copy = q;
 
   SAFELOCK(qtc_database);
 
@@ -201,7 +206,15 @@ const unsigned int qtc_database::n_qtcs_sent_to(const string& destination_callsi
 
   SAFELOCK(qtc_database);
 
-  for_each(_qtc_db.cbegin(), _qtc_db.cend(), [=, &rv] (const qtc& QTC) { if (QTC.target() == destination_callsign) rv += QTC.size(); } );
+  for_each(_qtc_db.cbegin(), _qtc_db.cend(), [=, &rv] (const qtc_series& QTC) { if (QTC.target() == destination_callsign) rv += QTC.size(); } );
+
+  return rv;
+}
+
+const unsigned int qtc_database::n_qtc_entries_sent(void) const
+{ unsigned int rv = 0;
+
+  for_each(_qtc_db.cbegin(), _qtc_db.cend(), [&rv] (const qtc_series& QTC) { rv += QTC.size(); } );
 
   return rv;
 }
@@ -238,7 +251,7 @@ void qtc_database::read(const string& filename)
 
 
   while (line_nr < lines.size())
-  { qtc QTC;
+  { qtc_series QTC;
     const string& id_line = lines[line_nr];
     const vector<string> fields = split_string(id_line, ' ');
 
@@ -304,4 +317,11 @@ void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
     _unsent_qtcs.erase(it);
 
    _sent_qtcs.insert(entry);
+}
+
+void qtc_buffer::unsent_to_sent(const qtc_series& qs)
+{ const vector<pair<qtc_entry, bool>>& vec_qe = qs.qtc_entries();    ///< the individual QTC entries, and whether each has been sent
+
+  for (const auto& qe : vec_qe)
+    unsent_to_sent(qe.first);
 }

@@ -1,4 +1,4 @@
-// $Id: log.h 63 2014-05-20 16:48:18Z  $
+// $Id: log.h 66 2014-06-14 19:22:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -119,23 +119,28 @@ public:
 /// return time-ordered container of qsos
   const std::vector<QSO> as_vector(void) const;
   
-/// return time-ordered container of qsos
-/*
-  template <template <class Cont> >
-  const Cont<QSO> as_container<Cont<QSO> >(void) const
-  { Cont<QSO> rv;
+//  template <typename T>
+//  const T as(void) const
+//  { T rv;
+//
+//    { SAFELOCK(_log);
+//
+//      copy(_log.cbegin(), _log.cend(), back_inserter(rv));
+//    }
+//
+//    rv.sort(earlier);    // sorts according to earlier(const QSO&, const QSO&)
+//
+//    return rv;
+//  }
 
-    { SAFELOCK(_log);
-  
-      for (std::multimap<std::string, QSO>::const_iterator cit = _log.begin(); cit != _log.end(); ++cit)
-        rv.push_back(cit->second);
-    }
+template <class UnaryPredicate>
+  const std::vector<QSO> filter(UnaryPredicate pred) const
+  { std::vector<QSO> rv;
 
-    rv.sort(earlier);    // sorts according to earlier(const QSO&, const QSO&)
+    copy_if(_log_vec.cbegin(), _log_vec.cend(), back_inserter(rv), pred);
 
     return rv;
-  }  
-*/
+  }
   
 /// recalculate the dupes
   const logbook recalculate_dupes(const contest_rules& rules) const;
