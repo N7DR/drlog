@@ -1244,9 +1244,9 @@ int main(int argc, char** argv)
         cur_band = b;
       }
 
+      update_remaining_callsign_mults_window(statistics, cur_band);
       update_remaining_country_mults_window(statistics);
       update_remaining_exch_mults_windows(rules, statistics);
-      update_remaining_callsign_mults_window(statistics, cur_band);
 
 // QTCs
       if (send_qtcs)
@@ -2100,9 +2100,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       win_dupe_mult < WINDOW_CLEAR < CURSOR_START_OF_LINE <= nearby_callsign;
 
 // update displays of needed mults
+      update_remaining_callsign_mults_window(statistics, cur_band);
       update_remaining_country_mults_window(statistics, cur_band);
       update_remaining_exch_mults_windows(rules, statistics, cur_band);
-      update_remaining_callsign_mults_window(statistics, cur_band);
 
       win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
@@ -2508,9 +2508,9 @@ ost << "processing command: " << command << endl;
             win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
 // update displays of needed mults
+            update_remaining_callsign_mults_window(statistics, cur_band);
             update_remaining_country_mults_window(statistics, cur_band);
             update_remaining_exch_mults_windows(rules, statistics, cur_band);
-            update_remaining_callsign_mults_window(statistics, cur_band);
           }
 
           enter_sap_mode();    // we want to be in SAP mode after a frequency change
@@ -2815,9 +2815,9 @@ ost << "processing command: " << command << endl;
         }
       }
 
+      update_remaining_callsign_mults_window(statistics, cur_band);
       update_remaining_country_mults_window(statistics);
       update_remaining_exch_mults_windows(rules, statistics);
-      update_remaining_callsign_mults_window(statistics, cur_band);
     }
    }
 
@@ -3362,12 +3362,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         win_active_p = &win_call;
         win_call <= CURSOR_START_OF_LINE;
 
-// remaining mults
-// was the just-logged QSO a country mult?
-        const set<string> new_worked_country_mults = statistics.worked_country_mults(cur_band);
-
+// remaining mults: callsign, country, exchange
         update_known_callsign_mults(qso.callsign());
         update_remaining_callsign_mults_window(statistics);
+
+        const set<string> new_worked_country_mults = statistics.worked_country_mults(cur_band);
 
         if (old_worked_country_mults.size() != new_worked_country_mults.size())
         { update_remaining_country_mults_window(statistics);
@@ -3923,6 +3922,9 @@ void toggle_drlog_mode(void)
 void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b)
 { const set<string> worked_callsign_mults = statistics.worked_callsign_mults(mult_name, b);
 
+//  ost << "update_remaining_callsign_mults_window: mult_name = " << mult_name << ", band = " << b << endl;
+//  ost << "update_remaining_callsign_mults_window: number of worked callsign mults on this band = " << worked_callsign_mults.size() << endl;
+
 // the original list of callsign mults
   set<string> original;
 
@@ -3938,14 +3940,6 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   { set<string> copy;
 
     copy_if(original.cbegin(), original.cend(), inserter(copy, copy.begin()), [=] (const string& s) { return (worked_callsign_mults.find(s) == worked_callsign_mults.end()); } );
-
-//    for (set<string>::const_iterator cit = original.cbegin(); cit != original.cend(); ++cit)
-//    { const bool is_needed = worked_callsign_mults.find(*cit) == worked_callsign_mults.end();
-
-//      if (is_needed)
-//        copy.insert(*cit);
-//    }
-
     original = copy;
   }
 
@@ -3953,22 +3947,16 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   vector<string> vec_str;
 
   copy(original.cbegin(), original.cend(), back_inserter(vec_str));
-
-//  for (set<string>::const_iterator cit = original.begin(); cit != original.end(); ++cit)
-//    vec_str.push_back(*cit);
-
   sort(vec_str.begin(), vec_str.end(), compare_calls);    // need to change the collation order
 
   vector<pair<string /* country */, int /* colour pair number */ > > vec;
 
   for (const auto& canonical_prefix : vec_str)
-  { ost << "updating callsign mults, processing: *" << canonical_prefix << "*" << endl;
+  { //ost << "updating callsign mults, processing: *" << canonical_prefix << "*" << endl;
 
     const bool is_needed = ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() );
-//    int colour_pair_number = colours.add(win_remaining_callsign_mults.fg(), win_remaining_callsign_mults.bg());
 
-//    if (!is_needed)
-//      colour_pair_number = colours.add(string_to_colour(context.worked_mults_colour()),  win_remaining_callsign_mults.bg());
+    //ost << "is_needed = " << is_needed << "for callsign mult: " << canonical_prefix << endl;
     const int colour_pair_number = colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : string_to_colour(context.worked_mults_colour()) ), win_remaining_callsign_mults.bg());
 
     vec.push_back( { canonical_prefix, colour_pair_number } );

@@ -115,6 +115,9 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
     { for (const auto& callsign_mult_name : callsign_mult_names)
       { multiplier em;
 
+        if (context.callsign_mults_per_band())
+          em.per_band(true);
+
         em.used(true);
 
         _callsign_multipliers[callsign_mult_name] = em;
@@ -667,8 +670,10 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
 //const set<string> rv = _worked_callsign_mults[static_cast<int>(b)];
 // std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;
 
-  if (mult_name == string() and !_callsign_multipliers.size() == 1)
+  if (mult_name == string() and _callsign_multipliers.size() == 1)
+  { //ost << "returning worked callsign mults for " << _callsign_multipliers.cbegin()->first << endl;
     return _callsign_multipliers.cbegin()->second.worked(b);
+  }
 
   const auto& cit = _callsign_multipliers.find(mult_name);
 
@@ -680,13 +685,11 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
 
 /// worked country mults for a particular band
 const set<string> running_statistics::worked_country_mults(const BAND b)
-{ //const set<string> rv = _worked_country_mults[static_cast<int>(b)];
+{ SAFELOCK(statistics);
 
-  SAFELOCK(statistics);
+//  const set<string> rv = _country_multipliers.worked(static_cast<int>(b));
 
-  const set<string> rv = _country_multipliers.worked(static_cast<int>(b));
-
-  return rv;
+  return ( _country_multipliers.worked(static_cast<int>(b)) );
 }
 
 /// worked exchange mults for a particular band
@@ -703,15 +706,6 @@ const map<string /* field name */, set<string> /* values */ >  running_statistic
 
     rv.insert( { field_name, m.worked(b) } );
   }
-
-//  map<string, set<string> > rv;
-
-//  for (const auto& worked_exchange_mult : _worked_exchange_mults)
-//  { const array<set<string>, N_BANDS>& ass = worked_exchange_mult.second;
-//    const set<string>& ss = ass[static_cast<int>(b)];
-
-//    rv.insert( { worked_exchange_mult.first, ss } );
-//  }
 
   return rv;
 }
