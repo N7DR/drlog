@@ -322,9 +322,6 @@ public:
   SAFEREAD(permitted_bands, rules);                      ///< bands allowed in this contest
 
   const std::vector<exchange_field> exch(const std::string& canonical_prefix) const;
-
-//  SAFEREAD(std::vector<exchange_field>, expanded_exch, rules); ///< details of the received exchange fields, with choices expanded (i.e., the leaves of the _exch element)
-
   const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix) const;
 
   SAFEREAD(country_mults, rules);       ///< collection of canonical prefixes of country multipliers

@@ -368,8 +368,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // remove any that are explicitly not allowed
   vector<string> not_country_mults_vec = remove_peripheral_spaces(split_string(context.not_country_mults(), ","));  // may not be actual canonical prefixes
 
-  for_each(not_country_mults_vec.cbegin(), not_country_mults_vec.cend(), [&] (const string& not_country_mult)
-      { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
+//  for_each(not_country_mults_vec.cbegin(), not_country_mults_vec.cend(), [&] (const string& not_country_mult)
+//      { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
+
+  FOR_ALL(not_country_mults_vec, [&] (const string& not_country_mult) { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
 
   ost << "number of possible country mults = " << _country_mults.size() << endl;
 

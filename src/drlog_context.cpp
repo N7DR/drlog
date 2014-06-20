@@ -326,8 +326,8 @@ void drlog_context::_process_configuration_file(const string& filename)
         _cq_memory[memory] = RHS;
 
 // CQ MENU
-    if (starts_with(testline, "CQ MENU"))
-      _cq_menu = (split_string(line, "="))[1];
+//    if (starts_with(testline, "CQ MENU"))
+//      _cq_menu = (split_string(line, "="))[1];
 
 // CW SPEED
     if (starts_with(testline, "CW SPEED"))
@@ -351,8 +351,8 @@ void drlog_context::_process_configuration_file(const string& filename)
         _ex_memory[memory - 1] = remove_peripheral_spaces((split_string(line, "="))[1]);
 
 // EX MENU
-    if (starts_with(testline, "EX MENU"))
-      _ex_menu = (split_string(line, "="))[1];
+//    if (starts_with(testline, "EX MENU"))
+//      _ex_menu = (split_string(line, "="))[1];
 
 // EXCHANGE
     if (starts_with(testline, "EXCHANGE"))

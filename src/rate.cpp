@@ -107,19 +107,10 @@ const pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seco
   const time_t now = ::time(NULL);
   const pair<unsigned int, unsigned int> current_values = qsos_and_score(now);
 
-//  ost << "calculating rate for " << seconds_in_past << " seconds in the past; normalisation period = " << normalisation_period << endl;
-
-//  { SAFELOCK(_rate);
-//    ost << "size of data = " << _data.size() << endl;
-//  }
-
   if (seconds_in_past <= 0)
     return current_values;
 
   const pair<unsigned int, unsigned int> old_values = qsos_and_score(now - seconds_in_past);
-
-//  ost << "old values: " << old_values.first << ", " << old_values.second << endl;
-//  ost << "cur values: " << current_values.first << ", " << current_values.second << endl;
 
   if (normalisation_period == 0)
     return { current_values.first - old_values.first, current_values.second - old_values.second };

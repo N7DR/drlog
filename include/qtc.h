@@ -24,8 +24,14 @@
 #include <list>
 #include <set>
 #include <string>
-//#include <unordered_set>
 #include <vector>
+
+// from http://www.kkn.net/~trey/cabrillo/qso-template.html:
+//
+//                             -qtc rcvd by - --------------qtc info received-----------------
+//QTC: freq  mo date       time call          qserial    qtc sent by   qtim qcall         qexc
+//QTC: ***** ** yyyy-mm-dd nnnn ************* nnn/nn     ************* nnnn ************* nnnn
+//QTC:  3799 PH 2003-03-23 0711 YB1AQS        001/10     DL8WPX        0330 DL6RAI        1021
 
 // -----------------------------------  qtc_entry  ----------------------------
 
@@ -83,7 +89,7 @@ public:
 // -----------------------------------  qtc_series  ----------------------------
 
 /*!     \class qtc_series
-        \brief A QTC series as defines by the WAE rules
+        \brief A QTC series as defined by the WAE rules
 */
 
 class qtc_series
@@ -98,20 +104,26 @@ protected:
   std::string  _date;              ///< yyyy-mm-dd
   std::string  _utc;               ///< hh:mm:ss
   std::string  _frequency;         ///< frequency in form xxxxx.y (kHz)
+  std::string  _mode;              ///< CW or PH
+  std::string  _source;            ///< my call
 
 public:
 
   qtc_series(void)
     { }
 
-  explicit qtc_series(const std::vector<qtc_entry>& vec_qe)
-    { for_each(vec_qe.cbegin(), vec_qe.cend(), [&] (const qtc_entry& qe) { (*this) += qe; } ); }
+  qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call) :
+    _mode(mode_str),
+    _source(my_call)
+//    { for_each(vec_qe.cbegin(), vec_qe.cend(), [&] (const qtc_entry& qe) { (*this) += qe; } ); }
+    { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += qe; } ); }
 
   READ_AND_WRITE(target);
   READ_AND_WRITE(id);
   READ_AND_WRITE(qtc_entries);
   READ_AND_WRITE(date);
   READ_AND_WRITE(utc);
+//  READ_AND_WRITE(mode);
 
   inline const std::string frequency_str(void) const
     { return _frequency; }
@@ -130,6 +142,9 @@ public:
 
   const bool operator+=(const qtc_entry& entry);
 
+  inline std::pair<qtc_entry, bool>& operator[](const unsigned int n)
+    { return _qtc_entries[n]; }
+
   const std::string to_string(const unsigned int n_rows) const;
 
 // set a particular entry to sent
@@ -137,6 +152,8 @@ public:
 
 // get first entry that has not been sent
   const qtc_entry first_not_sent(const unsigned int posn = 0);
+
+  const std::string output_string(const unsigned int n) const;
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

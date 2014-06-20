@@ -722,6 +722,16 @@ public:
   }
 };
 
+//template<class InputIterator, class Function>
+//  Function FOR_ALL(const InputIterator first, const InputIterator last, Function fn)
+//{ return (for_each(first.cbegin(), first.cend(), fn));
+//}
+
+template<class Input, class Function>
+  Function FOR_ALL(Input first, Function fn)
+{ return (for_each(first.begin(), first.end(), fn));
+}
+
 // ------------------------ container for per-band and per-mode information ------------
 
 #include <array>

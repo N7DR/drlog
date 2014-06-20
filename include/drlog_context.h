@@ -122,7 +122,7 @@ protected:
   bool                                         _cq_auto_rit;              ///< whether to enable RIT in CQ mode
   std::array<std::string, CQ_MEMORY_MESSAGES + 1>
                                                _cq_memory;                ///< CQ memories, counted wrt 1
-  std::string                                  _cq_menu;                  ///< menu displayed in CQ mode
+//  std::string                                  _cq_menu;                  ///< menu displayed in CQ mode
   std::string                                  _cty_filename;             ///< filename of country file (default = "cty.dat")
   unsigned int                                 _cw_speed;                 ///< Speed in WPM
 
@@ -140,7 +140,7 @@ protected:
   std::string                                  _exchange_sap;              ///< exchange in SAP mode
   MULTIPLE_EXCHANGES                           _exchanges;                 ///< optional exchange choices
   std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                 ///< exchange memories
-  std::string                                  _ex_menu;                   ///< menu displayed during an exchange
+//  std::string                                  _ex_menu;                   ///< menu displayed during an exchange
 
   std::map<MODE, unsigned int>                 _guard_band;
 
@@ -294,7 +294,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(contest_name, _context);
   SAFEREAD(country_mults_filter, _context);
   SAFEREAD(cq_memory, _context);
-  SAFEREAD(cq_menu, _context);
+//  SAFEREAD(cq_menu, _context);
   SAFEREAD(cty_filename, _context);
   SAFEREAD(cw_speed, _context);
 

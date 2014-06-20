@@ -75,6 +75,7 @@ const bool calculate_exchange_mults(QSO& qso,
                                     const contest_rules& rules);
 const string callsign_mult_value(const string& callsign_mult_name,
                                  const string& callsign);
+void cw_speed(const unsigned int new_speed);
 void debug_dump(void);
 void display_band_mode(window& win,
                        const BAND current_band,
@@ -125,6 +126,8 @@ void process_CALL_input(window* wp,
 void process_EXCHANGE_input(window* wp,
                             const keyboard_event& e);
 void process_LOG_input(window* wp,
+                       const keyboard_event& e);
+void process_QTC_input(window* wp,
                        const keyboard_event& e);
 
 void* auto_backup(void* vp);
@@ -253,7 +256,6 @@ window win_band_mode,               ///< the band and mode indicator
        win_info,                    ///< summary of info about current station being worked
        win_local_time,              ///< window for local time
        win_log,                     ///< main visible log
-//       win_menu,
        win_message,                 // messages from drlog to the user
 //       win_note,                    // quick notes to go in the log
 //       win_prior_qsos,              // earlier QSOs with the same station
@@ -303,6 +305,7 @@ rig_interface rig;
 thread_attribute attr_detached(PTHREAD_DETACHED);
 
 window* win_active_p = &win_call;             // start with the CALL window active
+window* last_active_win_p = nullptr;
 
 const string OUTPUT_FILENAME("output.txt");
 message_stream ost(OUTPUT_FILENAME);
@@ -812,21 +815,17 @@ int main(int argc, char** argv)
   win_log.enable_scrolling();
   win_log.process_input_function(process_LOG_input);
 
-// LOG EXTRACT window
+// LOG EXTRACT window; also used for QTCs
   win_log_extract.init(context.window_info("LOG EXTRACT"), WINDOW_NO_CURSOR);
   editable_log.prepare();    // now we can size the editable log
   extract.prepare();
 
-// MENU window
-//  win_menu.init(context.window_info("MENU"), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-//  win_menu <= context.cq_menu();
+  if (send_qtcs)
+    win_log_extract.process_input_function(process_QTC_input);
 
 // NOTE window
 //  win_note.init(context.window_info("NOTE"), WINDOW_INSERT);
 //  win_note.hide();
-
-// PRIOR QSOS window
-//  win_prior_qsos.init(context.window_info("PRIOR QSOS"), WINDOW_NO_CURSOR);
 
 // QSO NUMBER window
   win_qso_number.init(context.window_info("QSO NUMBER"), WINDOW_NO_CURSOR);
@@ -857,18 +856,7 @@ int main(int argc, char** argv)
     const string& target_continent = *(set_from_context.cbegin());
 
     if ((set_from_context.size() == 1) and (continent_set < target_continent))
-    { const set<string> countries_in_continent_set = location_db.countries(target_continent);
-      //vector<string> countries_in_continent_vec;
-
-      //copy(countries_in_continent_set.cbegin(), countries_in_continent_set.cend(), back_inserter(countries_in_continent_vec));
-      //sort(countries_in_continent_vec.begin(), countries_in_continent_vec.end(), compare_calls);    // need to change the collation order
-
-      //string cp_str;
-
-      //for_each(countries_in_continent_vec.cbegin(), countries_in_continent_vec.cend(), [&cp_str] (const string& str) { cp_str += (str + " "); } );
-      //cp_str = cp_str.substr(0, cp_str.size() - 1);
-      win_remaining_country_mults <= countries_in_continent_set;
-    }
+      win_remaining_country_mults <= location_db.countries(target_continent);
     else
       win_remaining_country_mults <= (context.remaining_country_mults_list());
   }
@@ -1451,8 +1439,7 @@ void* display_date_and_time(void* vp)
 
 // possibly run thread to perform auto backup
         if (!context.auto_backup().empty())
-        { //static pair<string, string> pss;
-          static tuple<string, string, string> tsss;
+        { static tuple<string, string, string> tsss;
           static pthread_t auto_backup_thread_id;
 
           const string filename = context.logfile();
@@ -2149,11 +2136,15 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
   if (!processed and ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
-  { int change = (e.is_control() ? 1 : 3);
+  { if (cw_p)
+    { int change = (e.is_control() ? 1 : 3);
 
-    if (e.symbol() == XK_Prior)
-      change = -change;
+      if (e.symbol() == XK_Prior)
+        change = -change;
 
+      cw_speed(cw_p->speed() - change);  // effective immediately
+
+/*
     if (cw_p)
     { cw_p->speed(cw_p->speed() - change);
       win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(cw_p->speed()) + " WPM");
@@ -2166,6 +2157,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       catch (const rig_interface_error& e)
       { alert("Error setting CW speed on rig");
       }
+    }
+*/
     }
 
     processed = true;
@@ -3025,77 +3018,6 @@ ost << "processing command: " << command << endl;
   if (!processed and e.is_control('p'))
   { dump_screen();
 
-#if 0
-    //ost << "Pressed Print key" << endl;
-
-
-    Display* display_p = keyboard.display_p();
-    const Window window_id = keyboard.window_id();
-    XWindowAttributes win_attr;
-
-//    alert("creating attributes");
-
-    XLockDisplay(display_p);
-    XGetWindowAttributes(display_p, window_id, &win_attr);
-    XUnlockDisplay(display_p);
-    const int width = win_attr.width;
-    const int height = win_attr.height;
-
-//    alert("acquiring screen image");
-
-    XLockDisplay(display_p);
-    XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
-    XUnlockDisplay(display_p);
-
-//    alert("acquired screen image");
-
-    png::image< png::rgb_pixel > image(width, height);
-
-//    alert("created PNG image");
-
-    static const unsigned int BLUE_MASK = 0xff;
-    static const unsigned int GREEN_MASK = 0xff << 8;
-    static const unsigned int RED_MASK = 0xff << 16;
-
-    for (size_t y = 0; y < image.get_height(); ++y)
-    { for (size_t x = 0; x < image.get_width(); ++x)
-      { const unsigned long pixel = XGetPixel (xim_p, x, y);
-        const unsigned char blue = pixel bitand BLUE_MASK;
-        const unsigned char green = (pixel bitand GREEN_MASK) >> 8;
-        const unsigned char red = (pixel bitand RED_MASK) >> 16;
-
-        image[y][x] = png::rgb_pixel(red, green, blue);
-      }
-
-//      static const string percent_str("%%");
-//      const int percent = ((y + 1) * 100.0) / image.get_height();
-
-//      alert(string("screendump progress: ") + to_string(percent) + percent_str);
-    }
-
-//    alert("screendump acquired");
-
-    const string base_filename = context.screen_snapshot_file();
-
-    int index = 0;
-    bool file_written = false;
-
-    while (!file_written)
-    { const string filename = base_filename + "-" + to_string(index);
-
-      if (!file_exists(filename))
-      { image.write(filename);
-        file_written = true;
-
-        alert("screenshot file " + filename + " written");
-      }
-      else
-        ++index;
-    }
-
-//    image.write("rgb.png");
-#endif
-
     processed = true;
   }
 
@@ -3107,8 +3029,12 @@ ost << "processing command: " << command << endl;
 
 // ALT-Q -- send QTC
   if (!processed and e.is_alt('q') and rules.send_qtcs())
-  {
+  { last_active_win_p = win_active_p;
+    win_active_p = &win_log_extract;
+    win_active_p-> process_input(e);  // reprocess the alt-q
+
 // destination for the QTC is the callsign in the window; or, if the window is empty, the call of the last logged QSO
+/*
     string destination_callsign = remove_peripheral_spaces(win.read());
 
     if (destination_callsign.empty())
@@ -3122,6 +3048,7 @@ ost << "processing command: " << command << endl;
 
     if (!destination_callsign.empty())
       send_qtc(destination_callsign);
+*/
 
     processed = true;
   }
@@ -3521,10 +3448,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             bmap.not_needed(qso.callsign());
         }
 
-//        ost << "callsign mults used = " << callsign_mults_used << endl
-//            << "country mults used = " << country_mults_used << endl
-//            << "exchange mults used = " << exchange_mults_used << endl;
-
 // callsign mult status
         if (callsign_mults_used)
         { if (rules.country_mults_per_band())
@@ -3614,6 +3537,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         } // end pexch.valid()
         else  // unable to parse exchange
           alert("Unable to parse exchange");
+
         processed = true;
       }
     }
@@ -3742,10 +3666,10 @@ ost << "Adding new QSO(s)" << endl;
 //            qso.is_country_mult(false);
 //            qso.is_prefix_mult(false);
 
-            ost << "     reconstituted line: " << qso.log_line() << endl;
+//            ost << "     reconstituted line: " << qso.log_line() << endl;
 
             const BAND b = qso.band();
-            ost << "band of reconstituted QSO = " << BAND_NAME[b] << endl;
+//            ost << "band of reconstituted QSO = " << BAND_NAME[b] << endl;
 
             update_known_callsign_mults(qso.callsign());
             update_known_country_mults(qso.callsign());
@@ -3754,8 +3678,8 @@ ost << "Adding new QSO(s)" << endl;
             const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), qso.band());
             qso.is_country_mult(is_country_mult);
 
-            ost << "is_country_mult after QSO has been rebuilt: " << is_country_mult << endl;
-            ost << "is_exchange_mult after QSO has been rebuilt: " << qso.is_exchange_mult() << endl;
+//            ost << "is_country_mult after QSO has been rebuilt: " << is_country_mult << endl;
+//            ost << "is_exchange_mult after QSO has been rebuilt: " << qso.is_exchange_mult() << endl;
 
 // exchange mults
             if (exchange_mults_used)
@@ -3764,53 +3688,10 @@ ost << "Adding new QSO(s)" << endl;
 // if callsign mults matter, add more to the qso
             allow_for_callsign_mults(qso);
 
-#if 0
-            if (!rules.callsign_mults().empty())
-            { string mult_name;
-
-              if (rules.callsign_mults() < static_cast<string>("WPXPX"))
-              { qso.prefix(wpx_prefix(qso.callsign()));
-                ost << "added prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
-                mult_name = "WPXPX";
-              }
-
-              if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") )  // All Asian
-              { qso.prefix(wpx_prefix(qso.callsign()));
-                ost << "added prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
-                mult_name = "AAPX";
-              }
-
-              if ( (rules.callsign_mults() < static_cast<string>("SACPX")) and (qso.prefix().empty()) )      // SAC
-              { qso.prefix(sac_prefix(qso.callsign()));
-                ost << "added SACPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
-                mult_name = "SACPX";
-              }
-
-// see if it's a mult... requires checking if mults are per-band
-              if (!qso.prefix().empty() and !mult_name.empty())
-              { if (rules.callsign_mults_per_band())
-                { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), qso.band()))
-                    qso.is_prefix_mult(true);
-                }
-                else
-                { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), static_cast<BAND>(ALL_BANDS)))
-                    qso.is_prefix_mult(true);
-                }
-              }
-            }
-#endif
-
-// get the current list of country mults
-//            const set<string> old_worked_country_mults = statistics.worked_country_mults(b);
-
-// and any exch multiplers
-//             map<string /* field name */, set<string> /* values */ >   old_worked_exchange_mults = statistics.worked_exchange_mults(b);
-
 // add it to the running statistics; do this before we add it to the log so we can check for dupes against the current log
              statistics.add_qso(qso, logbk, rules);
 
              logbk += qso;
-//             add_qso(qso);
           }
         }
 
@@ -5296,16 +5177,7 @@ void allow_for_callsign_mults(QSO& qso)
   }
 }
 
-//void update_qtcs_sent_window(void)
-//{ if (!send_qtcs)
-//    return;
-//
-//  const int n_qtcs_sent = qtc_db.n_qtcs();
-//  const int n_qsos = logbk.size();
-//
-//  win_qtcs_sent < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(n_qtcs_sent) + " / " < to_string(n_qsos));
-//}
-
+#if 0
 void send_qtc(const string& destination_call)
 { if (destination_call.empty())
     return;
@@ -5351,6 +5223,229 @@ void send_qtc(const string& destination_call)
 // display the QTC entries; we use the "prior QSOs" window
   win_qtc_detail <= this_qtc;
 
+  bool finish = false;
+  win_active_p = &win_qtc_detail;
+
+  return;
 }
+#endif
+
+void process_QTC_input(window* wp, const keyboard_event& e)
+{ static bool sending_qtc = false;
+  static unsigned int total_qtcs_to_send;
+  static unsigned int qtcs_sent;
+  static string qtc_id;
+  static qtc_series series;
+
+  const bool cw = (safe_get_mode() == MODE_CW);  // just to keep it easy to determine if we are on CW
+  bool processed = false;
+
+  auto send_msg = [=](const string& msg)
+    { if (cw)
+        (*cw_p) << (string("---") + msg + string("+++"));  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
+    };
+
+  ost << "processing QTC input; event string: " << e.str() << endl;
+
+  window& win = *wp;   // syntactic sugar
+
+  if (!sending_qtc)
+  {
+// destination for the QTC is the callsign in the window; or, if the window is empty, the call of the last logged QSO
+    string destination_callsign = remove_peripheral_spaces(win.read());
+
+    if (destination_callsign.empty())
+      destination_callsign = logbk.last_qso().callsign();
+
+    if (!destination_callsign.empty() and (location_db.continent(destination_callsign) != "EU") )  // got a call, but it's not EU
+    { vector<QSO> vec_q = logbk.filter([] (const QSO& q) { return (q.continent() == string("EU")); } );
+
+      destination_callsign = ( vec_q.empty() ? string() : (vec_q[vec_q.size() - 1].callsign()) );
+    }
+
+    if (destination_callsign.empty())  // we have no destination
+    { alert("No valid destination for QTC");
+      win_active_p = &win_call;
+      processed = true;
+    }
+
+    if (location_db.continent(destination_callsign) != "EU")    // send QTCs only to EU stations
+    { alert("No EU destination for QTC");
+      win_active_p = &win_call;
+      processed = true;
+    }
+
+// check that it's OK to send a QTC to this call
+    const unsigned int n_already_sent = qtc_db.n_qtcs_sent_to(destination_callsign);
+
+    if (n_already_sent >= 10)
+    { alert(string("10 QSOs already sent to ") + destination_callsign);
+      win_active_p = &win_call;
+      processed = true;
+    }
+
+// check that we have at least one QTC that can be sent to this call
+    const unsigned int n_to_send = 10 - n_already_sent;
+    const vector<qtc_entry> qtc_entries_to_send = qtc_buf.get_next_unsent_qtc(destination_callsign, n_to_send);
+
+    if (qtc_entries_to_send.empty())
+    { alert(string("No QSOs available to send to ") + destination_callsign);
+      win_active_p = &win_call;
+      processed = true;
+    }
+
+    const string mode_str = (safe_get_mode() == MODE_CW ? "CW" : "PH");
+    series = qtc_series(qtc_entries_to_send, mode_str, context.my_call());
+
+// check that we still have entries (this should always pass)
+    if (series.empty())
+    { alert(string("Error: empty QTC object for ") + destination_callsign);
+      win_active_p = &win_call;
+      processed = true;
+    }
+
+// OK; we're going to send at least one QTC
+    sending_qtc = true;
+
+    const unsigned int number_of_qtc = qtc_db.size() + 1;
+
+    qtc_id = to_string(number_of_qtc) + "/" + to_string(qtc_entries_to_send.size());
+
+    if (cw)
+      send_msg((string)"QTC " + qtc_id);
+
+    win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sending QTC " < qtc_id < " to " <= destination_callsign;
+
+// display the QTC entries; we use the "prior QSOs" window
+    win <= series;
+
+    total_qtcs_to_send = qtc_entries_to_send.size();
+    qtcs_sent = 0;
+    processed = true;
+  }
+
+// R -- repeat introduction (i.e., no QTCs sent)
+  if (!processed and (qtcs_sent == 0) and (e.is_char('r')))
+  { //if (qtcs_sent == 0)
+    { if (cw)
+        send_msg((string)"QTC " + qtc_id);
+    }
+
+    processed = true;
+  }
+
+// ENTER
+  if (!processed and e.is_unmodified() and (e.symbol() == XK_Return))
+  { if (qtcs_sent != total_qtcs_to_send)
+    { const qtc_entry& qe = series[qtcs_sent].first;
+
+      if (cw)
+      { string msg;
+
+        msg = qe.utc() + " " + qe.callsign() + " ";
+
+        const string serno = pad_string(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, PAD_LEFT, 'T');
+
+        msg += serno;
+        send_msg(msg);
+      }
+
+      series[qtcs_sent].second = true;
+
+      win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= series;
+      qtcs_sent++;
+
+      processed = true;
+    }
+    else    // we have sent the last QTC
+    { win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+
+      if (cw)
+      { if (drlog_mode == CQ_MODE)                                   // send QSL
+          (*cw_p) << expand_cw_message( context.qsl_message() );
+
+      }
+      processed = true;
+    }
+  }
+
+// T, U -- repeat time
+  if (!processed and ( (e.is_char('t')) or (e.is_char('u'))))
+  { if (cw)
+    { const int qtc_nr = static_cast<int>(qtcs_sent) - 1;
+
+      if ((qtc_nr >= 0) and (qtc_nr < series.size()))
+        send_msg(series[qtc_nr].first.utc());
+    }
+
+    processed = true;
+  }
+
+// C -- repeat call
+  if (!processed and ( (e.is_char('c'))) )
+  { if (cw)
+    { const int qtc_nr = static_cast<int>(qtcs_sent) - 1;
+
+      if ((qtc_nr >= 0) and (qtc_nr < series.size()))
+        send_msg(series[qtc_nr].first.callsign());
+    }
+
+    processed = true;
+  }
+
+// N, S -- repeat number
+  if (!processed and ( (e.is_char('n')) or (e.is_char('s'))))
+  { if (cw)
+    { const int qtc_nr = static_cast<int>(qtcs_sent) - 1;
+
+      if ((qtc_nr >= 0) and (qtc_nr < series.size()))
+      { const string serno = pad_string(remove_leading(remove_peripheral_spaces(series[qtc_nr].first.serno()), '0'), 3, PAD_LEFT, 'T');
+
+        send_msg(serno);
+      }
+    }
+
+    processed = true;
+  }
+
+// A, R -- repeat all
+  if (!processed and ( (e.is_char('a')) or (e.is_char('r'))))
+  { if (cw)
+    { const int qtc_nr = static_cast<int>(qtcs_sent) - 1;
+
+      if ((qtc_nr >= 0) and (qtc_nr < series.size()))
+      { const qtc_entry& qe = series[qtc_nr].first;
+        string msg;
+
+        msg = qe.utc() + " " + qe.callsign() + " ";
+
+        const string serno = pad_string(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, PAD_LEFT, 'T');
+
+        msg += serno;
+        send_msg(msg);
+      }
+    }
+
+    processed = true;
+  }
+
+}
+
+void cw_speed(const unsigned int new_speed)
+{ if (cw_p)
+  { cw_p->speed(new_speed);
+    win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(new_speed) + " WPM");
+
+    try
+    { if (context.sync_keyer())
+        rig.keyer_speed(new_speed);
+    }
+
+    catch (const rig_interface_error& e)
+    { alert("Error setting CW speed on rig");
+    }
+  }
+}
+
 
 

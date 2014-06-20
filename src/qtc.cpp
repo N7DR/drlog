@@ -115,6 +115,37 @@ const qtc_entry qtc_series::first_not_sent(const unsigned int posn)
   return qtc_entry();
 }
 
+const string qtc_series::output_string(const unsigned int n) const
+{ static const string SPACE(" ");
+  string rv;
+
+  if (n >= size())
+    return rv;
+
+  const qtc_entry qe = _qtc_entries[n].first;
+
+  rv = pad_string(remove_from_end(_frequency, 2), 5) + SPACE;
+  rv += (_mode + SPACE + _date + SPACE + _utc + SPACE);
+  rv += substring(pad_string(_target, 13, PAD_RIGHT, ' '), 0, 13) + SPACE;
+
+  const vector<string> qtc_ser = split_string(_id, "/");
+
+  rv += pad_string(qtc_ser[0], 3, PAD_LEFT, '0') + "/" + pad_string(qtc_ser[1], 2, PAD_LEFT, '0') + create_string(' ', 5);
+  rv += substring(pad_string(_source, 13, PAD_RIGHT, ' '), 0, 13) + SPACE;
+  rv += qe.utc() + SPACE;
+  rv += substring(pad_string(qe.callsign(), 13, PAD_RIGHT, ' '), 0, 13) + SPACE;
+  rv += qe.serno();
+
+  return rv;
+}
+
+// from http://www.kkn.net/~trey/cabrillo/qso-template.html:
+//
+//                             -qtc rcvd by - --------------qtc info received-----------------
+//QTC: freq  mo date       time call          qserial    qtc sent by   qtim qcall         qexc
+//QTC: ***** ** yyyy-mm-dd nnnn ************* nnn/nn     ************* nnnn ************* nnnn
+//QTC:  3799 PH 2003-03-23 0711 YB1AQS        001/10     DL8WPX        0330 DL6RAI        1021
+
 #include <array>
 
 const string qtc_series::to_string(const unsigned int n_rows) const
@@ -151,13 +182,14 @@ const string qtc_series::to_string(const unsigned int n_rows) const
 /// window < qtc_series
 window& operator<(window& win, const qtc_series& qs)
 { static const unsigned int COLUMN_WIDTH = qtc_entry().size();                           // width of a column
-  static const unsigned int COLUMN_GAP = 1;                                              // gap between columns
+  static const unsigned int COLUMN_GAP = 2;                                              // gap between columns
   static const int GAP_COLOUR = COLOUR_YELLOW;
 
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
 
 // write the column separators
-
+  for (unsigned int y = 0; y < win.height(); ++y)
+    win < cursor(COLUMN_WIDTH, y) < colour_pair(colours.add(COLOUR_YELLOW, COLOUR_YELLOW)) <= "  ";
 
   size_t index = 0;    // keep track of where we are in vector of entries
   const auto qtc_entries = qs.qtc_entries();
