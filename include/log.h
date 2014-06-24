@@ -56,31 +56,52 @@ protected:
   std::multimap<std::string, QSO>  _log;
   std::vector<QSO>                 _log_vec;
   
-  QSO                              _removed_qso;   // most-recently removed QSO;  currently we don't do anything with this
+//  QSO                              _removed_qso;   // most-recently removed QSO;  currently we don't do anything with this
 
 public:
   
-// return qso number n (wrt 1)
-  const QSO operator[](const size_t n);
+/*!     \brief      Return an individual QSO by number (wrt 1)
+        \param  n   QSO number to return
+        \return     The <i>n</i>th QSO
+
+        If <i>n</i> is out of range, then returns an empty QSO
+*/
+  const QSO operator[](const size_t n) const;
 
 // return most recent qso
-  inline const QSO last_qso(void)
-    { return ( (*this)[size()] ); }
+  inline const QSO last_qso(void) const
+    { SAFELOCK(_log);
+      return ( (*this)[size()] );
+    }
 
 /// add a qso
   void operator+=(const QSO& q);
     
-/// remove qso number n (wrt 1)
+/*!     \brief      Remove an individual QSO by number (wrt 1)
+        \param  n   QSO number to remove
+
+        If <i>n</i> is out of range, then does nothing
+*/
   void operator-=(const unsigned int n);
 
 /// remove most-recent qso
   inline void remove_last_qso(void)
-    { *this -= size(); }
+    { SAFELOCK(_log);
+      *this -= size();
+    }
 
-/// all the QSOs with a particular call, returned in chronological order
+/*!     \brief          All the QSOs with a particular call, in chronological order
+        \param  call    Target callsign
+        \return         Vector of QSOs in chronological order
+
+        If there are no QSOs with <i>call</i>, returns an empty vector
+*/
   const std::vector<QSO> worked(const std::string& call) const;
   
-/// number of times a call has been worked
+/*!     \brief          The number of times that a particular call has been worked
+        \param  call    Target callsign
+        \return         Number of times that <i>call</i> has been worked
+*/
   const unsigned int n_worked(const std::string& call) const;
 
 /// has a particular call been worked at all?
@@ -106,9 +127,6 @@ public:
 
 /// would a QSO be a dupe?
   const bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
-  
-/// calculate total points
-//  const unsigned int points(const contest_rules& rules, location_database& location_db) const;
   
 /// calculate QSO points (i.e., mults = 1)
   const unsigned int qso_points(const contest_rules& rules, location_database& location_db) const;
@@ -168,14 +186,12 @@ template <class UnaryPredicate>
   inline size_t size(void) const
     { return _log.size(); }
 
-  inline const bool empty(void) const
-    { return _log.empty(); }
-
   inline size_t n_qsos(void) const
     { return size(); }
 
-// modifies statistics
-//  void populate_from_disk_file(const std::string& filename, const contest_rules& rules, running_statistics& statistics);
+/// is the log empty?
+  inline const bool empty(void) const
+    { return _log.empty(); }
 
 // get the value of an exchange field from the last QSO with someone; returns empty string if anything goes wrong
   const std::string exchange_field_value(const std::string& callsign, const std::string& exchange_field_name);

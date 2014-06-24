@@ -30,45 +30,66 @@ extern string VERSION;
 
 // -----------  logbook  ----------------
 
+/*!     \brief      Is one QSO earlier than another?
+        \param  q1  First QSO
+        \param  q2  Second QSO
+        \return     Whether <i>q1</i> is earlier than <i>q2</i>
+*/
 const bool qso_sort_by_time(const QSO& q1, const QSO& q2)
   { return q1.earlier_than(q2); }
 
+// add a QSO to the logbook
 void logbook::operator+=(const QSO& q)
 { SAFELOCK(_log);
+
   _log.insert( { q.callsign(), q } );
   _log_vec.push_back(q);
 }
 
-// return qso number n (wrt 1)
-const QSO logbook::operator[](const size_t n)
-{ if (_log_vec.empty() or (_log_vec.size() < n))
+/*!     \brief      Return an individual QSO by number (wrt 1)
+        \param  n   QSO number to return
+        \return     The <i>n</i>th QSO
+
+        If <i>n</i> is out of range, then returns an empty QSO
+*/
+const QSO logbook::operator[](const size_t n) const
+{ SAFELOCK(_log);
+
+  if (_log_vec.empty() or (_log_vec.size() < n))
     return QSO();
 
   return _log_vec[n - 1];
 }
 
-/// remove qso number n (wrt 1)
+/*!     \brief      Remove an individual QSO by number (wrt 1)
+        \param  n   QSO number to remove
+
+        If <i>n</i> is out of range, then does nothing
+*/
 void logbook::operator-=(const unsigned int n)
 { SAFELOCK(_log);
 
   if (_log.empty() or (_log.size() < n))
     return;
 
-// convert to chronological list, remove the pertinent entry, then convert back to map
-//  list<QSO> qso_list = as_list();    // chronological order
   const size_t index = n - 1;    // because the interface is wrt 1
-
   auto it = _log_vec.begin();
-  advance(it, index);
+  advance(it, index);            // move to the correct QSO
 
-  _removed_qso = (*it);    // just in case we ever need it
+//  _removed_qso = (*it);    // just in case we ever need it
   _log_vec.erase(it);
-  _log.clear();
+  _log.clear();              // empty preparatory to copying
 
-  for_each(_log_vec.cbegin(), _log_vec.cend(), [&](const QSO& qso) { _log.insert( {qso.callsign(), qso} ); } );
+//  for_each(_log_vec.cbegin(), _log_vec.cend(), [&](const QSO& qso) { _log.insert( {qso.callsign(), qso} ); } );
+  FOR_ALL(_log_vec, [&](const QSO& qso) { _log.insert( { qso.callsign(), qso } ); } );
 }
 
-// all the QSOs with a particular call, returned in chronological order
+/*!     \brief          All the QSOs with a particular call, in chronological order
+        \param  call    Target callsign
+        \return         Vector of QSOs in chronological order
+
+        If there are no QSOs with <i>call</i>, returns an empty vector
+*/
 const vector<QSO> logbook::worked(const string& call) const
 { vector<QSO> rv;
 
@@ -82,7 +103,10 @@ const vector<QSO> logbook::worked(const string& call) const
   return rv;
 }
 
-// number of times a call has been worked
+/*!     \brief          The number of times that a particular call has been worked
+        \param  call    Target callsign
+        \return         Number of times that <i>call</i> has been worked
+*/
 const unsigned int logbook::n_worked(const string& call) const
 { SAFELOCK(_log);
 
