@@ -979,7 +979,7 @@ const string wpx_prefix(const string& call)
   if (call.length() < 3)
     return string();
 
-  static const string digits( {"0123456789"} );
+  static const string digits( { "0123456789" } );
   string callsign = call;
   char portable_district { 0 } ;   // portable call district
 
@@ -1050,9 +1050,15 @@ const string wpx_prefix(const string& call)
   if (designator.find_first_of(digits) == string::npos)
     designator += "0";
 
-  const size_t last_digit_posn = designator.find_last_of(digits);
+//  const size_t last_digit_posn = designator.find_last_of(digits);
+//  const string rv = substring(designator, 0, min(callsign.length(), last_digit_posn + 1));
 
-  return substring(designator, 0, min(callsign.length(), last_digit_posn + 1));
+  const string rv = designator;
+
+  ost << "WPX prefix for " << callsign << " is: " << rv << endl;
+
+//  return substring(designator, 0, min(callsign.length(), last_digit_posn + 1));
+  return rv;
 }
 
 
