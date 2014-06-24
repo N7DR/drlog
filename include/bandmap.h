@@ -585,8 +585,7 @@ public:
     { return _filter_p->enabled(); }
 
 /// enable or disable the filter
-  inline void filter_enabled(const bool torf)
-    { _filter_p->enabled(torf); }
+  void filter_enabled(const bool torf);
 
 /// return all the countries and continents currently in the filter
   inline const std::vector<std::string> filter(void)
@@ -599,24 +598,21 @@ public:
      if it's not already in the filter; otherwise it is removed. Currently, all bandmaps share a single
      filter.
 */
-  inline void filter_add_or_subtract(const std::string& str)
-    { _filter_p->add_or_subtract(str); }
+  void filter_add_or_subtract(const std::string& str);
 
 /// is the filter in hide mode? (as opposed to show)
   inline const bool filter_hide(void)
     { return _filter_p->hide(); }
 
 /// set or unset the filter to hide mode (as opposed to show)
-  inline void filter_hide(const bool torf)
-    { _filter_p->hide(torf); }
+  void filter_hide(const bool torf);
 
 /// is the filter in show mode? (as opposed to hide)
   inline const bool filter_show(void)
     { return !_filter_p->hide(); }
 
 /// set or unset the filter to show mode (as opposed to hide)
-  inline void filter_show(const bool torf)
-    { _filter_p->hide(!torf); }
+  void filter_show(const bool torf);
 
 /// all the entries, after filtering has been applied
   const BM_ENTRIES filtered_entries(void);

@@ -700,6 +700,56 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
     be.remove_exchange_mult(mult_name, mult_value);
 }
 
+/// enable or disable the filter
+void bandmap::filter_enabled(const bool torf)
+{ if (torf != filter_enabled())
+  { SAFELOCK(_bandmap);
+
+    _filter_p->enabled(torf);
+    _filtered_entries_dirty = true;
+    _rbn_threshold_and_filtered_entries_dirty = true;
+  }
+}
+
+/*!  \brief Add a string to, or remove a string from, the filter associated with this bandmap
+     \param str string to add or subtract
+
+     <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
+     if it's not already in the filter; otherwise it is removed. Currently, all bandmaps share a single
+     filter.
+*/
+void bandmap::filter_add_or_subtract(const string& str)
+{ if (!str.empty())
+  { SAFELOCK(_bandmap);
+
+    _filter_p->add_or_subtract(str);
+    _filtered_entries_dirty = true;
+    _rbn_threshold_and_filtered_entries_dirty = true;
+  }
+}
+
+/// set or unset the filter to hide mode (as opposed to show)
+void bandmap::filter_hide(const bool torf)
+{ if (torf != filter_hide())
+  { SAFELOCK(_bandmap);
+
+    _filter_p->hide(torf);
+    _filtered_entries_dirty = true;
+    _rbn_threshold_and_filtered_entries_dirty = true;
+  }
+}
+
+/// set or unset the filter to show mode (as opposed to hide)
+void bandmap::filter_show(const bool torf)
+{ if (torf != filter_show())
+  { SAFELOCK(_bandmap);
+
+    _filter_p->hide(!torf);
+    _filtered_entries_dirty = true;
+    _rbn_threshold_and_filtered_entries_dirty = true;
+  }
+}
+
 /// all the entries, after filtering has been applied
 const BM_ENTRIES bandmap::filtered_entries(void)
 { if (!filter_enabled())
@@ -750,7 +800,7 @@ const BM_ENTRIES bandmap::filtered_entries(void)
 }
 
 const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
-{ ost << "inside bandmap::rbn_threshold_and_filtered_entries()" << endl;
+{ // ost << "inside bandmap::rbn_threshold_and_filtered_entries()" << endl;
 
   { SAFELOCK (_bandmap);
 
@@ -780,8 +830,8 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
     }
   }
 
-  ost << "size of filtered = " << filtered.size() << endl;
-  ost << "size of returned = " << rv.size() << endl;
+//  ost << "size of filtered = " << filtered.size() << endl;
+//  ost << "size of returned = " << rv.size() << endl;
 
   _rbn_threshold_and_filtered_entries = rv;
   _rbn_threshold_and_filtered_entries_dirty = false;
@@ -927,12 +977,17 @@ const string bandmap::to_str(void)
 
 /// window < bandmap
 window& operator<(window& win, bandmap& bm)
-{ static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
+{
+//  ost << "starting output of bm" << endl;
+
+  static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
   const size_t maximum_number_of_displayable_entries = (win.width() / COLUMN_WIDTH) * win.height();
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
   const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();    // automatically filter
+//  const BM_ENTRIES entries = bm.filtered_entries();    // automatically filter
+
   const size_t start_entry = (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0;
 
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
@@ -1001,7 +1056,9 @@ window& operator<(window& win, bandmap& bm)
 
     index++;
   }
-  
+
+//  ost << "concluding output of bm" << endl;
+
   return win;
 }
 

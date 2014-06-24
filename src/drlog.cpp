@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 66 2014-06-14 19:22:10Z  $
+// $Id: drlog.cpp 67 2014-06-24 00:51:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2143,22 +2143,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         change = -change;
 
       cw_speed(cw_p->speed() - change);  // effective immediately
-
-/*
-    if (cw_p)
-    { cw_p->speed(cw_p->speed() - change);
-      win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(cw_p->speed()) + " WPM");
-
-      try
-      { if (context.sync_keyer())
-          rig.keyer_speed(cw_p->speed());
-      }
-
-      catch (const rig_interface_error& e)
-      { alert("Error setting CW speed on rig");
-      }
-    }
-*/
     }
 
     processed = true;
@@ -2229,7 +2213,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
         win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
-        win_bandmap <= bm;
         processed = true;
       }
 
@@ -2240,7 +2223,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_hide_colour());
         win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
-        win_bandmap <= bm;
         processed = true;
       }
 
@@ -2250,7 +2232,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_show_colour());
         win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
-        win_bandmap <= bm;
         processed = true;
       }
     }
@@ -2262,9 +2243,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
       win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
-      win_bandmap <= bm;
       processed = true;         //  processed even if haven't been able to do anything with it
     }
+
+    win_bandmap <= bm;
   }
 
 // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
