@@ -259,10 +259,10 @@ window win_band_mode,               ///< the band and mode indicator
        win_message,                 ///< messages from drlog to the user
        win_nearby,                  ///< nearby station
 //       win_note,                    // quick notes to go in the log
-       win_qso_number,              // number of the next QSO
+       win_qso_number,              ///< number of the next QSO
 //       win_qtcs_sent,               // number of QSOs sent as QTCs / total number of QSOs
-       win_qtc_status,
-       win_rate,
+       win_qtc_status,              ///< status of QTCs
+       win_rate,                    ///< QSO and point rates
        win_rbn_line,                ///< last line received from the RBN
        win_remaining_callsign_mults, // the remaining callsign mults
        win_remaining_country_mults, // the remaining country mults
@@ -271,6 +271,7 @@ window win_band_mode,               ///< the band and mode indicator
        win_score,                   // total number of points
        win_score_bands,             // which bands contribute to score
        win_scp,                     // SCP lookups
+       win_scratchpad,              ///< scratchpad
        win_serial_number,           // next serial number (octothorpe)
        win_srate,                   // recent score rates
        win_summary,                 // overview of score
@@ -620,14 +621,12 @@ int main(int argc, char** argv)
 // see if the rig is on the right band and mode (as defined in the configuration file), and if not then move it
     { const frequency rf = rig.rig_frequency();
       const MODE rm = rig.rig_mode();
-
-//    const rig_status rstat = rig.status();
       const bool mode_matches = ((current_mode == MODE_CW and rm == MODE_CW ) or
                                  (current_mode == MODE_SSB and (rm == MODE_SSB )));
       const bool band_matches = (current_band == static_cast<BAND>(rf));
 
-    ost << "current mode = " << current_mode << ", rstat = " << rm << endl;
-    ost << "current band = " << current_band << ", rig = " << static_cast<BAND>(rf) << endl;
+//    ost << "current mode = " << current_mode << ", rstat = " << rm << endl;
+//    ost << "current band = " << current_band << ", rig = " << static_cast<BAND>(rf) << endl;
 
       if (!band_matches or !mode_matches)
       { ost << "mismatch; setting frequency" << endl;
@@ -885,6 +884,10 @@ int main(int argc, char** argv)
 
 // SCP window
   win_scp.init(context.window_info("SCP"), WINDOW_NO_CURSOR);
+
+// SCRATCHPAD window
+  win_scratchpad.init(context.window_info("SCRATCHPAD"), WINDOW_NO_CURSOR);
+  win_scratchpad.enable_scrolling();
 
 // SERIAL NUMBER window
   win_serial_number.init(context.window_info("SERIAL NUMBER"), WINDOW_NO_CURSOR);
@@ -1445,16 +1448,8 @@ void* display_date_and_time(void* vp)
           get<1>(tsss) = filename;
           get<2>(tsss) = qtc_filename;
 
-//          ost << "get<0>(tsss) = " << get<0>(tsss) << endl;
-//          ost << "get<1>(tsss) = " << get<1>(tsss) << endl;
-//          ost << "get<2>(tsss) = " << get<2>(tsss) << endl;
-
-
           try
-          { //ost << "about to create thread" << endl;
-            create_thread(&auto_backup_thread_id, &(attr_detached.attr()), auto_backup, static_cast<void*>(&tsss), "backup");
-            //ost << "after creating thread" << endl;
-            //sleep_for(seconds(5));
+          { create_thread(&auto_backup_thread_id, &(attr_detached.attr()), auto_backup, static_cast<void*>(&tsss), "backup");
           }
 
           catch (const pthread_error& e)
@@ -2000,8 +1995,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
-// need comma and asterisk for rescore options
-  if (!processed and (e.is_char(',') or e.is_char('*')))
+// need comma and asterisk for rescore options, backslash for scratchpad
+  if (!processed and (e.is_char(',') or e.is_char('*') or e.is_char('\\')))
   { win <= e.str();
     processed = true;
   }
@@ -2051,9 +2046,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
 
       cur_band = ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) );    // move up or down one band
-
-//      ost << "new band = " << cur_band << endl;
-//      ost << "new band name = " << BAND_NAME[cur_band] << endl;
 
       safe_set_band(cur_band);
 
@@ -2393,6 +2385,16 @@ ost << "processing command: " << command << endl;
       processed = true;
     }
 
+// send to the scratchpad?
+    if (!processed and contents[0] == '\\')
+    { const string scratchpad_str = substring(hhmmss(), 0, 5) + " " + rig.rig_frequency().display_string() + " " + substring(contents, 1);
+
+      win_scratchpad < WINDOW_SCROLL_UP < WINDOW_BOTTOM_LEFT <= scratchpad_str;
+      win <= WINDOW_CLEAR;
+
+      processed = true;
+    }
+
 // is it a frequency? Could check exhaustively with a horrible regex, but this is clearer and we would have to parse it anyway
 // something like (\+|-)?([0-9]+(\.[0-9]+))
 // if there's a letter, it's not a frequency; otherwise we try to parse as a frequency
@@ -2426,18 +2428,20 @@ ost << "processing command: " << command << endl;
 
               switch (cur_band)
               { case BAND_160 :
-                { if (value < 100)
-                    value = 1800 + value;
-                  else
-                    value = 1000 + value;
+                { //if (value < 100)
+                  //  value = 1800 + value;
+                  //else
+                  //  value = 1000 + value;
+                  value += (value < 100 ? 1800 : 1000);
                   break;
                 }
 
                 case BAND_80 :
-                { if (value < 100)
-                    value = 3500 + value;
-                  else
-                    value = 3000 + value;
+                { //if (value < 100)
+                  //  value = 3500 + value;
+                  //else
+                  //  value = 3000 + value;
+                  value += (value < 100 ? 3500 : 3000);
                   break;
                 }
 
@@ -2445,7 +2449,7 @@ ost << "processing command: " << command << endl;
                 case BAND_20 :
                 case BAND_15 :
                 case BAND_10 :
-                { value = band_edge_in_khz + value;
+                { value += band_edge_in_khz;
                   break;
                 }
 
@@ -2835,7 +2839,6 @@ ost << "processing command: " << command << endl;
         }
 
 // rebuild the history
-//        rebuild_history(logbk, rules, statistics, q_history, time_n_qsos, time_points);
         rebuild_history(logbk, rules, statistics, q_history, rate);
 
 // rescore the log
@@ -2927,29 +2930,25 @@ ost << "processing command: " << command << endl;
 
 // ALT-KP+ -- increment octothorpe
   if (!processed and e.is_alt() and e.symbol() == XK_KP_Add)
-  { octothorpe++;
-    win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(octothorpe);
+  { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
     processed = true;
   }
 
 // ALT-KP- -- decrement octothorpe
   if (!processed and e.is_alt() and e.symbol() == XK_KP_Subtract)
-  { octothorpe--;
-    win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(octothorpe);
+  { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(--octothorpe);
     processed = true;
   }
 
 // CTRL-KP+ -- increment qso number
   if (!processed and e.is_ctrl() and e.symbol() == XK_KP_Add)
-  { next_qso_number++;
-    win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
+  { win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(++next_qso_number), win_qso_number.width());
     processed = true;
   }
 
 // CTRL-KP- -- decrement qso number
   if (!processed and e.is_ctrl() and e.symbol() == XK_KP_Subtract)
-  { next_qso_number--;
-    win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
+  { win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(--next_qso_number), win_qso_number.width());
     processed = true;
   }
 
@@ -2961,9 +2960,9 @@ ost << "processing command: " << command << endl;
                                                                    bm.do_not_add(callsign);
                                                                  } );
 
-    bandmap& bm = bandmaps[safe_get_band()];
+//    bandmap& bm = bandmaps[safe_get_band()];
 
-    win_bandmap <= bm;
+    win_bandmap <= (bandmaps[safe_get_band()]);
 
     processed = true;
   }
