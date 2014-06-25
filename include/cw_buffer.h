@@ -33,10 +33,7 @@ class cw_buffer
 {
 protected:
 
-//  pa_sample_spec _ss;
-//  pa_simple*     _sp;
-
-  parallel_port    _port;
+  parallel_port    _port;               ///< the associated parallel port
 
 /*  positive numbers represent key down
  *  negative numbers represent key up
@@ -44,37 +41,47 @@ protected:
  *
  *  the duration of key up/down is in units in which 100 == the standard length of a dot
 */
-  std::queue<int>   _key_buffer;
-  pt_mutex          _key_buffer_mutex;
+  std::queue<int>   _key_buffer;       ///< the queue of key up/down motions remaining to be executed
+  pt_mutex          _key_buffer_mutex; ///< mutex to allow thread-safe access to <i>_key_buffer</i>
 
-  bool              _aborted;
-  pt_mutex          _abort_mutex;
+  bool              _aborted;          ///< have we received an "abort" command?
+  pt_mutex          _abort_mutex;      ///< mutex to allow thread-safe execution of an "abort" command
 
-  bool              _disabled_cw;    // don't actially send anything
+  bool              _disabled_cw;      ///< whether actual sending is disabled
 
-  unsigned int      _wpm;
-  unsigned int      _usec;           // dot length in microseconds
-  pt_mutex          _speed_mutex;    // mutex for reading/writing speed and ptt delay
+  unsigned int      _wpm;              ///< keyer speed in WPM
+  unsigned int      _usec;             ///< dot length in microseconds
+  pt_mutex          _speed_mutex;      ///< mutex for reading/writing speed and ptt delay
 
-  unsigned int      _ptt_delay;      // milliseconds
+  unsigned int      _ptt_delay;        ///< delay between asserting PTT and transmitting the start of a character, in milliseconds
 
-  pthread_t             _thread_id;      // ID for the thread that plays the buffer
-  static void*          _static_play(void* arg);    // play the buffer
-  void*                 _play(void*);    // play the buffer
-  pt_condition_variable _condvar;        // condvar associated with the play thread
-  pt_mutex              _condvar_mutex;  // mutex associated with the condvar
+  pthread_t             _thread_id;                 ///< ID for the thread that plays the buffer
+  static void*          _static_play(void* arg);    ///< pointer to static function to play the buffer
+  void*                 _play(void*);               ///< pointer to object function to play the buffer
+  pt_condition_variable _condvar;                   ///< condvar associated with the play thread
+  pt_mutex              _condvar_mutex;             ///< mutex associated with the condvar
 
-  rig_interface*        _rigp;           // associated rig
+  rig_interface*        _rigp;                      ///< associated rig
 
-// add an action to the key buffer
+/*!     \brief      Add an action to the key buffer
+        \param  n   coded action
+
+        positive values of <i>n</i> represent key down;
+        negative values represent key up;
+        zero represents the start of an embedded command
+*/
   void _add_action(const int n);
 
 public:
 
-// construct on a parallel port
+/*!     \brief          Construct on a parallel port
+        \param  filename    device file
+        \param  delay       PTT delay (in milliseconds)
+        \param  speed       Speed (in WPM)
+*/
   cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int speed);
 
-// destructor
+/// destructor
   ~cw_buffer(void);
 
 // set the speed in wpm
@@ -143,8 +150,8 @@ public:
 class cw_messages
 {
 protected:
-  std::map<int, std::string > _messages;
-  pt_mutex                    _messages_mutex;
+  std::map<int, std::string > _messages;          ///< sparse vector to hold the messages
+  pt_mutex                    _messages_mutex;    ///< mutex to allow for thread-safe access
 
 public:
 

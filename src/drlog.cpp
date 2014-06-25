@@ -248,7 +248,7 @@ window win_band_mode,               ///< the band and mode indicator
 //       win_cw,
        win_date,                    ///< the date
        win_drlog_mode,              ///< indicate whether in CQ or SAP mode
-       win_dupe_mult,               ///< used to mark dupes and mults when spacebar hit
+//       win_dupe_mult,               ///< used to mark dupes and mults when spacebar hit
        win_exchange,                ///< QSO exchange received from other station
        win_log_extract,             ///< to show prior QSOs
        win_fuzzy,                   ///< fuzzy lookups
@@ -256,10 +256,9 @@ window win_band_mode,               ///< the band and mode indicator
        win_info,                    ///< summary of info about current station being worked
        win_local_time,              ///< window for local time
        win_log,                     ///< main visible log
-       win_message,                 // messages from drlog to the user
+       win_message,                 ///< messages from drlog to the user
+       win_nearby,                  ///< nearby station
 //       win_note,                    // quick notes to go in the log
-//       win_prior_qsos,              // earlier QSOs with the same station
-//       win_qrate,                   // recent QSO rates
        win_qso_number,              // number of the next QSO
 //       win_qtcs_sent,               // number of QSOs sent as QTCs / total number of QSOs
        win_qtc_status,
@@ -341,18 +340,6 @@ pthread_t thread_id_display_date_and_time,
           thread_id_rig_status;
 
 /// define wrappers to pass parameters to threads
-#if 0
-WRAPPER_9_NC(big_cluster_info,
-    drlog_context*, contextp,
-    posting_source*, sourcep
-    window*, wclp,
-    window*, wcmp,
-    dx_cluster*, dcp,
-    running_statistics*, statistics_p,
-    location_database*, location_database_p,
-    window*, win_bandmap_p,
-    BM_ARRAY*, bandmaps_p);
-#endif
 
 WRAPPER_7_NC(cluster_info, 
     window*, wclp,
@@ -760,9 +747,6 @@ int main(int argc, char** argv)
 // DRLOG MODE window
   win_drlog_mode.init(context.window_info("DRLOG MODE"), COLOUR_WHITE, COLOUR_BLACK, WINDOW_NO_CURSOR);
 
-// DUPE/MULT window
-  win_dupe_mult.init(context.window_info("DUPE/MULT"), WINDOW_NO_CURSOR);
-
 // EXCHANGE window
   win_exchange.init(context.window_info("EXCHANGE"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
   win_exchange <= WINDOW_BOLD;
@@ -822,6 +806,9 @@ int main(int argc, char** argv)
 
   if (send_qtcs)
     win_log_extract.process_input_function(process_QTC_input);
+
+// NEARBY window
+  win_nearby.init(context.window_info("NEARBY"), WINDOW_NO_CURSOR);
 
 // NOTE window
 //  win_note.init(context.window_info("NOTE"), WINDOW_INSERT);
@@ -1589,21 +1576,21 @@ void* display_rig_status(void* vp)
           if (!nearby_callsign.empty())
           { const bool dupe = logbk.is_dupe(nearby_callsign, safe_get_band(), safe_get_mode(), rules);
             const bool worked = q_history.worked(nearby_callsign, safe_get_band(), safe_get_mode());
-            const int foreground = win_dupe_mult.fg();  // save the default colours
-            const int background = win_dupe_mult.bg();
+            const int foreground = win_nearby.fg();  // save the default colours
+            const int background = win_nearby.bg();
 
 // in what colour should we display this call?
-            int colour_pair_number = colours.add(win_dupe_mult.fg(), win_dupe_mult.bg());
+            int colour_pair_number = colours.add(win_nearby.fg(), win_nearby.bg());
 
             if (!worked)
-              colour_pair_number = colours.add(COLOUR_GREEN,  win_dupe_mult.bg());
+              colour_pair_number = colours.add(COLOUR_GREEN,  win_nearby.bg());
 
             if (dupe)
-              colour_pair_number = colours.add(COLOUR_RED,  win_dupe_mult.bg());
+              colour_pair_number = colours.add(COLOUR_RED,  win_nearby.bg());
 
-            win_dupe_mult < WINDOW_CLEAR < CURSOR_START_OF_LINE;
-            win_dupe_mult.cpair(colour_pair_number);
-            win_dupe_mult < nearby_callsign <= COLOURS(foreground, background);
+            win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE;
+            win_nearby.cpair(colour_pair_number);
+            win_nearby < nearby_callsign <= COLOURS(foreground, background);
 
             string call_contents = remove_peripheral_spaces(win_call.read());
 
@@ -1632,8 +1619,8 @@ void* display_rig_status(void* vp)
               const int f_diff = abs(be.freq().hz() - f.hz());
 
               if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
-              { if (!win_dupe_mult.empty())
-                  win_dupe_mult <= WINDOW_CLEAR;
+              { if (!win_nearby.empty())
+                  win_nearby <= WINDOW_CLEAR;
 
 //            const string call_contents = remove_peripheral_spaces(win_call.read());
 
@@ -2097,7 +2084,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 //      const string nearby_callsign = bm.nearby_callsign(long_frequency, context.guard_band(cur_mode));
       const string nearby_callsign = bm.nearest_rbn_threshold_and_filtered_callsign(long_frequency, context.guard_band(cur_mode));
 
-      win_dupe_mult < WINDOW_CLEAR < CURSOR_START_OF_LINE <= nearby_callsign;
+      win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE <= nearby_callsign;
 
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, cur_band);
@@ -2747,7 +2734,7 @@ ost << "processing command: " << command << endl;
    {
 // possibly put a bandmap call into the call window
     if (contents.empty() and drlog_mode == SAP_MODE)
-    { const string dupe_contents = remove_peripheral_spaces(win_dupe_mult.read());
+    { const string dupe_contents = remove_peripheral_spaces(win_nearby.read());
 
       if (!dupe_contents.empty())
       { win < CURSOR_START_OF_LINE <= dupe_contents;
@@ -3331,7 +3318,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         win_exchange <= WINDOW_CLEAR;
         win_call <= WINDOW_CLEAR;
-        win_dupe_mult <= WINDOW_CLEAR;
+        win_nearby <= WINDOW_CLEAR;
         win_call_needed <= WINDOW_CLEAR;
         win_country_needed <= WINDOW_CLEAR;
 

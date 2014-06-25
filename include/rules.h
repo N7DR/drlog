@@ -21,6 +21,7 @@
 #include "drlog_context.h"
 #include "macros.h"
 #include "pthread_support.h"
+//#include "qso.h"
 #include "serialization.h"
 
 #include <set>
@@ -31,6 +32,8 @@
 extern pt_mutex  rules_mutex;
 
 typedef std::map<std::string, unsigned int> MSI;
+
+class QSO;
 
 /// Some contest have very complex point structures
 enum points_type { POINTS_NORMAL,                       ///< points defined in configuration file

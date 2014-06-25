@@ -1068,32 +1068,28 @@ const int cpair::bg(const int pair_nr)
   return b;
 }
 
-// -----------  log_window  ----------------
-
-/*!     \class log_window
-        \brief A special class for the log window
-*/
-
-#include "qso.h"
-
-void log_window::operator<(QSO& qso)
-{ (*this) < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
-}
-
 // convert the name of a colour to a colour
 const int string_to_colour(const string& str)
-{ static const map<string, int> colour_map { make_pair("BLACK",   COLOUR_BLACK),
-                                             make_pair("BLUE",    COLOUR_BLUE),
-                                             make_pair("CYAN",    COLOUR_CYAN),
-                                             make_pair("GREEN",   COLOUR_GREEN),
-                                             make_pair("MAGENTA", COLOUR_MAGENTA),
-                                             make_pair("RED",     COLOUR_RED),
-                                             make_pair("WHITE",   COLOUR_WHITE),
-                                             make_pair("YELLOW",  COLOUR_YELLOW)
+{ static const map<string, int> colour_map { //make_pair("BLACK",   COLOUR_BLACK),
+                                             //make_pair("BLUE",    COLOUR_BLUE),
+                                             //make_pair("CYAN",    COLOUR_CYAN),
+                                             //make_pair("GREEN",   COLOUR_GREEN),
+                                             //make_pair("MAGENTA", COLOUR_MAGENTA),
+                                             //make_pair("RED",     COLOUR_RED),
+                                             //make_pair("WHITE",   COLOUR_WHITE),
+                                             //make_pair("YELLOW",  COLOUR_YELLOW)
+                                             { "BLACK",   COLOUR_BLACK },
+                                             { "BLUE",    COLOUR_BLUE },
+                                             { "CYAN",    COLOUR_CYAN },
+                                             { "GREEN",   COLOUR_GREEN },
+                                             { "MAGENTA", COLOUR_MAGENTA },
+                                             { "RED",     COLOUR_RED },
+                                             { "WHITE",   COLOUR_WHITE },
+                                             { "YELLOW",  COLOUR_YELLOW }
                                            };
 
   const string s = to_upper(remove_peripheral_spaces(str));
-  auto cit = colour_map.find(s);
+  const auto cit = colour_map.find(s);
 
   if (cit != colour_map.cend())
     return cit->second;
@@ -1106,14 +1102,18 @@ const int string_to_colour(const string& str)
   if (begins_with(s, "COLOR_"))
     return (from_string<int>(substring(s, 6)));
 
-  bool found_non_digit = false;
-  unsigned int index = 0;
-
-  while (!found_non_digit and index < s.length())
-    found_non_digit = !isdigit(s[index++]);
-
-  if (!found_non_digit)
+//  const bool contains_non_digit = (s.find_first_not_of("0123456789") != string::npos);
+  if (s.find_first_not_of("0123456789") == string::npos)  // if all digits
     return from_string<int>(s);
+
+//  bool found_non_digit = false;
+//  unsigned int index = 0;
+
+//  while (!found_non_digit and index < s.length())
+//    found_non_digit = !isdigit(s[index++]);
+
+//  if (!found_non_digit)
+//    return from_string<int>(s);
 
   return COLOUR_BLACK;
 }

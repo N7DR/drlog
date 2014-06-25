@@ -255,7 +255,7 @@ public:
   READ_AND_WRITE(vertical);
   READ_AND_WRITE(column_width);
   
-  WINDOW* wp(void)
+  inline WINDOW* wp(void)
     { return _wp; }
   
 /// move cursor
@@ -320,9 +320,7 @@ public:
     window& rv = (*this < t);
     
     { SAFELOCK(screen);
-//      SAVE_CURSOR sc(this);
-  
-//      wrefresh(_wp);
+
       refresh();
     }
     
@@ -338,9 +336,7 @@ public:
     window& rv = (*this < t);
     
     { SAFELOCK(screen);
-//      SAVE_CURSOR sc(this);
-  
-//      wrefresh(_wp);
+
       refresh();
     }
     
@@ -465,24 +461,6 @@ template
 
 };
 
-// -----------  log_window  ----------------
-
-/*!     \class log_window
-        \brief A special class for the log window
-*/
-
-class QSO;
-
-class log_window : public window
-{
-protected:
-  std::deque<QSO> _qsos;
-
-public:
-
-  void operator<(QSO& qso);
-};
-
 /// trivial class for moving the cursor
 WRAPPER_2(cursor, int, x, int, y);
 
@@ -532,8 +510,7 @@ public:
 
 
 inline const int FGBG(const int fg, const int bg)
-{ //const int cp = colours.add(fg, bg);
-  return COLOUR_PAIR(colours.add(fg, bg));
+{ return COLOUR_PAIR(colours.add(fg, bg));
 }
 
 // convert the name of a colour to a colour

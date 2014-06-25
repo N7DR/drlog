@@ -172,9 +172,6 @@ const bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
     if (qso_b4(call, b, m))
       rv = true;
 
-//    ost << "OK to work on different band? = " << rules.work_if_different_band() << endl;
-//    ost << "OK to work on different mode? = " << rules.work_if_different_mode() << endl;
-
 // it's a dupe if we've worked before on a different mode and we're not allowed to re-work
     if (!rv and !rules.work_if_different_band())
     { if (qso_b4(call, m))
@@ -203,30 +200,15 @@ const bool logbook::is_dupe(const string& call, const BAND b, const enum MODE m,
   return is_dupe(qso, rules);
 }
 
-/// calculate QSO points (i.e., mults = 1)
-const unsigned int logbook::qso_points(const contest_rules& rules, location_database& location_db) const
-{ unsigned int rv = 0;
-
-  logbook tmp_log;                       // we are going to rebuild a log qso by qso, in order to mark dupes correctly; this assumes that we aren't keeping the dupes properly marked as we go along, which may be a better way to go
-  
-  for (vector<QSO>::const_iterator cit = _log_vec.cbegin(); cit != _log_vec.cend(); ++cit)
-  { if (!tmp_log.is_dupe(*cit, rules))               // if this QSO is not a dupe
-    { rv += rules.points(*cit, location_db);
-      tmp_log += (*cit);                             // add this QSO to the temporary log
-    }
-  }
-  
-  return rv;
-}
-
-/// return time-ordered container of qsos
+/// return time-ordered list of qsos
 const list<QSO> logbook::as_list(void) const
 { list<QSO> rv;
 
   { SAFELOCK(_log);
   
-    for (multimap<string, QSO>::const_iterator cit = _log.begin(); cit != _log.end(); ++cit)
-      rv.push_back(cit->second);
+//    for (multimap<string, QSO>::const_iterator cit = _log.begin(); cit != _log.end(); ++cit)
+//      rv.push_back(cit->second);
+    FOR_ALL(_log, [&rv] (const pair<string, QSO>& q) { rv.push_back(q.second); } );
   }
 
   rv.sort(earlier);    // sorts according to earlier(const QSO&, const QSO&)
@@ -234,7 +216,7 @@ const list<QSO> logbook::as_list(void) const
   return rv;
 }
 
-/// return time-ordered container of qsos
+/// return time-ordered vector of qsos
 const vector<QSO> logbook::as_vector(void) const
 { SAFELOCK(_log);
 
@@ -377,7 +359,7 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
     rv += "CLAIMED-SCORE: " + to_string(score) + LF;   
 
 /* the QSOs. The Cabrillo so-called "specification" provides not even a semblance of a computer-parsable 
-   grammar for QSOs, So a lot of this is guesswork.
+   grammar for QSOs, so a lot of this is guesswork.
    
   CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R TXID:81:1 
 */
@@ -386,10 +368,8 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
   const list<QSO> qsos = as_list();
   const string cabrillo_qso_template = context.cabrillo_qso_template();
   
-//  for (list<QSO>::const_iterator cit = qsos.begin(); cit != qsos.end(); ++cit)
-//  { rv += cit->cabrillo_format(context.cabrillo_qso_template()) + LF;
-//  }
-  for_each(qsos.cbegin(), qsos.cend(), [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + LF; } );
+//  for_each(qsos.cbegin(), qsos.cend(), [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + LF; } );
+  FOR_ALL(qsos, [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + LF; } );
   
 // soapbox
   rv += "SOAPBOX: " + LF;
@@ -409,8 +389,9 @@ const string logbook::trlog_log(const drlog_context& context, const unsigned int
   const list<QSO> qsos = as_list();
   logbook         cumulative;
 
-  for (list<QSO>::const_iterator cit = qsos.begin(); cit != qsos.end(); ++cit)
-  { const QSO& qso = *cit;
+//  for (list<QSO>::const_iterator cit = qsos.begin(); cit != qsos.end(); ++cit)
+  for (const auto& qso : qsos)
+  { //const QSO& qso = *cit;
     string line(80, ' ');
     
 // band
@@ -444,57 +425,6 @@ const string logbook::trlog_log(const drlog_context& context, const unsigned int
       trlog_date += MONTHS[month_number - 1];
     else
       trlog_date += "UNK";
-
-/*    switch (from_string<int>(drlog_date.substr(5, 2)))
-    { case 1:
-        trlog_date += "Jan";
-        break;
-
-      case 2:
-        trlog_date += "Feb";
-        break;
-
-      case 3:
-        trlog_date += "Mar";
-        break;
-
-      case 4:
-        trlog_date += "Apr";
-        break;
-
-      case 5:
-        trlog_date += "May";
-        break;
-
-      case 6:
-        trlog_date += "Jun";
-        break;
-
-      case 7:
-        trlog_date += "Jul";
-       break;
-
-      case 8:
-        trlog_date += "Aug";
-        break;
-
-      case 9:
-        trlog_date += "Sep";
-        break;
-
-      case 10:
-        trlog_date += "Oct";
-        break;
-
-      case 11:
-        trlog_date += "Nov";
-        break;
-
-      case 12:
-        trlog_date += "Dec";
-        break;
-    }
-*/
     
     trlog_date += "-";
     trlog_date += drlog_date.substr(2, 4);
@@ -509,8 +439,7 @@ const string logbook::trlog_log(const drlog_context& context, const unsigned int
 // call
     line.replace(29, 15, qso.call());
     
-// more here... it seems that the format changes as a function of contest, though  
-  
+// more here... it seems that the format changes as a function of contest, though
   
 //   rv += cit->cabrillo_format(context.cabrillo_qso_template()) + LF;
   }
@@ -536,8 +465,9 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   unsigned int last_qso_number = 0; 
    
 // for each QSO line
-  for (unsigned int n = 0; n < lines.size(); ++n)
-  { const string& line = lines[n];
+//  for (unsigned int n = 0; n < lines.size(); ++n)
+  for (const auto& line : lines)
+  { //const string& line = lines[n];
   
 //ost << n << ": " << line << endl;
 //ost << "length of line: " << line.length() << endl;
@@ -560,7 +490,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
 //ost << "len: " << len << endl;
 
-      const string value = (line.length() >= posn + 1 ? remove_peripheral_spaces(line.substr(posn, len)) : "");
+        const string value = (line.length() >= posn + 1 ? remove_peripheral_spaces(line.substr(posn, len)) : "");
   
 //ost << name << ": " << value << endl;
       
@@ -568,64 +498,68 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
         if (name == "FREQ")
         { qso.freq(value);
     
-  unsigned int _frequency = from_string<int>(value);
-  BAND _band;
+          const unsigned int _frequency = from_string<unsigned int>(value);
+          const BAND _band = static_cast<BAND>(frequency(_frequency));
       
-  if (_frequency >= 1800 and _frequency <= 2000)
-      _band = BAND_160;
-    if (_frequency >= 3500 and _frequency <= 4000)
-      _band = BAND_80;
-    if (_frequency >= 7000 and _frequency <= 7300)
-      _band = BAND_40;
-    if (_frequency >= 14000 and _frequency <= 14350)
-      _band = BAND_20;
-    if (_frequency >= 21000 and _frequency <= 21450)
-      _band = BAND_15;
-    if (_frequency >= 28000 and _frequency <= 29700)
-      _band = BAND_10;  
-        qso.band(_band);
+//          if (_frequency >= 1800 and _frequency <= 2000)
+//            _band = BAND_160;
+//          if (_frequency >= 3500 and _frequency <= 4000)
+//            _band = BAND_80;
+//          if (_frequency >= 7000 and _frequency <= 7300)
+//            _band = BAND_40;
+//          if (_frequency >= 14000 and _frequency <= 14350)
+//            _band = BAND_20;
+//          if (_frequency >= 21000 and _frequency <= 21450)
+//            _band = BAND_15;
+//          if (_frequency >= 28000 and _frequency <= 29700)
+//            _band = BAND_10;
+
+          qso.band(_band);
   
-  ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
-  }
+          ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
+        }
       
       
 // mode
         if (name == "MODE")
-  { if (value == "CW")
-      qso.mode(MODE_CW);
-    if (value == "SSB")
-      qso.mode(MODE_SSB);
+        { if (value == "CW")
+            qso.mode(MODE_CW);
+
+          if (value == "SSB")
+            qso.mode(MODE_SSB);
 //    if (value == "RTTY")
 //      qso.mode(MODE_DIGI);
-  }
+        }
 
 // date
         if (name == "DATE")
-    qso.date(value);
+          qso.date(value);
 
 // time
-  if (name == "TIME")
-  { //ost << "TIME: " << value << endl;
+        if (name == "TIME")
+        { //ost << "TIME: " << value << endl;
 
-    if (value.length() == 5)
-      qso.utc(value.substr(0, 2) + value.substr(3, 2));    // handle hh:mm format
-    else
-      qso.utc(value);                                      // hhmm
+          if (value.length() == 5)
+            qso.utc(value.substr(0, 2) + value.substr(3, 2));    // handle hh:mm format
+          else
+            qso.utc(value);                                      // hhmm
 
     //ost << "UTC: " << qso.utc() << endl;
-  }
+        }
 
 // tcall
         if (name == "TCALL")
-    qso.my_call(value);
+          qso.my_call(value);
     
 // transmitted exchange
         if (name.substr(0, 5) == "TEXCH")
-  { const string field_name = name.substr(6);
-    vector<pair<string, string> > current_sent_exchange = qso.sent_exchange(); // do in two steps in order to remove constness of returned value
+        { const string field_name = name.substr(6);
+          vector<pair<string, string> > current_sent_exchange = qso.sent_exchange(); // do in two steps in order to remove constness of returned value
   
-    qso.sent_exchange((current_sent_exchange.push_back(make_pair(field_name, value)), current_sent_exchange)); 
-  }   
+//          qso.sent_exchange((current_sent_exchange.push_back(make_pair(field_name, value)), current_sent_exchange));
+          qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
+
+        }
 
 // rcall
         if (name == "RCALL")
@@ -633,23 +567,15 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
 // received exchange
         if (name.substr(0, 5) == "REXCH")
-  { const string field_name = name.substr(6);
-//    vector<pair<string, string> > current_received_exchange = qso.received_exchange(); // do in two steps in order to remove constness of returned value
-    vector<received_field> current_received_exchange = qso.received_exchange(); // do in two steps in order to remove constness of returned value
+        { const string field_name = name.substr(6);
+          vector<received_field> current_received_exchange = qso.received_exchange(); // do in two steps in order to remove constness of returned value
 
 // should have a function in the QSO class to add a field to the exchange
-//    map<string, string> current_received_exchange = qso.received_exchange();
-//    current_received_exchange.insert(make_pair(field_name, value));
-    current_received_exchange.push_back( { field_name, value, false, false });
-    qso.received_exchange(current_received_exchange);
-
-//    qso.received_exchange((current_received_exchange.push_back(make_pair(field_name, value)), current_received_exchange));
-
-  
-  }   
+          current_received_exchange.push_back( { field_name, value, false, false });
+          qso.received_exchange(current_received_exchange);
+        }
 
 // don't do TXID since we don't really need that (and there's currently nowhere in QSO to put it)
-      
       }
       
 //ost << "Processed QSO" << endl;      
@@ -669,8 +595,9 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
 //ost << "Reading file" << endl;
 
 // for each QSO line
-  for (unsigned int n = 0; n < lines.size(); ++n)
-  { const string& line = lines[n];
+//  for (unsigned int n = 0; n < lines.size(); ++n)
+  for (const auto& line : lines)
+  { //const string& line = lines[n];
   
 //ost << n << ": " << line << endl;
 //ost << "length of line: " << line.length() << endl;
@@ -697,7 +624,7 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
         if (name == "FREQ")
   { qso.freq(value);
     
-  unsigned int _frequency = from_string<int>(value);
+  unsigned int _frequency = from_string<unsigned int>(value);
   BAND _band = to_BAND(_frequency);
 
 /*

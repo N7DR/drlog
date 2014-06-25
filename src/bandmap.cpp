@@ -264,6 +264,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
 
      Returns the lowest-frequency station within the guard band, or the null string if no call is found.
 */
+#if 0
 const string bandmap::_nearby_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
 { const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
   bool finish_looking = false;
@@ -280,7 +281,9 @@ const string bandmap::_nearby_callsign(const BM_ENTRIES& bme, const float target
 
   return string();
 }
+#endif
 
+#if 0
 const vector<string> bandmap::_nearby_callsigns(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
 { const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
   bool finish_looking = false;
@@ -298,16 +301,17 @@ const vector<string> bandmap::_nearby_callsigns(const BM_ENTRIES& bme, const flo
 
   return rv;
 }
+#endif
 
-/*!  \brief Return a callsign close to a particular frequency
+/*!  \brief Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme                     band map entries
      \param target_frequency_in_khz the target frequency, in kHz
      \param guard_band_in_hz        how far from the target to search, in Hz
      \return                        Callsign of a station within the guard band
 
-     Returns the lowest-frequency station within the guard band, or the null string if no call is found.
+     Returns the nearest station within the guard band, or the null string if no call is found.
 */
-const string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
+const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
 { const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
   bool finish_looking = false;
   float smallest_difference = 1000000;
@@ -317,7 +321,7 @@ const string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequen
   { const float difference = cit->freq().kHz() - target_frequency_in_khz;
     const float abs_difference = fabs(difference);
 
-    if (abs_difference <= guard_band_in_khz and (cit->callsign() != MY_MARKER))
+    if ( (abs_difference <= guard_band_in_khz) and (cit->callsign() != MY_MARKER))
     { if (abs_difference < smallest_difference)
       { smallest_difference = abs_difference;
         rv = cit->callsign();

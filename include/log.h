@@ -127,10 +127,7 @@ public:
 
 /// would a QSO be a dupe?
   const bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
-  
-/// calculate QSO points (i.e., mults = 1)
-  const unsigned int qso_points(const contest_rules& rules, location_database& location_db) const;
-  
+
 /// return time-ordered container of qsos
   const std::list<QSO> as_list(void) const;
 
