@@ -261,6 +261,7 @@ public:
 /// move cursor
   window& move_cursor(const int new_x, const int new_y);
   
+/// move cursor
   window& move_cursor(const cursor& c);
   
 /// move cursor relative
@@ -279,11 +280,16 @@ public:
 /// disable scrolling
   inline window& disable_scrolling(void)
     { return scrolling(false); }
-  
+
+/// is scolling enabled?
   inline const bool scrolling(void) const
     { return _scrolling; }
 
-/// scroll -- can't call it 'scroll' because there's a silly ncurses *macro* with the same name
+/*!     \brief          scroll a window
+        \param  n       number of lines to by which to scroll
+
+        Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
+*/
   window& scrollit(const int n_lines);
 
 /// control leaveok
@@ -403,15 +409,17 @@ public:
 /// delete a character within a line
   window& delete_character( const int n, const int line_nr );
 
-// set function to process input
+/// set function used to process input
   inline void process_input_function(WINDOW_PROCESS_INPUT_TYPE pf)
     { _process_input = pf; }
 
+/// process input
   inline void process_input(const keyboard_event& e)
     { if (_process_input)
         _process_input(this, e);
     }
 
+/// is the window empty?
   inline const bool empty(void)
     { return remove_peripheral_spaces(read()).empty(); }
 

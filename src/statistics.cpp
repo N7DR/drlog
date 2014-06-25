@@ -667,13 +667,8 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
 const set<string> running_statistics::worked_callsign_mults(const string& mult_name, const BAND b)
 { SAFELOCK(statistics);
 
-//const set<string> rv = _worked_callsign_mults[static_cast<int>(b)];
-// std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;
-
   if (mult_name == string() and _callsign_multipliers.size() == 1)
-  { //ost << "returning worked callsign mults for " << _callsign_multipliers.cbegin()->first << endl;
     return _callsign_multipliers.cbegin()->second.worked(b);
-  }
 
   const auto& cit = _callsign_multipliers.find(mult_name);
 
@@ -687,25 +682,24 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
 const set<string> running_statistics::worked_country_mults(const BAND b)
 { SAFELOCK(statistics);
 
-//  const set<string> rv = _country_multipliers.worked(static_cast<int>(b));
-
   return ( _country_multipliers.worked(static_cast<int>(b)) );
 }
 
 /// worked exchange mults for a particular band
 const map<string /* field name */, set<string> /* values */ >  running_statistics::worked_exchange_mults(const BAND b)
-{
+{ map<string, set<string> > rv;
 
-//  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  // vector so we can keep the correct order
+  SAFELOCK(statistics);
 
-  map<string, set<string> > rv;
+  FOR_ALL(_exchange_multipliers, [=, &rv] (const pair<string, multiplier>& psm) { rv.insert( { psm.first, psm.second.worked(b) } ); } );
 
-  for (const auto& psm : _exchange_multipliers)
-  { const string& field_name = psm.first;
-    const multiplier& m = psm.second;
 
-    rv.insert( { field_name, m.worked(b) } );
-  }
+//  for (const auto& psm : _exchange_multipliers)
+//  { const string& field_name = psm.first;
+//    const multiplier& m = psm.second;
+//
+//    rv.insert( { field_name, m.worked(b) } );
+//  }
 
   return rv;
 }
@@ -741,12 +735,10 @@ void running_statistics::clear_info(void)
   _n_qsos.fill(0);
   _qso_points.fill(0);
 
-//  _callsign_multipliers.clear();
   for (auto& callsign_m : _callsign_multipliers)
     callsign_m.second.clear();
 
   _country_multipliers.clear();
-//  _exchange_multipliers.clear();
 
 //  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  // vector so we can keep the correct order
   for (size_t n = 0; n < _exchange_multipliers.size(); ++n)

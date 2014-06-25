@@ -996,7 +996,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
   }
 
   if (response_expected and !completed)
-    _error_alert("Incomplete response from rig to cmd: " + cmd + " length of response = " + to_string(rcvd.length()) + " " + rcvd);
+    _error_alert("Incomplete response from rig to cmd: " + cmd + " length = " + to_string(rcvd.length()) + " " + rcvd);
 
   if (response_expected and completed)
     return rcvd;

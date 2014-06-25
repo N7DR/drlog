@@ -642,6 +642,9 @@ void bandmap::not_needed(const string& callsign)
   { be.is_needed(false);
     (*this) += be;                   // this will remove the pre-existing entry
   }
+
+  _filtered_entries_dirty = true;
+  _rbn_threshold_and_filtered_entries_dirty = true;
 }
 
 /*! \brief set the needed country mult status of all calls in a particular country to false
@@ -653,6 +656,9 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
 { SAFELOCK(_bandmap);
 
   for_each(_entries.begin(), _entries.end(), [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+
+  _filtered_entries_dirty = true;
+  _rbn_threshold_and_filtered_entries_dirty = true;
 }
 
 /*! \brief set the needed callsign mult status of all matching callsign mults to false
@@ -675,9 +681,14 @@ void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string
     { const string& callsign = be.callsign();
       const string this_callsign_mult = (*pf)(mult_type, callsign);
 
+      ost << "callsign = " << callsign << ", this_callsign_mult = " << this_callsign_mult << ", callsign_mult_string = " << callsign_mult_string << endl;
+
       if (this_callsign_mult == callsign_mult_string)
 //        be.is_needed_callsign_mult(false);              // be.is_needed_callsign_mult(this_callsign_mult == callsign_mult_string) might work
-        be.remove_callsign_mult(mult_type, callsign_mult_string);
+      { be.remove_callsign_mult(mult_type, callsign_mult_string);
+        _filtered_entries_dirty = true;
+        _rbn_threshold_and_filtered_entries_dirty = true;
+      }
     }
   }
 }
@@ -692,6 +703,9 @@ void bandmap::not_needed_callsign_mult(const std::string& mult_type /* e.g., "WP
 // change status for all entries with this particular callsign mult
   for (auto& be : _entries)
     be.remove_callsign_mult(mult_type, callsign_mult_string);
+
+  _filtered_entries_dirty = true;
+  _rbn_threshold_and_filtered_entries_dirty = true;
 }
 
 void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
@@ -702,6 +716,9 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
 
   for (auto& be : _entries)
     be.remove_exchange_mult(mult_name, mult_value);
+
+  _filtered_entries_dirty = true;
+  _rbn_threshold_and_filtered_entries_dirty = true;
 }
 
 /// enable or disable the filter

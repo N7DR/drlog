@@ -42,14 +42,13 @@ class running_statistics
 {
 protected:
   
-  location_database                                        _location_db;
+  location_database                                  _location_db;          ///< database for location-based lookups
   
-  std::array<unsigned int, N_BANDS>                        _n_dupes;
-  std::array<unsigned int, N_BANDS>                        _n_qsos;
+  std::array<unsigned int, N_BANDS>                  _n_dupes;              ///< number of dupes, per band
+  std::array<unsigned int, N_BANDS>                  _n_qsos;               ///< number of QSOs, per band
+  std::array<unsigned int, N_BANDS>                  _qso_points;           ///< number of QSO poiints, pe rband
 
-  std::array<unsigned int, N_BANDS>                        _qso_points;
-
-  std::set<std::string>                                    _exch_mult_fields;    ///< names of the exch fields that are mults
+  std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
 
 // ALL_BANDS means add to *only* the global set; otherwise add to a band AND to the global set
   void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS);
@@ -183,10 +182,10 @@ protected:
 
 public:
 
-//  void add(const std::string& callsign, const BAND b, const MODE m);
   void operator+=(const QSO& qso);
 
   const bool worked(const std::string& s, const BAND b, const MODE m);
+
   inline const bool worked(const std::string& s, const BAND b)
     { return (worked(s, b, MODE_CW) or worked(s, b, MODE_SSB)); }
 

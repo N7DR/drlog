@@ -21,7 +21,6 @@
 #include "drlog_context.h"
 #include "macros.h"
 #include "pthread_support.h"
-//#include "qso.h"
 #include "serialization.h"
 
 #include <set>
@@ -52,27 +51,27 @@ protected:
 
   std::string _name;                           ///< name of the exchange field
   std::map<std::string,                        /* a canonical field value */
-          std::set                                      /* each equivalent value is a member of the set, including the canonical value */
-            <std::string                                /* indistinguishable legal values */
-            >>  _values;
+          std::set                             /* each equivalent value is a member of the set, including the canonical value */
+            <std::string                       /* indistinguishable legal values */
+            >> _values;
 
 public:
 
+/// default constructor
   exchange_field_values(void)
   { }
 
+/*!     \brief      Construct from useful values
+        \param  nm  Name of exchange field
+        \param  mss Canonical field value, all equivalent values (including canonical value)
+*/
   exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
     _name(nm),
     _values(mss)
   { }
 
   READ_AND_WRITE(name);
-
-  inline const std::map<std::string, std::set<std::string>> values(void) const
-    { return _values; }
-
-  inline void values(const std::map<std::string, std::set<std::string>>& mss)
-    { _values = mss; }
+  READ_AND_WRITE(values);
 
   void add_canonical_value(const std::string& cv);
 

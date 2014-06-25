@@ -3252,14 +3252,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           qso.sent_exchange(sent_exchange);
 
 // build name/value pairs for the received exchange
-        vector<received_field>  received_exchange;
+          vector<received_field>  received_exchange;
 
-        ost << "about to process received exchange" << endl;
+          for (size_t n = 0; n < pexch.n_fields(); ++n)
+          { const bool is_mult_field = rules.is_exchange_mult(pexch.field_name(n));
 
-        for (size_t n = 0; n < pexch.n_fields(); ++n)
-        { const bool is_mult_field = rules.is_exchange_mult(pexch.field_name(n));
-
-          received_exchange.push_back( { pexch.field_name(n), pexch.field_value(n), is_mult_field /* pexch.field_is_mult(n) */, false } );
+            received_exchange.push_back( { pexch.field_name(n), pexch.field_value(n), is_mult_field /* pexch.field_is_mult(n) */, false } );
 
         ost << "added pexch: name = " << pexch.field_name(n) << ", value = " << pexch.field_value(n) << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
 
@@ -3406,95 +3404,84 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // perform any changes to the bandmaps
 
 // if we are in CQ mode, then remove this call if it's present elsewhere in the bandmap ... we assume he isn't CQing and SAPing simultaneously on the same band
+      bandmap& bandmap_this_band = bandmaps[cur_band];
+
       if (drlog_mode == CQ_MODE)
-      { bandmap& bandmap_this_band = bandmaps[cur_band];
-        bandmap_this_band -= qso.callsign();
+      { bandmap_this_band -= qso.callsign();
 
 // possibly change needed status of this call on other bandmaps
         if (!rules.work_if_different_band())
         { for (auto& bmap : bandmaps)
             bmap.not_needed(qso.callsign());
         }
+      }
+      else    // SAP; if we are in SAP mode, we may need to change the work/mult designation in the bandmap
+      {
+// add the stn to the bandmap
+         bandmap_entry be;
+
+         be.freq(rig.rig_frequency());
+         be.callsign(qso.callsign());
+
+         const location_info li = location_db.info(qso.callsign());
+
+         be.canonical_prefix(li.canonical_prefix());
+         be.continent(li.continent());
+         be.band(cur_band);
+         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
+         be.is_needed(false);
+
+         bandmap_this_band += be;
+
+//         bandmap_this_band.not_needed_country_mult(location_db.canonical_prefix(qso.callsign()));
+      }
 
 // callsign mult status
-        if (callsign_mults_used)
-        { if (rules.country_mults_per_band())
-          { for (const auto& callsign_mult_name : rules.callsign_mults())
-            { const string target_value = callsign_mult_value(callsign_mult_name, qso.callsign());
+      if (callsign_mults_used)
+      { if (rules.callsign_mults_per_band())
+        { for (const auto& callsign_mult_name : rules.callsign_mults())
+          { const string target_value = callsign_mult_value(callsign_mult_name, qso.callsign());
 
-              bandmap_this_band.not_needed_callsign_mult(&callsign_mult_value, callsign_mult_name, target_value);
-            }
-          }
-          else
-          { for (const auto& callsign_mult_name : rules.callsign_mults())
-            { const string target_value = callsign_mult_value(callsign_mult_name, qso.callsign());
-
-              for (auto& bmap : bandmaps)
-                bmap.not_needed_callsign_mult(&callsign_mult_value, callsign_mult_name, target_value);
-            }
+            bandmap_this_band.not_needed_callsign_mult(&callsign_mult_value, callsign_mult_name, target_value);
           }
         }
+        else
+        { for (const auto& callsign_mult_name : rules.callsign_mults())
+          { const string target_value = callsign_mult_value(callsign_mult_name, qso.callsign());
+
+            for (auto& bmap : bandmaps)
+              bmap.not_needed_callsign_mult(&callsign_mult_value, callsign_mult_name, target_value);
+          }
+        }
+      }
 
 // country mult status
-        if (country_mults_used)
-        { const string canonical_prefix = location_db.canonical_prefix(qso.callsign());
+      if (country_mults_used)
+      { const string canonical_prefix = location_db.canonical_prefix(qso.callsign());
 
-          if (rules.country_mults_per_band())
-            bandmap_this_band.not_needed_country_mult(canonical_prefix /*, location_db */);
-          else                           // country mults are not per band
-          { for (auto& bmap : bandmaps)
-              bmap.not_needed_country_mult(canonical_prefix);
-          }
+        if (rules.country_mults_per_band())
+          bandmap_this_band.not_needed_country_mult(canonical_prefix /*, location_db */);
+        else                           // country mults are not per band
+        { for (auto& bmap : bandmaps)
+            bmap.not_needed_country_mult(canonical_prefix);
         }
+      }
 
 // exchange mult status
-        if (exchange_mults_used and !exchange_mults_this_qso.empty())
-        { if (rules.exchange_mults_per_band())
-          { for (const auto& pss : exchange_mults_this_qso)
-            { ost << "inside loop for exchange mult: " << pss.first << " with value: " << pss.second << endl;
-              bandmap_this_band.not_needed_exchange_mult(pss.first, pss.second);
-            }
-          }
-          else
-          { for (const auto& pss : exchange_mults_this_qso)
-            { for (auto& bmap : bandmaps)
-                bmap.not_needed_exchange_mult(pss.first, pss.second);
-            }
+      if (exchange_mults_used and !exchange_mults_this_qso.empty())
+      { if (rules.exchange_mults_per_band())
+        { for (const auto& pss : exchange_mults_this_qso)
+            bandmap_this_band.not_needed_exchange_mult(pss.first, pss.second);
+        }
+        else
+        { for (const auto& pss : exchange_mults_this_qso)
+          { for (auto& bmap : bandmaps)
+              bmap.not_needed_exchange_mult(pss.first, pss.second);
           }
         }
-
-        win_bandmap <= bandmap_this_band;
       }
 
-// if we are in SAP mode, we may need to change the work/mult designation in the bandmap
-// TODO -- callsign mult designation in bandmap
-      if (drlog_mode == SAP_MODE)
-      { bandmap& bandmap_this_band = bandmaps[cur_band];
-
-// add the stn to the bandmap
-        bandmap_entry be;
-
-        { be.freq(rig.rig_frequency());
-          be.callsign(qso.callsign());
-
-          const location_info li = location_db.info(qso.callsign());
-
-          be.canonical_prefix(li.canonical_prefix());
-          be.continent(li.continent());
-          be.band(cur_band);
-          be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
-          be.is_needed(false);
-//          be.is_needed_mult(false);
-
-//          ost << "Replacing " << qso.callsign() << " in bandmap" << endl;
-
-          bandmap_this_band += be;
-
-          bandmap_this_band.not_needed_country_mult(location_db.canonical_prefix(qso.callsign()) /*, location_db */);
-
-          win_bandmap <= bandmap_this_band;
-        }
-      }
+      win_bandmap <= bandmap_this_band;
 
 // keep track of QSO number
           win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
@@ -3502,6 +3489,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
 
           display_call_info(qso.callsign(), DO_NOT_DISPLAY_EXTRACT);
+
+
         } // end pexch.valid()
         else  // unable to parse exchange
           alert("Unable to parse exchange");

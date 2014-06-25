@@ -39,7 +39,7 @@ extern message_stream ost;
 
 void exchange_field_values::add_canonical_value(const std::string& cv)
 { if (_values.find(cv) == _values.end())
-    _values.insert( { cv, set<string>({ cv }) } );
+    _values.insert( { cv, set<string>( { cv } ) } );
 }
 
 // adds canonical value if it doesn't already exist
@@ -68,7 +68,8 @@ const set<std::string> exchange_field_values::values(const string& cv) const
 const set<string> exchange_field_values::canonical_values(void) const
 { set<string> rv;
 
-  for_each(_values.cbegin(), _values.cend(), [&rv] (const pair<string, set<string>>& psss) { rv.insert(psss.first); } );
+//  for_each(_values.cbegin(), _values.cend(), [&rv] (const pair<string, set<string>>& psss) { rv.insert(psss.first); } );
+  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& psss) { rv.insert(psss.first); } );
 
   return rv;
 }
@@ -124,7 +125,8 @@ const vector<exchange_field> exchange_field::expand(void) const
   for (const auto& this_choice : _choice)
   { const vector<exchange_field>& vec = this_choice.expand();   // recursive
 
-    copy(vec.cbegin(), vec.cend(), back_inserter(rv));          // append to rv
+//    copy(vec.cbegin(), vec.cend(), back_inserter(rv));          // append to rv
+    COPY_ALL(vec, back_inserter(rv));          // append to rv
   }
 
   return rv;
@@ -171,7 +173,7 @@ points_structure::points_structure(void) :
         This object should be created and initialized early, and from that
         point it should be treated as read-only. Being paranoid, though, there's still lots of
         internal locking, since there are ongoing debates about the true thread safety of
-        strings in libstc++.
+        strings in libstdc++.
 */
 
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
@@ -217,15 +219,19 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
 
         Uses the variable <i>_exch_values</i> to obtain the returned value
 */
-const set<string> contest_rules::_all_exchange_values(const string& field_name) const           ///< all the understood values for a particular exchange field
+const set<string> contest_rules::_all_exchange_values(const string& field_name) const
 { SAFELOCK(rules);
 
-  for (const auto& exch_value : _exch_values)
-  { if (exch_value.name() == field_name)
-      return exch_value.all_values();
-  }
+  const auto cit = find_if(_exch_values.cbegin(), _exch_values.cend(), [=] (const exchange_field_values& efv) { return (efv.name() == field_name); } );
 
-  return set<string>();
+  return ( (cit == _exch_values.cend()) ? set<string>() : cit->all_values() );
+
+//  for (const auto& exch_value : _exch_values)
+//  { if (exch_value.name() == field_name)
+//      return exch_value.all_values();
+//  }
+
+//  return set<string>();
 }
 
 const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchange_fields , const vector<string>& exchange_mults_vec) const
@@ -973,6 +979,31 @@ const bool contest_rules::is_exchange_mult(const string& name) const
 
 extern location_database location_db;
 
+/*
+ *  1. A PREFIX is the letter/numeral combination which forms the first part of the amateur call.
+ *  Examples: N8, W8, WD8, HG1, HG19, KC2, OE2, OE25, LY1000, etc. Any difference in the numbering,
+ *  lettering, or order of same shall count as a separate prefix. A station operating from a DXCC
+ *  entity different from that indicated by its call sign is required to sign portable. The portable
+ *  prefix must be an authorized prefix of the country/call area of operation. In cases of portable
+ *  operation, the portable designator will then become the prefix. Example: N8BJQ operating from
+ *  Wake Island would sign N8BJQ/KH9 or N8BJQ/NH9. KH6XXX operating from Ohio must use an authorized
+ *  prefix for the U.S. 8th district (/W8, /AD8, etc.). Portable designators without numbers will be
+ *  assigned a zero (Ø) after the second letter of the portable designator to form the prefix.
+ *  Example: PA/N8BJQ would become PAØ. All calls without numbers will be assigned a zero (Ø) after
+ *  the first two letters to form the prefix. Example: XEFTJW would count as XEØ. Maritime mobile,
+ *  mobile, /A, /E, /J, /P, or other license class identifiers do not count as prefixes.
+ *
+ *  I wish that they would provide an algorithm; the above is pretty silly (what about G/<call>; I'm sure that's
+ *  supposed to be G0, but the above doesn't say that, since there is only one letter in the "portable designator";
+ *  it's also easy to construct cases to which the above isn't clearly intended to apply: surely they can't really
+ *  intend that HB/<call> is to be scored as HB0, or OH/<call> as OH0, etc. But that's what it says.
+ *
+ *  They must have an algorithm in use in the log checking software, so why isn't public? I don't understand
+ *  what is served by keeping the actual algorithm secret and instead publishing an ambiguous and incomplete
+ *  description.
+ *
+ */
+
 const string wpx_prefix(const string& call)
 {
 // callsign has to contain three characters
@@ -1026,11 +1057,11 @@ const string wpx_prefix(const string& call)
   }
 
 // we have a (meaningful) slash in the call
-  string left = substring(callsign, 0, slash_posn);
-  string right = substring(callsign, slash_posn + 1);
+  const string left = substring(callsign, 0, slash_posn);
+  const string right = substring(callsign, slash_posn + 1);
 
-  size_t left_size = left.size();
-  size_t right_size = right.size();
+  const size_t left_size = left.size();
+  const size_t right_size = right.size();
 
   if (left_size == right_size)
   { const string left_canonical_prefix = location_db.canonical_prefix(left);
@@ -1060,90 +1091,6 @@ const string wpx_prefix(const string& call)
 //  return substring(designator, 0, min(callsign.length(), last_digit_posn + 1));
   return rv;
 }
-
-
-/*
-#if 0
-Determine the WPX prefix from the call
-' A PREFIX is the letter/numeral combination which form the first part of
-' the amateur call. Examples: N8, W8, WD8, HG1, HG19, KC2, OE2, OE25, etc. Any
-' difference in the numbering, lettering, or order of same shall constitute a
-' separate prefix. A station operating from a DXCC country different from that
-' indicated by its callsign is required to sign portable. The portable prefix
-' must be an authorized prefix of the country/call area of operation. In cases
-' of portable operation, the portable designator will then become the prefix.
-' Example N8BJQ operating from Wake Island would sign N8BJQ/KH9 or N8BJQ/NH9.
-' KH6XXX operating from Ohio must use an authorized prefix for the US 8th
-' district (W8, K8, etc.) Portable designators without numbers will be assigned
-' a zero (0) after the second letter of the portable designator to form the
-' prefix. Example: N8BJQ/PA would become PA0. All calls without numbers will
-' be assigned a zero (0) after the first two letters to form the prefix.
-' Example XEFTJW would count as XE0. Maritime mobile, mobile, /A, /E, /J, /P
-' or interim license class identifiers do not count as prefixes.
-
-   Dim szWpx As String
-   Dim szBuf As String
-   Dim iPos As Long
-   Dim szLeft As String
-   Dim szRight As String
-
-   szCall = UCase$(szCall)
-
-   If Len(szCall) < 2 Then
-       WpxPrefixFromCall = ""
-       Exit Function
-   End If
-
-   szCall = CallExceptions(szCall) ' trim off funky suffixes
-
-   ' Modified the autoWPX routine to work like CT9.  If there is a "/" in
-   ' the callsign perform the autocountry of whichever string length is shorter.
-   ' If they are the same length, take the call on the left.  Thus
-   ' AH6PN/HR6 will report as HR6
-
-   iPos = InStr(szCall, "/")
-   If iPos > 0 Then
-       szLeft = Left$(szCall, iPos - 1)
-       szRight = Right$(szCall, Len(szCall) - iPos)
-       If Len(szLeft) > Len(szRight) And Not IsNumeric(szRight) Then
-           szBuf = szRight
-       Else
-           szBuf = szLeft
-       End If
-   Else
-       szBuf = szCall
-   End If
-
-   If Len(szBuf) < 2 Then
-       Exit Function
-   End If
-   szWpx = Left$(szBuf, 2)
-   szBuf = Right$(szBuf, Len(szBuf) - 2)
-
-   Do While Left$(szBuf, 1) Like "#"
-       szWpx = szWpx & Left$(szBuf, 1)
-       szBuf = Right$(szBuf, Len(szBuf) - 1)
-   Loop
-
-   If Left$(szBuf, 1) = "/" And Not Right$(szWpx, 1) Like "#" Then
-       szWpx = szWpx & "0"
-   End If
-
-   If Len(szRight) = 1 And IsNumeric(szRight) Then
-       szWpx = Left$(szWpx, Len(szWpx) - 1) & szRight
-   End If
-
-   ' Only return a WPX if the last character is a number
-   If Right$(szWpx, 1) Like "#" Then
-       WpxPrefixFromCall = UCase$(szWpx)
-   ElseIf Len(szWpx) = 2 Then
-       WpxPrefixFromCall = szWpx & "0"
-   Else
-       WpxPrefixFromCall = ""
-   End If
-End Function
-#endif
-*/
 
 /*! \brief  The SAC prefix for a particular call
     \param  call         call for which the prefix is to be calculated

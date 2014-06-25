@@ -722,14 +722,16 @@ public:
   }
 };
 
-//template<class InputIterator, class Function>
-//  Function FOR_ALL(const InputIterator first, const InputIterator last, Function fn)
-//{ return (for_each(first.cbegin(), first.cend(), fn));
-//}
-
 template<class Input, class Function>
   Function FOR_ALL(Input first, Function fn)
 { return (for_each(first.begin(), first.end(), fn));
+}
+
+//copy(vec.cbegin(), vec.cend(), back_inserter(rv));          // append to rv
+
+template<class Input, class OutputIterator>
+  OutputIterator COPY_ALL(Input first, OutputIterator oi)
+{ return (copy(first.begin(), first.end(), oi));
 }
 
 // ------------------------ container for per-band and per-mode information ------------

@@ -428,8 +428,8 @@ class bandmap
 {
 protected:
 
-  bool                      _filtered_entries_dirty;                               ///< are the two filtered versions dirty?
-  bool                      _rbn_threshold_and_filtered_entries_dirty;                               ///< are the two filtered versions dirty?
+  bool                      _filtered_entries_dirty;                               ///< is the filtered version dirty?
+  bool                      _rbn_threshold_and_filtered_entries_dirty;             ///< is the RBN threshold and filtered version dirty?
   
   BM_ENTRIES                _entries;                             ///< all the entries
   BM_ENTRIES                _filtered_entries;                    ///< all the entries
