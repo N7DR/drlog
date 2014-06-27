@@ -1350,10 +1350,6 @@ int main(int argc, char** argv)
 
       const keyboard_event e = keyboard.pop();
 
-//    ost << "got event string: " << e.str() << endl;
-//    ost << "  state = " << e.xkey_state() << endl;
-//    ost << "  time = " << e.xkey_time() << endl;
-
       win_active_p -> process_input(e);
     }
   }
@@ -1436,14 +1432,6 @@ void* display_date_and_time(void* vp)
           const string directory = context.auto_backup();
           const string qtc_filename = (context.qtcs() ? context.qtc_filename() : string());
 
-//          ost << "before creating thread" << endl;
-//          ost << "directory = " << directory << endl;
-//          ost << "filename = " << filename << endl;
-//          ost << "qtc_filename = " << qtc_filename << endl;
-
-
-//          pss.first = filename;
-//          pss.second = directory;
           get<0>(tsss) = directory;
           get<1>(tsss) = filename;
           get<2>(tsss) = qtc_filename;
@@ -1520,10 +1508,6 @@ void* display_rig_status(void* vp)
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
       const string status_str = (rig_status_thread_parameters.rigp())->raw_command("IF;", 38);          // K3 returns 38 characters
 
-//    ost << "status_str = " << status_str << endl;
-
-//      static frequency last_frequency;
-
       if (status_str.length() == 38)
       { const frequency f(from_string<unsigned int>(substring(status_str, 2, 11)));
         const frequency target = SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency);
@@ -1538,11 +1522,12 @@ void* display_rig_status(void* vp)
         const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
 
         if ( (current_drlog_mode == CQ_MODE) and (last_drlog_mode == CQ_MODE) and (target != f) )
-        { //ost << "entering SAP mode" << endl;
           enter_sap_mode();
-        }
 
         last_drlog_mode = current_drlog_mode;
+
+//        ost << "f.display_string() = " << f.display_string() << endl;
+//        ost << "be.freq().display_string() = " << be.freq().display_string() << endl;
 
 // possibly update bandmap entry and nearby callsign, if any
         if (f.display_string() != be.freq().display_string())  // redraw if moved > 100 Hz
@@ -1565,8 +1550,9 @@ void* display_rig_status(void* vp)
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
-//          const string nearby_callsign = bandmap_this_band.nearby_filtered_callsign(f.khz(), context.guard_band(m));
           const string nearby_callsign = bandmap_this_band.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
+
+ //         ost << "nearby callsign = " << nearby_callsign << " at " << f.display_string() << endl;
 
           if (!nearby_callsign.empty())
           { const bool dupe = logbk.is_dupe(nearby_callsign, safe_get_band(), safe_get_mode(), rules);
@@ -1602,8 +1588,10 @@ void* display_rig_status(void* vp)
 
 //              ost << "last_call_inserted_with_space = " << last_call_inserted_with_space
 
-              if (call_contents == last_call)
+              if (call_contents != last_call)
+              { //ost << "clearing CALL window because call_contents != last_call" << endl;
                 win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+              }
             }
           }
           else    // no nearby callsign
@@ -1615,7 +1603,10 @@ void* display_rig_status(void* vp)
 
               if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
               { if (!win_nearby.empty())
+                { // ost << "f_diff = " << f_diff << ", guard band = " << context.guard_band(m) << endl;
+                  // ost << "clearing CALL window of " << win_call.read() << endl;
                   win_nearby <= WINDOW_CLEAR;
+                }
 
 //            const string call_contents = remove_peripheral_spaces(win_call.read());
 
@@ -1660,10 +1651,7 @@ void* display_rig_status(void* vp)
             break;
         }
 
-//        ost << "mode_char = " << mode_char << "; mode_str = " << mode_str << endl;
-//        ost << "frequency = " << f.display_string() << endl;
-
-            static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
+        static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
 
         bool rit_is_on = status_str[RIT_ENTRY] == '1';
         string rit_str;

@@ -332,6 +332,9 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
       finish_looking = true;
   }
 
+//  if (finish_looking and !rv.empty())
+//    ost << "nearest callsign to " << target_frequency_in_khz << " is " << rv << ", with abs(difference) = " << smallest_difference << endl;
+
   return rv;
 }
 

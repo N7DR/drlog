@@ -996,10 +996,12 @@ extern location_database location_db;
  *  I wish that they would provide an algorithm; the above is pretty silly (what about G/<call>; I'm sure that's
  *  supposed to be G0, but the above doesn't say that, since there is only one letter in the "portable designator";
  *  it's also easy to construct cases to which the above isn't clearly intended to apply: surely they can't really
- *  intend that HB/<call> is to be scored as HB0, or OH/<call> as OH0, etc. But that's what it says.
+ *  intend that HB/<call> is to be scored as HB0, or OH/<call> as OH0, etc. But that's what it says. (Well, actually,
+ *  it doesn't even say that, since it says "zero" (i.e., U+0030), but then uses U+00D8 in the example; one is left
+ *  trying to guess from this mess what they might have meant.)
  *
  *  They must have an algorithm in use in the log checking software, so why isn't public? I don't understand
- *  what is served by keeping the actual algorithm secret and instead publishing an ambiguous and incomplete
+ *  what is served by keeping the actual algorithm secret and publishing instead an ambiguous and incomplete
  *  description.
  *
  */

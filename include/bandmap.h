@@ -616,6 +616,7 @@ public:
 /// all the entries, after filtering has been applied
   const BM_ENTRIES filtered_entries(void);
 
+  /// all the entries, after the RBN threshold and filtering have been applied
   const BM_ENTRIES rbn_threshold_and_filtered_entries(void);
 
 /// the current column offset
@@ -628,43 +629,19 @@ public:
       _column_offset = n;
     }
 
-/*!  \brief Return a callsign close to a particular frequency
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
+/*!  \brief Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
+     \param target_frequency_in_khz target frequency, in kHz
+     \param guard_band_in_hz        guard band, in Hz
+     \return    Closest bandmap entry (if any) to the target frequency and within the guard band
 
-     Returns the lowest-frequency station within the guard band, or the null string if no call is found.
+     Applies filtering and the RBN threshold before searching for the station. Returns the
+     empty string if no station was found within the guard band.
 */
-//  const std::string nearby_callsign(const float target_frequency_in_khz, const int guard_band_in_hz);
-//    inline const std::string nearby_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-//      { SAFELOCK(_bandmap);
-//        return _nearby_callsign(_entries, target_frequency_in_khz, guard_band_in_hz);
-//      }
-
-//    inline const std::vector<std::string> nearby_callsigns(const float target_frequency_in_khz, const int guard_band_in_hz)
-//      { SAFELOCK(_bandmap);
-//        return _nearby_callsigns(_entries, target_frequency_in_khz, guard_band_in_hz);
-//      }
-
-/*!  \brief Return a callsign close to a particular frequency, using the filtered version of the bandmap
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
-
-     Returns the lowest-frequency station within the guard band, or the null string if no call is found.
-*/
-//    const std::string nearby_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz);
-//    inline const std::string nearby_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-//      { return _nearby_callsign(filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
-
-//    inline const std::vector<std::string> nearby_filtered_callsigns(const float target_frequency_in_khz, const int guard_band_in_hz)
-//      { return _nearby_callsigns(filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
-
     inline const std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
       { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
-/*!  \brief Find the next needed station up or down in frequency from the current loction
-     \param fp      pointer to function to be used to determine whather a station is needed
+/*!  \brief Find the next needed station up or down in frequency from the current location
+     \param fp      pointer to function to be used to determine whether a station is needed
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
 
@@ -720,6 +697,7 @@ public:
       _do_not_add.erase(callsign);
     }
 
+/// convert to a printable string
   const std::string to_str(void);
 
 /// serialize using boost
@@ -735,6 +713,7 @@ public:
 /// window < bandmap
 window& operator<(window& win, bandmap& bm);
 
-std::ostream& operator<<(std::ostream& ost, bandmap& be);
+/// ostream << bandmap
+std::ostream& operator<<(std::ostream& ost, bandmap& bm);
 
 #endif    // BANDMAP_H
