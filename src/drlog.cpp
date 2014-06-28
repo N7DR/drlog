@@ -2476,7 +2476,7 @@ ost << "processing command: " << command << endl;
 
 // don't treat as a call if it contains weird characters
     if (!processed)
-      processed = (contents.find_first_not_of("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/") != string::npos);
+      processed = (contents.find_first_not_of("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/?") != string::npos);
 
 // assume it's a call
     if (!processed)

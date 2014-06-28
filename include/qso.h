@@ -65,8 +65,8 @@ protected:
 
   std::string  _prefix;            ///< prefix, according to the contest's definition
 
-  std::vector<std::pair<std::string, std::string> >           _sent_exchange;                  ///< vector<pair<name, value>>; names do not include the TEXCH-
-  std::vector<received_field>                                 _received_exchange;              ///< names do not include the REXCH-
+  std::vector<std::pair<std::string, std::string> >           _sent_exchange;       ///< vector<pair<name, value>>; names do not include the TEXCH-
+  std::vector<received_field>                                 _received_exchange;   ///< names do not include the REXCH-
 
   std::vector<std::string>  _log_line_fields;       ///< separate fields from the log line
 
@@ -176,9 +176,10 @@ public:
   inline const std::string sent_exchange_field(const std::string& field_name) const
     { return sent_exchange(field_name); }
 
-// does the sent exchange include a particular field?
+/// does the sent exchange include a particular field?
   const bool sent_exchange_includes(const std::string& field_name);
 
+/// convert to a string suitable for display in the log window
   const std::string log_line(void);
 
 /// read fields from a log_line
