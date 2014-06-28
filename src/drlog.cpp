@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 67 2014-06-24 00:51:24Z  $
+// $Id: drlog.cpp 68 2014-06-28 15:42:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2416,20 +2416,12 @@ ost << "processing command: " << command << endl;
 
               switch (cur_band)
               { case BAND_160 :
-                { //if (value < 100)
-                  //  value = 1800 + value;
-                  //else
-                  //  value = 1000 + value;
-                  value += (value < 100 ? 1800 : 1000);
+                { value += (value < 100 ? 1800 : 1000);
                   break;
                 }
 
                 case BAND_80 :
-                { //if (value < 100)
-                  //  value = 3500 + value;
-                  //else
-                  //  value = 3000 + value;
-                  value += (value < 100 ? 3500 : 3000);
+                { value += (value < 100 ? 3500 : 3000);
                   break;
                 }
 
@@ -2481,6 +2473,10 @@ ost << "processing command: " << command << endl;
         processed = true;
       }
     }
+
+// don't treat as a call if it contains weird characters
+    if (!processed)
+      processed = (contents.find_first_not_of("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/") != string::npos);
 
 // assume it's a call
     if (!processed)

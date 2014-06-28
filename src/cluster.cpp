@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 61 2014-05-03 16:34:34Z  $
+// $Id: cluster.cpp 68 2014-06-28 15:42:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -349,6 +349,10 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 // just in case we've somehow got here and don't have a call, but think we're valid
   if (_callsign.empty())
     _valid = false;
+
+// sanity check for the callsign
+  if (_valid)
+    _valid = (_callsign.find_first_not_of("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/") == string::npos);
 
 // add the band
   if (_valid)

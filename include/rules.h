@@ -1,4 +1,4 @@
-// $Id: rules.h 67 2014-06-24 00:51:24Z  $
+// $Id: rules.h 68 2014-06-28 15:42:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -73,18 +73,34 @@ public:
   READ_AND_WRITE(name);
   READ_AND_WRITE(values);
 
+/*!     \brief      Add a canonical value
+        \param  cv  canonical value to add
+
+        Also adds <i>cv</i> as a possible value
+*/
   void add_canonical_value(const std::string& cv);
 
-// adds canonical value if it doesn't already exist
+/*!     \brief      Add a possible value
+        \param  cv  canonical value to which <i>v</i> is to be added
+        \param  v   value to be added
+
+        Also adds <i>cv</i> as a canonical value if it does not already exist
+*/
   void add_value(const std::string& cv, const std::string& v);
 
-// number of values for a single canonical value
-// returns 0 if the canonical value does not exist
+/*!     \brief      Number of possible values for a particular canonical value
+        \param  cv  canonical value
+        \return     number of possible values for the canonical value <i>cv</i>
+
+        Returns 0 if the canonical value does not exist
+*/
   const size_t n_values(const std::string& cv) const;
 
+/// Get the number of canonical values
   inline const size_t n_canonical_values(void) const
     { return _values.size(); }
 
+/// Get all the canonical values
   const std::set<std::string> canonical_values(void) const;
 
 // values for a single canonical value

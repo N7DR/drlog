@@ -1,4 +1,4 @@
-// $Id: bandmap.h 65 2014-06-07 17:15:04Z  $
+// $Id: bandmap.h 68 2014-06-28 15:42:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -548,25 +548,22 @@ public:
 
 /*! \brief set the needed country mult status of all calls in a particular country to false
     \param  canonical_prefix    canonical prefix corresponding to country for which the status should be set
-    \param  location_db         location database derived from CTY file
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
 */
-//  void not_needed_country_mult(const std::string& canonical_prefix, location_database& location_db);
-
   void not_needed_country_mult(const std::string& canonical_prefix);
-
-//  typedef
 
 /*! \brief set the needed callsign mult status of all calls in a particular country to false
     \param  pf          pointer to function to return the callsign mult value
+    \param  mult_type   name of the callsign multiplier
     \param  callsign_mult_string value of callsign mult value that is no longer a multiplier
-
-    Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
 */
   void not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
                                 const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., SM1 */);
 
+/*! \brief set the needed callsign mult status of all calls in a particular country to false
+    \param  target_values   vector of target multiplier names and values
+*/
   void not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
                                 const std::vector<std::pair<std::string /* e.g., "WPXPX" */, std::string /* e.g., SM1 */>>& target_values);
 
@@ -616,10 +613,10 @@ public:
 /// all the entries, after filtering has been applied
   const BM_ENTRIES filtered_entries(void);
 
-  /// all the entries, after the RBN threshold and filtering have been applied
+/// all the entries, after the RBN threshold and filtering have been applied
   const BM_ENTRIES rbn_threshold_and_filtered_entries(void);
 
-/// the current column offset
+/// get the column offset
   inline int column_offset(void) const
     { return _column_offset; }
 
