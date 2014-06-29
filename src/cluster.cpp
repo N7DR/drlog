@@ -38,6 +38,10 @@ pt_mutex rbn_buffer_mutex;
 
 // -----------  dx_cluster  ----------------
 
+/*! \brief  constructor
+    \param  context  the drlog context
+    \param  src      whether this is a real DX cluster or the RBN
+*/
 dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _server(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server()),
   _port(src == POSTING_CLUSTER ? context.cluster_port() : context.rbn_port()),
@@ -91,6 +95,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
     _connection.send("sh/dx/100" + CRLF);
 }
 
+/// destructor
 dx_cluster::~dx_cluster(void)
 { _connection.send("BYE" + CRLF);
   
@@ -99,6 +104,7 @@ dx_cluster::~dx_cluster(void)
   }
 }
 
+/// process a read error
 void dx_cluster::_process_error(void)
 {
 new_socket:
@@ -158,17 +164,18 @@ reconnect:
   }
 }
 
+/// reset the cluster socket
 void dx_cluster::reset(void)
 { ost << "Attempting to reset connection" << endl;
   _process_error();
   ost << "Completed reset of connection" << endl;
 }
 
+/*! \brief  read from the cluster socket
+    \return the current bytes waiting on the cluster socket
+*/
 const string dx_cluster::read(void)
-{ //try
-  //{
-//    ost << "About to read the connection" << endl;
-  string buf;
+{ string buf;
     
   try
   { buf = _connection.read(_timeout);

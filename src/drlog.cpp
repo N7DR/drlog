@@ -1495,7 +1495,9 @@ void* display_rig_status(void* vp)
 
   while (true)
   { try
-    { try
+    { const bool in_call_window = (win_active_p = &win_call);  // never update call window if we aren't in it
+
+      try
       { while ( rig_status_thread_parameters.rigp()-> is_transmitting() )                     // don't poll when transmitting
           sleep_for(microseconds(microsecond_poll_period / 10));
       }
@@ -1573,29 +1575,31 @@ void* display_rig_status(void* vp)
             win_nearby.cpair(colour_pair_number);
             win_nearby < nearby_callsign <= COLOURS(foreground, background);
 
-            string call_contents = remove_peripheral_spaces(win_call.read());
+            if (in_call_window)
+            { string call_contents = remove_peripheral_spaces(win_call.read());
 
-            if (!call_contents.empty())
-            { if (last(call_contents, 5) == " DUPE")
-                call_contents = call_contents.substr(0, call_contents.length() - 5);    // reduce to actual call
+              if (!call_contents.empty())
+              { if (last(call_contents, 5) == " DUPE")
+                  call_contents = call_contents.substr(0, call_contents.length() - 5);    // reduce to actual call
 
-              string last_call;
+                string last_call;
 
-              { SAFELOCK(dupe_check);
+                { SAFELOCK(dupe_check);
 
-                last_call = last_call_inserted_with_space;
-              }
+                  last_call = last_call_inserted_with_space;
+                }
 
 //              ost << "last_call_inserted_with_space = " << last_call_inserted_with_space
 
-              if (call_contents != last_call)
-              { //ost << "clearing CALL window because call_contents != last_call" << endl;
-                win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+                if (call_contents != last_call)
+                { //ost << "clearing CALL window because call_contents != last_call" << endl;
+                  win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+                }
               }
             }
           }
           else    // no nearby callsign
-          { if (win_active_p == &win_call)  // don't change anything if we've moved out of the CALL window
+          { if (in_call_window)
 // see if we are within twice the guard band before we clear the call window
             { const string call_contents = remove_peripheral_spaces(win_call.read());
               const bandmap_entry be = bandmap_this_band[call_contents];

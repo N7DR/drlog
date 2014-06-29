@@ -68,7 +68,7 @@ public:
 */
   const QSO operator[](const size_t n) const;
 
-// return most recent qso
+/// return the most recent qso
   inline const QSO last_qso(void) const
     { SAFELOCK(_log);
       return ( (*this)[size()] );
@@ -119,7 +119,7 @@ public:
 /// has a call been worked on a particular band and mode?
   const bool qso_b4(const std::string& call, const BAND b, const MODE m) const;
   
-/// a string list of bands on which a call is needed
+/// return all the bands on which a call is needed
   const std::string call_needed(const std::string& call, const contest_rules& rules) const;
   
 /// would a QSO be a dupe?
@@ -128,10 +128,10 @@ public:
 /// would a QSO be a dupe?
   const bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
 
-/// return time-ordered container of qsos
+/// return time-ordered container of QSOs
   const std::list<QSO> as_list(void) const;
 
-/// return time-ordered container of qsos
+/// return time-ordered container of QSOs
   const std::vector<QSO> as_vector(void) const;
   
 //  template <typename T>
@@ -148,7 +148,13 @@ public:
 //    return rv;
 //  }
 
-template <class UnaryPredicate>
+/*!     \brief          Return the QSOs, filtered by some criterion
+        \param  pred    predicate to apply
+        \return         The QSOs for which <i>pred</i> is true
+
+        The returned QSOs are in chronological order
+*/
+  template <class UnaryPredicate>
   const std::vector<QSO> filter(UnaryPredicate pred) const
   { std::vector<QSO> rv;
 
