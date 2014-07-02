@@ -1717,7 +1717,7 @@ void* process_rbn_info(void* vp)
   location_database& location_db = *(cip->location_database_p());    // database of locations
   window& bandmap_win = *(cip->win_bandmap_p());                     // bandmap window
   array<bandmap, NUMBER_OF_BANDS>& bandmaps = *(cip->bandmaps_p());  // bandmaps
-  const bool is_rbn = rbn.source() == POSTING_RBN;
+  const bool is_rbn = (rbn.source() == POSTING_RBN);
   const bool is_cluster = !is_rbn;
 
   const size_t QUEUE_SIZE = 100;    // size of queue of recent calls posted to the mult window
@@ -1725,19 +1725,19 @@ void* process_rbn_info(void* vp)
   const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
   deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
 
-  const int highlight_colour = colours.add(COLOUR_WHITE, COLOUR_RED);
+  const int highlight_colour = colours.add(COLOUR_WHITE, COLOUR_RED);             // colour that will mark that we are processing a ten-second pass
   const int original_colour = colours.add(cluster_line_win.fg(), cluster_line_win.bg());
 
   if (is_cluster)
     win_cluster_screen < WINDOW_CLEAR < CURSOR_BOTTOM_LEFT;  // probably unused
 
-  while (1)                                                // forever
+  while (1)                                                // forever; process a ten-second pass
   { set<BAND> changed_bands;                               // the bands that have been changed by this ten-second pass
     bool cluster_mult_win_was_changed = false;             // has cluster_mult_win been changed by this pass?
     string last_processed_line;                            // the last line processed during this pass
     const string new_input = rbn.get_unprocessed_input();  // add any unprocessed info from the cluster; deletes the data from the cluster
 
-// a visual marker that we are processing a pass
+// a visual marker that we are processing a pass; this should appear only briefly
     const string win_contents = cluster_line_win.read();
     const char first_char = win_contents.empty() ? ' ' : win_contents[0];
 
@@ -1792,7 +1792,7 @@ void* process_rbn_info(void* vp)
             const pair<string, BAND> target { dx_callsign, dx_band };
             const location_info li = location_db.info(dx_callsign);
 
-            bandmap_entry be(post.source() == POSTING_CLUSTER ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN);
+            bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
 
             be.freq(post.freq());
             be.callsign(dx_callsign);
@@ -1817,7 +1817,6 @@ void* process_rbn_info(void* vp)
 // possibly add the call to the known countries
             update_known_country_mults(dx_callsign);
 
-//            calculate_bandmap_entry_mult_status(be, rules, statistics);
             be.calculate_mult_status(rules, statistics);
 
             const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
@@ -2038,11 +2037,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
 
       cur_band = ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) );    // move up or down one band
-
       safe_set_band(cur_band);
-
-//      ost << "band has now been set" << endl;
-
       frequency last_frequency = rig.get_last_frequency(cur_band, cur_mode);  // go to saved frequency for this band/mode (if any)
 
       if (last_frequency.hz() == 0)
@@ -2395,12 +2390,7 @@ ost << "processing command: " << command << endl;
 // for current status of regex support, see: http://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html#status.iso.tr1
 
     if (!processed)
-    { bool contains_letter = false;
-
-      for (string::const_iterator cit = contents.begin(); cit != contents.end(); ++cit)
-        contains_letter = contains_letter or ( (*cit >= 'A') and (*cit <= 'Z') );
-
-//      const bool contains_letter = regex_match(contents, expression);
+    { const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
 
       if (!contains_letter)    // try to parse as frequency
       { const bool contains_plus  = (contents[0] == '+');        // this can be entered from the keypad w/o using shift
@@ -2645,26 +2635,35 @@ ost << "processing command: " << command << endl;
 
 // CTRL-ENTER -- assume it's a call and go to the call if it's in the bandmap
   if (!processed and e.is_control() and (e.symbol() == XK_Return))
-  { const string contents = remove_peripheral_spaces(win.read());
+  { string contents = remove_peripheral_spaces(win.read());
+    bool found_call = false;
 
-// Assume it's a call -- look for the same call in the current bandmap
+// assume it's a call -- look for the same call in the current bandmap
     bandmap_entry be = bandmaps[safe_get_band()][contents];
 
     if (!(be.callsign().empty()))
-    { rig.rig_frequency(be.freq());
+    { found_call = true;
+      rig.rig_frequency(be.freq());
       enter_sap_mode();
     }
     else    // didn't find an exact match; try a substring search
     { be = bandmaps[safe_get_band()].substr(contents);
 
       if (!(be.callsign().empty()))
-      { win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
+      { found_call = true;
+        win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
         rig.rig_frequency(be.freq());
         enter_sap_mode();
       }
     }
 
-    populate_win_info(remove_peripheral_spaces(win.read()));
+    contents = remove_peripheral_spaces(win.read());    // may have changed
+    populate_win_info(contents);
+
+    if (found_call)
+    { SAFELOCK(dupe_check);
+      last_call_inserted_with_space = contents;
+    }
 
     processed = true;
   }

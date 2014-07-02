@@ -734,6 +734,13 @@ template<class Input, class OutputIterator>
 { return (copy(first.begin(), first.end(), oi));
 }
 
+template <class Input, class UnaryPredicate>
+  void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
+{ //const auto it = remove_if(first.begin(), first.end(), pred);
+  //first.erase(it
+  first.erase(remove_if(first.begin(), first.end(), pred), first.end());
+}
+
 // ------------------------ container for per-band and per-mode information ------------
 
 #include <array>

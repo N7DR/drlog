@@ -32,6 +32,7 @@ extern BAND                current_band;
 
 const string MY_MARKER = "--------";
 
+/// convert BANDMAP_ENTRY_SOURCE to printable string
 const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
   { case BANDMAP_ENTRY_LOCAL :
@@ -90,6 +91,9 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 
 // -----------  bandmap_entry  ----------------
 
+extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
+extern exchange_field_database exchange_db;                          ///< dynamic database of exchange field values for calls; automatically thread-safe
+
 // default constructor
 bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _time(::time(NULL)),
@@ -104,9 +108,12 @@ void bandmap_entry::freq(const frequency& f)
   _frequency_str = _freq.display_string();
 }
 
-extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
-extern exchange_field_database exchange_db;                          ///< dynamic database of exchange field values for calls; automatically thread-safe
+/*! \brief  Calculate the mult status of all entries
+    \param  rules           the rules for this contest
+    \param  statistics      the current statistics
 
+    Adjust the mult status in accordance with the passed parameters
+*/
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
 // callsign mult status
@@ -180,6 +187,7 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
            (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));
 }
 
+/// difference in frequency between two bandmap entries
 const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
 { frequency rv;
 
@@ -188,6 +196,12 @@ const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) con
   return rv;
 }
 
+/*! \brief          Add a call to the associated posters
+    \param  call    call to add
+    \return         number of posters associated with this call, after adding <i>call</i>
+
+    Does nothing if <i>call</i> is already a poster
+*/
 const unsigned int bandmap_entry::add_poster(const string& call)
 { _posters.insert(call);
 
@@ -199,36 +213,13 @@ const string bandmap_entry::posters_string(void) const
 
   for_each(_posters.cbegin(), _posters.cend(), [&rv] (const string& p) { rv += (p + " "); } );
 
-  rv = rv.substr(0, rv.length() - 1);  // skip the final space
+  if (!rv.empty())
+    rv = rv.substr(0, rv.length() - 1);  // skip the final space
 
   return rv;
 }
 
-#if 0
-const string bandmap_entry::to_string(void) const
-{ string rv;
-
-  rv += "frequency: " << be.freq() << endl
-      << "frequency_str: " << be.frequency_str() << endl
-      << "callsign: " << be.callsign() << endl
-      << "canonical_prefix: " << be.canonical_prefix() << endl
-      << "continent: " << be.continent() << endl
-      << "band: " << be.band() << endl
-      << "time: " << be.time() << endl
-      << "source: " << be.source() << endl
-      << "expiration_time: " << be.expiration_time() << endl
-      << "is needed: " << be.is_needed() << endl
-      << "is needed mult: " << be.is_needed_mult() << endl;
-
-//  const needed_mult_details<std::pair<std::string, std::string>> nmd_callsign = be.is_n_callsign_mult();
-
-  ost << "is needed callsign mult: " << be.is_needed_callsign_mult_details() << endl;
-  ost << "is needed country mult: " << be.is_needed_country_mult_details() << endl;
-  ost << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl;
-
-}
-#endif
-
+/// ostream << bandmap_entry
 ostream& operator<<(ostream& ost, const bandmap_entry& be)
 { ost << "frequency: " << to_string(be.freq()) << endl
       << "frequency_str: " << be.frequency_str() << endl
@@ -240,13 +231,10 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "source: " << to_string(be.source()) << endl
       << "expiration_time: " << be.expiration_time() << endl
       << "is needed: " << be.is_needed() << endl
-      << "is needed mult: " << be.is_needed_mult() << endl;
-
-//  const needed_mult_details<std::pair<std::string, std::string>> nmd_callsign = be.is_n_callsign_mult();
-
-  ost << "is needed callsign mult: " << be.is_needed_callsign_mult_details() << endl;
-  ost << "is needed country mult: " << be.is_needed_country_mult_details() << endl;
-  ost << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl;
+      << "is needed mult: " << be.is_needed_mult() << endl
+      << "is needed callsign mult: " << be.is_needed_callsign_mult_details() << endl
+      << "is needed country mult: " << be.is_needed_country_mult_details() << endl
+      << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl;
 
   return ost;
 }
@@ -547,6 +535,7 @@ void bandmap::operator+=(const bandmap_entry& be)
       else    // this call is not currently present
       { //_entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (be.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
         _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
+//        REMOVE_IF_AND_RESIZE(
         _insert(be);
       }
     }

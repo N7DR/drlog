@@ -50,29 +50,46 @@ protected:
 
   std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
 
-// ALL_BANDS means add to *only* the global set; otherwise add to a band AND to the global set
+/*! \brief  add a callsign mult name, value and band to those worked
+    \param  mult_name   name of callsign mult
+    \param  mult_value  value of callsign mult
+    \param  band_nr     band on which callsign mult was worked
+
+    <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
+    The information is inserted into the <i>_callsign_multipliers</i> object.
+*/
   void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS);
 
-  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;
-  multiplier                                                        _country_multipliers;
-  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  // vector so we can keep the correct order
+  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;  ///< callsign multipliers (supports more than one)
+  multiplier                                                        _country_multipliers;   ///< country multipliers
+  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
 
-// copied from rules
+// these are copied from rules
   bool                            _callsign_mults_used;      ///< are callsign mults used?
   bool                            _country_mults_used;       ///< are country mults used?
   bool                            _exchange_mults_used;      ///< are country mults used?
 
-  bool          _include_qtcs;
-  unsigned int  _qtc_qsos_sent;
-  unsigned int  _qtc_qsos_unsent;
+  bool          _include_qtcs;                  ///< do we include QTC information?
+  unsigned int  _qtc_qsos_sent;                 ///< total number of QSOs sent in QTCs
+  unsigned int  _qtc_qsos_unsent;               ///< total number of (legal) QSOs available but not yet sent in QTCs
 
 public:
 
 /// default constructor
   running_statistics(void);
 
+/*! \brief  Constructor
+    \param  country_data    data from cty.dat file
+    \param  context         drlog context
+    \param  rules           rules for this contest
+*/
   running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules);
   
+/*! \brief  Prepare an object that was created with the default constructor
+    \param  country_data    data from cty.dat file
+    \param  context         drlog context
+    \param  rules           rules for this contest
+*/
   void prepare(const cty_data& country_data, const drlog_context& context, const contest_rules& rules);
 
   SAFEREAD(callsign_mults_used, statistics);                  ///< are callsign mults used?
@@ -89,7 +106,10 @@ public:
 // return true if actually added
   const bool add_known_country_mult(const std::string& str);
 
-/// do we still need to work a particular country as a mult on a particular band?
+/*! \brief  do we still need to work a particular country as a mult on a particular band?
+    \param  callsign    call to test
+    \param  b           band to test
+*/
   const bool is_needed_country_mult(const std::string& callsign, const BAND);
 
 /// a string list of bands on which a country is needed
@@ -136,6 +156,10 @@ public:
 /// worked exchange mults for a particular band
   const std::map<std::string /* field name */, std::set<std::string> /* values */ >   worked_exchange_mults(const BAND b);
 
+/*! \brief  is a particular string a known callsign mult name?
+    \param  putative_callsign_mult_name     string to test
+    \return whether <i>putative_callsign_mult_name</i> is a known callsign mult name
+*/
   const bool known_callsign_mult_name(const std::string& putative_callsign_mult_name) const;
 
   void clear_info(void);

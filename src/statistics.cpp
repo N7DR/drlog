@@ -36,6 +36,7 @@ pt_mutex statistics_mutex;
     \param  mult_value  value of callsign mult
     \param  band_nr     band on which callsign mult was worked
 
+    <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
 void running_statistics::_insert_callsign_mult(const string& mult_name, const string& mult_value, const unsigned int band_nr)
@@ -72,6 +73,11 @@ running_statistics::running_statistics(void) :
 {
 }
 
+/*! \brief  Constructor
+    \param  country_data    data from cty.dat file
+    \param  context         drlog context
+    \param  rules           rules for this contest
+*/
 running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules) :
   _n_qsos( {} ),                                 // Josuttis 2nd ed., p.262 -- initializes all elements with zero
   _n_dupes( {} ),
@@ -89,6 +95,11 @@ running_statistics::running_statistics(const cty_data& country_data, const drlog
     _exch_mult_fields.insert(exchange_mult);
 }
 
+/*! \brief  Prepare an object that was created with the default constructor
+    \param  country_data    data from cty.dat file
+    \param  context         drlog context
+    \param  rules           rules for this contest
+*/
 void running_statistics::prepare(const cty_data& country_data, const drlog_context& context, const contest_rules& rules)
 { SAFELOCK(statistics);
 
@@ -168,6 +179,11 @@ const bool running_statistics::known_callsign_mult_name(const string& putative_c
   return ( _callsign_multipliers.find(putative_callsign_mult_name) != _callsign_multipliers.cend() );
 }
 
+/*! \brief  do we still need to work a particular callsign mult on a particular band?
+    \param  mult_name   name of mult
+    \param  mult_value  value of mult to test
+    \param  b           band to test
+*/
 const bool running_statistics::is_needed_callsign_mult(const string& mult_name, const string& mult_value, const BAND b) const
 { SAFELOCK(statistics);
 
@@ -181,7 +197,10 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
   return !(worked);
 }
 
-/// do we still need to work a particular country on a particular band?
+/*! \brief  do we still need to work a particular country as a mult on a particular band?
+    \param  callsign    call to test
+    \param  b           band to test
+*/
 const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND band_nr)
 { try
   { SAFELOCK(statistics);
