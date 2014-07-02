@@ -2633,7 +2633,7 @@ ost << "processing command: " << command << endl;
     }
   }                 // end of ENTER
 
-// CTRL-ENTER -- assume it's a call and go to the call if it's in the bandmap
+// CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
   if (!processed and e.is_control() and (e.symbol() == XK_Return))
   { string contents = remove_peripheral_spaces(win.read());
     bool found_call = false;
@@ -2657,11 +2657,15 @@ ost << "processing command: " << command << endl;
       }
     }
 
-    contents = remove_peripheral_spaces(win.read());    // may have changed
-    populate_win_info(contents);
+//    contents = remove_peripheral_spaces(win.read());    // may have changed
+//    populate_win_info(contents);
+//    display_call_info(contents);
 
     if (found_call)
-    { SAFELOCK(dupe_check);
+    { contents = remove_peripheral_spaces(win.read());
+      display_call_info(contents);
+
+      SAFELOCK(dupe_check);
       last_call_inserted_with_space = contents;
     }
 
@@ -2946,8 +2950,6 @@ ost << "processing command: " << command << endl;
     for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm -= callsign;
                                                                    bm.do_not_add(callsign);
                                                                  } );
-
-//    bandmap& bm = bandmaps[safe_get_band()];
 
     win_bandmap <= (bandmaps[safe_get_band()]);
 

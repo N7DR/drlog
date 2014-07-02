@@ -103,10 +103,10 @@ public:
 /// Get all the canonical values
   const std::set<std::string> canonical_values(void) const;
 
-// values for a single canonical value
+/// Get all the legal values for a single canonical value
   const std::set<std::string> values(const std::string& cv) const;
 
-// values for all canonical values
+/// Get all the legal values (for all canonical values)
   const std::set<std::string> all_values(void) const;
 
   inline const bool canonical_value_present(const std::string& cv) const
@@ -115,6 +115,11 @@ public:
   inline const bool is_legal_canonical_value(const std::string& putative_cv_value) const
     { return canonical_value_present(putative_cv_value); }
 
+/*!     \brief                  Is a particular value legal for a given canonical value?
+        \param  cv              canonical value
+        \param  putative_value  value to test
+        \return     Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
+*/
   const bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
 
   template<typename Archive>

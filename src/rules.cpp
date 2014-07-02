@@ -37,13 +37,23 @@ extern message_stream ost;
         \brief Encapsulates the name and legal values for an exchange field
 */
 
-void exchange_field_values::add_canonical_value(const std::string& cv)
+/*!     \brief      Add a canonical value
+        \param  cv  canonical value to add
+
+        Also adds <i>cv</i> as a possible value
+*/
+void exchange_field_values::add_canonical_value(const string& cv)
 { if (_values.find(cv) == _values.end())
     _values.insert( { cv, set<string>( { cv } ) } );
 }
 
-// adds canonical value if it doesn't already exist
-void exchange_field_values::add_value(const std::string& cv, const std::string& v)
+/*!     \brief      Add a possible value
+        \param  cv  canonical value to which <i>v</i> is to be added
+        \param  v   value to be added
+
+        Also adds <i>cv</i> as a canonical value if it does not already exist
+*/
+void exchange_field_values::add_value(const string& cv, const string& v)
 { add_canonical_value(cv);
 
   set<string>& ss = _values[cv];
@@ -51,30 +61,35 @@ void exchange_field_values::add_value(const std::string& cv, const std::string& 
   ss.insert(v);
 }
 
-// number of values for a single canonical value
-// returns 0 if the canonical value does not exist
+/*!     \brief      Number of possible values for a particular canonical value
+        \param  cv  canonical value
+        \return     number of possible values for the canonical value <i>cv</i>
+
+        Returns 0 if the canonical value does not exist
+*/
 const size_t exchange_field_values::n_values(const string& cv) const
 { const auto posn = _values.find(cv);
 
   return ( (posn == _values.end()) ? 0 : posn->second.size() );
 }
 
+/// Get all the legal values for a single canonical value
 const set<std::string> exchange_field_values::values(const string& cv) const
 { const auto posn = _values.find(cv);
 
   return ( (posn == _values.end()) ? set<string>() : posn->second );
 }
 
+/// Get all the canonical values
 const set<string> exchange_field_values::canonical_values(void) const
 { set<string> rv;
 
-//  for_each(_values.cbegin(), _values.cend(), [&rv] (const pair<string, set<string>>& psss) { rv.insert(psss.first); } );
   FOR_ALL(_values, [&rv] (const pair<string, set<string>>& psss) { rv.insert(psss.first); } );
 
   return rv;
 }
 
-// values for all canonical values
+/// Get all the legal values (for all canonical values)
 const set<string> exchange_field_values::all_values(void) const
 { set<string> rv;
 
@@ -84,6 +99,11 @@ const set<string> exchange_field_values::all_values(void) const
   return rv;
 }
 
+/*!     \brief                  Is a particular value legal for a given canonical value?
+        \param  cv              canonical value
+        \param  putative_value  value to test
+        \return     Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
+*/
 const bool exchange_field_values::is_legal_value(const string& cv, const string& putative_value) const
 { if (!is_legal_canonical_value(cv))
     return false;
@@ -279,7 +299,7 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
 const map<string, vector<exchange_field>> contest_rules::_parse_context_exchange(const drlog_context& context) const // parse the "exchange =" line from context
 {
 // generate vector of all permitted exchange fields
-  map<string, vector<string>> permitted_exchange_fields;  // use a set so that each value is inserted only once
+  map<string, vector<string>> permitted_exchange_fields;  // use a map so that each value is inserted only once
 
   const auto& per_country_exchanges = context.exchange_per_country();
 
@@ -374,21 +394,18 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // remove any that are explicitly not allowed
   vector<string> not_country_mults_vec = remove_peripheral_spaces(split_string(context.not_country_mults(), ","));  // may not be actual canonical prefixes
 
-//  for_each(not_country_mults_vec.cbegin(), not_country_mults_vec.cend(), [&] (const string& not_country_mult)
-//      { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
-
   FOR_ALL(not_country_mults_vec, [&] (const string& not_country_mult) { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
+
+// are any mults derived from callsigns?
+  _callsign_mults = context.callsign_mults();                    // e.g., "WPXPX"
+  _callsign_mults_per_band = context.callsign_mults_per_band();
+  _callsign_mults_used = !_callsign_mults.empty();
 
   ost << "number of possible country mults = " << _country_mults.size() << endl;
 
   _country_mults_used = !_country_mults.empty();
   _country_mults_per_band = context.country_mults_per_band();
   _per_band_country_mult_factor = context.per_band_country_mult_factor();
-
-// are any mults derived from callsigns?
-  _callsign_mults = context.callsign_mults();                    // e.g., "WPXPX"
-  _callsign_mults_per_band = context.callsign_mults_per_band();
-  _callsign_mults_used = !_callsign_mults.empty();
 
 // add the permitted modes
   const string modes = context.modes();
