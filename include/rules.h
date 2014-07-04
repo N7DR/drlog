@@ -344,7 +344,12 @@ public:
   SAFEREAD(work_if_different_mode, rules);               ///< whether it is OK to work the same station on different modes
   SAFEREAD(permitted_bands, rules);                      ///< bands allowed in this contest
 
+/*!     \brief                      Get the expected exchange fields for a particular canonical prefix
+        \param  canonical_prefix    canonical prefix
+        \return                     The exchange fields associated with <i>canonical_prefix</i>
+*/
   const std::vector<exchange_field> exch(const std::string& canonical_prefix) const;
+
   const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix) const;
 
   SAFEREAD(country_mults, rules);       ///< collection of canonical prefixes of country multipliers
@@ -366,7 +371,8 @@ public:
 
   SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?
 
-  const std::set<std::string> all_known_field_names(void) const; ///< all the exchange field names
+/// Get all the known names of exchange fields
+  const std::set<std::string> all_known_field_names(void) const;
 
 /// restore the original set of bands to be scored (from the configuration file)
   inline void restore_original_score_bands(void)

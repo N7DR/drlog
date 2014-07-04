@@ -137,6 +137,10 @@ public:
 /// synonym for callsign()
   inline const std::string call(void) const
     { return callsign(); }
+
+/// simple proxy for emptiness
+  inline const bool empty(void) const
+    { return callsign().empty(); }
     
 /// mark as dupe
   inline void dupe(void)

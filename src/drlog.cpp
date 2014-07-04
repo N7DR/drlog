@@ -248,7 +248,6 @@ window win_band_mode,               ///< the band and mode indicator
 //       win_cw,
        win_date,                    ///< the date
        win_drlog_mode,              ///< indicate whether in CQ or SAP mode
-//       win_dupe_mult,               ///< used to mark dupes and mults when spacebar hit
        win_exchange,                ///< QSO exchange received from other station
        win_log_extract,             ///< to show prior QSOs
        win_fuzzy,                   ///< fuzzy lookups
@@ -266,7 +265,6 @@ window win_band_mode,               ///< the band and mode indicator
        win_rbn_line,                ///< last line received from the RBN
        win_remaining_callsign_mults, // the remaining callsign mults
        win_remaining_country_mults, // the remaining country mults
-//       win_remaining_exch_mults,    // the remaining exchange mults
        win_rig,                     // rig status
        win_score,                   // total number of points
        win_score_bands,             // which bands contribute to score
@@ -1066,24 +1064,6 @@ int main(int argc, char** argv)
     { ost << e.reason() << endl;
       exit(-1);
     }
-
-#if 0
-    cluster_p = new dx_cluster(context, POSTING_CLUSTER);
-
-    static cluster_info cluster_info_for_thread(&win_cluster_line, &win_cluster_mult, cluster_p, &statistics, &location_db, &win_bandmap, &bandmaps);
-    static pthread_t thread_id_2;
-    static pthread_t thread_id_3;
-
-    try
-    { create_thread(&thread_id_2, &(attr_detached.attr()), get_cluster_info, (void*)(cluster_p), "cluster read");
-      create_thread(&thread_id_3, &(attr_detached.attr()), process_rbn_info, (void*)(&cluster_info_for_thread), "cluster process");
-    }
-
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
-      exit(-1);
-    }
-#endif
   }
 
 // ditto for the RBN
@@ -1098,26 +1078,6 @@ int main(int argc, char** argv)
     { ost << e.reason() << endl;
       exit(-1);
     }
-
-#if 0
-    ost << "about to create RBN" << endl;
-    rbn_p = new dx_cluster(context, POSTING_RBN);
-    ost << "RBN created" << endl;
-
-    static cluster_info rbn_info_for_thread(&win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps);
-    static pthread_t   thread_id_2;
-    static pthread_t thread_id_3;
-
-    try
-    { create_thread(&thread_id_2, &(attr_detached.attr()), get_cluster_info, (void*)(rbn_p), "RBN read");
-      create_thread(&thread_id_3, &(attr_detached.attr()), process_rbn_info, (void*)(&rbn_info_for_thread), "RBN process");
-    }
-
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
-      exit(-1);
-    }
-#endif
   }
 
 // now we can restore data from the last run
@@ -1202,7 +1162,7 @@ int main(int argc, char** argv)
         if (rules.sent_exchange_includes("SERNO"))
         { const QSO last_qso = logbk[logbk.size()];    // wrt 1
 
-          octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1;
+          octothorpe = (last_qso.empty() ? 1 : from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1);
         }
         else
           octothorpe = logbk.size() + 1;
@@ -1211,11 +1171,8 @@ int main(int argc, char** argv)
 // display most recent lines from log
       editable_log.recent_qsos(logbk, true);
 
-// display the current statistics
-//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
-
 // correct QSO number (and octothorpe)
-      if (logbk.n_qsos() > 0)
+      if (!logbk.empty())
       { next_qso_number = logbk[logbk.n_qsos()].number() /* logbook is wrt 1 */  + 1;
         win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
         win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(octothorpe);
@@ -1589,12 +1546,8 @@ void* display_rig_status(void* vp)
                   last_call = last_call_inserted_with_space;
                 }
 
-//              ost << "last_call_inserted_with_space = " << last_call_inserted_with_space
-
                 if (call_contents != last_call)
-                { //ost << "clearing CALL window because call_contents != last_call" << endl;
                   win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
-                }
               }
             }
           }
@@ -1607,12 +1560,7 @@ void* display_rig_status(void* vp)
 
               if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
               { if (!win_nearby.empty())
-                { // ost << "f_diff = " << f_diff << ", guard band = " << context.guard_band(m) << endl;
-                  // ost << "clearing CALL window of " << win_call.read() << endl;
                   win_nearby <= WINDOW_CLEAR;
-                }
-
-//            const string call_contents = remove_peripheral_spaces(win_call.read());
 
                 if (!call_contents.empty())
                 { string last_call;
@@ -1941,6 +1889,7 @@ void* prune_bandmap(void* vp)
   { const enum BAND cur_band = safe_get_band();
 
     for_each(bandmaps.begin(), bandmaps.end(), [](bandmap& bm) { bm.prune(); } );
+//    FOR_ALL(bandmaps, [](bandmap& bm) { bm.prune(); } );
 
     bandmap_win <= bandmaps[cur_band];
 
@@ -2477,7 +2426,8 @@ ost << "processing command: " << command << endl;
     { const string& callsign = contents;
       const BAND cur_band = safe_get_band();
       const MODE cur_mode = safe_get_mode();
-      const bool is_dupe = q_history.worked(callsign, cur_band, cur_mode);  // need to fix for SS
+//      const bool is_dupe = q_history.worked(callsign, cur_band, cur_mode);  // need to fix for SS
+      const bool is_dupe = logbk.is_dupe(callsign, cur_band, cur_mode, rules);
 
 // if we're in SAP mode, don't call him if he's a dupe
       if (drlog_mode == SAP_MODE and is_dupe)

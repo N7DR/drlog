@@ -638,7 +638,10 @@ contest_rules::contest_rules(void) :
   _send_qtcs(false)
 { }
 
-// constructor
+/*!     \brief                  construct from parameters
+        \param  context         context for this contest
+        \param  location_db     location information
+*/
 contest_rules::contest_rules(const drlog_context& context, location_database& location_db) :
   _work_if_different_band(context.qso_multiple_bands()),
   _work_if_different_mode(context.qso_multiple_modes()),
@@ -649,7 +652,10 @@ contest_rules::contest_rules(const drlog_context& context, location_database& lo
 { _init(context, location_db);
 }
 
-/// initialise for use (if created with default constructor)
+/*!     \brief                  initialise for use (if created with default constructor)
+        \param  context         context for this contest
+        \param  location_db     location information
+*/
 void contest_rules::prepare(const drlog_context& context, location_database& location_db)
 { _work_if_different_band = context.qso_multiple_bands();
   _work_if_different_mode = context.qso_multiple_modes();
@@ -658,39 +664,52 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
   _init(context, location_db);
 }
 
+/*!     \brief                      Get the expected exchange fields for a particular canonical prefix
+        \param  canonical_prefix    canonical prefix
+        \return                     The exchange fields associated with <i>canonical_prefix</i>
+
+        CHOICE fields are NOT expanded
+*/
 const vector<exchange_field> contest_rules::exch(const string& canonical_prefix) const
-{ SAFELOCK(rules);
+{ if (canonical_prefix.empty())
+    return vector<exchange_field>();
+
+  SAFELOCK(rules);
 
   auto cit = _exch.find(canonical_prefix);
 
   if (cit != _exch.cend())
     return cit->second;
 
-  if (canonical_prefix.empty())
-    return vector<exchange_field>();
-
   cit = _exch.find(string());
 
   return ( (cit == _exch.cend()) ? vector<exchange_field>() : cit->second );
 }
 
+/*!     \brief                      Get the expected exchange fields for a particular canonical prefix
+        \param  canonical_prefix    canonical prefix
+        \return                     The exchange fields associated with <i>canonical_prefix</i>
+
+        CHOICE fields ARE expanded
+*/
 const vector<exchange_field> contest_rules::expanded_exch(const string& canonical_prefix) const
-{ SAFELOCK(rules);
+{ if (canonical_prefix.empty())
+    return vector<exchange_field>();
+
+  SAFELOCK(rules);
 
   auto cit = _expanded_exch.find(canonical_prefix);
 
   if (cit != _expanded_exch.cend())
     return cit->second;
 
-  if (canonical_prefix.empty())
-    return vector<exchange_field>();
-
   cit = _expanded_exch.find(string());
 
   return ( (cit == _expanded_exch.cend()) ? vector<exchange_field>() : cit->second );
 }
 
-const set<string> contest_rules::all_known_field_names(void) const ///< all the exchange field names
+/// Get all the known names of exchange fields
+const set<string> contest_rules::all_known_field_names(void) const
 { set<string> rv;
 
   for (const auto& msvef : _expanded_exch)

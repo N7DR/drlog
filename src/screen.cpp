@@ -36,10 +36,10 @@ cpair colours;
 // -----------  screen  ----------------
 
 /*! \class screen
-  \brief A single terminal (e.g., an xterm)
+    \brief A single terminal (e.g., an xterm)
         
-  The screen will have the size given by the COLUMNS and LINES environment variables,
-  or, in their absence, 80 columns and 25 lines.
+    The screen will have the size given by the COLUMNS and LINES environment variables,
+    or, in their absence, 80 columns and 25 lines.
 */
 
 /// default constructor
@@ -59,33 +59,6 @@ screen::screen(void)
 // I would like a blinking underline, but there seems to be no way to get that.
 // TODO: look into this in more depth
   curs_set(1);             // a medium cursor
-
-#if 0
-  _sp = newterm(NULL, stdout, stdin);
-
-  if (_sp == NULL)
-    throw exception();
-   
-// get the dimensions
-  getmaxyx(stdscr, _height, _width);
-  
-// turn on colour
-  start_color();
-
-// set colour pairs; these are currently stolen from tlf  
-  init_pair(COLOR_BLACK, COLOR_BLACK, COLOR_WHITE);
-  init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_YELLOW);
-  init_pair(COLOR_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_WHITE);
-  init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
-  init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_WHITE);
-  init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_YELLOW);
-  init_pair(COLOR_YELLOW, COLOR_WHITE, COLOR_BLACK);  
-
-// turn off echoing
-  echo(false);
-#endif    // 0
-
 }
 
 /// destructor
@@ -93,10 +66,11 @@ screen::~screen(void)
 { endwin();
 }
 
-void screen::clear(void)
-{ ::clear();
-  refresh();
-}
+// -----------  window  ----------------
+
+/*!     \class window
+        \brief A single ncurses window
+*/
 
 /// default constructor
 window::window(const unsigned int flags) :
@@ -108,7 +82,6 @@ window::window(const unsigned int flags) :
   _column_width(0),
   _wp(nullptr),
   _scrolling(false),
-//  _hidden_cursor(false)
   _hidden_cursor(flags & WINDOW_NO_CURSOR),
   _insert(flags & WINDOW_INSERT),
   _pp(nullptr),
@@ -129,7 +102,6 @@ window::window(const window_information& wi, const unsigned int flags) :
   _column_width(0),
   _wp(nullptr),
   _scrolling(false),
-//  _hidden_cursor(false)
   _hidden_cursor(flags & WINDOW_NO_CURSOR),
   _insert(flags & WINDOW_INSERT),
   _pp(nullptr),
@@ -168,7 +140,6 @@ void window::init(const window_information& wi, const unsigned int flags)
   _column_width = 0;
   _wp = nullptr;
   _scrolling = false;
-//  _hidden_cursor = false;
   _hidden_cursor = (flags & WINDOW_NO_CURSOR);
   _insert = (flags & WINDOW_INSERT);
   _pp = nullptr;
@@ -185,13 +156,7 @@ void window::init(const window_information& wi, const unsigned int flags)
   _fg = string_to_colour(wi.fg_colour());
   _bg = string_to_colour(wi.bg_colour());
 
-//  ost << "fg colour string = " << wi.fg_colour() << "; _fg = " << _fg << endl;
-//  ost << "bg colour string = " << wi.bg_colour() << "; _bg = " << _bg << endl;
-
-  int pair_nr = colours.add(_fg, _bg);
-
-//  ost << "pair_nr = " << pair_nr << endl;
-//  ost << "CP(pair_nr) = " << COLOUR_PAIR(pair_nr) << endl;
+  const int pair_nr = colours.add(_fg, _bg);
 
   default_colours(COLOUR_PAIR(pair_nr));
 
@@ -209,7 +174,6 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
   _column_width = 0;
   _wp = nullptr;
   _scrolling = false;
-//  _hidden_cursor = false;
   _hidden_cursor = (flags & WINDOW_NO_CURSOR);
   _insert = (flags & WINDOW_INSERT);
   _pp = nullptr;
@@ -232,13 +196,7 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
     _bg = bg;
   }
 
-//  ost << "fg colour string = " << wi.fg_colour() << "; _fg = " << _fg << endl;
-//  ost << "bg colour string = " << wi.bg_colour() << "; _bg = " << _bg << endl;
-
-  int pair_nr = colours.add(_fg, _bg);
-
-//  ost << "pair_nr = " << pair_nr << endl;
-//  ost << "CP(pair_nr) = " << COLOUR_PAIR(pair_nr) << endl;
+  const int pair_nr = colours.add(_fg, _bg);
 
   default_colours(COLOUR_PAIR(pair_nr));
 
@@ -259,10 +217,6 @@ window& window::move_cursor(const int new_x, const int new_y)
   return *this;
 }
 
-window& window::move_cursor(const cursor& c)
-{ return move_cursor(c.x(), c.y()); 
-}
-
 /*! \brief  write a string to the window
     \param  s   string to write
     \return the window
@@ -280,14 +234,9 @@ window& window::operator<(const string& s)
   SAFELOCK(screen);
 
   if (!_insert)
-  { //SAFELOCK(screen);
- 
     wprintw(_wp, s.c_str());
-  }
   else    // insert mode
-  { //SAFELOCK(screen);
-
-    const cursor c = cursor_position();
+  { const cursor c = cursor_position();
     const string remainder = read(c.x(), c.y());
 
     wprintw(_wp, (s + remainder).c_str());
@@ -298,81 +247,49 @@ window& window::operator<(const string& s)
   return *this;
 }
 
-/*
-/// write a vector of strings to a window
-window& window::operator<(const std::vector<std::string>& vec)
-{ 
-// ****************************** HERE ***************************
-// start with the simplest case
-  for (unsigned int n = 0; n < vec.size(); ++n)
-  { *this < vec[n];
-  
-    if (n != vec.size() - 1)
-      *this < " ";
-  }
-  
-  return *this;
-}
-*/
-
 /// write a set of strings to a window
 window& window::operator<(const set<string>& vec)
 { if (!_wp)
     return *this;
 
-  vector<string> v;
-    for (set<string>::const_iterator cit = vec.begin(); cit != vec.end(); ++cit)
-      v.push_back(*cit);
-
+  vector<string> v(vec.cbegin(), vec.cend());
+//    for (set<string>::const_iterator cit = vec.begin(); cit != vec.end(); ++cit)
+//      v.push_back(*cit);
+//  copy(vec.cbegin(), vec.cend(), back_inserter(v));
   sort(v.begin(), v.end(), compare_calls);
 
   unsigned int idx = 0;
   
-  for (vector<string>::const_iterator cit = v.begin(); cit != v.end(); ++cit)
+//  for (vector<string>::const_iterator cit = v.begin(); cit != v.end(); ++cit)
+  for (const auto& str : v)
   { 
 // see if there's enough room on this line    
     cursor_position();
     const int remaining_space = width() - _cursor_x;
 
  // stop writing if there's insufficient room for the next string
-    if (remaining_space < static_cast<int>(cit->length()))
+    if (remaining_space < static_cast<int>(str.length()))
       if (!scrolling() and (_cursor_y == 0))
         break;
     
-    if (remaining_space < static_cast<int>(cit->length()))
+    if (remaining_space < static_cast<int>(str.length()))
       *this < "\n";
 
-    *this < *cit;
+    *this < str;
   
 // add space unless we're at the end of a line or this is the last string
-    const bool end_of_line = (remaining_space == static_cast<int>(cit->length()));
+    const bool end_of_line = (remaining_space == static_cast<int>(str.length()));
     
     if ((idx != v.size() - 1) and !end_of_line)
       *this < " ";
     
     idx++;
   }
-  
-//  this->cpair(4);
-//  *this < colours(COLOUR_GREEN, COLOUR_BLACK);
-//  this->cpair(FGBG(COLOUR_GREEN, COLOUR_BLACK));
 
-//  const int n = COLOUR_PAIR(colours.add(COLOUR_GREEN, COLOUR_BLACK));
+//  *this < COLOURS(COLOUR_GREEN, COLOUR_BLACK);
 
-//  ost << "colour pair = " << n << endl;
+//  *this < COLOURS(_fg, _bg);
 
-//  const int pair_nr = colours.add(_fg, _bg);
-//  default_colours(COLOUR_PAIR(pair_nr));
-
-
-//  this->cpair(colours.add(COLOUR_GREEN, COLOUR_BLACK));
-
-  *this < COLOURS(COLOUR_GREEN, COLOUR_BLACK);
-//  *this < " burble1 " < " burble2 ";
-//  this->cpair(colours.add(_fg, _bg));
-  *this < COLOURS(_fg, _bg);
-
-//  *this < colours(_fg, _bg);
   return *this;
 }
 
@@ -495,10 +412,9 @@ const cursor window::cursor_position(void)
 { if (!_wp)
     return cursor(0, 0);
     
-  { SAFELOCK(screen);  
+  SAFELOCK(screen);
 
-    getyx(_wp, _cursor_y, _cursor_x);
-  }
+  getyx(_wp, _cursor_y, _cursor_x);
 
   _cursor_y = height() - _cursor_y - 1;
   
@@ -1014,71 +930,69 @@ SAVE_CURSOR::~SAVE_CURSOR(void)
 }
 
 // -----------  colour_pair  ----------------
-// return the pair number
-// note the pair number 0 cannot be changed, so we ignore it here and start counting from one
-const int cpair::add(const int fg, const int bg)
-{ const pair<int, int> fgbg = make_pair(fg, bg);
+
+/*! \class colour_pair
+    \brief A class to hold information about used colour pairs
+*/
+
+/*!     \brief          Private function to add a new pair of colours
+        \param  p       foreground colour, background colour
+        \return         the number of the colour pair
+*/
+const unsigned int cpair::_add_to_vector(const pair< int, int>& fgbg)
+{ _colours.push_back(fgbg);
+  init_pair(_colours.size(), fgbg.first, fgbg.second);
+
+  return _colours.size();
+}
+
+/*!     \brief          Add a pair of colours
+        \param  fg      foreground colour
+        \param  bg      background colour
+        \return         the number of the colour pair
+
+        If the pair is already known, returns the number of the known pair.
+        Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
+*/
+const unsigned int cpair::add(const int fg, const int bg)
+{ const pair<int, int> fgbg { fg, bg };
 
   SAFELOCK(_colours);
 
   if (_colours.empty())
-  { _colours.push_back(make_pair(fg, bg));
-    init_pair(_colours.size(), fg, bg);
-    return _colours.size();
-  }
+    return _add_to_vector(fgbg);
 
-//  const vector< pair<int, int> >::iterator it = find(_colours.begin(), _colours.end(), fgbg);
   const auto cit = find(_colours.cbegin(), _colours.cend(), fgbg);
 
- // ost << "trying to add pair: " << fg << ", " << bg << endl;
-
   if (cit == _colours.cend())
-  { //ost << "colour pair not found; adding it" << endl;
-
-    _colours.push_back(make_pair(fg, bg));
-    init_pair(_colours.size(), fg, bg);
-
-    //ost << "added as pair number " << _colours.size() << endl;
-
-    return _colours.size();
-  }
+    return _add_to_vector(fgbg);
   else
-  { //ost << "colour pair found as pair number " << (it - _colours.begin()) << endl;
-    //ost << "colour pair found" <<  endl;
     return (cit - _colours.cbegin() + 1);    // the first entry (at _colours.begin()) is ncurses colour pair number 1
-
-  }
 }
 
-const int cpair::fg(const int pair_nr)
+/// return the foreground colour of a pair
+const int cpair::fg(const int pair_nr) const
 { short f;
   short b;
 
   pair_content(pair_nr, &f, &b);
 
-  return f;
+  return static_cast<int>(f);
 }
 
-const int cpair::bg(const int pair_nr)
+/// return the background colour of a pair
+const int cpair::bg(const int pair_nr) const
 { short f;
   short b;
 
   pair_content(pair_nr, &f, &b);
 
-  return b;
+  return static_cast<int>(b);
 }
 
 // convert the name of a colour to a colour
 const int string_to_colour(const string& str)
-{ static const map<string, int> colour_map { //make_pair("BLACK",   COLOUR_BLACK),
-                                             //make_pair("BLUE",    COLOUR_BLUE),
-                                             //make_pair("CYAN",    COLOUR_CYAN),
-                                             //make_pair("GREEN",   COLOUR_GREEN),
-                                             //make_pair("MAGENTA", COLOUR_MAGENTA),
-                                             //make_pair("RED",     COLOUR_RED),
-                                             //make_pair("WHITE",   COLOUR_WHITE),
-                                             //make_pair("YELLOW",  COLOUR_YELLOW)
-                                             { "BLACK",   COLOUR_BLACK },
+{ static const map<string, int> colour_map { { "BLACK",   COLOUR_BLACK },
                                              { "BLUE",    COLOUR_BLUE },
                                              { "CYAN",    COLOUR_CYAN },
                                              { "GREEN",   COLOUR_GREEN },
@@ -1102,18 +1016,8 @@ const int string_to_colour(const string& str)
   if (begins_with(s, "COLOR_"))
     return (from_string<int>(substring(s, 6)));
 
-//  const bool contains_non_digit = (s.find_first_not_of("0123456789") != string::npos);
   if (s.find_first_not_of("0123456789") == string::npos)  // if all digits
     return from_string<int>(s);
 
-//  bool found_non_digit = false;
-//  unsigned int index = 0;
-
-//  while (!found_non_digit and index < s.length())
-//    found_non_digit = !isdigit(s[index++]);
-
-//  if (!found_non_digit)
-//    return from_string<int>(s);
-
-  return COLOUR_BLACK;
+  return COLOUR_BLACK;    // default
 }

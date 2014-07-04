@@ -83,25 +83,54 @@ const int COLOUR_BLACK   = COLOR_BLACK,
                        
 extern pt_mutex screen_mutex;                       
                        
-// forward declarations;
-class cursor;
+// forward declarations
 class SAVE_CURSOR;
 
+// -----------  cursor  ----------------
+
+/*! \class cursor
+    \brief Trivial class for moving the cursor
+*/
+
+WRAPPER_2(cursor, int, x, int, y);
+
 // -----------  colour_pair  ----------------
+
+/*! \class colour_pair
+    \brief A class to hold information about used colour pairs
+*/
+
 class cpair
 {
 protected:
 
-  std::vector< std::pair< int, int> > _colours;
+  std::vector< std::pair< int, int> > _colours;    ///< the used colour pairs
 
-  pt_mutex _colours_mutex;
+  pt_mutex _colours_mutex;                         ///< allow thread-safe access
+
+/*!     \brief          Private function to add a new pair of colours
+        \param  p       foreground colour, background colour
+        \return         the number of the colour pair
+*/
+  const unsigned int _add_to_vector(const std::pair< int, int>& p);
 
 public:
 
-  const int add(const int fg, const int bg);
+/*!     \brief          Add a pair of colours
+        \param  fg      foreground colour
+        \param  bg      background colour
+        \return         the number of the colour pair
 
-  const int fg(const int pair_nr);
-  const int bg(const int pair_nr);
+        If the pair is already known, returns the number of the known pair.
+        Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
+*/
+  const unsigned int add(const int fg, const int bg);
+
+/// return the foreground colour of a pair
+  const int fg(const int pair_nr) const;
+
+/// return the background colour of a pair
+  const int bg(const int pair_nr) const;
 };
 
 // -----------  screen  ----------------
@@ -121,8 +150,6 @@ public:
 
 /// destructor
   virtual ~screen(void);
-
-  void clear(void);
 };
 
 // -----------  window_information ----------------
@@ -181,17 +208,16 @@ class window
 {
 protected:
   
-  bool    _scrolling;        ///< whether scrolling is enabled
-  bool    _leaveok;          ///< whether leaveok is set
+  bool    _scrolling;          ///< whether scrolling is enabled
+  bool    _leaveok;            ///< whether leaveok is set
 
-  bool    _echoing;           ///< whether echoing characters 
-  bool    _vertical;          ///< containers of strings are to be displayed vertically
-  unsigned int _column_width; ///< width of columns
-  
-  
+  bool    _echoing;            ///< whether echoing characters
+  bool    _vertical;           ///< containers of strings are to be displayed vertically
+  unsigned int _column_width;  ///< width of columns
+
   int     _y;                  ///< y of origin (in proper coordinates)
   int     _width;              ///< width
-  int     _height;          ///< height
+  int     _height;             ///< height
   int     _x;                  ///< x of origin (in proper coordinates)
 
   int    _cursor_x;            ///< used to hold x cursor
@@ -209,7 +235,7 @@ protected:
   int    _fg;                  ///< foreground colour
   int    _bg;                  ///< background colour
 
-  std::string _input_buffer;   ///< a place to put characters that have been input to the window
+//  std::string _input_buffer;   ///< a place to put characters that have been input to the window
 
   WINDOW_PROCESS_INPUT_TYPE _process_input;    ///< function to handle input to this window
 
@@ -244,16 +270,17 @@ public:
 /// destructor
   virtual ~window(void);
 
-/// RO access
-  READ(width);
+// RO access
   READ(height);
   READ(hidden_cursor);
-  READ_AND_WRITE(insert);
-  
-  READ_AND_WRITE(fg);
+  READ(width);
+
+// RW access
   READ_AND_WRITE(bg);
-  READ_AND_WRITE(vertical);
   READ_AND_WRITE(column_width);
+  READ_AND_WRITE(fg);
+  READ_AND_WRITE(insert);
+  READ_AND_WRITE(vertical);
   
   inline WINDOW* wp(void)
     { return _wp; }
@@ -262,7 +289,8 @@ public:
   window& move_cursor(const int new_x, const int new_y);
   
 /// move cursor
-  window& move_cursor(const cursor& c);
+  inline window& move_cursor(const cursor& c)
+    { return move_cursor(c.x(), c.y()); }
   
 /// move cursor relative
   window& move_cursor_relative(const int delta_x, const int delta_y);  
@@ -469,8 +497,7 @@ template
 
 };
 
-/// trivial class for moving the cursor
-WRAPPER_2(cursor, int, x, int, y);
+
 
 window& operator<(window& win, const cursor& c);
 

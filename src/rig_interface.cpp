@@ -1042,7 +1042,7 @@ const int rig_interface::bandwidth(void)
 const frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
 { SAFELOCK(_rig);
 
-  const auto cit = _last_frequency.find(make_pair(b, m));
+  const auto cit = _last_frequency.find( { b, m } );
 
   return ( ( cit == _last_frequency.cend() ) ? frequency() : cit->second );    // return 0 if there's no last frequency
 }
@@ -1050,7 +1050,7 @@ const frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
 void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequency& f) noexcept
 { SAFELOCK(_rig);
 
-  _last_frequency[std::make_pair(b, m)] = f;
+  _last_frequency[ { b, m } ] = f;
 }
 
 const bool rig_interface::is_transmitting(void)
@@ -1096,14 +1096,10 @@ const bool rig_interface::test(void)
 }
 
 void rig_interface::test(const bool b)
-{ bool current_state = test();
-
-  if (current_state == b)
-    return;
-
-  if (_rig_connected)
-  { if (_model == RIG_MODEL_K3)
-    { raw_command("SWH18;");    // toggles state
+{ if (test() != b)
+  { if (_rig_connected)
+    { if (_model == RIG_MODEL_K3)
+        raw_command("SWH18;");    // toggles state
     }
   }
 }
@@ -1114,17 +1110,17 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
   _error_alert_function = error_alert_function;
 }
 
-map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { make_pair(BAND_160, MODE_CW),  frequency(1800000) },
-                                                          { make_pair(BAND_160, MODE_SSB), frequency(1900000) },
-                                                          { make_pair(BAND_80,  MODE_CW),  frequency(3500000) },
-                                                          { make_pair(BAND_80,  MODE_SSB), frequency(3750000) },
-                                                          { make_pair(BAND_40,  MODE_CW),  frequency(7000000) },
-                                                          { make_pair(BAND_40,  MODE_SSB), frequency(7150000) },
-                                                          { make_pair(BAND_20,  MODE_CW),  frequency(14000000) },
-                                                          { make_pair(BAND_20,  MODE_SSB), frequency(14150000) },
-                                                          { make_pair(BAND_15,  MODE_CW),  frequency(21000000) },
-                                                          { make_pair(BAND_15,  MODE_SSB), frequency(21200000) },
-                                                          { make_pair(BAND_10,  MODE_CW),  frequency(28000000) },
-                                                          { make_pair(BAND_10,  MODE_SSB), frequency(28300000) }
+map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { { BAND_160, MODE_CW },  frequency(1800000) },
+                                                          { { BAND_160, MODE_SSB }, frequency(1900000) },
+                                                          { { BAND_80,  MODE_CW },  frequency(3500000) },
+                                                          { { BAND_80,  MODE_SSB }, frequency(3750000) },
+                                                          { { BAND_40,  MODE_CW },  frequency(7000000) },
+                                                          { { BAND_40,  MODE_SSB }, frequency(7150000) },
+                                                          { { BAND_20,  MODE_CW },  frequency(14000000) },
+                                                          { { BAND_20,  MODE_SSB }, frequency(14150000) },
+                                                          { { BAND_15,  MODE_CW },  frequency(21000000) },
+                                                          { { BAND_15,  MODE_SSB }, frequency(21200000) },
+                                                          { { BAND_10,  MODE_CW },  frequency(28000000) },
+                                                          { { BAND_10,  MODE_SSB }, frequency(28300000) }
                                                         };
 
