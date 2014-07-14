@@ -229,6 +229,10 @@ const string dx_cluster::get_unprocessed_input(void)
 
 // -----------  dx_post  ----------------
 
+/*!     \class dx_post
+        \brief Convert a line from the cluster to a DX posting
+*/
+
 dx_post::dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source) :
   _source(post_source),
   _valid(false)

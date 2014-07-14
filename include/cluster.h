@@ -97,40 +97,47 @@ class dx_post
 {
   
 protected:
-    bool         _valid;                 ///< is it a valid post?
+    bool         _valid;                ///< is it a valid post?
     
-    std::string  _poster;
-    frequency    _freq;
-    std::string  _frequency_str;
-    std::string  _callsign;
-    std::string  _canonical_prefix;
-    std::string  _continent;
-    std::string  _comment;
-    enum BAND    _band;
-    time_t       _time_processed;
-    enum POSTING_SOURCE _source;
+    std::string  _poster;               ///< call of poster
+    frequency    _freq;                 ///< frequency at which <i>_callsign</i> was heard
+    std::string  _frequency_str;        ///< frequency in format xxxxx.y [kHz]
+    std::string  _callsign;             ///< callsign that was heard
+    std::string  _canonical_prefix;     ///< canonical prefix corresponding to <i>callsign</i>
+    std::string  _continent;            ///< continent of <i>_callsign</i>
+    std::string  _comment;              ///< comment supplied by poster
+    enum BAND    _band;                 ///< band of post
+    time_t       _time_processed;       ///< time (relative to the UNIX epoch) at which we processed the post
+    enum POSTING_SOURCE _source;        ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
     
+/// does the frequency appear to be valid? Nothing fancy needed here
     inline const bool _valid_frequency(void) const
       { return (_freq.khz() >= 1800 and _freq.khz() <= 29700); }
 
 public:
     
-  dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
+/*! \brief  constructor
+    \param  received_info   a line received from the cluster or RBN
+    \param  db              the location database for this contest
+    \param  post_source     the origin of the post
+*/
+    dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
   
+/// destructor
   inline virtual ~dx_post(void)
     { }
 
-  READ(valid);
-  READ(poster);
-  READ(freq);
-  READ(frequency_str);
-  READ(callsign);
-  READ(canonical_prefix);
-  READ(continent);
-  READ(comment);
-  READ(band);
-  READ(time_processed);
-  READ(source);
+  READ(valid);                  ///< is it a valid post?
+  READ(poster);                 ///< call of poster
+  READ(freq);                   ///< frequency at which <i>_callsign</i> was heard
+  READ(frequency_str);          ///< frequency in format xxxxx.y [kHz]
+  READ(callsign);               ///< callsign that was heard
+  READ(canonical_prefix);       ///< canonical prefix corresponding to <i>callsign</i>
+  READ(continent);              ///< continent of <i>_callsign</i>
+  READ(comment);                ///< comment supplied by poster
+  READ(band);                   ///< band of post
+  READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
+  READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
 };
 
 #endif    // CLUSTER_H
