@@ -66,6 +66,7 @@ const bool DISPLAY_EXTRACT = true,
            DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;
 
 // some forward declarations; others, that depend on these, occur later
+const string active_window_name(void);
 void add_qso(const QSO& qso);
 void alert(const string& msg);
 void allow_for_callsign_mults(QSO& qso);  // may change qso
@@ -1302,12 +1303,25 @@ int main(int argc, char** argv)
 
 // everything is set up and running. Now we simply loop
     while (1)
-    { while (keyboard.empty())
+    { //ost << "Before sleeping for one second, window is: " << active_window_name() << endl;
+
+      //sleep_for(seconds(1));
+
+      //ost << "Before checking keyboard, window is: " << active_window_name() << endl;
+
+      while (keyboard.empty())
         sleep_for(milliseconds(10));
+
+      //ost << "Before popping event, window is: " << active_window_name() << endl;
 
       const keyboard_event e = keyboard.pop();
 
+      //ost << "About to process input in window: " << active_window_name() << endl;
+
       win_active_p -> process_input(e);
+
+      //ost << "Processed input; window is now: " << active_window_name() << endl;
+
     }
   }
 
@@ -1452,7 +1466,7 @@ void* display_rig_status(void* vp)
 
   while (true)
   { try
-    { const bool in_call_window = (win_active_p = &win_call);  // never update call window if we aren't in it
+    { const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
 
       try
       { while ( rig_status_thread_parameters.rigp()-> is_transmitting() )                     // don't poll when transmitting
@@ -2913,7 +2927,6 @@ ost << "processing command: " << command << endl;
   }
 
 // ALT-P -- Dump P3
-//  if (!processed and e.is_alt() and e.symbol() == XK_Sys_Req)
   if (!processed and e.is_alt('p'))
   { p3_screenshot();
 
@@ -2921,7 +2934,6 @@ ost << "processing command: " << command << endl;
   }
 
 // CTRL-P -- dump screen
-//  if (!processed and e.symbol() == XK_Print)
   if (!processed and e.is_control('p'))
   { dump_screen();
 
@@ -2940,40 +2952,27 @@ ost << "processing command: " << command << endl;
     win_active_p = &win_log_extract;
     win_active_p-> process_input(e);  // reprocess the alt-q
 
-// destination for the QTC is the callsign in the window; or, if the window is empty, the call of the last logged QSO
-/*
-    string destination_callsign = remove_peripheral_spaces(win.read());
-
-    if (destination_callsign.empty())
-      destination_callsign = logbk.last_qso().callsign();
-
-    if (!destination_callsign.empty() and (location_db.continent(destination_callsign) != "EU") )  // got a call, but it's not EU
-    { vector<QSO> vec_q = logbk.filter([] (const QSO& q) { return (q.continent() == string("EU")); } );
-
-      destination_callsign = ( vec_q.empty() ? string() : (vec_q[vec_q.size() - 1].callsign()) );
-    }
-
-    if (!destination_callsign.empty())
-      send_qtc(destination_callsign);
-*/
-
     processed = true;
   }
 
 // finished processing a keypress
-  if (processed and win_call.empty())
+  if (processed and win_active_p == &win_call)
+//  if (processed and win_call.empty())
+  { if (win_call.empty())
   { win_info <= WINDOW_CLEAR;
     win_batch_messages <= WINDOW_CLEAR;
     win_individual_messages <= WINDOW_CLEAR;
   }
 
-  if (processed)
+//  if (processed)
+  else
   { const string current_contents = remove_peripheral_spaces(win.read());
 
     if (current_contents != prior_contents)
     { update_scp_window(current_contents);
       update_fuzzy_window(current_contents);
     }
+  }
   }
 }
 
@@ -5133,7 +5132,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
   window& win = *wp;   // syntactic sugar
 
-  if (!sending_qtc)
+// ALT-Q
+  if (!sending_qtc and e.is_alt('q'))
   {
 // destination for the QTC is the callsign in the window; or, if the window is empty, the call of the last logged QSO
     string destination_callsign = remove_peripheral_spaces(win.read());
@@ -5153,7 +5153,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       processed = true;
     }
 
-    if (location_db.continent(destination_callsign) != "EU")    // send QTCs only to EU stations
+    if (!processed and location_db.continent(destination_callsign) != "EU")    // send QTCs only to EU stations
     { alert("No EU destination for QTC");
       win_active_p = &win_call;
       processed = true;
@@ -5162,7 +5162,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // check that it's OK to send a QTC to this call
     const unsigned int n_already_sent = qtc_db.n_qtcs_sent_to(destination_callsign);
 
-    if (n_already_sent >= 10)
+    if (!processed and n_already_sent >= 10)
     { alert(string("10 QSOs already sent to ") + destination_callsign);
       win_active_p = &win_call;
       processed = true;
@@ -5172,47 +5172,51 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     const unsigned int n_to_send = 10 - n_already_sent;
     const vector<qtc_entry> qtc_entries_to_send = qtc_buf.get_next_unsent_qtc(destination_callsign, n_to_send);
 
-    if (qtc_entries_to_send.empty())
+    if (!processed and qtc_entries_to_send.empty())
     { alert(string("No QSOs available to send to ") + destination_callsign);
       win_active_p = &win_call;
       processed = true;
     }
 
-    const string mode_str = (safe_get_mode() == MODE_CW ? "CW" : "PH");
-    series = qtc_series(qtc_entries_to_send, mode_str, context.my_call());
+    if (!processed)
+    { const string mode_str = (safe_get_mode() == MODE_CW ? "CW" : "PH");
+      series = qtc_series(qtc_entries_to_send, mode_str, context.my_call());
 
 // check that we still have entries (this should always pass)
-    if (series.empty())
-    { alert(string("Error: empty QTC object for ") + destination_callsign);
-      win_active_p = &win_call;
-      processed = true;
-    }
+      if (series.empty())
+      { alert(string("Error: empty QTC object for ") + destination_callsign);
+        win_active_p = &win_call;
+        processed = true;
+      }
+      else
 
 // OK; we're going to send at least one QTC
-    sending_qtc = true;
+      { sending_qtc = true;
 
-    const unsigned int number_of_qtc = qtc_db.size() + 1;
+        const unsigned int number_of_qtc = qtc_db.size() + 1;
 
-    qtc_id = to_string(number_of_qtc) + "/" + to_string(qtc_entries_to_send.size());
+        qtc_id = to_string(number_of_qtc) + "/" + to_string(qtc_entries_to_send.size());
 
-    if (cw)
-      send_msg((string)"QTC " + qtc_id);
+        if (cw)
+          send_msg((string)"QTC " + qtc_id + " QRV?");
 
-    win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sending QTC " < qtc_id < " to " <= destination_callsign;
+        win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sending QTC " < qtc_id < " to " <= destination_callsign;
 
 // display the QTC entries; we use the "prior QSOs" window
-    win <= series;
+        win <= series;
 
-    total_qtcs_to_send = qtc_entries_to_send.size();
-    qtcs_sent = 0;
-    processed = true;
+        total_qtcs_to_send = qtc_entries_to_send.size();
+        qtcs_sent = 0;
+        processed = true;
+      }
+    }
   }
 
 // R -- repeat introduction (i.e., no QTCs sent)
   if (!processed and (qtcs_sent == 0) and (e.is_char('r')))
   { //if (qtcs_sent == 0)
     { if (cw)
-        send_msg((string)"QTC " + qtc_id);
+        send_msg((string)"QTC " + qtc_id + " QRV?");
     }
 
     processed = true;
@@ -5313,6 +5317,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+//  ost << "Leaving process_QTC_input, active window = " << active_window_name() << endl;
+
 }
 
 void cw_speed(const unsigned int new_speed)
@@ -5331,5 +5337,19 @@ void cw_speed(const unsigned int new_speed)
   }
 }
 
+const string active_window_name(void)
+{ string name = "UNKNOWN";
+
+  if (win_active_p == &win_call)
+    name = "CALL";
+
+  if (win_active_p == &win_exchange)
+    name = "EXCHANGE";
+
+  if (win_active_p == &win_log_extract)
+    name = "LOG EXTRACT";
+
+  return name;
+}
 
 
