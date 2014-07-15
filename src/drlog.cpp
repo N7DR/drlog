@@ -5060,59 +5060,6 @@ void allow_for_callsign_mults(QSO& qso)
   }
 }
 
-#if 0
-void send_qtc(const string& destination_call)
-{ if (destination_call.empty())
-    return;
-
-  if (location_db.continent(destination_call) != "EU")    // send QTCs only to EU stations
-    return;
-
-  window& win_qtc_detail = win_log_extract;    // we use the "prior QSOs" window
-
-// check that it's OK to send a QTC to this call
-  const unsigned int n_already_sent = qtc_db.n_qtcs_sent_to(destination_call);
-
-  if (n_already_sent >= 10)
-  { alert(string("10 QSOs already sent to ") + destination_call);
-    return;
-  }
-
-  const unsigned int n_to_send = 10 - n_already_sent;
-  const vector<qtc_entry> qtc_entries_to_send = qtc_buf.get_next_unsent_qtc(destination_call, n_to_send);
-
-  if (qtc_entries_to_send.empty())
-  { alert(string("No QSOs available to send to ") + destination_call);
-    return;
-  }
-
-  qtc_series this_qtc(qtc_entries_to_send);
-
-// check that we still have entries (this should always pass)
-  if (this_qtc.empty())
-  { alert(string("Error: empty QTC object for ") + destination_call);
-    return;
-  }
-
-  const bool cw = (safe_get_mode() == MODE_CW);
-  const unsigned int number_of_qtc = qtc_db.size() + 1;
-  string qtc_id = to_string(number_of_qtc) + "/" + to_string(qtc_entries_to_send.size());
-
-  if (cw)
-    (*cw_p) << (string)"QTC " + qtc_id;
-
-  win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sending QTC " < qtc_id < " to " <= destination_call;
-
-// display the QTC entries; we use the "prior QSOs" window
-  win_qtc_detail <= this_qtc;
-
-  bool finish = false;
-  win_active_p = &win_qtc_detail;
-
-  return;
-}
-#endif
-
 void process_QTC_input(window* wp, const keyboard_event& e)
 { static bool sending_qtc = false;
   static unsigned int total_qtcs_to_send;
@@ -5229,8 +5176,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       if (cw)
       { string msg;
+        string space = (context.qtc_double_space() ? "  " : " ");
 
-        msg = qe.utc() + " " + qe.callsign() + " ";
+        msg = qe.utc() + space + qe.callsign() + space;
 
         const string serno = pad_string(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, PAD_LEFT, 'T');
 
@@ -5304,8 +5252,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       if ((qtc_nr >= 0) and (qtc_nr < series.size()))
       { const qtc_entry& qe = series[qtc_nr].first;
         string msg;
+        string space = (context.qtc_double_space() ? "  " : " ");
 
-        msg = qe.utc() + " " + qe.callsign() + " ";
+        msg = qe.utc() + space + qe.callsign() + space;
 
         const string serno = pad_string(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, PAD_LEFT, 'T');
 
@@ -5317,8 +5266,19 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
-//  ost << "Leaving process_QTC_input, active window = " << active_window_name() << endl;
+// PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+  if (!processed and ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
+  { if (cw)
+    { int change = (e.is_control() ? 1 : 3);
 
+      if (e.symbol() == XK_Prior)
+        change = -change;
+
+      cw_speed(cw_p->speed() - change);  // effective immediately
+    }
+
+    processed = true;
+  }
 }
 
 void cw_speed(const unsigned int new_speed)

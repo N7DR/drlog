@@ -178,6 +178,7 @@ protected:
   bool                                         _qso_multiple_bands;  ///< whether OK to work station on another band
   bool                                         _qso_multiple_modes;  ///< whether OK to work station on another mode
   bool                                         _qtcs;                ///< whether QTCs are enabled
+  bool                                         _qtc_double_space;    ///< whether to leave a longer pause between elements of a QTC
   std::string                                  _qtc_filename;        ///< name of file where QTCs are stored
   std::map<std::string, std::set<std::string>> _qthx;                ///< allowed exchanges values as a function of country
 
@@ -365,6 +366,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(qso_multiple_bands, _context);
   SAFEREAD(qso_multiple_modes, _context);
   SAFEREAD(qtcs, _context);
+  SAFEREAD(qtc_double_space, _context);
   SAFEREAD(qtc_filename, _context);
   SAFEREAD(qthx, _context);         ///< allowed exchanges values as a function of country
   SAFEREAD(quick_qsl_message, _context);

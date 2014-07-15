@@ -391,8 +391,7 @@ const string logbook::trlog_log(const drlog_context& context, const unsigned int
 
 //  for (list<QSO>::const_iterator cit = qsos.begin(); cit != qsos.end(); ++cit)
   for (const auto& qso : qsos)
-  { //const QSO& qso = *cit;
-    string line(80, ' ');
+  { string line(80, ' ');
     
 // band
     line.replace(0, 3, pad_string(BAND_NAME[qso.band()], 3));
@@ -621,26 +620,13 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
 // frequency
       
 
-        if (name == "FREQ")
+  if (name == "FREQ")
   { qso.freq(value);
     
   unsigned int _frequency = from_string<unsigned int>(value);
   BAND _band = to_BAND(_frequency);
 
-/*
-  if (_frequency >= 1800 and _frequency <= 2000)
-      _band = BAND_160;
-    if (_frequency >= 3500 and _frequency <= 4000)
-      _band = BAND_80;
-    if (_frequency >= 7000 and _frequency <= 7300)
-      _band = BAND_40;
-    if (_frequency >= 14000 and _frequency <= 14350)
-      _band = BAND_20;
-    if (_frequency >= 21000 and _frequency <= 21450)
-      _band = BAND_15;
-    if (_frequency >= 28000 and _frequency <= 29700)
-      _band = BAND_10;  
-*/
+
         qso.band(_band);
   
   ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
@@ -735,9 +721,12 @@ const string logbook::exchange_field_value(const string& callsign, const string&
         \brief Support for bits of the log
 */
 
+/*! \brief  constructor
+    \param  w               window to be used by this extract
+*/
 log_extract::log_extract(window& w) :
   _win(w),
-  _win_size(0)
+  _win_size(0)                                  // don't set the size yet, since the size of w may not be set
 {
 }
 

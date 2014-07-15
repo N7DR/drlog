@@ -596,6 +596,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "QTCS"))
       _qtcs = is_true;
 
+// QTC DOUBLE SPACE
+    if (starts_with(testline, "QTC DOUBLE SPACE"))
+      _qtc_double_space = is_true;
+
 // QTC FILENAME
     if (starts_with(testline, "QTC FILENAME"))
       _qtc_filename = rhs;
@@ -1180,6 +1184,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _qso_multiple_bands(false),                 // each station may be worked on only one band
   _qso_multiple_modes(false),                 // each station may be worked on only one mode
   _qtcs(false),                               // QTCs are disabled
+  _qtc_double_space(false),                   // QTC elements are single-spaced
   _qtc_filename("QTCs"),                      // QTC filename
   _rate_periods( { 15, 30, 60 } ),            // 15-, 30-, 60-minute periods for rates
   _rbn_port(7000),                            // telnet port for the reverse beacon network

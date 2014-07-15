@@ -179,7 +179,6 @@ const string dx_cluster::read(void)
     
   try
   { buf = _connection.read(_timeout);
-//      ost << "Returned from reading the connection; number of read bytes = " << buf.length() << endl;
   }
     
   catch (const socket_support_error& e)
@@ -201,21 +200,24 @@ const string dx_cluster::read(void)
   }
   
   if (!buf.empty())
-  { //ost << "Data from server: " << buf << endl;
+  { SAFELOCK(rbn_buffer);
 
-    SAFELOCK(rbn_buffer);
     _unprocessed_input += buf;
-            
-//    ost << "_unprocessed_input is now: " << _unprocessed_input << endl;
   }
   
   return _unprocessed_input;
 }
 
+/*! \brief      send a message to the cluster
+    \return msg the message to be sent
+*/
 void dx_cluster::send(const string& msg)
 { _connection.send(msg);
 }
 
+/*! \brief  read from the cluster socket
+    \return the information that has been read from the socket but has not yet been processed
+*/
 const string dx_cluster::get_unprocessed_input(void)
 { string rv;
 
@@ -233,6 +235,11 @@ const string dx_cluster::get_unprocessed_input(void)
         \brief Convert a line from the cluster to a DX posting
 */
 
+/*! \brief  constructor
+    \param  received_info   a line received from the cluster or RBN
+    \param  db              the location database for this contest
+    \param  post_source     the origin of the post
+*/
 dx_post::dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source) :
   _source(post_source),
   _valid(false)

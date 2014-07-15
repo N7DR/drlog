@@ -53,10 +53,8 @@ protected:
 // not possible to put that in chronological order without including seconds...
 // and even with seconds a change would be necessary should this ever be adapted for
 // use in a multi station
-  std::multimap<std::string, QSO>  _log;
-  std::vector<QSO>                 _log_vec;
-  
-//  QSO                              _removed_qso;   // most-recently removed QSO;  currently we don't do anything with this
+  std::multimap<std::string, QSO>  _log;        ///< map version of log
+  std::vector<QSO>                 _log_vec;    ///< vector version of log
 
 public:
   
@@ -87,7 +85,7 @@ public:
 /// remove most-recent qso
   inline void remove_last_qso(void)
     { SAFELOCK(_log);
-      *this -= size();
+      *this -= size();    // remember, numbering is wrt 1
     }
 
 /*!     \brief          All the QSOs with a particular call, in chronological order
@@ -186,10 +184,11 @@ public:
     { _log.clear(); }
 
 /// how many QSOs are in the log?
-  inline size_t size(void) const
+  inline const size_t size(void) const
     { return _log.size(); }
 
-  inline size_t n_qsos(void) const
+/// how many QSOs are in the log?
+  inline const size_t n_qsos(void) const
     { return size(); }
 
 /// is the log empty?
@@ -197,6 +196,13 @@ public:
     { return _log.empty(); }
 
 // get the value of an exchange field from the last QSO with someone; returns empty string if anything goes wrong
+/*!     \brief                          Get the value of an exchange field from the most recent QSO with a station
+        \param  callsign                call for which the information is required
+        \param  exchange_field_name     name of the exchange field for which the information is required
+        \return                         Value received from <i>callsign</i> for the field <i>exchange_field_name</i> during the most recent QSO with <i>callsign</i>
+
+        Returns empty string if anything goes wrong.
+*/
   const std::string exchange_field_value(const std::string& callsign, const std::string& exchange_field_name);
 
   template<typename Archive>
@@ -218,15 +224,18 @@ class log_extract
 {
 protected:
 
-  window&      _win;
-  unsigned int _win_size;
+  window&      _win;                        ///< window associated with the log extract  (NB, during construction, _win will be constructed first)
+  unsigned int _win_size;                   ///< height of the associated window
 
-  std::deque<QSO> _qsos;
+  std::deque<QSO> _qsos;                    ///< QSOs contained in the extract
 
-  pt_mutex _extract_mutex;
+  pt_mutex _extract_mutex;                  ///< mutex for thread safety
 
 public:
 
+/*! \brief  constructor
+    \param  w               window to be used by this extract
+*/
   explicit log_extract(window& w);
 
   void prepare(void);
