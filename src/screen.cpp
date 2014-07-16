@@ -339,10 +339,10 @@ window& window::operator<(const vector<string>& v)
 
 //  this->cpair(colours.add(COLOUR_GREEN, COLOUR_BLACK));
 
-  *this < COLOURS(COLOUR_GREEN, COLOUR_BLACK);
+//  *this < COLOURS(COLOUR_GREEN, COLOUR_BLACK);
 //  *this < " burble1 " < " burble2 ";
 //  this->cpair(colours.add(_fg, _bg));
-  *this < COLOURS(_fg, _bg);
+//  *this < COLOURS(_fg, _bg);
 
 //  *this < colours(_fg, _bg);
   return *this;
@@ -384,26 +384,6 @@ window& window::operator<(const std::vector<std::pair<std::string /* callsign */
     idx++;
   }
 
-//  this->cpair(4);
-//  *this < colours(COLOUR_GREEN, COLOUR_BLACK);
-//  this->cpair(FGBG(COLOUR_GREEN, COLOUR_BLACK));
-
-//  const int n = COLOUR_PAIR(colours.add(COLOUR_GREEN, COLOUR_BLACK));
-
-//  ost << "colour pair = " << n << endl;
-
-//  const int pair_nr = colours.add(_fg, _bg);
-//  default_colours(COLOUR_PAIR(pair_nr));
-
-
-//  this->cpair(colours.add(COLOUR_GREEN, COLOUR_BLACK));
-
-//  *this < COLOURS(COLOUR_GREEN, COLOUR_BLACK);
-//  *this < " burble1 " < " burble2 ";
-//  this->cpair(colours.add(_fg, _bg));
-//  *this < COLOURS(_fg, _bg);
-
-//  *this < colours(_fg, _bg);
   return *this;
 }
 
@@ -644,10 +624,6 @@ window& window::leave_cursor(const bool enable_or_disable)
   return *this;
 }
 
-/// change to a defined colour pair
-//window& window::operator<(const enum COLOUR_PAIR_USES cp)
-//{ return cpair(static_cast<int>(cp));
-//}
 
 window& operator<(window& win, const cursor& c)
 { return win.move_cursor(c.x(), c.y());
@@ -659,6 +635,7 @@ window& operator<(window& win, const cursor_relative& cr)
 
 window& operator<(window& win, const centre& c)
 { win.move_cursor((win.width() - c.s().length()) / 2, c.y());
+
   return win < c.s();
 }
 
@@ -667,17 +644,18 @@ const string window::read(int x, int y)
 { if (!_wp)
     return string();
   
-  char tmp[500];
+  const unsigned int BUF_SIZE = 1024;
+  char tmp[BUF_SIZE];
+
   tmp[0] = '\0';
   
   SAFELOCK(screen);
   
 // we need to save the current logical cursor position in the window, because mvwinstr() silently moves it
   const cursor c = cursor_position();
-  const int n_chars = mvwinstr(_wp,  _limit(_height - y - 1, 0, _height - 1),  _limit(x, 0, _width - 1), tmp);
+  const int n_chars = mvwinnstr(_wp,  _limit(_height - y - 1, 0, _height - 1),  _limit(x, 0, _width - 1), tmp, BUF_SIZE - 1);
   move_cursor(c.x(), c.y());          // restore the logical cursor position
   
-//  ost << "n_chars = " << n_chars << endl;
   if (n_chars != ERR)
     tmp[n_chars] = '\0';   // in theory, not necessary
 
@@ -687,8 +665,6 @@ const string window::read(int x, int y)
 /// snapshot of all the contents
 const vector<string> window::snapshot(void)
 { vector<string> rv;
-
-//  ost << "height(): = " << static_cast<int>(height());
 
   for (size_t n = height() - 1; n < height(); --n)
     rv.push_back(getline(n));
@@ -706,43 +682,11 @@ window& window::clear_line(const int line_nr)
   const cursor c = cursor_position();
 
   move_cursor(0, line_nr);
-
   (*this) <= WINDOW_CLEAR_TO_EOL;
-
   move_cursor(c.x(), c.y());          // restore the logical cursor position
 
   return *this;
 }
-
-/// delete a character
-/*
-window& window::delete_character(const int n)
-{ if (!_wp)
-    return *this; 
-    
-  SAFELOCK(screen);
-    
-  const string current_contents = read();
-  if (n < 0 or n >= static_cast<int>(current_contents.length()))
-    return *this;
-  
-  const cursor c = cursor_position(); 
-  const string new_contents = substring(current_contents, 0, n) + substring(current_contents, n + 1);
-  *this < CURSOR_START_OF_LINE;
-  
-// ensure we are not in insert mode
-  const bool insert_enabled = _insert;
-  _insert = false;
-  *this < new_contents;
-  _insert = insert_enabled;         // restore old insert mode
-  move_cursor(c);
-  
-  if (c.x() > n)
-    move_cursor_relative(-1, 0);
-  
-  return *this;
-}
-*/
 
 /// delete a character within the current line
 window& window::delete_character(const int n)
@@ -751,15 +695,12 @@ window& window::delete_character(const int n)
 
   SAFELOCK(screen);    // ensure that nothing changes
 
-//  const int line_nr = cursor_position().y();
-
   return delete_character( n, cursor_position().y() );
 }
 
 /// delete a character within a line
 window& window::delete_character(const int n, const int line_nr)
-//#if 0
-//window& window::delete_char( const int n, const int line_nr )
+
 { if (!_wp)
     return *this;
 
@@ -797,7 +738,6 @@ window& window::delete_character(const int n, const int line_nr)
 
   return *this;
 }
-//#endif
 
 /// hide the window
 void window::hide(void)

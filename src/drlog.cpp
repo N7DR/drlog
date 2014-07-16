@@ -5079,7 +5079,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
   window& win = *wp;   // syntactic sugar
 
-// ALT-Q
+// ALT-Q - start process of sending QTC batch
   if (!sending_qtc and e.is_alt('q'))
   {
 // destination for the QTC is the callsign in the window; or, if the window is empty, the call of the last logged QSO
@@ -5159,12 +5159,24 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     }
   }
 
+// ESCAPE
+  if (!processed and e.symbol() == XK_Escape)
+  {
+// abort sending CW if we are currently sending
+    if (cw)
+    { if (!cw_p->empty())
+      { cw_p->abort();
+        processed = true;
+      }
+    }
+
+    processed = true;
+  }
+
 // R -- repeat introduction (i.e., no QTCs sent)
   if (!processed and (qtcs_sent == 0) and (e.is_char('r')))
-  { //if (qtcs_sent == 0)
-    { if (cw)
-        send_msg((string)"QTC " + qtc_id + " QRV?");
-    }
+  { if (cw)
+      send_msg((string)"QTC " + qtc_id + " QRV?");
 
     processed = true;
   }
@@ -5279,6 +5291,16 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     processed = true;
   }
+
+// ALT-K -- toggle CW
+  if (!processed and cw and e.is_alt('k'))
+  { cw_p->toggle();
+
+    win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );
+
+    processed = true;
+  }
+
 }
 
 void cw_speed(const unsigned int new_speed)
