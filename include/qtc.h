@@ -123,7 +123,16 @@ public:
   READ_AND_WRITE(qtc_entries);
   READ_AND_WRITE(date);
   READ_AND_WRITE(utc);
-//  READ_AND_WRITE(mode);
+
+  inline const decltype(_target) destination(void) const
+    { return target(); }
+
+  inline void destination(const decltype(_target) tgt)
+    { target(tgt); }
+
+  const std::vector<qtc_entry> sent_qtc_entries(void) const;
+
+  const std::vector<qtc_entry> unsent_qtc_entries(void) const;
 
   inline const std::string frequency_str(void) const
     { return _frequency; }
@@ -150,10 +159,15 @@ public:
 // set a particular entry to sent
   void mark_as_sent(const unsigned int n);
 
+// set a particular entry to unsent
+  void mark_as_unsent(const unsigned int n);
+
 // get first entry that has not been sent
   const qtc_entry first_not_sent(const unsigned int posn = 0);
 
   const std::string output_string(const unsigned int n) const;
+
+  const std::string complete_output_string(void);
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -238,9 +252,6 @@ protected:
   std::set<qtc_entry> _sent_qtcs;       ///< unordered_set won't serialize
 
 public:
-
-//  inline const size_t n_unsent(void) const
-//    { return _unsent_qtcs.size(); }
 
   const std::vector<qtc_entry> get_next_unsent_qtc(const std::string& target, const int max_entries = 10);
 

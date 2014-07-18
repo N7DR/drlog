@@ -44,8 +44,7 @@ cpair colours;
 
 /// default constructor
 screen::screen(void)
-{
-  initscr();
+{ initscr();
   start_color();
 
   if (!has_colors())
@@ -113,10 +112,10 @@ window::window(const window_information& wi, const unsigned int flags) :
 
     _wp = newwin(_height, _width, LINES - _y /* - 1 */ - _height, /*COLS - */_x);
     keypad(_wp, true);
-
     _pp = new_panel(_wp);
 
     const int pair_nr = colours.add(_fg, _bg);
+
     default_colours(COLOUR_PAIR(pair_nr));
   }
 }
@@ -183,7 +182,6 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
 
     _wp = newwin(_height, _width, LINES - _y /* - 1 */ - _height, /*COLS - */_x);
     keypad(_wp, true);
-
     _pp = new_panel(_wp);
   }
 
@@ -253,14 +251,11 @@ window& window::operator<(const set<string>& vec)
     return *this;
 
   vector<string> v(vec.cbegin(), vec.cend());
-//    for (set<string>::const_iterator cit = vec.begin(); cit != vec.end(); ++cit)
-//      v.push_back(*cit);
-//  copy(vec.cbegin(), vec.cend(), back_inserter(v));
+
   sort(v.begin(), v.end(), compare_calls);
 
   unsigned int idx = 0;
   
-//  for (vector<string>::const_iterator cit = v.begin(); cit != v.end(); ++cit)
   for (const auto& str : v)
   { 
 // see if there's enough room on this line    
@@ -286,10 +281,6 @@ window& window::operator<(const set<string>& vec)
     idx++;
   }
 
-//  *this < COLOURS(COLOUR_GREEN, COLOUR_BLACK);
-
-//  *this < COLOURS(_fg, _bg);
-
   return *this;
 }
 
@@ -300,24 +291,24 @@ window& window::operator<(const vector<string>& v)
 
   unsigned int idx = 0;
 
-  for (vector<string>::const_iterator cit = v.begin(); cit != v.end(); ++cit)
+  for (const auto& str : v)
   {
 // see if there's enough room on this line
     cursor_position();
     const int remaining_space = width() - _cursor_x;
 
  // stop writing if there's insufficient room for the next string
-    if (remaining_space < static_cast<int>(cit->length()))
+    if (remaining_space < static_cast<int>(str.length()))
       if (!scrolling() and (_cursor_y == 0))
         break;
 
-    if (remaining_space < static_cast<int>(cit->length()))
+    if (remaining_space < static_cast<int>(str.length()))
       *this < "\n";
 
-    *this < *cit;
+    *this < str;
 
 // add space unless we're at the end of a line or this is the last string
-    const bool end_of_line = (remaining_space == static_cast<int>(cit->length()));
+    const bool end_of_line = (remaining_space == static_cast<int>(str.length()));
 
     if ((idx != v.size() - 1) and !end_of_line)
       *this < " ";
@@ -325,26 +316,6 @@ window& window::operator<(const vector<string>& v)
     idx++;
   }
 
-//  this->cpair(4);
-//  *this < colours(COLOUR_GREEN, COLOUR_BLACK);
-//  this->cpair(FGBG(COLOUR_GREEN, COLOUR_BLACK));
-
-//  const int n = COLOUR_PAIR(colours.add(COLOUR_GREEN, COLOUR_BLACK));
-
-//  ost << "colour pair = " << n << endl;
-
-//  const int pair_nr = colours.add(_fg, _bg);
-//  default_colours(COLOUR_PAIR(pair_nr));
-
-
-//  this->cpair(colours.add(COLOUR_GREEN, COLOUR_BLACK));
-
-//  *this < COLOURS(COLOUR_GREEN, COLOUR_BLACK);
-//  *this < " burble1 " < " burble2 ";
-//  this->cpair(colours.add(_fg, _bg));
-//  *this < COLOURS(_fg, _bg);
-
-//  *this < colours(_fg, _bg);
   return *this;
 }
 
@@ -355,9 +326,9 @@ window& window::operator<(const std::vector<std::pair<std::string /* callsign */
 
   unsigned int idx = 0;
 
-  for (vector<pair<string, int> >::const_iterator cit = vec.begin(); cit != vec.end(); ++cit)
-  { const string& callsign = cit->first;
-    const int& cp = cit->second;
+  for (const auto& psi : vec)
+  { const string& callsign = psi.first;
+    const int& cp = psi.second;
 
 // see if there's enough room on this line
     cursor_position();
@@ -395,7 +366,6 @@ const cursor window::cursor_position(void)
   SAFELOCK(screen);
 
   getyx(_wp, _cursor_y, _cursor_x);
-
   _cursor_y = height() - _cursor_y - 1;
   
   return cursor(_cursor_x, _cursor_y);
@@ -407,8 +377,8 @@ window& window::move_cursor_relative(const int delta_x, const int delta_y)
     return *this;
     
   cursor_position();
-
   move_cursor(_cursor_x + delta_x, _cursor_y + delta_y);
+
   return *this;
 }
 
@@ -449,7 +419,6 @@ window& window::default_colours(const int foreground_colour, const int backgroun
 
   return default_colours(FGBG(foreground_colour, background_colour));
 }
-
 
 /// control an attribute or perform a simple operation
 window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
@@ -589,7 +558,6 @@ window& window::scrolling(const bool enable_or_disable)
   _scrolling = enable_or_disable;
   
   SAFELOCK(screen);
-//  SAVE_CURSOR(this);
 
   scrollok(_wp, enable_or_disable);
   
@@ -602,7 +570,6 @@ window& window::scrollit(const int n_lines)
     return *this;
     
   SAFELOCK(screen);
-//  SAVE_CURSOR(this);
 
   wscrl(_wp, n_lines);
   
@@ -617,29 +584,36 @@ window& window::leave_cursor(const bool enable_or_disable)
   _leaveok = enable_or_disable;
   
   SAFELOCK(screen);
-//  SAVE_CURSOR(this);
 
   leaveok(_wp, enable_or_disable);
   
   return *this;
 }
 
-
+/// window << cursor
 window& operator<(window& win, const cursor& c)
 { return win.move_cursor(c.x(), c.y());
 }
 
+/// window << cursor_relative
 window& operator<(window& win, const cursor_relative& cr)
 { return win.move_cursor_relative(cr.x(), cr.y());
 }
 
+/// window << centre
 window& operator<(window& win, const centre& c)
 { win.move_cursor((win.width() - c.s().length()) / 2, c.y());
 
   return win < c.s();
 }
 
-/// read window
+/*! \brief      read to end of window
+    \param  x   x value from which to read (0 is leftmost column)
+    \param  y   y value from which to read (0 is bottommost row)
+    \return     contents of the window, starting at the position (<i>x</i>, <i>y</i>)
+
+    By default reads the entirety of the bottom line
+*/
 const string window::read(int x, int y)
 { if (!_wp)
     return string();
@@ -765,18 +739,18 @@ const bool window::hidden(void) const
   return false;                // default
 }
 
-// returns whether the event has been processed
-const bool window::common_processing(const keyboard_event& e)    // processing that is the same in multiple windows
+/*! \brief  character processing that is the same in multiple windows
+    \param  e   keyboard event to be processed
+    \return whether the event was processed
+*/
+const bool window::common_processing(const keyboard_event& e)
 { window& win = (*this);
-
-//  ost << "Inside common_processing" << endl;
-//  ost << "AND mask = " << (e.xkey_state() & (ShiftMask | ControlMask | Mod1Mask)) << endl;
 
 // a..z A..Z
   if (e.is_letter())
-  { const string s = to_upper(e.str());
+  { //const string s = to_upper(e.str());
 
-    win <= s;
+    win <= to_upper(e.str());
     return true;
   }
 
@@ -841,7 +815,7 @@ window& operator<(window& win, const colour_pair& cpair)
 { return win.cpair(cpair.pair_nr());
 }
 
-
+#if 0
 SAVE_CURSOR::SAVE_CURSOR(window& w) :
   _wp(&w)
 { if (_wp->hidden_cursor())
@@ -868,6 +842,7 @@ SAVE_CURSOR::~SAVE_CURSOR(void)
     //doupdate();
   }
 }
+#endif
 
 // -----------  colour_pair  ----------------
 

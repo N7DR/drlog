@@ -70,6 +70,9 @@ const string active_window_name(void);
 void add_qso(const QSO& qso);
 void alert(const string& msg);
 void allow_for_callsign_mults(QSO& qso);  // may change qso
+inline void append_to_file(const string& filename, const string& str)
+  { ofstream(filename, ios_base::app) << str;
+  }
 void archive_data(void);
 const string bearing(const string& callsign);
 const bool calculate_exchange_mults(QSO& qso,
@@ -848,7 +851,7 @@ int main(int argc, char** argv)
 
 // REMAINING EXCHANGE MULTS window(s)
   const vector<string> exchange_mult_window_names = context.window_name_contains("REMAINING EXCHANGE MULTS");
-  const size_t n_remaining_exch_mult_windows = exchange_mult_window_names.size();
+//  const size_t n_remaining_exch_mult_windows = exchange_mult_window_names.size();
 
   for (auto& window_name : exchange_mult_window_names)
   { window* wp = new window();
@@ -1218,7 +1221,8 @@ int main(int argc, char** argv)
 // move the sent ones to the sent buffer
         const vector<qtc_series>& vec_qs = qtc_db.qtc_db();    ///< the QTCs
 
-        for_each(vec_qs.cbegin(), vec_qs.cend(), [&qtc_buf] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+//        for_each(vec_qs.cbegin(), vec_qs.cend(), [&qtc_buf] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+        for_each(vec_qs.cbegin(), vec_qs.cend(), [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
 
         statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
         statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
@@ -1417,7 +1421,6 @@ void* display_date_and_time(void* vp)
         }
 
 // possibly clear alert window
-
         { SAFELOCK(alert);
 
           if ( (alert_time != 0) and ( (now - alert_time) > 60 ) )
@@ -1570,7 +1573,7 @@ void* display_rig_status(void* vp)
 // see if we are within twice the guard band before we clear the call window
             { const string call_contents = remove_peripheral_spaces(win_call.read());
               const bandmap_entry be = bandmap_this_band[call_contents];
-              const int f_diff = abs(be.freq().hz() - f.hz());
+              const unsigned int f_diff = abs(be.freq().hz() - f.hz());
 
               if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
               { if (!win_nearby.empty())
@@ -1748,7 +1751,7 @@ void* process_rbn_info(void* vp)
 
           if (permitted_bands < dx_band)
           { const BAND cur_band = safe_get_band();
-            const MODE cur_mode = safe_get_mode();
+            //const MODE cur_mode = safe_get_mode();
             const string& dx_callsign = post.callsign();
             const string& poster = post.poster();
             const pair<string, BAND> target { dx_callsign, dx_band };
@@ -1807,8 +1810,8 @@ void* process_rbn_info(void* vp)
 
 // add the post to the correct bandmap
             bandmap& bandmap_this_band = bandmaps[dx_band];
-            const unsigned int expiration_time = post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
-                                                                                                              (context.bandmap_decay_time_rbn() * 60 ) );
+//            const unsigned int expiration_time = post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
+//                                                                                                              (context.bandmap_decay_time_rbn() * 60 ) );
             bandmap_this_band += be;
 
 // prepare to display the bandmap if we just made a change for this band
@@ -1834,8 +1837,6 @@ void* process_rbn_info(void* vp)
       cluster_mult_win.refresh();
 
 // remove marker that we are processing a pass
-//    cluster_line_win < CURSOR_START_OF_LINE < WINDOW_NORMAL <= first_char;
-
 // we assume that the height of cluster_line_win is one
     if (last_processed_line.empty())
       cluster_line_win < CURSOR_START_OF_LINE <= first_char;
@@ -2956,23 +2957,20 @@ ost << "processing command: " << command << endl;
   }
 
 // finished processing a keypress
-  if (processed and win_active_p == &win_call)
-//  if (processed and win_call.empty())
+  if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())
-  { win_info <= WINDOW_CLEAR;
-    win_batch_messages <= WINDOW_CLEAR;
-    win_individual_messages <= WINDOW_CLEAR;
-  }
-
-//  if (processed)
-  else
-  { const string current_contents = remove_peripheral_spaces(win.read());
-
-    if (current_contents != prior_contents)
-    { update_scp_window(current_contents);
-      update_fuzzy_window(current_contents);
+    { win_info <= WINDOW_CLEAR;
+      win_batch_messages <= WINDOW_CLEAR;
+      win_individual_messages <= WINDOW_CLEAR;
     }
-  }
+    else
+    { const string current_contents = remove_peripheral_spaces(win.read());
+
+      if (current_contents != prior_contents)
+      { update_scp_window(current_contents);
+        update_fuzzy_window(current_contents);
+      }
+    }
   }
 }
 
@@ -3081,8 +3079,16 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
-// ENTER and KP_ENTER -- thanks and log the contact
-  if (!processed and e.is_unmodified() and ( (e.symbol() == XK_Return) or (e.symbol() == XK_KP_Enter) ) )
+// ENTER, KP_ENTER, ALT -Q -- thanks and log the contact; also perhaps start QTC process
+  bool log_the_qso = !processed and e.is_unmodified() and ( (e.symbol() == XK_Return) or (e.symbol() == XK_KP_Enter) );
+  bool send_qtc = false;
+
+  if (!log_the_qso)
+  { log_the_qso = !processed and e.is_alt('q') and rules.send_qtcs();
+    send_qtc = log_the_qso;
+  }
+
+  if (log_the_qso)
   { const BAND cur_band = safe_get_band();
     const MODE cur_mode = safe_get_mode();
     const string call_contents = remove_peripheral_spaces(win_call.read());
@@ -3109,32 +3115,36 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       }
 
       if (!processed)
-      { if ( (cur_mode == MODE_CW) and (cw_p) )
+      { if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
         { if (exchange_field_values.size() == exchange_template.size())    // 1:1 correspondence between expected and received fields
           { if (drlog_mode == CQ_MODE)                                   // send QSL
             { const bool quick_qsl = (e.symbol() == XK_KP_Enter);
 
-              (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
+              if (!send_qtc)
+                (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
             }
             else                                                         // SAP exchange
-            { (*cw_p) << expand_cw_message( context.exchange_sap() );
+            { if (!send_qtc)
+                (*cw_p) << expand_cw_message( context.exchange_sap() );
               ost << "sent SAP exchange: " << expand_cw_message( context.exchange_sap() ) << endl;
             }
-            sent_acknowledgement = true;
+            sent_acknowledgement = true;  // should rename now that we've added QTC processing here
           }
         }
 
-      parsed_exchange pexch(canonical_prefix, rules, exchange_field_values);
+        parsed_exchange pexch(canonical_prefix, rules, exchange_field_values);
 
-      ost << "is exchange valid? " << pexch.valid() << endl;
-      ost << pexch << endl;
+        ost << "is exchange valid? " << pexch.valid() << endl;
+        ost << pexch << endl;
 
-      if (pexch.valid())
-      { if (!sent_acknowledgement)
-        { if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == SAP_MODE))    // in SAP mode, he doesn't care that we might have changed his call
-          { (*cw_p) << expand_cw_message(context.exchange_sap());
-            ost << " sent: " << expand_cw_message(context.exchange_sap()) << endl;
-          }
+        if (pexch.valid())
+        { if (!sent_acknowledgement)
+          { if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == SAP_MODE))    // in SAP mode, he doesn't care that we might have changed his call
+            { if (!send_qtc)
+              { (*cw_p) << expand_cw_message(context.exchange_sap());
+                ost << " sent: " << expand_cw_message(context.exchange_sap()) << endl;
+              }
+            }
 
           if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))    // in CQ mode, he does
           { const vector<string> call_contents_fields = split_string(call_contents, " ");
@@ -3146,13 +3156,15 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
             if (callsign != original_callsign)    // callsign did not change
             { at_call = callsign;
-              (*cw_p) << expand_cw_message(context.call_ok_now_message());
+              if (!send_qtc)
+                (*cw_p) << expand_cw_message(context.call_ok_now_message());
             }
 
 // now send ordinary TU message
             const bool quick_qsl = (e.symbol() == XK_KP_Enter);
 
-            (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
+            if (!send_qtc)
+              (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
           }
         }
 
@@ -3263,7 +3275,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
-        win_active_p = &win_call;
+        win_active_p = &win_call;    // switch to the CALL window
         win_call <= CURSOR_START_OF_LINE;
 
 // remaining mults: callsign, country, exchange
@@ -3285,12 +3297,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         { const size_t old_size = (cit->second).size();
           map<string, set<string> >::const_iterator ncit = new_worked_exchange_mults.find(cit->first);
 
-          //ost << "old size = " << old_size << endl;
-
           if (ncit != new_worked_exchange_mults.end())    // should never be equal
           { const size_t new_size = (ncit->second).size();
-
-           //ost << "new size = " << new_size << endl;
 
             no_exchange_mults_this_qso = (old_size == new_size);
 
@@ -3301,9 +3309,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // what exchange mults came from this qso? there ought to be a better way of doing this
         if (!no_exchange_mults_this_qso)
-        { // set<pair<string /* field name */, string /* field value */> > exchange_mults_this_qso;
-
-          for (const auto& current_exchange_mult : new_worked_exchange_mults)
+        { for (const auto& current_exchange_mult : new_worked_exchange_mults)
           { set<string> difference;
 
             const auto tmp = old_worked_exchange_mults.find(current_exchange_mult.first);
@@ -3326,13 +3332,21 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           }
         }
 
-// write to disk
-        FILE* fp = fopen(context.logfile().c_str(), "a");
-        fseek(fp, 0, SEEK_END);
+// writing to disk is slow, so start the QTC now, if applicable
+        if (send_qtc)
+        { last_active_win_p = win_active_p;  // this is now CALL
+          win_active_p = &win_log_extract;
+          win_active_p-> process_input(e);  // reprocess the alt-q
+        }
 
-        const string line_to_write = qso.verbose_format() + EOL;
-        fwrite(line_to_write.c_str(), line_to_write.length(), 1, fp);
-        fclose(fp);
+// write to disk
+//        FILE* fp = fopen(context.logfile().c_str(), "a");
+//        fseek(fp, 0, SEEK_END);
+//
+//        const string line_to_write = qso.verbose_format() + EOL;
+//        fwrite(line_to_write.c_str(), line_to_write.length(), 1, fp);
+//        fclose(fp);
+        append_to_file(context.logfile(), (qso.verbose_format() + EOL) );
 
 // display the current rate (including this QSO)
         update_rate_window();
@@ -3369,8 +3383,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
          be.is_needed(false);
 
          bandmap_this_band += be;
-
-//         bandmap_this_band.not_needed_country_mult(location_db.canonical_prefix(qso.callsign()));
       }
 
 // callsign mult status
@@ -4533,14 +4545,6 @@ void* auto_backup(void* vp)
       const string& directory = get<0>(*tsss_p);
       const string& filename = get<1>(*tsss_p);
       const string& qtc_filename = get<2>(*tsss_p);
-
-//      ost << "in auto_backup()" << endl;
-//      ost << "directory = " << directory << endl;
-//      ost << "filename = " << filename << endl;
-//      ost << "qtc_filename = " << qtc_filename << endl;
-
-//      const string& filename = pss_p->first;
-//      const string& directory = pss_p->second;
       const string dts = date_time_string();
       const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
       const string complete_name = directory + "/" + filename + "-" + suffix;
@@ -5061,11 +5065,12 @@ void allow_for_callsign_mults(QSO& qso)
 }
 
 void process_QTC_input(window* wp, const keyboard_event& e)
-{ static bool sending_qtc = false;
+{ static bool sending_series = false;
   static unsigned int total_qtcs_to_send;
   static unsigned int qtcs_sent;
   static string qtc_id;
   static qtc_series series;
+//  static bool confirmed_last_qtc = false;
 
   const bool cw = (safe_get_mode() == MODE_CW);  // just to keep it easy to determine if we are on CW
   bool processed = false;
@@ -5080,10 +5085,11 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   window& win = *wp;   // syntactic sugar
 
 // ALT-Q - start process of sending QTC batch
-  if (!sending_qtc and e.is_alt('q'))
+  if (!sending_series and e.is_alt('q'))
   {
-// destination for the QTC is the callsign in the window; or, if the window is empty, the call of the last logged QSO
-    string destination_callsign = remove_peripheral_spaces(win.read());
+// destination for the QTC is the callsign in the CALL window; or, if the window is empty, the call of the last logged QSO
+    const string call_window_contents = remove_peripheral_spaces(win_call.read());
+    string destination_callsign = call_window_contents;
 
     if (destination_callsign.empty())
       destination_callsign = logbk.last_qso().callsign();
@@ -5129,6 +5135,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     { const string mode_str = (safe_get_mode() == MODE_CW ? "CW" : "PH");
       series = qtc_series(qtc_entries_to_send, mode_str, context.my_call());
 
+// populate info in the series
+      series.destination(destination_callsign);
+
 // check that we still have entries (this should always pass)
       if (series.empty())
       { alert(string("Error: empty QTC object for ") + destination_callsign);
@@ -5138,11 +5147,12 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       else
 
 // OK; we're going to send at least one QTC
-      { sending_qtc = true;
+      { sending_series = true;
 
         const unsigned int number_of_qtc = qtc_db.size() + 1;
 
         qtc_id = to_string(number_of_qtc) + "/" + to_string(qtc_entries_to_send.size());
+        series.id(qtc_id);
 
         if (cw)
           send_msg((string)"QTC " + qtc_id + " QRV?");
@@ -5198,23 +5208,52 @@ void process_QTC_input(window* wp, const keyboard_event& e)
         send_msg(msg);
       }
 
-      series[qtcs_sent].second = true;
+// before marking this as sent, record the last acknowledged QTC
+      if (qtcs_sent != 0)
+        qtc_buf.unsent_to_sent(series[qtcs_sent - 1].first);
 
+      series.mark_as_sent(qtcs_sent++);
       win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= series;
-      qtcs_sent++;
 
       processed = true;
     }
-    else    // we have sent the last QTC
-    { win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+    else    // we have sent the last QTC; cleanup
+    { ost << "Sent QTC " << qtc_id << " to " << series.destination() << endl;
+      win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sent QTC " < qtc_id < " to " <= series.destination();
+
+      series.date(substring(date_time_string(), 0, 10));
+      series.utc(hhmmss());
+      series.frequency_str(rig.rig_frequency());
+
+      sending_series = false;
+      qtc_db += series;                  // add to database of sent QTCs
 
       if (cw)
       { if (drlog_mode == CQ_MODE)                                   // send QSL
           (*cw_p) << expand_cw_message( context.qsl_message() );
-
       }
+
+      (*win_active_p) <= WINDOW_CLEAR;
+
+// log the QTC series
+//      string entries_str;
+
+      append_to_file(context.qtc_filename(), series.complete_output_string());
+
+      win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+
       processed = true;
     }
+  }
+
+// ALT-Y -- mark most-recently sent QTC as unsent
+  if (!processed and e.is_alt('y'))
+  { if (qtcs_sent != 0)
+    { series.mark_as_unsent(qtcs_sent--);
+      win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= series;
+    }
+
+    processed = true;
   }
 
 // T, U -- repeat time
@@ -5333,5 +5372,4 @@ const string active_window_name(void)
 
   return name;
 }
-
 

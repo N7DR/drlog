@@ -84,7 +84,7 @@ const int COLOUR_BLACK   = COLOR_BLACK,
 extern pt_mutex screen_mutex;                       
                        
 // forward declarations
-class SAVE_CURSOR;
+//class SAVE_CURSOR;
 
 // -----------  cursor  ----------------
 
@@ -414,7 +414,13 @@ public:
 /// clear a window
   window& clear(void);
   
-/// read window
+/*! \brief      read to end of window
+    \param  x   x value from which to read (0 is leftmost column)
+    \param  y   y value from which to read (0 is bottommost row)
+    \return     contents of the window, starting at the position (<i>x</i>, <i>y</i>)
+
+    By default reads the entirety of the bottom line
+*/
   const std::string read(int x = 0, int y = 0);
 
 /// read a line
@@ -523,6 +529,7 @@ WRAPPER_2(COLOURS, int, fg, int, bg);
 inline window& operator<(window& win, const COLOURS& CP)
   { return win.cpair(colours.add(CP.fg(), CP.bg())); }
 
+#if 0
 // -----------  SAVE_CURSOR  ----------------
 
 /*!     \class SAVE_CURSOR
@@ -542,7 +549,7 @@ public:
   
   ~SAVE_CURSOR(void);
 };
-
+#endif
 
 inline const int FGBG(const int fg, const int bg)
 { return COLOUR_PAIR(colours.add(fg, bg));

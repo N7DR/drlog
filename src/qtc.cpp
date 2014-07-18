@@ -83,8 +83,24 @@ const string qtc_entry::to_string(void) const
 // -----------------------------------  qtc_series  ----------------------------
 
 /*!     \class qtc_series
-        \brief A QTC series as defines by the WAE rules
+        \brief A QTC series as defined by the WAE rules
 */
+
+const vector<qtc_entry> qtc_series::sent_qtc_entries(void) const
+{ vector<qtc_entry> rv;
+
+  for_each(_qtc_entries.cbegin(), _qtc_entries.cend(), [&] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv.push_back(pqeb.first); } );
+
+  return rv;
+}
+
+const vector<qtc_entry> qtc_series::unsent_qtc_entries(void) const
+{ vector<qtc_entry> rv;
+
+  for_each(_qtc_entries.cbegin(), _qtc_entries.cend(), [&] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv.push_back(pqeb.first); } );
+
+  return rv;
+}
 
 const bool qtc_series::operator+=(const qtc_entry& entry)
 { if (entry.valid() and (entry.callsign() != _target))
@@ -99,6 +115,12 @@ const bool qtc_series::operator+=(const qtc_entry& entry)
 void qtc_series::mark_as_sent(const unsigned int n)
 { if (n < _qtc_entries.size())
     _qtc_entries[n].second = true;
+}
+
+// set a particular entry to unsent
+void qtc_series::mark_as_unsent(const unsigned int n)
+{ if (n < _qtc_entries.size())
+    _qtc_entries[n].second = false;
 }
 
 // get first entry that has not been sent
@@ -135,6 +157,17 @@ const string qtc_series::output_string(const unsigned int n) const
   rv += qe.utc() + SPACE;
   rv += substring(pad_string(qe.callsign(), 13, PAD_RIGHT, ' '), 0, 13) + SPACE;
   rv += qe.serno();
+
+  return rv;
+}
+
+const string qtc_series::complete_output_string(void)
+{ string rv;
+
+  for (size_t n = 0; n < size(); ++n)
+  { if (_qtc_entries[n].second)
+      rv += (output_string(n) + EOL);
+  }
 
   return rv;
 }
@@ -352,8 +385,10 @@ void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
 }
 
 void qtc_buffer::unsent_to_sent(const qtc_series& qs)
-{ const vector<pair<qtc_entry, bool>>& vec_qe = qs.qtc_entries();    ///< the individual QTC entries, and whether each has been sent
+{ //const vector<pair<qtc_entry, bool>>& vec_qe = qs.qtc_entries();    ///< the individual QTC entries, and whether each has been sent
 
-  for (const auto& qe : vec_qe)
-    unsent_to_sent(qe.first);
+  const vector<qtc_entry> sent_qtc_entries = qs.sent_qtc_entries();
+
+  for (const auto& qe : sent_qtc_entries)
+    unsent_to_sent(qe);
 }
