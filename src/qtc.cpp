@@ -146,7 +146,8 @@ const string qtc_series::output_string(const unsigned int n) const
 
   const qtc_entry qe = _qtc_entries[n].first;
 
-  rv = pad_string(remove_from_end(_frequency, 2), 5) + SPACE;
+//  rv = pad_string(remove_from_end(_frequency, 2), 5) + SPACE;
+  rv = pad_string(_frequency, 5) + SPACE;
   rv += (_mode + SPACE + _date + SPACE + _utc + SPACE);
   rv += substring(pad_string(_target, 13, PAD_RIGHT, ' '), 0, 13) + SPACE;
 
@@ -221,8 +222,8 @@ window& operator<(window& win, const qtc_series& qs)
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
 
 // write the column separators
-  for (unsigned int y = 0; y < win.height(); ++y)
-    win < cursor(COLUMN_WIDTH, y) < colour_pair(colours.add(COLOUR_YELLOW, COLOUR_YELLOW)) <= "  ";
+  for (int y = 0; y < win.height(); ++y)
+    win < cursor(COLUMN_WIDTH, y) < colour_pair(colours.add(GAP_COLOUR, GAP_COLOUR)) <= "  ";
 
   size_t index = 0;    // keep track of where we are in vector of entries
   const auto qtc_entries = qs.qtc_entries();
@@ -284,6 +285,7 @@ const unsigned int qtc_database::n_qtc_entries_sent(void) const
   return rv;
 }
 
+#if 0
 // write to file
 void qtc_database::write(const string& filename)
 { string str;
@@ -305,6 +307,7 @@ void qtc_database::write(const string& filename)
 
   write_file(str, filename);
 }
+#endif
 
 // read from file
 void qtc_database::read(const string& filename)
@@ -313,32 +316,60 @@ void qtc_database::read(const string& filename)
 
   const vector<string> lines = to_lines(read_file(filename));
   unsigned int line_nr = 0;
+  string last_id;
+  qtc_series series;
 
-
+// 28100.0 CW 2014-07-18 15:32:42 G1AAA         001/10     N7DR          1516 YL2BJ         477
+// 28100.0 CW 2014-07-18 15:32:42 G1AAA 001/10 N7DR 1516 YL2BJ 477
+//    0    1      2         3       4      5     6    7    8    9
   while (line_nr < lines.size())
-  { qtc_series QTC;
-    const string& id_line = lines[line_nr];
-    const vector<string> fields = split_string(id_line, ' ');
+  { const string& line = lines[line_nr++];
+    const vector<string> fields = split_string(squash(line), ' ');
 
-    QTC.id(split_string(fields[0], '=')[1]);
-    QTC.target(split_string(fields[1], '=')[1]);
+    if (fields.size() != 10)
+      throw qtc_error(QTC_INVALID_FORMAT, string("QTC has ") + to_string(fields.size()) + " fields; " + line);
 
-    vector<pair<qtc_entry, bool>> qtc_entries;    ///< the individual QTC entries, and whether each has been sent
+    const string id = fields[5];
 
-    while ((line_nr != lines.size() - 1) and (!contains(lines[line_nr + 1], "=")))
-    { const string& line = lines[++line_nr];
+    if (id != last_id)       // new ID?
+    { _qtc_db.push_back(series);
+
+// do stuff, then:
+      last_id = id;    // ready to process the new ID
+      series.clear();
+    }
+    else
+    { if (series.frequency_str().empty())
+        series.frequency_str(fields[0]);
+
+      if (series.mode().empty())
+        series.mode(fields[1]);
+
+      if (series.date().empty())
+        series.date(fields[2]);
+
+      if (series.utc().empty())
+        series.utc(fields[3]);
+
+      if (series.destination().empty())
+        series.destination(fields[4]);
+
+      if (series.source().empty())
+        series.source(fields[6]);
 
       qtc_entry qe;
 
-      qe.utc(substring(line, 0, 4));
-      qe.callsign(remove_trailing_spaces(substring(line, 5, line.length() - 4)));
-      qe.serno(last(line, 4));
+      qe.utc(fields[7]);
+      qe.callsign(fields[8]);
+      qe.serno(fields[9]);
 
-      qtc_entries.push_back( { qe, true } );
+      series += qe;
     }
-
-    QTC.qtc_entries(qtc_entries);
   }
+
+// add the last series to the database
+  if (!lines.empty())
+    _qtc_db.push_back(series);
 }
 
 // -----------------------------------  qtc_buffer  ----------------------------
@@ -362,7 +393,7 @@ void qtc_buffer::operator+=(const logbook& logbk)
   }
 }
 
-const vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const string& target, const int max_entries)
+const vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const string& target, const unsigned int max_entries)
 { vector<qtc_entry> rv;
 
   list<qtc_entry>::const_iterator cit = _unsent_qtcs.cbegin();

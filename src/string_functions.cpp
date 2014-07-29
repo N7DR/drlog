@@ -799,7 +799,7 @@ bool compare_calls(const string& s1, const string& s2)
  *  This should be faster than the find_next_of() or C++ is_letter or similar generic functions
 */
 const bool contains_letter(const std::string& str)
-{ for (auto n = 0; n < str.size(); ++n)
+{ for (unsigned int n = 0; n < str.size(); ++n)
   { const char& c = str[n];
 
     if ( (c >= 'A' and c <='Z') or (c >= 'a' and c <='z') )
@@ -814,7 +814,7 @@ const bool contains_letter(const std::string& str)
  *  This should be faster than the find_next_of() or C++ is_digit or similar generic functions
 */
 const bool contains_digit(const std::string& str)
-{ for (auto n = 0; n < str.size(); ++n)
+{ for (unsigned int n = 0; n < str.size(); ++n)
   { const char& c = str[n];
 
     if (c >= '0' and c <= '9' )

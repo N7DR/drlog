@@ -20,11 +20,15 @@
 #include "macros.h"
 #include "qso.h"
 #include "serialization.h"
+#include "x_error.h"
 
 #include <list>
 #include <set>
 #include <string>
 #include <vector>
+
+// error numbers
+const int QTC_INVALID_FORMAT            = -1;    // error reading from file
 
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
 //
@@ -123,12 +127,17 @@ public:
   READ_AND_WRITE(qtc_entries);
   READ_AND_WRITE(date);
   READ_AND_WRITE(utc);
+  READ_AND_WRITE(mode);
+  READ_AND_WRITE(source);
 
   inline const decltype(_target) destination(void) const
     { return target(); }
 
   inline void destination(const decltype(_target) tgt)
     { target(tgt); }
+
+  inline void clear(void)
+    { *this = qtc_series(); }
 
   const std::vector<qtc_entry> sent_qtc_entries(void) const;
 
@@ -226,7 +235,7 @@ public:
   const unsigned int n_qtc_entries_sent(void) const;
 
 // write to file
-  void write(const std::string& filename);
+//  void write(const std::string& filename);
 
 // read from file
   void read(const std::string& filename);
@@ -253,7 +262,7 @@ protected:
 
 public:
 
-  const std::vector<qtc_entry> get_next_unsent_qtc(const std::string& target, const int max_entries = 10);
+  const std::vector<qtc_entry> get_next_unsent_qtc(const std::string& target, const unsigned int max_entries = 10);
 
   void operator+=(const logbook& logbk);
 
@@ -282,5 +291,25 @@ public:
     }
 };
 
+// -------------------------------------- Errors  -----------------------------------
+
+/*! \class  qtc_error
+    \brief  Errors related to QTC processing
+*/
+
+class qtc_error : public x_error
+{
+protected:
+
+public:
+
+/*! \brief  Construct from error code and reason
+  \param  n Error code
+  \param  s Reason
+*/
+  inline qtc_error(const int n, const std::string& s) :
+    x_error(n, s)
+  { }
+};
 
 #endif /* QTC_H */

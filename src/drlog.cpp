@@ -70,9 +70,9 @@ const string active_window_name(void);
 void add_qso(const QSO& qso);
 void alert(const string& msg);
 void allow_for_callsign_mults(QSO& qso);  // may change qso
-inline void append_to_file(const string& filename, const string& str)
-  { ofstream(filename, ios_base::app) << str;
-  }
+//inline void append_to_file(const string& filename, const string& str)
+//  { ofstream(filename, ios_base::app) << str;
+//  }
 void archive_data(void);
 const string bearing(const string& callsign);
 const bool calculate_exchange_mults(QSO& qso,
@@ -1199,6 +1199,8 @@ int main(int argc, char** argv)
       update_remaining_country_mults_window(statistics);
       update_remaining_exch_mults_windows(rules, statistics);
 
+//      ost << "About to process QTC file" << endl;
+
 // QTCs
       if (send_qtcs)
       {
@@ -1206,7 +1208,14 @@ int main(int argc, char** argv)
         const unsigned int n_eu_qsos = logbk.filter([] (const QSO& q) { return (q.continent() == string("EU")); } ).size();
         ost << "number of EU QSOs in log = " << n_eu_qsos << endl;
 
-        qtc_db.read(context.qtc_filename());
+        try
+        { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
+        }
+
+        catch (const qtc_error& e)
+        { ost << "Error reading QTC file: " << e.reason() << endl;
+          exit(-1);
+        }
 
         ost << "Number of QTCs read from QTC file= " << qtc_db.size() << endl;
         ost << "Total number of QTC QSOs already sent = " << qtc_db.n_qtc_entries_sent() << endl;
@@ -1233,6 +1242,8 @@ int main(int argc, char** argv)
           win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Last QTC: " < last_qs.id() < " to " <= last_qs.target();
         }
       }
+
+//      ost << "Finished processing QTC file" << endl;
 
 // display the current statistics
       win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
@@ -5155,7 +5166,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
         series.id(qtc_id);
 
         if (cw)
-          send_msg((string)"QTC " + qtc_id + " QRV?");
+          send_msg( (cw_p->empty() ? (string)"QTC " : (string)" QTC ") + qtc_id + " QRV?");
 
         win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sending QTC " < qtc_id < " to " <= destination_callsign;
 
@@ -5218,12 +5229,17 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       processed = true;
     }
     else    // we have sent the last QTC; cleanup
-    { ost << "Sent QTC " << qtc_id << " to " << series.destination() << endl;
+    { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
+
+      ost << "Sent QTC " << qtc_id << " to " << series.destination() << endl;
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sent QTC " < qtc_id < " to " <= series.destination();
 
       series.date(substring(date_time_string(), 0, 10));
       series.utc(hhmmss());
       series.frequency_str(rig.rig_frequency());
+
+//      ost << "QTC frequency_str set = " << rig.rig_frequency() << endl;
+//      ost << "QTC frequency_str get = " << series.frequency_str() << endl;
 
       sending_series = false;
       qtc_db += series;                  // add to database of sent QTCs
@@ -5241,6 +5257,12 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       append_to_file(context.qtc_filename(), series.complete_output_string());
 
       win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+
+// update statistics and summary window
+      statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
+      statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+
 
       processed = true;
     }
