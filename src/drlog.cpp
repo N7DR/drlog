@@ -1217,7 +1217,7 @@ int main(int argc, char** argv)
           exit(-1);
         }
 
-        ost << "Number of QTCs read from QTC file= " << qtc_db.size() << endl;
+        ost << "Number of QTC series read from QTC file= " << qtc_db.size() << endl;
         ost << "Total number of QTC QSOs already sent = " << qtc_db.n_qtc_entries_sent() << endl;
 
         qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
@@ -1228,16 +1228,23 @@ int main(int argc, char** argv)
           alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS");
 
 // move the sent ones to the sent buffer
-        const vector<qtc_series>& vec_qs = qtc_db.qtc_db();    ///< the QTCs
+        const vector<qtc_series>& vec_qs = qtc_db.qtc_db();    ///< the QTC series
+
+        ost << "Number of QTC series to be processed = " << vec_qs.size() << endl;
 
 //        for_each(vec_qs.cbegin(), vec_qs.cend(), [&qtc_buf] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
         for_each(vec_qs.cbegin(), vec_qs.cend(), [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+
+        ost << "Number of QTC QSOs sent = " << qtc_buf.n_sent_qsos() << endl;
+        ost << "Number of QTC QSOs unsent = " << qtc_buf.n_unsent_qsos() << endl;
 
         statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
         statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
 
         if (!vec_qs.empty())
         { const qtc_series& last_qs = vec_qs[vec_qs.size() - 1];
+
+          ost << "Last QTC series: " << last_qs.complete_output_string() << endl;
 
           win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Last QTC: " < last_qs.id() < " to " <= last_qs.target();
         }

@@ -30,6 +30,9 @@
 // error numbers
 const int QTC_INVALID_FORMAT            = -1;    // error reading from file
 
+const bool QTC_SENT = true,
+           QTC_UNSENT = false;
+
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
 //
 //                             -qtc rcvd by - --------------qtc info received-----------------
@@ -116,11 +119,11 @@ public:
   qtc_series(void)
     { }
 
-  qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call) :
+  qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const bool b = QTC_UNSENT) :
     _mode(mode_str),
     _source(my_call)
 //    { for_each(vec_qe.cbegin(), vec_qe.cend(), [&] (const qtc_entry& qe) { (*this) += qe; } ); }
-    { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += qe; } ); }
+    { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += std::pair<qtc_entry, bool>( { qe, b } ); } ); }
 
   READ_AND_WRITE(target);
   READ_AND_WRITE(id);
@@ -158,7 +161,8 @@ public:
   inline const bool empty(void) const
     { return _qtc_entries.empty(); }
 
-  const bool operator+=(const qtc_entry& entry);
+//  const bool operator+=(const qtc_entry& entry);
+  const bool operator+=(const std::pair<qtc_entry, bool>&);
 
   inline std::pair<qtc_entry, bool>& operator[](const unsigned int n)
     { return _qtc_entries[n]; }
@@ -176,7 +180,7 @@ public:
 
   const std::string output_string(const unsigned int n) const;
 
-  const std::string complete_output_string(void);
+  const std::string complete_output_string(void) const;
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

@@ -102,14 +102,27 @@ const vector<qtc_entry> qtc_series::unsent_qtc_entries(void) const
   return rv;
 }
 
-const bool qtc_series::operator+=(const qtc_entry& entry)
-{ if (entry.valid() and (entry.callsign() != _target))
-  { _qtc_entries.push_back( { entry, false });
+//const bool qtc_series::operator+=(const qtc_entry& entry)
+//{ if (entry.valid() and (entry.callsign() != _target))
+//  { _qtc_entries.push_back( { entry, QTC_UNSENT });
+//    return true;
+//  }
+//
+//  return false;
+//}
+
+const bool qtc_series::operator+=(const std::pair<qtc_entry, bool>& p)
+{ const qtc_entry& entry = p.first;
+  const bool sent = p.second;
+
+  if (entry.valid() and (entry.callsign() != _target))
+  { _qtc_entries.push_back( { entry, sent });
     return true;
   }
 
   return false;
 }
+
 
 // set a particular entry to sent
 void qtc_series::mark_as_sent(const unsigned int n)
@@ -162,13 +175,17 @@ const string qtc_series::output_string(const unsigned int n) const
   return rv;
 }
 
-const string qtc_series::complete_output_string(void)
+const string qtc_series::complete_output_string(void) const
 { string rv;
+
+  ost << "series size = " << size() << endl;
 
   for (size_t n = 0; n < size(); ++n)
   { if (_qtc_entries[n].second)
       rv += (output_string(n) + EOL);
   }
+
+  ost << "complete_output_string returning: " << rv << endl;
 
   return rv;
 }
@@ -311,7 +328,9 @@ void qtc_database::write(const string& filename)
 
 // read from file
 void qtc_database::read(const string& filename)
-{ if (!file_exists(filename))
+{ ost << "in qtc_database::read()" << endl;
+
+  if (!file_exists(filename))
     return;
 
   const vector<string> lines = to_lines(read_file(filename));
@@ -331,15 +350,25 @@ void qtc_database::read(const string& filename)
 
     const string id = fields[5];
 
+    if (line_nr == 1)  // we've already incremented the line number
+      last_id = id;
+
+    ost << "id = " << id << endl;
+
     if (id != last_id)       // new ID?
-    { _qtc_db.push_back(series);
+    { ost << "id != last_id" << endl;
+
+      _qtc_db.push_back(series);
 
 // do stuff, then:
       last_id = id;    // ready to process the new ID
       series.clear();
     }
     else
-    { if (series.frequency_str().empty())
+    { if (series.id().empty())
+        series.id(id);
+
+      if (series.frequency_str().empty())
         series.frequency_str(fields[0]);
 
       if (series.mode().empty())
@@ -363,13 +392,15 @@ void qtc_database::read(const string& filename)
       qe.callsign(fields[8]);
       qe.serno(fields[9]);
 
-      series += qe;
+      series += pair<qtc_entry, bool>( { qe, QTC_SENT } );
     }
   }
 
 // add the last series to the database
   if (!lines.empty())
     _qtc_db.push_back(series);
+
+  ost << "size of _qtc_db = " << _qtc_db.size() << endl;
 }
 
 // -----------------------------------  qtc_buffer  ----------------------------
@@ -412,13 +443,15 @@ void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
   if (it != _unsent_qtcs.end())
     _unsent_qtcs.erase(it);
 
-   _sent_qtcs.insert(entry);
+  _sent_qtcs.insert(entry);
 }
 
 void qtc_buffer::unsent_to_sent(const qtc_series& qs)
 { //const vector<pair<qtc_entry, bool>>& vec_qe = qs.qtc_entries();    ///< the individual QTC entries, and whether each has been sent
 
   const vector<qtc_entry> sent_qtc_entries = qs.sent_qtc_entries();
+
+  ost << "number of sent qtc entries in vector<qtc_entry> = " << sent_qtc_entries.size() << endl;
 
   for (const auto& qe : sent_qtc_entries)
     unsent_to_sent(qe);
