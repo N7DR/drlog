@@ -1232,6 +1232,9 @@ int main(int argc, char** argv)
 
         ost << "Number of QTC series to be processed = " << vec_qs.size() << endl;
 
+        ost << "Before unsent_to_sent, number of QTC QSOs sent = " << qtc_buf.n_sent_qsos() << endl;
+        ost << "Before unsent_to_sent, number of QTC QSOs unsent = " << qtc_buf.n_unsent_qsos() << endl;
+
 //        for_each(vec_qs.cbegin(), vec_qs.cend(), [&qtc_buf] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
         for_each(vec_qs.cbegin(), vec_qs.cend(), [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
 

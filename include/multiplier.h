@@ -62,7 +62,10 @@ public:
 
     Returns false if the value <i>str</i> was already known
 */
-  const bool add_known(const std::string& str);
+//  const bool add_known(const std::string& str);
+
+  inline const bool add_known(const std::string& str)
+    { return ( _used ? ( (_known.insert(str)).second ) : false ); }
 
 /*! \brief  add a container of values to the set of known values
     \param  k   container of values to add
@@ -115,6 +118,13 @@ public:
 */
   const bool unconditional_add_worked(const std::string& str, const int b);
 
+/*! \brief  add a worked multiplier, even if it is unknown
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Makes <i>str</i> known if it was previously unknown
+*/
   inline const bool unconditional_add_worked(const std::string& str, const BAND b)
     { return (unconditional_add_worked(str, static_cast<int>(b))); }
 
@@ -130,20 +140,29 @@ public:
   inline const bool is_known(const std::string& str) const
     { return (_used ? (_known < str) : false); }
 
+/*! \brief      Has a station been worked on a particular band?
+    \param  str callsign to test
+    \param  b   band to be tested
+*/
   const bool is_worked(const std::string& str, const int b) const;
 
-  const size_t n_worked(const int b) const;
+//  const size_t n_worked(const int b) const;
+  inline const size_t n_worked(const int b) const
+    { return (_used ? _worked[b].size() : 0); }
 
   inline const size_t n_known(void) const
     { return _known.size(); }
 
-  const std::set<std::string> worked(const int b) const;
+//  const std::set<std::string> worked(const int b) const;
+
+  inline const std::set<std::string> worked(const int b) const
+    { return (_used ? _worked[b] : std::set<std::string>() ); }
 
   inline const std::set<std::string> known(void) const
     { return _known; }
 
   inline void clear(void)
-  { for (auto& ss : _worked)    // this is clearer than using for_each here
+  { for (auto& ss : _worked)    // this is, I think, clearer than using for_each here
       ss.clear();
   }
 

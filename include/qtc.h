@@ -62,7 +62,10 @@ public:
 
   READ_AND_WRITE(utc);
   READ_AND_WRITE(callsign);
-  READ_AND_WRITE(serno);
+  READ(serno);
+
+  inline void serno(const std::string& str)
+    { _serno = pad_string(str, 4, PAD_RIGHT); }
 
   const bool operator==(const QSO& qso) const;
 
@@ -268,7 +271,7 @@ public:
 
   const std::vector<qtc_entry> get_next_unsent_qtc(const std::string& target, const unsigned int max_entries = 10);
 
-  void operator+=(const logbook& logbk);
+  void operator+=(const logbook& );
 
   void operator-=(const qtc_entry& entry);
 

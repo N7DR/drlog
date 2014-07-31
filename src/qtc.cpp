@@ -34,7 +34,7 @@ qtc_entry::qtc_entry(void) :
 qtc_entry::qtc_entry(const QSO& qso) :
   _utc(substring(qso.utc(), 0, 2) + substring(qso.utc(), 3, 2)),
   _callsign( (qso.continent() == "EU") ? qso.callsign() : string()),
-  _serno(pad_string(qso.received_exchange("SERNO"), 4, PAD_RIGHT))
+  _serno(pad_string(qso.received_exchange("SERNO"), 4, PAD_RIGHT))    // width = 4
 {
 }
 
@@ -343,7 +343,7 @@ void qtc_database::read(const string& filename)
 //    0    1      2         3       4      5     6    7    8    9
   while (line_nr < lines.size())
   { const string& line = lines[line_nr++];
-    const vector<string> fields = split_string(squash(line), ' ');
+    const vector<string> fields = remove_peripheral_spaces(split_string(squash(line), ' '));
 
     if (fields.size() != 10)
       throw qtc_error(QTC_INVALID_FORMAT, string("QTC has ") + to_string(fields.size()) + " fields; " + line);
@@ -438,10 +438,16 @@ const vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const string& target, co
 }
 
 void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
-{ const auto it = find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry);
+{ ost << "attempting to transfer: " << entry.to_string() << endl;
+
+  const auto it = find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry);
+
+  ost << "size of _unsent_qtcs = " << _unsent_qtcs.size() << endl;
 
   if (it != _unsent_qtcs.end())
+  { ost << "Erasing: " << it->to_string() << endl;
     _unsent_qtcs.erase(it);
+  }
 
   _sent_qtcs.insert(entry);
 }
