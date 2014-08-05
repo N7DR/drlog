@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 68 2014-06-28 15:42:35Z  $
+// $Id: drlog.cpp 70 2014-08-04 22:42:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1217,8 +1217,8 @@ int main(int argc, char** argv)
           exit(-1);
         }
 
-        ost << "Number of QTC series read from QTC file= " << qtc_db.size() << endl;
-        ost << "Total number of QTC QSOs already sent = " << qtc_db.n_qtc_entries_sent() << endl;
+//        ost << "Number of QTC series read from QTC file= " << qtc_db.size() << endl;
+//        ost << "Total number of QTC QSOs already sent = " << qtc_db.n_qtc_entries_sent() << endl;
 
         qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
 
@@ -1757,7 +1757,7 @@ void* process_rbn_info(void* vp)
 
       if (!line.empty())
       {
-//ost << "processing rbn line: " << line << endl;
+ost << "processing rbn line: " << line << endl;
 //ost << "rbn line has length " << line.size() << endl;
 
 // display the line in the window
@@ -4526,8 +4526,8 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
                      rate_meter& rate)
 {
 // clear the histories
-  ost << "in rebuild_history()" << endl;
-  ost << "original rate: " << rate.to_string() << endl;
+//  ost << "in rebuild_history()" << endl;
+//  ost << "original rate: " << rate.to_string() << endl;
 
   statistics.clear_info();
   q_history.clear();
@@ -4548,7 +4548,7 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
     l += qso;
   }
 
-  ost << "rebuilt rate: " << rate.to_string() << endl;
+//  ost << "rebuilt rate: " << rate.to_string() << endl;
 }
 
 /*! \brief  Copy a file to a destination directory

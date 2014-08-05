@@ -326,9 +326,12 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
   return rv;
 }
 
-// insert an entry at the right place
+// insert an entry at the right place; also remove any current entry at the same frequency
 void bandmap::_insert(const bandmap_entry& be)
 { SAFELOCK(_bandmap);
+
+// remove any entry at the same frequency
+  _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
 
   bool inserted = false;
 
@@ -466,6 +469,8 @@ void bandmap::operator+=(const bandmap_entry& be)
   if (add_it)
     add_it = !((be.source() != BANDMAP_ENTRY_LOCAL) and is_recent_call(callsign));
 
+  ost << "bandmap+=; callsign = " << callsign << " on " << be.frequency_str() << "; add_it = " << boolalpha << add_it << noboolalpha << endl;
+
   if (add_it)
   { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going got mark this as a recent call
 
@@ -534,8 +539,9 @@ void bandmap::operator+=(const bandmap_entry& be)
       }
       else    // this call is not currently present
       { //_entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (be.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
+        ost << "in bandmap::operator+=(); remove_if: " << endl;
+        for_each(_entries.begin(), _entries.end(), [=]  (bandmap_entry& bme) { ost << "  bme frequency string = " << bme.frequency_str() << " for " << bme.callsign() << "; be frequency string = " << be.frequency_str() << " for " << be.callsign() << endl; } );
         _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
-//        REMOVE_IF_AND_RESIZE(
         _insert(be);
       }
     }

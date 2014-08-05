@@ -87,6 +87,7 @@ public:
     _values.insert(v);
   }
 
+/// is a particular value needed?
   const bool is_value_needed(const T& v) const
   { if (!_is_needed)
       return false;
@@ -94,6 +95,12 @@ public:
     return (_values.find(v) == _values.cend());
   }
 
+/*! \brief  remove a needed value
+    \param  v   value to remove
+    \return whether <i>v</i> was actually removed
+
+    Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
+*/
   const bool remove(const T& v)
   { if (!_is_needed)
       return false;
@@ -109,6 +116,7 @@ public:
     return rv;
   }
 
+/// remove knowledge of all needed values
   void clear(void)
   { _is_needed = false;
     _values.clear();
@@ -119,7 +127,6 @@ public:
   { ar & _is_needed
        & _values;
   }
-
 };
 
 template<typename S>

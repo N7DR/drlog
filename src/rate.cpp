@@ -80,10 +80,6 @@ const pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t
   if (_data.empty() or (t < _data.begin()->first))  // no data or we precede all the data
     return { 0, 0 };
 
-//  ost << "now = " << now << endl;
-//  ost << "query time = " << query_time << endl;
-
-//  auto bound = _data.upper_bound(query_time);
   const auto ub = _data.upper_bound(query_time);    // first element with key > query_time
 
   if (ub == _data.begin())                          // should never be true
@@ -125,7 +121,6 @@ const string rate_meter::to_string(void)
 
   rv += "Number of points in rate = " + ::to_string(_data.size()) + EOL;
 
-//  std::map<time_t /* epoch time */, std::pair<unsigned int /* n_qsos */, unsigned int /* points */> > _data;
   size_t index = 0;
 
   for (auto datum : _data)

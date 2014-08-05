@@ -1,4 +1,4 @@
-// $Id: multiplier.h 64 2014-05-31 21:25:48Z  $
+// $Id: multiplier.h 70 2014-08-04 22:42:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -146,21 +146,23 @@ public:
 */
   const bool is_worked(const std::string& str, const int b) const;
 
-//  const size_t n_worked(const int b) const;
+/// Number of mults worked on a particular band
   inline const size_t n_worked(const int b) const
     { return (_used ? _worked[b].size() : 0); }
 
+/// Number of known mults
   inline const size_t n_known(void) const
     { return _known.size(); }
 
-//  const std::set<std::string> worked(const int b) const;
-
+/// All the mults worked on a particular band
   inline const std::set<std::string> worked(const int b) const
     { return (_used ? _worked[b] : std::set<std::string>() ); }
 
+/// All the known mults
   inline const std::set<std::string> known(void) const
     { return _known; }
 
+/// Set all bands to state in which no mults have been worked
   inline void clear(void)
   { for (auto& ss : _worked)    // this is, I think, clearer than using for_each here
       ss.clear();
@@ -175,6 +177,7 @@ public:
   }
 };
 
+/// ostream << multiplier
 std::ostream& operator<<(std::ostream& ost, const multiplier& m);
 
 #endif /* MULTIPLIER_H */

@@ -1,4 +1,4 @@
-// $Id: qtc.h 67 2014-06-24 00:51:24Z  $
+// $Id: qtc.h 70 2014-08-04 22:42:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -56,13 +56,15 @@ protected:
 
 public:
 
+/// default constructor
   qtc_entry(void);
 
+/// construct from a QSO
   explicit qtc_entry(const QSO& qso);
 
-  READ_AND_WRITE(utc);
-  READ_AND_WRITE(callsign);
-  READ(serno);
+  READ_AND_WRITE(utc);          ///< time of QSO: HHMM
+  READ_AND_WRITE(callsign);     ///< other station
+  READ(serno);                  ///< serial number sent by other station; width = 4
 
   inline void serno(const std::string& str)
     { _serno = pad_string(str, 4, PAD_RIGHT); }

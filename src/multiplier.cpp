@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 64 2014-05-31 21:25:48Z  $
+// $Id: multiplier.cpp 70 2014-08-04 22:42:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,13 +30,6 @@ multiplier::multiplier(void) :
 {
 }
 
-//const bool multiplier::add_known(const string& str)
-//{ if (_used)
-//    return ( (_known.insert(str)).second );
-//  else
-//    return false;
-//}
-
 /*! \brief  add a worked multiplier
     \param  str value that has been worked
     \param  b   band on which <i>str</i> has been worked
@@ -45,21 +38,17 @@ multiplier::multiplier(void) :
     Returns false if the value <i>str</i> is not known
 */
 const bool multiplier::add_worked(const std::string& str, const int b)
-{
-//  ost << "add_worked: Adding " << str << " for band " << b << endl;
-
-  if ((_used) and is_known(str))                                          // add only known mults
-//    return ( (_worked[ (_per_band ? b : N_BANDS) ].insert(str)).second );
+{ if ((_used) and is_known(str))                                          // add only known mults
   { if (_per_band)
     { const bool rv = (_worked[b].insert(str)).second;
-//      _worked[N_BANDS].insert(str);
 
       return rv;
     }
     else // not per-band
     { const bool rv = (_worked[b].insert(str)).second;  // keep track of per-band anyway, in case of single-band entry
-          _worked[N_BANDS].insert(str);
-          return rv;
+
+      _worked[N_BANDS].insert(str);
+      return rv;
     }
   }
   else
@@ -102,20 +91,7 @@ const bool multiplier::is_worked(const string& str, const int b) const
   return (worked_this_band.find(str) != worked_this_band.cend());
 }
 
-//const size_t multiplier::n_worked(const int b) const
-//{ if (!_used)
-//    return 0;
-//
-//  return  ( _worked[b].size() );
-//}
-
-//const set<string> multiplier::worked(const int b) const
-//{ if (!_used)
-//    return set<string>();
-//
-//  return _worked[b];
-//}
-
+// ostream << multiplier
 ostream& operator<<(ostream& ost, const multiplier& m)
 { const auto flags = ost.flags();
 
