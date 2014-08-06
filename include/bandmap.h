@@ -271,6 +271,15 @@ public:
 
   READ_AND_WRITE(is_needed);                      ///< do we need this call?
 
+  inline const bool is_rbn(void) const
+    { return (_source == BANDMAP_ENTRY_RBN); }
+
+  inline const bool call_is(const std::string& str) const
+    { return (_callsign == str); }
+
+  inline const bool is_my_marker(void) const
+    { return call_is(MY_MARKER); }
+
   void calculate_mult_status(contest_rules& rules, running_statistics& statistics);
 
   inline const needed_mult_details<pss_type> is_needed_callsign_mult_details(void) const

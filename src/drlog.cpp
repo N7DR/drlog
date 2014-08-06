@@ -1217,8 +1217,8 @@ int main(int argc, char** argv)
           exit(-1);
         }
 
-//        ost << "Number of QTC series read from QTC file= " << qtc_db.size() << endl;
-//        ost << "Total number of QTC QSOs already sent = " << qtc_db.n_qtc_entries_sent() << endl;
+        ost << "Number of QTC series read from QTC file= " << qtc_db.size() << endl;
+        ost << "Total number of QTC QSOs already sent = " << qtc_db.n_qtc_entries_sent() << endl;
 
         qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
 

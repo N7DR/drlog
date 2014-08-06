@@ -330,7 +330,7 @@ void qtc_database::write(const string& filename)
 
 // read from file
 void qtc_database::read(const string& filename)
-{ // ost << "in qtc_database::read()" << endl;
+{  ost << "in qtc_database::read()" << endl;
 
   if (!file_exists(filename))
     return;
@@ -355,10 +355,10 @@ void qtc_database::read(const string& filename)
     if (line_nr == 1)  // we've already incremented the line number
       last_id = id;
 
-    // ost << "id = " << id << endl;
+     ost << "id = " << id << endl;
 
     if (id != last_id)       // new ID?
-    { // ost << "id != last_id" << endl;
+    {  ost << "id != last_id" << endl;
 
       _qtc_db.push_back(series);
 
@@ -366,7 +366,7 @@ void qtc_database::read(const string& filename)
       last_id = id;    // ready to process the new ID
       series.clear();
     }
-    else
+//    else
     { if (series.id().empty())
         series.id(id);
 
@@ -402,7 +402,7 @@ void qtc_database::read(const string& filename)
   if (!lines.empty())
     _qtc_db.push_back(series);
 
-//  ost << "size of _qtc_db = " << _qtc_db.size() << endl;
+  ost << "size of _qtc_db = " << _qtc_db.size() << endl;
 }
 
 // -----------------------------------  qtc_buffer  ----------------------------
