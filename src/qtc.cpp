@@ -152,6 +152,30 @@ const qtc_entry qtc_series::first_not_sent(const unsigned int posn)
   return qtc_entry();
 }
 
+const unsigned int qtc_series::n_sent(void) const
+{ unsigned int rv = 0;
+
+//  for (const auto qe : _qtc_entries)
+//  { if (qe.second)
+//      rv++;
+//  }
+
+  for_each(_qtc_entries.cbegin(), _qtc_entries.cend(), [&rv] (const pair<qtc_entry, bool> & pqeb) { if (pqeb.second) rv++; } );
+
+  return rv;
+}
+
+const unsigned int qtc_series::n_unsent(void) const
+{ unsigned int rv = 0;
+
+  for (const auto qe : _qtc_entries)
+  { if (!qe.second)
+      rv++;
+  }
+
+  return rv;
+}
+
 const string qtc_series::output_string(const unsigned int n) const
 { static const string SPACE(" ");
   string rv;
@@ -303,30 +327,6 @@ const unsigned int qtc_database::n_qtc_entries_sent(void) const
 
   return rv;
 }
-
-#if 0
-// write to file
-void qtc_database::write(const string& filename)
-{ string str;
-
-  { SAFELOCK(qtc_database);
-
-    for (const auto& QTC : _qtc_db)
-    { str += "ID=" + QTC.id() + " ";
-      str += "TARGET=" + QTC.target() + EOL;
-
-      const vector<pair<qtc_entry, bool>> qtc_entries = QTC.qtc_entries();    ///< the individual QTC entries, and whether each has been sent
-
-//    for_each(qtc_entries.cbegin(), qtc_entries.cend(), [&] (const auto& qeb) { str +=
-      for (const auto& qeb : qtc_entries)
-      { str += qeb.first.to_string() + EOL;
-      }
-    }
-  }
-
-  write_file(str, filename);
-}
-#endif
 
 // read from file
 void qtc_database::read(const string& filename)

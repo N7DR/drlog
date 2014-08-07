@@ -187,6 +187,10 @@ public:
 
   const std::string complete_output_string(void) const;
 
+  const unsigned int n_sent(void) const;
+
+  const unsigned int n_unsent(void) const;
+
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _qtc_entries

@@ -160,10 +160,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     Used in += function.
 */
 const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
-{ if ((be._callsign == MY_MARKER) or (_callsign == MY_MARKER))       // mustn't delete a valid call if we're updating my QRG
+{ if ((be.is_my_marker()) or is_my_marker())       // mustn't delete a valid call if we're updating my QRG
     return (_callsign == be._callsign);
-  else                                                                 // neither is my QRG
-    return ((_callsign == be._callsign) or (_frequency_str == be._frequency_str));
+
+  return ((_callsign == be._callsign) or (_frequency_str == be._frequency_str));  // neither bandmap_entry is at my QRG
 }
 
 // re-mark as to the need/mult status
@@ -244,52 +244,6 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
 /*!     \class bandmap
         \brief A bandmap
 */
-
-/*!  \brief Return a callsign close to a particular frequency
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
-
-     Returns the lowest-frequency station within the guard band, or the null string if no call is found.
-*/
-#if 0
-const string bandmap::_nearby_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
-{ const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
-  bool finish_looking = false;
-
-  for (BM_ENTRIES::const_iterator cit = bme.cbegin(); (!finish_looking and cit != bme.cend()); ++cit)
-  { const float difference = cit->freq().kHz() - target_frequency_in_khz;
-
-    if (fabs(difference) <= guard_band_in_khz and (cit->callsign() != MY_MARKER))
-      return cit->callsign();
-
-    if (difference > guard_band_in_khz)
-      finish_looking = true;
-  }
-
-  return string();
-}
-#endif
-
-#if 0
-const vector<string> bandmap::_nearby_callsigns(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
-{ const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
-  bool finish_looking = false;
-  vector<string> rv;
-
-  for (BM_ENTRIES::const_iterator cit = bme.cbegin(); (!finish_looking and cit != bme.cend()); ++cit)
-  { const float difference = cit->freq().kHz() - target_frequency_in_khz;
-
-    if (fabs(difference) <= guard_band_in_khz and (cit->callsign() != MY_MARKER))
-      rv.push_back(cit->callsign());
-
-    if (difference > guard_band_in_khz)
-      finish_looking = true;
-  }
-
-  return rv;
-}
-#endif
 
 /*!  \brief Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme                     band map entries
@@ -542,7 +496,7 @@ void bandmap::operator+=(const bandmap_entry& be)
       { //_entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (be.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
         ost << "in bandmap::operator+=(); remove_if: " << endl;
         for_each(_entries.begin(), _entries.end(), [=]  (bandmap_entry& bme) { ost << "  bme frequency string = " << bme.frequency_str() << " for " << bme.callsign() << "; be frequency string = " << be.frequency_str() << " for " << be.callsign() << endl; } );
-        _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
+        _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (!bme.is_my_marker())); } );  // remove any real entries at this QRG
         _insert(be);
       }
 
@@ -809,7 +763,7 @@ const BM_ENTRIES bandmap::filtered_entries(void)
   BM_ENTRIES rv;
 
   for (const auto& be : tmp)
-  { if (be.callsign() == MY_MARKER)
+  { if (be.is_my_marker())
       rv.push_back(be);
     else                                              // start by assuming that we are in show mode
     { const string& canonical_prefix = be.canonical_prefix();
@@ -881,57 +835,6 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
   return rv;
 }
 
-/*!  \brief Return a callsign close to a particular frequency
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
-
-     Returns the lowest-frequency station within the guard band, or the null string if no call is found.
-*/
-#if 0
-const string bandmap::nearby_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-{ const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
-  bool finish_looking = false;
-
-  for (BM_ENTRIES::const_iterator cit = _entries.cbegin(); (!finish_looking and cit != _entries.cend()); ++cit)
-  { const float difference = cit->freq().kHz() - target_frequency_in_khz;
-
-    if (fabs(difference) <= guard_band_in_khz and (cit->callsign() != MY_MARKER))
-      return cit->callsign();
-
-    if (difference > guard_band_in_khz)
-      finish_looking = true;
-  }
-
-  return string();
-}
-
-/*!  \brief Return a callsign close to a particular frequency, using the filtered version of the bandmap
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
-
-     Returns the lowest-frequency station within the guard band, or the null string if no call is found.
-*/
-const string bandmap::nearby_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-{ const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
-  bool finish_looking = false;
-  const BM_ENTRIES fe = filtered_entries();
-
-  for (BM_ENTRIES::const_iterator cit = fe.cbegin(); (!finish_looking and cit != fe.cend()); ++cit)
-  { const float difference = cit->freq().kHz() - target_frequency_in_khz;
-
-    if (fabs(difference) <= guard_band_in_khz and (cit->callsign() != MY_MARKER))
-      return cit->callsign();
-
-    if (difference > guard_band_in_khz)
-      finish_looking = true;
-  }
-
-  return string();
-}
-#endif
-
 /*!  \brief Find the next needed station up or down in frequency from the current loction
      \param fp      pointer to function to be used to determine whather a station is needed
      \param dirn    direction in which to search
@@ -944,7 +847,7 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
 { //const BM_ENTRIES fe = filtered_entries();
   const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
 
-  BM_ENTRIES::const_iterator cit = find_if(fe.cbegin(), fe.cend(), [=] (const bandmap_entry& be) { return (be.callsign() == MY_MARKER); } );  // find myself
+  BM_ENTRIES::const_iterator cit = find_if(fe.cbegin(), fe.cend(), [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
 
   if (dirn == BANDMAP_DIRECTION_DOWN)
   { if (cit != fe.cend())                      // should always be true
@@ -1057,7 +960,7 @@ window& operator<(window& win, bandmap& bm)
 
       int cpu = colours.add(fade_colours.at(n_intervals), win.bg());
 
-      if (be.callsign() == MY_MARKER)
+      if (be.is_my_marker())
         cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // marker for my current frequency
 
 // work out where to start the display of this call
@@ -1070,7 +973,7 @@ window& operator<(window& win, bandmap& bm)
       const unsigned int y = (win.height() - 1) - (index - start_entry) % win.height();
       int status_colour = colours.add(COLOUR_BLACK, COLOUR_BLACK);
 
-      if (be.callsign() != MY_MARKER)
+      if (!be.is_my_marker())
       { if (be.is_needed())
           status_colour = colours.add(COLOUR_BLUE, COLOUR_BLUE);
 

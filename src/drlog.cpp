@@ -1831,8 +1831,7 @@ ost << "processing rbn line: " << line << endl;
 
 // add the post to the correct bandmap
             bandmap& bandmap_this_band = bandmaps[dx_band];
-//            const unsigned int expiration_time = post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
-//                                                                                                              (context.bandmap_decay_time_rbn() * 60 ) );
+
             bandmap_this_band += be;
 
 // prepare to display the bandmap if we just made a change for this band
@@ -5273,9 +5272,53 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
       win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
-
       processed = true;
     }
+  }
+
+// CTRL-X -- Abort and go back to prior window
+  if (!processed and e.is_control('x'))
+  { ost << "Aborting; n_sent = " << series.n_sent() << endl;
+
+    if (series.n_sent() != 0)
+    { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
+
+      ost << "Aborted sending QTC " << qtc_id << " to " << series.destination() << endl;
+      win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Aborted sending QTC " < qtc_id < " to " <= series.destination();
+
+      series.date(substring(date_time_string(), 0, 10));
+      series.utc(hhmmss());
+      series.frequency_str(rig.rig_frequency());
+
+      sending_series = false;
+      qtc_db += series;                  // add to database of sent QTCs
+
+      //if (cw)
+      //{ if (drlog_mode == CQ_MODE)                                   // send QSL
+      //    (*cw_p) << expand_cw_message( context.qsl_message() );
+      //}
+
+      (*win_active_p) <= WINDOW_CLEAR;
+
+      append_to_file(context.qtc_filename(), series.complete_output_string());
+
+      win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+
+// update statistics and summary window
+      statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
+      statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+    }
+    else  // none sent
+    { ost << "Completely aborted; QTC " << qtc_id << " not sent to " << series.destination() << endl;
+      win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Completely aborted; QTC " < qtc_id < " not sent to " <= series.destination();
+
+    (*win_active_p) <= WINDOW_CLEAR;
+
+      win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+    }
+    processed = true;
   }
 
 // ALT-Y -- mark most-recently sent QTC as unsent
