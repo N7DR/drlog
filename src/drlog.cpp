@@ -3288,10 +3288,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         if (send_qtcs)
         {
-          ost << "Adding QSO to QTC buffer: " << qso << endl;
-          ost << "Number of unsent QSOs before = " << qtc_buf.n_unsent_qsos() << endl;
+//          ost << "Adding QSO to QTC buffer: " << qso << endl;
+//          ost << "Number of unsent QSOs before = " << qtc_buf.n_unsent_qsos() << endl;
           qtc_buf += qso;
-          ost << "Number of unsent QSOs = after " << qtc_buf.n_unsent_qsos() << endl;
+//          ost << "Number of unsent QSOs = after " << qtc_buf.n_unsent_qsos() << endl;
           statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
         }
 
@@ -3997,11 +3997,16 @@ inline const string sunset(const string& callsign)
     Called multiple times as a call is being typed
  */
 void populate_win_info(const string& callsign)
-{ win_info < WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
+{ if (send_qtcs)
+  { const string qtc_str = string("[") + to_string(qtc_db.n_qtcs_sent_to(callsign)) + string("]");
+    win_info < WINDOW_CLEAR < qtc_str <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
+  }
+  else
+    win_info < WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
 
   const string name_str = location_db.country_name(callsign);            // name of the country
 
-  ost << "name_str = " << name_str << endl;
+//  ost << "name_str = " << name_str << endl;
 
   if (to_upper(name_str) != "NONE")
   { win_info < cursor(0, win_info.height() - 2) < location_db.canonical_prefix(callsign) < ": "
@@ -4054,7 +4059,7 @@ void populate_win_info(const string& callsign)
 // exch mults
     const vector<string>& exch_mults = rules.exchange_mults();
 
-    ost << "about to guess exch mults for " << callsign << endl;
+//    ost << "about to guess exch mults for " << callsign << endl;
 
     for (const auto& exch_mult_field : exch_mults)
     { bool output_this_mult = true;
@@ -4067,11 +4072,11 @@ void populate_win_info(const string& callsign)
       }
 
       if (output_this_mult)
-      { ost << "guessing for mult field " << exch_mult_field << endl;
+      { //ost << "guessing for mult field " << exch_mult_field << endl;
 
         const string exch_mult_value = exchange_db.guess_value(callsign, exch_mult_field);    // make best guess as to to value of this field
 
-        ost << "guessed value is " << exch_mult_value << endl;
+        //ost << "guessed value is " << exch_mult_value << endl;
 
         line = pad_string(exch_mult_field + " [" + exch_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 

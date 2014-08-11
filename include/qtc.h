@@ -80,16 +80,21 @@ public:
 /// qtc_entry == qtc_entry
   const bool operator==(const qtc_entry& entry) const;
 
+/// qtc_entry < qtc_entry
   const bool operator<(const qtc_entry&) const;
 
+/// convert to printable string
   const std::string to_string(void) const;
 
+/// return the length of the printable string
   inline const size_t size(void) const
     { return to_string().size(); }
 
+/// does a qtc_entry contain a non-empty call?
   inline const bool empty(void) const
     { return _callsign.empty(); }
 
+/// is a qtc_entry valid?
   inline const bool valid(void) const
     { return !empty(); }
 
@@ -99,7 +104,6 @@ public:
          & _callsign
          & _serno;
     }
-
 };
 
 // -----------------------------------  qtc_series  ----------------------------
