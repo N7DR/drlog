@@ -5415,6 +5415,13 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+// CTRL-P -- dump screen
+  if (!processed and e.is_control('p'))
+  { dump_screen();
+
+    processed = true;
+  }
+
 }
 
 void cw_speed(const unsigned int new_speed)

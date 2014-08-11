@@ -129,22 +129,23 @@ protected:
 
 public:
 
+/// default constructor
   qtc_series(void)
     { }
 
+/// construct from a vector of qtc_entry
   qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const bool b = QTC_UNSENT) :
     _mode(mode_str),
     _source(my_call)
-//    { for_each(vec_qe.cbegin(), vec_qe.cend(), [&] (const qtc_entry& qe) { (*this) += qe; } ); }
     { FOR_ALL(vec_qe, [&] (const qtc_entry& qe) { (*this) += std::pair<qtc_entry, bool>( { qe, b } ); } ); }
 
-  READ_AND_WRITE(target);
-  READ_AND_WRITE(id);
-  READ_AND_WRITE(qtc_entries);
-  READ_AND_WRITE(date);
-  READ_AND_WRITE(utc);
-  READ_AND_WRITE(mode);
-  READ_AND_WRITE(source);
+  READ_AND_WRITE(target);             ///< to whom is the QTC series to be sent?
+  READ_AND_WRITE(id);                 ///< QTC ID (e.g., "1/10")
+  READ_AND_WRITE(qtc_entries);        ///< the individual QTC entries, and whether each has been sent
+  READ_AND_WRITE(date);               ///< yyyy-mm-dd
+  READ_AND_WRITE(utc);                ///< hh:mm:ss
+  READ_AND_WRITE(mode);               ///< CW or PH
+  READ_AND_WRITE(source);             ///< my call
 
   inline const decltype(_target) destination(void) const
     { return target(); }

@@ -411,10 +411,10 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
 void bandmap::operator+=(const bandmap_entry& be)
 { ost << "inside += for " << be.callsign() << "; source = " << be.source() << endl;
 
-  if ((*this)[MY_MARKER].valid())
-    ost << "MY MARKER appears to be present on entry" << endl;
-  else
-    ost << "MY MARKER appears NOT to be present on entry" << endl;
+//  if ((*this)[MY_MARKER].valid())
+//    ost << "MY MARKER appears to be present on entry" << endl;
+//  else
+//    ost << "MY MARKER appears NOT to be present on entry" << endl;
 
   const string& callsign = be.callsign();
 
@@ -494,8 +494,8 @@ void bandmap::operator+=(const bandmap_entry& be)
       }
       else    // this call is not currently present
       { //_entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (be.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
-        ost << "in bandmap::operator+=(); remove_if: " << endl;
-        for_each(_entries.begin(), _entries.end(), [=]  (bandmap_entry& bme) { ost << "  bme frequency string = " << bme.frequency_str() << " for " << bme.callsign() << "; be frequency string = " << be.frequency_str() << " for " << be.callsign() << endl; } );
+//        ost << "in bandmap::operator+=(); remove_if: " << endl;
+//        for_each(_entries.begin(), _entries.end(), [=]  (bandmap_entry& bme) { ost << "  bme frequency string = " << bme.frequency_str() << " for " << bme.callsign() << "; be frequency string = " << be.frequency_str() << " for " << be.callsign() << endl; } );
         _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (!bme.is_my_marker())); } );  // remove any real entries at this QRG
         _insert(be);
       }
@@ -534,10 +534,10 @@ void bandmap::operator+=(const bandmap_entry& be)
     _rbn_threshold_and_filtered_entries_dirty = true;
   }
 
-  if ((*this)[MY_MARKER].valid())
-    ost << "MY MARKER appears to be present on exit" << endl;
-  else
-    ost << "MY MARKER appears NOT to be present on exit" << endl;
+//  if ((*this)[MY_MARKER].valid())
+//    ost << "MY MARKER appears to be present on exit" << endl;
+//  else
+//    ost << "MY MARKER appears NOT to be present on exit" << endl;
 }
 
 /// prune the bandmap
