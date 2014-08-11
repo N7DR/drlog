@@ -40,12 +40,14 @@ qtc_entry::qtc_entry(const QSO& qso) :
 {
 }
 
+/// qtc_entry == qso
 const bool qtc_entry::operator==(const QSO& qso) const
 { const qtc_entry target(qso);
 
   return (*this == target);
 }
 
+/// qtc_entry == qtc_entry
 const bool qtc_entry::operator==(const qtc_entry& entry) const
 { if (_serno != entry._serno)
     return false;

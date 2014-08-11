@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 70 2014-08-04 22:42:51Z  $
+// $Id: drlog.cpp 71 2014-08-10 22:56:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -5276,8 +5276,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     }
   }
 
-// CTRL-X -- Abort and go back to prior window
-  if (!processed and e.is_control('x'))
+// CTRL-X, ALT-X -- Abort and go back to prior window
+  if (!processed and (e.is_control('x') or e.is_alt('x')))
   { ost << "Aborting; n_sent = " << series.n_sent() << endl;
 
     if (series.n_sent() != 0)
@@ -5292,11 +5292,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       sending_series = false;
       qtc_db += series;                  // add to database of sent QTCs
-
-      //if (cw)
-      //{ if (drlog_mode == CQ_MODE)                                   // send QSL
-      //    (*cw_p) << expand_cw_message( context.qsl_message() );
-      //}
 
       (*win_active_p) <= WINDOW_CLEAR;
 

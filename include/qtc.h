@@ -1,4 +1,4 @@
-// $Id: qtc.h 70 2014-08-04 22:42:51Z  $
+// $Id: qtc.h 71 2014-08-10 22:56:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -66,14 +66,18 @@ public:
   READ_AND_WRITE(callsign);     ///< other station
   READ(serno);                  ///< serial number sent by other station; width = 4
 
+/// set the serial number
   inline void serno(const std::string& str)
     { _serno = pad_string(str, 4, PAD_RIGHT); }
 
+/// qtc_entry == qso
   const bool operator==(const QSO& qso) const;
 
+/// qtc_entry != qso
   inline const bool operator!=(const QSO& qso) const
     { return !(*this == qso); }
 
+/// qtc_entry == qtc_entry
   const bool operator==(const qtc_entry& entry) const;
 
   const bool operator<(const qtc_entry&) const;
