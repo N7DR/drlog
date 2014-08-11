@@ -40,7 +40,7 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
 
 extern const std::string MY_MARKER;                                ///< the string that marks my position in the bandmap
 
-const std::string to_string(const BANDMAP_ENTRY_SOURCE);
+const std::string to_string(const BANDMAP_ENTRY_SOURCE);           ///< printable name of a source
 
 
 // -----------   needed_mult_details ----------------
@@ -129,6 +129,7 @@ public:
   }
 };
 
+/// ostream << needed_mult_details
 template<typename S>
 std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<S, S>>& nmd)
 { ost << "is needed: " << nmd.is_any_value_needed() << std::endl
@@ -142,6 +143,7 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<
   return ost;
 }
 
+/// ostream << needed_mult_details
 template<typename T>
 std::ostream& operator<<(std::ostream& ost, const needed_mult_details<T>& nmd)
 { ost << "is needed: " << nmd.is_any_value_needed() << std::endl
@@ -178,10 +180,10 @@ public:
     _hide(true)
   { }
 
-  READ_AND_WRITE(enabled);                          ///< is bandmap filtering enabled?
-  READ_AND_WRITE(hide);                             ///< are we in hide mode? (as opposed to show)
-  READ(continents);  ///< continents to filter
-  READ(prefixes);    ///< canonical country prefixes to filter
+  READ_AND_WRITE(enabled);                      ///< is bandmap filtering enabled?
+  READ_AND_WRITE(hide);                         ///< are we in hide mode? (as opposed to show)
+  READ(continents);                             ///< continents to filter
+  READ(prefixes);                               ///< canonical country prefixes to filter
 
 /// return all the canonical prefixes and continents that are currently being filtered
   const std::vector<std::string> filter(void) const;
@@ -190,7 +192,7 @@ public:
      \param str string to add or subtract
 
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
-     if it's not already in the filter; ortherwise it is removed.
+     if it's not already in the filter; otherwise it is removed.
 */
   void add_or_subtract(const std::string& str);
 };
@@ -221,9 +223,9 @@ protected:
 
   std::set<std::string>     _posters;                 ///< stations that posted this entry
 
-  typedef std::pair<std::string, std::string> pss_type;
+  typedef std::pair<std::string, std::string> pss_type;    ///< useful syntactic sugar
 
-  needed_mult_details<std::pair<std::string, std::string>> _is_needed_callsign_mult;
+  needed_mult_details<std::pair<std::string, std::string>> _is_needed_callsign_mult;    ///< details of needed callsign mults
   needed_mult_details<std::string>                         _is_needed_country_mult;
   needed_mult_details<std::pair<std::string, std::string>> _is_needed_exchange_mult;
 

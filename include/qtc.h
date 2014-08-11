@@ -281,7 +281,9 @@ public:
 
   const std::vector<qtc_entry> get_next_unsent_qtc(const std::string& target, const unsigned int max_entries = 10);
 
-  void operator+=(const logbook& );
+  void operator+=(const logbook&);
+
+  void operator+=(const QSO&);
 
   void operator-=(const qtc_entry& entry);
 

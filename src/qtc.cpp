@@ -417,6 +417,21 @@ void qtc_buffer::operator+=(const logbook& logbk)
 { const vector<QSO> qsos = logbk.as_vector();
 
   for (const auto& qso : qsos)
+  { (*this) += qso;//if (qso.continent() == "EU")
+    //{ const qtc_entry entry(qso);
+
+    //  if (_sent_qtcs.find(entry) == _sent_qtcs.end())
+    //  { if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) == _unsent_qtcs.end())
+    //      _unsent_qtcs.push_back(entry);
+    //  }
+    //}
+  }
+}
+
+void qtc_buffer::operator+=(const QSO& qso)
+{ //const vector<QSO> qsos = logbk.as_vector();
+
+  //for (const auto& qso : qsos)
   { if (qso.continent() == "EU")
     { const qtc_entry entry(qso);
 

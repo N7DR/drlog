@@ -1122,8 +1122,6 @@ int main(int argc, char** argv)
             update_known_country_mults(qso.callsign());
             qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band()) );
 
-//          ost << "Adding QSO with " << qso.callsign() << "; is_country_mult = " << qso.is_country_mult() << endl;
-
 // add exchange info for this call to the exchange db
             const vector<received_field>& received_exchange = qso.received_exchange();
 
@@ -1198,8 +1196,6 @@ int main(int argc, char** argv)
       update_remaining_callsign_mults_window(statistics, cur_band);
       update_remaining_country_mults_window(statistics);
       update_remaining_exch_mults_windows(rules, statistics);
-
-//      ost << "About to process QTC file" << endl;
 
 // QTCs
       if (send_qtcs)
@@ -3205,6 +3201,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
           qso.callsign(callsign);
           qso.canonical_prefix(location_db.canonical_prefix(callsign));
+          qso.continent(location_db.continent(callsign));
           qso.mode(cur_mode);
           qso.band(cur_band);
           qso.my_call(context.my_call());
@@ -3289,6 +3286,15 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         win_call_needed <= WINDOW_CLEAR;
         win_country_needed <= WINDOW_CLEAR;
 
+        if (send_qtcs)
+        {
+          ost << "Adding QSO to QTC buffer: " << qso << endl;
+          ost << "Number of unsent QSOs before = " << qtc_buf.n_unsent_qsos() << endl;
+          qtc_buf += qso;
+          ost << "Number of unsent QSOs = after " << qtc_buf.n_unsent_qsos() << endl;
+          statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+        }
+
 // display the current statistics
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
@@ -3360,12 +3366,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         }
 
 // write to disk
-//        FILE* fp = fopen(context.logfile().c_str(), "a");
-//        fseek(fp, 0, SEEK_END);
-//
-//        const string line_to_write = qso.verbose_format() + EOL;
-//        fwrite(line_to_write.c_str(), line_to_write.length(), 1, fp);
-//        fclose(fp);
         append_to_file(context.logfile(), (qso.verbose_format() + EOL) );
 
 // display the current rate (including this QSO)

@@ -791,7 +791,7 @@ const string QSO::log_line(void)
 }
 
 /// ostream << QSO
-std::ostream& operator<<(std::ostream& ost, QSO& q)
+std::ostream& operator<<(std::ostream& ost, const QSO& q)
 { ost << "Number: " << q.number()
       << ", Date: " << q.date()
       << ", UTC: " << q.utc()
