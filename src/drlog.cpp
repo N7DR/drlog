@@ -81,9 +81,8 @@ const string callsign_mult_value(const string& callsign_mult_name,
                                  const string& callsign);
 void cw_speed(const unsigned int new_speed);
 void debug_dump(void);
-void display_band_mode(window& win,
-                       const BAND current_band,
-                       const enum MODE current_mode);
+void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);
+void display_nearby_callsign(const string& callsign);
 const string dump_screen(const string& filename = string());
 void enter_cq_mode(void);
 void enter_sap_mode(void);
@@ -1556,7 +1555,8 @@ void* display_rig_status(void* vp)
  //         ost << "nearby callsign = " << nearby_callsign << " at " << f.display_string() << endl;
 
           if (!nearby_callsign.empty())
-          { const bool dupe = logbk.is_dupe(nearby_callsign, safe_get_band(), safe_get_mode(), rules);
+          { display_nearby_callsign(nearby_callsign);
+/*            const bool dupe = logbk.is_dupe(nearby_callsign, safe_get_band(), safe_get_mode(), rules);
             const bool worked = q_history.worked(nearby_callsign, safe_get_band(), safe_get_mode());
             const int foreground = win_nearby.fg();  // save the default colours
             const int background = win_nearby.bg();
@@ -1573,6 +1573,7 @@ void* display_rig_status(void* vp)
             win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE;
             win_nearby.cpair(colour_pair_number);
             win_nearby < nearby_callsign <= COLOURS(foreground, background);
+*/
 
             if (in_call_window)
             { string call_contents = remove_peripheral_spaces(win_call.read());
@@ -2017,10 +2018,11 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ALT-B and ALT-V (band up and down)
   if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
-  { try
+  { ost << "processing band change" << endl;
+
+    try
     { BAND cur_band       = safe_get_band();
       const MODE cur_mode = safe_get_mode();
-      unsigned long long_frequency;
 
       rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
 
@@ -2032,10 +2034,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         last_frequency = DEFAULT_FREQUENCIES[ { cur_band, cur_mode } ];
 
       rig.rig_frequency(last_frequency);
-      long_frequency = last_frequency.hz();
 
 // make sure that it's in the right mode, since rigs can do weird things depending on what mode it was in the last time it was on this band
       rig.rig_mode(cur_mode);
+      enter_sap_mode();
 
 // clear the call window (since we're now on a new band)
       win < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
@@ -2048,10 +2050,20 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       win_bandmap <= bm;
 
 // is there a station close to our frequency?
-//      const string nearby_callsign = bm.nearby_callsign(long_frequency, context.guard_band(cur_mode));
-      const string nearby_callsign = bm.nearest_rbn_threshold_and_filtered_callsign(long_frequency, context.guard_band(cur_mode));
+      const string nearby_callsign = bm.nearest_rbn_threshold_and_filtered_callsign(last_frequency.khz(), context.guard_band(cur_mode));
 
-      win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE <= nearby_callsign;
+//      ost << "lookup frequency = " << last_frequency.khz() << ", guard band = " << context.guard_band(cur_mode) << endl;
+//      ost << "alt-b/v, nearby call = " << nearby_callsign << endl;
+
+      display_nearby_callsign(nearby_callsign);  // clears nearby window if call is empty
+
+//      if (!nearby_callsign.empty())
+//      { //win < WINDOW_CLEAR <= nearby_callsign;
+//        win < WINDOW_CLEAR <= "burble";
+//        last_call_inserted_with_space = nearby_callsign;
+//      }
+
+//      ost << "this bandmap = " << bm.to_str() << endl;
 
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, cur_band);
@@ -2060,7 +2072,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
       win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
-      enter_sap_mode();
+//      enter_sap_mode();
     }
 
     catch (const rig_interface_error& e)
@@ -2225,11 +2237,11 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // if empty, send CQ #1, regardless of whether I'm in CQ or SAP mode
     if (contents.empty())
-    { ost << "contents are empty" << endl;
+    { //ost << "contents are empty" << endl;
 
       if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))
       { const string msg = context.message_cq_1();
-        ost << "sending message (CQ #1) : " << msg << endl;
+        //ost << "sending message (CQ #1) : " << msg << endl;
 
         if (!msg.empty())
           (*cw_p) << msg;
@@ -2783,7 +2795,12 @@ ost << "processing command: " << command << endl;
     const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
 
     if (!be.empty())
-      rig.rig_frequency(be.freq());
+    { rig.rig_frequency(be.freq());
+      win_call < WINDOW_CLEAR <= be.callsign();
+
+      display_nearby_callsign(be.callsign());
+      last_call_inserted_with_space = be.callsign();
+    }
 
     processed = true;
   }
@@ -5460,5 +5477,31 @@ const string active_window_name(void)
     name = "LOG EXTRACT";
 
   return name;
+}
+
+void display_nearby_callsign(const string& callsign)
+{ ost << "display_nearby_callsign called with call = " << callsign << endl;
+
+  if (callsign.empty())
+    win_nearby <= WINDOW_CLEAR;
+  else
+  { const bool dupe = logbk.is_dupe(callsign, safe_get_band(), safe_get_mode(), rules);
+    const bool worked = q_history.worked(callsign, safe_get_band(), safe_get_mode());
+    const int foreground = win_nearby.fg();  // save the default colours
+    const int background = win_nearby.bg();
+
+// in what colour should we display this call?
+    int colour_pair_number = colours.add(win_nearby.fg(), win_nearby.bg());
+
+    if (!worked)
+      colour_pair_number = colours.add(COLOUR_GREEN,  win_nearby.bg());
+
+    if (dupe)
+      colour_pair_number = colours.add(COLOUR_RED,  win_nearby.bg());
+
+    win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE;
+    win_nearby.cpair(colour_pair_number);
+    win_nearby < callsign <= COLOURS(foreground, background);
+  }
 }
 

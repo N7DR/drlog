@@ -234,7 +234,14 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "is needed mult: " << be.is_needed_mult() << endl
       << "is needed callsign mult: " << be.is_needed_callsign_mult_details() << endl
       << "is needed country mult: " << be.is_needed_country_mult_details() << endl
-      << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl;
+      << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl
+      << "number of posters: " << be.n_posters() << endl;
+
+  if (be.n_posters())
+  { const set<string> posters = be.posters();
+
+    for_each(posters.cbegin(), posters.cend(), [&ost] (const string& poster) { ost << "  " << poster << endl; } );
+  }
 
   return ost;
 }
@@ -254,7 +261,14 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      Returns the nearest station within the guard band, or the null string if no call is found.
 */
 const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
-{ const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
+{ ost << "Inside _nearest callsign; target frequency (kHz) = " << target_frequency_in_khz << "; guard band (Hz) = " << guard_band_in_hz << endl;
+
+  if (target_frequency_in_khz < 1800 or target_frequency_in_khz > 29700)
+  { ost << "WARNING: bandmap::_nearest_callsign called with frequency in kHz = " << target_frequency_in_khz << endl;
+    //alert("Invalid frequency in _nearest_callsign");
+  }
+
+  const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
   bool finish_looking = false;
   float smallest_difference = 1000000;
   string rv;
@@ -274,8 +288,12 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
       finish_looking = true;
   }
 
-//  if (finish_looking and !rv.empty())
-//    ost << "nearest callsign to " << target_frequency_in_khz << " is " << rv << ", with abs(difference) = " << smallest_difference << endl;
+  if (finish_looking and !rv.empty())
+    ost << "nearest callsign to " << target_frequency_in_khz << " is " << rv << ", with abs(difference) = " << smallest_difference << endl;
+  else
+  { ost << "finish_looking = " << finish_looking << endl;
+    ost << "rv = " << rv << endl;
+  }
 
   return rv;
 }
