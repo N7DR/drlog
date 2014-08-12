@@ -147,17 +147,22 @@ public:
   READ_AND_WRITE(mode);               ///< CW or PH
   READ_AND_WRITE(source);             ///< my call
 
+/// synonym for getting target
   inline const decltype(_target) destination(void) const
     { return target(); }
 
+/// synonym for setting target
   inline void destination(const decltype(_target) tgt)
     { target(tgt); }
 
+/// reset to default-constructed state
   inline void clear(void)
     { *this = qtc_series(); }
 
+/// return all the sent QTCs
   const std::vector<qtc_entry> sent_qtc_entries(void) const;
 
+/// return all the unsent QTCs
   const std::vector<qtc_entry> unsent_qtc_entries(void) const;
 
   inline const std::string frequency_str(void) const

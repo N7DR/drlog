@@ -256,6 +256,7 @@ window win_band_mode,               ///< the band and mode indicator
        win_log_extract,             ///< to show prior QSOs
        win_fuzzy,                   ///< fuzzy lookups
        win_individual_messages,     ///< messages from the individual messages file
+       win_individual_qtc_count,    ///< number of QTCs sent to an individual
        win_info,                    ///< summary of info about current station being worked
        win_local_time,              ///< window for local time
        win_log,                     ///< main visible log
@@ -786,6 +787,13 @@ int main(int argc, char** argv)
     { cerr << "Unable to read individual messages file: " << context.individual_messages_file() << endl;
       exit(-1);
     }
+  }
+
+// INDIVIDUAL QTC COUNT window
+//  ost << "send_qtcs = " << send_qtcs << endl;
+  if (send_qtcs)
+  { win_individual_qtc_count.init(context.window_info("INDIVIDUAL QTC COUNT"), WINDOW_NO_CURSOR);
+    win_individual_qtc_count <= WINDOW_CLEAR;
   }
 
 // INFO window
@@ -2638,10 +2646,6 @@ ost << "processing command: " << command << endl;
       }
     }
 
-//    contents = remove_peripheral_spaces(win.read());    // may have changed
-//    populate_win_info(contents);
-//    display_call_info(contents);
-
     if (found_call)
     { contents = remove_peripheral_spaces(win.read());
       display_call_info(contents);
@@ -3994,12 +3998,15 @@ inline const string sunset(const string& callsign)
 /*! \brief  Populate the information window
     \param  full or partial call
 
-    Called multiple times as a call is being typed
+    Called multiple times as a call is being typed. Also populates INDIVIDUAL QTC COUNT
+    window if appropriate
  */
 void populate_win_info(const string& callsign)
 { if (send_qtcs)
   { const string qtc_str = string("[") + to_string(qtc_db.n_qtcs_sent_to(callsign)) + string("]");
+
     win_info < WINDOW_CLEAR < qtc_str <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
+    win_individual_qtc_count < WINDOW_CLEAR <= qtc_str;
   }
   else
     win_info < WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
