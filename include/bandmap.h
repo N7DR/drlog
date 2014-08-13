@@ -450,8 +450,8 @@ protected:
   bool                      _rbn_threshold_and_filtered_entries_dirty;             ///< is the RBN threshold and filtered version dirty?
   
   BM_ENTRIES                _entries;                             ///< all the entries
-  BM_ENTRIES                _filtered_entries;                    ///< all the entries
-  BM_ENTRIES                _rbn_threshold_and_filtered_entries;  ///< all the entries
+  BM_ENTRIES                _filtered_entries;                    ///< entries, with the filter applied
+  BM_ENTRIES                _rbn_threshold_and_filtered_entries;  ///< entries, with the filter and RBN threshold applied
   
 //  auto lt = [] (const bandmap_entry& be1, const bandmap_entry& be2) { return be1.callsign() < be2.callsign(); };
 
@@ -470,19 +470,7 @@ protected:
 
   pt_mutex                  _bandmap_mutex;    ///< mutex for this bandmap
 
-  unsigned int _rbn_threshold;
-
-/*!  \brief Return a callsign close to a particular frequency
-     \param bme                     band map entries
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
-
-     Returns the lowest-frequency station within the guard band, or the null string if no call is found.
-*/
-//  const std::string _nearby_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
-
-//  const std::vector<std::string> _nearby_callsigns(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
+  unsigned int _rbn_threshold;                 ///< number of posters needed before a station appears in the bandmap
 
 /*!  \brief Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme                     band map entries
@@ -504,6 +492,7 @@ public:
 /// default constructor
   bandmap(void);
 
+/// set the RBN threshold
   inline void rbn_threshold(const unsigned int n)
   { SAFELOCK (_bandmap);
     _rbn_threshold = n;
@@ -592,7 +581,7 @@ public:
 /// prune the bandmap
   void prune(void);
 
-// filter functions -- these affect all bandmaps, since there's just one filter object
+// filter functions -- these affect all bandmaps, since there's just one (global) filter
 
 /// is the filter enabled?
   inline const bool filter_enabled(void)

@@ -1186,6 +1186,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _qtcs(false),                               // QTCs are disabled
   _qtc_double_space(false),                   // QTC elements are single-spaced
   _qtc_filename("QTCs"),                      // QTC filename
+  _qtc_qrs(3),                                // WPM decrease when sending QTC
   _rate_periods( { 15, 30, 60 } ),            // 15-, 30-, 60-minute periods for rates
   _rbn_port(7000),                            // telnet port for the reverse beacon network
   _rbn_server("telnet.reversebeacon.net"),    // domain name of the reverse beacon network telnet server

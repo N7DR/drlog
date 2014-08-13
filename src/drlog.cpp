@@ -5126,7 +5126,16 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
   auto send_msg = [=](const string& msg)
     { if (cw)
-        (*cw_p) << (string("---") + msg + string("+++"));  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
+      { const unsigned int qrs = context.qtc_qrs();
+
+        if (qrs)
+          (*cw_p) << create_string('-', qrs);
+
+        (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
+
+        if (qrs)
+          (*cw_p) << create_string('+', qrs);
+      }
     };
 
   ost << "processing QTC input; event string: " << e.str() << endl;

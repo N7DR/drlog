@@ -180,6 +180,7 @@ protected:
   bool                                         _qtcs;                ///< whether QTCs are enabled
   bool                                         _qtc_double_space;    ///< whether to leave a longer pause between elements of a QTC
   std::string                                  _qtc_filename;        ///< name of file where QTCs are stored
+  unsigned int                                 _qtc_qrs;             ///< WPM decrease when sending QTC
   std::map<std::string, std::set<std::string>> _qthx;                ///< allowed exchanges values as a function of country
 
   std::vector<unsigned int>                    _rate_periods;                    ///< periods (in minutes) over which rates should be calculated
@@ -368,6 +369,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(qtcs, _context);
   SAFEREAD(qtc_double_space, _context);
   SAFEREAD(qtc_filename, _context);
+  SAFEREAD(qtc_qrs, _context);
   SAFEREAD(qthx, _context);         ///< allowed exchanges values as a function of country
   SAFEREAD(quick_qsl_message, _context);
 
