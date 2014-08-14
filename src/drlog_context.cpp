@@ -325,10 +325,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (starts_with(testline, "CQ MEMORY " + to_string(memory)))
         _cq_memory[memory] = RHS;
 
-// CQ MENU
-//    if (starts_with(testline, "CQ MENU"))
-//      _cq_menu = (split_string(line, "="))[1];
-
 // CW SPEED
     if (starts_with(testline, "CW SPEED"))
       _cw_speed = from_string<unsigned int>(RHS);
@@ -348,11 +344,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EX MEMORY Fn
     for (unsigned int memory = 1; memory <= EX_MEMORY_MESSAGES; ++memory)
       if (starts_with(testline, "EX MEMORY F" + to_string(memory)))
-        _ex_memory[memory - 1] = remove_peripheral_spaces((split_string(line, "="))[1]);
-
-// EX MENU
-//    if (starts_with(testline, "EX MENU"))
-//      _ex_menu = (split_string(line, "="))[1];
+        _ex_memory[memory - 1] = remove_peripheral_spaces(RHS);
 
 // EXCHANGE
     if (starts_with(testline, "EXCHANGE"))
@@ -604,6 +596,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "QTC FILENAME"))
       _qtc_filename = rhs;
 
+// QTC QRS
+    if (starts_with(testline, "QTC QRS"))
+      _qtc_qrs = from_string<unsigned int>(rhs);
+
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
     if (starts_with(testline, "QTHX["))
@@ -633,7 +629,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // RBN PORT
     if (starts_with(testline, "RBN PORT"))
-      _rbn_port = from_string<int>((split_string(line, "="))[1]);
+      _rbn_port = from_string<int>(rhs);
 
 // RBN SERVER
     if (starts_with(testline, "RBN SERVER"))
@@ -928,10 +924,10 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
     if (starts_with(testline, "WINDOW"))
-    { vector<string> window_info = split_string(split_string(testline, "=")[1], ",");
+    { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
 
-      for (size_t n = 0; n < window_info.size(); ++n)
-        window_info[n] = remove_peripheral_spaces(window_info[n]);
+//      for (size_t n = 0; n < window_info.size(); ++n)
+//        window_info[n] = remove_peripheral_spaces(window_info[n]);
 
       if (window_info.size() >= 5)
       { const string name = window_info[0];
@@ -944,12 +940,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
         if (window_info.size() >= 6)
         { winfo.fg_colour(window_info[5]);
-//          cout << "foreground colour = " << winfo.fg_colour() << endl;
 
           if (window_info.size() >= 7)
-          { winfo.bg_colour(window_info[6]);
- //           cout << "background colour = " << winfo.bg_colour() << endl;
-          }
+            winfo.bg_colour(window_info[6]);
 
           winfo.colours_set(true);
         }
@@ -973,7 +966,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
     if (starts_with(testline, "STATIC WINDOW INFO"))  // must come after the corresponding STATIC WINDOW command
-    { vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
+    { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
 
       if (!window_info.empty())
       { const string name = window_info[0];

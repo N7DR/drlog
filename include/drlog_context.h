@@ -198,13 +198,13 @@ protected:
   std::string                                  _rig1_type;                       ///< model name of rig
   std::string                                  _russian_filename;                ///< filename of russian location file (default = "russian-data")
 
-  std::set<BAND>                               _score_bands;         ///< which bands are going to be scored?
+  std::set<BAND>                               _score_bands;             ///< which bands are going to be scored?
   std::string                                  _screen_snapshot_file;    ///< base name of file for screenshot
-  std::vector<std::pair<std::string, std::string> > _sent_exchange;  ///< names and values of sent exchange fields
-  unsigned int                                 _shift_delta;         ///< how many Hertz to QSY per poll of the shift key
-  unsigned int                                 _shift_poll;          ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
-  enum BAND                                    _start_band;             ///< on what band do we start?
-  enum MODE                                    _start_mode;          ///< on which mode do we start?
+  std::vector<std::pair<std::string, std::string> > _sent_exchange;      ///< names and values of sent exchange fields
+  unsigned int                                 _shift_delta;             ///< how many Hertz to QSY per poll of the shift key
+  unsigned int                                 _shift_poll;              ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
+  enum BAND                                    _start_band;              ///< on what band do we start?
+  enum MODE                                    _start_mode;              ///< on which mode do we start?
   std::map<std::string /* name */,
              std::pair<std::string /* contents */,
                          std::vector<window_information> > > _static_windows;
@@ -214,8 +214,6 @@ protected:
 
   std::map<std::string, window_information >   _windows;             ///< size and position info for each window
   std::string                                  _worked_mults_colour; ///< colour of worked mults in the mult windows
-
-
 
 // cw messages
 // we use the KeySymbol as the integer, although other I/O implementations could use something else
@@ -286,17 +284,16 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(call_ok_now_message, _context);
   SAFEREAD(callsign_mults, _context);
   SAFEREAD(callsign_mults_per_band, _context);
-  SAFEREAD(country_list, _context);
-  SAFEREAD(country_mults_per_band, _context);
-  SAFEREAD(cq_auto_lock, _context);
-  SAFEREAD(cq_auto_rit, _context);
   SAFEREAD(cluster_port, _context);
   SAFEREAD(cluster_server, _context);
   SAFEREAD(cluster_username, _context);
   SAFEREAD(contest_name, _context);
+  SAFEREAD(country_list, _context);
   SAFEREAD(country_mults_filter, _context);
+  SAFEREAD(country_mults_per_band, _context);
+  SAFEREAD(cq_auto_lock, _context);
+  SAFEREAD(cq_auto_rit, _context);
   SAFEREAD(cq_memory, _context);
-//  SAFEREAD(cq_menu, _context);
   SAFEREAD(cty_filename, _context);
   SAFEREAD(cw_speed, _context);
 
@@ -316,7 +313,6 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
       return _exchange_per_country;
     }
 
-//  CONTEXTREAD(unsigned int, guard_band);
   const unsigned int guard_band(const MODE m)
   { SAFELOCK(_context);
 
@@ -416,34 +412,35 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 /// vector of the names of bands (e.g., "160", "80", etc.)
   inline const std::vector<std::string> band_names(void) const
     { SAFELOCK(_context);
-      return split_string(_bands, ","); }
+      return split_string(_bands, ",");
+    }
 
 /// vector of the names of modes (e.g., "CW", "SSB", etc.)
   inline const std::vector<std::string> mode_names(void) const
     { SAFELOCK(_context);
-      return split_string(_modes, ","); }
+      return split_string(_modes, ",");
+    }
 
 /// how many bands are used in this contest?
   inline const unsigned int n_bands(void) const
     { SAFELOCK(_context);
-      return band_names().size(); }
+      return band_names().size();
+    }
 
 /// how many modes are used in this contest?
   inline const unsigned int n_modes(void) const
     { SAFELOCK(_context);
-      return mode_names().size(); }
+      return mode_names().size();
+    }
 
 /// a CQ memory
   inline const std::string cq_memory(const unsigned int n) const
     { SAFELOCK(_context);
       return (n < _cq_memory.size() ? _cq_memory[n] : std::string()); }
 
- // inline const std::map<int, std::string >  messages(void)
- //   { return _messages; }
   SAFEREAD(messages, _context);
 
   const std::vector<std::string> window_name_contains(const std::string& substr) const;
-
 };
 
 #endif    // DRLOG_CONTEXT_H

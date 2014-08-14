@@ -427,10 +427,7 @@ std::string convert_to_dotted_decimal(const uint32_t val);
 const bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator);
 
 // return true if call1 < call2
-bool compare_calls(const std::string& s1, const std::string& s2);
-
-
-
+const bool compare_calls(const std::string& s1, const std::string& s2);
 
 // -------------------------------------- Errors  -----------------------------------
 

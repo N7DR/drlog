@@ -165,22 +165,26 @@ public:
 /// return all the unsent QTCs
   const std::vector<qtc_entry> unsent_qtc_entries(void) const;
 
+/// return frequency in form xxxxx.y (kHz)
   inline const std::string frequency_str(void) const
     { return _frequency; }
 
+/// set frequency in form xxxxx.y (kHz)
   inline void frequency_str(const std::string& s)
     { _frequency = s; }
 
+/// set frequency from a frequency object
   inline void frequency_str(const frequency& f)
     { _frequency = f.display_string(); }
 
+/// return the number of qtc_entries in the series
   inline const size_t size(void) const
     { return _qtc_entries.size(); }
 
+/// are there zero qtc_entries in the series?
   inline const bool empty(void) const
     { return _qtc_entries.empty(); }
 
-//  const bool operator+=(const qtc_entry& entry);
   const bool operator+=(const std::pair<qtc_entry, bool>&);
 
   inline std::pair<qtc_entry, bool>& operator[](const unsigned int n)
@@ -260,9 +264,6 @@ public:
   const unsigned int n_qtcs_sent_to(const std::string& destination_callsign) const;
 
   const unsigned int n_qtc_entries_sent(void) const;
-
-// write to file
-//  void write(const std::string& filename);
 
 // read from file
   void read(const std::string& filename);

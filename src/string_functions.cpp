@@ -774,7 +774,7 @@ const bool compchar(const char c1, const char c2)
 }
 
 // return true if call1 < call2
-bool compare_calls(const string& s1, const string& s2)
+const bool compare_calls(const string& s1, const string& s2)
 { const size_t l1 = s1.size();
   const size_t l2 = s2.size();
   const size_t n_to_compare = min(l1, l2);

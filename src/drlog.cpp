@@ -234,8 +234,7 @@ cached_data<string, string> WPX_DB(&wpx_prefix);
 
 qtc_database qtc_db;    ///< sent QTCs
 qtc_buffer   qtc_buf;   ///< all sent and unsent QTCs
-//pt_mutex     qtc_mutex;
-bool send_qtcs = false;  // set from rules later
+bool send_qtcs = false;  // whether QTCs are used; set from rules later
 
 // windows -- these should automatically be thread_safe
 window win_band_mode,               ///< the band and mode indicator
@@ -247,12 +246,11 @@ window win_band_mode,               ///< the band and mode indicator
        win_cluster_line,            ///< last line received from cluster
        win_cluster_mult,            ///< mults received from cluster
        win_cluster_screen,          ///< interactive screen on to the cluster
-       win_country_needed,          ///< bands on which this country is needed
-//       win_cw,
+//       win_country_needed,          ///< bands on which this country is needed
        win_date,                    ///< the date
        win_drlog_mode,              ///< indicate whether in CQ or SAP mode
        win_exchange,                ///< QSO exchange received from other station
-       win_log_extract,             ///< to show prior QSOs
+       win_log_extract,             ///< to show earlier QSOs
        win_fuzzy,                   ///< fuzzy lookups
        win_individual_messages,     ///< messages from the individual messages file
        win_individual_qtc_count,    ///< number of QTCs sent to an individual
@@ -261,25 +259,24 @@ window win_band_mode,               ///< the band and mode indicator
        win_log,                     ///< main visible log
        win_message,                 ///< messages from drlog to the user
        win_nearby,                  ///< nearby station
-//       win_note,                    // quick notes to go in the log
        win_qso_number,              ///< number of the next QSO
 //       win_qtcs_sent,               // number of QSOs sent as QTCs / total number of QSOs
        win_qtc_status,              ///< status of QTCs
        win_rate,                    ///< QSO and point rates
        win_rbn_line,                ///< last line received from the RBN
-       win_remaining_callsign_mults, // the remaining callsign mults
-       win_remaining_country_mults, // the remaining country mults
-       win_rig,                     // rig status
-       win_score,                   // total number of points
-       win_score_bands,             // which bands contribute to score
-       win_scp,                     // SCP lookups
+       win_remaining_callsign_mults, ///< the remaining callsign mults
+       win_remaining_country_mults, ///< the remaining country mults
+       win_rig,                     ///< rig status
+       win_score,                   ///< total number of points
+       win_score_bands,             ///< which bands contribute to score
+       win_scp,                     ///< SCP lookups
        win_scratchpad,              ///< scratchpad
-       win_serial_number,           // next serial number (octothorpe)
-       win_srate,                   // recent score rates
-       win_summary,                 // overview of score
-       win_time,                    // current UTC
-       win_title,                   // title of the contest
-       win_wpm;                     // CW speed in WPM
+       win_serial_number,           ///< next serial number (octothorpe)
+//       win_srate,                   // recent score rates
+       win_summary,                 ///< overview of score
+       win_time,                    ///< current UTC
+       win_title,                   ///< title of the contest
+       win_wpm;                     ///< CW speed in WPM
 
 map<string /* name */, window*> win_remaining_exch_mults_p;
 
@@ -627,9 +624,6 @@ int main(int argc, char** argv)
                                  (current_mode == MODE_SSB and (rm == MODE_SSB )));
       const bool band_matches = (current_band == static_cast<BAND>(rf));
 
-//    ost << "current mode = " << current_mode << ", rstat = " << rm << endl;
-//    ost << "current band = " << current_band << ", rig = " << static_cast<BAND>(rf) << endl;
-
       if (!band_matches or !mode_matches)
       { ost << "mismatch; setting frequency" << endl;
 
@@ -643,18 +637,21 @@ int main(int argc, char** argv)
 // configure bandmaps so user's call does not display
   { const string my_call = context.my_call();
 
-    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(my_call); } );
+//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(my_call); } );
+    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
   }
 
   for (const auto& callsign : context.do_not_show())
-    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
 
   if (!context.do_not_show_filename().empty())
   { try
     { const vector<string> lines = remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), context.do_not_show_filename()))));
 
       for (const auto& callsign : lines)
-        for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+//        for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
     }
 
     catch (...)
@@ -666,13 +663,12 @@ int main(int argc, char** argv)
 // set the RBN threshold for each bandmap
   { const unsigned int rbn_threshold = context.rbn_threshold();
 
-    if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so mat be no need to change
-      for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
+    if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
+//      for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
+      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
   }
 
-// create and populate windows
-
-// static windows first
+// create and populate windows; do static windows first
   const map<string /* name */, pair<string /* contents */, vector<window_information> > > swindows = context.static_windows();;
 
   for (const auto& this_static_window : swindows)
@@ -688,8 +684,7 @@ int main(int argc, char** argv)
   }
 
   for (auto& swin : static_windows_p)
-  { *(swin.second) <= swin.first;
-  }
+    *(swin.second) <= swin.first;
 
 // BAND/MODE window
   win_band_mode.init(context.window_info("BAND/MODE"), WINDOW_NO_CURSOR);
@@ -736,11 +731,10 @@ int main(int argc, char** argv)
   win_call_needed.init(context.window_info("CALL NEEDED"), WINDOW_NO_CURSOR);
 
 // CLUSTER LINE window
-//  window win_cluster_line(context.window_info("CLUSTER LINE"), WINDOW_NO_CURSOR);
   win_cluster_line.init(context.window_info("CLUSTER LINE"), WINDOW_NO_CURSOR);
 
 // COUNTRY NEEDED window; shows which bands we need this call's country on
-  win_country_needed.init(context.window_info("COUNTRY NEEDED"), WINDOW_NO_CURSOR);
+//  win_country_needed.init(context.window_info("COUNTRY NEEDED"), WINDOW_NO_CURSOR);
 
 // DATE window
   win_date.init(context.window_info("DATE"), WINDOW_NO_CURSOR);
@@ -3305,14 +3299,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         win_call <= WINDOW_CLEAR;
         win_nearby <= WINDOW_CLEAR;
         win_call_needed <= WINDOW_CLEAR;
-        win_country_needed <= WINDOW_CLEAR;
+//        win_country_needed <= WINDOW_CLEAR;
 
         if (send_qtcs)
-        {
-//          ost << "Adding QSO to QTC buffer: " << qso << endl;
-//          ost << "Number of unsent QSOs before = " << qtc_buf.n_unsent_qsos() << endl;
-          qtc_buf += qso;
-//          ost << "Number of unsent QSOs = after " << qtc_buf.n_unsent_qsos() << endl;
+        { qtc_buf += qso;
           statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
         }
 
@@ -4554,9 +4544,6 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
                      rate_meter& rate)
 {
 // clear the histories
-//  ost << "in rebuild_history()" << endl;
-//  ost << "original rate: " << rate.to_string() << endl;
-
   statistics.clear_info();
   q_history.clear();
   rate.clear();
@@ -4575,8 +4562,6 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
 
     l += qso;
   }
-
-//  ost << "rebuilt rate: " << rate.to_string() << endl;
 }
 
 /*! \brief  Copy a file to a destination directory
@@ -4598,12 +4583,12 @@ void* auto_backup(void* vp)
       const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
       const string complete_name = directory + "/" + filename + "-" + suffix;
 
-      ofstream(complete_name) << ifstream(filename).rdbuf();
+      ofstream(complete_name) << ifstream(filename).rdbuf();          // perform the copy
 
       if (!qtc_filename.empty())
       { const string qtc_complete_name = directory + "/" + qtc_filename + "-" + suffix;
 
-        ofstream(qtc_complete_name) << ifstream(qtc_filename).rdbuf();
+        ofstream(qtc_complete_name) << ifstream(qtc_filename).rdbuf();  // perform copy of QTC file
       }
     }
 
@@ -4796,9 +4781,6 @@ void add_qso(const QSO& qso)
     fuzzy_dynamic_db.add_call(qso.callsign());
 
 // add to the rates
-//  const time_t now = qso.epoch_time();
-//  const unsigned int score = statistics.points(rules);
-
   rate.insert(qso.epoch_time(), statistics.points(rules));
 }
 
@@ -5119,7 +5101,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   static unsigned int qtcs_sent;
   static string qtc_id;
   static qtc_series series;
-//  static bool confirmed_last_qtc = false;
 
   const bool cw = (safe_get_mode() == MODE_CW);  // just to keep it easy to determine if we are on CW
   bool processed = false;
@@ -5217,7 +5198,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
         win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sending QTC " < qtc_id < " to " <= destination_callsign;
 
-// display the QTC entries; we use the "prior QSOs" window
+// display the QTC entries; we use the "log extract" window
         win <= series;
 
         total_qtcs_to_send = qtc_entries_to_send.size();
@@ -5454,7 +5435,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     processed = true;
   }
-
 }
 
 void cw_speed(const unsigned int new_speed)
@@ -5489,7 +5469,7 @@ const string active_window_name(void)
 }
 
 void display_nearby_callsign(const string& callsign)
-{ ost << "display_nearby_callsign called with call = " << callsign << endl;
+{ //ost << "display_nearby_callsign called with call = " << callsign << endl;
 
   if (callsign.empty())
     win_nearby <= WINDOW_CLEAR;

@@ -19,6 +19,7 @@
 #include "bands-modes.h"
 #include "serialization.h"
 
+#include <algorithm>
 #include <tuple>
 
 #if (!defined(READ_AND_WRITE))
@@ -724,10 +725,8 @@ public:
 
 template<class Input, class Function>
   Function FOR_ALL(Input& first, Function fn)
-{ return (for_each(first.begin(), first.end(), fn));
+{ return (std::for_each(first.begin(), first.end(), fn));
 }
-
-//copy(vec.cbegin(), vec.cend(), back_inserter(rv));          // append to rv
 
 template<class Input, class OutputIterator>
   OutputIterator COPY_ALL(Input& first, OutputIterator oi)
@@ -736,9 +735,7 @@ template<class Input, class OutputIterator>
 
 template <class Input, class UnaryPredicate>
   void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
-{ //const auto it = remove_if(first.begin(), first.end(), pred);
-  //first.erase(it
-  first.erase(remove_if(first.begin(), first.end(), pred), first.end());
+{ first.erase(remove_if(first.begin(), first.end(), pred), first.end());
 }
 
 // ------------------------ container for per-band and per-mode information ------------
