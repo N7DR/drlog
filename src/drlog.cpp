@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 71 2014-08-10 22:56:10Z  $
+// $Id: drlog.cpp 72 2014-08-16 16:53:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -51,6 +51,8 @@ using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   placeholders;  // std::placeholders
 using namespace   this_thread;   // std::this_thread
+
+extern const set<string> CONTINENT_SET;
 
 enum DRLOG_MODE { CQ_MODE = 0,
                   SAP_MODE
@@ -242,7 +244,7 @@ window win_band_mode,               ///< the band and mode indicator
        win_bandmap_filter,          ///< bandmap filter information
        win_batch_messages,          ///< messages from the batch messages file
        win_call,                    ///< callsign of other station, or command
-       win_call_needed,             ///< bands on which this call is needed
+//       win_call_needed,             ///< bands on which this call is needed
        win_cluster_line,            ///< last line received from cluster
        win_cluster_mult,            ///< mults received from cluster
        win_cluster_screen,          ///< interactive screen on to the cluster
@@ -382,7 +384,6 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 
     copy(matches.cbegin(), matches.cend(), back_inserter(vec_str));
     sort(vec_str.begin(), vec_str.end(), compare_calls);
-
     match_vector.clear();
 
     for (const auto& cs : vec_str)
@@ -669,7 +670,7 @@ int main(int argc, char** argv)
   }
 
 // create and populate windows; do static windows first
-  const map<string /* name */, pair<string /* contents */, vector<window_information> > > swindows = context.static_windows();;
+  const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows = context.static_windows();;
 
   for (const auto& this_static_window : swindows)
   { const string& contents = this_static_window.second.first;
@@ -727,14 +728,8 @@ int main(int argc, char** argv)
   win_call < WINDOW_BOLD <= "";
   win_call.process_input_function(process_CALL_input);
 
-// CALL NEEDED window; shows which bands we need this call on
-  win_call_needed.init(context.window_info("CALL NEEDED"), WINDOW_NO_CURSOR);
-
 // CLUSTER LINE window
   win_cluster_line.init(context.window_info("CLUSTER LINE"), WINDOW_NO_CURSOR);
-
-// COUNTRY NEEDED window; shows which bands we need this call's country on
-//  win_country_needed.init(context.window_info("COUNTRY NEEDED"), WINDOW_NO_CURSOR);
 
 // DATE window
   win_date.init(context.window_info("DATE"), WINDOW_NO_CURSOR);
@@ -812,10 +807,6 @@ int main(int argc, char** argv)
 // NEARBY window
   win_nearby.init(context.window_info("NEARBY"), WINDOW_NO_CURSOR);
 
-// NOTE window
-//  win_note.init(context.window_info("NOTE"), WINDOW_INSERT);
-//  win_note.hide();
-
 // QSO NUMBER window
   win_qso_number.init(context.window_info("QSO NUMBER"), WINDOW_NO_CURSOR);
   win_qso_number <= pad_string(to_string(next_qso_number), win_qso_number.width());
@@ -841,10 +832,10 @@ int main(int argc, char** argv)
     update_remaining_country_mults_window(statistics);
   else
   { const set<string> set_from_context = context.remaining_country_mults_list();
-    static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
+//    static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
     const string& target_continent = *(set_from_context.cbegin());
 
-    if ((set_from_context.size() == 1) and (continent_set < target_continent))
+    if ((set_from_context.size() == 1) and (CONTINENT_SET < target_continent))
       win_remaining_country_mults <= location_db.countries(target_continent);
     else
       win_remaining_country_mults <= (context.remaining_country_mults_list());
@@ -852,7 +843,6 @@ int main(int argc, char** argv)
 
 // REMAINING EXCHANGE MULTS window(s)
   const vector<string> exchange_mult_window_names = context.window_name_contains("REMAINING EXCHANGE MULTS");
-//  const size_t n_remaining_exch_mult_windows = exchange_mult_window_names.size();
 
   for (auto& window_name : exchange_mult_window_names)
   { window* wp = new window();
@@ -1550,24 +1540,6 @@ void* display_rig_status(void* vp)
 
           if (!nearby_callsign.empty())
           { display_nearby_callsign(nearby_callsign);
-/*            const bool dupe = logbk.is_dupe(nearby_callsign, safe_get_band(), safe_get_mode(), rules);
-            const bool worked = q_history.worked(nearby_callsign, safe_get_band(), safe_get_mode());
-            const int foreground = win_nearby.fg();  // save the default colours
-            const int background = win_nearby.bg();
-
-// in what colour should we display this call?
-            int colour_pair_number = colours.add(win_nearby.fg(), win_nearby.bg());
-
-            if (!worked)
-              colour_pair_number = colours.add(COLOUR_GREEN,  win_nearby.bg());
-
-            if (dupe)
-              colour_pair_number = colours.add(COLOUR_RED,  win_nearby.bg());
-
-            win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE;
-            win_nearby.cpair(colour_pair_number);
-            win_nearby < nearby_callsign <= COLOURS(foreground, background);
-*/
 
             if (in_call_window)
             { string call_contents = remove_peripheral_spaces(win_call.read());
@@ -2196,8 +2168,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       }
     }
     else   // treat the contents as something to add to or subtract from the filter
-    { static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
-      const string str = ( (continent_set < contents) ? contents : location_db.canonical_prefix(contents) );
+    { const string str = ( (CONTINENT_SET < contents) ? contents : location_db.canonical_prefix(contents) );
 
       bm.filter_add_or_subtract(str);
 
@@ -2471,7 +2442,6 @@ ost << "processing command: " << command << endl;
     { const string& callsign = contents;
       const BAND cur_band = safe_get_band();
       const MODE cur_mode = safe_get_mode();
-//      const bool is_dupe = q_history.worked(callsign, cur_band, cur_mode);  // need to fix for SS
       const bool is_dupe = logbk.is_dupe(callsign, cur_band, cur_mode, rules);
 
 // if we're in SAP mode, don't call him if he's a dupe
@@ -2647,6 +2617,7 @@ ost << "processing command: " << command << endl;
       if (!(be.callsign().empty()))
       { found_call = true;
         win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
+        contents = be.callsign();
         rig.rig_frequency(be.freq());
         enter_sap_mode();
       }
@@ -2793,6 +2764,7 @@ ost << "processing command: " << command << endl;
       win_call < WINDOW_CLEAR <= be.callsign();
 
       display_nearby_callsign(be.callsign());
+      display_call_info(be.callsign());
       last_call_inserted_with_space = be.callsign();
     }
 
@@ -3264,7 +3236,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
           const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), cur_band);
 
-          ost << "QSO with " << qso.callsign() << "; is_country_mult = " << is_country_mult << endl;
+//          ost << "QSO with " << qso.callsign() << "; is_country_mult = " << is_country_mult << endl;
 
           qso.is_country_mult(is_country_mult);
         }
@@ -3298,7 +3270,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         win_exchange <= WINDOW_CLEAR;
         win_call <= WINDOW_CLEAR;
         win_nearby <= WINDOW_CLEAR;
-        win_call_needed <= WINDOW_CLEAR;
+//        win_call_needed <= WINDOW_CLEAR;
 //        win_country_needed <= WINDOW_CLEAR;
 
         if (send_qtcs)
@@ -3310,18 +3282,18 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
         const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
-        win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
-        win_active_p = &win_call;    // switch to the CALL window
+        win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
+        win_active_p = &win_call;          // switch to the CALL window
         win_call <= CURSOR_START_OF_LINE;
 
 // remaining mults: callsign, country, exchange
         update_known_callsign_mults(qso.callsign());
         update_remaining_callsign_mults_window(statistics);
 
-        const set<string> new_worked_country_mults = statistics.worked_country_mults(cur_band);
+//        const set<string> new_worked_country_mults = statistics.worked_country_mults(cur_band);
 
-        if (old_worked_country_mults.size() != new_worked_country_mults.size())
+        if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band).size())
         { update_remaining_country_mults_window(statistics);
           update_known_country_mults(qso.callsign());
         }

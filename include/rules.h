@@ -109,9 +109,11 @@ public:
 /// Get all the legal values (for all canonical values)
   const std::set<std::string> all_values(void) const;
 
+/// Is a string a known canonical value?
   inline const bool canonical_value_present(const std::string& cv) const
     { return (_values.find(cv) != _values.cend()); }
 
+/// Is a string a known canonical value? Synonym for canonical_value_present()
   inline const bool is_legal_canonical_value(const std::string& putative_cv_value) const
     { return canonical_value_present(putative_cv_value); }
 
@@ -127,7 +129,6 @@ public:
     { ar & _name
          & _values;
     }
-
 };
 
 // -------------------------  exchange_field  ---------------------------

@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 67 2014-06-24 00:51:24Z  $
+// $Id: cty_data.cpp 72 2014-08-16 16:53:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,6 +25,8 @@
 using namespace std;
 
 //extern ofstream ost;
+
+extern const set<string> CONTINENT_SET { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };  // see https://stackoverflow.com/questions/177437/const-static
 
 const unsigned int CTY_FIELDS_PER_RECORD = 9;    ///< Number of fields in a single CTY record
 
@@ -60,33 +62,34 @@ const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };
 */
 cty_record::cty_record(const string& record)
 { const string record_copy = remove_char(remove_char(record, LF_CHAR), CR_CHAR);    // make it all one line
-  const vector<string> fields = split_string(record_copy, ":");                     // split the record into fields
+  const vector<string> fields = remove_peripheral_spaces(split_string(record_copy, ":"));                     // split the record into fields
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
     throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found " + to_string(fields.size()) + " fields in record for " + fields[0]); 
   
-  _country_name = remove_leading_spaces(fields[0]);
+  _country_name = fields[0];
 
-  _cq_zone = from_string<int>(remove_leading_spaces(fields[1]));
+  _cq_zone = from_string<int>(fields[1]);
   if (_cq_zone < 1 or _cq_zone > 40)
     throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = " + to_string(_cq_zone) + " in record for " + _country_name);
   
-  _itu_zone = from_string<int>(remove_leading_spaces(fields[2]));
+  _itu_zone = from_string<int>(fields[2]);
   if (_itu_zone < 1 or _itu_zone > 90)
     throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = " + to_string(_itu_zone) + " in record for " + _country_name);
 
-  _continent = remove_leading_spaces(fields[3]);
-  if (_continent != "AF" and _continent != "AS" and _continent != "EU" and _continent != "NA" and
-      _continent != "OC" and _continent != "SA")
+  _continent = fields[3];
+//  if (_continent != "AF" and _continent != "AS" and _continent != "EU" and _continent != "NA" and
+//      _continent != "OC" and _continent != "SA")
+  if ( !(CONTINENT_SET < _continent) )
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = " + _continent + " in record for " + _country_name);
   
   _latitude = from_string<float>(fields[4]);
   if (_latitude < -90 or _latitude > 90)
-    throw cty_error(CTY_INVALID_LATITUDE, "Latitude = " + remove_leading_spaces(fields[4]) + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_LATITUDE, "Latitude = " + fields[4] + " in record for " + _country_name);
 
   _longitude = from_string<float>(fields[5]);
   if (_longitude < -180 or _longitude > 180)
-    throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = " + remove_leading_spaces(fields[5]) + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = " + fields[5] + " in record for " + _country_name);
   
 // map to (0, 360)
   if (_longitude < 0)
@@ -95,9 +98,9 @@ cty_record::cty_record(const string& record)
   _utc_offset = static_cast<int>(from_string<float>(fields[6]) * 60 + 0.5);  // convert to minutes
 
   if ( (_utc_offset < -24 * 60) or (_utc_offset > 24 * 60) )                 // check that it's reasonable
-    throw cty_error(CTY_INVALID_UTC_OFFSET, "UTC offset = " + remove_leading_spaces(fields[6]) + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_UTC_OFFSET, "UTC offset = " + fields[6] + " in record for " + _country_name);
 
-  _prefix = to_upper(remove_leading_spaces(fields[7]));  // so that, for example, JD/o -> JD/O
+  _prefix = to_upper(fields[7]);  // so that, for example, JD/o -> JD/O
   
   if (_prefix.empty())
     throw cty_error(CTY_INVALID_PREFIX, "PREFIX is empty in record for " + _country_name);

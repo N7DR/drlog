@@ -1,4 +1,4 @@
-// $Id: rules.cpp 68 2014-06-28 15:42:35Z  $
+// $Id: rules.cpp 72 2014-08-16 16:53:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,6 +29,7 @@ using namespace std::placeholders;
 
 pt_mutex rules_mutex;
 
+extern const set<string> CONTINENT_SET;
 extern message_stream ost;
 
 // -------------------------  exchange_field_values  ---------------------------
@@ -383,9 +384,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (context.country_mults_filter() == "ALL")
     copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
 
-  static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
+//  static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
 
-  if (continent_set < context.country_mults_filter())
+  if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
 
     copy_if(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()), [=, &location_db] (const string& cp) {return (location_db.continent(cp) == target_continent); } );
@@ -497,8 +498,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // country
           if (!processed and !fields[1].empty())
-          { //country_points_this_band.insert( make_pair(location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2])) );
-            country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
+          { country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
 
             country_points_this_band[location_db.canonical_prefix(fields[1])] = from_string<unsigned int>(fields[2]);
             points_this_band.country_points(country_points_this_band);
@@ -756,7 +756,7 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
 
   for (unsigned int n = 0; n < _exch_values.size() and !found_it; ++n)
   { if (_exch_values[n].name() == field_name)
-    { // found_it = true;
+    { found_it = true;
 
       //map<string, set<string> >& m = _exch_values[n].second;
       //set<string>& ss = m[new_canonical_value];                // creates if it doesn't exist
@@ -815,8 +815,11 @@ const bool contest_rules::is_legal_value(const string& field_name, const string&
   return false;
 }
 
-/// the permitted values for a field
-// returns empty set if the field can take any value
+/*! \brief                           The permitted values for a field
+    \param  field_name               name of an exchange field (received)
+
+    Returns the empty set if the field <i>field_name</i> can take any value
+*/
 const set<string> contest_rules::exch_permitted_values(const string& field_name) const
 { static const set<string> empty_set( { } );
 
@@ -827,13 +830,16 @@ const set<string> contest_rules::exch_permitted_values(const string& field_name)
   return (it == _permitted_exchange_values.cend() ? empty_set : it->second);
 }
 
-/// the canonical value for a field name and actual value
-// if there are no canonical values, returns the actual value
+/*! \brief                  The canonical value for a field
+    \param  field_name      name of an exchange field (received)
+    \param  actual_value    actual received value of the field <i>field_name</i>
+    \return                 Canonical value for the value <i>actual_value</i> forf the field <i>field_name</i>
+
+    Returns <i>actual_value</i> if there are no canonical values.
+    Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>
+*/
 const string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
 { set<string> ss = exch_permitted_values(field_name);
-
-//  for (set<string>::const_iterator cit = ss.cbegin(); cit != ss.cend(); ++cit)
-//    ost << "permitted value = " << *cit << endl;
 
   if (exch_permitted_values(field_name).empty())                         // if no permitted values => anything allowed
     return actual_value;
@@ -850,15 +856,19 @@ const string contest_rules::canonical_value(const string& field_name, const stri
 */
   SAFELOCK(rules);
 
-//  ost << "GOT TO HERE" << field_name << " = " << actual_value << endl;
-
   const map<string, string>& p_to_c = _permitted_to_canonical.at(field_name);  // we don't get here if field_name isn't valid
   const auto cit = p_to_c.find(actual_value);
 
-  return (cit == p_to_c.cend() ? actual_value /* string() */ : (cit->second));
+  return (cit == p_to_c.cend() ? actual_value : (cit->second));
 }
 
-/// get the next mode
+/*! \brief                          Get the next mode
+    \param  current_mode            Current mode
+    \return                         Next mode in sequence
+
+    Cycles through the available modes.
+    Currently supports only MODE_CW and MODE_SSB
+*/
 const MODE contest_rules::next_mode(const MODE current_mode) const
 { SAFELOCK(rules);
 
@@ -875,7 +885,11 @@ const MODE contest_rules::next_mode(const MODE current_mode) const
   return *cit;
 }
 
-/// add a band to the list of permitted modes
+/*! \brief               Add a band to the list of permitted bands
+    \param  b            Band to add
+
+    Does nothing if <i>b</i> is already permitted
+*/
 void contest_rules::add_permitted_band(const BAND b)
 { SAFELOCK(rules);
 

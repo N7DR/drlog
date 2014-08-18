@@ -1,4 +1,4 @@
-// $Id: cty_data.h 67 2014-06-24 00:51:24Z  $
+// $Id: cty_data.h 72 2014-08-16 16:53:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,6 +28,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+// extern const std::set<std::string> CONTINENT_SET;
 
 enum country_list_type { COUNTRY_LIST_DXCC,     ///< DXCC list
                          COUNTRY_LIST_WAEDC     ///< DARC WAEDC list

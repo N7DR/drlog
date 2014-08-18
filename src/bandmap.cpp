@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 71 2014-08-10 22:56:10Z  $
+// $Id: bandmap.cpp 72 2014-08-16 16:53:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,7 +30,9 @@ extern pt_mutex            current_band_mutex;
 extern pt_mutex            bandmap_mutex;        // used when writing to the bandmap window
 extern BAND                current_band;
 
-const string MY_MARKER = "--------";
+extern const set<string> CONTINENT_SET;
+
+const string MY_MARKER("--------");
 
 /// convert BANDMAP_ENTRY_SOURCE to printable string
 const string to_string(const BANDMAP_ENTRY_SOURCE bes)
@@ -73,8 +75,8 @@ const vector<string> bandmap_filter_type::filter(void) const
      if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
-{ static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
-  vector<string>* vs_p = ( (continent_set < str) ? &_continents : &_prefixes );          // create pointer to correct vector
+{ //static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
+  vector<string>* vs_p = ( (CONTINENT_SET < str) ? &_continents : &_prefixes );          // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss.insert(continent_or_prefix); } );  // create a copy of current values
@@ -261,11 +263,11 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      Returns the nearest station within the guard band, or the null string if no call is found.
 */
 const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
-{ ost << "Inside _nearest callsign; target frequency (kHz) = " << target_frequency_in_khz << "; guard band (Hz) = " << guard_band_in_hz << endl;
+{ // ost << "Inside _nearest callsign; target frequency (kHz) = " << target_frequency_in_khz << "; guard band (Hz) = " << guard_band_in_hz << endl;
 
   if (target_frequency_in_khz < 1800 or target_frequency_in_khz > 29700)
   { ost << "WARNING: bandmap::_nearest_callsign called with frequency in kHz = " << target_frequency_in_khz << endl;
-    //alert("Invalid frequency in _nearest_callsign");
+    return string();
   }
 
   const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
@@ -288,12 +290,12 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
       finish_looking = true;
   }
 
-  if (finish_looking and !rv.empty())
-    ost << "nearest callsign to " << target_frequency_in_khz << " is " << rv << ", with abs(difference) = " << smallest_difference << endl;
-  else
-  { ost << "finish_looking = " << finish_looking << endl;
-    ost << "rv = " << rv << endl;
-  }
+//  if (finish_looking and !rv.empty())
+//    ost << "nearest callsign to " << target_frequency_in_khz << " is " << rv << ", with abs(difference) = " << smallest_difference << endl;
+//  else
+//  { ost << "finish_looking = " << finish_looking << endl;
+//    ost << "rv = " << rv << endl;
+//  }
 
   return rv;
 }
@@ -475,9 +477,6 @@ void bandmap::operator+=(const bandmap_entry& be)
             else
             { const string& poster = *(be.posters().cbegin());
 
-//              if (old_be.is_poster(poster))
-//                mark_as_recent = true;
-
               old_be.add_poster(poster);
 
                 ost << "added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
@@ -494,9 +493,6 @@ void bandmap::operator+=(const bandmap_entry& be)
               ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
             else
             { const string& poster = *(be.posters().cbegin());
-
-//            if (old_be.is_poster(poster))
-//              mark_as_recent = true;
 
               old_be.add_poster(poster);
 
@@ -551,11 +547,6 @@ void bandmap::operator+=(const bandmap_entry& be)
     _filtered_entries_dirty = true;
     _rbn_threshold_and_filtered_entries_dirty = true;
   }
-
-//  if ((*this)[MY_MARKER].valid())
-//    ost << "MY MARKER appears to be present on exit" << endl;
-//  else
-//    ost << "MY MARKER appears NOT to be present on exit" << endl;
 }
 
 /// prune the bandmap
@@ -830,10 +821,10 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 
   threshold = _rbn_threshold;
 
-  ost << "filtering with rbn threshold = " << threshold << endl;
+//  ost << "filtering with rbn threshold = " << threshold << endl;
 
   for (const auto& be : filtered)
-  { ost << "source for " << be.callsign() << " is " << be.source() << endl;
+  { //ost << "source for " << be.callsign() << " is " << be.source() << endl;
 
     if (be.source() == BANDMAP_ENTRY_RBN)
     { if (be.n_posters() >= threshold)
@@ -940,10 +931,7 @@ const string bandmap::to_str(void)
 
 /// window < bandmap
 window& operator<(window& win, bandmap& bm)
-{
-//  ost << "starting output of bm" << endl;
-
-  static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
+{ static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
   const size_t maximum_number_of_displayable_entries = (win.width() / COLUMN_WIDTH) * win.height();
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
@@ -1019,8 +1007,6 @@ window& operator<(window& win, bandmap& bm)
 
     index++;
   }
-
-//  ost << "concluding output of bm" << endl;
 
   return win;
 }
