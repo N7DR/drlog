@@ -37,8 +37,14 @@ multiplier::multiplier(void) :
 
     Returns false if the value <i>str</i> is not known
 */
-const bool multiplier::add_worked(const std::string& str, const int b)
-{ if ((_used) and is_known(str))                                          // add only known mults
+const bool multiplier::add_worked(const string& str, const int b)
+{ ost << "inside multiplier::add_worked()" << endl;
+
+  ost << (_used ? "used" : "NOT used") << endl;
+  ost << str << (is_known(str) ? " is known" : " is NOT known") << endl;
+  ost << (_per_band ? "per band" : "NOT per band") << endl;
+
+  if ((_used) and is_known(str))                                          // add only known mults
   { if (_per_band)
     { const bool rv = (_worked[b].insert(str)).second;
 

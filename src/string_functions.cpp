@@ -42,10 +42,6 @@ const vector<string> from_csv(const string& line)
   while (posn < line.size())
   { const char& this_char = line[posn];
 
-//    cerr << "line: " << line << endl;
-//    cerr << posn << " : " << this_char << endl;
-//    cerr << "this value: " << this_value << endl;
-
     if (this_char == quote)
     { if (inside_value)               // we're inside a field
       { if (posn < line.size() - 1)   // make sure there's at least one unread character
@@ -97,7 +93,6 @@ const vector<string> from_csv(const string& line)
         }
       }
     }
-
   }
 
   return rv;

@@ -480,7 +480,12 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
 { SAFELOCK(exchange_field_database);
 
+  ost << "in exchange_field_database::set_value(); initial size = " << _db.size() << endl;
+  ost << "callsign = " << callsign << ", field_name = " << field_name << ", value = " << value << endl;
+
   _db[ { callsign, field_name } ] = value;    // don't use insert, since we must overwrite
+
+  ost << "final size = " << _db.size() << endl;
 }
 
 // -------------------------  exchange_field_template  ---------------------------

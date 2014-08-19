@@ -29,8 +29,6 @@
 #include <unordered_map>
 #include <vector>
 
-// extern const std::set<std::string> CONTINENT_SET;
-
 enum country_list_type { COUNTRY_LIST_DXCC,     ///< DXCC list
                          COUNTRY_LIST_WAEDC     ///< DARC WAEDC list
                        };

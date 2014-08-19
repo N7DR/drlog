@@ -160,9 +160,13 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
       if (context.exchange_mults_per_band())
         em.per_band(true);
 
+// if values are obtained from grep, then the next line returns an empty vector
       const vector<string> canonical_values = rules.exch_canonical_values(exchange_mult_name);
 
-      em.add_known(canonical_values);
+      ost << "in running_statistics:prepare(), number of canonical values = " << canonical_values.size() << " for exchange mult: " << exchange_mult_name << endl;
+
+      if (!canonical_values.empty())
+        em.add_known(canonical_values);
 
       _exchange_multipliers.push_back( { exchange_mult_name, em } );
     }
@@ -263,15 +267,15 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   { const string mult_name = _callsign_multipliers.begin()->first;
     multiplier& m = _callsign_multipliers.begin()->second;
 
-    ost << "inside running_statistics::add_qso(), processing callsign mult " << mult_name << endl;
-    ost << "callsign = " << qso.callsign() << "; prefix = " << qso.prefix() << endl;
-    ost << "initial m = " << m << endl;
+//    ost << "inside running_statistics::add_qso(), processing callsign mult " << mult_name << endl;
+//    ost << "callsign = " << qso.callsign() << "; prefix = " << qso.prefix() << endl;
+//    ost << "initial m = " << m << endl;
 
     m.unconditional_add_worked(qso.prefix(), band_nr);
 
-    ost << "middle m = " << m << endl;
+//    ost << "middle m = " << m << endl;
     _callsign_multipliers[mult_name] = m;
-    ost << "final m = " << m << endl;
+//    ost << "final m = " << m << endl;
   }
 
 // country mults
@@ -289,47 +293,17 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     multiplier& m = exchange_multiplier.second;
     const string value = qso.received_exchange(field_name);
 
+    ost << "Inside running_statistics::add_qso()" << endl;
+    ost << "QSO: " << qso << endl;
+    ost << "field_name = " << field_name << endl;
+    ost << "value: " << value << endl;
+
     if (!value.empty())
-      m.add_worked(value, band_nr);
+//      m.add_worked(value, band_nr);
+      m.unconditional_add_worked(value, band_nr);
+
+    ost << "exchange multiplier object: " << m << endl;
   }
-
-
-//  ost << "about to test callsign mults" << endl;
-
-// WPXPX
-
- // ost << "current number of global prefixes = " << _global_worked_callsign_mults.size() << endl;
-
-//  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;
-
- // const string callsign_mult = qso.prefix();
-
-//  if (!callsign_mult.empty())
-//  { if (rules.callsign_mults_per_band())
-//      _insert_callsign_mult(callsign_mult, band_nr);
-//    else
-//      _insert_callsign_mult(callsign_mult, ALL_BANDS);
-
-//    ost << "qso prefix = " << qso.prefix() << endl;
-//    ost << "number of global prefixes = " << _global_worked_callsign_mults.size() << endl;
-//  }
-//  else
-//    ost << "qso prefix is empty" << endl;
-
-// keep track of exchange multipliers per band (or in all bands if exchange mults aren't per-band)
-//  for (const auto& exch_field : rules.expanded_exch())
-//  { if (exch_field.is_mult())
-//    { array<set<string>, N_BANDS>& s = _worked_exchange_mults[exch_field.name()];   // for each band, the set of exchange names (e.g., CQZONE)
-//      const string value = qso.received_exchange(exch_field.name());
-//
-//      if (!value.empty())
-//      { if (rules.exchange_mults_per_band())
-//          s[band_nr].insert(value);
-//        else                             // insert into all bands if exchange mults aren't per-band
-//          for_each(s.begin(), s.end(), [=] (set<string>& ss) { ss.insert(value); } );
-//      }
-//    }
-//  }
   
   const bool is_dupe = log.is_dupe(qso, rules);
 
@@ -373,12 +347,16 @@ void running_statistics::add_worked_exchange_mult(const string& field_name, cons
 
   SAFELOCK(statistics);
 
-  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
-  { pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
+//  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
+//  { pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
+//
+//    if (sm.first == field_name)
+//      sm.second.add_worked(field_value, b);
+//  }
 
-    if (sm.first == field_name)
-      sm.second.add_worked(field_value, b);
-  }
+  for (auto& psm : _exchange_multipliers)
+    if (psm.first == field_name)
+      psm.second.add_worked(field_value, b);
 }
 
 /// rebuild
@@ -408,15 +386,6 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
       return !(sm.second.is_worked(exchange_field_value, b));
     }
   }
-
-
-
-//  if (_exch_mult_fields < exchange_field_name)
-//  { array<set<string>, N_BANDS>& sa = _worked_exchange_mults[exchange_field_name];
-//    set<string>::const_iterator cit = sa[static_cast<int>(b)].find(exchange_field_value);
-//
-//    return (cit == sa[static_cast<int>(b)].end());
-//  }
 
   return false;
 }
@@ -479,7 +448,7 @@ const string running_statistics::summary_string(const contest_rules& rules)
 
   rv += line + LF; 
   
-// Mults... country mults
+// country mults
   if (_country_multipliers.used())                                         // if countries are mults
   { line = pad_string("Countries", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
@@ -501,7 +470,7 @@ const string running_statistics::summary_string(const contest_rules& rules)
     rv += line + LF;   
   }
   
-// mults from callsign (e.g., prefix)
+// callsign mults
   const set<string>&  callsign_mults = rules.callsign_mults();      // collection of types of mults based on callsign (e.g., "WPXPX")
   const bool callsign_mults_per_band = rules.callsign_mults_per_band();
 
@@ -528,6 +497,7 @@ const string running_statistics::summary_string(const contest_rules& rules)
           const unsigned int n_callsign_mults = m.n_worked(band_nr);
 
           line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
+
           if (callsign_mults_per_band)
             total += n_callsign_mults;
         }
@@ -547,23 +517,14 @@ const string running_statistics::summary_string(const contest_rules& rules)
         for (const auto& m : _callsign_multipliers)
           ost << m.first << endl;
       }
-
-//      for (unsigned int n1 = 0; n1 < permitted_bands.size(); ++n1)
-//      { const int band_nr = static_cast<int>(permitted_bands[n1]);
- //       const unsigned int n_callsign_mults = ar.at(band_nr).size();
-//
-//        line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
-//      }
-//
-//      line += pad_string(to_string(_global_worked_callsign_mults.size()), FIELD_WIDTH);
     }
 
     rv += line + LF;
   }
 
 // Exchange mults
+  const bool exchange_mults_per_band = rules.exchange_mults_per_band();
 
-//  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  // vector so we can keep the correct order
   for (const auto& sm : _exchange_multipliers)
   { const string& field_name = sm.first;
 
@@ -580,10 +541,15 @@ const string running_statistics::summary_string(const contest_rules& rules)
       const unsigned int n_exchange_mults = m.n_worked(band_nr);
 
       line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
-      total += n_exchange_mults;
+
+      if (exchange_mults_per_band)
+        total += n_exchange_mults;
     }
 
-    if (permitted_bands.size() != 1)
+    if (!exchange_mults_per_band)
+      total = m.n_worked(N_BANDS);
+
+//    if (permitted_bands.size() != 1)
       line += pad_string(to_string(total), FIELD_WIDTH);
 
     rv += line + LF;

@@ -1121,6 +1121,8 @@ int main(int argc, char** argv)
                 exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
             }
 
+            ost << "size of exchange_db = " << exchange_db.size() << endl;
+
             statistics.add_qso(qso, logbk, rules);
             logbk += qso;
             rate.insert(qso.epoch_time(), statistics.points(rules));
@@ -4485,7 +4487,9 @@ void* reset_connection(void* vp)
 
 // also returns whether any fields of the QSO are actually mults
 const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
-{ const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix());        // exchange_field = name, is_mult
+{ ost << "Inside calculate_exchange_mults()" << endl;
+
+  const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix());        // exchange_field = name, is_mult
   const vector<received_field> received_exchange = qso.received_exchange();
   const BAND b = qso.band();
   vector<received_field> new_received_exchange;
@@ -4495,7 +4499,7 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
   { if (field.is_possible_mult())                              // see if it's really a mult
     { const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), b);
 
-//ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
+ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 
       field.is_mult(is_needed_exchange_mult);
       if (is_needed_exchange_mult)

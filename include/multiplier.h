@@ -44,7 +44,7 @@ protected:
   std::set<std::string>                                            _known;     ///< all the (currently) known possible values
   bool                                                             _used;      ///< is this object in use?
 
-//  pt_mutex  _mult_mutex;
+//  boost::regex                                                     _regex;     ///< if _known is empty, use this to determine
 
 public:
 

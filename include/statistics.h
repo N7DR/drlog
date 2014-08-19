@@ -104,15 +104,27 @@ public:
   const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const;
 
 // return true if actually added
+/*! \brief          Add a known value of country mult
+    \param  str     Canonical prefix of mult
+    \return         Whether <i>str</i> was actually added
+
+    Does nothing and returns false if <i>str</i> is already known
+*/
   const bool add_known_country_mult(const std::string& str);
 
 /*! \brief  do we still need to work a particular country as a mult on a particular band?
     \param  callsign    call to test
     \param  b           band to test
+    \return         Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i>.
 */
-  const bool is_needed_country_mult(const std::string& callsign, const BAND);
+  const bool is_needed_country_mult(const std::string& callsign, const BAND b);
 
-/// a string list of bands on which a country is needed
+/*! \brief  On what bands is a country mult needed?
+    \param  call    call to test
+    \param  rules   Rules for the contest
+    \return         Space-separated (actually, multiple spaces) string of band names on which
+                    the country corresponding to <i>call</i> is needed.
+*/
   const std::string country_mult_needed(const std::string& call, const contest_rules& rules);
   
 /// add a qso

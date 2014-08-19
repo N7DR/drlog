@@ -239,12 +239,7 @@ void drlog_context::_process_configuration_file(const string& filename)
             _per_band_country_mult_factor.insert( { static_cast<BAND>(n), from_string<int>(tmp_str) } );
         }
         else    // not all bands
-        { //size_t left_bracket_posn = lhs.find('[');
-          //size_t right_bracket_posn = lhs.find(']');
-
-          //const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
-
-          //if (valid)
+        {
           { string bands_str = delimited_substring(lhs, '[', ']');
             vector<string> bands = split_string(bands_str, ",");
 
