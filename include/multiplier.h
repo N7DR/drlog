@@ -62,18 +62,21 @@ public:
 
     Returns false if the value <i>str</i> was already known
 */
-//  const bool add_known(const std::string& str);
-
   inline const bool add_known(const std::string& str)
     { return ( _used ? ( (_known.insert(str)).second ) : false ); }
 
-/*! \brief  add a container of values to the set of known values
+/*! \brief  add a container of string values to the set of known values
     \param  k   container of values to add
+    \return     Number of values added
 */
   template<typename T>
-  inline void add_known(const T& k)
-    { if (_used)
-        for_each(k.cbegin(), k.cend(), [&] (const std::string& str) { add_known(str); } );
+  inline const unsigned int add_known(const T& k)
+    { unsigned int rv = 0;
+
+      if (_used)
+        for_each(k.cbegin(), k.cend(), [&] (const std::string& str) { if (add_known(str)) rv++; } );
+
+      return rv;
     }
 
 /// add the value <i>str</i> to the known values

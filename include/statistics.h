@@ -103,7 +103,6 @@ public:
 */
   const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const;
 
-// return true if actually added
 /*! \brief          Add a known value of country mult
     \param  str     Canonical prefix of mult
     \return         Whether <i>str</i> was actually added
@@ -127,7 +126,11 @@ public:
 */
   const std::string country_mult_needed(const std::string& call, const contest_rules& rules);
   
-/// add a qso
+/*! \brief  Add a QSO to the ongoing statistics
+    \param  qso     QSO to add
+    \param  log     Logbook (without the qso <i>qso</i>)
+    \param  rules   Contest rules
+*/
   void add_qso(const QSO& qso, const logbook& log, const contest_rules& rules);
   
 /// rebuild
@@ -142,7 +145,12 @@ public:
   const std::array<std::set<std::string>, N_BANDS> worked_exchange_mults(const std::string& exchange_field_name);
 
   const std::set<std::string> worked_exchange_mults(const std::string& exchange_field_name, const BAND b);
-  
+
+/*! \brief  Add a worked exchange mult
+    \param  field_name    Exchange mult field name
+    \param  field_value   Value of the field <i>field_name</i>
+    \param  band_nr       Number of the band on which worked mult is to be added
+*/
   void add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS);
 
 /// a (multi-line) string that summarizes the statistics
@@ -176,13 +184,8 @@ public:
 
   void clear_info(void);
 
-//  bool          _include_qtcs;
-//  unsigned int  _qtc_qsos_sent;
-//  unsigned int  _qtc_qsos_unsent;
-
   void qtc_qsos_sent(const unsigned int n);
   void qtc_qsos_unsent(const unsigned int n);
-
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

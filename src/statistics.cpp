@@ -220,11 +220,16 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
   }
 }
 
-// return true if actually added
+/*! \brief          Add a known value of country mult
+    \param  str     Canonical prefix of mult
+    \return         Whether <i>str</i> was actually added
+
+    Does nothing and returns false if <i>str</i> is already known
+*/
 const bool running_statistics::add_known_country_mult(const string& str)
 { SAFELOCK(statistics);
 
-  ost << "inside running_statistics, adding known country mult: " << str << endl;
+//  ost << "inside running_statistics, adding known country mult: " << str << endl;
 
   const size_t n1 = _country_multipliers.n_known();
 
@@ -235,7 +240,12 @@ const bool running_statistics::add_known_country_mult(const string& str)
   return (n1 != n2);
 }
 
-/// a string list of bands on which a country mult is needed
+/*! \brief  On what bands is a country mult needed?
+    \param  call    call to test
+    \param  rules   Rules for the contest
+    \return         Space-separated (actually, multiple spaces) string of band names on which
+                    the country corresponding to <i>call</i> is needed.
+*/
 const string running_statistics::country_mult_needed(const string& call, const contest_rules& rules)
 { string rv;
   const vector<BAND> permitted_bands = rules.permitted_bands();
@@ -246,7 +256,11 @@ const string running_statistics::country_mult_needed(const string& call, const c
   return rv;
 }
 
-/// add a qso
+/*! \brief  Add a QSO to the ongoing statistics
+    \param  qso     QSO to add
+    \param  log     Logbook (without the qso <i>qso</i>)
+    \param  rules   Contest rules
+*/
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
 { SAFELOCK(statistics);
   
@@ -337,22 +351,18 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
     _qso_points[band_nr] += points_this_qso;
   }
-//  std::map<std::string, unsigned int> _exchange_value_points;    ///< number of points if a particular exchange field has a particular value
-
 }
 
+/*! \brief  Add a worked exchange mult
+    \param  field_name    Exchange mult field name
+    \param  field_value   Value of the field <i>field_name</i>
+    \param  band_nr       Number of the band on which worked mult is to be added
+*/
 void running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int b)
 { if (field_value.empty())
     return;
 
   SAFELOCK(statistics);
-
-//  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
-//  { pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
-//
-//    if (sm.first == field_name)
-//      sm.second.add_worked(field_value, b);
-//  }
 
   for (auto& psm : _exchange_multipliers)
     if (psm.first == field_name)

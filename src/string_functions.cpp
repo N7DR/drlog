@@ -206,7 +206,7 @@ const string replace_char(const string& s, char old_char, char new_char)
  */
 const string replace(const string& s, const string& old_str, const string& new_str)
 { string rv;
-  size_t posn = 0, last_posn = 0, new_posn = 0;
+  size_t posn = 0, last_posn = 0;
 
   while ((posn = s.find(old_str, last_posn)) != string::npos)
   { rv += s.substr(last_posn, posn - last_posn) + new_str;
@@ -214,8 +214,6 @@ const string replace(const string& s, const string& old_str, const string& new_s
   }
 
   rv += s.substr(last_posn);
-
-//  ost << "after replace: " << s << "->" << rv << endl;
 
   return rv;
 }
