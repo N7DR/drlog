@@ -2553,11 +2553,14 @@ ost << "processing command: " << command << endl;
               { if ((exf.name() == "RDA") and (guess.length() == 2))  // RDA guess might just have first two characters
                   exchange_str += guess;
                 else
-                  exchange_str += guess + " ";
-              }
+                { exchange_str += guess + " ";
 
-              if (exf.is_mult())                 // save the expected value of this field
-                mult_exchange_field_value.insert( { exf.name(), guess } );
+                  if (exf.is_mult())                 // save the expected value of this field
+                    mult_exchange_field_value.insert( { exf.name(), guess } );
+                }
+              }
+//              if (exf.is_mult())                 // save the expected value of this field
+//                mult_exchange_field_value.insert( { exf.name(), guess } );
             }
           }
 
@@ -3031,10 +3034,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // ESCAPE
   if (!processed and e.symbol() == XK_Escape)
-  {
-// abort sending CW if we are currently sending
-  	if (cw_p)
-  	{ if (!cw_p->empty())
+  { if (cw_p)
+  	{ if (!cw_p->empty())    // abort sending CW if we are currently sending
   	  { cw_p->abort();
   	    processed = true;
   	  }
@@ -3112,8 +3113,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         processed = true;
       }
 
+
       if (!processed)
-      { if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
+      {
+
+#if 0
+        if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
         { if (exchange_field_values.size() == exchange_template.size())    // 1:1 correspondence between expected and received fields
           { if (drlog_mode == CQ_MODE)                                   // send QSL
             { const bool quick_qsl = (e.symbol() == XK_KP_Enter);
@@ -3129,14 +3134,36 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             sent_acknowledgement = true;  // should rename now that we've added QTC processing here
           }
         }
+#endif
 
-        parsed_exchange pexch(canonical_prefix, rules, exchange_field_values);
+        parsed_exchange pexch(canonical_prefix, rules, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 
         ost << "is exchange valid? " << pexch.valid() << endl;
         ost << pexch << endl;
 
         if (pexch.valid())
-        { if (!sent_acknowledgement)
+        {
+
+          if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
+          { if (exchange_field_values.size() == exchange_template.size())    // 1:1 correspondence between expected and received fields
+            { if (drlog_mode == CQ_MODE)                                   // send QSL
+              { const bool quick_qsl = (e.symbol() == XK_KP_Enter);
+
+                if (!send_qtc)
+                  (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
+              }
+              else                                                         // SAP exchange
+              { if (!send_qtc)
+                  (*cw_p) << expand_cw_message( context.exchange_sap() );
+                ost << "sent SAP exchange: " << expand_cw_message( context.exchange_sap() ) << endl;
+              }
+              sent_acknowledgement = true;  // should rename now that we've added QTC processing here
+            }
+          }
+
+
+
+          if (!sent_acknowledgement)
           { if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == SAP_MODE))    // in SAP mode, he doesn't care that we might have changed his call
             { if (!send_qtc)
               { (*cw_p) << expand_cw_message(context.exchange_sap());
@@ -3265,8 +3292,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         win_exchange <= WINDOW_CLEAR;
         win_call <= WINDOW_CLEAR;
         win_nearby <= WINDOW_CLEAR;
-//        win_call_needed <= WINDOW_CLEAR;
-//        win_country_needed <= WINDOW_CLEAR;
 
         if (send_qtcs)
         { qtc_buf += qso;
