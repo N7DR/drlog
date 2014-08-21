@@ -547,19 +547,18 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   vector<exchange_field> leaves;
 
-  for (/*vector<exchange_field>::const_iterator*/ auto cit = _exch.cbegin(); cit != _exch.cend(); ++cit)
+  for (auto cit = _exch.cbegin(); cit != _exch.cend(); ++cit)
   { const vector<exchange_field> vec_1 = cit->second;
 
     for (auto cit3 = vec_1.cbegin(); cit3 != vec_1.cend(); ++cit3)
     { const vector<exchange_field> vec = cit3->expand();
 
-      for (/*vector<exchange_field>::const_iterator*/ auto cit2 = vec.cbegin(); cit2 != vec.cend(); ++cit2)
-        leaves.push_back(*cit2);
+//      for (auto cit2 = vec.cbegin(); cit2 != vec.cend(); ++cit2)
+//        leaves.push_back(*cit2);
+      copy(vec.cbegin(), vec.cend(), back_inserter(leaves));
     }
   }
 
-
-//  for (vector<exchange_field>::const_iterator cit = _exch.begin(); cit != _exch.end(); ++cit)
   for (/*vector<exchange_field>::const_iterator*/ auto cit = leaves.begin(); cit != leaves.end(); ++cit)
   { static const set<string> no_canonical_values( { "RST", "SERNO" } );    // some field values don't have canonical values
     const string& field_name = cit->name();

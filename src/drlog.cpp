@@ -2022,14 +2022,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
       display_nearby_callsign(nearby_callsign);  // clears nearby window if call is empty
 
-//      if (!nearby_callsign.empty())
-//      { //win < WINDOW_CLEAR <= nearby_callsign;
-//        win < WINDOW_CLEAR <= "burble";
-//        last_call_inserted_with_space = nearby_callsign;
-//      }
-
-//      ost << "this bandmap = " << bm.to_str() << endl;
-
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, cur_band);
       update_remaining_country_mults_window(statistics, cur_band);
@@ -2558,7 +2550,11 @@ ost << "processing command: " << command << endl;
             { const string guess = rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name()));
 
               if (!guess.empty())
-                exchange_str += guess + " ";
+              { if ((exf.name() == "RDA") and (guess.length() == 2))  // RDA guess might just have first two characters
+                  exchange_str += guess;
+                else
+                  exchange_str += guess + " ";
+              }
 
               if (exf.is_mult())                 // save the expected value of this field
                 mult_exchange_field_value.insert( { exf.name(), guess } );
