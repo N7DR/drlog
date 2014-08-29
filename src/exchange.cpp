@@ -22,6 +22,228 @@ using namespace std;
 
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 
+#define NEW_CONSTRUCTOR
+
+#if defined(NEW_CONSTRUCTOR)
+
+/*!     \brief  constructor
+        \param  callsign    callsign of the station from which the exchange was received
+        \param  rules       rules for the contest
+        \param  received_values     the received values, in the order that they were received
+*/
+parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const contest_rules& rules, const vector<string>& received_values) :
+  _replacement_call(),
+  _valid(false)
+{ static const string EMPTY_STRING("");
+
+  ost << "Inside parsed_exchange constructor" << endl;
+
+  const vector<exchange_field> exchange_template = rules.exch(canonical_prefix);
+  const int size_difference = static_cast<int>(received_values.size()) - static_cast<int>(exchange_template.size());  // does not allow for optional fields
+
+//  ost << "exchange_template: " << endl;
+//  int index = 0;
+//  for (const auto& field : exchange_template)
+//  { ost << index++ << ": " << field.name() << ", " << field.is_mult() << ", " << field.is_optional() << ", " << field.is_choice() << endl;
+//  }
+
+//  for (const auto& field : exchange_template)
+//    _fields.push_back(parsed_exchange_field { field.name(), "", field.is_mult() } );
+//  for_each(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field { ef.name(), EMPTY_STRING, ef.is_mult() }); } );
+  FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field { ef.name(), EMPTY_STRING, ef.is_mult() }); } );
+
+  if (size_difference == 0)    // correct number, although we don't assume that the order is the same as the template
+  { for (auto& field : _fields)
+    {
+    }
+  }
+
+
+
+// in what follows, "source" refers to what has been received, "destination" refers to the fields that will be logged
+
+// use vector<int> instead of vector<bool>
+  vector<int> is_dest_mapped(exchange_template.size());    // all set to false (0)
+  vector<int> is_source_used(exchange_template.size());    // all set to false (0)
+  set<int>    sources_examined;
+  set<int>    dest_mapped;
+
+//  int number_of_excess_values = received_values.size() - exchange_template.size();
+  unsigned int next_source = 0;
+  unsigned int next_dest = 0;
+
+// look at first field
+// name of first field
+
+  int n_attempts = 0;
+  const int MAX_ATTEMPTS = 10;
+
+// look for explicit marker for replacement call, which is a field that contains a dot
+  vector<string> copy_received_values;
+
+  for (const auto& received_value : received_values)  // assume only one field contains a dot
+  { if (contains(received_value, "."))
+      _replacement_call = remove_char(received_value, '.');
+    else
+      copy_received_values.push_back(received_value);
+  }
+
+//  ost << "number of source fields = " << copy_received_values.size() << endl;
+//  ost << "number of dest fields = " << exchange_template.size() << endl;
+
+//  for (size_t n = 0; n < copy_received_values.size(); ++n)
+//    ost << "received value # " << n << " = " << copy_received_values[n] << endl;  // not canonical
+
+  while ( ( (sources_examined.size() != copy_received_values.size()) or (dest_mapped.size() != exchange_template.size()) ) and (n_attempts++ < MAX_ATTEMPTS) )
+  { //ost << "Attempt # " << n_attempts << endl;
+
+    //ost << "number of sources examined = " << sources_examined.size() << endl;
+    //ost << "number of dest mapped = " << dest_mapped.size() << endl;
+
+    if (dest_mapped.size() == exchange_template.size() )    // have all fields been filled?
+    { ost << "Testing after all fields have been filled" << endl;
+      if (_replacement_call.empty() and (*validity_function("CALLSIGN", rules))(copy_received_values[next_source], rules))
+      { ost << "Found a replacement call: " << copy_received_values[next_source] << endl;
+        _replacement_call = copy_received_values[next_source];
+        sources_examined.insert(next_source);
+        is_source_used[next_source] = 1;
+        next_source = ( (++next_source < copy_received_values.size()) ? next_source : 0);    // wrap
+      }
+      else    // re-map; find first destination field that this can go in
+      { const string source = copy_received_values[next_source];
+        bool remapped = false;
+
+        for (size_t n = 0; !remapped and n < exchange_template.size(); ++n)
+        { string destination_field_name = _fields[n].name();
+          const bool is_choice = contains(destination_field_name, "+");
+          string resolved_destination_field_name;
+          bool resolved = false;
+
+          if (is_choice)
+          { resolved_destination_field_name = _resolve_choice(destination_field_name, source, rules);
+
+            if (!resolved_destination_field_name.empty())
+            { destination_field_name = resolved_destination_field_name;
+              resolved = true;
+            }
+          }
+
+          if (!is_choice or (is_choice and resolved))
+          { const bool is_permitted_value_1 = (rules.exch_permitted_values(destination_field_name) < source);
+
+//            ost << "is_permitted_value_1 = " << is_permitted_value_1
+//                << "; source = " << source
+//                << "; destination field name = " << destination_field_name
+//                << "; number of permitted values = " << rules.exch_permitted_values(destination_field_name).size() << endl;
+
+//              const std::set<std::string> exch_permitted_values(const std::string& field_name) const;
+
+//            const bool is_permitted_value_1 = false;
+
+            const bool is_permitted_value = ( (is_permitted_value_1) ? true : (*validity_function(destination_field_name, rules))(source, rules) );
+
+            if (is_permitted_value)
+            { _fields[n].value(source);
+              _fields[n].name(destination_field_name);
+              sources_examined.insert(next_source);
+            }
+          }
+        }
+      }
+    }
+    else               // not all the fields have yet been filled
+    { string destination_field_name = _fields[next_dest].name();
+      const bool is_choice = contains(destination_field_name, "+");
+      string resolved_destination_field_name;
+      bool resolved = false;
+
+      if (is_choice)
+      { resolved_destination_field_name = _resolve_choice(destination_field_name, copy_received_values[next_source], rules);
+
+        if (!resolved_destination_field_name.empty())
+        { destination_field_name = resolved_destination_field_name;
+          resolved = true;
+        }
+      }
+
+      ost << "is_choice = " << is_choice << "; resolved = " << resolved << endl;
+
+      if (!is_choice or (is_choice and resolved))
+      { const set<string>& permitted_values = rules.exch_permitted_values(destination_field_name);
+        bool is_permitted_value_1 = false;
+        bool is_permitted_value_2 = false;
+        bool is_permitted_value;
+
+        if (!permitted_values.empty())
+        { is_permitted_value = (permitted_values < copy_received_values[next_source]);
+
+//      ost << "is_permitted_value (1) = " << is_permitted_value
+//          << "; source = " << copy_received_values[next_source]
+//         << "; destination field name = " << destination_field_name
+//          << "; number of permitted values = " << permitted_values.size() << endl;
+        }
+        else  // rules do not have an explicit set of permitted values
+        { const VALIDITY_FUNCTION_TYPE vf = validity_function(destination_field_name, rules);
+
+          is_permitted_value = (*vf)(copy_received_values[next_source], rules);
+        }
+
+//        ost << "destination field name = " << destination_field_name << ", tested value = " << copy_received_values[next_source] << ", is permitted value = " << is_permitted_value << endl;
+
+        if (is_permitted_value)
+        { _fields[next_dest].value(copy_received_values[next_source]);
+          _fields[next_dest].name(destination_field_name);
+          is_dest_mapped[next_dest] = 1;
+          is_source_used[next_source] = 1;
+          sources_examined.insert(next_source);
+          dest_mapped.insert(next_dest);
+          next_source = ( (++next_source < copy_received_values.size()) ? next_source : 0);    // wrap
+          next_dest = ( (++next_dest < exchange_template.size()) ? next_dest : 0);    // wrap
+        }
+        else        // value does not match template
+        {
+// have we allocated a replacement call?
+          if (_replacement_call.empty() and (*validity_function("CALLSIGN", rules))(copy_received_values[next_source], rules))
+          { _replacement_call = copy_received_values[next_source];
+            sources_examined.insert(next_source);
+            is_source_used[next_source] = 1;
+            next_source = ( (++next_source < copy_received_values.size()) ? next_source : 0);    // wrap
+          }
+          else    // we have allocated a replacement call
+            next_dest = ( (++next_dest < exchange_template.size()) ? next_dest : 0);    // wrap
+        }
+      }
+      else // unresolved choice
+      {
+// have we allocated a replacement call?
+        if (_replacement_call.empty() and (*validity_function("CALLSIGN", rules))(copy_received_values[next_source], rules))
+        { _replacement_call = copy_received_values[next_source];
+          sources_examined.insert(next_source);
+          is_source_used[next_source] = 1;
+          next_source = ( (++next_source < copy_received_values.size()) ? next_source : 0);    // wrap
+        }
+        else    // we have allocated a replacement call
+          next_dest = ( (++next_dest < exchange_template.size()) ? next_dest : 0);    // wrap
+      }
+    }
+  }
+
+  if (n_attempts < MAX_ATTEMPTS)
+    _valid = true;
+
+// normalize some of the exchange fields ... so that we don't mistakenly count each legitimate value more than once in statistics
+  if (_valid)
+  { for (auto it = _fields.begin(); it != _fields.end(); ++it)
+    { //ost << "pexch field " << it->name() << " has value " << it->value() << endl;
+      it->value(rules.canonical_value(it->name(), it->value()));
+      //ost << "pexch field " << it->name() << " now has value " << it->value() << endl;
+    }
+  }
+}
+
+#endif
+
+#if !defined(NEW_CONSTRUCTOR)
 /*!     \brief  constructor
         \param  callsign    callsign of the station from which the exchange was received
         \param  rules       rules for the contest
@@ -224,6 +446,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     }
   }
 }
+#endif
 
 /*! \brief  Return the value of a particular field
     \param  field_name  field for which the value is requested
@@ -786,4 +1009,308 @@ const string parsed_exchange::_resolve_choice(const string& choice_name, const s
   return string();
 }
 
+// -------------------------  EFT  ---------------------------
+
+/*!     \class EFT (exchange_field_template)
+        \brief Manage a single exchange field
+*/
+
+/// construct from name
+EFT::EFT(const string& nm) :
+  _is_mult(false),
+  _name(nm)
+{ }
+
+/// construct from regex and values files
+EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename /* , const string& values_filename */) :
+  _is_mult(false),
+  _name(nm)
+{ read_regex_expression_file(path, regex_filename);
+  read_values_file(path, nm);
+
+  ost << (*this) << endl;
+}
+
+/// construct from regex and values files
+EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename,
+    const drlog_context& context, location_database& location_db) :
+  _is_mult(false),
+  _name(nm)
+{ read_regex_expression_file(path, regex_filename);
+  read_values_file(path, nm);
+
+
+
+
+
+
+
+  ost << (*this) << endl;
+}
+
+#if 0
+/// is an algorithm defined?
+const bool EFT::defined(void) const
+{ if (!_values.empty())
+    return true;
+
+  if (!_regex_expression.empty())
+    return true;
+
+  return false;
+}
+#endif
+
+/*! \brief  Get regex expression from file
+    \param  paths      paths to try
+    \param  filename   name of file
+    \return whether a regex expression was read
+*/
+const bool EFT::read_regex_expression_file(const vector<string>& path, const string& filename)
+{ if (filename.empty())
+    return false;
+
+  try
+  { const vector<string> lines = to_lines(read_file(path, filename));
+    bool found_it = false;
+
+    for (const auto& line : lines)
+    { if (!found_it and !line.empty())
+      { const vector<string> fields = split_string(line, ":");
+
+// a bit complex because ":" may appear in the regex
+        if (fields.size() >= 2)
+        { const string field_name = remove_peripheral_spaces(fields[0]);
+          const size_t posn = line.find(":");
+          const string regex_str = remove_peripheral_spaces(substring(line, posn + 1));
+
+          if (field_name == _name)
+          { _regex_expression = regex(regex_str);
+            found_it = true;
+          }
+        }
+      }
+    }
+  }
+
+  catch (...)
+  { ost << "error trying to read exchange field template file " << filename << endl;
+    return false;
+  }
+
+  return (!_regex_expression.empty());
+}
+
+/*! \brief  Get info from .values file
+    \param  path      paths to try
+    \param  filename   name of file (without .values extension)
+    \return whether values were read
+*/
+const bool EFT::read_values_file(const vector<string>& path, const string& filename)
+{ try
+  { const vector<string> lines = to_lines(read_file(path, filename + ".values"));
+
+    for (const auto& line : lines)
+    { set<string> equivalent_values;    // includes the canonical
+
+      if (!line.empty() and line[0] != ';' and !starts_with(line, "//") ) // ";" and "//" introduce comments
+      { if (contains(line, "=") )
+        { const vector<string> lhsrhs = split_string(line, "=");
+          const string lhs = remove_peripheral_spaces(lhsrhs[0]);
+
+          equivalent_values.insert(lhs);                  // canonical value
+
+          if (lhsrhs.size() != 1)
+          { const string& rhs = lhsrhs[1];
+            const vector<string> remaining_equivalent_values = remove_peripheral_spaces(split_string(rhs, ","));
+
+            COPY_ALL(remaining_equivalent_values, inserter(equivalent_values, equivalent_values.begin()));
+
+            _values.insert( { lhs, equivalent_values });
+          }
+        }
+        else    // no "="
+        { const string str = remove_peripheral_spaces(line);
+
+          if (!str.empty())
+            _values.insert( { str, /* set<string> */ { str } } );
+        }
+      }
+    }
+  }
+
+  catch (...)
+  { ost << "Failed to read file " << filename << ".values" << endl;
+    return false;
+  }
+
+  return (!_values.empty());
+}
+
+void EFT::parse_context_qthx(const drlog_context& context, location_database& location_db)
+{ const auto& context_qthx = context.qthx();
+
+  if (context_qthx.empty())
+    return;
+
+//  SAFELOCK(rules);
+
+  for (const auto this_qthx : context_qthx)
+  { const string canonical_prefix = location_db.canonical_prefix(this_qthx.first);
+    const set<string> ss = this_qthx.second;
+//    exchange_field_values qthx;
+
+//    qthx.name(string("QTHX[") + canonical_prefix + "]");
+
+    for (const auto this_value : ss)
+    { if (!contains(this_value, "|"))
+        add_canonical_value(this_value);
+      else
+      { const vector<string> equivalent_values = remove_peripheral_spaces(split_string(this_value, "|"));
+
+        if (!equivalent_values.empty())
+          add_canonical_value(equivalent_values[0]);
+
+        for (size_t n = 1; n < equivalent_values.size(); ++n)
+          add_legal_value(equivalent_values[0], equivalent_values[n]);
+      }
+    }
+
+//    _values.push_back(qthx);
+  }
+}
+
+
+// maybe should keep this as a separate member, to save having to execute this so frequently
+#if 0
+const set<string> EFT::_all_legal_non_regex_values(void) const
+{ set<string> rv;
+
+  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& pss) { copy(pss.second.cbegin(), pss.second.cend(), inserter(rv, rv.begin())); } );
+
+  return rv;
+}
+#endif
+
+#if 0
+const string EFT::_equivalent_canonical_value(const string& str) const
+{ for (const auto& pss: _values)
+  { if (pss.second < str)
+      return pss.first;
+  }
+
+  return string();
+}
+#endif
+
+void EFT::add_canonical_value(const string& new_canonical_value)
+{ if (!is_canonical_value(new_canonical_value))
+    _values.insert( { new_canonical_value, { new_canonical_value } } );
+
+  _legal_non_regex_values.insert(new_canonical_value);
+  _value_to_canonical.insert( { new_canonical_value, new_canonical_value } );
+}
+
+void EFT::add_legal_value(const string& cv, const string& new_value)
+{ if (!is_canonical_value(cv))
+    add_canonical_value(cv);
+
+  const auto& it = _values.find(cv);
+  auto& ss = it->second;
+
+  ss.insert(new_value);
+
+  _legal_non_regex_values.insert(new_value);
+  _value_to_canonical.insert( { new_value, cv } );
+}
+
+const bool EFT::is_legal_value(const string& str) const
+{ if (!_regex_expression.empty() and regex_match(str, _regex_expression))
+    return true;
+
+  if (!_values.empty())
+    return (_legal_non_regex_values < str);
+
+  return false;
+}
+
+const string EFT::value_to_log(const string& str) const
+{ //if (is_legal_value(str))
+  { const string rv = canonical_value(str);
+
+    return (rv.empty() ? str : rv);
+
+//    if (!rv.empty())
+//      return rv;
+//
+//    return str;
+  }
+//  else
+//    return string();
+}
+
+// return canonical value for a received value
+const string EFT::canonical_value(const std::string& str) const
+{ const auto& it = _value_to_canonical.find(str);
+
+  if (it != _value_to_canonical.cend())
+    return it->second;
+
+  if (regex_match(str, _regex_expression))
+    return str;
+
+  return string();
+}
+
+const set<string> EFT::canonical_values(void) const
+{ set<string> rv;
+
+  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& pss) { rv.insert(pss.first); } );
+
+  return rv;
+}
+
+ostream& operator<<(ostream& ost, const EFT& eft)
+{ ost << "EFT name: " << eft.name() << endl
+      << "  is_mult: " << eft.is_mult() << endl
+      << "  regex_expression: " << eft.regex_expression() << endl;
+
+//const map<string,                        /* a canonical field value */
+//         set                             /* each equivalent value is a member of the set, including the canonical value */
+//          <string                       /* indistinguishable legal values */
+//          >> values = eft.values();
+  const auto values = eft.values();
+
+  for (const auto& sss : values)
+  { ost << "  canonical value = " << sss.first << endl;
+
+    const auto& ss = sss.second;
+
+    for (const auto& s : ss)
+      ost << "  value = " << s << endl;
+  }
+
+  const auto v = eft.legal_non_regex_values();
+
+  if (!v.empty())
+  { ost << "  legal_non_regex_values : ";
+    for (const auto& str : v)
+      ost << "  " << str;
+
+    ost << endl;
+  }
+
+  const auto vcv = eft.value_to_canonical();
+
+  if (!vcv.empty())
+  { ost << "  v -> cv : " << endl;
+
+    for (const auto& pss : vcv)
+      ost << "    " << pss.first << " -> " << pss.second << endl;
+  }
+
+//      << endl;
+
+  return ost;
+}
 

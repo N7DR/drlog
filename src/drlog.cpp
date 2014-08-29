@@ -3311,8 +3311,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         update_known_callsign_mults(qso.callsign());
         update_remaining_callsign_mults_window(statistics);
 
-//        const set<string> new_worked_country_mults = statistics.worked_country_mults(cur_band);
-
         if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band).size())
         { update_remaining_country_mults_window(statistics);
           update_known_country_mults(qso.callsign());
@@ -3491,6 +3489,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { debug_dump();
     processed = true;
   }
+
 }
 
 // function to process input to the (editable) LOG window

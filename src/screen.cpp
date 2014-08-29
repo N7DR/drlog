@@ -789,7 +789,7 @@ const bool window::common_processing(const keyboard_event& e)
     return true;
   }
 
- // CURSOR LEFT
+// CURSOR LEFT
   if (e.is_unmodified() and e.symbol() == XK_Left)
   { win <= cursor_relative(-1, 0);
     return true;
@@ -804,6 +804,47 @@ const bool window::common_processing(const keyboard_event& e)
 // INSERT -- toggle insert mode
   if (e.is_unmodified() and e.symbol() == XK_Insert)
   { win.insert(!win.insert());
+    return true;
+  }
+
+// CTRL-CURSOR LEFT
+  if (e.is_ctrl() and e.symbol() == XK_Left)
+  { const cursor original_posn = win.cursor_position();
+
+    if (original_posn.x() == 0)    // do nothing if at start of line
+      return true;
+
+    const string contents = win.read(0, original_posn.y());
+    const vector<size_t> word_posn = starts_of_words(contents);
+
+    if (word_posn.empty())                // there are no words
+    { win <= CURSOR_START_OF_LINE;
+      return true;
+    }
+
+    for (size_t index = 0; index < word_posn.size(); ++index)
+    { if (word_posn[index] == original_posn.x())
+      { if (index == 0)                  // we are at the start of the first word
+        { win <= CURSOR_START_OF_LINE;
+          return true;
+        }
+
+        win <= cursor(word_posn[index - 1], original_posn.y());  // are at the start of a word (but not the first word)
+        return true;
+      }
+
+      if (word_posn[index] > original_posn.x())
+      { if (index == 0)                          // should never happen; cursor is to left of first word
+        { win <= CURSOR_START_OF_LINE;
+          return true;
+        }
+
+        win <= cursor(word_posn[index - 1], original_posn.y());  // go to the start of the current word
+        return true;
+      }
+    }
+
+    win <= cursor(word_posn[word_posn.size() - 1], original_posn.y());  // go to the start of the current word
     return true;
   }
 

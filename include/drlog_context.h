@@ -302,9 +302,10 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(drmaster_filename, _context);
 
   SAFEREAD(exchange, _context);
+  SAFEREAD(exchange_cq, _context);
+  SAFEREAD(exchange_fields_filename, _context);
   SAFEREAD(exchange_mults, _context);
   SAFEREAD(exchange_mults_per_band, _context);
-  SAFEREAD(exchange_cq, _context);
   SAFEREAD(exchange_sap, _context);
 
   const std::map<std::string, std::string> exchange_per_country(void) const
@@ -318,10 +319,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
     const auto cit = _guard_band.find(m);
 
-    if (cit == _guard_band.end())
-      return 1000;
-
-    return cit->second;
+    return  ( (cit == _guard_band.end()) ? 1000 : cit->second );
   }
 
   SAFEREAD(individual_messages_file, _context);

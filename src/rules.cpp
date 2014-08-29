@@ -13,6 +13,7 @@
         Classes and functions related to the contest rules
 */
 
+#include "exchange.h"
 #include "macros.h"
 #include "qso.h"
 #include "rules.h"
@@ -98,6 +99,21 @@ const set<string> exchange_field_values::all_values(void) const
     copy(cvv.second.cbegin(), cvv.second.cend(), inserter(rv, rv.begin()));
 
   return rv;
+}
+
+/// Is a string a legal value (for any canonical value)
+const bool exchange_field_values::is_legal_value(const string& value) const
+{ bool rv = false;
+  const set<string> all_canonical_values = canonical_values();
+
+  for (const auto& cv : all_canonical_values)
+  { rv = (cv < value);
+
+    if (rv)
+      return true;
+  }
+
+  return false;
 }
 
 /*!     \brief                  Is a particular value legal for a given canonical value?
@@ -198,11 +214,7 @@ points_structure::points_structure(void) :
 */
 
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
-{ // vector<exchange_field> rv;
-
-//  ost << "in contest_rules::_parse_context_qthx()" << endl;
-
-  const auto& context_qthx = context.qthx();
+{ const auto& context_qthx = context.qthx();
 
   if (context_qthx.empty())
     return;
@@ -454,6 +466,15 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     }
 
     _expanded_exch.insert( { prefix, expanded_vef } );
+  }
+
+//std::map<std::string, std::vector<exchange_field>> _expanded_exch;
+  for (const auto& psvef : _expanded_exch)
+  { const vector<exchange_field>& vef = psvef.second;
+
+    for (const auto& ef : vef)
+    { _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
+    }
   }
 
 // define the points structure; this can be quite complex
@@ -757,10 +778,6 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
   { if (_exch_values[n].name() == field_name)
     { found_it = true;
 
-      //map<string, set<string> >& m = _exch_values[n].second;
-      //set<string>& ss = m[new_canonical_value];                // creates if it doesn't exist
-
-      //ss.insert(new_canonical_value);
       _exch_values[n].add_canonical_value(new_canonical_value);
     }
   }

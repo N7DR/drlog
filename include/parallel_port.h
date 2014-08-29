@@ -111,8 +111,8 @@ Pin No (DB25)   Pin No (36 pin)     Signal name     Direction   Register - bit  
 class parallel_port
 {
 protected:
-  struct parport_list   _list_from_library;
-  int                   _port_nr;
+  struct parport_list   _list_from_library;     ///< list of parallel ports, from ieee1284 library
+  int                   _port_nr;               ///< number of this port
 
 public:
 

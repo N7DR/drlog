@@ -638,12 +638,7 @@ const string comma_separated_string(const int n)
 { const char separator = ',';
 
   string tmp = to_string(n);
-//  unsigned int len = tmp.length();
-  
-//  int n_to_add = (len - 1) / 3;
-  
   string rv;
-//  unsigned int posn = rv.length() - 2;
   
   while (!tmp.empty())
   { for (unsigned int N = 0; N < 3 and !tmp.empty(); ++N)
@@ -657,6 +652,37 @@ const string comma_separated_string(const int n)
   
   return rv;
   
+}
+
+/// return the starting position for each word
+const vector<size_t> starts_of_words(const string& s)
+{ vector<size_t> rv;
+
+  if (s.empty())
+    return rv;
+
+// start of first word
+  size_t posn = s.find_first_not_of(" ", 0);
+
+  if (posn == string::npos)
+    return rv;
+
+  rv.push_back(posn);
+
+// next space
+  while (1)
+  { posn = s.find_first_of(" ", posn);
+
+    if (posn == string::npos)
+      return rv;
+
+    posn = s.find_first_not_of(" ", posn);
+
+    if (posn == string::npos)
+      return rv;
+
+    rv.push_back(posn);
+  }
 }
 
 /*!     \brief  Does a string contain a legal dotted-decimal IPv4 address

@@ -19,6 +19,7 @@
 #include "bands-modes.h"
 #include "cty_data.h"
 #include "drlog_context.h"
+//#include "exchange.h"
 #include "macros.h"
 #include "pthread_support.h"
 #include "serialization.h"
@@ -32,6 +33,7 @@ extern pt_mutex  rules_mutex;
 
 typedef std::map<std::string, unsigned int> MSI;
 
+class EFT;
 class QSO;
 
 /// Some contest have very complex point structures
@@ -116,6 +118,9 @@ public:
 /// Is a string a known canonical value? Synonym for canonical_value_present()
   inline const bool is_legal_canonical_value(const std::string& putative_cv_value) const
     { return canonical_value_present(putative_cv_value); }
+
+/// Is a string a legal value (for any canonical value)
+  const bool is_legal_value(const std::string& value) const;
 
 /*!     \brief                  Is a particular value legal for a given canonical value?
         \param  cv              canonical value
@@ -277,6 +282,8 @@ protected:
         <std::string,                                      /* permitted value */
           std::string                                      /* canonical value */
            > >                                  _permitted_to_canonical;
+
+  std::map<std::string /* field name */, EFT>   _exchange_field_eft;
 
 // copied from context, so that we can score correctly without loading context
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score

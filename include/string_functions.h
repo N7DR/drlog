@@ -408,6 +408,9 @@ inline bool starts_with(const std::string& cs, const std::string& ss)
   
 /// convert an integer to a comma-separated string
 const std::string comma_separated_string(const int n);
+
+/// return the starting position for each word
+const std::vector<size_t> starts_of_words(const std::string& s);
   
 /*!     \brief  Does a string contain a legal dotted-decimal IPv4 address
         \param  cs  Original string

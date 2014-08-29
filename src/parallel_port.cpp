@@ -14,6 +14,8 @@
         Uses the libieee1284 library
 */
 
+
+#include "log_message.h"
 #include "parallel_port.h"
 
 #include <iostream>
@@ -21,6 +23,8 @@
 #include <errno.h>
 
 using namespace std;
+
+extern message_stream ost;
 
 // ---------------------------------------- parallel_port -------------------------
 
@@ -47,19 +51,19 @@ parallel_port::parallel_port(const string& filename)
     { const int status = ieee1284_open(_list_from_library.portv[n], 0, &capabilities);
 
       if (status == E1284_INIT)
-        cerr << "E1284_INIT" << endl;
+        ost << "Error opening parallel port: E1284_INIT" << endl;
 
       if (status == E1284_NOMEM)
-        cerr << "E1284_NOMEM" << endl;
+        ost << "Error opening parallel port: E1284_NOMEM" << endl;
 
       if (status == E1284_NOTAVAIL)
-        cerr << "E1284_NOTAVAIL" << endl;
+        ost << "Error opening parallel port: E1284_NOTAVAIL" << endl;
 
       if (status == E1284_INVALIDPORT)
-        cerr << "E1284_INVALIDPORT" << endl;
+        ost << "Error opening parallel port: E1284_INVALIDPORT" << endl;
 
       if (status == E1284_SYS)
-         cerr << "E1284_SYS" << endl;
+        ost << "Error opening parallel port: E1284_SYS" << endl;
 
       if (status != E1284_OK)
         throw parallel_port_error(PARALLEL_PORT_MISC_ERROR, "Error trying to open parallel port " + filename + ".");
@@ -75,13 +79,13 @@ parallel_port::parallel_port(const string& filename)
   status = ieee1284_claim(_list_from_library.portv[_port_nr]);
 
   if (status == E1284_NOMEM)
-    cerr << "E1284_NOMEM" << endl;
+    ost << "Error claiming parallel port: E1284_NOMEM" << endl;
 
   if (status == E1284_INVALIDPORT)
-    cerr << "E1284_INVALIDPORT" << endl;
+    ost << "Error claiming parallel port: E1284_INVALIDPORT" << endl;
 
   if (status == E1284_SYS)
-    cerr << "E1284_SYS" << endl;
+    ost << "Error claiming parallel port: E1284_SYS" << endl;
 
   if (status != E1284_OK)
     throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_CLAIM, "Cannot claim parallel port " + filename + ".");

@@ -259,5 +259,100 @@ typedef const bool (*VALIDITY_FUNCTION_TYPE)(const std::string& field_name, cons
 */
 VALIDITY_FUNCTION_TYPE validity_function(const std::string& field_name, const contest_rules& rules);
 
+// -------------------------  EFT  ---------------------------
+
+/*!     \class EFT (exchange_field_template)
+        \brief Manage a single exchange field
+*/
+
+class EFT
+{
+protected:
+
+// There are several ways to define a field:
+//  1. regex
+//  2. .values file
+
+  std::string _name;                    ///< name of exchange field
+  boost::regex _regex_expression;       ///< regex expression to define field
+
+  std::map<std::string,                        /* a canonical field value */
+          std::set                             /* each equivalent value is a member of the set, including the canonical value */
+            <std::string                       /* indistinguishable legal values */
+            >> _values;
+
+  std::set<std::string>  _legal_non_regex_values;
+  std::map<std::string, std::string>  _value_to_canonical;
+
+  bool _is_mult;                       ///< is this field a mult?
+
+//  const std::set<std::string>  _all_legal_non_regex_values(void) const;
+
+//  const std::string _equivalent_canonical_value(const std::string& str) const;
+
+public:
+
+/// construct from name
+  EFT(const std::string& nm);
+
+/// construct from regex and values files
+  EFT(const std::string& nm, const std::vector<std::string>& path, const std::string& regex_filename /*, const std::string& values_filename = nm */);
+  EFT(const std::string& nm, const std::vector<std::string>& path,
+      const std::string& regex_filename,
+      const drlog_context& context, location_database& location_db);
+
+  READ_AND_WRITE(is_mult);
+  READ_AND_WRITE(name);
+  READ(regex_expression);
+  READ(values);
+  READ(legal_non_regex_values);
+  READ(value_to_canonical);
+
+/// is an algorithm defined?
+//  const bool defined(void) const;
+
+//  inline const bool is_regex_defined(void) const
+//    { return !_regex_expression.empty(); }
+
+//  inline const bool is_values_defined(void) const
+//    { return !_values.empty(); }
+
+/*! \brief  Get regex expression from file
+    \param  path      paths to try
+    \param  filename   name of file
+    \return whether a regex expression was read
+*/
+  const bool read_regex_expression_file(const std::vector<std::string>& path, const std::string& filename);
+
+/*! \brief  Get info from .values file
+    \param  path      paths to try
+    \param  filename   name of file (without .values extension)
+    \return whether values were read
+*/
+  const bool read_values_file(const std::vector<std::string>& path, const std::string& filename);
+
+  void parse_context_qthx(const drlog_context& context, location_database& location_db);
+
+  inline const bool is_canonical_value(const std::string& str) const
+    { return (_values.find(str)  != _values.end()); }
+
+  void add_canonical_value(const std::string& new_canonical_value);
+
+  void add_legal_value(const std::string& cv, const std::string& new_value);
+
+// check regex, then other values
+  const bool is_legal_value(const std::string& str) const;
+
+  const std::string value_to_log(const std::string& str) const;
+
+// return canonical value for a received value
+  const std::string canonical_value(const std::string& str) const;
+
+// all canonical values
+  const std::set<std::string> canonical_values(void) const;
+};
+
+std::ostream& operator<<(std::ostream& ost, const EFT& eft);
+
 #endif /* EXCHANGE_H */
 
