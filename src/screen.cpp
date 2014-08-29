@@ -848,6 +848,43 @@ const bool window::common_processing(const keyboard_event& e)
     return true;
   }
 
+// CTRL-CURSOR RIGHT
+  if (e.is_ctrl() and e.symbol() == XK_Right)
+  { const cursor original_posn = win.cursor_position();
+    const string contents = win.read(0, original_posn.y());
+    const string truncated_contents = remove_trailing_spaces(contents);
+
+    if (truncated_contents.empty())                // there are no words
+    { win <= CURSOR_START_OF_LINE;
+      return true;
+    }
+
+    const vector<size_t> word_posn = starts_of_words(contents);
+    const size_t last_filled_posn = truncated_contents.size() - 1;
+
+    if (word_posn.empty())                // there are no words; should never be true at this point
+    { win <= CURSOR_START_OF_LINE;
+      return true;
+    }
+
+    if (original_posn.x() >= word_posn[word_posn.size() - 1])  // at or after start of last word
+    { win <= cursor(last_filled_posn + 2, original_posn.y());
+      return true;
+    }
+
+    for (size_t index = 0; index < word_posn.size(); ++index)
+    { if (word_posn[index] == original_posn.x())        // are at the start of a word (but not the last word)
+      { win <= cursor(word_posn[index + 1], original_posn.y());
+        return true;
+      }
+
+      if (word_posn[index] > original_posn.x())
+      { win <= cursor(word_posn[index], original_posn.y());
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
