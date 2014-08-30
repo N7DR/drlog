@@ -1,4 +1,4 @@
-// $Id: screen.cpp 68 2014-06-28 15:42:35Z  $
+// $Id: screen.cpp 73 2014-08-30 14:44:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -806,7 +806,7 @@ const bool window::common_processing(const keyboard_event& e)
   { win.insert(!win.insert());
     return true;
   }
-
+#if 0
 // CTRL-CURSOR LEFT
   if (e.is_ctrl() and e.symbol() == XK_Left)
   { const cursor original_posn = win.cursor_position();
@@ -884,7 +884,7 @@ const bool window::common_processing(const keyboard_event& e)
       }
     }
   }
-
+#endif
   return false;
 }
 

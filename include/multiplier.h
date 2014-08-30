@@ -1,4 +1,4 @@
-// $Id: multiplier.h 71 2014-08-10 22:56:10Z  $
+// $Id: multiplier.h 73 2014-08-30 14:44:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

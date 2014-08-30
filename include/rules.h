@@ -1,4 +1,4 @@
-// $Id: rules.h 68 2014-06-28 15:42:35Z  $
+// $Id: rules.h 73 2014-08-30 14:44:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

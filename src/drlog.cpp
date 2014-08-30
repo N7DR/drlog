@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 72 2014-08-16 16:53:27Z  $
+// $Id: drlog.cpp 73 2014-08-30 14:44:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3490,6 +3490,84 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+// CTRL-CURSOR LEFT -- left one word
+  if (!processed and e.is_ctrl() and e.symbol() == XK_Left)
+  { const cursor original_posn = win.cursor_position();
+
+    if (original_posn.x() != 0)    // do nothing if at start of line
+    { const string contents = win.read(0, original_posn.y());
+      const vector<size_t> word_posn = starts_of_words(contents);
+
+      if (word_posn.empty())                              // there are no words
+        win <= CURSOR_START_OF_LINE;
+      else                                                // there are some words
+      { bool handled = false;
+
+        for (size_t index = 0; !handled and index < word_posn.size(); ++index)
+        { if (word_posn[index] == original_posn.x())
+          { if (index == 0)                  // we are at the start of the first word
+              win <= CURSOR_START_OF_LINE;
+            else
+              win <= cursor(word_posn[index - 1], original_posn.y());  // are at the start of a word (but not the first word)
+
+            handled = true;
+          }
+
+          if (word_posn[index] > original_posn.x())
+          { if (index == 0)                          // should never happen; cursor is to left of first word
+              win <= CURSOR_START_OF_LINE;
+            else
+              win <= cursor(word_posn[index - 1], original_posn.y());  // go to the start of the current word
+
+            handled = true;
+          }
+        }
+
+        if (!handled)
+          win <= cursor(word_posn[word_posn.size() - 1], original_posn.y());  // go to the start of the current word
+      }
+    }
+
+    processed = true;
+  }
+
+// CTRL-CURSOR RIGHT -- right one word
+  if (!processed and e.is_ctrl() and e.symbol() == XK_Right)
+  { const cursor original_posn = win.cursor_position();
+    const string contents = win.read(0, original_posn.y());
+    const string truncated_contents = remove_trailing_spaces(contents);
+
+    if (truncated_contents.empty())                // there are no words
+      win <= CURSOR_START_OF_LINE;
+    else                                           // there is at least one word
+    { const vector<size_t> word_posn = starts_of_words(contents);
+      const size_t last_filled_posn = truncated_contents.size() - 1;
+
+      if (word_posn.empty())                // there are no words; should never be true at this point
+        win <= CURSOR_START_OF_LINE;
+      else
+      { if (original_posn.x() >= word_posn[word_posn.size() - 1])  // at or after start of last word
+          win <= cursor(last_filled_posn + 2, original_posn.y());
+        else
+        { bool handled = false;
+
+          for (size_t index = 0; !handled and index < word_posn.size(); ++index)
+          { if (word_posn[index] == original_posn.x())        // at the start of a word (but not the last word)
+            { win <= cursor(word_posn[index + 1], original_posn.y());
+              handled = true;
+            }
+
+            if (word_posn[index] > original_posn.x())
+            { win <= cursor(word_posn[index], original_posn.y());
+              handled = true;
+            }
+          }
+        }
+      }
+    }
+
+    processed = true;
+  }
 }
 
 // function to process input to the (editable) LOG window
