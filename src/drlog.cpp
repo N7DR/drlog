@@ -3501,16 +3501,17 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       if (word_posn.empty())                              // there are no words
         win <= CURSOR_START_OF_LINE;
       else                                                // there are some words
-      { bool handled = false;
+      { //bool handled = false;
 
-        for (size_t index = 0; !handled and index < word_posn.size(); ++index)
+        for (size_t index = 0; /* !handled and */ index < word_posn.size(); ++index)
         { if (word_posn[index] == original_posn.x())
           { if (index == 0)                  // we are at the start of the first word
               win <= CURSOR_START_OF_LINE;
             else
               win <= cursor(word_posn[index - 1], original_posn.y());  // are at the start of a word (but not the first word)
 
-            handled = true;
+            //handled = true;
+            break;
           }
 
           if (word_posn[index] > original_posn.x())
@@ -3519,11 +3520,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             else
               win <= cursor(word_posn[index - 1], original_posn.y());  // go to the start of the current word
 
-            handled = true;
+           // handled = true;
+            break;
           }
         }
 
-        if (!handled)
+//        if (!handled)
           win <= cursor(word_posn[word_posn.size() - 1], original_posn.y());  // go to the start of the current word
       }
     }
@@ -3549,17 +3551,19 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       { if (original_posn.x() >= word_posn[word_posn.size() - 1])  // at or after start of last word
           win <= cursor(last_filled_posn + 2, original_posn.y());
         else
-        { bool handled = false;
+        { //bool handled = false;
 
-          for (size_t index = 0; !handled and index < word_posn.size(); ++index)
+          for (size_t index = 0; /* !handled and */ index < word_posn.size(); ++index)
           { if (word_posn[index] == original_posn.x())        // at the start of a word (but not the last word)
             { win <= cursor(word_posn[index + 1], original_posn.y());
-              handled = true;
+             // handled = true;
+              break;
             }
 
             if (word_posn[index] > original_posn.x())
             { win <= cursor(word_posn[index], original_posn.y());
-              handled = true;
+              //handled = true;
+              break;
             }
           }
         }

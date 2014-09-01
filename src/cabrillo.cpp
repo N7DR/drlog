@@ -138,6 +138,10 @@ cabrillo_tag_templates::cabrillo_tag_templates(void)
   tag = "CATEGORY-TRANSMITTER:LIMITED,ONE,SWL,TWO,UNLIMITED";   
   _templates.push_back(tag);
 
+// CERTIFICATE
+  tag = "CERTIFICATE:YES,NO";
+  _templates.push_back(tag);
+
 // CLAIMED-SCORE
   tag = "CLAIMED-SCORE";
   _templates.push_back(tag);  

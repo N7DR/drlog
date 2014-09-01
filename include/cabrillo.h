@@ -22,6 +22,9 @@
         where one has to guess what might be intended.
 */
 
+// The definition of Cabrillo has now been moved to:
+//   http://wwrof.org/cabrillo. One hopes for improvement.
+
 #include <string>
 #include <vector>
 

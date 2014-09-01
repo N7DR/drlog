@@ -806,85 +806,7 @@ const bool window::common_processing(const keyboard_event& e)
   { win.insert(!win.insert());
     return true;
   }
-#if 0
-// CTRL-CURSOR LEFT
-  if (e.is_ctrl() and e.symbol() == XK_Left)
-  { const cursor original_posn = win.cursor_position();
 
-    if (original_posn.x() == 0)    // do nothing if at start of line
-      return true;
-
-    const string contents = win.read(0, original_posn.y());
-    const vector<size_t> word_posn = starts_of_words(contents);
-
-    if (word_posn.empty())                // there are no words
-    { win <= CURSOR_START_OF_LINE;
-      return true;
-    }
-
-    for (size_t index = 0; index < word_posn.size(); ++index)
-    { if (word_posn[index] == original_posn.x())
-      { if (index == 0)                  // we are at the start of the first word
-        { win <= CURSOR_START_OF_LINE;
-          return true;
-        }
-
-        win <= cursor(word_posn[index - 1], original_posn.y());  // are at the start of a word (but not the first word)
-        return true;
-      }
-
-      if (word_posn[index] > original_posn.x())
-      { if (index == 0)                          // should never happen; cursor is to left of first word
-        { win <= CURSOR_START_OF_LINE;
-          return true;
-        }
-
-        win <= cursor(word_posn[index - 1], original_posn.y());  // go to the start of the current word
-        return true;
-      }
-    }
-
-    win <= cursor(word_posn[word_posn.size() - 1], original_posn.y());  // go to the start of the current word
-    return true;
-  }
-
-// CTRL-CURSOR RIGHT
-  if (e.is_ctrl() and e.symbol() == XK_Right)
-  { const cursor original_posn = win.cursor_position();
-    const string contents = win.read(0, original_posn.y());
-    const string truncated_contents = remove_trailing_spaces(contents);
-
-    if (truncated_contents.empty())                // there are no words
-    { win <= CURSOR_START_OF_LINE;
-      return true;
-    }
-
-    const vector<size_t> word_posn = starts_of_words(contents);
-    const size_t last_filled_posn = truncated_contents.size() - 1;
-
-    if (word_posn.empty())                // there are no words; should never be true at this point
-    { win <= CURSOR_START_OF_LINE;
-      return true;
-    }
-
-    if (original_posn.x() >= word_posn[word_posn.size() - 1])  // at or after start of last word
-    { win <= cursor(last_filled_posn + 2, original_posn.y());
-      return true;
-    }
-
-    for (size_t index = 0; index < word_posn.size(); ++index)
-    { if (word_posn[index] == original_posn.x())        // are at the start of a word (but not the last word)
-      { win <= cursor(word_posn[index + 1], original_posn.y());
-        return true;
-      }
-
-      if (word_posn[index] > original_posn.x())
-      { win <= cursor(word_posn[index], original_posn.y());
-        return true;
-      }
-    }
-  }
-#endif
   return false;
 }
 
@@ -892,35 +814,6 @@ const bool window::common_processing(const keyboard_event& e)
 window& operator<(window& win, const colour_pair& cpair)
 { return win.cpair(cpair.pair_nr());
 }
-
-#if 0
-SAVE_CURSOR::SAVE_CURSOR(window& w) :
-  _wp(&w)
-{ if (_wp->hidden_cursor())
-  { //getsyx(_y, _x); 
-    
-//    ost << "Saved cursor at : " << _y << "; " << _x << endl;
-  }
-}
-
-SAVE_CURSOR::SAVE_CURSOR(window* wp) :
-  _wp(wp)
-{ if (_wp->hidden_cursor())
-  { //getsyx(_y, _x); 
-    
-//    ost << "Saved cursor at : " << _y << "; " << _x << endl;
-  }
-}
-
-SAVE_CURSOR::~SAVE_CURSOR(void)
-{ if (_wp->hidden_cursor())
-  { //setsyx(_y, _x);
-
-//    ost << "Restored cursor at : " << _y << "; " << _x << endl;
-    //doupdate();
-  }
-}
-#endif
 
 // -----------  colour_pair  ----------------
 
