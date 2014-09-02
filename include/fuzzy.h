@@ -60,16 +60,20 @@ public:
     { }
 
 /// populate the database from a vector of calls
-  void init_from_calls(const std::vector<std::string>& calls);
+  inline void init_from_calls(const std::vector<std::string>& calls)
+    { FOR_ALL(calls, [&] (const std::string& this_call) { add_call(this_call); } ); }
 
 /// add a call to the database
-  void add_call(const std::string& call);
+  inline void add_call(const std::string& call)
+    { _db[ _to_valid_size(call.length()) ].insert(call); }
 
-/// remove a call from the database; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
-  const unsigned int remove_call(const std::string& call);
+/// remove a call from the database; returns whether the removal was successful
+  inline const bool remove_call(const std::string& call)
+    { return ( (_db[ _to_valid_size(call.length()) ].erase(call)) != 0 ); }
 
 /// is a call in the database?
-  const bool contains(const std::string& call);
+  inline const bool contains(const std::string& call)
+    { return (_db[ _to_valid_size(call.length()) ] < call); }
   
 /// return fuzzy matches
   const std::set<std::string> operator[](const std::string& key) const;

@@ -64,7 +64,7 @@ const vector<string> from_csv(const string& line)
         }
       }
       else                            // we have a quote and we aren't inside a value; start a new value
-      { this_value = string();
+      { this_value.clear();
         inside_value = true;
         posn++;
       }
@@ -219,11 +219,11 @@ const string replace(const string& s, const string& old_str, const string& new_s
 }
 
 /*! \brief  pad a string to a particular size
-  \param  s original string
-  \param  len length of returned string
-  \param  pad_direction side on which to pad
-  \param  pad_char  character with which to pad
-  \return padded version of <i>s</i>
+    \param  s original string
+    \param  len length of returned string
+    \param  pad_direction side on which to pad
+    \param  pad_char  character with which to pad
+    \return padded version of <i>s</i>
   
   If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
@@ -381,7 +381,6 @@ const vector<string> split_string(const string& cs, const string& separator)
 */
 const vector<string> split_string(const string& cs, const unsigned int record_length)
 { vector<string> rv;
-
   string cp = cs;
 
   while (cp.length() >= record_length)
@@ -404,53 +403,13 @@ const string squash(const string& cs, const char c)
   return rv;
 }
 
-/*!     \brief  split a string into components
-        \param  cs      Original string
-        \param  separator       Separator string (typically a single character)
-        \return Vector containing the separate components
-        
-        Allows return of empty strings
-*/
-/*
-const vector<string> split_string_complete(const string& cs, const string& separator)
-{ bool debug = false;
-  if (separator == ":")
-    debug = false;
-  
-  string cs_copy = cs;
-  vector<string> rv;
-    
-  while (!cs_copy.empty())
-  { unsigned long posn = cs_copy.find(separator);
-    
-    if (posn == string::npos)                       // no more separators
-    { if (cs_copy != separator and !cs_copy.empty())
-      { if (debug)
-          ost << "pushing [1]: *" << cs_copy << "*" << endl;
-        rv.push_back(cs_copy);
-      }
-      cs_copy = string();                           // empty the string
-    }
-    else                                            // at least one separator
-    { //if (cs_copy.substr(0, posn) != separator and !cs_copy.substr(0, posn).empty())
-      { if (debug)
-          ost << "pushing [2]: *" << cs_copy.substr(0, posn) << "*" << endl;
-        rv.push_back(cs_copy.substr(0, posn));
-      }
-      cs_copy = cs_copy.substr(posn + separator.length());
-    }
-  }
-  return rv;
-}  
-*/
-
-
 // join all the elements of a string array together, with a known separator
 const string join(const vector<string>& vec, const string& sep)
 { string rv;
 
   for (unsigned int n = 0; n < vec.size(); ++n)
   { rv += vec[n];
+
     if (n != vec.size() - 1)
       rv += sep;
   }
@@ -464,14 +423,13 @@ const string join(const deque<string>& vec, const string& sep)
 
   for (unsigned int n = 0; n < vec.size(); ++n)
   { rv += vec[n];
+
     if (n != vec.size() - 1)
       rv += sep;
   }
   
   return rv;
 }
-
-
 
 /*! \brief remove characters from the end of a string
   \param  s original string

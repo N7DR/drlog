@@ -53,7 +53,8 @@ scp_database::scp_database(const drmaster& drm)
 /// populate the database from a vector of calls
 void scp_database::init_from_calls(const vector<string>& calls)
 { //for_each(calls.begin(), calls.end(), bind( &scp_database::add_call, this, _1) );
-  for_each(calls.begin(), calls.end(), [&] (const string& this_call) { add_call(this_call); } );
+//  for_each(calls.begin(), calls.end(), [&] (const string& this_call) { add_call(this_call); } );
+  FOR_ALL(calls, [&] (const string& this_call) { add_call(this_call); } );
 }
 
 /// add a call
@@ -125,12 +126,15 @@ void scp_database::clear(void)
 
 /// clear the cache (without altering the database)
 void scp_database::clear_cache(void)
-{ _last_key = string();
+{ _last_key.clear();
   _last_result.clear();
 
 // must also clear the cache of any parents
-  for (auto& parent_p : _parents)
-    parent_p->clear_cache_no_children();
+//  for (auto& parent_p : _parents)
+//    parent_p->clear_cache_no_children();
+  FOR_ALL(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
+
+//  std::vector<scp_databases*> _parents;
 }
 
 // -----------  scp_databases  ----------------
@@ -210,11 +214,12 @@ void scp_databases::clear_cache(void)
 
 //  for (auto& db_p : _vec)
 //    db_p->clear_cache();
-  for_each(_vec.begin(), _vec.end(), [] (scp_database* db_p) { db_p->clear_cache(); } );
+//  for_each(_vec.begin(), _vec.end(), [] (scp_database* db_p) { db_p->clear_cache(); } );
+  FOR_ALL(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
 }
 
 /// clear the cache without clearing the caches of any children
 void scp_databases::clear_cache_no_children(void)
-{ _last_key = string();
+{ _last_key.clear();
   _last_result.clear();
 }
