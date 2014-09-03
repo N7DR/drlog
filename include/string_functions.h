@@ -409,6 +409,9 @@ inline bool starts_with(const std::string& cs, const std::string& ss)
 /// convert an integer to a comma-separated string
 const std::string comma_separated_string(const int n);
 
+/// get location of start of next word
+const size_t next_word_posn(const std::string& str, const size_t current_posn);
+
 /// return the starting position for each word
 const std::vector<size_t> starts_of_words(const std::string& s);
   

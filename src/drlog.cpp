@@ -3501,31 +3501,37 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       if (word_posn.empty())                              // there are no words
         win <= CURSOR_START_OF_LINE;
       else                                                // there are some words
-      { //bool handled = false;
+      { size_t index;
 
-        for (size_t index = 0; /* !handled and */ index < word_posn.size(); ++index)
+        for (index = 0; index < word_posn.size(); ++index)
         { if (word_posn[index] == original_posn.x())
           { if (index == 0)                  // we are at the start of the first word
-              win <= CURSOR_START_OF_LINE;
+            { win <= CURSOR_START_OF_LINE;
+              break;
+            }
             else
-              win <= cursor(word_posn[index - 1], original_posn.y());  // are at the start of a word (but not the first word)
-
-            //handled = true;
-            break;
+            { win <= cursor(word_posn[index - 1], original_posn.y());  // are at the start of a word (but not the first word)
+              break;
+            }
+//            win <= ( (index == 0) ? CURSOR_START_OF_LINE : cursor(word_posn[index - 1], original_posn.y()) );  // invalid ternary op
+//            break;
           }
 
           if (word_posn[index] > original_posn.x())
           { if (index == 0)                          // should never happen; cursor is to left of first word
-              win <= CURSOR_START_OF_LINE;
+            { win <= CURSOR_START_OF_LINE;
+              break;
+            }
             else
-              win <= cursor(word_posn[index - 1], original_posn.y());  // go to the start of the current word
-
-           // handled = true;
-            break;
+            { win <= cursor(word_posn[index - 1], original_posn.y());  // go to the start of the current word
+              break;
+            }
+//            win <= ( (index == 0) ? CURSOR_START_OF_LINE : cursor(word_posn[index - 1], original_posn.y()) );  // invalid ternary op
+//            break;
           }
         }
 
-//        if (!handled)
+        if (index == word_posn.size())
           win <= cursor(word_posn[word_posn.size() - 1], original_posn.y());  // go to the start of the current word
       }
     }
@@ -3551,18 +3557,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       { if (original_posn.x() >= word_posn[word_posn.size() - 1])  // at or after start of last word
           win <= cursor(last_filled_posn + 2, original_posn.y());
         else
-        { //bool handled = false;
-
-          for (size_t index = 0; /* !handled and */ index < word_posn.size(); ++index)
+        { for (size_t index = 0; index < word_posn.size(); ++index)
           { if (word_posn[index] == original_posn.x())        // at the start of a word (but not the last word)
             { win <= cursor(word_posn[index + 1], original_posn.y());
-             // handled = true;
               break;
             }
 
             if (word_posn[index] > original_posn.x())
             { win <= cursor(word_posn[index], original_posn.y());
-              //handled = true;
               break;
             }
           }
@@ -3572,6 +3574,75 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
     processed = true;
   }
+
+// CTRL-T -- delete word
+  if (!processed and e.is_control('t'))
+  { const cursor original_posn = win.cursor_position();
+    const string contents = win.read(0, original_posn.y());
+    const vector<size_t> word_posn = starts_of_words(contents);
+
+    if (!word_posn.empty())
+    { const bool is_space = (contents[original_posn.x()] == ' ');
+
+      if (!is_space)
+      { size_t start_current_word = 0;
+
+        for (size_t n = 0; n < word_posn.size(); ++n)
+          if (word_posn[n] <= original_posn.x())
+            start_current_word = word_posn[n];
+
+        const size_t end_current_word = contents.find_first_of(" ", original_posn.x());
+
+        if (end_current_word != string::npos)  // word is followed by space
+        { string new_contents;
+          if (start_current_word != 0)
+            new_contents = substring(contents, 0, start_current_word);
+
+          new_contents += substring(contents, end_current_word + 1);
+
+          win < WINDOW_CLEAR < new_contents <= cursor(start_current_word, original_posn.y());
+
+//          win <= cursor(start_current_word, original_posn.y());
+        }
+        else
+        { //const string new_contents = substring(contents, 0, next_start - 1);
+          string new_contents;
+          if (start_current_word != 0)
+            new_contents = substring(contents, 0, start_current_word - 1);
+
+          win < WINDOW_CLEAR < new_contents <= cursor(start_current_word, original_posn.y());
+//          win <= original_posn;
+//          win <= cursor(start_current_word, original_posn.y());
+        }
+      }
+      else  // we are at a space
+      { const size_t next_start = next_word_posn(contents, original_posn.x());
+
+//        ost << "x_0 = " << original_posn.x() << endl;
+//        ost << "next_start = " << next_start << endl;
+
+        if (next_start != string::npos)
+        { const size_t next_end = contents.find_first_of(" ", next_start);
+
+          if (next_end != string::npos)    // there is a complete word following
+          { const string new_contents = substring(contents, 0, next_start) + substring(contents, next_end + 1);
+
+            win < WINDOW_CLEAR < new_contents <= cursor(original_posn.x() + 1, original_posn.y());
+//            win <= cursor(original_posn.x() + 1, original_posn.y());
+          }
+          else
+          { const string new_contents = substring(contents, 0, next_start - 1);
+
+            win < WINDOW_CLEAR < new_contents <= original_posn;
+//            win <= original_posn;
+          }
+        }
+      }
+    }
+
+    processed = true;
+  }
+
 }
 
 // function to process input to the (editable) LOG window

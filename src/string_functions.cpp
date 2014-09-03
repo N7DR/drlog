@@ -643,6 +643,23 @@ const vector<size_t> starts_of_words(const string& s)
   }
 }
 
+/// get location of start of next word
+const size_t next_word_posn(const string& str, const size_t current_posn)
+{ if (str.length() <= current_posn)
+    return string::npos;
+
+  const bool is_space = (str[current_posn] == ' ');
+
+  if (is_space)
+    return ( str.find_first_not_of(" ", current_posn) );
+
+// we are inside a word
+  size_t space_posn = str.find_first_of(" ", current_posn);
+  size_t word_posn = str.find_first_not_of(" ", space_posn);
+
+  return word_posn;
+}
+
 /*!     \brief  Does a string contain a legal dotted-decimal IPv4 address
         \param  cs  Original string
         \return  Whether <i>cs</i> contains a legal dotted decimal IPv4 address
