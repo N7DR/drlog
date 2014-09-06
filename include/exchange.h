@@ -181,6 +181,8 @@ public:
 */
   void prepare(const std::vector<std::string>& path, const std::string& filename);
 
+  READ(db);
+
 /// is <i>name</i> the name of a recognised field?
   inline const bool is_valid_field_name(const std::string& name) const
     { return (_db.find(name) != _db.cend()); }
@@ -196,6 +198,12 @@ public:
     \return     Names of fields for which <i>str</i> is a valid value
 */
   const std::vector<std::string> valid_matches(const std::string& str);
+
+/// Return all the names of exchange fields in the database
+  const std::set<std::string> names(void) const;
+
+/// Return regex for a name; returns empty regex if the name is invalid
+  const boost::regex expression(const std::string& str) const;
 };
 
 /*! \brief  Is a string a valid callsign?

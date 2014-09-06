@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 73 2014-08-30 14:44:01Z  $
+// $Id: drlog.cpp 74 2014-09-06 14:45:30Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -114,6 +114,7 @@ const string sunrise(const string& callsign,
                      const bool calc_sunset = false);
 const string sunset(const string& callsign);
 void swap_rit_xit(void);
+void test_exchange_templates(const string& test_filename);
 void toggle_drlog_mode(void);
 void update_batch_messages_window(const string& callsign = string());
 void update_fuzzy_window(const string& callsign);
@@ -121,7 +122,6 @@ void update_individual_messages_window(const string& callsign = string());
 void update_known_callsign_mults(const string& callsign);
 void update_known_country_mults(const string& callsign);
 void update_local_time(void);
-//void update_qtcs_sent_window(void);
 void update_rate_window(void);
 void update_scp_window(const string& callsign);
 
@@ -456,21 +456,9 @@ int main(int argc, char** argv)
     context = *context_p;
     delete context_p;
 
+// possibly test regex exchanges; this will exit if it executes
     if (cl.value_present("-test-exchanges"))
-    { const string test_filename = cl.value("test-exchanges");
-      const vector<string> targets = to_lines(read_file(test_filename));
-
-      for (const auto& target : targets)
-      { const vector<string> matches = EXCHANGE_FIELD_TEMPLATES.valid_matches(target);
-
-        ost << "matches for " << target << ": " << endl;
-        for (const auto& match : matches)
-        { ost << "  " << match << endl;
-        }
-      }
-
-      exit(0);
-    }
+      test_exchange_templates(cl.value("-test-exchanges"));
 
 // read the country data
     cty_data* country_data_p = nullptr;
@@ -832,7 +820,6 @@ int main(int argc, char** argv)
     update_remaining_country_mults_window(statistics);
   else
   { const set<string> set_from_context = context.remaining_country_mults_list();
-//    static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
     const string& target_continent = *(set_from_context.cbegin());
 
     if ((set_from_context.size() == 1) and (CONTINENT_SET < target_continent))
@@ -5638,5 +5625,43 @@ void display_nearby_callsign(const string& callsign)
     win_nearby.cpair(colour_pair_number);
     win_nearby < callsign <= COLOURS(foreground, background);
   }
+}
+
+void test_exchange_templates(const string& test_filename)
+{ ost << "executing -test-exchanges" << endl;
+  ost << "exchange templates:" << endl;
+
+  const auto db = EXCHANGE_FIELD_TEMPLATES.db();
+
+  for (const auto& kv : db)
+    ost << "  " << kv.first << " : " << kv.second << endl;
+
+//  const string test_filename = cl.value("-test-exchanges");
+
+  ost << "reading file: " << test_filename << endl;
+
+  try
+  { const vector<string> targets = to_lines(read_file(test_filename));
+
+    ost << "contents: " << endl;
+
+    for (const auto& target : targets)
+      ost << "  " << target << endl;
+
+    for (const auto& target : targets)
+    { const vector<string> matches = EXCHANGE_FIELD_TEMPLATES.valid_matches(target);
+
+      ost << "matches for " << target << ": " << endl;
+      for (const auto& match : matches)
+      { ost << "  " << match << endl;
+      }
+    }
+  }
+
+  catch (const string_function_error& e)
+  { ost << "Error: unable to read file: " << test_filename << endl;
+  }
+
+  exit(0);
 }
 

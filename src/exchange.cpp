@@ -779,6 +779,24 @@ const vector<string> exchange_field_template::valid_matches(const string& str)
   return rv;
 }
 
+/// Return all the names of exchange fields in the database
+const set<string> exchange_field_template::names(void) const
+{ set<string> rv;
+
+//  FOR_ALL(_db, [&rv] (const pair<string, boost::regex>& psr) { rv.insert(psr.first); } );
+  FOR_ALL(_db, [&rv] (const decltype(_db)::value_type& psr) { rv.insert(psr.first); } );
+
+  return rv;
+}
+
+/// Return regex for a name; returns empty regex if the name is invalid
+const boost::regex exchange_field_template::expression(const string& str) const
+{ if (!(names() < str))
+    return boost::regex();
+
+  return _db.at(str);
+}
+
 /*! \brief          Replace cut numbers with real numbers
     \param  input   string possibly containing cut numbers
     \return         <i.input</i> but with cut numbers replaced by actual digits
