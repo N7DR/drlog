@@ -1,0 +1,18 @@
+ANY: ^(.)*$
+
+// forums.asp.net/t/918584.aspx/1
+// CALLSIGN tests for at least one digit and at least one letter
+CALLSIGN:  ^.*(?=.{3,12})(?=.*\d)(?=.*[a-zA-Z]).*$
+CQZONE: ^([1-3]+[1-9])|([1-4]0)|(0?[1-9])$
+
+IARU: ^(AF|AN|AS|EU|NA|OC|SA)([[:digit:]]{1,3})$
+ITUZONE: ^([1-8][1-9])|([1-9]0)|(0?[1-9])$
+
+JAPREF: ^([1-8][1-9])|([1-5]0)|(0?[1-9])$
+
+RDA: ^[[:alpha:]][[:alpha:]][[:digit:]][[:digit:]]$
+RS: ^[1-5][1-9]$
+RST: ^[1-5][1-9][1-9]$ 
+
+SERNO: ^([[:digit:]])+$
+SOCIETY: ^(R[1-3])|(([[:alpha:]])*)$
