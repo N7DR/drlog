@@ -137,16 +137,25 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
         \brief Encapsulates the name for an exchange field, and whether it's a mult
 */
 
+/// default constructor
 exchange_field::exchange_field(void) :
   _name(),
   _is_mult(false),
   _is_optional(false)
 { }
 
-exchange_field::exchange_field(const std::string& nm, const bool mult) :
+/// construct from name and multiplier status
+exchange_field::exchange_field(const string& nm, const bool mult) :
   _name(nm),
   _is_mult(mult),
   _is_optional(false)
+{ }
+
+/// construct from name, multiplier and optional status
+exchange_field::exchange_field(const string& nm, const bool mult, const bool opt) :
+  _name(nm),
+  _is_mult(mult),
+  _is_optional(opt)
 { }
 
 // follow all trees to their leaves
@@ -162,14 +171,13 @@ const vector<exchange_field> exchange_field::expand(void) const
   for (const auto& this_choice : _choice)
   { const vector<exchange_field>& vec = this_choice.expand();   // recursive
 
-//    copy(vec.cbegin(), vec.cend(), back_inserter(rv));          // append to rv
     COPY_ALL(vec, back_inserter(rv));          // append to rv
   }
 
   return rv;
 }
 
-/// output to a stream
+/// ostream << exchange_field
 ostream& operator<<(ostream& ost, const exchange_field& exch_f)
 { ost << "exchange_field.name() = " << exch_f.name() << endl
       << "exchange_field.is_mult() = " << (exch_f.is_mult() ? "true" : "false") << endl
@@ -271,7 +279,60 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
 { vector<exchange_field> rv;
 
   for (const auto& field_name : exchange_fields)
-  { if (!contains(field_name, "CHOICE:"))
+  { const bool is_choice = contains(field_name, "CHOICE:");
+    const bool is_opt = contains(field_name, "OPT:");
+
+    if (is_choice)
+    { const vector<string> choice_vec = split_string(field_name, ":");
+      string full_name;  // pseudo name of the choice
+
+       if (choice_vec.size() == 2)    // true if legal
+       { vector<string> choice_fields = remove_peripheral_spaces(split_string(choice_vec[1], "/"));
+         vector<exchange_field> choices;
+
+         for (auto& choice_field_name : choice_fields)
+         { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend();
+           exchange_field this_choice(choice_field_name, is_mult);
+
+           choices.push_back(this_choice);
+         }
+
+// put into alphabetical order
+         sort(choice_fields.begin(), choice_fields.end());
+
+         for (auto& choice_field_name : choice_fields)
+           full_name += choice_field_name + "+";
+
+         exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
+
+         this_field.choice(choices);
+         rv.push_back(this_field);
+       }
+     }
+
+    if (is_opt)
+    { try
+      { const string name = split_string(field_name, ":")[1];
+        const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend();
+
+        rv.push_back( exchange_field(field_name, is_mult, is_opt) );
+      }
+
+      catch (...)
+      { ost << "Error parsing OPT exchange field: " << field_name << endl;
+        exit(-1);
+      }
+    }
+
+    if (!is_choice and !is_opt)
+    { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend();
+
+      rv.push_back( exchange_field(field_name, is_mult) );
+    }
+
+
+#if 0
+    if (!contains(field_name, "CHOICE:"))
     { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend();
 
       rv.push_back( exchange_field(field_name, is_mult) );
@@ -303,6 +364,8 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
         rv.push_back(this_field);
       }
     }
+#endif
+
   }
 
   return rv;

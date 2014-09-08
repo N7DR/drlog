@@ -159,6 +159,9 @@ public:
 /// construct from name and multiplier status
   exchange_field(const std::string& nm, const bool mult);
 
+/// construct from name, multiplier and optional status
+  exchange_field(const std::string& nm, const bool mult, const bool opt);
+
   READ(name);                          ///< name of field
   READ(is_mult);                       ///< is this field a multiplier?
   READ(is_optional);                   ///< is this an optional field?  *** not yet supported ***
