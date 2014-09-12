@@ -153,14 +153,8 @@ protected:
 
 public:
 
-/// default constructor
-  exchange_field(void);
-
-/// construct from name and multiplier status
-  exchange_field(const std::string& nm, const bool mult);
-
-/// construct from name, multiplier and optional status
-  exchange_field(const std::string& nm, const bool mult, const bool opt);
+/// construct from name, multiplier and optional status; also default constructor
+  exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false);
 
   READ(name);                          ///< name of field
   READ(is_mult);                       ///< is this field a multiplier?

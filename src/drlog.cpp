@@ -148,7 +148,7 @@ void* reset_connection(void* vp);
 void* simulator_thread(void* vp);
 void* spawn_dx_cluster(void*);
 void* spawn_rbn(void*);
-void* start_cluster_thread(void* vp);
+//void* start_cluster_thread(void* vp);
 
 // functions that include thread safety
 const BAND safe_get_band(void);
@@ -3042,11 +3042,20 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     }
   }
 
-// FULL STOP -- place contents of call window into this window, preceeded by a dot
-  if (!processed and (e.is_char('.')))
+// COMMA -- place contents of call window into this window, preceeded by a dot
+  if (!processed and (e.is_char(',')))
   { static const string full_stop(".");
 
     win <= (full_stop + remove_peripheral_spaces(win_call.read()));
+    processed = true;
+  }
+
+// FULL STOP
+  if (!processed and (e.is_char('.')))
+  { static const string full_stop(".");
+
+//    win <= (full_stop + remove_peripheral_spaces(win_call.read()));
+    win <= full_stop;
     processed = true;
   }
 
@@ -4982,13 +4991,17 @@ const string callsign_mult_value(const string& callsign_mult_name, const string&
   return string();
 }
 
+#if 0
 void* start_cluster_thread(void* vp)
 { big_cluster_info& bci = *(static_cast<big_cluster_info*>(vp)); // make the cluster available
   drlog_context& context = *(bci.context_p());
   POSTING_SOURCE& posting_source = *(bci.source_p());
 
   cluster_p = new dx_cluster(context, POSTING_CLUSTER);
+
+  return nullptr;
 }
+#endif    // 0
 
 /*! \brief update several call-related windows
     \param callsign call to use as a basis for the updated windows
@@ -5483,7 +5496,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   { if (cw)
     { const int qtc_nr = static_cast<int>(qtcs_sent) - 1;
 
-      if ((qtc_nr >= 0) and (qtc_nr < series.size()))
+      if ((qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
         send_msg(series[qtc_nr].first.utc());
     }
 
@@ -5495,7 +5508,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   { if (cw)
     { const int qtc_nr = static_cast<int>(qtcs_sent) - 1;
 
-      if ((qtc_nr >= 0) and (qtc_nr < series.size()))
+      if ((qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
         send_msg(series[qtc_nr].first.callsign());
     }
 
@@ -5507,7 +5520,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   { if (cw)
     { const int qtc_nr = static_cast<int>(qtcs_sent) - 1;
 
-      if ((qtc_nr >= 0) and (qtc_nr < series.size()))
+      if ((qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
       { const string serno = pad_string(remove_leading(remove_peripheral_spaces(series[qtc_nr].first.serno()), '0'), 3, PAD_LEFT, 'T');
 
         send_msg(serno);
@@ -5522,7 +5535,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   { if (cw)
     { const int qtc_nr = static_cast<int>(qtcs_sent) - 1;
 
-      if ((qtc_nr >= 0) and (qtc_nr < series.size()))
+      if ((qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
       { const qtc_entry& qe = series[qtc_nr].first;
         string msg;
         string space = (context.qtc_double_space() ? "  " : " ");

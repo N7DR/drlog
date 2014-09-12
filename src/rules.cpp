@@ -137,21 +137,7 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
         \brief Encapsulates the name for an exchange field, and whether it's a mult
 */
 
-/// default constructor
-exchange_field::exchange_field(void) :
-  _name(),
-  _is_mult(false),
-  _is_optional(false)
-{ }
-
-/// construct from name and multiplier status
-exchange_field::exchange_field(const string& nm, const bool mult) :
-  _name(nm),
-  _is_mult(mult),
-  _is_optional(false)
-{ }
-
-/// construct from name, multiplier and optional status
+/// construct from name, multiplier and optional status; also default constructor
 exchange_field::exchange_field(const string& nm, const bool mult, const bool opt) :
   _name(nm),
   _is_mult(mult),
@@ -180,9 +166,9 @@ const vector<exchange_field> exchange_field::expand(void) const
 /// ostream << exchange_field
 ostream& operator<<(ostream& ost, const exchange_field& exch_f)
 { ost << "exchange_field.name() = " << exch_f.name() << endl
-      << "exchange_field.is_mult() = " << (exch_f.is_mult() ? "true" : "false") << endl
-      << "exchange_field.is_optional() = " << (exch_f.is_optional() ? "true" : "false") << endl
-      << "exchange_field.is_choice() = " << (exch_f.is_choice() ? "true" : "false");
+      << boolalpha << "exchange_field.is_mult() = " << exch_f.is_mult() << endl
+      << "exchange_field.is_optional() = " << exch_f.is_optional() << endl
+      << "exchange_field.is_choice() = " << exch_f.is_choice() << noboolalpha;
 
   if (exch_f.is_choice())
   { ost << endl
