@@ -47,10 +47,11 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 //  { ost << index++ << ": " << field.name() << ", " << field.is_mult() << ", " << field.is_optional() << ", " << field.is_choice() << endl;
 //  }
 
-//  for (const auto& field : exchange_template)
-//    _fields.push_back(parsed_exchange_field { field.name(), "", field.is_mult() } );
-//  for_each(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field { ef.name(), EMPTY_STRING, ef.is_mult() }); } );
   FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field { ef.name(), EMPTY_STRING, ef.is_mult() }); } );
+
+  for (auto& field : _fields)
+  { ost << "field : " << field << endl;
+  }
 
   if (size_difference == 0)    // correct number, although we don't assume that the order is the same as the template
   { for (auto& field : _fields)

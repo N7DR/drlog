@@ -20,6 +20,7 @@
 #include "serialization.h"
 
 #include <algorithm>
+#include <iostream>
 #include <tuple>
 
 #if (!defined(READ_AND_WRITE))
@@ -143,8 +144,6 @@ public:                                                                   \
                                                                           \
   inline void b1(b0 var)                                          \
     { std::get<1>(*this) = var; }                               \
-                                                                          \
-                                                                          \
 }
 
 /// tuple class (3)
@@ -182,8 +181,15 @@ public:                                                                   \
                                                                           \
   inline void c1(c0 var)                                          \
     { std::get<2>(*this) = var; }                               \
-                                                                          \
-                                                                          \
+}; \
+\
+inline std::ostream& operator<<(std::ostream& ost, const nm& type)  \
+{ ost << "##nm:" << std::endl  \
+      << "  ##a1: " << type.a1() << std::endl  \
+      << "  ##b1: " << type.b1() << std::endl  \
+      << "  ##c1: " << type.c1(); \
+\
+  return ost; \
 }
 
 /// tuple class (3)
