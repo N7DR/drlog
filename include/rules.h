@@ -1,4 +1,4 @@
-// $Id: rules.h 73 2014-08-30 14:44:01Z  $
+// $Id: rules.h 75 2014-09-15 23:01:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -375,6 +375,10 @@ public:
   SAFEREAD(exchange_mults, rules);  ///< the exchange multipliers, in the same order as in the configuration file
 
   SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?
+
+  SAFEREAD(exchange_field_eft, rules);
+
+  const EFT exchange_field_eft(const std::string& field_name) const;
 
 /// Get all the known names of exchange fields
   const std::set<std::string> all_known_field_names(void) const;

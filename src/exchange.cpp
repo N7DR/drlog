@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 73 2014-08-30 14:44:01Z  $
+// $Id: exchange.cpp 75 2014-09-15 23:01:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,23 +35,98 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   _replacement_call(),
   _valid(false)
 { static const string EMPTY_STRING("");
+  vector<string> copy_received_values(received_values);
 
   ost << "Inside parsed_exchange constructor" << endl;
 
   const vector<exchange_field> exchange_template = rules.exch(canonical_prefix);
-  const int size_difference = static_cast<int>(received_values.size()) - static_cast<int>(exchange_template.size());  // does not allow for optional fields
 
-//  ost << "exchange_template: " << endl;
-//  int index = 0;
-//  for (const auto& field : exchange_template)
-//  { ost << index++ << ": " << field.name() << ", " << field.is_mult() << ", " << field.is_optional() << ", " << field.is_choice() << endl;
-//  }
+// how many fields are optional?
+  unsigned int n_optional_fields = 0;
+  FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
+                                                                n_optional_fields++;
+                                                            } );
 
+// prepare output; includes optional fields and all choices
   FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field { ef.name(), EMPTY_STRING, ef.is_mult() }); } );
 
+// print exchange template fields for debugging purposes
   for (auto& field : _fields)
   { ost << "field : " << field << endl;
   }
+
+// if there's an explicit . field, use it to replace the call
+  for (const auto& received_value : received_values)
+  { if (contains(received_value, "."))
+      _replacement_call = remove_char(received_value, '.');
+  }
+
+  if (!_replacement_call.empty())    // remove the dotted field(s)
+  { copy_received_values.clear();
+    copy_if(received_values.cbegin(), received_values.cend(), back_inserter(copy_received_values), [] (const string& str) { return contains(str, "."); } );
+  }
+
+// generate reverse vectors for comparisons
+  vector<string> reverse_received_values(copy_received_values);
+  REVERSE(reverse_received_values);
+
+  decltype(_fields) reverse_fields(_fields);
+  REVERSE(reverse_fields);
+
+// for each received field, which output fields does it match?
+  map<int /* received field number */, set<string>> matches;
+  const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();
+  int field_nr = 0;
+
+  for (const string& rv : copy_received_values)
+  { set<string> match;
+
+    for (const auto& field : exchange_template)
+    { const string& field_name = field.name();
+
+      try
+      { const EFT& eft = exchange_field_eft.at(field_name);
+
+        ost << "testing value of " << rv << " against field " << field_name << endl;
+
+        if (eft.is_legal_value(rv))
+        { match.insert(field_name);
+          ost << "is legal value" << endl;
+        }
+        else
+          ost << "is NOT legal value" << endl;
+
+
+
+
+      }
+
+      catch (...)
+      { ost << "Error: cannot find field name: " << field_name << endl;
+      }
+    }
+
+    matches.insert( { field_nr++, match } );
+  }
+
+// debug; print status
+  for (const auto& m : matches)
+  { ost << "field nr " << m.first << " [" << copy_received_values[m.first] << "]: ";
+    for (const string& str : m.second)
+      ost << str << "  ";
+
+    ost << endl;
+  }
+
+
+
+
+
+
+
+
+
+  const int size_difference = static_cast<int>(copy_received_values.size()) - static_cast<int>(exchange_template.size());  // does not allow optional fields to be absent
 
   if (size_difference == 0)    // correct number, although we don't assume that the order is the same as the template
   { for (auto& field : _fields)
@@ -80,7 +155,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   const int MAX_ATTEMPTS = 10;
 
 // look for explicit marker for replacement call, which is a field that contains a dot
-  vector<string> copy_received_values;
+//  vector<string> copy_received_values;
 
   for (const auto& received_value : received_values)  // assume only one field contains a dot
   { if (contains(received_value, "."))
@@ -1244,7 +1319,11 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
 }
 
 const bool EFT::is_legal_value(const string& str) const
-{ if (!_regex_expression.empty() and regex_match(str, _regex_expression))
+{
+  ost << "is legal value(): regex expression = " << _regex_expression << endl;
+  ost << "str = " << str << endl;
+
+  if (!_regex_expression.empty() and regex_match(str, _regex_expression))
     return true;
 
   if (!_values.empty())

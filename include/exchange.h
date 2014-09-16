@@ -1,4 +1,4 @@
-// $Id: exchange.h 73 2014-08-30 14:44:01Z  $
+// $Id: exchange.h 75 2014-09-15 23:01:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -80,7 +80,7 @@ public:
 
 /// is a replacement call present?
   inline const bool has_replacement_call(void) const
-    { return (_replacement_call != std::string() ); }
+    { return (!_replacement_call.empty() ); }
 
 /*! \brief  Return the value of a particular field
     \param  field_name  field for which the value is requested

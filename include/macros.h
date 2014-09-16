@@ -1,4 +1,4 @@
-// $Id: macros.h 72 2014-08-16 16:53:27Z  $
+// $Id: macros.h 75 2014-09-15 23:01:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -184,10 +184,10 @@ public:                                                                   \
 }; \
 \
 inline std::ostream& operator<<(std::ostream& ost, const nm& type)  \
-{ ost << "##nm:" << std::endl  \
-      << "  ##a1: " << type.a1() << std::endl  \
-      << "  ##b1: " << type.b1() << std::endl  \
-      << "  ##c1: " << type.c1(); \
+{ ost << #nm << ": " << std::endl  \
+      << #a1 << ": " << type.a1() << std::endl  \
+      << #b1 << ": " << type.b1() << std::endl  \
+      << #c1 << ": " << type.c1(); \
 \
   return ost; \
 }
@@ -729,6 +729,8 @@ public:
   }
 };
 
+// convenient syntactic sugar for some STL functions
+
 template<class Input, class Function>
   Function FOR_ALL(Input& first, Function fn)
 { return (std::for_each(first.begin(), first.end(), fn));
@@ -736,12 +738,17 @@ template<class Input, class Function>
 
 template<class Input, class OutputIterator>
   OutputIterator COPY_ALL(Input& first, OutputIterator oi)
-{ return (copy(first.begin(), first.end(), oi));
+{ return (std::copy(first.begin(), first.end(), oi));
 }
 
 template <class Input, class UnaryPredicate>
   void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
-{ first.erase(remove_if(first.begin(), first.end(), pred), first.end());
+{ first.erase(std::remove_if(first.begin(), first.end(), pred), first.end());
+}
+
+template <class Input>
+  void REVERSE(Input& v)
+{ std::reverse(v.begin(), v.end());
 }
 
 // ------------------------ container for per-band and per-mode information ------------

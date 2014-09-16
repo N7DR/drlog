@@ -1,4 +1,4 @@
-// $Id: rules.cpp 73 2014-08-30 14:44:01Z  $
+// $Id: rules.cpp 75 2014-09-15 23:01:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -299,9 +299,9 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
     if (is_opt)
     { try
       { const string name = split_string(field_name, ":")[1];
-        const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend();
+        const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), name) != exchange_mults_vec.cend();
 
-        rv.push_back( exchange_field(field_name, is_mult, is_opt) );
+        rv.push_back( exchange_field(name, is_mult, is_opt) );
       }
 
       catch (...)
@@ -781,6 +781,8 @@ const vector<exchange_field> contest_rules::expanded_exch(const string& canonica
 const set<string> contest_rules::all_known_field_names(void) const
 { set<string> rv;
 
+  SAFELOCK(rules);
+
   for (const auto& msvef : _expanded_exch)
   { const vector<exchange_field>& vef = msvef.second;
 
@@ -789,6 +791,17 @@ const set<string> contest_rules::all_known_field_names(void) const
   }
 
   return rv;
+}
+
+const EFT contest_rules::exchange_field_eft(const string& field_name) const
+{ SAFELOCK(rules);
+
+  const auto v = _exchange_field_eft.find(field_name);
+
+  if (v == _exchange_field_eft.end())
+    return EFT("none");
+
+  return (v->second);
 }
 
 // returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
