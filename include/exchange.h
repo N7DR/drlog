@@ -61,6 +61,8 @@ protected:
 */
 const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
 
+void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
+
 public:
 
 /*!     \brief  constructor

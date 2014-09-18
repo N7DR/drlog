@@ -87,17 +87,14 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
       try
       { const EFT& eft = exchange_field_eft.at(field_name);
 
-        ost << "testing value of " << rv << " against field " << field_name << endl;
+//        ost << "testing value of " << rv << " against field " << field_name << endl;
 
         if (eft.is_legal_value(rv))
         { match.insert(field_name);
-          ost << "is legal value" << endl;
+//          ost << "is legal value" << endl;
         }
-        else
-          ost << "is NOT legal value" << endl;
-
-
-
+//        else
+//          ost << "is NOT legal value" << endl;
 
       }
 
@@ -1103,6 +1100,23 @@ const string parsed_exchange::_resolve_choice(const string& choice_name, const s
   return string();
 }
 
+void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const vector<string>& received_values)
+{ set<int> matched_field_numbers;
+  set<string> matched_field_names;
+  decltype(matches) remaining_matches(matches);
+
+  for (unsigned int field_nr = 0; field_nr < remaining_matches.size(); ++field_nr)
+  { if (remaining_matches.at(field_nr).size() == 1)  // there is a single match between field number and name
+    { const string& matched_field_name = *(remaining_matches.at(field_nr).cbegin());
+
+      for (unsigned int n = 0; n < _fields.size(); ++n)
+      { if (_fields[n].name() == matched_field_name)
+          _fields[n].value(received_values[n]);
+      }
+    }
+  }
+}
+
 // -------------------------  EFT  ---------------------------
 
 /*!     \class EFT (exchange_field_template)
@@ -1320,8 +1334,8 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
 
 const bool EFT::is_legal_value(const string& str) const
 {
-  ost << "is legal value(): regex expression = " << _regex_expression << endl;
-  ost << "str = " << str << endl;
+//  ost << "is legal value(): regex expression = " << _regex_expression << endl;
+//  ost << "str = " << str << endl;
 
   if (!_regex_expression.empty() and regex_match(str, _regex_expression))
     return true;
