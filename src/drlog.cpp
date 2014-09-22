@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 75 2014-09-15 23:01:51Z  $
+// $Id: drlog.cpp 76 2014-09-21 20:33:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -274,7 +274,6 @@ window win_band_mode,               ///< the band and mode indicator
        win_scp,                     ///< SCP lookups
        win_scratchpad,              ///< scratchpad
        win_serial_number,           ///< next serial number (octothorpe)
-//       win_srate,                   // recent score rates
        win_summary,                 ///< overview of score
        win_time,                    ///< current UTC
        win_title,                   ///< title of the contest

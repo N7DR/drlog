@@ -1,4 +1,4 @@
-// $Id: rules.cpp 75 2014-09-15 23:01:51Z  $
+// $Id: rules.cpp 76 2014-09-21 20:33:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -541,6 +541,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // parse the config file
     const string context_points = context.points(b);
 
+// ost << "points from context: " << context_points << endl;
+
     if (context_points == "IARU")  // special
     { points_structure ps = _points[b];
 
@@ -568,9 +570,20 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // country
           if (!processed and !fields[1].empty())
-          { country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
+          { if (contains(fields[1], "["))    // possible multiple countries
+            { const string countries = delimited_substring(fields[1], '[', ']');
 
-            country_points_this_band[location_db.canonical_prefix(fields[1])] = from_string<unsigned int>(fields[2]);
+              if (!countries.empty())
+              { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already spilt on commas
+
+                for (const auto& country : country_vec)
+                  country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } );
+              }
+            }
+            else
+              country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
+
+//            country_points_this_band[location_db.canonical_prefix(fields[1])] = from_string<unsigned int>(fields[2]);
             points_this_band.country_points(country_points_this_band);
 
             processed = true;

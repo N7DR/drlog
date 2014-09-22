@@ -46,7 +46,7 @@ protected:
   
   std::array<unsigned int, N_BANDS>                  _n_dupes;              ///< number of dupes, per band
   std::array<unsigned int, N_BANDS>                  _n_qsos;               ///< number of QSOs, per band
-  std::array<unsigned int, N_BANDS>                  _qso_points;           ///< number of QSO poiints, pe rband
+  std::array<unsigned int, N_BANDS>                  _qso_points;           ///< number of QSO points, per band
 
   std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
 
