@@ -3738,12 +3738,9 @@ ost << "Adding new QSO(s)" << endl;
 
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 
+        ost << " new QSO call from QSO: " << qso.callsign() << endl;
+
 // we can't assume anything about the mult status
-//            qso.is_country_mult(false);
-//            qso.is_prefix_mult(false);
-
-//            ost << "     reconstituted line: " << qso.log_line() << endl;
-
             const BAND b = qso.band();
 //            ost << "band of reconstituted QSO = " << BAND_NAME[b] << endl;
 
@@ -5205,8 +5202,12 @@ const string dump_screen(const string& dump_filename)
 
 // add info to QSO if callsign mults are in use
 void allow_for_callsign_mults(QSO& qso)
-{ if (callsign_mults_used)
-  { string mult_name;
+{ ost << "inside allow_for_callsign_mults()" << endl;
+
+  if (callsign_mults_used)
+  { ost << "qso.prefix = " << qso.prefix() << endl;
+
+    string mult_name;
 
     if (rules.callsign_mults() < static_cast<string>("WPXPX"))
     { qso.prefix(wpx_prefix(qso.callsign()));
@@ -5214,13 +5215,13 @@ void allow_for_callsign_mults(QSO& qso)
       mult_name = "WPXPX";
     }
 
-    if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") and qso.prefix().empty())  // All Asian
+    if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") /* and qso.prefix().empty() */)  // All Asian
     { qso.prefix(wpx_prefix(qso.callsign()));
       ost << "added AAPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "AAPX";
     }
 
-    if ( (rules.callsign_mults() < static_cast<string>("SACPX")) and (qso.prefix().empty()) )      // SAC
+    if ( (rules.callsign_mults() < static_cast<string>("SACPX")) /* and (qso.prefix().empty()) */ )      // SAC
     { qso.prefix(sac_prefix(qso.callsign()));
       ost << "added SACPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "SACPX";
