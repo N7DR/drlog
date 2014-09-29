@@ -59,9 +59,11 @@ protected:
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
+  const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
 
-void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
+  void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
+
+  void _print_tuple(const std::tuple<int, std::string, std::set<std::string>>& t);
 
 public:
 

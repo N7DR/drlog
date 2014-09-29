@@ -1,4 +1,4 @@
-// $Id: rules.cpp 76 2014-09-21 20:33:46Z  $
+// $Id: rules.cpp 77 2014-09-27 22:23:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

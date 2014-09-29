@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 76 2014-09-21 20:33:46Z  $
+// $Id: drlog.cpp 77 2014-09-27 22:23:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3099,37 +3099,28 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     for (unsigned int n = 0; n < exchange_template.size(); ++n)
       ost << n << ": " << exchange_template[n] << endl;
 
+    unsigned int n_optional_fields = 0;
+
+//    for (unsigned int n = 0; n < exchange_template.size(); ++n)
+//      if (exchange_template[n].is_optional())
+//        n_optional_fields++;
+
+    FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
+                                                                  n_optional_fields++;
+                                                              } );
+
     bool sent_acknowledgement = false;
 
     if (!exchange_contents.empty())
-    { if (exchange_template.size() > exchange_field_values.size())
+    { if ( (exchange_template.size() - n_optional_fields) > exchange_field_values.size())
       { ost << "mismatched template and exchange fields: Expected " << exchange_template.size() << " exchange fields; found " << exchange_field_values.size() << endl;
         alert("Expected " + to_string(exchange_template.size()) + " exchange fields; found " + to_string(exchange_field_values.size()));
         processed = true;
       }
 
-
       if (!processed)
       {
 
-#if 0
-        if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
-        { if (exchange_field_values.size() == exchange_template.size())    // 1:1 correspondence between expected and received fields
-          { if (drlog_mode == CQ_MODE)                                   // send QSL
-            { const bool quick_qsl = (e.symbol() == XK_KP_Enter);
-
-              if (!send_qtc)
-                (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
-            }
-            else                                                         // SAP exchange
-            { if (!send_qtc)
-                (*cw_p) << expand_cw_message( context.exchange_sap() );
-              ost << "sent SAP exchange: " << expand_cw_message( context.exchange_sap() ) << endl;
-            }
-            sent_acknowledgement = true;  // should rename now that we've added QTC processing here
-          }
-        }
-#endif
 
         parsed_exchange pexch(canonical_prefix, rules, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 

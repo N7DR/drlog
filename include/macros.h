@@ -1,4 +1,4 @@
-// $Id: macros.h 76 2014-09-21 20:33:46Z  $
+// $Id: macros.h 77 2014-09-27 22:23:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -750,6 +750,13 @@ template <class Input>
   void REVERSE(Input& v)
 { std::reverse(v.begin(), v.end());
 }
+
+/* need example of correct syntax for returning generic iterator; can't find exactly how to do this described in a book
+template <class Input, class UnaryPredicate>
+  auto FIND_IF(Input& v, UnaryPredicate pred) -> decltype(Input::iterator)
+{ return std::find_if(v.begin(), v.end(), pred);
+}
+*/
 
 // ------------------------ container for per-band and per-mode information ------------
 

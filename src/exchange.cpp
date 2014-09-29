@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 76 2014-09-21 20:33:46Z  $
+// $Id: exchange.cpp 77 2014-09-27 22:23:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,6 +25,21 @@ exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 #undef NEW_CONSTRUCTOR
 
 #if defined(NEW_CONSTRUCTOR)
+
+void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t)
+{ ost << "tuple:" << endl;
+  ost << "  field number: " << get<0>(t) << endl;
+  ost << "  field value: " << get<1>(t) << endl;
+
+  const set<string>& ss = get<2>(t);
+
+  ost << "  { ";
+
+  for (const auto& s : ss)
+    ost << s << " ";
+
+  ost << "}" << endl;
+}
 
 /*!     \brief  constructor
         \param  callsign    callsign of the station from which the exchange was received
@@ -87,15 +102,8 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
       try
       { const EFT& eft = exchange_field_eft.at(field_name);
 
-//        ost << "testing value of " << rv << " against field " << field_name << endl;
-
         if (eft.is_legal_value(rv))
-        { match.insert(field_name);
-//          ost << "is legal value" << endl;
-        }
-//        else
-//          ost << "is NOT legal value" << endl;
-
+          match.insert(field_name);
       }
 
       catch (...)
@@ -115,22 +123,166 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     ost << endl;
   }
 
+  deque<tuple<int, string, set<string>>> tuple_vector;
+
+  for (const auto& m : matches)
+    tuple_vector.push_back(tuple<int, string, set<string>> { m.first, copy_received_values[m.first], m.second } );
+
+  vector<tuple<int, string, set<string>>> tuple_vector_assignments;
+  map<string, tuple<int, string, set<string>>> tuple_map_assignments;
 
 
+  size_t old_size_of_tuple_vector;
 
+// find entries with only one entry in set
+  do
+  { old_size_of_tuple_vector = tuple_vector.size();
 
+    for (const auto& t : tuple_vector)
+    { if (get<2>(t).size() == 1)
+      { ost << "map insertion: " << *(get<2>(t).cbegin()) << " and position " << get<0>(t) << endl;
 
+        const auto it = tuple_map_assignments.find( *(get<2>(t).cbegin()) );
 
+        if (it != tuple_map_assignments.end())
+          tuple_map_assignments.erase(it);
 
-
-  const int size_difference = static_cast<int>(copy_received_values.size()) - static_cast<int>(exchange_template.size());  // does not allow optional fields to be absent
-
-  if (size_difference == 0)    // correct number, although we don't assume that the order is the same as the template
-  { for (auto& field : _fields)
-    {
+        tuple_map_assignments.insert( { *(get<2>(t).cbegin()) /* field name */, t } );    // overwrite any previous entry with this key
+      }
     }
+
+// eliminate matched fields from sets of possible matches
+
+// remove assigned tuples (changes tuple_vector)
+    REMOVE_IF_AND_RESIZE(tuple_vector,  [] (tuple<int, string, set<string>>& t) { return (get<2>(t).size() == 1); } );
+
+    for (auto& t : tuple_vector)
+    { set<string>& ss = get<2>(t);
+
+      for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
+        ss.erase(tm.first);
+    }
+  } while (old_size_of_tuple_vector != tuple_vector.size());
+
+  ost << "size of tuple vector = " << tuple_vector.size() << endl;
+  ost << "size of tuple map assignments  = " << tuple_map_assignments.size() << endl;
+
+  for (const auto& tma : tuple_map_assignments)
+  { ost << "field name: " << tma.first << endl;
+    _print_tuple(tma.second);
   }
 
+  if (tuple_vector.size()) // we aren't finished
+  { ost << "Not finished yet" << endl;
+
+    const tuple<int, string, set<string>>& t = tuple_vector[0];    // first received field we haven't been able to use, even tentatively
+
+    ost << "zeroth tuple: " << endl;
+    _print_tuple(t);
+
+// find first received field that's a match for any exchange field and that we haven't used
+    const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
+//    const auto cit = FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
+
+    if (cit != exchange_template.cend())
+    { ost << "Assuming received field #" << get<0>(t) << " with value [" << get<1>(t) << "] corresponds to " << cit->name() << endl;
+
+      const bool inserted = (tuple_map_assignments.insert( { cit->name() /* field name */, t } )).second;
+
+      if (!inserted)
+        ost << "WARNING: Unable to insert map assignment. This should never happen" << endl;
+
+// remove the tuple we just processed
+      tuple_vector.pop_front();
+
+// remove this possible match name from all remaining elements in tuple vector
+//      for (size_t n = 0; n < tuple_vector.size(); ++n)
+//      { set<string>& ss = get<2>(tuple_vector[n]);
+//
+//        ss.erase(cit->name());
+//      }
+      FOR_ALL(tuple_vector, [=] (tuple<int, string, set<string>>& t) { get<2>(t).erase(cit->name()); } );
+
+      do
+      { old_size_of_tuple_vector = tuple_vector.size();
+
+        for (const auto& t : tuple_vector)
+        { if (get<2>(t).size() == 1)
+          { ost << "map insertion: " << *(get<2>(t).cbegin()) << " and position " << get<0>(t) << endl;
+
+            const auto it = tuple_map_assignments.find( *(get<2>(t).cbegin()) );
+
+            if (it != tuple_map_assignments.end())
+              tuple_map_assignments.erase(it);
+
+            tuple_map_assignments.insert( { *(get<2>(t).cbegin()) /* field name */, t } );    // overwrite any previous entry with this key
+          }
+        }
+
+          // remove assigned tuples (changes tuple_vector)
+              REMOVE_IF_AND_RESIZE(tuple_vector,  [] (tuple<int, string, set<string>>& t) { return (get<2>(t).size() == 1); } );
+
+              for (auto& t : tuple_vector)
+              { //if (get<2>(t).size() == 1)         // one remaining entry in the set
+                { set<string>& ss = get<2>(t);
+
+                  for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
+                  { ss.erase(tm.first);
+                  }
+                }
+              }
+
+              ost << "new size of tuple_vector = " << tuple_vector.size() << endl;
+            } while (old_size_of_tuple_vector != tuple_vector.size());
+
+      if (tuple_vector.size()) // we aren't finished
+      { ost << "Still not finished yet" << endl;
+
+        for (size_t n = 0; n < tuple_vector.size(); ++n)
+        { _print_tuple(tuple_vector[n]);
+
+          const auto& t = tuple_vector[n];
+          ost << get<0>(t) << ", " << get<1>(t) << ", ";
+              const set<string>& ss = get<2>(t);
+
+              ost << "{ ";
+
+              for (const auto& s : ss)
+                ost << s << "  ";
+
+              ost << "}" << endl;
+
+        }
+      }
+
+
+    }
+
+  }
+
+  // prepare output; includes optional fields and all choices
+//    FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field { ef.name(), EMPTY_STRING, ef.is_mult() }); } );
+//  std::vector<parsed_exchange_field>    _fields;              ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
+//  WRAPPER_3(parsed_exchange_field, std::string, name, std::string, value, bool, is_mult);
+
+  for (auto& pef : _fields)
+  { const string& name = pef.name();
+
+    try
+    { const auto& t = tuple_map_assignments.at(name);
+
+      pef.value(get<1>(t));
+    }
+
+//  tuple_map_assignments.insert( { *(get<2>(t).cbegin()) /* field name */, t } );    // overwrite any previous entry with this key
+    catch (... /* const out_of_range& e */)
+    { ost << "WARNING: unable to find map assignment for key = " << name << endl;
+    }
+
+  }
+
+// for now, just declare it as having worked
+  _valid = true;
 
 
 // in what follows, "source" refers to what has been received, "destination" refers to the fields that will be logged
@@ -1424,5 +1576,14 @@ ostream& operator<<(ostream& ost, const EFT& eft)
 //      << endl;
 
   return ost;
+}
+
+const vector<pair<int /* field number */, string /* value */>> fit_matches(const map<int /* received field number */, set<string>>& matches)
+{ vector<pair<int /* field number */, string /* value */>> rv;
+
+
+
+
+  return rv;
 }
 
