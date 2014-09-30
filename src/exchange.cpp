@@ -22,11 +22,11 @@ using namespace std;
 
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 
-#undef NEW_CONSTRUCTOR
+#define NEW_CONSTRUCTOR
 
 #if defined(NEW_CONSTRUCTOR)
 
-void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t)
+void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) const
 { ost << "tuple:" << endl;
   ost << "  field number: " << get<0>(t) << endl;
   ost << "  field value: " << get<1>(t) << endl;
@@ -90,20 +90,48 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
 // for each received field, which output fields does it match?
   map<int /* received field number */, set<string>> matches;
-  const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();
+  const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
   int field_nr = 0;
 
-  for (const string& rv : copy_received_values)
+  for (const auto& pseft : exchange_field_eft)
+  { ost << "for field name = " << pseft.first << ", EFT is: " << pseft.second << endl;
+  }
+
+  for (const string& received_value : copy_received_values)
   { set<string> match;
 
     for (const auto& field : exchange_template)
     { const string& field_name = field.name();
 
       try
-      { const EFT& eft = exchange_field_eft.at(field_name);
+      { const bool is_choice = contains(field_name, "+");
 
-        if (eft.is_legal_value(rv))
-          match.insert(field_name);
+        if (is_choice)
+        { ost << "field name " << field_name << " IS CHOICE" << endl;
+
+          const vector<string> choices_vec = split_string(field_name, '+');
+          set<string> choices(choices_vec.cbegin(), choices_vec.cend());
+
+          for (auto it = choices.begin(); it != choices.end(); )    // see Josuttis 2nd edition, p. 343
+          { const EFT& eft = exchange_field_eft.at(*it);
+
+            ost << "choice field name: " << (*it) << ", EFT = " << eft << endl;
+            if (eft.is_legal_value(received_value))
+            { match.insert(field_name);                 // insert the "+" version of the name
+              it = choices.end();
+            }
+            else
+              it++;
+          }
+        }
+        else
+        { const EFT& eft = exchange_field_eft.at(field_name);
+
+          ost << "field name: " << field_name << ", EFT = " << eft << endl;
+
+          if (eft.is_legal_value(received_value))
+            match.insert(field_name);
+        }
       }
 
       catch (...)
@@ -172,7 +200,10 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     _print_tuple(tma.second);
   }
 
-  if (tuple_vector.size()) // we aren't finished
+  if (tuple_vector.empty())
+    _valid = true;
+
+  if (!_valid) // we aren't finished
   { ost << "Not finished yet" << endl;
 
     const tuple<int, string, set<string>>& t = tuple_vector[0];    // first received field we haven't been able to use, even tentatively
@@ -185,9 +216,11 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 //    const auto cit = FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
 
     if (cit != exchange_template.cend())
-    { ost << "Assuming received field #" << get<0>(t) << " with value [" << get<1>(t) << "] corresponds to " << cit->name() << endl;
+    { const string& field_name = cit->name();    // syntactic sugar
 
-      const bool inserted = (tuple_map_assignments.insert( { cit->name() /* field name */, t } )).second;
+      ost << "Assuming received field #" << get<0>(t) << " with value [" << get<1>(t) << "] corresponds to " << field_name << endl;
+
+      const bool inserted = (tuple_map_assignments.insert( { field_name, t } )).second;
 
       if (!inserted)
         ost << "WARNING: Unable to insert map assignment. This should never happen" << endl;
@@ -196,63 +229,48 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
       tuple_vector.pop_front();
 
 // remove this possible match name from all remaining elements in tuple vector
-//      for (size_t n = 0; n < tuple_vector.size(); ++n)
-//      { set<string>& ss = get<2>(tuple_vector[n]);
-//
-//        ss.erase(cit->name());
-//      }
-      FOR_ALL(tuple_vector, [=] (tuple<int, string, set<string>>& t) { get<2>(t).erase(cit->name()); } );
+      FOR_ALL(tuple_vector, [=] (tuple<int, string, set<string>>& t) { get<2>(t).erase(field_name); } );
 
       do
       { old_size_of_tuple_vector = tuple_vector.size();
 
         for (const auto& t : tuple_vector)
-        { if (get<2>(t).size() == 1)
-          { ost << "map insertion: " << *(get<2>(t).cbegin()) << " and position " << get<0>(t) << endl;
+        { if (get<2>(t).size() == 1)                             // if one element in set
+          { const string& field_name = *(get<2>(t).cbegin());    // syntactic sugar
 
-            const auto it = tuple_map_assignments.find( *(get<2>(t).cbegin()) );
+            ost << "map insertion: " << field_name << " and position " << get<0>(t) << endl;
+
+            const auto it = tuple_map_assignments.find( field_name );
 
             if (it != tuple_map_assignments.end())
               tuple_map_assignments.erase(it);
 
-            tuple_map_assignments.insert( { *(get<2>(t).cbegin()) /* field name */, t } );    // overwrite any previous entry with this key
+            tuple_map_assignments.insert( { field_name, t } );    // overwrite any previous entry with this key
           }
         }
 
-          // remove assigned tuples (changes tuple_vector)
-              REMOVE_IF_AND_RESIZE(tuple_vector,  [] (tuple<int, string, set<string>>& t) { return (get<2>(t).size() == 1); } );
+// remove assigned tuples from tuple_vector
+        REMOVE_IF_AND_RESIZE(tuple_vector,  [] (tuple<int, string, set<string>>& t) { return (get<2>(t).size() == 1); } );
 
-              for (auto& t : tuple_vector)
-              { //if (get<2>(t).size() == 1)         // one remaining entry in the set
-                { set<string>& ss = get<2>(t);
+        for (auto& t : tuple_vector)
+        { set<string>& ss = get<2>(t);
 
-                  for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
-                  { ss.erase(tm.first);
-                  }
-                }
-              }
+          for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
+            ss.erase(tm.first);
+        }
 
-              ost << "new size of tuple_vector = " << tuple_vector.size() << endl;
-            } while (old_size_of_tuple_vector != tuple_vector.size());
+        ost << "new size of tuple_vector = " << tuple_vector.size() << endl;
+      } while (old_size_of_tuple_vector != tuple_vector.size());
 
-      if (tuple_vector.size()) // we aren't finished
+      if (tuple_vector.empty())
+        _valid = true;
+
+      if (!_valid) // we aren't finished
       { ost << "Still not finished yet" << endl;
 
-        for (size_t n = 0; n < tuple_vector.size(); ++n)
-        { _print_tuple(tuple_vector[n]);
+        FOR_ALL(tuple_vector, [this] (tuple<int, string, set<string>>& t) { _print_tuple(t); } );
 
-          const auto& t = tuple_vector[n];
-          ost << get<0>(t) << ", " << get<1>(t) << ", ";
-              const set<string>& ss = get<2>(t);
 
-              ost << "{ ";
-
-              for (const auto& s : ss)
-                ost << s << "  ";
-
-              ost << "}" << endl;
-
-        }
       }
 
 
@@ -282,188 +300,17 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   }
 
 // for now, just declare it as having worked
-  _valid = true;
-
-
-// in what follows, "source" refers to what has been received, "destination" refers to the fields that will be logged
-
-// use vector<int> instead of vector<bool>
-  vector<int> is_dest_mapped(exchange_template.size());    // all set to false (0)
-  vector<int> is_source_used(exchange_template.size());    // all set to false (0)
-  set<int>    sources_examined;
-  set<int>    dest_mapped;
-
-//  int number_of_excess_values = received_values.size() - exchange_template.size();
-  unsigned int next_source = 0;
-  unsigned int next_dest = 0;
-
-// look at first field
-// name of first field
-
-  int n_attempts = 0;
-  const int MAX_ATTEMPTS = 10;
-
-// look for explicit marker for replacement call, which is a field that contains a dot
-//  vector<string> copy_received_values;
-
-  for (const auto& received_value : received_values)  // assume only one field contains a dot
-  { if (contains(received_value, "."))
-      _replacement_call = remove_char(received_value, '.');
-    else
-      copy_received_values.push_back(received_value);
-  }
-
-//  ost << "number of source fields = " << copy_received_values.size() << endl;
-//  ost << "number of dest fields = " << exchange_template.size() << endl;
-
-//  for (size_t n = 0; n < copy_received_values.size(); ++n)
-//    ost << "received value # " << n << " = " << copy_received_values[n] << endl;  // not canonical
-
-  while ( ( (sources_examined.size() != copy_received_values.size()) or (dest_mapped.size() != exchange_template.size()) ) and (n_attempts++ < MAX_ATTEMPTS) )
-  { //ost << "Attempt # " << n_attempts << endl;
-
-    //ost << "number of sources examined = " << sources_examined.size() << endl;
-    //ost << "number of dest mapped = " << dest_mapped.size() << endl;
-
-    if (dest_mapped.size() == exchange_template.size() )    // have all fields been filled?
-    { ost << "Testing after all fields have been filled" << endl;
-      if (_replacement_call.empty() and (*validity_function("CALLSIGN", rules))(copy_received_values[next_source], rules))
-      { ost << "Found a replacement call: " << copy_received_values[next_source] << endl;
-        _replacement_call = copy_received_values[next_source];
-        sources_examined.insert(next_source);
-        is_source_used[next_source] = 1;
-        next_source = ( (++next_source < copy_received_values.size()) ? next_source : 0);    // wrap
-      }
-      else    // re-map; find first destination field that this can go in
-      { const string source = copy_received_values[next_source];
-        bool remapped = false;
-
-        for (size_t n = 0; !remapped and n < exchange_template.size(); ++n)
-        { string destination_field_name = _fields[n].name();
-          const bool is_choice = contains(destination_field_name, "+");
-          string resolved_destination_field_name;
-          bool resolved = false;
-
-          if (is_choice)
-          { resolved_destination_field_name = _resolve_choice(destination_field_name, source, rules);
-
-            if (!resolved_destination_field_name.empty())
-            { destination_field_name = resolved_destination_field_name;
-              resolved = true;
-            }
-          }
-
-          if (!is_choice or (is_choice and resolved))
-          { const bool is_permitted_value_1 = (rules.exch_permitted_values(destination_field_name) < source);
-
-//            ost << "is_permitted_value_1 = " << is_permitted_value_1
-//                << "; source = " << source
-//                << "; destination field name = " << destination_field_name
-//                << "; number of permitted values = " << rules.exch_permitted_values(destination_field_name).size() << endl;
-
-//              const std::set<std::string> exch_permitted_values(const std::string& field_name) const;
-
-//            const bool is_permitted_value_1 = false;
-
-            const bool is_permitted_value = ( (is_permitted_value_1) ? true : (*validity_function(destination_field_name, rules))(source, rules) );
-
-            if (is_permitted_value)
-            { _fields[n].value(source);
-              _fields[n].name(destination_field_name);
-              sources_examined.insert(next_source);
-            }
-          }
-        }
-      }
-    }
-    else               // not all the fields have yet been filled
-    { string destination_field_name = _fields[next_dest].name();
-      const bool is_choice = contains(destination_field_name, "+");
-      string resolved_destination_field_name;
-      bool resolved = false;
-
-      if (is_choice)
-      { resolved_destination_field_name = _resolve_choice(destination_field_name, copy_received_values[next_source], rules);
-
-        if (!resolved_destination_field_name.empty())
-        { destination_field_name = resolved_destination_field_name;
-          resolved = true;
-        }
-      }
-
-      ost << "is_choice = " << is_choice << "; resolved = " << resolved << endl;
-
-      if (!is_choice or (is_choice and resolved))
-      { const set<string>& permitted_values = rules.exch_permitted_values(destination_field_name);
-        bool is_permitted_value_1 = false;
-        bool is_permitted_value_2 = false;
-        bool is_permitted_value;
-
-        if (!permitted_values.empty())
-        { is_permitted_value = (permitted_values < copy_received_values[next_source]);
-
-//      ost << "is_permitted_value (1) = " << is_permitted_value
-//          << "; source = " << copy_received_values[next_source]
-//         << "; destination field name = " << destination_field_name
-//          << "; number of permitted values = " << permitted_values.size() << endl;
-        }
-        else  // rules do not have an explicit set of permitted values
-        { const VALIDITY_FUNCTION_TYPE vf = validity_function(destination_field_name, rules);
-
-          is_permitted_value = (*vf)(copy_received_values[next_source], rules);
-        }
-
-//        ost << "destination field name = " << destination_field_name << ", tested value = " << copy_received_values[next_source] << ", is permitted value = " << is_permitted_value << endl;
-
-        if (is_permitted_value)
-        { _fields[next_dest].value(copy_received_values[next_source]);
-          _fields[next_dest].name(destination_field_name);
-          is_dest_mapped[next_dest] = 1;
-          is_source_used[next_source] = 1;
-          sources_examined.insert(next_source);
-          dest_mapped.insert(next_dest);
-          next_source = ( (++next_source < copy_received_values.size()) ? next_source : 0);    // wrap
-          next_dest = ( (++next_dest < exchange_template.size()) ? next_dest : 0);    // wrap
-        }
-        else        // value does not match template
-        {
-// have we allocated a replacement call?
-          if (_replacement_call.empty() and (*validity_function("CALLSIGN", rules))(copy_received_values[next_source], rules))
-          { _replacement_call = copy_received_values[next_source];
-            sources_examined.insert(next_source);
-            is_source_used[next_source] = 1;
-            next_source = ( (++next_source < copy_received_values.size()) ? next_source : 0);    // wrap
-          }
-          else    // we have allocated a replacement call
-            next_dest = ( (++next_dest < exchange_template.size()) ? next_dest : 0);    // wrap
-        }
-      }
-      else // unresolved choice
-      {
-// have we allocated a replacement call?
-        if (_replacement_call.empty() and (*validity_function("CALLSIGN", rules))(copy_received_values[next_source], rules))
-        { _replacement_call = copy_received_values[next_source];
-          sources_examined.insert(next_source);
-          is_source_used[next_source] = 1;
-          next_source = ( (++next_source < copy_received_values.size()) ? next_source : 0);    // wrap
-        }
-        else    // we have allocated a replacement call
-          next_dest = ( (++next_dest < exchange_template.size()) ? next_dest : 0);    // wrap
-      }
-    }
-  }
-
-  if (n_attempts < MAX_ATTEMPTS)
-    _valid = true;
+//  _valid = true;
 
 // normalize some of the exchange fields ... so that we don't mistakenly count each legitimate value more than once in statistics
   if (_valid)
-  { for (auto it = _fields.begin(); it != _fields.end(); ++it)
-    { //ost << "pexch field " << it->name() << " has value " << it->value() << endl;
-      it->value(rules.canonical_value(it->name(), it->value()));
-      //ost << "pexch field " << it->name() << " now has value " << it->value() << endl;
-    }
-  }
+//  { //for (auto it = _fields.begin(); it != _fields.end(); ++it)
+    //{ //ost << "pexch field " << it->name() << " has value " << it->value() << endl;
+     // it->value(rules.canonical_value(it->name(), it->value()));
+    //  //ost << "pexch field " << it->name() << " now has value " << it->value() << endl;
+    //}
+    FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
+//  }
 }
 
 #endif

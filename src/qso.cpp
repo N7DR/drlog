@@ -306,7 +306,7 @@ void QSO::populate_from_log_line(const string& str)
   _epoch_time = _to_epoch_time(_date, _utc);
 
 //  ost << "_epoch_time = " << _epoch_time << endl;
-  ost << "in populate_from_log_line; _is_country_mult = " << _is_country_mult << endl;
+//  ost << "in populate_from_log_line; _is_country_mult = " << _is_country_mult << endl;
 }
 
 /// are any of the exchange fields a mult?
@@ -332,14 +332,11 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
   if (!record_length)                                         // if we don't yet know the record length
   { const vector<string> template_fields = split_string(cabrillo_qso_template, ",");         // colon-delimited values
   
-//    for (unsigned int n = 0; n < template_fields.size(); ++n)
     for (const auto& template_field : template_fields)
       individual_values.push_back(split_string(remove_peripheral_spaces(template_field), ":"));
   
-//    for (unsigned int n = 0; n < individual_values.size(); ++n)
     for (const auto& value : individual_values)
-    { //const vector<string>& vec = individual_values[n];
-      const unsigned int last_char_posn = from_string<unsigned int>(value[1]) + from_string<unsigned int>(value[2]) - 1;
+    { const unsigned int last_char_posn = from_string<unsigned int>(value[1]) + from_string<unsigned int>(value[2]) - 1;
 
       record_length = max(last_char_posn, record_length);    
     }
@@ -357,18 +354,11 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
     const unsigned int posn = from_string<unsigned int>(vec[1]) - 1;
     const unsigned int len  = from_string<unsigned int>(vec[2]);
     pad_direction pdirn = PAD_LEFT;
-
     char pad_char = ' ';
       
     if (vec.size() == 4)
-    { // ost << "looking for padding for " << name << " => " << vec[3] << endl;
-
-      if (vec[3][0] == 'R')
-    { // ost << "PADDING TO RIGHT" << endl;
-      pdirn = PAD_RIGHT;
-    }
-//      else
-//        ost << "Pad direction = " << vec[3][0] << endl;
+    { if (vec[3][0] == 'R')
+        pdirn = PAD_RIGHT;
 
       if (vec[3].size() == 2)    // if we define a pad char
         pad_char = vec[3][1];
@@ -477,9 +467,12 @@ specification tells us otherwise, that's what we do.
     if (name.substr(0, 6) == "TEXCH-")
     { const string field_name = name.substr(6);
     
-      for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
-        if (_sent_exchange[n].first == field_name)
-          value = _sent_exchange[n].second;
+//      for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
+//        if (_sent_exchange[n].first == field_name)
+//          value = _sent_exchange[n].second;
+      for (const auto& pss : _sent_exchange)
+        if (pss.first == field_name)
+          value = pss.second;
     }
 
 // REXCH-xxx
@@ -501,7 +494,6 @@ specification tells us otherwise, that's what we do.
     record.replace(posn, len, value);             // put into record
     
     ost << "record: " << record << endl;
-//    ost << "record length: " << record.length() << endl;
   }
 
   return record;
@@ -536,14 +528,11 @@ const string QSO::verbose_format(void) const
   rv += " frequency=" + pad_string(_frequency, FREQUENCY_WIDTH);
   rv += " mycall=" + pad_string(_my_call, CALLSIGN_WIDTH, PAD_RIGHT);
 
-//  for (size_t n = 0; n < _sent_exchange.size(); ++n)
   for (const auto& exch_field : _sent_exchange)
-  { //const pair<string, string>& exch_field = _sent_exchange[n];
-    const string name = "sent-" + exch_field.first;
+  { const string name = "sent-" + exch_field.first;
     const auto cit = TX_WIDTH.find(name);
     const string value = (cit == TX_WIDTH.cend() ? exch_field.second : pad_string(exch_field.second, cit->second.first, cit->second.second));
   
-//    rv += " sent-" + exch_field.first + "=" + exch_field.second;
     rv += " " + name + "=" + value;
   } 
 
@@ -554,15 +543,10 @@ const string QSO::verbose_format(void) const
 
     rv += " " + name + "=" + value;
   }
-//    rv += (" received-" + field.name() + "=" + field.value());
-
 
   rv += " points=" + to_string(_points);
   rv += static_cast<string>(" dupe=") + (_is_dupe ? "true " : "false");
-
   rv += " comment=" + _comment;
-
-//  ost << "verbose_format() returning: " << rv << endl;
     
   return rv; 
 }
@@ -673,17 +657,13 @@ const string QSO::log_line(void)
   rv += pad_string(utc(), 9);
   rv += pad_string(MODE_NAME[mode()], 4);
   rv += pad_string(freq(), 8);
-
-//  ost << "rv = *" << rv << "*" << endl;
-
   rv += pad_string(pad_string(callsign(), CALL_FIELD_LENGTH, PAD_RIGHT), CALL_FIELD_LENGTH + 1);
-
-//  ost << "rv = *" << rv << "*" << endl;
 
 //  for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
 //    rv += " " + _sent_exchange[n].second;
 
-  for_each(_sent_exchange.cbegin(), _sent_exchange.cend(), [&] (pair<string, string> se) { rv += " " + se.second; });
+//  for_each(_sent_exchange.cbegin(), _sent_exchange.cend(), [&] (pair<string, string> se) { rv += " " + se.second; });
+  FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += " " + se.second; });
 
 // print in same order the are present in the config file
 //    for (size_t n = 0; n < _received_exchange.size(); ++n)

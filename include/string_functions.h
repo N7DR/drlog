@@ -294,14 +294,9 @@ inline const std::string remove_peripheral_spaces(std::string& s)
 
 template <typename T>
 T remove_peripheral_spaces(T& t)
-{ //T rv;
-//  for_each(t.begin(), t.end(), [&rv](std::string& s) { rv.push_back(remove_peripheral_spaces(s)); } );
-  typename std::remove_const<T>::type rv;
+{ typename std::remove_const<T>::type rv;
 
   for_each(t.begin(), t.end(), [&rv](const std::string& s) { rv.push_back(remove_peripheral_spaces(s)); } );
-
-//  for (const auto& str : t)
-//    rv.push_back(remove_peripheral_spaces(str));
 
   return rv;
 }
@@ -331,18 +326,6 @@ const std::string remove_char(const std::string& cs, const char char_to_remove);
   <i>delim_2</i> does not appear after <i>delim_1</i>
 */
 const std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2);
-
-/*! \brief  Obtain a delimited substring
-  \param  s Original string
-  \param  delim_1 opening delimiter
-  \param  delim_2 closing delimiter
-  \param  del     whether to remove substrings and delimiters from <i>s</i>
-  \return substring between <i>delim_1</i> and <i>delim_2</i>
-  
-  Returns the empty string if the delimiters do not exist, or if
-  <i>delim_2</i> does not appear after <i>delim_1</i>
-*/
-//const std::string delimited_substring(std::string& s, const char delim_1, const char delim_2, const bool del = false);
 
 // join all the elements of a string vector together, with a known separator
 const std::string join(const std::vector<std::string>& vec, const std::string& sep /* = " " */);

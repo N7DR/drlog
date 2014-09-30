@@ -63,7 +63,7 @@ protected:
 
   void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
 
-  void _print_tuple(const std::tuple<int, std::string, std::set<std::string>>& t);
+  void _print_tuple(const std::tuple<int, std::string, std::set<std::string>>& t) const;
 
 public:
 
