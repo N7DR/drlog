@@ -11,6 +11,8 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+#define NEW_CONSTRUCTOR
+
 /*!     \file macros.h
 
         Macros and templates for drlog.

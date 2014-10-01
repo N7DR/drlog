@@ -114,7 +114,13 @@ const string sunrise(const string& callsign,
                      const bool calc_sunset = false);
 const string sunset(const string& callsign);
 void swap_rit_xit(void);
+
+#if defined(NEW_CONSTRUCTOR)
+void test_exchange_templates(const contest_rules&, const string& test_filename);
+#else
 void test_exchange_templates(const string& test_filename);
+#endif
+
 void toggle_drlog_mode(void);
 void update_batch_messages_window(const string& callsign = string());
 void update_fuzzy_window(const string& callsign);
@@ -455,10 +461,6 @@ int main(int argc, char** argv)
     context = *context_p;
     delete context_p;
 
-// possibly test regex exchanges; this will exit if it executes
-    if (cl.value_present("-test-exchanges"))
-      test_exchange_templates(cl.value("-test-exchanges"));
-
 // read the country data
     cty_data* country_data_p = nullptr;
 
@@ -559,6 +561,10 @@ int main(int argc, char** argv)
     callsign_mults_used = rules.callsign_mults_used();
     country_mults_used = rules.country_mults_used();
     exchange_mults_used = rules.exchange_mults_used();
+
+// possibly test regex exchanges; this will exit if it executes
+    if (cl.value_present("-test-exchanges"))
+      test_exchange_templates(rules, cl.value("-test-exchanges"));
 
 // real-time statistics
     try
@@ -5634,6 +5640,57 @@ void display_nearby_callsign(const string& callsign)
   }
 }
 
+#if defined(NEW_CONSTRUCTOR)
+void test_exchange_templates(const contest_rules& rules, const string& test_filename)
+{ ost << "executing -test-exchanges" << endl;
+
+//const std::set<std::string> all_known_field_names(void) const;
+  const set<string> field_names = rules.all_known_field_names();
+
+//  ost << "exchange templates:" << endl;
+
+//  const auto db = EXCHANGE_FIELD_TEMPLATES.db();
+
+//  for (const auto& kv : db)
+//    ost << "  " << kv.first << " : " << kv.second << endl;
+
+//  const string test_filename = cl.value("-test-exchanges");
+
+  ost << "reading file: " << test_filename << endl;
+
+  try
+  { const vector<string> targets = to_lines(read_file(test_filename));
+
+    ost << "contents: " << endl;
+
+    for (const auto& target : targets)
+      ost << "  " << target << endl;
+
+    for (const auto& target : targets)
+    { vector<string> matches;
+
+      for (const auto& field_name : field_names)
+      { const EFT exchange_field_eft(field_name);
+
+        if (exchange_field_eft.is_legal_value(target))
+          matches.push_back(field_name);
+      }
+
+      ost << "matches for " << target << ": " << endl;
+
+      for (const auto& match : matches)
+      { ost << "  " << match << endl;
+      }
+    }
+  }
+
+  catch (const string_function_error& e)
+  { ost << "Error: unable to read file: " << test_filename << endl;
+  }
+
+  exit(0);
+}
+#else
 void test_exchange_templates(const string& test_filename)
 { ost << "executing -test-exchanges" << endl;
   ost << "exchange templates:" << endl;
@@ -5671,4 +5728,5 @@ void test_exchange_templates(const string& test_filename)
 
   exit(0);
 }
+#endif
 

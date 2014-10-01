@@ -298,10 +298,6 @@ protected:
 
   bool _is_mult;                       ///< is this field a mult?
 
-//  const std::set<std::string>  _all_legal_non_regex_values(void) const;
-
-//  const std::string _equivalent_canonical_value(const std::string& str) const;
-
 public:
 
 /// construct from name
@@ -319,15 +315,6 @@ public:
   READ(values);
   READ(legal_non_regex_values);
   READ(value_to_canonical);
-
-/// is an algorithm defined?
-//  const bool defined(void) const;
-
-//  inline const bool is_regex_defined(void) const
-//    { return !_regex_expression.empty(); }
-
-//  inline const bool is_values_defined(void) const
-//    { return !_values.empty(); }
 
 /*! \brief  Get regex expression from file
     \param  path      paths to try
