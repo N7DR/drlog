@@ -24,7 +24,9 @@ class exchange_field_template;
 
 extern pt_mutex exchange_field_database_mutex;
 
+#if !defined(NEW_CONSTRUCTOR)
 extern exchange_field_template EXCHANGE_FIELD_TEMPLATES;
+#endif
 
 extern const std::string process_cut_digits(const std::string& input);
 
@@ -51,7 +53,8 @@ protected:
   bool                                  _valid;               ///< is the object valid? (i.e., was parsing successful?)
 
 
-/*! \brief  Given several possible field names, choose one that fits the data
+#if !defined(NEW_CONSTRUCTOR)
+  /*! \brief  Given several possible field names, choose one that fits the data
     \param  choice_name   the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
     \param  received_field the value of the received field
     \return the individual name of a field in <i>choice_name</i> that fits the data
@@ -60,6 +63,7 @@ protected:
     If there is no fit, then returns the empty string.
 */
   const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
+#endif
 
   void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
 
@@ -166,6 +170,7 @@ public:
     { return _db.size(); }
 };
 
+#if !defined(NEW_CONSTRUCTOR)
 // -------------------------  exchange_field_template  ---------------------------
 
 /*!     \class exchange_field_template
@@ -209,7 +214,9 @@ public:
 /// Return regex for a name; returns empty regex if the name is invalid
   const boost::regex expression(const std::string& str) const;
 };
+#endif
 
+#if !defined(NEW_CONSTRUCTOR)
 /*! \brief  Is a string a valid callsign?
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of callsign
@@ -270,6 +277,7 @@ typedef const bool (*VALIDITY_FUNCTION_TYPE)(const std::string& field_name, cons
     \return the validity function corresponding to <i>field_name</i>
 */
 VALIDITY_FUNCTION_TYPE validity_function(const std::string& field_name, const contest_rules& rules);
+#endif
 
 // -------------------------  EFT  ---------------------------
 

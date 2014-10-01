@@ -990,15 +990,14 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             { winfo.fg_colour(window_info[3]);
 
               if (window_info.size() >= 5)
-              { winfo.bg_colour(window_info[4]);
-              }
+                winfo.bg_colour(window_info[4]);
 
               winfo.colours_set(true);
             }
 
             vector<window_information> vec = _static_windows[name].second;
-            vec.push_back(winfo);
 
+            vec.push_back(winfo);
             _static_windows[name] = { contents, vec };
           }
         }
@@ -1038,10 +1037,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             if (cit != key_names.cend())
             { const int keysym = cit->second;
 
-//              ost << "found keysym for equivalent key = " << hex << keysym << dec << endl;
-
-//              const map<int, string>::const_iterator cit3 = _messages.find(keysym);
-
               if (_messages.find(keysym) == _messages.cend())  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
 
@@ -1075,8 +1070,10 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
   if (_cabrillo_callsign == string())
     _cabrillo_callsign = _my_call;
 
+#if !defined(NEW_CONSTRUCTOR)
   if (!_exchange_fields_filename.empty())
     EXCHANGE_FIELD_TEMPLATES.prepare(_path, _exchange_fields_filename);
+#endif
 
   if (_qsl_message.empty())
     _qsl_message = "tu " + _my_call + " test";

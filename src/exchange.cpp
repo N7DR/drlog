@@ -22,9 +22,11 @@ using namespace std;
 
 extern EFT CALLSIGN_EFT;
 
+#if !defined(NEW_CONSTRUCTOR)
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
+#endif
 
-#define NEW_CONSTRUCTOR
+//#define NEW_CONSTRUCTOR
 
 #if defined(NEW_CONSTRUCTOR)
 
@@ -686,10 +688,10 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
   if ((field_name == "RDA") or (field_name == "RD2"))
-  { static const set<string> countries { "UA", "UA2", "UA9" };
+  { //static const set<string> countries { "UA", "UA2", "UA9" };
     string rv;
 
-    if (!drm_line.empty() and (countries < location_db.canonical_prefix(callsign)))
+    if (!drm_line.empty() and (set<string>( { "R1FJ", "UA", "UA2", "UA9" } ) < location_db.canonical_prefix(callsign)))
     { rv = drm_line.qth();
 
       if (!rv.empty())
@@ -701,12 +703,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
 
 // no entry in drmaster database; can we determine from the location database?
-
-//    ost << "no entry in database" << endl;
-
     rv = location_db.region_abbreviation(callsign);
-
-//    ost << "location_db.region_abbreviation() for " << callsign << " is: " << rv << endl;
 
     if (!rv.empty())    // should always be true
     { _db.insert( { { callsign, field_name }, rv } );
@@ -771,14 +768,15 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
 { SAFELOCK(exchange_field_database);
 
-  ost << "in exchange_field_database::set_value(); initial size = " << _db.size() << endl;
-  ost << "callsign = " << callsign << ", field_name = " << field_name << ", value = " << value << endl;
+//  ost << "in exchange_field_database::set_value(); initial size = " << _db.size() << endl;
+//  ost << "callsign = " << callsign << ", field_name = " << field_name << ", value = " << value << endl;
 
   _db[ { callsign, field_name } ] = value;    // don't use insert, since we must overwrite
 
-  ost << "final size = " << _db.size() << endl;
+//  ost << "final size = " << _db.size() << endl;
 }
 
+#if !defined(NEW_CONSTRUCTOR)
 // -------------------------  exchange_field_template  ---------------------------
 
 /*!     \class exchange_field_template
@@ -864,6 +862,7 @@ const boost::regex exchange_field_template::expression(const string& str) const
 
   return _db.at(str);
 }
+#endif
 
 /*! \brief          Replace cut numbers with real numbers
     \param  input   string possibly containing cut numbers
@@ -888,6 +887,7 @@ const string process_cut_digits(const string& input)
   return rv;
 }
 
+#if !defined(NEW_CONSTRUCTOR)
 /*! \brief  Is a string a valid CW power?
     \param  str   the string to test
     \return whether <i>str</i> is a legal value of CW power
@@ -1068,7 +1068,9 @@ VALIDITY_FUNCTION_TYPE validity_function(const string& field_name, const contest
 
   return &is_valid_ANYTHING;    // default
 }
+#endif
 
+#if !defined(NEW_CONSTRUCTOR)
 /*! \brief  Given several possible field names, choose one that fits the data
     \param  choice_name   the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
     \param  received_field the value of the received field
@@ -1094,6 +1096,7 @@ const string parsed_exchange::_resolve_choice(const string& choice_name, const s
 
   return string();
 }
+#endif
 
 void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const vector<string>& received_values)
 { set<int> matched_field_numbers;
