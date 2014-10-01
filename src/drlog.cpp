@@ -238,17 +238,17 @@ qtc_database qtc_db;    ///< sent QTCs
 qtc_buffer   qtc_buf;   ///< all sent and unsent QTCs
 bool send_qtcs = false;  // whether QTCs are used; set from rules later
 
+EFT CALLSIGN_EFT("CALLSIGN");
+
 // windows -- these should automatically be thread_safe
 window win_band_mode,               ///< the band and mode indicator
        win_bandmap,                 ///< the bandmap for the current band
        win_bandmap_filter,          ///< bandmap filter information
        win_batch_messages,          ///< messages from the batch messages file
        win_call,                    ///< callsign of other station, or command
-//       win_call_needed,             ///< bands on which this call is needed
        win_cluster_line,            ///< last line received from cluster
        win_cluster_mult,            ///< mults received from cluster
        win_cluster_screen,          ///< interactive screen on to the cluster
-//       win_country_needed,          ///< bands on which this country is needed
        win_date,                    ///< the date
        win_drlog_mode,              ///< indicate whether in CQ or SAP mode
        win_exchange,                ///< QSO exchange received from other station
@@ -513,6 +513,9 @@ int main(int argc, char** argv)
     }
 
     location_db.add_russian_database(context.path(), context.russian_filename());
+
+// make callsign parser available now that we can create it
+    CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context.path(), context.exchange_fields_filename(), context, location_db);
 
 // build super check partial database from the drmaster information
     try

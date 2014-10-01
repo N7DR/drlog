@@ -19,7 +19,6 @@
 #include "bands-modes.h"
 #include "cty_data.h"
 #include "drlog_context.h"
-//#include "exchange.h"
 #include "macros.h"
 #include "pthread_support.h"
 #include "serialization.h"
@@ -281,6 +280,7 @@ protected:
            > >                                  _permitted_to_canonical;
 
   std::map<std::string /* field name */, EFT>   _exchange_field_eft;
+//  EFT                                           _callsign_eft;          // in general, there might be a new callsign in the exchange window, so make sure we can parse it
 
 // copied from context, so that we can score correctly without loading context
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score
@@ -379,6 +379,8 @@ public:
   SAFEREAD(exchange_field_eft, rules);
 
   const EFT exchange_field_eft(const std::string& field_name) const;
+
+//  SAFEREAD(callsign_eft, rules);
 
 /// Get all the known names of exchange fields
   const std::set<std::string> all_known_field_names(void) const;

@@ -20,6 +20,8 @@
 using namespace boost;
 using namespace std;
 
+extern EFT CALLSIGN_EFT;
+
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 
 #define NEW_CONSTRUCTOR
@@ -78,15 +80,15 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
   if (!_replacement_call.empty())    // remove the dotted field(s)
   { copy_received_values.clear();
-    copy_if(received_values.cbegin(), received_values.cend(), back_inserter(copy_received_values), [] (const string& str) { return contains(str, "."); } );
+    copy_if(received_values.cbegin(), received_values.cend(), back_inserter(copy_received_values), [] (const string& str) { return !contains(str, "."); } );
   }
 
 // generate reverse vectors for comparisons
-  vector<string> reverse_received_values(copy_received_values);
-  REVERSE(reverse_received_values);
+//  vector<string> reverse_received_values(copy_received_values);
+//  REVERSE(reverse_received_values);
 
-  decltype(_fields) reverse_fields(_fields);
-  REVERSE(reverse_fields);
+//  decltype(_fields) reverse_fields(_fields);
+//  REVERSE(reverse_fields);
 
 // for each received field, which output fields does it match?
   map<int /* received field number */, set<string>> matches;
@@ -215,7 +217,23 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
 //    const auto cit = FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
 
+//    if (cit == exchange_template.cend())
+//    { ost << "no match for any expected exchange field" << endl;
+//
+//      if (_replacement_call.empty())  // maybe test for replacement call
+//      { const bool replace_callsign = CALLSIGN_EFT.is_legal_value(get<1>(t));
+//
+//        if (replace_callsign)
+//        { _replacement_call = get<1>(t);
+//
+ //         if (t.size() == 1)
+ //           _valid = true;
+//        }
+//      }
+//    }
+
     if (cit != exchange_template.cend())
+//    if (!_valid)
     { const string& field_name = cit->name();    // syntactic sugar
 
       ost << "Assuming received field #" << get<0>(t) << " with value [" << get<1>(t) << "] corresponds to " << field_name << endl;
@@ -264,11 +282,35 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
       if (tuple_vector.empty())
         _valid = true;
+    }
 
-      if (!_valid) // we aren't finished
+      if (!_valid) // we aren't finished -- tuple_vector is not empty
       { ost << "Still not finished yet" << endl;
 
         FOR_ALL(tuple_vector, [this] (tuple<int, string, set<string>>& t) { _print_tuple(t); } );
+
+        const tuple<int, string, set<string>>& t = tuple_vector[0];
+
+        const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
+    //    const auto cit = FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
+
+        if (cit == exchange_template.cend())
+        { ost << "no match for any expected exchange field" << endl;
+
+          if (_replacement_call.empty())  // maybe test for replacement call
+          { const bool replace_callsign = CALLSIGN_EFT.is_legal_value(get<1>(t));
+
+            if (replace_callsign)
+            { _replacement_call = get<1>(t);
+
+              ost << "last-ditch call replacement: " << _replacement_call << endl;
+
+              if (tuple_vector.size() == 1)
+                _valid = true;
+            }
+          }
+
+
 
 
       }
@@ -276,6 +318,8 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
     }
 
+    if (!_valid)
+      ost << "unable to parse exchange" << endl;
   }
 
   // prepare output; includes optional fields and all choices
