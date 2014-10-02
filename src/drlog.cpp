@@ -4245,14 +4245,17 @@ void populate_win_info(const string& callsign)
       for (const auto& callsign_mult : callsign_mults)
       { string callsign_mult_value;
 
-        if (callsign_mult == "WPXPX")
+        if ( (callsign_mult == "AAPX")  and (location_db.continent(callsign) == "AS") )  // All Asian
           callsign_mult_value = wpx_prefix(callsign);
 
-        if ( (callsign_mult == "AAPX")  and (location_db.continent(callsign) == "AS") )  // All Asian
-         callsign_mult_value = wpx_prefix(callsign);
+        if ( (callsign_mult == "OCPX")  and (location_db.continent(callsign) == "OC") )  // Oceania
+          callsign_mult_value = wpx_prefix(callsign);
 
         if (callsign_mult == "SACPX")      // SAC
           callsign_mult_value = sac_prefix(callsign);
+
+        if (callsign_mult == "WPXPX")
+          callsign_mult_value = wpx_prefix(callsign);
 
         if (!callsign_mult_value.empty())
         { line = pad_string(callsign_mult + " [" + callsign_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
@@ -4405,6 +4408,23 @@ void update_known_callsign_mults(const string& callsign)
     const set<string> callsign_mults = rules.callsign_mults();           ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
     if ( (callsign_mults < string("AAPX")) and (continent == "AS") )
+    { bool is_known;
+
+      { SAFELOCK(known_callsign_mults);
+        is_known = (known_callsign_mults < prefix);
+      }
+
+      if (!is_known)
+      {
+        { SAFELOCK(known_callsign_mults);
+          known_callsign_mults.insert(prefix);
+        }
+
+        update_remaining_callsign_mults_window(statistics);
+      }
+    }
+
+    if ( (callsign_mults < string("OCPX")) and (continent == "OC") )
     { bool is_known;
 
       { SAFELOCK(known_callsign_mults);
@@ -4979,6 +4999,9 @@ const string callsign_mult_value(const string& callsign_mult_name, const string&
 { if ( (callsign_mult_name == "AAPX")  and (location_db.continent(callsign) == "AS") )  // All Asian
     return wpx_prefix(callsign);
 
+  if ( (callsign_mult_name == "AOCX")  and (location_db.continent(callsign) == "OC") )  // Oceania
+    return wpx_prefix(callsign);
+
   if (callsign_mult_name == "SACPX")      // SAC
     return sac_prefix(callsign);
 
@@ -5210,22 +5233,28 @@ void allow_for_callsign_mults(QSO& qso)
 
     string mult_name;
 
-    if (rules.callsign_mults() < static_cast<string>("WPXPX"))
-    { qso.prefix(wpx_prefix(qso.callsign()));
-      ost << "added WPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
-      mult_name = "WPXPX";
-    }
-
-    if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") /* and qso.prefix().empty() */)  // All Asian
+    if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") )  // All Asian
     { qso.prefix(wpx_prefix(qso.callsign()));
       ost << "added AAPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "AAPX";
     }
 
-    if ( (rules.callsign_mults() < static_cast<string>("SACPX")) /* and (qso.prefix().empty()) */ )      // SAC
+    if ( (rules.callsign_mults() < static_cast<string>("OCPX")) and (location_db.continent(qso.callsign()) == "OC") )  // Oceania
+    { qso.prefix(wpx_prefix(qso.callsign()));
+      ost << "added OCPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      mult_name = "OCPX";
+    }
+
+    if ( (rules.callsign_mults() < static_cast<string>("SACPX")) )      // SAC
     { qso.prefix(sac_prefix(qso.callsign()));
       ost << "added SACPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "SACPX";
+    }
+
+    if (rules.callsign_mults() < static_cast<string>("WPXPX"))
+    { qso.prefix(wpx_prefix(qso.callsign()));
+      ost << "added WPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      mult_name = "WPXPX";
     }
 
 // see if it's a mult... requires checking if mults are per-band
