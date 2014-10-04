@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 61 2014-05-03 16:34:34Z  $
+// $Id: bands-modes.h 78 2014-10-04 17:00:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -166,6 +166,22 @@ public:
 /// frequency != frequency
   inline const bool operator!=(const frequency& f) const
     { return !(*this == f); }
+
+/// frequency < frequency
+  inline const bool operator<(const frequency& f) const
+    { return (_hz < f._hz); }
+
+/// frequency <= frequency
+  inline const bool operator<=(const frequency& f) const
+    { return (_hz <= f._hz); }
+
+/// frequency > frequency
+  inline const bool operator>(const frequency& f) const
+    { return (_hz > f._hz); }
+
+/// frequency >= frequency
+  inline const bool operator>=(const frequency& f) const
+    { return (_hz >= f._hz); }
 
 /// allow archiving
   template<typename Archive>

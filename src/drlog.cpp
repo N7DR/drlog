@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 77 2014-09-27 22:23:23Z  $
+// $Id: drlog.cpp 78 2014-10-04 17:00:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -73,11 +73,10 @@ const string active_window_name(void);
 void add_qso(const QSO& qso);
 void alert(const string& msg);
 void allow_for_callsign_mults(QSO& qso);  // may change qso
-//inline void append_to_file(const string& filename, const string& str)
-//  { ofstream(filename, ios_base::app) << str;
-//  }
 void archive_data(void);
+
 const string bearing(const string& callsign);
+
 const bool calculate_exchange_mults(QSO& qso,
                                     const contest_rules& rules);
 const string callsign_mult_value(const string& callsign_mult_name,
@@ -1625,7 +1624,18 @@ void* display_rig_status(void* vp)
         const string bandwidth_str = to_string(rig_status_thread_parameters.rigp()->bandwidth());
 
 // now display the status
-        win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT < pad_string(f.display_string(), 7);
+        win_rig.default_colours(win_rig.fg(), context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);
+ //       window& default_colours(const int foreground_colour, const int background_colour);
+
+        ost << "set background colour to: " << (context.mark_frequency(f) ? "RED" : "BLACK") << endl;
+
+        win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT;
+
+//        win_rig.bg(context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);
+
+//        ost << "set background colour to: " << (context.mark_frequency(f) ? "RED" : "BLACK") << endl;
+
+        win_rig < pad_string(f.display_string(), 7);
 
         if (rig_status_thread_parameters.rigp()->is_locked())
           win_rig < "L";
@@ -4884,7 +4894,7 @@ const bool is_needed_qso(const string& callsign, const BAND b)
 
 // RIT changes via hamlib, at least on the K3, are *very* slow
 void rit_control(const keyboard_event& e)
-{const int change = (e.symbol() == XK_Shift_L ? -context.shift_delta() : context.shift_delta());                            // 20 Hz
+{ const int change = (e.symbol() == XK_Shift_L ? -context.shift_delta() : context.shift_delta());
   int poll = context.shift_poll();
 
   try
@@ -4895,7 +4905,8 @@ void rit_control(const keyboard_event& e)
       { rig.rit(last_rit + change);                 // this takes forever through hamlib
         last_rit += change;
 
-        sleep_for(milliseconds(poll));
+        if (poll)
+          sleep_for(milliseconds(poll));
       } while (keyboard.empty());                      // the next event should be a key-release, but anything will do
     }
   }

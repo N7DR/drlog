@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 73 2014-08-30 14:44:01Z  $
+// $Id: drlog_context.h 78 2014-10-04 17:00:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -114,7 +114,6 @@ protected:
   std::string                                  _cluster_username;         ///< username to use on the cluster
   std::string                                  _contest_name;             ///< name of the contest
   std::vector<std::pair<std::string, std::string>> _country_exceptions;   ///< calls to be placed in non-default country
-//  std::map<std::string, std::set<std::string>> _country_exchange;         ///< allowed exchanges values as a function of country
   enum country_list_type                       _country_list;             ///< DXCC or WAE list?
   std::string                                  _country_mults_filter;     ///< the command from the configuration file
   bool                                         _country_mults_per_band;   ///< are country mults per-band?
@@ -122,7 +121,6 @@ protected:
   bool                                         _cq_auto_rit;              ///< whether to enable RIT in CQ mode
   std::array<std::string, CQ_MEMORY_MESSAGES + 1>
                                                _cq_memory;                ///< CQ memories, counted wrt 1
-//  std::string                                  _cq_menu;                  ///< menu displayed in CQ mode
   std::string                                  _cty_filename;             ///< filename of country file (default = "cty.dat")
   unsigned int                                 _cw_speed;                 ///< Speed in WPM
 
@@ -150,6 +148,7 @@ protected:
 
   std::string                                  _logfile;             ///< name of the log filename
 
+  std::vector<std::pair<frequency, frequency>> _mark_frequencies;    ///< frequency ranges to be marked on-screen
   unsigned int                                 _match_minimum;       ///< number of characters before SCP or fuzzy match kicks in
   std::array<std::string, MAX_MEMORY_MESSAGES> _memory_messages;     ///< canned messages
   std::string                                  _message_cq_1;        ///< CQ message #1 (generally, a short CQ)
@@ -328,6 +327,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
   SAFEREAD(logfile, _context);
 
+  SAFEREAD(mark_frequencies, _context);
   SAFEREAD(match_minimum, _context);
   SAFEREAD(modes, _context);
   SAFEREAD(my_call, _context);
@@ -439,6 +439,8 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(messages, _context);
 
   const std::vector<std::string> window_name_contains(const std::string& substr) const;
+
+  const bool mark_frequency(const frequency& f);
 };
 
 #endif    // DRLOG_CONTEXT_H

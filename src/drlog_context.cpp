@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 73 2014-08-30 14:44:01Z  $
+// $Id: drlog_context.cpp 78 2014-10-04 17:00:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -401,6 +401,24 @@ void drlog_context::_process_configuration_file(const string& filename)
 // LOG
     if (starts_with(testline, "LOG") and !rhs.empty())
       _logfile = rhs;
+
+// MARK FREQUENCIES
+    if (starts_with(testline, "MARK FREQUENCIES") and !rhs.empty())
+    { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
+
+      for (const string& range : ranges)
+      { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
+
+        try
+        { _mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+        }
+
+        catch (...)
+        { ost << "Parse error in MARK FREQUENCIES" << endl;
+          exit(-1);
+        }
+      }
+    }
 
 // MATCH MINIMUM
     if (starts_with(testline, "MATCH MINIMUM"))
@@ -1150,6 +1168,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),  // 500 Hz guard band on CW, 2 kHz on slopbucket
   _individual_messages_file(),                // no file of individual messages
   _logfile("drlog.dat"),                      // name of log file
+  _mark_frequencies(),                        // don't mark any frequencies
   _match_minimum(4),                          // 4 characters required for SCP or fuzzy match
   _message_cq_1(),                            // no short CQ (default is changed once configuration file has been read)
   _message_cq_2(),                            // no long CQ (default is changed once configuration file has been read)
@@ -1228,5 +1247,18 @@ const vector<string> drlog_context::window_name_contains(const string& substr) c
       rv.push_back(cit->first);
 
   return rv;
+}
+
+const bool drlog_context::mark_frequency(const frequency& f)
+{ SAFELOCK(_context);
+
+  for (const auto& pff : _mark_frequencies)
+  { if ( (f >= pff.first) and (f <= pff.second))
+    {  ost << "frequencies: " << f.display_string() << ", " << pff.first.display_string() << ", " << pff.second.display_string() << endl;
+      return true;
+    }
+  }
+
+  return false;
 }
 
