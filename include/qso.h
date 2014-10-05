@@ -165,7 +165,7 @@ public:
   const std::string verbose_format(void) const;  
 
 /// read fields from a line in the disk log
-  void populate_from_verbose_format(const std::string& str, const contest_rules& rules, running_statistics& statistics);
+  void populate_from_verbose_format(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
 
 /// does the QSO match an expression for a received exchange field?
   const bool exchange_match(const std::string& rule_to_match) const;

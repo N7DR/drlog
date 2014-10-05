@@ -179,9 +179,9 @@ void update_remaining_exch_mults_window(const string&,
                                         const contest_rules&,
                                         running_statistics&,
                                         const BAND b = safe_get_band());
-void update_remaining_exch_mults_windows(const contest_rules&,
-                                         running_statistics&,
-                                         const BAND b = safe_get_band());
+void update_remaining_exchange_mults_windows(const contest_rules&,
+                                             running_statistics&,
+                                             const BAND b = safe_get_band());
 
 string last_call_inserted_with_space;  // probably should be per band
 pt_mutex dupe_check_mutex;
@@ -1099,7 +1099,7 @@ int main(int argc, char** argv)
           for (const auto& line : lines)
           { QSO qso;
 
-            qso.populate_from_verbose_format(line, rules, statistics);
+            qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
 
 // callsign mults
             allow_for_callsign_mults(qso);
@@ -1183,7 +1183,7 @@ int main(int argc, char** argv)
 
       update_remaining_callsign_mults_window(statistics, cur_band);
       update_remaining_country_mults_window(statistics);
-      update_remaining_exch_mults_windows(rules, statistics);
+      update_remaining_exchange_mults_windows(rules, statistics);
 
 // QTCs
       if (send_qtcs)
@@ -2025,7 +2025,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, cur_band);
       update_remaining_country_mults_window(statistics, cur_band);
-      update_remaining_exch_mults_windows(rules, statistics, cur_band);
+      update_remaining_exchange_mults_windows(rules, statistics, cur_band);
 
       win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
@@ -2413,7 +2413,7 @@ ost << "processing command: " << command << endl;
 // update displays of needed mults
             update_remaining_callsign_mults_window(statistics, cur_band);
             update_remaining_country_mults_window(statistics, cur_band);
-            update_remaining_exch_mults_windows(rules, statistics, cur_band);
+            update_remaining_exchange_mults_windows(rules, statistics, cur_band);
           }
 
           enter_sap_mode();    // we want to be in SAP mode after a frequency change
@@ -2741,7 +2741,7 @@ ost << "processing command: " << command << endl;
 
       update_remaining_callsign_mults_window(statistics, cur_band);
       update_remaining_country_mults_window(statistics);
-      update_remaining_exch_mults_windows(rules, statistics);
+      update_remaining_exchange_mults_windows(rules, statistics);
     }
    }
 
@@ -2823,7 +2823,7 @@ ost << "processing command: " << command << endl;
 
         update_remaining_callsign_mults_window(statistics, safe_get_band());
         update_remaining_country_mults_window(statistics);
-        update_remaining_exch_mults_windows(rules, statistics);
+        update_remaining_exchange_mults_windows(rules, statistics);
 
 // remove the last line from the log on disk
         string disk_log = read_file(context.logfile());
@@ -3327,7 +3327,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             no_exchange_mults_this_qso = (old_size == new_size);
 
             if (!no_exchange_mults_this_qso)
-              update_remaining_exch_mults_windows(rules, statistics);
+              update_remaining_exchange_mults_windows(rules, statistics);
           }
         }
 
@@ -3843,7 +3843,7 @@ ost << hhmmss() << " completed rescore" << endl;
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
         update_remaining_country_mults_window(statistics);
-        update_remaining_exch_mults_windows(rules, statistics);
+        update_remaining_exchange_mults_windows(rules, statistics);
         update_remaining_callsign_mults_window(statistics);
 
         next_qso_number = logbk.n_qsos() + 1;
@@ -4071,24 +4071,27 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
 }
 
 void update_remaining_exch_mults_window(const string& exch_mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b)
-{ const vector<string> canonical_exch_values = rules.exch_canonical_values(exch_mult_name);
+{ //const vector<string> canonical_exch_values = rules.exch_canonical_values(exch_mult_name);
+
+  const set<string> known_exchange_values_set = statistics.known_exchange_mults(exch_mult_name);
+  const vector<string> known_exchange_values(known_exchange_values_set.cbegin(), known_exchange_values_set.cend());
   window* wp = win_remaining_exch_mults_p[exch_mult_name];
   window& win = (*wp);
 
 // get the colours right
   vector<pair<string /* exch value */, int /* colour pair number */ > > vec;
 
-   for (const auto& canonical_value : canonical_exch_values)
-   { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, canonical_value, b);
+   for (const auto& known_value : known_exchange_values)
+   { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b);
      const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
 
-     vec.push_back( { canonical_value, colour_pair_number } );
+     vec.push_back( { known_value, colour_pair_number } );
    }
 
    win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
 }
 
-void update_remaining_exch_mults_windows(const contest_rules& rules, running_statistics& statistics, const BAND b)
+void update_remaining_exchange_mults_windows(const contest_rules& rules, running_statistics& statistics, const BAND b)
 { for_each(win_remaining_exch_mults_p.begin(), win_remaining_exch_mults_p.end(), [&] (const map<string, window*>::value_type& m)  // Josuttis 2nd ed., p. 338
     { update_remaining_exch_mults_window(m.first, rules, statistics, b); } );
 }
@@ -4342,7 +4345,7 @@ ost << "QSY to " << frequency(str_frequency).hz() << " Hz" << endl;
         const BAND cur_band = safe_get_band();
 
         update_remaining_country_mults_window(statistics, cur_band);
-        update_remaining_exch_mults_windows(rules, statistics, cur_band);
+        update_remaining_exchange_mults_windows(rules, statistics, cur_band);
       }
 
       last_frequency = str_frequency;
@@ -4682,7 +4685,8 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 
   for (auto field : received_exchange)
   { if (field.is_possible_mult())                              // see if it's really a mult
-    { statistics.add_known_exchange_mult(field.name(), field.value());
+    { if (auto_mults)
+        statistics.add_known_exchange_mult(field.name(), field.value());
 
       const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), b);
 

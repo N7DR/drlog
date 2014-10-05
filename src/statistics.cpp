@@ -306,7 +306,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   { const string& field_name = exchange_multiplier.first;
     multiplier& m = exchange_multiplier.second;
     const string value = qso.received_exchange(field_name);
-    const string mv = mult_value(field_name, value);  // the mult value of the received field
+    const string mv = MULT_VALUE(field_name, value);  // the mult value of the received field
 
     ost << "Inside running_statistics::add_qso()" << endl;
     ost << "QSO: " << qso << endl;
@@ -357,20 +357,37 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 //std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
 
 const bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
-{ for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
+{ SAFELOCK(statistics);
+  ost << "in add_known_exchange_mult; name = " << name << ", value = " << value << endl;
+  ost << "size of _exchange_multipliers = " << _exchange_multipliers.size() << endl;
+
+  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
   { pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
 
     if (sm.first == name)
-    { const bool added = sm.second.add_known(mult_value(name, value));
+    { const bool added = sm.second.add_known(MULT_VALUE(name, value));
 
       if (added)
-      { ost << "added known exchange mult: " << name << ", value = " << value << ", mult value = " << mult_value(name, value) << endl;
+      { ost << "added known exchange mult: " << name << ", value = " << value << ", mult value = " << MULT_VALUE(name, value) << endl;
         return true;
       }
     }
   }
 
   return false;
+}
+
+const set<string> running_statistics::known_exchange_mults(const string& name)
+{ SAFELOCK(statistics);
+
+  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
+  { pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
+
+    if (sm.first == name)
+      return sm.second.known();
+  }
+
+  return set<string>();
 }
 
 /*! \brief  Add a worked exchange mult
@@ -384,7 +401,7 @@ void running_statistics::add_worked_exchange_mult(const string& field_name, cons
 { if (field_value.empty())
     return;
 
-  const string mv = mult_value(field_name, field_value);  // the mult value of the received field
+  const string mv = MULT_VALUE(field_name, field_value);  // the mult value of the received field
 
   SAFELOCK(statistics);
 
@@ -406,7 +423,7 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
 
 /// do we still need to work a particular exchange mult on a particular band?
 const bool running_statistics::is_needed_exchange_mult(const string& exchange_field_name, const string& exchange_field_value, const BAND b) const
-{ const string mv = mult_value(exchange_field_name, exchange_field_value);  // the mult value of the received field
+{ const string mv = MULT_VALUE(exchange_field_name, exchange_field_value);  // the mult value of the received field
 
   SAFELOCK(statistics);
 

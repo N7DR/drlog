@@ -1197,7 +1197,7 @@ Sweden 7S – 8S – SA – SB – SC – SD – SE – SF – SG – SH – SI 
 Iceland TF
 */
 
-const string mult_value(const string& field_name, const string& received_value)
+const string MULT_VALUE(const string& field_name, const string& received_value)
 { if (field_name == "DOK")
   { if (!received_value.empty())
     { const auto posn = received_value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");

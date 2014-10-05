@@ -119,7 +119,7 @@ QSO::QSO(void) :
 
 /// read fields from a line in the disk log
 //QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
-void QSO::populate_from_verbose_format(const string& str, const contest_rules& rules, running_statistics& statistics)
+void QSO::populate_from_verbose_format(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
 {
 // build a vector of name/value pairs
   size_t cur_posn = min(static_cast<size_t>(5), str.size());  // skip the "QSO: "
@@ -190,16 +190,21 @@ extern location_database location_db;
       processed = true;
     }
 
- //   ost << "restoring QSO for " << _callsign << endl;
+    ost << "restoring QSO for " << _callsign << endl;
 
     if (!processed and (name_value[n].first.substr(0, 9) == "received-"))
     { const string& name = to_upper(name_value[n].first.substr(9));
       const string& value = name_value[n].second;
+//      const string mv = MULT_VALUE(name, value);
       const bool is_possible_mult = rules.is_exchange_mult(name);
+
+      if (is_possible_mult and context.auto_remaining_exchange_mults())
+        statistics.add_known_exchange_mult(name, value);
+
       const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name, value, _band) : false;
       const received_field rf { name, value , is_possible_mult, is_mult };
 
-//      ost << "exchange field " << name << " has value " << value << " and is_possible_mult is " << is_possible_mult << " and is_mult is " << is_mult << endl;
+      ost << "exchange field " << name << " has value " << value << " and is_possible_mult is " << is_possible_mult << " and is_mult is " << is_mult << endl;
 
       _received_exchange.push_back(rf);
       processed = true;
@@ -745,10 +750,7 @@ const string QSO::log_line(void)
      if (QSO_MULT_WIDTH)
        field_width = QSO_MULT_WIDTH;
 
-     rv += (field.is_mult() ? pad_string(mult_value(name, field.value()), field_width + 1) : "");
-
-//     ost << "field = " << name << "; is_mult = " << field.is_mult() << endl;
-//     ost << "length of log line = " << rv.size() << endl;
+     rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
    }
 
   _log_line_fields.clear();    // make sure it's empty before we fill it

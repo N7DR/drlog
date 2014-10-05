@@ -138,6 +138,8 @@ public:
 
   const bool add_known_exchange_mult(const std::string& name, const std::string& value);
 
+  const std::set<std::string> known_exchange_mults(const std::string& name);
+
 /// a string list of bands on which a particular exchange mult value is needed
   const std::string exchange_mult_needed(const std::string& exchange_field_name, const std::string& exchange_field_value, const contest_rules& rules); 
 
