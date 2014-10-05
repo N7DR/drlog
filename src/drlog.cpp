@@ -1608,7 +1608,7 @@ void* display_rig_status(void* vp)
 
         static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
 
-        bool rit_is_on = status_str[RIT_ENTRY] == '1';
+        const bool rit_is_on = (status_str[RIT_ENTRY] == '1');
         string rit_str;
 
         if (rit_is_on)
@@ -1625,22 +1625,16 @@ void* display_rig_status(void* vp)
 
 // now display the status
         win_rig.default_colours(win_rig.fg(), context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);
- //       window& default_colours(const int foreground_colour, const int background_colour);
-
-        ost << "set background colour to: " << (context.mark_frequency(f) ? "RED" : "BLACK") << endl;
-
-        win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT;
-
-//        win_rig.bg(context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);
 
 //        ost << "set background colour to: " << (context.mark_frequency(f) ? "RED" : "BLACK") << endl;
 
-        win_rig < pad_string(f.display_string(), 7);
+        win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT < pad_string(f.display_string(), 7)
+                <  ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
 
-        if (rig_status_thread_parameters.rigp()->is_locked())
-          win_rig < "L";
+//        if (rig_status_thread_parameters.rigp()->is_locked())
+//          win_rig < "L";
 
-        win_rig < "  " < mode_str < CURSOR_DOWN
+                < mode_str < CURSOR_DOWN
                 < CURSOR_START_OF_LINE < rit_str < "   " <= bandwidth_str;
       }
     }
@@ -3121,10 +3115,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
     unsigned int n_optional_fields = 0;
 
-//    for (unsigned int n = 0; n < exchange_template.size(); ++n)
-//      if (exchange_template[n].is_optional())
-//        n_optional_fields++;
-
     FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
                                                                   n_optional_fields++;
                                                               } );
@@ -3139,18 +3129,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       }
 
       if (!processed)
-      {
-
-
-        parsed_exchange pexch(canonical_prefix, rules, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
+      { parsed_exchange pexch(canonical_prefix, rules, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 
         ost << "is exchange valid? " << pexch.valid() << endl;
         ost << pexch << endl;
 
         if (pexch.valid())
-        {
-
-          if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
+        { if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
           { if (exchange_field_values.size() == exchange_template.size())    // 1:1 correspondence between expected and received fields
             { if (drlog_mode == CQ_MODE)                                   // send QSL
               { const bool quick_qsl = (e.symbol() == XK_KP_Enter);
@@ -3167,8 +3152,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
           }
 
-
-
           if (!sent_acknowledgement)
           { if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == SAP_MODE))    // in SAP mode, he doesn't care that we might have changed his call
             { if (!send_qtc)
@@ -3177,19 +3160,19 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               }
             }
 
-          if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))    // in CQ mode, he does
-          { const vector<string> call_contents_fields = split_string(call_contents, " ");
-            const string original_callsign = call_contents_fields[call_contents_fields.size() - 1];
-            string callsign = original_callsign;
+            if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))    // in CQ mode, he does
+            { const vector<string> call_contents_fields = split_string(call_contents, " ");
+              const string original_callsign = call_contents_fields[call_contents_fields.size() - 1];
+              string callsign = original_callsign;
 
-            if (pexch.has_replacement_call())
-              callsign = pexch.replacement_call();
+              if (pexch.has_replacement_call())
+                callsign = pexch.replacement_call();
 
-            if (callsign != original_callsign)    // callsign did not change
-            { at_call = callsign;
-              if (!send_qtc)
-                (*cw_p) << expand_cw_message(context.call_ok_now_message());
-            }
+              if (callsign != original_callsign)    // callsign did not change
+              { at_call = callsign;
+                if (!send_qtc)
+                  (*cw_p) << expand_cw_message(context.call_ok_now_message());
+              }
 
 // now send ordinary TU message
             const bool quick_qsl = (e.symbol() == XK_KP_Enter);
@@ -3205,7 +3188,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         set<pair<string /* field name */, string /* field value */> > exchange_mults_this_qso;    // needed when we do the bandmaps
 
-// callsign is the last entry in the CALL window (for now do not handle a call change in the EXCHANGE window)
+// callsign is the last entry in the CALL window
         if (!call_contents.empty()) // to speed things up, probably should make this test earlier, before we send the exchange info
         { const vector<string> call_contents_fields = split_string(call_contents, " ");
           const string original_callsign = call_contents_fields[call_contents_fields.size() - 1];
@@ -3249,10 +3232,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
           if (is_mult_field)
-          { ost << "Adding canonical value " << pexch.field_value(n) << " for multiplier exchange field " << pexch.field_name(n) << endl;
+          { ost << "Adding canonical value " << pexch.field_value(n) << " for multiplier exchange field " << pexch.field_name(n) << ", mult value = " << pexch.mult_value(n) << endl;
 
-            if (!rules.is_canonical_value(pexch.field_name(n), pexch.field_value(n)))
-              rules.add_exch_canonical_value(pexch.field_name(n), pexch.field_value(n));
+//            if (!rules.is_canonical_value(pexch.field_name(n), pexch.field_value(n)))
+//              rules.add_exch_canonical_value(pexch.field_name(n), pexch.field_value(n));
+
+            if (!rules.is_canonical_value(pexch.field_name(n), pexch.mult_value(n)))
+              rules.add_exch_canonical_value(pexch.field_name(n), pexch.mult_value(n));
+
           }
         }
 
@@ -3271,7 +3258,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // is this an exchange mult?
         if (exchange_mults_used)
+        { //if (context.auto_remaining_exchange_mults())
+          //  statistics.add_known_exchange_mult();
+
           calculate_exchange_mults(qso, rules);  // may modify qso
+        }
 
 // if callsign mults matter, add more to the qso
         allow_for_callsign_mults(qso);
@@ -4687,10 +4678,13 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
   const BAND b = qso.band();
   vector<received_field> new_received_exchange;
   bool rv = false;
+  const bool auto_mults = (context.auto_remaining_exchange_mults());
 
   for (auto field : received_exchange)
   { if (field.is_possible_mult())                              // see if it's really a mult
-    { const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), b);
+    { statistics.add_known_exchange_mult(field.name(), field.value());
+
+      const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), b);
 
 ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 

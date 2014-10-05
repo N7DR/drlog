@@ -306,15 +306,16 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   { const string& field_name = exchange_multiplier.first;
     multiplier& m = exchange_multiplier.second;
     const string value = qso.received_exchange(field_name);
+    const string mv = mult_value(field_name, value);  // the mult value of the received field
 
     ost << "Inside running_statistics::add_qso()" << endl;
     ost << "QSO: " << qso << endl;
     ost << "field_name = " << field_name << endl;
     ost << "value: " << value << endl;
+    ost << "mult value: " << mv << endl;
 
     if (!value.empty())
-//      m.add_worked(value, band_nr);
-      m.unconditional_add_worked(value, band_nr);
+      m.unconditional_add_worked(mv, band_nr);
 
     ost << "exchange multiplier object: " << m << endl;
   }
@@ -353,20 +354,43 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   }
 }
 
+//std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
+
+const bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
+{ for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
+  { pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
+
+    if (sm.first == name)
+    { const bool added = sm.second.add_known(mult_value(name, value));
+
+      if (added)
+      { ost << "added known exchange mult: " << name << ", value = " << value << ", mult value = " << mult_value(name, value) << endl;
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 /*! \brief  Add a worked exchange mult
     \param  field_name    Exchange mult field name
     \param  field_value   Value of the field <i>field_name</i>
     \param  band_nr       Number of the band on which worked mult is to be added
+
+    Doesn't add if the value is unknown.
 */
 void running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int b)
 { if (field_value.empty())
     return;
 
+  const string mv = mult_value(field_name, field_value);  // the mult value of the received field
+
   SAFELOCK(statistics);
 
   for (auto& psm : _exchange_multipliers)
     if (psm.first == field_name)
-      psm.second.add_worked(field_value, b);
+      psm.second.add_worked(mv, b);
 }
 
 /// rebuild
@@ -382,18 +406,21 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
 
 /// do we still need to work a particular exchange mult on a particular band?
 const bool running_statistics::is_needed_exchange_mult(const string& exchange_field_name, const string& exchange_field_value, const BAND b) const
-{ SAFELOCK(statistics);
+{ const string mv = mult_value(exchange_field_name, exchange_field_value);  // the mult value of the received field
 
-//  ost << "in is_needed_exchange_mult for field " << exchange_field_name << ", value = " << exchange_field_value << ", and band = " << b << endl;
+  SAFELOCK(statistics);
+
+  ost << "in is_needed_exchange_mult for field " << exchange_field_name << ", value = " << exchange_field_value << ", and band = " << b << ", mult value = " << mv << endl;
 
   for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
   { const pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
 
 //    ost << "checking exchange field name = " << sm.first << endl;
 
-    if (sm.first == exchange_field_name and sm.second.is_known(exchange_field_value))
-    { //ost << "found known field name; returning " << !(sm.second.is_worked(exchange_field_value, b)) << endl;;
-      return !(sm.second.is_worked(exchange_field_value, b));
+    if (sm.first == exchange_field_name and sm.second.is_known(mv) /* sm.second.is_known(exchange_field_value) */)
+    { ost << "found known field name; returning " << !(sm.second.is_worked(mv, b)) << endl;;
+//      return !(sm.second.is_worked(exchange_field_value, b));
+      return !(sm.second.is_worked(mv, b));
     }
   }
 

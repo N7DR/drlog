@@ -62,6 +62,7 @@ protected:
   std::string                                  _auto_backup;                     ///< directory for auto backup files
   bool                                         _auto_remaining_callsign_mults;   ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;    ///< do we auto-generate the remaining country mults?
+  bool                                         _auto_remaining_exchange_mults;   ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
 
   unsigned int                                 _bandmap_decay_time_local;          ///< time (in minutes) for an entry to age off the bandmap (local entries)
   unsigned int                                 _bandmap_decay_time_cluster;        ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
@@ -234,6 +235,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
   SAFEREAD(auto_backup, _context);
   SAFEREAD(auto_remaining_callsign_mults, _context);
   SAFEREAD(auto_remaining_country_mults, _context);
+  SAFEREAD(auto_remaining_exchange_mults, _context);
 
   SAFEREAD(bandmap_decay_time_local, _context);
   SAFEREAD(bandmap_decay_time_cluster, _context);

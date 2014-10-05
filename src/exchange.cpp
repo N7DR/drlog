@@ -26,7 +26,79 @@ extern EFT CALLSIGN_EFT;
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 #endif
 
-//#define NEW_CONSTRUCTOR
+// -------------------------  parsed_exchange_field  ---------------------------
+
+/*!     \class parsed_exchange_field
+        \brief Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
+*/
+
+parsed_exchange_field::parsed_exchange_field(void) :
+  _name(),
+  _value(),
+  _is_mult(false),
+  _mult_value()
+{ }
+
+parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, const bool m) :
+    _name(nm),
+    _value(v),
+    _is_mult(m)
+{ if (_name == "DOK")
+  { if (!_value.empty())
+    { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+      if (posn == string::npos)
+        _mult_value.clear();
+      else
+        _mult_value = create_string(_value[posn]);
+    }
+  }
+  else
+    _mult_value = _value;
+}
+
+void parsed_exchange_field::name(const string& nm)
+{ _name = nm;
+
+  if (_name == "DOK")
+  { if (!_value.empty())
+    { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+      if (posn == string::npos)
+        _mult_value.clear();
+      else
+        _mult_value = create_string(_value[posn]);
+    }
+  }
+  else
+    _mult_value = _value;
+}
+
+void parsed_exchange_field::value(const string& v)
+{ _value = v;
+
+  if (_name == "DOK")
+  { if (!_value.empty())
+    { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+      if (posn == string::npos)
+        _mult_value.clear();
+      else
+        _mult_value = create_string(_value[posn]);
+    }
+  }
+  else
+    _mult_value = _value;
+}
+
+ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
+{ ost << "  name: " << pef.name() << endl
+      << "  value: " << pef.value() << endl
+      << "  is_mult: " << pef.is_mult() << endl
+      << "  mult_value: " << pef.mult_value() << endl;
+
+  return ost;
+}
 
 #if defined(NEW_CONSTRUCTOR)
 
@@ -56,7 +128,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 { static const string EMPTY_STRING("");
   vector<string> copy_received_values(received_values);
 
-//  ost << "Inside parsed_exchange constructor" << endl;
+  ost << "Inside parsed_exchange constructor" << endl;
 
   const vector<exchange_field> exchange_template = rules.exch(canonical_prefix);
 
@@ -67,12 +139,12 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
                                                             } );
 
 // prepare output; includes optional fields and all choices
-  FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field { ef.name(), EMPTY_STRING, ef.is_mult() }); } );
+  FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
 
 // print exchange template fields for debugging purposes
-//  for (auto& field : _fields)
-//  { ost << "field : " << field << endl;
-//  }
+  for (auto& field : _fields)
+  { ost << "field : " << field << endl;
+  }
 
 // if there's an explicit . field, use it to replace the call
   for (const auto& received_value : received_values)
@@ -90,9 +162,9 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
   int field_nr = 0;
 
-//  for (const auto& pseft : exchange_field_eft)
-//  { ost << "for field name = " << pseft.first << ", EFT is: " << pseft.second << endl;
-//  }
+  for (const auto& pseft : exchange_field_eft)
+  { ost << "for field name = " << pseft.first << ", EFT is: " << pseft.second << endl;
+  }
 
   for (const string& received_value : copy_received_values)
   { set<string> match;
@@ -124,7 +196,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
         else    // not a choice
         { const EFT& eft = exchange_field_eft.at(field_name);
 
-//          ost << "field name: " << field_name << ", EFT = " << eft << endl;
+          ost << "field name: " << field_name << ", EFT = " << eft << endl;
 
           if (eft.is_legal_value(received_value))
             match.insert(field_name);
@@ -140,13 +212,13 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   }
 
 // debug; print status
-//  for (const auto& m : matches)
-//  { ost << "field nr " << m.first << " [" << copy_received_values[m.first] << "]: ";
-//    for (const string& str : m.second)
-//      ost << str << "  ";
-//
-//    ost << endl;
-//  }
+  for (const auto& m : matches)
+  { ost << "field nr " << m.first << " [" << copy_received_values[m.first] << "]: ";
+    for (const string& str : m.second)
+      ost << str << "  ";
+
+    ost << endl;
+  }
 
   deque<tuple<int, string, set<string>>> tuple_deque;
 
@@ -163,7 +235,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
     for (const auto& t : tuple_deque)
     { if (get<2>(t).size() == 1)
-      { //ost << "map insertion: " << *(get<2>(t).cbegin()) << " and position " << get<0>(t) << endl;
+      { ost << "map insertion: " << *(get<2>(t).cbegin()) << " and position " << get<0>(t) << endl;
 
         const auto it = tuple_map_assignments.find( *(get<2>(t).cbegin()) );
 
@@ -186,24 +258,24 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     }
   } while (old_size_of_tuple_deque != tuple_deque.size());
 
-//  ost << "size of tuple deque = " << tuple_deque.size() << endl;
-//  ost << "size of tuple map assignments  = " << tuple_map_assignments.size() << endl;
+  ost << "size of tuple deque = " << tuple_deque.size() << endl;
+  ost << "size of tuple map assignments  = " << tuple_map_assignments.size() << endl;
 
-//  for (const auto& tma : tuple_map_assignments)
-//  { ost << "field name: " << tma.first << endl;
-//    _print_tuple(tma.second);
-//  }
+  for (const auto& tma : tuple_map_assignments)
+  { ost << "field name: " << tma.first << endl;
+    _print_tuple(tma.second);
+  }
 
   if (tuple_deque.empty())
     _valid = true;
 
   if (!_valid) // we aren't finished
-  { //ost << "Not finished yet" << endl;
+  { ost << "Not finished yet" << endl;
 
     const tuple<int, string, set<string>>& t = tuple_deque[0];    // first received field we haven't been able to use, even tentatively
 
-//    ost << "zeroth tuple: " << endl;
-//    _print_tuple(t);
+    ost << "zeroth tuple: " << endl;
+    _print_tuple(t);
 
 // find first received field that's a match for any exchange field and that we haven't used
     const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
@@ -212,7 +284,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     if (cit != exchange_template.cend())
     { const string& field_name = cit->name();    // syntactic sugar
 
-//      ost << "Assuming received field #" << get<0>(t) << " with value [" << get<1>(t) << "] corresponds to " << field_name << endl;
+      ost << "Assuming received field #" << get<0>(t) << " with value [" << get<1>(t) << "] corresponds to " << field_name << endl;
 
       const bool inserted = (tuple_map_assignments.insert( { field_name, t } )).second;
 
@@ -232,7 +304,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
         { if (get<2>(t).size() == 1)                             // if one element in set
           { const string& field_name = *(get<2>(t).cbegin());    // syntactic sugar
 
- //           ost << "map insertion: " << field_name << " and position " << get<0>(t) << endl;
+            ost << "map insertion: " << field_name << " and position " << get<0>(t) << endl;
 
             const auto it = tuple_map_assignments.find( field_name );
 
@@ -253,7 +325,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
             ss.erase(tm.first);
         }
 
-//        ost << "new size of tuple_deque = " << tuple_deque.size() << endl;
+        ost << "new size of tuple_deque = " << tuple_deque.size() << endl;
       } while (old_size_of_tuple_deque != tuple_deque.size());
 
       if (tuple_deque.empty())
@@ -261,16 +333,15 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     }
 
     if (!_valid) // we aren't finished -- tuple_vector is not empty
-    { //ost << "Still not finished yet" << endl;
-
- //       FOR_ALL(tuple_deque, [this] (tuple<int, string, set<string>>& t) { _print_tuple(t); } );
+    { ost << "Still not finished yet" << endl;
+        FOR_ALL(tuple_deque, [this] (tuple<int, string, set<string>>& t) { _print_tuple(t); } );
 
       const tuple<int, string, set<string>>& t = tuple_deque[0];
       const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
     //    const auto cit = FIND_IF(exchange_template, [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
 
       if (cit == exchange_template.cend())
-      { //ost << "no match for any expected exchange field" << endl;
+      { ost << "no match for any expected exchange field" << endl;
 
         if (_replacement_call.empty())  // maybe test for replacement call
         { const bool replace_callsign = CALLSIGN_EFT.is_legal_value(get<1>(t));
@@ -278,7 +349,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
           if (replace_callsign)
           { _replacement_call = get<1>(t);
 
-//              ost << "last-ditch call replacement: " << _replacement_call << endl;
+              ost << "last-ditch call replacement: " << _replacement_call << endl;
 
             if (tuple_deque.size() == 1)
               _valid = true;

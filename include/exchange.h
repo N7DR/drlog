@@ -36,7 +36,31 @@ extern const std::string process_cut_digits(const std::string& input);
         \brief Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
 */
 
-WRAPPER_3(parsed_exchange_field, std::string, name, std::string, value, bool, is_mult);
+//WRAPPER_3(parsed_exchange_field, std::string, name, std::string, value, bool, is_mult);
+class parsed_exchange_field
+{
+protected:
+  std::string    _name;
+  std::string    _value;
+  bool           _is_mult;
+  std::string    _mult_value;
+
+public:
+
+  parsed_exchange_field(void);
+
+  parsed_exchange_field(const std::string& nm, const std::string& v, const bool m);
+
+  READ(name);
+  READ(value);
+  READ_AND_WRITE(is_mult);
+  READ(mult_value);
+
+  void name(const std::string& nm);
+  void value(const std::string& v);
+};
+
+std::ostream& operator<<(std::ostream& ost, const parsed_exchange_field& pef);
 
 // -------------------------  parsed_exchange  ---------------------------
 
@@ -128,6 +152,15 @@ public:
 */
   inline const bool field_is_mult(const size_t n) const
     { return (n >= _fields.size() ? false : _fields[n].is_mult()); }
+
+/*! \brief  Return the mult value of a field
+    \param  n  number of field for which the value is requested
+    \return value corresponding to <i>n</i>
+
+    Returns empty string if <i>n</i> is out of range
+*/
+  inline const std::string mult_value(const size_t n) const
+    { return (n >= _fields.size() ? std::string() : _fields[n].mult_value()); }
 };
 
 /// ostream << parsed_exchange

@@ -679,6 +679,9 @@ const string QSO::log_line(void)
       if (name == "CWPOWER")
         field_width = 3;
 
+      if (name == "DOK")
+        field_width = 1;
+
       if (name == "ITUZONE")
         field_width = 2;
 
@@ -721,6 +724,9 @@ const string QSO::log_line(void)
      if (name == "CQZONE" or name == "ITUZONE")
        field_width = 2;
 
+     if (name == "DOK")
+       field_width = 1;
+
      if (name == "RS")
        field_width = 2;
 
@@ -739,7 +745,7 @@ const string QSO::log_line(void)
      if (QSO_MULT_WIDTH)
        field_width = QSO_MULT_WIDTH;
 
-     rv += (field.is_mult() ? pad_string(field.value(), field_width + 1) : "");
+     rv += (field.is_mult() ? pad_string(mult_value(name, field.value()), field_width + 1) : "");
 
 //     ost << "field = " << name << "; is_mult = " << field.is_mult() << endl;
 //     ost << "length of log line = " << rv.size() << endl;

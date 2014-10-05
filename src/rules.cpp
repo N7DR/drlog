@@ -96,20 +96,21 @@ const set<string> exchange_field_values::all_values(void) const
 { set<string> rv;
 
   for (const auto cvv : _values)
-    copy(cvv.second.cbegin(), cvv.second.cend(), inserter(rv, rv.begin()));
+//    copy(cvv.second.cbegin(), cvv.second.cend(), inserter(rv, rv.begin()));
+    COPY_ALL(cvv.second, inserter(rv, rv.begin()));
 
   return rv;
 }
 
 /// Is a string a legal value (for any canonical value)
 const bool exchange_field_values::is_legal_value(const string& value) const
-{ bool rv = false;
+{ //bool rv = false;
   const set<string> all_canonical_values = canonical_values();
 
   for (const auto& cv : all_canonical_values)
-  { rv = (cv < value);
+  { //rv = (cv < value);
 
-    if (rv)
+    if (cv < value)
       return true;
   }
 
@@ -252,13 +253,6 @@ const set<string> contest_rules::_all_exchange_values(const string& field_name) 
   const auto cit = find_if(_exch_values.cbegin(), _exch_values.cend(), [=] (const exchange_field_values& efv) { return (efv.name() == field_name); } );
 
   return ( (cit == _exch_values.cend()) ? set<string>() : cit->all_values() );
-
-//  for (const auto& exch_value : _exch_values)
-//  { if (exch_value.name() == field_name)
-//      return exch_value.all_values();
-//  }
-
-//  return set<string>();
 }
 
 const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchange_fields , const vector<string>& exchange_mults_vec) const
@@ -315,43 +309,6 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
 
       rv.push_back( exchange_field(field_name, is_mult) );
     }
-
-
-#if 0
-    if (!contains(field_name, "CHOICE:"))
-    { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend();
-
-      rv.push_back( exchange_field(field_name, is_mult) );
-    }
-    else                                                   // a CHOICE
-    { const vector<string> choice_vec = split_string(field_name, ":");
-      string full_name;  // pseudo name of the choice
-
-      if (choice_vec.size() == 2)    // true if legal
-      { vector<string> choice_fields = remove_peripheral_spaces(split_string(choice_vec[1], "/"));
-        vector<exchange_field> choices;
-
-        for (auto& choice_field_name : choice_fields)
-        { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend();
-          exchange_field this_choice(choice_field_name, is_mult);
-
-          choices.push_back(this_choice);
-        }
-
-// put into alphabetical order
-        sort(choice_fields.begin(), choice_fields.end());
-
-        for (auto& choice_field_name : choice_fields)
-          full_name += choice_field_name + "+";
-
-        exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
-
-        this_field.choice(choices);
-        rv.push_back(this_field);
-      }
-    }
-#endif
-
   }
 
   return rv;
@@ -385,44 +342,6 @@ const map<string, vector<exchange_field>> contest_rules::_parse_context_exchange
     rv.insert( {  mpef.first, vef } );
   }
 
-//  exchange = RST, CHOICE:ITUZONE/SOCIETY
-#if 0
-  for (const auto& mpef : permitted_exchange_fields)
-  { for (const auto& field_name : mpef.second)
-    { if (!contains(field_name, "CHOICE:"))
-      { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend();
-
-        rv.push_back( { mpef.first, exchange_field(field_name, is_mult) } );
-      }
-      else                                                   // a CHOICE
-      { const vector<string> choice_vec = split_string(field_name, ":");
-        string full_name;  // pseudo name of the choice
-
-        if (choice_vec.size() == 2)    // true if legal
-        { vector<string> choice_fields = remove_peripheral_spaces(split_string(choice_vec[1], "/"));
-          vector<exchange_field> choices;
-
-          for (auto& choice_field_name : choice_fields)
-          { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend();
-            exchange_field this_choice(choice_field_name, is_mult);
-            choices.push_back(this_choice);
-          }
-
-// put into alphabetical order
-          sort(choice_fields.begin(), choice_fields.end());
-
-          for (auto& choice_field_name : choice_fields)
-            full_name += choice_field_name + "+";
-
-          exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
-          this_field.choice(choices);
-          rv.push_back(this_field);
-        }
-      }
-    }
-  }
-#endif
-
   return rv;
 }
 
@@ -444,8 +363,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // generate the country mults; the value from context is either "ALL" or "NONE"
   if (context.country_mults_filter() == "ALL")
     copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
-
-//  static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
 
   if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
@@ -517,13 +434,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     _expanded_exch.insert( { prefix, expanded_vef } );
   }
 
-//std::map<std::string, std::vector<exchange_field>> _expanded_exch;
   for (const auto& psvef : _expanded_exch)
   { const vector<exchange_field>& vef = psvef.second;
 
     for (const auto& ef : vef)
-    { _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
-    }
+      _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
   }
 
 // define the points structure; this can be quite complex
@@ -1281,3 +1196,22 @@ Denmark 5P – 5Q – OU – OV – OZ
 Sweden 7S – 8S – SA – SB – SC – SD – SE – SF – SG – SH – SI – SJ – SK – SL – SM
 Iceland TF
 */
+
+const string mult_value(const string& field_name, const string& received_value)
+{ if (field_name == "DOK")
+  { if (!received_value.empty())
+    { const auto posn = received_value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+      if (posn == string::npos)
+        return string();
+      else
+        return (create_string(received_value[posn]));
+    }
+    else        // should never happen: DOK with no value
+    { ost << "Error: DOK with no value" << endl;
+      return string();
+    }
+  }
+  else
+    return received_value;
+}

@@ -535,5 +535,7 @@ const std::string wpx_prefix(const std::string& call);
 */
 const std::string sac_prefix(const std::string& call);
 
+const std::string mult_value(const std::string& field_name, const std::string& received_value);
+
 #endif    // RULES_H
 
