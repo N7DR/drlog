@@ -790,16 +790,9 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
     }
 
-  // REMAINING COUNTRY MULTS
+// REMAINING COUNTRY MULTS
       if (starts_with(testline, "REMAINING EXCHANGE MULTS"))
-      { _auto_remaining_exchange_mults = (RHS == "AUTO");
-
-//        if (!_auto_remaining_country_mults)
-//        { const vector<string> countries = remove_peripheral_spaces(split_string(RHS, ","));
-//
-//          _remaining_country_mults_list = set<string>(countries.cbegin(), countries.cend());
-//        }
-      }
+        _auto_remaining_exchange_mults = (RHS == "AUTO");
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
 

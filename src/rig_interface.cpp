@@ -442,6 +442,25 @@ void rig_interface::rig_frequency(const frequency& f)
   }
 }
 
+// set frequency -- do nothing if zero is passed
+void rig_interface::rig_frequency_b(const frequency& f)
+{ if (f.hz())
+  { _last_commanded_frequency_b = f;
+
+    if (_rig_connected)
+    { int status;
+
+      { SAFELOCK(_rig);
+
+        status = rig_set_freq(_rigp, RIG_VFO_B, f.hz());
+      }
+
+      if (status != RIG_OK)
+        _error_alert("Error setting frequency");
+    }
+  }
+}
+
 void rig_interface::rig_mode(const MODE m)
 {_last_commanded_mode = m;
 
@@ -490,6 +509,25 @@ const frequency rig_interface::rig_frequency(void)
     if (status != RIG_OK)
     { _error_alert("Error getting frequency");
       return _last_commanded_frequency;
+    }
+
+    return frequency(hz);
+  }
+}
+
+// get frequency
+const frequency rig_interface::rig_frequency_b(void)
+{ if (!_rig_connected)
+    return _last_commanded_frequency_b;
+  else
+  { freq_t hz;
+    SAFELOCK(_rig);
+
+    const int status = rig_get_freq(_rigp, RIG_VFO_B, &hz);
+
+    if (status != RIG_OK)
+    { _error_alert("Error getting frequency of VFO B");
+      return _last_commanded_frequency_b;
     }
 
     return frequency(hz);

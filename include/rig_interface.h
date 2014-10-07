@@ -92,6 +92,8 @@ protected:
   frequency         _last_commanded_frequency;
   MODE              _last_commanded_mode;
 
+  frequency         _last_commanded_frequency_b;
+
   void (*_error_alert_function)(const std::string&);
 
   void _error_alert(const std::string& msg);
@@ -130,6 +132,11 @@ public:
 
   const frequency rig_frequency(void);
 
+// get/set frequency, VFO B
+  void rig_frequency_b(const frequency& f);
+
+  const frequency rig_frequency_b(void);
+
   const MODE rig_mode(void);
 
   void rig_mode(const MODE m);
@@ -138,13 +145,6 @@ public:
   const bool test(void);
 
   void test(const bool);
-
-// get/set mode
-//  void mode(rmode_t);
-
-//  const rmode_t mode(void);
-//  inline const std::string mode_str(void)
-//    { return rig_strrmode(mode()); }
 
 // set rit offset
   void rit(const int hz);
@@ -164,7 +164,6 @@ public:
     { rit_enable(); }
 
   const bool rit_enabled(void);
-//    { return (rit() == 0); }
 
 // set xit offset
   void xit(const int hz);
@@ -203,6 +202,17 @@ public:
 
 // is sub-receiver on?
   const bool sub_receiver(void);
+
+  inline const bool sub_receiver_enabled(void)
+    { return sub_receiver(); }
+
+  inline void sub_receiver_enable(void)
+    { sub_receiver(true); }
+
+  inline void sub_receiver_disable(void)
+    { sub_receiver(false); }
+
+
 
 // get the bandwidth in Hz
   const int bandwidth(void);

@@ -3258,11 +3258,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // is this an exchange mult?
         if (exchange_mults_used)
-        { //if (context.auto_remaining_exchange_mults())
-          //  statistics.add_known_exchange_mult();
-
           calculate_exchange_mults(qso, rules);  // may modify qso
-        }
 
 // if callsign mults matter, add more to the qso
         allow_for_callsign_mults(qso);
@@ -3764,9 +3760,8 @@ ost << "Adding new QSO(s)" << endl;
             allow_for_callsign_mults(qso);
 
 // add it to the running statistics; do this before we add it to the log so we can check for dupes against the current log
-             statistics.add_qso(qso, logbk, rules);
-
-             logbk += qso;
+            statistics.add_qso(qso, logbk, rules);
+            logbk += qso;
           }
         }
 
@@ -3789,17 +3784,17 @@ ost << "Adding new QSO(s)" << endl;
           else
             alert("Unable to open log file " + context.logfile() + " for writing: ");
         }
-ost << hhmmss() << " about to do second rebuild" << endl;
+//ost << hhmmss() << " about to do second rebuild" << endl;
 
 // rebuild the history
         rebuild_history(logbk, rules, statistics, q_history, rate);
 
-ost << hhmmss() << " completed second rebuild" << endl;
+//ost << hhmmss() << " completed second rebuild" << endl;
 
 // rescore the log
         rescore(rules);
 
-ost << hhmmss() << " completed rescore" << endl;
+//ost << hhmmss() << " completed rescore" << endl;
 
         update_rate_window();
 
@@ -3812,24 +3807,26 @@ ost << hhmmss() << " completed rescore" << endl;
         ost << hhmmss() << " about to re-fill databases" << endl;
 
         for (const auto& qso : qso_vec)
-        { if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
-            scp_dynamic_db.add_call(qso.callsign());
+        { const string& callsign = qso.callsign();
+
+          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+            scp_dynamic_db.add_call(callsign);
+
+          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+            fuzzy_dynamic_db.add_call(callsign);
+        }
+
+ //       ost << hhmmss() << " re-filled first database" << endl;
+
+//        for (const auto& qso : qso_vec)
+//        { //if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
+            //scp_dynamic_db.add_call(qso.callsign());
 
 //          if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
 //            fuzzy_dynamic_db.add_call(qso.callsign());
-        }
+//        }
 
-        ost << hhmmss() << " re-filled first database" << endl;
-
-        for (const auto& qso : qso_vec)
-        { //if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
-            //scp_dynamic_db.add_call(qso.callsign());
-
-          if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
-            fuzzy_dynamic_db.add_call(qso.callsign());
-        }
-
-        ost << hhmmss() << " completed re-filling databases" << endl;
+//        ost << hhmmss() << " completed re-filling databases" << endl;
 
 //        ost << "About to display; number of QSOs in logbook = " << logbk.size() << endl;
 
@@ -3886,10 +3883,6 @@ ost << hhmmss() << " completed rescore" << endl;
   { const cursor posn = win.cursor_position();
 
     win < CURSOR_START_OF_LINE < WINDOW_CLEAR_TO_EOL <= posn;
-
-//    win.move_cursor(posn);
-
-//    win < WINDOW_REFRESH;
 
     processed = true;
   }

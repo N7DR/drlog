@@ -378,8 +378,11 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   }
 
 // normalize exchange fields to use canonical value, so that we don't mistakenly count each legitimate value more than once in statistics
+// this means that we can't use a DOK.values file, because the received DOK will get changed here
   if (_valid)
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
+  //FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), MULT_VALUE(pef.name(), pef.value()))); } );
+
 }
 
 #endif
@@ -774,10 +777,10 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
   if ((field_name == "RDA") or (field_name == "RD2"))
-  { //static const set<string> countries { "UA", "UA2", "UA9" };
+  { static const set<string> countries { "R1FJ", "UA", "UA2", "UA9" };
     string rv;
 
-    if (!drm_line.empty() and (set<string>( { "R1FJ", "UA", "UA2", "UA9" } ) < location_db.canonical_prefix(callsign)))
+    if (!drm_line.empty() and (countries < location_db.canonical_prefix(callsign)))
     { rv = drm_line.qth();
 
       if (!rv.empty())
