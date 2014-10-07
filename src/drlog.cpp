@@ -2957,6 +2957,22 @@ ost << "processing command: " << command << endl;
     processed = true;
   }
 
+// CTRL-S -- toggle split
+  if (!processed and e.is_control('s'))
+  { if (rig.split_enabled())
+    { ost << "going to disable SPLIT" << endl;
+      rig.split_disable();
+      ost << "SPLIT is now " << (rig.split_enabled() ? "enabled" : "disabled") << endl;
+    }
+    else
+    { ost << "going to enable SPLIT" << endl;
+      rig.split_enable();
+      ost << "SPLIT is now " << (rig.split_enabled() ? "enabled" : "disabled") << endl;
+    }
+
+    processed = true;
+  }
+
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())

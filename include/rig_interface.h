@@ -137,6 +137,15 @@ public:
 
   const frequency rig_frequency_b(void);
 
+  inline void rig_frequency_a_to_b(void)
+    { rig_frequency_b(rig_frequency()); }
+
+  void split_enable(void);
+
+  void split_disable(void);
+
+  const bool split_enabled(void);
+
   const MODE rig_mode(void);
 
   void rig_mode(const MODE m);

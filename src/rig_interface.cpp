@@ -534,6 +534,60 @@ const frequency rig_interface::rig_frequency_b(void)
   }
 }
 
+void rig_interface::split_enable(void)
+{ if (!_rig_connected)
+    return;
+
+  SAFELOCK(_rig);
+
+//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_B, RIG_SPLIT_ON, RIG_VFO_B);
+  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B);
+//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_CURR);
+
+  if (status != RIG_OK)
+    _error_alert("Error executing SPLIT command");
+
+  ost << "SPLIT has been enabled" << endl;
+}
+
+void rig_interface::split_disable(void)
+{ if (!_rig_connected)
+    return;
+
+  SAFELOCK(_rig);
+
+//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_B, RIG_SPLIT_OFF, RIG_VFO_A);
+//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_OFF, RIG_VFO_A);
+  const int status = rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A);  // the line above also works
+
+  if (status != RIG_OK)
+    _error_alert("Error executing SPLIT command");
+
+  ost << "SPLIT has been disabled" << endl;
+}
+
+const bool rig_interface::split_enabled(void)
+{ if (!_rig_connected)
+    return false;
+
+  split_t split_mode;
+  vfo_t  tx_vfo;
+
+  SAFELOCK(_rig);
+
+  const int status = rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo);
+
+  if (status != RIG_OK)
+  { _error_alert("Error getting SPLIT");
+    return false;
+  }
+
+  ost << "SPLIT mode is " << (split_mode == RIG_SPLIT_ON ? "ON" : "OFF") << endl;
+  ost << "VFO is " << tx_vfo << endl;
+
+  return (split_mode == RIG_SPLIT_ON);
+}
+
 // get/set baud rate
 void rig_interface::baud_rate(const unsigned int rate)
 { if (_rigp)
