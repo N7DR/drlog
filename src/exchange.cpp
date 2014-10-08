@@ -42,8 +42,11 @@ parsed_exchange_field::parsed_exchange_field(void) :
 parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, const bool m) :
     _name(nm),
     _value(v),
-    _is_mult(m)
-{ if (_name == "DOK")
+    _is_mult(m),
+    _mult_value(MULT_VALUE(nm, v))
+{
+#if 0
+  if (_name == "DOK")
   { if (!_value.empty())
     { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
@@ -55,12 +58,15 @@ parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, 
   }
   else
     _mult_value = _value;
+#endif
 }
 
 void parsed_exchange_field::name(const string& nm)
 { _name = nm;
+  _mult_value = MULT_VALUE(_name, _value);
 
-  if (_name == "DOK")
+#if 0
+if (_name == "DOK")
   { if (!_value.empty())
     { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
@@ -72,11 +78,14 @@ void parsed_exchange_field::name(const string& nm)
   }
   else
     _mult_value = _value;
+#endif
 }
 
 void parsed_exchange_field::value(const string& v)
 { _value = v;
+  _mult_value = MULT_VALUE(_name, _value);
 
+#if 0
   if (_name == "DOK")
   { if (!_value.empty())
     { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -89,6 +98,7 @@ void parsed_exchange_field::value(const string& v)
   }
   else
     _mult_value = _value;
+#endif
 }
 
 ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)

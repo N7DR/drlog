@@ -2973,6 +2973,22 @@ ost << "processing command: " << command << endl;
     processed = true;
   }
 
+// ALT-S -- toggle sub receiver
+  if (!processed and e.is_alt('s'))
+  { if (rig.sub_receiver_enabled())
+    { ost << "going to disable SUBRX" << endl;
+      rig.sub_receiver_disable();
+      ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
+    }
+    else
+    { ost << "going to enable SUBRX" << endl;
+      rig.sub_receiver_enable();
+      ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
+    }
+
+    processed = true;
+  }
+
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())
