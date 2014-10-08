@@ -1607,19 +1607,28 @@ void* display_rig_status(void* vp)
         }
 
         static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
+        static const unsigned int XIT_ENTRY = 24;      // position of the RIT status byte in the K3 status string
 
         const bool rit_is_on = (status_str[RIT_ENTRY] == '1');
-        string rit_str;
+        const bool xit_is_on = (status_str[XIT_ENTRY] == '1');
+
+        string rit_xit_str;
+
+        if (xit_is_on)
+          rit_xit_str += "X";
 
         if (rit_is_on)
-        { const int rit_value = from_string<int>(substring(status_str, 19, 4));
+          rit_xit_str += "R";
 
-          rit_str = status_str[18] + to_string(rit_value);
-          rit_str = pad_string(rit_str, 7);
+        if (rit_is_on or xit_is_on)
+        { const int rit_xit_value = from_string<int>(substring(status_str, 19, 4));
+
+          rit_xit_str += status_str[18] + to_string(rit_xit_value);
+          rit_xit_str = pad_string(rit_xit_str, 7);
         }
 
-        if (rit_str.empty())
-          rit_str = create_string(' ', 7);
+        if (rit_xit_str.empty())
+          rit_xit_str = create_string(' ', 7);
 
         const string bandwidth_str = to_string(rig_status_thread_parameters.rigp()->bandwidth());
 
@@ -1635,7 +1644,7 @@ void* display_rig_status(void* vp)
 //          win_rig < "L";
 
                 < mode_str < CURSOR_DOWN
-                < CURSOR_START_OF_LINE < rit_str < "   " <= bandwidth_str;
+                < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
       }
     }
 

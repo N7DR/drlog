@@ -204,7 +204,7 @@ extern location_database location_db;
       const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name, value, _band) : false;
       const received_field rf { name, value , is_possible_mult, is_mult };
 
-      ost << "exchange field " << name << " has value " << value << " and is_possible_mult is " << is_possible_mult << " and is_mult is " << is_mult << endl;
+//      ost << "exchange field " << name << " has value " << value << " and is_possible_mult is " << is_possible_mult << " and is_mult is " << is_mult << endl;
 
       _received_exchange.push_back(rf);
       processed = true;
@@ -227,9 +227,6 @@ void QSO::populate_from_log_line(const string& str)
 
 // separate the line into fields
   const vector<string> vec = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
-
-//  for (size_t n = 0; n < vec.size(); ++n)
-//    vec[n] = remove_peripheral_spaces(vec[n]);
 
   if (vec.size() != _log_line_fields.size())
   { ost << "populate_from_log_line parameter: " << str << endl;
@@ -322,9 +319,6 @@ const bool QSO::is_exchange_mult(void) const
 
   return false;
 }
-
-//std::vector<received_field>   _received_exchange;              // names do not include the REXCH-
-
 
 /// re-format according to a Cabrillo template
 /*
@@ -667,11 +661,9 @@ const string QSO::log_line(void)
 //  for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
 //    rv += " " + _sent_exchange[n].second;
 
-//  for_each(_sent_exchange.cbegin(), _sent_exchange.cend(), [&] (pair<string, string> se) { rv += " " + se.second; });
   FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += " " + se.second; });
 
 // print in same order the are present in the config file
-//    for (size_t n = 0; n < _received_exchange.size(); ++n)
     for (const auto& field : _received_exchange)
     { unsigned int field_width = 5;
       const string& name = field.name();
@@ -770,10 +762,6 @@ const string QSO::log_line(void)
 
   for (const auto& field : _received_exchange)
     _log_line_fields.push_back("received-" + field.name());
-
-// possible mults
-//  log_line += (is_country_mult ? pad_string(location_db_p->canonical_prefix(qso.callsign()), 5) : "     ");
-//  _log_line_fields.push_back(_is_country_mult ? pad_string(_canonical_prefix, 5) : "     ");
 
   return rv;
 }
