@@ -1147,7 +1147,7 @@ void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequen
 
 const bool rig_interface::is_transmitting(void)
 { if (_rig_connected)
-  { bool rv = true;                                        // be paranoid
+  { bool rv = true;                                        // default: be paranoid
 
     if (_model == RIG_MODEL_K3)
     { const string response = raw_command("TQ;", 4);

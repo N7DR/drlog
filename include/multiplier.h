@@ -30,9 +30,9 @@ extern message_stream    ost;
 // -----------  multiplier  ----------------
 
 /*!     \class multiplier
-        \brief encapsulate all the necessary stuff for a mult
+        \brief encapsulate necessary stuff for a mult
 
-        Note that this is not a thread-safe object; I don't think that that matters
+        Not thread-safe; I don't think that that matters
 */
 
 class multiplier
@@ -44,14 +44,10 @@ protected:
   std::set<std::string>                                            _known;     ///< all the (currently) known possible values
   bool                                                             _used;      ///< is this object in use?
 
-//  boost::regex                                                     _regex;     ///< if _known is empty, use this to determine
-
 public:
 
 /// default constructor
   multiplier(void);
-
-//  multiplier(const multiplier& obj);
 
   READ_AND_WRITE(per_band);                       ///< get/set _per_band
   READ_AND_WRITE(used);                           ///< get/set _used
@@ -74,7 +70,8 @@ public:
     { unsigned int rv = 0;
 
       if (_used)
-        for_each(k.cbegin(), k.cend(), [&] (const std::string& str) { if (add_known(str)) rv++; } );
+//        for_each(k.cbegin(), k.cend(), [&] (const std::string& str) { if (add_known(str)) rv++; } );
+        FOR_ALL(k, [&] (const std::string& str) { if (add_known(str)) rv++; } );
 
       return rv;
     }

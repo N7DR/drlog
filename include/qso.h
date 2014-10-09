@@ -99,12 +99,12 @@ public:
   virtual ~QSO(void)
     { }
 
-  READ_AND_WRITE(number);
-  READ_AND_WRITE(callsign);
-  READ_AND_WRITE(mode);
-  READ_AND_WRITE(band);
-  READ_AND_WRITE(date);
-  READ_AND_WRITE(utc);
+  READ_AND_WRITE(number);            ///< qso number
+  READ_AND_WRITE(callsign);          ///< call
+  READ_AND_WRITE(mode);              ///< mode
+  READ_AND_WRITE(band);              ///< band
+  READ_AND_WRITE(date);              ///< yyyy-mm-dd
+  READ_AND_WRITE(utc);               ///< hh:mm:ss
 
 /// get frequency as a string
   inline const decltype(_frequency) freq(void) const
@@ -114,24 +114,24 @@ public:
   inline void freq(const decltype(_frequency)& str)
     { _frequency = str; }
 
-  READ_AND_WRITE(comment);
-  READ_AND_WRITE(canonical_prefix);
-  READ_AND_WRITE(continent);
-  READ_AND_WRITE(points);
+  READ_AND_WRITE(comment);           ///< comment to be carried with QSO
+  READ_AND_WRITE(canonical_prefix);  ///< canonical prefix for the country
+  READ_AND_WRITE(continent);         ///< continent
+  READ_AND_WRITE(points);            ///< points for this QSO
   
-  READ_AND_WRITE(prefix);
-  READ_AND_WRITE(my_call);
+  READ_AND_WRITE(prefix);            ///< prefix, according to the contest's definition
+  READ_AND_WRITE(my_call);           ///< my call
   
-  READ(epoch_time);
+  READ(epoch_time);                  ///< time in seconds since the UNIX epoch
 
-  READ_AND_WRITE(sent_exchange);
-  READ_AND_WRITE(received_exchange);
-  READ_AND_WRITE(is_country_mult);
-  READ_AND_WRITE(is_prefix_mult);
+  READ_AND_WRITE(sent_exchange);     ///< vector<pair<name, value>>; names do not include the TEXCH-
+  READ_AND_WRITE(received_exchange); ///< names do not include the REXCH-
+  READ_AND_WRITE(is_country_mult);   ///< is this QSO a country mult?
+  READ_AND_WRITE(is_prefix_mult);    ///< is this QSO a prefix mult?
 
-  READ(is_dupe);
+  READ(is_dupe);                     ///< is this QSO a dupe?
   
-/// are any of the exchange fields a mult?
+/// is any exchange field a mult?
   const bool is_exchange_mult(void) const;
 
 /// synonym for callsign()

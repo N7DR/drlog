@@ -1486,9 +1486,13 @@ void* display_rig_status(void* vp)
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
       const string status_str = (rig_status_thread_parameters.rigp())->raw_command("IF;", 38);          // K3 returns 38 characters
 
+      ost << "status string: " << status_str << endl;
+
       if (status_str.length() == 38)
       { const frequency f(from_string<unsigned int>(substring(status_str, 2, 11)));
         const frequency target = SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency);
+
+        const frequency f_b = rig.rig_frequency_b();
 
 //        ost << "f = " << f.hz() << ", target = " << target.hz() << endl;
 //        ost << "mode: " << ( (drlog_mode == CQ_MODE) ? "CQ" : "SAP") << endl;
@@ -1585,7 +1589,8 @@ void* display_rig_status(void* vp)
 
         static const unsigned int MODE_ENTRY = 29;      // position of the mode byte in the K3 status string
 
-        const char mode_char = (status_str.length() >= MODE_ENTRY + 1 ? status_str[MODE_ENTRY] : 'A');    // 'A' is not a valid mode
+//        const char mode_char = (status_str.length() >= MODE_ENTRY + 1 ? status_str[MODE_ENTRY] : 'A');    // 'A' is not a valid mode
+        const char mode_char = status_str[MODE_ENTRY];
         string mode_str;
 
         switch (mode_char)
@@ -1598,7 +1603,7 @@ void* display_rig_status(void* vp)
             break;
 
           case '3' :
-            mode_str = "CW";
+            mode_str = "CW ";
             break;
 
           default :
@@ -1607,7 +1612,7 @@ void* display_rig_status(void* vp)
         }
 
         static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
-        static const unsigned int XIT_ENTRY = 24;      // position of the RIT status byte in the K3 status string
+        static const unsigned int XIT_ENTRY = 24;      // position of the XIT status byte in the K3 status string
 
         const bool rit_is_on = (status_str[RIT_ENTRY] == '1');
         const bool xit_is_on = (status_str[XIT_ENTRY] == '1');
@@ -1630,20 +1635,24 @@ void* display_rig_status(void* vp)
         if (rit_xit_str.empty())
           rit_xit_str = create_string(' ', 7);
 
+// TX_ENTRY is currently broken in the K3 firmware; this has been reported to Elecraft and it's on their to-fix list
+// e-mail <5435CF66.4020303@elecraft.com> from Wayne Burdick/David Shoaf, 2014-10-08
+        static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
+
+        const bool transmitting = (status_str[TX_ENTRY] == '1');
+
+        string tx_str(transmitting ? "TX " : "RX ");
+
         const string bandwidth_str = to_string(rig_status_thread_parameters.rigp()->bandwidth());
+        const string frequency_b_str = f_b.display_string();
 
 // now display the status
-        win_rig.default_colours(win_rig.fg(), context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);
-
-//        ost << "set background colour to: " << (context.mark_frequency(f) ? "RED" : "BLACK") << endl;
+        win_rig.default_colours(win_rig.fg(), context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
 
         win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT < pad_string(f.display_string(), 7)
                 <  ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
-
-//        if (rig_status_thread_parameters.rigp()->is_locked())
-//          win_rig < "L";
-
-                < mode_str < CURSOR_DOWN
+                < mode_str < tx_str < frequency_b_str
+                < CURSOR_DOWN
                 < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
       }
     }
