@@ -3083,32 +3083,44 @@ ost << "processing command: " << command << endl;
 
 // assume it's a call or partial call and go to the call if it's in the bandmap
     if (!processed)
-    { //const string& callsign = contents;
-      bool found_call = false;
+    { //bool found_call = false;
       const BAND band_b = to_BAND(f_b);
 
 // assume it's a call -- look for the same call in the VFO B bandmap
       bandmap_entry be = bandmaps[band_b][contents];
 
       if (!(be.callsign().empty()))
-      { found_call = true;
+      { //found_call = true;
         rig.rig_frequency_b(be.freq());
       }
       else    // didn't find an exact match; try a substring search
       { be = bandmaps[band_b].substr(contents);
 
         if (!(be.callsign().empty()))
-        { found_call = true;
-//          win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
-//          contents = be.callsign();
+        { //found_call = true;
           rig.rig_frequency_b(be.freq());
-//          enter_sap_mode();
 
           win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
         }
       }
 
     }
+
+    processed = true;
+  }
+
+// ALT-> VFO A -> VFO B
+  if (!processed and e.is_alt('>'))
+  { //ost << "Alt->" << endl;
+
+    rig.rig_frequency_b(rig.rig_frequency());
+
+    processed = true;
+  }
+
+// ALT-< VFO B -> VFO A
+  if (!processed and e.is_alt('<'))
+  { rig.rig_frequency(rig.rig_frequency_b());
 
     processed = true;
   }

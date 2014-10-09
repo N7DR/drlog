@@ -116,6 +116,9 @@ public:
 
   inline const bool is_alt(const char c) const
     { return (is_alt() and (_str == create_string(c))); }
+
+//  inline const bool is_shift(const char c) const
+//    { return (is_shifted() and (_str == create_string(c))); }
 };
 
 
