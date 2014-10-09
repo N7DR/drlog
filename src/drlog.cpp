@@ -2376,6 +2376,7 @@ ost << "processing command: " << command << endl;
 // handle frequency without the MHz part: [n][n]n.n
           if (!contains_plus and !contains_minus and (value < 1000))
           { bool possible_qsy = (contents.length() >= 3);
+
             possible_qsy = possible_qsy and (contents[contents.size() - 2] == '.');
 
             if (possible_qsy)
@@ -3002,6 +3003,74 @@ ost << "processing command: " << command << endl;
     { ost << "going to enable SUBRX" << endl;
       rig.sub_receiver_enable();
       ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
+    }
+
+    processed = true;
+  }
+
+// ALT-ENTER; VFO B
+  if (!processed and e.is_alt() and (e.symbol() == XK_Return))
+  { const string contents = remove_peripheral_spaces(win.read());
+
+// try to parse as frequency
+    const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
+
+    if (!contains_letter)    // try to parse as frequency
+    { const bool contains_plus  = (contents[0] == '+');        // this can be entered from the keypad w/o using shift
+      const bool contains_minus = (contents[0] == '-');
+      double value = from_string<double>(contents);      // what happens when contents can't be parsed as a number?
+      const frequency f_b = rig.rig_frequency_b();;
+
+// if there's a plus or minus we interpret the value as kHz and move up or down from the current QRG
+      {
+// handle frequency without the MHz part: [n][n]n.n
+        if (!contains_plus and !contains_minus and (value < 1000))
+        { bool possible_qsy = (contents.length() >= 3);
+
+          possible_qsy = possible_qsy and (contents[contents.size() - 2] == '.');
+
+          if (possible_qsy)
+          {
+// get band of VFO B
+//            frequency f_b = rig.rig_frequency_b();
+            const BAND band_b = to_BAND(f_b);
+            float band_edge_in_khz = f_b.lower_band_edge().khz();
+
+//            ost << "f_b = " << f_b.display_string() << endl;
+//            ost << "band_b = " << band_b << endl;
+//            ost << "band edge = " << band_edge_in_khz << endl;
+
+            switch (band_b)
+            { case BAND_160 :
+              { value += (value < 100 ? 1800 : 1000);
+                break;
+              }
+
+              case BAND_80 :
+              { value += (value < 100 ? 3500 : 3000);
+                break;
+              }
+
+              case BAND_40 :
+              case BAND_20 :
+              case BAND_15 :
+              case BAND_10 :
+              { value += band_edge_in_khz;
+                break;
+              }
+
+              default :
+                break;
+            }
+
+//            ost << "value = " << value << endl;
+
+          }
+        }
+
+        const frequency new_frequency_b( (contains_plus or contains_minus) ? f_b.hz() + (value * 1000) : value);
+        rig.rig_frequency_b(new_frequency_b); // don't call set_last_frequency for VFO B
+      }
     }
 
     processed = true;
