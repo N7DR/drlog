@@ -3014,12 +3014,13 @@ ost << "processing command: " << command << endl;
 
 // try to parse as frequency
     const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
+    const frequency f_b = rig.rig_frequency_b();;
 
     if (!contains_letter)    // try to parse as frequency
     { const bool contains_plus  = (contents[0] == '+');        // this can be entered from the keypad w/o using shift
       const bool contains_minus = (contents[0] == '-');
       double value = from_string<double>(contents);      // what happens when contents can't be parsed as a number?
-      const frequency f_b = rig.rig_frequency_b();;
+//      const frequency f_b = rig.rig_frequency_b();;
 
 // if there's a plus or minus we interpret the value as kHz and move up or down from the current QRG
       {
@@ -3071,6 +3072,42 @@ ost << "processing command: " << command << endl;
         const frequency new_frequency_b( (contains_plus or contains_minus) ? f_b.hz() + (value * 1000) : value);
         rig.rig_frequency_b(new_frequency_b); // don't call set_last_frequency for VFO B
       }
+
+      win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+      processed = true;
+    }
+
+// don't treat as a call if it contains weird characters
+    if (!processed)
+      processed = (contents.find_first_not_of("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/?") != string::npos);
+
+// assume it's a call or partial call and go to the call if it's in the bandmap
+    if (!processed)
+    { //const string& callsign = contents;
+      bool found_call = false;
+      const BAND band_b = to_BAND(f_b);
+
+// assume it's a call -- look for the same call in the VFO B bandmap
+      bandmap_entry be = bandmaps[band_b][contents];
+
+      if (!(be.callsign().empty()))
+      { found_call = true;
+        rig.rig_frequency_b(be.freq());
+      }
+      else    // didn't find an exact match; try a substring search
+      { be = bandmaps[band_b].substr(contents);
+
+        if (!(be.callsign().empty()))
+        { found_call = true;
+//          win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
+//          contents = be.callsign();
+          rig.rig_frequency_b(be.freq());
+//          enter_sap_mode();
+
+          win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+        }
+      }
+
     }
 
     processed = true;
