@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 78 2014-10-04 17:00:27Z  $
+// $Id: exchange.cpp 79 2014-10-11 15:09:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,61 +44,16 @@ parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, 
     _value(v),
     _is_mult(m),
     _mult_value(MULT_VALUE(nm, v))
-{
-#if 0
-  if (_name == "DOK")
-  { if (!_value.empty())
-    { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-
-      if (posn == string::npos)
-        _mult_value.clear();
-      else
-        _mult_value = create_string(_value[posn]);
-    }
-  }
-  else
-    _mult_value = _value;
-#endif
-}
+{ }
 
 void parsed_exchange_field::name(const string& nm)
 { _name = nm;
   _mult_value = MULT_VALUE(_name, _value);
-
-#if 0
-if (_name == "DOK")
-  { if (!_value.empty())
-    { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-
-      if (posn == string::npos)
-        _mult_value.clear();
-      else
-        _mult_value = create_string(_value[posn]);
-    }
-  }
-  else
-    _mult_value = _value;
-#endif
 }
 
 void parsed_exchange_field::value(const string& v)
 { _value = v;
   _mult_value = MULT_VALUE(_name, _value);
-
-#if 0
-  if (_name == "DOK")
-  { if (!_value.empty())
-    { const auto posn = _value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-
-      if (posn == string::npos)
-        _mult_value.clear();
-      else
-        _mult_value = create_string(_value[posn]);
-    }
-  }
-  else
-    _mult_value = _value;
-#endif
 }
 
 ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
@@ -108,6 +63,29 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
       << "  mult_value: " << pef.mult_value() << endl;
 
   return ost;
+}
+
+// -------------------------  parsed_exchange  ---------------------------
+
+/*!     \class parsed_exchange
+        \brief All the fields in the exchange, following parsing
+*/
+
+void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const vector<string>& received_values)
+{ set<int> matched_field_numbers;
+  set<string> matched_field_names;
+  decltype(matches) remaining_matches(matches);
+
+  for (unsigned int field_nr = 0; field_nr < remaining_matches.size(); ++field_nr)
+  { if (remaining_matches.at(field_nr).size() == 1)  // there is a single match between field number and name
+    { const string& matched_field_name = *(remaining_matches.at(field_nr).cbegin());
+
+      for (unsigned int n = 0; n < _fields.size(); ++n)
+      { if (_fields[n].name() == matched_field_name)
+          _fields[n].value(received_values[n]);
+      }
+    }
+  }
 }
 
 #if defined(NEW_CONSTRUCTOR)
@@ -663,7 +641,7 @@ pt_mutex exchange_field_database_mutex;
     Returns empty string if no sensible guess can be made
 */
 const string exchange_field_database::guess_value(const string& callsign, const string& field_name)
-{ ost << "guessing value of " << field_name << " exchange field for " << callsign << endl;
+{ //ost << "guessing value of " << field_name << " exchange field for " << callsign << endl;
 
   SAFELOCK(exchange_field_database);
 
@@ -673,7 +651,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   if (it != _db.end())
     return it->second;
 
-  ost << "not in database => no prior QSO" << endl;
+  //ost << "not in database => no prior QSO" << endl;
 
 // no prior QSO; is it in the drmaster database?
   const drmaster_line drm_line = (*drm_p)[callsign];
@@ -867,12 +845,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
 { SAFELOCK(exchange_field_database);
 
-//  ost << "in exchange_field_database::set_value(); initial size = " << _db.size() << endl;
-//  ost << "callsign = " << callsign << ", field_name = " << field_name << ", value = " << value << endl;
-
   _db[ { callsign, field_name } ] = value;    // don't use insert, since we must overwrite
-
-//  ost << "final size = " << _db.size() << endl;
 }
 
 #if !defined(NEW_CONSTRUCTOR)
@@ -1196,23 +1169,6 @@ const string parsed_exchange::_resolve_choice(const string& choice_name, const s
   return string();
 }
 #endif
-
-void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const vector<string>& received_values)
-{ set<int> matched_field_numbers;
-  set<string> matched_field_names;
-  decltype(matches) remaining_matches(matches);
-
-  for (unsigned int field_nr = 0; field_nr < remaining_matches.size(); ++field_nr)
-  { if (remaining_matches.at(field_nr).size() == 1)  // there is a single match between field number and name
-    { const string& matched_field_name = *(remaining_matches.at(field_nr).cbegin());
-
-      for (unsigned int n = 0; n < _fields.size(); ++n)
-      { if (_fields[n].name() == matched_field_name)
-          _fields[n].value(received_values[n]);
-      }
-    }
-  }
-}
 
 // -------------------------  EFT  ---------------------------
 

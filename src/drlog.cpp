@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 78 2014-10-04 17:00:27Z  $
+// $Id: drlog.cpp 79 2014-10-11 15:09:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -245,6 +245,13 @@ qtc_buffer   qtc_buf;   ///< all sent and unsent QTCs
 bool send_qtcs = false;  // whether QTCs are used; set from rules later
 
 EFT CALLSIGN_EFT("CALLSIGN");
+
+/* The K3's handling of commands from the computer is rubbish. This variable
+   is a simple way to cease polling when we are moving RIT with the shift keys,
+   because there's a pause in the RIT adjustment if we happen to poll the
+   rig while adjusting RIT
+*/
+bool ok_to_poll_k3 = true;
 
 // windows -- these should automatically be thread_safe
 window win_band_mode,               ///< the band and mode indicator
@@ -1470,11 +1477,12 @@ void* display_rig_status(void* vp)
   be.expiration_time(be.time() + 1000000);    // a million seconds in the future
 
   while (true)
-  { try
+  {
+    try
     { const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
 
-      try
-      { while ( rig_status_thread_parameters.rigp()-> is_transmitting() )                     // don't poll when transmitting
+       try
+      { while ( rig_status_thread_parameters.rigp()-> is_transmitting() )  // don't poll while transmitting                   // don't poll when transmitting
           sleep_for(microseconds(microsecond_poll_period / 10));
       }
 
@@ -1484,15 +1492,18 @@ void* display_rig_status(void* vp)
       }
 
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
-      const string status_str = (rig_status_thread_parameters.rigp())->raw_command("IF;", 38);          // K3 returns 38 characters
 
-      ost << "status string: " << status_str << endl;
+      if (ok_to_poll_k3)
+      {
+        const string status_str = (rig_status_thread_parameters.rigp())->raw_command("IF;", 38);          // K3 returns 38 characters
 
-      if (status_str.length() == 38)
-      { const frequency f(from_string<unsigned int>(substring(status_str, 2, 11)));
-        const frequency target = SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency);
+        ost << "status string: " << status_str << endl;
 
-        const frequency f_b = rig.rig_frequency_b();
+        if (status_str.length() == 38)
+        { const frequency f(from_string<unsigned int>(substring(status_str, 2, 11)));
+          const frequency target = SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency);
+
+          const frequency f_b = rig.rig_frequency_b();
 
 //        ost << "f = " << f.hz() << ", target = " << target.hz() << endl;
 //        ost << "mode: " << ( (drlog_mode == CQ_MODE) ? "CQ" : "SAP") << endl;
@@ -1501,166 +1512,168 @@ void* display_rig_status(void* vp)
 //        ost << "equality of hz: " << ( (target.hz() == f.hz()) ? "TRUE" : "FALSE") << endl;
 
 // explicitly set to SAP mode if we have QSYed.
-        const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
+          const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
 
-        if ( (current_drlog_mode == CQ_MODE) and (last_drlog_mode == CQ_MODE) and (target != f) )
-          enter_sap_mode();
+          if ( (current_drlog_mode == CQ_MODE) and (last_drlog_mode == CQ_MODE) and (target != f) )
+            enter_sap_mode();
 
-        last_drlog_mode = current_drlog_mode;
+          last_drlog_mode = current_drlog_mode;
 
 //        ost << "f.display_string() = " << f.display_string() << endl;
 //        ost << "be.freq().display_string() = " << be.freq().display_string() << endl;
 
 // possibly update bandmap entry and nearby callsign, if any
-        if (f.display_string() != be.freq().display_string())  // redraw if moved > 100 Hz
-        { const BAND b = static_cast<BAND>(f);
+          if (f.display_string() != be.freq().display_string())  // redraw if moved > 100 Hz
+          { const BAND b = static_cast<BAND>(f);
 
-          be.freq(f);
-          be.band(b);
-          safe_set_band(b);
+            be.freq(f);
+            be.band(b);
+            safe_set_band(b);
 
-          const MODE m = safe_get_mode();
+            const MODE m = safe_get_mode();
 
-          display_band_mode(win_band_mode, b, m);
+            display_band_mode(win_band_mode, b, m);
 
 // update and display the correct bandmap
-          bandmap& bandmap_this_band = bandmaps[b];
+            bandmap& bandmap_this_band = bandmaps[b];
 
-          bandmap_this_band += be;
-          win_bandmap <= bandmap_this_band;
+            bandmap_this_band += be;
+            win_bandmap <= bandmap_this_band;
 
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
-          const string nearby_callsign = bandmap_this_band.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
+            const string nearby_callsign = bandmap_this_band.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
 
  //         ost << "nearby callsign = " << nearby_callsign << " at " << f.display_string() << endl;
 
-          if (!nearby_callsign.empty())
-          { display_nearby_callsign(nearby_callsign);
+            if (!nearby_callsign.empty())
+            { display_nearby_callsign(nearby_callsign);
 
-            if (in_call_window)
-            { string call_contents = remove_peripheral_spaces(win_call.read());
-
-              if (!call_contents.empty())
-              { if (last(call_contents, 5) == " DUPE")
-                  call_contents = call_contents.substr(0, call_contents.length() - 5);    // reduce to actual call
-
-                string last_call;
-
-                { SAFELOCK(dupe_check);
-
-                  last_call = last_call_inserted_with_space;
-                }
-
-                if (call_contents != last_call)
-                  win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
-              }
-            }
-          }
-          else    // no nearby callsign
-          { if (in_call_window)
-// see if we are within twice the guard band before we clear the call window
-            { const string call_contents = remove_peripheral_spaces(win_call.read());
-              const bandmap_entry be = bandmap_this_band[call_contents];
-              const unsigned int f_diff = abs(be.freq().hz() - f.hz());
-
-              if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
-              { if (!win_nearby.empty())
-                  win_nearby <= WINDOW_CLEAR;
+              if (in_call_window)
+              { string call_contents = remove_peripheral_spaces(win_call.read());
 
                 if (!call_contents.empty())
-                { string last_call;
+                { if (last(call_contents, 5) == " DUPE")
+                    call_contents = call_contents.substr(0, call_contents.length() - 5);    // reduce to actual call
+
+                  string last_call;
 
                   { SAFELOCK(dupe_check);
 
                     last_call = last_call_inserted_with_space;
                   }
 
-//              ost << "last_call_inserted_with_space = " << last_call_inserted_with_space
-
-                  if ((call_contents == last_call) or (call_contents == (last_call + " DUPE")) )
+                  if (call_contents != last_call)
                     win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
                 }
               }
             }
-          }
-        }
+            else    // no nearby callsign
+            { if (in_call_window)
+// see if we are within twice the guard band before we clear the call window
+              { const string call_contents = remove_peripheral_spaces(win_call.read());
+                const bandmap_entry be = bandmap_this_band[call_contents];
+                const unsigned int f_diff = abs(be.freq().hz() - f.hz());
 
-        static const unsigned int MODE_ENTRY = 29;      // position of the mode byte in the K3 status string
+                if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
+                { if (!win_nearby.empty())
+                    win_nearby <= WINDOW_CLEAR;
+
+                  if (!call_contents.empty())
+                  { string last_call;
+
+                    { SAFELOCK(dupe_check);
+
+                      last_call = last_call_inserted_with_space;
+                    }
+
+//              ost << "last_call_inserted_with_space = " << last_call_inserted_with_space
+
+                    if ((call_contents == last_call) or (call_contents == (last_call + " DUPE")) )
+                      win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+                  }
+                }
+              }
+            }
+          }
+
+          static const unsigned int MODE_ENTRY = 29;      // position of the mode byte in the K3 status string
 
 //        const char mode_char = (status_str.length() >= MODE_ENTRY + 1 ? status_str[MODE_ENTRY] : 'A');    // 'A' is not a valid mode
-        const char mode_char = status_str[MODE_ENTRY];
-        string mode_str;
+          const char mode_char = status_str[MODE_ENTRY];
+          string mode_str;
 
-        switch (mode_char)
-        { case '1' :
-            mode_str = "LSB";
-            break;
+          switch (mode_char)
+          { case '1' :
+              mode_str = "LSB";
+              break;
 
-          case '2' :
-            mode_str = "USB";
-            break;
+            case '2' :
+              mode_str = "USB";
+              break;
 
-          case '3' :
-            mode_str = "CW ";
-            break;
+            case '3' :
+              mode_str = "CW ";
+              break;
 
-          default :
-            mode_str = "UNK";
-            break;
-        }
+            default :
+              mode_str = "UNK";
+              break;
+          }
 
-        static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
-        static const unsigned int XIT_ENTRY = 24;      // position of the XIT status byte in the K3 status string
+          static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
+          static const unsigned int XIT_ENTRY = 24;      // position of the XIT status byte in the K3 status string
 
-        const bool rit_is_on = (status_str[RIT_ENTRY] == '1');
-        const bool xit_is_on = (status_str[XIT_ENTRY] == '1');
+          const bool rit_is_on = (status_str[RIT_ENTRY] == '1');
+          const bool xit_is_on = (status_str[XIT_ENTRY] == '1');
 
-        string rit_xit_str;
+          string rit_xit_str;
 
-        if (xit_is_on)
-          rit_xit_str += "X";
+          if (xit_is_on)
+            rit_xit_str += "X";
 
-        if (rit_is_on)
-          rit_xit_str += "R";
+          if (rit_is_on)
+            rit_xit_str += "R";
 
-        if (rit_is_on or xit_is_on)
-        { const int rit_xit_value = from_string<int>(substring(status_str, 19, 4));
+          if (rit_is_on or xit_is_on)
+          { const int rit_xit_value = from_string<int>(substring(status_str, 19, 4));
 
-          rit_xit_str += status_str[18] + to_string(rit_xit_value);
-          rit_xit_str = pad_string(rit_xit_str, 7);
-        }
+           rit_xit_str += status_str[18] + to_string(rit_xit_value);
+            rit_xit_str = pad_string(rit_xit_str, 7);
+          }
 
-        if (rit_xit_str.empty())
-          rit_xit_str = create_string(' ', 7);
+          if (rit_xit_str.empty())
+            rit_xit_str = create_string(' ', 7);
 
 // TX_ENTRY is currently broken in the K3 firmware; this has been reported to Elecraft and it's on their to-fix list
 // e-mail <5435CF66.4020303@elecraft.com> from Wayne Burdick/David Shoaf, 2014-10-08
-        static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
+          static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
 
-        const bool transmitting = (status_str[TX_ENTRY] == '1');
+          const bool transmitting = (status_str[TX_ENTRY] == '1');
 
-        string tx_str(transmitting ? "TX " : "RX ");
+          string tx_str(transmitting ? "TX " : "RX ");
 
-        const string bandwidth_str = to_string(rig_status_thread_parameters.rigp()->bandwidth());
-        const string frequency_b_str = f_b.display_string();
+          const string bandwidth_str = to_string(rig_status_thread_parameters.rigp()->bandwidth());
+          const string frequency_b_str = f_b.display_string();
 
 // now display the status
-        win_rig.default_colours(win_rig.fg(), context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
+          win_rig.default_colours(win_rig.fg(), context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
 
-        win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT < pad_string(f.display_string(), 7)
-                <  ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
-                < mode_str < tx_str < frequency_b_str
-                < CURSOR_DOWN
-                < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
+          win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT < pad_string(f.display_string(), 7)
+                  <  ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
+                  < mode_str < tx_str < frequency_b_str
+                  < CURSOR_DOWN
+                  < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
+        }
       }
     }
 
 // be silent if there was an error communicating with the rig
-    catch (const rig_interface_error& e)
-    {
-    }
+      catch (const rig_interface_error& e)
+      {
+      }
+//    }    // if ok to poll K3
 
     sleep_for(microseconds(microsecond_poll_period));
 
@@ -1795,7 +1808,7 @@ ost << "processing rbn line: " << line << endl;
 
             const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
 
-            if (!is_recent_call and (be.is_needed_country_mult()  or be.is_needed_exchange_mult() or be.is_needed_callsign_mult()))            // if it's a mult and not recently posted...
+            if (!is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult()  or be.is_needed_exchange_mult()))            // if it's a mult and not recently posted...
             { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
               { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
                 recent_mult_calls.push_back(target);
@@ -2978,15 +2991,21 @@ ost << "processing command: " << command << endl;
 
 // CTRL-S -- toggle split
   if (!processed and e.is_control('s'))
-  { if (rig.split_enabled())
-    { ost << "going to disable SPLIT" << endl;
-      rig.split_disable();
-      ost << "SPLIT is now " << (rig.split_enabled() ? "enabled" : "disabled") << endl;
+  { try
+    { if (rig.split_enabled())
+      { //ost << "going to disable SPLIT" << endl;
+        rig.split_disable();
+      //ost << "SPLIT is now " << (rig.split_enabled() ? "enabled" : "disabled") << endl;
+      }
+      else
+      { //ost << "going to enable SPLIT" << endl;
+        rig.split_enable();
+      //ost << "SPLIT is now " << (rig.split_enabled() ? "enabled" : "disabled") << endl;
+      }
     }
-    else
-    { ost << "going to enable SPLIT" << endl;
-      rig.split_enable();
-      ost << "SPLIT is now " << (rig.split_enabled() ? "enabled" : "disabled") << endl;
+
+    catch (const rig_interface_error& e)
+    { alert( (string)"Error toggling split: " + e.reason());
     }
 
     processed = true;
@@ -2994,15 +3013,21 @@ ost << "processing command: " << command << endl;
 
 // ALT-S -- toggle sub receiver
   if (!processed and e.is_alt('s'))
-  { if (rig.sub_receiver_enabled())
-    { ost << "going to disable SUBRX" << endl;
-      rig.sub_receiver_disable();
-      ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
+  { try
+    { if (rig.sub_receiver_enabled())
+      { //ost << "going to disable SUBRX" << endl;
+        rig.sub_receiver_disable();
+      //ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
+      }
+      else
+      { //ost << "going to enable SUBRX" << endl;
+        rig.sub_receiver_enable();
+      //ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
+      }
     }
-    else
-    { ost << "going to enable SUBRX" << endl;
-      rig.sub_receiver_enable();
-      ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
+
+    catch (const rig_interface_error& e)
+    { alert( (string)"Error toggling SUBRX: " + e.reason());
     }
 
     processed = true;
@@ -3083,43 +3108,36 @@ ost << "processing command: " << command << endl;
 
 // assume it's a call or partial call and go to the call if it's in the bandmap
     if (!processed)
-    { //bool found_call = false;
-      const BAND band_b = to_BAND(f_b);
+    { const BAND band_b = to_BAND(f_b);
 
 // assume it's a call -- look for the same call in the VFO B bandmap
       bandmap_entry be = bandmaps[band_b][contents];
 
       if (!(be.callsign().empty()))
-      { //found_call = true;
         rig.rig_frequency_b(be.freq());
-      }
       else    // didn't find an exact match; try a substring search
       { be = bandmaps[band_b].substr(contents);
 
         if (!(be.callsign().empty()))
-        { //found_call = true;
-          rig.rig_frequency_b(be.freq());
+        { rig.rig_frequency_b(be.freq());
 
           win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
         }
       }
-
     }
 
     processed = true;
   }
 
 // ALT-> VFO A -> VFO B
-  if (!processed and e.is_alt('>'))
-  { //ost << "Alt->" << endl;
-
-    rig.rig_frequency_b(rig.rig_frequency());
+  if (!processed and (e.is_alt('>') or e.is_alt('.')))
+  { rig.rig_frequency_b(rig.rig_frequency());
 
     processed = true;
   }
 
 // ALT-< VFO B -> VFO A
-  if (!processed and e.is_alt('<'))
+  if (!processed and (e.is_alt('<') or e.is_alt(',')))
   { rig.rig_frequency(rig.rig_frequency_b());
 
     processed = true;
@@ -5060,18 +5078,23 @@ void rit_control(const keyboard_event& e)
   { int last_rit = rig.rit();
 
     if (rig.rit_enabled())
-    { do
+    { ok_to_poll_k3 = false;
+
+      do
       { rig.rit(last_rit + change);                 // this takes forever through hamlib
         last_rit += change;
 
         if (poll)
           sleep_for(milliseconds(poll));
       } while (keyboard.empty());                      // the next event should be a key-release, but anything will do
+
+      ok_to_poll_k3 = true;
     }
   }
 
   catch (const rig_interface_error& e)
   { alert("Error in rig communication while setting RIT offset");
+    ok_to_poll_k3 = true;
   }
 }
 
@@ -5169,7 +5192,7 @@ const string callsign_mult_value(const string& callsign_mult_name, const string&
 { if ( (callsign_mult_name == "AAPX")  and (location_db.continent(callsign) == "AS") )  // All Asian
     return wpx_prefix(callsign);
 
-  if ( (callsign_mult_name == "AOCX")  and (location_db.continent(callsign) == "OC") )  // Oceania
+  if ( (callsign_mult_name == "OCPX")  and (location_db.continent(callsign) == "OC") )  // Oceania
     return wpx_prefix(callsign);
 
   if (callsign_mult_name == "SACPX")      // SAC

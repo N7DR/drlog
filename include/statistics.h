@@ -1,4 +1,4 @@
-// $Id: statistics.h 77 2014-09-27 22:23:23Z  $
+// $Id: statistics.h 79 2014-10-11 15:09:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

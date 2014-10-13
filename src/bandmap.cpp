@@ -75,8 +75,7 @@ const vector<string> bandmap_filter_type::filter(void) const
      if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
-{ //static const set<string> continent_set { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };
-  vector<string>* vs_p = ( (CONTINENT_SET < str) ? &_continents : &_prefixes );          // create pointer to correct vector
+{ vector<string>* vs_p = ( (CONTINENT_SET < str) ? &_continents : &_prefixes );          // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss.insert(continent_or_prefix); } );  // create a copy of current values

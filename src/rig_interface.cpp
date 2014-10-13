@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 68 2014-06-28 15:42:35Z  $
+// $Id: rig_interface.cpp 79 2014-10-11 15:09:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -863,13 +863,17 @@ const bool rig_interface::sub_receiver(void)
     { const string str = raw_command("SB;", true);
 
       if (str.length() < 3)
-        throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting sub-receiver status");
+        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "SUBRX Short response");
 
       return (str[2] == '1');
     }
 
+    catch (const rig_interface_error& e)
+    { throw e;
+    }
+
     catch (...)
-    { throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting sub-receiver status");
+    { throw rig_interface_error(RIG_MISC_ERROR, "Error getting SUBRX status");
     }
   }
 
@@ -1194,6 +1198,19 @@ void rig_interface::test(const bool b)
         raw_command("SWH18;");    // toggles state
     }
   }
+}
+
+const VFO rig_interface::tx_vfo(void)
+{ if (!_rig_connected)
+    return VFO_A;
+
+  vfo_t v;
+  const int status = rig_get_vfo(_rigp, &v);
+
+  if (status != RIG_OK)
+    throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting active VFO");
+
+  return (v == RIG_VFO_A ? VFO_A : VFO_B);
 }
 
 // register a function for alerting the user

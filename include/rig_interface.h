@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 43 2013-12-07 20:29:56Z  $
+// $Id: rig_interface.h 79 2014-10-11 15:09:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,10 +39,15 @@ const int RIG_UNABLE_TO_OPEN       = -1,    ///< unable to access rig
           RIG_INVALID_STOP_BITS    = -5,    ///< stop bits must be 1 or 2
           RIG_NO_RESPONSE          = -6,    ///< no response received
           RIG_HAMLIB_ERROR         = -7,    ///< unexpected event in hamlib
-          RIG_UNEXPECTED_RESPONSE  = -8;    ///< received unexpected response from rig
+          RIG_UNEXPECTED_RESPONSE  = -8,    ///< received unexpected response from rig
+          RIG_MISC_ERROR           = -9;    ///< other error
 
 const bool RESPONSE = true,
            NO_RESPONSE = false;
+
+enum VFO { VFO_A = 0,
+           VFO_B
+         };
 
 extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;
 
@@ -190,7 +195,6 @@ public:
     { xit_disable(); }
 
   const bool xit_enabled(void);
-//    { return (xit() == 0); }
 
   inline void enable_xit(void)
     { xit_enable(); }
@@ -221,8 +225,6 @@ public:
   inline void sub_receiver_disable(void)
     { sub_receiver(false); }
 
-
-
 // get the bandwidth in Hz
   const int bandwidth(void);
 
@@ -243,6 +245,8 @@ public:
 
 // register a function for alerting the user
   void register_error_alert_function(void (*error_alert_function)(const std::string&) );
+
+  const VFO tx_vfo(void);
 
 // get the band and mode from the rig, so that the status can be subsequently checked
 //  inline void get_status(void)

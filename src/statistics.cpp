@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 73 2014-08-30 14:44:01Z  $
+// $Id: statistics.cpp 79 2014-10-11 15:09:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -105,7 +105,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
   _include_qtcs = rules.send_qtcs();
 
-  ost << "in statistics::prepare, _include_qtcs = " << _include_qtcs << endl;
+//  ost << "in statistics::prepare, _include_qtcs = " << _include_qtcs << endl;
 
   _callsign_mults_used = rules.callsign_mults_used();
   _country_mults_used  = rules.country_mults_used();
@@ -163,7 +163,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 // if values are obtained from grep, then the next line returns an empty vector
       const vector<string> canonical_values = rules.exch_canonical_values(exchange_mult_name);
 
-      ost << "in running_statistics:prepare(), number of canonical values = " << canonical_values.size() << " for exchange mult: " << exchange_mult_name << endl;
+//      ost << "in running_statistics:prepare(), number of canonical values = " << canonical_values.size() << " for exchange mult: " << exchange_mult_name << endl;
 
       if (!canonical_values.empty())
         em.add_known(canonical_values);
@@ -192,7 +192,9 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
 { SAFELOCK(statistics);
 
   if (!known_callsign_mult_name(mult_name))
+  { ost << "in running_statistics::is_needed_callsign_mult(), unknown callsign mult name = " << mult_name << endl;
     return false;
+  }
 
   const auto cit = _callsign_multipliers.find(mult_name);
   const multiplier& m = cit->second;
@@ -229,15 +231,13 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 const bool running_statistics::add_known_country_mult(const string& str)
 { SAFELOCK(statistics);
 
-//  ost << "inside running_statistics, adding known country mult: " << str << endl;
+//  const size_t n1 = _country_multipliers.n_known();
 
-  const size_t n1 = _country_multipliers.n_known();
+  return (_country_multipliers.add_known(str));
 
-  _country_multipliers.add_known(str);
+//  const size_t n2 = _country_multipliers.n_known();
 
-  const size_t n2 = _country_multipliers.n_known();
-
-  return (n1 != n2);
+//  return (n1 != _country_multipliers.n_known());
 }
 
 /*! \brief  On what bands is a country mult needed?
