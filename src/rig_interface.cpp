@@ -976,7 +976,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
   int n_read             = 0;
   unsigned int total_read         = 0;
   string rcvd;
-  const bool is_p3_screenshot = (cmd == "#BMP;");   // this has to be treated differently: it is long and has no concluding semicolon
+  const bool is_p3_screenshot = (cmd == "#BMP;");   // this has to be treated differently: the response is long and has no concluding semicolon
 
   if (!_rig_connected)
     return string();
@@ -1028,11 +1028,11 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
             ost << "Error in select() in raw_command()" << endl;
           else
           { if (status == 0)
-             ost << "timeout in select() in raw_command()" << endl;
+             ost << "timeout in select() in raw_command: " << cmd << endl;
             else
             { n_read = read(fd, c_in.data(), 131640 - total_read);
 
-              ost << "n_read = " << n_read << endl;
+//              ost << "n_read = " << n_read << endl;
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
@@ -1064,6 +1064,9 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           timeout.tv_sec = 0;
           timeout.tv_usec = timeout_microseconds;
 
+          if (counter)                          // we've already slept the first time through
+            sleep_for(milliseconds(50));
+
           int status = select(fd + 1, &set, NULL, NULL, &timeout);
           int nread = 0;
 
@@ -1071,13 +1074,17 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
             ost << "Error in select() in raw_command()" << endl;
           else
           { if (status == 0)
-             ost << "timeout in select() in raw_command()" << endl;
+             ost << "timeout (" << timeout_microseconds << "µs) in select() in raw_command: " << cmd << endl;
             else
             { n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
+
+//              ost << "n_read = " << n_read << " bytes; counter = " << counter << endl;
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
                 c_in[n_read] = static_cast<char>(0);    // append a null byte
+//                ost << "  received: *" << c_in.data() << "*" << endl;
+
                 rcvd += string(c_in.data());
 
                 if (contains(rcvd, ";"))
