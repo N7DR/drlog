@@ -223,18 +223,15 @@ protected:
 
   std::set<std::string>     _posters;                 ///< stations that posted this entry
 
-  typedef std::pair<std::string, std::string> pss_type;    ///< useful syntactic sugar
+//  typedef std::pair<std::string, std::string> pss_type;    ///< useful syntactic sugar
 
   needed_mult_details<std::pair<std::string, std::string>> _is_needed_callsign_mult;    ///< details of needed callsign mults
-  needed_mult_details<std::string>                         _is_needed_country_mult;
-  needed_mult_details<std::pair<std::string, std::string>> _is_needed_exchange_mult;
+  needed_mult_details<std::string>                         _is_needed_country_mult;     ///< details of needed country mults
+  needed_mult_details<std::pair<std::string, std::string>> _is_needed_exchange_mult;    ///< details of needed exchange mults
 
 public:
 
-/// default constructor
-//  bandmap_entry(void);
-
-/// construct from particular source
+/// construct from particular source; also default constructor
   bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
 
 /*! \brief  Construct from some useful stuff
@@ -284,13 +281,21 @@ public:
 
   void calculate_mult_status(contest_rules& rules, running_statistics& statistics);
 
-  inline const needed_mult_details<pss_type> is_needed_callsign_mult_details(void) const
+//  inline const needed_mult_details<pss_type> is_needed_callsign_mult_details(void) const
+//    { return _is_needed_callsign_mult; }
+//  READ(is_needed_callsign_mult_details);
+//  READ(is_needed_callsign_mult);
+  inline const decltype(_is_needed_callsign_mult) is_needed_callsign_mult_details(void) const
     { return _is_needed_callsign_mult; }
 
-  inline const needed_mult_details<std::string> is_needed_country_mult_details(void) const
+//  inline const needed_mult_details<std::string> is_needed_country_mult_details(void) const
+//    { return _is_needed_country_mult; }
+  inline const decltype(_is_needed_country_mult) is_needed_country_mult_details(void) const
     { return _is_needed_country_mult; }
 
-  inline const needed_mult_details<pss_type> is_needed_exchange_mult_details(void) const
+//  inline const needed_mult_details<pss_type> is_needed_exchange_mult_details(void) const
+//    { return _is_needed_exchange_mult; }
+  inline const decltype(_is_needed_exchange_mult) is_needed_exchange_mult_details(void) const
     { return _is_needed_exchange_mult; }
 
   inline const bool is_needed_callsign_mult(void) const
@@ -361,7 +366,7 @@ public:
 */
   const bool matches_bandmap_entry(const bandmap_entry& be) const;
    
-/// how long (in seconds) has it been since this enty was inserted into a bandmap?
+/// how long (in seconds) has it been since this entry was inserted into a bandmap?
   inline const time_t time_since_inserted(void) const
     { return ::time(NULL) - _time; }
 
@@ -370,7 +375,7 @@ public:
     \return whether this bandmap_entry has expired
 */
   inline const bool should_prune(const time_t now = ::time(NULL)) const
-    { return ( (_expiration_time < now) and (_callsign != "--------")); }
+    { return ( (_expiration_time < now) and (_callsign != MY_MARKER)); }
 
 /// needed for a functor in const bandmap_entry bandmap::operator[](const std::string& str)
   const bool is_callsign(const std::string& str) const
@@ -480,7 +485,7 @@ protected:
 
      Returns the nearest station within the guard band, or the null string if no call is found.
 */
-    const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
+  const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
 
 // insert an entry at the right place
   void _insert(const bandmap_entry& be);

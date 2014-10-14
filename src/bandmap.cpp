@@ -101,7 +101,7 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _source(s),
   _is_needed(true),
   _expiration_time(0)
-  { }
+{ }
 
 /// set _freq and _frequency_str
 void bandmap_entry::freq(const frequency& f)
@@ -506,10 +506,7 @@ void bandmap::operator+=(const bandmap_entry& be)
         }
       }
       else    // this call is not currently present
-      { //_entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (be.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
-//        ost << "in bandmap::operator+=(); remove_if: " << endl;
-//        for_each(_entries.begin(), _entries.end(), [=]  (bandmap_entry& bme) { ost << "  bme frequency string = " << bme.frequency_str() << " for " << bme.callsign() << "; be frequency string = " << be.frequency_str() << " for " << be.callsign() << endl; } );
-        _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (!bme.is_my_marker())); } );  // remove any real entries at this QRG
+      { _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (!bme.is_my_marker())); } );  // remove any real entries at this QRG
         _insert(be);
       }
 
@@ -528,12 +525,8 @@ void bandmap::operator+=(const bandmap_entry& be)
                                                         }
 
                                                         return rv; } );
-
         }
       }
-
-
-
     }
     else    // not RBN
     { _entries.remove_if([=] (bandmap_entry& bme) { return bme.matches_bandmap_entry(be); } );
@@ -844,7 +837,7 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 }
 
 /*!  \brief Find the next needed station up or down in frequency from the current loction
-     \param fp      pointer to function to be used to determine whather a station is needed
+     \param fp      pointer to function to be used to determine whether a station is needed
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
 
@@ -852,17 +845,21 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
      Applies filtering and the RBN threshold before searching for the next station.
 */
 const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
-{ //const BM_ENTRIES fe = filtered_entries();
-  const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
+{ const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
 
-  BM_ENTRIES::const_iterator cit = find_if(fe.cbegin(), fe.cend(), [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
+//  BM_ENTRIES::const_iterator cit = find_if(fe.cbegin(), fe.cend(), [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
+//  BM_ENTRIES::const_iterator cit = FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
+  auto cit = FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
 
   if (dirn == BANDMAP_DIRECTION_DOWN)
   { if (cit != fe.cend())                      // should always be true
     {  const string target_freq_str = cit->frequency_str();
-       BM_ENTRIES::const_reverse_iterator crit(cit);                    // NB points to position *before* cit; Josuttis First ed. p. 66f.
+       //BM_ENTRIES::const_reverse_iterator crit(cit);                    // NB points to position *before* cit; Josuttis First ed. p. 66f.
 
-       crit = prev(crit);
+//       reverse_iterator<decltype(cit)> crit(cit);
+      auto crit = prev(reverse_iterator<decltype(cit)>(cit));
+
+//       crit = prev(crit);
 
        BM_ENTRIES::const_reverse_iterator crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency
 
@@ -936,8 +933,6 @@ window& operator<(window& win, bandmap& bm)
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
   const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();    // automatically filter
-//  const BM_ENTRIES entries = bm.filtered_entries();    // automatically filter
-
   const size_t start_entry = (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0;
 
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
@@ -1001,7 +996,7 @@ window& operator<(window& win, bandmap& bm)
         win < WINDOW_NORMAL;
 
       win < colour_pair(status_colour) < " "
-          < colour_pair(cpu) < callsign_str; // < WINDOW_NORMAL;
+          < colour_pair(cpu) < callsign_str;
     }
 
     index++;

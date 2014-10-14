@@ -97,7 +97,7 @@ void rig_interface::_error_alert(const string& msg)
 
 // constructor
 rig_interface::rig_interface (void /* const string& serial_port */) :
-  _port_name(nullptr),
+  _port_name(),
   _rigp(nullptr),
   _rig_poll_interval(1000),             // poll once per second
   _status(frequency(), MODE_CW),            // frequency and mode are set to defaults prior to reading from rig
@@ -298,13 +298,13 @@ rig_interface::rig_interface (void /* const string& serial_port */) :
 
 // destructor
 rig_interface::~rig_interface(void)
-{ if (_port_name)
-    delete [] _port_name;
+{ //if (_port_name)
+  //  delete [] _port_name;
 }
 
 /// prepare rig for use
 void rig_interface::prepare(const drlog_context& context)
-{ const string serial_port = context.rig1_port();
+{ _port_name = context.rig1_port();
 
 /*
 
@@ -407,13 +407,13 @@ void rig_interface::prepare(const drlog_context& context)
     data_bits(context.rig1_data_bits());
     stop_bits(context.rig1_stop_bits());
 
-    strncpy(_rigp->state.rigport.pathname, serial_port.c_str(), FILPATHLEN);
+    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN);
   }
 
   const int status = rig_open(_rigp);
 
   if (status != RIG_OK)
-  { const string msg = "Unable to open the rig on port " + serial_port + ": Error = " + to_string(status);
+  { const string msg = "Unable to open the rig on port " + _port_name + ": Error = " + to_string(status);
 
     _error_alert(msg);
     ost << msg << endl;
@@ -1119,7 +1119,6 @@ const bool rig_interface::is_locked(void)
   { SAFELOCK(_rig);
 
     int v;
-
     const int status = rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v);
 
     if (status != RIG_OK)

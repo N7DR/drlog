@@ -1316,25 +1316,12 @@ int main(int argc, char** argv)
 
 // everything is set up and running. Now we simply loop
     while (1)
-    { //ost << "Before sleeping for one second, window is: " << active_window_name() << endl;
-
-      //sleep_for(seconds(1));
-
-      //ost << "Before checking keyboard, window is: " << active_window_name() << endl;
-
-      while (keyboard.empty())
+    { while (keyboard.empty())
         sleep_for(milliseconds(10));
-
-      //ost << "Before popping event, window is: " << active_window_name() << endl;
 
       const keyboard_event e = keyboard.pop();
 
-      //ost << "About to process input in window: " << active_window_name() << endl;
-
       win_active_p -> process_input(e);
-
-      //ost << "Processed input; window is now: " << active_window_name() << endl;
-
     }
   }
 
@@ -1950,6 +1937,9 @@ void* prune_bandmap(void* vp)
 // -------------------------------------------------  functions to process input to various windows  -----------------------------
 
 // function to process input to the CALL window
+/*  KP numbers -- CW messages
+    CTRL-C -- EXIT (same as .QUIT)
+*/
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
 // syntactic sugar
@@ -1990,7 +1980,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     display_call_info(callsign);
   }
 
-// CW messages
+// KP numbers -- CW messages
   if (!processed and cw_p and (cur_mode == MODE_CW))
   { if (e.is_unmodified() and (keypad_numbers < e.symbol()) )
     {
@@ -2048,9 +2038,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // is there a station close to our frequency?
       const string nearby_callsign = bm.nearest_rbn_threshold_and_filtered_callsign(last_frequency.khz(), context.guard_band(cur_mode));
 
-//      ost << "lookup frequency = " << last_frequency.khz() << ", guard band = " << context.guard_band(cur_mode) << endl;
-//      ost << "alt-b/v, nearby call = " << nearby_callsign << endl;
-
       display_nearby_callsign(nearby_callsign);  // clears nearby window if call is empty
 
 // update displays of needed mults
@@ -2059,8 +2046,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       update_remaining_exchange_mults_windows(rules, statistics, cur_band);
 
       win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
-
-//      enter_sap_mode();
     }
 
     catch (const rig_interface_error& e)
@@ -2149,10 +2134,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
-  if (!processed and (e.symbol() == XK_F1))
-  { ost << "Rig test status = " << rig.test() << endl;
-    processed = true;
-  }
+//  if (!processed and (e.symbol() == XK_F1))
+//  { ost << "Rig test status = " << rig.test() << endl;
+//    processed = true;
+//  }
 
 // F11 -- band map filtering
   if (!processed and (e.symbol() == XK_F11))
@@ -2193,7 +2178,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     { const string str = ( (CONTINENT_SET < contents) ? contents : location_db.canonical_prefix(contents) );
 
       bm.filter_add_or_subtract(str);
-
       win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
       processed = true;         //  processed even if haven't been able to do anything with it
@@ -2219,16 +2203,13 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ENTER -- a lot of complicated stuff
   if (!processed and e.is_unmodified() and (e.symbol() == XK_Return))
-  { ost << "it's a return" << endl;
+  { //ost << "it's a return" << endl;
     const string contents = remove_peripheral_spaces(win.read());
 
 // if empty, send CQ #1, regardless of whether I'm in CQ or SAP mode
     if (contents.empty())
-    { //ost << "contents are empty" << endl;
-
-      if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))
+    { if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))
       { const string msg = context.message_cq_1();
-        //ost << "sending message (CQ #1) : " << msg << endl;
 
         if (!msg.empty())
           (*cw_p) << msg;
@@ -2300,10 +2281,30 @@ ost << "processing command: " << command << endl;
           set<BAND> score_bands;
 
 //next bit of code is copied from drlog_context.cpp
-          vector<string> bands_str = split_string(rhs, ",");
+//          vector<string> bands_str = split_string(rhs, ",");
 
-          for (unsigned int n = 0; n < bands_str.size(); ++n)
-          { bands_str[n] = remove_peripheral_spaces(bands_str[n]);
+//          for (unsigned int n = 0; n < bands_str.size(); ++n)
+
+          const vector<string> bands_str = remove_peripheral_spaces(split_string(rhs, ","));
+
+          for (const auto& band_str : bands_str)
+          { try
+            { score_bands.insert(BAND_FROM_NAME.at(band_str));
+            }
+
+            catch (...)
+            { if (band_str == "*")
+              { for (const auto& b : rules.permitted_bands())
+                  score_bands.insert(b);
+              }
+              else
+                alert("Error parsing [RE]SCORE command");
+            }
+          }
+
+
+/*
+           { bands_str[n] = remove_peripheral_spaces(bands_str[n]);
 
             try
             { const BAND b = BAND_FROM_NAME.at(bands_str[n]);
@@ -2319,6 +2320,7 @@ ost << "processing command: " << command << endl;
                 alert("Error parsing [RE]SCORE command");
             }
           }
+*/
 
           rules.score_bands(score_bands);
         }
@@ -2591,8 +2593,6 @@ ost << "processing command: " << command << endl;
                     mult_exchange_field_value.insert( { exf.name(), guess } );
                 }
               }
-//              if (exf.is_mult())                 // save the expected value of this field
-//                mult_exchange_field_value.insert( { exf.name(), guess } );
             }
           }
 
@@ -2672,7 +2672,7 @@ ost << "processing command: " << command << endl;
     if (contents.empty())
     { if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))
       { const string msg = context.message_cq_2();
-        ost << "sending message (CQ #2) : " << msg << endl;
+//        ost << "sending message (CQ #2) : " << msg << endl;
 
         if (!msg.empty())
           (*cw_p) << msg;
@@ -5837,10 +5837,11 @@ const string active_window_name(void)
   return name;
 }
 
+/*! \brief              Display a callsign in the NEARBY window, in the correct colour
+    \param  callsign    Call to display
+*/
 void display_nearby_callsign(const string& callsign)
-{ //ost << "display_nearby_callsign called with call = " << callsign << endl;
-
-  if (callsign.empty())
+{ if (callsign.empty())
     win_nearby <= WINDOW_CLEAR;
   else
   { const bool dupe = logbk.is_dupe(callsign, safe_get_band(), safe_get_mode(), rules);
@@ -5849,13 +5850,13 @@ void display_nearby_callsign(const string& callsign)
     const int background = win_nearby.bg();
 
 // in what colour should we display this call?
-    int colour_pair_number = colours.add(win_nearby.fg(), win_nearby.bg());
+    int colour_pair_number = colours.add(foreground, background);
 
     if (!worked)
-      colour_pair_number = colours.add(COLOUR_GREEN,  win_nearby.bg());
+      colour_pair_number = colours.add(COLOUR_GREEN,  background);
 
     if (dupe)
-      colour_pair_number = colours.add(COLOUR_RED,  win_nearby.bg());
+      colour_pair_number = colours.add(COLOUR_RED,  background);
 
     win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE;
     win_nearby.cpair(colour_pair_number);
@@ -5867,17 +5868,7 @@ void display_nearby_callsign(const string& callsign)
 void test_exchange_templates(const contest_rules& rules, const string& test_filename)
 { ost << "executing -test-exchanges" << endl;
 
-//const std::set<std::string> all_known_field_names(void) const;
   const set<string> field_names = rules.all_known_field_names();
-
-//  ost << "exchange templates:" << endl;
-
-//  const auto db = EXCHANGE_FIELD_TEMPLATES.db();
-
-//  for (const auto& kv : db)
-//    ost << "  " << kv.first << " : " << kv.second << endl;
-
-//  const string test_filename = cl.value("-test-exchanges");
 
   ost << "reading file: " << test_filename << endl;
 
@@ -5913,7 +5904,7 @@ void test_exchange_templates(const contest_rules& rules, const string& test_file
 
   exit(0);
 }
-#else
+#else    // !NEW_CONSTRUCTOR
 void test_exchange_templates(const string& test_filename)
 { ost << "executing -test-exchanges" << endl;
   ost << "exchange templates:" << endl;

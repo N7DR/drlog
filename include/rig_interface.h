@@ -68,13 +68,13 @@ WRAPPER_2(rig_status, frequency, freq, MODE, mode);
 class rig_interface
 {
 protected:
-  hamlib_port_t    _port;
-  char*            _port_name;                           // ugh!
+  hamlib_port_t    _port;                                ///< hamlib port
+  std::string      _port_name;                           ///< name of port
 
-  RIG*             _rigp;
-  rig_model_t      _model;
+  RIG*             _rigp;                                ///< hamlib handle
+  rig_model_t      _model;                               ///< hamlib model
 
-  rig_status       _status;                              // most recent rig status from the periodic poll
+  rig_status       _status;                              ///< most recent rig frequency and mode from the periodic poll
   pt_mutex         _rig_mutex;                           // mutex for all operations
 
   unsigned int     _rig_poll_interval;                   // interval between polling for rig status, in milliseconds

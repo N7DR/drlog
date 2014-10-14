@@ -753,12 +753,15 @@ template <class Input>
 { std::reverse(v.begin(), v.end());
 }
 
-/* need example of correct syntax for returning generic iterator; can't find exactly how to do this described in a book
-template <class Input, class UnaryPredicate>
-  auto FIND_IF(Input& v, UnaryPredicate pred) -> decltype(Input::iterator)
+template <typename Input, typename UnaryPredicate>
+  auto FIND_IF(Input& v, UnaryPredicate pred) -> typename Input::iterator
 { return std::find_if(v.begin(), v.end(), pred);
 }
-*/
+
+template <typename Input, typename UnaryPredicate>
+  auto FIND_IF(const Input& v, UnaryPredicate pred) -> typename Input::const_iterator
+{ return std::find_if(v.cbegin(), v.cend(), pred);
+}
 
 // ------------------------ container for per-band and per-mode information ------------
 
