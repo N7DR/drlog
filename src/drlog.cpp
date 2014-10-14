@@ -1340,12 +1340,14 @@ int main(int argc, char** argv)
 void display_band_mode(window& win, const BAND b, const enum MODE m)
 { static BAND last_band = BAND_20;  // start state
   static MODE last_mode = MODE_CW;
+  static bool first_time = true;
 //  static pt_mutex band_mode_mutex;
 
   SAFELOCK(band_mode);
 
-  if ((b != last_band) or (m != last_mode))
-  { last_band = b;
+  if ((b != last_band) or (m != last_mode) or first_time)
+  { first_time = false;
+    last_band = b;
     last_mode = m;
 
     win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= string(BAND_NAME[b] + " " + MODE_NAME[m]);
@@ -1585,27 +1587,28 @@ void* display_rig_status(void* vp)
             }
           }
 
+// mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
+// following a recent change of mode. By the next poll it seems to be OK, though, so for now
+// it seems like the effort of trying to work around the bug is not worth it
           static const unsigned int MODE_ENTRY = 29;      // position of the mode byte in the K3 status string
-
-//        const char mode_char = (status_str.length() >= MODE_ENTRY + 1 ? status_str[MODE_ENTRY] : 'A');    // 'A' is not a valid mode
           const char mode_char = status_str[MODE_ENTRY];
           string mode_str;
 
           switch (mode_char)
           { case '1' :
-              mode_str = "LSB";
+              mode_str = "LSB ";
               break;
 
             case '2' :
-              mode_str = "USB";
+              mode_str = "USB ";
               break;
 
             case '3' :
-              mode_str = "CW ";
+              mode_str = " CW ";
               break;
 
             default :
-              mode_str = "UNK";
+              mode_str = "UNK ";
               break;
           }
 
@@ -1657,10 +1660,9 @@ void* display_rig_status(void* vp)
     }
 
 // be silent if there was an error communicating with the rig
-      catch (const rig_interface_error& e)
-      {
-      }
-//    }    // if ok to poll K3
+    catch (const rig_interface_error& e)
+    {
+    }
 
     sleep_for(microseconds(microsecond_poll_period));
 
@@ -1939,6 +1941,8 @@ void* prune_bandmap(void* vp)
 // function to process input to the CALL window
 /*  KP numbers -- CW messages
     CTRL-C -- EXIT (same as .QUIT)
+    ALT-M -- change mode
+    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {

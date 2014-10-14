@@ -462,7 +462,10 @@ void rig_interface::rig_frequency_b(const frequency& f)
 }
 
 void rig_interface::rig_mode(const MODE m)
-{_last_commanded_mode = m;
+{ static pbwidth_t last_cw_bandwidth  = 200;
+  static pbwidth_t last_ssb_bandwidth = 1800;
+
+  _last_commanded_mode = m;
 
   if (_rig_connected)
   { rmode_t hamlib_m = RIG_MODE_CW;
@@ -473,7 +476,7 @@ void rig_interface::rig_mode(const MODE m)
     int status;
 
     {
-// hamlib not-very-intelligently sets both the mode and the bandwidth in a single command
+// hamlib, for reasons I can't even guess at, sets both the mode and the bandwidth in a single command
       pbwidth_t tmp_bandwidth;
       rmode_t tmp_mode;
 
@@ -484,9 +487,32 @@ void rig_interface::rig_mode(const MODE m)
       if (status != RIG_OK)
         _error_alert("Error getting mode prior to setting mode");
       else
-      {
+      { switch (tmp_mode)
+        { case RIG_MODE_CW:
+            last_cw_bandwidth = tmp_bandwidth;
+            break;
+
+          case RIG_MODE_LSB:
+          case RIG_MODE_USB:
+              last_ssb_bandwidth = tmp_bandwidth;
+            break;
+
+          default:
+            break;
+        }
+
         { SAFELOCK(_rig);
-          status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : rig_passband_normal(_rigp, hamlib_m) ));
+
+          pbwidth_t new_bandwidth;
+
+          if (m == MODE_CW)
+            new_bandwidth = last_cw_bandwidth;
+
+          if (m == MODE_SSB)
+            new_bandwidth = last_ssb_bandwidth;
+
+//          status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : rig_passband_normal(_rigp, hamlib_m) ));
+          status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
         }
 
         if (status != RIG_OK)
