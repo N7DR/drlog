@@ -38,20 +38,14 @@ multiplier::multiplier(void) :
     Returns false if the value <i>str</i> is not known
 */
 const bool multiplier::add_worked(const string& str, const int b)
-{ //ost << "inside multiplier::add_worked()" << endl;
-
-  //ost << (_used ? "used" : "NOT used") << endl;
-  //ost << str << (is_known(str) ? " is known" : " is NOT known") << endl;
-  //ost << (_per_band ? "per band" : "NOT per band") << endl;
-
-  if ((_used) and is_known(str))                                          // add only known mults
+{ if ((_used) and is_known(str))                                          // add only known mults
   { if (_per_band)
-    { const bool rv = (_worked[b].insert(str)).second;
+    { //const bool rv = (_worked[b].insert(str)).second;
 
-      return rv;
+      return ( (_worked[b].insert(str)).second );
     }
-    else // not per-band
-    { const bool rv = (_worked[b].insert(str)).second;  // keep track of per-band anyway, in case of single-band entry
+    else // not per-band; keep track of per-band anyway, in case of single-band entry
+    { const bool rv = (_worked[b].insert(str)).second;
 
       _worked[N_BANDS].insert(str);
       return rv;

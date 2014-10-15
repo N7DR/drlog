@@ -26,8 +26,6 @@ extern message_stream ost;
 extern bool QSO_DISPLAY_COUNTRY_MULT;        ///< controls whether country mults are written on the log line
 extern int  QSO_MULT_WIDTH;                  ///< controls width of zone mults field in log line
 
-//extern map<string, int>    key_names;    ///< The names of the keys on the keyboard; maps names to X KeySyms
-
 // -----------  drlog_context  ----------------
 
 /*! \class drlog_context
@@ -49,7 +47,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     exit(-1);
   }
 
-  static const std::string LF_STR   = "\n";      ///< LF as string
+  static const string LF_STR   = "\n";      ///< LF as string
 
 // split into lines
   const vector<string> lines = split_string(entire_file, LF_STR);
@@ -295,7 +293,6 @@ void drlog_context::_process_configuration_file(const string& filename)
               }
 
               tmp_str = to_upper(remove_peripheral_spaces(new_str));
-
               _per_band_country_mult_factor.insert( { b, from_string<int>(tmp_str) } );
             }
           }
@@ -427,6 +424,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // MODES
     if (starts_with(testline, "MODES"))
     { _modes = RHS;
+
       if (!contains(_modes, ","))
       { if (to_upper(_modes) == "SSB")
           _start_mode = MODE_SSB;
@@ -467,7 +465,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // NORMALISE RATE
     if (starts_with(testline, "NORMALISE RATE") or starts_with(testline, "NORMALIZE RATE"))
-      _normalise_rate = is_true;;
+      _normalise_rate = is_true;
 
 // NOT COUNTRY MULTS
     if (starts_with(testline, "NOT COUNTRY MULTS"))
@@ -634,7 +632,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const vector<string> vec_rates = remove_peripheral_spaces(split_string(rhs, ","));
       vector<unsigned int> new_rates;
 
-      for_each(vec_rates.cbegin(), vec_rates.cend(), [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
+//      for_each(vec_rates.cbegin(), vec_rates.cend(), [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
+      FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
 
       if (!new_rates.empty())
         _rate_periods = new_rates;
@@ -760,9 +759,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 //                      NONE
 // any single continent
     if (starts_with(testline, "COUNTRY MULTS") and !starts_with(testline, "COUNTRY MULTS PER BAND"))
-    { _country_mults_filter = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
-
-//      ost << "_country_mults_filter = " << _country_mults_filter << endl;
+    { _country_mults_filter = RHS;
 
       if (_country_mults_filter == "NONE")
         QSO_DISPLAY_COUNTRY_MULT = false;                  // since countries aren't mults, don't take up space in the log line
@@ -1209,8 +1206,8 @@ drlog_context::drlog_context(const std::string& filename) :
   _rig1_type(""),                             // no default rig type
   _russian_filename("russian-data"),          // default file for Russian location information
   _screen_snapshot_file("screen"),            // screen snapshots will be in screen-<n>
-  _shift_delta(20),                           // shift RIT by 20 Hz
-  _shift_poll(10),                            // poll every 10 milliseconds (this is much too frequent for a K3 to respond)
+  _shift_delta(10),                           // shift RIT by 10 Hz
+  _shift_poll(50),                            // poll every 50 milliseconds
   _start_band(BAND_20),                       // start on 20m
   _start_mode(MODE_CW),                       // start on CW
   _sync_keyer(false),                         // do not synchronise rig keyer with computer

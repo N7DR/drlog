@@ -11,6 +11,7 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+// temporary, until I am convinced that the new constructor in exchange functions at least as well as the old one
 #define NEW_CONSTRUCTOR
 
 /*!     \file macros.h
@@ -657,6 +658,7 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
   return rv;
 }
 
+// syntactic suger for time-related use
 #include <chrono>
 
 typedef std::chrono::duration<long, std::centi> centiseconds;
@@ -709,6 +711,10 @@ public:
   }
 };
 
+// allow easy execution of a loop a predetermined number of times
+// this does throw a warning, but I can't think of a better way to
+// execute a loop a predetermined number of times. C++14 might be going
+// to provide a better mechanism.
 template <typename T>
 class RANGE : public std::vector<T>
 {
