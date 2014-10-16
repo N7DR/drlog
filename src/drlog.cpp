@@ -1636,13 +1636,12 @@ void* display_rig_status(void* vp)
           if (rit_xit_str.empty())
             rit_xit_str = create_string(' ', 7);
 
-// TX_ENTRY is currently broken in the K3 firmware; this has been reported to Elecraft and it's on their to-fix list
-// e-mail <5435CF66.4020303@elecraft.com> from Wayne Burdick/David Shoaf, 2014-10-08
-          static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
+// remove TX inddicator, since we no longer poll if we're TXing (modula a µs or so)
+//          static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
 
-          const bool transmitting = (status_str[TX_ENTRY] == '1');
+//          const bool transmitting = (status_str[TX_ENTRY] == '1');
 
-          string tx_str(transmitting ? "TX " : "RX ");
+//          string tx_str(transmitting ? "TX " : "RX ");
 
           const string bandwidth_str = to_string(rig_status_thread_parameters.rigp()->bandwidth());
           const string frequency_b_str = f_b.display_string();
@@ -1652,7 +1651,7 @@ void* display_rig_status(void* vp)
 
           win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT < pad_string(f.display_string(), 7)
                   <  ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
-                  < mode_str < tx_str < frequency_b_str
+                  < mode_str < /* tx_str < */ frequency_b_str
                   < CURSOR_DOWN
                   < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
         }
