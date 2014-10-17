@@ -400,20 +400,69 @@ void drlog_context::_process_configuration_file(const string& filename)
       _logfile = rhs;
 
 // MARK FREQUENCIES
-    if (starts_with(testline, "MARK FREQUENCIES") and !rhs.empty())
+    if (starts_with(testline, "MARK FREQUENCIES") and !contains(testline, "CW") and !contains(testline, "SSB") and !rhs.empty())
     { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
+      vector<pair<frequency, frequency>> frequencies;
 
       for (const string& range : ranges)
       { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
 
         try
-        { _mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+        { //_mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+          frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
         }
 
         catch (...)
         { ost << "Parse error in MARK FREQUENCIES" << endl;
           exit(-1);
         }
+
+        _mark_frequencies.insert( { MODE_CW, frequencies } );
+        _mark_frequencies.insert( { MODE_SSB, frequencies } );
+      }
+    }
+
+// MARK FREQUENCIES CW
+    if (starts_with(testline, "MARK FREQUENCIES CW") and !rhs.empty())
+    { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
+      vector<pair<frequency, frequency>> frequencies;
+
+      for (const string& range : ranges)
+      { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
+
+        try
+        { //_mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+          frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+        }
+
+        catch (...)
+        { ost << "Parse error in MARK FREQUENCIES CW" << endl;
+          exit(-1);
+        }
+
+        _mark_frequencies.insert( { MODE_CW, frequencies } );
+      }
+    }
+
+// MARK FREQUENCIES SSB
+    if (starts_with(testline, "MARK FREQUENCIES SSB") and !rhs.empty())
+    { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
+      vector<pair<frequency, frequency>> frequencies;
+
+      for (const string& range : ranges)
+      { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
+
+        try
+        { //_mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+          frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+        }
+
+        catch (...)
+        { ost << "Parse error in MARK FREQUENCIES SSB" << endl;
+          exit(-1);
+        }
+
+        _mark_frequencies.insert( { MODE_SSB, frequencies } );
       }
     }
 
@@ -1251,14 +1300,22 @@ const vector<string> drlog_context::window_name_contains(const string& substr) c
   return rv;
 }
 
-const bool drlog_context::mark_frequency(const frequency& f)
+const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 { SAFELOCK(_context);
 
-  for (const auto& pff : _mark_frequencies)
-  { if ( (f >= pff.first) and (f <= pff.second))
-    {  ost << "frequencies: " << f.display_string() << ", " << pff.first.display_string() << ", " << pff.second.display_string() << endl;
-      return true;
+  try
+  { const vector<pair<frequency, frequency>>& vec = _mark_frequencies.at(m);
+
+    for (const auto& pff : vec)
+    { if ( (f >= pff.first) and (f <= pff.second))
+      { // ost << "frequencies: " << f.display_string() << ", " << pff.first.display_string() << ", " << pff.second.display_string() << endl;
+        return true;
+      }
     }
+  }
+
+  catch (...)
+  { return false;
   }
 
   return false;

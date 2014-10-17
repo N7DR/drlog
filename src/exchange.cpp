@@ -114,11 +114,24 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   _replacement_call(),
   _valid(false)
 { static const string EMPTY_STRING("");
+  static bool is_ss = false;    // Sweepstakes is special
+  static bool first_time = true;
+
   vector<string> copy_received_values(received_values);
 
   ost << "Inside parsed_exchange constructor" << endl;
 
   const vector<exchange_field> exchange_template = rules.exch(canonical_prefix);
+
+// first time through, determine whether this is Sweepstakes
+  if (first_time)
+  { for (const auto& ef : exchange_template)
+    { if (ef.name() == "PREC")
+        is_ss = true;
+    }
+
+    first_time = false;
+  }
 
 // how many fields are optional?
   unsigned int n_optional_fields = 0;

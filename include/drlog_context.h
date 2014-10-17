@@ -149,7 +149,7 @@ protected:
 
   std::string                                  _logfile;             ///< name of the log filename
 
-  std::vector<std::pair<frequency, frequency>> _mark_frequencies;    ///< frequency ranges to be marked on-screen
+  std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;    ///< frequency ranges to be marked on-screen
   unsigned int                                 _match_minimum;       ///< number of characters before SCP or fuzzy match kicks in
   std::array<std::string, MAX_MEMORY_MESSAGES> _memory_messages;     ///< canned messages
   std::string                                  _message_cq_1;        ///< CQ message #1 (generally, a short CQ)
@@ -442,7 +442,7 @@ typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
   const std::vector<std::string> window_name_contains(const std::string& substr) const;
 
-  const bool mark_frequency(const frequency& f);
+  const bool mark_frequency(const MODE, const frequency& f);
 };
 
 #endif    // DRLOG_CONTEXT_H

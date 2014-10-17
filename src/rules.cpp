@@ -250,7 +250,8 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
 const set<string> contest_rules::_all_exchange_values(const string& field_name) const
 { SAFELOCK(rules);
 
-  const auto cit = find_if(_exch_values.cbegin(), _exch_values.cend(), [=] (const exchange_field_values& efv) { return (efv.name() == field_name); } );
+//  const auto cit = find_if(_exch_values.cbegin(), _exch_values.cend(), [=] (const exchange_field_values& efv) { return (efv.name() == field_name); } );
+  const auto cit = FIND_IF(_exch_values, [=] (const exchange_field_values& efv) { return (efv.name() == field_name); } );
 
   return ( (cit == _exch_values.cend()) ? set<string>() : cit->all_values() );
 }
@@ -380,7 +381,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _callsign_mults_per_band = context.callsign_mults_per_band();
   _callsign_mults_used = !_callsign_mults.empty();
 
-  ost << "number of possible country mults = " << _country_mults.size() << endl;
+//  ost << "number of possible country mults = " << _country_mults.size() << endl;
 
   _country_mults_used = !_country_mults.empty();
   _country_mults_per_band = context.country_mults_per_band();
@@ -449,7 +450,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { _points.insert( {b, empty_ps} );  // default is no points
 
     points_structure points_this_band;
-
     MSI     country_points_this_band;
     MSI     continent_points_this_band;
 
@@ -491,14 +491,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
               if (!countries.empty())
               { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already spilt on commas
 
-                for (const auto& country : country_vec)
-                  country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } );
+ //               for (const auto& country : country_vec)
+//                  country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } );
+                FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } ); } );
               }
             }
             else
               country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
 
-//            country_points_this_band[location_db.canonical_prefix(fields[1])] = from_string<unsigned int>(fields[2]);
             points_this_band.country_points(country_points_this_band);
 
             processed = true;
@@ -551,8 +551,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     for (auto cit3 = vec_1.cbegin(); cit3 != vec_1.cend(); ++cit3)
     { const vector<exchange_field> vec = cit3->expand();
 
-//      for (auto cit2 = vec.cbegin(); cit2 != vec.cend(); ++cit2)
-//        leaves.push_back(*cit2);
       copy(vec.cbegin(), vec.cend(), back_inserter(leaves));
     }
   }

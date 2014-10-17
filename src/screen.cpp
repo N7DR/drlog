@@ -422,7 +422,7 @@ window& window::default_colours(const int foreground_colour, const int backgroun
 
 /// control an attribute or perform a simple operation
 window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
-{ if (!_wp)
+{ if (!_wp or (wa == WINDOW_NOP) )
     return *this;
     
   switch (wa)

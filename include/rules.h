@@ -54,7 +54,7 @@ protected:
   std::map<std::string,                        /* a canonical field value */
           std::set                             /* each equivalent value is a member of the set, including the canonical value */
             <std::string                       /* indistinguishable legal values */
-            >> _values;
+            >> _values;                        ///< associate legal values with a canonical value
 
 public:
 
@@ -71,8 +71,8 @@ public:
     _values(mss)
   { }
 
-  READ_AND_WRITE(name);
-  READ_AND_WRITE(values);
+  READ_AND_WRITE(name);             ///< name of the exchange field
+  READ_AND_WRITE(values);           ///< associate legal values with a canonical value
 
 /*!     \brief      Add a canonical value
         \param  cv  canonical value to add
@@ -196,7 +196,7 @@ protected:
 
 public:
 
-/// constructor
+/// default constructor
   points_structure(void);
 
   READ_AND_WRITE(default_points);      ///< default points
@@ -280,7 +280,6 @@ protected:
            > >                                  _permitted_to_canonical;
 
   std::map<std::string /* field name */, EFT>   _exchange_field_eft;
-//  EFT                                           _callsign_eft;          // in general, there might be a new callsign in the exchange window, so make sure we can parse it
 
 // copied from context, so that we can score correctly without loading context
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score
@@ -294,8 +293,6 @@ protected:
 
   bool                                         _send_qtcs;           ///< whether to send QTCs
 
-/// private function used to generate _permitted_exch_values
-
 /*!     \brief              private function used to obtain all the understood values for a particular exchange field
         \param  field_name  name of the field for which the understood values are required
         \return             set of all the legal values for the field <i>field_name</i>
@@ -304,8 +301,12 @@ protected:
 */
   const std::set<std::string> _all_exchange_values(const std::string& field_name) const;
 
-//  const std::vector<exchange_field> _parse_context_exchange(const drlog_context& context /* const std::string& exchange_str, const std::string& exchange_mults_str */) const;  // parse the "exchange =" line from context
-  const std::map<std::string, std::vector<exchange_field>> _parse_context_exchange(const drlog_context& context) const;  // parse all the "exchange [xx] = " lines from context
+/*!     \brief              parse all the "exchange [xx] = " lines from context
+        \param  context     drlog context
+        \return             name/mult/optional/choice status for exchange fields
+*/
+  const std::map<std::string, std::vector<exchange_field>> _parse_context_exchange(const drlog_context& context) const;
+
   const std::vector<exchange_field> _inner_parse(const std::vector<std::string>& exchange_fields , const std::vector<std::string>& exchange_mults_vec) const;
 
   void _parse_context_qthx(const drlog_context& context, location_database& location_db);

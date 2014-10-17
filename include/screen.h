@@ -62,7 +62,8 @@ enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
                          WINDOW_SCROLL_UP,
                          WINDOW_SCROLL_DOWN,
                          CURSOR_HIDE,
-                         CURSOR_END_OF_LINE
+                         CURSOR_END_OF_LINE,
+                         WINDOW_NOP
                        };
 
 // window creation flags

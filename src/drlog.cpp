@@ -1508,6 +1508,8 @@ void* display_rig_status(void* vp)
 
           last_drlog_mode = current_drlog_mode;
 
+          const MODE m = safe_get_mode();
+
 //        ost << "f.display_string() = " << f.display_string() << endl;
 //        ost << "be.freq().display_string() = " << be.freq().display_string() << endl;
 
@@ -1519,7 +1521,7 @@ void* display_rig_status(void* vp)
             be.band(b);
             safe_set_band(b);
 
-            const MODE m = safe_get_mode();
+//            const MODE m = safe_get_mode();
 
             display_band_mode(win_band_mode, b, m);
 
@@ -1647,7 +1649,7 @@ void* display_rig_status(void* vp)
           const string frequency_b_str = f_b.display_string();
 
 // now display the status
-          win_rig.default_colours(win_rig.fg(), context.mark_frequency(f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
+          win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
 
           win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT < pad_string(f.display_string(), 7)
                   <  ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
