@@ -38,31 +38,24 @@ using namespace   this_thread;   // std::this_thread
 const bool RESPONSE_EXPECTED = true;
 
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
- * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in hamlib).
+ * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
  *
  * Anyway, as a result of this, we use explicit K3 control commands where appropriate. This may be changed if/when hamlib proves
- * itself sufficiently robust
+ * itself sufficiently robust.
+ *
+ * Another issue is that there is simply no good detailed description of the expected behaviour corresponding to many hamlib
+ * functions (for example, the split-related functions -- e.g., CURR_VFO is defined simply as "the current VFO", but it plainly is not,
+ * as a few test function calls quickly demonstrate); nor, indeed, is there a even description of the theoretical transceiver that is modelled by
+ * hamlib. There doesn't even appear to be a guarantee that if a function is "successful" (i.e., does not return an error), it
+ * will behave identically on all rigs.
+ *
+ * There are other weirdnesses: polling the split status on the K3 actually SWAPS the frequencies of the two VFOs, even though
+ * it is a *get* function. Life is too short to try to sort out all this stuff and to get it to work correctly, if that's even possible,
+ * even just for the K3 -- especially as there is no guarantee that other rigs will respond the same way to the same (successful) calls.
+ *
+ * So, unfortunately, we end up using a lot of K3-specific calls. This was not my desire. But I got fed up of trying to make sense
+ * of the current implementation of hamlib.
  */
-
-// sleep for a designated number of milliseconds
-/*void rig_interface::_msec_sleep(const unsigned int msec)
-{ struct timespec nanosleep_time;
-  struct timespec remaining_nanosleep_time;
-
-  nanosleep_time.tv_sec = 0;
-  nanosleep_time.tv_nsec = msec * 1000000;              // milliseconds -> nanoseconds
-
-  while (nanosleep_time.tv_nsec >= 1000000000)
-  { nanosleep_time.tv_sec++;
-    nanosleep_time.tv_nsec -= 1000000000;
-  }
-
-  const int status = nanosleep(&nanosleep_time, &remaining_nanosleep_time);
-
-  if (status != 0)
-    _error_alert("problem with nanosleep() in msec_sleep()");
-}
-*/
 
 /*! \brief      static wrapper for function to poll rig for status
     \param  vp  the this pointer, in order to allow static member access to a real object
@@ -578,6 +571,14 @@ void rig_interface::split_enable(void)
 
   SAFELOCK(_rig);
 
+  if (_model = RIG_MODEL_K3)
+  { raw_command("FT1;");
+
+    return;
+  }
+
+// not a K3
+
 //  const int status = rig_set_split_vfo(_rigp, RIG_VFO_B, RIG_SPLIT_ON, RIG_VFO_B);
   const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B);
 //  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_CURR);
@@ -594,6 +595,13 @@ void rig_interface::split_disable(void)
 
   SAFELOCK(_rig);
 
+  if (_model = RIG_MODEL_K3)
+  { raw_command("FR0;");
+
+    return;
+  }
+
+// not a K3
 //  const int status = rig_set_split_vfo(_rigp, RIG_VFO_B, RIG_SPLIT_OFF, RIG_VFO_A);
 //  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_OFF, RIG_VFO_A);
   const int status = rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A);  // the line above also works
@@ -608,6 +616,19 @@ const bool rig_interface::split_enabled(void)
 { if (!_rig_connected)
     return false;
 
+  if (_model = RIG_MODEL_K3)
+  { SAFELOCK(_rig);
+
+    const string transmit_vfo = raw_command("FT;", true);
+
+    if (transmit_vfo.length() >= 4)
+      return (transmit_vfo[2] == '1');
+
+    _error_alert("Unable to determine whether rig is SPLIT");
+    return false;
+  }
+
+// not a K3
   split_t split_mode;
   vfo_t  tx_vfo;
 
@@ -1248,6 +1269,11 @@ const VFO rig_interface::tx_vfo(void)
 { if (!_rig_connected)
     return VFO_A;
 
+  return (split_enabled() ? VFO_B : VFO_A);  // this is the recommended procedure from the hamlib reflector
+// I think this is ridiculous, because it does not allow for the case where the rig is in reverse split,
+// with the TX on A and RX on B
+
+  /*
   vfo_t v;
   const int status = rig_get_vfo(_rigp, &v);
 
@@ -1255,6 +1281,7 @@ const VFO rig_interface::tx_vfo(void)
     throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting active VFO");
 
   return (v == RIG_VFO_A ? VFO_A : VFO_B);
+*/
 }
 
 // register a function for alerting the user

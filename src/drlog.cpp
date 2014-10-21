@@ -1638,7 +1638,11 @@ void* display_rig_status(void* vp)
           if (rit_xit_str.empty())
             rit_xit_str = create_string(' ', 7);
 
-// remove TX indicator, since we no longer poll if we're TXing (modula a µs or so)
+          static const unsigned int SPLIT_ENTRY = 32;      // position of the SPLIT status byte in the K3 status string
+
+          const bool is_split = (status_str[SPLIT_ENTRY] == '1');
+
+// remove TX indicator, since we no longer poll if we're TXing (modulo a µs or so)
 //          static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
 
 //          const bool transmitting = (status_str[TX_ENTRY] == '1');
@@ -1651,17 +1655,19 @@ void* display_rig_status(void* vp)
 // now display the status
           win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
 
-          const VFO tx_vfo = rig_status_thread_parameters.rigp()-> tx_vfo();
+//          ost << "clg tx_vfo()" << endl;
+//          const VFO tx_vfo = rig_status_thread_parameters.rigp()-> tx_vfo();
+//          ost << "tx vfo is: " << tx_vfo << endl;
 
           win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT
-                  < ( (tx_vfo == VFO_A) ? WINDOW_BOLD : WINDOW_NOP)
+                  < ( is_split ? WINDOW_NOP : WINDOW_BOLD)
                   < pad_string(f.display_string(), 7)
-                  < ( (tx_vfo == VFO_A) ? WINDOW_NORMAL : WINDOW_NOP)
-                  <  ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
+                  < ( is_split ? WINDOW_NOP : WINDOW_NORMAL)
+                  < ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
                   < mode_str /* < tx_str */
-                  < ( (tx_vfo == VFO_A) ? WINDOW_NOP : WINDOW_BOLD)
+                  < ( is_split ? WINDOW_BOLD : WINDOW_NORMAL)
                   < frequency_b_str
-                  < ( (tx_vfo == VFO_A) ? WINDOW_NOP : WINDOW_NORMAL)
+                  < ( is_split ? WINDOW_NORMAL : WINDOW_NOP)
                   < CURSOR_DOWN
                   < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
         }
