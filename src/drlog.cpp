@@ -1638,7 +1638,7 @@ void* display_rig_status(void* vp)
           if (rit_xit_str.empty())
             rit_xit_str = create_string(' ', 7);
 
-// remove TX inddicator, since we no longer poll if we're TXing (modula a µs or so)
+// remove TX indicator, since we no longer poll if we're TXing (modula a µs or so)
 //          static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
 
 //          const bool transmitting = (status_str[TX_ENTRY] == '1');
@@ -1651,9 +1651,17 @@ void* display_rig_status(void* vp)
 // now display the status
           win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
 
-          win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT < pad_string(f.display_string(), 7)
+          const VFO tx_vfo = rig_status_thread_parameters.rigp()-> tx_vfo();
+
+          win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT
+                  < ( (tx_vfo == VFO_A) ? WINDOW_BOLD : WINDOW_NOP)
+                  < pad_string(f.display_string(), 7)
+                  < ( (tx_vfo == VFO_A) ? WINDOW_NORMAL : WINDOW_NOP)
                   <  ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
-                  < mode_str < /* tx_str < */ frequency_b_str
+                  < mode_str /* < tx_str */
+                  < ( (tx_vfo == VFO_A) ? WINDOW_NOP : WINDOW_BOLD)
+                  < frequency_b_str
+                  < ( (tx_vfo == VFO_A) ? WINDOW_NOP : WINDOW_NORMAL)
                   < CURSOR_DOWN
                   < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
         }
@@ -1801,7 +1809,7 @@ ost << "processing rbn line: " << line << endl;
               for (const auto& exch_mult_name : exch_mults)
               { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
-                ost << "guess in drlog = " << guess << ", MULT VALUE = " << MULT_VALUE(exch_mult_name, guess) << endl;
+//                ost << "guess in drlog = " << guess << ", MULT VALUE = " << MULT_VALUE(exch_mult_name, guess) << endl;
 
                 if (!guess.empty())
                   statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));

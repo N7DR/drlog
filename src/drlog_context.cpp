@@ -981,8 +981,25 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 123456789012345678901234567890123456789012345678901234567890123456789012345678901
 */
 
+// cabrillo qso = template: CQ WW
+    map<string, string> cabrillo_qso_templates { { "CQ WW", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" } };
+
     if (starts_with(testline, "CABRILLO QSO"))
-      _cabrillo_qso_template = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    { _cabrillo_qso_template = RHS;
+
+      if (contains(RHS, "TEMPLATE"))
+      { try
+        { const string key = remove_peripheral_spaces(split_string(RHS, ":"))[1];
+
+          _cabrillo_qso_template = cabrillo_qso_templates.at(key);
+        }
+
+        catch (...)
+        { ost << "Error in CABRILLO QSO TEMPLATE" << endl;
+          exit(-1);
+        }
+      }
+    }
 
 // ---------------------------------------------  WINDOWS  ---------------------------------
 

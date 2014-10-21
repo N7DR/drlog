@@ -83,9 +83,6 @@ const int COLOUR_BLACK   = COLOR_BLACK,
 #define COLOUR_PAIR(n)  COLOR_PAIR(n)
                        
 extern pt_mutex screen_mutex;                       
-                       
-// forward declarations
-//class SAVE_CURSOR;
 
 // -----------  cursor  ----------------
 
@@ -159,12 +156,12 @@ public:
 class window_information
 {
 protected:
-  int    _x;
-  int    _y;
-  int    _w;
-  int    _h;
+  int    _x;                    ///< x location on the screen
+  int    _y;                    ///< y location on the screen
+  int    _w;                    ///< width
+  int    _h;                    ///< height
 
-  std::string _fg_colour;
+  std::string _fg_colour;       ///< name of foreground colour
   std::string _bg_colour;
 
   bool   _colours_set;      // have the colours been set explicitly?

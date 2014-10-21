@@ -101,18 +101,18 @@ public:
 
 // the usual get/set functions
   READ_AND_WRITE(call);                       ///< callsign
-  READ_AND_WRITE(check);                              ///< Sweepstakes check
-  READ_AND_WRITE(cq_zone);                            ///< CQ zone
-  READ_AND_WRITE(foc);                                ///< FOC membership number
+  READ_AND_WRITE(check);                      ///< Sweepstakes check
+  READ_AND_WRITE(cq_zone);                    ///< CQ zone
+  READ_AND_WRITE(foc);                        ///< FOC membership number
   READ_AND_WRITE(grid);                       ///< Maidenhead grid locator
-  READ_AND_WRITE(hit_count);                          ///< nominal number of QSOs with this station
+  READ_AND_WRITE(hit_count);                  ///< nominal number of QSOs with this station
   READ_AND_WRITE(itu_zone);                   ///< ITU zone (because TR treats HQ stations differently)
   READ_AND_WRITE(name);                       ///< operator's name
   READ_AND_WRITE(old_call);                   ///< operator's old call
   READ_AND_WRITE(qth);                        ///< precise meaning depends on location of this station
   READ_AND_WRITE(section);                    ///< ARRL section
   READ_AND_WRITE(speed);                      ///< CW speed
-  READ_AND_WRITE(ten_ten);                            ///< 10-X membership number
+  READ_AND_WRITE(ten_ten);                    ///< 10-X membership number
 
 /// is the vector of calls empty?
   inline const bool empty(void) const
@@ -162,17 +162,17 @@ class trmaster
 {
 protected:
 
-  std::map<std::string, trmaster_line> _records;       ///< the information
+  std::map<std::string /* callsign */, trmaster_line> _records;       ///< the information for each call
 
-/// get a "line" from a binary file
+/// get a "line" from a TRMASTER binary file
   const trmaster_line _get_binary_record(const std::string& contents, uint32_t& posn);
 
 public:
 
-// constructor -- can take either an ASCII or binary file
+/// constructor -- can take either an ASCII or binary file
   trmaster(const std::string& filename = "trmaster.asc");
 
-// all the calls (in alphabetical order)
+/// all the calls (in alphabetical order)
   const std::vector<std::string> calls(void) const;
 };
 
@@ -186,11 +186,11 @@ class drmaster_line
 {
 protected:
 
-  std::string _hit_count;
-  std::string _cq_zone;
-  std::string _check;
-  std::string _foc;
-  std::string _ten_ten;
+  std::string _hit_count;                                       ///< hit count
+  std::string _cq_zone;                                         ///< CQ zone
+  std::string _check;                                           ///< Sweepstakes check
+  std::string _foc;                                             ///< FOC number
+  std::string _ten_ten;                                         ///< 10-10 number
 
   std::string _call;
   std::string _qth;
