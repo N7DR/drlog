@@ -1,4 +1,4 @@
-// $Id: bandmap.h 72 2014-08-16 16:53:27Z  $
+// $Id: bandmap.h 80 2014-10-20 18:47:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -79,12 +79,13 @@ public:
   inline const std::set<T> values(void) const
     { return _values; }
 
-/*! \brief  add a needed value
+/*! \brief      add a needed value
     \param  v   needed value
+    \return     whether <i>v</i> was actually inserted
 */
-  void add(const T& v)
+  const bool add(const T& v)
   { _is_needed = true;
-    _values.insert(v);
+    return (_values.insert(v)).second;
   }
 
 /// is a particular value needed?
@@ -313,8 +314,8 @@ public:
   inline void add_country_mult(const std::string& value)
     { _is_needed_country_mult.add(value); }
 
-  inline void add_exchange_mult(const std::string& name, const std::string& value)
-    { _is_needed_exchange_mult.add( { name, value } ); }
+  inline const bool add_exchange_mult(const std::string& name, const std::string& value)
+    { return (_is_needed_exchange_mult.add( { name, value } ) ); }
 
   inline void clear_callsign_mult(void)
     { _is_needed_callsign_mult.clear(); }

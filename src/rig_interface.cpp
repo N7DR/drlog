@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 79 2014-10-11 15:09:04Z  $
+// $Id: rig_interface.cpp 80 2014-10-20 18:47:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -64,7 +64,11 @@ const bool RESPONSE_EXPECTED = true;
 }
 */
 
-void* rig_interface::_static_poll_thread_function(void* arg)    // arg is the this pointer, in order to allow static member access to a real object
+/*! \brief      static wrapper for function to poll rig for status
+    \param  vp  the this pointer, in order to allow static member access to a real object
+    \return     nullptr
+*/
+void* rig_interface::_static_poll_thread_function(void* arg)
 { rig_interface* bufp = static_cast<rig_interface*>(arg);
 
   bufp->_poll_thread_function(nullptr);
@@ -72,18 +76,28 @@ void* rig_interface::_static_poll_thread_function(void* arg)    // arg is the th
   return nullptr;
 }
 
+/*! \brief      poll rig for status, forever
+    \param  vp  unused (should be nullptr)
+    \return     nullptr
+
+    Sets the frequency and mode in the <i>_status</i> object
+*/
 void* rig_interface::_poll_thread_function(void* vp)
 { while (true)
   { _status.freq(rig_frequency());
     _status.mode(rig_mode());
 
-//    _msec_sleep(_rig_poll_interval);
     sleep_for(milliseconds(_rig_poll_interval));
   }
 
   return nullptr;
 }
 
+/*! \brief       Alert the user with a message
+    \param  msg  message for the user
+
+    Calls <i>_error_alert_function</i> to perform the actual alerting
+*/
 void rig_interface::_error_alert(const string& msg)
 { if (_error_alert_function)
     (*_error_alert_function)(msg);
@@ -95,8 +109,8 @@ void rig_interface::_error_alert(const string& msg)
         \brief The interface to a rig
 */
 
-// constructor
-rig_interface::rig_interface (void /* const string& serial_port */) :
+/// default constructor
+rig_interface::rig_interface (void) :
   _port_name(),
   _rigp(nullptr),
   _rig_poll_interval(1000),             // poll once per second
@@ -106,7 +120,7 @@ rig_interface::rig_interface (void /* const string& serial_port */) :
   _model(RIG_MODEL_DUMMY),
   _last_commanded_frequency(),
   _last_commanded_mode(MODE_CW)
-{
+{ // all this stuff now happens in prepare()
 #if 0
   const string serial_port = context.rig1_port();
 
@@ -296,11 +310,9 @@ rig_interface::rig_interface (void /* const string& serial_port */) :
 
 }
 
-// destructor
+/// destructor
 rig_interface::~rig_interface(void)
-{ //if (_port_name)
-  //  delete [] _port_name;
-}
+{ }
 
 /// prepare rig for use
 void rig_interface::prepare(const drlog_context& context)

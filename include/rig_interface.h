@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 79 2014-10-11 15:09:04Z  $
+// $Id: rig_interface.h 80 2014-10-20 18:47:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -75,18 +75,26 @@ protected:
   rig_model_t      _model;                               ///< hamlib model
 
   rig_status       _status;                              ///< most recent rig frequency and mode from the periodic poll
-  pt_mutex         _rig_mutex;                           // mutex for all operations
+  pt_mutex         _rig_mutex;                           ///< mutex for all operations
 
-  unsigned int     _rig_poll_interval;                   // interval between polling for rig status, in milliseconds
-  pthread_t        _thread_id;                           // ID for the thread that polls the rig for status
+  unsigned int     _rig_poll_interval;                   ///< interval between polling for rig status, in milliseconds
+  pthread_t        _thread_id;                           ///< ID for the thread that polls the rig for status
 
-  void*            _poll_thread_function(void*);         // function to poll rig for status
-  static void*     _static_poll_thread_function(void*);  // function to poll rig for status
+/*! \brief      poll rig for status, forever
+    \param  vp  unused (should be nullptr)
+    \return     nullptr
 
-// sleep for a designated number of milliseconds
-//  void              _msec_sleep(const unsigned int msec);
+    Sets the frequency and mode in the <i>_status</i> object
+*/
+void*            _poll_thread_function(void* vp);
 
-// allow direct access to the file descriptor
+/*! \brief      static wrapper for function to poll rig for status
+    \param  vp  the this pointer, in order to allow static member access to a real object
+    \return     nullptr
+*/
+  static void*     _static_poll_thread_function(void* vp);
+
+///< allow direct access to the underlying file descriptor used to communicate with the rig
   inline const int  _file_descriptor(void) const
     { return _rigp->state.rigport.fd; }
 
@@ -101,15 +109,20 @@ protected:
 
   void (*_error_alert_function)(const std::string&);
 
+/*! \brief       Alert the user with a message
+    \param  msg  message for the user
+
+    Calls <i>_error_alert_function</i> to perform the actual alerting
+*/
   void _error_alert(const std::string& msg);
 
 public:
 
-// constructor
-  rig_interface ( void /* const std::string& serial_port */);
+/// default constructor
+  rig_interface (void);
 
-// destructor
-  ~rig_interface(void);
+/// destructor
+  virtual ~rig_interface(void);
 
 /// prepare rig for use
   void prepare(const drlog_context& context);

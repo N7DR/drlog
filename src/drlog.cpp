@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 79 2014-10-11 15:09:04Z  $
+// $Id: drlog.cpp 80 2014-10-20 18:47:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1793,6 +1793,22 @@ ost << "processing rbn line: " << line << endl;
 
 // possibly add the call to the known countries
             update_known_country_mults(dx_callsign);
+
+// possibly add exchange mult value
+            if (context.auto_remaining_exchange_mults())
+            { const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
+
+              for (const auto& exch_mult_name : exch_mults)
+              { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
+
+                ost << "guess in drlog = " << guess << ", MULT VALUE = " << MULT_VALUE(exch_mult_name, guess) << endl;
+
+                if (!guess.empty())
+                  statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+
+              }
+
+            }
 
             be.calculate_mult_status(rules, statistics);
 

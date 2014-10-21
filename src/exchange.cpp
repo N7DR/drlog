@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 79 2014-10-11 15:09:04Z  $
+// $Id: exchange.cpp 80 2014-10-20 18:47:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -163,9 +163,9 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
   int field_nr = 0;
 
-  for (const auto& pseft : exchange_field_eft)
-  { ost << "for field name = " << pseft.first << ", EFT is: " << pseft.second << endl;
-  }
+//  for (const auto& pseft : exchange_field_eft)
+//  { ost << "for field name = " << pseft.first << ", EFT is: " << pseft.second << endl;
+//  }
 
   for (const string& received_value : copy_received_values)
   { set<string> match;
@@ -177,15 +177,12 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
       { const bool is_choice = contains(field_name, "+");
 
         if (is_choice)
-        { //ost << "field name " << field_name << " IS CHOICE" << endl;
-
-          const vector<string> choices_vec = split_string(field_name, '+');
+        { const vector<string> choices_vec = split_string(field_name, '+');
           set<string> choices(choices_vec.cbegin(), choices_vec.cend());
 
           for (auto it = choices.begin(); it != choices.end(); )    // see Josuttis 2nd edition, p. 343
           { const EFT& eft = exchange_field_eft.at(*it);
 
-            //ost << "choice field name: " << (*it) << ", EFT = " << eft << endl;
             if (eft.is_legal_value(received_value))
             { match.insert(field_name);                 // insert the "+" version of the name
               it = choices.end();
@@ -197,7 +194,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
         else    // not a choice
         { const EFT& eft = exchange_field_eft.at(field_name);
 
-          ost << "field name: " << field_name << ", EFT = " << eft << endl;
+//          ost << "field name: " << field_name << ", EFT = " << eft << endl;
 
           if (eft.is_legal_value(received_value))
             match.insert(field_name);
@@ -213,13 +210,13 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   }
 
 // debug; print status
-  for (const auto& m : matches)
-  { ost << "field nr " << m.first << " [" << copy_received_values[m.first] << "]: ";
-    for (const string& str : m.second)
-      ost << str << "  ";
-
-    ost << endl;
-  }
+//  for (const auto& m : matches)
+//  { ost << "field nr " << m.first << " [" << copy_received_values[m.first] << "]: ";
+//    for (const string& str : m.second)
+//      ost << str << "  ";
+//
+//    ost << endl;
+//  }
 
   deque<tuple<int, string, set<string>>> tuple_deque;
 
@@ -654,17 +651,13 @@ pt_mutex exchange_field_database_mutex;
     Returns empty string if no sensible guess can be made
 */
 const string exchange_field_database::guess_value(const string& callsign, const string& field_name)
-{ //ost << "guessing value of " << field_name << " exchange field for " << callsign << endl;
-
-  SAFELOCK(exchange_field_database);
+{ SAFELOCK(exchange_field_database);
 
 // first, check the database
   const auto it = _db.find( pair<string, string>( { callsign, field_name } ) ) ;
 
   if (it != _db.end())
     return it->second;
-
-  //ost << "not in database => no prior QSO" << endl;
 
 // no prior QSO; is it in the drmaster database?
   const drmaster_line drm_line = (*drm_p)[callsign];
@@ -1232,7 +1225,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
 { read_regex_expression_file(path, regex_filename);
   read_values_file(path, nm);
 
-  ost << (*this) << endl;
+//  ost << (*this) << endl;
 }
 
 /// construct from regex and values files
@@ -1243,13 +1236,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
 { read_regex_expression_file(path, regex_filename);
   read_values_file(path, nm);
 
-
-
-
-
-
-
-  ost << (*this) << endl;
+//  ost << (*this) << endl;
 }
 
 #if 0
@@ -1357,14 +1344,9 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
   if (context_qthx.empty())
     return;
 
-//  SAFELOCK(rules);
-
   for (const auto this_qthx : context_qthx)
   { const string canonical_prefix = location_db.canonical_prefix(this_qthx.first);
     const set<string> ss = this_qthx.second;
-//    exchange_field_values qthx;
-
-//    qthx.name(string("QTHX[") + canonical_prefix + "]");
 
     for (const auto this_value : ss)
     { if (!contains(this_value, "|"))
@@ -1379,8 +1361,6 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
           add_legal_value(equivalent_values[0], equivalent_values[n]);
       }
     }
-
-//    _values.push_back(qthx);
   }
 }
 

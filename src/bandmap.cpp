@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 72 2014-08-16 16:53:27Z  $
+// $Id: bandmap.cpp 80 2014-10-20 18:47:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -144,12 +144,19 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
   const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
 
-  for (const auto& exch_mult : exch_mults)
-  { const string guess = exchange_db.guess_value(_callsign, exch_mult);
+  for (const auto& exch_mult_name : exch_mults)
+  { const string guess = exchange_db.guess_value(_callsign, exch_mult_name);
+
+    ost << "guess for " << _callsign << ", exchange mult " << exch_mult_name << " is: " << guess << endl;
 
     if (!guess.empty())
-    { if (statistics.is_needed_exchange_mult(exch_mult, guess, _band))
-        add_exchange_mult(exch_mult, guess);
+    { ost << "is needed exchange mult = " << statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band) << endl;
+
+      if (statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band))
+      { const bool status = add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+
+        ost << "attempt to add returned: " << status << endl;
+      }
     }
   }
 }
