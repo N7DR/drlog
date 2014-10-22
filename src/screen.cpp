@@ -429,7 +429,6 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
   { case WINDOW_NORMAL :
       { SAFELOCK(screen);
         wstandend(_wp);
-//        wattr_on(_wp, WA_NORMAL, NULL);
       }
       break;
     case WINDOW_BOLD :
@@ -455,7 +454,6 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
     case WINDOW_REFRESH :
     case WINDOW_UPDATE :
       { SAFELOCK(screen);
-//        wrefresh(_wp);
         refresh();
       }
       break;
@@ -507,10 +505,11 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
       _hidden_cursor = true;
       break;
     case CURSOR_END_OF_LINE :
-    	{ const size_t posn = read().find_last_not_of(" ");
-    	  move_cursor(posn + 1, cursor_position().y());
-        break;
-    	}
+    { const size_t posn = read().find_last_not_of(" ");
+
+      move_cursor(posn + 1, cursor_position().y());
+      break;
+    }
 
   }
   return *this;
@@ -748,9 +747,7 @@ const bool window::common_processing(const keyboard_event& e)
 
 // a..z A..Z
   if (e.is_letter())
-  { //const string s = to_upper(e.str());
-
-    win <= to_upper(e.str());
+  { win <= to_upper(e.str());
     return true;
   }
 

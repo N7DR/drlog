@@ -375,7 +375,6 @@ public:
     return rv;
   }
 
-
 /// write a string to a window
   window& operator<(const std::string& s);
   

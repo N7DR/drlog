@@ -34,7 +34,11 @@ extern int  QSO_MULT_WIDTH;                  ///< controls width of zone mults f
 
 pt_mutex _context_mutex;
 
-// we have a separate routine so that it can be called recursively for the rules
+/*!     \brief              Process a configuration file
+        \param  filename    name of file to process
+
+        This routine may be called recursively (by the RULES statement in the processed file)
+*/
 void drlog_context::_process_configuration_file(const string& filename)
 { string entire_file;
 

@@ -215,27 +215,32 @@ protected:
   std::map<std::string, window_information >   _windows;             ///< size and position info for each window
   std::string                                  _worked_mults_colour; ///< colour of worked mults in the mult windows
 
-// cw messages
 // we use the KeySymbol as the integer, although other I/O implementations could use something else
-  std::map<int, std::string >                  _messages;
+  std::map<int, std::string >                  _messages;            ///< CW messages
 
-  void _process_configuration_file(const std::string& cs);
+/*!     \brief              Process a configuration file
+        \param  filename    name of file to process
+
+        This routine may be called recursively (by the RULES statement in the processed file)
+*/
+  void _process_configuration_file(const std::string& filename);
 
   public:
 
+/// default constructor
   drlog_context(void)
     { }
 
 /// construct from file
   drlog_context( const std::string& filename );
 
-typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
+//typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
 
-  SAFEREAD(archive_name, _context);
-  SAFEREAD(auto_backup, _context);
-  SAFEREAD(auto_remaining_callsign_mults, _context);
-  SAFEREAD(auto_remaining_country_mults, _context);
-  SAFEREAD(auto_remaining_exchange_mults, _context);
+  SAFEREAD(archive_name, _context);                     ///< name of the archive for save/restore information
+  SAFEREAD(auto_backup, _context);                      ///< directory for auto backup files
+  SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?
+  SAFEREAD(auto_remaining_country_mults, _context);     ///< do we auto-generate the remaining country mults?
+  SAFEREAD(auto_remaining_exchange_mults, _context);    ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
 
   SAFEREAD(bandmap_decay_time_local, _context);
   SAFEREAD(bandmap_decay_time_cluster, _context);

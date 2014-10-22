@@ -1658,6 +1658,8 @@ void* display_rig_status(void* vp)
 //          ost << "clg tx_vfo()" << endl;
 //          const VFO tx_vfo = rig_status_thread_parameters.rigp()-> tx_vfo();
 //          ost << "tx vfo is: " << tx_vfo << endl;
+          const bool sub_rx = (rig_status_thread_parameters.rigp())->sub_receiver_enabled();
+          const auto fg = win_rig.fg();    // original foreground colour
 
           win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT
                   < ( is_split ? WINDOW_NOP : WINDOW_BOLD)
@@ -1665,10 +1667,18 @@ void* display_rig_status(void* vp)
                   < ( is_split ? WINDOW_NOP : WINDOW_NORMAL)
                   < ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
                   < mode_str /* < tx_str */
-                  < ( is_split ? WINDOW_BOLD : WINDOW_NORMAL)
-                  < frequency_b_str
-                  < ( is_split ? WINDOW_NORMAL : WINDOW_NOP)
-                  < CURSOR_DOWN
+                  < ( is_split ? WINDOW_BOLD : WINDOW_NORMAL);
+
+          if (sub_rx)
+            win_rig < COLOURS(COLOUR_GREEN, win_rig.bg());
+
+          win_rig < frequency_b_str
+                  < ( is_split ? WINDOW_NORMAL : WINDOW_NOP);
+
+          if (sub_rx)
+            win_rig < COLOURS(fg, win_rig.bg());
+
+          win_rig < CURSOR_DOWN
                   < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
         }
       }
@@ -1762,7 +1772,7 @@ void* process_rbn_info(void* vp)
 
       if (!line.empty())
       {
-ost << "processing rbn line: " << line << endl;
+//ost << "processing rbn line: " << line << endl;
 //ost << "rbn line has length " << line.size() << endl;
 
 // display the line in the window
@@ -1944,8 +1954,8 @@ void* prune_bandmap(void* vp)
   while (1)
   { const enum BAND cur_band = safe_get_band();
 
-    for_each(bandmaps.begin(), bandmaps.end(), [](bandmap& bm) { bm.prune(); } );
-//    FOR_ALL(bandmaps, [](bandmap& bm) { bm.prune(); } );
+//    for_each(bandmaps.begin(), bandmaps.end(), [](bandmap& bm) { bm.prune(); } );
+    FOR_ALL(bandmaps, [](bandmap& bm) { bm.prune(); } );
 
     bandmap_win <= bandmaps[cur_band];
 
@@ -1974,6 +1984,8 @@ void* prune_bandmap(void* vp)
     CTRL-C -- EXIT (same as .QUIT)
     ALT-M -- change mode
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+    ALT-K -- toggle CW
+    ESCAPE
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2023,7 +2035,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       if (prior_contents.empty())
         octothorpe--;
 
-      ost << "sending CW message: " << expand_cw_message(cwm[e.symbol()]) << endl;
+//      ost << "sending CW message: " << expand_cw_message(cwm[e.symbol()]) << endl;
       (*cw_p) << expand_cw_message(cwm[e.symbol()]);
 
       if (prior_contents.empty())
@@ -2039,7 +2051,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ALT-B and ALT-V (band up and down)
   if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
-  { ost << "processing band change" << endl;
+  { // ost << "processing band change" << endl;
 
     try
     { BAND cur_band       = safe_get_band();
@@ -2084,7 +2096,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     }
 
     catch (const rig_interface_error& e)
-    { ost << "Error in band up/down" << endl;
+    { //ost << "Error in band up/down" << endl;
       alert(e.reason());
     }
 
@@ -2238,8 +2250,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ENTER -- a lot of complicated stuff
   if (!processed and e.is_unmodified() and (e.symbol() == XK_Return))
-  { //ost << "it's a return" << endl;
-    const string contents = remove_peripheral_spaces(win.read());
+  { const string contents = remove_peripheral_spaces(win.read());
 
 // if empty, send CQ #1, regardless of whether I'm in CQ or SAP mode
     if (contents.empty())
@@ -2316,10 +2327,6 @@ ost << "processing command: " << command << endl;
           set<BAND> score_bands;
 
 //next bit of code is copied from drlog_context.cpp
-//          vector<string> bands_str = split_string(rhs, ",");
-
-//          for (unsigned int n = 0; n < bands_str.size(); ++n)
-
           const vector<string> bands_str = remove_peripheral_spaces(split_string(rhs, ","));
 
           for (const auto& band_str : bands_str)
@@ -2336,26 +2343,6 @@ ost << "processing command: " << command << endl;
                 alert("Error parsing [RE]SCORE command");
             }
           }
-
-
-/*
-           { bands_str[n] = remove_peripheral_spaces(bands_str[n]);
-
-            try
-            { const BAND b = BAND_FROM_NAME.at(bands_str[n]);
-              score_bands.insert(b);
-            }
-
-            catch (...)
-            { if (bands_str[n] == "*")
-              { for (const auto& b : rules.permitted_bands())
-                  score_bands.insert(b);
-              }
-              else
-                alert("Error parsing [RE]SCORE command");
-            }
-          }
-*/
 
           rules.score_bands(score_bands);
         }
@@ -2378,6 +2365,7 @@ ost << "processing command: " << command << endl;
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
         const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
       }
 
@@ -2545,7 +2533,7 @@ ost << "processing command: " << command << endl;
         { if (drlog_mode == CQ_MODE)
           { (*cw_p) << callsign;
             (*cw_p) << expand_cw_message( context.exchange_cq() );
-            ost << "sent CQ exchange: " << callsign << " " << expand_cw_message( context.exchange_cq() ) << endl;
+//            ost << "sent CQ exchange: " << callsign << " " << expand_cw_message( context.exchange_cq() ) << endl;
           }
           else
             (*cw_p) << cwm[XK_KP_0];    // send contents of KP0, which is assumed to be my call
@@ -2707,13 +2695,14 @@ ost << "processing command: " << command << endl;
     if (contents.empty())
     { if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))
       { const string msg = context.message_cq_2();
-//        ost << "sending message (CQ #2) : " << msg << endl;
 
         if (!msg.empty())
           (*cw_p) << msg;
       }
-      processed = true;
+//      processed = true;
     }
+
+    processed = true;
   }
 
 // CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
@@ -2748,35 +2737,35 @@ ost << "processing command: " << command << endl;
   if (!processed and (e.is_char(' ')))
   {
 // if we're inside a command, just insert a space in the window
-   string contents = remove_peripheral_spaces(win.read());
+    string contents = remove_peripheral_spaces(win.read());
 
-   if (contents.size() > 1 and contents[0] == '.')
-     win <= " ";
-   else        // not inside a command
-   {
+    if (contents.size() > 1 and contents[0] == '.')
+      win <= " ";
+    else        // not inside a command
+    {
 // possibly put a bandmap call into the call window
-    if (contents.empty() and drlog_mode == SAP_MODE)
-    { const string dupe_contents = remove_peripheral_spaces(win_nearby.read());
+      if (contents.empty() and drlog_mode == SAP_MODE)
+      { const string dupe_contents = remove_peripheral_spaces(win_nearby.read());
 
-      if (!dupe_contents.empty())
-      { win < CURSOR_START_OF_LINE <= dupe_contents;
-        display_call_info(dupe_contents);
+        if (!dupe_contents.empty())
+        { win < CURSOR_START_OF_LINE <= dupe_contents;
+          display_call_info(dupe_contents);
+        }
       }
-    }
 
-    contents = remove_peripheral_spaces(win.read());    // contents of CALL window may have changed, so we may need to re-insert/refresh call in bandmap
+      contents = remove_peripheral_spaces(win.read());    // contents of CALL window may have changed, so we may need to re-insert/refresh call in bandmap
 
 // put call into bandmap
-    if (!contents.empty() and drlog_mode == SAP_MODE and !contains(contents, " DUPE"))
-    {
+      if (!contents.empty() and drlog_mode == SAP_MODE and !contains(contents, " DUPE"))
+      {
 // possibly add the call to known mults
-      update_known_callsign_mults(contents);
-      update_known_country_mults(contents);
+        update_known_callsign_mults(contents);
+        update_known_country_mults(contents);
 
-      bandmap_entry be;                        // default source is BANDMAP_ENTRY_LOCAL
-      const BAND cur_band = safe_get_band();
+        bandmap_entry be;                        // default source is BANDMAP_ENTRY_LOCAL
+        const BAND cur_band = safe_get_band();
 
-      { be.freq(rig.rig_frequency());
+        be.freq(rig.rig_frequency());
         be.callsign(contents);
 
         const location_info li = location_db.info(contents);
@@ -2804,13 +2793,12 @@ ost << "processing command: " << command << endl;
         { SAFELOCK(dupe_check);
           last_call_inserted_with_space = contents;
         }
-      }
 
-      update_remaining_callsign_mults_window(statistics, cur_band);
-      update_remaining_country_mults_window(statistics);
-      update_remaining_exchange_mults_windows(rules, statistics);
+        update_remaining_callsign_mults_window(statistics, cur_band);
+        update_remaining_country_mults_window(statistics);
+        update_remaining_exchange_mults_windows(rules, statistics);
+      }
     }
-   }
 
     processed = true;
   }
@@ -2980,9 +2968,13 @@ ost << "processing command: " << command << endl;
   if (!processed and e.symbol() == XK_KP_Delete)
   { const string callsign = remove_peripheral_spaces(win.read());
 
-    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm -= callsign;
-                                                                   bm.do_not_add(callsign);
-                                                                 } );
+//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm -= callsign;
+//                                                                   bm.do_not_add(callsign);
+//                                                                 } );
+
+    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
+                                          bm.do_not_add(callsign);
+                                        } );
 
     win_bandmap <= (bandmaps[safe_get_band()]);
 
@@ -3028,15 +3020,9 @@ ost << "processing command: " << command << endl;
   if (!processed and e.is_control('s'))
   { try
     { if (rig.split_enabled())
-      { //ost << "going to disable SPLIT" << endl;
         rig.split_disable();
-      //ost << "SPLIT is now " << (rig.split_enabled() ? "enabled" : "disabled") << endl;
-      }
       else
-      { //ost << "going to enable SPLIT" << endl;
         rig.split_enable();
-      //ost << "SPLIT is now " << (rig.split_enabled() ? "enabled" : "disabled") << endl;
-      }
     }
 
     catch (const rig_interface_error& e)
@@ -4836,17 +4822,21 @@ void rescore(const contest_rules& rules)
 /*!     \brief  Obtain the current time in HHMMSS format
 */
 const string hhmmss(void)
-{ const time_t now = time(NULL);             // get the time from the kernel
+{ const time_t now = ::time(NULL);           // get the time from the kernel
   struct tm    structured_time;
   array<char, 26> buf;                       // buffer to hold the ASCII date/time info; see man page for gmtime()
 
   gmtime_r(&now, &structured_time);          // convert to UTC in a thread-safe manner
-
   asctime_r(&structured_time, buf.data());   // convert to ASCII
 
   return (substring(string(buf.data(), 26), 11, 8));
 }
 
+/*!     \brief          Alert the user
+        \param  msg     Message to display
+
+        Also logs the message
+*/
 void alert(const string& msg)
 {
   { SAFELOCK(alert);
@@ -4854,14 +4844,20 @@ void alert(const string& msg)
   }
 
    win_message < WINDOW_CLEAR < hhmmss() < " " <= msg;
+   ost << "ALERT: " << hhmmss() << " " << msg << endl;
 }
 
+/*!     \brief          Alert the user to a rig-related error
+        \param  msg     Message to display
+
+        Also logs the message
+*/
 void rig_error_alert(const string& msg)
 { ost << "Rig error: " << msg << endl;
   alert(msg);
 }
 
-/// update the Q and score values in the rate window
+/// update the QSO and score values in the rate window
 void update_rate_window(void)
 { const vector<unsigned int> rate_periods = context.rate_periods();    // in minutes
   string rate_str = pad_string("", 3) + pad_string("Qs", 3) + pad_string("Score", 10);
@@ -4895,7 +4891,7 @@ void* reset_connection(void* vp)
 
 // also returns whether any fields of the QSO are actually mults
 const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
-{ ost << "Inside calculate_exchange_mults()" << endl;
+{ // ost << "Inside calculate_exchange_mults()" << endl;
 
   const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix());        // exchange_field = name, is_mult
   const vector<received_field> received_exchange = qso.received_exchange();
@@ -4911,7 +4907,7 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 
       const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), b);
 
-ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
+// ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 
       field.is_mult(is_needed_exchange_mult);
       if (is_needed_exchange_mult)
@@ -4962,8 +4958,7 @@ void* auto_backup(void* vp)
   { start_of_thread();
 
     try
-    { //const pair<string /* filename */, string /* destination directory */>* pss_p = static_cast<pair<string, string>*>(vp);
-      const tuple<string, string, string>* tsss_p = static_cast<tuple<string, string, string>*>(vp);;
+    { const tuple<string, string, string>* tsss_p = static_cast<tuple<string, string, string>*>(vp);;
       const string& directory = get<0>(*tsss_p);
       const string& filename = get<1>(*tsss_p);
       const string& qtc_filename = get<2>(*tsss_p);
@@ -4989,7 +4984,6 @@ void* auto_backup(void* vp)
 
       n_running_threads--;
     }
-
   }  // ensure that all objects call destructors, whatever the implementation
 
   pthread_exit(nullptr);
@@ -5000,7 +4994,7 @@ void update_local_time(void)
 { if (win_local_time.wp())                                         // don't do it if we haven't defined this window
   { struct tm       structured_local_time;
     array<char, 26> buf_local_time;
-    const time_t    now = time(NULL);                              // get the time from the kernel
+    const time_t    now = ::time(NULL);                            // get the time from the kernel
 
     localtime_r(&now, &structured_local_time);                     // convert to local time
     asctime_r(&structured_local_time, buf_local_time.data());      // and now to ASCII

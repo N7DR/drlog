@@ -147,15 +147,17 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   for (const auto& exch_mult_name : exch_mults)
   { const string guess = exchange_db.guess_value(_callsign, exch_mult_name);
 
-    ost << "guess for " << _callsign << ", exchange mult " << exch_mult_name << " is: " << guess << endl;
+//    ost << "guess for " << _callsign << ", exchange mult " << exch_mult_name << " is: " << guess << endl;
 
     if (!guess.empty())
-    { ost << "is needed exchange mult = " << statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band) << endl;
+    { //ost << "is needed exchange mult = " << statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band) << endl;
 
       if (statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band))
-      { const bool status = add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+      { add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
 
-        ost << "attempt to add returned: " << status << endl;
+        //const bool status = add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+
+        //ost << "attempt to add returned: " << status << endl;
       }
     }
   }
@@ -174,8 +176,14 @@ const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
   return ((_callsign == be._callsign) or (_frequency_str == be._frequency_str));  // neither bandmap_entry is at my QRG
 }
 
-// re-mark as to the need/mult status
-// statistics must be updated before we call this
+/*! \brief              Re-mark the need/mult status
+    \param  rules       rules for the contest
+    \param  q_history   history of all the QSOs
+    \param  statistics  statistics for the contest so far
+    \return             whether there are any changes in needed/mult status
+
+    <i>statistics</i> must be updated to be current before this is called
+*/
 const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, running_statistics& statistics)
 {
 // is needed?
@@ -196,6 +204,10 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
 }
 
 /// difference in frequency between two bandmap entries
+/*! \brief              Return the difference in frequency between two bandmap entries
+    \param  be          other bandmap entry
+    \return             difference in frequency between *this and <i>be</i>
+*/
 const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
 { frequency rv;
 
@@ -216,10 +228,12 @@ const unsigned int bandmap_entry::add_poster(const string& call)
   return n_posters();
 }
 
+/// return all the posters as a space-separated string
 const string bandmap_entry::posters_string(void) const
 { string rv;
 
-  for_each(_posters.cbegin(), _posters.cend(), [&rv] (const string& p) { rv += (p + " "); } );
+//  for_each(_posters.cbegin(), _posters.cend(), [&rv] (const string& p) { rv += (p + " "); } );
+  FOR_ALL(_posters, [&rv] (const string& p) { rv += (p + " "); } );
 
   if (!rv.empty())
     rv = rv.substr(0, rv.length() - 1);  // skip the final space

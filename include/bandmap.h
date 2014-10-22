@@ -386,7 +386,14 @@ public:
   const bool is_substr(const std::string& str) const
     { return contains(_callsign, str); }
 
-// re-mark as to the need/mult status
+/*! \brief              Re-mark the need/mult status
+    \param  rules       rules for the contest
+    \param  q_history   history of all the QSOs
+    \param  statistics  statistics for the contest so far
+    \return             whether there are any changes in needed/mult status
+
+    <i>statistics</i> must be updated to be current before this is called
+*/
   const bool remark(contest_rules& rules, call_history& q_history, running_statistics& statistics);
 
 /// the number of posters
@@ -407,6 +414,7 @@ public:
   inline const bool is_poster(const std::string& call) const
     { return (_posters < call); }
 
+/// return all the posters as a space-separated string
   const std::string posters_string(void) const;
 
 //  const std::string to_string(void) const;
