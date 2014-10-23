@@ -556,7 +556,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   }
 
   for (/*vector<exchange_field>::const_iterator*/ auto cit = leaves.begin(); cit != leaves.end(); ++cit)
-  { static const set<string> no_canonical_values( { "RST", "SERNO" } );    // some field values don't have canonical values
+  { static const set<string> no_canonical_values( { "RS", "RST", "SERNO" } );    // some field values don't have canonical values
     const string& field_name = cit->name();
     string entire_file;
     bool   read_file_ok = false;
@@ -593,7 +593,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
               vector<string> remaining_equivalent_values = remove_peripheral_spaces(split_string(rhs, ","));
 
-              for_each(remaining_equivalent_values.cbegin(), remaining_equivalent_values.cend(), [&] (const string& rev) { equivalent_values.insert(rev); });
+//              for_each(remaining_equivalent_values.cbegin(), remaining_equivalent_values.cend(), [&] (const string& rev) { equivalent_values.insert(rev); });
+              FOR_ALL(remaining_equivalent_values, [&] (const string& rev) { equivalent_values.insert(rev); });
 
               map_canonical_to_all.insert( { lhs, equivalent_values });
 
@@ -1195,6 +1196,13 @@ Sweden 7S – 8S – SA – SB – SC – SD – SE – SF – SG – SH – SI 
 Iceland TF
 */
 
+/*! \brief  Given a received value of a particular multiplier field, what is the actual mult value?
+    \param  field_name         name of the field
+    \param  received_value     received value for field <i>field_name</i>
+    \return                    The multiplier value for the field <i>field_name</i>
+
+    For example, the mult value for a DOK field with the value A01 is A.
+*/
 const string MULT_VALUE(const string& field_name, const string& received_value)
 { if (field_name == "DOK")
   { if (!received_value.empty())

@@ -570,8 +570,13 @@ int main(int argc, char** argv)
     exchange_mults_used = rules.exchange_mults_used();
 
 // possibly test regex exchanges; this will exit if it executes
+#if defined(NEW_CONSTRUCTOR)
     if (cl.value_present("-test-exchanges"))
       test_exchange_templates(rules, cl.value("-test-exchanges"));
+#else
+    if (cl.value_present("-test-exchanges"))
+      test_exchange_templates(cl.value("-test-exchanges"));
+#endif    // NEW_CONSTRUCTOR
 
 // real-time statistics
     try
@@ -1486,7 +1491,7 @@ void* display_rig_status(void* vp)
       {
         const string status_str = (rig_status_thread_parameters.rigp())->raw_command("IF;", 38);          // K3 returns 38 characters
 
-        ost << "status string: " << status_str << endl;
+//        ost << "status string: " << status_str << endl;
 
         if (status_str.length() == 38)
         { const frequency f(from_string<unsigned int>(substring(status_str, 2, 11)));
@@ -2598,6 +2603,12 @@ ost << "processing command: " << command << endl;
               exchange_str += "599 ";
             else
               exchange_str += "59 ";
+
+            processed_field = true;
+          }
+
+          if (!processed_field and exf.name() == "RS")
+          { exchange_str += "59 ";
 
             processed_field = true;
           }

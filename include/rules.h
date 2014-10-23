@@ -259,7 +259,7 @@ protected:
 
   std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
   bool                                _exchange_mults_per_band;  ///< are exchange mults counted per-band?
-  bool                                _exchange_mults_used;      ///< are country mults used?
+  bool                                _exchange_mults_used;      ///< are exchange mults used?
 
 // structures to hold information about the possible values of exchange fields
 
@@ -536,6 +536,13 @@ const std::string wpx_prefix(const std::string& call);
 */
 const std::string sac_prefix(const std::string& call);
 
+/*! \brief  Given a received value of a particular multiplier field, what is the actual mult value?
+    \param  field_name         name of the field
+    \param  received_value     received value for field <i>field_name</i>
+    \return                    The multiplier value for the field <i>field_name</i>
+
+    For example, the mult value for a DOK field with the value A01 is A.
+*/
 const std::string MULT_VALUE(const std::string& field_name, const std::string& received_value);
 
 #endif    // RULES_H

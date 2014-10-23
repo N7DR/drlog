@@ -40,10 +40,7 @@ multiplier::multiplier(void) :
 const bool multiplier::add_worked(const string& str, const int b)
 { if ((_used) and is_known(str))                                          // add only known mults
   { if (_per_band)
-    { //const bool rv = (_worked[b].insert(str)).second;
-
       return ( (_worked[b].insert(str)).second );
-    }
     else // not per-band; keep track of per-band anyway, in case of single-band entry
     { const bool rv = (_worked[b].insert(str)).second;
 
@@ -64,6 +61,7 @@ const bool multiplier::add_worked(const string& str, const int b)
 */
 const bool multiplier::unconditional_add_worked(const std::string& str, const int b)
 { add_known(str);
+
   return add_worked(str, b);
 }
 

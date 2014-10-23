@@ -36,7 +36,6 @@ extern const std::string process_cut_digits(const std::string& input);
         \brief Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
 */
 
-//WRAPPER_3(parsed_exchange_field, std::string, name, std::string, value, bool, is_mult);
 class parsed_exchange_field
 {
 protected:
@@ -341,6 +340,10 @@ protected:
 
 public:
 
+/// default constructor
+  EFT(void)
+    { }
+
 /// construct from name
   EFT(const std::string& nm);
 
@@ -393,6 +396,41 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& ost, const EFT& eft);
+
+// -------------------------  sweepstakes_exchange  ---------------------------
+
+/*!     \class sweepstakes_exchange
+        \brief Encapsulates an exchange for Sweepstakes
+
+        Sweepstakes is different because:
+          1. Two fields might take the form of a two-digit number
+          2. A call may be present as part of the exchange
+          3. The order may be quite different from the canonical order if part of the exchange has come from drmaster
+*/
+
+class sweepstakes_exchange
+{
+protected:
+
+  std::string _serno;    ///< serial number
+  std::string _prec;     ///< precedence
+  std::string _call;     ///< callsign
+  std::string _check;    ///< check
+  std::string _section;  ///< section
+
+public:
+
+  sweepstakes_exchange(const contest_rules& rules, const std::string& callsign, const std::string& received_exchange);
+
+  READ(serno);    ///< serial number
+  READ(prec);     ///< precedence
+  READ(call);     ///< callsign
+  READ(check);    ///< check
+  READ(section);  ///< section
+
+  inline const bool valid(void) const
+    { return (!_serno.empty() and !_prec.empty() and !_call.empty() and !_check.empty() and !_section.empty() ); }
+};
 
 #endif /* EXCHANGE_H */
 

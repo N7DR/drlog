@@ -163,9 +163,9 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
   int field_nr = 0;
 
-//  for (const auto& pseft : exchange_field_eft)
-//  { ost << "for field name = " << pseft.first << ", EFT is: " << pseft.second << endl;
-//  }
+  for (const auto& pseft : exchange_field_eft)
+  { ost << "for field name = " << pseft.first << ", EFT is: " << pseft.second << endl;
+  }
 
   for (const string& received_value : copy_received_values)
   { set<string> match;
@@ -194,7 +194,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
         else    // not a choice
         { const EFT& eft = exchange_field_eft.at(field_name);
 
-//          ost << "field name: " << field_name << ", EFT = " << eft << endl;
+          ost << "field name: " << field_name << ", EFT = " << eft << endl;
 
           if (eft.is_legal_value(received_value))
             match.insert(field_name);
@@ -210,13 +210,13 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   }
 
 // debug; print status
-//  for (const auto& m : matches)
-//  { ost << "field nr " << m.first << " [" << copy_received_values[m.first] << "]: ";
-//    for (const string& str : m.second)
-//      ost << str << "  ";
-//
-//    ost << endl;
-//  }
+  for (const auto& m : matches)
+  { ost << "field nr " << m.first << " [" << copy_received_values[m.first] << "]: ";
+    for (const string& str : m.second)
+      ost << str << "  ";
+
+    ost << endl;
+  }
 
   deque<tuple<int, string, set<string>>> tuple_deque;
 
@@ -1218,7 +1218,7 @@ EFT::EFT(const string& nm) :
   _name(nm)
 { }
 
-/// construct from regex and values files
+/// construct from regex and values files; assumes not a mult
 EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename /* , const string& values_filename */) :
   _is_mult(false),
   _name(nm)
@@ -1235,6 +1235,12 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
   _name(nm)
 { read_regex_expression_file(path, regex_filename);
   read_values_file(path, nm);
+
+  const vector<string> exchange_mults =  remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
+
+  _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
+
+
 
 //  ost << (*this) << endl;
 }
@@ -1410,31 +1416,29 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
 
 const bool EFT::is_legal_value(const string& str) const
 {
-//  ost << "is legal value(): regex expression = " << _regex_expression << endl;
-//  ost << "str = " << str << endl;
+  ost << "is legal value(): regex expression = " << _regex_expression << endl;
+  ost << "str = " << str << endl;
 
   if (!_regex_expression.empty() and regex_match(str, _regex_expression))
     return true;
 
   if (!_values.empty())
+  { ost << "_values is not empty" << endl;
+   ost << "  legal values: " << endl;
+
+    for (const auto& v : _legal_non_regex_values )
+      ost << v << " ";
+
     return (_legal_non_regex_values < str);
+  }
 
   return false;
 }
 
 const string EFT::value_to_log(const string& str) const
-{ //if (is_legal_value(str))
-  { const string rv = canonical_value(str);
+{ const string rv = canonical_value(str);
 
-    return (rv.empty() ? str : rv);
-
-//    if (!rv.empty())
-//      return rv;
-//
-//    return str;
-  }
-//  else
-//    return string();
+  return (rv.empty() ? str : rv);
 }
 
 // return canonical value for a received value
@@ -1502,12 +1506,60 @@ ostream& operator<<(ostream& ost, const EFT& eft)
   return ost;
 }
 
-const vector<pair<int /* field number */, string /* value */>> fit_matches(const map<int /* received field number */, set<string>>& matches)
-{ vector<pair<int /* field number */, string /* value */>> rv;
+//const vector<pair<int /* field number */, string /* value */>> fit_matches(const map<int /* received field number */, set<string>>& matches)
+//{ vector<pair<int /* field number */, string /* value */>> rv;
+//
+//
+//
+//
+//  return rv;
+//}
+
+// -------------------------  sweepstakes_exchange  ---------------------------
+
+/*!     \class sweepstakes_exchange
+        \brief Encapsulates an exchange for Sweepstakes
+
+        Sweepstakes is different because:
+          1. Two fields might take the form of a two-digit number
+          2. A call may be present as part of the exchange
+          3. The order may be quite different from the canonical order if part of the exchange has come from drmaster
+*/
+
+sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const string& callsign, const string& received_exchange) :
+  _call(callsign)
+{ static EFT check_eft;
+  static EFT serno_eft;
+  static EFT prec_eft;
+  static EFT section_eft;
+  static bool first_time = true;
+
+  if (first_time)
+  { check_eft = rules.exchange_field_eft("CHECK");
+    serno_eft = rules.exchange_field_eft("SERNO");
+    prec_eft = rules.exchange_field_eft("PREC");
+    section_eft = rules.exchange_field_eft("SECTION");
+
+    first_time = false;
+  }
+
+  const vector<string> r_vec = remove_peripheral_spaces(split_string(received_exchange, " "));
+
+//  static const EFT check_eft = rules.exchange_field_eft("CHECK");
+//  static const EFT serno_eft = rules.exchange_field_eft("SERNO");
+//  static const EFT prec_eft = rules.exchange_field_eft("PREC");
 
 
+//  const static regex check_regex("^[[:digit:]][[:digit:]]$");
+//  const static regex serno_regex("^([[:digit:]])+$");
+
+//  auto is_check = [](const string& target) { return regex_match(target, check_regex); };
+//  auto is_serno = [](const string& target) { return regex_match(target, serno_regex); };
+
+  auto is_check = [](const string& target) { return check_eft.is_legal_value(target); };
+  auto is_serno = [](const string& target) { return serno_eft.is_legal_value(target); };
+  auto is_prec = [](const string& target) { return prec_eft.is_legal_value(target); };
+  auto is_section = [](const string& target) { return section_eft.is_legal_value(target); };
 
 
-  return rv;
 }
-
