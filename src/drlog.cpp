@@ -1660,6 +1660,8 @@ void* display_rig_status(void* vp)
 // now display the status
           win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
 
+//          ost << "background colour is " << (context.mark_frequency(m, f) ? "RED" : "BLACK") << " for frequency " << f.display_string() << " and mode " << m << endl;
+
 //          ost << "clg tx_vfo()" << endl;
 //          const VFO tx_vfo = rig_status_thread_parameters.rigp()-> tx_vfo();
 //          ost << "tx vfo is: " << tx_vfo << endl;

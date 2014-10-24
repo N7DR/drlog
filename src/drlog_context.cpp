@@ -428,9 +428,15 @@ void drlog_context::_process_configuration_file(const string& filename)
           exit(-1);
         }
 
-        _mark_frequencies.insert( { MODE_CW, frequencies } );
-        _mark_frequencies.insert( { MODE_SSB, frequencies } );
+ //       ost << "number of frequency ranges = " << frequencies.size() << endl;
+
+//        _mark_frequencies.insert( { MODE_CW, frequencies } );
+//        _mark_frequencies.insert( { MODE_SSB, frequencies } );
       }
+
+      _mark_frequencies.insert( { MODE_CW, frequencies } );
+      _mark_frequencies.insert( { MODE_SSB, frequencies } );
+
     }
 
 // MARK FREQUENCIES CW
@@ -451,8 +457,11 @@ void drlog_context::_process_configuration_file(const string& filename)
           exit(-1);
         }
 
-        _mark_frequencies.insert( { MODE_CW, frequencies } );
+//        _mark_frequencies.insert( { MODE_CW, frequencies } );
       }
+
+      _mark_frequencies.insert( { MODE_CW, frequencies } );
+
     }
 
 // MARK FREQUENCIES SSB
@@ -465,6 +474,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
         try
         { //_mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+//          ost << "marking frequency range " << frequency(bounds.at(0)).display_string() << " to " << frequency(bounds.at(1)).display_string() << endl;
           frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
         }
 
@@ -473,8 +483,12 @@ void drlog_context::_process_configuration_file(const string& filename)
           exit(-1);
         }
 
-        _mark_frequencies.insert( { MODE_SSB, frequencies } );
+//        ost << "number of frequency ranges = " << frequencies.size() << endl;
+
+
       }
+
+      _mark_frequencies.insert( { MODE_SSB, frequencies } );
     }
 
 // MATCH MINIMUM
@@ -1361,8 +1375,13 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
   try
   { const vector<pair<frequency, frequency>>& vec = _mark_frequencies.at(m);
 
+//    ost << "size of frequency vector = " << vec.size() << endl;
+
     for (const auto& pff : vec)
-    { if ( (f >= pff.first) and (f <= pff.second))
+    { //ost << "before test: frequencies: " << f.display_string() << ", " << pff.first.display_string() << ", " << pff.second.display_string() << endl;
+      //ost << "before test: frequencies (Hz): " << f.hz() << ", " << pff.first.hz() << ", " << pff.second.hz() << endl;
+
+      if ( (f >= pff.first) and (f <= pff.second))
       { // ost << "frequencies: " << f.display_string() << ", " << pff.first.display_string() << ", " << pff.second.display_string() << endl;
         return true;
       }
