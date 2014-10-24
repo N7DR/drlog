@@ -26,6 +26,13 @@ extern message_stream ost;
 extern bool QSO_DISPLAY_COUNTRY_MULT;        ///< controls whether country mults are written on the log line
 extern int  QSO_MULT_WIDTH;                  ///< controls width of zone mults field in log line
 
+// cabrillo qso = template: CQ WW
+static const map<string, string> cabrillo_qso_templates { { "CQ WW",      "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" },
+                                                          { "ARRL DX", "ARRL DX" }, // placeholder; mode chosen before we exit this function
+                                                          { "ARRL DX CW", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1" },
+                                                          { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" }
+                                                        };
+
 // -----------  drlog_context  ----------------
 
 /*! \class drlog_context
@@ -986,16 +993,18 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 */
 
 // cabrillo qso = template: CQ WW
-    map<string, string> cabrillo_qso_templates { { "CQ WW",      "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" },
-                                                 { "ARRL DX CW", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1" }
-                                               };
+//    map<string, string> cabrillo_qso_templates { { "CQ WW",      "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" },
+//                                                 { "ARRL DX", "ARRL DX" }, // placeholder; mode chosen before we exit this function
+//                                                 { "ARRL DX CW", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1" },
+//                                                 { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" }
+//    };
 
     if (starts_with(testline, "CABRILLO QSO"))
     { _cabrillo_qso_template = RHS;
 
       if (contains(RHS, "TEMPLATE"))
       { try
-        { const string key = remove_peripheral_spaces(split_string(RHS, ":"))[1];
+        { string key = remove_peripheral_spaces(split_string(RHS, ":"))[1];
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
         }
@@ -1177,6 +1186,29 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
   if (_message_cq_2.empty())
     _message_cq_2 = "cq cq test de  " + _my_call + "  " + _my_call + "  " + _my_call + "  test";
+
+// possibly fix Cabrillo template
+  if (_cabrillo_qso_template == "ARRL DX")
+  { vector<string> actual_modes = remove_peripheral_spaces(split_string(_modes, ","));
+
+    if (actual_modes.size() == 1)
+    { try
+      { const string key = ( (actual_modes[0] == "CW") ?  "ARRL DX CW" : "ARRL DX SSB");
+
+        _cabrillo_qso_template = cabrillo_qso_templates.at(key);
+      }
+
+      catch (...)
+      { ost << "Error in revised CABRILLO QSO TEMPLATE" << endl;
+        exit(-1);
+      }
+    }
+    else
+    { ost << "Error in CABRILLO QSO TEMPLATE: ARRL DX" << endl;
+      exit(-1);
+    }
+
+  }
 }
 
 /// construct from file

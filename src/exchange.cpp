@@ -840,6 +840,21 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
+  if (field_name == "SSBPOWER")
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.ssb_power();
+
+      if (!rv.empty())
+      { rv = rules.canonical_value(field_name, rv);
+        _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
 // choices
   if (field_name == "ITUZONE+SOCIETY")    // IARU
   { string rv;
