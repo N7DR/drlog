@@ -1993,6 +1993,8 @@ void* prune_bandmap(void* vp)
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     ALT-K -- toggle CW
     ESCAPE
+    TAB -- switch between CQ and SAP mode
+    F10 -- toggle filter_remaining_country_mults
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2181,7 +2183,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
-// F10 toggling filter_remaining_country_mults
+// F10 -- toggle filter_remaining_country_mults
   if (!processed and (e.symbol() == XK_F10))
   { filter_remaining_country_mults = !filter_remaining_country_mults;
     update_remaining_country_mults_window(statistics);
@@ -3863,6 +3865,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+// CTRL-P -- dump screen
+  if (!processed and e.is_control('p'))
+  { dump_screen();
+
+    processed = true;
+  }
 }
 
 // function to process input to the (editable) LOG window
@@ -4131,6 +4139,13 @@ ost << "Adding new QSO(s)" << endl;
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
   { debug_dump();
+    processed = true;
+  }
+
+// CTRL-P -- dump screen
+  if (!processed and e.is_control('p'))
+  { dump_screen();
+
     processed = true;
   }
 }

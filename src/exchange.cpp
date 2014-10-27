@@ -32,6 +32,7 @@ exchange_field_template EXCHANGE_FIELD_TEMPLATES;
         \brief Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
 */
 
+/// default constructor
 parsed_exchange_field::parsed_exchange_field(void) :
   _name(),
   _value(),
@@ -39,6 +40,11 @@ parsed_exchange_field::parsed_exchange_field(void) :
   _mult_value()
 { }
 
+/*!     \brief      constructor
+        \param  nm  field name
+        \param  v   field value
+        \param  b   is this field a mult?
+*/
 parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, const bool m) :
     _name(nm),
     _value(v),

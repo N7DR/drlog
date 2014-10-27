@@ -39,21 +39,27 @@ extern const std::string process_cut_digits(const std::string& input);
 class parsed_exchange_field
 {
 protected:
-  std::string    _name;
-  std::string    _value;
-  bool           _is_mult;
-  std::string    _mult_value;
+  std::string    _name;                 ///< field name
+  std::string    _value;                ///< field value
+  bool           _is_mult;              ///< is this field a mult?
+  std::string    _mult_value;           ///< actual value of the mult (if it is a mult)
 
 public:
 
+/// default constructor
   parsed_exchange_field(void);
 
+/*!     \brief      constructor
+        \param  nm  field name
+        \param  v   field value
+        \param  b   is this field a mult?
+*/
   parsed_exchange_field(const std::string& nm, const std::string& v, const bool m);
 
-  READ(name);
-  READ(value);
-  READ_AND_WRITE(is_mult);
-  READ(mult_value);
+  READ(name);                   ///< field name
+  READ(value);                  ///< field value
+  READ_AND_WRITE(is_mult);      ///< is this field a mult?
+  READ(mult_value);             ///< actual value of the mult (if it is a mult)
 
   void name(const std::string& nm);
   void value(const std::string& v);
