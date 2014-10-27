@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 80 2014-10-20 18:47:10Z  $
+// $Id: rig_interface.h 81 2014-10-27 18:31:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -80,6 +80,14 @@ protected:
   unsigned int     _rig_poll_interval;                   ///< interval between polling for rig status, in milliseconds
   pthread_t        _thread_id;                           ///< ID for the thread that polls the rig for status
 
+  std::map< std::pair <BAND, MODE>, frequency > _last_frequency;  ///< last-used frequencies on per-band, per-mode basis
+
+  bool              _rig_connected;                      ///< is a rig connected?
+  frequency         _last_commanded_frequency;           ///< last frequency to which the rig was commanded to QSY
+  MODE              _last_commanded_mode;                ///< last mode into which the rig was commanded
+
+  frequency         _last_commanded_frequency_b;         ///< last frequency to which the VFO B was commanded to QSY
+
 /*! \brief      poll rig for status, forever
     \param  vp  unused (should be nullptr)
     \return     nullptr
@@ -97,15 +105,6 @@ void*            _poll_thread_function(void* vp);
 ///< allow direct access to the underlying file descriptor used to communicate with the rig
   inline const int  _file_descriptor(void) const
     { return _rigp->state.rigport.fd; }
-
-// keep track of frequencies on per-band, per-mode basis
-  std::map< std::pair <BAND, MODE>, frequency > _last_frequency;
-
-  bool              _rig_connected;
-  frequency         _last_commanded_frequency;
-  MODE              _last_commanded_mode;
-
-  frequency         _last_commanded_frequency_b;
 
   void (*_error_alert_function)(const std::string&);
 

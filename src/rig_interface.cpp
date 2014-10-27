@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 80 2014-10-20 18:47:10Z  $
+// $Id: rig_interface.cpp 81 2014-10-27 18:31:40Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -104,204 +104,17 @@ void rig_interface::_error_alert(const string& msg)
 
 /// default constructor
 rig_interface::rig_interface (void) :
-  _port_name(),
-  _rigp(nullptr),
+  _port_name(),                         // no default port
+  _rigp(nullptr),                       // no rig connected
   _rig_poll_interval(1000),             // poll once per second
-  _status(frequency(), MODE_CW),            // frequency and mode are set to defaults prior to reading from rig
-  _rig_connected(false),                // no rig is connected
+  _status(frequency(14000), MODE_CW),   // 14MHz, CW
+  _rig_connected(false),                // no rig connected
   _error_alert_function(nullptr),       // no default error handler
-  _model(RIG_MODEL_DUMMY),
-  _last_commanded_frequency(),
-  _last_commanded_mode(MODE_CW)
-{ // all this stuff now happens in prepare()
-#if 0
-  const string serial_port = context.rig1_port();
-
-/*
-
- int fd = ::open("/dev/ttyS0", O_RDWR | O_NOCTTY | O_NDELAY);
-
-  cout << "fd = " << fd << endl;
-
-  struct termios  config;
-
-  //
-  // Input flags - Turn off input processing
-  // convert break to null byte, no CR to NL translation,
-  // no NL to CR translation, don't mark parity errors or breaks
-  // no input parity check, don't strip high bit off,
-  // no XON/XOFF software flow control
-  //
-  config.c_iflag &= ~(IGNBRK | BRKINT | ICRNL |
-                      INLCR | PARMRK | INPCK | ISTRIP | IXON);
-  //
-  // Output flags - Turn off output processing
-  // no CR to NL translation, no NL to CR-NL translation,
-  // no NL to CR translation, no column 0 CR suppression,
-  // no Ctrl-D suppression, no fill characters, no case mapping,
-  // no local output processing
-  //
-  // config.c_oflag &= ~(OCRNL | ONLCR | ONLRET |
-  //                     ONOCR | ONOEOT| OFILL | OLCUC | OPOST);
-  config.c_oflag = 0;
-  //
-  // No line processing:
-  // echo off, echo newline off, canonical mode off,
-  // extended input processing off, signal chars off
-  //
-  config.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
-  //
-  // Turn off character processing
-  // clear current char size mask, no parity checking,
-  // no output processing, force 8 bit input
-  //
-  config.c_cflag &= ~(CSIZE | PARENB);
-  config.c_cflag |= CS8;
-  //
-  // One input byte is enough to return from read()
-  // Inter-character timer off
-  //
-  config.c_cc[VMIN]  = 1;
-  config.c_cc[VTIME] = 0;
-  //
-  // Communication speed (simple version, using the predefined
-  // constants)
-  //
-  if(cfsetispeed(&config, B4800) < 0 || cfsetospeed(&config, B4800) < 0)
-  {
-      cout << "speed error" << endl;
-  }
-  //
-  // Finally, apply the configuration
-  //
-   cout << "set attributes = " << tcsetattr(fd, TCSAFLUSH, &config) << endl;
-
-   char* c_out = "ID;";
-   char* c_in = new char [1000];
-
-
-   write(fd, c_out, 3);
-   sleep(1);
-   int n_read = read(fd, c_in, 500);
-
-   cout << "Received: " << n_read << " characters: " << endl;
-
-   if (n_read > 0)
-  { for (size_t n = 0; n < n_read; ++n)
-     cout << c_in[n];
-    cout << endl;
-  }
-
-   close(fd);
-*/
-
-  rig_set_debug(RIG_DEBUG_NONE);
-
-  rig_load_all_backends();
-
-  const string rig_type = context.rig1_type();
-
-// ugly map of name to hamlib model number
-//  rig_model_t rig_model_nr = 0;
-
-  if (rig_type == "K3")
-  { //rig_model_nr = RIG_MODEL_K3;
-    _model = RIG_MODEL_K3;
-  }
-
-  if (!_model)
-    throw rig_interface_error(RIG_NO_SUCH_RIG, "Unknown rig: " + rig_type);
-
-//  const rig_model_t myrig_model = rig_probe(&_port);
-//  const rig_model_t myrig_model = RIG_MODEL_K3;            // http://hamlib.sourceforge.net/manuals/1.2.14/riglist_8h.html#a9d6b6a604733ada9ee1c9fc08e8c16da
-//  cout << "rig model number: " << myrig_model << endl;
-
-  _rigp = rig_init(_model);
-
-  if (!_rigp)
-    throw rig_interface_error(RIG_UNABLE_TO_INITIALISE, "Unable to initialise rig structure for rig type " + rig_type);
-
-  baud_rate(context.rig1_baud());
-  data_bits(context.rig1_data_bits());
-  stop_bits(context.rig1_stop_bits());
-
-//  cout << " parameters: baud rate:  " << baud_rate() << "; data bits: " << data_bits() << "; stop bits: " << stop_bits() << endl;
-
-
-//  for (size_t n = 0; n <= serial_port.length(); ++n)
-//    _rigp->state.rigport.pathname[n] = _port_name[n];
-
-  strncpy(_rigp->state.rigport.pathname, serial_port.c_str(), FILPATHLEN);
-//  _rigp->state.rigport.parm.serial.rate = 4800;
-
-//  cout << "about to open rig" << endl;
-  const int status = rig_open(_rigp);
-
-  if (status != RIG_OK)
-  { //cout << "unable to open rig" << endl;
-    throw rig_interface_error(RIG_UNABLE_TO_OPEN, "Unable to open the rig on port " + serial_port + ": Error = " + to_string(status));
-  }
-//  else
-//    cout << "rig opened OK" << endl;
-#endif
-
-#if 0
-  int fd = ::open("/dev/ttyS0", O_RDWR | O_NOCTTY | O_NDELAY);
-
-  cout << "fd = " << fd << endl;
-
-  struct termios  config;
-  config.c_iflag &= ~(IGNBRK | BRKINT | ICRNL |
-                      INLCR | PARMRK | INPCK | ISTRIP | IXON);
-  config.c_oflag = 0;
-  config.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
-  config.c_cflag &= ~(CSIZE | PARENB);
-  config.c_cflag |= CS8;
-  config.c_cc[VMIN]  = 1;
-  config.c_cc[VTIME] = 0;
-  if(cfsetispeed(&config, B4800) < 0 || cfsetospeed(&config, B4800) < 0)
-  {
-      cout << "speed error" << endl;
-  }
-   cout << "set attributes = " << tcsetattr(fd, TCSAFLUSH, &config) << endl;
-
-   char* c_out = "IF;";
-   char* c_in = new char [1000];
-
-
-   write(fd, c_out, 3);
-   sleep(1);
-   int n_read = read(fd, c_in, 500);
-
-   cout << "Received: " << n_read << " characters: " << endl;
-
-   if (n_read > 0)
-  { for (size_t n = 0; n < n_read; ++n)
-     cout << c_in[n];
-    cout << endl;
-  }
-
-   cout << "setting frequency via hamlib; fd still open" << endl;
-   frequency(28000000);
-
-   write(fd, c_out, 3);
-   sleep(1);
-   n_read = read(fd, c_in, 500);
-
-   cout << "Received: " << n_read << " characters: " << endl;
-
-   if (n_read > 0)
-  { for (size_t n = 0; n < n_read; ++n)
-     cout << c_in[n];
-    cout << endl;
-  }
-
-   close(fd);
-   cout << "setting frequency via hamlib; fd closed" << endl;
-   frequency(21000000);
-#endif    // 0
-
-}
+  _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
+  _last_commanded_frequency(),          // no last-commanded frequency
+  _last_commanded_mode(MODE_CW),        // last commanded mode was CW
+  _last_commanded_frequency_b()         // no last-commanded frequency fro VFO B
+{ }
 
 /// destructor
 rig_interface::~rig_interface(void)
