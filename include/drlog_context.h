@@ -63,6 +63,7 @@ protected:
   bool                                         _auto_remaining_callsign_mults;   ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;    ///< do we auto-generate the remaining country mults?
   bool                                         _auto_remaining_exchange_mults;   ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
+  bool                                         _auto_screenshot;                 ///< do we create a screenshot every hour?
 
   unsigned int                                 _bandmap_decay_time_local;          ///< time (in minutes) for an entry to age off the bandmap (local entries)
   unsigned int                                 _bandmap_decay_time_cluster;        ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
@@ -241,19 +242,21 @@ protected:
   SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?
   SAFEREAD(auto_remaining_country_mults, _context);     ///< do we auto-generate the remaining country mults?
   SAFEREAD(auto_remaining_exchange_mults, _context);    ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
+  SAFEREAD(auto_screenshot, _context);                  ///< do we create a screenshot every hour?
 
-  SAFEREAD(bandmap_decay_time_local, _context);
-  SAFEREAD(bandmap_decay_time_cluster, _context);
-  SAFEREAD(bandmap_decay_time_rbn, _context);
-  SAFEREAD(bands, _context);
-  SAFEREAD(bandmap_fade_colours, _context);
+  SAFEREAD(bandmap_decay_time_local, _context);         ///< time (in minutes) for an entry to age off the bandmap (local entries)
+  SAFEREAD(bandmap_decay_time_cluster, _context);       ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
+  SAFEREAD(bandmap_decay_time_rbn, _context);           ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
+  SAFEREAD(bandmap_fade_colours, _context);             ///< the colours calls adopt as they fade
+  SAFEREAD(bandmap_filter, _context);                   ///< the strings in the bandmap filter
   SAFEREAD(bandmap_filter_foreground_colour, _context);
   SAFEREAD(bandmap_filter_hide_colour, _context);
   SAFEREAD(bandmap_filter_show_colour, _context);
   SAFEREAD(bandmap_filter_disabled_colour, _context);
   SAFEREAD(bandmap_filter_enabled, _context);
   SAFEREAD(bandmap_filter_show, _context);
-  SAFEREAD(bandmap_filter, _context);
+
+  SAFEREAD(bands, _context);
 
   inline const bool bandmap_filter_hide(void) const
     { return !bandmap_filter_show(); }

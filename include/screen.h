@@ -454,21 +454,25 @@ public:
   inline const bool empty(void)
     { return remove_peripheral_spaces(read()).empty(); }
 
-  inline window& toggle_hidden(void)
+/// toggle the hide/show status of the cursor
+    inline window& toggle_hidden(void)
     { _hidden_cursor = !_hidden_cursor;
       return *this;
     }
 
+/// hide the cursor
   inline window& hide_cursor(void)
     { _hidden_cursor = true;
       return *this;
     }
 
+/// show the cursor
   inline window& show_cursor(void)
     { _hidden_cursor = false;
       return *this;
     }
 
+/// toggle the insert mode
   inline window& toggle_insert(void)
     { _insert = !_insert;
       return *this;
@@ -500,8 +504,7 @@ template
 
 };
 
-
-
+/// window < cursor
 window& operator<(window& win, const cursor& c);
 
 /// trivial class for moving the cursor (relative)

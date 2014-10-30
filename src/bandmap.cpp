@@ -24,17 +24,15 @@
 
 using namespace std;
 
-extern message_stream      ost;
-extern running_statistics* statistics_p;
-extern pt_mutex            current_band_mutex;
-extern pt_mutex            bandmap_mutex;        // used when writing to the bandmap window
-extern BAND                current_band;
+extern message_stream      ost;                 ///< debugging/logging output
+extern pt_mutex            bandmap_mutex;       ///< used when writing to the bandmap window
 
-extern const set<string> CONTINENT_SET;
+extern const set<string> CONTINENT_SET;         ///< two-letter abbreviations for all the continents
 
-const string MY_MARKER("--------");
+const string MY_MARKER("--------");             ///< the string that marks my position in the bandmap
+bandmap_filter_type bmf;                        ///< the global bandmap filter
 
-/// convert BANDMAP_ENTRY_SOURCE to printable string
+/// printable name of a source
 const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
   { case BANDMAP_ENTRY_LOCAL :
@@ -50,8 +48,6 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
       return "UNKNOWN";
   }
 }
-
-bandmap_filter_type bmf;
 
 // -----------   bandmap_filter_type ----------------
 

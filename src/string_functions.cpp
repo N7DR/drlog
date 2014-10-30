@@ -403,7 +403,11 @@ const string squash(const string& cs, const char c)
   return rv;
 }
 
-// join all the elements of a string array together, with a known separator
+/*! \brief      Join the elements of a string vector, using a provided separator
+    \param  vec container of strings
+    \param  sep separator inserted between the elements of <i>vec</i>
+    \return     all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
+*/
 const string join(const vector<string>& vec, const string& sep)
 { string rv;
 

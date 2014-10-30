@@ -28,10 +28,11 @@
 #include <utility>
 #include <vector>
 
-extern pt_mutex  rules_mutex;
+extern pt_mutex  rules_mutex;                           ///< mutex for rules
 
-typedef std::map<std::string, unsigned int> MSI;
+typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 
+// forward declarations
 class EFT;
 class QSO;
 
@@ -128,6 +129,7 @@ public:
 */
   const bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
 
+/// read from and write to disk
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _name
@@ -147,7 +149,7 @@ protected:
 
   std::string                 _name;            ///< name of field
   bool                        _is_mult;         ///< is this field a multiplier?
-  bool                        _is_optional;     ///< is this an optional field?  *** not yet supported ***
+  bool                        _is_optional;     ///< is this an optional field?
   std::vector<exchange_field> _choice;          ///< is this field a choice?
 
 public:
@@ -157,7 +159,7 @@ public:
 
   READ(name);                          ///< name of field
   READ(is_mult);                       ///< is this field a multiplier?
-  READ(is_optional);                   ///< is this an optional field?  *** not yet supported ***
+  READ(is_optional);                   ///< is this an optional field?
   READ_AND_WRITE(choice);              ///< is this field a choice?
 
 /// is this field a choice?
@@ -167,6 +169,7 @@ public:
 /// follow all trees to their leaves
   const std::vector<exchange_field> expand(void) const;
 
+/// read from and write to disk
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _name

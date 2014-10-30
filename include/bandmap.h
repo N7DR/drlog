@@ -403,21 +403,31 @@ public:
 /// difference in frequency between two bandmap entries
   const frequency frequency_difference(const bandmap_entry& be) const;
 
+/// order two bandmap entries, in order of callsign
   inline const bool less_by_callsign(const bandmap_entry& be) const
     { return (_callsign < be._callsign); }
 
+/// order two bandmap entries, in order of frequency
   inline const bool less_by_frequency(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz()); }
 
+/*! \brief          Add a call to the associated posters
+    \param  call    call to add
+    \return         number of posters associated with this call, after adding <i>call</i>
+
+    Does nothing if <i>call</i> is already a poster
+*/
   const unsigned int add_poster(const std::string& call);
 
+/*! \brief          Is a particular call one of the posters?
+    \param  call    call to test
+    \return         Whether <i>call</i> is a poster
+*/
   inline const bool is_poster(const std::string& call) const
     { return (_posters < call); }
 
 /// return all the posters as a space-separated string
   const std::string posters_string(void) const;
-
-//  const std::string to_string(void) const;
 
 /// archive using boost serialization
   template<typename Archive>

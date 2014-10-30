@@ -282,16 +282,24 @@ const std::string remove_trailing(const std::string& cs, const char c);
 inline const std::string remove_trailing_spaces(const std::string& cs)
   { return remove_trailing(cs, ' '); }
 
-/*!     \brief  Remove leading and trailing spaces
+/*!     \brief          Remove leading and trailing spaces
         \param  cs      Original string
-        \return <i>cs</i> with any leading or trailing spaces removed
+        \return         <i>cs</i> with any leading or trailing spaces removed
 */
 inline const std::string remove_peripheral_spaces(const std::string& cs)
   { return remove_trailing_spaces(remove_leading_spaces(cs)); }
 
+/*!     \brief          Remove leading and trailing spaces
+        \param  s       Original string
+        \return         <i>s</i> with any leading or trailing spaces removed
+*/
 inline const std::string remove_peripheral_spaces(std::string& s)
   { return remove_trailing_spaces(remove_leading_spaces(s)); }
 
+/*!     \brief          Remove leading and trailing spaces
+        \param  t       Container of strings
+        \return         <i>t</i> with leading and trailing spaces removed from the individual elements
+*/
 template <typename T>
 T remove_peripheral_spaces(T& t)
 { typename std::remove_const<T>::type rv;
@@ -301,33 +309,37 @@ T remove_peripheral_spaces(T& t)
   return rv;
 }
 
-/*!     \brief  Remove peripheral instances of a specific character
+/*!     \brief          Remove peripheral instances of a specific character
         \param  cs      Original string
         \param  c       Character to remove
-        \return <i>cs</i> with any leading or trailing instances of <i>c</i> removed
+        \return         <i>cs</i> with any leading or trailing instances of <i>c</i> removed
 */
 inline const std::string remove_peripheral_character(const std::string& cs, const char c)
   { return remove_trailing(remove_leading(cs, c), c); }
 
-/*! \brief  Remove all instances of a particular char from a string
-  \param  cs  Original string
-  \param  char_to_remove  Character to be removed from <i>cs</i>
-  \return <i>cs</i> with all instances of <i>char_to_remove</i> removed
+/*! \brief                  Remove all instances of a particular char from a string
+  \param  cs                Original string
+  \param  char_to_remove    Character to be removed from <i>cs</i>
+  \return                   <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
 const std::string remove_char(const std::string& cs, const char char_to_remove);
 
-/*! \brief  Obtain a delimited substring
-  \param  cs  Original string
-  \param  delim_1 opening delimiter
-  \param  delim_2 closing delimiter
-  \return substring between <i>delim_1</i> and <i>delim_2</i>
+/*! \brief          Obtain a delimited substring
+  \param  cs        Original string
+  \param  delim_1   opening delimiter
+  \param  delim_2   closing delimiter
+  \return           substring between <i>delim_1</i> and <i>delim_2</i>
   
   Returns the empty string if the delimiters do not exist, or if
   <i>delim_2</i> does not appear after <i>delim_1</i>
 */
 const std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2);
 
-// join all the elements of a string vector together, with a known separator
+/*! \brief      Join the elements of a string vector, using a provided separator
+    \param  vec container of strings
+    \param  sep separator inserted between the elements of <i>vec</i>
+    \return     all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
+*/
 const std::string join(const std::vector<std::string>& vec, const std::string& sep /* = " " */);
 
 // join all the elements of a string deque together, with a known separator

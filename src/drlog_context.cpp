@@ -22,15 +22,17 @@
 
 using namespace std;
 
-extern message_stream ost;
+extern message_stream ost;                   ///< for debugging, info
 extern bool QSO_DISPLAY_COUNTRY_MULT;        ///< controls whether country mults are written on the log line
 extern int  QSO_MULT_WIDTH;                  ///< controls width of zone mults field in log line
 
-// cabrillo qso = template: CQ WW
-static const map<string, string> cabrillo_qso_templates { { "CQ WW",      "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" },
+/// cabrillo qso = template: CQ WW
+static const map<string, string> cabrillo_qso_templates { { "CQ WW",      "CQ WW" }, // placeholder; mode chosen before we exit this function
+                                                          { "CQ WW CW",   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" },
+                                                          { "CQ WW SSB",  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" },
                                                           { "ARRL DX", "ARRL DX" }, // placeholder; mode chosen before we exit this function
                                                           { "ARRL DX CW", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1" },
-                                                          { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" }
+                                                          { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" }
                                                         };
 
 // -----------  drlog_context  ----------------
@@ -39,7 +41,7 @@ static const map<string, string> cabrillo_qso_templates { { "CQ WW",      "FREQ:
     \brief The variables and constants that comprise the context for drlog
 */
 
-pt_mutex _context_mutex;
+pt_mutex _context_mutex;                    ///< mutex for the context
 
 /*!     \brief              Process a configuration file
         \param  filename    name of file to process
@@ -50,7 +52,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 { string entire_file;
 
   try
-  { entire_file = remove_char(read_file(filename), CR_CHAR);    // remove_peripheral_character(remove_char(read_file(filename), CR_CHAR), LF_CHAR);
+  { entire_file = remove_char(read_file(filename), CR_CHAR);
   }
 
   catch (...)
@@ -60,14 +62,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 
   static const string LF_STR   = "\n";      ///< LF as string
 
-// split into lines
-  const vector<string> lines = split_string(entire_file, LF_STR);
+  const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
 
-// process each line
-  for (const auto& line : lines)
+  for (const auto& line : lines)                                    // process each line
   {
-// generate a number of useful variables to save writing them explicitly many times
-// this is only processed at start-up so we don't need to be efficient
+// generate a number of useful variables
     const string testline = remove_leading_spaces(to_upper(line));
     const vector<string> fields = split_string(line, "=");
     const string rhs = ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : "");      // the stuff to the right of the "="
@@ -83,6 +82,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // AUTO BACKUP
     if (starts_with(testline, "AUTO BACKUP") and !rhs.empty())
       _auto_backup = rhs;
+
+// AUTO SCREENSHOT
+    if (starts_with(testline, "AUTO SCREENSHOT") and !rhs.empty())
+      _auto_screenshot = is_true;
 
 // BAND MAP DECAY TIME CLUSTER
     if (starts_with(testline, "BAND MAP DECAY TIME CLUSTER") or starts_with(testline, "BANDMAP DECAY TIME CLUSTER"))
@@ -104,7 +107,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (!RHS.empty())
       { const vector<string> colour_names = remove_peripheral_spaces(split_string(RHS, ","));
 
-        for_each(colour_names.cbegin(), colour_names.cend(), [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
+//        for_each(colour_names.cbegin(), colour_names.cend(), [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
+        FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
       }
     }
 
@@ -410,6 +414,33 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "LOG") and !rhs.empty())
       _logfile = rhs;
 
+// MARK FREQUENCIES [CW|SSB]
+    if (starts_with(testline, "MARK FREQUENCIES") and !rhs.empty())
+    { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
+      vector<pair<frequency, frequency>> frequencies;
+
+      for (const string& range : ranges)
+      { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
+
+        try
+        { frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
+        }
+
+        catch (...)
+        { ost << "Parse error in " << LHS << endl;
+          exit(-1);
+        }
+      }
+
+      if (LHS == "MARK FREQUENCIES" or LHS == "MARK FREQUENCIES CW")
+        _mark_frequencies.insert( { MODE_CW, frequencies } );
+
+      if (LHS == "MARK FREQUENCIES" or LHS == "MARK FREQUENCIES SSB")
+        _mark_frequencies.insert( { MODE_SSB, frequencies } );
+    }
+
+
+#if 0
 // MARK FREQUENCIES
     if (starts_with(testline, "MARK FREQUENCIES") and !contains(testline, "CW") and !contains(testline, "SSB") and !rhs.empty())
     { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
@@ -490,6 +521,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       _mark_frequencies.insert( { MODE_SSB, frequencies } );
     }
+#endif
 
 // MATCH MINIMUM
     if (starts_with(testline, "MATCH MINIMUM"))
@@ -706,7 +738,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const vector<string> vec_rates = remove_peripheral_spaces(split_string(rhs, ","));
       vector<unsigned int> new_rates;
 
-//      for_each(vec_rates.cbegin(), vec_rates.cend(), [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
       FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
 
       if (!new_rates.empty())
@@ -868,10 +899,9 @@ void drlog_context::_process_configuration_file(const string& filename)
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
 // CABRILLO CONTEST
-    if (starts_with(testline, "CABRILLO CONTEST"))
-    { if (is_legal_value(RHS, "AP-SPRINT,ARRL-10,ARRL-160,ARRL-DX-CW,ARRL-DX-SSB,ARRL-SS-CW,ARRL-SS-SSB,ARRL-UHF-AUG,ARRL-VHF-JAN,ARRL-VHF-JUN,ARRL-VHF-SEP,ARRL-RTTY,BARTG-RTTY,CQ-160-CW,CQ-160-SSB,CQ-WPX-CW,CQ-WPX-RTTY,CQ-WPX-SSB,CQ-VHF,CQ-WW-CW,CQ-WW-RTTY,CQ-WW-SSB,DARC-WAEDC-CW,DARC-WAEDC-RTTY,DARC-WAEDC-SSB,FCG-FQP,IARU-HF,JIDX-CW,JIDX-SSB,NAQP-CW,NAQP-RTTY,NAQP-SSB,NA-SPRINT-CW,NA-SPRINT-SSB,NCCC-CQP,NEQP,OCEANIA-DX-CW,OCEANIA-DX-SSB,RDXC,RSGB-IOTA,SAC-CW,SAC-SSB,STEW-PERRY,TARA-RTTY", ","))
-        _cabrillo_contest = RHS;                        // required to be upper case
-    }
+    if (starts_with(testline, "CABRILLO CONTEST") and
+        (is_legal_value(RHS, "AP-SPRINT,ARRL-10,ARRL-160,ARRL-DX-CW,ARRL-DX-SSB,ARRL-SS-CW,ARRL-SS-SSB,ARRL-UHF-AUG,ARRL-VHF-JAN,ARRL-VHF-JUN,ARRL-VHF-SEP,ARRL-RTTY,BARTG-RTTY,CQ-160-CW,CQ-160-SSB,CQ-WPX-CW,CQ-WPX-RTTY,CQ-WPX-SSB,CQ-VHF,CQ-WW-CW,CQ-WW-RTTY,CQ-WW-SSB,DARC-WAEDC-CW,DARC-WAEDC-RTTY,DARC-WAEDC-SSB,FCG-FQP,IARU-HF,JIDX-CW,JIDX-SSB,NAQP-CW,NAQP-RTTY,NAQP-SSB,NA-SPRINT-CW,NA-SPRINT-SSB,NCCC-CQP,NEQP,OCEANIA-DX-CW,OCEANIA-DX-SSB,RDXC,RSGB-IOTA,SAC-CW,SAC-SSB,STEW-PERRY,TARA-RTTY", ",")))
+          _cabrillo_contest = RHS;                        // required to be upper case
 
  // CABRILLO EMAIL (sic)
     if (starts_with(testline, "CABRILLO E-MAIL") or starts_with(testline, "CABRILLO EMAIL"))
@@ -886,26 +916,21 @@ void drlog_context::_process_configuration_file(const string& filename)
       _cabrillo_name = rhs;
 
 // CABRILLO CATEGORY-ASSISTED
-    if (starts_with(testline, "CABRILLO CATEGORY-ASSISTED"))
-    { const string value = RHS;
-
-      if (is_legal_value(value, "ASSISTED,NON-ASSISTED", ","))
-        _cabrillo_category_assisted = value;
-    }
+    if (starts_with(testline, "CABRILLO CATEGORY-ASSISTED") and is_legal_value(RHS, "ASSISTED,NON-ASSISTED", ","))
+      _cabrillo_category_assisted = RHS;
 
 // CABRILLO CATEGORY-BAND
     if (starts_with(testline, "CABRILLO CATEGORY-BAND"))
-    { const string value = remove_peripheral_spaces((split_string(line, "="))[1]);
+    { const string value = rhs; // remove_peripheral_spaces((split_string(line, "="))[1]);
 
 // The spec calls for bizarre capitalization
       if (is_legal_value(value, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light", ","))
         _cabrillo_category_band = value;
-
     }
 
 // CABRILLO CATEGORY-MODE
     if (starts_with(testline, "CABRILLO CATEGORY-MODE"))
-    { const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    { const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
       if (is_legal_value(value, "CW,MIXED,RTTY,SSB", ","))
         _cabrillo_category_mode = value;
@@ -913,7 +938,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CABRILLO CATEGORY-OPERATOR
     if (starts_with(testline, "CABRILLO CATEGORY-OPERATOR"))
-    { const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    { const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
       if (is_legal_value(value, "CHECKLOG,MULTI-OP,SINGLE-OP", ","))
         _cabrillo_category_operator = value;
@@ -921,7 +946,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CABRILLO CATEGORY-OVERLAY
     if (starts_with(testline, "CABRILLO CATEGORY-OVERLAY"))
-    { const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    { const string value = RHS; //to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
       if (is_legal_value(value, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES", ","))
         _cabrillo_category_operator = value;
@@ -929,7 +954,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CABRILLO CATEGORY-POWER
     if (starts_with(testline, "CABRILLO CATEGORY-POWER"))
-    { const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    { const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
       if (is_legal_value(value, "HIGH,LOW,QRP", ","))
         _cabrillo_category_power = value;
@@ -1034,9 +1059,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     if (starts_with(testline, "WINDOW"))
     { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
-
-//      for (size_t n = 0; n < window_info.size(); ++n)
-//        window_info[n] = remove_peripheral_spaces(window_info[n]);
 
       if (window_info.size() >= 5)
       { const string name = window_info[0];
@@ -1202,14 +1224,22 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _message_cq_2 = "cq cq test de  " + _my_call + "  " + _my_call + "  " + _my_call + "  test";
 
 // possibly fix Cabrillo template
-  if (_cabrillo_qso_template == "ARRL DX")
+  if ( (_cabrillo_qso_template == "ARRL DX") or (_cabrillo_qso_template == "CQ WW") )
   { vector<string> actual_modes = remove_peripheral_spaces(split_string(_modes, ","));
 
     if (actual_modes.size() == 1)
     { try
-      { const string key = ( (actual_modes[0] == "CW") ?  "ARRL DX CW" : "ARRL DX SSB");
+      { if ((_cabrillo_qso_template == "ARRL DX"))
+        { const string key = ( (actual_modes[0] == "CW") ?  "ARRL DX CW" : "ARRL DX SSB");
 
-        _cabrillo_qso_template = cabrillo_qso_templates.at(key);
+          _cabrillo_qso_template = cabrillo_qso_templates.at(key);
+        }
+
+        if ((_cabrillo_qso_template == "CQ WW"))
+        { const string key = ( (actual_modes[0] == "CW") ?  "CQ WW CW" : "CQ WW SSB");
+
+          _cabrillo_qso_template = cabrillo_qso_templates.at(key);
+        }
       }
 
       catch (...)
@@ -1231,6 +1261,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _auto_backup(""),                                              // no auto backup directory
   _auto_remaining_country_mults(false),                          // do not add country mults as we detect them
   _auto_remaining_exchange_mults(false),                         // do not add exchange mults as we detect them
+  _auto_screenshot(false),                                       // do not generate horal screenshots
   _bandmap_decay_time_local(60),                                 // stay on bandmap for one hour
   _bandmap_decay_time_cluster(60),                               // stay on bandmap for one hour
   _bandmap_decay_time_rbn(60),                                   // stay on bandmap for one hour
@@ -1375,16 +1406,9 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
   try
   { const vector<pair<frequency, frequency>>& vec = _mark_frequencies.at(m);
 
-//    ost << "size of frequency vector = " << vec.size() << endl;
-
     for (const auto& pff : vec)
-    { //ost << "before test: frequencies: " << f.display_string() << ", " << pff.first.display_string() << ", " << pff.second.display_string() << endl;
-      //ost << "before test: frequencies (Hz): " << f.hz() << ", " << pff.first.hz() << ", " << pff.second.hz() << endl;
-
-      if ( (f >= pff.first) and (f <= pff.second))
-      { // ost << "frequencies: " << f.display_string() << ", " << pff.first.display_string() << ", " << pff.second.display_string() << endl;
+    { if ( (f >= pff.first) and (f <= pff.second))
         return true;
-      }
     }
   }
 

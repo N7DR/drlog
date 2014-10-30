@@ -1433,6 +1433,17 @@ void* display_date_and_time(void* vp)
         }
       }
 
+// if a new hour, then possibly gereate screenshot
+     if ( (last_second % 60 == 0) and (structured_time.tm_min == 0) )
+     { if (context.auto_screenshot())
+       {  const string dts = date_time_string();
+          const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
+          const string complete_name = string("auto-screenshot-") + suffix;
+
+          dump_screen(complete_name);
+       }
+     }
+
 // if a new day, then update date window
       const string date_string = substring(date_time_string(), 0, 10);
 
@@ -1995,6 +2006,9 @@ void* prune_bandmap(void* vp)
     ESCAPE
     TAB -- switch between CQ and SAP mode
     F10 -- toggle filter_remaining_country_mults
+    F11 -- band map filtering
+    ALT-KP_4 -- decrement bandmap column offset
+    ALT-KP_6 -- increment bandmap column offset
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {

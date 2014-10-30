@@ -96,6 +96,8 @@ public:
   SAFEREAD(country_mults_used, statistics);                   ///< are country mults used?
   SAFEREAD(exchange_mults_used, statistics);                  ///< are exchange mults used?
 
+  const unsigned int n_qsos(const contest_rules& rules) const;
+
 /*! \brief  do we still need to work a particular callsign mult on a particular band?
     \param  mult_name   name of mult
     \param  mult_value  value of mult to test
@@ -190,6 +192,14 @@ public:
 
   void qtc_qsos_sent(const unsigned int n);
   void qtc_qsos_unsent(const unsigned int n);
+
+  const unsigned int n_worked_callsign_mults(const contest_rules& rules) const;
+
+  const unsigned int n_worked_country_mults(const contest_rules& rules) const;
+
+  const unsigned int n_worked_exchange_mults(const contest_rules& rules) const;
+
+  const float mult_to_qso_value(const contest_rules& rules, const BAND b) const;
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
