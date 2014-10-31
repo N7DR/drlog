@@ -128,6 +128,7 @@ void update_individual_messages_window(const string& callsign = string());
 void update_known_callsign_mults(const string& callsign);
 void update_known_country_mults(const string& callsign);
 void update_local_time(void);
+void update_mult_value(void);
 void update_rate_window(void);
 void update_scp_window(const string& callsign);
 
@@ -273,9 +274,9 @@ window win_band_mode,               ///< the band and mode indicator
        win_local_time,              ///< window for local time
        win_log,                     ///< main visible log
        win_message,                 ///< messages from drlog to the user
+       win_mult_value,              ///< value of a mult
        win_nearby,                  ///< nearby station
        win_qso_number,              ///< number of the next QSO
-//       win_qtcs_sent,               // number of QSOs sent as QTCs / total number of QSOs
        win_qtc_status,              ///< status of QTCs
        win_rate,                    ///< QSO and point rates
        win_rbn_line,                ///< last line received from the RBN
@@ -812,6 +813,10 @@ int main(int argc, char** argv)
   if (send_qtcs)
     win_log_extract.process_input_function(process_QTC_input);
 
+// MULT VALUE window
+  win_mult_value.init(context.window_info("MULT VALUE"), WINDOW_NO_CURSOR);
+  update_mult_value();
+
 // NEARBY window
   win_nearby.init(context.window_info("NEARBY"), WINDOW_NO_CURSOR);
 
@@ -1254,6 +1259,8 @@ int main(int argc, char** argv)
       const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
 
       win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
+
+      update_mult_value();
     }
 
 // now delete the archive file if it exists, regardless of whether we've used it
@@ -1396,10 +1403,11 @@ void* display_date_and_time(void* vp)
 
 // if a new minute, then update rate window, and do other stuff
       if (last_second % 60 == 0)
-      { update_local_time();
-        update_rate_window();
+      { ost << "Time: " << substring(string(buf.data(), 26), 11, 8) << endl;
 
-        ost << "Time: " << substring(string(buf.data(), 26), 11, 8) << endl;
+        update_local_time();
+        update_rate_window();
+        update_mult_value();
 
 // possibly run thread to perform auto backup
         if (!context.auto_backup().empty())
@@ -6021,4 +6029,15 @@ void test_exchange_templates(const string& test_filename)
   exit(0);
 }
 #endif
+
+void update_mult_value(void)
+{ const float mult_value = statistics.mult_to_qso_value(rules, safe_get_band());
+
+  const unsigned int mult_value_10 = static_cast<unsigned int>( (mult_value * 10) + 0.5);
+
+  const string term_1 = to_string(mult_value_10 / 10);
+  const string term_2 = to_string(mult_value_10 - (10 * (mult_value_10 / 10) )).substr(0, 1);
+
+  win_mult_value < WINDOW_CLEAR < /* "M ≍ " */ "M = "< term_1 < "." < term_2 <= "Q";
+}
 

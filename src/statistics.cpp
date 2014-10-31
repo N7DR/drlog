@@ -819,6 +819,8 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
   const set<BAND>& score_bands = rules.score_bands();
   unsigned int current_qso_points = 0;
 
+  SAFELOCK(statistics);
+
 // current QSO points
   FOR_ALL(score_bands, [&] (const BAND& b) { current_qso_points += _qso_points[static_cast<int>(b)]; } );
 
@@ -828,16 +830,35 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
   unsigned int notional_mults = current_mults;
   const map<BAND, int>& per_band_country_mult_factor = rules.per_band_country_mult_factor();
 
+// include the correct factor for a mult on the current band
   if (_country_multipliers.used())
   { notional_mults += per_band_country_mult_factor.at(b);
   }
   else
     notional_mults++;
 
-// add a notional QSO
+// add a notional QSO; first calculate average qso point worth of a qso on the current band
+  const unsigned int& n_qso_points = _qso_points[b];
+  const unsigned int& n_qsos = _n_qsos[b];
 
+  const float mean_qso_points = (n_qsos ? ( static_cast<float>(n_qso_points) / n_qsos ) : 0);
 
+  const unsigned int new_qso = static_cast<unsigned int>((mean_qso_points * (n_qsos + 1) ) * current_mults);
+  const unsigned int new_mult = static_cast<unsigned int>((mean_qso_points * (n_qsos + 1) ) * notional_mults);
 
+//  ost << "current points = " << current_points << endl;
+//  ost << "new qso = " << new_qso << endl;
+//  ost << "new mult = " << new_mult << endl;
+
+  const unsigned int new_qso_value = new_qso - current_points;
+  const unsigned int new_mult_value = new_mult - current_points;
+
+//  ost << "new qso value = " << new_qso_value << endl;
+//  ost << "new mult value = " << new_mult_value << endl;
+
+//  ost << "returning: " << static_cast<float>(new_mult_value) / new_qso_value << endl;
+
+  return ( static_cast<float>(new_mult_value) / new_qso_value );
 }
 
 const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
