@@ -618,12 +618,24 @@ public:                                                                   \
 
 #include <set>
 
+/*! \brief  Is an object a member of a set?
+    \param  s   set to be tested
+    \param  v   object to be tested for membership
+    \return     Whether <i>t</i> is a member of <i>s</i>
+
+*/
 template <class T>
 const bool operator<(const std::set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
 #include <unordered_set>
 
+/*! \brief  Is an object a member of an unordered set?
+    \param  s   unordered set to be tested
+    \param  v   object to be tested for membership
+    \return     Whether <i>t</i> is a member of <i>s</i>
+
+*/
 template <class T>
 const bool operator<(const std::unordered_set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
@@ -711,8 +723,8 @@ public:
   }
 };
 
-// allow easy execution of a loop a predetermined number of times
-// this does throw a warning, but I can't think of a better way to
+// allow easy execution of a loop a predetermined number of times.
+// This does throw a warning, but I can't think of a better way to
 // execute a loop a predetermined number of times. C++14 might be going
 // to provide a better mechanism.
 template <typename T>

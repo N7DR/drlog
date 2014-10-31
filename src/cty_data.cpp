@@ -1178,7 +1178,10 @@ const float drlog_qth_database::longitude(const string& country, const unsigned 
     \brief Encapsulate the data from a Russian data file, for a single substring
 */
 
-/// construct from a prefix and a line
+/*! \brief  construct from a prefix and a line
+    \param  sbstring        The prefix for the Russian district
+    \param  line            Line from Russian data file
+*/
 russian_data_per_substring::russian_data_per_substring(const string& ss, const string& line) :
   _sstring(ss)
 {

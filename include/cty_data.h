@@ -195,8 +195,6 @@ public:
   inline virtual ~cty_record(void)
     { }
 
-//  typedef std::map<std::string, alternative_country_info> aci_map_type;  ///< needed because of expansion in the READ() macro
-
 /// RO access
   READ(waedc_country_only);     ///< Is this only a country in the WAEDC (DARC) list?
   READ(country_name);           ///< official name of the country
@@ -210,7 +208,7 @@ public:
   READ(alt_callsigns);          ///< alternative callsigns used by this country
   READ(alt_prefixes);           ///< alternative prefixes used by this country
 
-/// return the canonical prefix for this country; prefixes such as "GM/s" or "JD/o" are rendered in uppper case
+/// return the canonical prefix for this country; prefixes such as "GM/s" or "JD/o" are rendered in upper case
   inline const std::string canonical_prefix(void) const
     { return prefix(); }
     
@@ -315,7 +313,10 @@ protected:
 
 public:
 
-/// construct from a file
+/*! \brief  construct from a prefix and a line
+    \param  sbstring        The prefix for the Russian district
+    \param  line            Line from Russian data file
+*/
   russian_data_per_substring(const std::string& sbstring, const std::string& line);
 
   READ(sstring);               ///< substring that matches this district
@@ -391,13 +392,13 @@ protected:
   int           _utc_offset;            ///< local-time offset from UTC, in minutes
   std::string   _canonical_prefix;      ///< official prefix
   
-// used by Russian stations
+// used only by Russian stations
   std::string  _region_name;            ///< name of region in which station resides
   std::string  _region_abbreviation;    ///< abbreviation for region in which the station resides
 
 public:
 
-/// default constructir
+/// default constructor
   location_info(void);
   
 /// construct from a record from a CTY file
@@ -409,18 +410,17 @@ public:
 /// location_info == location_info
   const bool operator==(const location_info& li) const;
 
-/// RW access
-   READ(country_name);          ///< official name of the country
-   READ_AND_WRITE(cq_zone);     ///< CQ zone
-   READ_AND_WRITE(itu_zone);    ///< ITU zone
-   READ(continent);             ///< two-letter abbreviation for continent
-   READ_AND_WRITE(latitude);    ///< latitude in degrees (+ve north)
-   READ_AND_WRITE(longitude);   ///< longitude in degrees (+ve west)
-   READ(utc_offset);            ///< local-time offset from UTC, in minutes
-   READ(canonical_prefix);      ///< official prefix
+  READ(country_name);          ///< official name of the country
+  READ_AND_WRITE(cq_zone);     ///< CQ zone
+  READ_AND_WRITE(itu_zone);    ///< ITU zone
+  READ(continent);             ///< two-letter abbreviation for continent
+  READ_AND_WRITE(latitude);    ///< latitude in degrees (+ve north)
+  READ_AND_WRITE(longitude);   ///< longitude in degrees (+ve west)
+  READ(utc_offset);            ///< local-time offset from UTC, in minutes
+  READ(canonical_prefix);      ///< official prefix
 
-   READ_AND_WRITE(region_name);           ///< (Russian) name of region
-   READ_AND_WRITE(region_abbreviation);   ///< (Russian) abbreviation for region
+  READ_AND_WRITE(region_name);           ///< (Russian) name of region
+  READ_AND_WRITE(region_abbreviation);   ///< (Russian) abbreviation for region
 
 /// archive using boost
    template<typename Archive>
@@ -453,16 +453,18 @@ const location_info guess_zones(const std::string& call, const location_info& li
 
 /*!     \class drlog_qth_database_record
         \brief A record from the drlog-specific QTH-override database
+
+        I believe that this is currently unused.
 */
 
 class drlog_qth_database_record
 {
 protected:
-  std::string         _id;
-  value<unsigned int> _area; 
-  value<unsigned int> _cq_zone; 
-  value<float>        _latitude;
-  value<float>        _longitude;  
+  std::string         _id;          ///< ID for the record (typically, a callsign)
+  value<unsigned int> _area;        ///< not sure what this is
+  value<unsigned int> _cq_zone;     ///< CQ zone
+  value<float>        _latitude;    ///< latitude in degrees (+ve north)
+  value<float>        _longitude;   ///< longitude in degrees (+ve west)
   
 public:
   
