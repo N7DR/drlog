@@ -1027,6 +1027,12 @@ const bool contest_rules::is_exchange_mult(const string& name) const
   return ( find(_exchange_mults.cbegin(), _exchange_mults.cend(), name) != _exchange_mults.cend() );
 }
 
+//const set<BAND> contest_rules::permitted_bands_set(void) const
+//{ set<BAND> rv;
+//
+//
+//}
+
 // The intention here is to follow the WPX definition. It would be
 // a lot more helpful if they actually supplied a strict algorithm rather than
 // an ambiguous definition. What follows attempts to implement my guess as to what

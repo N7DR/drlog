@@ -207,34 +207,34 @@ template<class T> const BAND to_BAND(T f)
     return to_BAND(static_cast<long>(f) * 1000);
 
 // Hz
-  if (f <= 2000000)
+  if ( (f >= 1800000) and (f <= 2000000) )
     return BAND_160;
 
-  if (f <= 4000000)
+  if ( (f >= 3500000) and (f <= 4000000) )
     return BAND_80;
 
-  if (f <= 6000000)
+  if ( (f >= 5000000) and (f <= 6000000) )
     return BAND_60;
 
-  if (f <= 7300000)
+  if ( (f >= 7000000) and (f <= 7300000) )
     return BAND_40;
 
-  if (f <= 11000000)
+  if ( (f >= 1010000) and (f <= 10150000) )
     return BAND_30;
 
-  if (f <= 15000000)
+  if ( (f >= 14000000) and (f <= 14350000) )
     return BAND_20;
 
-  if (f <= 19000000)
+  if ( (f >= 18000000) and (f <= 19000000) )
     return BAND_17;
 
-  if (f <= 22000000)
+  if ( (f >= 21000000) and (f <= 21450000) )
     return BAND_15;
 
-  if (f <= 25000000)
+  if ( (f >= 24890000) and (f <= 25000000) )
     return BAND_12;
 
-  if (f <= 30000000)
+  if ( (f >= 28000000) and (f <= 29700000) )
     return BAND_10;
 
   return MIN_BAND;

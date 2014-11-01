@@ -1,4 +1,4 @@
-// $Id: cty_data.h 73 2014-08-30 14:44:01Z  $
+// $Id: cty_data.h 82 2014-11-01 14:52:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

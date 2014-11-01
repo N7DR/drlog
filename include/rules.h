@@ -1,4 +1,4 @@
-// $Id: rules.h 81 2014-10-27 18:31:40Z  $
+// $Id: rules.h 82 2014-11-01 14:52:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -490,6 +490,9 @@ public:
 // does the sent exchange include a particular field?
   inline const bool sent_exchange_includes(const std::string& str)
     { return (find(_sent_exchange.begin(), _sent_exchange.end(), str) != _sent_exchange.end()); }
+
+  inline const std::set<BAND> permitted_bands_set(void) const
+    { return std::set<BAND>(_permitted_bands.cbegin(), _permitted_bands.cend() ); }
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

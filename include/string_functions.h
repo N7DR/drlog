@@ -1,4 +1,4 @@
-// $Id: string_functions.h 78 2014-10-04 17:00:27Z  $
+// $Id: string_functions.h 82 2014-11-01 14:52:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

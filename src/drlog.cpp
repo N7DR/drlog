@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 81 2014-10-27 18:31:40Z  $
+// $Id: drlog.cpp 82 2014-11-01 14:52:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2017,6 +2017,8 @@ void* prune_bandmap(void* vp)
     F11 -- band map filtering
     ALT-KP_4 -- decrement bandmap column offset
     ALT-KP_6 -- increment bandmap column offset
+    ENTER
+    CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2478,37 +2480,52 @@ ost << "processing command: " << command << endl;
           }
 
           const frequency new_frequency( (contains_plus or contains_minus) ? rig.rig_frequency().hz() + (value * 1000) : value);
-          BAND cur_band = safe_get_band();
-          MODE cur_mode = safe_get_mode();
+          const BAND new_band = to_BAND(new_frequency);
+          bool valid = ( rules.permitted_bands_set() < new_band );
 
-          rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
-          rig.rig_frequency(new_frequency);
+//          ost << "new frequency = " << new_frequency.hz() << endl;
+//          ost << "new band = " << new_band << " : " << BAND_NAME[new_band] << endl;
 
-          const BAND new_band = static_cast<BAND>(new_frequency);
+          if ( (valid) and (new_band == BAND_160))
+            valid = ( (new_frequency.hz() >= 1800000) and (new_frequency.hz() <= 2000000) );
 
-          if (new_band != cur_band)
-          { cur_band = new_band;
-            display_band_mode(win_band_mode, cur_band, cur_mode);
+          if (valid)
+          { BAND cur_band = safe_get_band();
+            MODE cur_mode = safe_get_mode();
 
-            SAFELOCK(current_band);
-            current_band = new_band;
+            rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
+            rig.rig_frequency(new_frequency);
 
-            bandmap& bm = bandmaps[cur_band];
-            win_bandmap <= bm;
+//          const BAND new_band = static_cast<BAND>(new_frequency);
 
-            win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
+            if (new_band != cur_band)
+            { cur_band = new_band;
+              display_band_mode(win_band_mode, cur_band, cur_mode);
+
+              SAFELOCK(current_band);
+              current_band = new_band;
+
+              bandmap& bm = bandmaps[cur_band];
+              win_bandmap <= bm;
+
+              win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
 // update displays of needed mults
-            update_remaining_callsign_mults_window(statistics, cur_band);
-            update_remaining_country_mults_window(statistics, cur_band);
-            update_remaining_exchange_mults_windows(rules, statistics, cur_band);
+              update_remaining_callsign_mults_window(statistics, cur_band);
+              update_remaining_country_mults_window(statistics, cur_band);
+              update_remaining_exchange_mults_windows(rules, statistics, cur_band);
+            }
+
+            enter_sap_mode();    // we want to be in SAP mode after a frequency change
+
+            win <= WINDOW_CLEAR;
+          }
+          else // not valid frequency
+          { alert(string("Invalid frequency: ") + to_string(new_frequency.hz()) + " Hz");
           }
 
-          enter_sap_mode();    // we want to be in SAP mode after a frequency change
+          processed = true;
         }
-
-        win <= WINDOW_CLEAR;
-        processed = true;
       }
     }
 
