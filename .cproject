@@ -51,7 +51,7 @@
 									<listOptionValue builtIn="false" value="panel"/>
 									<listOptionValue builtIn="false" value="hamlib"/>
 									<listOptionValue builtIn="false" value="ieee1284"/>
-									<listOptionValue builtIn="false" value="curses"/>
+									<listOptionValue builtIn="false" value="ncursesw"/>
 								</option>
 								<option id="gnu.cpp.link.option.flags.489434108" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1148669108" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">

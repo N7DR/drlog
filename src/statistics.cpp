@@ -24,10 +24,10 @@
 
 using namespace std;
 
-extern message_stream    ost;
+extern message_stream ost;      ///< for debugging and logging
 
-// there is just one of these objects, and it needs to be thread-safe
-pt_mutex statistics_mutex;
+// there is just one running_statistics object, and it needs to be thread-safe
+pt_mutex statistics_mutex;      ///< mutex for the running_statistics object
 
 // -----------  running_statistics  ----------------
 
@@ -89,10 +89,11 @@ running_statistics::running_statistics(const cty_data& country_data, const drlog
   _qtc_qsos_sent(0),
   _qtc_qsos_unsent(0),
   _include_qtcs(rules.send_qtcs())
-{ const vector<string> exchange_mults = rules.exchange_mults();
+{ const vector<string>& exchange_mults = rules.exchange_mults();
 
-  for (const auto& exchange_mult : exchange_mults)
-    _exch_mult_fields.insert(exchange_mult);
+//  for (const auto& exchange_mult : exchange_mults)
+//    _exch_mult_fields.insert(exchange_mult);
+  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
 }
 
 /*! \brief  Prepare an object that was created with the default constructor
@@ -104,19 +105,18 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 { SAFELOCK(statistics);
 
   _include_qtcs = rules.send_qtcs();
-
-//  ost << "in statistics::prepare, _include_qtcs = " << _include_qtcs << endl;
-
   _callsign_mults_used = rules.callsign_mults_used();
   _country_mults_used  = rules.country_mults_used();
   _exchange_mults_used = rules.exchange_mults_used();
 
   _location_db.prepare(country_data, context.country_list());
 
-  const vector<string> exchange_mults = rules.exchange_mults();
+  const vector<string>& exchange_mults = rules.exchange_mults();
 
-  for (const auto& exchange_mult : exchange_mults)
-    _exch_mult_fields.insert(exchange_mult);
+  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
+
+//  for (const auto& exchange_mult : exchange_mults)
+//    _exch_mult_fields.insert(exchange_mult);
 
 // callsign mults
   if (_callsign_mults_used)
@@ -163,8 +163,6 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 // if values are obtained from grep, then the next line returns an empty vector
       const vector<string> canonical_values = rules.exch_canonical_values(exchange_mult_name);
 
-//      ost << "in running_statistics:prepare(), number of canonical values = " << canonical_values.size() << " for exchange mult: " << exchange_mult_name << endl;
-
       if (!canonical_values.empty())
         em.add_known(canonical_values);
 
@@ -173,9 +171,9 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
   }
 }
 
-/*! \brief  is a particular string a known callsign mult name?
+/*! \brief                                  is a particular string a known callsign mult name?
     \param  putative_callsign_mult_name     string to test
-    \return whether <i>putative_callsign_mult_name</i> is a known callsign mult name
+    \return                                 whether <i>putative_callsign_mult_name</i> is a known callsign mult name
 */
 const bool running_statistics::known_callsign_mult_name(const string& putative_callsign_mult_name) const
 { SAFELOCK(statistics);
@@ -183,10 +181,11 @@ const bool running_statistics::known_callsign_mult_name(const string& putative_c
   return ( _callsign_multipliers.find(putative_callsign_mult_name) != _callsign_multipliers.cend() );
 }
 
-/*! \brief  do we still need to work a particular callsign mult on a particular band?
+/*! \brief              do we still need to work a particular callsign mult on a particular band?
     \param  mult_name   name of mult
     \param  mult_value  value of mult to test
     \param  b           band to test
+    \return             whether the mult <i>mult_name</i> with the value <i>mult_value</i> is needed on band <i>b</i>
 */
 const bool running_statistics::is_needed_callsign_mult(const string& mult_name, const string& mult_value, const BAND b) const
 { SAFELOCK(statistics);

@@ -44,7 +44,8 @@ cpair colours;
 
 /// default constructor
 screen::screen(void)
-{ initscr();
+{ setlocale(LC_ALL, "");  // for wide characters
+  initscr();
   start_color();
 
   if (!has_colors())

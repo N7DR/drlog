@@ -1448,6 +1448,8 @@ void* display_date_and_time(void* vp)
           const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
           const string complete_name = string("auto-screenshot-") + suffix;
 
+//          ost << "dumping screenshot" << endl;
+
           dump_screen(complete_name);
        }
      }
@@ -6049,12 +6051,13 @@ void test_exchange_templates(const string& test_filename)
 
 void update_mult_value(void)
 { const float mult_value = statistics.mult_to_qso_value(rules, safe_get_band());
-
   const unsigned int mult_value_10 = static_cast<unsigned int>( (mult_value * 10) + 0.5);
-
   const string term_1 = to_string(mult_value_10 / 10);
   const string term_2 = to_string(mult_value_10 - (10 * (mult_value_10 / 10) )).substr(0, 1);
+  const string msg = string("M ≡ ") + term_1 + "." + term_2 + "Q";
 
-  win_mult_value < WINDOW_CLEAR < /* "M ≍ " */ "M = "< term_1 < "." < term_2 <= "Q";
+  win_mult_value < WINDOW_CLEAR;
+  win_mult_value.move_cursor((win_mult_value.width() - msg.length() + 2) / 2, 0);  // length is not calculated correctly because there's a wide character; probably some way to avoid this hack by using wstring
+  win_mult_value <= msg;
 }
 

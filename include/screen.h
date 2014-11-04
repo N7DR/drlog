@@ -30,7 +30,9 @@
 #include <tuple>
 #include <vector>
 
-#include <ncurses.h>
+//#include <ncurses.h>
+//#include "/usr/include/ncursesw/ncurses.h"
+#include <ncursesw/ncurses.h>
 #include <panel.h>
 
 extern message_stream ost;

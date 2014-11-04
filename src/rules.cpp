@@ -23,15 +23,13 @@
 #include <iostream>
 #include <utility>
 
-//#include <boost/tr1/regex.hpp>                 // g++ does not implement regex :-(
-
 using namespace std;
 using namespace std::placeholders;
 
-pt_mutex rules_mutex;
+pt_mutex rules_mutex;                   ///< mutex for the contest_rules object
 
-extern const set<string> CONTINENT_SET;
-extern message_stream ost;
+extern const set<string> CONTINENT_SET; ///< the abbreviations for the continents
+extern message_stream ost;              ///< for debugging and logging
 
 // -------------------------  exchange_field_values  ---------------------------
 
@@ -96,7 +94,6 @@ const set<string> exchange_field_values::all_values(void) const
 { set<string> rv;
 
   for (const auto cvv : _values)
-//    copy(cvv.second.cbegin(), cvv.second.cend(), inserter(rv, rv.begin()));
     COPY_ALL(cvv.second, inserter(rv, rv.begin()));
 
   return rv;
@@ -104,14 +101,22 @@ const set<string> exchange_field_values::all_values(void) const
 
 /// Is a string a legal value (for any canonical value)
 const bool exchange_field_values::is_legal_value(const string& value) const
-{ //bool rv = false;
-  const set<string> all_canonical_values = canonical_values();
+{ //const set<string> all_canonical_values = canonical_values();
 
-  for (const auto& cv : all_canonical_values)
-  { //rv = (cv < value);
+//  for (const auto& cv : all_canonical_values)
+//  { if (cv < value)
+//      return true;
+//  }
 
-    if (cv < value)
-      return true;
+//  return false;
+
+//  return (canonical_values() < value);
+
+//  const set<string> all_canonical_values = canonical_values();
+
+  for (const auto& cv : canonical_values())
+  { if (is_legal_value(cv, value))
+        return true;
   }
 
   return false;
