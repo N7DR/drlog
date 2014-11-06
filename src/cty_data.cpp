@@ -24,8 +24,6 @@
 
 using namespace std;
 
-//extern ofstream ost;
-
 extern const set<string> CONTINENT_SET { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };  // see https://stackoverflow.com/questions/177437/const-static
 
 const unsigned int CTY_FIELDS_PER_RECORD = 9;    ///< Number of fields in a single CTY record
@@ -45,20 +43,20 @@ const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };
 // -----------  cty_record  ----------------
 
 /*! \class cty_record
-  \brief A single record in the CTY.DAT file
+    \brief A single record in the CTY.DAT file
   
-  The official page describing the format is:
-  http://www.country-files.com/cty/format.htm.
+    The official page describing the format is:
+      http://www.country-files.com/cty/format.htm.
   
-  Spacing in the file is "for readability only", so 
-  we use the official delimiter ":" for fields, and
-  ";" for records.
+    Spacing in the file is "for readability only", so
+    we use the official delimiter ":" for fields, and
+    ";" for records.
 */
 
 /*! \brief  construct from a string
 
-  The string is assumed to contain a single record. We don't catch all
-  possible errors, but we do test for the most obvious ones.
+            The string is assumed to contain a single record. We don't catch all
+            possible errors, but we do test for the most obvious ones.
 */
 cty_record::cty_record(const string& record)
 { const string record_copy = remove_char(remove_char(record, LF_CHAR), CR_CHAR);    // make it all one line
@@ -78,8 +76,7 @@ cty_record::cty_record(const string& record)
     throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = " + to_string(_itu_zone) + " in record for " + _country_name);
 
   _continent = fields[3];
-//  if (_continent != "AF" and _continent != "AS" and _continent != "EU" and _continent != "NA" and
-//      _continent != "OC" and _continent != "SA")
+
   if ( !(CONTINENT_SET < _continent) )
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = " + _continent + " in record for " + _country_name);
   
@@ -184,15 +181,15 @@ ostream& operator<<(ostream& ost, const cty_record& rec)
 
 // -----------  alternative_country_info  ----------------
 
-/*! \class alternative_country_info
-  \brief A single alternative prefix of callsign for a country
+/*! \class  alternative_country_info
+     \brief A single alternative prefix of callsign for a country
   
-  CTY files may contain "alias" information. This encapsulates that information.
+            CTY files may contain "alias" information. This encapsulates that information.
 */
 
-/*! \brief  construct from a string
-        \param  record from which to contruct the alternative information
-        \param  id     canonical country ID
+/*! \brief          construct from a string
+    \param  record  record from which to contruct the alternative information
+    \param  id      canonical country ID
         
   <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
   is optional
@@ -253,7 +250,8 @@ cty_data::cty_data(const string& filename)
 // split into records
   const vector<string> records = split_string(entire_file, ";");
   
-  for_each(records.cbegin(), records.cend(), [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
+//  for_each(records.cbegin(), records.cend(), [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
+  FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
 
 /// construct from a file
@@ -265,7 +263,8 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 // split into records
   const vector<string> records = split_string(entire_file, ";");
 
-  for_each(records.cbegin(), records.cend(), [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
+//  for_each(records.cbegin(), records.cend(), [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
+  FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
 
 // -----------  location_info  ----------------
@@ -276,6 +275,7 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
         This is basically just a simple tuple
 */
 
+/// default constructor
 location_info::location_info(void) :
   _country_name("None"),
   _cq_zone(0),

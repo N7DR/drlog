@@ -58,12 +58,12 @@ class drlog_context
 {
 protected:
 
-  std::string                                  _archive_name;                    ///< name of the archive for save/restore information
+  std::string                                  _archive_name;                      ///< name of the archive for save/restore information
   std::string                                  _auto_backup;                     ///< directory for auto backup files
-  bool                                         _auto_remaining_callsign_mults;   ///< do we auto-generate the remaining callsign mults?
-  bool                                         _auto_remaining_country_mults;    ///< do we auto-generate the remaining country mults?
-  bool                                         _auto_remaining_exchange_mults;   ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
-  bool                                         _auto_screenshot;                 ///< do we create a screenshot every hour?
+  bool                                         _auto_remaining_callsign_mults;       ///< do we auto-generate the remaining callsign mults?
+  bool                                         _auto_remaining_country_mults;      ///< do we auto-generate the remaining country mults?
+  bool                                         _auto_remaining_exchange_mults;     ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
+  bool                                         _auto_screenshot;                   ///< do we create a screenshot every hour?
 
   unsigned int                                 _bandmap_decay_time_local;          ///< time (in minutes) for an entry to age off the bandmap (local entries)
   unsigned int                                 _bandmap_decay_time_cluster;        ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
@@ -79,7 +79,7 @@ protected:
   std::string                                  _bands;                             ///< comma-delimited bands
   std::string                                  _batch_messages_file;               ///< file that contains per-call batch messages
 
-  std::string                                  _cabrillo_filename;   ///< name of Cabrillo log
+  std::string                                  _cabrillo_filename;                 ///< name of Cabrillo log
 
 // Cabrillo records
   std::string                                  _cabrillo_callsign;                 ///< CALLSIGN:
@@ -130,7 +130,6 @@ protected:
   std::string                                  _do_not_show_filename;  ///< filename of calls (one per line) not to be shown
   std::string                                  _drmaster_filename;     ///< filename of drmaster file (default = "drmaster")
 
-//  std::string                                  _exchange;                  ///< comma-delimited received exchange
   SINGLE_EXCHANGE                              _exchange;                  ///< comma-delimited received exchange
   std::string                                  _exchange_cq;               ///< exchange in CQ mode
   std::string                                  _exchange_fields_filename;  ///< file that holds regex templates of exchange fields
@@ -140,15 +139,14 @@ protected:
   std::string                                  _exchange_sap;              ///< exchange in SAP mode
   MULTIPLE_EXCHANGES                           _exchanges;                 ///< optional exchange choices
   std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                 ///< exchange memories
-//  std::string                                  _ex_menu;                   ///< menu displayed during an exchange
 
   std::map<MODE, unsigned int>                 _guard_band;
 
   std::string                                  _individual_messages_file;  ///< file that contains per-call individual messages
 
-  std::string                                  _keyer_port;          ///< the device that is to be used as a keyer
+  std::string                                  _keyer_port;                 ///< the device that is to be used as a keyer
 
-  std::string                                  _logfile;             ///< name of the log filename
+  std::string                                  _logfile;                    ///< name of the log filename
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;    ///< frequency ranges to be marked on-screen
   unsigned int                                 _match_minimum;       ///< number of characters before SCP or fuzzy match kicks in
@@ -235,8 +233,6 @@ protected:
 /// construct from file
   drlog_context( const std::string& filename );
 
-//typedef std::array<std::string, CQ_MEMORY_MESSAGES + 1> cq_memory_type;
-
   SAFEREAD(archive_name, _context);                     ///< name of the archive for save/restore information
   SAFEREAD(auto_backup, _context);                      ///< directory for auto backup files
   SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?
@@ -249,12 +245,12 @@ protected:
   SAFEREAD(bandmap_decay_time_rbn, _context);           ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
   SAFEREAD(bandmap_fade_colours, _context);             ///< the colours calls adopt as they fade
   SAFEREAD(bandmap_filter, _context);                   ///< the strings in the bandmap filter
-  SAFEREAD(bandmap_filter_foreground_colour, _context);
-  SAFEREAD(bandmap_filter_hide_colour, _context);
-  SAFEREAD(bandmap_filter_show_colour, _context);
-  SAFEREAD(bandmap_filter_disabled_colour, _context);
-  SAFEREAD(bandmap_filter_enabled, _context);
-  SAFEREAD(bandmap_filter_show, _context);
+  SAFEREAD(bandmap_filter_disabled_colour, _context);   ///< background colour when bandmap filter is disabled
+  SAFEREAD(bandmap_filter_enabled, _context);           ///< is the bandmap filter enabled?
+  SAFEREAD(bandmap_filter_foreground_colour, _context); ///< colour of foreground in the bandmap filter
+  SAFEREAD(bandmap_filter_hide_colour, _context);       ///< background colour when bandmap filter is in hide mode
+  SAFEREAD(bandmap_filter_show, _context);              ///< is the bandmap filter set to show? (If not, then it's set to hide)
+  SAFEREAD(bandmap_filter_show_colour, _context);       ///< background colour when bandmap filter is in show mode
 
   SAFEREAD(bands, _context);
 

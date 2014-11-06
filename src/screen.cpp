@@ -44,7 +44,7 @@ cpair colours;
 
 /// default constructor
 screen::screen(void)
-{ setlocale(LC_ALL, "");  // for wide characters
+{ setlocale(LC_ALL, "");  // for wide characters; see http://www.roguebasin.com/index.php?title=Ncursesw
   initscr();
   start_color();
 

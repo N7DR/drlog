@@ -145,23 +145,34 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
                                                                 n_optional_fields++;
                                                             } );
 
+  ost << "number of optional fields = " << n_optional_fields << endl;
+
 // prepare output; includes optional fields and all choices
   FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
 
 // print exchange template fields for debugging purposes
+  ost << "details of fields:" << endl;
+
   for (auto& field : _fields)
-  { ost << "field : " << field << endl;
-  }
+    ost << "  field : " << field << endl;
 
 // if there's an explicit . field, use it to replace the call
   for (const auto& received_value : received_values)
   { if (contains(received_value, "."))
-      _replacement_call = remove_char(received_value, '.');
+    { _replacement_call = remove_char(received_value, '.');
+
+      ost << "explicit replacement call = " << _replacement_call << endl;
+    }
   }
 
   if (!_replacement_call.empty())    // remove the dotted field(s) from the received exchange
   { copy_received_values.clear();
     copy_if(received_values.cbegin(), received_values.cend(), back_inserter(copy_received_values), [] (const string& str) { return !contains(str, "."); } );
+
+    ost << "after replacement, remaining fields are: " << endl;
+
+    for (const auto& rv : copy_received_values)
+      ost << rv << endl;
   }
 
 // for each received field, which output fields does it match?
@@ -173,8 +184,12 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   { ost << "for field name = " << pseft.first << ", EFT is: " << pseft.second << endl;
   }
 
+  ost << "About to iterate through received values" << endl;
+
   for (const string& received_value : copy_received_values)
   { set<string> match;
+
+    ost << "received value : " << received_value << endl;
 
     for (const auto& field : exchange_template)
     { const string& field_name = field.name();

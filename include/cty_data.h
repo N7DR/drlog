@@ -518,17 +518,18 @@ class drlog_qth_database
 {
 protected:
   
-  std::vector<drlog_qth_database_record> _db;
+  std::vector<drlog_qth_database_record> _db;    ///< the database
     
 public:
   
-// constructor
-  drlog_qth_database(const std::string& filename);
-
+/// default constructor
   drlog_qth_database(void)
     { }
+
+/// construct from filename
+  drlog_qth_database(const std::string& filename);
   
-// return all the entries with a particular ID
+/// return all the entries with a particular ID
   const std::vector<drlog_qth_database_record> id(const std::string& id_target) const;
   
   const unsigned int cq_zone(const std::string& call, const unsigned int initial_cq_zone) const;

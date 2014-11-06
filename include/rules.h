@@ -166,7 +166,9 @@ public:
   inline const bool is_choice(void) const
     { return !_choice.empty(); }
 
-/// follow all trees to their leaves
+/*! \brief  Follow all trees to their leaves
+    \return The exchange field, expanded recursively into all possible choices
+*/
   const std::vector<exchange_field> expand(void) const;
 
 /// read from and write to disk
@@ -310,8 +312,15 @@ protected:
 */
   const std::map<std::string, std::vector<exchange_field>> _parse_context_exchange(const drlog_context& context) const;
 
+
   const std::vector<exchange_field> _inner_parse(const std::vector<std::string>& exchange_fields , const std::vector<std::string>& exchange_mults_vec) const;
 
+/*!     \brief              parse and incorporate the "QTHX[xx] = " lines from context
+        \param  context     drlog context
+        \param  location_db location database
+
+        Incorporates the parsed information into _exch
+*/
   void _parse_context_qthx(const drlog_context& context, location_database& location_db);
   void _init(const drlog_context& context, location_database& location_db);
 

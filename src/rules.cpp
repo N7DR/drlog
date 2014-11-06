@@ -150,7 +150,9 @@ exchange_field::exchange_field(const string& nm, const bool mult, const bool opt
   _is_optional(opt)
 { }
 
-// follow all trees to their leaves
+/*! \brief  Follow all trees to their leaves
+    \return The exchange field, expanded recursively into all possible choices
+*/
 const vector<exchange_field> exchange_field::expand(void) const
 { vector<exchange_field> rv;
 
@@ -213,6 +215,12 @@ points_structure::points_structure(void) :
         strings in libstdc++.
 */
 
+/*!     \brief              parse and incorporate the "QTHX[xx] = " lines from context
+        \param  context     drlog context
+        \param  location_db location database
+
+        Incorporates the parsed information into _exch
+*/
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
 { const auto& context_qthx = context.qthx();
 
@@ -237,7 +245,7 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
         if (!equivalent_values.empty())
           qthx.add_canonical_value(equivalent_values[0]);
 
-        for (size_t n = 1; n < equivalent_values.size(); ++n)
+        for (size_t n = 1; n < equivalent_values.size(); ++n)           // n = 0 corresponds to the canonical value
           qthx.add_value(equivalent_values[0], equivalent_values[n]);
       }
     }

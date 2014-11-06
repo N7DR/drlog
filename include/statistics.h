@@ -98,7 +98,7 @@ public:
 
   const unsigned int n_qsos(const contest_rules& rules) const;
 
-/*! \brief  do we still need to work a particular callsign mult on a particular band?
+/*! \brief              Do we still need to work a particular callsign mult on a particular band?
     \param  mult_name   name of mult
     \param  mult_value  value of mult to test
     \param  b           band to test
@@ -113,14 +113,14 @@ public:
 */
   const bool add_known_country_mult(const std::string& str);
 
-/*! \brief  do we still need to work a particular country as a mult on a particular band?
+/*! \brief              Do we still need to work a particular country as a mult on a particular band?
     \param  callsign    call to test
     \param  b           band to test
-    \return         Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i>.
+    \return             Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i>.
 */
   const bool is_needed_country_mult(const std::string& callsign, const BAND b);
 
-/*! \brief  On what bands is a country mult needed?
+/*! \brief          On what bands is a country mult needed?
     \param  call    call to test
     \param  rules   Rules for the contest
     \return         Space-separated (actually, multiple spaces) string of band names on which
@@ -128,18 +128,30 @@ public:
 */
   const std::string country_mult_needed(const std::string& call, const contest_rules& rules);
   
-/*! \brief  Add a QSO to the ongoing statistics
+/*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add
     \param  log     Logbook (without the qso <i>qso</i>)
     \param  rules   Contest rules
 */
   void add_qso(const QSO& qso, const logbook& log, const contest_rules& rules);
   
-/// rebuild
+/*! \brief          Perform a complete rebuild
+    \param  log     logbook
+    \param  rules   contest rules
+*/
   void rebuild(const logbook& log, const contest_rules& rules);
 
+/*! \brief          Add a known legal value for a particular exchange multiplier
+    \param  name    name of the exchange multiplier
+    \param  value   New legal value for the exchange multiplier <i>name</i>
+    \return         Whether <i>value</i> was actually added
+*/
   const bool add_known_exchange_mult(const std::string& name, const std::string& value);
 
+/*! \brief          Return all known legal value for a particular exchange multiplier
+    \param  name    name of the exchange multiplier
+    \return         All the known legal values of <i>name</i>
+*/
   const std::set<std::string> known_exchange_mults(const std::string& name);
 
 /// a string list of bands on which a particular exchange mult value is needed
