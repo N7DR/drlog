@@ -44,6 +44,12 @@ frequency::frequency(const double f)
   }
 }
 
+
+/*! \brief      construct from a band
+    \param b    band
+
+    Sets the frequency to the low edge of the band <i>b</i>
+*/
 frequency::frequency(const enum BAND b)
 { switch (b)
   { case BAND_160 :

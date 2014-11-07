@@ -403,7 +403,10 @@ protected:
 
   SAFEREAD(worked_mults_colour, _context);
 
-/// location and size of a particular window
+/*! \brief              linformation pertaining to a particular window
+    \param      name    name of window
+    \return             location, size and colour information
+*/
   const window_information window_info(const std::string& name) const;
 
 // cw messages
@@ -444,8 +447,17 @@ protected:
 
   SAFEREAD(messages, _context);
 
+/*! \brief              all the windows whose name contains a particular substring
+    \param      subst   substring for which to search
+    \return             all the window names that include <i>substr</i>
+*/
   const std::vector<std::string> window_name_contains(const std::string& substr) const;
 
+/*! \brief              is a particular frequency within any marked range?
+    \param      m       mode
+    \param      f       frequency to test
+    \return             whether <i>f</i> is in any marked range for the mode <i>m</i>
+*/
   const bool mark_frequency(const MODE, const frequency& f);
 };
 

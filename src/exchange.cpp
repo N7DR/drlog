@@ -1340,8 +1340,12 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
     \return whether values were read
 */
 const bool EFT::read_values_file(const vector<string>& path, const string& filename)
-{ try
+{ ost << "EFT reading values file: " << filename << endl;
+
+  try
   { const vector<string> lines = to_lines(read_file(path, filename + ".values"));
+
+    ost << "Read values file OK: " << lines.size() << " lines" << endl;
 
     for (const auto& line : lines)
     { set<string> equivalent_values;    // includes the canonical
@@ -1360,22 +1364,40 @@ const bool EFT::read_values_file(const vector<string>& path, const string& filen
             COPY_ALL(remaining_equivalent_values, inserter(equivalent_values, equivalent_values.begin()));
 
             _values.insert( { lhs, equivalent_values });
+            add_legal_values(lhs, equivalent_values);
           }
         }
         else    // no "="
         { const string str = remove_peripheral_spaces(line);
 
           if (!str.empty())
-            _values.insert( { str, /* set<string> */ { str } } );
+          { _values.insert( { str, /* set<string> */ { str } } );
+            add_canonical_value(str);
+          }
         }
       }
     }
   }
 
   catch (...)
-  { ost << "Failed to read file " << filename << ".values" << endl;
+  { ost << "Failed to read values file " << filename << ".values" << endl;
     return false;
   }
+
+#if 0
+  if (!_values.empty())
+  { for (const auto& psss : _values)
+    { const string& canonical_value = psss.first;
+      const set<string>& ss = psss.second;
+
+      add_canonical_value(canonical_value);
+
+      for (const auto& str : ss)
+      { add_legal_value(canonical_value, str);
+      }
+    }
+  }
+#endif
 
   return (!_values.empty());
 }
@@ -1450,23 +1472,43 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
   _value_to_canonical.insert( { new_value, cv } );
 }
 
+void EFT::add_legal_values(const string& cv, const set<string>& new_values)
+{ FOR_ALL(new_values, [cv, this] (const string& str) { add_legal_value(cv, str); } );
+}
+
 const bool EFT::is_legal_value(const string& str) const
-{
+{ ost << "testing whether " << str << " is a legal value for field " << name() << endl;
+  ost << " ------------ " << endl;
+
   ost << "is legal value(): regex expression = " << _regex_expression << endl;
   ost << "str = " << str << endl;
 
   if (!_regex_expression.empty() and regex_match(str, _regex_expression))
+  { ost << str << " IS a legal value for " << name() << endl;
     return true;
+  }
 
   if (!_values.empty())
   { ost << "_values is not empty" << endl;
-   ost << "  legal values: " << endl;
+    ost << "  legal values: " << endl;
 
     for (const auto& v : _legal_non_regex_values )
       ost << v << " ";
 
+    if (_legal_non_regex_values.empty())
+      ost << "There are NO legal non-regex values" << endl;
+
+    const bool b = (_legal_non_regex_values < str);
+
+    if (b)
+      ost << str << " IS a legal value for " << name() << endl;
+    else
+      ost << str << " IS NOT a legal value for " << name() << endl;
+
     return (_legal_non_regex_values < str);
   }
+
+  ost << str << " IS NOT a legal value for " << name() << endl;
 
   return false;
 }

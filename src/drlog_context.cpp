@@ -1239,26 +1239,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
         }
-
-#if 0
-        if ((_cabrillo_qso_template == "ARRL DX"))
-        { const string key = ( (actual_modes[0] == "CW") ?  "ARRL DX CW" : "ARRL DX SSB");
-
-          _cabrillo_qso_template = cabrillo_qso_templates.at(key);
-        }
-
-        if ((_cabrillo_qso_template == "CQ WW"))
-        { const string key = ( (actual_modes[0] == "CW") ?  "CQ WW CW" : "CQ WW SSB");
-
-          _cabrillo_qso_template = cabrillo_qso_templates.at(key);
-        }
-
-        if ((_cabrillo_qso_template == "JIDX"))
-        { const string key = ( (actual_modes[0] == "CW") ?  "JIDX CW" : "JIDX SSB");
-
-          _cabrillo_qso_template = cabrillo_qso_templates.at(key);
-        }
-#endif
       }
 
       catch (...)
@@ -1402,13 +1382,20 @@ drlog_context::drlog_context(const std::string& filename) :
   }
 }
 
-/// location and size of a particular window
+/*! \brief              information pertaining to a particular window
+    \param      name    name of window
+    \return             location, size and colour information
+*/
 const window_information drlog_context::window_info(const string& name) const
 { const auto cit = _windows.find(name);
 
   return (cit == _windows.cend() ? window_information() : cit->second);
 }
 
+/*! \brief              all the windows whose name contains a particular substring
+    \param      subst   substring for which to search
+    \return             all the window names that include <i>substr</i>
+*/
 const vector<string> drlog_context::window_name_contains(const string& substr) const
 { vector<string> rv;
 
@@ -1419,6 +1406,11 @@ const vector<string> drlog_context::window_name_contains(const string& substr) c
   return rv;
 }
 
+/*! \brief              is a particular frequency within any marked range?
+    \param      m       mode
+    \param      f       frequency to test
+    \return             whether <i>f</i> is in any marked range for the mode <i>m</i>
+*/
 const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 { SAFELOCK(_context);
 

@@ -115,10 +115,14 @@ public:
   explicit frequency(const std::string& str)
     { *this = frequency(from_string<double>(str)); }
 
-/// construct from a band
-  explicit frequency(const enum BAND);
+/*! \brief      construct from a band
+    \param b    band
 
-/// set frequency in hz
+    Sets the frequency to the low edge of the band <i>b</i>
+*/
+  explicit frequency(const enum BAND b);
+
+/// set frequency in Hz
   inline void hz(const unsigned int n)
     { _hz = n; }
 
@@ -142,7 +146,7 @@ public:
   inline const float MHz(void) const
     { return static_cast<float>(_hz) / 1000000; }
 
-/// get frequency in MHz
+/// get frequency in MHz (even though I shudder at the use of "m" to mean "mega")
   inline const float mhz(void) const
     { return static_cast<float>(_hz) / 1000000; }
 
@@ -240,14 +244,30 @@ template<class T> const BAND to_BAND(T f)
   return MIN_BAND;
 }
 
+/*!  \brief         convert the string representation of a frequency to a band
+     \param  str    any string representation of a frequency, such that the string can be converted to a frequency object
+     \return        band corresponding to <i>f</i>
+
+     Frequency may be in Hz, kHz or MHz.
+*/
 inline const BAND to_BAND(const std::string& str)
 { return to_BAND(frequency(str).hz());
 }
 
+/*!  \brief         convert a frequency to a band
+     \param  f      frequency to convert
+     \return        band corresponding to <i>f</i>
+*/
 inline const BAND to_BAND(const frequency& f)
 { return to_BAND(f.hz());
 }
 
+/*!  \brief         convert a frequency to a string
+     \param  f      frequency to convert
+     \return        comma-separated string of the frequency in Hz
+
+     Appends " Hz" to the numerical frequency.
+*/
 inline const std::string to_string(const frequency& f)
 { return (comma_separated_string(f.hz()) + " Hz");
 }

@@ -389,6 +389,8 @@ public:
 
   void add_legal_value(const std::string& cv, const std::string& new_value);
 
+  void add_legal_values(const std::string& cv, const std::set<std::string>& new_values);
+
 // check regex, then other values
   const bool is_legal_value(const std::string& str) const;
 
