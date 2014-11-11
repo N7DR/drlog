@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 79 2014-10-11 15:09:04Z  $
+// $Id: bands-modes.h 83 2014-11-10 21:31:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

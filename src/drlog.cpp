@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 82 2014-11-01 14:52:18Z  $
+// $Id: drlog.cpp 83 2014-11-10 21:31:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -143,6 +143,7 @@ void process_QTC_input(window* wp,
                        const keyboard_event& e);
 
 void* auto_backup(void* vp);
+void* auto_screenshot(void* vp);
 void display_call_info(const string& callsign, const bool display_extract = true);
 void* display_rig_status(void* vp);
 void* display_date_and_time(void* vp);
@@ -1376,7 +1377,7 @@ void* display_date_and_time(void* vp)
 
   update_local_time();
 
-  while (true)                                  // forever
+  while (true)                                 // forever
   { const time_t now = time(NULL);             // get the time from the kernel
     struct tm    structured_time;
     bool new_second = false;
@@ -1441,18 +1442,35 @@ void* display_date_and_time(void* vp)
         }
       }
 
-// if a new hour, then possibly gereate screenshot
-     if ( (last_second % 60 == 0) and (structured_time.tm_min == 0) )
-     { if (context.auto_screenshot())
-       {  const string dts = date_time_string();
-          const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
-          const string complete_name = string("auto-screenshot-") + suffix;
+// if a new hour, then possibly create screenshot
+      if ( (last_second % 60 == 0) and (structured_time.tm_min == 0) )
+      { if (context.auto_screenshot())
+        { static pthread_t auto_screenshot_thread_id;
+          static string filename;
 
-//          ost << "dumping screenshot" << endl;
+           const string dts = date_time_string();
+           const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
+           const string complete_name = string("auto-screenshot-") + suffix;
 
-          dump_screen(complete_name);
-       }
-     }
+           filename = complete_name;
+
+           ost << "dumping screenshot at time: " << hhmmss() << endl;
+
+//           dump_screen(complete_name);
+
+           try
+           { create_thread(&auto_screenshot_thread_id, &(attr_detached.attr()), auto_screenshot, static_cast<void*>(&filename), "screenshot");
+           }
+
+           catch (const pthread_error& e)
+           { ost << e.reason() << endl;
+           }
+
+
+ //          ost << "finished dumping screenshot at time: " << hhmmss() << endl;
+
+        }
+      }
 
 // if a new day, then update date window
       const string date_string = substring(date_time_string(), 0, 10);
@@ -5471,19 +5489,34 @@ void debug_dump(void)
         from the context, and a string "-<n>" is appended.
  */
 const string dump_screen(const string& dump_filename)
-{ Display* display_p = keyboard.display_p();
+{ ost << "dump_screen called with parameter: " << dump_filename << endl;
+
+  Display* display_p = keyboard.display_p();
   const Window window_id = keyboard.window_id();
   XWindowAttributes win_attr;
 
+  ost << hhmmss() << ": locking display 1" << endl;
+
   XLockDisplay(display_p);
-  XGetWindowAttributes(display_p, window_id, &win_attr);
+  const Status status = XGetWindowAttributes(display_p, window_id, &win_attr);
+
+  if (status == 0)
+    ost << hhmmss() << ": ERROR returned by XGetWindowAttributes: " << status << endl;
+
   XUnlockDisplay(display_p);
+
+  ost << hhmmss() << ": unlocked display 2" << endl;
+
   const int width = win_attr.width;
   const int height = win_attr.height;
+
+  ost << hhmmss() << ": locking display 2" << endl;
 
   XLockDisplay(display_p);
   XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
   XUnlockDisplay(display_p);
+
+  ost << hhmmss() << ": unlocked display 2" << endl;
 
   png::image< png::rgb_pixel > image(width, height);
 
@@ -5502,6 +5535,8 @@ const string dump_screen(const string& dump_filename)
     }
   }
 
+  ost << hhmmss() << ": prepared image" << endl;
+
   string filename;
 
   if (dump_filename.empty())
@@ -5517,6 +5552,9 @@ const string dump_screen(const string& dump_filename)
     filename = dump_filename;
 
   image.write(filename);
+
+  ost << hhmmss() << ": image file written" << endl;
+
   alert("screenshot file " + filename + " written");
 
   return filename;
@@ -6061,3 +6099,31 @@ void update_mult_value(void)
   win_mult_value <= msg;
 }
 
+/*! \brief
+*
+*   This is intended to be used as a separate thread, so the parameters are passed
+*   in the usual void*
+*/
+void* auto_screenshot(void* vp)
+{
+  { start_of_thread();
+
+    try
+    { const string* filename_p = static_cast<string*>(vp);
+
+      dump_screen(*filename_p);
+    }
+
+    catch (...)
+    { ost << "CAUGHT EXCEPTION IN AUTO_SCREENSHOT" << endl;
+    }
+
+// manually mark this thread as complete, since we don't want to interrupt the above copy
+    { SAFELOCK(thread_check);
+
+      n_running_threads--;
+    }
+  }  // ensure that all objects call destructors, whatever the implementation
+
+  pthread_exit(nullptr);
+}

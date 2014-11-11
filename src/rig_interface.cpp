@@ -946,7 +946,9 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
             ost << "Error in select() in raw_command()" << endl;
           else
           { if (status == 0)
-             ost << "timeout (" << timeout_microseconds << "µs) in select() in raw_command: " << cmd << endl;
+            { if (counter == max_attempts - 1)
+                ost << "last-attempt timeout (" << timeout_microseconds << "µs) in select() in raw_command: " << cmd << endl;
+            }
             else
             { n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
 
