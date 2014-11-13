@@ -1255,6 +1255,7 @@ EFT::EFT(const string& nm) :
 { }
 
 /// construct from regex and values files; assumes not a mult
+#if 0
 EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename /* , const string& values_filename */) :
   _is_mult(false),
   _name(nm)
@@ -1263,6 +1264,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
 
 //  ost << (*this) << endl;
 }
+#endif
 
 /// construct from regex and values files
 EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename,
@@ -1271,14 +1273,14 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
   _name(nm)
 { read_regex_expression_file(path, regex_filename);
   read_values_file(path, nm);
+  parse_context_qthx(context, location_db);
+
 
   const vector<string> exchange_mults =  remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
 
-
-
-//  ost << (*this) << endl;
+  ost << "constructed EFT: " << (*this) << endl;
 }
 
 #if 0

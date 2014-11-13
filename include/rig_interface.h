@@ -247,8 +247,15 @@ public:
   const int keyer_speed(void);
 
 // explicit K3 commands
+#if !defined(NEW_RAW_COMMAND)
   const std::string raw_command(const std::string& cmd,
                                 const bool expect_response = NO_RESPONSE);
+#endif
+
+#if defined(NEW_RAW_COMMAND)
+  const std::string raw_command(const std::string& cmd,
+                                const unsigned int expected_length);
+#endif
 
   const frequency get_last_frequency(const BAND b, const MODE m);
   void set_last_frequency(const BAND b, const MODE m, const frequency& f) noexcept;

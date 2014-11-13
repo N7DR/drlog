@@ -354,7 +354,7 @@ public:
   EFT(const std::string& nm);
 
 /// construct from regex and values files
-  EFT(const std::string& nm, const std::vector<std::string>& path, const std::string& regex_filename /*, const std::string& values_filename = nm */);
+//  EFT(const std::string& nm, const std::vector<std::string>& path, const std::string& regex_filename /*, const std::string& values_filename = nm */);
   EFT(const std::string& nm, const std::vector<std::string>& path,
       const std::string& regex_filename,
       const drlog_context& context, location_database& location_db);

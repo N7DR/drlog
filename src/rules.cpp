@@ -269,6 +269,12 @@ const set<string> contest_rules::_all_exchange_values(const string& field_name) 
   return ( (cit == _exch_values.cend()) ? set<string>() : cit->all_values() );
 }
 
+/*!     \brief                      parse exchange line from context
+        \param  exchange_fields     container of fields taken from line in configuration file
+        \param  exchange_mults_vec  container of fields that are mults
+
+        \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
+*/
 const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchange_fields , const vector<string>& exchange_mults_vec) const
 { vector<exchange_field> rv;
 
@@ -359,6 +365,12 @@ const map<string, vector<exchange_field>> contest_rules::_parse_context_exchange
   return rv;
 }
 
+/*!     \brief              initialize an object that was created from the default constructor
+        \param  context     drlog context
+        \param  location_db location database
+
+        After calling this function, the object is ready for use
+*/
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
 { const vector<string> path = context.path();
 
@@ -452,7 +464,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { const vector<exchange_field>& vef = psvef.second;
 
     for (const auto& ef : vef)
-      _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
+    { _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
+      ost << "Added exchange_field_eft for field " << ef.name() << endl;
+    }
   }
 
 // define the points structure; this can be quite complex
@@ -647,9 +661,9 @@ contest_rules::contest_rules(void) :
   _send_qtcs(false)
 { }
 
-/*!     \brief                  construct from parameters
-        \param  context         context for this contest
-        \param  location_db     location information
+/*!     \brief              Construct an object ready for use
+        \param  context     context for this contest
+        \param  location_db location database
 */
 contest_rules::contest_rules(const drlog_context& context, location_database& location_db) :
   _work_if_different_band(context.qso_multiple_bands()),
@@ -661,9 +675,9 @@ contest_rules::contest_rules(const drlog_context& context, location_database& lo
 { _init(context, location_db);
 }
 
-/*!     \brief                  initialise for use (if created with default constructor)
-        \param  context         context for this contest
-        \param  location_db     location information
+/*!     \brief              prepare for use an object that was created from the default constructor
+        \param  context     context for this contest
+        \param  location_db location database
 */
 void contest_rules::prepare(const drlog_context& context, location_database& location_db)
 { _work_if_different_band = context.qso_multiple_bands();

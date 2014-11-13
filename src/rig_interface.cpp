@@ -840,6 +840,7 @@ const bool rig_interface::is_locked(void)
 #endif    // 0
 
 // explicit K3 commands
+#if !defined(NEW_RAW_COMMAND)
 const string rig_interface::raw_command(const string& cmd, const bool response_expected)
 { struct rig_state* rs_p = &(_rigp->state);
   struct rig_state& rs   = *rs_p;
@@ -980,6 +981,150 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 
   return string();
 }
+#endif
+
+#if defined(NEW_RAW_COMMAND)
+const string rig_interface::raw_command(const string& cmd, const unsigned int expected_length)
+{ struct rig_state* rs_p = &(_rigp->state);
+  struct rig_state& rs   = *rs_p;
+  const int fd           = _file_descriptor();
+  static array<char, 1000> c_in;
+  int n_read             = 0;
+  unsigned int total_read         = 0;
+  string rcvd;
+  const bool is_p3_screenshot = (cmd == "#BMP;");   // this has to be treated differently: the response is long and has no concluding semicolon
+
+  if (!_rig_connected)
+    return string();
+
+  if (cmd.empty())
+    return string();
+
+  static const int max_attempts = 10;
+  static const int timeout_microseconds = 100000;    // 100 milliseconds
+
+// sanity check ... on K3 all commands end in a ";"
+  if (cmd[cmd.length() - 1] != ';')
+  {  _error_alert("Invalid rig command: " + cmd);
+    return string();
+  }
+
+  bool completed = false;
+
+  { SAFELOCK(_rig);
+
+    serial_flush(&rs_p->rigport);
+    write(fd, cmd.c_str(), cmd.length());
+    serial_flush(&rs_p->rigport);
+    sleep_for(milliseconds(100));
+
+    fd_set set;
+    struct timeval timeout;
+
+    int counter = 0;
+
+    if (response_expected)
+    { if (is_p3_screenshot)
+      { array<char, 131640> c_in;    // hide the static array
+
+        const int n_bits = 131640 * 10;
+        const int n_secs = n_bits / baud_rate();
+
+        while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
+        { FD_ZERO(&set);    // clear the set
+          FD_SET(fd, &set); // add the file descriptor to the set
+
+          timeout.tv_sec = 1;
+          timeout.tv_usec = 0;
+
+          int status = select(fd + 1, &set, NULL, NULL, &timeout);
+          int nread = 0;
+
+          if (status == -1)
+            ost << "Error in select() in raw_command()" << endl;
+          else
+          { if (status == 0)
+             ost << "timeout in select() in raw_command: " << cmd << endl;
+            else
+            { n_read = read(fd, c_in.data(), 131640 - total_read);
+
+//              ost << "n_read = " << n_read << endl;
+
+              if (n_read > 0)                      // should always be true
+              { total_read += n_read;
+                rcvd.append(c_in.data(), n_read);
+
+                if (rcvd.length() == 131640)
+                  completed = true;
+              }
+            }
+          }
+          counter++;
+          if (!completed)
+          { static const string percent_str("%%");
+            const int percent = rcvd.length() * 100 / 131640;
+
+            _error_alert(string("P3 screendump progress: ") + to_string(percent) + percent_str);
+//            ost << "not yet complete; counter now = " << counter << " and received length = " << rcvd.length() << endl;
+            sleep_for(milliseconds(1000));  // we have the lock for all this time
+          }
+          else
+            _error_alert("P3 screendump complete");
+        }
+      }
+      else
+      { while (!completed and (counter < max_attempts) )
+        { FD_ZERO(&set);    // clear the set
+          FD_SET(fd, &set); // add the file descriptor to the set
+
+          timeout.tv_sec = 0;
+          timeout.tv_usec = timeout_microseconds;
+
+          if (counter)                          // we've already slept the first time through
+            sleep_for(milliseconds(50));
+
+          int status = select(fd + 1, &set, NULL, NULL, &timeout);
+          int nread = 0;
+
+          if (status == -1)
+            ost << "Error in select() in raw_command()" << endl;
+          else
+          { if (status == 0)
+            { if (counter == max_attempts - 1)
+                ost << "last-attempt timeout (" << timeout_microseconds << "µs) in select() in raw_command: " << cmd << endl;
+            }
+            else
+            { n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
+
+//              ost << "n_read = " << n_read << " bytes; counter = " << counter << endl;
+
+              if (n_read > 0)                      // should always be true
+              { total_read += n_read;
+                c_in[n_read] = static_cast<char>(0);    // append a null byte
+//                ost << "  received: *" << c_in.data() << "*" << endl;
+
+                rcvd += string(c_in.data());
+
+                if (contains(rcvd, ";"))
+                  completed = true;
+              }
+            }
+          }
+          counter++;
+        }
+      }
+    }
+  }
+
+  if (response_expected and !completed)
+    _error_alert("Incomplete response from rig to cmd: " + cmd + " length = " + to_string(rcvd.length()) + " " + rcvd);
+
+  if (response_expected and completed)
+    return rcvd;
+
+  return string();
+}
+#endif
 
 // is the VFO locked?
 const bool rig_interface::is_locked(void)
@@ -1075,7 +1220,11 @@ void rig_interface::test(const bool b)
 { if (test() != b)
   { if (_rig_connected)
     { if (_model == RIG_MODEL_K3)
+#if defined(NEW_RAW_COMMAND)
+        raw_command("SWH18;", 0);    // toggles state
+#else
         raw_command("SWH18;");    // toggles state
+#endif
     }
   }
 }

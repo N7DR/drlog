@@ -30,8 +30,6 @@
 #include <tuple>
 #include <vector>
 
-//#include <ncurses.h>
-//#include "/usr/include/ncursesw/ncurses.h"
 #include <ncursesw/ncurses.h>
 #include <panel.h>
 
@@ -166,11 +164,11 @@ protected:
   std::string _fg_colour;       ///< name of foreground colour
   std::string _bg_colour;
 
-  bool   _colours_set;      // have the colours been set explicitly?
+  bool   _colours_set;          ///< have the colours been set explicitly?
 
 public:
 
-// default constructor
+/// default constructor
   window_information(void) :
     _x(0),
     _y(0),
@@ -512,11 +510,13 @@ window& operator<(window& win, const cursor& c);
 /// trivial class for moving the cursor (relative)
 WRAPPER_2(cursor_relative, int, x, int, y);
 
+/// window < cursor_relative
 window& operator<(window& win, const cursor_relative& cr);
 
 /// trivial class for centring a string on line y of a window
 WRAPPER_2(centre, std::string, s, int, y);
 
+/// window < centre
 window& operator<(window& win, const centre& c);
 
 /// utterly trivial class for changing colour to a colour pair
@@ -528,30 +528,10 @@ window& operator<(window& win, const colour_pair& cpair);
 // in order to change the colours
 
 WRAPPER_2(COLOURS, int, fg, int, bg);
+
+/// window < COLOURS
 inline window& operator<(window& win, const COLOURS& CP)
   { return win.cpair(colours.add(CP.fg(), CP.bg())); }
-
-#if 0
-// -----------  SAVE_CURSOR  ----------------
-
-/*!     \class SAVE_CURSOR
-        \brief Save and restore the screen cursor
-*/
-
-class SAVE_CURSOR
-{
-protected:
-  int _x;
-  int _y;
-  window* _wp;
-    
-public:
-  SAVE_CURSOR(window& w);
-  SAVE_CURSOR(window* wp);
-  
-  ~SAVE_CURSOR(void);
-};
-#endif
 
 inline const int FGBG(const int fg, const int bg)
 { return COLOUR_PAIR(colours.add(fg, bg));

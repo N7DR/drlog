@@ -312,16 +312,28 @@ protected:
 */
   const std::map<std::string, std::vector<exchange_field>> _parse_context_exchange(const drlog_context& context) const;
 
+/*!     \brief                      parse exchange line from context
+        \param  exchange_fields     container of fields taken from line in configuration file
+        \param  exchange_mults_vec  container of fields that are mults
 
+        \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
+*/
   const std::vector<exchange_field> _inner_parse(const std::vector<std::string>& exchange_fields , const std::vector<std::string>& exchange_mults_vec) const;
 
 /*!     \brief              parse and incorporate the "QTHX[xx] = " lines from context
-        \param  context     drlog context
+        \param  context     context for this contest
         \param  location_db location database
 
         Incorporates the parsed information into _exch
 */
   void _parse_context_qthx(const drlog_context& context, location_database& location_db);
+
+/*!     \brief              initialize an object that was created from the default constructor
+        \param  context     context for this contest
+        \param  location_db location database
+
+        After calling this function, the object is ready for use
+*/
   void _init(const drlog_context& context, location_database& location_db);
 
 public:
@@ -329,10 +341,16 @@ public:
 /// default constructor
   contest_rules(void);
 
-/// constructor
+/*!     \brief              Construct an object ready for use
+        \param  context     context for this contest
+        \param  location_db location database
+*/
   contest_rules(const drlog_context& context, location_database& location_db);
   
-/// initialise for use (if created with default constructor)
+/*!     \brief              prepare for use an object that was created from the default constructor
+        \param  context     context for this contest
+        \param  location_db location database
+*/
   void prepare(const drlog_context& context, location_database& location_db);
 
 /// is a particular mode permitted?
@@ -343,19 +361,19 @@ public:
   inline void add_permitted_mode(const MODE mode)
     { SAFELOCK(rules); _permitted_modes.insert(mode); }
     
-/// get the next mode
+/// get the next mode in sequence
   const MODE next_mode(const MODE current_mode) const;
 
-/// add a band to the list of permitted bands
+/// add a band to the list of those permitted
   void add_permitted_band(const BAND b);
   
 /// is a particular band permitted?
   const bool permitted_band(const BAND b) const;
 
-/// get the next band up
+/// get the next band that is higher in frequency than a given band
   const BAND next_band_up(const BAND current_band) const;
 
-/// get the next band down
+/// get the next band that is lower in frequency than a given band
   const BAND next_band_down(const BAND current_band) const;
   
   SAFEREAD(work_if_different_band, rules);               ///< whether it is OK to work the same station on different bands
@@ -368,6 +386,12 @@ public:
 */
   const std::vector<exchange_field> exch(const std::string& canonical_prefix) const;
 
+/*!     \brief                      Get the expected exchange fields for a particular canonical prefix
+        \param  canonical_prefix    canonical prefix
+        \return                     The exchange fields associated with <i>canonical_prefix</i>
+
+        CHOICE fields ARE expanded
+*/
   const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix) const;
 
   SAFEREAD(country_mults, rules);       ///< collection of canonical prefixes of country multipliers

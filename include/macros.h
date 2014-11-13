@@ -12,7 +12,8 @@
 #define MACROS_H
 
 // temporary, until I am convinced that the new constructor in exchange functions at least as well as the old one
-#undef NEW_CONSTRUCTOR
+#define NEW_CONSTRUCTOR
+#undef NEW_RAW_COMMAND
 
 /*!     \file macros.h
 
@@ -72,127 +73,121 @@
 
 /// tuple class (1) -- complete overkill
 #define WRAPPER_1(nm, a0, a1)                          \
-                                                                          \
-class nm : public std::tuple < a0 >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X )                                                       \
-    { std::get<0>(*this) = X;                                                    \
-    }                                                                     \
-                                                                          \
-  inline const a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(const a0 & var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-                                                                           \
-                                                                          \
+                                                       \
+class nm : public std::tuple < a0 >                    \
+{                                                      \
+protected:                                             \
+                                                       \
+public:                                                \
+                                                       \
+  nm( a0 X )                                           \
+    { std::get<0>(*this) = X;                          \
+    }                                                  \
+                                                       \
+  inline const a0 a1(void) const                       \
+    { return std::get<0>(*this); }                     \
+                                                       \
+  inline void a1(const a0 & var)                       \
+    { std::get<0>(*this) = var; }                      \
 }
 
 /// tuple class (2)
-#define WRAPPER_2(nm, a0, a1, b0, b1)                          \
-                                                                          \
-class nm : public std::tuple < a0, b0 >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X, b0 Y)                                                       \
-    { std::get<0>(*this) = X;                                                    \
-      std::get<1>(*this) = Y;                                                    \
-    }                                                                     \
-                                                                          \
-  inline const a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(const a0 & var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-  inline const b0 b1(void) const                                                    \
-    { return std::get<1>(*this); }                              \
-                                                                          \
-  inline void b1(const b0 & var)                                          \
-    { std::get<1>(*this) = var; }                               \
-                                                                          \
-                                                                          \
+#define WRAPPER_2(nm, a0, a1, b0, b1)                  \
+                                                       \
+class nm : public std::tuple < a0, b0 >                \
+{                                                      \
+protected:                                             \
+                                                       \
+public:                                                \
+                                                       \
+  nm( a0 X, b0 Y)                                      \
+    { std::get<0>(*this) = X;                          \
+      std::get<1>(*this) = Y;                          \
+    }                                                  \
+                                                       \
+  inline const a0 a1(void) const                       \
+    { return std::get<0>(*this); }                     \
+                                                       \
+  inline void a1(const a0 & var)                       \
+    { std::get<0>(*this) = var; }                      \
+                                                       \
+  inline const b0 b1(void) const                       \
+    { return std::get<1>(*this); }                     \
+                                                       \
+  inline void b1(const b0 & var)                       \
+    { std::get<1>(*this) = var; }                      \
 }
 
 /// tuple class (2)
-#define WRAPPER_2_NC(nm, a0, a1, b0, b1)                          \
-                                                                          \
-class nm : public std::tuple < a0, b0 >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X, b0 Y)                                                       \
-    { std::get<0>(*this) = X;                                                    \
-      std::get<1>(*this) = Y;                                                    \
-    }                                                                     \
-                                                                          \
-  inline a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(a0 var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-  inline b0 b1(void) const                                                    \
-    { return std::get<1>(*this); }                              \
-                                                                          \
-  inline void b1(b0 var)                                          \
-    { std::get<1>(*this) = var; }                               \
+#define WRAPPER_2_NC(nm, a0, a1, b0, b1)               \
+                                                       \
+class nm : public std::tuple < a0, b0 >                \
+{                                                      \
+protected:                                             \
+                                                       \
+public:                                                \
+                                                       \
+  nm( a0 X, b0 Y)                                      \
+    { std::get<0>(*this) = X;                          \
+      std::get<1>(*this) = Y;                          \
+    }                                                  \
+                                                       \
+  inline a0 a1(void) const                             \
+    { return std::get<0>(*this); }                     \
+                                                       \
+  inline void a1(a0 var)                               \
+    { std::get<0>(*this) = var; }                      \
+                                                       \
+  inline b0 b1(void) const                             \
+    { return std::get<1>(*this); }                     \
+                                                       \
+  inline void b1(b0 var)                               \
+    { std::get<1>(*this) = var; }                      \
 }
 
 /// tuple class (3)
-#define WRAPPER_3(nm, a0, a1, b0, b1, c0, c1)                   \
-                                                                          \
-class nm : public std::tuple < a0, b0, c0 >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X, b0 Y, c0 Z)                                                       \
-    { std::get<0>(*this) = X;                                                    \
-      std::get<1>(*this) = Y;                                                    \
-      std::get<2>(*this) = Z;                                                    \
-    }                                                                     \
-                                                                          \
-                                                                          \
-  nm( void ) { }                                                          \
-                                                                          \
-  inline const a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(a0 var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-  inline const b0 b1(void) const                                                    \
-    { return std::get<1>(*this); }                              \
-                                                                          \
-  inline void b1(b0 var)                                          \
-    { std::get<1>(*this) = var; }                               \
-                                                                          \
-  inline const c0 c1(void) const                                                    \
-    { return std::get<2>(*this); }                              \
-                                                                          \
-  inline void c1(c0 var)                                          \
-    { std::get<2>(*this) = var; }                               \
-}; \
-\
+#define WRAPPER_3(nm, a0, a1, b0, b1, c0, c1)          \
+                                                       \
+class nm : public std::tuple < a0, b0, c0 >            \
+{                                                      \
+protected:                                             \
+                                                       \
+public:                                                \
+                                                       \
+  nm( a0 X, b0 Y, c0 Z)                                \
+    { std::get<0>(*this) = X;                          \
+      std::get<1>(*this) = Y;                          \
+      std::get<2>(*this) = Z;                          \
+    }                                                  \
+                                                       \
+  nm( void ) { }                                       \
+                                                       \
+  inline const a0 a1(void) const                       \
+    { return std::get<0>(*this); }                     \
+                                                       \
+  inline void a1(a0 var)                               \
+    { std::get<0>(*this) = var; }                      \
+                                                       \
+  inline const b0 b1(void) const                       \
+    { return std::get<1>(*this); }                     \
+                                                       \
+  inline void b1(b0 var)                               \
+    { std::get<1>(*this) = var; }                      \
+                                                       \
+  inline const c0 c1(void) const                       \
+    { return std::get<2>(*this); }                     \
+                                                       \
+  inline void c1(c0 var)                               \
+    { std::get<2>(*this) = var; }                      \
+};                                                     \
+                                                       \
 inline std::ostream& operator<<(std::ostream& ost, const nm& type)  \
-{ ost << #nm << ": " << std::endl  \
-      << #a1 << ": " << type.a1() << std::endl  \
-      << #b1 << ": " << type.b1() << std::endl  \
-      << #c1 << ": " << type.c1(); \
-\
-  return ost; \
+{ ost << #nm << ": " << std::endl                                   \
+      << #a1 << ": " << type.a1() << std::endl                      \
+      << #b1 << ": " << type.b1() << std::endl                      \
+      << #c1 << ": " << type.c1();                                  \
+                                                                    \
+  return ost;                                                       \
 }
 
 /// tuple class (3)

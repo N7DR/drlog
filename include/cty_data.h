@@ -531,15 +531,42 @@ public:
   
 /// return all the entries with a particular ID
   const std::vector<drlog_qth_database_record> id(const std::string& id_target) const;
-  
+
+/*! \brief                      Get the CQ zone corresponding to a call
+    \param  call                callsign
+    \param  initial_cq_zone     default value of CQ zone, if none is found
+    \return                     CQ zone corresponding to <i>call</i>
+*/
   const unsigned int cq_zone(const std::string& call, const unsigned int initial_cq_zone) const;
 
-  const unsigned int cq_zone(const std::string& country, const unsigned int area, const unsigned int initial_cq_zone) const;
+/*! \brief                      Get the CQ zone corresponding to a call area in a country
+    \param  country             country identifier
+    \param  call_area           call area (0 - 9)
+    \param  initial_cq_zone     default value of CQ zone, if none is found
+    \return                     CQ zone corresponding to call area <i>call_area</i> in country <i>country</i>
+*/
+  const unsigned int cq_zone(const std::string& country, const unsigned int call_area, const unsigned int initial_cq_zone) const;
 
+/*! \brief                      Get the latitude corresponding to a call
+    \param  call                callsign
+    \param  initial_latitude    default value of latitude, if none is found
+    \return                     latitude corresponding to <i>call</i>
+*/
   const float latitude(const std::string& call, const float initial_latitude) const;
 
+/*! \brief                      Get the latitude corresponding to a call area in a country
+    \param  country             country identifier
+    \param  call_area           call area (0 - 9)
+    \param  initial_cq_zone     default value of latitude, if none is found
+    \return                     latitude corresponding to call area <i>call_area</i> in country <i>country</i>
+*/
   const float latitude(const std::string& country, const unsigned int area, const float initial_latitude) const;
  
+/*! \brief                      Get the longitude corresponding to a call
+    \param  call                callsign
+    \param  initial_longitude   default value of longitude, if none is found
+    \return                     longitude corresponding to <i>call</i>
+*/
   const float longitude(const std::string& call, const float initial_longitude) const;
 
   const float longitude(const std::string& country, const unsigned int area, const float initial_longitude) const;
