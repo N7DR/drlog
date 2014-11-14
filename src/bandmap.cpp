@@ -979,6 +979,10 @@ window& operator<(window& win, bandmap& bm)
 
       int cpu = colours.add(fade_colours.at(n_intervals), win.bg());
 
+// mark in GREEN if age is less than two minutes
+      if (age < 120 and !be.is_my_marker())
+        cpu = colours.add(COLOUR_GREEN, win.bg());
+
       if (be.is_my_marker())
         cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // marker for my current frequency
 

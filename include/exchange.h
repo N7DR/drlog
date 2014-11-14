@@ -350,11 +350,22 @@ public:
   EFT(void)
     { }
 
-/// construct from name
+/*! \brief      construct from name
+    \param  nm  name
+
+                Assumes not a mult. Object is not ready for use, except to test the name, after this constructor.
+*/
   EFT(const std::string& nm);
 
-/// construct from regex and values files
-//  EFT(const std::string& nm, const std::vector<std::string>& path, const std::string& regex_filename /*, const std::string& values_filename = nm */);
+/*! \brief                  construct from several parameters
+    \param  nm              name
+    \param  path            path for the regex and values files
+    \param  regex_filename  name of file that contains the regex filter
+    \param  context         context for the contest
+    \param  location_db     location database
+
+    Object is fully ready for use after this constructor.
+*/
   EFT(const std::string& nm, const std::vector<std::string>& path,
       const std::string& regex_filename,
       const drlog_context& context, location_database& location_db);
@@ -380,6 +391,10 @@ public:
 */
   const bool read_values_file(const std::vector<std::string>& path, const std::string& filename);
 
+/*! \brief              Parse and incorporate QTHX values from context
+    \param  context     context for the contest
+    \param  location_db location database
+*/
   void parse_context_qthx(const drlog_context& context, location_database& location_db);
 
   inline const bool is_canonical_value(const std::string& str) const

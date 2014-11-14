@@ -49,8 +49,8 @@ extern pt_mutex _context_mutex;
   inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }
 
 
-typedef std::string SINGLE_EXCHANGE;
-typedef std::vector<SINGLE_EXCHANGE> MULTIPLE_EXCHANGES;
+//typedef std::string SINGLE_EXCHANGE;
+//typedef std::vector<SINGLE_EXCHANGE> MULTIPLE_EXCHANGES;
 
 // -----------  drlog_context  ----------------
 
@@ -130,14 +130,14 @@ protected:
   std::string                                  _do_not_show_filename;  ///< filename of calls (one per line) not to be shown
   std::string                                  _drmaster_filename;     ///< filename of drmaster file (default = "drmaster")
 
-  SINGLE_EXCHANGE                              _exchange;                  ///< comma-delimited received exchange
+  std::string                                  _exchange;                  ///< comma-delimited received exchange
   std::string                                  _exchange_cq;               ///< exchange in CQ mode
   std::string                                  _exchange_fields_filename;  ///< file that holds regex templates of exchange fields
   std::string                                  _exchange_mults;            ///< comma-delimited exchange fields that are mults
   bool                                         _exchange_mults_per_band;   ///< are exchange mults per-band?
-  std::map<std::string, SINGLE_EXCHANGE>       _exchange_per_country;      ///< per-country exchanges; key = prefix-or-call; value = exchange
+  std::map<std::string, std::string>           _exchange_per_country;      ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::string                                  _exchange_sap;              ///< exchange in SAP mode
-  MULTIPLE_EXCHANGES                           _exchanges;                 ///< optional exchange choices
+  std::vector<std::string>                     _exchanges;                 ///< optional exchange choices
   std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                 ///< exchange memories
 
   std::map<MODE, unsigned int>                 _guard_band;
@@ -148,20 +148,20 @@ protected:
 
   std::string                                  _logfile;                    ///< name of the log filename
 
-  std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;    ///< frequency ranges to be marked on-screen
-  unsigned int                                 _match_minimum;       ///< number of characters before SCP or fuzzy match kicks in
-  std::array<std::string, MAX_MEMORY_MESSAGES> _memory_messages;     ///< canned messages
-  std::string                                  _message_cq_1;        ///< CQ message #1 (generally, a short CQ)
-  std::string                                  _message_cq_2;        ///< CQ message #2 (generally, a long CQ)
-  std::string                                  _modes;               ///< comma-delimited modes CW, DIGI, SSB
-  std::string                                  _my_call;             ///< my call
-  std::string                                  _my_continent;        ///< my continent
-  unsigned int                                 _my_cq_zone;          ///< my CQ zone
-  std::string                                  _my_grid;             ///< grid square identifier
-  std::string                                  _my_ip;               ///< my IP address
-  unsigned int                                 _my_itu_zone;         ///< my ITU zone
-  float                                        _my_latitude;         ///< latitude in degrees (north +ve)
-  float                                        _my_longitude;        ///< longitude in degrees (east +ve)
+  std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;   ///< frequency ranges to be marked on-screen
+  unsigned int                                 _match_minimum;                      ///< number of characters before SCP or fuzzy match kicks in
+  std::array<std::string, MAX_MEMORY_MESSAGES> _memory_messages;                    ///< canned messages
+  std::string                                  _message_cq_1;                       ///< CQ message #1 (generally, a short CQ)
+  std::string                                  _message_cq_2;                       ///< CQ message #2 (generally, a long CQ)
+  std::string                                  _modes;                              ///< comma-delimited modes CW, SSB
+  std::string                                  _my_call;                            ///< my call
+  std::string                                  _my_continent;                       ///< my continent
+  unsigned int                                 _my_cq_zone;                         ///< my CQ zone
+  std::string                                  _my_grid;                            ///< grid square identifier
+  std::string                                  _my_ip;                              ///< my IP address
+  unsigned int                                 _my_itu_zone;                        ///< my ITU zone
+  float                                        _my_latitude;                        ///< latitude in degrees (north +ve)
+  float                                        _my_longitude;                       ///< longitude in degrees (east +ve)
 
   bool                                         _normalise_rate;      ///< whether to display rates as per-hour
   std::string                                  _not_country_mults;   ///< comma-separated list of countries that are explicitly NOT country mults
@@ -197,17 +197,17 @@ protected:
   std::string                                  _rig1_type;                       ///< model name of rig
   std::string                                  _russian_filename;                ///< filename of russian location file (default = "russian-data")
 
-  std::set<BAND>                               _score_bands;             ///< which bands are going to be scored?
-  std::string                                  _screen_snapshot_file;    ///< base name of file for screenshot
-  std::vector<std::pair<std::string, std::string> > _sent_exchange;      ///< names and values of sent exchange fields
-  unsigned int                                 _shift_delta;             ///< how many Hertz to QSY per poll of the shift key
-  unsigned int                                 _shift_poll;              ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
-  enum BAND                                    _start_band;              ///< on what band do we start?
-  enum MODE                                    _start_mode;              ///< on which mode do we start?
+  std::set<BAND>                               _score_bands;                    ///< which bands are going to be scored?
+  std::string                                  _screen_snapshot_file;           ///< base name of file for screenshot
+  std::vector<std::pair<std::string, std::string> > _sent_exchange;             ///< names and values of sent exchange fields
+  unsigned int                                 _shift_delta;                    ///< how many Hertz to QSY per poll of the shift key
+  unsigned int                                 _shift_poll;                     ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
+  enum BAND                                    _start_band;                     ///< on what band do we start?
+  enum MODE                                    _start_mode;                     ///< on which mode do we start?
   std::map<std::string /* name */,
              std::pair<std::string /* contents */,
-                         std::vector<window_information> > > _static_windows;
-  bool                                         _sync_keyer;          ///< whether to synchronise the rig keyer speed with the computer
+                         std::vector<window_information> > > _static_windows;   ///< size, position and content information for each static window
+  bool                                         _sync_keyer;                     ///< whether to synchronise the rig keyer speed with the computer
 
   bool                                         _test;                ///< put rig in TEST mode?
 
@@ -248,16 +248,16 @@ protected:
   SAFEREAD(bandmap_filter_disabled_colour, _context);   ///< background colour when bandmap filter is disabled
   SAFEREAD(bandmap_filter_enabled, _context);           ///< is the bandmap filter enabled?
   SAFEREAD(bandmap_filter_foreground_colour, _context); ///< colour of foreground in the bandmap filter
-  SAFEREAD(bandmap_filter_hide_colour, _context);       ///< background colour when bandmap filter is in hide mode
-  SAFEREAD(bandmap_filter_show, _context);              ///< is the bandmap filter set to show? (If not, then it's set to hide)
-  SAFEREAD(bandmap_filter_show_colour, _context);       ///< background colour when bandmap filter is in show mode
 
-  SAFEREAD(bands, _context);
-
+/// is the bandmap filter set to hide? (If not, then it's set to show)
   inline const bool bandmap_filter_hide(void) const
     { return !bandmap_filter_show(); }
 
-  SAFEREAD(batch_messages_file, _context);
+  SAFEREAD(bandmap_filter_hide_colour, _context);       ///< background colour when bandmap filter is in hide mode
+  SAFEREAD(bandmap_filter_show, _context);              ///< is the bandmap filter set to show? (If not, then it's set to hide)
+  SAFEREAD(bandmap_filter_show_colour, _context);       ///< background colour when bandmap filter is in show mode
+  SAFEREAD(bands, _context);                            ///< comma-delimited bands
+  SAFEREAD(batch_messages_file, _context);              ///< file that contains per-call batch messages
 
   SAFEREAD(cabrillo_address_1, _context);
   SAFEREAD(cabrillo_address_2, _context);

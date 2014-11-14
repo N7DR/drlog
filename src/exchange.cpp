@@ -1248,25 +1248,25 @@ const string parsed_exchange::_resolve_choice(const string& choice_name, const s
         \brief Manage a single exchange field
 */
 
-/// construct from name
+/*! \brief      construct from name
+    \param  nm  name
+
+                Assumes not a mult. Object is not ready for use, except to test the name, after this constructor.
+*/
 EFT::EFT(const string& nm) :
   _is_mult(false),
   _name(nm)
 { }
 
-/// construct from regex and values files; assumes not a mult
-#if 0
-EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename /* , const string& values_filename */) :
-  _is_mult(false),
-  _name(nm)
-{ read_regex_expression_file(path, regex_filename);
-  read_values_file(path, nm);
+/*! \brief                  construct from several parameters
+    \param  nm              name
+    \param  path            path for the regex and values files
+    \param  regex_filename  name of file that contains the regex filter
+    \param  context         context for the contest
+    \param  location_db     location database
 
-//  ost << (*this) << endl;
-}
-#endif
-
-/// construct from regex and values files
+    Object is fully ready for use after this constructor.
+*/
 EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename,
     const drlog_context& context, location_database& location_db) :
   _is_mult(false),
@@ -1275,12 +1275,11 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
   read_values_file(path, nm);
   parse_context_qthx(context, location_db);
 
-
   const vector<string> exchange_mults =  remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
 
-  ost << "constructed EFT: " << (*this) << endl;
+//  ost << "constructed EFT: " << (*this) << endl;
 }
 
 #if 0
@@ -1296,10 +1295,10 @@ const bool EFT::defined(void) const
 }
 #endif
 
-/*! \brief  Get regex expression from file
-    \param  paths      paths to try
-    \param  filename   name of file
-    \return whether a regex expression was read
+/*! \brief              Get regex expression from file
+    \param  paths       paths to try
+    \param  filename    name of file
+    \return             whether a regex expression was read
 */
 const bool EFT::read_regex_expression_file(const vector<string>& path, const string& filename)
 { if (filename.empty())
@@ -1336,10 +1335,10 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
   return (!_regex_expression.empty());
 }
 
-/*! \brief  Get info from .values file
-    \param  path      paths to try
-    \param  filename   name of file (without .values extension)
-    \return whether values were read
+/*! \brief              Get info from .values file
+    \param  path        paths to try
+    \param  filename    name of file (without .values extension)
+    \return             whether values were read
 */
 const bool EFT::read_values_file(const vector<string>& path, const string& filename)
 { ost << "EFT reading values file: " << filename << endl;
@@ -1386,26 +1385,15 @@ const bool EFT::read_values_file(const vector<string>& path, const string& filen
     return false;
   }
 
-#if 0
-  if (!_values.empty())
-  { for (const auto& psss : _values)
-    { const string& canonical_value = psss.first;
-      const set<string>& ss = psss.second;
-
-      add_canonical_value(canonical_value);
-
-      for (const auto& str : ss)
-      { add_legal_value(canonical_value, str);
-      }
-    }
-  }
-#endif
-
   return (!_values.empty());
 }
 
+/*! \brief              Parse and incorporate QTHX values from context
+    \param  context     context for the contest
+    \param  location_db location database
+*/
 void EFT::parse_context_qthx(const drlog_context& context, location_database& location_db)
-{ const auto& context_qthx = context.qthx();
+{ const auto& context_qthx = context.qthx();  // map; key = canonical prefix; value = set of legal values
 
   if (context_qthx.empty())
     return;
@@ -1417,7 +1405,7 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
     for (const auto this_value : ss)
     { if (!contains(this_value, "|"))
         add_canonical_value(this_value);
-      else
+      else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
       { const vector<string> equivalent_values = remove_peripheral_spaces(split_string(this_value, "|"));
 
         if (!equivalent_values.empty())
@@ -1429,18 +1417,6 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
     }
   }
 }
-
-
-// maybe should keep this as a separate member, to save having to execute this so frequently
-#if 0
-const set<string> EFT::_all_legal_non_regex_values(void) const
-{ set<string> rv;
-
-  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& pss) { copy(pss.second.cbegin(), pss.second.cend(), inserter(rv, rv.begin())); } );
-
-  return rv;
-}
-#endif
 
 #if 0
 const string EFT::_equivalent_canonical_value(const string& str) const
