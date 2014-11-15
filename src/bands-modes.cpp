@@ -34,7 +34,7 @@ frequency::frequency(void) :
     \param f    frequency in Hz, kHz or MHz
 */
 frequency::frequency(const double f)
-{ if (f < 100)              // MHz
+{ if (f < 100)                  // MHz
     _hz = static_cast<unsigned int>(f * 1000000 + 0.5);
   else
   { if (f < 100000)            // kHz
@@ -43,7 +43,6 @@ frequency::frequency(const double f)
       _hz = static_cast<unsigned int>(f + 0.5);
   }
 }
-
 
 /*! \brief      construct from a band
     \param b    band
@@ -94,7 +93,11 @@ frequency::frequency(const enum BAND b)
   }
 }
 
-// xxxx.y kHz
+/*! \brief      return string suitable for use in bandmap
+    \return     string of the frequency in kHz, to one decimal place ([x]xxxx.y)
+
+    Sets the frequency to the low edge of the band <i>b</i>
+*/
 const string frequency::display_string(void) const
 { static const string POINT(".");
 
@@ -109,8 +112,16 @@ const string frequency::display_string(void) const
   return (to_string(khz) + POINT + to_string(hhz));
 }
 
+/*! \brief      convert to BAND
+    \return     BAND in which the frequency is located
+
+    Returns BAND_160 if the frequency is outside all bands
+*/
 frequency::operator BAND(void) const
-{ static const map<unsigned int, BAND> fmap { make_pair(2000000, BAND_160) };  // fill this out, then iterate to find the right return value
+{ return to_BAND(hz());
+
+#if 0
+  static const map<unsigned int, BAND> fmap { make_pair(2000000, BAND_160) };  // fill this out, then iterate to find the right return value
 
   if (_hz <= 2000000)
     return BAND_160;
@@ -143,6 +154,7 @@ frequency::operator BAND(void) const
     return BAND_10;
 
   return MIN_BAND;
+#endif
 }
 
 /// return lower band edge that corresponds to frequency

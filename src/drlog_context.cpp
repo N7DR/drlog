@@ -167,6 +167,16 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "BAND MAP GUARD BAND SSB") or starts_with(testline, "BANDMAP GUARD BAND SSB"))
       _guard_band[MODE_SSB] = from_string<int>(rhs);
 
+// BAND MAP RECENT COLOUR
+    if (starts_with(testline, "BAND MAP RECENT COLOUR") or starts_with(testline, "BANDMAP RECENT COLOUR") or
+        starts_with(testline, "BAND MAP RECENT COLOR") or starts_with(testline, "BANDMAP RECENT COLOR"))
+    { if (!RHS.empty())
+      { string name = remove_peripheral_spaces(RHS);
+
+        _bandmap_recent_colour = string_to_colour(name);
+      }
+    }
+
 // BANDS
     if (starts_with(testline, "BANDS"))
       _bands = RHS;
@@ -1272,6 +1282,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _bandmap_filter_hide_colour(string_to_colour("RED")),          // background colour when bandmap filter is in HIDE mode
   _bandmap_filter_show(false),                                   // filter is used to hide entrie
   _bandmap_filter_show_colour(string_to_colour("GREEN")),        // background colour when bandmap filter is in SHOW mode
+  _bandmap_recent_colour(string_to_colour("BLACK")),             // do not indicate recent postings with special colour
   _bands("160, 80, 40, 20, 15, 10"),                             // legal bands for the contest
   _batch_messages_file(),                                        // name for batch messages file
   _cabrillo_address_1(),

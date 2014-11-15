@@ -348,7 +348,8 @@ bandmap::bandmap(void) :
   _column_offset(0),
   _rbn_threshold(1),
   _filtered_entries_dirty(false),
-  _rbn_threshold_and_filtered_entries_dirty(false)
+  _rbn_threshold_and_filtered_entries_dirty(false),
+  _recent_colour(string_to_colour("BLACK"))
 { }
 
 
@@ -980,8 +981,8 @@ window& operator<(window& win, bandmap& bm)
       int cpu = colours.add(fade_colours.at(n_intervals), win.bg());
 
 // mark in GREEN if age is less than two minutes
-      if (age < 120 and !be.is_my_marker())
-        cpu = colours.add(COLOUR_GREEN, win.bg());
+      if (age < 120 and !be.is_my_marker() and (bm.recent_colour() != string_to_colour("BLACK")))
+        cpu = colours.add(bm.recent_colour(), win.bg());
 
       if (be.is_my_marker())
         cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // marker for my current frequency

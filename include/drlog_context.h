@@ -76,6 +76,7 @@ protected:
   int                                          _bandmap_filter_hide_colour;        ///< background colour when bandmap filter is in hide mode
   bool                                         _bandmap_filter_show;               ///< is the bandmap filter set to show? (If not, then it's set to hide)
   int                                          _bandmap_filter_show_colour;        ///< background colour when bandmap filter is in show mode
+  int                                          _bandmap_recent_colour;             ///< colour for bandmap entries that are less than two minutes old
   std::string                                  _bands;                             ///< comma-delimited bands
   std::string                                  _batch_messages_file;               ///< file that contains per-call batch messages
 
@@ -256,6 +257,7 @@ protected:
   SAFEREAD(bandmap_filter_hide_colour, _context);       ///< background colour when bandmap filter is in hide mode
   SAFEREAD(bandmap_filter_show, _context);              ///< is the bandmap filter set to show? (If not, then it's set to hide)
   SAFEREAD(bandmap_filter_show_colour, _context);       ///< background colour when bandmap filter is in show mode
+  SAFEREAD(bandmap_recent_colour, _context);            ///< colour for bandmap entries that are less than two minutes old
   SAFEREAD(bands, _context);                            ///< comma-delimited bands
   SAFEREAD(batch_messages_file, _context);              ///< file that contains per-call batch messages
 

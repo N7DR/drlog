@@ -970,6 +970,10 @@ int main(int argc, char** argv)
   { const vector<int> fc = context.bandmap_fade_colours();
 
     for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.fade_colours(fc); } );
+
+    const int rc = context.bandmap_recent_colour();
+
+    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.recent_colour(rc); } );
   }
 
 // create thread to prune the bandmaps every minute
@@ -1623,7 +1627,7 @@ void* display_rig_status(void* vp)
                       last_call = last_call_inserted_with_space;
                     }
 
-//              ost << "last_call_inserted_with_space = " << last_call_inserted_with_space
+//              ost << "last_call_inserted_with_space = *" << last_call_inserted_with_space << "*; call_contents = *" << call_contents << "*" << endl;
 
                     if ((call_contents == last_call) or (call_contents == (last_call + " DUPE")) )
                       win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
@@ -2039,6 +2043,8 @@ void* prune_bandmap(void* vp)
     ALT-KP_6 -- increment bandmap column offset
     ENTER
     CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
+    KP ENTER -- send CQ #2
+    CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2761,7 +2767,7 @@ ost << "processing command: " << command << endl;
     processed = true;
   }
 
-// KP ENTER
+// KP ENTER -- send CQ #2
   if (!processed and (e.symbol() == XK_KP_Enter))
   { const string contents = remove_peripheral_spaces(win.read());
 
@@ -2829,7 +2835,7 @@ ost << "processing command: " << command << endl;
 
       contents = remove_peripheral_spaces(win.read());    // contents of CALL window may have changed, so we may need to re-insert/refresh call in bandmap
 
-// put call into bandmap
+// dupe check; put call into bandmap
       if (!contents.empty() and drlog_mode == SAP_MODE and !contains(contents, " DUPE"))
       {
 // possibly add the call to known mults

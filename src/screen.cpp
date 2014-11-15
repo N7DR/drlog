@@ -29,9 +29,9 @@
 
 using namespace std;
 
-pt_mutex screen_mutex;
+pt_mutex screen_mutex;          ///< mutex for access to screen
 
-cpair colours;
+cpair colours;                  ///< global repository for information about colour pairs
 
 // -----------  screen  ----------------
 
@@ -72,7 +72,11 @@ screen::~screen(void)
         \brief A single ncurses window
 */
 
-/// default constructor
+/*! \brief          default constructor
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+
+    The window is not ready for use after this constructor. It still needs to be initialised.
+*/
 window::window(const unsigned int flags) :
   _x(0),
   _y(0),
@@ -92,7 +96,12 @@ window::window(const unsigned int flags) :
    default_colours(COLOUR_PAIR(pair_nr));
 }
 
-/// create from an x, y, w, h array
+/*! \brief          create using position and size information from the configuration file
+    \param  wi      window position and size
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+
+    The window is ready for use after this constructor.
+*/
 window::window(const window_information& wi, const unsigned int flags) :
   _width(wi.w()),
   _height(wi.h()),
@@ -130,7 +139,12 @@ window::~window(void)
     delwin(_wp);
 }
 
-/// initialize an empty window from an x, y, w, h array
+/*! \brief          initialise using position and size information from the configuration file
+    \param  wi      window position and size
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+
+    The window is ready for use after this function has been called.
+*/
 void window::init(const window_information& wi, const unsigned int flags)
 { _x = wi.x();
   _y = wi.y();

@@ -154,10 +154,18 @@ public:
   inline const int rounded_kHz(void) const
     { return static_cast<int>(kHz() + 0.5); }
 
-/// get frequency as a string for display: xxxxx.y kHz
+/*! \brief      return string suitable for use in bandmap
+    \return     string of the frequency in kHz, to one decimal place ([x]xxxx.y)
+
+    Sets the frequency to the low edge of the band <i>b</i>
+*/
   const std::string display_string(void) const;
 
-/// get band that corresponds to the frequency
+/*! \brief      convert to BAND
+    \return     BAND in which the frequency is located
+
+    Returns BAND_160 if the frequency is outside all bands
+*/
   operator BAND(void) const;
 
 /// get lower band edge that corresponds to frequency

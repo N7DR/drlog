@@ -488,6 +488,7 @@ protected:
   std::set<std::string>     _recent_calls;     ///< calls recently added
   std::set<std::string>     _do_not_add;       ///< do not add these calls
   std::vector<int>          _fade_colours;     ///< the colours to use as entries age
+  int                       _recent_colour;    ///< colour to use for entries < 120 seconds old (if black, then not used)
 
   bandmap_filter_type*      _filter_p;         ///< pointer to a bandmap filter
   int                       _column_offset;    ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
@@ -543,6 +544,18 @@ public:
 /// set the colours to use as entries age
   inline void fade_colours(const std::vector<int> fc)
     { _fade_colours = fc; }
+
+/// the colour used for recent entries
+  inline const int recent_colour(void)
+    { SAFELOCK(_bandmap);
+      return _recent_colour;
+    }
+
+/// set the colour used for recent entries
+  inline void recent_colour(const int rc)
+    { SAFELOCK(_bandmap);
+      _recent_colour = rc;
+    }
 
 /// add an entry to the bandmap
   void operator+=(const bandmap_entry& be);

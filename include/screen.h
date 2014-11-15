@@ -251,22 +251,37 @@ protected:
     
 public:
 
-/// default constructor
+/*! \brief  default constructor
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+
+    The window is not ready for use after this constructor. It still needs to be initialised.
+*/
   window(const unsigned int flags = 0);
   
 /// create from an x, y, w, h array
-  window(const std::array<int, 4>& xywh, const unsigned int flags = 0);
+//  window(const std::array<int, 4>& xywh, const unsigned int flags = 0);
 
-/// create from an window_information as defined in drlog_context.h
+/*! \brief          create using position and size information from the configuration file
+    \param  wi      window position and size
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+
+    The window is ready for use after this constructor.
+*/
   window(const window_information& wi, const unsigned int flags = 0);
 
+/// destructor
+  virtual ~window(void);
+
+/*! \brief          initialise using position and size information from the configuration file
+    \param  wi      window position and size
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+
+    The window is ready for use after this function has been called.
+*/
   void init(const window_information& wi, const unsigned int flags = 0);
 
 // sets to fg/bg *IF* wi.colours_set() is false
   void init(const window_information& wi, int fg, int bg, const unsigned int flags = 0);
-
-/// destructor
-  virtual ~window(void);
 
 // RO access
   READ(height);
