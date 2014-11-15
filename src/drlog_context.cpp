@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 83 2014-11-10 21:31:02Z  $
+// $Id: drlog_context.cpp 84 2014-11-15 19:20:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

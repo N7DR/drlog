@@ -25,9 +25,9 @@
 static const std::string EOL      = "\n";      ///< end-of-line marker as string
 static const char        EOL_CHAR = '\n';      ///< end-of-line marker as character
 
-static const std::string  LF       = "\n";      ///< LF as string
+static const std::string  LF       = "\n";     ///< LF as string
 static const std::string& LF_STR  = LF;        ///< LF as string
-static const char         LF_CHAR  = '\n';      ///< LF as character
+static const char         LF_CHAR  = '\n';     ///< LF as character
 
 static const std::string CR       = "\r";      ///< CR as string
 static const char        CR_CHAR  = '\r';      ///< CR as character
@@ -48,31 +48,38 @@ const int STRING_UNDERFLOW            = -1,    ///< Underflow
           STRING_BOUNDS_ERROR         = -7,    ///< Attempt to access range outside string
           STRING_CONVERSION_FAILURE   = -8;    ///< Attempt to convert the format of a string failed
 
-/*! \brief convert from a CSV line
+/*! \brief convert from a CSV line to a vector of strings, each containing one field
+    \param  line    CSV line
+    \return         vector of fields from the CSV line
+
+    This is actually quite difficult to do properly
 */
 const std::vector<std::string> from_csv(const std::string& line);
 
-/* \brief duplicate a particular character
+/* \brief       duplicate a particular character within a string
+    \param  s   string in which characters are to be duplicated
+    \param  c   character to be duplicated
+    \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
 const std::string duplicate_char(const std::string& s, const char& c = '"');
 
 /*! \brief  provide a formatted date/time string
- *
- *   YYYY-MM-DDTHH:MM
+    \return current date and time in the format: YYYY-MM-DDTHH:MM
 */
 const std::string date_time_string(void);
 
 /*! \brief  convert struct tm pointer to formatted string
-  \param  format  format string
-  \param  time_p  date/time to format
-  \return formatted string
+    \param  format  format to be used
+    \param  tmp     date/time to be formatted
+    \return         formatted string
+
+    Uses strftime() to perform the formatting
 */
 const std::string format_time(const std::string& format, const tm* tmp);
 
-
 /*! \brief  generic conversion from string
-  \param  s string
-  \return string converted to type <i>T</i>
+    \param  s string
+    \return string converted to type <i>T</i>
 */
 template <class T>
 const T from_string(const std::string& s)

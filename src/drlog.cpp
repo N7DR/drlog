@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 83 2014-11-10 21:31:02Z  $
+// $Id: drlog.cpp 84 2014-11-15 19:20:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,9 +59,11 @@ enum DRLOG_MODE { CQ_MODE = 0,
                   SAP_MODE
                 };
 
-string VERSION("α");
-const string DATE_STR(__DATE__);  // Mmm dd yyyy
-const string TIME_STR(__TIME__);
+#include "../src/version"
+
+//string VERSION("β");
+//const string DATE_STR(__DATE__);  // Mmm dd yyyy
+//const string TIME_STR(__TIME__);
 
 static const set<string> variable_exchange_fields { "SERNO" };  // exchange fields that change
 

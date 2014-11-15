@@ -1,4 +1,4 @@
-// $Id: rules.h 83 2014-11-10 21:31:02Z  $
+// $Id: rules.h 84 2014-11-15 19:20:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -102,13 +102,26 @@ public:
   inline const size_t n_canonical_values(void) const
     { return _values.size(); }
 
-/// Get all the canonical values
+/*!     \brief      Get all the canonical values
+        \return     all the canonical values
+
+        Returns empty set if there are no canonical values
+*/
   const std::set<std::string> canonical_values(void) const;
 
-/// Get all the legal values for a single canonical value
+/*!     \brief      Get all the legal values for a single canonical value
+        \param  cv  canonical value
+        \return     all the legal values corresponding to the canonical value <i>cv</i>
+
+        Returns empty set if the canonical value does not exist
+*/
   const std::set<std::string> values(const std::string& cv) const;
 
-/// Get all the legal values (for all canonical values)
+/*!     \brief      Get all the legal values (for all canonical values)
+        \return     all possible legal values for all canonical values
+
+        Returns empty set if there are no canonical values
+*/
   const std::set<std::string> all_values(void) const;
 
 /// Is a string a known canonical value?
@@ -119,7 +132,10 @@ public:
   inline const bool is_legal_canonical_value(const std::string& putative_cv_value) const
     { return canonical_value_present(putative_cv_value); }
 
-/// Is a string a legal value (for any canonical value)
+/*!     \brief          Is a string a legal value (for any canonical value)
+        \param  value   value to be tested
+        \return         whether <i>value</i> is a legal value of any canonical value
+*/
   const bool is_legal_value(const std::string& value) const;
 
 /*!     \brief                  Is a particular value legal for a given canonical value?

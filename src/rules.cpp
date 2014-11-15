@@ -1,4 +1,4 @@
-// $Id: rules.cpp 83 2014-11-10 21:31:02Z  $
+// $Id: rules.cpp 84 2014-11-15 19:20:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -73,14 +73,23 @@ const size_t exchange_field_values::n_values(const string& cv) const
   return ( (posn == _values.end()) ? 0 : posn->second.size() );
 }
 
-/// Get all the legal values for a single canonical value
+/*!     \brief      Get all the legal values for a single canonical value
+        \param  cv  canonical value
+        \return     all the legal values corresponding to the canonical value <i>cv</i>
+
+        Returns empty set if the canonical value does not exist
+*/
 const set<std::string> exchange_field_values::values(const string& cv) const
 { const auto posn = _values.find(cv);
 
   return ( (posn == _values.end()) ? set<string>() : posn->second );
 }
 
-/// Get all the canonical values
+/*!     \brief      Get all the canonical values
+        \return     all the canonical values
+
+        Returns empty set if there are no canonical values
+*/
 const set<string> exchange_field_values::canonical_values(void) const
 { set<string> rv;
 
@@ -89,32 +98,26 @@ const set<string> exchange_field_values::canonical_values(void) const
   return rv;
 }
 
-/// Get all the legal values (for all canonical values)
+/*!     \brief      Get all the legal values (for all canonical values)
+        \return     all possible legal values for all canonical values
+
+        Returns empty set if there are no canonical values
+*/
 const set<string> exchange_field_values::all_values(void) const
 { set<string> rv;
 
-  for (const auto cvv : _values)
+  for (const auto& cvv : _values)
     COPY_ALL(cvv.second, inserter(rv, rv.begin()));
 
   return rv;
 }
 
-/// Is a string a legal value (for any canonical value)
+/*!     \brief          Is a string a legal value (for any canonical value)
+        \param  value   value to be tested
+        \return         whether <i>value</i> is a legal value of any canonical value
+*/
 const bool exchange_field_values::is_legal_value(const string& value) const
-{ //const set<string> all_canonical_values = canonical_values();
-
-//  for (const auto& cv : all_canonical_values)
-//  { if (cv < value)
-//      return true;
-//  }
-
-//  return false;
-
-//  return (canonical_values() < value);
-
-//  const set<string> all_canonical_values = canonical_values();
-
-  for (const auto& cv : canonical_values())
+{ for (const auto& cv : canonical_values())  // for each canonical value
   { if (is_legal_value(cv, value))
         return true;
   }
@@ -125,7 +128,7 @@ const bool exchange_field_values::is_legal_value(const string& value) const
 /*!     \brief                  Is a particular value legal for a given canonical value?
         \param  cv              canonical value
         \param  putative_value  value to test
-        \return     Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
+        \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
 const bool exchange_field_values::is_legal_value(const string& cv, const string& putative_value) const
 { if (!is_legal_canonical_value(cv))

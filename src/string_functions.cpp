@@ -25,9 +25,11 @@ using namespace std;
 
 extern ofstream ost;
 
-/*! \brief convert from a CSV line
- *
- *   This is actually quite difficult to do properly
+/*! \brief convert from a CSV line to a vector of strings, each containing one field
+    \param  line    CSV line
+    \return         vector of fields from the CSV line
+
+    This is actually quite difficult to do properly
 */
 const vector<string> from_csv(const string& line)
 { static const char quote = '"';
@@ -98,7 +100,10 @@ const vector<string> from_csv(const string& line)
   return rv;
 }
 
-/* \brief duplicate a particular character
+/* \brief       duplicate a particular character within a string
+    \param  s   string in which characters are to be duplicated
+    \param  c   character to be duplicated
+    \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
 const string duplicate_char(const string& s, const char& c)
 { string rv;
@@ -144,8 +149,7 @@ const string substring(const string& str, const size_t start_posn)
 }
 
 /*! \brief  provide a formatted date/time string
- *
- *  YYYY-MM-DDTHH:MM
+    \return current date and time in the format: YYYY-MM-DDTHH:MM
 */
 const string date_time_string(void)
 { const time_t now = time(NULL);             // get the time from the kernel
@@ -168,15 +172,15 @@ const string date_time_string(void)
 }
 
 /*! \brief  convert struct tm pointer to formatted string
-  \param  format  format string
-        \param  time_p  date/time to format
-  \return formatted string
+    \param  format  format to be used
+    \param  tmp     date/time to be formatted
+    \return         formatted string
+
+    Uses strftime() to perform the formatting
 */
 const string format_time(const string& format, const tm* tmp)
 { const unsigned int BUFLEN = 60;
-
   char buf[BUFLEN];
-
   const size_t nchars = strftime(buf, BUFLEN, format.c_str(), tmp);
 
   if (!nchars)
