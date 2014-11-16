@@ -38,6 +38,7 @@
 #include "statistics.h"
 #include "string_functions.h"
 #include "trlog.h"
+#include "version.h"
 
 #include <chrono>
 #include <fstream>
@@ -59,7 +60,13 @@ enum DRLOG_MODE { CQ_MODE = 0,
                   SAP_MODE
                 };
 
-#include "../src/version"
+//extern const string VERSION_TYPE;
+//extern const string DATE_STR;  // Mmm dd yyyy
+//extern const string TIME_STR;
+
+string VERSION;
+
+//#include "../src/version"
 
 //string VERSION("β");
 //const string DATE_STR(__DATE__);  // Mmm dd yyyy
@@ -441,7 +448,7 @@ int main(int argc, char** argv)
     const string date_str = DATE_STR.substr(DATE_STR.length() - 4) + "-" + MONTH_NAME_TO_NUMBER.at(DATE_STR.substr(0, 3)) + "-" +
                             (DATE_STR[4] == ' ' ? string("0") + DATE_STR.substr(5, 1) : DATE_STR.substr(4, 2));
 
-    VERSION += string(" ") + date_str + " " + TIME_STR.substr(0, 5);
+    VERSION = VERSION_TYPE + string(" ") + date_str + " " + TIME_STR.substr(0, 5);
 
     ost << "Running drlog version " << VERSION << endl;
   }

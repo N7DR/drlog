@@ -1,3 +1,0 @@
-string VERSION("β");
-const string DATE_STR(__DATE__);  // Mmm dd yyyy
-const string TIME_STR(__TIME__);
