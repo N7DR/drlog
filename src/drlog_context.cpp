@@ -406,7 +406,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // EXCHANGE SENT std::vector<std::pair<std::string, std::string> >  sent_exchange(void) const
 // exchange sent = RST:599, CQZONE:4
-    if (starts_with(testline, "EXCHANGE SENT"))
+    if (starts_with(testline, "EXCHANGE SENT") and !starts_with(testline, "EXCHANGE SENT CW ") and !starts_with(testline, "EXCHANGE SENT SSB "))
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
@@ -414,6 +414,30 @@ void drlog_context::_process_configuration_file(const string& filename)
       { vector<string> field = split_string(fields[n], ":");
 
         _sent_exchange.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
+      }
+    }
+
+// EXCHANGE SENT CW
+    if (starts_with(testline, "EXCHANGE SENT CW"))
+    { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
+      const vector<string> fields = split_string(comma_delimited_list, ",");
+
+      for (size_t n = 0; n < fields.size(); ++n)
+      { vector<string> field = split_string(fields[n], ":");
+
+        _sent_exchange_cw.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
+      }
+    }
+
+// EXCHANGE SENT SSB
+    if (starts_with(testline, "EXCHANGE SENT SSB"))
+    { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
+      const vector<string> fields = split_string(comma_delimited_list, ",");
+
+      for (size_t n = 0; n < fields.size(); ++n)
+      { vector<string> field = split_string(fields[n], ":");
+
+        _sent_exchange_ssb.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
       }
     }
 
@@ -1365,6 +1389,9 @@ drlog_context::drlog_context(const std::string& filename) :
   _rig1_type(""),                             // no default rig type
   _russian_filename("russian-data"),          // default file for Russian location information
   _screen_snapshot_file("screen"),            // screen snapshots will be in screen-<n>
+  _sent_exchange(),                           // no default sent exchange
+  _sent_exchange_cw(),                        // no default sent CW exchange
+  _sent_exchange_ssb(),                       // no default sent SSB exchange
   _shift_delta(10),                           // shift RIT by 10 Hz
   _shift_poll(50),                            // poll every 50 milliseconds
   _start_band(BAND_20),                       // start on 20m

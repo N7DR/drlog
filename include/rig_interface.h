@@ -42,14 +42,14 @@ const int RIG_UNABLE_TO_OPEN       = -1,    ///< unable to access rig
           RIG_UNEXPECTED_RESPONSE  = -8,    ///< received unexpected response from rig
           RIG_MISC_ERROR           = -9;    ///< other error
 
-const bool RESPONSE = true,
-           NO_RESPONSE = false;
+const bool RESPONSE = true,                 ///< raw K3 command expects a response
+           NO_RESPONSE = false;             ///< raw K3 command does not expect a response
 
-enum VFO { VFO_A = 0,
-           VFO_B
+enum VFO { VFO_A = 0,                       ///< VFO A
+           VFO_B                            ///< VFO B
          };
 
-extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;
+extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band andn per-mode
 
 // ---------------------------------------- rig_status -------------------------
 
@@ -123,7 +123,9 @@ public:
 /// destructor
   virtual ~rig_interface(void);
 
-/// prepare rig for use
+/*! \brief              Prepare rig for use
+    \param  context     context for the contest
+*/
   void prepare(const drlog_context& context);
 
   const bool valid(void) const

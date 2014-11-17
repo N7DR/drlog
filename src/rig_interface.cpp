@@ -57,6 +57,21 @@ const bool RESPONSE_EXPECTED = true;
  * of the current implementation of hamlib.
  */
 
+/* But there are many problems with the K3 soi-disant protocol as well. Even after trying to get clear answers from Elecraft, the following
+ * issues (at least) remain:
+ *
+ *   1. Which commands might cause a "?;" response if the K3 is "busy";
+ *   2. Do these include commands that don't normally return a response?
+ *   3. Which commands do eventually get executed even if the K3 is "busy";
+ *   4. How long might one have to wait for some commands to execute if the K3 is "busy"?
+ *   5. Which commands are subject to delay if the K3 is "busy"?
+ *   6. What is the precise definition of "busy"?
+ *
+ *   All in all, the only thing to do seems to be to throw commands at the K3 and hope that they stick. It is impractical to
+ *   check each time whether a command was executed, because the documentation says that certain (undefined) commands might take as
+ *   long as half a second to execute if the K3 is "busy".
+*/
+
 /*! \brief      static wrapper for function to poll rig for status
     \param  vp  the this pointer, in order to allow static member access to a real object
     \return     nullptr
@@ -113,97 +128,19 @@ rig_interface::rig_interface (void) :
   _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
   _last_commanded_frequency(),          // no last-commanded frequency
   _last_commanded_mode(MODE_CW),        // last commanded mode was CW
-  _last_commanded_frequency_b()         // no last-commanded frequency fro VFO B
+  _last_commanded_frequency_b()         // no last-commanded frequency for VFO B
 { }
 
 /// destructor
 rig_interface::~rig_interface(void)
 { }
 
-/// prepare rig for use
+/*! \brief              Prepare rig for use
+    \param  context     context for the contest
+*/
 void rig_interface::prepare(const drlog_context& context)
 { _port_name = context.rig1_port();
-
-/*
-
- int fd = ::open("/dev/ttyS0", O_RDWR | O_NOCTTY | O_NDELAY);
-
-  cout << "fd = " << fd << endl;
-
-  struct termios  config;
-
-  //
-  // Input flags - Turn off input processing
-  // convert break to null byte, no CR to NL translation,
-  // no NL to CR translation, don't mark parity errors or breaks
-  // no input parity check, don't strip high bit off,
-  // no XON/XOFF software flow control
-  //
-  config.c_iflag &= ~(IGNBRK | BRKINT | ICRNL |
-                      INLCR | PARMRK | INPCK | ISTRIP | IXON);
-  //
-  // Output flags - Turn off output processing
-  // no CR to NL translation, no NL to CR-NL translation,
-  // no NL to CR translation, no column 0 CR suppression,
-  // no Ctrl-D suppression, no fill characters, no case mapping,
-  // no local output processing
-  //
-  // config.c_oflag &= ~(OCRNL | ONLCR | ONLRET |
-  //                     ONOCR | ONOEOT| OFILL | OLCUC | OPOST);
-  config.c_oflag = 0;
-  //
-  // No line processing:
-  // echo off, echo newline off, canonical mode off,
-  // extended input processing off, signal chars off
-  //
-  config.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
-  //
-  // Turn off character processing
-  // clear current char size mask, no parity checking,
-  // no output processing, force 8 bit input
-  //
-  config.c_cflag &= ~(CSIZE | PARENB);
-  config.c_cflag |= CS8;
-  //
-  // One input byte is enough to return from read()
-  // Inter-character timer off
-  //
-  config.c_cc[VMIN]  = 1;
-  config.c_cc[VTIME] = 0;
-  //
-  // Communication speed (simple version, using the predefined
-  // constants)
-  //
-  if(cfsetispeed(&config, B4800) < 0 || cfsetospeed(&config, B4800) < 0)
-  {
-      cout << "speed error" << endl;
-  }
-  //
-  // Finally, apply the configuration
-  //
-   cout << "set attributes = " << tcsetattr(fd, TCSAFLUSH, &config) << endl;
-
-   char* c_out = "ID;";
-   char* c_in = new char [1000];
-
-
-   write(fd, c_out, 3);
-   sleep(1);
-   int n_read = read(fd, c_in, 500);
-
-   cout << "Received: " << n_read << " characters: " << endl;
-
-   if (n_read > 0)
-  { for (size_t n = 0; n < n_read; ++n)
-     cout << c_in[n];
-    cout << endl;
-  }
-
-   close(fd);
-*/
-
   rig_set_debug(RIG_DEBUG_NONE);
-
   rig_load_all_backends();
 
   const string rig_type = context.rig1_type();
@@ -241,9 +178,14 @@ void rig_interface::prepare(const drlog_context& context)
     _rig_connected = true;
 }
 
-// set frequency -- do nothing if zero is passed
+/*! \brief      Set frequency of VFO A
+    \param  f   frequency to which to QSY
+
+                Does nothing if <i>f</i> is not within a ham band
+*/
 void rig_interface::rig_frequency(const frequency& f)
-{ if (f.hz())
+{ //if (f.hz())
+  if (f.is_within_ham_band())
   { _last_commanded_frequency = f;
 
     if (_rig_connected)
@@ -251,7 +193,8 @@ void rig_interface::rig_frequency(const frequency& f)
 
       { SAFELOCK(_rig);
 
-        status = rig_set_freq(_rigp, RIG_VFO_CURR, f.hz());
+//        status = rig_set_freq(_rigp, RIG_VFO_CURR, f.hz());
+        status = rig_set_freq(_rigp, RIG_VFO_A, f.hz());
       }
 
       if (status != RIG_OK)

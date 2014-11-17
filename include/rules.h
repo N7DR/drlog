@@ -124,11 +124,17 @@ public:
 */
   const std::set<std::string> all_values(void) const;
 
-/// Is a string a known canonical value?
-  inline const bool canonical_value_present(const std::string& cv) const
-    { return (_values.find(cv) != _values.cend()); }
+/*!     \brief                      Is a string a known canonical value?
+        \param  putative_cv_value   string to test
+        \return                     whether <i>putative_cv_value</i> is a canonical value
+*/
+  inline const bool canonical_value_present(const std::string& putative_cv_value) const
+    { return (_values.find(putative_cv_value) != _values.cend()); }
 
-/// Is a string a known canonical value? Synonym for canonical_value_present()
+/*!     \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
+        \param  putative_cv_value   string to test
+        \return                     whether <i>putative_cv_value</i> is a canonical value
+*/
   inline const bool is_legal_canonical_value(const std::string& putative_cv_value) const
     { return canonical_value_present(putative_cv_value); }
 
@@ -141,7 +147,7 @@ public:
 /*!     \brief                  Is a particular value legal for a given canonical value?
         \param  cv              canonical value
         \param  putative_value  value to test
-        \return     Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
+        \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
   const bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
 
@@ -171,6 +177,11 @@ protected:
 public:
 
 /// construct from name, multiplier and optional status; also default constructor
+/*!     \brief                  Construct from name, multiplier and optional status; also default constructor
+        \param  nm              name of field
+        \param  mult            whether field is a mult
+        \param  opt             whether field is optional
+*/
   exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false);
 
   READ(name);                          ///< name of field
@@ -212,7 +223,6 @@ protected:
   unsigned int                        _default_points;      ///< default points
   std::map<std::string, unsigned int> _country_points;      ///< per-country points
   std::map<std::string, unsigned int> _continent_points;    ///< per-continent points
-
   enum points_type                    _points_type;         ///< is the points structure too complex for the configuration notation?
 
 public:
@@ -252,7 +262,7 @@ protected:
   std::set<MODE>    _permitted_modes;            ///< modes allowed in this contest
   std::vector<BAND> _permitted_bands;            ///< bands allowed in this contest; use a vector container in order to keep the frequency order
   
-  std::map<std::string, std::vector<exchange_field>>                        _exch;             ///< details of the received exchange fields
+  std::map<std::string, std::vector<exchange_field>> _exch;             ///< details of the received exchange fields
 //  canonical prefix, vector of fields in the exchange for that prefix
 
   std::map<std::string, std::vector<exchange_field>> _expanded_exch;    ///< details of the received exchange fields, with choices expanded (i.e., the leaves of the _exch element)
@@ -298,9 +308,9 @@ protected:
       std::map
         <std::string,                                      /* permitted value */
           std::string                                      /* canonical value */
-           > >                                  _permitted_to_canonical;
+           > >                                  _permitted_to_canonical;    ///< mapping from a permitted value to the corresponding canonical value
 
-  std::map<std::string /* field name */, EFT>   _exchange_field_eft;
+  std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
 // copied from context, so that we can score correctly without loading context
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score

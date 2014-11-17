@@ -40,7 +40,11 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
 
 extern const std::string MY_MARKER;                                ///< the string that marks my position in the bandmap
 
-const std::string to_string(const BANDMAP_ENTRY_SOURCE);           ///< printable name of a source
+/*! \brief  Printable version of the name of a bandmap_entry source
+    \param  bes source of a bandmap entry
+    \return Printable version of <i>bes</i>
+*/
+const std::string to_string(const BANDMAP_ENTRY_SOURCE);
 
 
 // -----------   needed_mult_details ----------------
@@ -186,7 +190,11 @@ public:
   READ(continents);                             ///< continents to filter
   READ(prefixes);                               ///< canonical country prefixes to filter
 
-/// return all the canonical prefixes and continents that are currently being filtered
+/*! \brief  All the continents and canonical prefixes that are currently being filtered
+    \return all the continents and canonical prefixes that are currently being filtered
+
+            The continents precede the canonical prefixes
+*/
   const std::vector<std::string> filter(void) const;
 
 /*!  \brief Add a string to, or remove a string from, the filter
@@ -258,6 +266,9 @@ public:
   READ(freq);                    ///< QRG
   READ(frequency_str);           ///< QRG (kHz)
 
+/*! \brief      Set _freq and _frequency_str
+    \param  f   frequency used to set the values
+*/
   void freq(const frequency& f);           ///< set _freq and _frequency_str
 
   READ_AND_WRITE(callsign);                ///< call

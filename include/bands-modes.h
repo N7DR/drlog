@@ -168,6 +168,8 @@ public:
 */
   operator BAND(void) const;
 
+  const bool is_within_ham_band(void) const;
+
 /// get lower band edge that corresponds to frequency
   const frequency lower_band_edge(void) const;
 

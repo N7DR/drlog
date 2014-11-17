@@ -26,19 +26,11 @@ using namespace std;
 
 extern const set<string> CONTINENT_SET { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };  // see https://stackoverflow.com/questions/177437/const-static
 
-const unsigned int CTY_FIELDS_PER_RECORD = 9;    ///< Number of fields in a single CTY record
-
-// default CQ zones for VE call areas; 0 to 9
-const array<int, 10> VE_CQ = { { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 }  };
-
-// default CQ zones for W call areas; 0 to 9
-const array<int, 10> W_CQ = { { 4, 5, 5, 5, 5, 4, 3, 3, 4, 4 } };
-
-// default ITU zones for VE call areas; 0 to 9
-const array<int, 10> VE_ITU = { { 8 /* probably not correct */, 9, 4, 7, 3, 3, 2, 2, 4, 9 }  };
-
-// default ITU zones for W call areas; 0 to 9
-const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };
+const unsigned int CTY_FIELDS_PER_RECORD = 9;                                                   ///< Number of fields in a single CTY record
+const array<int, 10> VE_CQ = { { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 }  };  ///< default CQ zones for VE call areas; 0 to 9
+const array<int, 10> W_CQ = { { 4, 5, 5, 5, 5, 4, 3, 3, 4, 4 } };                               ///< default CQ zones for W call areas; 0 to 9
+const array<int, 10> VE_ITU = { { 8 /* probably not correct */, 9, 4, 7, 3, 3, 2, 2, 4, 9 }  }; ///< default ITU zones for VE call areas; 0 to 9
+const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };                              ///< default ITU zones for W call areas; 0 to 9
 
 // -----------  cty_record  ----------------
 
@@ -59,8 +51,8 @@ const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };
             possible errors, but we do test for the most obvious ones.
 */
 cty_record::cty_record(const string& record)
-{ const string record_copy = remove_char(remove_char(record, LF_CHAR), CR_CHAR);    // make it all one line
-  const vector<string> fields = remove_peripheral_spaces(split_string(record_copy, ":"));                     // split the record into fields
+{ const string record_copy = remove_char(remove_char(record, LF_CHAR), CR_CHAR);            // make it all one line
+  const vector<string> fields = remove_peripheral_spaces(split_string(record_copy, ":"));   // split the record into fields
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
     throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found " + to_string(fields.size()) + " fields in record for " + fields[0]); 
@@ -124,7 +116,8 @@ cty_record::cty_record(const string& record)
   }
 
 // remove the '=' from all the the alternative calls
-  for_each(alt_callsigns.begin(), alt_callsigns.end(), [] (string& alt_callsign) { alt_callsign = remove_char(alt_callsign, '='); } );
+  FOR_ALL(alt_callsigns, [] (string& alt_callsign) { alt_callsign = remove_char(alt_callsign, '='); } );
+//  for_each(alt_callsigns.begin(), alt_callsigns.end(), [] (string& alt_callsign) { alt_callsign = remove_char(alt_callsign, '='); } );
 
 // save the alternative info; also modify the zone info now, since it will be faster later to retrieve it
 // directly from here than to check for zero here and then retrieve from the main record

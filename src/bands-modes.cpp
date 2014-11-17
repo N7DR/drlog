@@ -197,3 +197,12 @@ const frequency frequency::lower_band_edge(void) const
   }
 }
 
+const bool frequency::is_within_ham_band(void) const
+{ const BAND b = BAND(*this);
+
+  if (b != BAND_160)
+    return true;
+
+   return ( (_hz >= 1800000) and (_hz <= 2000000) );
+}
+

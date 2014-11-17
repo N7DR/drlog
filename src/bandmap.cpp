@@ -32,7 +32,10 @@ extern const set<string> CONTINENT_SET;         ///< two-letter abbreviations fo
 const string MY_MARKER("--------");             ///< the string that marks my position in the bandmap
 bandmap_filter_type bmf;                        ///< the global bandmap filter
 
-/// printable name of a source
+/*! \brief  Printable version of the name of a bandmap_entry source
+    \param  bes source of a bandmap entry
+    \return Printable version of <i>bes</i>
+*/
 const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
   { case BANDMAP_ENTRY_LOCAL :
@@ -55,7 +58,11 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
         \brief Control bandmap filtering
 */
 
-/// return all the canonical prefixes and continents that are currently being filtered
+/*! \brief  All the continents and canonical prefixes that are currently being filtered
+    \return all the continents and canonical prefixes that are currently being filtered
+
+            The continents precede the canonical prefixes
+*/
 const vector<string> bandmap_filter_type::filter(void) const
 { vector<string> rv = _continents;
 
@@ -64,11 +71,11 @@ const vector<string> bandmap_filter_type::filter(void) const
   return rv;
 }
 
-/*!  \brief Add a string to, or remove a string from, the filter
+/*!  \brief     Add a string to, or remove a string from, the filter
      \param str string to add or subtract
 
-     <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
-     if it's not already in the filter; otherwise it is removed.
+                <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
+                if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
 { vector<string>* vs_p = ( (CONTINENT_SET < str) ? &_continents : &_prefixes );          // create pointer to correct vector
@@ -88,7 +95,14 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 
 // -----------  bandmap_entry  ----------------
 
+/*! \brief  Obtain value corresponding to a type of callsign mult from a callsign
+    \param  callsign_mult_name  the type of the callsign mult
+    \param  callsign            the call for which the mult value is required
+
+    Returns the empty string if no sensible result can be returned
+*/
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
+
 extern exchange_field_database exchange_db;                          ///< dynamic database of exchange field values for calls; automatically thread-safe
 
 // default constructor
@@ -99,17 +113,19 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _expiration_time(0)
 { }
 
-/// set _freq and _frequency_str
+/*! \brief      Set _freq and _frequency_str
+    \param  f   frequency used to set the values
+*/
 void bandmap_entry::freq(const frequency& f)
 { _freq = f;
   _frequency_str = _freq.display_string();
 }
 
-/*! \brief  Calculate the mult status of all entries
+/*! \brief                  Calculate the mult status of all entries
     \param  rules           the rules for this contest
     \param  statistics      the current statistics
 
-    Adjust the mult status in accordance with the passed parameters
+                            Adjust the mult status in accordance with the passed parameters
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
@@ -161,11 +177,11 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   }
 }
 
-/*! \brief  Does this object match another bandmap_entry?
+/*! \brief      Does this object match another bandmap_entry?
     \param  be  target bandmap entry
-    \return whether frequency_str or callsign match
+    \return     whether frequency_str or callsign match
 
-    Used in += function.
+                Used in += function.
 */
 const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 { if ((be.is_my_marker()) or is_my_marker())       // mustn't delete a valid call if we're updating my QRG
@@ -201,7 +217,6 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
            (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));
 }
 
-/// difference in frequency between two bandmap entries
 /*! \brief              Return the difference in frequency between two bandmap entries
     \param  be          other bandmap entry
     \return             difference in frequency between *this and <i>be</i>
@@ -218,7 +233,7 @@ const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) con
     \param  call    call to add
     \return         number of posters associated with this call, after adding <i>call</i>
 
-    Does nothing if <i>call</i> is already a poster
+                    Does nothing if <i>call</i> is already a poster
 */
 const unsigned int bandmap_entry::add_poster(const string& call)
 { _posters.insert(call);
@@ -230,7 +245,6 @@ const unsigned int bandmap_entry::add_poster(const string& call)
 const string bandmap_entry::posters_string(void) const
 { string rv;
 
-//  for_each(_posters.cbegin(), _posters.cend(), [&rv] (const string& p) { rv += (p + " "); } );
   FOR_ALL(_posters, [&rv] (const string& p) { rv += (p + " "); } );
 
   if (!rv.empty())

@@ -201,6 +201,10 @@ protected:
   std::set<BAND>                               _score_bands;                    ///< which bands are going to be scored?
   std::string                                  _screen_snapshot_file;           ///< base name of file for screenshot
   std::vector<std::pair<std::string, std::string> > _sent_exchange;             ///< names and values of sent exchange fields
+  std::vector<std::pair<std::string, std::string> > _sent_exchange_cw;          ///< names and values of sent exchange fields, CW
+  std::vector<std::pair<std::string, std::string> > _sent_exchange_ssb;         ///< names and values of sent exchange fields, SSB
+
+//  std::map<MODE, std::vector<std::pair<std::string, std::string> > >_sent_exchange;  ///< names and values of sent exchange fields, per mode
   unsigned int                                 _shift_delta;                    ///< how many Hertz to QSY per poll of the shift key
   unsigned int                                 _shift_poll;                     ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   enum BAND                                    _start_band;                     ///< on what band do we start?
@@ -394,6 +398,8 @@ protected:
   SAFEREAD(score_bands, _context);
   SAFEREAD(screen_snapshot_file, _context);
   SAFEREAD(sent_exchange, _context);
+  SAFEREAD(sent_exchange_cw, _context);
+  SAFEREAD(sent_exchange_ssb, _context);
   SAFEREAD(shift_delta, _context);
   SAFEREAD(shift_poll, _context);
   SAFEREAD(start_band, _context);
