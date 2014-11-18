@@ -1468,3 +1468,29 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
   return false;
 }
 
+const vector<string> drlog_context::sent_exchange_names(void) const
+{ vector<string> rv;
+
+  for (const auto& pss : _sent_exchange)
+    rv.push_back(pss.first);
+
+  return rv;
+}
+
+const vector<string> drlog_context::sent_exchange_cw_names(void) const
+{ vector<string> rv;
+
+  for (const auto& pss : _sent_exchange_cw)
+    rv.push_back(pss.first);
+
+  return rv;
+}
+
+const vector<string> drlog_context::sent_exchange_ssb_names(void) const
+{ vector<string> rv;
+
+  for (const auto& pss : _sent_exchange_ssb)
+    rv.push_back(pss.first);
+
+  return rv;
+}

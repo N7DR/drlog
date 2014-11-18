@@ -467,6 +467,11 @@ protected:
     \return             whether <i>f</i> is in any marked range for the mode <i>m</i>
 */
   const bool mark_frequency(const MODE, const frequency& f);
+
+  const std::vector<std::string> sent_exchange_names(void) const;
+  const std::vector<std::string> sent_exchange_cw_names(void) const;
+  const std::vector<std::string> sent_exchange_ssb_names(void) const;
+
 };
 
 #endif    // DRLOG_CONTEXT_H

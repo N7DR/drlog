@@ -327,7 +327,7 @@ void rig_interface::split_enable(void)
 
   SAFELOCK(_rig);
 
-  if (_model = RIG_MODEL_K3)
+  if (_model == RIG_MODEL_K3)
   { raw_command("FT1;");
 
     return;
@@ -351,7 +351,7 @@ void rig_interface::split_disable(void)
 
   SAFELOCK(_rig);
 
-  if (_model = RIG_MODEL_K3)
+  if (_model == RIG_MODEL_K3)
   { raw_command("FR0;");
 
     return;
@@ -372,7 +372,7 @@ const bool rig_interface::split_enabled(void)
 { if (!_rig_connected)
     return false;
 
-  if (_model = RIG_MODEL_K3)
+  if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
 
     const string transmit_vfo = raw_command("FT;", true);

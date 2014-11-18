@@ -1180,13 +1180,23 @@ int main(int argc, char** argv)
         }
 
 // octothorpe
-        if (rules.sent_exchange_includes("SERNO"))
+        if (logbk.size() >= 1)
         { const QSO last_qso = logbk[logbk.size()];    // wrt 1
+          const MODE m = last_qso.mode();
 
-          octothorpe = (last_qso.empty() ? 1 : from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1);
+          if (rules.sent_exchange_includes("SERNO", m))
+            octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1;
         }
         else
-          octothorpe = logbk.size() + 1;
+          octothorpe = 1;
+
+//        if (rules.sent_exchange_includes("SERNO"))
+//        { const QSO last_qso = logbk[logbk.size()];    // wrt 1
+//
+//          octothorpe = (last_qso.empty() ? 1 : from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1);
+//        }
+//        else
+//          octothorpe = logbk.size() + 1;
       }
 
 // display most recent lines from log

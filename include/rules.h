@@ -267,7 +267,8 @@ protected:
 
   std::map<std::string, std::vector<exchange_field>> _expanded_exch;    ///< details of the received exchange fields, with choices expanded (i.e., the leaves of the _exch element)
 
-  std::vector<std::string>    _sent_exchange;    ///< names of fields in the sent exchange
+//  std::vector<std::string>    _sent_exchange;    ///< names of fields in the sent exchange
+  std::map<enum MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
 
 // dupe rules
   bool              _work_if_different_band;     ///< whether it is OK to work the same station on different bands
@@ -547,8 +548,9 @@ public:
   const std::string to_string(void) const;
 
 // does the sent exchange include a particular field?
-  inline const bool sent_exchange_includes(const std::string& str)
-    { return (find(_sent_exchange.begin(), _sent_exchange.end(), str) != _sent_exchange.end()); }
+//  inline const bool sent_exchange_includes(const std::string& str, const MODE m)
+//    { return (find(_sent_exchange.begin(), _sent_exchange.end(), str) != _sent_exchange.end()); }
+  const bool sent_exchange_includes(const std::string& str, const MODE m) const;
 
   inline const std::set<BAND> permitted_bands_set(void) const
     { return std::set<BAND>(_permitted_bands.cbegin(), _permitted_bands.cend() ); }
@@ -561,7 +563,7 @@ public:
          & _permitted_bands
          & _exch
          & _expanded_exch
-         & _sent_exchange
+         & _sent_exchange_names
          & _exchange_mults
          & _exchange_mults_used
          & _work_if_different_band

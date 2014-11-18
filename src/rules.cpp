@@ -427,6 +427,21 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (contains(modes, "SSB"))
     add_permitted_mode(MODE_SSB);
 
+// the sent exchange
+  if (_permitted_modes < MODE_CW)
+  { if (!context.sent_exchange_cw().empty())
+      _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_cw_names() } );
+    else
+      _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names() } );
+  }
+
+  if (_permitted_modes < MODE_SSB)
+  { if (!context.sent_exchange_ssb().empty())
+      _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_ssb_names() } );
+    else
+      _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names() } );
+  }
+
 // add the permitted bands
   const vector<string> bands_vec = remove_peripheral_spaces( split_string(context.bands(), ",") );
 
@@ -1055,6 +1070,21 @@ const bool contest_rules::is_exchange_mult(const string& name) const
 { SAFELOCK(rules);
 
   return ( find(_exchange_mults.cbegin(), _exchange_mults.cend(), name) != _exchange_mults.cend() );
+}
+
+const bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m) const
+{ SAFELOCK(rules);
+
+  try
+  { const auto& se = _sent_exchange_names.at(m);
+
+    return (find(se.cbegin(), se.cend(), str) != se.cend());
+  }
+
+  catch (...)
+  { ost << "ERROR: mode " << m << " is not a key in contest_rules::_sent_exchange_names" << endl;
+    return false;
+  }
 }
 
 //const set<BAND> contest_rules::permitted_bands_set(void) const
