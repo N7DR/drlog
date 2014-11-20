@@ -478,90 +478,6 @@ void drlog_context::_process_configuration_file(const string& filename)
         _mark_frequencies.insert( { MODE_SSB, frequencies } );
     }
 
-
-#if 0
-// MARK FREQUENCIES
-    if (starts_with(testline, "MARK FREQUENCIES") and !contains(testline, "CW") and !contains(testline, "SSB") and !rhs.empty())
-    { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
-      vector<pair<frequency, frequency>> frequencies;
-
-      for (const string& range : ranges)
-      { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
-
-        try
-        { //_mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
-          frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
-        }
-
-        catch (...)
-        { ost << "Parse error in MARK FREQUENCIES" << endl;
-          exit(-1);
-        }
-
- //       ost << "number of frequency ranges = " << frequencies.size() << endl;
-
-//        _mark_frequencies.insert( { MODE_CW, frequencies } );
-//        _mark_frequencies.insert( { MODE_SSB, frequencies } );
-      }
-
-      _mark_frequencies.insert( { MODE_CW, frequencies } );
-      _mark_frequencies.insert( { MODE_SSB, frequencies } );
-
-    }
-
-// MARK FREQUENCIES CW
-    if (starts_with(testline, "MARK FREQUENCIES CW") and !rhs.empty())
-    { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
-      vector<pair<frequency, frequency>> frequencies;
-
-      for (const string& range : ranges)
-      { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
-
-        try
-        { //_mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
-          frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
-        }
-
-        catch (...)
-        { ost << "Parse error in MARK FREQUENCIES CW" << endl;
-          exit(-1);
-        }
-
-//        _mark_frequencies.insert( { MODE_CW, frequencies } );
-      }
-
-      _mark_frequencies.insert( { MODE_CW, frequencies } );
-
-    }
-
-// MARK FREQUENCIES SSB
-    if (starts_with(testline, "MARK FREQUENCIES SSB") and !rhs.empty())
-    { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
-      vector<pair<frequency, frequency>> frequencies;
-
-      for (const string& range : ranges)
-      { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
-
-        try
-        { //_mark_frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
-//          ost << "marking frequency range " << frequency(bounds.at(0)).display_string() << " to " << frequency(bounds.at(1)).display_string() << endl;
-          frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
-        }
-
-        catch (...)
-        { ost << "Parse error in MARK FREQUENCIES SSB" << endl;
-          exit(-1);
-        }
-
-//        ost << "number of frequency ranges = " << frequencies.size() << endl;
-
-
-      }
-
-      _mark_frequencies.insert( { MODE_SSB, frequencies } );
-    }
-#endif
-
 // MATCH MINIMUM
     if (starts_with(testline, "MATCH MINIMUM"))
       _match_minimum = from_string<int>(RHS);
@@ -1468,6 +1384,9 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
   return false;
 }
 
+/*! \brief              Get all the names in the sent exchange
+    \return             the names of all the fields in the sent exchange
+*/
 const vector<string> drlog_context::sent_exchange_names(void) const
 { vector<string> rv;
 
@@ -1477,6 +1396,9 @@ const vector<string> drlog_context::sent_exchange_names(void) const
   return rv;
 }
 
+/*! \brief              Get all the names in the sent CW exchange
+    \return             the names of all the fields in the sent CW exchange
+*/
 const vector<string> drlog_context::sent_exchange_cw_names(void) const
 { vector<string> rv;
 
@@ -1486,6 +1408,9 @@ const vector<string> drlog_context::sent_exchange_cw_names(void) const
   return rv;
 }
 
+/*! \brief              Get all the names in the sent SSB exchange
+    \return             the names of all the fields in the sent SSB exchange
+*/
 const vector<string> drlog_context::sent_exchange_ssb_names(void) const
 { vector<string> rv;
 

@@ -765,6 +765,12 @@ const set<string> contest_rules::all_known_field_names(void) const
   return rv;
 }
 
+/*!     \brief              The exchange field template corresponding to a particular field
+        \param  field_name  name of the field
+        \return             The exchange field information associated with <i>field_name</i>
+
+        Returned EFT("none") if <i>field_name</i> is unknown.
+*/
 const EFT contest_rules::exchange_field_eft(const string& field_name) const
 { SAFELOCK(rules);
 
@@ -1063,6 +1069,19 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
 
       return rv;
     }
+  }
+}
+
+/*! \brief  Define a new set of bands to be scored
+    \param  new_bands   the set of bands to be scored
+
+    Does nothing if <i>new_bands</i> is empty
+*/
+void contest_rules::score_bands(const set<BAND>& new_bands)
+{ if (!new_bands.empty())
+  { SAFELOCK(rules);
+
+    _score_bands = new_bands;
   }
 }
 

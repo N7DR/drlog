@@ -406,6 +406,7 @@ public:
   SAFEREAD(work_if_different_band, rules);               ///< whether it is OK to work the same station on different bands
   SAFEREAD(work_if_different_mode, rules);               ///< whether it is OK to work the same station on different modes
   SAFEREAD(permitted_bands, rules);                      ///< bands allowed in this contest
+  SAFEREAD(permitted_modes, rules);                      ///< modes allowed in this contest
 
 /*!     \brief                      Get the expected exchange fields for a particular canonical prefix
         \param  canonical_prefix    canonical prefix
@@ -434,30 +435,38 @@ public:
   SAFEREAD(country_mults_used, rules);                   ///< are country mults used?
   SAFEREAD(exchange_mults_used, rules);                  ///< are exchange mults used?
 
-  SAFEREAD(score_bands, rules);               ///< bands currently used to calculate score
-  SAFEREAD(original_score_bands, rules);      ///< bands that were originally used to calculate score (from the configuration file)
-  SAFEREAD(exchange_mults, rules);  ///< the exchange multipliers, in the same order as in the configuration file
+  SAFEREAD(score_bands, rules);             ///< bands currently used to calculate score
+  SAFEREAD(original_score_bands, rules);    ///< bands that were originally used to calculate score (from the configuration file)
+  SAFEREAD(exchange_mults, rules);          ///< the exchange multipliers, in the same order as in the configuration file
 
   SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?
 
-  SAFEREAD(exchange_field_eft, rules);
+  SAFEREAD(exchange_field_eft, rules);      ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
+/*!     \brief              The exchange field template corresponding to a particular field
+        \param  field_name  name of the field
+        \return             The exchange field information associated with <i>field_name</i>
+
+        Returned EFT("none") if <i>field_name</i> is unknown.
+*/
   const EFT exchange_field_eft(const std::string& field_name) const;
 
-//  SAFEREAD(callsign_eft, rules);
-
-/// Get all the known names of exchange fields
+/// Return all the known names of exchange fields
   const std::set<std::string> all_known_field_names(void) const;
 
-/// restore the original set of bands to be scored (from the configuration file)
+/// Restore the original set of bands to be scored (from the configuration file)
   inline void restore_original_score_bands(void)
-    { _score_bands = _original_score_bands; }
+    { SAFELOCK(rules);
+
+      _score_bands = _original_score_bands;
+    }
 
 /*! \brief  Define a new set of bands to be scored
     \param  new_bands   the set of bands to be scored
- */
-  inline void score_bands(const std::set<BAND> new_bands)
-    { _score_bands = new_bands; }
+
+    Does nothing if <i>new_bands</i> is empty
+*/
+  void score_bands(const std::set<BAND>& new_bands);
 
 /*! \brief  Is a particular exchange field a multiplier
     \param  name   name of an exchange field (received)

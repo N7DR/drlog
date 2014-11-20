@@ -8,13 +8,6 @@
 // Copyright owners:
 //    N7DR
 
-/*
- * bands-modes.cpp
- *
- *  Created on: Jan 1, 2013
- *      Author: n7dr
- */
-
 #include "bands-modes.h"
 
 using namespace std;
@@ -56,40 +49,40 @@ frequency::frequency(const enum BAND b)
       break;
 
     case BAND_80 :
-        _hz = 3500000;
-        break;
+      _hz = 3500000;
+      break;
 
     case BAND_60 :
-        _hz = 5000000;
-        break;
+      _hz = 5000000;
+      break;
 
     case BAND_40 :
-        _hz = 7000000;
-        break;
+      _hz = 7000000;
+      break;
 
     case BAND_30 :
-        _hz = 10100000;
-        break;
+      _hz = 10100000;
+      break;
 
     case BAND_20 :
-       _hz = 14000000;
-        break;
+      _hz = 14000000;
+      break;
 
     case BAND_17 :
-        _hz = 18000000;
-        break;
+      _hz = 18000000;
+      break;
 
     case BAND_15 :
-        _hz = 21000000;
-        break;
+      _hz = 21000000;
+      break;
 
     case BAND_12 :
-        _hz = 24900000;
-        break;
+      _hz = 24900000;
+      break;
 
     case BAND_10 :
-       _hz = 28000000;
-        break;
+      _hz = 28000000;
+      break;
   }
 }
 
@@ -119,42 +112,6 @@ const string frequency::display_string(void) const
 */
 frequency::operator BAND(void) const
 { return to_BAND(hz());
-
-#if 0
-  static const map<unsigned int, BAND> fmap { make_pair(2000000, BAND_160) };  // fill this out, then iterate to find the right return value
-
-  if (_hz <= 2000000)
-    return BAND_160;
-
-  if (_hz <= 4000000)
-    return BAND_80;
-
-  if (_hz <= 6000000)
-    return BAND_60;
-
-  if (_hz <= 7300000)
-    return BAND_40;
-
-  if (_hz <= 11000000)
-    return BAND_30;
-
-  if (_hz <= 15000000)
-    return BAND_20;
-
-  if (_hz <= 19000000)
-    return BAND_17;
-
-  if (_hz <= 22000000)
-    return BAND_15;
-
-  if (_hz <= 25000000)
-    return BAND_12;
-
-  if (_hz <= 30000000)
-    return BAND_10;
-
-  return MIN_BAND;
-#endif
 }
 
 /// return lower band edge that corresponds to frequency
@@ -197,12 +154,13 @@ const frequency frequency::lower_band_edge(void) const
   }
 }
 
+/// is the frequency within a band?
 const bool frequency::is_within_ham_band(void) const
 { const BAND b = BAND(*this);
 
   if (b != BAND_160)
     return true;
 
-   return ( (_hz >= 1800000) and (_hz <= 2000000) );
+ return ( (_hz >= 1800000) and (_hz <= 2000000) );    // check if BAND_160, because that's the returned band if frequency is outside a band
 }
 

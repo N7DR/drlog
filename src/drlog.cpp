@@ -231,6 +231,7 @@ pt_mutex            known_callsign_mults_mutex;
 set<string>         known_callsign_mults;
 
 unsigned int        next_qso_number = 1;                      ///< actual number of next QSO
+unsigned int        n_modes = 0;                              ///< number of modes allowed in the contest
 unsigned int        octothorpe = 1;                           ///< serial number of next QSO
 string              at_call;                                  ///< call that should replace comat in "call ok now" message
 
@@ -574,6 +575,7 @@ int main(int argc, char** argv)
     }
 
     send_qtcs = rules.send_qtcs();    // grab it once
+    n_modes = rules.n_modes();        // grab this once too
 
 // define types of mults that are in use; after this point these should be treated as read-only
     callsign_mults_used = rules.callsign_mults_used();
@@ -2064,6 +2066,7 @@ void* prune_bandmap(void* vp)
     CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
     KP ENTER -- send CQ #2
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
+    SPACE -- generally, dupe check
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2182,7 +2185,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // ALT-M -- change mode
-  if (!processed and e.is_alt('m') and (rules.n_modes() > 1))
+  if (!processed and e.is_alt('m') and (n_modes > 1))
   { const BAND cur_band = safe_get_band();
     MODE cur_mode = safe_get_mode();
 
@@ -2832,7 +2835,7 @@ ost << "processing command: " << command << endl;
     processed = true;
   }
 
-// SPACE
+// SPACE -- generally, dupe check
   if (!processed and (e.is_char(' ')))
   {
 // if we're inside a command, just insert a space in the window
@@ -4495,31 +4498,50 @@ void populate_win_info(const string& callsign)
     static const unsigned int FIELD_WIDTH       = 5;          // width of other fields
     int next_y_value = win_info.height() - 3;                 // keep track of where we are vertically in the window
     const vector<BAND>& permitted_bands = rules.permitted_bands();
+    const set<MODE>& permitted_modes = rules.permitted_modes();
+
+//    if ( (n_modes > 1) and (permitted_modes < MODE_CW))
+//      win_info < cursor(0, next_y_value--) < "CW";
+
+//    cpu = colours.add(bm.recent_colour(), win.bg());
+//    win < cursor(x, y) < colour_pair(cpu);
+
+    for (const auto& this_mode : permitted_modes)
+    { if (n_modes > 1)
+      { const int original_cp = colours.add(win_info.fg(), win_info.bg());
+        int fg = win_info.fg();
+        int bg = win_info.bg();
+        const int tmp_cp = colours.add(COLOUR_BLACK, COLOUR_GREEN);
+
+        const string strip = create_string(' ', win_info.width());
+
+        win_info < cursor(0, next_y_value--) < colour_pair(tmp_cp) < strip < centre(MODE_NAME[this_mode], next_y_value + 1) < colour_pair(original_cp);
+      }
 
 // QSOs
-    string line = pad_string("QSO", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
-    const MODE cur_mode = safe_get_mode();
+      string line = pad_string("QSO", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+//      const MODE cur_mode = safe_get_mode();
 
-    for (const auto& b : permitted_bands)
-      line += pad_string( ( q_history.worked(callsign, b, cur_mode) ? "-" : BAND_NAME.at(b) ), FIELD_WIDTH);
+      for (const auto& b : permitted_bands)
+        line += pad_string( ( q_history.worked(callsign, b, this_mode) ? "-" : BAND_NAME.at(b) ), FIELD_WIDTH);
 
-    win_info < cursor(0, next_y_value--) < line;
+      win_info < cursor(0, next_y_value--) < line;
 
 // country mults
-    const set<string>& country_mults = rules.country_mults();
-    const string canonical_prefix = location_db.canonical_prefix(callsign);
+      const set<string>& country_mults = rules.country_mults();
+      const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-    if (!country_mults.empty() or context.auto_remaining_country_mults())
-    { if ((country_mults < canonical_prefix) or context.auto_remaining_country_mults())
-      { const set<string> known_country_mults = statistics.known_country_mults();
+      if (!country_mults.empty() or context.auto_remaining_country_mults())
+      { if ((country_mults < canonical_prefix) or context.auto_remaining_country_mults())
+        { const set<string> known_country_mults = statistics.known_country_mults();
 
-        line = pad_string(string("Country [") + canonical_prefix +"]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+          line = pad_string(string("Country [") + canonical_prefix +"]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
-        for (const auto& b : permitted_bands)
-        { string per_band_indicator;
+          for (const auto& b : permitted_bands)
+          { string per_band_indicator;
 
-          if (known_country_mults < canonical_prefix)
-            per_band_indicator = ( statistics.is_needed_country_mult(callsign, b) ? BAND_NAME.at(b) : "-" );
+            if (known_country_mults < canonical_prefix)
+              per_band_indicator = ( statistics.is_needed_country_mult(callsign, b) ? BAND_NAME.at(b) : "-" );
           else
             per_band_indicator = BAND_NAME.at(b);
 
@@ -4590,6 +4612,7 @@ void populate_win_info(const string& callsign)
         }
       }
     }
+  }
   }
 
   win_info.refresh();

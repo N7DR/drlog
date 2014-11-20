@@ -67,8 +67,8 @@ enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
                        };
 
 // window creation flags
-const unsigned int WINDOW_NO_CURSOR = 1,
-                   WINDOW_INSERT    = 2;
+const unsigned int WINDOW_NO_CURSOR = 1,            ///< do not display the cursor
+                   WINDOW_INSERT    = 2;            ///< INSERT mode
                     
 // allow English spelling for colour names
 const int COLOUR_BLACK   = COLOR_BLACK,
@@ -82,7 +82,7 @@ const int COLOUR_BLACK   = COLOR_BLACK,
 
 #define COLOUR_PAIR(n)  COLOR_PAIR(n)
                        
-extern pt_mutex screen_mutex;                       
+extern pt_mutex screen_mutex;                       ///< mutex for the screen
 
 // -----------  cursor  ----------------
 
@@ -102,7 +102,7 @@ class cpair
 {
 protected:
 
-  std::vector< std::pair< int, int> > _colours;    ///< the used colour pairs
+  std::vector< std::pair< int, int> > _colours;    ///< the (globally) used colour pairs
 
   pt_mutex _colours_mutex;                         ///< allow thread-safe access
 
@@ -162,7 +162,7 @@ protected:
   int    _h;                    ///< height
 
   std::string _fg_colour;       ///< name of foreground colour
-  std::string _bg_colour;
+  std::string _bg_colour;       ///< name of background colour
 
   bool   _colours_set;          ///< have the colours been set explicitly?
 

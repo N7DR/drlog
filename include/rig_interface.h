@@ -128,17 +128,22 @@ public:
 */
   void prepare(const drlog_context& context);
 
-  const bool valid(void) const
+/*! \brief              Is a rig ready for use?
+    \return             Whether a rig is available
+*/
+  inline const bool valid(void) const
     { return (_rigp != nullptr); }
 
-// get/set baud rate
+/// set baud rate
   void baud_rate(const unsigned int rate);
 
+/// get baud rate
   const unsigned int baud_rate(void);
 
-// get/set number of data bits
+/// set number of data bits
   void data_bits(const unsigned int bits);
 
+/// get number of data bits
   const unsigned int data_bits(void);
 
 // get/set number of stop bits

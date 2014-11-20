@@ -23,9 +23,33 @@ using namespace std;
         \brief encapsulate all the necessary stuff for a mult
 */
 
+/*! \brief  add a worked multiplier
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
+    \param  worked_for_a_mode   reference to array of worked information for a single mode
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Returns false if the value <i>str</i> is not known
+*/
+const bool multiplier::_add_worked(const std::string& str, const int b, std::array< std::set< std::string /* values */>, N_BANDS + 1>& worked_for_a_mode)
+{ if ((_used) and is_known(str))                                          // add only known mults
+  { if (_per_band)
+      return ( (worked_for_a_mode[b].insert(str)).second );
+    else // not per-band; keep track of per-band anyway, in case of single-band entry
+    { const bool rv = (worked_for_a_mode[b].insert(str)).second;
+
+      worked_for_a_mode[N_BANDS].insert(str);
+      return rv;
+    }
+  }
+  else
+    return false;
+}
+
 /// default constructor
 multiplier::multiplier(void) :
   _per_band(false),
+  _per_mode(false),
   _used(false)
 {
 }
@@ -52,6 +76,36 @@ const bool multiplier::add_worked(const string& str, const int b)
     return false;
 }
 
+/*! \brief  add a worked multiplier
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
+    \param  m   mode on which <i>str</i> has been worked
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Returns false if the value <i>str</i> is not known
+*/
+const bool multiplier::add_worked(const std::string& str, const int b, const MODE m)
+{ if ((_used) and is_known(str))                                          // add only known mults
+  { auto& pb = _workedbm[static_cast<int>(m)];
+
+    if (_per_mode)
+    { //auto& pb = _workedbm[static_cast<int>(m)];
+
+      return (_add_worked(str, b, pb));
+    }
+    else    // not per mode; keep track of per-mode anyway, in case of single-mode entry
+    { //auto& pb = _workedbm[static_cast<int>(m)];
+
+      const bool rv = _add_worked(str, b, pb);
+
+      pb[N_BANDS].insert(str);
+      return rv;
+    }
+  }
+
+  return false;
+}
+
 /*! \brief  add a worked multiplier, even if it is unknown
     \param  str value that has been worked
     \param  b   band on which <i>str</i> has been worked
@@ -65,6 +119,20 @@ const bool multiplier::unconditional_add_worked(const std::string& str, const in
   return add_worked(str, b);
 }
 
+/*! \brief  add a worked multiplier, even if it is unknown
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
+    \param  m   mode on which <i>str</i> has been worked
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Makes <i>str</i> known if it was previously unknown
+*/
+const bool multiplier::unconditional_add_worked(const std::string& str, const int b, const MODE m)
+{ add_known(str);
+
+  return add_worked(str, b, m);
+}
+
 /*! \brief  remove a worked multiplier
     \param  str value to be worked
     \param  b   band on which <i>str</i> is to be removed
@@ -74,6 +142,21 @@ const bool multiplier::unconditional_add_worked(const std::string& str, const in
 void multiplier::remove_worked(const string& str, const int b)
 { if (_used)
    _worked[ (_per_band ? b : N_BANDS) ].erase(str);
+}
+
+/*! \brief  remove a worked multiplier
+    \param  str value to be worked
+    \param  b   band on which <i>str</i> is to be removed
+    \param  m   mode on which <i>str</i> has been worked
+
+    Does nothing if <i>str</i> was not worked on <i>b</i>
+*/
+void multiplier::remove_worked(const std::string& str, const int b, const MODE m)
+{ if (_used)
+  { auto& pb = _workedbm[ (_per_mode ? static_cast<int>(m) : N_MODES) ];
+
+    pb[ (_per_band ? b : N_BANDS) ].erase(str);
+  }
 }
 
 /*! \brief      Has a station been worked on a particular band?

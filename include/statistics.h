@@ -120,6 +120,14 @@ public:
 */
   const bool is_needed_country_mult(const std::string& callsign, const BAND b);
 
+/*! \brief              Do we still need to work a particular country as a mult on a particular band and a particular mode?
+    \param  callsign    call to test
+    \param  b           band to test
+    \param  m           mode to test
+    \return             Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i> and mode <i>m</i>.
+*/
+    const bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m);
+
 /*! \brief          On what bands is a country mult needed?
     \param  call    call to test
     \param  rules   Rules for the contest

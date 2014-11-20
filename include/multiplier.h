@@ -40,9 +40,24 @@ class multiplier
 protected:
 
   bool                                                             _per_band;  ///< is this multiplier accumulated per-band?
+  bool                                                             _per_mode;  ///< is this multiplier accumulated per-mode?
+
   std::array< std::set< std::string /* values */>, N_BANDS + 1>    _worked;    ///< last entry is the all-band set
+
+  std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _workedbm;  // will replace _worked eventually
+
   std::set<std::string>                                            _known;     ///< all the (currently) known possible values
   bool                                                             _used;      ///< is this object in use?
+
+/*! \brief  add a worked multiplier
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
+    \param  worked_for_a_mode   reference to array of worked information for a single mode
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Returns false if the value <i>str</i> is not known
+*/
+  const bool _add_worked(const std::string& str, const int b, std::array< std::set< std::string /* values */>, N_BANDS + 1>& worked_for_a_mode);
 
 public:
 
@@ -50,6 +65,7 @@ public:
   multiplier(void);
 
   READ_AND_WRITE(per_band);                       ///< get/set _per_band
+  READ_AND_WRITE(per_mode);                       ///< get/set _per_mode
   READ_AND_WRITE(used);                           ///< get/set _used
 
 /*! \brief  add a value to the set of known values
@@ -102,12 +118,32 @@ public:
 /*! \brief  add a worked multiplier
     \param  str value that has been worked
     \param  b   band on which <i>str</i> has been worked
+    \param  m   mode on which <i>str</i> has been worked
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Returns false if the value <i>str</i> is not known
+*/
+    const bool add_worked(const std::string& str, const int b, const MODE m);
+
+/*! \brief  add a worked multiplier
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
     \return whether <i>str</i> was successfully added to the worked multipliers
 
     Returns false if the value <i>str</i> is not known
 */
   inline const bool add_worked(const std::string& str, const BAND b)
     { return (add_worked(str, static_cast<int>(b))); }
+
+/*! \brief  add a worked multiplier
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Returns false if the value <i>str</i> is not known
+*/
+  inline const bool add_worked(const std::string& str, const BAND b, const MODE m)
+    { return (add_worked(str, static_cast<int>(b), m)); }
 
 /*! \brief  add a worked multiplier, even if it is unknown
     \param  str value that has been worked
@@ -121,12 +157,33 @@ public:
 /*! \brief  add a worked multiplier, even if it is unknown
     \param  str value that has been worked
     \param  b   band on which <i>str</i> has been worked
+    \param  m   mode on which <i>str</i> has been worked
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Makes <i>str</i> known if it was previously unknown
+*/
+  const bool unconditional_add_worked(const std::string& str, const int b, const MODE m);
+
+/*! \brief  add a worked multiplier, even if it is unknown
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
     \return whether <i>str</i> was successfully added to the worked multipliers
 
     Makes <i>str</i> known if it was previously unknown
 */
   inline const bool unconditional_add_worked(const std::string& str, const BAND b)
     { return (unconditional_add_worked(str, static_cast<int>(b))); }
+
+/*! \brief  add a worked multiplier, even if it is unknown
+    \param  str value that has been worked
+    \param  b   band on which <i>str</i> has been worked
+    \param  m   mode on which <i>str</i> has been worked
+    \return whether <i>str</i> was successfully added to the worked multipliers
+
+    Makes <i>str</i> known if it was previously unknown
+*/
+  inline const bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m)
+    { return (unconditional_add_worked(str, static_cast<int>(b), m)); }
 
 /*! \brief  remove a worked multiplier
     \param  str value to be worked
@@ -135,6 +192,16 @@ public:
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
   void remove_worked(const std::string& str, const int b);
+
+/*! \brief  remove a worked multiplier
+    \param  str value to be worked
+    \param  b   band on which <i>str</i> is to be removed
+    \param  m   mode on which <i>str</i> has been worked
+
+
+    Does nothing if <i>str</i> was not worked on <i>b</i>
+*/
+  void remove_worked(const std::string& str, const int b, const MODE m);
 
 /// Returns whether the value <i>str</i> is a known multiplier
   inline const bool is_known(const std::string& str) const
@@ -172,8 +239,10 @@ public:
   void serialize(Archive& ar, const unsigned version)
   { ar & _known
        & _per_band
+       & _per_mode
        & _used
-       & _worked;
+       & _worked
+       & _workedbm;
   }
 };
 
