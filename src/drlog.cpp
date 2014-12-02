@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 84 2014-11-15 19:20:13Z  $
+// $Id: drlog.cpp 85 2014-12-01 23:26:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2590,7 +2590,18 @@ ost << "processing command: " << command << endl;
 
 // if we're in SAP mode, don't call him if he's a dupe
       if (drlog_mode == SAP_MODE and is_dupe)
-      { win <= " DUPE";
+      { //win <= " DUPE";
+
+        const cursor posn = win.cursor_position();
+//        ost << "cursor position = " << posn.x() << ", " << posn.y() << endl;
+
+        win < WINDOW_CLEAR < CURSOR_START_OF_LINE < (contents + " DUPE") <= posn;
+//        const cursor new_posn = win.cursor_position();
+
+//        ost << " new cursor position = "  << new_posn.x() << ", " << new_posn.y() << endl;
+
+//        win.move_cursor(posn);
+//        win.refresh();
 
         extract = logbk.worked( callsign );
         extract.display();
@@ -2882,7 +2893,11 @@ ost << "processing command: " << command << endl;
         const bool is_needed = is_needed_qso(contents, be.band());
 
         if (!is_needed /* worked_this_band_mode */)
-          win < WINDOW_CLEAR < CURSOR_START_OF_LINE < contents <= " DUPE";
+        { const cursor posn = win.cursor_position();
+          win < WINDOW_CLEAR < CURSOR_START_OF_LINE < (contents + " DUPE") <= posn;
+
+//          win < WINDOW_CLEAR < CURSOR_START_OF_LINE < contents <= " DUPE";
+        }
 
         be.calculate_mult_status(rules, statistics);
         be.is_needed(is_needed);

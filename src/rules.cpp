@@ -1,4 +1,4 @@
-// $Id: rules.cpp 84 2014-11-15 19:20:13Z  $
+// $Id: rules.cpp 85 2014-12-01 23:26:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1085,12 +1085,23 @@ void contest_rules::score_bands(const set<BAND>& new_bands)
   }
 }
 
+/*! \brief          Is an exchange field a mult?
+    \param  name    name of exchange field
+    \return         whether <i>name</i> is an exchange mult
+
+    Returns <i>false</i> if <i>name</i> is unrecognised
+*/
 const bool contest_rules::is_exchange_mult(const string& name) const
 { SAFELOCK(rules);
 
   return ( find(_exchange_mults.cbegin(), _exchange_mults.cend(), name) != _exchange_mults.cend() );
 }
 
+/*! \brief          Does the sent exchange include a particular field?
+    \param  str     name of field to test
+    \param  m       mode
+    \return         whether the sent exchange for mode <i>m</i> includes a field with the name <i>str</i>
+*/
 const bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m) const
 { SAFELOCK(rules);
 
@@ -1105,12 +1116,6 @@ const bool contest_rules::sent_exchange_includes(const std::string& str, const M
     return false;
   }
 }
-
-//const set<BAND> contest_rules::permitted_bands_set(void) const
-//{ set<BAND> rv;
-//
-//
-//}
 
 // The intention here is to follow the WPX definition. It would be
 // a lot more helpful if they actually supplied a strict algorithm rather than
@@ -1146,6 +1151,10 @@ extern location_database location_db;
  *
  */
 
+/*! \brief          Return the WPX prefix of a call
+    \param  call    callsign for which the WPX prefix is desired
+    \return         the WPX prefix corresponding to <i>call</i>
+*/
 const string wpx_prefix(const string& call)
 {
 // callsign has to contain three characters
@@ -1218,7 +1227,7 @@ const string wpx_prefix(const string& call)
 
   string designator = (left_size < right_size ? left : right);
 
-  ost << "designator = " << designator << endl;
+//  ost << "designator = " << designator << endl;
 
   if (designator.find_first_of(digits) == string::npos)
     designator += "0";
@@ -1228,17 +1237,17 @@ const string wpx_prefix(const string& call)
 
   const string rv = designator;
 
-  ost << "WPX prefix for " << callsign << " is: " << rv << endl;
+//  ost << "WPX prefix for " << callsign << " is: " << rv << endl;
 
 //  return substring(designator, 0, min(callsign.length(), last_digit_posn + 1));
   return rv;
 }
 
-/*! \brief  The SAC prefix for a particular call
-    \param  call         call for which the prefix is to be calculated
+/*! \brief          The SAC prefix for a particular call
+    \param  call    call for which the prefix is to be calculated
+    \return         the SAC prefix corresponding to <i>call</i>
 
-    Return the SAC prefix for <i>call</i>. The SAC rules do not allow for weird prefixes such as
-    LA100, etc.
+    The SAC rules as written do not allow for weird prefixes such as LA100, etc.
 */
 const string sac_prefix(const string& call)
 { static const set<string> scandinavian_countries { "JW", "JX", "LA", "OH", "OH0", "OJ0", "OX", "OY", "OZ", "SM", "TF" };

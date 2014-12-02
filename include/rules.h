@@ -1,4 +1,4 @@
-// $Id: rules.h 84 2014-11-15 19:20:13Z  $
+// $Id: rules.h 85 2014-12-01 23:26:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -468,8 +468,11 @@ public:
 */
   void score_bands(const std::set<BAND>& new_bands);
 
-/*! \brief  Is a particular exchange field a multiplier
-    \param  name   name of an exchange field (received)
+/*! \brief          Is an exchange field a mult?
+    \param  name    name of exchange field
+    \return         whether <i>name</i> is an exchange mult
+
+    Returns <i>false</i> if <i>name</i> is unrecognised
 */
   const bool is_exchange_mult(const std::string& name) const;
 
@@ -559,6 +562,11 @@ public:
 // does the sent exchange include a particular field?
 //  inline const bool sent_exchange_includes(const std::string& str, const MODE m)
 //    { return (find(_sent_exchange.begin(), _sent_exchange.end(), str) != _sent_exchange.end()); }
+/*! \brief          Does the sent exchange include a particular field?
+    \param  str     name of field to test
+    \param  m       mode
+    \return         whether the sent exchange for mode <i>m</i> includes a field with the name <i>str</i>
+*/
   const bool sent_exchange_includes(const std::string& str, const MODE m) const;
 
   inline const std::set<BAND> permitted_bands_set(void) const
@@ -598,17 +606,17 @@ public:
     }
 };
 
-/*! \brief  The WPX prefix for a particular call
-    \param  call         call for which the prefix is to be calculated
-
-    Return the WPX prefix for <i>call</i>
+/*! \brief          Return the WPX prefix of a call
+    \param  call    callsign for which the WPX prefix is desired
+    \return         the WPX prefix corresponding to <i>call</i>
 */
 const std::string wpx_prefix(const std::string& call);
 
-/*! \brief  The SAC prefix for a particular call
-    \param  call         call for which the prefix is to be calculated
+/*! \brief          The SAC prefix for a particular call
+    \param  call    call for which the prefix is to be calculated
+    \return         the SAC prefix corresponding to <i>call</i>
 
-    Return the SAC prefix for <i>call</i>
+    The SAC rules as written do not allow for weird prefixes such as LA100, etc.
 */
 const std::string sac_prefix(const std::string& call);
 

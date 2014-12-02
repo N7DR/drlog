@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 84 2014-11-15 19:20:13Z  $
+// $Id: bandmap.cpp 85 2014-12-01 23:26:41Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
