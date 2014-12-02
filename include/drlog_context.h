@@ -83,7 +83,6 @@ protected:
   std::string                                  _cabrillo_filename;                 ///< name of Cabrillo log
 
 // Cabrillo records
-  std::string                                  _cabrillo_callsign;                 ///< CALLSIGN:
   std::string                                  _cabrillo_address_1;                ///< first ADDRESS: line
   std::string                                  _cabrillo_address_2;                ///< second ADDRESS: line
   std::string                                  _cabrillo_address_3;                ///< third ADDRESS: line
@@ -92,6 +91,7 @@ protected:
   std::string                                  _cabrillo_address_state_province;   ///< ADDRESS-STATE-PROVINCE:
   std::string                                  _cabrillo_address_postalcode;       ///< ADDRESS-POSTALCODE:
   std::string                                  _cabrillo_address_country;          ///< ADDRESS-COUNTRY:
+  std::string                                  _cabrillo_callsign;                 ///< CALLSIGN:
   std::string                                  _cabrillo_category_assisted;        ///< CATEGORY-ASSISTED:
   std::string                                  _cabrillo_category_band;            ///< CATEGORY-BAND:
   std::string                                  _cabrillo_category_mode;            ///< CATEGORY-MODE:
@@ -214,7 +214,7 @@ protected:
                          std::vector<window_information> > > _static_windows;   ///< size, position and content information for each static window
   bool                                         _sync_keyer;                     ///< whether to synchronise the rig keyer speed with the computer
 
-  bool                                         _test;                ///< put rig in TEST mode?
+  bool                                         _test;                           ///< whether to put rig in TEST mode
 
   std::map<std::string, window_information >   _windows;             ///< size and position info for each window
   std::string                                  _worked_mults_colour; ///< colour of worked mults in the mult windows
@@ -265,32 +265,32 @@ protected:
   SAFEREAD(bands, _context);                            ///< comma-delimited bands
   SAFEREAD(batch_messages_file, _context);              ///< file that contains per-call batch messages
 
-  SAFEREAD(cabrillo_address_1, _context);
-  SAFEREAD(cabrillo_address_2, _context);
-  SAFEREAD(cabrillo_address_3, _context);
-  SAFEREAD(cabrillo_address_4, _context);
-  SAFEREAD(cabrillo_address_city, _context);
-  SAFEREAD(cabrillo_address_state_province, _context);
-  SAFEREAD(cabrillo_address_postalcode, _context);
-  SAFEREAD(cabrillo_address_country, _context);
-  SAFEREAD(cabrillo_callsign, _context);
-  SAFEREAD(cabrillo_category_assisted, _context);
-  SAFEREAD(cabrillo_category_band, _context);
-  SAFEREAD(cabrillo_category_mode, _context);
-  SAFEREAD(cabrillo_category_operator, _context);
-  SAFEREAD(cabrillo_category_overlay, _context);
-  SAFEREAD(cabrillo_category_power, _context);
-  SAFEREAD(cabrillo_category_station, _context);
-  SAFEREAD(cabrillo_category_time, _context);
-  SAFEREAD(cabrillo_category_transmitter, _context);
-  SAFEREAD(cabrillo_club, _context);
-  SAFEREAD(cabrillo_contest, _context);
-  SAFEREAD(cabrillo_e_mail, _context);
-  SAFEREAD(cabrillo_filename, _context);
-  SAFEREAD(cabrillo_location, _context);
-  SAFEREAD(cabrillo_name, _context);
-  SAFEREAD(cabrillo_operators, _context);
-  SAFEREAD(cabrillo_qso_template, _context);
+  SAFEREAD(cabrillo_address_1, _context);               ///< first ADDRESS: line
+  SAFEREAD(cabrillo_address_2, _context);               ///< second ADDRESS: line
+  SAFEREAD(cabrillo_address_3, _context);               ///< third ADDRESS: line
+  SAFEREAD(cabrillo_address_4, _context);               ///< fourth ADDRESS: line
+  SAFEREAD(cabrillo_address_city, _context);            ///< ADDRESS-CITY:
+  SAFEREAD(cabrillo_address_state_province, _context);  ///< ADDRESS-STATE-PROVINCE:
+  SAFEREAD(cabrillo_address_postalcode, _context);      ///< ADDRESS-POSTALCODE:
+  SAFEREAD(cabrillo_address_country, _context);         ///< ADDRESS-COUNTRY:
+  SAFEREAD(cabrillo_callsign, _context);                ///< CALLSIGN:
+  SAFEREAD(cabrillo_category_assisted, _context);       ///< CATEGORY-ASSISTED:
+  SAFEREAD(cabrillo_category_band, _context);           ///< CATEGORY-BAND:
+  SAFEREAD(cabrillo_category_mode, _context);           ///< CATEGORY-MODE:
+  SAFEREAD(cabrillo_category_operator, _context);       ///< CATEGORY-OPERATOR:
+  SAFEREAD(cabrillo_category_overlay, _context);        ///< CATEGORY-OVERLAY:
+  SAFEREAD(cabrillo_category_power, _context);          ///< CATEGORY-POWER:
+  SAFEREAD(cabrillo_category_station, _context);        ///< CATEGORY-STATION:
+  SAFEREAD(cabrillo_category_time, _context);           ///< CATEGORY-TIME:
+  SAFEREAD(cabrillo_category_transmitter, _context);    ///< CATEGORY-TRANSMITTER:
+  SAFEREAD(cabrillo_club, _context);                    ///< CLUB:
+  SAFEREAD(cabrillo_contest, _context);                 ///< CONTEST:
+  SAFEREAD(cabrillo_e_mail, _context);                  ///< EMAIL: (sic)
+  SAFEREAD(cabrillo_filename, _context);                ///< name of Cabrillo log
+  SAFEREAD(cabrillo_location, _context);                ///< LOCATION:
+  SAFEREAD(cabrillo_name, _context);                    ///< NAME:
+  SAFEREAD(cabrillo_operators, _context);               ///< OPERATORS:
+  SAFEREAD(cabrillo_qso_template, _context);            ///< format for Cabrillo QSOs
 
   SAFEREAD(call_ok_now_message, _context);
   SAFEREAD(callsign_mults, _context);

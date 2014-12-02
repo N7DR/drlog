@@ -18,8 +18,8 @@
 
 #include <string>
 
-extern const std::string VERSION_TYPE;
-extern const std::string DATE_STR;  // Mmm dd yyyy
-extern const std::string TIME_STR;
+extern const std::string VERSION_TYPE;  ///< level of release: α, β, γ
+extern const std::string DATE_STR;      ///< Mmm dd yyyy
+extern const std::string TIME_STR;      ///< hh:mm:ss
 
 #endif /* VERSION_H */

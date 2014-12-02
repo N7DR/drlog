@@ -299,6 +299,7 @@ window win_band_mode,               ///< the band and mode indicator
        win_scp,                     ///< SCP lookups
        win_scratchpad,              ///< scratchpad
        win_serial_number,           ///< next serial number (octothorpe)
+       win_srss,                    ///< my sunrise/sunset
        win_summary,                 ///< overview of score
        win_time,                    ///< current UTC
        win_title,                   ///< title of the contest
@@ -909,6 +910,10 @@ int main(int argc, char** argv)
 // SERIAL NUMBER window
   win_serial_number.init(context.window_info("SERIAL NUMBER"), WINDOW_NO_CURSOR);
   win_serial_number <= serial_number_string(octothorpe);
+
+// SRSS window
+  win_srss.init(context.window_info("SRSS"), WINDOW_NO_CURSOR);
+  win_srss <= ( (string)"SR/SS: " + sunrise(context.my_latitude(), context.my_longitude()) + "/" + sunrise(context.my_latitude(), context.my_longitude(), true));
 
 // SUMMARY window
   win_summary.init(context.window_info("SUMMARY"), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
