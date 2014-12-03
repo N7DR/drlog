@@ -207,6 +207,9 @@ time_t   alert_time = 0;
 pt_mutex  cq_mode_frequency_mutex;
 frequency cq_mode_frequency;
 
+pt_mutex  last_exchange_mutex;
+string    last_exchange;
+
 pt_mutex            thread_check_mutex;                       ///< both the following variables are under this mutex
 int                 n_running_threads = 0;
 bool                exiting = false;
@@ -2086,6 +2089,8 @@ void* prune_bandmap(void* vp)
     KP ENTER -- send CQ #2
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
     SPACE -- generally, dupe check
+    CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
+    SHIFT (RIT control)
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2609,18 +2614,9 @@ ost << "processing command: " << command << endl;
 
 // if we're in SAP mode, don't call him if he's a dupe
       if (drlog_mode == SAP_MODE and is_dupe)
-      { //win <= " DUPE";
-
-        const cursor posn = win.cursor_position();
-//        ost << "cursor position = " << posn.x() << ", " << posn.y() << endl;
+      { const cursor posn = win.cursor_position();
 
         win < WINDOW_CLEAR < CURSOR_START_OF_LINE < (contents + " DUPE") <= posn;
-//        const cursor new_posn = win.cursor_position();
-
-//        ost << " new cursor position = "  << new_posn.x() << ", " << new_posn.y() << endl;
-
-//        win.move_cursor(posn);
-//        win.refresh();
 
         extract = logbk.worked( callsign );
         extract.display();
@@ -2658,7 +2654,14 @@ ost << "processing command: " << command << endl;
         if ( (cur_mode == MODE_CW) and (cw_p) )
         { if (drlog_mode == CQ_MODE)
           { (*cw_p) << callsign;
-            (*cw_p) << expand_cw_message( context.exchange_cq() );
+
+            SAFELOCK(last_exchange);
+
+            last_exchange = expand_cw_message( context.exchange_cq() );
+            (*cw_p) << last_exchange;
+            last_exchange = callsign /* + " " */ + last_exchange;  // add the call so that we can re-send the entire sequence easily
+
+//            (*cw_p) << expand_cw_message( context.exchange_cq() );
 //            ost << "sent CQ exchange: " << callsign << " " << expand_cw_message( context.exchange_cq() ) << endl;
           }
           else
@@ -4656,14 +4659,22 @@ void populate_win_info(const string& callsign)
         \param  msg     The original message
         \return         <i>msg</i> with special characters replaced by their intended values
 
-        Expands <i>#</i> and <i>@</i> characters. As written, this function is simple but inefficient.
+        Expands <i>#</i> and <i>@</i> characters.
+        As written, this function is simple but inefficient.
+        # -> octothorpe_str
+        @ -> at_call
+        * -> last_exchange
  */
 const string expand_cw_message(const string& msg)
 { const string octothorpe_str = pad_string(to_string(octothorpe), (octothorpe < 1000 ? 3 : 4), PAD_LEFT, 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
   const string octothorpe_replaced = replace(msg, "#", octothorpe_str);
   const string at_replaced = replace(octothorpe_replaced, "@", at_call);
 
-  return at_replaced;
+  SAFELOCK(last_exchange);
+
+  const string asterisk_replaced = replace(at_replaced, "*", last_exchange);
+
+  return asterisk_replaced;
 }
 
 void* keyboard_test(void* vp)

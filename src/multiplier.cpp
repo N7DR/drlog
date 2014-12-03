@@ -172,6 +172,21 @@ const bool multiplier::is_worked(const string& str, const int b) const
   return (worked_this_band.find(str) != worked_this_band.cend());
 }
 
+/*! \brief      Has a station been worked on a particular band and mode?
+    \param  str callsign to test
+    \param  b   band to be tested
+*/
+const bool multiplier::is_worked(const std::string& str, const int b, const MODE m) const
+{ if (!_used)
+    return false;
+
+  auto& pb = _workedbm[ (_per_mode ? static_cast<int>(m) : N_MODES) ];
+
+  const set<string>& worked_this_band = pb[ (_per_band ? b : N_BANDS) ];
+
+  return (worked_this_band.find(str) != worked_this_band.cend());
+}
+
 // ostream << multiplier
 ostream& operator<<(ostream& ost, const multiplier& m)
 { const auto flags = ost.flags();

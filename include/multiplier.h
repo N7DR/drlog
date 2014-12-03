@@ -198,7 +198,6 @@ public:
     \param  b   band on which <i>str</i> is to be removed
     \param  m   mode on which <i>str</i> has been worked
 
-
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
   void remove_worked(const std::string& str, const int b, const MODE m);
@@ -212,6 +211,12 @@ public:
     \param  b   band to be tested
 */
   const bool is_worked(const std::string& str, const int b) const;
+
+/*! \brief      Has a station been worked on a particular band and mode?
+    \param  str callsign to test
+    \param  b   band to be tested
+*/
+  const bool is_worked(const std::string& str, const int b, const MODE m) const;
 
 /// Number of mults worked on a particular band
   inline const size_t n_worked(const int b) const
