@@ -105,7 +105,9 @@ extern const string callsign_mult_value(const string& callsign_mult_name, const 
 
 extern exchange_field_database exchange_db;                          ///< dynamic database of exchange field values for calls; automatically thread-safe
 
-// default constructor
+/*! \brief      Default constructor
+    \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
+*/
 bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _time(::time(NULL)),
   _source(s),
@@ -154,7 +156,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // exchange mult status
   clear_exchange_mult();
 
-  const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
+  const vector<string> exch_mults = rules.exchange_mults();                                  // the exchange multipliers, in the same order as in the configuration file
 
   for (const auto& exch_mult_name : exch_mults)
   { string guess = exchange_db.guess_value(_callsign, exch_mult_name);
@@ -295,9 +297,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      Returns the nearest station within the guard band, or the null string if no call is found.
 */
 const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
-{ // ost << "Inside _nearest callsign; target frequency (kHz) = " << target_frequency_in_khz << "; guard band (Hz) = " << guard_band_in_hz << endl;
-
-  if (target_frequency_in_khz < 1800 or target_frequency_in_khz > 29700)
+{ if (target_frequency_in_khz < 1800 or target_frequency_in_khz > 29700)
   { ost << "WARNING: bandmap::_nearest_callsign called with frequency in kHz = " << target_frequency_in_khz << endl;
     return string();
   }
@@ -322,23 +322,12 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
       finish_looking = true;
   }
 
-//  if (finish_looking and !rv.empty())
-//    ost << "nearest callsign to " << target_frequency_in_khz << " is " << rv << ", with abs(difference) = " << smallest_difference << endl;
-//  else
-//  { ost << "finish_looking = " << finish_looking << endl;
-//    ost << "rv = " << rv << endl;
-//  }
-
   return rv;
 }
 
 // insert an entry at the right place; also remove any current entry at the same frequency
 void bandmap::_insert(const bandmap_entry& be)
 { SAFELOCK(_bandmap);
-
-// remove any entry at the same frequency; now done in +=
-//  if (be.n_posters() >= _rbn_threshold)
-//    _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.callsign() != MY_MARKER)); } );  // remove any real entries at this QRG
 
   bool inserted = false;
 
@@ -352,8 +341,6 @@ void bandmap::_insert(const bandmap_entry& be)
 
   if (!inserted)
     _entries.push_back(be);    // this frequency is higher than any currently in the bandmap
-
-//  ost << "inserted " << be.callsign() << " from " << be.source() << " with n posters = " << be.n_posters() << "; posters = " << be.posters_string() << endl;
 }
 
 /// default constructor
@@ -365,7 +352,6 @@ bandmap::bandmap(void) :
   _rbn_threshold_and_filtered_entries_dirty(false),
   _recent_colour(string_to_colour("BLACK"))
 { }
-
 
 // a call will be marked as recent if:
 // its source is LOCAL or CLUSTER

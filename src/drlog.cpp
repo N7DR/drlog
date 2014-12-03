@@ -411,7 +411,21 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
     sort(vec_str.begin(), vec_str.end(), compare_calls);
     match_vector.clear();
 
+// this is experimental, to see if I like it in a contest;
+// I found it hard to see an exact match (for V6A) far down the list;
+// also, putting it first ensures that it can't disappear off the end
+// put an exact match at the front (this will never happen with a fuzzy match)
+    vector<string> tmp_matches;
+
     for (const auto& cs : vec_str)
+      if (cs == callsign)
+        tmp_matches.push_back(cs);
+
+    for (const auto& cs : vec_str)
+      if (cs != callsign)
+        tmp_matches.push_back(cs);
+
+    for (const auto& cs : tmp_matches)
     { const bool qso_b4 = logbk.qso_b4(cs);
       const bool dupe = logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules);
       int colour_pair_number = colours.add(win.fg(), win.bg());

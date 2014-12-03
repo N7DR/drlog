@@ -240,7 +240,9 @@ protected:
 
 public:
 
-/// construct from particular source; also default constructor
+/*! \brief      Default constructor
+    \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
+*/
   bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
 
 /*! \brief  Construct from some useful stuff
