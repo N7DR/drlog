@@ -151,25 +151,50 @@ public:
 
   const unsigned int stop_bits(void);
 
-// get/set frequency
+/*! \brief      Set frequency of VFO A
+    \param  f   frequency to which to QSY
+
+                Does nothing if <i>f</i> is not within a ham band
+*/
   void rig_frequency(const frequency& f);
 
+/// get the frequency of VFO A
   const frequency rig_frequency(void);
 
-// get/set frequency, VFO B
+/*! \brief      Set frequency of VFO B
+    \param  f   frequency to which to QSY
+
+                Does nothing if <i>f</i> is not within a ham band
+*/
   void rig_frequency_b(const frequency& f);
 
+// get frequency of VFO B
   const frequency rig_frequency_b(void);
 
   inline void rig_frequency_a_to_b(void)
     { rig_frequency_b(rig_frequency()); }
 
+/*! \brief  Enable split operation
+
+            hamlib has no good definition of exactly what split operation really means, and, hence,
+            has no clear description of precisely what the hamlib  rig_set_split_vfo() function is supposed
+            to do for various values of the permitted parameters. There is general agreement on the reflector
+            that the call contained herein *should* do the "right" thing -- but since there's no precise definition
+            of any of this, not all backends are guaranteed to behave the same.
+
+            Hence we use the explicit K3 command, since at least we know what that will do on that rig.
+*/
   void split_enable(void);
 
   void split_disable(void);
 
   const bool split_enabled(void);
 
+/*! \brief      Set mode
+    \param  m   new mode
+
+                Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
+*/
   const MODE rig_mode(void);
 
   void rig_mode(const MODE m);

@@ -16,6 +16,8 @@
         Classes and functions related to managing multipliers
 */
 
+#define SINGLE_MODE
+
 #include "log_message.h"
 #include "macros.h"
 #include "pthread_support.h"
@@ -42,7 +44,9 @@ protected:
   bool                                                             _per_band;  ///< is this multiplier accumulated per-band?
   bool                                                             _per_mode;  ///< is this multiplier accumulated per-mode?
 
+#if defined(SINGLE_MODE)
   std::array< std::set< std::string /* values */>, N_BANDS + 1>    _worked;    ///< last entry is the all-band set
+#endif    // SINGLE_MODE
 
   std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _workedbm;  // will replace _worked eventually
 
@@ -218,27 +222,46 @@ public:
 */
   const bool is_worked(const std::string& str, const int b, const MODE m) const;
 
+#if defined(SINGLE_MODE)
 /// Number of mults worked on a particular band
   inline const size_t n_worked(const int b) const
     { return (_used ? _worked[b].size() : 0); }
+#endif    // SINGLE_MODE
+
+/// Number of mults worked on a particular band and mode
+  const size_t n_worked(const int b, const MODE m) const;
 
 /// Number of known mults
   inline const size_t n_known(void) const
     { return _known.size(); }
 
+#if defined(SINGLE_MODE)
 /// All the mults worked on a particular band
   inline const std::set<std::string> worked(const int b) const
     { return (_used ? _worked[b] : std::set<std::string>() ); }
+#endif    // SINGLE_MODE
+
+/// All the mults worked on a particular band and mode
+  const std::set<std::string> worked(const int b, const MODE m) const;
 
 /// All the known mults
   inline const std::set<std::string> known(void) const
     { return _known; }
 
+#if defined(SINGLE_MODE)
 /// Set all bands to state in which no mults have been worked
   inline void clear(void)
   { for (auto& ss : _worked)    // this is, I think, clearer than using for_each here
       ss.clear();
   }
+#else
+/// Set all bands and modes to state in which no mults have been worked
+  inline void clear(void)
+  { for (auto& ass : _workedbm)    // this is, I think, clearer than using for_each here
+      for (auto& ss : ass)
+        ss.clear();
+  }
+#endif    // SINGLE_MODE
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -246,7 +269,9 @@ public:
        & _per_band
        & _per_mode
        & _used
+#if defined(SINGLE_MODE)
        & _worked
+#endif    // SINGLE_MODE
        & _workedbm;
   }
 };

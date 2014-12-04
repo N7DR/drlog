@@ -139,7 +139,7 @@ window::~window(void)
     delwin(_wp);
 }
 
-/*! \brief          initialise using position and size information from the configuration file
+/*! \brief          Initialise using position and size information from the configuration file
     \param  wi      window position and size
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
@@ -178,7 +178,15 @@ void window::init(const window_information& wi, const unsigned int flags)
   (*this) <= WINDOW_CLEAR;
 }
 
-// sets to fg/bg *IF* wi.colours_set() is false
+/*! \brief          Initialise using position and size information from the configuration file, and possibly set colours explicitly
+    \param  wi      window position and size
+    \param  fg      foreground colour
+    \param  bg      background colour
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+
+    The window is ready for use after this function has been called. <i>fg</i> and <i.bg</i>
+    override <i>wi.fg_colour()</i> and <i>wi.bg_colour()</i> iff wi.colours_set() is false.
+*/
 void window::init(const window_information& wi, int fg, int bg, const unsigned int flags)
 { _x = wi.x();
   _y = wi.y();
@@ -217,7 +225,10 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
   (*this) <= WINDOW_CLEAR;
 }
 
-/// move cursor
+/*! \brief          Move the logical cursor
+    \param  new_x   x position
+    \param  new_y   y position
+*/
 window& window::move_cursor(const int new_x, const int new_y)
 { if (!_wp)
     return *this;
@@ -260,12 +271,16 @@ window& window::operator<(const string& s)
   return *this;
 }
 
-/// write a set of strings to a window
-window& window::operator<(const set<string>& vec)
+/*! \brief          Write a set of strings to a window
+    \param  ss      set to write
+
+    Wraps words to new lines. Stops writing if there's insufficient room for the next string.
+*/
+window& window::operator<(const set<string>& ss)
 { if (!_wp)
     return *this;
 
-  vector<string> v(vec.cbegin(), vec.cend());
+  vector<string> v(ss.cbegin(), ss.cend());
 
   sort(v.begin(), v.end(), compare_calls);
 
@@ -277,7 +292,7 @@ window& window::operator<(const set<string>& vec)
     cursor_position();
     const int remaining_space = width() - _cursor_x;
 
- // stop writing if there's insufficient room for the next string
+// stop writing if there's insufficient room for the next string
     if (remaining_space < static_cast<int>(str.length()))
       if (!scrolling() and (_cursor_y == 0))
         break;

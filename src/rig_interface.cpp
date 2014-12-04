@@ -184,8 +184,7 @@ void rig_interface::prepare(const drlog_context& context)
                 Does nothing if <i>f</i> is not within a ham band
 */
 void rig_interface::rig_frequency(const frequency& f)
-{ //if (f.hz())
-  if (f.is_within_ham_band())
+{ if (f.is_within_ham_band())
   { _last_commanded_frequency = f;
 
     if (_rig_connected)
@@ -193,7 +192,6 @@ void rig_interface::rig_frequency(const frequency& f)
 
       { SAFELOCK(_rig);
 
-//        status = rig_set_freq(_rigp, RIG_VFO_CURR, f.hz());
         status = rig_set_freq(_rigp, RIG_VFO_A, f.hz());
       }
 
@@ -203,7 +201,11 @@ void rig_interface::rig_frequency(const frequency& f)
   }
 }
 
-// set frequency -- do nothing if zero is passed
+/*! \brief      Set frequency of VFO B
+    \param  f   frequency to which to QSY
+
+                Does nothing if <i>f</i> is not within a ham band
+*/
 void rig_interface::rig_frequency_b(const frequency& f)
 { if (f.hz())
   { _last_commanded_frequency_b = f;
@@ -222,6 +224,11 @@ void rig_interface::rig_frequency_b(const frequency& f)
   }
 }
 
+/*! \brief      Set mode
+    \param  m   new mode
+
+                Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
+*/
 void rig_interface::rig_mode(const MODE m)
 { static pbwidth_t last_cw_bandwidth  = 200;
   static pbwidth_t last_ssb_bandwidth = 1800;
@@ -283,7 +290,7 @@ void rig_interface::rig_mode(const MODE m)
   }
 }
 
-// get frequency
+/// get the frequency of VFO A
 const frequency rig_interface::rig_frequency(void)
 { if (!_rig_connected)
     return _last_commanded_frequency;
@@ -302,7 +309,7 @@ const frequency rig_interface::rig_frequency(void)
   }
 }
 
-// get frequency
+// get frequency of VFO B
 const frequency rig_interface::rig_frequency_b(void)
 { if (!_rig_connected)
     return _last_commanded_frequency_b;
@@ -321,6 +328,16 @@ const frequency rig_interface::rig_frequency_b(void)
   }
 }
 
+/*! \brief  Enable split operation
+
+            hamlib has no good definition of exactly what split operation really means, and, hence,
+            has no clear description of precisely what the hamlib  rig_set_split_vfo() function is supposed
+            to do for various values of the permitted parameters. There is general agreement on the reflector
+            that the call contained herein *should* do the "right" thing -- but since there's no precise definition
+            of any of this, not all backends are guaranteed to behave the same.
+
+            Hence we use the explicit K3 command, since at least we know what that will do on that rig.
+*/
 void rig_interface::split_enable(void)
 { if (!_rig_connected)
     return;
@@ -334,15 +351,12 @@ void rig_interface::split_enable(void)
   }
 
 // not a K3
-
-//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_B, RIG_SPLIT_ON, RIG_VFO_B);
-  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B);
-//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_CURR);
+  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B);  // magic parameters
 
   if (status != RIG_OK)
     _error_alert("Error executing SPLIT command");
 
-  ost << "SPLIT has been enabled" << endl;
+//  ost << "SPLIT has been enabled" << endl;
 }
 
 void rig_interface::split_disable(void)

@@ -54,6 +54,7 @@ multiplier::multiplier(void) :
 {
 }
 
+#if defined(SINGLE_MODE)
 /*! \brief  add a worked multiplier
     \param  str value that has been worked
     \param  b   band on which <i>str</i> has been worked
@@ -75,6 +76,7 @@ const bool multiplier::add_worked(const string& str, const int b)
   else
     return false;
 }
+#endif    // SINGLE_MODE
 
 /*! \brief  add a worked multiplier
     \param  str value that has been worked
@@ -133,6 +135,7 @@ const bool multiplier::unconditional_add_worked(const std::string& str, const in
   return add_worked(str, b, m);
 }
 
+#if defined(SINGLE_MODE)
 /*! \brief  remove a worked multiplier
     \param  str value to be worked
     \param  b   band on which <i>str</i> is to be removed
@@ -143,6 +146,7 @@ void multiplier::remove_worked(const string& str, const int b)
 { if (_used)
    _worked[ (_per_band ? b : N_BANDS) ].erase(str);
 }
+#endif    // SINGLE_MODE
 
 /*! \brief  remove a worked multiplier
     \param  str value to be worked
@@ -159,6 +163,7 @@ void multiplier::remove_worked(const std::string& str, const int b, const MODE m
   }
 }
 
+#if defined(SINGLE_MODE)
 /*! \brief      Has a station been worked on a particular band?
     \param  str callsign to test
     \param  b   band to be tested
@@ -171,6 +176,7 @@ const bool multiplier::is_worked(const string& str, const int b) const
 
   return (worked_this_band.find(str) != worked_this_band.cend());
 }
+#endif    // SINGLE_MODE
 
 /*! \brief      Has a station been worked on a particular band and mode?
     \param  str callsign to test
@@ -187,6 +193,27 @@ const bool multiplier::is_worked(const std::string& str, const int b, const MODE
   return (worked_this_band.find(str) != worked_this_band.cend());
 }
 
+/// Number of mults worked on a particular band and mode
+const size_t multiplier::n_worked(const int b, const MODE m) const
+{ if (!_used)
+    return 0;
+
+  auto& pb = _workedbm[ (_per_mode ? static_cast<int>(m) : N_MODES) ];
+
+  return pb[ (_per_band ? b : N_BANDS) ].size();
+}
+
+/// All the mults worked on a particular band and mode
+const set<string> multiplier::worked(const int b, const MODE m) const
+{ if (!_used)
+    return set<string>();
+
+  auto& pb = _workedbm[ (_per_mode ? static_cast<int>(m) : N_MODES) ];
+
+  return pb[ (_per_band ? b : N_BANDS) ];
+}
+
+#if defined(SINGLE_MODE)
 // ostream << multiplier
 ostream& operator<<(ostream& ost, const multiplier& m)
 { const auto flags = ost.flags();
@@ -194,15 +221,16 @@ ostream& operator<<(ostream& ost, const multiplier& m)
   ost << "multiplier is per-band = " << boolalpha << m.per_band() << endl
       << "worked multipliers:" << endl;
 
-  for (size_t n = 0; n <= N_BANDS; ++n)
-  { ost << "band = " << n << " : ";
+  { for (size_t n = 0; n <= N_BANDS; ++n)
+    { ost << "band = " << n << " : ";
 
-    const set<string>& ss = m.worked(n);
+      const set<string>& ss = m.worked(n);
 
-    for (const auto& worked : ss)
-      ost << worked << " ";
+      for (const auto& worked : ss)
+        ost << worked << " ";
 
-    ost << endl;
+      ost << endl;
+    }
   }
 
   ost << "known multipliers: ";
@@ -218,3 +246,39 @@ ostream& operator<<(ostream& ost, const multiplier& m)
 
   return ost;
 }
+#else
+// ostream << multiplier
+ostream& operator<<(ostream& ost, const multiplier& m)
+{ const auto flags = ost.flags();
+
+  ost << "multiplier is per-mode = " << boolalpha << m.per_mode() << endl
+      << "multiplier is per-band = " << boolalpha << m.per_band() << endl
+      << "worked multipliers:" << endl;
+
+  for (size_t nm = 0; nm <= N_MODES; ++nm)
+  { for (size_t n = 0; n <= N_BANDS; ++n)
+    { ost << "mode = " << nm << ", band = " << n << " : ";
+
+      const set<string>& ss = m.worked(n, static_cast<MODE>(nm));
+
+      for (const auto& worked : ss)
+        ost << worked << " ";
+
+      ost << endl;
+    }
+  }
+
+  ost << "known multipliers: ";
+
+  const set<string>& ss = m.known();
+
+  for (const auto& known : ss)
+    ost << known << " ";
+
+  ost << "multiplier is used = " << m.used() << endl;
+
+  ost.flags(flags);
+
+  return ost;
+}
+#endif    // SINGLE_MODE

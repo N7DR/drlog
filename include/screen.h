@@ -272,7 +272,7 @@ public:
 /// destructor
   virtual ~window(void);
 
-/*! \brief          initialise using position and size information from the configuration file
+/*! \brief          Initialise using position and size information from the configuration file
     \param  wi      window position and size
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
@@ -280,17 +280,25 @@ public:
 */
   void init(const window_information& wi, const unsigned int flags = 0);
 
-// sets to fg/bg *IF* wi.colours_set() is false
+/*! \brief          Initialise using position and size information from the configuration file, and possibly set colours explicitly
+    \param  wi      window position and size
+    \param  fg      foreground colour
+    \param  bg      background colour
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+
+    The window is ready for use after this function has been called. <i>fg</i> and <i.bg</i>
+    override <i>wi.fg_colour()</i> and <i>wi.bg_colour()</i> iff wi.colours_set() is false.
+*/
   void init(const window_information& wi, int fg, int bg, const unsigned int flags = 0);
 
 // RO access
-  READ(height);
-  READ(hidden_cursor);
-  READ(width);
+  READ(height);                     ///< height
+  READ(hidden_cursor);              ///< whether to hide the cursor
+  READ(width);                      ///< width
 
 // RW access
-  READ_AND_WRITE(bg);
-  READ_AND_WRITE(column_width);
+  READ_AND_WRITE(bg);               ///< background colour
+  READ_AND_WRITE(column_width);     ///< width of columns
   READ_AND_WRITE(fg);
   READ_AND_WRITE(insert);
   READ_AND_WRITE(vertical);
@@ -298,7 +306,10 @@ public:
   inline WINDOW* wp(void)
     { return _wp; }
   
-/// move cursor
+/*! \brief          Move the logical cursor
+    \param  new_x   x position
+    \param  new_y   y position
+*/
   window& move_cursor(const int new_x, const int new_y);
   
 /// move cursor
@@ -396,8 +407,12 @@ public:
 /// write a vector of strings to a window
   window& operator<(const std::vector<std::string>& vec);
 
-/// write a set of strings to a window
-  window& operator<(const std::set<std::string>& vec);
+/*! \brief          Write a set of strings to a window
+    \param  ss      set to write
+
+    Wraps words to new lines. Stops writing if there's insufficient room for the next string.
+*/
+  window& operator<(const std::set<std::string>& ss);
 
 /// write a vector of strings with possible different colours
   window& operator<(const std::vector<std::pair<std::string /* callsign */, int /* colour pair number */ > >& vec);
