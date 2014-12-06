@@ -407,9 +407,13 @@ inline std::string to_lower(const std::string& cs)
 /// does a string start with a particular substring?
 inline bool starts_with(const std::string& cs, const std::string& ss)
   { return cs.find(ss) == 0; }
-  
+
+/// convert an integer to a character-separated string
+const std::string separated_string(const int n, const std::string& sep = ",");
+
 /// convert an integer to a comma-separated string
-const std::string comma_separated_string(const int n);
+inline const std::string comma_separated_string(const int n)
+  { return separated_string(n); }
 
 /// get location of start of next word
 const size_t next_word_posn(const std::string& str, const size_t current_posn);

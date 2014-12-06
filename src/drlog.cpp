@@ -65,6 +65,8 @@ enum DRLOG_MODE { CQ_MODE = 0,
 //extern const string TIME_STR;
 
 string VERSION;
+string DP("·");
+string TS(",");
 
 //#include "../src/version"
 
@@ -498,6 +500,9 @@ int main(int argc, char** argv)
     context = *context_p;
     delete context_p;
 
+    DP = context.decimal_point();
+    TS = context.thousands_separator();
+
 // read the country data
     cty_data* country_data_p = nullptr;
 
@@ -901,7 +906,8 @@ int main(int argc, char** argv)
 
 // SCORE window
   win_score.init(context.window_info("SCORE"), WINDOW_NO_CURSOR);
-  { const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+  { // const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+    const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
     win_score < CURSOR_START_OF_LINE < "Score: " <= score_str;
   }
@@ -1304,7 +1310,8 @@ int main(int argc, char** argv)
 // display the current statistics
       win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
-      const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+//      const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+      const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
       win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
@@ -2469,7 +2476,8 @@ ost << "processing command: " << command << endl;
 // display the current statistics
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
-        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+//        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+        const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
       }
@@ -3005,7 +3013,8 @@ ost << "processing command: " << command << endl;
 // display the current statistics
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
-        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+//        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+        const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
@@ -3647,7 +3656,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // display the current statistics
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
-        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+//        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+        const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
         win_active_p = &win_call;          // switch to the CALL window
@@ -4195,7 +4205,8 @@ ost << "Adding new QSO(s)" << endl;
 // display the current statistics
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
-        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+//        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+        const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
         update_remaining_country_mults_window(statistics);
@@ -5050,7 +5061,8 @@ void update_rate_window(void)
     const pair<unsigned int, unsigned int> qs = rate.calculate_rate(rate_period * 60, context.normalise_rate() ? 3600 : 0);
 
     str += pad_string(to_string(qs.first), 3);
-    str += pad_string(comma_separated_string(qs.second), 10);
+//    str += pad_string(comma_separated_string(qs.second), 10);
+    str += pad_string(separated_string(qs.second, TS), 10);
 
     rate_str += (str + (str.length() == static_cast<unsigned int>(win_rate.width()) ? "" : LF) );      // LF is added automatically if a string fills a line
   }

@@ -127,6 +127,7 @@ protected:
   std::string                                  _cty_filename;             ///< filename of country file (default = "cty.dat")
   unsigned int                                 _cw_speed;                 ///< Speed in WPM
 
+  std::string                                  _decimal_point;         ///< character to use as decimal point
   std::vector<std::string>                     _do_not_show;           ///< do not show these calls when spotted (MY CALL is automatically not shown)
   std::string                                  _do_not_show_filename;  ///< filename of calls (one per line) not to be shown
   std::string                                  _drmaster_filename;     ///< filename of drmaster file (default = "drmaster")
@@ -215,6 +216,7 @@ protected:
   bool                                         _sync_keyer;                     ///< whether to synchronise the rig keyer speed with the computer
 
   bool                                         _test;                           ///< whether to put rig in TEST mode
+  std::string                                  _thousands_separator;            ///< character used as thousands separator in numbers
 
   std::map<std::string, window_information >   _windows;             ///< size and position info for each window
   std::string                                  _worked_mults_colour; ///< colour of worked mults in the mult windows
@@ -308,6 +310,7 @@ protected:
   SAFEREAD(cty_filename, _context);
   SAFEREAD(cw_speed, _context);
 
+  SAFEREAD(decimal_point, _context);
   SAFEREAD(do_not_show, _context);
   SAFEREAD(do_not_show_filename, _context);
   SAFEREAD(drmaster_filename, _context);
@@ -408,6 +411,7 @@ protected:
   SAFEREAD(sync_keyer, _context);
 
   SAFEREAD(test, _context);
+  SAFEREAD(thousands_separator, _context);  ///< character used as thousands separator in numbers
 
   SAFEREAD(worked_mults_colour, _context);
 

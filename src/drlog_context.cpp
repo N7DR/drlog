@@ -351,6 +351,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "CW SPEED"))
       _cw_speed = from_string<unsigned int>(RHS);
 
+// DECIMAL POINT
+    if (starts_with(testline, "DECIMAL POINT"))
+      _decimal_point = rhs;
+
 // DO NOT SHOW
     if (starts_with(testline, "DO NOT SHOW") and !starts_with(testline, "DO NOT SHOW FILE"))
       _do_not_show = remove_peripheral_spaces(split_string(RHS, ","));
@@ -807,6 +811,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "TEST"))
       _test = is_true;
 
+// THOUSANDS SEPARATOR
+    if (starts_with(testline, "THOUSANDS SEPARATOR"))
+      _thousands_separator = rhs;
+
 // WORKED MULTS COLOUR
     if (starts_with(testline, "WORKED MULTS COLOUR") or starts_with(testline, "WORKED MULTS COLOR"))
       _worked_mults_colour = RHS;
@@ -1260,6 +1268,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cq_auto_rit(false),                        // don't enable RIT in CQ mode
   _cty_filename("cty.dat"),                   // filename for country data
   _cw_speed(29),                              // 29 WPM
+  _decimal_point("·"),                        // use centred dot as decimal point
   _do_not_show(),                             // all calls (apart from my_call()) should be shown on the bandmap
   _do_not_show_filename(),                    // no do-not-show file
   _drmaster_filename("drmaster"),             // name of the drmaster file
@@ -1314,6 +1323,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _start_mode(MODE_CW),                       // start on CW
   _sync_keyer(false),                         // do not synchronise rig keyer with computer
   _test(false),                               // transmit is not disabled
+  _thousands_separator(","),                  // numbers are written with ","
   _worked_mults_colour("RED")                 // worked mults are in red
 { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
     _per_band_country_mult_factor.insert( { static_cast<BAND>(n), 1 } );

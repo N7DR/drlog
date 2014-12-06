@@ -600,8 +600,9 @@ const string transform_string(const string& cs, int(*pf)(int))
 }
 
 /// convert an integer to a comma-separated string
-const string comma_separated_string(const int n)
-{ const char separator = ',';
+const string separated_string(const int n, const string& sep)
+{ // char separator = ',';
+  const char separator = sep.at(0);
 
   string tmp = to_string(n);
   string rv;
@@ -617,7 +618,6 @@ const string comma_separated_string(const int n)
   }
   
   return rv;
-  
 }
 
 /// return the starting position for each word
