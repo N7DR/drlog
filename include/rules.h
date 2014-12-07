@@ -317,6 +317,9 @@ protected:
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score
   std::set<BAND>                               _original_score_bands;   ///< bands that were originally used to calculate score (from the configuration file)
 
+  std::set<MODE>                               _score_modes;            ///< modes currently used to calculate score
+  std::set<MODE>                               _original_score_modes;   ///< modes that were originally used to calculate score (from the configuration file)
+
 // my information (from context)  &&& TODO
   std::string                                  _my_continent;        ///< my continent
   std::string                                  _my_country;          ///< canonical prefix for my country
@@ -437,6 +440,8 @@ public:
 
   SAFEREAD(score_bands, rules);             ///< bands currently used to calculate score
   SAFEREAD(original_score_bands, rules);    ///< bands that were originally used to calculate score (from the configuration file)
+  SAFEREAD(score_modes, rules);             ///< modes currently used to calculate score
+  SAFEREAD(original_score_modes, rules);    ///< modes that were originally used to calculate score (from the configuration file)
   SAFEREAD(exchange_mults, rules);          ///< the exchange multipliers, in the same order as in the configuration file
 
   SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?
@@ -532,7 +537,7 @@ public:
 */
     const bool is_legal_value(const std::string& field_name, const std::string& putative_canonical_value) const;
 
-///< number of points if a particular exchange field has a particular value
+/// number of points if a particular exchange field has a particular value
   inline const std::map<std::string, unsigned int> exchange_value_points(void) const
     { SAFELOCK(rules); return _exchange_value_points; };
 

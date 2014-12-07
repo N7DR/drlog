@@ -383,9 +383,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _my_cq_zone = context.my_cq_zone();
   _my_itu_zone = context.my_itu_zone();
 
-// on which band(s) are we scoring?
+// on which band(s) and mode(s) are we scoring?
   _score_bands = context.score_bands();
   _original_score_bands = _score_bands;
+  _score_modes = context.score_modes();
+  _original_score_modes = _score_modes;
 
   _send_qtcs = context.qtcs() and (_my_continent != "EU");
 

@@ -301,6 +301,7 @@ window win_band_mode,               ///< the band and mode indicator
        win_rig,                     ///< rig status
        win_score,                   ///< total number of points
        win_score_bands,             ///< which bands contribute to score
+       win_score_modes,             ///< which modes contribute to score
        win_scp,                     ///< SCP lookups
        win_scratchpad,              ///< scratchpad
        win_serial_number,           ///< next serial number (octothorpe)
@@ -921,6 +922,20 @@ int main(int argc, char** argv)
       bands_str += (BAND_NAME[b] + " ");
 
     win_score_bands < CURSOR_START_OF_LINE < "Score Bands: " <= bands_str;
+  }
+
+// SCORE MODES window
+  win_score_modes.init(context.window_info("SCORE MODES"), WINDOW_NO_CURSOR);
+  { const set<MODE> score_modes = rules.score_modes();
+    string modes_str;
+
+    if (score_modes < MODE_CW)
+      modes_str += "CW ";
+
+    if (score_modes < MODE_SSB)
+      modes_str += "SSB ";
+
+    win_score_modes < CURSOR_START_OF_LINE < "Score Modes: " <= modes_str;
   }
 
 // SCP window
@@ -2431,8 +2446,8 @@ ost << "processing command: " << command << endl;
         }
       }
 
-// .RESCORE or .SCORE
-      if (substring(command, 0, 7) == "RESCORE" or substring(command, 0, 5) == "SCORE")
+// .RESCOREB or .SCOREB
+      if (substring(command, 0, 8) == "RESCOREB" or substring(command, 0, 6) == "SCOREB")
       { if (contains(command, " "))
         { size_t posn = command.find(" ");
           string rhs = substring(command, posn);
@@ -2452,7 +2467,7 @@ ost << "processing command: " << command << endl;
                   score_bands.insert(b);
               }
               else
-                alert("Error parsing [RE]SCORE command");
+                alert("Error parsing [RE]SCOREB command");
             }
           }
 

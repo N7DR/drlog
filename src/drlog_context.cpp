@@ -765,6 +765,15 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
     }
 
+// SCORE MODES
+    if (starts_with(testline, "SCORE MODES"))
+    { if (contains(testline, "CW"))
+        _score_modes.insert(MODE_CW);
+
+      if (contains(testline, "SSB") or contains(testline, "PH"))
+        _score_modes.insert(MODE_SSB);
+    }
+
 // SCREEN SNAPSHOT FILE
     if (starts_with(testline, "SCREEN SNAPSHOT FILE"))
       _screen_snapshot_file = rhs;
@@ -1343,6 +1352,15 @@ drlog_context::drlog_context(const std::string& filename) :
       catch (...)
       { }
     }
+  }
+
+// default is to score all permitted modes
+  if (_score_modes.empty())
+  { if (contains(_modes, "CW"))
+      _score_modes.insert(MODE_CW);
+
+    if (contains(_modes, "SSB"))
+      _score_modes.insert(MODE_SSB);
   }
 }
 
