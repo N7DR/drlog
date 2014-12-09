@@ -282,6 +282,7 @@ protected:
   std::set<std::string>               _countries;                     ///< collection of canonical prefixes for all the valid countries
   std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
+  bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
   bool                                _country_mults_used;            ///< are country mults used?
   std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
 
@@ -436,6 +437,7 @@ public:
   SAFEREAD(exchange_mults_per_band, rules);              ///< are exchange mults counted per-band?
 
   SAFEREAD(callsign_mults_per_mode, rules);              ///< are callsign mults counted per-mode?
+  SAFEREAD(country_mults_per_mode, rules);               ///< are country mults counted per-mode?
 
   SAFEREAD(callsign_mults_used, rules);                  ///< are callsign mults used?
   SAFEREAD(country_mults_used, rules);                   ///< are country mults used?

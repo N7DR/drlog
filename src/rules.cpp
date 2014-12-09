@@ -416,6 +416,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   _country_mults_used = !_country_mults.empty();
   _country_mults_per_band = context.country_mults_per_band();
+  _country_mults_per_mode = context.country_mults_per_mode();
   _per_band_country_mult_factor = context.per_band_country_mult_factor();
 
 // add the permitted modes

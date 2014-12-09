@@ -146,8 +146,11 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
     if (!country_mults.empty() or context.auto_remaining_country_mults())  // should always be true
       _country_multipliers.used(true);
 
-    if (context.country_mults_per_band())
+    if (rules.country_mults_per_band())
       _country_multipliers.per_band(true);
+
+    if (rules.country_mults_per_mode())
+      _country_multipliers.per_mode(true);
 
     if (!context.auto_remaining_country_mults())
       _country_multipliers.add_known(country_mults);

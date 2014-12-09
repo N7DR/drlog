@@ -338,6 +338,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "COUNTRY MULTS PER BAND"))
       _country_mults_per_band = is_true;
 
+// COUNTRY MULTS PER MODE
+    if (starts_with(testline, "COUNTRY MULTS PER MODE"))
+      _country_mults_per_mode = is_true;
+
 // CQ AUTO LOCK
     if (starts_with(testline, "CQ AUTO LOCK"))
       _cq_auto_lock = is_true;
@@ -1278,6 +1282,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _country_list(COUNTRY_LIST_WAEDC),          // WAE country list
   _country_mults_filter("ALL"),               // all countries are mults
   _country_mults_per_band(true),              // any country mults are per-band
+  _country_mults_per_mode(false),             // any country mults are not per-mode
   _cq_auto_lock(false),                       // don't lock the TX frequency in CQ mode
   _cq_auto_rit(false),                        // don't enable RIT in CQ mode
   _cty_filename("cty.dat"),                   // filename for country data

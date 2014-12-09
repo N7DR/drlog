@@ -121,6 +121,7 @@ protected:
   enum country_list_type                       _country_list;             ///< DXCC or WAE list?
   std::string                                  _country_mults_filter;     ///< the command from the configuration file
   bool                                         _country_mults_per_band;   ///< are country mults per-band?
+  bool                                         _country_mults_per_mode;   ///< are country mults per-mode?
   bool                                         _cq_auto_lock;             ///< whether to lock the transmitter in CQ mode
   bool                                         _cq_auto_rit;              ///< whether to enable RIT in CQ mode
   std::array<std::string, CQ_MEMORY_MESSAGES + 1>
@@ -307,6 +308,7 @@ protected:
   SAFEREAD(country_list, _context);
   SAFEREAD(country_mults_filter, _context);
   SAFEREAD(country_mults_per_band, _context);
+  SAFEREAD(country_mults_per_mode, _context);
   SAFEREAD(cq_auto_lock, _context);
   SAFEREAD(cq_auto_rit, _context);
   SAFEREAD(cq_memory, _context);
