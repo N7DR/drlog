@@ -293,6 +293,7 @@ protected:
 
   std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
   bool                                _exchange_mults_per_band;  ///< are exchange mults counted per-band?
+  bool                                _exchange_mults_per_mode;  ///< are exchange mults counted per-mode?
   bool                                _exchange_mults_used;      ///< are exchange mults used?
 
 // structures to hold information about the possible values of exchange fields
@@ -438,6 +439,7 @@ public:
 
   SAFEREAD(callsign_mults_per_mode, rules);              ///< are callsign mults counted per-mode?
   SAFEREAD(country_mults_per_mode, rules);               ///< are country mults counted per-mode?
+  SAFEREAD(exchange_mults_per_mode, rules);              ///< are exchange mults counted per-mode?
 
   SAFEREAD(callsign_mults_used, rules);                  ///< are callsign mults used?
   SAFEREAD(country_mults_used, rules);                   ///< are country mults used?

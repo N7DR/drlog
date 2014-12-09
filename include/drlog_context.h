@@ -139,6 +139,7 @@ protected:
   std::string                                  _exchange_fields_filename;  ///< file that holds regex templates of exchange fields
   std::string                                  _exchange_mults;            ///< comma-delimited exchange fields that are mults
   bool                                         _exchange_mults_per_band;   ///< are exchange mults per-band?
+  bool                                         _exchange_mults_per_mode;   ///< are exchange mults per-mode?
   std::map<std::string, std::string>           _exchange_per_country;      ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::string                                  _exchange_sap;              ///< exchange in SAP mode
   std::vector<std::string>                     _exchanges;                 ///< optional exchange choices
@@ -325,6 +326,7 @@ protected:
   SAFEREAD(exchange_fields_filename, _context);
   SAFEREAD(exchange_mults, _context);
   SAFEREAD(exchange_mults_per_band, _context);
+  SAFEREAD(exchange_mults_per_mode, _context);
   SAFEREAD(exchange_sap, _context);
 
   const std::map<std::string, std::string> exchange_per_country(void) const

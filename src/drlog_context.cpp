@@ -412,6 +412,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "EXCHANGE MULTS PER BAND"))
       _exchange_mults_per_band = is_true;
 
+// EXCHANGE MULTS PER MODE
+    if (starts_with(testline, "EXCHANGE MULTS PER MODE"))
+      _exchange_mults_per_mode = is_true;
+
 // EXCHANGE SAP
     if (starts_with(testline, "EXCHANGE SAP"))
       _exchange_sap = RHS;
@@ -1294,6 +1298,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _exchange("RST"),                           // exchange is just RST
   _exchange_fields_filename(),                // file that holds regex templates for exchange fields
   _exchange_mults_per_band(false),            // any exchange mults are once-only
+  _exchange_mults_per_mode(false),            // any exchange mults are once-only
   _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),  // 500 Hz guard band on CW, 2 kHz on slopbucket
   _individual_messages_file(),                // no file of individual messages
   _logfile("drlog.dat"),                      // name of log file

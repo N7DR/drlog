@@ -163,8 +163,11 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
       em.used(true);
 
-      if (context.exchange_mults_per_band())
+      if (rules.exchange_mults_per_band())
         em.per_band(true);
+
+      if (rules.exchange_mults_per_mode())
+        em.per_mode(true);
 
 // if values are obtained from grep, then the next line returns an empty vector
       const vector<string> canonical_values = rules.exch_canonical_values(exchange_mult_name);

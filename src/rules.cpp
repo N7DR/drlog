@@ -462,6 +462,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exch = _parse_context_exchange(context);
   _exchange_mults = remove_peripheral_spaces( split_string(context.exchange_mults(), ",") );
   _exchange_mults_per_band = context.exchange_mults_per_band();
+  _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
 
   for (const auto& qth_vec_field : _exch)
