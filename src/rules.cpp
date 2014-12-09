@@ -409,6 +409,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // are any mults derived from callsigns?
   _callsign_mults = context.callsign_mults();                    // e.g., "WPXPX"
   _callsign_mults_per_band = context.callsign_mults_per_band();
+  _callsign_mults_per_mode = context.callsign_mults_per_mode();
   _callsign_mults_used = !_callsign_mults.empty();
 
 //  ost << "number of possible country mults = " << _country_mults.size() << endl;

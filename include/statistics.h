@@ -48,6 +48,10 @@ protected:
   std::array<unsigned int, N_BANDS>                  _n_qsos;               ///< number of QSOs, per band
   std::array<unsigned int, N_BANDS>                  _qso_points;           ///< number of QSO points, per band
 
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_dupesbm;              ///< number of dupes, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_qsosbm;               ///< number of QSOs, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _qso_pointsbm;           ///< number of QSO points, per band and mode
+
   std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
 
 /*! \brief  add a callsign mult name, value and band to those worked
@@ -72,6 +76,8 @@ protected:
   bool          _include_qtcs;                  ///< do we include QTC information?
   unsigned int  _qtc_qsos_sent;                 ///< total number of QSOs sent in QTCs
   unsigned int  _qtc_qsos_unsent;               ///< total number of (legal) QSOs available but not yet sent in QTCs
+
+  const std::string _summary_string(const contest_rules& rules, const unsigned int n_mode);  // n_mode = rules.n_modes() + 1 => all modes
 
 public:
 
@@ -104,6 +110,14 @@ public:
     \param  b           band to test
 */
   const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const;
+
+/*! \brief              Do we still need to work a particular callsign mult on a particular band and mode?
+    \param  mult_name   name of mult
+    \param  mult_value  value of mult to test
+    \param  b           band to test
+    \param  m           mode to test
+*/
+    const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
 
 /*! \brief          Add a known value of country mult
     \param  str     Canonical prefix of mult

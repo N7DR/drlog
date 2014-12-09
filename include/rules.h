@@ -287,6 +287,7 @@ protected:
 
   std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
   bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
+  bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
   std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
@@ -433,6 +434,8 @@ public:
   SAFEREAD(callsign_mults_per_band, rules);              ///< are callsign mults counted per-band?
   SAFEREAD(country_mults_per_band, rules);               ///< are country mults counted per-band?
   SAFEREAD(exchange_mults_per_band, rules);              ///< are exchange mults counted per-band?
+
+  SAFEREAD(callsign_mults_per_mode, rules);              ///< are callsign mults counted per-mode?
 
   SAFEREAD(callsign_mults_used, rules);                  ///< are callsign mults used?
   SAFEREAD(country_mults_used, rules);                   ///< are country mults used?

@@ -112,6 +112,7 @@ protected:
   std::string                                  _call_ok_now_message;      ///< message if call was changed
   std::set<std::string>                        _callsign_mults;           ///< mults derived from callsign; e.g., WPXPX
   bool                                         _callsign_mults_per_band;  ///< are callsign mults per-band?
+  bool                                         _callsign_mults_per_mode;  ///< are callsign mults per-mode?
   unsigned int                                 _cluster_port;             ///< port on the cluster server
   std::string                                  _cluster_server;           ///< hostname or IP of cluster server
   std::string                                  _cluster_username;         ///< username to use on the cluster
@@ -298,6 +299,7 @@ protected:
   SAFEREAD(call_ok_now_message, _context);
   SAFEREAD(callsign_mults, _context);
   SAFEREAD(callsign_mults_per_band, _context);
+  SAFEREAD(callsign_mults_per_mode, _context);
   SAFEREAD(cluster_port, _context);
   SAFEREAD(cluster_server, _context);
   SAFEREAD(cluster_username, _context);

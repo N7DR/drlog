@@ -204,6 +204,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "CALLSIGN MULTS PER BAND"))
       _callsign_mults_per_band = is_true;
 
+// CALLSIGN MULTS PER MODE
+    if (starts_with(testline, "CALLSIGN MULTS PER MODE"))
+      _callsign_mults_per_mode = is_true;
+
 // CLUSTER PORT
     if (starts_with(testline, "CLUSTER PORT"))
       _cluster_port = from_string<int>(rhs);
@@ -1269,6 +1273,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cabrillo_qso_template(),
   _callsign_mults(),                          // callsign is not the basis for any mults
   _callsign_mults_per_band(false),            // any callsign mults are once-only
+  _callsign_mults_per_mode(false),            // any callsign mults are once-only
   _cluster_port(23),                          // standard telnet server port
   _country_list(COUNTRY_LIST_WAEDC),          // WAE country list
   _country_mults_filter("ALL"),               // all countries are mults
