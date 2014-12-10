@@ -77,6 +77,10 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
         \brief All the fields in the exchange, following parsing
 */
 
+/*! \brief                      Try to fill exchange fields with received field matches
+    \param  matches             the names of the matching fields, for each received field number
+    \param  received_values     the received values
+*/
 void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const vector<string>& received_values)
 { set<int> matched_field_numbers;
   set<string> matched_field_names;
@@ -95,7 +99,9 @@ void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const v
 }
 
 #if defined(NEW_CONSTRUCTOR)
-
+/*! \brief      Print the values of a <int, string, set<string>> tuple to the debug file
+    \param  t   the tuple to print
+*/
 void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) const
 { ost << "tuple:" << endl;
   ost << "  field number: " << get<0>(t) << endl;

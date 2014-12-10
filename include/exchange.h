@@ -81,9 +81,8 @@ protected:
   std::vector<parsed_exchange_field>    _fields;              ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   bool                                  _valid;               ///< is the object valid? (i.e., was parsing successful?)
 
-
 #if !defined(NEW_CONSTRUCTOR)
-  /*! \brief  Given several possible field names, choose one that fits the data
+/*! \brief  Given several possible field names, choose one that fits the data
     \param  choice_name   the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
     \param  received_field the value of the received field
     \return the individual name of a field in <i>choice_name</i> that fits the data
@@ -94,9 +93,18 @@ protected:
   const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
 #endif
 
+/*! \brief                      Try to fill exchange fields with received field matches
+    \param  matches             the names of the matching fields, for each received field number
+    \param  received_values     the received values
+*/
   void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
 
+#if defined(NEW_CONSTRUCTOR)
+/*! \brief      Print the values of a <int, string, set<string>> tuple to the debug file
+    \param  t   the tuple to print
+*/
   void _print_tuple(const std::tuple<int, std::string, std::set<std::string>>& t) const;
+#endif
 
 public:
 
@@ -339,10 +347,10 @@ protected:
             <std::string                       /* indistinguishable legal values */
             >> _values;
 
-  std::set<std::string>  _legal_non_regex_values;
-  std::map<std::string, std::string>  _value_to_canonical;
+  std::set<std::string>  _legal_non_regex_values;           ///< all legal values not obtained from a regex
+  std::map<std::string, std::string>  _value_to_canonical;  ///< key = value; value = corresponding canonical value
 
-  bool _is_mult;                       ///< is this field a mult?
+  bool _is_mult;                                            ///< is this field a mult?
 
 public:
 

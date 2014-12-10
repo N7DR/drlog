@@ -248,18 +248,14 @@ public:
 /*! \brief  Construct from some useful stuff
     \param  post            a post from a cluster/RBN
     \param  expiration      time at which this entry will expire
-    \param  is_needed       do we need to work this station on this band?
-    \param  is_needed_mult  would this station be a mult on this band?
+    \param  is_needed_callsign_mult  needed values of callsign mults on this band
+    \param  is_needed_country_mult   needed values of country mults on this band
+    \param  is_needed_exchange_mult  needed values of exchange mults on this band
 */
-//  bandmap_entry(const dx_post& post, const time_t expiration, const bool is_needed, const bool is_needed_mult);
-
 //  bandmap_entry(const dx_post& post, const time_t expiration, const bool is_needed,
-//                const bool is_needed_callsign_mult, const bool is_needed_country_mult, const bool is_needed_exchange_mult);
-
-  bandmap_entry(const dx_post& post, const time_t expiration, const bool is_needed,
-                const needed_mult_details<std::pair<std::string, std::string>>& is_needed_callsign_mult,
-                const needed_mult_details<std::string>& is_needed_country_mult,
-                const needed_mult_details<std::pair<std::string, std::string>>& is_needed_exchange_mult);
+//                const needed_mult_details<std::pair<std::string, std::string>>& is_needed_callsign_mult,
+//                const needed_mult_details<std::string>& is_needed_country_mult,
+//                const needed_mult_details<std::pair<std::string, std::string>>& is_needed_exchange_mult);
 
 /// define the sorting criterion to be applied to a pair of bandmap entries
   inline const bool operator<(const bandmap_entry& be) const
@@ -282,11 +278,13 @@ public:
   READ_AND_WRITE(expiration_time);         ///< time at which this entry expires (in seconds since the epoch)
   READ_AND_WRITE(source);                  ///< the source of this entry
 
-  READ_AND_WRITE(is_needed);                      ///< do we need this call?
+  READ_AND_WRITE(is_needed);                    ///< do we need this call?
 
+/// was this bandmap_entry generated from the RBN?
   inline const bool is_rbn(void) const
     { return (_source == BANDMAP_ENTRY_RBN); }
 
+/// does the call in this bandmap_entry match the value <i>str</i>?
   inline const bool call_is(const std::string& str) const
     { return (_callsign == str); }
 
