@@ -29,8 +29,19 @@
 */
 const float bearing(const float& lat1, const float& long1, const float& lat2, const float& long2);
 
+/*! \brief  Obtain distance in km between two locations
+    \param  lat1    latitude of source, in degrees (+ve north)
+    \param  long1   longitude of source, in degrees (+ve east)
+    \param  lat2    latitude of target, in degrees (+ve north)
+    \param  long2   longitude of target, in degrees (+ve east)
+    \return distance between source and target, in km
+
+    See http://www.movable-type.co.uk/scripts/latlong.html:
+*/
 const float distance(const float& lat1, const float& long1, const float& lat2, const float& long2);
+
 const std::string sunrise(const float& lat, const float& lon, const bool calc_sunset = false);
+
 inline const std::string sunset(const float& lat, const float& lon)
   { return sunrise(lat, lon, true); }
 

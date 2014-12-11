@@ -3592,6 +3592,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
           qso.sent_exchange(sent_exchange);
 
+//          ost << "QSO: " << qso << endl;
+
 // build name/value pairs for the received exchange
           vector<received_field>  received_exchange;
 

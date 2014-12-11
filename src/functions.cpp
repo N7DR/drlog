@@ -19,12 +19,26 @@
 
 #include <math.h>
 
-extern message_stream           ost;
+extern message_stream ost;  ///< debugging/logging output
 
 using namespace std;
 
-// obtain distance, given two locations
-// http://www.movable-type.co.uk/scripts/latlong.html
+/*! \brief  Obtain distance in km between two locations
+    \param  lat1    latitude of source, in degrees (+ve north)
+    \param  long1   longitude of source, in degrees (+ve east)
+    \param  lat2    latitude of target, in degrees (+ve north)
+    \param  long2   longitude of target, in degrees (+ve east)
+    \return distance between source and target, in km
+
+    See http://www.movable-type.co.uk/scripts/latlong.html:
+
+    a = sin²(Δφ/2) + cos(φ1).cos(φ2).sin²(Δλ/2)
+    c = 2.atan2(√a, √(1−a))
+    d = R.c
+    where   φ is latitude, λ is longitude, R is earth’s radius (mean radius = 6,371km)
+
+    θ = atan2( sin(Δλ).cos(φ2), cos(φ1).sin(φ2) − sin(φ1).cos(φ2).cos(Δλ) )
+*/
 const float distance(const float& lat1, const float& long1, const float& lat2, const float& long2)
 { static const float r = 6371;                  // radius in km
   static const float pi = 3.14159265;
