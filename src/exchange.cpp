@@ -678,7 +678,9 @@ pt_mutex exchange_field_database_mutex;
     Returns empty string if no sensible guess can be made
 */
 const string exchange_field_database::guess_value(const string& callsign, const string& field_name)
-{ SAFELOCK(exchange_field_database);
+{ //ost << "guessing value of " << field_name << " field for " << callsign << endl;
+
+  SAFELOCK(exchange_field_database);
 
 // first, check the database
   const auto it = _db.find( pair<string, string>( { callsign, field_name } ) ) ;
@@ -693,7 +695,16 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   { string rv;
 
     if (!drm_line.empty())
-    { rv = drm_line.state_10();
+    { //ost << "drm_line = " << drm_line.to_string() << endl;
+
+      rv = to_upper(drm_line.state_10());
+
+      //ost << "state_10() = " << rv << endl;
+
+      if (rv.empty())
+      { rv = to_upper(drm_line.qth());
+        //ost << "qth() = " << rv << endl;
+      }
 
       if (!rv.empty())
       { rv = rules.canonical_value("10MSTATE", rv);

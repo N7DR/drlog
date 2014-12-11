@@ -306,6 +306,8 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
          for (auto& choice_field_name : choice_fields)
            full_name += choice_field_name + "+";
 
+         ost << "CHOICE field: " << full_name << endl;
+
          exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
 
          this_field.choice(choices);
@@ -352,6 +354,8 @@ const map<string, vector<exchange_field>> contest_rules::_parse_context_exchange
   }
 
 // add the ordinary exchange to the permitted exchange fields
+//  ost << "context.exchange() = " << context.exchange() << endl;
+
   const vector<string> exchange_vec = remove_peripheral_spaces(split_string(context.exchange(), ","));
   permitted_exchange_fields.insert( { "", exchange_vec } );
 
@@ -465,13 +469,22 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
 
+//  for (const auto& e : _exch)
+//  { ost << "first: " << e.first << endl;
+//    for (const auto& ve : e.second)
+//    { ost << "second: " << ve.name() << endl;
+//    }
+//  }
+
   for (const auto& qth_vec_field : _exch)
   { const string& prefix = qth_vec_field.first;
     const vector<exchange_field>& vef = qth_vec_field.second;
     vector<exchange_field> expanded_vef;
 
     for (const auto& field : vef)
-    { if (!field.is_choice())
+    { ost << "field: " << field.name() << "; is_choice: " << field.is_choice() << endl;
+
+      if (!field.is_choice())
         expanded_vef.push_back(field);
       else
       { const vector<exchange_field> vec = field.expand();
@@ -615,6 +628,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { try
       { entire_file = read_file(path, field_name + ".values");
         read_file_ok = true;
+        ost << "read values file: " << (field_name + ".values") << endl;
       }
 
       catch (...)

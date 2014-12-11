@@ -238,7 +238,7 @@ public:
   READ_AND_WRITE(hit_count);
   READ_AND_WRITE(itu_zone);
   READ_AND_WRITE(name);
-  READ_AND_WRITE(qth);
+  READ_AND_WRITE(qth);         // state in US
   READ_AND_WRITE(old_call);
   READ_AND_WRITE(section);
   READ_AND_WRITE(speed);

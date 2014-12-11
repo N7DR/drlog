@@ -653,7 +653,7 @@ const string running_statistics::summary_string(const contest_rules& rules)
     if (!exchange_mults_per_band)
       total = m.n_worked(N_BANDS);
 
-//    if (permitted_bands.size() != 1)
+    if (permitted_bands.size() != 1)
       line += pad_string(to_string(total), FIELD_WIDTH);
 
     rv += line + LF;

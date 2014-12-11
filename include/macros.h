@@ -12,7 +12,7 @@
 #define MACROS_H
 
 // temporary, until I am convinced that the new constructor in exchange functions at least as well as the old one
-#define NEW_CONSTRUCTOR
+#undef NEW_CONSTRUCTOR
 #undef NEW_RAW_COMMAND
 
 /*!     \file macros.h
