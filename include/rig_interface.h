@@ -146,9 +146,10 @@ public:
 /// get number of data bits
   const unsigned int data_bits(void);
 
-// get/set number of stop bits
+/// set number of stop bits
   void stop_bits(const unsigned int bits);
 
+/// get number of stop bits
   const unsigned int stop_bits(void);
 
 /*! \brief      Set frequency of VFO A
@@ -168,16 +169,17 @@ public:
 */
   void rig_frequency_b(const frequency& f);
 
-// get frequency of VFO B
+/// get frequency of VFO B
   const frequency rig_frequency_b(void);
 
+/// set frequency of VFO B to match that of VFO A
   inline void rig_frequency_a_to_b(void)
     { rig_frequency_b(rig_frequency()); }
 
 /*! \brief  Enable split operation
 
             hamlib has no good definition of exactly what split operation really means, and, hence,
-            has no clear description of precisely what the hamlib  rig_set_split_vfo() function is supposed
+            has no clear description of precisely what the hamlib rig_set_split_vfo() function is supposed
             to do for various values of the permitted parameters. There is general agreement on the reflector
             that the call contained herein *should* do the "right" thing -- but since there's no precise definition
             of any of this, not all backends are guaranteed to behave the same.
@@ -186,6 +188,7 @@ public:
 */
   void split_enable(void);
 
+/// disable split operation; see caveats under split_enable()
   void split_disable(void);
 
   const bool split_enabled(void);

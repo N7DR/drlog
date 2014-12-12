@@ -90,7 +90,15 @@ const float bearing(const float& lat1, const float& long1, const float& lat2, co
   return theta;
 }
 
-// http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
+/*! \brief  Calculate the time of sunrise or sunset
+    \param  lat    latitude of target, in degrees (+ve north)
+    \param  long   longitude of target, in degrees (+ve east)
+    \param  calc_sunset whether to calculate sunset instead of sunrise
+    \return sunrise or sunset in the form HH:MM
+
+    Default is to calculate sunrise if <i>calc_sunset</i> is absent.
+    See http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
+*/
 const string sunrise(const float& lat, const float& lon, const bool calc_sunset)
 { static const float pi = 3.14159265;
   static const float dtor = pi / 180.0;
