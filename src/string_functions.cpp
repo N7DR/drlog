@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 85 2014-12-01 23:26:41Z  $
+// $Id: string_functions.cpp 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -662,10 +662,32 @@ const size_t next_word_posn(const string& str, const size_t current_posn)
     return ( str.find_first_not_of(" ", current_posn) );
 
 // we are inside a word
-  size_t space_posn = str.find_first_of(" ", current_posn);
-  size_t word_posn = str.find_first_not_of(" ", space_posn);
+  const size_t space_posn = str.find_first_of(" ", current_posn);
+  const size_t word_posn = str.find_first_not_of(" ", space_posn);
 
   return word_posn;
+}
+
+// get nth word
+const string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
+{ string rv;
+
+  if (n < wrt)
+    return rv;
+
+  const unsigned int actual_word_number = n - wrt;
+  const vector<size_t> starts = starts_of_words(s);
+
+  if (actual_word_number >= starts.size())
+    return rv;
+
+  const size_t posn_1 = starts[actual_word_number];
+  const size_t posn_2 = ( (actual_word_number + 1) >= starts.size() ? string::npos : starts[actual_word_number + 1] );
+
+  rv = substring(s, posn_1, posn_2 - posn_1);
+  rv = remove_peripheral_spaces(rv);
+
+  return rv;
 }
 
 /*!     \brief  Does a string contain a legal dotted-decimal IPv4 address

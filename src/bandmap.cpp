@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 85 2014-12-01 23:26:41Z  $
+// $Id: bandmap.cpp 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -325,7 +325,11 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
   return rv;
 }
 
-// insert an entry at the right place; also remove any current entry at the same frequency
+/*!  \brief                         Insert a bandmap_entry
+     \param be                      entry to add
+
+     Removes any extant entry at the same frequency as <i>be</i>
+*/
 void bandmap::_insert(const bandmap_entry& be)
 { SAFELOCK(_bandmap);
 
@@ -415,6 +419,14 @@ bandmap::bandmap(void) :
                 |               |
                 '---------------'
  */
+/*!  \brief                     Mark a bandmap_entry as recent
+     \param be                  entry to mark
+
+    an entry will be marked as recent if:
+        its source is LOCAL or CLUSTER
+    or
+        its source is RBN and the call is already present in the bandmap at the same QRG with the poster of <i>be</i>
+*/
 const bool bandmap::_mark_as_recent(const bandmap_entry& be)
 { if (_rbn_threshold == 1)
     return true;
@@ -446,14 +458,11 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   return false;    // should never get here
 }
 
-/// add an entry to the bandmap
+/*!  \brief                         Add a bandmap_entry
+     \param be                      entry to add
+*/
 void bandmap::operator+=(const bandmap_entry& be)
-{ ost << "inside += for " << be.callsign() << "; source = " << be.source() << endl;
-
-//  if ((*this)[MY_MARKER].valid())
-//    ost << "MY MARKER appears to be present on entry" << endl;
-//  else
-//    ost << "MY MARKER appears NOT to be present on entry" << endl;
+{ //ost << "inside += for " << be.callsign() << "; source = " << be.source() << endl;
 
   const string& callsign = be.callsign();
 
@@ -463,15 +472,15 @@ void bandmap::operator+=(const bandmap_entry& be)
   if (add_it)
     add_it = !((be.source() != BANDMAP_ENTRY_LOCAL) and is_recent_call(callsign));
 
-  ost << "bandmap+=; callsign = " << callsign << " on " << be.frequency_str() << "; add_it = " << boolalpha << add_it << noboolalpha << endl;
+//  ost << "bandmap+=; callsign = " << callsign << " on " << be.frequency_str() << "; add_it = " << boolalpha << add_it << noboolalpha << endl;
 
   if (add_it)
   { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going got mark this as a recent call
 
-    if (mark_as_recent)
-      ost << "marked as recent" << endl;
-    else
-      ost << "NOT marked as recent" << endl;
+//    if (mark_as_recent)
+//      ost << "marked as recent" << endl;
+//    else
+//      ost << "NOT marked as recent" << endl;
 
     SAFELOCK(_bandmap);
 
@@ -578,7 +587,7 @@ void bandmap::prune(void)
   _recent_calls.clear();                       // empty the container of recent calls
 }
 
-/*! \brief return the entry for a particular call
+/*! \brief              return the entry for a particular call
     \param  callsign    call for which the entry should be returned
     \return the bandmap_entry corresponding to <i>callsign</i>
 
@@ -592,7 +601,7 @@ const bandmap_entry bandmap::operator[](const string& str)
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
 }
 
-/*! \brief return the first entry for a partial call
+/*! \brief              return the first entry for a partial call
     \param  callsign    partial call for which the entry should be returned
     \return             the first bandmap_entry corresponding to <i>callsign</i>
 
@@ -606,7 +615,7 @@ const bandmap_entry bandmap::substr(const string& str)
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
 }
 
-/*! \brief remove a call from the bandmap
+/*! \brief              remove a call from the bandmap
     \param  callsign    call to be removed
 
     Does nothing if <i>callsign</i> is not in the bandmap
@@ -624,7 +633,7 @@ void bandmap::operator-=(const string& callsign)
   }
 }
 
-/*! \brief set the needed status of a call to false
+/*! \brief              set the needed status of a call to <i>false</i>
     \param  callsign    call for which the status should be set
 
     Does nothing if <i>callsign</i> is not in the bandmap
@@ -657,11 +666,10 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
   _rbn_threshold_and_filtered_entries_dirty = true;
 }
 
-/*! \brief set the needed callsign mult status of all matching callsign mults to false
-    \param  pf          pointer to function to return the callsign mult value
-    \param  callsign_mult_string value of callsign mult value that is no longer a multiplier
-
-    Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
+/*! \brief                          set the needed callsign mult status of all matching callsign mults to <i>false</i>
+    \param  pf                      pointer to function to return the callsign mult value
+    \param  mult_type               name of mult type
+    \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
 void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g. "WPXPX" */, const std::string& /* callsign */),
                                        const std::string& mult_type /* e.g., "WPXPX" */,

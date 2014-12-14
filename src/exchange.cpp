@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 84 2014-11-15 19:20:13Z  $
+// $Id: exchange.cpp 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,7 +20,7 @@
 using namespace boost;
 using namespace std;
 
-extern EFT CALLSIGN_EFT;
+extern EFT CALLSIGN_EFT;            ///< exchange field template for a callsign
 
 #if !defined(NEW_CONSTRUCTOR)
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
@@ -52,16 +52,23 @@ parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, 
     _mult_value(MULT_VALUE(nm, v))
 { }
 
+/*!     \brief      set the name and corresponding mult value
+        \param  nm  field name
+*/
 void parsed_exchange_field::name(const string& nm)
 { _name = nm;
   _mult_value = MULT_VALUE(_name, _value);
 }
 
+/*!     \brief      set the value and corresponding mult value
+        \param  v   new value
+*/
 void parsed_exchange_field::value(const string& v)
 { _value = v;
   _mult_value = MULT_VALUE(_name, _value);
 }
 
+/// ostream << parsed_exchange_field
 ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
 { ost << "  name: " << pef.name() << endl
       << "  value: " << pef.value() << endl
@@ -655,7 +662,7 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 #include "drmaster.h"
 #include "log.h"
 
-extern drmaster* drm_p;
+extern drmaster* drm_p;                 ///< pointer to drmaster database
 extern location_database location_db;
 extern logbook logbk;
 extern contest_rules     rules;
@@ -701,7 +708,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
       //ost << "state_10() = " << rv << endl;
 
-      if (rv.empty())
+      if (rv.empty())                       ///< if no explicit 10MSTATE value, try the QTH value
       { rv = to_upper(drm_line.qth());
         //ost << "qth() = " << rv << endl;
       }

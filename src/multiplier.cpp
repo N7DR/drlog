@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 85 2014-12-01 23:26:41Z  $
+// $Id: multiplier.cpp 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -193,7 +193,11 @@ const bool multiplier::is_worked(const std::string& str, const int b, const MODE
   return (worked_this_band.find(str) != worked_this_band.cend());
 }
 
-/// Number of mults worked on a particular band and mode
+/*! \brief      Number of mults worked on a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     number of mults worked on band <i>b</i> and mode <i>m</i>
+*/
 const size_t multiplier::n_worked(const int b, const MODE m) const
 { if (!_used)
     return 0;
@@ -203,7 +207,11 @@ const size_t multiplier::n_worked(const int b, const MODE m) const
   return pb[ (_per_band ? b : N_BANDS) ].size();
 }
 
-/// All the mults worked on a particular band and mode
+/*! \brief      All the mults worked on a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     all the mults worked on band <i>b</i> and mode <i>m</i>
+*/
 const set<string> multiplier::worked(const int b, const MODE m) const
 { if (!_used)
     return set<string>();

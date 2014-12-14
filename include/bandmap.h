@@ -1,4 +1,4 @@
-// $Id: bandmap.h 85 2014-12-01 23:26:41Z  $
+// $Id: bandmap.h 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -518,9 +518,21 @@ protected:
 */
   const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
 
-// insert an entry at the right place
+/*!  \brief                         Insert a bandmap_entry
+     \param be                      entry to add
+
+     Removes any extant entry at the same frequency as <i>be</i>
+*/
   void _insert(const bandmap_entry& be);
 
+/*!  \brief                     Mark a bandmap_entry as recent
+     \param be                  entry to mark
+
+     an entry will be marked as recent if:
+       its source is LOCAL or CLUSTER
+     or
+       its source is RBN and the call is already present in the bandmap at the same QRG with the poster of <i>be</i>
+*/
   const bool _mark_as_recent(const bandmap_entry& be);
 
 public:
@@ -568,7 +580,9 @@ public:
       _recent_colour = rc;
     }
 
-/// add an entry to the bandmap
+/*!  \brief                         Add a bandmap_entry
+     \param be                      entry to add
+*/
   void operator+=(const bandmap_entry& be);
 
 /*! \brief return the entry for a particular call
@@ -594,7 +608,7 @@ public:
 */
   void operator-=(const std::string& callsign);
 
-/*! \brief set the needed status of a call to false
+/*! \brief set the needed status of a call to <i>false</i>
     \param  callsign    call for which the status should be set
 
     Does nothing if <i>callsign</i> is not in the bandmap
@@ -608,10 +622,10 @@ public:
 */
   void not_needed_country_mult(const std::string& canonical_prefix);
 
-/*! \brief set the needed callsign mult status of all calls in a particular country to false
-    \param  pf          pointer to function to return the callsign mult value
-    \param  mult_type   name of the callsign multiplier
-    \param  callsign_mult_string value of callsign mult value that is no longer a multiplier
+/*! \brief                          set the needed callsign mult status of all matching callsign mults to <i>false</i>
+    \param  pf                      pointer to function to return the callsign mult value
+    \param  mult_type               name of mult type
+    \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
   void not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
                                 const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., SM1 */);

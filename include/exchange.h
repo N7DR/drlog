@@ -1,4 +1,4 @@
-// $Id: exchange.h 84 2014-11-15 19:20:13Z  $
+// $Id: exchange.h 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -61,10 +61,18 @@ public:
   READ_AND_WRITE(is_mult);      ///< is this field a mult?
   READ(mult_value);             ///< actual value of the mult (if it is a mult)
 
+/*!     \brief      set the name and corresponding mult value
+        \param  nm  field name
+*/
   void name(const std::string& nm);
+
+/*!     \brief      set the value and corresponding mult value
+        \param  v   new value
+*/
   void value(const std::string& v);
 };
 
+/// ostream << parsed_exchange_field
 std::ostream& operator<<(std::ostream& ost, const parsed_exchange_field& pef);
 
 // -------------------------  parsed_exchange  ---------------------------

@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 85 2014-12-01 23:26:41Z  $
+// $Id: drlog_context.h 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -187,20 +187,21 @@ protected:
   unsigned int                                 _qtc_qrs;             ///< WPM decrease when sending QTC
   std::map<std::string, std::set<std::string>> _qthx;                ///< allowed exchanges values as a function of country
 
-  std::vector<unsigned int>                    _rate_periods;                    ///< periods (in minutes) over which rates should be calculated
-  unsigned int                                 _rbn_port;                        ///< port number on the RBN server
-  std::string                                  _rbn_server;                      ///< hostname or IP of RBN server
-  unsigned int                                 _rbn_threshold;                   ///< number of different stations that have to post to RBN before it shows on the bandmap
-  std::string                                  _rbn_username;                    ///< username to use on the RBN
-  std::set<std::string>                        _remaining_callsign_mults_list;   ///< callsign mults to display
-  std::set<std::string>                        _remaining_country_mults_list;    ///< country mults to display
-  unsigned int                                 _rig1_baud;                       ///< baud rate for rig
-  unsigned int                                 _rig1_data_bits;                  ///< number of data bits for rig
-  std::string                                  _rig1_name;                       ///< name of rig
-  std::string                                  _rig1_port;                       ///< port to communicate with rig
-  unsigned int                                 _rig1_stop_bits;                  ///< number of stop bits for rig
-  std::string                                  _rig1_type;                       ///< model name of rig
-  std::string                                  _russian_filename;                ///< filename of russian location file (default = "russian-data")
+  std::vector<unsigned int>                    _rate_periods;                   ///< periods (in minutes) over which rates should be calculated
+  bool                                         _rbn_beacons;                    ///< whether to place RBN posts from beacons on the bandmap
+  unsigned int                                 _rbn_port;                       ///< port number on the RBN server
+  std::string                                  _rbn_server;                     ///< hostname or IP of RBN server
+  unsigned int                                 _rbn_threshold;                  ///< number of different stations that have to post to RBN before it shows on the bandmap
+  std::string                                  _rbn_username;                   ///< username to use on the RBN
+  std::set<std::string>                        _remaining_callsign_mults_list;  ///< callsign mults to display
+  std::set<std::string>                        _remaining_country_mults_list;   ///< country mults to display
+  unsigned int                                 _rig1_baud;                      ///< baud rate for rig
+  unsigned int                                 _rig1_data_bits;                 ///< number of data bits for rig
+  std::string                                  _rig1_name;                      ///< name of rig
+  std::string                                  _rig1_port;                      ///< port to communicate with rig
+  unsigned int                                 _rig1_stop_bits;                 ///< number of stop bits for rig
+  std::string                                  _rig1_type;                      ///< model name of rig
+  std::string                                  _russian_filename;               ///< filename of russian location file (default = "russian-data")
 
   std::set<BAND>                               _score_bands;                    ///< which bands are going to be scored?
   std::set<MODE>                               _score_modes;                    ///< which modes are going to be scored?
@@ -390,6 +391,7 @@ protected:
   SAFEREAD(quick_qsl_message, _context);
 
   SAFEREAD(rate_periods, _context);
+  SAFEREAD(rbn_beacons, _context);
   SAFEREAD(rbn_port, _context);
   SAFEREAD(rbn_server, _context);
   SAFEREAD(rbn_threshold, _context);

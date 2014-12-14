@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 85 2014-12-01 23:26:41Z  $
+// $Id: drlog_context.cpp 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -715,6 +715,10 @@ void drlog_context::_process_configuration_file(const string& filename)
         _rate_periods = new_rates;
     }
 
+// RBN BEACONS
+    if (starts_with(testline, "RBN BEACONS"))
+      _rbn_beacons = is_true;
+
 // RBN PORT
     if (starts_with(testline, "RBN PORT"))
       _rbn_port = from_string<int>(rhs);
@@ -1326,6 +1330,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _qtc_filename("QTCs"),                      // QTC filename
   _qtc_qrs(3),                                // WPM decrease when sending QTC
   _rate_periods( { 15, 30, 60 } ),            // 15-, 30-, 60-minute periods for rates
+  _rbn_beacons(false),                        // do not place RBN posts from beacons on bandmap
   _rbn_port(7000),                            // telnet port for the reverse beacon network
   _rbn_server("telnet.reversebeacon.net"),    // domain name of the reverse beacon network telnet server
   _rbn_threshold(1),                          // all received spots are posted

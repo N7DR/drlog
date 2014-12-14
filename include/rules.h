@@ -1,4 +1,4 @@
-// $Id: rules.h 85 2014-12-01 23:26:41Z  $
+// $Id: rules.h 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -235,6 +235,7 @@ public:
   READ_AND_WRITE(continent_points);    ///< per-continent points
   READ_AND_WRITE(points_type);         ///< is the points structure too complex for the configuration notation?
 
+/// read from and write to disk
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
   { ar & _default_points
@@ -386,7 +387,12 @@ public:
 */
   void prepare(const drlog_context& context, location_database& location_db);
 
-/// is a particular mode permitted?
+/*!     \brief          Add a new permitted mode
+        \param  mode    mode to add
+        \return         whether <i>mode</i> was actually added
+
+        Returns <i>false</i> if <i>mode</i> was already permitted
+*/
   inline const bool permitted_mode(const MODE mode) const
     { SAFELOCK(rules); return (_permitted_modes < mode); }
     
@@ -584,6 +590,7 @@ public:
   inline const std::set<BAND> permitted_bands_set(void) const
     { return std::set<BAND>(_permitted_bands.cbegin(), _permitted_bands.cend() ); }
 
+/// read from and write to disk
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(rules);

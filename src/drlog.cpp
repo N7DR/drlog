@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 85 2014-12-01 23:26:41Z  $
+// $Id: drlog.cpp 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1517,27 +1517,21 @@ void* display_date_and_time(void* vp)
         { static pthread_t auto_screenshot_thread_id;
           static string filename;
 
-           const string dts = date_time_string();
-           const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
-           const string complete_name = string("auto-screenshot-") + suffix;
+          const string dts = date_time_string();
+          const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
+          const string complete_name = string("auto-screenshot-") + suffix;
 
-           filename = complete_name;
+          filename = complete_name;
 
-           ost << "dumping screenshot at time: " << hhmmss() << endl;
+          ost << "dumping screenshot at time: " << hhmmss() << endl;
 
-//           dump_screen(complete_name);
+          try
+          { create_thread(&auto_screenshot_thread_id, &(attr_detached.attr()), auto_screenshot, static_cast<void*>(&filename), "screenshot");
+          }
 
-           try
-           { create_thread(&auto_screenshot_thread_id, &(attr_detached.attr()), auto_screenshot, static_cast<void*>(&filename), "screenshot");
-           }
-
-           catch (const pthread_error& e)
-           { ost << e.reason() << endl;
-           }
-
-
- //          ost << "finished dumping screenshot at time: " << hhmmss() << endl;
-
+          catch (const pthread_error& e)
+          { ost << e.reason() << endl;
+          }
         }
       }
 
@@ -1886,109 +1880,110 @@ void* process_rbn_info(void* vp)
       unprocessed_input = substring(unprocessed_input, posn + 2);  // delete the line (including the CRLF) from the buffer
 
       if (!line.empty())
-      {
+      { const bool is_beacon = contains(line, " BCN ");
+
+        if (!is_beacon or context.rbn_beacons())
+        {
 //ost << "processing rbn line: " << line << endl;
 //ost << "rbn line has length " << line.size() << endl;
-
-// display the line in the window
-//        cluster_line_win < CURSOR_START_OF_LINE < WINDOW_CLEAR <= line;
-        last_processed_line = line;
+          last_processed_line = line;
 
 // display if this is a new mult on any band, and if the poster is on our own continent
-        const dx_post post(line, location_db, rbn.source());
+          const dx_post post(line, location_db, rbn.source());
 
-        if (post.valid())
-        { const BAND dx_band = post.band();
+          if (post.valid())
+          { const BAND dx_band = post.band();
 
-          if (permitted_bands < dx_band)
-          { const BAND cur_band = safe_get_band();
+            if (permitted_bands < dx_band)
+            { const BAND cur_band = safe_get_band();
             //const MODE cur_mode = safe_get_mode();
-            const string& dx_callsign = post.callsign();
-            const string& poster = post.poster();
-            const pair<string, BAND> target { dx_callsign, dx_band };
-            const location_info li = location_db.info(dx_callsign);
+              const string& dx_callsign = post.callsign();
+              const string& poster = post.poster();
+              const pair<string, BAND> target { dx_callsign, dx_band };
+              const location_info li = location_db.info(dx_callsign);
 
-            bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
+              bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
 
-            be.freq(post.freq());
-            be.callsign(dx_callsign);
-            be.canonical_prefix(li.canonical_prefix());
-            be.continent(li.continent());
-            be.band(dx_band);
-            be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
+              be.freq(post.freq());
+              be.callsign(dx_callsign);
+              be.canonical_prefix(li.canonical_prefix());
+              be.continent(li.continent());
+              be.band(dx_band);
+              be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
-            if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
-              be.posters( { poster } );
+              if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
+                be.posters( { poster } );
 
 // do we still need this guy?
-            const bool is_needed = is_needed_qso(dx_callsign, dx_band);
+              const bool is_needed = is_needed_qso(dx_callsign, dx_band);
 
-            be.is_needed(is_needed);
+              be.is_needed(is_needed);
 
 // update known mults before we test to see if this is a needed mult
 
 // possibly add the call to the known prefixes
-            update_known_callsign_mults(dx_callsign);
+              update_known_callsign_mults(dx_callsign);
 
 // possibly add the call to the known countries
-            update_known_country_mults(dx_callsign);
+              update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
-            if (context.auto_remaining_exchange_mults())
-            { const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
+              if (context.auto_remaining_exchange_mults())
+              { const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
 
-              for (const auto& exch_mult_name : exch_mults)
-              { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
+                for (const auto& exch_mult_name : exch_mults)
+                { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
 //                ost << "guess in drlog = " << guess << ", MULT VALUE = " << MULT_VALUE(exch_mult_name, guess) << endl;
 
-                if (!guess.empty())
-                  statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+                  if (!guess.empty())
+                    statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+
+                }
 
               }
 
-            }
+              be.calculate_mult_status(rules, statistics);
 
-            be.calculate_mult_status(rules, statistics);
+             const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
 
-            const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
+              if (!is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult()  or be.is_needed_exchange_mult()))            // if it's a mult and not recently posted...
+              { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
+                { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
+                  recent_mult_calls.push_back(target);
 
-            if (!is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult()  or be.is_needed_exchange_mult()))            // if it's a mult and not recently posted...
-            { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
-              { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
-                recent_mult_calls.push_back(target);
+                  while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
+                    recent_mult_calls.pop_front();
 
-                while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
-                  recent_mult_calls.pop_front();
-
-                cluster_mult_win < CURSOR_TOP_LEFT < WINDOW_SCROLL_DOWN;
+                  cluster_mult_win < CURSOR_TOP_LEFT < WINDOW_SCROLL_DOWN;
 
 // highlight it if it's on our current band
-                if (dx_band == cur_band)
-                  cluster_mult_win < WINDOW_HIGHLIGHT;
+                  if (dx_band == cur_band)
+                    cluster_mult_win < WINDOW_HIGHLIGHT;
 
-                const string frequency_str = pad_string(post.frequency_str(), 7);
-                cluster_mult_win < pad_string(frequency_str + " " + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
+                  const string frequency_str = pad_string(post.frequency_str(), 7);
+                  cluster_mult_win < pad_string(frequency_str + " " + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
 
-                if (dx_band == cur_band)
-                  cluster_mult_win < WINDOW_NORMAL;    // removed refresh
+                  if (dx_band == cur_band)
+                    cluster_mult_win < WINDOW_NORMAL;    // removed refresh
+                }
               }
-            }
 
 // add the post to the correct bandmap
-            bandmap& bandmap_this_band = bandmaps[dx_band];
+              bandmap& bandmap_this_band = bandmaps[dx_band];
 
-            bandmap_this_band += be;
+              bandmap_this_band += be;
 
 // prepare to display the bandmap if we just made a change for this band
-            changed_bands.insert(dx_band);
+              changed_bands.insert(dx_band);
+            }
+            else
+              { //ost << "not a contest posting" << endl;
+              }
           }
           else
-            { //ost << "not a contest posting" << endl;
-            }
-        }
-        else
-        { //ost << "invalid post" << endl;
+          { //ost << "invalid post" << endl;
+          }
         }
       }
     }
@@ -2069,7 +2064,6 @@ void* prune_bandmap(void* vp)
   while (1)
   { const enum BAND cur_band = safe_get_band();
 
-//    for_each(bandmaps.begin(), bandmaps.end(), [](bandmap& bm) { bm.prune(); } );
     FOR_ALL(bandmaps, [](bandmap& bm) { bm.prune(); } );
 
     bandmap_win <= bandmaps[cur_band];

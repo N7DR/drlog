@@ -1,4 +1,4 @@
-// $Id: string_functions.h 85 2014-12-01 23:26:41Z  $
+// $Id: string_functions.h 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -420,6 +420,9 @@ const size_t next_word_posn(const std::string& str, const size_t current_posn);
 
 /// return the starting position for each word
 const std::vector<size_t> starts_of_words(const std::string& s);
+
+// get nth word
+const std::string nth_word(const std::string& s, const unsigned int n, const unsigned int wrt = 0);
   
 /*!     \brief  Does a string contain a legal dotted-decimal IPv4 address
         \param  cs  Original string

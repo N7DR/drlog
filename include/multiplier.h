@@ -1,4 +1,4 @@
-// $Id: multiplier.h 85 2014-12-01 23:26:41Z  $
+// $Id: multiplier.h 86 2014-12-13 20:06:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -228,7 +228,11 @@ public:
     { return (_used ? _worked[b].size() : 0); }
 #endif    // SINGLE_MODE
 
-/// Number of mults worked on a particular band and mode
+/*! \brief      Number of mults worked on a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     number of mults worked on band <i>b</i> and mode <i>m</i>
+*/
   const size_t n_worked(const int b, const MODE m) const;
 
 /// Number of known mults
@@ -241,7 +245,11 @@ public:
     { return (_used ? _worked[b] : std::set<std::string>() ); }
 #endif    // SINGLE_MODE
 
-/// All the mults worked on a particular band and mode
+/*! \brief      All the mults worked on a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     all the mults worked on band <i>b</i> and mode <i>m</i>
+*/
   const std::set<std::string> worked(const int b, const MODE m) const;
 
 /// All the known mults
