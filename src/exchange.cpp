@@ -219,6 +219,14 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
             if (eft.is_legal_value(received_value))
             { match.insert(field_name);                 // insert the "+" version of the name
+              //match.insert(eft.name());                   // insert the chosen field name
+
+//              map<string, string> mss;
+//              mss.insert( { field_name, eft.name() } );
+
+              ost << "inserted into _choices: " << field_name << " => " << eft.name() << " for value " << received_value << endl;
+
+              _choices.insert( { field_name, eft.name() } );
               it = choices.end();
             }
             else
@@ -398,6 +406,8 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   for (auto& pef : _fields)
   { const string& name = pef.name();
 
+    ost << "preparing output; pef name = " << name << endl;
+
     try
     { const auto& t = tuple_map_assignments.at(name);
 
@@ -405,7 +415,36 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     }
 
     catch (...)
-    { ost << "WARNING: unable to find map assignment for key = " << name << endl;
+    { //ost << "WARNING: unable to find map assignment for key = " << name << endl;
+      const bool is_choice = contains(name, "+");
+      bool found_map = false;
+
+      if (is_choice)
+      { const vector<string> choices_vec = split_string(name, '+');
+
+        for (int n = 0; n < choices_vec.size() and !found_map; ++n)
+        { try
+          { const auto& t = tuple_map_assignments.at(choices_vec[n]);
+
+//          map<string, string> mss;
+//                       mss.insert( { name, choices_vec[n] } );
+
+//                        ost << "inserted into _choices: " << name << " => " << choices_vec[n] << " for value " << get<1>(t) << endl;
+
+//                        _choices.push_back(mss);
+
+            pef.value(get<1>(t));
+            found_map = true;
+          }
+
+          catch (...)
+          {
+          }
+        }
+      }
+
+      if (!found_map)
+        ost << "WARNING: unable to find map assignment for key = " << name << endl;
     }
   }
 
@@ -414,6 +453,10 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   if (_valid)
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
   //FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), MULT_VALUE(pef.name(), pef.value()))); } );
+
+  ost << "Leaving constructor" << endl;
+  for (const auto& c : _choices)
+    ost << "_choices: " << c.first << " => " << c.second << endl;
 
 }
 
@@ -637,6 +680,119 @@ const string parsed_exchange::field_value(const std::string& field_name) const
 
   return string();
 }
+
+const string parsed_exchange::chosen_field_name(const string& choice_field_name) const
+{ string rv;
+
+  if (!contains(choice_field_name, "+"))
+    return rv;
+
+  try
+    { return _choices.at(choice_field_name);
+    }
+
+    catch (...)
+    { return rv;
+    }
+
+
+//  return rv;
+}
+
+#if 0
+const vector<parsed_exchange_field> parsed_exchange::chosen_fields(void) const
+{ ost << "Inside chosen_fields()" << endl;
+
+  for (const auto& c : _choices)
+    ost << "_choices: " << c.first << " => " << c.second << endl;
+
+  vector<parsed_exchange_field> rv;
+
+  for (const auto& pef : _fields)
+  { ost << "pef = " << pef << endl;
+
+    if (!contains(pef.name(), "+"))
+      rv.push_back(pef);
+    else
+    { parsed_exchange_field pef_chosen = pef;
+
+      pef_chosen.name(chosen_field_name(pef.name()));
+
+      ost << "pef_chosen name = " << pef_chosen.name() << endl;
+
+      if (pef_chosen.name().empty())
+      { ost << "ERROR in parsed_exchange::chosen_fields(): empty name for field: " << pef.name() << endl;
+      }
+      else
+        rv.push_back(pef_chosen);
+    }
+  }
+
+  return rv;
+}
+#endif
+
+const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules& rules) const
+{ ost << "Inside new chosen_fields()" << endl;
+
+//  for (const auto& c : _choices)
+//    ost << "_choices: " << c.first << " => " << c.second << endl;
+
+  vector<parsed_exchange_field> rv;
+
+  for (const auto& pef : _fields)
+  { ost << "pef = " << pef << endl;
+
+    if (!contains(pef.name(), "+"))
+      rv.push_back(pef);
+    else
+    { parsed_exchange_field pef_chosen = pef;
+
+      pef_chosen.name(resolve_choice(pef.name(), pef.value(), rules));
+
+      ost << "pef_chosen name = " << pef_chosen.name() << endl;
+
+      if (pef_chosen.name().empty())
+      { ost << "ERROR in parsed_exchange::chosen_fields(): empty name for field: " << pef.name() << endl;
+      }
+      else
+        rv.push_back(pef_chosen);
+    }
+  }
+
+  return rv;
+}
+
+const string parsed_exchange::resolve_choice(const string& field_name, const string& received_value, const contest_rules& rules) const
+{ if (field_name.empty())
+    return string();
+
+  const bool is_choice = contains(field_name, "+");
+
+  if (!is_choice)
+    return field_name;
+
+  const vector<string> choices_vec = split_string(field_name, '+');
+//  set<string> choices(choices_vec.cbegin(), choices_vec.cend());
+
+  const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+
+  for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
+  { try
+    { const EFT& eft = exchange_field_eft.at(choice);
+
+      if (eft.is_legal_value(received_value))
+        return choice;
+    }
+
+    catch (...)
+    { ost << "Cannot find EFT for choice: " << choice << endl;
+    }
+  }
+
+  return string();
+}
+
 
 /// ostream << parsed_exchange
 ostream& operator<<(ostream& ost, const parsed_exchange& pe)

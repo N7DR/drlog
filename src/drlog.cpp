@@ -1829,6 +1829,7 @@ void* process_rbn_info(void* vp)
   array<bandmap, NUMBER_OF_BANDS>& bandmaps = *(cip->bandmaps_p());  // bandmaps
   const bool is_rbn = (rbn.source() == POSTING_RBN);
   const bool is_cluster = !is_rbn;
+  const bool rbn_beacons = context.rbn_beacons();
 
   const size_t QUEUE_SIZE = 100;    // size of queue of recent calls posted to the mult window
   string unprocessed_input;         // data from the cluster that have not yet been processed by this thread
@@ -1882,7 +1883,7 @@ void* process_rbn_info(void* vp)
       if (!line.empty())
       { const bool is_beacon = contains(line, " BCN ");
 
-        if (!is_beacon or context.rbn_beacons())
+        if (!is_beacon or rbn_beacons)
         {
 //ost << "processing rbn line: " << line << endl;
 //ost << "rbn line has length " << line.size() << endl;
@@ -3591,30 +3592,91 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // build name/value pairs for the received exchange
           vector<received_field>  received_exchange;
 
-          for (size_t n = 0; n < pexch.n_fields(); ++n)
+#if defined(NEW_CONSTRUCTOR)
+          vector<parsed_exchange_field> vec_pef = pexch.chosen_fields(rules);
+
+// keep track of which fields are mults
+          for (auto& pef : vec_pef)
+            pef.is_mult(rules.is_exchange_mult(pef.name()));
+
+ost << "vec_pef: " << endl;
+   for (const auto& pef : vec_pef)
+     ost << pef << endl;
+
+//   for (size_t n = 0; n < pexch.n_fields(); ++n)
+   for (const auto& pef : vec_pef)
+   { const bool is_mult_field = pef.is_mult();
+
+     received_exchange.push_back( { pef.name(), pef.value(), is_mult_field /* pexch.field_is_mult(n) */, false } );
+
+ ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
+
+     if (!(variable_exchange_fields < pef.name()))
+       exchange_db.set_value(callsign, pef.name(), pef.value());   // add it to the database of exchange fields
+
+   ost << "canonical value = " << rules.canonical_value(pef.name(), pef.value()) << endl;
+
+// possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
+     if (is_mult_field)
+     { ost << "Adding canonical value " << pef.value() << " for multiplier exchange field " << pef.name() << ", mult value = " << pef.mult_value() << endl;
+
+       if (!rules.is_canonical_value(pef.name(), pef.mult_value()))
+         rules.add_exch_canonical_value(pef.name(), pef.mult_value());
+   }
+ }
+
+
+
+#else
+
+   for (size_t n = 0; n < pexch.n_fields(); ++n)
+   { const bool is_mult_field = rules.is_exchange_mult(pexch.field_name(n));
+
+     received_exchange.push_back( { pexch.field_name(n), pexch.field_value(n), is_mult_field /* pexch.field_is_mult(n) */, false } );
+
+ ost << "added pexch: name = " << pexch.field_name(n) << ", value = " << pexch.field_value(n) << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
+
+     if (!(variable_exchange_fields < pexch.field_name(n)))
+       exchange_db.set_value(callsign, pexch.field_name(n), pexch.field_value(n));   // add it to the database of exchange fields
+
+   ost << "canonical value = " << rules.canonical_value(pexch.field_name(n), pexch.field_value(n)) << endl;
+
+// possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
+     if (is_mult_field)
+     { ost << "Adding canonical value " << pexch.field_value(n) << " for multiplier exchange field " << pexch.field_name(n) << ", mult value = " << pexch.mult_value(n) << endl;
+
+       if (!rules.is_canonical_value(pexch.field_name(n), pexch.mult_value(n)))
+         rules.add_exch_canonical_value(pexch.field_name(n), pexch.mult_value(n));
+   }
+ }
+
+
+
+
+#endif    // NEW_CONSTRUCTOR
+
+#if 0
+   for (size_t n = 0; n < pexch.n_fields(); ++n)
           { const bool is_mult_field = rules.is_exchange_mult(pexch.field_name(n));
 
             received_exchange.push_back( { pexch.field_name(n), pexch.field_value(n), is_mult_field /* pexch.field_is_mult(n) */, false } );
 
         ost << "added pexch: name = " << pexch.field_name(n) << ", value = " << pexch.field_value(n) << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
 
-          if (!(variable_exchange_fields < pexch.field_name(n)))
-            exchange_db.set_value(callsign, pexch.field_name(n), pexch.field_value(n));   // add it to the database of exchange fields
+            if (!(variable_exchange_fields < pexch.field_name(n)))
+              exchange_db.set_value(callsign, pexch.field_name(n), pexch.field_value(n));   // add it to the database of exchange fields
 
           ost << "canonical value = " << rules.canonical_value(pexch.field_name(n), pexch.field_value(n)) << endl;
 
 // possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
-          if (is_mult_field)
-          { ost << "Adding canonical value " << pexch.field_value(n) << " for multiplier exchange field " << pexch.field_name(n) << ", mult value = " << pexch.mult_value(n) << endl;
+            if (is_mult_field)
+            { ost << "Adding canonical value " << pexch.field_value(n) << " for multiplier exchange field " << pexch.field_name(n) << ", mult value = " << pexch.mult_value(n) << endl;
 
-//            if (!rules.is_canonical_value(pexch.field_name(n), pexch.field_value(n)))
-//              rules.add_exch_canonical_value(pexch.field_name(n), pexch.field_value(n));
-
-            if (!rules.is_canonical_value(pexch.field_name(n), pexch.mult_value(n)))
-              rules.add_exch_canonical_value(pexch.field_name(n), pexch.mult_value(n));
-
+              if (!rules.is_canonical_value(pexch.field_name(n), pexch.mult_value(n)))
+                rules.add_exch_canonical_value(pexch.field_name(n), pexch.mult_value(n));
           }
         }
+#endif
 
         qso.received_exchange(received_exchange);
 

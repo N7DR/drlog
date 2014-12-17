@@ -30,6 +30,14 @@ extern exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 
 extern const std::string process_cut_digits(const std::string& input);
 
+// -------------------------  choice_exchange_field  ---------------------------
+
+/*!     \class choice_exchange_field
+        \brief Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
+*/
+
+// ?????
+
 // -------------------------  parsed_exchange_field  ---------------------------
 
 /*!     \class parsed_exchange_field
@@ -88,6 +96,9 @@ protected:
   std::string                           _replacement_call;    ///< a new callsign, to replace the one in the CALL window
   std::vector<parsed_exchange_field>    _fields;              ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   bool                                  _valid;               ///< is the object valid? (i.e., was parsing successful?)
+//  std::vector<std::map<std::string /* choice name */, std::string /* chosen name */>>  _choices;
+  std::map<std::string /* choice name */, std::string /* chosen name */>  _choices;
+//  std::map<std::pair<std::string /* choice name */, std::string /* received value */>, std::string /* chosen name */>  _choices;
 
 #if !defined(NEW_CONSTRUCTOR)
 /*! \brief  Given several possible field names, choose one that fits the data
@@ -182,6 +193,22 @@ public:
 */
   inline const std::string mult_value(const size_t n) const
     { return (n >= _fields.size() ? std::string() : _fields[n].mult_value()); }
+
+  const std::string chosen_field_name(const std::string& choice_field_name) const;
+
+//  const std::vector<parsed_exchange_field> chosen_fields(void) const;
+  const std::vector<parsed_exchange_field> chosen_fields(const contest_rules& rules) const;
+
+  /*! \brief  Given several possible field names, choose one that fits the data
+      \param  choice_name   the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
+      \param  received_field the value of the received field
+      \return the individual name of a field in <i>choice_name</i> that fits the data
+
+      Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
+      If there is no fit, then returns the empty string.
+  */
+    const std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
+
 };
 
 /// ostream << parsed_exchange
