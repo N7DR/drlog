@@ -96,9 +96,6 @@ protected:
   std::string                           _replacement_call;    ///< a new callsign, to replace the one in the CALL window
   std::vector<parsed_exchange_field>    _fields;              ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   bool                                  _valid;               ///< is the object valid? (i.e., was parsing successful?)
-//  std::vector<std::map<std::string /* choice name */, std::string /* chosen name */>>  _choices;
-  std::map<std::string /* choice name */, std::string /* chosen name */>  _choices;
-//  std::map<std::pair<std::string /* choice name */, std::string /* received value */>, std::string /* chosen name */>  _choices;
 
 #if !defined(NEW_CONSTRUCTOR)
 /*! \brief  Given several possible field names, choose one that fits the data
@@ -194,7 +191,7 @@ public:
   inline const std::string mult_value(const size_t n) const
     { return (n >= _fields.size() ? std::string() : _fields[n].mult_value()); }
 
-  const std::string chosen_field_name(const std::string& choice_field_name) const;
+//  const std::string chosen_field_name(const std::string& choice_field_name) const;
 
 //  const std::vector<parsed_exchange_field> chosen_fields(void) const;
   const std::vector<parsed_exchange_field> chosen_fields(const contest_rules& rules) const;

@@ -224,9 +224,9 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 //              map<string, string> mss;
 //              mss.insert( { field_name, eft.name() } );
 
-              ost << "inserted into _choices: " << field_name << " => " << eft.name() << " for value " << received_value << endl;
+//              ost << "inserted into _choices: " << field_name << " => " << eft.name() << " for value " << received_value << endl;
 
-              _choices.insert( { field_name, eft.name() } );
+//              _choices.insert( { field_name, eft.name() } );
               it = choices.end();
             }
             else
@@ -454,9 +454,9 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
   //FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), MULT_VALUE(pef.name(), pef.value()))); } );
 
-  ost << "Leaving constructor" << endl;
-  for (const auto& c : _choices)
-    ost << "_choices: " << c.first << " => " << c.second << endl;
+//  ost << "Leaving constructor" << endl;
+//  for (const auto& c : _choices)
+//    ost << "_choices: " << c.first << " => " << c.second << endl;
 
 }
 
@@ -681,6 +681,7 @@ const string parsed_exchange::field_value(const std::string& field_name) const
   return string();
 }
 
+#if 0
 const string parsed_exchange::chosen_field_name(const string& choice_field_name) const
 { string rv;
 
@@ -698,6 +699,7 @@ const string parsed_exchange::chosen_field_name(const string& choice_field_name)
 
 //  return rv;
 }
+#endif
 
 #if 0
 const vector<parsed_exchange_field> parsed_exchange::chosen_fields(void) const
@@ -759,6 +761,10 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
         rv.push_back(pef_chosen);
     }
   }
+
+// assign correct mult status
+  for (auto& pef : rv)
+    pef.is_mult(rules.is_exchange_mult(pef.name()));
 
   return rv;
 }

@@ -3599,9 +3599,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           for (auto& pef : vec_pef)
             pef.is_mult(rules.is_exchange_mult(pef.name()));
 
-ost << "vec_pef: " << endl;
-   for (const auto& pef : vec_pef)
-     ost << pef << endl;
+//ost << "vec_pef: " << endl;
+//   for (const auto& pef : vec_pef)
+//     ost << pef << endl;
 
 //   for (size_t n = 0; n < pexch.n_fields(); ++n)
    for (const auto& pef : vec_pef)
@@ -6265,16 +6265,54 @@ void test_exchange_templates(const string& test_filename)
 }
 #endif
 
+#include <cwchar>
+
 void update_mult_value(void)
 { const float mult_value = statistics.mult_to_qso_value(rules, safe_get_band());
   const unsigned int mult_value_10 = static_cast<unsigned int>( (mult_value * 10) + 0.5);
   const string term_1 = to_string(mult_value_10 / 10);
   const string term_2 = to_string(mult_value_10 - (10 * (mult_value_10 / 10) )).substr(0, 1);
 //  const string msg = string("M ≡ ") + term_1 + "." + term_2 + "Q";
-  const string msg = string("M ≡ ") + term_1 + DP + term_2 + "Q";
+  string msg = string("M ≡ ") + term_1 + DP + term_2 + "Q";
+
+  const pair<unsigned int, unsigned int> qs = rate.calculate_rate(900 /* seconds */, 3600);  // rate per hour
+  const unsigned int qs_per_hour = qs.first;
+  const float mins_per_q = (qs_per_hour ? 60.0 / static_cast<float>(qs_per_hour) : 3600.0);
+  const float mins_per_mult = mins_per_q * mult_value;
+
+  string mins("∞");
+
+  if (mins_per_mult < 60)
+  { const unsigned int mins_value_10 = static_cast<unsigned int>( (mins_per_mult * 10) + 0.5);
+    const string term_1_m = to_string(mins_value_10 / 10);
+    const string term_2_m = to_string(mins_value_10 - (10 * (mins_value_10 / 10) )).substr(0, 1);
+
+    mins = term_1_m + DP + term_2_m;
+  }
+
+  msg += string(" ≡ ") + mins + "'";
+
+// hack to get the message properly centred
+  win_mult_value < WINDOW_CLEAR < CURSOR_START_OF_LINE < msg;
+  const unsigned int msg_length = win_mult_value.cursor_position().x();
+
+//  wstring wmsg(msg.cbegin(), msg.cend());
+
+//  ost << "msg len = " << msg.size() << ": *" << msg << "*" << endl;
+//  ost << "cursor posn = " << x << endl;
+//  ost << "wmsg len = " << wmsg.size() << /* ": *" << wmsg << "*" << */ endl;
+//  ost << "window width = " <<  win_mult_value.width()<< endl;
+//  ost << "cursor x = " << (win_mult_value.width() - msg.length() + 2) / 2 << endl;
+
+
+
+  unsigned int x_posn = (win_mult_value.width() - msg_length) / 2;
+  if (x_posn > win_mult_value.width() / 2)
+    x_posn = 0;
 
   win_mult_value < WINDOW_CLEAR;
-  win_mult_value.move_cursor((win_mult_value.width() - msg.length() + 2) / 2, 0);  // length is not calculated correctly because there's a wide character; probably some way to avoid this hack by using wstring
+  win_mult_value.move_cursor(x_posn, 0);  // length is not calculated correctly because there's a wide character; probably some way to avoid this hack by using wstring
+//  win_mult_value.move_cursor((win_mult_value.width() - msg.length() + 2) / 2, 0);  // length is not calculated correctly because there's a wide character; probably some way to avoid this hack by using wstring
   win_mult_value <= msg;
 }
 
