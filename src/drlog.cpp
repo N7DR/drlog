@@ -6272,7 +6272,6 @@ void update_mult_value(void)
   const unsigned int mult_value_10 = static_cast<unsigned int>( (mult_value * 10) + 0.5);
   const string term_1 = to_string(mult_value_10 / 10);
   const string term_2 = to_string(mult_value_10 - (10 * (mult_value_10 / 10) )).substr(0, 1);
-//  const string msg = string("M ≡ ") + term_1 + "." + term_2 + "Q";
   string msg = string("M ≡ ") + term_1 + DP + term_2 + "Q";
 
   const pair<unsigned int, unsigned int> qs = rate.calculate_rate(900 /* seconds */, 3600);  // rate per hour
@@ -6292,28 +6291,7 @@ void update_mult_value(void)
 
   msg += string(" ≡ ") + mins + "'";
 
-// hack to get the message properly centred
-  win_mult_value < WINDOW_CLEAR < CURSOR_START_OF_LINE < msg;
-  const unsigned int msg_length = win_mult_value.cursor_position().x();
-
-//  wstring wmsg(msg.cbegin(), msg.cend());
-
-//  ost << "msg len = " << msg.size() << ": *" << msg << "*" << endl;
-//  ost << "cursor posn = " << x << endl;
-//  ost << "wmsg len = " << wmsg.size() << /* ": *" << wmsg << "*" << */ endl;
-//  ost << "window width = " <<  win_mult_value.width()<< endl;
-//  ost << "cursor x = " << (win_mult_value.width() - msg.length() + 2) / 2 << endl;
-
-
-
-  unsigned int x_posn = (win_mult_value.width() - msg_length) / 2;
-  if (x_posn > win_mult_value.width() / 2)
-    x_posn = 0;
-
-  win_mult_value < WINDOW_CLEAR;
-  win_mult_value.move_cursor(x_posn, 0);  // length is not calculated correctly because there's a wide character; probably some way to avoid this hack by using wstring
-//  win_mult_value.move_cursor((win_mult_value.width() - msg.length() + 2) / 2, 0);  // length is not calculated correctly because there's a wide character; probably some way to avoid this hack by using wstring
-  win_mult_value <= msg;
+  win_mult_value < WINDOW_CLEAR <= centre(msg, 0);
 }
 
 /*! \brief

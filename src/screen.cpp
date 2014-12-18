@@ -631,7 +631,8 @@ window& operator<(window& win, const cursor_relative& cr)
 
 /// window << centre
 window& operator<(window& win, const centre& c)
-{ win.move_cursor((win.width() - c.s().length()) / 2, c.y());
+{ //win.move_cursor((win.width() - c.s().length()) / 2, c.y());
+  win.move_cursor((win.width() - n_chars(c.s())) / 2, c.y());    // correctly accounts for UTF-8 encoding
 
   return win < c.s();
 }

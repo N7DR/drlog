@@ -423,6 +423,9 @@ const std::vector<size_t> starts_of_words(const std::string& s);
 
 // get nth word
 const std::string nth_word(const std::string& s, const unsigned int n, const unsigned int wrt = 0);
+
+// assumes UTF-8; TODO: generalise using locales/facets
+const size_t n_chars(const std::string& str);
   
 /*!     \brief  Does a string contain a legal dotted-decimal IPv4 address
         \param  cs  Original string
