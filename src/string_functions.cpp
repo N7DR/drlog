@@ -8,6 +8,7 @@
 // Copyright owners:
 //    N7DR
 
+#include "macros.h"
 #include "string_functions.h"
 
 #include <iostream>
@@ -23,7 +24,7 @@
 
 using namespace std;
 
-extern ofstream ost;
+extern ofstream ost;                   ///< for debugging, info
 
 /*! \brief convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
@@ -118,32 +119,35 @@ const string duplicate_char(const string& s, const char& c)
   return rv;
 }
 
-/*! \brief  safe version of the substr() member function
-    \param  str string on which to operate
-    \return substring
+/*! \brief              safe version of the substr() member function
+    \param  str         string on which to operate
+    \param  start_posn  position at which to start operation
+    \param  length      length of substring to be extracted
+    \return             substring of length <i>length</i>, starting at position <i>start_posn</i>
 
-    Does not throw a range exception
+    Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception
 */
 const string substring(const string& str, const size_t start_posn, const size_t length)
 { if (str.size() > start_posn)
     return str.substr(start_posn, length);
 
-  ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << ", length = " << length << endl;
+   ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << ", length = " << length << endl;  // log the problem
 
   return string();
 }
 
-/*! \brief  safe version of the substr() member function
-    \param  str string on which to operate
-    \return substring
+/*! \brief              safe version of the substr() member function
+    \param  str         string on which to operate
+    \param  start_posn  position at which to start operation
+    \return             substring starting at position <i>start_posn</i>
 
-    Does not throw a range exception
+    Operates like <i>str.substr(start_posn)</i>, except does not throw a range exception
 */
 const string substring(const string& str, const size_t start_posn)
 { if (str.size() > start_posn)
     return str.substr(start_posn);
 
-  ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << endl;
+  ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << endl;    // log the problem
 
   return string();
 }
@@ -189,25 +193,29 @@ const string format_time(const string& format, const tm* tmp)
   return string(buf);
 }
 
-/*! \brief replace every instance of one character with another
- *
- */
+/*! \brief              replace every instance of one character with another
+    \param  s           string on which to operate
+    \param  old_char    character to be replaced
+    \param  new_char    replacement character
+    \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
+*/
 const string replace_char(const string& s, char old_char, char new_char)
 { string rv;
 
-  for (size_t n = 0; n < s.length(); ++n)
-  { if (s[n] == old_char)
-      rv += new_char;
-    else
-      rv += s[n];
-  }
+//  for (size_t n = 0; n < s.length(); ++n)
+//    rv += ( (s[n] == old_char) ? new_char : s[n] );
+
+  FOR_ALL(s, [=, &rv] (const char c) { rv += ( (c == old_char) ? new_char : c ); } );
 
   return rv;
 }
 
-/*! \brief replace every instance of one string with another
- *  &&&&&&&&&&&
- */
+/*! \brief              replace every instance of one string with another
+    \param  s           string on which to operate
+    \param  old_str     string to be replaced
+    \param  new_str     replacement string
+    \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
+*/
 const string replace(const string& s, const string& old_str, const string& new_str)
 { string rv;
   size_t posn = 0, last_posn = 0;

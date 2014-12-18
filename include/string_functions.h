@@ -102,37 +102,45 @@ const std::string to_string(const T val)
   return stream.str();
 }
 
-/*! \brief  safe version of the substr() member function
-    \param  str string on which to operate
-    \return substring
+/*! \brief              safe version of the substr() member function
+    \param  str         string on which to operate
+    \param  start_posn  position at which to start operation
+    \param  length      length of substring to be extracted
+    \return             substring of length <i>length</i>, starting at position <i>start_posn</i>
 
-    Does not throw a range exception
+    Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception
 */
-//inline const std::string substring(const std::string& str, const size_t start_posn, const size_t length)
-//  { return ( (str.size() > start_posn) ? str.substr(start_posn, length) : std::string() ); }
 const std::string substring(const std::string& str, const size_t start_posn, const size_t length);
 
-/*! \brief  safe version of the substr() member function
-    \param  str string on which to operate
-    \return substring
+/*! \brief              safe version of the substr() member function
+    \param  str         string on which to operate
+    \param  start_posn  position at which to start operation
+    \return             substring starting at position <i>start_posn</i>
 
-    Does not throw a range exception
+    Operates like <i>str.substr(start_posn)</i>, except does not throw a range exception
 */
-//inline const std::string substring(const std::string& str, const size_t start_posn)
-//  { return ( (str.size() > start_posn) ? str.substr(start_posn) : std::string() ); }
 const std::string substring(const std::string& str, const size_t start_posn);
 
-/*! \brief replace every instance of one character with another
- *
- */
+/*! \brief              replace every instance of one character with another
+    \param  s           string on which to operate
+    \param  old_char    character to be replaced
+    \param  new_char    replacement character
+    \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
+*/
 const std::string replace_char(const std::string& s, char old_char, char new_char);
 
-/*! \brief replace every instance of one string with another
- *
- */
+/*! \brief              replace every instance of one string with another
+    \param  s           string on which to operate
+    \param  old_str     string to be replaced
+    \param  new_str     replacement string
+    \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
+*/
 const std::string replace(const std::string& s, const std::string& old_str, const std::string& new_str);
 
-/*! \brief does a string contain a particular substring?
+/*! \brief              does a string contain a particular substring?
+    \param  s           string to test
+    \param  ss          substring for which to search
+    \return             whether <i>s</i> contains the substring <i>ss</i>
 */
 inline const bool contains(const std::string& s, const std::string& ss)
   { return s.find(ss) != std::string::npos; }

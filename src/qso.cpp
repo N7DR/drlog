@@ -476,9 +476,23 @@ specification tells us otherwise, that's what we do.
 
 // REXCH-xxx
     if (name.substr(0, 6) == "REXCH-")
-    { const string field_name = name.substr(6);
+    { const string field_name = substring(name, 6);
     
-      value = received_exchange(field_name);  // don't use _received_exchange[field_name] because that's not const
+      ost << "R field name = " << field_name << endl;
+
+      if (contains(field_name, "+"))
+      { const vector<string> vec = remove_peripheral_spaces(split_string(field_name, "+"));
+
+        for (const auto& name : vec)
+        { ost << "name = " << name << endl;
+          ost << "received_exchange(name) = " << received_exchange(name) << endl;
+
+          if (!received_exchange(name).empty())
+            value = received_exchange(name);
+        }
+      }
+      else
+        value = received_exchange(field_name);  // don't use _received_exchange[field_name] because that's not const
     }
     
 // RCALL
