@@ -871,8 +871,65 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       //ost << "state_10() = " << rv << endl;
 
       if (rv.empty())                       ///< if no explicit 10MSTATE value, try the QTH value
-      { rv = to_upper(drm_line.qth());
-        //ost << "qth() = " << rv << endl;
+        rv = to_upper(drm_line.qth());
+    }
+
+//      ost << "guess so far is: " << rv << endl;
+
+      if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE") )  // can often guess province for VEs
+      { //ost << "Guessing VE province" << endl;
+
+        const string pfx = wpx_prefix(callsign);
+
+        if (pfx == "VY2")
+          rv = "PE";
+
+        if (rv.empty() and (pfx == "VO1"))
+          rv = "NF";
+
+        if (rv.empty())
+        { const char call_area = pfx[pfx.length() - 1];
+
+          switch (call_area)
+          { case '1' :
+              rv = "NS";
+              break;
+
+            case '2' :
+              rv = "PQ";
+              break;
+
+            case '3' :
+              rv = "ON";
+              break;
+
+            case '4' :
+              rv = "MB";
+              break;
+
+            case '5' :
+              rv = "SK";
+              break;
+
+            case '6' :
+              rv = "MB";
+              break;
+
+            case '7' :
+              rv = "BC";
+              break;
+
+            case '9' :
+              rv = "NB";
+              break;
+
+            default :
+              break;
+          }
+        }
+
+//        ost << "guessed VE province = " << rv << endl;
+
       }
 
       if (!rv.empty())
@@ -881,7 +938,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
         return rv;
       }
-    }
+
   }
 
   if (field_name == "CHECK")
