@@ -54,25 +54,15 @@ using namespace   chrono;        // std::chrono
 using namespace   placeholders;  // std::placeholders
 using namespace   this_thread;   // std::this_thread
 
-extern const set<string> CONTINENT_SET;
+extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
-enum DRLOG_MODE { CQ_MODE = 0,
-                  SAP_MODE
+enum DRLOG_MODE { CQ_MODE = 0,              ///< I'm calling the other station
+                  SAP_MODE                  ///< the other station is calling me
                 };
 
-//extern const string VERSION_TYPE;
-//extern const string DATE_STR;  // Mmm dd yyyy
-//extern const string TIME_STR;
-
-string VERSION;
-string DP("·");
-string TS(",");
-
-//#include "../src/version"
-
-//string VERSION("β");
-//const string DATE_STR(__DATE__);  // Mmm dd yyyy
-//const string TIME_STR(__TIME__);
+string VERSION;         ///< version string
+string DP("·");         ///< character for decimal point
+string TS(",");         ///< character for thousands separator
 
 static const set<string> variable_exchange_fields { "SERNO" };  // exchange fields that change
 
@@ -1234,14 +1224,6 @@ int main(int argc, char** argv)
         }
         else
           octothorpe = 1;
-
-//        if (rules.sent_exchange_includes("SERNO"))
-//        { const QSO last_qso = logbk[logbk.size()];    // wrt 1
-//
-//          octothorpe = (last_qso.empty() ? 1 : from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1);
-//        }
-//        else
-//          octothorpe = logbk.size() + 1;
       }
 
 // display most recent lines from log
@@ -1939,9 +1921,7 @@ void* process_rbn_info(void* vp)
 
                   if (!guess.empty())
                     statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
-
                 }
-
               }
 
               be.calculate_mult_status(rules, statistics);
@@ -2108,6 +2088,8 @@ void* prune_bandmap(void* vp)
     SPACE -- generally, dupe check
     CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
     SHIFT (RIT control)
+    ALT-Y -- delete last QSO
+    CURSOR UP -- go to log window
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -3023,7 +3005,6 @@ ost << "processing command: " << command << endl;
 // display the current statistics
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
-//        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
@@ -6265,33 +6246,36 @@ void test_exchange_templates(const string& test_filename)
 }
 #endif
 
-#include <cwchar>
-
 void update_mult_value(void)
 { const float mult_value = statistics.mult_to_qso_value(rules, safe_get_band());
   const unsigned int mult_value_10 = static_cast<unsigned int>( (mult_value * 10) + 0.5);
   const string term_1 = to_string(mult_value_10 / 10);
-  const string term_2 = to_string(mult_value_10 - (10 * (mult_value_10 / 10) )).substr(0, 1);
+  const string term_2 = substring(to_string(mult_value_10 - (10 * (mult_value_10 / 10) )), 0, 1);
   string msg = string("M ≡ ") + term_1 + DP + term_2 + "Q";
 
   const pair<unsigned int, unsigned int> qs = rate.calculate_rate(900 /* seconds */, 3600);  // rate per hour
   const unsigned int qs_per_hour = qs.first;
   const float mins_per_q = (qs_per_hour ? 60.0 / static_cast<float>(qs_per_hour) : 3600.0);
   const float mins_per_mult = mins_per_q * mult_value;
-
   string mins("∞");
 
   if (mins_per_mult < 60)
   { const unsigned int mins_value_10 = static_cast<unsigned int>( (mins_per_mult * 10) + 0.5);
     const string term_1_m = to_string(mins_value_10 / 10);
-    const string term_2_m = to_string(mins_value_10 - (10 * (mins_value_10 / 10) )).substr(0, 1);
+    const string term_2_m = substring(to_string(mins_value_10 - (10 * (mins_value_10 / 10) )), 0, 1);
 
     mins = term_1_m + DP + term_2_m;
   }
 
-  msg += string(" ≡ ") + mins + "'";
+  msg += string(" ≡ ") + mins + "′";
 
-  win_mult_value < WINDOW_CLEAR <= centre(msg, 0);
+  try
+  { win_mult_value < WINDOW_CLEAR <= centre(msg, 0);
+  }
+
+  catch (const string_function_error& e)
+  { alert(e.reason());
+  }
 }
 
 /*! \brief

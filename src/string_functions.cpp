@@ -16,6 +16,8 @@
 #include <cctype>
 #include <cstdio>
 
+#include <langinfo.h>
+
 #include <arpa/inet.h>
 #include <sys/stat.h>
 
@@ -698,10 +700,12 @@ const string nth_word(const string& s, const unsigned int n, const unsigned int 
   return rv;
 }
 
-// assumes UTF-8; TODO: generalise using locales/facets
 // https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
 const size_t n_chars(const string& str)
-{ const size_t n_bytes = str.size();
+{ if (string(nl_langinfo(CODESET)) != "UTF-8")
+    throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: " + string(nl_langinfo(CODESET)));
+
+  const size_t n_bytes = str.size();
   char* cp = const_cast<char*>(str.data());
   char* end_cp = cp + n_bytes;  // one past the end of the contents of str
   size_t rv = 0;

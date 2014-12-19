@@ -46,7 +46,8 @@ const int STRING_UNDERFLOW            = -1,    ///< Underflow
           STRING_FILE_IS_DIRECTORY    = -5,    ///< File is a directory
           STRING_UNABLE_TO_STAT_FILE  = -6,    ///< Unable to stat a file
           STRING_BOUNDS_ERROR         = -7,    ///< Attempt to access range outside string
-          STRING_CONVERSION_FAILURE   = -8;    ///< Attempt to convert the format of a string failed
+          STRING_CONVERSION_FAILURE   = -8,    ///< Attempt to convert the format of a string failed
+          STRING_UNKNOWN_ENCODING     = -9;    ///< Unknown character encoding
 
 /*! \brief convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line

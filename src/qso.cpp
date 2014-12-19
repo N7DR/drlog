@@ -127,41 +127,40 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 //  string str_copy = str.substr(5);    // remove the "QSO: "
   vector<pair<string, string> > name_value;
 
-//  if (posn != string::npos)
   while (cur_posn != string::npos)
     name_value.push_back(_next_name_value_pair(str, cur_posn));
-
-//  for (size_t n = 0; n < name_value.size(); ++n)
-//    ost << "name = " << name_value[n].first << ", value = " << name_value[n].second << endl;
 
   _sent_exchange.clear();
   _received_exchange.clear();
 
-  for (size_t n = 0; n < name_value.size(); ++n)
+//  for (size_t n = 0; n < name_value.size(); ++n)
+  for (const auto& nv : name_value)
   { bool processed = false;
+    const string& name = nv.first;
+    const string& value = nv.second;
 
-    if (!processed and (name_value[n].first == "number"))
-    { _number = from_string<decltype(_number)>(name_value[n].second);
+    if (!processed and (name == "number"))
+    { _number = from_string<decltype(_number)>(value);
       processed = true;
     }
 
-    if (!processed and (name_value[n].first == "date"))
-    { _date = name_value[n].second;
+    if (!processed and (name == "date"))
+    { _date = value;
       processed = true;
     }
 
-    if (!processed and (name_value[n].first == "utc"))
-    { _utc = name_value[n].second;
+    if (!processed and (name == "utc"))
+    { _utc = value;
       processed = true;
     }
 
-    if (!processed and (name_value[n].first == "mode"))
-    { _mode = ( ( name_value[n].second == "CW") ? MODE_CW : MODE_SSB);
+    if (!processed and (name == "mode"))
+    { _mode = ( ( value == "CW") ? MODE_CW : MODE_SSB);
       processed = true;
     }
 
-    if (!processed and (name_value[n].first == "frequency"))
-    { _frequency = name_value[n].second;
+    if (!processed and (name == "frequency"))
+    { _frequency = value;
 
       const double f = from_string<double>(_frequency);
       const frequency freq(f);
@@ -170,8 +169,8 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = true;
     }
 
-    if (!processed and (name_value[n].first == "hiscall"))
-    { _callsign = name_value[n].second;
+    if (!processed and (name == "hiscall"))
+    { _callsign = value;
 
 extern location_database location_db;
 
@@ -180,29 +179,25 @@ extern location_database location_db;
       processed = true;
     }
 
-    if (!processed and (name_value[n].first == "mycall"))
-    { _my_call = name_value[n].second;
+    if (!processed and (name == "mycall"))
+    { _my_call = value;
       processed = true;
     }
 
-    if (!processed and (name_value[n].first.substr(0, 5) == "sent-"))
-    { _sent_exchange.push_back( { to_upper(name_value[n].first.substr(5)), name_value[n].second } );
+    if (!processed and (name.substr(0, 5) == "sent-"))
+    { _sent_exchange.push_back( { to_upper(name.substr(5)), value } );
       processed = true;
     }
 
-    ost << "restoring QSO for " << _callsign << endl;
-
-    if (!processed and (name_value[n].first.substr(0, 9) == "received-"))
-    { const string& name = to_upper(name_value[n].first.substr(9));
-      const string& value = name_value[n].second;
-//      const string mv = MULT_VALUE(name, value);
-      const bool is_possible_mult = rules.is_exchange_mult(name);
+    if (!processed and (name.substr(0, 9) == "received-"))
+    { const string name_upper = to_upper(name.substr(9));
+      const bool is_possible_mult = rules.is_exchange_mult(name_upper);
 
       if (is_possible_mult and context.auto_remaining_exchange_mults())
-        statistics.add_known_exchange_mult(name, value);
+        statistics.add_known_exchange_mult(name_upper, value);
 
-      const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name, value, _band) : false;
-      const received_field rf { name, value , is_possible_mult, is_mult };
+      const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band) : false;
+      const received_field rf { name_upper, value , is_possible_mult, is_mult };
 
 //      ost << "exchange field " << name << " has value " << value << " and is_possible_mult is " << is_possible_mult << " and is_mult is " << is_mult << endl;
 
@@ -465,13 +460,25 @@ specification tells us otherwise, that's what we do.
 // TEXCH-xxx
     if (name.substr(0, 6) == "TEXCH-")
     { const string field_name = name.substr(6);
+
+      //ost << "T field name = " << field_name << endl;
     
-//      for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
-//        if (_sent_exchange[n].first == field_name)
-//          value = _sent_exchange[n].second;
-      for (const auto& pss : _sent_exchange)
-        if (pss.first == field_name)
-          value = pss.second;
+      if (contains(field_name, "+"))
+      { const vector<string> vec = remove_peripheral_spaces(split_string(field_name, "+"));
+
+        for (const auto& name : vec)
+        { //ost << "name = " << name << endl;
+
+          for (const auto& pss : _sent_exchange)
+            if (pss.first == name)
+              value = pss.second;
+        }
+      }
+      else
+      { for (const auto& pss : _sent_exchange)
+          if (pss.first == field_name)
+            value = pss.second;
+      }
     }
 
 // REXCH-xxx
