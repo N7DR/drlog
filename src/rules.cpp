@@ -509,85 +509,86 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   const points_structure empty_ps { };
 
 // fill the points structure
-  for (const auto& b : _permitted_bands)
-  { _points.insert( {b, empty_ps} );  // default is no points
+  for (const auto& m : _permitted_modes)
+  { auto& pb = _points[m];
 
-    points_structure points_this_band;
-    MSI     country_points_this_band;
-    MSI     continent_points_this_band;
+    for (const auto& b : _permitted_bands)
+    { pb.insert( {b, empty_ps} );  // default is no points
+
+      points_structure points_this_band;
+      MSI     country_points_this_band;
+      MSI     continent_points_this_band;
 
 // parse the config file
-    const string context_points = context.points(b);
+      const string context_points = context.points(b, m);
 
 // ost << "points from context: " << context_points << endl;
 
-    if (context_points == "IARU")  // special
-    { points_structure ps = _points[b];
+      if (context_points == "IARU")  // special
+      { points_structure ps = pb[b];
 
-      ps.points_type(POINTS_IARU);
-      _points[b] = ps;
-    }
-    else
-    { const vector<string> points_str_vec = remove_peripheral_spaces( split_string(context_points, ",") );
+        ps.points_type(POINTS_IARU);
+        pb[b] = ps;
+      }
+      else
+      { const vector<string> points_str_vec = remove_peripheral_spaces( split_string(context_points, ",") );
 
-      for (unsigned int n = 0; n < points_str_vec.size(); ++n)
-      { const string points_str = points_str_vec[n];
-        const vector<string> fields = split_string(points_str, ":");
+        for (unsigned int n = 0; n < points_str_vec.size(); ++n)
+        { const string points_str = points_str_vec[n];
+          const vector<string> fields = split_string(points_str, ":");
 
 // default?
-        if (fields.size() != 2 and fields.size() != 3)
-          ost << "Ignoring points field: " << points_str << endl;
-        else
-        { if (fields.size() == 3)                              // three fields
-          { bool processed = false;
+          if (fields.size() != 2 and fields.size() != 3)
+            ost << "Ignoring points field: " << points_str << endl;
+          else
+          { if (fields.size() == 3)                              // three fields
+            { bool processed = false;
 
-            if (fields[0].empty() and fields[1].empty())
-            { points_this_band.default_points(from_string<unsigned int>(fields[2]));
+              if (fields[0].empty() and fields[1].empty())
+              { points_this_band.default_points(from_string<unsigned int>(fields[2]));
+                processed = true;
+              }
+
+// country
+            if (!processed and !fields[1].empty())
+            { if (contains(fields[1], "["))    // possible multiple countries
+              { const string countries = delimited_substring(fields[1], '[', ']');
+
+                if (!countries.empty())
+                { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already spilt on commas
+
+                  FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } ); } );
+                }
+              }
+              else
+                country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
+
+              points_this_band.country_points(country_points_this_band);
+
               processed = true;
             }
 
-// country
-          if (!processed and !fields[1].empty())
-          { if (contains(fields[1], "["))    // possible multiple countries
-            { const string countries = delimited_substring(fields[1], '[', ']');
-
-              if (!countries.empty())
-              { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already spilt on commas
-
- //               for (const auto& country : country_vec)
-//                  country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } );
-                FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } ); } );
-              }
+            if (!processed)
+            { continent_points_this_band[fields[0]] = from_string<unsigned int>(fields[2]);
+              points_this_band.continent_points(continent_points_this_band);
             }
-            else
-              country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
-
-            points_this_band.country_points(country_points_this_band);
-
-            processed = true;
-          }
-
-          if (!processed)
-          { continent_points_this_band[fields[0]] = from_string<unsigned int>(fields[2]);
-            points_this_band.continent_points(continent_points_this_band);
           }
         }
-      }
 
 // [field-name-condition]:points // [IOTA != ------]:15
-      if (fields.size() == 2)
-      { const string& f0 = fields[0];
+        if (fields.size() == 2)
+        { const string& f0 = fields[0];
 
-        if ((f0.find("[") != string::npos) and (f0.find("]") != string::npos))
-        { _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
+          if ((f0.find("[") != string::npos) and (f0.find("]") != string::npos))
+          { _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
 //            ost << "inserted " << fields[1] << " points for condition: " << f0 << endl;
+          }
         }
-      }
 
-      _points[b] = points_this_band;    // overwrite default
-    }
-  }  // not IARU
-  }
+        pb[b] = points_this_band;    // overwrite default
+      }
+    }  // not IARU
+  } }
 
 // legal values for the exchange fields
 //  std::vector<std::map<std::string /* exch field name */, std::vector<std::string> /* legal values of exch field*/> > _exch_values;
@@ -908,13 +909,15 @@ const set<string> contest_rules::exch_permitted_values(const string& field_name)
 /*! \brief                  The canonical value for a field
     \param  field_name      name of an exchange field (received)
     \param  actual_value    actual received value of the field <i>field_name</i>
-    \return                 Canonical value for the value <i>actual_value</i> forf the field <i>field_name</i>
+    \return                 Canonical value for the value <i>actual_value</i> for the field <i>field_name</i>
 
     Returns <i>actual_value</i> if there are no canonical values.
     Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>
 */
 const string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
-{ set<string> ss = exch_permitted_values(field_name);
+{ ost << "attempting to get canonical value for field " << field_name << " with value " << actual_value << endl;
+
+  set<string> ss = exch_permitted_values(field_name);
 
   if (exch_permitted_values(field_name).empty())                         // if no permitted values => anything allowed
     return actual_value;
@@ -1015,27 +1018,27 @@ const BAND contest_rules::next_band_down(const BAND current_band) const
 
 const unsigned int contest_rules::points(const QSO& qso, location_database& location_db) const
 { const BAND b = qso.band();
-  const string call = qso.callsign();
 
   if (!(_score_bands < b))    // no points if we're not scoring this band
     return 0;
 
+  const string call = qso.callsign();
   const string canonical_prefix = location_db.canonical_prefix(call);
-
-//  ost << "Calculating points for QSO with " << call << endl;
-//  ost << "Canonical prefix: " << canonical_prefix << endl;
 
   if (canonical_prefix == "NONE")      // unable to determine country
     return 0;
 
+  const MODE m = qso.mode();
+  const auto& pb = _points[m];          // select the correct mode
+
   SAFELOCK(rules);
 
-  if (_points.find(b) == _points.cend())
+  if (pb.find(b) == pb.cend())
   { ost << "Unable to find any points entries for band " << BAND_NAME[b] << endl;
     return 0;
   }
 
-  const points_structure& points_this_band = _points.at(b);           // valid because of the prior check
+  const points_structure& points_this_band = pb.at(b);           // valid because of the prior check
 
   switch (points_this_band.points_type())
   { default :

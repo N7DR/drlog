@@ -1,4 +1,4 @@
-// $Id: exchange.h 86 2014-12-13 20:06:24Z  $
+// $Id: exchange.h 87 2014-12-20 18:29:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,23 +20,13 @@
 
 #include <boost/regex.hpp>    // because libstdc++ support for regex is essentially nonexistent
 
-class exchange_field_template;
+class exchange_field_template;                  ///< forward declaration
 
-extern pt_mutex exchange_field_database_mutex;
+extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
 
 #if !defined(NEW_CONSTRUCTOR)
 extern exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 #endif
-
-extern const std::string process_cut_digits(const std::string& input);
-
-// -------------------------  choice_exchange_field  ---------------------------
-
-/*!     \class choice_exchange_field
-        \brief Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
-*/
-
-// ?????
 
 // -------------------------  parsed_exchange_field  ---------------------------
 
@@ -143,9 +133,9 @@ public:
   inline const bool has_replacement_call(void) const
     { return (!_replacement_call.empty() ); }
 
-/*! \brief  Return the value of a particular field
+/*! \brief              Return the value of a particular field (addressed by name)
     \param  field_name  field for which the value is requested
-    \return value corresponding to <i>field_name</i>
+    \return             value corresponding to <i>field_name</i>
 
     Returns empty string if <i>field_name</i> does not exist
 */
@@ -155,55 +145,58 @@ public:
   inline const size_t n_fields(void) const
     { return _fields.size(); }
 
-/*! \brief  Return the name of a field
-    \param  n  number of field for which the name is requested
-    \return name corresponding to <i>n</i>
+/*! \brief      Return the name of a field
+    \param  n   number of field for which the name is requested
+    \return     name corresponding to <i>n</i>
 
     Returns empty string if <i>n</i> is out of range
 */
   inline const std::string field_name(const size_t n) const
     { return (n >= _fields.size() ? std::string() : _fields[n].name()); }
 
-/*! \brief  Return the value of a field
-    \param  n  number of field for which the value is requested
-    \return value corresponding to <i>n</i>
+/*! \brief      Return the value of a particular field (addressed by number)
+    \param  n   number of field for which the value is requested
+    \return     value corresponding to field number <i>n</i>
 
     Returns empty string if <i>n</i> is out of range
 */
   inline const std::string field_value(const size_t n) const
     { return (n >= _fields.size() ? std::string() : _fields[n].value()); }
 
-/*! \brief  Is a field a mult?
-    \param  n  number of field for which the mult status is requested
-    \return  whether field number <i>n</i> is a mult
+/*! \brief      Is a field a mult?
+    \param  n   number of field for which the mult status is requested
+    \return     whether field number <i>n</i> is a mult
 
     Returns false if <i>n</i> is out of range
 */
   inline const bool field_is_mult(const size_t n) const
     { return (n >= _fields.size() ? false : _fields[n].is_mult()); }
 
-/*! \brief  Return the mult value of a field
-    \param  n  number of field for which the value is requested
-    \return value corresponding to <i>n</i>
+/*! \brief      Return the mult value of a field
+    \param  n   number of field for which the mult value is requested
+    \return     mult value corresponding to <i>n</i>
 
     Returns empty string if <i>n</i> is out of range
 */
   inline const std::string mult_value(const size_t n) const
     { return (n >= _fields.size() ? std::string() : _fields[n].mult_value()); }
 
-//  const std::string chosen_field_name(const std::string& choice_field_name) const;
+/*! \brief          Return the names and values of matched fields
+    \param  rules   rules for this contest
+    \return         returns the actual matched names and values of the exchange fields
 
-//  const std::vector<parsed_exchange_field> chosen_fields(void) const;
+    Any field names that represent a choice are resolved to the name of the actual matched field in the returned object
+*/
   const std::vector<parsed_exchange_field> chosen_fields(const contest_rules& rules) const;
 
-  /*! \brief  Given several possible field names, choose one that fits the data
-      \param  choice_name   the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
-      \param  received_field the value of the received field
-      \return the individual name of a field in <i>choice_name</i> that fits the data
+/*! \brief                  Given several possible field names, choose one that fits the data
+    \param  choice_name     the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
+    \param  received_field  the value of the received field
+    \return                 the individual name of a field in <i>choice_name</i> that fits the data
 
-      Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
-      If there is no fit, then returns the empty string.
-  */
+    Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
+    If there is no fit, then returns the empty string.
+*/
     const std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
 
 };

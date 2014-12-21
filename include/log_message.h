@@ -31,30 +31,23 @@
 class message_stream
 {
 protected:
-  std::ofstream     _ost;
+  std::ofstream     _ost;                       ///< the output stream
   
-  pt_mutex          _message_stream_mutex;
+  pt_mutex          _message_stream_mutex;      ///< mutex for the stream
 
 public:
 
-// constructor from a file name
-  explicit message_stream(const std::string& filename);
+/// constructor from a file name
+explicit message_stream(const std::string& filename);
 
+/// message_stream << <generic object>
 template <typename T>
-  message_stream& operator<<(T obj)
+  message_stream& operator<<(const T obj)
   { SAFELOCK(_message_stream);
-  
+
     _ost << obj;
     return *this;
   }
-
-//template <typename T>
-//  message_stream& operator<<(T& obj)
-//  { SAFELOCK(_message_stream);
-//
-//    _ost << obj;
-//    return *this;
-//  }
 
 // for manipulator (see "The C++ Standard Library", 13.6.1)
 // I have no idea why this is necessary, since it seems to me that the
@@ -66,7 +59,6 @@ template <typename T>
     return *this;
   }
 };
-
 
 #endif    // LOG_MESSAGE_H
 

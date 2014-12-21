@@ -1,4 +1,4 @@
-// $Id: rules.h 86 2014-12-13 20:06:24Z  $
+// $Id: rules.h 87 2014-12-20 18:29:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -275,7 +275,8 @@ protected:
   bool              _work_if_different_band;     ///< whether it is OK to work the same station on different bands
   bool              _work_if_different_mode;     ///< whether it is OK to work the same station on different modes
   
-  std::map<BAND, points_structure>     _points;  ///< points per QSO
+//  std::map<BAND, points_structure>     _points;  ///< points per QSO
+  std::array<std::map<BAND, points_structure>, N_MODES> _points;                  ///< points structure for each band and mode
 
   std::map<std::string, unsigned int>  _exchange_present_points;  ///< number of points if a particular exchange field is received
   std::map<std::string, unsigned int>  _exchange_value_points;    ///< number of points if a particular exchange field has a particular value

@@ -1,4 +1,4 @@
-// $Id: bandmap.h 86 2014-12-13 20:06:24Z  $
+// $Id: bandmap.h 87 2014-12-20 18:29:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,7 +46,6 @@ extern const std::string MY_MARKER;                                ///< the stri
 */
 const std::string to_string(const BANDMAP_ENTRY_SOURCE);
 
-
 // -----------   needed_mult_details ----------------
 
 /*!     \class needed_mult_details
@@ -92,7 +91,10 @@ public:
     return (_values.insert(v)).second;
   }
 
-/// is a particular value needed?
+/*! \brief      is a particular value needed?
+    \param  v   value to test
+    \return     whether <i>v</i> is needed
+*/
   const bool is_value_needed(const T& v) const
   { if (!_is_needed)
       return false;
@@ -100,9 +102,9 @@ public:
     return (_values.find(v) == _values.cend());
   }
 
-/*! \brief  remove a needed value
+/*! \brief      remove a needed value
     \param  v   value to remove
-    \return whether <i>v</i> was actually removed
+    \return     whether <i>v</i> was actually removed
 
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
@@ -127,6 +129,7 @@ public:
     _values.clear();
   }
 
+/// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
   { ar & _is_needed
@@ -134,7 +137,7 @@ public:
   }
 };
 
-/// ostream << needed_mult_details
+/// ostream << needed_mult_details<pair<>>
 template<typename S>
 std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<S, S>>& nmd)
 { ost << "is needed: " << nmd.is_any_value_needed() << std::endl
@@ -148,7 +151,7 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<
   return ost;
 }
 
-/// ostream << needed_mult_details
+/// ostream << needed_mult_details<>
 template<typename T>
 std::ostream& operator<<(std::ostream& ost, const needed_mult_details<T>& nmd)
 { ost << "is needed: " << nmd.is_any_value_needed() << std::endl
@@ -232,8 +235,6 @@ protected:
 
   std::set<std::string>     _posters;                 ///< stations that posted this entry
 
-//  typedef std::pair<std::string, std::string> pss_type;    ///< useful syntactic sugar
-
   needed_mult_details<std::pair<std::string, std::string>> _is_needed_callsign_mult;    ///< details of needed callsign mults
   needed_mult_details<std::string>                         _is_needed_country_mult;     ///< details of needed country mults
   needed_mult_details<std::pair<std::string, std::string>> _is_needed_exchange_mult;    ///< details of needed exchange mults
@@ -244,18 +245,6 @@ public:
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
   bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
-
-/*! \brief  Construct from some useful stuff
-    \param  post            a post from a cluster/RBN
-    \param  expiration      time at which this entry will expire
-    \param  is_needed_callsign_mult  needed values of callsign mults on this band
-    \param  is_needed_country_mult   needed values of country mults on this band
-    \param  is_needed_exchange_mult  needed values of exchange mults on this band
-*/
-//  bandmap_entry(const dx_post& post, const time_t expiration, const bool is_needed,
-//                const needed_mult_details<std::pair<std::string, std::string>>& is_needed_callsign_mult,
-//                const needed_mult_details<std::string>& is_needed_country_mult,
-//                const needed_mult_details<std::pair<std::string, std::string>>& is_needed_exchange_mult);
 
 /// define the sorting criterion to be applied to a pair of bandmap entries
   inline const bool operator<(const bandmap_entry& be) const

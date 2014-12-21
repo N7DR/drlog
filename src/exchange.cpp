@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 86 2014-12-13 20:06:24Z  $
+// $Id: exchange.cpp 87 2014-12-20 18:29:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -13,14 +13,23 @@
         Classes and functions related to processing exchanges
 */
 
+#include "cty_data.h"
 #include "diskfile.h"
+#include "drmaster.h"
 #include "exchange.h"
+#include "log.h"
 #include "string_functions.h"
 
 using namespace boost;
 using namespace std;
 
-extern EFT CALLSIGN_EFT;            ///< exchange field template for a callsign
+extern contest_rules     rules;
+extern drmaster* drm_p;                 ///< pointer to drmaster database
+extern EFT CALLSIGN_EFT;                ///< exchange field template for a callsign
+extern location_database location_db;
+extern logbook logbk;
+
+pt_mutex exchange_field_database_mutex;
 
 #if !defined(NEW_CONSTRUCTOR)
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
@@ -124,9 +133,9 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
   ost << "}" << endl;
 }
 
-/*!     \brief  constructor
-        \param  callsign    callsign of the station from which the exchange was received
-        \param  rules       rules for the contest
+/*!     \brief                      constructor
+        \param  callsign            callsign of the station from which the exchange was received
+        \param  rules               rules for the contest
         \param  received_values     the received values, in the order that they were received
 */
 parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const contest_rules& rules, const vector<string>& received_values) :
@@ -667,9 +676,9 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 }
 #endif
 
-/*! \brief  Return the value of a particular field
+/*! \brief              Return the value of a particular field
     \param  field_name  field for which the value is requested
-    \return value corresponding to <i>field_name</i>
+    \return             value corresponding to <i>field_name</i>
 
     Returns empty string if <i>field_name</i> does not exist
 */
@@ -734,8 +743,14 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(void) const
 }
 #endif
 
+/*! \brief          Return the names and values of matched fields
+    \param  rules   rules for this contest
+    \return         returns the actual matched names and values of the exchange fields
+
+    Any field names that represent a choice are resolved to the name of the actual matched field in the returned object
+*/
 const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules& rules) const
-{ ost << "Inside new chosen_fields()" << endl;
+{ //ost << "Inside new chosen_fields()" << endl;
 
 //  for (const auto& c : _choices)
 //    ost << "_choices: " << c.first << " => " << c.second << endl;
@@ -743,7 +758,7 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
   vector<parsed_exchange_field> rv;
 
   for (const auto& pef : _fields)
-  { ost << "pef = " << pef << endl;
+  { //ost << "pef = " << pef << endl;
 
     if (!contains(pef.name(), "+"))
       rv.push_back(pef);
@@ -752,7 +767,7 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
 
       pef_chosen.name(resolve_choice(pef.name(), pef.value(), rules));
 
-      ost << "pef_chosen name = " << pef_chosen.name() << endl;
+      //ost << "pef_chosen name = " << pef_chosen.name() << endl;
 
       if (pef_chosen.name().empty())
       { ost << "ERROR in parsed_exchange::chosen_fields(): empty name for field: " << pef.name() << endl;
@@ -769,6 +784,14 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
   return rv;
 }
 
+/*! \brief                  Given several possible field names, choose one that fits the data
+    \param  choice_name     the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
+    \param  received_field  the value of the received field
+    \return                 the individual name of a field in <i>choice_name</i> that fits the data
+
+    Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
+    If there is no fit, then returns the empty string.
+*/
 const string parsed_exchange::resolve_choice(const string& field_name, const string& received_value, const contest_rules& rules) const
 { if (field_name.empty())
     return string();
@@ -779,8 +802,6 @@ const string parsed_exchange::resolve_choice(const string& field_name, const str
     return field_name;
 
   const vector<string> choices_vec = split_string(field_name, '+');
-//  set<string> choices(choices_vec.cbegin(), choices_vec.cend());
-
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
 
   for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
@@ -798,7 +819,6 @@ const string parsed_exchange::resolve_choice(const string& field_name, const str
 
   return string();
 }
-
 
 /// ostream << parsed_exchange
 ostream& operator<<(ostream& ost, const parsed_exchange& pe)
@@ -820,16 +840,16 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
   return ost;
 }
 
-#include "cty_data.h"
-#include "drmaster.h"
-#include "log.h"
+//#include "cty_data.h"
+//#include "drmaster.h"
+//#include "log.h"
 
-extern drmaster* drm_p;                 ///< pointer to drmaster database
-extern location_database location_db;
-extern logbook logbk;
-extern contest_rules     rules;
+//extern drmaster* drm_p;                 ///< pointer to drmaster database
+//extern location_database location_db;
+//extern logbook logbk;
+//extern contest_rules     rules;
 
-pt_mutex exchange_field_database_mutex;
+//pt_mutex exchange_field_database_mutex;
 
 // -------------------------  exchange_field_database  ---------------------------
 

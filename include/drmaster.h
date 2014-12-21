@@ -1,4 +1,4 @@
-// $Id: drmaster.h 86 2014-12-13 20:06:24Z  $
+// $Id: drmaster.h 87 2014-12-20 18:29:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

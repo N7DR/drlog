@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 86 2014-12-13 20:06:24Z  $
+// $Id: drlog_context.cpp 87 2014-12-20 18:29:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,6 +47,101 @@ static const map<string, string> cabrillo_qso_templates { { "ARRL DX", "ARRL DX"
 */
 
 pt_mutex _context_mutex;                    ///< mutex for the context
+
+void drlog_context::_set_points(const string& command, const MODE m)
+{ if (command.empty())
+    return;
+
+  const vector<string> str_vec = split_string(command, "=");
+
+  if (!str_vec.empty())
+  { string tmp_points_str;
+    const string lhs = str_vec[0];
+    auto& pbb = _per_band_points[m];
+
+    if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
+    { string new_str;
+
+      for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+      { new_str += str_vec[n];
+        if (n != str_vec.size() - 1)
+          new_str += "=";
+      }
+
+      tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
+
+      for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
+        pbb.insert( {static_cast<BAND>(n), tmp_points_str} );
+    }
+    else    // not all bands
+    { size_t left_bracket_posn = lhs.find('[');
+      size_t right_bracket_posn = lhs.find(']');
+
+      const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
+
+      if (valid)
+      { string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
+        vector<string> bands = split_string(bands_str, ",");
+
+        for (size_t n = 0; n < bands.size(); ++n)
+          bands[n] = remove_peripheral_spaces(bands[n]);
+
+        for (size_t n = 0; n < bands.size(); ++n)
+        { int wavelength = from_string<size_t>(bands[n]);
+          BAND b;
+
+          switch (wavelength)
+          { case 160 :
+              b = BAND_160;
+              break;
+            case 80 :
+              b = BAND_80;
+              break;
+            case 60 :
+              b = BAND_60;
+              break;
+            case 40 :
+              b = BAND_40;
+              break;
+            case 30 :
+              b = BAND_30;
+              break;
+            case 20 :
+              b = BAND_20;
+              break;
+            case 17 :
+              b = BAND_17;
+              break;
+            case 15 :
+              b = BAND_15;
+              break;
+            case 12 :
+              b = BAND_12;
+              break;
+            case 10 :
+              b = BAND_10;
+              break;
+            default :
+              continue;
+          }
+
+          string new_str;
+
+          for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+          { new_str += str_vec[n];
+
+            if (n != str_vec.size() - 1)
+              new_str += "=";
+          }
+
+          tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
+
+          pbb.insert( {b, tmp_points_str} );
+        }
+      }
+    }
+  }
+}
 
 /*!     \brief              Process a configuration file
         \param  filename    name of file to process
@@ -557,96 +652,18 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // POINTS
-    if (starts_with(testline, "POINTS"))  // there may be an "=" in the points definitions
-    { const vector<string> str_vec = split_string(line, "=");
-
-      if (!str_vec.empty())
-      { string tmp_points_str;
-        const string lhs = str_vec[0];
-
-        if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
-        { string new_str;
-
-          for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
-          { new_str += str_vec[n];
-            if (n != str_vec.size() - 1)
-              new_str += "=";
-          }
-
-          tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
-
-          for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
-            _per_band_points.insert( {static_cast<BAND>(n), tmp_points_str} );
-        }
-        else    // not all bands
-        { size_t left_bracket_posn = lhs.find('[');
-          size_t right_bracket_posn = lhs.find(']');
-
-          const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
-
-          if (valid)
-          { string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
-            vector<string> bands = split_string(bands_str, ",");
-
-            for (size_t n = 0; n < bands.size(); ++n)
-              bands[n] = remove_peripheral_spaces(bands[n]);
-
-            for (size_t n = 0; n < bands.size(); ++n)
-            { int wavelength = from_string<size_t>(bands[n]);
-              BAND b;
-
-              switch (wavelength)
-              { case 160 :
-                  b = BAND_160;
-                  break;
-                case 80 :
-                  b = BAND_80;
-                  break;
-                case 60 :
-                  b = BAND_60;
-                  break;
-                case 40 :
-                  b = BAND_40;
-                  break;
-                case 30 :
-                  b = BAND_30;
-                  break;
-                case 20 :
-                  b = BAND_20;
-                  break;
-                case 17 :
-                  b = BAND_17;
-                  break;
-                case 15 :
-                  b = BAND_15;
-                  break;
-                case 12 :
-                  b = BAND_12;
-                  break;
-                case 10 :
-                  b = BAND_10;
-                  break;
-                default :
-                  continue;
-              }
-
-              string new_str;
-
-              for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
-              { new_str += str_vec[n];
-
-                if (n != str_vec.size() - 1)
-                  new_str += "=";
-              }
-
-              tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
-
-              _per_band_points.insert( {b, tmp_points_str} );
-            }
-          }
-        }
-      }
+    if (starts_with(testline, "POINTS") and !starts_with(testline, "POINTS CW") and !starts_with(testline, "POINTS SSB"))  // there may be an "=" in the points definitions
+    { _set_points(testline, MODE_CW);
+      _set_points(testline, MODE_SSB);
     }
+
+// POINTS CW
+    if (starts_with(testline, "POINTS CW"))
+      _set_points(testline, MODE_CW);
+
+// POINTS SSB
+    if (starts_with(testline, "POINTS SSB"))
+      _set_points(testline, MODE_SSB);
 
 // PTT DELAY (0 => no PTT)
     if (starts_with(testline, "PTT DELAY"))
@@ -899,7 +916,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "CABRILLO LOCATION"))
       _cabrillo_location = rhs;
 
- // CABRILLO NAME
+// CABRILLO NAME
     if (starts_with(testline, "CABRILLO NAME"))
       _cabrillo_name = rhs;
 

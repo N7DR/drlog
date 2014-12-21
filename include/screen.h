@@ -33,10 +33,10 @@
 #include <ncursesw/ncurses.h>
 #include <panel.h>
 
-extern message_stream ost;
+extern message_stream ost;                  ///< for debugging, info
 
-class cpair;
-extern cpair colours;
+class cpair;                                ///< forward declaration for a pair of colours
+extern cpair colours;                       ///< singleton used to hold  a pair of colours
 
 enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
                          WINDOW_BOLD,
@@ -64,7 +64,7 @@ enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
                          CURSOR_HIDE,
                          CURSOR_END_OF_LINE,
                          WINDOW_NOP
-                       };
+                       };                       ///< attributes and pre-defined cursor movement
 
 // window creation flags
 const unsigned int WINDOW_NO_CURSOR = 1,            ///< do not display the cursor
@@ -134,7 +134,7 @@ public:
 // -----------  screen  ----------------
 
 /*! \class screen
-    \brief A dummy class to allow for easy initialisation and closing
+    \brief A dummy class to allow for easy initialisation and termination
 */
 
 class screen
@@ -151,7 +151,6 @@ public:
 };
 
 // -----------  window_information ----------------
-
 
 class window_information
 {

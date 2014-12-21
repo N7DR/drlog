@@ -143,14 +143,9 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
   if (_country_mults_used)
   { const set<string> country_mults = rules.country_mults();
 
-    if (!country_mults.empty() or context.auto_remaining_country_mults())  // should always be true
-      _country_multipliers.used(true);
-
-    if (rules.country_mults_per_band())
-      _country_multipliers.per_band(true);
-
-    if (rules.country_mults_per_mode())
-      _country_multipliers.per_mode(true);
+    _country_multipliers.used(!country_mults.empty() or context.auto_remaining_country_mults());  // should always be true
+    _country_multipliers.per_band(rules.country_mults_per_band());
+    _country_multipliers.per_mode(rules.country_mults_per_mode());
 
     if (!context.auto_remaining_country_mults())
       _country_multipliers.add_known(country_mults);
@@ -162,12 +157,8 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
     { multiplier em;
 
       em.used(true);
-
-      if (rules.exchange_mults_per_band())
-        em.per_band(true);
-
-      if (rules.exchange_mults_per_mode())
-        em.per_mode(true);
+      em.per_band(rules.exchange_mults_per_band());
+      em.per_mode(rules.exchange_mults_per_mode());
 
 // if values are obtained from grep, then the next line returns an empty vector
       const vector<string> canonical_values = rules.exch_canonical_values(exchange_mult_name);
@@ -388,18 +379,22 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   }
 }
 
-//std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
-
+/*! \brief          Add a known legal value for a particular exchange multiplier
+    \param  name    name of the exchange multiplier
+    \param  value   New legal value for the exchange multiplier <i>name</i>
+    \return         Whether <i>value</i> was actually added
+*/
 const bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
 { SAFELOCK(statistics);
 //  ost << "in add_known_exchange_mult; name = " << name << ", value = " << value << endl;
 //  ost << "size of _exchange_multipliers = " << _exchange_multipliers.size() << endl;
 
-  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
-  { pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
+//  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
+  for (auto& psm : _exchange_multipliers)
+  { //pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
 
-    if (sm.first == name)
-    { const bool added = sm.second.add_known(MULT_VALUE(name, value));
+    if (psm.first == name)
+    { const bool added = psm.second.add_known(MULT_VALUE(name, value));
 
       if (added)
       { ost << "added known exchange mult: " << name << ", value = " << value << ", mult value = " << MULT_VALUE(name, value) << endl;
@@ -411,14 +406,19 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
   return false;
 }
 
+/*! \brief          Return all known legal value for a particular exchange multiplier
+    \param  name    name of the exchange multiplier
+    \return         All the known legal values of <i>name</i>
+*/
 const set<string> running_statistics::known_exchange_mults(const string& name)
 { SAFELOCK(statistics);
 
-  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
-  { pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
+//  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
+  for (const auto& psm : _exchange_multipliers)
+  { //pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
 
-    if (sm.first == name)
-      return sm.second.known();
+    if (psm.first == name)
+      return psm.second.known();
   }
 
   return set<string>();
@@ -444,7 +444,10 @@ void running_statistics::add_worked_exchange_mult(const string& field_name, cons
       psm.second.add_worked(mv, b);
 }
 
-/// rebuild
+/*! \brief          Perform a complete rebuild
+    \param  log     logbook
+    \param  rules   contest rules
+*/
 void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
 { logbook l;
 
@@ -469,7 +472,7 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
 //    ost << "checking exchange field name = " << sm.first << endl;
 
     if (sm.first == exchange_field_name and sm.second.is_known(mv) /* sm.second.is_known(exchange_field_value) */)
-    { ost << "found known field name; returning " << !(sm.second.is_worked(mv, b)) << endl;;
+    { //ost << "found field name " << sm.first << "; is needed: " << boolalpha << !(sm.second.is_worked(mv, b)) << noboolalpha << endl;;
 //      return !(sm.second.is_worked(exchange_field_value, b));
       return !(sm.second.is_worked(mv, b));
     }
@@ -488,6 +491,14 @@ const std::string running_statistics::exchange_mult_needed(const string& exchang
   return rv;
 }
 
+// TODO
+/*! \brief            generate the summary string for display
+    \param  rules     rules for this contest
+    \param  n_mode    number of the mode for which the summary is to be produced
+    \return           summary string for mode <i>n_mode</i>
+
+    If <i>n_mode</i> = <i>rules.n_modes() + 1</i>, then the returned string is for all modes
+*/
 const string _summary_string(const contest_rules& rules, const unsigned int n_mode)
 { string rv;
 
@@ -918,6 +929,11 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
   return ( static_cast<float>(new_mult_value) / new_qso_value );
 }
 
+/*! \brief                  How many QSOs have been made?
+    \param  rules           rules for this contest
+
+    Counts only those QSOs on bands being used to calculate the score. Includes dupes.
+*/
 const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
 { const vector<BAND>& permitted_bands = rules.permitted_bands();
   const set<BAND>& score_bands = rules.score_bands();

@@ -30,7 +30,7 @@
 #include <set>
 #include <string>
 
-extern pt_mutex statistics_mutex;
+extern pt_mutex statistics_mutex;       ///< mutex for statistics
 
 // -----------  running_statistics  ----------------
 
@@ -54,7 +54,7 @@ protected:
 
   std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
 
-/*! \brief  add a callsign mult name, value and band to those worked
+/*! \brief              add a callsign mult name, value and band to those worked
     \param  mult_name   name of callsign mult
     \param  mult_value  value of callsign mult
     \param  band_nr     band on which callsign mult was worked
@@ -77,6 +77,14 @@ protected:
   unsigned int  _qtc_qsos_sent;                 ///< total number of QSOs sent in QTCs
   unsigned int  _qtc_qsos_unsent;               ///< total number of (legal) QSOs available but not yet sent in QTCs
 
+// TODO
+/*! \brief            generate the summary string for display
+    \param  rules     rules for this contest
+    \param  n_mode    number of the mode for which the summary is to be produced
+    \return           summary string for mode <i>n_mode</i>
+
+    If <i>n_mode</i> = <i>rules.n_modes() + 1</i>, then the returned string is for all modes
+*/
   const std::string _summary_string(const contest_rules& rules, const unsigned int n_mode);  // n_mode = rules.n_modes() + 1 => all modes
 
 public:
@@ -84,14 +92,14 @@ public:
 /// default constructor
   running_statistics(void);
 
-/*! \brief  Constructor
+/*! \brief                  Constructor
     \param  country_data    data from cty.dat file
     \param  context         drlog context
     \param  rules           rules for this contest
 */
   running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules);
   
-/*! \brief  Prepare an object that was created with the default constructor
+/*! \brief                  Prepare an object that was created with the default constructor
     \param  country_data    data from cty.dat file
     \param  context         drlog context
     \param  rules           rules for this contest
@@ -102,6 +110,11 @@ public:
   SAFEREAD(country_mults_used, statistics);                   ///< are country mults used?
   SAFEREAD(exchange_mults_used, statistics);                  ///< are exchange mults used?
 
+/*! \brief                  How many QSOs have been made?
+    \param  rules           rules for this contest
+
+    Counts only those QSOs on bands being used to calculate the score. Includes dupes.
+*/
   const unsigned int n_qsos(const contest_rules& rules) const;
 
 /*! \brief              Do we still need to work a particular callsign mult on a particular band?

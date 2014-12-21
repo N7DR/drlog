@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 86 2014-12-13 20:06:24Z  $
+// $Id: drlog_context.h 87 2014-12-20 18:29:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -172,7 +172,9 @@ protected:
   std::string                                  _not_country_mults;   ///< comma-separated list of countries that are explicitly NOT country mults
 
   std::vector<std::string>                     _path;                             ///< directories to search, in order
-  std::map<BAND, std::string>                  _per_band_points;                  ///< points structure for each band
+//  std::map<BAND, std::string>                  _per_band_points;                  ///< points structure for each band
+  std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;                  ///< points structure for each band and mode
+
   std::map<BAND, int>                          _per_band_country_mult_factor;     ///< country mult factor structure for each band
   unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
   std::string                                  _p3_snapshot_file;                 ///< base name of file for P3 snapshot
@@ -235,6 +237,8 @@ protected:
         This routine may be called recursively (by the RULES statement in the processed file)
 */
   void _process_configuration_file(const std::string& filename);
+
+  void _set_points(const std::string& command, const MODE m);
 
   public:
 
@@ -368,14 +372,30 @@ protected:
   SAFEREAD(per_band_country_mult_factor, _context);
   SAFEREAD(per_band_points, _context);
 
-  const std::string points(const BAND b) const
+  const std::string points(const BAND b, const MODE m) const
     { SAFELOCK(_context);
+
+      const auto& pbb = _per_band_points[m];
+
+      if (pbb.find(b) != pbb.end())
+        return pbb.at(b);
+      else
+        return std::string();
+    }
+
+#if 0
+  const std::string points(const BAND b, const MODE m) const
+    { SAFELOCK(_context);
+
+//    std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;                  ///< points structure for each band and mode
+      const auto& pbb = _per_band_points[m];
 
       if (_per_band_points.find(b) != _per_band_points.end())
         return _per_band_points.at(b);
       else
         return std::string();
     }
+#endif
 
   SAFEREAD(ptt_delay, _context);
   SAFEREAD(p3_snapshot_file, _context);
