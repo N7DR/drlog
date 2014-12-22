@@ -90,7 +90,9 @@ public:
 /// default constructor
   trmaster_line(void);
 
-/// constructor from a line from a file
+/*!     \brief          construct from a TRMASTER.ASC line
+        \param  line    line from the TRMASTER.ASC file
+*/
   explicit trmaster_line(const std::string& line);
 
 /// destructor

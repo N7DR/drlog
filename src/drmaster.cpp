@@ -31,10 +31,10 @@ SCPIndexArrayType    = ARRAY [0..36, 0..36] OF LONGINT;
 
 */
 
-/*!     \brief  private function to return the call starting at <i>posn</i> in <i>contents</i>
-        \param  contents  contents of a MASTER.DTA file
-        \param  posn      location at which to start returning call
-        \return call that starts at <i>posn</i> in <i>contents</i>
+/*!     \brief              private function to return the call starting at <i>posn</i> in <i>contents</i>
+        \param  contents    contents of a MASTER.DTA file
+        \param  posn        location at which to start returning call
+        \return             call that starts at <i>posn</i> in <i>contents</i>
 
         <i>posn</i> is updated to point at the start of the next call
 */
@@ -49,7 +49,11 @@ const string master_dta::_get_call(const string& contents, size_t& posn) const
   return rv;
 }
 
-// constructor
+/*!     \brief              construct from file
+        \param  filename    file name
+
+        Also default constructor, with filename "master.dta"
+*/
 master_dta::master_dta(const string& filename)
 { string contents = read_file(filename);                // throws exception if there's a problem
 
@@ -78,8 +82,13 @@ master_dta::master_dta(const string& filename)
     \brief  Manipulate a line from an N6TR TRMASTER.ASC file
 */
 
-// routine to extract the value of a parameter from a TRMASTER.ASC line
-//  e.g., _extract_value(line, "=H")
+/*!     \brief          extract the value of a parameter from a TRMASTER.ASC line
+        \param  line    line from the TRMASTER.ASC file
+        \param  param   parameter to extract, e.g., "=H"
+        \return         the value associated with <i>param</i>
+
+        Returns empty string if there is no value associated with <i>param</i>
+*/
 const string __extract_value(const string& line, const string& param)
 { string rv;
 
@@ -87,8 +96,8 @@ const string __extract_value(const string& line, const string& param)
     return rv;
 
   size_t start_position = line.find(param);
-
   string short_line = substring(line, start_position + param.length());
+
   start_position = 0;
 
   size_t end_position = short_line.length();
@@ -103,7 +112,7 @@ const string __extract_value(const string& line, const string& param)
   return rv;
 }
 
-/* According to Tree the following are the keys in a TRMASTER file:
+/* According to Tree, the following are the keys in a TRMASTER file:
 
 A - ARRL section
 C - CQ Zone
@@ -150,10 +159,12 @@ trmaster_line::trmaster_line(void) :
     _foc(0)
 { }
 
-// constructor from a TRMASTER.ASC line
+/*!     \brief          construct from a TRMASTER.ASC line
+        \param  line    line from the TRMASTER.ASC file
+*/
 trmaster_line::trmaster_line(const string& line)
-{ // parsing the line is tricky because items are in no particular order, except for the call
-
+{
+// parsing the line is tricky because items are in no particular order, except for the call;
 // call
   const bool contains_parameters = contains(line, " ");
   const size_t length_of_call = (contains_parameters ? line.find(" ") : line.length());
@@ -191,10 +202,7 @@ trmaster_line::~trmaster_line(void)
 
 // convert to string
 const string trmaster_line::to_string(void) const
-{ string rv;
-//  char int_holder[10];
-
-  rv += call();
+{ string rv = call();
 
   if (!section().empty())
     rv += ((string)(" =A") + section());
@@ -205,30 +213,31 @@ const string trmaster_line::to_string(void) const
   if (foc())
     rv += ((string)(" =F") + ::to_string(foc()));
 
-  if (grid() != "")
+  if (!grid().empty())
     rv += ((string)(" =G") + grid());
 
   if (hit_count())
     rv += ((string)(" =H") + ::to_string(hit_count()));
 
-  if (itu_zone() != "")
+  if (!itu_zone().empty())
     rv += ((string)(" =I") + itu_zone());
 
   if (check())
     rv += ((string)(" =K") + ::to_string(check()));
 
-  if (name() != "")
+  if (!name().empty())
     rv += ((string)(" =N") + name());
 
-  if (qth() != "")
+  if (!qth().empty())
     rv += ((string)(" =Q") + qth());
 
   if (ten_ten())
     rv += ((string)(" =T") +  ::to_string(ten_ten()));
 
   char user_letter = 'U';
+
   for (unsigned int n = 0; n < TRMASTER_N_USER_PARAMETERS; n++)
-  { if (user(n + 1) != "")
+  { if (!user(n + 1).empty())
     { rv += (string)(" =");
       rv += user_letter;
       rv += user(n + 1);

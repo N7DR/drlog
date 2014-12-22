@@ -2090,6 +2090,8 @@ void* prune_bandmap(void* vp)
     SHIFT (RIT control)
     ALT-Y -- delete last QSO
     CURSOR UP -- go to log window
+    CURSOR DOWN -- possibly replace call with SCP info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
+    CTRL-CURSOR DOWN -- possibly replace call with fuzzy info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2469,6 +2471,55 @@ ost << "processing command: " << command << endl;
         win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
 
 //        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
+        const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
+
+        win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
+      }
+
+// .RESCOREM or .SCOREM  &&& HERE
+      if (substring(command, 0, 8) == "RESCOREM" or substring(command, 0, 6) == "SCOREM")
+      { if (contains(command, " "))
+        { size_t posn = command.find(" ");
+          string rhs = substring(command, posn);
+          set<MODE> score_modes;
+
+          const vector<string> modes_str = remove_peripheral_spaces(split_string(rhs, ","));
+
+          for (const auto& mode_str : modes_str)
+          { try
+            { score_modes.insert(MODE_FROM_NAME.at(mode_str));
+            }
+
+            catch (...)
+            { if (mode_str == "*")
+              { for (const auto& m : rules.permitted_modes())
+                  score_modes.insert(m);
+              }
+              else
+                alert("Error parsing [RE]SCOREM command");
+            }
+          }
+
+          rules.score_modes(score_modes);
+        }
+        else    // no mode information
+          rules.restore_original_score_modes();
+
+        { const set<MODE> score_modes = rules.score_modes();
+          string modes_str;
+
+          for (const auto& m : score_modes)
+            modes_str += (MODE_NAME[m] + " ");
+
+          win_score_modes < WINDOW_CLEAR < "Score Modes: " <= modes_str;
+        }
+
+        rescore(rules);
+        update_rate_window();
+
+// display the current statistics
+        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;

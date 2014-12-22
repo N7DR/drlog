@@ -24,7 +24,7 @@
 
 enum POSTING_SOURCE { POSTING_CLUSTER,
                       POSTING_RBN
-                    };
+                    };                          ///< the source of a remote posting
 
 // -----------  dx_cluster  ----------------
 
@@ -48,8 +48,6 @@ protected:
   
 /// process a read error
   void _process_error(void);
-
-//  pt_mutex        _rbn_mutex;
 
 /// forbid copying: declared but never defined
   dx_cluster(const dx_cluster&);
@@ -95,24 +93,22 @@ public:
 
 class dx_post
 {
-  
 protected:
-    bool         _valid;                ///< is it a valid post?
-    
-    std::string  _poster;               ///< call of poster
-    frequency    _freq;                 ///< frequency at which <i>_callsign</i> was heard
-    std::string  _frequency_str;        ///< frequency in format xxxxx.y [kHz]
-    std::string  _callsign;             ///< callsign that was heard
-    std::string  _canonical_prefix;     ///< canonical prefix corresponding to <i>callsign</i>
-    std::string  _continent;            ///< continent of <i>_callsign</i>
-    std::string  _comment;              ///< comment supplied by poster
-    enum BAND    _band;                 ///< band of post
-    time_t       _time_processed;       ///< time (relative to the UNIX epoch) at which we processed the post
-    enum POSTING_SOURCE _source;        ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
+  enum BAND             _band;              ///< band of post
+  std::string           _callsign;          ///< callsign that was heard
+  std::string           _canonical_prefix;  ///< canonical prefix corresponding to <i>callsign</i>
+  std::string           _comment;           ///< comment supplied by poster
+  std::string           _continent;         ///< continent of <i>_callsign</i>
+  frequency             _freq;              ///< frequency at which <i>_callsign</i> was heard
+  std::string           _frequency_str;     ///< frequency in format xxxxx.y [kHz]
+  std::string           _poster;            ///< call of poster
+  enum POSTING_SOURCE   _source;            ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
+  time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
+  bool                  _valid;             ///< is it a valid post?
     
 /// does the frequency appear to be valid? Nothing fancy needed here
-    inline const bool _valid_frequency(void) const
-      { return (_freq.khz() >= 1800 and _freq.khz() <= 29700); }
+  inline const bool _valid_frequency(void) const
+    { return (_freq.khz() >= 1800 and _freq.khz() <= 29700); }
 
 public:
     
@@ -121,23 +117,23 @@ public:
     \param  db              the location database for this contest
     \param  post_source     the origin of the post
 */
-    dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
+  dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
   
 /// destructor
   inline virtual ~dx_post(void)
     { }
 
-  READ(valid);                  ///< is it a valid post?
-  READ(poster);                 ///< call of poster
-  READ(freq);                   ///< frequency at which <i>_callsign</i> was heard
-  READ(frequency_str);          ///< frequency in format xxxxx.y [kHz]
+  READ(band);                   ///< band of post
   READ(callsign);               ///< callsign that was heard
   READ(canonical_prefix);       ///< canonical prefix corresponding to <i>callsign</i>
-  READ(continent);              ///< continent of <i>_callsign</i>
   READ(comment);                ///< comment supplied by poster
-  READ(band);                   ///< band of post
-  READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
+  READ(continent);              ///< continent of <i>_callsign</i>
+  READ(freq);                   ///< frequency at which <i>_callsign</i> was heard
+  READ(frequency_str);          ///< frequency in format xxxxx.y [kHz]
+  READ(poster);                 ///< call of poster
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
+  READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
+  READ(valid);                  ///< is it a valid post?
 };
 
 #endif    // CLUSTER_H

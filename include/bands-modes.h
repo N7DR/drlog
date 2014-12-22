@@ -85,6 +85,11 @@ static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW",
                                                                 "SSB"
                                                             } };
 
+/// generate the mode from a name
+static std::map<std::string, MODE> MODE_FROM_NAME { { "CW", MODE_CW },
+                                                    { "SSB",  MODE_SSB }
+                                                  };
+
 typedef std::pair<BAND, MODE> bandmode;    ///< tuple for encapsulating a band and mode
 
 // ----------------------------------------------------  frequency  -----------------------------------------------

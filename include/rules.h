@@ -176,11 +176,12 @@ protected:
 
 public:
 
-/// construct from name, multiplier and optional status; also default constructor
-/*!     \brief                  Construct from name, multiplier and optional status; also default constructor
-        \param  nm              name of field
-        \param  mult            whether field is a mult
-        \param  opt             whether field is optional
+/*!     \brief          Construct from name, multiplier and optional status
+        \param  nm      name of field
+        \param  mult    whether field is a mult
+        \param  opt     whether field is optional
+
+        Also the default constructor
 */
   exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false);
 
@@ -480,12 +481,26 @@ public:
       _score_bands = _original_score_bands;
     }
 
+/// Restore the original set of modes to be scored (from the configuration file)
+  inline void restore_original_score_modes(void)
+    { SAFELOCK(rules);
+
+      _score_modes = _original_score_modes;
+    }
+
 /*! \brief  Define a new set of bands to be scored
     \param  new_bands   the set of bands to be scored
 
     Does nothing if <i>new_bands</i> is empty
 */
   void score_bands(const std::set<BAND>& new_bands);
+
+/*! \brief  Define a new set of modes to be scored
+    \param  new_modes   the set of modes to be scored
+
+    Does nothing if <i>new_modes</i> is empty
+*/
+  void score_modes(const std::set<MODE>& new_modes);
 
 /*! \brief          Is an exchange field a mult?
     \param  name    name of exchange field

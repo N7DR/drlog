@@ -146,7 +146,13 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
         \brief Encapsulates the name for an exchange field, and whether it's a mult
 */
 
-/// construct from name, multiplier and optional status; also default constructor
+/*!     \brief          Construct from name, multiplier and optional status
+        \param  nm      name of field
+        \param  mult    whether field is a mult
+        \param  opt     whether field is optional
+
+        Also the default constructor
+*/
 exchange_field::exchange_field(const string& nm, const bool mult, const bool opt) :
   _name(nm),
   _is_mult(mult),
@@ -266,7 +272,6 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
 const set<string> contest_rules::_all_exchange_values(const string& field_name) const
 { SAFELOCK(rules);
 
-//  const auto cit = find_if(_exch_values.cbegin(), _exch_values.cend(), [=] (const exchange_field_values& efv) { return (efv.name() == field_name); } );
   const auto cit = FIND_IF(_exch_values, [=] (const exchange_field_values& efv) { return (efv.name() == field_name); } );
 
   return ( (cit == _exch_values.cend()) ? set<string>() : cit->all_values() );
@@ -339,7 +344,10 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
   return rv;
 }
 
-// does not handle is_mult() portion of the returned vector
+/*!     \brief              parse all the "exchange [xx] = " lines from context
+        \param  context     drlog context
+        \return             name/mult/optional/choice status for exchange fields
+*/
 const map<string, vector<exchange_field>> contest_rules::_parse_context_exchange(const drlog_context& context) const // parse the "exchange =" line from context
 {
 // generate vector of all permitted exchange fields
@@ -468,13 +476,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_band = context.exchange_mults_per_band();
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
-
-//  for (const auto& e : _exch)
-//  { ost << "first: " << e.first << endl;
-//    for (const auto& ve : e.second)
-//    { ost << "second: " << ve.name() << endl;
-//    }
-//  }
 
   for (const auto& qth_vec_field : _exch)
   { const string& prefix = qth_vec_field.first;
@@ -655,10 +656,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
             if (lhsrhs.size() != 1)
             { const string& rhs = lhsrhs[1];
+              const vector<string> remaining_equivalent_values = remove_peripheral_spaces(split_string(rhs, ","));
 
-              vector<string> remaining_equivalent_values = remove_peripheral_spaces(split_string(rhs, ","));
-
-//              for_each(remaining_equivalent_values.cbegin(), remaining_equivalent_values.cend(), [&] (const string& rev) { equivalent_values.insert(rev); });
               FOR_ALL(remaining_equivalent_values, [&] (const string& rev) { equivalent_values.insert(rev); });
 
               map_canonical_to_all.insert( { lhs, equivalent_values });
@@ -1094,7 +1093,7 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
   }
 }
 
-/*! \brief  Define a new set of bands to be scored
+/*! \brief              Define a new set of bands to be scored
     \param  new_bands   the set of bands to be scored
 
     Does nothing if <i>new_bands</i> is empty
@@ -1104,6 +1103,19 @@ void contest_rules::score_bands(const set<BAND>& new_bands)
   { SAFELOCK(rules);
 
     _score_bands = new_bands;
+  }
+}
+
+/*! \brief              Define a new set of modes to be scored
+    \param  new_modes   the set of modes to be scored
+
+    Does nothing if <i>new_mode</i> is empty
+*/
+void contest_rules::score_modes(const set<MODE>& new_modes)
+{ if (!new_modes.empty())
+  { SAFELOCK(rules);
+
+    _score_modes = new_modes;
   }
 }
 
