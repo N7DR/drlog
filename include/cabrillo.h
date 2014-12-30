@@ -1,4 +1,4 @@
-// $Id: cabrillo.h 74 2014-09-06 14:45:30Z  $
+// $Id: cabrillo.h 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,6 +28,10 @@
 #include <string>
 #include <vector>
 
+class cabrillo_tag_templates;                   ///< forward declaration
+
+extern cabrillo_tag_templates cabrillo_tags;    ///< instantiation of all the templates
+
 // -----------  cabrillo_tag_template  ----------------
 
 /*!     \class cabrillo_tag_template
@@ -39,7 +43,7 @@ class cabrillo_tag_template
 protected:
   std::string                 _name;            ///< name of the tag
   std::vector<std::string>    _legal_values;    ///< allowed values; if empty then any text is permitted
-  
+
 public:
   
 /*!     \brief  construct from name
@@ -70,9 +74,11 @@ public:
 class cabrillo_tag_templates
 {
 protected:
-  
-// there aren't many different kinds of tags, so a vector will suffice  
-  std::vector<cabrillo_tag_template>        _templates;    ///< container for the templates
+
+  std::vector<cabrillo_tag_template>    _templates;    ///< container for the templates; there aren't many different kinds of tags, so a vector will suffice
+
+  inline void _add(const std::string& str)
+    { _templates.push_back(cabrillo_tag_template(str)); }
   
 public:
   
@@ -83,8 +89,5 @@ public:
   virtual ~cabrillo_tag_templates(void)
   { }  
 };
-
-/// Instantiation of all the templates
-extern cabrillo_tag_templates cabrillo_tags;
 
 #endif    // CABRILLO_H

@@ -1,4 +1,4 @@
-// $Id: log.cpp 68 2014-06-28 15:42:35Z  $
+// $Id: log.cpp 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,12 +23,16 @@
 
 using namespace std;
 
-pt_mutex _log_mutex;
+pt_mutex _log_mutex;            ///< mutex for the log
 
-extern message_stream ost;
-extern string VERSION;
+extern message_stream ost;      ///< for debugging, info
+extern string VERSION;          ///< version string
 
 // -----------  logbook  ----------------
+
+/*!     \class logbook
+        \brief The log
+*/
 
 /*!     \brief      Is one QSO earlier than another?
         \param  q1  First QSO
@@ -38,7 +42,9 @@ extern string VERSION;
 const bool qso_sort_by_time(const QSO& q1, const QSO& q2)
   { return q1.earlier_than(q2); }
 
-// add a QSO to the logbook
+/*!     \brief      add a QSO to the logbook
+        \param  q   QSO to add
+*/
 void logbook::operator+=(const QSO& q)
 { SAFELOCK(_log);
 
@@ -76,11 +82,9 @@ void logbook::operator-=(const unsigned int n)
   auto it = _log_vec.begin();
   advance(it, index);            // move to the correct QSO
 
-//  _removed_qso = (*it);    // just in case we ever need it
   _log_vec.erase(it);
   _log.clear();              // empty preparatory to copying
 
-//  for_each(_log_vec.cbegin(), _log_vec.cend(), [&](const QSO& qso) { _log.insert( {qso.callsign(), qso} ); } );
   FOR_ALL(_log_vec, [&](const QSO& qso) { _log.insert( { qso.callsign(), qso } ); } );
 }
 
@@ -115,7 +119,11 @@ const unsigned int logbook::n_worked(const string& call) const
   return distance(range.first, range.second);
 }
 
-// has a call been worked on a particular band?
+/*!     \brief          has a call been worked on a particular band?
+        \param  call    target callsign
+        \param  b       target band
+        \return         whether <i>call</i> has been worked on <i>b</i>
+*/
 const bool logbook::qso_b4(const string& call, const BAND b) const
 { SAFELOCK(_log);
   
@@ -126,7 +134,11 @@ const bool logbook::qso_b4(const string& call, const BAND b) const
   return false;
 }
 
-// has a call been worked on a particular mode?
+/*!     \brief          has a call been worked on a particular mode?
+        \param  call    target callsign
+        \param  m       target mode
+        \return         whether <i>call</i> has been worked on <i>m</i>
+*/
 const bool logbook::qso_b4(const string& call, const enum MODE m) const
 { SAFELOCK(_log);
   
@@ -137,7 +149,12 @@ const bool logbook::qso_b4(const string& call, const enum MODE m) const
   return false;
 }
 
-// has a call been worked on a particular band and mode?
+/*!     \brief          has a call been worked on a particular band and mode?
+        \param  call    target callsign
+        \param  b       target band
+        \param  m       target mode
+        \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
+*/
 const bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 { SAFELOCK(_log);
   
@@ -148,7 +165,11 @@ const bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) 
   return false;
 }
 
-/// a string list of bands on which a call is needed
+/*!     \brief          get a string list of bands on which a call is needed
+        \param  call    target callsign
+        \param  rules   rules for the contest
+        \return         string list of bands on which a call is needed (separated by three spaces)
+*/
 const string logbook::call_needed(const string& call, const contest_rules& rules) const
 { string rv;
 
@@ -158,7 +179,11 @@ const string logbook::call_needed(const string& call, const contest_rules& rules
   return rv;
 }
 
-/// would a QSO be a dupe?
+/*!     \brief          would a QSO be a dupe, according to the rules?
+        \param  qso     target QSO
+        \param  rules   rules for the contest
+        \return         whether <i>qso</i> would be a dupe
+*/
 const bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
 { bool rv = false;
   const string& call = qso.call();

@@ -1,4 +1,4 @@
-// $Id: qso.h 79 2014-10-11 15:09:04Z  $
+// $Id: qso.h 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -74,16 +74,18 @@ protected:
   bool _is_country_mult;            ///< is this QSO a country mult?
   bool _is_prefix_mult;             ///< is this QSO a prefix mult?
   
-/*! \brief  obtain the next name and value from a drlog-format line
+/*! \brief          obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line
     \return         The next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
 
-    Correctly handles extraneous spaces in <i>str</i>
+    Correctly handles extraneous spaces in <i>str</i>.
+    <i>str</i> looks like:
+      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
 */
   const std::pair<std::string, std::string> _next_name_value_pair(const std::string& str, size_t& posn);
 
-/*! \brief  obtain the epoch time from a date and time in drlog format
+/*! \brief               obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
     \return              time in seconds since the UNIX epoch
@@ -164,7 +166,15 @@ public:
 /// format for writing to disk
   const std::string verbose_format(void) const;  
 
-/// read fields from a line in the disk log
+/*! \brief              read fields from a line in the disk log
+    \param  context     drlog context
+    \param  str         string from log file
+    \param  rules       rules for this contest
+    \param  statistics  contest statistics
+
+    line in disk log looks like:
+      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+*/
   void populate_from_verbose_format(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
 
 /// does the QSO match an expression for a received exchange field?

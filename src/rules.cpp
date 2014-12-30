@@ -1,4 +1,4 @@
-// $Id: rules.cpp 86 2014-12-13 20:06:24Z  $
+// $Id: rules.cpp 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -473,6 +473,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // define the legal receive exchanges, and which fields are mults
   _exch = _parse_context_exchange(context);
   _exchange_mults = remove_peripheral_spaces( split_string(context.exchange_mults(), ",") );
+
+//  FOR_ALL(_exchange_mults, [] (const string& em) { ost << "rules found exchange mult: " << em << endl; } );
+
   _exchange_mults_per_band = context.exchange_mults_per_band();
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();

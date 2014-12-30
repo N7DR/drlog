@@ -74,8 +74,8 @@ const vector<string> bandmap_filter_type::filter(void) const
 /*!  \brief     Add a string to, or remove a string from, the filter
      \param str string to add or subtract
 
-                <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
-                if it's not already in the filter; otherwise it is removed.
+     <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
+     if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
 { vector<string>* vs_p = ( (CONTINENT_SET < str) ? &_continents : &_prefixes );          // create pointer to correct vector
@@ -123,11 +123,11 @@ void bandmap_entry::freq(const frequency& f)
   _frequency_str = _freq.display_string();
 }
 
-/*! \brief                  Calculate the mult status of all entries
-    \param  rules           the rules for this contest
-    \param  statistics      the current statistics
+/*! \brief              Calculate the mult status of all entries
+    \param  rules       the rules for this contest
+    \param  statistics  the current statistics
 
-                            Adjust the mult status in accordance with the passed parameters
+    Adjust the mult status in accordance with the passed parameters
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
@@ -183,7 +183,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     \param  be  target bandmap entry
     \return     whether frequency_str or callsign match
 
-                Used in += function.
+    Used in += function.
 */
 const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 { if ((be.is_my_marker()) or is_my_marker())       // mustn't delete a valid call if we're updating my QRG
@@ -219,9 +219,9 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
            (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));
 }
 
-/*! \brief              Return the difference in frequency between two bandmap entries
-    \param  be          other bandmap entry
-    \return             difference in frequency between *this and <i>be</i>
+/*! \brief      Return the difference in frequency between two bandmap entries
+    \param  be  other bandmap entry
+    \return     difference in frequency between *this and <i>be</i>
 */
 const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
 { frequency rv;
@@ -235,7 +235,7 @@ const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) con
     \param  call    call to add
     \return         number of posters associated with this call, after adding <i>call</i>
 
-                    Does nothing if <i>call</i> is already a poster
+    Does nothing if <i>call</i> is already a poster
 */
 const unsigned int bandmap_entry::add_poster(const string& call)
 { _posters.insert(call);
@@ -250,9 +250,18 @@ const string bandmap_entry::posters_string(void) const
   FOR_ALL(_posters, [&rv] (const string& p) { rv += (p + " "); } );
 
   if (!rv.empty())
-    rv = rv.substr(0, rv.length() - 1);  // skip the final space
+//    rv = rv.substr(0, rv.length() - 1);  // skip the final space
+    rv = substring(rv, 0, rv.length() - 1);  // skip the final space
 
   return rv;
+}
+
+/// guess the mode
+const MODE bandmap_entry::putative_mode(void) const
+{ if (source() == BANDMAP_ENTRY_RBN)
+    return MODE_CW;
+
+  return ( (_freq < MODE_BREAK_POINT.at(band()) ) ? MODE_CW : MODE_SSB);
 }
 
 /// ostream << bandmap_entry
@@ -271,12 +280,14 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "is needed callsign mult: " << be.is_needed_callsign_mult_details() << endl
       << "is needed country mult: " << be.is_needed_country_mult_details() << endl
       << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl
-      << "number of posters: " << be.n_posters() << endl;
+      << "number of posters: " << be.n_posters() << endl
+      << "putative mode: " << MODE_NAME[be.putative_mode()] << endl;
 
   if (be.n_posters())
   { const set<string> posters = be.posters();
 
-    for_each(posters.cbegin(), posters.cend(), [&ost] (const string& poster) { ost << "  " << poster << endl; } );
+//    for_each(posters.cbegin(), posters.cend(), [&ost] (const string& poster) { ost << "  " << poster << endl; } );
+    FOR_ALL(posters, [&ost] (const string& poster) { ost << "  " << poster << endl; } );
   }
 
   return ost;
@@ -288,7 +299,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
         \brief A bandmap
 */
 
-/*!  \brief Return the callsign closest to a particular frequency, if it is within the guard band
+/*!  \brief                         Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme                     band map entries
      \param target_frequency_in_khz the target frequency, in kHz
      \param guard_band_in_hz        how far from the target to search, in Hz
@@ -325,8 +336,8 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
   return rv;
 }
 
-/*!  \brief                         Insert a bandmap_entry
-     \param be                      entry to add
+/*!  \brief     Insert a bandmap_entry
+     \param be  entry to add
 
      Removes any extant entry at the same frequency as <i>be</i>
 */
@@ -587,9 +598,9 @@ void bandmap::prune(void)
   _recent_calls.clear();                       // empty the container of recent calls
 }
 
-/*! \brief              return the entry for a particular call
+/*! \brief              Return the entry for a particular call
     \param  callsign    call for which the entry should be returned
-    \return the bandmap_entry corresponding to <i>callsign</i>
+    \return             the bandmap_entry corresponding to <i>callsign</i>
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
@@ -601,7 +612,7 @@ const bandmap_entry bandmap::operator[](const string& str)
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
 }
 
-/*! \brief              return the first entry for a partial call
+/*! \brief              Return the first entry for a partial call
     \param  callsign    partial call for which the entry should be returned
     \return             the first bandmap_entry corresponding to <i>callsign</i>
 
@@ -615,7 +626,7 @@ const bandmap_entry bandmap::substr(const string& str)
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
 }
 
-/*! \brief              remove a call from the bandmap
+/*! \brief              Remove a call from the bandmap
     \param  callsign    call to be removed
 
     Does nothing if <i>callsign</i> is not in the bandmap
@@ -633,7 +644,7 @@ void bandmap::operator-=(const string& callsign)
   }
 }
 
-/*! \brief              set the needed status of a call to <i>false</i>
+/*! \brief              Set the needed status of a call to <i>false</i>
     \param  callsign    call for which the status should be set
 
     Does nothing if <i>callsign</i> is not in the bandmap
@@ -652,7 +663,7 @@ void bandmap::not_needed(const string& callsign)
   _rbn_threshold_and_filtered_entries_dirty = true;
 }
 
-/*! \brief set the needed country mult status of all calls in a particular country to false
+/*! \brief                      Set the needed country mult status of all calls in a particular country to false
     \param  canonical_prefix    canonical prefix corresponding to country for which the status should be set
 
     Does nothing if no calls from the country identified by <i>canonical_prefix</i> are in the bandmap
@@ -660,7 +671,8 @@ void bandmap::not_needed(const string& callsign)
 void bandmap::not_needed_country_mult(const string& canonical_prefix)
 { SAFELOCK(_bandmap);
 
-  for_each(_entries.begin(), _entries.end(), [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+//  for_each(_entries.begin(), _entries.end(), [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
+  FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
 
   _filtered_entries_dirty = true;
   _rbn_threshold_and_filtered_entries_dirty = true;
@@ -688,7 +700,6 @@ void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string
       ost << "callsign = " << callsign << ", this_callsign_mult = " << this_callsign_mult << ", callsign_mult_string = " << callsign_mult_string << endl;
 
       if (this_callsign_mult == callsign_mult_string)
-//        be.is_needed_callsign_mult(false);              // be.is_needed_callsign_mult(this_callsign_mult == callsign_mult_string) might work
       { be.remove_callsign_mult(mult_type, callsign_mult_string);
         _filtered_entries_dirty = true;
         _rbn_threshold_and_filtered_entries_dirty = true;
@@ -697,16 +708,17 @@ void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string
   }
 }
 
-void bandmap::not_needed_callsign_mult(const std::string& mult_type /* e.g., "WPXPX" */,
-                                       const std::string& callsign_mult_string /* e.g., SM1 */)
+void bandmap::not_needed_callsign_mult(const string& mult_type /* e.g., "WPXPX" */,
+                                       const string& callsign_mult_string /* e.g., SM1 */)
 { if (callsign_mult_string.empty() or mult_type.empty())
     return;
 
   SAFELOCK(_bandmap);
 
 // change status for all entries with this particular callsign mult
-  for (auto& be : _entries)
-    be.remove_callsign_mult(mult_type, callsign_mult_string);
+//  for (auto& be : _entries)
+//    be.remove_callsign_mult(mult_type, callsign_mult_string);
+  FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_callsign_mult(mult_type, callsign_mult_string); } );
 
   _filtered_entries_dirty = true;
   _rbn_threshold_and_filtered_entries_dirty = true;
@@ -718,8 +730,9 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
 
   SAFELOCK(_bandmap);
 
-  for (auto& be : _entries)
-    be.remove_exchange_mult(mult_name, mult_value);
+//  for (auto& be : _entries)
+//    be.remove_exchange_mult(mult_name, mult_value);
+  FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
 
   _filtered_entries_dirty = true;
   _rbn_threshold_and_filtered_entries_dirty = true;
@@ -874,29 +887,21 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 */
 const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
 { const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
-
-//  BM_ENTRIES::const_iterator cit = find_if(fe.cbegin(), fe.cend(), [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
-//  BM_ENTRIES::const_iterator cit = FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
   auto cit = FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
 
   if (dirn == BANDMAP_DIRECTION_DOWN)
   { if (cit != fe.cend())                      // should always be true
-    {  const string target_freq_str = cit->frequency_str();
-       //BM_ENTRIES::const_reverse_iterator crit(cit);                    // NB points to position *before* cit; Josuttis First ed. p. 66f.
+    { const string target_freq_str = cit->frequency_str();
+      auto crit = prev(reverse_iterator<decltype(cit)>(cit));             // Josuttis First ed. p. 66f.
 
-//       reverse_iterator<decltype(cit)> crit(cit);
-      auto crit = prev(reverse_iterator<decltype(cit)>(cit));
+      BM_ENTRIES::const_reverse_iterator crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency
 
-//       crit = prev(crit);
+      if (crit2 != fe.crend())
+      { BM_ENTRIES::const_reverse_iterator crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
 
-       BM_ENTRIES::const_reverse_iterator crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency
-
-       if (crit2 != fe.crend())
-       { BM_ENTRIES::const_reverse_iterator crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
-
-         if (crit3 != fe.crend())
-           return (*crit3);
-       }
+        if (crit3 != fe.crend())
+          return (*crit3);
+      }
     }
   }
 

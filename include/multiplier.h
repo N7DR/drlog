@@ -16,8 +16,6 @@
         Classes and functions related to managing multipliers
 */
 
-#define SINGLE_MODE
-
 #include "log_message.h"
 #include "macros.h"
 #include "pthread_support.h"
@@ -44,11 +42,7 @@ protected:
   bool                                                             _per_band;  ///< is this multiplier accumulated per-band?
   bool                                                             _per_mode;  ///< is this multiplier accumulated per-mode?
 
-#if defined(SINGLE_MODE)
-  std::array< std::set< std::string /* values */>, N_BANDS + 1>    _worked;    ///< last entry is the all-band set
-#endif    // SINGLE_MODE
-
-  std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _workedbm;  // will replace _worked eventually
+  std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
 
   std::set<std::string>                                            _known;     ///< all the (currently) known possible values
   bool                                                             _used;      ///< is this object in use?
@@ -61,7 +55,7 @@ protected:
 
     Returns false if the value <i>str</i> is not known
 */
-  const bool _add_worked(const std::string& str, const int b, std::array< std::set< std::string /* values */>, N_BANDS + 1>& worked_for_a_mode);
+//  const bool _add_worked(const std::string& str, const int b, std::array< std::set< std::string /* values */>, N_BANDS + 1>& worked_for_a_mode);
 
 public:
 
@@ -117,7 +111,7 @@ public:
 
     Returns false if the value <i>str</i> is not known
 */
-  const bool add_worked(const std::string& str, const int b);
+//  const bool add_worked(const std::string& str, const int b);
 
 /*! \brief  add a worked multiplier
     \param  str value that has been worked
@@ -127,7 +121,7 @@ public:
 
     Returns false if the value <i>str</i> is not known
 */
-    const bool add_worked(const std::string& str, const int b, const MODE m);
+//    const bool add_worked(const std::string& str, const int b, const int m);
 
 /*! \brief  add a worked multiplier
     \param  str value that has been worked
@@ -136,8 +130,8 @@ public:
 
     Returns false if the value <i>str</i> is not known
 */
-  inline const bool add_worked(const std::string& str, const BAND b)
-    { return (add_worked(str, static_cast<int>(b))); }
+//  inline const bool add_worked(const std::string& str, const BAND b)
+//    { return (add_worked(str, static_cast<int>(b))); }
 
 /*! \brief  add a worked multiplier
     \param  str value that has been worked
@@ -146,8 +140,9 @@ public:
 
     Returns false if the value <i>str</i> is not known
 */
-  inline const bool add_worked(const std::string& str, const BAND b, const MODE m)
-    { return (add_worked(str, static_cast<int>(b), m)); }
+//  inline const bool add_worked(const std::string& str, const BAND b, const MODE m)
+//    { return (add_worked(str, static_cast<int>(b), m)); }
+  const bool add_worked(const std::string& str, const BAND b, const MODE m);
 
 /*! \brief  add a worked multiplier, even if it is unknown
     \param  str value that has been worked
@@ -156,7 +151,7 @@ public:
 
     Makes <i>str</i> known if it was previously unknown
 */
-  const bool unconditional_add_worked(const std::string& str, const int b);
+//  const bool unconditional_add_worked(const std::string& str, const int b);
 
 /*! \brief  add a worked multiplier, even if it is unknown
     \param  str value that has been worked
@@ -166,7 +161,7 @@ public:
 
     Makes <i>str</i> known if it was previously unknown
 */
-  const bool unconditional_add_worked(const std::string& str, const int b, const MODE m);
+  const bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m);
 
 /*! \brief  add a worked multiplier, even if it is unknown
     \param  str value that has been worked
@@ -175,8 +170,8 @@ public:
 
     Makes <i>str</i> known if it was previously unknown
 */
-  inline const bool unconditional_add_worked(const std::string& str, const BAND b)
-    { return (unconditional_add_worked(str, static_cast<int>(b))); }
+//  inline const bool unconditional_add_worked(const std::string& str, const BAND b)
+//    { return (unconditional_add_worked(str, static_cast<int>(b))); }
 
 /*! \brief  add a worked multiplier, even if it is unknown
     \param  str value that has been worked
@@ -186,8 +181,8 @@ public:
 
     Makes <i>str</i> known if it was previously unknown
 */
-  inline const bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m)
-    { return (unconditional_add_worked(str, static_cast<int>(b), m)); }
+//  inline const bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m)
+//    { return (unconditional_add_worked(str, static_cast<int>(b), m)); }
 
 /*! \brief  remove a worked multiplier
     \param  str value to be worked
@@ -195,7 +190,7 @@ public:
 
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
-  void remove_worked(const std::string& str, const int b);
+//  void remove_worked(const std::string& str, const int b);
 
 /*! \brief  remove a worked multiplier
     \param  str value to be worked
@@ -204,7 +199,7 @@ public:
 
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
-  void remove_worked(const std::string& str, const int b, const MODE m);
+  void remove_worked(const std::string& str, const BAND b, const MODE m);
 
 /// Returns whether the value <i>str</i> is a known multiplier
   inline const bool is_known(const std::string& str) const
@@ -214,7 +209,7 @@ public:
     \param  str callsign to test
     \param  b   band to be tested
 */
-  const bool is_worked(const std::string& str, const int b) const;
+//  const bool is_worked(const std::string& str, const int b) const;
 
 /*! \brief      Has a station been worked on a particular band and mode?
     \param  str callsign to test
@@ -222,54 +217,40 @@ public:
 */
   const bool is_worked(const std::string& str, const int b, const MODE m) const;
 
-#if defined(SINGLE_MODE)
-/// Number of mults worked on a particular band
-  inline const size_t n_worked(const int b) const
-    { return (_used ? _worked[b].size() : 0); }
-#endif    // SINGLE_MODE
-
 /*! \brief      Number of mults worked on a particular band and mode
     \param  b   band
     \param  m   mode
     \return     number of mults worked on band <i>b</i> and mode <i>m</i>
 */
-  const size_t n_worked(const int b, const MODE m) const;
+  const size_t n_worked(const BAND b, const MODE m) const;
+
+/// number of mults worked on a particular band, regardless of mode
+  const size_t n_worked(const int b) const;
 
 /// Number of known mults
   inline const size_t n_known(void) const
     { return _known.size(); }
-
-#if defined(SINGLE_MODE)
-/// All the mults worked on a particular band
-  inline const std::set<std::string> worked(const int b) const
-    { return (_used ? _worked[b] : std::set<std::string>() ); }
-#endif    // SINGLE_MODE
 
 /*! \brief      All the mults worked on a particular band and mode
     \param  b   band
     \param  m   mode
     \return     all the mults worked on band <i>b</i> and mode <i>m</i>
 */
-  const std::set<std::string> worked(const int b, const MODE m) const;
+  const std::set<std::string> worked(const int b, const int m) const;
+
+/// All the mults worked on a particular band, regardless of mode
+  const std::set<std::string> worked(const int b) const;
 
 /// All the known mults
   inline const std::set<std::string> known(void) const
     { return _known; }
 
-#if defined(SINGLE_MODE)
-/// Set all bands to state in which no mults have been worked
-  inline void clear(void)
-  { for (auto& ss : _worked)    // this is, I think, clearer than using for_each here
-      ss.clear();
-  }
-#else
 /// Set all bands and modes to state in which no mults have been worked
   inline void clear(void)
-  { for (auto& ass : _workedbm)    // this is, I think, clearer than using for_each here
+  { for (auto& ass : _worked)    // this is, I think, clearer than using for_each here
       for (auto& ss : ass)
         ss.clear();
   }
-#endif    // SINGLE_MODE
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -280,7 +261,7 @@ public:
 #if defined(SINGLE_MODE)
        & _worked
 #endif    // SINGLE_MODE
-       & _workedbm;
+       & _worked;
   }
 };
 

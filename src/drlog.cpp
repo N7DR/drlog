@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 87 2014-12-20 18:29:59Z  $
+// $Id: drlog.cpp 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1183,16 +1183,24 @@ int main(int argc, char** argv)
             }
 
 //            ost << "size of exchange_db = " << exchange_db.size() << endl;
+ost << "adding to statistics" << endl;
 
             statistics.add_qso(qso, logbk, rules);
+
+            ost << "added to statistics" << endl;
+
             logbk += qso;
             rate.insert(qso.epoch_time(), statistics.points(rules));
 
             win_message <= WINDOW_CLEAR;
           }
 
+          ost << "CW QSOs = " << statistics.n_qsos(rules, MODE_CW) << endl;
+
 // rebuild the history
           rebuild_history(logbk, rules, statistics, q_history, rate);
+
+          ost << "CW QSOs [1] = " << statistics.n_qsos(rules, MODE_CW) << endl;
 
 // rescore the log
           rescore(rules);
@@ -1225,6 +1233,8 @@ int main(int argc, char** argv)
         else
           octothorpe = 1;
       }
+
+    ost << "CW QSOs [2] = " << statistics.n_qsos(rules, MODE_CW) << endl;
 
 // display most recent lines from log
       editable_log.recent_qsos(logbk, true);
@@ -6298,7 +6308,7 @@ void test_exchange_templates(const string& test_filename)
 #endif
 
 void update_mult_value(void)
-{ const float mult_value = statistics.mult_to_qso_value(rules, safe_get_band());
+{ const float mult_value = statistics.mult_to_qso_value(rules, safe_get_band(), safe_get_mode());
   const unsigned int mult_value_10 = static_cast<unsigned int>( (mult_value * 10) + 0.5);
   const string term_1 = to_string(mult_value_10 / 10);
   const string term_2 = substring(to_string(mult_value_10 - (10 * (mult_value_10 / 10) )), 0, 1);

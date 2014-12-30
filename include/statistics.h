@@ -1,4 +1,4 @@
-// $Id: statistics.h 86 2014-12-13 20:06:24Z  $
+// $Id: statistics.h 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,9 +44,9 @@ protected:
   
   location_database                                  _location_db;          ///< database for location-based lookups
   
-  std::array<unsigned int, N_BANDS>                  _n_dupes;              ///< number of dupes, per band
-  std::array<unsigned int, N_BANDS>                  _n_qsos;               ///< number of QSOs, per band
-  std::array<unsigned int, N_BANDS>                  _qso_points;           ///< number of QSO points, per band
+//  std::array<unsigned int, N_BANDS>                  _n_dupes;              ///< number of dupes, per band
+//  std::array<unsigned int, N_BANDS>                  _n_qsos;               ///< number of QSOs, per band
+//  std::array<unsigned int, N_BANDS>                  _qso_points;           ///< number of QSO points, per band
 
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_dupesbm;              ///< number of dupes, per band and mode
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_qsosbm;               ///< number of QSOs, per band and mode
@@ -62,7 +62,7 @@ protected:
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
-  void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS);
+  void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
 
   std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;  ///< callsign multipliers (supports more than one)
   multiplier                                                        _country_multipliers;   ///< country multipliers
@@ -77,7 +77,6 @@ protected:
   unsigned int  _qtc_qsos_sent;                 ///< total number of QSOs sent in QTCs
   unsigned int  _qtc_qsos_unsent;               ///< total number of (legal) QSOs available but not yet sent in QTCs
 
-// TODO
 /*! \brief            generate the summary string for display
     \param  rules     rules for this contest
     \param  n_mode    number of the mode for which the summary is to be produced
@@ -85,7 +84,9 @@ protected:
 
     If <i>n_mode</i> = <i>rules.n_modes() + 1</i>, then the returned string is for all modes
 */
-  const std::string _summary_string(const contest_rules& rules, const unsigned int n_mode);  // n_mode = rules.n_modes() + 1 => all modes
+//  const std::string _summary_string(const contest_rules& rules, const unsigned int n_mode);  // n_mode = rules.n_modes() + 1 => all modes
+
+  const std::string _summary_string(const contest_rules& rules, const std::set<MODE>& modes);
 
 public:
 
@@ -117,12 +118,15 @@ public:
 */
   const unsigned int n_qsos(const contest_rules& rules) const;
 
-/*! \brief              Do we still need to work a particular callsign mult on a particular band?
-    \param  mult_name   name of mult
-    \param  mult_value  value of mult to test
-    \param  b           band to test
+/*! \brief                  How many QSOs have been made in a particular mode?
+    \param  rules           rules for this contest
+    \param  m               target mode
+
+    Counts only those QSOs on bands being used to calculate the score. Includes dupes.
 */
-  const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const;
+  const unsigned int n_qsos(const contest_rules& rules, const MODE m) const;
+
+
 
 /*! \brief              Do we still need to work a particular callsign mult on a particular band and mode?
     \param  mult_name   name of mult
@@ -130,7 +134,15 @@ public:
     \param  b           band to test
     \param  m           mode to test
 */
-    const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
+  const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
+
+/*! \brief              Do we still need to work a particular callsign mult on a particular band (and any mode)?
+    \param  mult_name   name of mult
+    \param  mult_value  value of mult to test
+    \param  b           band to test
+*/
+  inline const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const
+    { return is_needed_callsign_mult(mult_name, mult_value, b, ANY_MODE); }
 
 /*! \brief          Add a known value of country mult
     \param  str     Canonical prefix of mult
@@ -140,20 +152,21 @@ public:
 */
   const bool add_known_country_mult(const std::string& str);
 
-/*! \brief              Do we still need to work a particular country as a mult on a particular band?
-    \param  callsign    call to test
-    \param  b           band to test
-    \return             Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i>.
-*/
-  const bool is_needed_country_mult(const std::string& callsign, const BAND b);
-
 /*! \brief              Do we still need to work a particular country as a mult on a particular band and a particular mode?
     \param  callsign    call to test
     \param  b           band to test
     \param  m           mode to test
     \return             Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i> and mode <i>m</i>.
 */
-    const bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m);
+  const bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m);
+
+/*! \brief              Do we still need to work a particular country as a mult on a particular band (and any mode)?
+    \param  callsign    call to test
+    \param  b           band to test
+    \return             Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i>.
+*/
+  inline const bool is_needed_country_mult(const std::string& callsign, const BAND b)
+    { return is_needed_country_mult(callsign, b, ANY_MODE); }
 
 /*! \brief          On what bands is a country mult needed?
     \param  call    call to test
@@ -204,7 +217,7 @@ public:
     \param  field_value   Value of the field <i>field_name</i>
     \param  band_nr       Number of the band on which worked mult is to be added
 */
-  void add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS);
+  void add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
 
 /// a (multi-line) string that summarizes the statistics
   const std::string summary_string(const contest_rules& rules);
@@ -246,7 +259,7 @@ public:
 
   const unsigned int n_worked_exchange_mults(const contest_rules& rules) const;
 
-  const float mult_to_qso_value(const contest_rules& rules, const BAND b) const;
+  const float mult_to_qso_value(const contest_rules& rules, const BAND b, const MODE m) const;
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -259,9 +272,13 @@ public:
          & _exchange_multipliers
          & _exchange_mults_used
          & _location_db
-         & _n_dupes
-         & _n_qsos
-         & _qso_points;
+         & _n_dupesbm
+         & _n_qsosbm
+         & _qso_pointsbm
+//         & _n_dupes
+//         & _n_qsos
+//         & _qso_points;
+         ;
     }
 };
 

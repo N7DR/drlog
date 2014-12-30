@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 85 2014-12-01 23:26:41Z  $
+// $Id: bands-modes.h 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,6 +35,7 @@ enum  BAND  { BAND_160 = 0,
               BAND_15,
               BAND_12,
               BAND_10,
+              ANY_BAND,
               MIN_BAND = BAND_160,
               MAX_BAND = BAND_10
             };
@@ -71,14 +72,17 @@ static std::map<std::string, BAND> BAND_FROM_NAME { { "160", BAND_160 },
                                                   };
 
 /// modes drlog knows about
-enum  MODE  { MODE_CW = 0,
-              MODE_SSB,
-              MIN_MODE = MODE_CW,
-              MAX_MODE = MODE_SSB
-            };
+enum MODE  { MODE_CW = 0,
+             MODE_SSB,
+             ANY_MODE,
+             MIN_MODE = MODE_CW,
+             MAX_MODE = MODE_SSB
+           };
 
 const unsigned int NUMBER_OF_MODES = MAX_MODE + 1;  ///< how many modes does drlog know about?
 const unsigned int N_MODES = NUMBER_OF_MODES;       ///< how many modes does drlog know about?
+
+const unsigned int ALL_MODES = static_cast<unsigned int>(MAX_MODE) + 1;  ///< indicator used to mean "all modes"
 
 /// mode names
 static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW",
@@ -267,16 +271,14 @@ template<class T> const BAND to_BAND(T f)
      Frequency may be in Hz, kHz or MHz.
 */
 inline const BAND to_BAND(const std::string& str)
-{ return to_BAND(frequency(str).hz());
-}
+  { return to_BAND(frequency(str).hz()); }
 
 /*!  \brief         convert a frequency to a band
      \param  f      frequency to convert
      \return        band corresponding to <i>f</i>
 */
 inline const BAND to_BAND(const frequency& f)
-{ return to_BAND(f.hz());
-}
+  { return to_BAND(f.hz()); }
 
 /*!  \brief         convert a frequency to a string
      \param  f      frequency to convert
@@ -285,7 +287,19 @@ inline const BAND to_BAND(const frequency& f)
      Appends " Hz" to the numerical frequency.
 */
 inline const std::string to_string(const frequency& f)
-{ return (comma_separated_string(f.hz()) + " Hz");
-}
+  { return (comma_separated_string(f.hz()) + " Hz"); }
+
+/// default mode break points
+static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency(1900) },
+                                                    { BAND_80,  frequency(3600) },
+                                                    { BAND_60,  frequency(5500) },
+                                                    { BAND_40,  frequency(7100) },
+                                                    { BAND_30,  frequency(10150) },
+                                                    { BAND_20,  frequency(14150) },
+                                                    { BAND_17,  frequency(18900) },
+                                                    { BAND_15,  frequency(21200) },
+                                                    { BAND_12,  frequency(24910) },
+                                                    { BAND_10,  frequency(28300) }
+                                                  };
 
 #endif /* BANDSMODES_H */

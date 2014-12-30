@@ -1,4 +1,4 @@
-// $Id: bandmap.h 87 2014-12-20 18:29:59Z  $
+// $Id: bandmap.h 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -428,6 +428,9 @@ public:
 
 /// return all the posters as a space-separated string
   const std::string posters_string(void) const;
+
+/// guess the mode
+  const MODE putative_mode(void) const;
 
 /// archive using boost serialization
   template<typename Archive>

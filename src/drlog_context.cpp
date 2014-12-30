@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 87 2014-12-20 18:29:59Z  $
+// $Id: drlog_context.cpp 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -496,7 +496,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _exchange_fields_filename = rhs;
 
 // EXCHANGE MULTS
-    if (starts_with(testline, "EXCHANGE MULTS") and !starts_with(testline, "EXCHANGE MULTS PER BAND"))
+    if (starts_with(testline, "EXCHANGE MULTS") and !starts_with(testline, "EXCHANGE MULTS PER"))
     { _exchange_mults = RHS;
 
       if (contains(_exchange_mults, ","))       // if there are more than one exchange mult

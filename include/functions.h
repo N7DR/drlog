@@ -1,4 +1,4 @@
-// $Id: functions.h 86 2014-12-13 20:06:24Z  $
+// $Id: functions.h 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

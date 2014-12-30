@@ -1,4 +1,4 @@
-// $Id: qso.cpp 87 2014-12-20 18:29:59Z  $
+// $Id: qso.cpp 88 2014-12-27 15:19:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,9 +27,18 @@
 
 using namespace std;
 
-extern message_stream ost;
+extern location_database location_db;       ///< location database
+extern message_stream ost;                  ///< for debugging, info
 
-//QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+/*! \brief          obtain the next name and value from a drlog-format line
+    \param  str     a drlog-format line
+    \param  posn    character position within line
+    \return         The next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
+
+    Correctly handles extraneous spaces in <i>str</i>.
+    <i>str</i> looks like:
+      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+*/
 const pair<string, string> QSO::_next_name_value_pair(const string& str, size_t& posn)
 { static const pair<string, string> empty_pair;
 
@@ -71,6 +80,11 @@ const pair<string, string> QSO::_next_name_value_pair(const string& str, size_t&
   return pair<string, string> { name, value };
 }
 
+/*! \brief               obtain the epoch time from a date and time in drlog format
+    \param  date_str     date string in drlog format
+    \param  utc_str      time string in drlog format
+    \return              time in seconds since the UNIX epoch
+*/
 const time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) const
 {
   struct tm time_struct;
@@ -82,13 +96,6 @@ const time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) 
   time_struct.tm_mon = from_string<int>(date_str.substr(5, 2)) - 1;
   time_struct.tm_year = from_string<int>(date_str.substr(0, 4)) - 1900;
 
-//  ost << "_utc = " << _utc << endl;
-//  ost << "_date = " << _date << endl;
-
-//  _utc = 15:46:59
-//  _date = 2013-05-25
-
-//  return (mktime(&time_struct));
   return timegm(&time_struct);    // GNU function; see time_gm man page for portable alternative.
                                   // To implement alternative: declare a class whose constructor sets
                                   // TZ and calls tzset(), then call the constructor globally
@@ -117,8 +124,15 @@ QSO::QSO(void) :
           pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');             // yyyy-mm-dd
 }
 
-/// read fields from a line in the disk log
-//QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+/*! \brief              read fields from a line in the disk log
+    \param  context     drlog context
+    \param  str         string from log file
+    \param  rules       rules for this contest
+    \param  statistics  contest statistics
+
+    line in disk log looks like:
+      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+*/
 void QSO::populate_from_verbose_format(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
 {
 // build a vector of name/value pairs
@@ -133,7 +147,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
   _sent_exchange.clear();
   _received_exchange.clear();
 
-//  for (size_t n = 0; n < name_value.size(); ++n)
   for (const auto& nv : name_value)
   { bool processed = false;
     const string& name = nv.first;
@@ -171,8 +184,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 
     if (!processed and (name == "hiscall"))
     { _callsign = value;
-
-extern location_database location_db;
 
       _canonical_prefix = location_db.canonical_prefix(_callsign);
       _continent = location_db.continent(_callsign);
