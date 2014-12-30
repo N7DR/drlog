@@ -561,6 +561,21 @@ const string delimited_substring(string& s, const char delim_1, const char delim
 }
 */
 
+const string create_centred_string(const string& str, const unsigned int width)
+{ const size_t len = str.length();
+
+  if (len > width)
+    return substring(str, 0, width);
+
+  if (len == width)
+    return str;
+
+  const string l = create_string(' ', (width - len) / 2);
+  const string r = create_string(' ', width - len - l.length());
+
+  return (l + str + r);
+}
+
 // simple functions for chars near the end of strings
 /// the last character in a string
 const char last_char(const string& cs)

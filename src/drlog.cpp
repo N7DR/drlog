@@ -86,6 +86,7 @@ void cw_speed(const unsigned int new_speed);
 void debug_dump(void);
 void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);
 void display_nearby_callsign(const string& callsign);
+void display_statistics(const string& summary_str);
 const string dump_screen(const string& filename = string());
 void enter_cq_mode(void);
 void enter_sap_mode(void);
@@ -945,7 +946,8 @@ int main(int argc, char** argv)
 
 // SUMMARY window
   win_summary.init(context.window_info("SUMMARY"), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-  win_summary < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//  win_summary < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+  display_statistics(statistics.summary_string(rules));
 
 // TITLE window
   win_title.init(context.window_info("TITLE"), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
@@ -1315,7 +1317,8 @@ ost << "adding to statistics" << endl;
       }
 
 // display the current statistics
-      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+      display_statistics(statistics.summary_string(rules));
 
 //      const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
       const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
@@ -2478,7 +2481,8 @@ ost << "processing command: " << command << endl;
         update_rate_window();
 
 // display the current statistics
-        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+        display_statistics(statistics.summary_string(rules));
 
 //        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
@@ -2528,7 +2532,8 @@ ost << "processing command: " << command << endl;
         update_rate_window();
 
 // display the current statistics
-        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+        display_statistics(statistics.summary_string(rules));
 
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
@@ -3064,7 +3069,8 @@ ost << "processing command: " << command << endl;
           fuzzy_dbs.remove_call(qso.callsign());
 
 // display the current statistics
-        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+        display_statistics(statistics.summary_string(rules));
 
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
@@ -3769,7 +3775,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         }
 
 // display the current statistics
-        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+        display_statistics(statistics.summary_string(rules));
 
 //        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
@@ -4318,7 +4325,8 @@ ost << "Adding new QSO(s)" << endl;
         editable_log.recent_qsos(logbk, true);
 
 // display the current statistics
-        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+        display_statistics(statistics.summary_string(rules));
 
 //        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
@@ -6021,7 +6029,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // update statistics and summary window
       statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
       statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
-      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+      display_statistics(statistics.summary_string(rules));
 
       processed = true;
     }
@@ -6053,7 +6062,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // update statistics and summary window
       statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
       statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
-      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+      display_statistics(statistics.summary_string(rules));
     }
     else  // none sent
     { ost << "Completely aborted; QTC " << qtc_id << " not sent to " << series.destination() << endl;
@@ -6062,7 +6072,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     (*win_active_p) <= WINDOW_CLEAR;
 
       win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
-      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
+      display_statistics(statistics.summary_string(rules));
     }
     processed = true;
   }
@@ -6366,4 +6377,24 @@ void* auto_screenshot(void* vp)
   }  // ensure that all objects call destructors, whatever the implementation
 
   pthread_exit(nullptr);
+}
+
+void display_statistics(const string& summary_str)
+{ static const set<string> MODE_STRINGS { "CW", "SSB", "All" };
+
+// write the string, but don't refresh the window
+  win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT < summary_str;
+
+  if (rules.permitted_modes().size() > 1)
+  { for (unsigned int n = 0; n < win_summary.height(); ++n)
+    {
+// we have to be a bit complicated because we need to have spaces after the string, so that the colours for the entire line are handled correctly
+      const string line = remove_peripheral_spaces(win_summary.getline(n));
+
+      if (MODE_STRINGS < line)
+        win_summary < cursor(0, n) < WINDOW_REVERSE <  create_centred_string(line, win_summary.width()) < WINDOW_NORMAL;
+    }
+  }
+
+  win_summary.refresh();        // now OK to refresh
 }

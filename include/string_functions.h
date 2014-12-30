@@ -369,6 +369,8 @@ const std::string join(const std::deque<std::string>& vec, const std::string& se
 inline const std::string create_string(const char c, const int n = 1)
   { return std::string(n, c); }
 
+const std::string create_centred_string(const std::string& str, const unsigned int width);
+
 // simple functions for chars near the end of strings
 /// the last character in a string
 const char last_char(const std::string& cs);
