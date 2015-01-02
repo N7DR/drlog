@@ -29,6 +29,16 @@ extern pt_mutex            bandmap_mutex;       ///< used when writing to the ba
 
 extern const set<string> CONTINENT_SET;         ///< two-letter abbreviations for all the continents
 
+/*! \brief                      Obtain value corresponding to a type of callsign mult from a callsign
+    \param  callsign_mult_name  the type of the callsign mult
+    \param  callsign            the call for which the mult value is required
+
+    Returns the empty string if no sensible result can be returned
+*/
+extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
+
+extern exchange_field_database exchange_db;                          ///< dynamic database of exchange field values for calls; automatically thread-safe
+
 const string MY_MARKER("--------");             ///< the string that marks my position in the bandmap
 bandmap_filter_type bmf;                        ///< the global bandmap filter
 
@@ -61,7 +71,7 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 /*! \brief  All the continents and canonical prefixes that are currently being filtered
     \return all the continents and canonical prefixes that are currently being filtered
 
-            The continents precede the canonical prefixes
+    The continents precede the canonical prefixes
 */
 const vector<string> bandmap_filter_type::filter(void) const
 { vector<string> rv = _continents;
@@ -94,16 +104,6 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 }
 
 // -----------  bandmap_entry  ----------------
-
-/*! \brief  Obtain value corresponding to a type of callsign mult from a callsign
-    \param  callsign_mult_name  the type of the callsign mult
-    \param  callsign            the call for which the mult value is required
-
-    Returns the empty string if no sensible result can be returned
-*/
-extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
-
-extern exchange_field_database exchange_db;                          ///< dynamic database of exchange field values for calls; automatically thread-safe
 
 /*! \brief      Default constructor
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
@@ -250,7 +250,6 @@ const string bandmap_entry::posters_string(void) const
   FOR_ALL(_posters, [&rv] (const string& p) { rv += (p + " "); } );
 
   if (!rv.empty())
-//    rv = rv.substr(0, rv.length() - 1);  // skip the final space
     rv = substring(rv, 0, rv.length() - 1);  // skip the final space
 
   return rv;
@@ -286,7 +285,6 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
   if (be.n_posters())
   { const set<string> posters = be.posters();
 
-//    for_each(posters.cbegin(), posters.cend(), [&ost] (const string& poster) { ost << "  " << poster << endl; } );
     FOR_ALL(posters, [&ost] (const string& poster) { ost << "  " << poster << endl; } );
   }
 
@@ -356,6 +354,15 @@ void bandmap::_insert(const bandmap_entry& be)
 
   if (!inserted)
     _entries.push_back(be);    // this frequency is higher than any currently in the bandmap
+}
+
+/*!  \brief Mark filtered and rbn/filtered entries as dirty
+*/
+void bandmap::_dirty_entries(void)
+{ SAFELOCK (_bandmap);              // should be unnecessary, since if the entries are dirty we should already have the lock
+
+  _filtered_entries_dirty = true;
+  _rbn_threshold_and_filtered_entries_dirty = true;
 }
 
 /// default constructor
@@ -576,8 +583,9 @@ void bandmap::operator+=(const bandmap_entry& be)
     if ((callsign != MY_MARKER) and mark_as_recent)
       _recent_calls.insert(callsign);
 
-    _filtered_entries_dirty = true;
-    _rbn_threshold_and_filtered_entries_dirty = true;
+//    _filtered_entries_dirty = true;
+//    _rbn_threshold_and_filtered_entries_dirty = true;
+    _dirty_entries();
   }
 }
 
@@ -591,8 +599,9 @@ void bandmap::prune(void)
   _entries.remove_if([=] (const bandmap_entry& be) { return (be.should_prune(now)); });  // OK for lists
 
   if (_entries.size() != initial_size)
-  { _filtered_entries_dirty = true;
-    _rbn_threshold_and_filtered_entries_dirty = true;
+  { //_filtered_entries_dirty = true;
+    //_rbn_threshold_and_filtered_entries_dirty = true;
+    _dirty_entries();
   }
 
   _recent_calls.clear();                       // empty the container of recent calls
@@ -639,8 +648,9 @@ void bandmap::operator-=(const string& callsign)
   _entries.remove_if([=] (const bandmap_entry& be) { return (be.callsign() == callsign); });        // OK for lists
 
   if (_entries.size() != initial_size)
-  { _filtered_entries_dirty = true;
-    _rbn_threshold_and_filtered_entries_dirty = true;
+  { //_filtered_entries_dirty = true;
+    //_rbn_threshold_and_filtered_entries_dirty = true;
+    _dirty_entries();
   }
 }
 
@@ -659,8 +669,9 @@ void bandmap::not_needed(const string& callsign)
     (*this) += be;                   // this will remove the pre-existing entry
   }
 
-  _filtered_entries_dirty = true;
-  _rbn_threshold_and_filtered_entries_dirty = true;
+//  _filtered_entries_dirty = true;
+//  _rbn_threshold_and_filtered_entries_dirty = true;
+  _dirty_entries();
 }
 
 /*! \brief                      Set the needed country mult status of all calls in a particular country to false
@@ -674,8 +685,9 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
 //  for_each(_entries.begin(), _entries.end(), [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
   FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
 
-  _filtered_entries_dirty = true;
-  _rbn_threshold_and_filtered_entries_dirty = true;
+//  _filtered_entries_dirty = true;
+//  _rbn_threshold_and_filtered_entries_dirty = true;
+  _dirty_entries();
 }
 
 /*! \brief                          set the needed callsign mult status of all matching callsign mults to <i>false</i>
@@ -701,8 +713,9 @@ void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string
 
       if (this_callsign_mult == callsign_mult_string)
       { be.remove_callsign_mult(mult_type, callsign_mult_string);
-        _filtered_entries_dirty = true;
-        _rbn_threshold_and_filtered_entries_dirty = true;
+//        _filtered_entries_dirty = true;
+//        _rbn_threshold_and_filtered_entries_dirty = true;
+        _dirty_entries();
       }
     }
   }
@@ -720,8 +733,9 @@ void bandmap::not_needed_callsign_mult(const string& mult_type /* e.g., "WPXPX" 
 //    be.remove_callsign_mult(mult_type, callsign_mult_string);
   FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_callsign_mult(mult_type, callsign_mult_string); } );
 
-  _filtered_entries_dirty = true;
-  _rbn_threshold_and_filtered_entries_dirty = true;
+//  _filtered_entries_dirty = true;
+//  _rbn_threshold_and_filtered_entries_dirty = true;
+  _dirty_entries();
 }
 
 void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
@@ -734,8 +748,9 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
 //    be.remove_exchange_mult(mult_name, mult_value);
   FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
 
-  _filtered_entries_dirty = true;
-  _rbn_threshold_and_filtered_entries_dirty = true;
+//  _filtered_entries_dirty = true;
+//  _rbn_threshold_and_filtered_entries_dirty = true;
+  _dirty_entries();
 }
 
 /// enable or disable the filter
@@ -744,8 +759,9 @@ void bandmap::filter_enabled(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->enabled(torf);
-    _filtered_entries_dirty = true;
-    _rbn_threshold_and_filtered_entries_dirty = true;
+//    _filtered_entries_dirty = true;
+//    _rbn_threshold_and_filtered_entries_dirty = true;
+    _dirty_entries();
   }
 }
 
@@ -761,8 +777,9 @@ void bandmap::filter_add_or_subtract(const string& str)
   { SAFELOCK(_bandmap);
 
     _filter_p->add_or_subtract(str);
-    _filtered_entries_dirty = true;
-    _rbn_threshold_and_filtered_entries_dirty = true;
+//    _filtered_entries_dirty = true;
+//    _rbn_threshold_and_filtered_entries_dirty = true;
+    _dirty_entries();
   }
 }
 
@@ -772,8 +789,9 @@ void bandmap::filter_hide(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->hide(torf);
-    _filtered_entries_dirty = true;
-    _rbn_threshold_and_filtered_entries_dirty = true;
+//    _filtered_entries_dirty = true;
+//    _rbn_threshold_and_filtered_entries_dirty = true;
+    _dirty_entries();
   }
 }
 
@@ -783,8 +801,9 @@ void bandmap::filter_show(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->hide(!torf);
-    _filtered_entries_dirty = true;
-    _rbn_threshold_and_filtered_entries_dirty = true;
+//    _filtered_entries_dirty = true;
+//    _rbn_threshold_and_filtered_entries_dirty = true;
+    _dirty_entries();
   }
 }
 

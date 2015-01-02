@@ -487,6 +487,14 @@ void drlog_context::_process_configuration_file(const string& filename)
       _exchange_per_country.insert( { country, RHS  } );
     }
 
+// EXCHANGE CW
+//    if (starts_with(testline, "EXCHANGE CW") and !contains(LHS, "["))
+//      _exchange_cw = RHS;
+
+// EXCHANGE SSB
+//    if (starts_with(testline, "EXCHANGE SSB") and !contains(LHS, "["))
+//      _exchange_ssb = RHS;
+
 // EXCHANGE CQ
     if (starts_with(testline, "EXCHANGE CQ"))
       _exchange_cq = RHS;
@@ -499,7 +507,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "EXCHANGE MULTS") and !starts_with(testline, "EXCHANGE MULTS PER"))
     { _exchange_mults = RHS;
 
-      if (contains(_exchange_mults, ","))       // if there are more than one exchange mult
+      if (contains(_exchange_mults, ","))       // if there is more than one exchange mult
         QSO_MULT_WIDTH = 4;                     // make them all the same width, so that the log line looks OK
     }
 
@@ -1317,6 +1325,8 @@ drlog_context::drlog_context(const std::string& filename) :
   _do_not_show_filename(),                    // no do-not-show file
   _drmaster_filename("drmaster"),             // name of the drmaster file
   _exchange("RST"),                           // exchange is just RST
+//  _exchange_cw(),                             // no default CW exchange
+//  _exchange_ssb(),                            // no default SSB exchange
   _exchange_fields_filename(),                // file that holds regex templates for exchange fields
   _exchange_mults_per_band(false),            // any exchange mults are once-only
   _exchange_mults_per_mode(false),            // any exchange mults are once-only
@@ -1481,6 +1491,33 @@ const vector<string> drlog_context::sent_exchange_ssb_names(void) const
 
   for (const auto& pss : _sent_exchange_ssb)
     rv.push_back(pss.first);
+
+  return rv;
+}
+
+const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)
+{ SAFELOCK(_context);
+
+  decltype(_sent_exchange) rv = ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb);
+
+  if (rv.empty())
+  { rv = _sent_exchange;
+
+// fix RST/RS if using non-mode-specific exchange
+    for (int n = 0; n < rv.size(); ++n)
+    { pair<string, string>& pss = rv[n];
+
+      if ( (m == MODE_SSB) and (pss.first == "RST") )
+      { pss.first = "RS";
+        pss.second = "59";  // hardwire!
+      }
+
+      if ( (m == MODE_CW) and (pss.first == "RS") )
+      { pss.first = "RST";
+        pss.second = "599";  // hardwire!
+      }
+    }
+  }
 
   return rv;
 }

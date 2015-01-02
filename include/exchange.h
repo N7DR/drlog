@@ -119,7 +119,7 @@ public:
         \param  rules       rules for the contest
         \param  received_values     the received values, in the order that they were received
 */
-  parsed_exchange(const std::string& callsign, const contest_rules& rules, const std::vector<std::string>& received_values);
+  parsed_exchange(const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
 
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window
   READ(valid);                         ///< is the object valid? (i.e., was parsing successful?)

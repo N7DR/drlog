@@ -44,8 +44,9 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
   { SAFELOCK(statistics);
 
     if (known_callsign_mult_name(mult_name))            // do we already know about this mult name?
-    { auto it = _callsign_multipliers.find(mult_name);
-      multiplier& mult = it->second;
+    { //auto it = _callsign_multipliers.find(mult_name);
+      //multiplier& mult = it->second;
+      multiplier& mult = (_callsign_multipliers.find(mult_name))->second;
 
       mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));                // add value and band for this mult name
     }
@@ -60,10 +61,7 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
 
 /// default constructor
 running_statistics::running_statistics(void) :
-//  _n_qsos( {} ),                                 // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-//  _n_dupes( {} ),
-//  _qso_points( {} ),
-  _n_qsosbm( { {} } ),
+  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
   _n_dupesbm( { {} } ),
   _qso_pointsbm( { {} } ),
   _callsign_mults_used(false),
@@ -81,10 +79,7 @@ running_statistics::running_statistics(void) :
     \param  rules           rules for this contest
 */
 running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules) :
-//  _n_qsos( {} ),                                 // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-//  _n_dupes( {} ),
-//  _qso_points( {} ),
-  _n_qsosbm( { {} } ),
+  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
   _n_dupesbm( { {} } ),
   _qso_pointsbm( { {} } ),
   _location_db(country_data, context.country_list()),
@@ -286,7 +281,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   const unsigned int mode_nr = static_cast<int>(mo);
 
 // increment the number of QSOs
-  auto& pb = _n_qsosbm[mode_nr];
+  auto& pb = _n_qsos[mode_nr];
   pb[band_nr]++;
   
   ost << "in add_qso(); pb[band_nr] = " << pb[band_nr] << endl;
@@ -520,7 +515,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     line = pad_string("QSOs", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');                                          // accumulator for total qsos
 
     for (const auto& m : modes)
-    { const auto& nq = _n_qsosbm[m];
+    { const auto& nq = _n_qsos[m];
 
 //    for (unsigned int n = 0; n < permitted_bands.size(); ++n)
       for (const auto& b : permitted_bands)
@@ -902,7 +897,7 @@ void running_statistics::clear_info(void)
 //  _qso_points.fill(0);
 
   _n_dupesbm = move(decltype(_n_dupesbm)( { { } } ));
-  _n_qsosbm = move(decltype(_n_qsosbm)( { { } } ));
+  _n_qsos = move(decltype(_n_qsos)( { { } } ));
   _qso_pointsbm = move(decltype(_qso_pointsbm)( { { } } ));
 
   for (auto& callsign_m : _callsign_multipliers)
@@ -964,7 +959,7 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
 // add a notional QSO; first calculate average qso point worth of a qso on the current band and mode
   const auto& qp = _qso_pointsbm[m];
   const unsigned int& n_qso_points = qp[b];
-  const auto& nq = _n_qsosbm[m];
+  const auto& nq = _n_qsos[m];
   const unsigned int& n_qsos = nq[b];
 
   const float mean_qso_points = (n_qsos ? ( static_cast<float>(n_qso_points) / n_qsos ) : 0);
@@ -1001,7 +996,7 @@ const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
   SAFELOCK(statistics);
 
   for (const auto& m : score_modes)
-  { const auto& nq = _n_qsosbm[m];
+  { const auto& nq = _n_qsos[m];
 
     FOR_ALL(score_bands, [&] (const BAND& b) { rv += nq[static_cast<int>(b)]; } );
   }
@@ -1019,7 +1014,7 @@ const unsigned int running_statistics::n_qsos(const contest_rules& rules, const 
 { const vector<BAND>& permitted_bands = rules.permitted_bands();
   const set<BAND>& score_bands = rules.score_bands();
   unsigned int rv = 0;
-  const auto& nq = _n_qsosbm[m];
+  const auto& nq = _n_qsos[m];
 
   SAFELOCK(statistics);
 

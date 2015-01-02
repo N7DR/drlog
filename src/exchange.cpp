@@ -138,7 +138,7 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
         \param  rules               rules for the contest
         \param  received_values     the received values, in the order that they were received
 */
-parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const contest_rules& rules, const vector<string>& received_values) :
+parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
   _replacement_call(),
   _valid(false)
 { static const string EMPTY_STRING("");
@@ -149,7 +149,9 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
   ost << "Inside parsed_exchange constructor" << endl;
 
-  const vector<exchange_field> exchange_template = rules.exch(canonical_prefix);
+  const vector<exchange_field> exchange_template = rules.exch(canonical_prefix, m);
+
+  ost << "size of exchange template for prefix " << canonical_prefix << " is: " << exchange_template.size() << endl;
 
 // first time through, determine whether this is Sweepstakes
   if (first_time)
@@ -173,7 +175,8 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
 
 // print exchange template fields for debugging purposes
-  ost << "details of fields:" << endl;
+  ost << "details of exchange template fields:" << endl;
+  ost << "  number of fields: " << _fields.size() << endl;
 
   for (auto& field : _fields)
     ost << "  field : " << field << endl;

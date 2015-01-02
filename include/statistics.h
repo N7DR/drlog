@@ -43,13 +43,9 @@ class running_statistics
 protected:
   
   location_database                                  _location_db;          ///< database for location-based lookups
-  
-//  std::array<unsigned int, N_BANDS>                  _n_dupes;              ///< number of dupes, per band
-//  std::array<unsigned int, N_BANDS>                  _n_qsos;               ///< number of QSOs, per band
-//  std::array<unsigned int, N_BANDS>                  _qso_points;           ///< number of QSO points, per band
 
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_dupesbm;              ///< number of dupes, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_qsosbm;               ///< number of QSOs, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_qsos;               ///< number of QSOs, per band and mode
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _qso_pointsbm;           ///< number of QSO points, per band and mode
 
   std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
@@ -273,10 +269,9 @@ public:
          & _exchange_mults_used
          & _location_db
          & _n_dupesbm
-         & _n_qsosbm
          & _qso_pointsbm
 //         & _n_dupes
-//         & _n_qsos
+         & _n_qsos
 //         & _qso_points;
          ;
     }

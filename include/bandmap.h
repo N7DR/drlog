@@ -500,7 +500,7 @@ protected:
 
   unsigned int _rbn_threshold;                 ///< number of posters needed before a station appears in the bandmap
 
-/*!  \brief Return the callsign closest to a particular frequency, if it is within the guard band
+/*!  \brief                         Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme                     band map entries
      \param target_frequency_in_khz the target frequency, in kHz
      \param guard_band_in_hz        how far from the target to search, in Hz
@@ -510,15 +510,15 @@ protected:
 */
   const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
 
-/*!  \brief                         Insert a bandmap_entry
-     \param be                      entry to add
+/*!  \brief     Insert a bandmap_entry
+     \param be  entry to add
 
      Removes any extant entry at the same frequency as <i>be</i>
 */
   void _insert(const bandmap_entry& be);
 
-/*!  \brief                     Mark a bandmap_entry as recent
-     \param be                  entry to mark
+/*!  \brief     Mark a bandmap_entry as recent
+     \param be  entry to mark
 
      an entry will be marked as recent if:
        its source is LOCAL or CLUSTER
@@ -526,6 +526,10 @@ protected:
        its source is RBN and the call is already present in the bandmap at the same QRG with the poster of <i>be</i>
 */
   const bool _mark_as_recent(const bandmap_entry& be);
+
+/*!  \brief Mark filtered and rbn/filtered entries as dirty
+*/
+  void _dirty_entries(void);
 
 public:
 

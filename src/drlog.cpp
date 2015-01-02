@@ -1185,11 +1185,11 @@ int main(int argc, char** argv)
             }
 
 //            ost << "size of exchange_db = " << exchange_db.size() << endl;
-ost << "adding to statistics" << endl;
+//             ost << "adding to statistics" << endl;
 
             statistics.add_qso(qso, logbk, rules);
 
-            ost << "added to statistics" << endl;
+//            ost << "added to statistics" << endl;
 
             logbk += qso;
             rate.insert(qso.epoch_time(), statistics.points(rules));
@@ -1197,12 +1197,12 @@ ost << "adding to statistics" << endl;
             win_message <= WINDOW_CLEAR;
           }
 
-          ost << "CW QSOs = " << statistics.n_qsos(rules, MODE_CW) << endl;
+//          ost << "CW QSOs = " << statistics.n_qsos(rules, MODE_CW) << endl;
 
 // rebuild the history
           rebuild_history(logbk, rules, statistics, q_history, rate);
 
-          ost << "CW QSOs [1] = " << statistics.n_qsos(rules, MODE_CW) << endl;
+//          ost << "CW QSOs [1] = " << statistics.n_qsos(rules, MODE_CW) << endl;
 
 // rescore the log
           rescore(rules);
@@ -2738,7 +2738,7 @@ ost << "processing command: " << command << endl;
         string exchange_str;
         const string canonical_prefix = location_db.canonical_prefix(contents);
 
-        const vector<exchange_field> expected_exchange = rules.exch(canonical_prefix);
+        const vector<exchange_field> expected_exchange = rules.exch(canonical_prefix, cur_mode);
         map<string, string> mult_exchange_field_value;                  // the values of exchange fields that are mults
 
         for (const auto& exf : expected_exchange)
@@ -3519,7 +3519,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     const string canonical_prefix = location_db.canonical_prefix(call_contents);
     const string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
     const vector<string> exchange_field_values = split_string(exchange_contents, ' ');
-    const vector<exchange_field> exchange_template = rules.exch(canonical_prefix);
+    const vector<exchange_field> exchange_template = rules.exch(canonical_prefix, cur_mode);
 
     ost << "Contents of exchange_template:" << endl;
 
@@ -3549,7 +3549,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       }
 
       if (!processed)
-      { parsed_exchange pexch(canonical_prefix, rules, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
+      { parsed_exchange pexch(canonical_prefix, rules, cur_mode, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 
         ost << "is exchange valid? " << pexch.valid() << endl;
         ost << pexch << endl;
@@ -3626,7 +3626,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           qso.freq( frequency(rig.rig_frequency()).display_string() );    // in kHz; 1dp
 
 // build name/value pairs for the sent exchange
-          vector<pair<string, string> > sent_exchange = context.sent_exchange();
+          vector<pair<string, string> > sent_exchange = context.sent_exchange(qso.mode());
 
           for (auto& sent_exchange_field : sent_exchange)
           { if (sent_exchange_field.second == "#")
@@ -3752,7 +3752,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // and any exch multipliers
         map<string /* field name */, set<string> /* values */ >   old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band);
 
-        const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix);
+        const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix, qso.mode());
 
         for (const auto& exch_field : exchange_fields)
         { const string value = qso.received_exchange(exch_field.name());
@@ -3763,6 +3763,15 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
 
 // write the log line
+
+        ost << "about to write log line" << endl;
+
+        const auto se = qso.sent_exchange();
+
+        ost << "sent exchange: size = " << se.size() << endl;
+        for (unsigned int n = 0; n < se.size(); ++n)
+          ost<< "  " <<  se[n].first << " = " << se[n].second;
+
         win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
 
         win_exchange <= WINDOW_CLEAR;
@@ -5208,7 +5217,7 @@ void* reset_connection(void* vp)
 const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 { // ost << "Inside calculate_exchange_mults()" << endl;
 
-  const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix());        // exchange_field = name, is_mult
+  const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix(), qso.mode());        // exchange_field = name, is_mult
   const vector<received_field> received_exchange = qso.received_exchange();
   const BAND b = qso.band();
   vector<received_field> new_received_exchange;

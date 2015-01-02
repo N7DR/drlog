@@ -344,11 +344,14 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
   return rv;
 }
 
-/*!     \brief              parse all the "exchange [xx] = " lines from context
+/*!     \brief              parse the "exchange = " and all the "exchange [xx] = " lines from context
         \param  context     drlog context
         \return             name/mult/optional/choice status for exchange fields
+
+NOW: puts correct values in _received_exchange
+
 */
-const map<string, vector<exchange_field>> contest_rules::_parse_context_exchange(const drlog_context& context) const // parse the "exchange =" line from context
+void contest_rules::_parse_context_exchange(const drlog_context& context) /* const */ // parse the "exchange =" line from context
 {
 // generate vector of all permitted exchange fields
   map<string, vector<string>> permitted_exchange_fields;  // use a map so that each value is inserted only once
@@ -368,16 +371,65 @@ const map<string, vector<exchange_field>> contest_rules::_parse_context_exchange
   permitted_exchange_fields.insert( { "", exchange_vec } );
 
   const vector<string> exchange_mults_vec = remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
-  map<string, vector<exchange_field>> rv;
+  map<string, vector<exchange_field>> single_mode_rv_rst;
+  map<string, vector<exchange_field>> single_mode_rv_rs;
+  vector<exchange_field> vef_rst;
+  vector<exchange_field> vef_rs;
 
   for (const auto& mpef : permitted_exchange_fields)
   { const vector<string>& vs = mpef.second;
-    const vector<exchange_field> vef = _inner_parse(vs, exchange_mults_vec);
+    vector<exchange_field> vef = _inner_parse(vs, exchange_mults_vec);
 
-    rv.insert( {  mpef.first, vef } );
+// adjust RST/RS to match mode; ideally we would have done this later, when
+// it would be far simpler to iterate through the map, changing values, but
+// g++'s bizarre restriction that values of maps cannot be altered in-place
+// makes it easier to do it now
+
+// RST
+    for (auto ef : vef)
+    { if (ef.name() == "RS")
+        ef.name("RST");
+
+      vef_rst.push_back(ef);
+    }
+
+// RS
+    for (auto ef : vef)
+    { if (ef.name() == "RST")
+        ef.name("RS");
+
+      vef_rs.push_back(ef);
+    }
+
+    single_mode_rv_rst.insert( {  mpef.first, vef_rst } );
+    single_mode_rv_rs.insert( {  mpef.first, vef_rs } );
   }
 
-  return rv;
+  for (const auto& m : _permitted_modes)
+    _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
+
+#if 0
+  // now fix RST and RS;
+// this is far more complicated than it should be, because of g++'s idiotic
+// restriction that values of maps cannot be altered in-place
+  for (const auto& m : _permitted_modes)
+  { auto& map_s_vef = _received_exchange.at(m);
+
+    map<string, std::vector<exchange_field>>
+
+    for (auto& it = map_s_vef.begin(); it != map_s_vef.end(); ++it)
+    { auto& vef = it->second;
+
+      for (const auto& ef : vef)
+      { if ( (m == MODE_CW) and (ef.name() == "RS") )
+          ef.name("RST");
+
+        if ( (m == MODE_SSB) and (ef.name() == "RST") )
+          ef.name("RS");
+      }
+    }
+  }
+#endif
 }
 
 /*!     \brief              initialize an object that was created from the default constructor
@@ -471,7 +523,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   }
 
 // define the legal receive exchanges, and which fields are mults
-  _exch = _parse_context_exchange(context);
+//  _exch = _parse_context_exchange(context);
+  _parse_context_exchange(context);
+
+
   _exchange_mults = remove_peripheral_spaces( split_string(context.exchange_mults(), ",") );
 
 //  FOR_ALL(_exchange_mults, [] (const string& em) { ost << "rules found exchange mult: " << em << endl; } );
@@ -480,32 +535,40 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
 
-  for (const auto& qth_vec_field : _exch)
-  { const string& prefix = qth_vec_field.first;
-    const vector<exchange_field>& vef = qth_vec_field.second;
-    vector<exchange_field> expanded_vef;
+// build expanded version of _received_exchange
+  for (const auto& m : _permitted_modes)
+  { map<string, vector<exchange_field>> expanded_exch;
+    auto& unexpanded_exch = _received_exchange.at(m);
 
-    for (const auto& field : vef)
-    { ost << "field: " << field.name() << "; is_choice: " << field.is_choice() << endl;
+    for (const auto& qth_vec_field : unexpanded_exch)
+    { const string& prefix = qth_vec_field.first;
+      const vector<exchange_field>& vef = qth_vec_field.second;
+      vector<exchange_field> expanded_vef;
 
-      if (!field.is_choice())
-        expanded_vef.push_back(field);
-      else
-      { const vector<exchange_field> vec = field.expand();
+      for (const auto& field : vef)
+      { ost << "field: " << field.name() << "; is_choice: " << field.is_choice() << endl;
 
-        copy(vec.cbegin(), vec.cend(), back_inserter(expanded_vef));
+        if (!field.is_choice())
+          expanded_vef.push_back(field);
+        else
+        { const vector<exchange_field> vec = field.expand();
+
+          copy(vec.cbegin(), vec.cend(), back_inserter(expanded_vef));
+        }
       }
+
+      expanded_exch.insert( { prefix, expanded_vef } );
     }
 
-    _expanded_exch.insert( { prefix, expanded_vef } );
-  }
+    _expanded_received_exchange.insert( { m, expanded_exch} );
 
-  for (const auto& psvef : _expanded_exch)
-  { const vector<exchange_field>& vef = psvef.second;
+    for (const auto& psvef : expanded_exch)
+    { const vector<exchange_field>& vef = psvef.second;
 
-    for (const auto& ef : vef)
-    { _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
-      ost << "Added exchange_field_eft for field " << ef.name() << endl;
+      for (const auto& ef : vef)
+      { _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
+        ost << "Added exchange_field_eft for field " << ef.name() << endl;  // this happens once for each field name; not mode-dependent (except that RST and RS can both appear)
+      }
     }
   }
 
@@ -611,19 +674,30 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
                   > > > > >                                _exch_values;
 #endif
 
-  vector<exchange_field> leaves;
+  vector<exchange_field> leaves_vec;
 
-  for (auto cit = _exch.cbegin(); cit != _exch.cend(); ++cit)
-  { const vector<exchange_field> vec_1 = cit->second;
+  for (const auto& m : _permitted_modes)
+  { const map<string, vector<exchange_field>>& unexpanded_exch = _received_exchange.at(m);
 
-    for (auto cit3 = vec_1.cbegin(); cit3 != vec_1.cend(); ++cit3)
-    { const vector<exchange_field> vec = cit3->expand();
+    for (auto cit = unexpanded_exch.cbegin(); cit != unexpanded_exch.cend(); ++cit)
+    { const vector<exchange_field> vec_1 = cit->second;
 
-      copy(vec.cbegin(), vec.cend(), back_inserter(leaves));
+      for (auto cit3 = vec_1.cbegin(); cit3 != vec_1.cend(); ++cit3)
+      { const vector<exchange_field> vec = cit3->expand();
+
+        copy(vec.cbegin(), vec.cend(), back_inserter(leaves_vec));
+      }
     }
   }
 
-  for (/*vector<exchange_field>::const_iterator*/ auto cit = leaves.begin(); cit != leaves.end(); ++cit)
+//  set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
+
+  set<exchange_field> leaves;
+
+  for (const auto& v : leaves_vec)
+    leaves.insert(v);
+
+  for (/*vector<exchange_field>::const_iterator*/ auto cit = leaves.cbegin(); cit != leaves.cend(); ++cit)
   { static const set<string> no_canonical_values( { "RS", "RST", "SERNO" } );    // some field values don't have canonical values
     const string& field_name = cit->name();
     string entire_file;
@@ -733,20 +807,21 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
 
         CHOICE fields are NOT expanded
 */
-const vector<exchange_field> contest_rules::exch(const string& canonical_prefix) const
+const vector<exchange_field> contest_rules::exch(const string& canonical_prefix, const MODE m) const
 { if (canonical_prefix.empty())
     return vector<exchange_field>();
 
   SAFELOCK(rules);
 
-  auto cit = _exch.find(canonical_prefix);
+  const map<string, vector<exchange_field>>& unexpanded_exchange = _received_exchange.at(m);
+  auto cit = unexpanded_exchange.find(canonical_prefix);
 
-  if (cit != _exch.cend())
+  if (cit != unexpanded_exchange.cend())
     return cit->second;
 
-  cit = _exch.find(string());
+  cit = unexpanded_exchange.find(string());
 
-  return ( (cit == _exch.cend()) ? vector<exchange_field>() : cit->second );
+  return ( (cit == unexpanded_exchange.cend()) ? vector<exchange_field>() : cit->second );
 }
 
 /*!     \brief                      Get the expected exchange fields for a particular canonical prefix
@@ -755,33 +830,38 @@ const vector<exchange_field> contest_rules::exch(const string& canonical_prefix)
 
         CHOICE fields ARE expanded
 */
-const vector<exchange_field> contest_rules::expanded_exch(const string& canonical_prefix) const
+const vector<exchange_field> contest_rules::expanded_exch(const string& canonical_prefix, const MODE m) const
 { if (canonical_prefix.empty())
     return vector<exchange_field>();
 
   SAFELOCK(rules);
 
-  auto cit = _expanded_exch.find(canonical_prefix);
+  const map<string, vector<exchange_field>>& expanded_exchange = _expanded_received_exchange.at(m);
+  auto cit = expanded_exchange.find(canonical_prefix);
 
-  if (cit != _expanded_exch.cend())
+  if (cit != expanded_exchange.cend())
     return cit->second;
 
-  cit = _expanded_exch.find(string());
+  cit = expanded_exchange.find(string());
 
-  return ( (cit == _expanded_exch.cend()) ? vector<exchange_field>() : cit->second );
+  return ( (cit == expanded_exchange.cend()) ? vector<exchange_field>() : cit->second );
 }
 
-/// Get all the known names of exchange fields
+/// Get all the known names of exchange fields (for all modes)
 const set<string> contest_rules::all_known_field_names(void) const
 { set<string> rv;
 
   SAFELOCK(rules);
 
-  for (const auto& msvef : _expanded_exch)
-  { const vector<exchange_field>& vef = msvef.second;
+  for (const auto& m : _permitted_modes)
+  { const map<string, vector<exchange_field>>& expanded_exchange = _expanded_received_exchange.at(m);
 
-    for (const auto& ef : vef)
-      rv.insert(ef.name());
+    for (const auto& msvef : expanded_exchange)
+    { const vector<exchange_field>& vef = msvef.second;
+
+      for (const auto& ef : vef)
+        rv.insert(ef.name());
+    }
   }
 
   return rv;

@@ -185,7 +185,7 @@ public:
 */
   exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false);
 
-  READ(name);                          ///< name of field
+  READ_AND_WRITE(name);                ///< name of field
   READ(is_mult);                       ///< is this field a multiplier?
   READ(is_optional);                   ///< is this an optional field?
   READ_AND_WRITE(choice);              ///< is this field a choice?
@@ -198,6 +198,10 @@ public:
     \return The exchange field, expanded recursively into all possible choices
 */
   const std::vector<exchange_field> expand(void) const;
+
+// needed for set<exchange_field> to work
+  inline const bool operator<(const exchange_field& ef) const
+    { return (_name < ef.name()); }
 
 /// read from and write to disk
   template<typename Archive>
@@ -264,10 +268,13 @@ protected:
   std::set<MODE>    _permitted_modes;            ///< modes allowed in this contest
   std::vector<BAND> _permitted_bands;            ///< bands allowed in this contest; use a vector container in order to keep the frequency order
   
-  std::map<std::string, std::vector<exchange_field>> _exch;             ///< details of the received exchange fields
+//  std::map<std::string, std::vector<exchange_field>> _exch;             ///< details of the received exchange fields
 //  canonical prefix, vector of fields in the exchange for that prefix
 
-  std::map<std::string, std::vector<exchange_field>> _expanded_exch;    ///< details of the received exchange fields, with choices expanded (i.e., the leaves of the _exch element)
+  std::map<enum MODE, std::map<std::string, std::vector<exchange_field>>> _received_exchange;   ///< details of the received exchange fields
+  std::map<enum MODE, std::map<std::string, std::vector<exchange_field>>> _expanded_received_exchange;   ///< details of the received exchange fields
+
+//  std::map<std::string, std::vector<exchange_field>> _expanded_exch;    ///< details of the received exchange fields, with choices expanded (i.e., the leaves of the _exch element)
 
 //  std::vector<std::string>    _sent_exchange;    ///< names of fields in the sent exchange
   std::map<enum MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
@@ -345,8 +352,12 @@ protected:
 /*!     \brief              parse all the "exchange [xx] = " lines from context
         \param  context     drlog context
         \return             name/mult/optional/choice status for exchange fields
+
+NOW: puts correct values in _received_exchange
 */
-  const std::map<std::string, std::vector<exchange_field>> _parse_context_exchange(const drlog_context& context) const;
+  void _parse_context_exchange(const drlog_context& context) /* const */;
+
+//  const std::map<std::string, std::vector<exchange_field>> _parse_context_exchange(const drlog_context& context, const MODE m) const;
 
 /*!     \brief                      parse exchange line from context
         \param  exchange_fields     container of fields taken from line in configuration file
@@ -426,7 +437,7 @@ public:
         \param  canonical_prefix    canonical prefix
         \return                     The exchange fields associated with <i>canonical_prefix</i>
 */
-  const std::vector<exchange_field> exch(const std::string& canonical_prefix) const;
+  const std::vector<exchange_field> exch(const std::string& canonical_prefix, const MODE m) const;
 
 /*!     \brief                      Get the expected exchange fields for a particular canonical prefix
         \param  canonical_prefix    canonical prefix
@@ -434,7 +445,7 @@ public:
 
         CHOICE fields ARE expanded
 */
-  const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix) const;
+  const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const;
 
   SAFEREAD(country_mults, rules);       ///< collection of canonical prefixes of country multipliers
   SAFEREAD(callsign_mults, rules);      ///< collection of types of mults based on callsign (e.g., "WPXPX")
@@ -613,8 +624,8 @@ public:
 
      ar  & _permitted_modes
          & _permitted_bands
-         & _exch
-         & _expanded_exch
+//         & _exch
+//         & _expanded_exch
          & _sent_exchange_names
          & _exchange_mults
          & _exchange_mults_used
@@ -636,6 +647,7 @@ public:
          & _my_continent
          & _my_country
          & _my_cq_zone
+         & _received_exchange
          & _my_itu_zone;
 //         & _qthx_vector;              // &&& MORE HERE
     }

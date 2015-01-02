@@ -136,12 +136,17 @@ protected:
 
   std::string                                  _exchange;                  ///< comma-delimited received exchange
   std::string                                  _exchange_cq;               ///< exchange in CQ mode
+//  std::string                                  _exchange_cw;               ///< comma-delimited received exchange, CW
+
+//  std::map<MODE, std::string>                  _received_exchange;
+
   std::string                                  _exchange_fields_filename;  ///< file that holds regex templates of exchange fields
   std::string                                  _exchange_mults;            ///< comma-delimited exchange fields that are mults
   bool                                         _exchange_mults_per_band;   ///< are exchange mults per-band?
   bool                                         _exchange_mults_per_mode;   ///< are exchange mults per-mode?
   std::map<std::string, std::string>           _exchange_per_country;      ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::string                                  _exchange_sap;              ///< exchange in SAP mode
+//  std::string                                  _exchange_ssb;               ///< comma-delimited received exchange, SSB
   std::vector<std::string>                     _exchanges;                 ///< optional exchange choices
   std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                 ///< exchange memories
 
@@ -430,7 +435,10 @@ protected:
   SAFEREAD(score_bands, _context);
   SAFEREAD(score_modes, _context);
   SAFEREAD(screen_snapshot_file, _context);
-  SAFEREAD(sent_exchange, _context);
+//  SAFEREAD(sent_exchange, _context);
+
+  const decltype(_sent_exchange) sent_exchange(const MODE m);
+
   SAFEREAD(sent_exchange_cw, _context);
   SAFEREAD(sent_exchange_ssb, _context);
   SAFEREAD(shift_delta, _context);

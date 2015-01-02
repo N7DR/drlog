@@ -680,7 +680,9 @@ const bool QSO::sent_exchange_includes(const std::string& field_name)
 
 /// for use in the log window
 const string QSO::log_line(void)
-{ static const size_t CALL_FIELD_LENGTH = 12;
+{ ost << "Inside QSO::log_line()" << endl;
+
+  static const size_t CALL_FIELD_LENGTH = 12;
   string rv;
 
   rv  = pad_string(to_string(number()), 5);
@@ -690,8 +692,9 @@ const string QSO::log_line(void)
   rv += pad_string(freq(), 8);
   rv += pad_string(pad_string(callsign(), CALL_FIELD_LENGTH, PAD_RIGHT), CALL_FIELD_LENGTH + 1);
 
-//  for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
-//    rv += " " + _sent_exchange[n].second;
+  ost << "sent exchange: size = " << _sent_exchange.size() << endl;
+  for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
+    ost<< "  " <<  _sent_exchange[n].first << " = " << _sent_exchange[n].second;
 
   FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += " " + se.second; });
 
