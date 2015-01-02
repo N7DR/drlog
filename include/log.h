@@ -33,9 +33,9 @@
 #include <fstream>
 #include <iostream>
 
-extern message_stream ost;
+extern message_stream ost;                  ///< for debugging, info
 
-class running_statistics;
+class running_statistics;                   // forward declaration
 
 // -----------  logbook  ----------------
 
@@ -43,7 +43,7 @@ class running_statistics;
         \brief The log
 */
 
-extern pt_mutex _log_mutex;  // keep this outside the class so that const objects can lock the mutex
+extern pt_mutex _log_mutex;                 ///< mutex for log; keep this outside the class so that const objects can lock the mutex
 
 class logbook
 {
@@ -54,7 +54,7 @@ protected:
 // and even with seconds a change would be necessary should this ever be adapted for
 // use in a multi station
   std::multimap<std::string, QSO>  _log;        ///< map version of log
-  std::vector<QSO>                 _log_vec;    ///< vector version of log
+  std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
 
 public:
   
@@ -110,21 +110,21 @@ public:
       return (_log.lower_bound(call) != _log.upper_bound(call)); 
     }
     
-/*!     \brief          has a call been worked on a particular band?
+/*!     \brief          Has a call been worked on a particular band?
         \param  call    target callsign
         \param  b       target band
         \return         whether <i>call</i> has been worked on <i>b</i>
 */
   const bool qso_b4(const std::string& call, const BAND b) const;
 
-/*!     \brief          has a call been worked on a particular mode?
+/*!     \brief          Has a call been worked on a particular mode?
         \param  call    target callsign
         \param  m       target mode
         \return         whether <i>call</i> has been worked on <i>m</i>
 */
   const bool qso_b4(const std::string& call, const MODE m) const;
 
-/*!     \brief          has a call been worked on a particular band and mode?
+/*!     \brief          Has a call been worked on a particular band and mode?
         \param  call    target callsign
         \param  b       target band
         \param  m       target mode
@@ -132,14 +132,14 @@ public:
 */
   const bool qso_b4(const std::string& call, const BAND b, const MODE m) const;
   
-/*!     \brief          get a string list of bands on which a call is needed
+/*!     \brief          Get a string list of bands on which a call is needed
         \param  call    target callsign
         \param  rules   rules for the contest
         \return         string list of bands on which a call is needed (separated by three spaces)
 */
   const std::string call_needed(const std::string& call, const contest_rules& rules) const;
   
-/*!     \brief          would a QSO be a dupe, according to the rules?
+/*!     \brief          Would a QSO be a dupe, according to the rules?
         \param  qso     target QSO
         \param  rules   rules for the contest
         \return         whether <i>qso</i> would be a dupe

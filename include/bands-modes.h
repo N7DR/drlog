@@ -214,9 +214,9 @@ public:
     }
 };
 
-/*!  \brief  convert a frequency to a band
-     \param  f frequency
-     \return band corresponding to <i>f</i>
+/*!  \brief     Convert a frequency to a band
+     \param  f  frequency
+     \return    band corresponding to <i>f</i>
 
      Frequency may be in Hz, kHz or MHz.
 */
@@ -264,7 +264,7 @@ template<class T> const BAND to_BAND(T f)
   return MIN_BAND;
 }
 
-/*!  \brief         convert the string representation of a frequency to a band
+/*!  \brief         Convert the string representation of a frequency to a band
      \param  str    any string representation of a frequency, such that the string can be converted to a frequency object
      \return        band corresponding to <i>f</i>
 
@@ -273,14 +273,14 @@ template<class T> const BAND to_BAND(T f)
 inline const BAND to_BAND(const std::string& str)
   { return to_BAND(frequency(str).hz()); }
 
-/*!  \brief         convert a frequency to a band
+/*!  \brief         Convert a frequency to a band
      \param  f      frequency to convert
      \return        band corresponding to <i>f</i>
 */
 inline const BAND to_BAND(const frequency& f)
   { return to_BAND(f.hz()); }
 
-/*!  \brief         convert a frequency to a string
+/*!  \brief         Convert a frequency to a string
      \param  f      frequency to convert
      \return        comma-separated string of the frequency in Hz
 
@@ -289,7 +289,7 @@ inline const BAND to_BAND(const frequency& f)
 inline const std::string to_string(const frequency& f)
   { return (comma_separated_string(f.hz()) + " Hz"); }
 
-/// default mode break points
+/// mode break points; CW below the break point, SSB above it
 static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency(1900) },
                                                     { BAND_80,  frequency(3600) },
                                                     { BAND_60,  frequency(5500) },

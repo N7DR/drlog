@@ -36,7 +36,7 @@ typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 class EFT;
 class QSO;
 
-/// Some contest have very complex point structures
+/// Some contests have very complex point structures
 enum points_type { POINTS_NORMAL,                       ///< points defined in configuration file
                    POINTS_IARU                          ///< IARU contest
                  };
@@ -64,8 +64,8 @@ public:
   { }
 
 /*!     \brief      Construct from useful values
-        \param  nm  Name of exchange field
-        \param  mss Canonical field value, all equivalent values (including canonical value)
+        \param  nm  name of exchange field
+        \param  mss canonical field value, all equivalent values (including canonical value)
 */
   exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
     _name(nm),
@@ -268,23 +268,16 @@ protected:
   std::set<MODE>    _permitted_modes;            ///< modes allowed in this contest
   std::vector<BAND> _permitted_bands;            ///< bands allowed in this contest; use a vector container in order to keep the frequency order
   
-//  std::map<std::string, std::vector<exchange_field>> _exch;             ///< details of the received exchange fields
-//  canonical prefix, vector of fields in the exchange for that prefix
+  std::map<enum MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded
+  std::map<enum MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;  ///< details of the received exchange fields; choices expanded
 
-  std::map<enum MODE, std::map<std::string, std::vector<exchange_field>>> _received_exchange;   ///< details of the received exchange fields
-  std::map<enum MODE, std::map<std::string, std::vector<exchange_field>>> _expanded_received_exchange;   ///< details of the received exchange fields
-
-//  std::map<std::string, std::vector<exchange_field>> _expanded_exch;    ///< details of the received exchange fields, with choices expanded (i.e., the leaves of the _exch element)
-
-//  std::vector<std::string>    _sent_exchange;    ///< names of fields in the sent exchange
   std::map<enum MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
 
 // dupe rules
   bool              _work_if_different_band;     ///< whether it is OK to work the same station on different bands
   bool              _work_if_different_mode;     ///< whether it is OK to work the same station on different modes
   
-//  std::map<BAND, points_structure>     _points;  ///< points per QSO
-  std::array<std::map<BAND, points_structure>, N_MODES> _points;                  ///< points structure for each band and mode
+  std::array<std::map<BAND, points_structure>, N_MODES> _points;  ///< points structure for each band and mode
 
   std::map<std::string, unsigned int>  _exchange_present_points;  ///< number of points if a particular exchange field is received
   std::map<std::string, unsigned int>  _exchange_value_points;    ///< number of points if a particular exchange field has a particular value
@@ -341,7 +334,7 @@ protected:
 
   bool                                         _send_qtcs;           ///< whether to send QTCs
 
-/*!     \brief              private function used to obtain all the understood values for a particular exchange field
+/*!     \brief              Private function used to obtain all the understood values for a particular exchange field
         \param  field_name  name of the field for which the understood values are required
         \return             set of all the legal values for the field <i>field_name</i>
 
@@ -349,25 +342,22 @@ protected:
 */
   const std::set<std::string> _all_exchange_values(const std::string& field_name) const;
 
-/*!     \brief              parse all the "exchange [xx] = " lines from context
+/*!     \brief              Parse all the "exchange [xx] = " lines from context
         \param  context     drlog context
         \return             name/mult/optional/choice status for exchange fields
 
-NOW: puts correct values in _received_exchange
+        Puts correct values in _received_exchange
 */
-  void _parse_context_exchange(const drlog_context& context) /* const */;
+  void _parse_context_exchange(const drlog_context& context);
 
-//  const std::map<std::string, std::vector<exchange_field>> _parse_context_exchange(const drlog_context& context, const MODE m) const;
-
-/*!     \brief                      parse exchange line from context
+/*!     \brief                      Parse exchange line from context
         \param  exchange_fields     container of fields taken from line in configuration file
         \param  exchange_mults_vec  container of fields that are mults
-
         \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
 */
   const std::vector<exchange_field> _inner_parse(const std::vector<std::string>& exchange_fields , const std::vector<std::string>& exchange_mults_vec) const;
 
-/*!     \brief              parse and incorporate the "QTHX[xx] = " lines from context
+/*!     \brief              Parse and incorporate the "QTHX[xx] = " lines from context
         \param  context     context for this contest
         \param  location_db location database
 
@@ -375,7 +365,7 @@ NOW: puts correct values in _received_exchange
 */
   void _parse_context_qthx(const drlog_context& context, location_database& location_db);
 
-/*!     \brief              initialize an object that was created from the default constructor
+/*!     \brief              Initialize an object that was created from the default constructor
         \param  context     context for this contest
         \param  location_db location database
 

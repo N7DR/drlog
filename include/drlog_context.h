@@ -30,27 +30,22 @@
     \brief The variables and constants that comprise the context for operation
 */
 
-const unsigned int MAX_MEMORY_MESSAGES = 12;
-const unsigned int CQ_MEMORY_MESSAGES  = 9;        // must not exceed 9 without changes to drlog_context.cpp
-const unsigned int EX_MEMORY_MESSAGES  = 9;        // must not exceed 9 without changes to drlog_context.cpp
-const unsigned int EX_ALT_MEMORY_MESSAGES  = 9;    // must not exceed 9 without changes to drlog_context.cpp
-const unsigned int CQ_CTRL_MEMORY_MESSAGES  = 10;  // change already made in drlog_context.cpp; copy the logic for other memories if necessary
+const unsigned int MAX_MEMORY_MESSAGES = 12;        ///< number of memory messages
+const unsigned int CQ_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in CALL window; must not exceed 9 without changes to drlog_context.cpp
+const unsigned int EX_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in EXCHANGE window; must not exceed 9 without changes to drlog_context.cppmust not exceed 9 without changes to drlog_context.cpp
+//const unsigned int EX_ALT_MEMORY_MESSAGES  = 9;    // must not exceed 9 without changes to drlog_context.cpp
+//const unsigned int CQ_CTRL_MEMORY_MESSAGES  = 10;  // change already made in drlog_context.cpp; copy the logic for other memories if necessary
 
-enum country_multiplier_type { COUNTRY_MULT_NONE,
-                               COUNTRY_MULT_DXCC,     // DXCC list
-                               COUNTRY_MULT_WAEDC     // DARC WAEDC list
+enum country_multiplier_type { COUNTRY_MULT_NONE,       ///< no country multipliers
+                               COUNTRY_MULT_DXCC,       ///< use DXCC list
+                               COUNTRY_MULT_WAEDC       ///< use DARC WAEDC list
                              };
 
-extern pt_mutex _context_mutex;
+extern pt_mutex _context_mutex;             ///< mutex for the drlog context
 
 /// Syntactic sugar for read-only access
-#define CONTEXTREAD(y) \
-/*! Read-only access to _##y */ \
-  inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }
-
-
-//typedef std::string SINGLE_EXCHANGE;
-//typedef std::vector<SINGLE_EXCHANGE> MULTIPLE_EXCHANGES;
+#define CONTEXTREAD(y)          \
+  inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }  ///< Read-only access to _##y
 
 // -----------  drlog_context  ----------------
 
@@ -58,101 +53,96 @@ class drlog_context
 {
 protected:
 
-  std::string                                  _archive_name;                      ///< name of the archive for save/restore information
-  std::string                                  _auto_backup;                     ///< directory for auto backup files
-  bool                                         _auto_remaining_callsign_mults;       ///< do we auto-generate the remaining callsign mults?
-  bool                                         _auto_remaining_country_mults;      ///< do we auto-generate the remaining country mults?
-  bool                                         _auto_remaining_exchange_mults;     ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
-  bool                                         _auto_screenshot;                   ///< do we create a screenshot every hour?
+  std::string                                  _archive_name;                   ///< name of the archive for save/restore information
+  std::string                                  _auto_backup;                    ///< directory for auto backup files
+  bool                                         _auto_remaining_callsign_mults;  ///< do we auto-generate the remaining callsign mults?
+  bool                                         _auto_remaining_country_mults;   ///< do we auto-generate the remaining country mults?
+  bool                                         _auto_remaining_exchange_mults;  ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
+  bool                                         _auto_screenshot;                ///< do we create a screenshot every hour?
 
-  unsigned int                                 _bandmap_decay_time_local;          ///< time (in minutes) for an entry to age off the bandmap (local entries)
-  unsigned int                                 _bandmap_decay_time_cluster;        ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
-  unsigned int                                 _bandmap_decay_time_rbn;            ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
-  std::vector<int>                             _bandmap_fade_colours;              ///< the colours calls adopt as they fade
-  std::vector<std::string>                     _bandmap_filter;                    ///< the strings in the bandmap filter
-  int                                          _bandmap_filter_disabled_colour;    ///< background colour when bandmap filter is disabled
-  bool                                         _bandmap_filter_enabled;            ///< is the bandmap filter enabled?
-  int                                          _bandmap_filter_foreground_colour;  ///< colour of foreground in the bandmap filter
-  int                                          _bandmap_filter_hide_colour;        ///< background colour when bandmap filter is in hide mode
-  bool                                         _bandmap_filter_show;               ///< is the bandmap filter set to show? (If not, then it's set to hide)
-  int                                          _bandmap_filter_show_colour;        ///< background colour when bandmap filter is in show mode
-  int                                          _bandmap_recent_colour;             ///< colour for bandmap entries that are less than two minutes old
-  std::string                                  _bands;                             ///< comma-delimited bands
-  std::string                                  _batch_messages_file;               ///< file that contains per-call batch messages
+  unsigned int                                 _bandmap_decay_time_local;           ///< time (in minutes) for an entry to age off the bandmap (local entries)
+  unsigned int                                 _bandmap_decay_time_cluster;         ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
+  unsigned int                                 _bandmap_decay_time_rbn;             ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
+  std::vector<int>                             _bandmap_fade_colours;               ///< the colours calls adopt as they fade
+  std::vector<std::string>                     _bandmap_filter;                     ///< the strings in the bandmap filter
+  int                                          _bandmap_filter_disabled_colour;     ///< background colour when bandmap filter is disabled
+  bool                                         _bandmap_filter_enabled;             ///< is the bandmap filter enabled?
+  int                                          _bandmap_filter_foreground_colour;   ///< colour of foreground in the bandmap filter
+  int                                          _bandmap_filter_hide_colour;         ///< background colour when bandmap filter is in hide mode
+  bool                                         _bandmap_filter_show;                ///< is the bandmap filter set to show? (If not, then it's set to hide)
+  int                                          _bandmap_filter_show_colour;         ///< background colour when bandmap filter is in show mode
+  int                                          _bandmap_recent_colour;              ///< colour for bandmap entries that are less than two minutes old
+  std::string                                  _bands;                              ///< comma-delimited bands
+  std::string                                  _batch_messages_file;                ///< file that contains per-call batch messages
 
-  std::string                                  _cabrillo_filename;                 ///< name of Cabrillo log
+  std::string                                  _cabrillo_filename;                  ///< name of Cabrillo log
 
 // Cabrillo records
-  std::string                                  _cabrillo_address_1;                ///< first ADDRESS: line
-  std::string                                  _cabrillo_address_2;                ///< second ADDRESS: line
-  std::string                                  _cabrillo_address_3;                ///< third ADDRESS: line
-  std::string                                  _cabrillo_address_4;                ///< fourth ADDRESS: line
-  std::string                                  _cabrillo_address_city;             ///< ADDRESS-CITY:
-  std::string                                  _cabrillo_address_state_province;   ///< ADDRESS-STATE-PROVINCE:
-  std::string                                  _cabrillo_address_postalcode;       ///< ADDRESS-POSTALCODE:
-  std::string                                  _cabrillo_address_country;          ///< ADDRESS-COUNTRY:
-  std::string                                  _cabrillo_callsign;                 ///< CALLSIGN:
-  std::string                                  _cabrillo_category_assisted;        ///< CATEGORY-ASSISTED:
-  std::string                                  _cabrillo_category_band;            ///< CATEGORY-BAND:
-  std::string                                  _cabrillo_category_mode;            ///< CATEGORY-MODE:
-  std::string                                  _cabrillo_category_operator;        ///< CATEGORY-OPERATOR:
-  std::string                                  _cabrillo_category_overlay;         ///< CATEGORY-OVERLAY:
-  std::string                                  _cabrillo_category_power;           ///< CATEGORY-POWER:
-  std::string                                  _cabrillo_category_station;         ///< CATEGORY-STATION:
-  std::string                                  _cabrillo_category_time;            ///< CATEGORY-TIME:
-  std::string                                  _cabrillo_category_transmitter;     ///< CATEGORY-TRANSMITTER:
-  std::string                                  _cabrillo_club;                     ///< CLUB:
-  std::string                                  _cabrillo_contest;                  ///< CONTEST:
-  std::string                                  _cabrillo_e_mail;                   ///< EMAIL: (sic)
-  std::string                                  _cabrillo_location;                 ///< LOCATION:
-  std::string                                  _cabrillo_name;                     ///< NAME:
-  std::string                                  _cabrillo_operators;                ///< OPERATORS:
-  std::string                                  _cabrillo_qso_template;             ///< format for Cabrillo QSOs
+  std::string                                  _cabrillo_address_1;                 ///< first ADDRESS: line
+  std::string                                  _cabrillo_address_2;                 ///< second ADDRESS: line
+  std::string                                  _cabrillo_address_3;                 ///< third ADDRESS: line
+  std::string                                  _cabrillo_address_4;                 ///< fourth ADDRESS: line
+  std::string                                  _cabrillo_address_city;              ///< ADDRESS-CITY:
+  std::string                                  _cabrillo_address_state_province;    ///< ADDRESS-STATE-PROVINCE:
+  std::string                                  _cabrillo_address_postalcode;        ///< ADDRESS-POSTALCODE:
+  std::string                                  _cabrillo_address_country;           ///< ADDRESS-COUNTRY:
+  std::string                                  _cabrillo_callsign;                  ///< CALLSIGN:
+  std::string                                  _cabrillo_category_assisted;         ///< CATEGORY-ASSISTED:
+  std::string                                  _cabrillo_category_band;             ///< CATEGORY-BAND:
+  std::string                                  _cabrillo_category_mode;             ///< CATEGORY-MODE:
+  std::string                                  _cabrillo_category_operator;         ///< CATEGORY-OPERATOR:
+  std::string                                  _cabrillo_category_overlay;          ///< CATEGORY-OVERLAY:
+  std::string                                  _cabrillo_category_power;            ///< CATEGORY-POWER:
+  std::string                                  _cabrillo_category_station;          ///< CATEGORY-STATION:
+  std::string                                  _cabrillo_category_time;             ///< CATEGORY-TIME:
+  std::string                                  _cabrillo_category_transmitter;      ///< CATEGORY-TRANSMITTER:
+  std::string                                  _cabrillo_club;                      ///< CLUB:
+  std::string                                  _cabrillo_contest;                   ///< CONTEST:
+  std::string                                  _cabrillo_e_mail;                    ///< EMAIL: (sic)
+  std::string                                  _cabrillo_location;                  ///< LOCATION:
+  std::string                                  _cabrillo_name;                      ///< NAME:
+  std::string                                  _cabrillo_operators;                 ///< OPERATORS:
+  std::string                                  _cabrillo_qso_template;              ///< format for Cabrillo QSOs
 
-  std::string                                  _call_ok_now_message;      ///< message if call was changed
-  std::set<std::string>                        _callsign_mults;           ///< mults derived from callsign; e.g., WPXPX
-  bool                                         _callsign_mults_per_band;  ///< are callsign mults per-band?
-  bool                                         _callsign_mults_per_mode;  ///< are callsign mults per-mode?
-  unsigned int                                 _cluster_port;             ///< port on the cluster server
-  std::string                                  _cluster_server;           ///< hostname or IP of cluster server
-  std::string                                  _cluster_username;         ///< username to use on the cluster
-  std::string                                  _contest_name;             ///< name of the contest
-  std::vector<std::pair<std::string, std::string>> _country_exceptions;   ///< calls to be placed in non-default country
-  enum country_list_type                       _country_list;             ///< DXCC or WAE list?
-  std::string                                  _country_mults_filter;     ///< the command from the configuration file
-  bool                                         _country_mults_per_band;   ///< are country mults per-band?
-  bool                                         _country_mults_per_mode;   ///< are country mults per-mode?
-  bool                                         _cq_auto_lock;             ///< whether to lock the transmitter in CQ mode
-  bool                                         _cq_auto_rit;              ///< whether to enable RIT in CQ mode
+  std::string                                  _call_ok_now_message;        ///< message if call was changed
+  std::set<std::string>                        _callsign_mults;             ///< mults derived from callsign; e.g., WPXPX
+  bool                                         _callsign_mults_per_band;    ///< are callsign mults per-band?
+  bool                                         _callsign_mults_per_mode;    ///< are callsign mults per-mode?
+  unsigned int                                 _cluster_port;               ///< port on the cluster server
+  std::string                                  _cluster_server;             ///< hostname or IP of cluster server
+  std::string                                  _cluster_username;           ///< username to use on the cluster
+  std::string                                  _contest_name;               ///< name of the contest
+  std::vector<std::pair<std::string, std::string>> _country_exceptions;     ///< calls to be placed in non-default country
+  enum country_list_type                       _country_list;               ///< DXCC or WAE list?
+  std::string                                  _country_mults_filter;       ///< the command from the configuration file
+  bool                                         _country_mults_per_band;     ///< are country mults per-band?
+  bool                                         _country_mults_per_mode;     ///< are country mults per-mode?
+  bool                                         _cq_auto_lock;               ///< whether to lock the transmitter in CQ mode
+  bool                                         _cq_auto_rit;                ///< whether to enable RIT in CQ mode
   std::array<std::string, CQ_MEMORY_MESSAGES + 1>
-                                               _cq_memory;                ///< CQ memories, counted wrt 1
-  std::string                                  _cty_filename;             ///< filename of country file (default = "cty.dat")
-  unsigned int                                 _cw_speed;                 ///< Speed in WPM
+                                               _cq_memory;                  ///< CQ memories, counted wrt 1
+  std::string                                  _cty_filename;               ///< filename of country file (default = "cty.dat")
+  unsigned int                                 _cw_speed;                   ///< Speed in WPM
 
   std::string                                  _decimal_point;         ///< character to use as decimal point
   std::vector<std::string>                     _do_not_show;           ///< do not show these calls when spotted (MY CALL is automatically not shown)
   std::string                                  _do_not_show_filename;  ///< filename of calls (one per line) not to be shown
   std::string                                  _drmaster_filename;     ///< filename of drmaster file (default = "drmaster")
 
-  std::string                                  _exchange;                  ///< comma-delimited received exchange
-  std::string                                  _exchange_cq;               ///< exchange in CQ mode
-//  std::string                                  _exchange_cw;               ///< comma-delimited received exchange, CW
+  std::string                                  _exchange;                   ///< comma-delimited received exchange
+  std::string                                  _exchange_cq;                ///< exchange in CQ mode
+  std::string                                  _exchange_fields_filename;   ///< file that holds regex templates of exchange fields
+  std::string                                  _exchange_mults;             ///< comma-delimited exchange fields that are mults
+  bool                                         _exchange_mults_per_band;    ///< are exchange mults per-band?
+  bool                                         _exchange_mults_per_mode;    ///< are exchange mults per-mode?
+  std::map<std::string, std::string>           _exchange_per_country;       ///< per-country exchanges; key = prefix-or-call; value = exchange
+  std::string                                  _exchange_sap;               ///< exchange in SAP mode
+  std::vector<std::string>                     _exchanges;                  ///< optional exchange choices
+  std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                  ///< exchange memories
 
-//  std::map<MODE, std::string>                  _received_exchange;
+  std::map<MODE, unsigned int>                 _guard_band;                 ///< guard band, in Hz
 
-  std::string                                  _exchange_fields_filename;  ///< file that holds regex templates of exchange fields
-  std::string                                  _exchange_mults;            ///< comma-delimited exchange fields that are mults
-  bool                                         _exchange_mults_per_band;   ///< are exchange mults per-band?
-  bool                                         _exchange_mults_per_mode;   ///< are exchange mults per-mode?
-  std::map<std::string, std::string>           _exchange_per_country;      ///< per-country exchanges; key = prefix-or-call; value = exchange
-  std::string                                  _exchange_sap;              ///< exchange in SAP mode
-//  std::string                                  _exchange_ssb;               ///< comma-delimited received exchange, SSB
-  std::vector<std::string>                     _exchanges;                 ///< optional exchange choices
-  std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                 ///< exchange memories
-
-  std::map<MODE, unsigned int>                 _guard_band;
-
-  std::string                                  _individual_messages_file;  ///< file that contains per-call individual messages
+  std::string                                  _individual_messages_file;   ///< file that contains per-call individual messages
 
   std::string                                  _keyer_port;                 ///< the device that is to be used as a keyer
 
@@ -177,7 +167,6 @@ protected:
   std::string                                  _not_country_mults;   ///< comma-separated list of countries that are explicitly NOT country mults
 
   std::vector<std::string>                     _path;                             ///< directories to search, in order
-//  std::map<BAND, std::string>                  _per_band_points;                  ///< points structure for each band
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;                  ///< points structure for each band and mode
 
   std::map<BAND, int>                          _per_band_country_mult_factor;     ///< country mult factor structure for each band
@@ -243,9 +232,13 @@ protected:
 */
   void _process_configuration_file(const std::string& filename);
 
+/*!     \brief              Set the value of points, using the POINTS [CW|SSB] command
+        \param  command     the complete line from the configuration file
+        \param  m           mode
+*/
   void _set_points(const std::string& command, const MODE m);
 
-  public:
+public:
 
 /// default constructor
   drlog_context(void)

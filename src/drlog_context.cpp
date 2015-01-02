@@ -48,6 +48,10 @@ static const map<string, string> cabrillo_qso_templates { { "ARRL DX", "ARRL DX"
 
 pt_mutex _context_mutex;                    ///< mutex for the context
 
+/*!     \brief              Set the value of points, using the POINTS [CW|SSB] command
+        \param  command     the complete line from the configuration file
+        \param  m           mode
+*/
 void drlog_context::_set_points(const string& command, const MODE m)
 { if (command.empty())
     return;
@@ -172,7 +176,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     const string rhs = ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : "");      // the stuff to the right of the "="
     const string RHS = to_upper(rhs);                                                         // converted to upper case
     const bool is_true = (RHS == "TRUE");                                                     // is right hand side == "TRUE"?
-    const string lhs = ( (fields.empty()) ? "" : remove_peripheral_spaces(fields[0]) );       // the stuff to the left of the "="
+    const string lhs = squash( (fields.empty()) ? "" : remove_peripheral_spaces(fields[0]) );       // the stuff to the left of the "="
     const string LHS = to_upper(lhs);                                                         // converted to upper case
 
 // ARCHIVE
@@ -207,7 +211,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (!RHS.empty())
       { const vector<string> colour_names = remove_peripheral_spaces(split_string(RHS, ","));
 
-//        for_each(colour_names.cbegin(), colour_names.cend(), [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
         FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
       }
     }
@@ -486,14 +489,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       _exchange_per_country.insert( { country, RHS  } );
     }
-
-// EXCHANGE CW
-//    if (starts_with(testline, "EXCHANGE CW") and !contains(LHS, "["))
-//      _exchange_cw = RHS;
-
-// EXCHANGE SSB
-//    if (starts_with(testline, "EXCHANGE SSB") and !contains(LHS, "["))
-//      _exchange_ssb = RHS;
 
 // EXCHANGE CQ
     if (starts_with(testline, "EXCHANGE CQ"))
@@ -827,6 +822,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "SHIFT POLL"))
       _shift_poll = from_string<unsigned int>((split_string(line, "="))[1]);
 
+#if 0
     static std::map<std::string, BAND> BAND_FROM_NAME { { "160", BAND_160 },
                                                         { "80",  BAND_80 },
                                                         { "60",  BAND_60 },
@@ -838,6 +834,7 @@ void drlog_context::_process_configuration_file(const string& filename)
                                                         { "12",  BAND_12 },
                                                         { "10",  BAND_10 }
                                                       };
+#endif
 
 // START BAND
     if (starts_with(testline, "START BAND"))
@@ -876,7 +873,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 // Currently supported: ALL
 //                      NONE
 // any single continent
-    if (starts_with(testline, "COUNTRY MULTS") and !starts_with(testline, "COUNTRY MULTS PER BAND"))
+//    if (starts_with(testline, "COUNTRY MULTS") and !starts_with(testline, "COUNTRY MULTS PER"))
+    if (LHS == "COUNTRY MULTS")
     { _country_mults_filter = RHS;
 
       if (_country_mults_filter == "NONE")

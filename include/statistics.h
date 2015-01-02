@@ -224,8 +224,8 @@ public:
 /// worked callsign mults for a particular band
   const std::set<std::string> worked_callsign_mults(const std::string& mult_name, const BAND b);
 
-/// worked country mults for a particular band
-  const std::set<std::string> worked_country_mults(const BAND b);
+/// worked country mults for a particular band and mode
+  const std::set<std::string> worked_country_mults(const BAND b, const MODE m);
 
   inline const std::set<std::string> known_country_mults(void)
     { SAFELOCK(statistics);

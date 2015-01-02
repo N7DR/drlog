@@ -311,7 +311,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   const string& call = qso.callsign();
   const string& canonical_prefix = _location_db.canonical_prefix(call);
 
-  ost << "adding worked country mult: " << canonical_prefix << " on band " << band_nr << " and mode number " << mo << endl;
+  ost << "adding worked country mult: " << canonical_prefix << " on band " << BAND_NAME[band_nr] << " and mode " << MODE_NAME[mo] << endl;
 //  _country_multipliers.add_worked(canonical_prefix, band_nr);
   bool added = _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
@@ -840,10 +840,22 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
 }
 
 /// worked country mults for a particular band
-const set<string> running_statistics::worked_country_mults(const BAND b)
+const set<string> running_statistics::worked_country_mults(const BAND b, const MODE m)
 { SAFELOCK(statistics);
 
-  return ( _country_multipliers.worked(static_cast<int>(b)) );
+//  return ( _country_multipliers.worked(static_cast<int>(b)) );
+
+  const auto tmp = _country_multipliers.worked(b, m);
+
+  ost << "running_statistics::worked_country_mults; band = " << BAND_NAME[b] << ", mode = " << MODE_NAME[m] << endl;
+  string str("  ");
+
+  for (const auto& cm : tmp)
+    str += cm + " ";
+
+  ost << str << endl;
+
+  return ( _country_multipliers.worked(b, m) );
 }
 
 /// worked exchange mults for a particular band

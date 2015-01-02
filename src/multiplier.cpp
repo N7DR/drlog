@@ -69,6 +69,8 @@ const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
   { const int b_nr = static_cast<int>(b);
     const int m_nr = static_cast<int>(m);
 
+    ost << "multiplier; adding worked " << str << ", band = " << BAND_NAME[b] << ", mode = " << MODE_NAME[m] << endl;
+
     auto& pb = _worked[m_nr];
 
     bool rv = (pb[b_nr].insert(str)).second;  // BAND, MODE
@@ -223,9 +225,22 @@ const set<string> multiplier::worked(const int b, const int m) const
 { if (!_used)
     return set<string>();
 
-  auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : N_MODES) ];
+  auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ];
 
-  return pb[ (_per_band ? b : N_BANDS) ];
+  ost << "multiplier::worked for band = " << BAND_NAME[b] << ", mode = " << MODE_NAME[m] << " is:" << endl;
+  ost << "_per_mode = " << boolalpha << _per_mode << noboolalpha << endl;
+
+  set<string> tmp = pb[ (_per_band ? b : ANY_BAND) ];
+  string str("  ");
+
+  for (auto& s : tmp)
+    str += s + " ";
+
+  ost << str << endl;
+
+  return pb[ (_per_band ? b : ANY_BAND) ];
+//  auto& pb = _worked[m];
+//  return pb[b];
 }
 
 /// All the mults worked on a particular band, regardless of mode

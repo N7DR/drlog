@@ -224,11 +224,11 @@ points_structure::points_structure(void) :
         strings in libstdc++.
 */
 
-/*!     \brief              parse and incorporate the "QTHX[xx] = " lines from context
+/*!     \brief              Parse and incorporate the "QTHX[xx] = " lines from context
         \param  context     drlog context
         \param  location_db location database
 
-        Incorporates the parsed information into _exch
+        Incorporates the parsed information into _exch_values
 */
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
 { const auto& context_qthx = context.qthx();
@@ -263,7 +263,7 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
   }
 }
 
-/*!     \brief              private function used to obtain all the understood values for a particular exchange field
+/*!     \brief              Private function used to obtain all the understood values for a particular exchange field
         \param  field_name  name of the field for which the understood values are required
         \return             set of all the legal values for the field <i>field_name</i>
 
@@ -277,10 +277,9 @@ const set<string> contest_rules::_all_exchange_values(const string& field_name) 
   return ( (cit == _exch_values.cend()) ? set<string>() : cit->all_values() );
 }
 
-/*!     \brief                      parse exchange line from context
+/*!     \brief                      Parse exchange line from context
         \param  exchange_fields     container of fields taken from line in configuration file
         \param  exchange_mults_vec  container of fields that are mults
-
         \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
 */
 const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchange_fields , const vector<string>& exchange_mults_vec) const
@@ -344,14 +343,13 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
   return rv;
 }
 
-/*!     \brief              parse the "exchange = " and all the "exchange [xx] = " lines from context
+/*!     \brief              Parse the "exchange = " and all the "exchange [xx] = " lines from context
         \param  context     drlog context
         \return             name/mult/optional/choice status for exchange fields
 
-NOW: puts correct values in _received_exchange
-
+        Puts correct values in _received_exchange
 */
-void contest_rules::_parse_context_exchange(const drlog_context& context) /* const */ // parse the "exchange =" line from context
+void contest_rules::_parse_context_exchange(const drlog_context& context)
 {
 // generate vector of all permitted exchange fields
   map<string, vector<string>> permitted_exchange_fields;  // use a map so that each value is inserted only once
@@ -365,8 +363,6 @@ void contest_rules::_parse_context_exchange(const drlog_context& context) /* con
   }
 
 // add the ordinary exchange to the permitted exchange fields
-//  ost << "context.exchange() = " << context.exchange() << endl;
-
   const vector<string> exchange_vec = remove_peripheral_spaces(split_string(context.exchange(), ","));
   permitted_exchange_fields.insert( { "", exchange_vec } );
 
@@ -407,32 +403,9 @@ void contest_rules::_parse_context_exchange(const drlog_context& context) /* con
 
   for (const auto& m : _permitted_modes)
     _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
-
-#if 0
-  // now fix RST and RS;
-// this is far more complicated than it should be, because of g++'s idiotic
-// restriction that values of maps cannot be altered in-place
-  for (const auto& m : _permitted_modes)
-  { auto& map_s_vef = _received_exchange.at(m);
-
-    map<string, std::vector<exchange_field>>
-
-    for (auto& it = map_s_vef.begin(); it != map_s_vef.end(); ++it)
-    { auto& vef = it->second;
-
-      for (const auto& ef : vef)
-      { if ( (m == MODE_CW) and (ef.name() == "RS") )
-          ef.name("RST");
-
-        if ( (m == MODE_SSB) and (ef.name() == "RST") )
-          ef.name("RS");
-      }
-    }
-  }
-#endif
 }
 
-/*!     \brief              initialize an object that was created from the default constructor
+/*!     \brief              Initialize an object that was created from the default constructor
         \param  context     drlog context
         \param  location_db location database
 
@@ -458,6 +431,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // generate the country mults; the value from context is either "ALL" or "NONE"
   if (context.country_mults_filter() == "ALL")
     copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
+
+  ost << "context.country_mults_filter() = " << context.country_mults_filter() << endl;
+  ost << "size of rules::_countries after initial copy = " << _countries.size() << endl;
+  ost << "size of rules::_country_mults after initial copy = " << _country_mults.size() << endl;
 
   if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
@@ -522,15 +499,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { }
   }
 
-// define the legal receive exchanges, and which fields are mults
-//  _exch = _parse_context_exchange(context);
-  _parse_context_exchange(context);
-
-
+  _parse_context_exchange(context);                     // define the legal receive exchanges, and which fields are mults
   _exchange_mults = remove_peripheral_spaces( split_string(context.exchange_mults(), ",") );
-
-//  FOR_ALL(_exchange_mults, [] (const string& em) { ost << "rules found exchange mult: " << em << endl; } );
-
   _exchange_mults_per_band = context.exchange_mults_per_band();
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
@@ -617,50 +587,48 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
               }
 
 // country
-            if (!processed and !fields[1].empty())
-            { if (contains(fields[1], "["))    // possible multiple countries
-              { const string countries = delimited_substring(fields[1], '[', ']');
+              if (!processed and !fields[1].empty())
+              { if (contains(fields[1], "["))    // possible multiple countries
+                { const string countries = delimited_substring(fields[1], '[', ']');
 
-                if (!countries.empty())
-                { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already spilt on commas
+                  if (!countries.empty())
+                  { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already spilt on commas
 
-                  FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } ); } );
+                    FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } ); } );
+                  }
                 }
+                else
+                  country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
+
+                points_this_band.country_points(country_points_this_band);
+
+                processed = true;
               }
-              else
-                country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
 
-              points_this_band.country_points(country_points_this_band);
-
-              processed = true;
-            }
-
-            if (!processed)
-            { continent_points_this_band[fields[0]] = from_string<unsigned int>(fields[2]);
-              points_this_band.continent_points(continent_points_this_band);
+              if (!processed)
+              { continent_points_this_band[fields[0]] = from_string<unsigned int>(fields[2]);
+                points_this_band.continent_points(continent_points_this_band);
+              }
             }
           }
-        }
 
 // [field-name-condition]:points // [IOTA != ------]:15
-        if (fields.size() == 2)
-        { const string& f0 = fields[0];
+          if (fields.size() == 2)
+          { const string& f0 = fields[0];
 
-          if ((f0.find("[") != string::npos) and (f0.find("]") != string::npos))
-          { _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
+            if ((f0.find("[") != string::npos) and (f0.find("]") != string::npos))
+            { _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
 //            ost << "inserted " << fields[1] << " points for condition: " << f0 << endl;
+            }
           }
-        }
 
-        pb[b] = points_this_band;    // overwrite default
-      }
-    }  // not IARU
-  } }
+          pb[b] = points_this_band;    // overwrite default
+        }
+      }  // not IARU
+    }
+  }
 
 // legal values for the exchange fields
-//  std::vector<std::map<std::string /* exch field name */, std::vector<std::string> /* legal values of exch field*/> > _exch_values;
-//  std::vector<exchange_field> _exch;
-
   _parse_context_qthx(context, location_db);  // qth-dependent fields
 
 #if 0
@@ -690,12 +658,12 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     }
   }
 
-//  set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
+  set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
 
-  set<exchange_field> leaves;
+//  set<exchange_field> leaves;
 
-  for (const auto& v : leaves_vec)
-    leaves.insert(v);
+//  for (const auto& v : leaves_vec)
+//    leaves.insert(v);
 
   for (/*vector<exchange_field>::const_iterator*/ auto cit = leaves.cbegin(); cit != leaves.cend(); ++cit)
   { static const set<string> no_canonical_values( { "RS", "RST", "SERNO" } );    // some field values don't have canonical values

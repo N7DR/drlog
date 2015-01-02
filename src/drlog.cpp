@@ -178,7 +178,7 @@ inline void update_remaining_callsign_mults_window(running_statistics& statistic
   { update_remaining_callsign_mults_window(statistics, string(), b);}
 
 void update_remaining_country_mults_window(running_statistics&,
-                                           const BAND b = safe_get_band());
+                                           const BAND b = safe_get_band(), const MODE m = safe_get_mode());
 void update_remaining_exch_mults_window(const string&,
                                         const contest_rules&,
                                         running_statistics&,
@@ -1174,7 +1174,7 @@ int main(int argc, char** argv)
 
 // country mults
             update_known_country_mults(qso.callsign());
-            qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band()) );
+            qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode()) );
 
 // add exchange info for this call to the exchange db
             const vector<received_field>& received_exchange = qso.received_exchange();
@@ -2208,7 +2208,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, cur_band);
-      update_remaining_country_mults_window(statistics, cur_band);
+      update_remaining_country_mults_window(statistics, cur_band, cur_mode);
       update_remaining_exchange_mults_windows(rules, statistics, cur_band);
 
       win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
@@ -2236,6 +2236,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     rig.rig_mode(cur_mode);
 
     display_band_mode(win_band_mode, cur_band, cur_mode);
+
+// update displays of needed mults
+    update_remaining_country_mults_window(statistics, cur_band, cur_mode);
+
     processed = true;
   }
 
@@ -2650,7 +2654,7 @@ ost << "processing command: " << command << endl;
 
 // update displays of needed mults
               update_remaining_callsign_mults_window(statistics, cur_band);
-              update_remaining_country_mults_window(statistics, cur_band);
+              update_remaining_country_mults_window(statistics, cur_band, cur_mode);
               update_remaining_exchange_mults_windows(rules, statistics, cur_band);
             }
 
@@ -3747,7 +3751,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         allow_for_callsign_mults(qso);
 
 // get the current list of country mults
-        const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band);
+        const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band, cur_mode);
 
 // and any exch multipliers
         map<string /* field name */, set<string> /* values */ >   old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band);
@@ -3768,9 +3772,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         const auto se = qso.sent_exchange();
 
-        ost << "sent exchange: size = " << se.size() << endl;
-        for (unsigned int n = 0; n < se.size(); ++n)
-          ost<< "  " <<  se[n].first << " = " << se[n].second;
+//        ost << "sent exchange: size = " << se.size() << endl;
+//        for (unsigned int n = 0; n < se.size(); ++n)
+//          ost<< "  " <<  se[n].first << " = " << se[n].second;
 
         win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
 
@@ -3787,7 +3791,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 //        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
         display_statistics(statistics.summary_string(rules));
 
-//        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
@@ -3798,8 +3801,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         update_known_callsign_mults(qso.callsign());
         update_remaining_callsign_mults_window(statistics);
 
-        if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band).size())
-        { update_remaining_country_mults_window(statistics);
+        if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band, cur_mode).size())
+        { update_remaining_country_mults_window(statistics, cur_band, cur_mode);
           update_known_country_mults(qso.callsign());
         }
 
@@ -4543,8 +4546,8 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   win_remaining_callsign_mults < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
 }
 
-void update_remaining_country_mults_window(running_statistics& statistics, const BAND b)
-{ const set<string> worked_country_mults = statistics.worked_country_mults(b);
+void update_remaining_country_mults_window(running_statistics& statistics, const BAND b, const MODE m)
+{ const set<string> worked_country_mults = statistics.worked_country_mults(b, m);
   const set<string> known_country_mults = statistics.known_country_mults();
 
 //  ost << "number of known country mults = " << known_country_mults.size() << endl;
@@ -5008,22 +5011,22 @@ void update_known_country_mults(const string& callsign)
 { if (callsign.empty())
     return;
 
-//  ost << "inside update_known_country_mults for " << callsign << endl;
-//  ost << "initial number of known country mults = " << statistics.n_known_country_mults() << endl;
+  ost << "inside update_known_country_mults for " << callsign << endl;
+  ost << "initial number of known country mults = " << statistics.n_known_country_mults() << endl;
 
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-//    ost << "about to add " << canonical_prefix << endl;
+    ost << "about to add " << canonical_prefix << endl;
 
     if (rules.country_mults() < canonical_prefix)            // don't add if the rules don't recognise it as a country mult
-    { //ost << "prefix is known to rules" << endl;
+    { ost << "prefix is known to rules" << endl;
       statistics.add_known_country_mult(canonical_prefix);
 
-      //ost << "number of known country mults = " << statistics.n_known_country_mults() << endl;
+      ost << "number of known country mults = " << statistics.n_known_country_mults() << endl;
     }
-//    else
-//      ost << "prefix is NOT known to rules; size = " << rules.country_mults().size() << endl;
+    else
+      ost << "prefix is NOT known to rules; size = " << rules.country_mults().size() << endl;
   }
 }
 
@@ -5799,34 +5802,34 @@ const string dump_screen(const string& dump_filename)
 
 // add info to QSO if callsign mults are in use
 void allow_for_callsign_mults(QSO& qso)
-{ ost << "inside allow_for_callsign_mults()" << endl;
+{ //ost << "inside allow_for_callsign_mults()" << endl;
 
   if (callsign_mults_used)
-  { ost << "qso.prefix = " << qso.prefix() << endl;
+  { //ost << "qso.prefix = " << qso.prefix() << endl;
 
     string mult_name;
 
     if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") )  // All Asian
     { qso.prefix(wpx_prefix(qso.callsign()));
-      ost << "added AAPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      //ost << "added AAPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "AAPX";
     }
 
     if ( (rules.callsign_mults() < static_cast<string>("OCPX")) and (location_db.continent(qso.callsign()) == "OC") )  // Oceania
     { qso.prefix(wpx_prefix(qso.callsign()));
-      ost << "added OCPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      //ost << "added OCPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "OCPX";
     }
 
     if ( (rules.callsign_mults() < static_cast<string>("SACPX")) )      // SAC
     { qso.prefix(sac_prefix(qso.callsign()));
-      ost << "added SACPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      //ost << "added SACPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "SACPX";
     }
 
     if (rules.callsign_mults() < static_cast<string>("WPXPX"))
     { qso.prefix(wpx_prefix(qso.callsign()));
-      ost << "added WPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
+      //ost << "added WPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "WPXPX";
     }
 
