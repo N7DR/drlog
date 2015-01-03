@@ -25,14 +25,14 @@
 #include <set>
 #include <string>
 
-extern message_stream    ost;
+extern message_stream    ost;      ///< for debugging and logging
+
+extern pt_mutex multiplier_mutex;
 
 // -----------  multiplier  ----------------
 
 /*!     \class multiplier
         \brief encapsulate necessary stuff for a mult
-
-        Not thread-safe; I don't think that that matters
 */
 
 class multiplier
@@ -42,29 +42,23 @@ protected:
   bool                                                             _per_band;  ///< is this multiplier accumulated per-band?
   bool                                                             _per_mode;  ///< is this multiplier accumulated per-mode?
 
+/* Stored in the _worked array is the precise detail of what has been worked and where.
+   However, "worked" as used as an access verb really means "do I need this mult"? Thus,
+   writes and reads to/from _worked from outside the object are non-trivial.
+*/
   std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
 
   std::set<std::string>                                            _known;     ///< all the (currently) known possible values
   bool                                                             _used;      ///< is this object in use?
-
-/*! \brief  add a worked multiplier
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \param  worked_for_a_mode   reference to array of worked information for a single mode
-    \return whether <i>str</i> was successfully added to the worked multipliers
-
-    Returns false if the value <i>str</i> is not known
-*/
-//  const bool _add_worked(const std::string& str, const int b, std::array< std::set< std::string /* values */>, N_BANDS + 1>& worked_for_a_mode);
 
 public:
 
 /// default constructor
   multiplier(void);
 
-  READ_AND_WRITE(per_band);                       ///< get/set _per_band
-  READ_AND_WRITE(per_mode);                       ///< get/set _per_mode
-  READ_AND_WRITE(used);                           ///< get/set _used
+  READ_AND_WRITE(per_band);                       ///< is this multiplier accumulated per-band?
+  READ_AND_WRITE(per_mode);                       ///< is this multiplier accumulated per-mode?
+  READ_AND_WRITE(used);                           ///< is this object in use?
 
 /*! \brief  add a value to the set of known values
     \param  str value to add
@@ -73,7 +67,7 @@ public:
     Returns false if the value <i>str</i> was already known
 */
   inline const bool add_known(const std::string& str)
-    { return ( _used ? ( (_known.insert(str)).second ) : false ); }
+    { SAFELOCK(multiplier); return ( _used ? ( (_known.insert(str)).second ) : false ); }
 
 /*! \brief  add a container of string values to the set of known values
     \param  k   container of values to add
@@ -83,8 +77,9 @@ public:
   inline const unsigned int add_known(const T& k)
     { unsigned int rv = 0;
 
+      SAFELOCK(multiplier);
+
       if (_used)
-//        for_each(k.cbegin(), k.cend(), [&] (const std::string& str) { if (add_known(str)) rv++; } );
         FOR_ALL(k, [&] (const std::string& str) { if (add_known(str)) rv++; } );
 
       return rv;
@@ -96,7 +91,9 @@ public:
 
 /// remove the value <i>str</i> from the known values (if it is known)
   inline void remove_known(const std::string& str)
-    { if (_used)
+    { SAFELOCK(multiplier);
+
+      if (_used)
         _known.erase(str);
     }
 
@@ -203,7 +200,10 @@ public:
 
 /// Returns whether the value <i>str</i> is a known multiplier
   inline const bool is_known(const std::string& str) const
-    { return (_used ? (_known < str) : false); }
+    { SAFELOCK(multiplier);
+
+      return (_used ? (_known < str) : false);
+    }
 
 /*! \brief      Has a station been worked on a particular band?
     \param  str callsign to test
@@ -229,7 +229,10 @@ public:
 
 /// Number of known mults
   inline const size_t n_known(void) const
-    { return _known.size(); }
+    { SAFELOCK(multiplier);
+
+      return _known.size();
+    }
 
 /*! \brief      All the mults worked on a particular band and mode
     \param  b   band
@@ -243,11 +246,16 @@ public:
 
 /// All the known mults
   inline const std::set<std::string> known(void) const
-    { return _known; }
+    { SAFELOCK(multiplier);
+
+      return _known;
+    }
 
 /// Set all bands and modes to state in which no mults have been worked
   inline void clear(void)
-  { for (auto& ass : _worked)    // this is, I think, clearer than using for_each here
+  { SAFELOCK(multiplier);
+
+    for (auto& ass : _worked)    // this is, I think, clearer than using for_each here
       for (auto& ss : ass)
         ss.clear();
   }
@@ -258,9 +266,6 @@ public:
        & _per_band
        & _per_mode
        & _used
-#if defined(SINGLE_MODE)
-       & _worked
-#endif    // SINGLE_MODE
        & _worked;
   }
 };

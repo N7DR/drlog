@@ -123,7 +123,7 @@ void bandmap_entry::freq(const frequency& f)
   _frequency_str = _freq.display_string();
 }
 
-/*! \brief              Calculate the mult status of all entries
+/*! \brief              Calculate the mult status of this entry
     \param  rules       the rules for this contest
     \param  statistics  the current statistics
 

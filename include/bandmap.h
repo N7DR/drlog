@@ -40,11 +40,11 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
 
 extern const std::string MY_MARKER;                                ///< the string that marks my position in the bandmap
 
-/*! \brief  Printable version of the name of a bandmap_entry source
-    \param  bes source of a bandmap entry
-    \return Printable version of <i>bes</i>
+/*! \brief          Printable version of the name of a bandmap_entry source
+    \param  bes     source of a bandmap entry
+    \return         Printable version of <i>bes</i>
 */
-const std::string to_string(const BANDMAP_ENTRY_SOURCE);
+const std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 
 // -----------   needed_mult_details ----------------
 
@@ -88,6 +88,7 @@ public:
 */
   const bool add(const T& v)
   { _is_needed = true;
+
     return (_values.insert(v)).second;
   }
 
@@ -200,7 +201,7 @@ public:
 */
   const std::vector<std::string> filter(void) const;
 
-/*!  \brief Add a string to, or remove a string from, the filter
+/*!  \brief     Add a string to, or remove a string from, the filter
      \param str string to add or subtract
 
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
@@ -267,7 +268,7 @@ public:
   READ_AND_WRITE(expiration_time);         ///< time at which this entry expires (in seconds since the epoch)
   READ_AND_WRITE(source);                  ///< the source of this entry
 
-  READ_AND_WRITE(is_needed);                    ///< do we need this call?
+  READ_AND_WRITE(is_needed);               ///< do we need this call?
 
 /// was this bandmap_entry generated from the RBN?
   inline const bool is_rbn(void) const
@@ -277,25 +278,24 @@ public:
   inline const bool call_is(const std::string& str) const
     { return (_callsign == str); }
 
+/// does this entry correspond to me?
   inline const bool is_my_marker(void) const
     { return call_is(MY_MARKER); }
 
+/*! \brief              Calculate the mult status of this entry
+    \param  rules       the rules for this contest
+    \param  statistics  the current statistics
+
+    Adjust the mult status in accordance with the passed parameters
+*/
   void calculate_mult_status(contest_rules& rules, running_statistics& statistics);
 
-//  inline const needed_mult_details<pss_type> is_needed_callsign_mult_details(void) const
-//    { return _is_needed_callsign_mult; }
-//  READ(is_needed_callsign_mult_details);
-//  READ(is_needed_callsign_mult);
   inline const decltype(_is_needed_callsign_mult) is_needed_callsign_mult_details(void) const
     { return _is_needed_callsign_mult; }
 
-//  inline const needed_mult_details<std::string> is_needed_country_mult_details(void) const
-//    { return _is_needed_country_mult; }
   inline const decltype(_is_needed_country_mult) is_needed_country_mult_details(void) const
     { return _is_needed_country_mult; }
 
-//  inline const needed_mult_details<pss_type> is_needed_exchange_mult_details(void) const
-//    { return _is_needed_exchange_mult; }
   inline const decltype(_is_needed_exchange_mult) is_needed_exchange_mult_details(void) const
     { return _is_needed_exchange_mult; }
 

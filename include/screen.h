@@ -178,15 +178,15 @@ public:
     _colours_set(false)
   { }
 
-  READ_AND_WRITE(x);
-  READ_AND_WRITE(y);
-  READ_AND_WRITE(w);
-  READ_AND_WRITE(h);
+  READ_AND_WRITE(x);        ///< x location on the screen
+  READ_AND_WRITE(y);        ///< y location on the screen
+  READ_AND_WRITE(w);        ///< width
+  READ_AND_WRITE(h);        ///< height
 
-  READ_AND_WRITE(fg_colour);
-  READ_AND_WRITE(bg_colour);
+  READ_AND_WRITE(fg_colour);       ///< name of foreground colour
+  READ_AND_WRITE(bg_colour);       ///< name of background colour
 
-  READ_AND_WRITE(colours_set);
+  READ_AND_WRITE(colours_set);     ///< have the colours been set explicitly?
 };
 
 

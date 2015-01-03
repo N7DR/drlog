@@ -17,6 +17,8 @@
 
 using namespace std;
 
+pt_mutex multiplier_mutex;
+
 // -----------  multiplier  ----------------
 
 /*!     \class multiplier
@@ -65,7 +67,9 @@ multiplier::multiplier(void) :
     Returns false if the value <i>str</i> is not known
 */
 const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
-{ if ((_used) and is_known(str))                                          // add only known mults
+{ SAFELOCK(multiplier);
+
+  if ((_used) and is_known(str))                                          // add only known mults
   { const int b_nr = static_cast<int>(b);
     const int m_nr = static_cast<int>(m);
 
@@ -125,7 +129,9 @@ const bool multiplier::unconditional_add_worked(const string& str, const BAND b,
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
 void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
-{ if (_used)
+{ SAFELOCK(multiplier);
+
+  if (_used)
   { const int b_nr = static_cast<int>(b);
     const int m_nr = static_cast<int>(m);
 
@@ -180,7 +186,9 @@ const bool multiplier::is_worked(const string& str, const int b) const
     \param  b   band to be tested
 */
 const bool multiplier::is_worked(const std::string& str, const int b, const MODE m) const
-{ if (!_used)
+{ SAFELOCK(multiplier);
+
+  if (!_used)
     return false;
 
   auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : N_MODES) ];
@@ -196,7 +204,9 @@ const bool multiplier::is_worked(const std::string& str, const int b, const MODE
     \return     number of mults worked on band <i>b</i> and mode <i>m</i>
 */
 const size_t multiplier::n_worked(const BAND b, const MODE m) const
-{ if (!_used)
+{ SAFELOCK(multiplier);
+
+  if (!_used)
     return 0;
 
   const int b_nr = static_cast<int>(b);
@@ -208,7 +218,9 @@ const size_t multiplier::n_worked(const BAND b, const MODE m) const
 }
 
 const size_t multiplier::n_worked(const int b) const
-{ if (!_used)
+{ SAFELOCK(multiplier);
+
+  if (!_used)
     return 0;
 
   auto& pb = _worked[ N_MODES ];
@@ -222,7 +234,9 @@ const size_t multiplier::n_worked(const int b) const
     \return     all the mults worked on band <i>b</i> and mode <i>m</i>
 */
 const set<string> multiplier::worked(const int b, const int m) const
-{ if (!_used)
+{ SAFELOCK(multiplier);
+
+  if (!_used)
     return set<string>();
 
   auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ];
@@ -245,7 +259,9 @@ const set<string> multiplier::worked(const int b, const int m) const
 
 /// All the mults worked on a particular band, regardless of mode
 const set<string> multiplier::worked(const int b) const
-{ if (!_used)
+{ SAFELOCK(multiplier);
+
+  if (!_used)
     return set<string>();
 
 //  set<string> rv;
