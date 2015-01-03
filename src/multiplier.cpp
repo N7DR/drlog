@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 87 2014-12-20 18:29:59Z  $
+// $Id: multiplier.cpp 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,38 +17,13 @@
 
 using namespace std;
 
-pt_mutex multiplier_mutex;
+pt_mutex multiplier_mutex;          ///< mutex for all the multiplier objects
 
 // -----------  multiplier  ----------------
 
 /*!     \class multiplier
         \brief encapsulate all the necessary stuff for a mult
 */
-
-/*! \brief  add a worked multiplier
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \param  worked_for_a_mode   reference to array of worked information for a single mode
-    \return whether <i>str</i> was successfully added to the worked multipliers
-
-    Returns false if the value <i>str</i> is not known
-*/
-#if 0
-const bool multiplier::_add_worked(const std::string& str, const int b, std::array< std::set< std::string /* values */>, N_BANDS + 1>& worked_for_a_mode)
-{ if ((_used) and is_known(str))                                          // add only known mults
-  { if (_per_band)
-      return ( (worked_for_a_mode[b].insert(str)).second );
-    else // not per-band; keep track of per-band anyway, in case of single-band entry
-    { const bool rv = (worked_for_a_mode[b].insert(str)).second;
-
-      worked_for_a_mode[N_BANDS].insert(str);
-      return rv;
-    }
-  }
-  else
-    return false;
-}
-#endif
 
 /// default constructor
 multiplier::multiplier(void) :
@@ -58,11 +33,11 @@ multiplier::multiplier(void) :
 {
 }
 
-/*! \brief  add a worked multiplier
+/*! \brief      Add a worked multiplier
     \param  str value that has been worked
     \param  b   band on which <i>str</i> has been worked
     \param  m   mode on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
+    \return     whether <i>str</i> was successfully added to the worked multipliers
 
     Returns false if the value <i>str</i> is not known
 */
@@ -94,24 +69,11 @@ const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
   return false;
 }
 
-/*! \brief  add a worked multiplier, even if it is unknown
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
-
-    Makes <i>str</i> known if it was previously unknown
-*/
-//const bool multiplier::unconditional_add_worked(const std::string& str, const int b)
-//{ add_known(str);
-//
-//  return add_worked(str, b);
-//}
-
-/*! \brief  add a worked multiplier, even if it is unknown
+/*! \brief      Add a worked multiplier, even if it is unknown
     \param  str value that has been worked
     \param  b   band on which <i>str</i> has been worked
     \param  m   mode on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
+    \return     whether <i>str</i> was successfully added to the worked multipliers
 
     Makes <i>str</i> known if it was previously unknown
 */
@@ -121,7 +83,7 @@ const bool multiplier::unconditional_add_worked(const string& str, const BAND b,
   return add_worked(str, b, m);
 }
 
-/*! \brief  remove a worked multiplier
+/*! \brief      Remove a worked multiplier
     \param  str value to be worked
     \param  b   band on which <i>str</i> is to be removed
     \param  m   mode on which <i>str</i> has been worked
@@ -164,23 +126,6 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
   }
 }
 
-/*! \brief      Has a station been worked on a particular band, regardless of mode?
-    \param  str callsign to test
-    \param  b   band to be tested
-*/
-#if 0
-const bool multiplier::is_worked(const string& str, const int b) const
-{ if (!_used)
-    return false;
-
-  auto& pb = _worked[ N_MODES ];
-
-  const set<string>& worked_this_band = pb[ (_per_band ? b : N_BANDS) ];
-
-  return (worked_this_band.find(str) != worked_this_band.cend());
-}
-#endif
-
 /*! \brief      Has a station been worked on a particular band and mode?
     \param  str callsign to test
     \param  b   band to be tested
@@ -191,9 +136,9 @@ const bool multiplier::is_worked(const std::string& str, const int b, const MODE
   if (!_used)
     return false;
 
-  auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : N_MODES) ];
+  auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ];
 
-  const set<string>& worked_this_band = pb[ (_per_band ? b : N_BANDS) ];
+  const set<string>& worked_this_band = pb[ (_per_band ? b : ANY_BAND) ];
 
   return (worked_this_band.find(str) != worked_this_band.cend());
 }

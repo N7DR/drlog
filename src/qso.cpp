@@ -1,4 +1,4 @@
-// $Id: qso.cpp 88 2014-12-27 15:19:42Z  $
+// $Id: qso.cpp 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -207,7 +207,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       if (is_possible_mult and context.auto_remaining_exchange_mults())
         statistics.add_known_exchange_mult(name_upper, value);
 
-      const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band) : false;
+      const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band, _mode) : false;
       const received_field rf { name_upper, value , is_possible_mult, is_mult };
 
 //      ost << "exchange field " << name << " has value " << value << " and is_possible_mult is " << is_possible_mult << " and is_mult is " << is_mult << endl;

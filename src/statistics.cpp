@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 88 2014-12-27 15:19:42Z  $
+// $Id: statistics.cpp 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,8 +62,8 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
 /// default constructor
 running_statistics::running_statistics(void) :
   _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-  _n_dupesbm( { {} } ),
-  _qso_pointsbm( { {} } ),
+  _n_dupes( { {} } ),
+  _qso_points( { {} } ),
   _callsign_mults_used(false),
   _country_mults_used(false),
   _exchange_mults_used(false),
@@ -80,8 +80,8 @@ running_statistics::running_statistics(void) :
 */
 running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules) :
   _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-  _n_dupesbm( { {} } ),
-  _qso_pointsbm( { {} } ),
+  _n_dupes( { {} } ),
+  _qso_points( { {} } ),
   _location_db(country_data, context.country_list()),
   _callsign_mults_used(rules.callsign_mults_used()),
   _country_mults_used(rules.country_mults_used()),
@@ -311,11 +311,11 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   const string& call = qso.callsign();
   const string& canonical_prefix = _location_db.canonical_prefix(call);
 
-  ost << "adding worked country mult: " << canonical_prefix << " on band " << BAND_NAME[band_nr] << " and mode " << MODE_NAME[mo] << endl;
+//  ost << "adding worked country mult: " << canonical_prefix << " on band " << BAND_NAME[band_nr] << " and mode " << MODE_NAME[mo] << endl;
 //  _country_multipliers.add_worked(canonical_prefix, band_nr);
-  bool added = _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
+  /* bool added = */ _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
-  ost << "was added? = " << added << endl;
+//  ost << "was added? = " << added << endl;
 
 // exchange mults
 //  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  // vector so we can keep the correct order
@@ -344,7 +344,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   if (is_dupe)
   { //_n_dupes[band_nr]++;
 
-    auto& pb = _n_dupesbm[mode_nr];
+    auto& pb = _n_dupes[mode_nr];
     pb[band_nr]++;
   }
   else    // not a dupe; add qso points; this may not be a very clean algorithm; I should be able to do better
@@ -372,7 +372,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 //    ost << "final points this qso with " << qso.callsign() << " = " << points_this_qso << endl;
 
 //    _qso_points[band_nr] += points_this_qso;
-    _qso_pointsbm[mode_nr][band_nr] += points_this_qso;
+    _qso_points[mode_nr][band_nr] += points_this_qso;
   }
 }
 
@@ -455,8 +455,8 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
   }
 }
 
-/// do we still need to work a particular exchange mult on a particular band (and any mode)?
-const bool running_statistics::is_needed_exchange_mult(const string& exchange_field_name, const string& exchange_field_value, const BAND b) const
+/// do we still need to work a particular exchange mult on a particular band and mode?
+const bool running_statistics::is_needed_exchange_mult(const string& exchange_field_name, const string& exchange_field_value, const BAND b, const MODE m) const
 { const string mv = MULT_VALUE(exchange_field_name, exchange_field_value);  // the mult value of the received field
 
   SAFELOCK(statistics);
@@ -471,7 +471,7 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
     if (sm.first == exchange_field_name and sm.second.is_known(mv) /* sm.second.is_known(exchange_field_value) */)
     { //ost << "found field name " << sm.first << "; is needed: " << boolalpha << !(sm.second.is_worked(mv, b)) << noboolalpha << endl;;
 //      return !(sm.second.is_worked(exchange_field_value, b));
-      return !(sm.second.is_worked(mv, b, ANY_MODE));
+      return !(sm.second.is_worked(mv, b, m));
     }
   }
 
@@ -479,15 +479,14 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
 }
 
 /// a string list of bands on which a particular exchange mult value is needed
-const std::string running_statistics::exchange_mult_needed(const string& exchange_field_name, const string& exchange_field_value, const contest_rules& rules)
-{ string rv;
-
-  for (const auto& b : rules.permitted_bands())
-    rv += ((is_needed_exchange_mult(exchange_field_name, exchange_field_value, b)) ?  BAND_NAME[static_cast<int>(b)] : "   ");
-   
-  return rv;
-}
-
+//const std::string running_statistics::exchange_mult_needed(const string& exchange_field_name, const string& exchange_field_value, const contest_rules& rules)
+//{ string rv;
+//
+//  for (const auto& b : rules.permitted_bands())
+//    rv += ((is_needed_exchange_mult(exchange_field_name, exchange_field_value, b)) ?  BAND_NAME[static_cast<int>(b)] : "   ");
+//
+//  return rv;
+//}
 
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
 { string rv;
@@ -656,7 +655,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
 
     for (const auto& m : modes)
-    {     const auto& nd = _n_dupesbm[m];
+    {     const auto& nd = _n_dupes[m];
 
 //      for (unsigned int n = 0; n < permitted_bands.size(); ++n)
         for (const auto& b : permitted_bands)
@@ -679,10 +678,8 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 // QSO points
     line = pad_string("Qpoints", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
-
-
     for (const auto& m : modes)
-    {     const auto& qp = _qso_pointsbm[m];
+    { const auto& qp = _qso_points[m];
 
       for (const auto& b : permitted_bands)
 //      for (unsigned int n = 0; n < permitted_bands.size(); ++n)
@@ -784,7 +781,7 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
   SAFELOCK(statistics);
 
   for (const auto& m : score_modes)
-  { const auto& qp = _qso_pointsbm[m];
+  { const auto& qp = _qso_points[m];
 
     for (const auto& b : score_bands)
     { q_points += qp[b];
@@ -908,9 +905,9 @@ void running_statistics::clear_info(void)
 //  _n_qsos.fill(0);
 //  _qso_points.fill(0);
 
-  _n_dupesbm = move(decltype(_n_dupesbm)( { { } } ));
+  _n_dupes = move(decltype(_n_dupes)( { { } } ));
   _n_qsos = move(decltype(_n_qsos)( { { } } ));
-  _qso_pointsbm = move(decltype(_qso_pointsbm)( { { } } ));
+  _qso_points = move(decltype(_qso_points)( { { } } ));
 
   for (auto& callsign_m : _callsign_multipliers)
     callsign_m.second.clear();
@@ -950,7 +947,7 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
 
 // current QSO points
   for (const auto& m : score_modes)
-  { const auto& qp = _qso_pointsbm[m];
+  { const auto& qp = _qso_points[m];
 
     FOR_ALL(score_bands, [&] (const BAND& b) { current_qso_points += qp[static_cast<int>(b)]; } );
   }
@@ -969,7 +966,7 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
     notional_mults++;
 
 // add a notional QSO; first calculate average qso point worth of a qso on the current band and mode
-  const auto& qp = _qso_pointsbm[m];
+  const auto& qp = _qso_points[m];
   const unsigned int& n_qso_points = qp[b];
   const auto& nq = _n_qsos[m];
   const unsigned int& n_qsos = nq[b];

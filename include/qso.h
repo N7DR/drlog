@@ -1,4 +1,4 @@
-// $Id: qso.h 88 2014-12-27 15:19:42Z  $
+// $Id: qso.h 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,8 +24,8 @@
 #include <string>
 #include <utility>
 
-extern bool QSO_DISPLAY_COUNTRY_MULT;
-extern int  QSO_MULT_WIDTH;
+extern bool QSO_DISPLAY_COUNTRY_MULT;   ///< whether country mults are written on the log line
+extern int  QSO_MULT_WIDTH;             ///< width of mult fields on log line
 
 // forward declarations
 class running_statistics;
@@ -74,7 +74,7 @@ protected:
   bool _is_country_mult;            ///< is this QSO a country mult?
   bool _is_prefix_mult;             ///< is this QSO a prefix mult?
   
-/*! \brief          obtain the next name and value from a drlog-format line
+/*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line
     \return         The next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
@@ -85,7 +85,7 @@ protected:
 */
   const std::pair<std::string, std::string> _next_name_value_pair(const std::string& str, size_t& posn);
 
-/*! \brief               obtain the epoch time from a date and time in drlog format
+/*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
     \return              time in seconds since the UNIX epoch
@@ -163,10 +163,10 @@ public:
 /// re-format according to a Cabrillo template
   const std::string cabrillo_format(const std::string& cabrillo_qso_template) const;
   
-/// format for writing to disk
+/// format for writing to disk (in the actual drlog log)
   const std::string verbose_format(void) const;  
 
-/*! \brief              read fields from a line in the disk log
+/*! \brief              Read fields from a line in the disk log
     \param  context     drlog context
     \param  str         string from log file
     \param  rules       rules for this contest
@@ -196,7 +196,7 @@ public:
 /// convert to a string suitable for display in the log window
   const std::string log_line(void);
 
-/// read fields from a log_line
+/// read fields from a log_line as visible in the log window
   void populate_from_log_line(const std::string& str);
 
   template<typename Archive>

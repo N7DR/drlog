@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 87 2014-12-20 18:29:59Z  $
+// $Id: bandmap.cpp 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -121,6 +121,8 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
 void bandmap_entry::freq(const frequency& f)
 { _freq = f;
   _frequency_str = _freq.display_string();
+
+  _mode = putative_mode();
 }
 
 /*! \brief              Calculate the mult status of this entry
@@ -168,10 +170,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     if (!guess.empty())
     { //ost << "is needed exchange mult = " << statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band) << endl;
 
-      if (statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band))
+      if (statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode))
       { //add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
 
-        const bool status = add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+        /* const bool status = */ add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
 
         //ost << "attempt to add returned: " << status << endl;
       }

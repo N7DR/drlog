@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 88 2014-12-27 15:19:42Z  $
+// $Id: exchange.cpp 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,13 +23,13 @@
 using namespace boost;
 using namespace std;
 
-extern contest_rules     rules;
+extern contest_rules     rules;         ///< the rules for this contest
 extern drmaster* drm_p;                 ///< pointer to drmaster database
 extern EFT CALLSIGN_EFT;                ///< exchange field template for a callsign
-extern location_database location_db;
-extern logbook logbk;
+extern location_database location_db;   ///< the (global) location database
+extern logbook logbk;                   ///< the (global) logbook
 
-pt_mutex exchange_field_database_mutex;
+pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
 
 #if !defined(NEW_CONSTRUCTOR)
 exchange_field_template EXCHANGE_FIELD_TEMPLATES;
@@ -38,7 +38,7 @@ exchange_field_template EXCHANGE_FIELD_TEMPLATES;
 // -------------------------  parsed_exchange_field  ---------------------------
 
 /*!     \class parsed_exchange_field
-        \brief Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
+        \brief Encapsulates the name for an exchange field, its value after parsing an exchange, whether it's a mult, and, if so, the value of that mult
 */
 
 /// default constructor
@@ -49,7 +49,7 @@ parsed_exchange_field::parsed_exchange_field(void) :
   _mult_value()
 { }
 
-/*!     \brief      constructor
+/*!     \brief      Constructor
         \param  nm  field name
         \param  v   field value
         \param  b   is this field a mult?
@@ -61,7 +61,7 @@ parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, 
     _mult_value(MULT_VALUE(nm, v))
 { }
 
-/*!     \brief      set the name and corresponding mult value
+/*!     \brief      Set the name and corresponding mult value
         \param  nm  field name
 */
 void parsed_exchange_field::name(const string& nm)
@@ -69,7 +69,7 @@ void parsed_exchange_field::name(const string& nm)
   _mult_value = MULT_VALUE(_name, _value);
 }
 
-/*!     \brief      set the value and corresponding mult value
+/*!     \brief      Set the value and corresponding mult value
         \param  v   new value
 */
 void parsed_exchange_field::value(const string& v)

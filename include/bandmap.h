@@ -1,4 +1,4 @@
-// $Id: bandmap.h 88 2014-12-27 15:19:42Z  $
+// $Id: bandmap.h 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -226,7 +226,7 @@ protected:
   std::string               _canonical_prefix;        ///< canonical prefix corresponding to the call
   std::string               _continent;               ///< continent corresponding to the call
   enum BAND                 _band;                    ///< band
-//  enum MODE                 _mode;                    ///< mode
+  enum MODE                 _mode;                    ///< mode
   time_t                    _time;                    ///< time (in seconds since the epoch) at which the object was created
   enum BANDMAP_ENTRY_SOURCE _source;                  ///< the source of this entry
   time_t                    _expiration_time;         ///< time at which this entry expires (in seconds since the epoch)
@@ -263,6 +263,7 @@ public:
   READ_AND_WRITE(canonical_prefix);        ///< canonical prefix corresponding to the call
   READ_AND_WRITE(continent);               ///< continent corresponding to the call
   READ_AND_WRITE(band);                    ///< band
+  READ_AND_WRITE(mode);                    ///< mode
   READ_AND_WRITE(posters);                 ///< source(s) of posting (if the source is RBN)
   READ_AND_WRITE(time);                    ///< time (in seconds since the epoch) at which the object was created
   READ_AND_WRITE(expiration_time);         ///< time at which this entry expires (in seconds since the epoch)

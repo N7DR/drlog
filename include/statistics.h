@@ -1,4 +1,4 @@
-// $Id: statistics.h 88 2014-12-27 15:19:42Z  $
+// $Id: statistics.h 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,13 +44,33 @@ protected:
   
   location_database                                  _location_db;          ///< database for location-based lookups
 
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_dupesbm;              ///< number of dupes, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _n_qsos;               ///< number of QSOs, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>                  _qso_pointsbm;           ///< number of QSO points, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_dupes;         ///< number of dupes, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_qsos;          ///< number of QSOs, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _qso_points;      ///< number of QSO points, per band and mode
 
   std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
 
-/*! \brief              add a callsign mult name, value and band to those worked
+  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;  ///< callsign multipliers (supports more than one)
+  multiplier                                                        _country_multipliers;   ///< country multipliers
+  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
+
+// these are copied from rules
+  bool          _callsign_mults_used;   ///< are callsign mults used?
+  bool          _country_mults_used;    ///< are country mults used?
+  bool          _exchange_mults_used;   ///< are country mults used?
+
+  bool          _include_qtcs;          ///< do we include QTC information?
+  unsigned int  _qtc_qsos_sent;         ///< total number of QSOs sent in QTCs
+  unsigned int  _qtc_qsos_unsent;       ///< total number of (legal) QSOs available but not yet sent in QTCs
+
+/*! \brief            Generate the summary string for display
+    \param  rules     rules for this contest
+    \param  modes     the set of modes that are to be included in the summary string
+    \return           summary string for modes in <i>modes</i>
+*/
+  const std::string _summary_string(const contest_rules& rules, const std::set<MODE>& modes);
+
+/*! \brief              Add a callsign mult name, value and band to those worked
     \param  mult_name   name of callsign mult
     \param  mult_value  value of callsign mult
     \param  band_nr     band on which callsign mult was worked
@@ -58,31 +78,7 @@ protected:
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
-  void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
-
-  std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;  ///< callsign multipliers (supports more than one)
-  multiplier                                                        _country_multipliers;   ///< country multipliers
-  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
-
-// these are copied from rules
-  bool                            _callsign_mults_used;      ///< are callsign mults used?
-  bool                            _country_mults_used;       ///< are country mults used?
-  bool                            _exchange_mults_used;      ///< are country mults used?
-
-  bool          _include_qtcs;                  ///< do we include QTC information?
-  unsigned int  _qtc_qsos_sent;                 ///< total number of QSOs sent in QTCs
-  unsigned int  _qtc_qsos_unsent;               ///< total number of (legal) QSOs available but not yet sent in QTCs
-
-/*! \brief            generate the summary string for display
-    \param  rules     rules for this contest
-    \param  n_mode    number of the mode for which the summary is to be produced
-    \return           summary string for mode <i>n_mode</i>
-
-    If <i>n_mode</i> = <i>rules.n_modes() + 1</i>, then the returned string is for all modes
-*/
-//  const std::string _summary_string(const contest_rules& rules, const unsigned int n_mode);  // n_mode = rules.n_modes() + 1 => all modes
-
-  const std::string _summary_string(const contest_rules& rules, const std::set<MODE>& modes);
+    void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
 
 public:
 
@@ -199,10 +195,10 @@ public:
   const std::set<std::string> known_exchange_mults(const std::string& name);
 
 /// a string list of bands on which a particular exchange mult value is needed
-  const std::string exchange_mult_needed(const std::string& exchange_field_name, const std::string& exchange_field_value, const contest_rules& rules); 
+//  const std::string exchange_mult_needed(const std::string& exchange_field_name, const std::string& exchange_field_value, const contest_rules& rules);
 
-/// do we still need to work a particular exchange mult on a particular band?
-  const bool is_needed_exchange_mult(const std::string& exchange_field_name, const std::string& exchange_field_value, const BAND b) const;
+/// do we still need to work a particular exchange mult on a particular band and mode?
+  const bool is_needed_exchange_mult(const std::string& exchange_field_name, const std::string& exchange_field_value, const BAND b, const MODE m) const;
 
   const std::array<std::set<std::string>, N_BANDS> worked_exchange_mults(const std::string& exchange_field_name);
 
@@ -268,12 +264,9 @@ public:
          & _exchange_multipliers
          & _exchange_mults_used
          & _location_db
-         & _n_dupesbm
-         & _qso_pointsbm
-//         & _n_dupes
+         & _n_dupes
          & _n_qsos
-//         & _qso_points;
-         ;
+         & _qso_points;
     }
 };
 

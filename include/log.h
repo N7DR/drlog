@@ -1,4 +1,4 @@
-// $Id: log.h 88 2014-12-27 15:19:42Z  $
+// $Id: log.h 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -69,10 +69,11 @@ public:
 /// return the most recent qso
   inline const QSO last_qso(void) const
     { SAFELOCK(_log);
+
       return ( (*this)[size()] );
     }
 
-/*!     \brief      add a QSO to the logbook
+/*!     \brief      Add a QSO to the logbook
         \param  q   QSO to add
 */
   void operator+=(const QSO& q);
@@ -87,6 +88,7 @@ public:
 /// remove most-recent qso
   inline void remove_last_qso(void)
     { SAFELOCK(_log);
+
       *this -= size();    // remember, numbering is wrt 1
     }
 
@@ -107,6 +109,7 @@ public:
 /// has a particular call been worked at all?
   inline const bool qso_b4(const std::string& call) const
     { SAFELOCK(_log);
+
       return (_log.lower_bound(call) != _log.upper_bound(call)); 
     }
     
@@ -146,7 +149,13 @@ public:
 */
   const bool is_dupe(const QSO& qso, const contest_rules& rules) const;
 
-/// would a QSO be a dupe?
+/*!     \brief          Would a QSO be a dupe, according to the rules?
+        \param  call    target call
+        \param  b       target band
+        \param  m       target mode
+        \param  rules   rules for the contest
+        \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
+*/
   const bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
 
 /// return time-ordered container of QSOs

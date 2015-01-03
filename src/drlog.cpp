@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 88 2014-12-27 15:19:42Z  $
+// $Id: drlog.cpp 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -70,11 +70,11 @@ const bool DISPLAY_EXTRACT = true,
            DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;
 
 // some forward declarations; others, that depend on these, occur later
-const string active_window_name(void);
-void add_qso(const QSO& qso);
-void alert(const string& msg);
-void allow_for_callsign_mults(QSO& qso);  // may change qso
-void archive_data(void);
+const string active_window_name(void);      ///< Return the name of the active window in printable form
+void add_qso(const QSO& qso);               ///< Add a QSO into the all the objects that need to know about it
+void alert(const string& msg);              ///< Alert the user
+void allow_for_callsign_mults(QSO& qso);    ///< Add info to QSO if callsign mults are in use; may change qso
+void archive_data(void);                    ///< Send data to the archive file
 
 const string bearing(const string& callsign);
 
@@ -83,11 +83,13 @@ const bool calculate_exchange_mults(QSO& qso,
 const string callsign_mult_value(const string& callsign_mult_name,
                                  const string& callsign);
 void cw_speed(const unsigned int new_speed);
+
 void debug_dump(void);
 void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);
 void display_nearby_callsign(const string& callsign);
 void display_statistics(const string& summary_str);
 const string dump_screen(const string& filename = string());
+
 void enter_cq_mode(void);
 void enter_sap_mode(void);
 void exit_drlog(void);
@@ -182,10 +184,12 @@ void update_remaining_country_mults_window(running_statistics&,
 void update_remaining_exch_mults_window(const string&,
                                         const contest_rules&,
                                         running_statistics&,
-                                        const BAND b = safe_get_band());
+                                        const BAND b = safe_get_band(),
+                                        const MODE m = safe_get_mode());
 void update_remaining_exchange_mults_windows(const contest_rules&,
                                              running_statistics&,
-                                             const BAND b = safe_get_band());
+                                             const BAND b = safe_get_band(),
+                                             const MODE m = safe_get_mode());
 
 string last_call_inserted_with_space;  // probably should be per band
 pt_mutex dupe_check_mutex;
@@ -1053,6 +1057,7 @@ int main(int argc, char** argv)
   }
 
   BAND cur_band = safe_get_band();
+  MODE cur_mode = safe_get_mode();
 
   if (bandmaps.size() > static_cast<int>(cur_band))
   { bandmap& bm = bandmaps[cur_band];         // use map for current band, so column offset is correct
@@ -1062,7 +1067,8 @@ int main(int argc, char** argv)
 
     const vector<string>& original_filter = context.bandmap_filter();
 
-    for_each(original_filter.begin(), original_filter.end(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
+//    for_each(original_filter.begin(), original_filter.end(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
+    FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
     win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
   }
@@ -1169,6 +1175,8 @@ int main(int argc, char** argv)
 
             qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
 
+            ost << "QSO: " << qso << endl;
+
 // callsign mults
             allow_for_callsign_mults(qso);
 
@@ -1236,7 +1244,7 @@ int main(int argc, char** argv)
           octothorpe = 1;
       }
 
-    ost << "CW QSOs [2] = " << statistics.n_qsos(rules, MODE_CW) << endl;
+//    ost << "CW QSOs [2] = " << statistics.n_qsos(rules, MODE_CW) << endl;
 
 // display most recent lines from log
       editable_log.recent_qsos(logbk, true);
@@ -1261,8 +1269,10 @@ int main(int argc, char** argv)
         cur_band = b;
       }
 
+//      MODE cur_mode = safe_get_mode();
+
       update_remaining_callsign_mults_window(statistics, cur_band);
-      update_remaining_country_mults_window(statistics);
+      update_remaining_country_mults_window(statistics, cur_band);
       update_remaining_exchange_mults_windows(rules, statistics);
 
 // QTCs
@@ -4575,10 +4585,8 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   win_remaining_country_mults < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
 }
 
-void update_remaining_exch_mults_window(const string& exch_mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b)
-{ //const vector<string> canonical_exch_values = rules.exch_canonical_values(exch_mult_name);
-
-  const set<string> known_exchange_values_set = statistics.known_exchange_mults(exch_mult_name);
+void update_remaining_exch_mults_window(const string& exch_mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
+{ const set<string> known_exchange_values_set = statistics.known_exchange_mults(exch_mult_name);
   const vector<string> known_exchange_values(known_exchange_values_set.cbegin(), known_exchange_values_set.cend());
   window* wp = win_remaining_exch_mults_p[exch_mult_name];
   window& win = (*wp);
@@ -4587,7 +4595,7 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
   vector<pair<string /* exch value */, int /* colour pair number */ > > vec;
 
    for (const auto& known_value : known_exchange_values)
-   { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b);
+   { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
      const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
 
      vec.push_back( { known_value, colour_pair_number } );
@@ -4596,9 +4604,9 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
    win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
 }
 
-void update_remaining_exchange_mults_windows(const contest_rules& rules, running_statistics& statistics, const BAND b)
-{ for_each(win_remaining_exch_mults_p.begin(), win_remaining_exch_mults_p.end(), [&] (const map<string, window*>::value_type& m)  // Josuttis 2nd ed., p. 338
-    { update_remaining_exch_mults_window(m.first, rules, statistics, b); } );
+void update_remaining_exchange_mults_windows(const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
+{ for_each(win_remaining_exch_mults_p.begin(), win_remaining_exch_mults_p.end(), [&] (const map<string, window*>::value_type& mult)  // Josuttis 2nd ed., p. 338
+    { update_remaining_exch_mults_window(mult.first, rules, statistics, b, m); } );
 }
 
 const string bearing(const string& callsign)
@@ -4760,7 +4768,7 @@ void populate_win_info(const string& callsign)
         line = pad_string(exch_mult_field + " [" + exch_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
         for (const auto& b : permitted_bands)
-          line += pad_string( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b) ? BAND_NAME.at(b) : "-" ), FIELD_WIDTH);
+          line += pad_string( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? BAND_NAME.at(b) : "-" ), FIELD_WIDTH);
 
         win_info < cursor(0, next_y_value-- ) < line;
       }
@@ -5222,7 +5230,7 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 
   const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix(), qso.mode());        // exchange_field = name, is_mult
   const vector<received_field> received_exchange = qso.received_exchange();
-  const BAND b = qso.band();
+//  const BAND b = qso.band();
   vector<received_field> new_received_exchange;
   bool rv = false;
   const bool auto_mults = (context.auto_remaining_exchange_mults());
@@ -5232,7 +5240,7 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
     { if (auto_mults)
         statistics.add_known_exchange_mult(field.name(), field.value());
 
-      const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), b);
+      const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), qso.band(), qso.mode());
 
 // ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 
@@ -5477,8 +5485,8 @@ void swap_rit_xit(void)
   }
 }
 
-/*! \brief  add a QSO into the all the places that need to know about it
-    \param  qso    the QSO to add
+/*! \brief      Add a QSO into the all the objects that need to know about it
+    \param  qso the QSO to add
 */
 void add_qso(const QSO& qso)
 { statistics.add_qso(qso, logbk, rules);    // add it to the running statistics before we add it to the log so we can check for dupes against the current log
@@ -5800,36 +5808,28 @@ const string dump_screen(const string& dump_filename)
   return filename;
 }
 
-// add info to QSO if callsign mults are in use
+/// add info to QSO if callsign mults are in use; may change qso
 void allow_for_callsign_mults(QSO& qso)
-{ //ost << "inside allow_for_callsign_mults()" << endl;
-
-  if (callsign_mults_used)
-  { //ost << "qso.prefix = " << qso.prefix() << endl;
-
-    string mult_name;
+{ if (callsign_mults_used)
+  { string mult_name;
 
     if ( (rules.callsign_mults() < static_cast<string>("AAPX")) and (location_db.continent(qso.callsign()) == "AS") )  // All Asian
     { qso.prefix(wpx_prefix(qso.callsign()));
-      //ost << "added AAPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "AAPX";
     }
 
     if ( (rules.callsign_mults() < static_cast<string>("OCPX")) and (location_db.continent(qso.callsign()) == "OC") )  // Oceania
     { qso.prefix(wpx_prefix(qso.callsign()));
-      //ost << "added OCPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "OCPX";
     }
 
     if ( (rules.callsign_mults() < static_cast<string>("SACPX")) )      // SAC
     { qso.prefix(sac_prefix(qso.callsign()));
-      //ost << "added SACPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "SACPX";
     }
 
     if (rules.callsign_mults() < static_cast<string>("WPXPX"))
     { qso.prefix(wpx_prefix(qso.callsign()));
-      //ost << "added WPX prefix " << qso.prefix() << " to QSO " << qso.callsign() << endl;
       mult_name = "WPXPX";
     }
 
@@ -6208,6 +6208,7 @@ void cw_speed(const unsigned int new_speed)
   }
 }
 
+/// return the name of the active window in printable form
 const string active_window_name(void)
 { string name = "UNKNOWN";
 

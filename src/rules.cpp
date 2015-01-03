@@ -1,4 +1,4 @@
-// $Id: rules.cpp 88 2014-12-27 15:19:42Z  $
+// $Id: rules.cpp 89 2015-01-03 13:59:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -432,9 +432,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (context.country_mults_filter() == "ALL")
     copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
 
-  ost << "context.country_mults_filter() = " << context.country_mults_filter() << endl;
-  ost << "size of rules::_countries after initial copy = " << _countries.size() << endl;
-  ost << "size of rules::_country_mults after initial copy = " << _country_mults.size() << endl;
+//  ost << "context.country_mults_filter() = " << context.country_mults_filter() << endl;
+//  ost << "size of rules::_countries after initial copy = " << _countries.size() << endl;
+//  ost << "size of rules::_country_mults after initial copy = " << _country_mults.size() << endl;
 
   if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
