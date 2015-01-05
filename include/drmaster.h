@@ -38,12 +38,12 @@ class master_dta
 protected:
   std::vector<std::string> _calls;       ///< the calls in the MASTER.DTA file
 
-/*!     \brief  private function to return the call starting at <i>posn</i> in <i>contents</i>
-        \param  contents  contents of a MASTER.DTA file
-        \param  posn      location at which to start returning call
-        \return call that starts at <i>posn</i> in <i>contents</i>
+/*! \brief              Private function to return the call starting at <i>posn</i> in <i>contents</i>
+    \param  contents    contents of a MASTER.DTA file
+    \param  posn        location at which to start returning call
+    \return             call that starts at <i>posn</i> in <i>contents</i>
 
-        <i>posn</i> is updated to point at the start of the next call
+    <i>posn</i> is updated to point at the start of the next call
 */
   const std::string _get_call(const std::string& contents, size_t& posn) const;
 
@@ -81,7 +81,7 @@ protected:
   std::string _section;                                        ///< ARRL section
   std::string _name;                                           ///< operator's name
   std::string _grid;                                           ///< Maidenhead grid locator
-  std::string _itu_zone;                                       ///< ITU zone (because TR treats HQ stations differently)
+  std::string _itu_zone;                                       ///< ITU zone (string because of the way TR treats HQ stations)
   std::string _old_call;                                       ///< operator's old call
   std::string _speed;                                          ///< CW speed
 
@@ -90,8 +90,8 @@ public:
 /// default constructor
   trmaster_line(void);
 
-/*!     \brief          construct from a TRMASTER.ASC line
-        \param  line    line from the TRMASTER.ASC file
+/*! \brief          Construct from a TRMASTER.ASC line
+    \param  line    line from the TRMASTER.ASC file
 */
   explicit trmaster_line(const std::string& line);
 
@@ -101,7 +101,6 @@ public:
 /// convert to a string.
   const std::string to_string(void) const;
 
-// the usual get/set functions
   READ_AND_WRITE(call);                       ///< callsign
   READ_AND_WRITE(check);                      ///< Sweepstakes check
   READ_AND_WRITE(cq_zone);                    ///< CQ zone
@@ -116,13 +115,13 @@ public:
   READ_AND_WRITE(speed);                      ///< CW speed
   READ_AND_WRITE(ten_ten);                    ///< 10-X membership number
 
-/// is the vector of calls empty?
+/// use the emptiness of <i>_call</i> as a proxy for emptiness of the object
   inline const bool empty(void) const
     { return _call.empty(); }
 
-/*!     \brief  set a user parameter
-        \param  n  parameter number (with respect to 1)
-        \param  v  value to which to set the user parameter
+/*! \brief      Set a user parameter
+    \param  n   parameter number (with respect to 1)
+    \param  v   value to which to set the user parameter
 */
   inline void user(const int n, const std::string& v)
     { _user[n - 1] = v; }

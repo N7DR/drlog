@@ -47,10 +47,10 @@ public:
 /// default constructor
   parsed_exchange_field(void);
 
-/*!     \brief      constructor
-        \param  nm  field name
-        \param  v   field value
-        \param  b   is this field a mult?
+/*! \brief      Constructor
+    \param  nm  field name
+    \param  v   field value
+    \param  b   is this field a mult?
 */
   parsed_exchange_field(const std::string& nm, const std::string& v, const bool m);
 
@@ -59,13 +59,13 @@ public:
   READ_AND_WRITE(is_mult);      ///< is this field a mult?
   READ(mult_value);             ///< actual value of the mult (if it is a mult)
 
-/*!     \brief      set the name and corresponding mult value
-        \param  nm  field name
+/*! \brief      Set the name and corresponding mult value
+    \param  nm  field name
 */
   void name(const std::string& nm);
 
-/*!     \brief      set the value and corresponding mult value
-        \param  v   new value
+/*! \brief      Set the value and corresponding mult value
+    \param  v   new value
 */
   void value(const std::string& v);
 };
@@ -114,9 +114,9 @@ protected:
 
 public:
 
-/*!     \brief  constructor
-        \param  callsign    callsign of the station from which the exchange was received
-        \param  rules       rules for the contest
+/*!     \brief                      Constructor
+        \param  callsign            callsign of the station from which the exchange was received
+        \param  rules               rules for the contest
         \param  received_values     the received values, in the order that they were received
 */
   parsed_exchange(const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
@@ -183,7 +183,7 @@ public:
 
 /*! \brief          Return the names and values of matched fields
     \param  rules   rules for this contest
-    \return         returns the actual matched names and values of the exchange fields
+    \return         the actual matched names and values of the exchange fields
 
     Any field names that represent a choice are resolved to the name of the actual matched field in the returned object
 */
@@ -198,7 +198,6 @@ public:
     If there is no fit, then returns the empty string.
 */
     const std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
-
 };
 
 /// ostream << parsed_exchange
@@ -221,10 +220,10 @@ protected:
 
 public:
 
-/*! \brief  Guess the value of an exchange field
-    \param  callsign   callsign for the guess
-    \param  field_name name of the field for the guess
-    \return Guessed value of <i>field_name</i> for <i>callsign</i>
+/*! \brief              Guess the value of an exchange field
+    \param  callsign    callsign for the guess
+    \param  field_name  name of the field for the guess
+    \return             Guessed value of <i>field_name</i> for <i>callsign</i>
 
     Returns empty string if no sensible guess can be made
 */

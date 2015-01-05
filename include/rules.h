@@ -63,9 +63,9 @@ public:
   exchange_field_values(void)
   { }
 
-/*!     \brief      Construct from useful values
-        \param  nm  name of exchange field
-        \param  mss canonical field value, all equivalent values (including canonical value)
+/*! \brief      Construct from useful values
+    \param  nm  name of exchange field
+    \param  mss canonical field value, all equivalent values (including canonical value)
 */
   exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
     _name(nm),
@@ -75,26 +75,26 @@ public:
   READ_AND_WRITE(name);             ///< name of the exchange field
   READ_AND_WRITE(values);           ///< associate legal values with a canonical value
 
-/*!     \brief      Add a canonical value
-        \param  cv  canonical value to add
+/*! \brief      Add a canonical value
+    \param  cv  canonical value to add
 
-        Also adds <i>cv</i> as a possible value
+    Also adds <i>cv</i> as a possible value
 */
   void add_canonical_value(const std::string& cv);
 
-/*!     \brief      Add a possible value
-        \param  cv  canonical value to which <i>v</i> is to be added
-        \param  v   value to be added
+/*! \brief      Add a possible value
+    \param  cv  canonical value to which <i>v</i> is to be added
+    \param  v   value to be added
 
-        Also adds <i>cv</i> as a canonical value if it does not already exist
+    Also adds <i>cv</i> as a canonical value if it does not already exist
 */
   void add_value(const std::string& cv, const std::string& v);
 
-/*!     \brief      Number of possible values for a particular canonical value
-        \param  cv  canonical value
-        \return     number of possible values for the canonical value <i>cv</i>
+/*! \brief      Number of possible values for a particular canonical value
+    \param  cv  canonical value
+    \return     number of possible values for the canonical value <i>cv</i>
 
-        Returns 0 if the canonical value does not exist
+    Returns 0 if the canonical value does not exist
 */
   const size_t n_values(const std::string& cv) const;
 
@@ -102,52 +102,52 @@ public:
   inline const size_t n_canonical_values(void) const
     { return _values.size(); }
 
-/*!     \brief      Get all the canonical values
-        \return     all the canonical values
+/*! \brief      Get all the canonical values
+    \return     all the canonical values
 
-        Returns empty set if there are no canonical values
+    Returns empty set if there are no canonical values
 */
   const std::set<std::string> canonical_values(void) const;
 
-/*!     \brief      Get all the legal values for a single canonical value
-        \param  cv  canonical value
-        \return     all the legal values corresponding to the canonical value <i>cv</i>
+/*! \brief      Get all the legal values for a single canonical value
+    \param  cv  canonical value
+    \return     all the legal values corresponding to the canonical value <i>cv</i>
 
-        Returns empty set if the canonical value does not exist
+    Returns empty set if the canonical value does not exist
 */
   const std::set<std::string> values(const std::string& cv) const;
 
-/*!     \brief      Get all the legal values (for all canonical values)
-        \return     all possible legal values for all canonical values
+/*! \brief      Get all the legal values (for all canonical values)
+    \return     all possible legal values for all canonical values
 
-        Returns empty set if there are no canonical values
+    Returns empty set if there are no canonical values
 */
   const std::set<std::string> all_values(void) const;
 
-/*!     \brief                      Is a string a known canonical value?
-        \param  putative_cv_value   string to test
-        \return                     whether <i>putative_cv_value</i> is a canonical value
+/*! \brief                      Is a string a known canonical value?
+    \param  putative_cv_value   string to test
+    \return                     whether <i>putative_cv_value</i> is a canonical value
 */
   inline const bool canonical_value_present(const std::string& putative_cv_value) const
     { return (_values.find(putative_cv_value) != _values.cend()); }
 
-/*!     \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
-        \param  putative_cv_value   string to test
-        \return                     whether <i>putative_cv_value</i> is a canonical value
+/*! \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
+    \param  putative_cv_value   string to test
+    \return                     whether <i>putative_cv_value</i> is a canonical value
 */
   inline const bool is_legal_canonical_value(const std::string& putative_cv_value) const
     { return canonical_value_present(putative_cv_value); }
 
-/*!     \brief          Is a string a legal value (for any canonical value)
-        \param  value   value to be tested
-        \return         whether <i>value</i> is a legal value of any canonical value
+/*! \brief          Is a string a legal value (for any canonical value)
+    \param  value   value to be tested
+    \return         whether <i>value</i> is a legal value of any canonical value
 */
   const bool is_legal_value(const std::string& value) const;
 
-/*!     \brief                  Is a particular value legal for a given canonical value?
-        \param  cv              canonical value
-        \param  putative_value  value to test
-        \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
+/*! \brief                  Is a particular value legal for a given canonical value?
+    \param  cv              canonical value
+    \param  putative_value  value to test
+    \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
   const bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
 
@@ -176,12 +176,12 @@ protected:
 
 public:
 
-/*!     \brief          Construct from name, multiplier and optional status
-        \param  nm      name of field
-        \param  mult    whether field is a mult
-        \param  opt     whether field is optional
+/*! \brief          Construct from name, multiplier and optional status
+    \param  nm      name of field
+    \param  mult    whether field is a mult
+    \param  opt     whether field is optional
 
-        Also the default constructor
+    Also the default constructor
 */
   exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false);
 
@@ -273,14 +273,18 @@ protected:
 
   std::map<enum MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
 
-// dupe rules
-  bool              _work_if_different_band;     ///< whether it is OK to work the same station on different bands
-  bool              _work_if_different_mode;     ///< whether it is OK to work the same station on different modes
+  bool              _work_if_different_band;     ///< is it OK to work the same station on different bands?
+  bool              _work_if_different_mode;     ///< is it OK to work the same station on different modes?
   
   std::array<std::map<BAND, points_structure>, N_MODES> _points;  ///< points structure for each band and mode
 
   std::map<std::string, unsigned int>  _exchange_present_points;  ///< number of points if a particular exchange field is received
   std::map<std::string, unsigned int>  _exchange_value_points;    ///< number of points if a particular exchange field has a particular value
+
+  std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+  bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
+  bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
+  bool                                _callsign_mults_used;      ///< are callsign mults used?
 
   std::set<std::string>               _countries;                     ///< collection of canonical prefixes for all the valid countries
   std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of country multipliers
@@ -288,11 +292,6 @@ protected:
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
   bool                                _country_mults_used;            ///< are country mults used?
   std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
-
-  std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
-  bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
-  bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
-  bool                                _callsign_mults_used;      ///< are callsign mults used?
 
   std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
   bool                                _exchange_mults_per_band;  ///< are exchange mults counted per-band?
@@ -326,50 +325,51 @@ protected:
   std::set<MODE>                               _score_modes;            ///< modes currently used to calculate score
   std::set<MODE>                               _original_score_modes;   ///< modes that were originally used to calculate score (from the configuration file)
 
-// my information (from context)  &&& TODO
+// my information (from context)
   std::string                                  _my_continent;        ///< my continent
   std::string                                  _my_country;          ///< canonical prefix for my country
   unsigned int                                 _my_cq_zone;          ///< CQ zone
   unsigned int                                 _my_itu_zone;         ///< ITU zone
+  std::string                                  _my_grid;             ///< Maidenhead locator
 
   bool                                         _send_qtcs;           ///< whether to send QTCs
 
-/*!     \brief              Private function used to obtain all the understood values for a particular exchange field
-        \param  field_name  name of the field for which the understood values are required
-        \return             set of all the legal values for the field <i>field_name</i>
+/*! \brief              Private function used to obtain all the understood values for a particular exchange field
+    \param  field_name  name of the field for which the understood values are required
+    \return             set of all the legal values for the field <i>field_name</i>
 
-        Uses the variable <i>_exch_values</i> to obtain the returned value
+    Uses the variable <i>_exch_values</i> to obtain the returned value
 */
   const std::set<std::string> _all_exchange_values(const std::string& field_name) const;
 
-/*!     \brief              Parse all the "exchange [xx] = " lines from context
-        \param  context     drlog context
-        \return             name/mult/optional/choice status for exchange fields
+/*! \brief              Parse all the "exchange [xx] = " lines from context
+    \param  context     drlog context
+    \return             name/mult/optional/choice status for exchange fields
 
-        Puts correct values in _received_exchange
+    Puts correct values in _received_exchange
 */
   void _parse_context_exchange(const drlog_context& context);
 
-/*!     \brief                      Parse exchange line from context
-        \param  exchange_fields     container of fields taken from line in configuration file
-        \param  exchange_mults_vec  container of fields that are mults
-        \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
+/*! \brief                      Parse exchange line from context
+    \param  exchange_fields     container of fields taken from line in configuration file
+    \param  exchange_mults_vec  container of fields that are mults
+    \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
 */
   const std::vector<exchange_field> _inner_parse(const std::vector<std::string>& exchange_fields , const std::vector<std::string>& exchange_mults_vec) const;
 
-/*!     \brief              Parse and incorporate the "QTHX[xx] = " lines from context
-        \param  context     context for this contest
-        \param  location_db location database
+/*! \brief              Parse and incorporate the "QTHX[xx] = " lines from context
+    \param  context     context for this contest
+    \param  location_db location database
 
-        Incorporates the parsed information into _exch
+    Incorporates the parsed information into _exch
 */
   void _parse_context_qthx(const drlog_context& context, location_database& location_db);
 
-/*!     \brief              Initialize an object that was created from the default constructor
-        \param  context     context for this contest
-        \param  location_db location database
+/*! \brief              Initialize an object that was created from the default constructor
+    \param  context     context for this contest
+    \param  location_db location database
 
-        After calling this function, the object is ready for use
+    After calling this function, the object is ready for use
 */
   void _init(const drlog_context& context, location_database& location_db);
 
@@ -378,23 +378,23 @@ public:
 /// default constructor
   contest_rules(void);
 
-/*!     \brief              Construct an object ready for use
-        \param  context     context for this contest
-        \param  location_db location database
+/*! \brief              Construct an object ready for use
+    \param  context     context for this contest
+    \param  location_db location database
 */
   contest_rules(const drlog_context& context, location_database& location_db);
   
-/*!     \brief              prepare for use an object that was created from the default constructor
-        \param  context     context for this contest
-        \param  location_db location database
+/*! \brief              prepare for use an object that was created from the default constructor
+    \param  context     context for this contest
+    \param  location_db location database
 */
   void prepare(const drlog_context& context, location_database& location_db);
 
-/*!     \brief          Add a new permitted mode
-        \param  mode    mode to add
-        \return         whether <i>mode</i> was actually added
+/*! \brief          Add a new permitted mode
+    \param  mode    mode to add
+    \return         whether <i>mode</i> was actually added
 
-        Returns <i>false</i> if <i>mode</i> was already permitted
+    Returns <i>false</i> if <i>mode</i> was already permitted
 */
   inline const bool permitted_mode(const MODE mode) const
     { SAFELOCK(rules); return (_permitted_modes < mode); }
@@ -612,13 +612,11 @@ public:
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(rules);
 
-     ar  & _permitted_modes
-         & _permitted_bands
-//         & _exch
-//         & _expanded_exch
-         & _sent_exchange_names
-         & _exchange_mults
+      ar & _exchange_mults
          & _exchange_mults_used
+         & _permitted_modes
+         & _permitted_bands
+         & _sent_exchange_names
          & _work_if_different_band
          & _points
          & _exchange_present_points
@@ -638,6 +636,7 @@ public:
          & _my_country
          & _my_cq_zone
          & _received_exchange
+         & _my_grid
          & _my_itu_zone;
 //         & _qthx_vector;              // &&& MORE HERE
     }

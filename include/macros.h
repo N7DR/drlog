@@ -21,11 +21,15 @@
 */
 
 #include "bands-modes.h"
+#include "pthread_support.h"
 #include "serialization.h"
 
 #include <algorithm>
 #include <iostream>
+#include <map>
+#include <set>
 #include <tuple>
+#include <unordered_set>
 
 #if (!defined(READ_AND_WRITE))
 
@@ -611,33 +615,26 @@ public:                                                                   \
                                                                           \
 }
 
-#include <set>
-
-/*! \brief  Is an object a member of a set?
+/*! \brief      Is an object a member of a set?
     \param  s   set to be tested
     \param  v   object to be tested for membership
     \return     Whether <i>t</i> is a member of <i>s</i>
-
 */
 template <class T>
 const bool operator<(const std::set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
-#include <unordered_set>
 
-/*! \brief  Is an object a member of an unordered set?
+/*! \brief      Is an object a member of an unordered set?
     \param  s   unordered set to be tested
     \param  v   object to be tested for membership
     \return     Whether <i>t</i> is a member of <i>s</i>
-
 */
 template <class T>
 const bool operator<(const std::unordered_set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
-#include <map>
 
-#include "pthread_support.h"
 
 template <class T>
 const T SAFELOCK_GET(pt_mutex& m, const T& v)

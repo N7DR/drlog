@@ -30,7 +30,7 @@ using namespace std;
 extern location_database location_db;       ///< location database
 extern message_stream ost;                  ///< for debugging, info
 
-/*! \brief          obtain the next name and value from a drlog-format line
+/*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line
     \return         The next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
@@ -80,7 +80,7 @@ const pair<string, string> QSO::_next_name_value_pair(const string& str, size_t&
   return pair<string, string> { name, value };
 }
 
-/*! \brief               obtain the epoch time from a date and time in drlog format
+/*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
     \return              time in seconds since the UNIX epoch
@@ -110,13 +110,13 @@ QSO::QSO(void) :
   _epoch_time(time(NULL))        // now
 { struct tm    structured_time;
 
-  gmtime_r(&_epoch_time, &structured_time);          // convert to UTC
+  gmtime_r(&_epoch_time, &structured_time);     // convert to UTC
   
-  array<char, 26> buf;                           // buffer to hold the ASCII date/time info; see man page for gmtime()
+  array<char, 26> buf;                          // buffer to hold the ASCII date/time info; see man page for gmtime()
   
-  asctime_r(&structured_time, buf.data());                   // convert to ASCII
+  asctime_r(&structured_time, buf.data());      // convert to ASCII
 
-  const string ascii_time(buf.data(), 26);                   // this is a modern language
+  const string ascii_time(buf.data(), 26);
   
   _utc  = ascii_time.substr(11, 8);                                                     // hh:mm:ss
   _date = to_string(structured_time.tm_year + 1900) + "-" +
@@ -124,7 +124,7 @@ QSO::QSO(void) :
           pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');             // yyyy-mm-dd
 }
 
-/*! \brief              read fields from a line in the disk log
+/*! \brief              Read fields from a line in the disk log
     \param  context     drlog context
     \param  str         string from log file
     \param  rules       rules for this contest
@@ -210,31 +210,24 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band, _mode) : false;
       const received_field rf { name_upper, value , is_possible_mult, is_mult };
 
-//      ost << "exchange field " << name << " has value " << value << " and is_possible_mult is " << is_possible_mult << " and is_mult is " << is_mult << endl;
-
       _received_exchange.push_back(rf);
       processed = true;
     }
   }
 
-  const bool qso_is_country_mult = statistics.is_needed_country_mult(_callsign, _band);
-  _is_country_mult = qso_is_country_mult;
-
-//  ost << _callsign << " is_country_mult = " << _is_country_mult << endl;
-
+  _is_country_mult = statistics.is_needed_country_mult(_callsign, _band);
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 
-/// read fields from a log_line
+/*! \brief          Populate from a string (as visible in the log window)
+    \param  str     string from visible log window
+*/
 void QSO::populate_from_log_line(const string& str)
 {
-//  ost << "populate_from_log_line parameter: " << str << endl;
-//  ost << "squashed: " << squash(str, ' ') << endl;
-
 // separate the line into fields
   const vector<string> vec = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
 
-  if (vec.size() != _log_line_fields.size())
+  if (vec.size() != _log_line_fields.size())                        // output debuggig info
   { ost << "populate_from_log_line parameter: " << str << endl;
     ost << "squashed: " << squash(str, ' ') << endl;
 
@@ -289,8 +282,6 @@ void QSO::populate_from_log_line(const string& str)
       processed = true;
     }
 
-//    ost << "sent exchange size = " << _sent_exchange.size() << endl;
-
     if (!processed and (_log_line_fields[n].substr(0, 5) == "sent-"))
     { if (sent_index < _sent_exchange.size())
         _sent_exchange[sent_index++].second = vec[n];
@@ -304,20 +295,12 @@ void QSO::populate_from_log_line(const string& str)
     }
   }
 
-  extern location_database location_db;
-
   _canonical_prefix = location_db.canonical_prefix(_callsign);
   _continent = location_db.continent(_callsign);
-
-//ost << "in populate_from_log_line; about to set _epoch_time for " << _callsign << endl;
-
   _epoch_time = _to_epoch_time(_date, _utc);
-
-//  ost << "_epoch_time = " << _epoch_time << endl;
-//  ost << "in populate_from_log_line; _is_country_mult = " << _is_country_mult << endl;
 }
 
-/// are any of the exchange fields a mult?
+/// is any of the exchange fields a mult?
 const bool QSO::is_exchange_mult(void) const
 { for (const auto& field : _received_exchange)
     if (field.is_mult())

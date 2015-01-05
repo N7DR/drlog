@@ -112,7 +112,7 @@ protected:
   std::string                                  _cluster_server;             ///< hostname or IP of cluster server
   std::string                                  _cluster_username;           ///< username to use on the cluster
   std::string                                  _contest_name;               ///< name of the contest
-  std::vector<std::pair<std::string, std::string>> _country_exceptions;     ///< calls to be placed in non-default country
+  std::vector<std::pair<std::string, std::string>> _country_exceptions;     ///< calls to be placed in non-default country -- DOES NOT SEEM TO BE USED
   enum country_list_type                       _country_list;               ///< DXCC or WAE list?
   std::string                                  _country_mults_filter;       ///< the command from the configuration file
   bool                                         _country_mults_per_band;     ///< are country mults per-band?
@@ -122,7 +122,7 @@ protected:
   std::array<std::string, CQ_MEMORY_MESSAGES + 1>
                                                _cq_memory;                  ///< CQ memories, counted wrt 1
   std::string                                  _cty_filename;               ///< filename of country file (default = "cty.dat")
-  unsigned int                                 _cw_speed;                   ///< Speed in WPM
+  unsigned int                                 _cw_speed;                   ///< speed in WPM
 
   std::string                                  _decimal_point;         ///< character to use as decimal point
   std::vector<std::string>                     _do_not_show;           ///< do not show these calls when spotted (MY CALL is automatically not shown)
@@ -301,23 +301,23 @@ public:
   SAFEREAD(cabrillo_operators, _context);               ///< OPERATORS:
   SAFEREAD(cabrillo_qso_template, _context);            ///< format for Cabrillo QSOs
 
-  SAFEREAD(call_ok_now_message, _context);
-  SAFEREAD(callsign_mults, _context);
-  SAFEREAD(callsign_mults_per_band, _context);
-  SAFEREAD(callsign_mults_per_mode, _context);
-  SAFEREAD(cluster_port, _context);
-  SAFEREAD(cluster_server, _context);
-  SAFEREAD(cluster_username, _context);
-  SAFEREAD(contest_name, _context);
-  SAFEREAD(country_list, _context);
-  SAFEREAD(country_mults_filter, _context);
-  SAFEREAD(country_mults_per_band, _context);
-  SAFEREAD(country_mults_per_mode, _context);
-  SAFEREAD(cq_auto_lock, _context);
-  SAFEREAD(cq_auto_rit, _context);
-  SAFEREAD(cq_memory, _context);
-  SAFEREAD(cty_filename, _context);
-  SAFEREAD(cw_speed, _context);
+  SAFEREAD(call_ok_now_message, _context);              ///< message if call was changed
+  SAFEREAD(callsign_mults, _context);                   ///< mults derived from callsign; e.g., WPXPX
+  SAFEREAD(callsign_mults_per_band, _context);          ///< are callsign mults per-band?
+  SAFEREAD(callsign_mults_per_mode, _context);          ///< are callsign mults per-mode?
+  SAFEREAD(cluster_port, _context);                     ///< port on the cluster server
+  SAFEREAD(cluster_server, _context);                   ///< hostname or IP of cluster server
+  SAFEREAD(cluster_username, _context);                 ///< username to use on the cluster
+  SAFEREAD(contest_name, _context);                     ///< name of the contest
+  SAFEREAD(country_list, _context);                     ///< DXCC or WAE list?
+  SAFEREAD(country_mults_filter, _context);             ///< the command from the configuration file
+  SAFEREAD(country_mults_per_band, _context);           ///< are country mults per-band?
+  SAFEREAD(country_mults_per_mode, _context);           ///< are country mults per-mode?
+  SAFEREAD(cq_auto_lock, _context);                     ///< whether to lock the transmitter in CQ mode
+  SAFEREAD(cq_auto_rit, _context);                      ///< whether to enable RIT in CQ mode
+  SAFEREAD(cq_memory, _context);                        ///< CQ memories, counted wrt 1
+  SAFEREAD(cty_filename, _context);                     ///< filename of country file (default = "cty.dat")
+  SAFEREAD(cw_speed, _context);                         ///< speed in WPM
 
   SAFEREAD(decimal_point, _context);
   SAFEREAD(do_not_show, _context);
@@ -358,6 +358,7 @@ public:
   SAFEREAD(my_call, _context);
   SAFEREAD(my_continent, _context);
   SAFEREAD(my_cq_zone, _context);
+  SAFEREAD(my_grid, _context);
   SAFEREAD(my_ip, _context);
   SAFEREAD(my_itu_zone, _context);
   SAFEREAD(my_latitude, _context);

@@ -49,7 +49,7 @@ const int STRING_UNDERFLOW            = -1,    ///< Underflow
           STRING_CONVERSION_FAILURE   = -8,    ///< Attempt to convert the format of a string failed
           STRING_UNKNOWN_ENCODING     = -9;    ///< Unknown character encoding
 
-/*! \brief convert from a CSV line to a vector of strings, each containing one field
+/*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
     \return         vector of fields from the CSV line
 
@@ -57,19 +57,19 @@ const int STRING_UNDERFLOW            = -1,    ///< Underflow
 */
 const std::vector<std::string> from_csv(const std::string& line);
 
-/* \brief       duplicate a particular character within a string
+/*  \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
 const std::string duplicate_char(const std::string& s, const char& c = '"');
 
-/*! \brief  provide a formatted date/time string
+/*! \brief  Provide a formatted date/time string
     \return current date and time in the format: YYYY-MM-DDTHH:MM
 */
 const std::string date_time_string(void);
 
-/*! \brief  convert struct tm pointer to formatted string
+/*! \brief          Convert struct tm pointer to formatted string
     \param  format  format to be used
     \param  tmp     date/time to be formatted
     \return         formatted string
@@ -78,9 +78,9 @@ const std::string date_time_string(void);
 */
 const std::string format_time(const std::string& format, const tm* tmp);
 
-/*! \brief  generic conversion from string
-    \param  s string
-    \return string converted to type <i>T</i>
+/*! \brief      Generic conversion from string
+    \param  s   string
+    \return     <i>s</i> converted to type <i>T</i>
 */
 template <class T>
 const T from_string(const std::string& s)

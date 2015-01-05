@@ -72,7 +72,31 @@ screen::~screen(void)
         \brief A single ncurses window
 */
 
-/*! \brief          default constructor
+// perform common portion of initialisation
+void window::_init(const window_information& wi, const unsigned int flags)
+{ _x = wi.x();
+  _y = wi.y();
+  _width = wi.w();
+  _height = wi.h();
+  _vertical = false;
+  _column_width = 0;
+  _wp = nullptr;
+  _scrolling = false;
+  _hidden_cursor = (flags & WINDOW_NO_CURSOR);
+  _insert = (flags & WINDOW_INSERT);
+  _pp = nullptr;
+
+  if (_width and _height)
+  { SAFELOCK(screen);
+
+    _wp = newwin(_height, _width, LINES - _y /* - 1 */ - _height, /*COLS - */_x);
+    keypad(_wp, true);
+
+    _pp = new_panel(_wp);
+  }
+}
+
+/*! \brief          Default constructor
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
     The window is not ready for use after this constructor. It still needs to be initialised.
@@ -96,7 +120,7 @@ window::window(const unsigned int flags) :
    default_colours(COLOUR_PAIR(pair_nr));
 }
 
-/*! \brief          create using position and size information from the configuration file
+/*! \brief          Create using position and size information from the configuration file
     \param  wi      window position and size
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
@@ -146,7 +170,10 @@ window::~window(void)
     The window is ready for use after this function has been called.
 */
 void window::init(const window_information& wi, const unsigned int flags)
-{ _x = wi.x();
+{ _init(wi, flags);
+
+#if 0
+  _x = wi.x();
   _y = wi.y();
   _width = wi.w();
   _height = wi.h();
@@ -166,6 +193,7 @@ void window::init(const window_information& wi, const unsigned int flags)
 
     _pp = new_panel(_wp);
   }
+#endif
 
   _fg = string_to_colour(wi.fg_colour());
   _bg = string_to_colour(wi.bg_colour());
@@ -173,9 +201,7 @@ void window::init(const window_information& wi, const unsigned int flags)
   const int pair_nr = colours.add(_fg, _bg);
 
   default_colours(COLOUR_PAIR(pair_nr));
-
-// clear the window (this also correctly sets the background on the screen)
-  (*this) <= WINDOW_CLEAR;
+  (*this) <= WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
 /*! \brief          Initialise using position and size information from the configuration file, and possibly set colours explicitly
@@ -188,7 +214,10 @@ void window::init(const window_information& wi, const unsigned int flags)
     override <i>wi.fg_colour()</i> and <i>wi.bg_colour()</i> iff wi.colours_set() is false.
 */
 void window::init(const window_information& wi, int fg, int bg, const unsigned int flags)
-{ _x = wi.x();
+{ _init(wi, flags);
+
+#if 0
+  _x = wi.x();
   _y = wi.y();
   _width = wi.w();
   _height = wi.h();
@@ -207,6 +236,7 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
     keypad(_wp, true);
     _pp = new_panel(_wp);
   }
+#endif
 
   if (wi.colours_set())
   { _fg = string_to_colour(wi.fg_colour());
@@ -220,9 +250,7 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
   const int pair_nr = colours.add(_fg, _bg);
 
   default_colours(COLOUR_PAIR(pair_nr));
-
-// clear the window (this also correctly sets the background on the screen)
-  (*this) <= WINDOW_CLEAR;
+  (*this) <= WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
 /*! \brief          Move the logical cursor

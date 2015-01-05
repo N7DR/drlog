@@ -196,7 +196,9 @@ public:
 /// convert to a string suitable for display in the log window
   const std::string log_line(void);
 
-/// read fields from a log_line as visible in the log window
+/*! \brief          Populate from a string (as visible in the log window)
+    \param  str     string from visible log window
+*/
   void populate_from_log_line(const std::string& str);
 
   template<typename Archive>

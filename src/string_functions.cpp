@@ -28,7 +28,7 @@ using namespace std;
 
 extern ofstream ost;                   ///< for debugging, info
 
-/*! \brief convert from a CSV line to a vector of strings, each containing one field
+/*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
     \return         vector of fields from the CSV line
 
@@ -103,7 +103,7 @@ const vector<string> from_csv(const string& line)
   return rv;
 }
 
-/* \brief       duplicate a particular character within a string
+/* \brief       Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
@@ -121,7 +121,7 @@ const string duplicate_char(const string& s, const char& c)
   return rv;
 }
 
-/*! \brief              safe version of the substr() member function
+/*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
     \param  start_posn  position at which to start operation
     \param  length      length of substring to be extracted
@@ -138,7 +138,7 @@ const string substring(const string& str, const size_t start_posn, const size_t 
   return string();
 }
 
-/*! \brief              safe version of the substr() member function
+/*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
     \param  start_posn  position at which to start operation
     \return             substring starting at position <i>start_posn</i>
@@ -154,25 +154,25 @@ const string substring(const string& str, const size_t start_posn)
   return string();
 }
 
-/*! \brief  provide a formatted date/time string
+/*! \brief  Provide a formatted date/time string
     \return current date and time in the format: YYYY-MM-DDTHH:MM
 */
 const string date_time_string(void)
-{ const time_t now = time(NULL);             // get the time from the kernel
+{ const time_t now = time(NULL);            // get the time from the kernel
   struct tm    structured_time;
 
-  gmtime_r(&now, &structured_time);          // convert to UTC
+  gmtime_r(&now, &structured_time);         // convert to UTC
 
-  char buf[26];                                // buffer to hold the ASCII date/time info; see man page for gmtime()
+//  char buf[26];                             // buffer to hold the ASCII date/time info; see man page for gmtime()
+  array<char, 26> buf;                           // buffer to hold the ASCII date/time info; see man page for gmtime()
 
-  asctime_r(&structured_time, &buf[0]);                   // convert to ASCII
+  asctime_r(&structured_time, buf.data());                     // convert to ASCII
 
-  const string ascii_time(&buf[0], 26);                   // this is a modern language
-
-  const string _utc  = ascii_time.substr(11, 5);                                                     // hh:mm
+  const string ascii_time(buf.data(), 26);
+  const string _utc  = ascii_time.substr(11, 5);                            // hh:mm
   const string _date = to_string(structured_time.tm_year + 1900) + "-" +
                          pad_string(to_string(structured_time.tm_mon + 1), 2, PAD_LEFT, '0') + "-" +
-                         pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');             // yyyy-mm-dd
+                         pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');              // yyyy-mm-dd
 
   return _date + "T" + _utc;
 }

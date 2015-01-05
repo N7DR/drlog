@@ -37,21 +37,21 @@ extern message_stream ost;              ///< for debugging and logging
         \brief Encapsulates the name and legal values for an exchange field
 */
 
-/*!     \brief      Add a canonical value
-        \param  cv  canonical value to add
+/*! \brief      Add a canonical value
+    \param  cv  canonical value to add
 
-        Also adds <i>cv</i> as a possible value
+    Also adds <i>cv</i> as a possible value
 */
 void exchange_field_values::add_canonical_value(const string& cv)
 { if (_values.find(cv) == _values.end())
     _values.insert( { cv, set<string>( { cv } ) } );
 }
 
-/*!     \brief      Add a possible value
-        \param  cv  canonical value to which <i>v</i> is to be added
-        \param  v   value to be added
+/*! \brief      Add a possible value
+    \param  cv  canonical value to which <i>v</i> is to be added
+    \param  v   value to be added
 
-        Also adds <i>cv</i> as a canonical value if it does not already exist
+    Also adds <i>cv</i> as a canonical value if it does not already exist
 */
 void exchange_field_values::add_value(const string& cv, const string& v)
 { add_canonical_value(cv);
@@ -61,11 +61,11 @@ void exchange_field_values::add_value(const string& cv, const string& v)
   ss.insert(v);
 }
 
-/*!     \brief      Number of possible values for a particular canonical value
-        \param  cv  canonical value
-        \return     number of possible values for the canonical value <i>cv</i>
+/*! \brief      Number of possible values for a particular canonical value
+    \param  cv  canonical value
+    \return     number of possible values for the canonical value <i>cv</i>
 
-        Returns 0 if the canonical value does not exist
+    Returns 0 if the canonical value does not exist
 */
 const size_t exchange_field_values::n_values(const string& cv) const
 { const auto posn = _values.find(cv);
@@ -73,11 +73,11 @@ const size_t exchange_field_values::n_values(const string& cv) const
   return ( (posn == _values.end()) ? 0 : posn->second.size() );
 }
 
-/*!     \brief      Get all the legal values for a single canonical value
-        \param  cv  canonical value
-        \return     all the legal values corresponding to the canonical value <i>cv</i>
+/*! \brief      Get all the legal values for a single canonical value
+    \param  cv  canonical value
+    \return     all the legal values corresponding to the canonical value <i>cv</i>
 
-        Returns empty set if the canonical value does not exist
+    Returns empty set if the canonical value does not exist
 */
 const set<std::string> exchange_field_values::values(const string& cv) const
 { const auto posn = _values.find(cv);
@@ -85,10 +85,10 @@ const set<std::string> exchange_field_values::values(const string& cv) const
   return ( (posn == _values.end()) ? set<string>() : posn->second );
 }
 
-/*!     \brief      Get all the canonical values
-        \return     all the canonical values
+/*! \brief      Get all the canonical values
+    \return     all the canonical values
 
-        Returns empty set if there are no canonical values
+    Returns empty set if there are no canonical values
 */
 const set<string> exchange_field_values::canonical_values(void) const
 { set<string> rv;
@@ -98,10 +98,10 @@ const set<string> exchange_field_values::canonical_values(void) const
   return rv;
 }
 
-/*!     \brief      Get all the legal values (for all canonical values)
-        \return     all possible legal values for all canonical values
+/*! \brief      Get all the legal values (for all canonical values)
+    \return     all possible legal values for all canonical values
 
-        Returns empty set if there are no canonical values
+    Returns empty set if there are no canonical values
 */
 const set<string> exchange_field_values::all_values(void) const
 { set<string> rv;
@@ -112,9 +112,9 @@ const set<string> exchange_field_values::all_values(void) const
   return rv;
 }
 
-/*!     \brief          Is a string a legal value (for any canonical value)
-        \param  value   value to be tested
-        \return         whether <i>value</i> is a legal value of any canonical value
+/*! \brief          Is a string a legal value (for any canonical value)
+    \param  value   value to be tested
+    \return         whether <i>value</i> is a legal value of any canonical value
 */
 const bool exchange_field_values::is_legal_value(const string& value) const
 { for (const auto& cv : canonical_values())  // for each canonical value
@@ -125,10 +125,10 @@ const bool exchange_field_values::is_legal_value(const string& value) const
   return false;
 }
 
-/*!     \brief                  Is a particular value legal for a given canonical value?
-        \param  cv              canonical value
-        \param  putative_value  value to test
-        \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
+/*! \brief                  Is a particular value legal for a given canonical value?
+    \param  cv              canonical value
+    \param  putative_value  value to test
+    \return                 whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
 const bool exchange_field_values::is_legal_value(const string& cv, const string& putative_value) const
 { if (!is_legal_canonical_value(cv))
@@ -146,12 +146,12 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
         \brief Encapsulates the name for an exchange field, and whether it's a mult
 */
 
-/*!     \brief          Construct from name, multiplier and optional status
-        \param  nm      name of field
-        \param  mult    whether field is a mult
-        \param  opt     whether field is optional
+/*! \brief          Construct from name, multiplier and optional status
+    \param  nm      name of field
+    \param  mult    whether field is a mult
+    \param  opt     whether field is optional
 
-        Also the default constructor
+    Also the default constructor
 */
 exchange_field::exchange_field(const string& nm, const bool mult, const bool opt) :
   _name(nm),
@@ -418,6 +418,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _my_continent = context.my_continent();
   _my_country = location_db.canonical_prefix(context.my_call());
   _my_cq_zone = context.my_cq_zone();
+  _my_grid = context.my_grid();
   _my_itu_zone = context.my_itu_zone();
 
 // on which band(s) and mode(s) are we scoring?

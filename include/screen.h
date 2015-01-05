@@ -236,6 +236,9 @@ protected:
 
   WINDOW_PROCESS_INPUT_TYPE _process_input;    ///< function to handle input to this window
 
+// perform common portion of initialisation
+  void _init(const window_information& wi, const unsigned int flags);
+
 /// forbid copying
   window(const window&);  
   

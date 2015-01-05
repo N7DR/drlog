@@ -166,7 +166,7 @@ public:
     \return         Space-separated (actually, multiple spaces) string of band names on which
                     the country corresponding to <i>call</i> is needed.
 */
-  const std::string country_mult_needed(const std::string& call, const contest_rules& rules);
+//  const std::string country_mult_needed(const std::string& call, const contest_rules& rules);
   
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add

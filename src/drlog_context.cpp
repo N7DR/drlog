@@ -322,7 +322,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "CONTEST"))
       _contest_name = RHS;
 
-// COUNTRY EXCEPTION
+// COUNTRY EXCEPTION -- SEEMS NOT TO BE USED
     if (starts_with(testline, "COUNTRY EXCEPTION"))
     { if (testline.length() > 18)
       { string exception_string = testline.substr(18);  // callsign = country

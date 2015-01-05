@@ -24,28 +24,25 @@
 #include <map>
 #include <string>
 
-/// bands that drlog knows about
-enum  BAND  { BAND_160 = 0,
-              BAND_80,
-              BAND_60,
-              BAND_40,
-              BAND_30,
-              BAND_20,
-              BAND_17,
-              BAND_15,
-              BAND_12,
-              BAND_10,
-              ANY_BAND,
-              MIN_BAND = BAND_160,
-              MAX_BAND = BAND_10
-            };
+enum BAND { BAND_160 = 0,
+            BAND_80,
+            BAND_60,
+            BAND_40,
+            BAND_30,
+            BAND_20,
+            BAND_17,
+            BAND_15,
+            BAND_12,
+            BAND_10,
+            ANY_BAND,
+            MIN_BAND = BAND_160,
+            MAX_BAND = BAND_10
+          };                                        ///< bands that drlog knows about
 
-const unsigned int NUMBER_OF_BANDS = MAX_BAND + 1;  ///< how many bands does drlog know about?
-const unsigned int N_BANDS = NUMBER_OF_BANDS;       ///< how many bands does drlog know about?
+const unsigned int NUMBER_OF_BANDS = MAX_BAND + 1;                          ///< how many bands does drlog know about?
+const unsigned int N_BANDS = NUMBER_OF_BANDS;                               ///< how many bands does drlog know about?
+const unsigned int ALL_BANDS = N_BANDS;             // static_cast<unsigned int>(MAX_BAND) + 1;     ///< indicator used to mean "all bands"
 
-const unsigned int ALL_BANDS = static_cast<unsigned int>(MAX_BAND) + 1;  ///< indicator used to mean "all bands"
-
-/// band names
 static std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160",
                                                               "80",
                                                               "60",
@@ -56,9 +53,8 @@ static std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160",
                                                               "15",
                                                               "12",
                                                               "10"
-                                                          } };
+                                                           } };         ///< names of bands
 
-/// generate the band from a name
 static std::map<std::string, BAND> BAND_FROM_NAME { { "160", BAND_160 },
                                                     { "80",  BAND_80 },
                                                     { "60",  BAND_60 },
@@ -69,20 +65,18 @@ static std::map<std::string, BAND> BAND_FROM_NAME { { "160", BAND_160 },
                                                     { "15",  BAND_15 },
                                                     { "12",  BAND_12 },
                                                     { "10",  BAND_10 }
-                                                  };
+                                                  };                    ///< map a band name to a band
 
-/// modes drlog knows about
-enum MODE  { MODE_CW = 0,
-             MODE_SSB,
-             ANY_MODE,
-             MIN_MODE = MODE_CW,
-             MAX_MODE = MODE_SSB
-           };
+enum MODE { MODE_CW = 0,
+            MODE_SSB,
+            ANY_MODE,
+            MIN_MODE = MODE_CW,
+            MAX_MODE = MODE_SSB
+          };                                        ///< modes that drlog knows about
 
 const unsigned int NUMBER_OF_MODES = MAX_MODE + 1;  ///< how many modes does drlog know about?
 const unsigned int N_MODES = NUMBER_OF_MODES;       ///< how many modes does drlog know about?
-
-const unsigned int ALL_MODES = static_cast<unsigned int>(MAX_MODE) + 1;  ///< indicator used to mean "all modes"
+const unsigned int ALL_MODES = N_MODES;          // static_cast<unsigned int>(MAX_MODE) + 1;  ///< indicator used to mean "all modes"
 
 /// mode names
 static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW",

@@ -44,13 +44,11 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
   { SAFELOCK(statistics);
 
     if (known_callsign_mult_name(mult_name))            // do we already know about this mult name?
-    { //auto it = _callsign_multipliers.find(mult_name);
-      //multiplier& mult = it->second;
-      multiplier& mult = (_callsign_multipliers.find(mult_name))->second;
+    { multiplier& mult = (_callsign_multipliers.find(mult_name))->second;
 
       mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));                // add value and band for this mult name
     }
-    else                                                // unknown mult name
+    else                                                   // unknown mult name
     { multiplier mult;                                     // create new mult
 
       mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));                // we've worked it
@@ -111,7 +109,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
   const vector<string>& exchange_mults = rules.exchange_mults();
 
-  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); /* ost << "added _exch_mult_field: " << exchange_mult << endl; */} );
+  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
 
 // callsign mults
   if (_callsign_mults_used)
@@ -157,14 +155,12 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
       if (!canonical_values.empty())
         em.add_known(canonical_values);
 
-//      ost << "statistics: adding exchange multiplier: " << exchange_mult_name << endl;
-
       _exchange_multipliers.push_back( { exchange_mult_name, em } );
     }
   }
 }
 
-/*! \brief                                  is a particular string a known callsign mult name?
+/*! \brief                                  Is a particular string a known callsign mult name?
     \param  putative_callsign_mult_name     string to test
     \return                                 whether <i>putative_callsign_mult_name</i> is a known callsign mult name
 */
@@ -173,29 +169,6 @@ const bool running_statistics::known_callsign_mult_name(const string& putative_c
 
   return ( _callsign_multipliers.find(putative_callsign_mult_name) != _callsign_multipliers.cend() );
 }
-
-/*! \brief              do we still need to work a particular callsign mult on a particular band (and any mode)?
-    \param  mult_name   name of mult
-    \param  mult_value  value of mult to test
-    \param  b           band to test
-    \return             whether the mult <i>mult_name</i> with the value <i>mult_value</i> is needed on band <i>b</i>
-*/
-#if 0
-const bool running_statistics::is_needed_callsign_mult(const string& mult_name, const string& mult_value, const BAND b) const
-{ SAFELOCK(statistics);
-
-  if (!known_callsign_mult_name(mult_name))
-  { ost << "in running_statistics::is_needed_callsign_mult(), unknown callsign mult name = " << mult_name << endl;
-    return false;
-  }
-
-  const auto cit = _callsign_multipliers.find(mult_name);
-  const multiplier& mult = cit->second;
-  const bool worked = mult.is_worked(mult_value, b);
-
-  return !(worked);
-}
-#endif
 
 /*! \brief              Do we still need to work a particular callsign mult on a particular band and mode?
     \param  mult_name   name of mult
@@ -218,9 +191,10 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
   return !(worked);
 }
 
-/*! \brief  do we still need to work a particular country as a mult on a particular band and mode?
+/*! \brief              Do we still need to work a particular country as a mult on a particular band and mode?
     \param  callsign    call to test
     \param  b           band to test
+    \param  m           mode to test
 */
 const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
 { try
@@ -249,21 +223,21 @@ const bool running_statistics::add_known_country_mult(const string& str)
   return (_country_multipliers.add_known(str));
 }
 
-/*! \brief  On what bands is a country mult needed?
+/*! \brief          On what bands is a country mult needed?
     \param  call    call to test
     \param  rules   Rules for the contest
     \return         Space-separated (actually, multiple spaces) string of band names on which
                     the country corresponding to <i>call</i> is needed.
 */
-const string running_statistics::country_mult_needed(const string& call, const contest_rules& rules)
-{ string rv;
-  const vector<BAND> permitted_bands = rules.permitted_bands();
-  
-  for (const auto& b : permitted_bands)
-    rv += ((is_needed_country_mult(call, b)) ?  BAND_NAME[b] : "   ");
-  
-  return rv;
-}
+//const string running_statistics::country_mult_needed(const string& call, const contest_rules& rules)
+//{ string rv;
+//  const vector<BAND> permitted_bands = rules.permitted_bands();
+//
+//  for (const auto& b : permitted_bands)
+//    rv += ((is_needed_country_mult(call, b)) ?  BAND_NAME[b] : "   ");
+//
+//  return rv;
+//}
 
 /*! \brief  Add a QSO to the ongoing statistics
     \param  qso     QSO to add

@@ -76,32 +76,34 @@ void alert(const string& msg);              ///< Alert the user
 void allow_for_callsign_mults(QSO& qso);    ///< Add info to QSO if callsign mults are in use; may change qso
 void archive_data(void);                    ///< Send data to the archive file
 
-const string bearing(const string& callsign);
+const string bearing(const string& callsign);   ///< Return the bearing to a station
 
-const bool calculate_exchange_mults(QSO& qso,
-                                    const contest_rules& rules);
-const string callsign_mult_value(const string& callsign_mult_name,
-                                 const string& callsign);
-void cw_speed(const unsigned int new_speed);
+const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules);                  ///< Populate QSO with correct exchange mults
+const string callsign_mult_value(const string& callsign_mult_name, const string& callsign); ///< Obtain value corresponding to a type of callsign mult from a callsign
+void cw_speed(const unsigned int new_speed);                                                ///< Set speed of computer keyer
 
-void debug_dump(void);
-void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);
-void display_nearby_callsign(const string& callsign);
-void display_statistics(const string& summary_str);
-const string dump_screen(const string& filename = string());
+void debug_dump(void);                                                                      ///< Dump useful information to disk
+void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode); ///< Display band and mode
+void display_nearby_callsign(const string& callsign);                                       ///< Display a callsign in the NEARBY window, in the correct colour
+void display_statistics(const string& summary_str);                                         ///< Display the current statistics
+const string dump_screen(const string& filename = string());                                ///< Dump a screen image to PNG file
 
-void enter_cq_mode(void);
-void enter_sap_mode(void);
-void exit_drlog(void);
-const string expand_cw_message(const string& msg);
-const string hhmmss(void);
+void enter_cq_mode(void);                           ///< Enter CQ mode
+void enter_sap_mode(void);                          ///< Enter SAP mode
+void exit_drlog(void);                              ///< Cleanup and exit
+const string expand_cw_message(const string& msg);  ///< Expand a CW message, replacing special characters
+
+const string hhmmss(void);                          ///< Obtain the current time in HHMMSS format
+
 const string match_callsign(const vector<pair<string /* callsign */,
                                               int /* colour pair number */ > >& matches);
+
 const map<string, string> parse_exchange(const string& received_exchange,
                                          const vector<exchange_field>& tplate);
-const string prefix(const string& callsign);
 void populate_win_info(const string& str);
+const string prefix(const string& callsign);
 void p3_screenshot(void);
+
 void rebuild_history(const logbook& logbk,
                      const contest_rules& rules,
                      running_statistics& statistics,
@@ -111,6 +113,7 @@ void rescore(const contest_rules& rules);
 void restore_data(const string& archive_filename);
 void rit_control(const keyboard_event& e);
 void rig_error_alert(const string& msg);
+
 void send_qtc(const string& destination_callsign);
 const string serial_number_string(const unsigned int n);
 void start_of_thread(void);
@@ -126,6 +129,7 @@ void test_exchange_templates(const string& test_filename);
 #endif
 
 void toggle_drlog_mode(void);
+
 void update_batch_messages_window(const string& callsign = string());
 void update_fuzzy_window(const string& callsign);
 void update_individual_messages_window(const string& callsign = string());
@@ -1423,12 +1427,15 @@ int main(int argc, char** argv)
   }
 }
 
-// functions for displaying particular pieces of information
+/*! \brief          Display band and mode
+    \param  win     window in which to display information
+    \param  b       band
+    \param  m       mode
+*/
 void display_band_mode(window& win, const BAND b, const enum MODE m)
 { static BAND last_band = BAND_20;  // start state
   static MODE last_mode = MODE_CW;
   static bool first_time = true;
-//  static pt_mutex band_mode_mutex;
 
   SAFELOCK(band_mode);
 
@@ -4609,8 +4616,17 @@ void update_remaining_exchange_mults_windows(const contest_rules& rules, running
     { update_remaining_exch_mults_window(mult.first, rules, statistics, b, m); } );
 }
 
+/*! \brief              Return the bearing to a station
+    \param  callsign    target call
+    \return             bearing, in degrees to <i>callsign</i>
+
+    Returned string includes the degree sign
+*/
 const string bearing(const string& callsign)
 { static const string degree("°");
+
+  if (callsign.empty())
+    return string();
 
   const float lat1 = context.my_latitude();
   const float long1 = context.my_longitude();
@@ -4628,9 +4644,7 @@ const string bearing(const string& callsign)
   if (ibearing < 0)
     ibearing += 360;
 
-  const string rv = to_string(ibearing) + degree;
-
-  return rv;
+  return (to_string(ibearing) + degree);
 }
 
 const string sunrise(const string& callsign, const bool calc_sunset)
@@ -4674,8 +4688,6 @@ void populate_win_info(const string& callsign)
 
   const string name_str = location_db.country_name(callsign);            // name of the country
 
-//  ost << "name_str = " << name_str << endl;
-
   if (to_upper(name_str) != "NONE")
   { win_info < cursor(0, win_info.height() - 2) < location_db.canonical_prefix(callsign) < ": "
                                                 < pad_string(bearing(callsign), 5)       < "  "
@@ -4691,27 +4703,12 @@ void populate_win_info(const string& callsign)
     const vector<BAND>& permitted_bands = rules.permitted_bands();
     const set<MODE>& permitted_modes = rules.permitted_modes();
 
-//    if ( (n_modes > 1) and (permitted_modes < MODE_CW))
-//      win_info < cursor(0, next_y_value--) < "CW";
-
-//    cpu = colours.add(bm.recent_colour(), win.bg());
-//    win < cursor(x, y) < colour_pair(cpu);
-
     for (const auto& this_mode : permitted_modes)
     { if (n_modes > 1)
-      { const int original_cp = colours.add(win_info.fg(), win_info.bg());
-        int fg = win_info.fg();
-        int bg = win_info.bg();
-        const int tmp_cp = colours.add(COLOUR_BLACK, COLOUR_GREEN);
-
-        const string strip = create_string(' ', win_info.width());
-
-        win_info < cursor(0, next_y_value--) < colour_pair(tmp_cp) < strip < centre(MODE_NAME[this_mode], next_y_value + 1) < colour_pair(original_cp);
-      }
+        win_info < cursor(0, next_y_value--) < WINDOW_REVERSE < create_centred_string(MODE_NAME[this_mode], win_info.width()) < WINDOW_NORMAL;
 
 // QSOs
       string line = pad_string("QSO", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
-//      const MODE cur_mode = safe_get_mode();
 
       for (const auto& b : permitted_bands)
         line += pad_string( ( q_history.worked(callsign, b, this_mode) ? "-" : BAND_NAME.at(b) ), FIELD_WIDTH);
@@ -4809,15 +4806,15 @@ void populate_win_info(const string& callsign)
   win_info.refresh();
 }
 
-/*!     \brief  Expand a CW message, replacing special characters
-        \param  msg     The original message
-        \return         <i>msg</i> with special characters replaced by their intended values
+/*! \brief          Expand a CW message, replacing special characters
+    \param  msg     The original message
+    \return         <i>msg</i> with special characters replaced by their intended values
 
-        Expands <i>#</i> and <i>@</i> characters.
-        As written, this function is simple but inefficient.
-        # -> octothorpe_str
-        @ -> at_call
-        * -> last_exchange
+    Expands <i>#</i> and <i>@</i> characters.
+    As written, this function is simple but inefficient.
+    # -> octothorpe_str
+    @ -> at_call
+    * -> last_exchange
  */
 const string expand_cw_message(const string& msg)
 { const string octothorpe_str = pad_string(to_string(octothorpe), (octothorpe < 1000 ? 3 : 4), PAD_LEFT, 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
@@ -5153,7 +5150,7 @@ void rescore(const contest_rules& rules)
   }
 }
 
-/*!     \brief  Obtain the current time in HHMMSS format
+/*! \brief  Obtain the current time in HHMMSS format
 */
 const string hhmmss(void)
 { const time_t now = ::time(NULL);           // get the time from the kernel
@@ -5166,10 +5163,10 @@ const string hhmmss(void)
   return (substring(string(buf.data(), 26), 11, 8));
 }
 
-/*!     \brief          Alert the user
-        \param  msg     Message to display
+/*! \brief          Alert the user
+    \param  msg     Message to display
 
-        Also logs the message
+    Also logs the message
 */
 void alert(const string& msg)
 {
@@ -5181,10 +5178,10 @@ void alert(const string& msg)
    ost << "ALERT: " << hhmmss() << " " << msg << endl;
 }
 
-/*!     \brief          Alert the user to a rig-related error
-        \param  msg     Message to display
+/*! \brief          Alert the user to a rig-related error
+    \param  msg     Message to display
 
-        Also logs the message
+    Also logs the message
 */
 void rig_error_alert(const string& msg)
 { ost << "Rig error: " << msg << endl;
@@ -5224,7 +5221,11 @@ void* reset_connection(void* vp)
   pthread_exit(nullptr);
 }
 
-// also returns whether any fields of the QSO are actually mults
+/*! \brief          Populate QSO with correct exchange mults
+    \param  qso     QSO to poulate
+    \param  rules   rules for this contest
+    \return         whether any exchange fields are new mults
+*/
 const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 { // ost << "Inside calculate_exchange_mults()" << endl;
 
@@ -5344,6 +5345,7 @@ void start_of_thread(void)
   n_running_threads++;
 }
 
+/// Cleanup and exit
 void exit_drlog(void)
 { ost << "Inside exit_drlog()" << endl;
 
@@ -5709,11 +5711,11 @@ void* spawn_rbn(void* vp)
   }
 }
 
-/*!     \brief  dump useful information to disk
+/*! \brief  Dump useful information to disk
 
-        Performs a screenshot dump, and then dumps useful information
-        to the debug file.
- */
+    Performs a screenshot dump, and then dumps useful information
+    to the debug file.
+*/
 void debug_dump(void)
 { ost << "*** DEBUG DUMP ***" << endl;
 
@@ -5729,21 +5731,21 @@ void debug_dump(void)
   }
 }
 
-/*!     \brief  dump a screen image to PNG file
-        \param  dump_filename   name of the destination file
-        \return name of the file actually written
+/*! \brief                  Dump a screen image to PNG file
+    \param  dump_filename   name of the destination file
+    \return                 name of the file actually written
 
-        If <i>dump_filename</i> is empty, then a base name is taken
-        from the context, and a string "-<n>" is appended.
- */
+    If <i>dump_filename</i> is empty, then a base name is taken
+    from the context, and a string "-<n>" is appended.
+*/
 const string dump_screen(const string& dump_filename)
-{ ost << "dump_screen called with parameter: " << dump_filename << endl;
+{ //ost << "dump_screen called with parameter: " << dump_filename << endl;
 
   Display* display_p = keyboard.display_p();
   const Window window_id = keyboard.window_id();
   XWindowAttributes win_attr;
 
-  ost << hhmmss() << ": locking display 1" << endl;
+  //ost << hhmmss() << ": locking display 1" << endl;
 
   XLockDisplay(display_p);
   const Status status = XGetWindowAttributes(display_p, window_id, &win_attr);
@@ -5753,18 +5755,18 @@ const string dump_screen(const string& dump_filename)
 
   XUnlockDisplay(display_p);
 
-  ost << hhmmss() << ": unlocked display 2" << endl;
+  //ost << hhmmss() << ": unlocked display 2" << endl;
 
   const int width = win_attr.width;
   const int height = win_attr.height;
 
-  ost << hhmmss() << ": locking display 2" << endl;
+  //ost << hhmmss() << ": locking display 2" << endl;
 
   XLockDisplay(display_p);
   XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
   XUnlockDisplay(display_p);
 
-  ost << hhmmss() << ": unlocked display 2" << endl;
+  //ost << hhmmss() << ": unlocked display 2" << endl;
 
   png::image< png::rgb_pixel > image(width, height);
 
@@ -5783,7 +5785,7 @@ const string dump_screen(const string& dump_filename)
     }
   }
 
-  ost << hhmmss() << ": prepared image" << endl;
+  //ost << hhmmss() << ": prepared image" << endl;
 
   string filename;
 
@@ -5801,7 +5803,7 @@ const string dump_screen(const string& dump_filename)
 
   image.write(filename);
 
-  ost << hhmmss() << ": image file written" << endl;
+  //ost << hhmmss() << ": image file written" << endl;
 
   alert("screenshot file " + filename + " written");
 
@@ -6192,6 +6194,11 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   }
 }
 
+/*! \brief              Set speed of computer keyer
+    \param  new_speed   speed to assign to the keyer
+
+    Also sets key of rig keyer if SYNC KEYER was true in the configuration file
+*/
 void cw_speed(const unsigned int new_speed)
 { if (cw_p)
   { cw_p->speed(new_speed);
@@ -6392,6 +6399,9 @@ void* auto_screenshot(void* vp)
   pthread_exit(nullptr);
 }
 
+/*! \brief                  Display the current statistics
+    \param  summary_str     summary string from the global running_statistics object
+*/
 void display_statistics(const string& summary_str)
 { static const set<string> MODE_STRINGS { "CW", "SSB", "All" };
 
