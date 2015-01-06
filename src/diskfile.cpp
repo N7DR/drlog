@@ -18,6 +18,7 @@
 
 #include <array>
 #include <exception>
+#include <fstream>
 
 #include <dirent.h>
 #include <stdio.h>
@@ -57,7 +58,14 @@ void file_copy(const string& source_filename, const string& destination_filename
 { const unsigned int BUFFER_SIZE = 8192;
 
   if (file_exists(source_filename))
-  { FILE* fps = fopen(source_filename.c_str(), "rb");
+  {
+    ofstream(destination_filename) << ifstream(source_filename).rdbuf();          // perform the copy
+
+
+
+#if 0
+
+    FILE* fps = fopen(source_filename.c_str(), "rb");
     FILE* fpd = fopen(destination_filename.c_str(), "wb");
     array<char, BUFFER_SIZE> pc;
 
@@ -71,14 +79,16 @@ void file_copy(const string& source_filename, const string& destination_filename
 
       const size_t bytes_read = fread(pc.data(), bytes_to_transfer, 1, fps);
 
-      if (bytes_read != bytes_to_transfer)
-        throw exception();
+//      if (bytes_read != bytes_to_transfer)
+//        throw exception();
 
-      fwrite(pc.data(), bytes_to_transfer, 1, fpd);
-      filesize -= bytes_to_transfer;
+      fwrite(pc.data(), bytes_read, 1, fpd);
+      filesize -= bytes_read;
     }
     fclose(fps);
     fclose(fpd);
+#endif
+
   }
 }
 

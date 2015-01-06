@@ -42,9 +42,9 @@ extern exchange_field_database exchange_db;                          ///< dynami
 const string MY_MARKER("--------");             ///< the string that marks my position in the bandmap
 bandmap_filter_type bmf;                        ///< the global bandmap filter
 
-/*! \brief  Printable version of the name of a bandmap_entry source
+/*! \brief      Printable version of the name of a bandmap_entry source
     \param  bes source of a bandmap entry
-    \return Printable version of <i>bes</i>
+    \return     Printable version of <i>bes</i>
 */
 const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
@@ -115,7 +115,7 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _expiration_time(0)
 { }
 
-/*! \brief      Set _freq and _frequency_str
+/*! \brief      Set <i>_freq</i> and <i>_frequency_str</i>
     \param  f   frequency used to set the values
 */
 void bandmap_entry::freq(const frequency& f)
@@ -257,7 +257,7 @@ const string bandmap_entry::posters_string(void) const
   return rv;
 }
 
-/// guess the mode
+/// guess the mode, based on the frequency
 const MODE bandmap_entry::putative_mode(void) const
 { if (source() == BANDMAP_ENTRY_RBN)
     return MODE_CW;
@@ -439,8 +439,8 @@ bandmap::bandmap(void) :
                 |               |
                 '---------------'
  */
-/*!  \brief                     Mark a bandmap_entry as recent
-     \param be                  entry to mark
+/*!  \brief     Mark a bandmap_entry as recent
+     \param be  entry to mark
 
     an entry will be marked as recent if:
         its source is LOCAL or CLUSTER
@@ -478,13 +478,11 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   return false;    // should never get here
 }
 
-/*!  \brief                         Add a bandmap_entry
-     \param be                      entry to add
+/*!  \brief     Add a bandmap_entry
+     \param be  entry to add
 */
 void bandmap::operator+=(const bandmap_entry& be)
-{ //ost << "inside += for " << be.callsign() << "; source = " << be.source() << endl;
-
-  const string& callsign = be.callsign();
+{ const string& callsign = be.callsign();
 
 // do not add if it's already been done recently, or matches several other conditions
   bool add_it = !(_do_not_add < callsign);
@@ -492,24 +490,14 @@ void bandmap::operator+=(const bandmap_entry& be)
   if (add_it)
     add_it = !((be.source() != BANDMAP_ENTRY_LOCAL) and is_recent_call(callsign));
 
-//  ost << "bandmap+=; callsign = " << callsign << " on " << be.frequency_str() << "; add_it = " << boolalpha << add_it << noboolalpha << endl;
-
   if (add_it)
   { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going got mark this as a recent call
-
-//    if (mark_as_recent)
-//      ost << "marked as recent" << endl;
-//    else
-//      ost << "NOT marked as recent" << endl;
+    bandmap_entry old_be;
 
     SAFELOCK(_bandmap);
 
-    bandmap_entry old_be;
-
     if (be.source() == BANDMAP_ENTRY_RBN)
-    { //mark_as_recent = false;  // default for RBN entries, since a threshold may apply
-
-      old_be = (*this)[callsign];
+    { old_be = (*this)[callsign];
 
       if (old_be.valid())
       { if (be.frequency_difference(old_be).hz() > 250)  // if not within 250 Hz
@@ -585,8 +573,6 @@ void bandmap::operator+=(const bandmap_entry& be)
     if ((callsign != MY_MARKER) and mark_as_recent)
       _recent_calls.insert(callsign);
 
-//    _filtered_entries_dirty = true;
-//    _rbn_threshold_and_filtered_entries_dirty = true;
     _dirty_entries();
   }
 }
@@ -601,10 +587,7 @@ void bandmap::prune(void)
   _entries.remove_if([=] (const bandmap_entry& be) { return (be.should_prune(now)); });  // OK for lists
 
   if (_entries.size() != initial_size)
-  { //_filtered_entries_dirty = true;
-    //_rbn_threshold_and_filtered_entries_dirty = true;
     _dirty_entries();
-  }
 
   _recent_calls.clear();                       // empty the container of recent calls
 }
@@ -650,10 +633,7 @@ void bandmap::operator-=(const string& callsign)
   _entries.remove_if([=] (const bandmap_entry& be) { return (be.callsign() == callsign); });        // OK for lists
 
   if (_entries.size() != initial_size)
-  { //_filtered_entries_dirty = true;
-    //_rbn_threshold_and_filtered_entries_dirty = true;
     _dirty_entries();
-  }
 }
 
 /*! \brief              Set the needed status of a call to <i>false</i>
@@ -671,8 +651,6 @@ void bandmap::not_needed(const string& callsign)
     (*this) += be;                   // this will remove the pre-existing entry
   }
 
-//  _filtered_entries_dirty = true;
-//  _rbn_threshold_and_filtered_entries_dirty = true;
   _dirty_entries();
 }
 
@@ -684,11 +662,8 @@ void bandmap::not_needed(const string& callsign)
 void bandmap::not_needed_country_mult(const string& canonical_prefix)
 { SAFELOCK(_bandmap);
 
-//  for_each(_entries.begin(), _entries.end(), [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
   FOR_ALL(_entries, [&canonical_prefix] (decltype(*_entries.begin())& be) { be.remove_country_mult(canonical_prefix); } );
 
-//  _filtered_entries_dirty = true;
-//  _rbn_threshold_and_filtered_entries_dirty = true;
   _dirty_entries();
 }
 

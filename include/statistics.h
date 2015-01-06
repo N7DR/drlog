@@ -118,8 +118,6 @@ public:
 */
   const unsigned int n_qsos(const contest_rules& rules, const MODE m) const;
 
-
-
 /*! \brief              Do we still need to work a particular callsign mult on a particular band and mode?
     \param  mult_name   name of mult
     \param  mult_value  value of mult to test
@@ -159,14 +157,6 @@ public:
 */
   inline const bool is_needed_country_mult(const std::string& callsign, const BAND b)
     { return is_needed_country_mult(callsign, b, ANY_MODE); }
-
-/*! \brief          On what bands is a country mult needed?
-    \param  call    call to test
-    \param  rules   Rules for the contest
-    \return         Space-separated (actually, multiple spaces) string of band names on which
-                    the country corresponding to <i>call</i> is needed.
-*/
-//  const std::string country_mult_needed(const std::string& call, const contest_rules& rules);
   
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add
@@ -194,15 +184,18 @@ public:
 */
   const std::set<std::string> known_exchange_mults(const std::string& name);
 
-/// a string list of bands on which a particular exchange mult value is needed
-//  const std::string exchange_mult_needed(const std::string& exchange_field_name, const std::string& exchange_field_value, const contest_rules& rules);
-
-/// do we still need to work a particular exchange mult on a particular band and mode?
+/*! \brief                          Do we still need to work a particular exchange mult on a particular band and mode?
+    \param  exchange_field_name     name of the target exchange field
+    \param  exchange_field_value    value of the target exchange field
+    \param  b                       target band
+    \param  m                       target mode
+    \return                         Whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
+*/
   const bool is_needed_exchange_mult(const std::string& exchange_field_name, const std::string& exchange_field_value, const BAND b, const MODE m) const;
 
-  const std::array<std::set<std::string>, N_BANDS> worked_exchange_mults(const std::string& exchange_field_name);
+//  const std::array<std::set<std::string>, N_BANDS> worked_exchange_mults(const std::string& exchange_field_name);
 
-  const std::set<std::string> worked_exchange_mults(const std::string& exchange_field_name, const BAND b);
+//  const std::set<std::string> worked_exchange_mults(const std::string& exchange_field_name, const BAND b);
 
 /*! \brief  Add a worked exchange mult
     \param  field_name    Exchange mult field name

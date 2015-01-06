@@ -176,27 +176,27 @@ void drlog_context::_process_configuration_file(const string& filename)
     const string rhs = ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : "");      // the stuff to the right of the "="
     const string RHS = to_upper(rhs);                                                         // converted to upper case
     const bool is_true = (RHS == "TRUE");                                                     // is right hand side == "TRUE"?
-    const string lhs = squash( (fields.empty()) ? "" : remove_peripheral_spaces(fields[0]) );       // the stuff to the left of the "="
+    const string lhs = squash( (fields.empty()) ? "" : remove_peripheral_spaces(fields[0]) ); // the stuff to the left of the "="
     const string LHS = to_upper(lhs);                                                         // converted to upper case
 
 // ARCHIVE
-    if (starts_with(testline, "ARCHIVE") and !rhs.empty())
+    if ( (LHS == "ARCHIVE") and !rhs.empty() )
       _archive_name = rhs;
 
 // AUTO BACKUP
-    if (starts_with(testline, "AUTO BACKUP") and !rhs.empty())
+    if ( (LHS =="AUTO BACKUP") and !rhs.empty() )
       _auto_backup = rhs;
 
 // AUTO SCREENSHOT
-    if (starts_with(testline, "AUTO SCREENSHOT") and !rhs.empty())
+    if ( (LHS == "AUTO SCREENSHOT") and !rhs.empty() )
       _auto_screenshot = is_true;
 
 // BAND MAP DECAY TIME CLUSTER
-    if (starts_with(testline, "BAND MAP DECAY TIME CLUSTER") or starts_with(testline, "BANDMAP DECAY TIME CLUSTER"))
+    if ( ( (LHS == "BAND MAP DECAY TIME CLUSTER") or (LHS == "BANDMAP DECAY TIME CLUSTER") ) and !rhs.empty() )
       _bandmap_decay_time_cluster = from_string<int>(rhs);
 
 // BAND MAP DECAY TIME LOCAL
-    if (starts_with(testline, "BAND MAP DECAY TIME LOCAL") or starts_with(testline, "BANDMAP DECAY TIME LOCAL"))
+    if ( ( (LHS == "BAND MAP DECAY TIME LOCAL") or (LHS == "BANDMAP DECAY TIME LOCAL") ) and !rhs.empty() )
       _bandmap_decay_time_local = from_string<int>(rhs);
 
 // BAND MAP DECAY TIME RBN

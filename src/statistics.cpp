@@ -848,6 +848,7 @@ const map<string /* field name */, set<string> /* values */ >  running_statistic
   return rv;
 }
 
+#if 0
 const set<string> running_statistics::worked_exchange_mults(const string& exchange_field_name, const BAND b)
 { SAFELOCK(statistics);
 
@@ -861,7 +862,9 @@ const set<string> running_statistics::worked_exchange_mults(const string& exchan
 
   return set<string>();
 }
+#endif
 
+#if 0
 const array<set<string>, N_BANDS> running_statistics::worked_exchange_mults(const string& exchange_field_name)
 { array<set<string>, N_BANDS> rv;
 
@@ -870,6 +873,7 @@ const array<set<string>, N_BANDS> running_statistics::worked_exchange_mults(cons
 
   return rv;
 }
+#endif
 
 // clear dynamic info
 void running_statistics::clear_info(void)

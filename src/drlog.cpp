@@ -64,7 +64,7 @@ string VERSION;         ///< version string
 string DP("·");         ///< character for decimal point
 string TS(",");         ///< character for thousands separator
 
-static const set<string> variable_exchange_fields { "SERNO" };  // exchange fields that change
+static const set<string> variable_exchange_fields { "SERNO" };  ///< mutable exchange fields
 
 const bool DISPLAY_EXTRACT = true,
            DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;
@@ -96,23 +96,20 @@ const string expand_cw_message(const string& msg);  ///< Expand a CW message, re
 const string hhmmss(void);                          ///< Obtain the current time in HHMMSS format
 
 const string match_callsign(const vector<pair<string /* callsign */,
-                                              int /* colour pair number */ > >& matches);
+                            int /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
 
-const map<string, string> parse_exchange(const string& received_exchange,
-                                         const vector<exchange_field>& tplate);
-void populate_win_info(const string& str);
-const string prefix(const string& callsign);
-void p3_screenshot(void);
+void populate_win_info(const string& str);      ///< Populate the information window
+void p3_screenshot(void);                       ///< Start a thread to take a snapshot of a P3
 
 void rebuild_history(const logbook& logbk,
                      const contest_rules& rules,
                      running_statistics& statistics,
                      call_history& q_history,
-                     rate_meter& rate);
-void rescore(const contest_rules& rules);
-void restore_data(const string& archive_filename);
-void rit_control(const keyboard_event& e);
-void rig_error_alert(const string& msg);
+                     rate_meter& rate);         ///< Rebuild the history (and statistics and rate), using the logbook
+void rescore(const contest_rules& rules);       ///< Rescore the entire contest
+void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
+void rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
+void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
 
 void send_qtc(const string& destination_callsign);
 const string serial_number_string(const unsigned int n);
@@ -1145,6 +1142,24 @@ int main(int argc, char** argv)
     catch (const pthread_error& e)
     { ost << e.reason() << endl;
       exit(-1);
+    }
+  }
+
+// backup the last-used log, if one exists
+  { string fn = context.logfile();
+    int index = 0;
+
+    ost << "fn is: " << fn << endl;
+
+    while (file_exists(fn + "-" + to_string(index)))
+      index++;
+
+    ost << "index = " << index << endl;
+
+    if (file_exists(fn))
+    { ost << "file " << fn << " exists" << endl;
+      file_copy(fn, fn + "-" + to_string(index));
+      ost << "copied to " << fn + "-" + to_string(index) << endl;
     }
   }
 
@@ -5076,8 +5091,8 @@ void archive_data(void)
   ost << "Archive complete" << endl;
 }
 
-/*!     \brief  Send data to the archive file
-        \param  archive_filename    name of the file that contains the archive
+/*! \brief                      Extract the data from the archive file
+    \param  archive_filename    name of the file that contains the archive
 */
 void restore_data(const string& archive_filename)
 { if (file_exists(archive_filename))
@@ -5127,10 +5142,10 @@ void restore_data(const string& archive_filename)
   }
 }
 
-/*!     \brief  Rescore the entire contest
-        \param  rules    The rules for the contest
+/*! \brief          Rescore the entire contest
+    \param  rules   the rules for the contest
 
-        Recomputes all the history and statistics, based on the logbook
+    Recomputes all the history and statistics, based on the logbook
 */
 void rescore(const contest_rules& rules)
 { statistics.clear_info();
@@ -5179,7 +5194,7 @@ void alert(const string& msg)
 }
 
 /*! \brief          Alert the user to a rig-related error
-    \param  msg     Message to display
+    \param  msg     message to display
 
     Also logs the message
 */
@@ -5258,6 +5273,13 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
   return rv;
 }
 
+/*! \brief              Rebuild the history (and statistics and rate), using the logbook
+    \param  logbk       logbook of QSOs
+    \param  rules       rules for this contest
+    \param  statistics  global statistics
+    \param  q_history   History of QSOs
+    \param  rate        QSO and point rates
+*/
 void rebuild_history(const logbook& logbk, const contest_rules& rules,
                      running_statistics& statistics,
                      call_history& q_history,
@@ -5406,7 +5428,15 @@ void update_fuzzy_window(const string& callsign)
 { update_matches_window(fuzzy_dbs[callsign], fuzzy_matches, win_fuzzy, callsign);
 }
 
-// get best fuzzy or SCP match
+/*! \brief          Get best fuzzy or SCP match
+    \param  matches vector of fuzzy or SCP matches, colour coded
+    \return         best of the matches
+
+    The returned value, if any, is the match that is most likely to be the correct call, according to the algorithm in this routine.
+    This routine is very conservative. Hence, it should almost always return a value with which
+    the operator would agree. In the absence of an obvious candidate for "best match", the
+    empty string is returned.
+*/
 const string match_callsign(const vector<pair<string /* callsign */, int /* colour pair number */ > >& matches)
 { string new_callsign;
 
@@ -5442,7 +5472,11 @@ const bool is_needed_qso(const string& callsign, const BAND b)
   return is_needed;
 }
 
-// RIT changes via hamlib, at least on the K3, are *very* slow
+/*! \brief      Control RIT using the SHIFT keys
+    \param  e   keyboard event to process
+
+    RIT changes via hamlib, at least on the K3, are *very* slow
+*/
 void rit_control(const keyboard_event& e)
 { const int change = (e.symbol() == XK_Shift_L ? -context.shift_delta() : context.shift_delta());
   int poll = context.shift_poll();
@@ -5609,10 +5643,10 @@ void display_call_info(const string& callsign, const bool display_extract)
   }
 }
 
-/*! \brief start a thread to take a snapshot of a P3.
+/*! \brief Start a thread to take a snapshot of a P3.
 
-   Even though we use a separate thread to obtain the actual screenshot, it takes so long to transfer the data to the computer
-   that one should not use this function except when it will be OK for communication with the rig to be interrupted.
+    Even though we use a separate thread to obtain the actual screenshot, it takes so long to transfer the data to the computer
+    that one should not use this function except when it will be OK for communication with the rig to be interrupted.
 */
 void p3_screenshot(void)
 { static pthread_t thread_id_p3_screenshot;
