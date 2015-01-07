@@ -105,27 +105,28 @@ void rebuild_history(const logbook& logbk,
                      const contest_rules& rules,
                      running_statistics& statistics,
                      call_history& q_history,
-                     rate_meter& rate);         ///< Rebuild the history (and statistics and rate), using the logbook
-void rescore(const contest_rules& rules);       ///< Rescore the entire contest
+                     rate_meter& rate);             ///< Rebuild the history (and statistics and rate), using the logbook
+void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
 void rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
 
-void send_qtc(const string& destination_callsign);
-const string serial_number_string(const unsigned int n);
-void start_of_thread(void);
-const string sunrise(const string& callsign,
-                     const bool calc_sunset = false);
-const string sunset(const string& callsign);
-void swap_rit_xit(void);
+//void send_qtc(const string& destination_callsign);
+//const string serial_number_string(const unsigned int n);    ///< Convert a serial number to a string
+void start_of_thread(void);                             ///< Increase the counter for the number of running threads
+//const string sunrise(const string& callsign,
+//                     const bool calc_sunset = false);
+const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
+//const string sunset(const string& callsign);
+void swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
 
-#if defined(NEW_CONSTRUCTOR)
-void test_exchange_templates(const contest_rules&, const string& test_filename);
-#else
-void test_exchange_templates(const string& test_filename);
-#endif
+//#if defined(NEW_CONSTRUCTOR)
+void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
+//#else
+//void test_exchange_templates(const string& test_filename);
+//#endif
 
-void toggle_drlog_mode(void);
+void toggle_drlog_mode(void);   ///< Toggle between CQ mode and SAP mode
 
 void update_batch_messages_window(const string& callsign = string());
 void update_fuzzy_window(const string& callsign);
@@ -136,6 +137,33 @@ void update_local_time(void);
 void update_mult_value(void);
 void update_rate_window(void);
 void update_scp_window(const string& callsign);
+
+// simple inline functions
+
+/*! \brief      Convert a serial number to a string
+    \param  n   serial number
+    \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
+*/
+inline const string serial_number_string(const unsigned int n)
+  { return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) ); }
+
+/*! \brief              Calculate the sunrise time for a station
+    \param  callsign    call of the station for which sunset is desired
+    \return             sunrise in the form HHMM
+
+    Returns "9999" if it's always dark, and "8888" if it's always light
+ */
+inline const string sunrise(const string& callsign)
+  { return sunrise_or_sunset(callsign, false); }
+
+/*! \brief              Calculate the sunset time for a station
+    \param  callsign    call of the station for which sunset is desired
+    \return             sunset in the form HHMM
+
+    Returns "9999" if it's always dark, and "8888" if it's always light
+ */
+inline const string sunset(const string& callsign)
+  { return sunrise_or_sunset(callsign, true); }
 
 // functions for processing input to windows
 void process_CALL_input(window* wp,
@@ -322,8 +350,8 @@ pt_mutex bandmap_mutex;
 cw_messages cwm;
 
 contest_rules rules;
-cw_buffer*                  cw_p  = nullptr;
-drmaster*                  drm_p  = nullptr;
+cw_buffer*       cw_p  = nullptr;
+drmaster*       drm_p  = nullptr;
 dx_cluster* cluster_p = nullptr;
 dx_cluster*     rbn_p = nullptr;
 
@@ -2973,10 +3001,10 @@ ost << "processing command: " << command << endl;
 // SPACE -- generally, dupe check
   if (!processed and (e.is_char(' ')))
   {
-// if we're inside a command, just insert a space in the window
+// if we're inside a command, just insert a space in the window; also if we are writing a comment
     string contents = remove_peripheral_spaces(win.read());
 
-    if (contents.size() > 1 and contents[0] == '.')
+    if ( (contents.size() > 1 and contents[0] == '.') or contains(contents, "\\"))
       win <= " ";
     else        // not inside a command
     {
@@ -4524,7 +4552,7 @@ void enter_sap_mode(void)
   }
 }
 
-/// toggle between CQ mode and SAP mode
+/// Toggle between CQ mode and SAP mode
 void toggle_drlog_mode(void)
 { if (SAFELOCK_GET(drlog_mode_mutex, drlog_mode) == CQ_MODE)
     enter_sap_mode();
@@ -4662,7 +4690,14 @@ const string bearing(const string& callsign)
   return (to_string(ibearing) + degree);
 }
 
-const string sunrise(const string& callsign, const bool calc_sunset)
+/*! \brief              Calculate the sunrise or sunset time for a station
+    \param  callsign    call of the station for which sunrise or sunset is desired
+    \param  calc_sunset whether to calculate sunset
+    \return             sunrise or sunset in the form HHMM
+
+    Returns "9999" if it's always dark, and "8888" if it's always light
+ */
+const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
 { const location_info li = location_db.info(callsign);
   const location_info default_li;
 
@@ -4676,14 +4711,23 @@ const string sunrise(const string& callsign, const bool calc_sunset)
   return rv;
 }
 
-/*! \brief  Calculate the sunset time for a station
-    \param  callsign  call of the station for which sunset is desired
-    \return sunset in the form HHMM
+/*! \brief              Calculate the sunrise time for a station
+    \param  callsign    call of the station for which sunset is desired
+    \return             sunrise in the form HHMM
 
     Returns "9999" if it's always dark, and "8888" if it's always light
  */
-inline const string sunset(const string& callsign)
-  { return sunrise(callsign, true); }
+//const string sunrise(const string& callsign)
+//  { return sunrise_or_sunset(callsign, false); }
+
+/*! \brief              Calculate the sunset time for a station
+    \param  callsign    call of the station for which sunset is desired
+    \return             sunset in the form HHMM
+
+    Returns "9999" if it's always dark, and "8888" if it's always light
+ */
+//inline const string sunset(const string& callsign)
+//  { return sunrise_or_sunset(callsign, true); }
 
 /*! \brief  Populate the information window
     \param  full or partial call
@@ -5361,6 +5405,7 @@ void update_local_time(void)
   }
 }
 
+/// Increase the counter for the number of running threads
 void start_of_thread(void)
 { SAFELOCK(thread_check);
 
@@ -5412,13 +5457,13 @@ void exit_drlog(void)
   exit(0);
 }
 
-/*! \brief  convert a serial number to a string
-    \param  n  serial number
-    \return <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
+/*! \brief      Convert a serial number to a string
+    \param  n   serial number
+    \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
 */
-const string serial_number_string(const unsigned int n)
-{ return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) );
-}
+//const string serial_number_string(const unsigned int n)
+//{ return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) );
+//}
 
 void update_scp_window(const string& callsign)
 { update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign);
@@ -6293,6 +6338,12 @@ void display_nearby_callsign(const string& callsign)
 }
 
 #if defined(NEW_CONSTRUCTOR)
+/*! \brief                  Debug exchange templates
+    \param  rules           rules for the contest
+    \param  test_filename   name of file to test
+
+    Prints out which lines in <i>test_filename</i> match the exchange templates defined by <i>rules</i>
+*/
 void test_exchange_templates(const contest_rules& rules, const string& test_filename)
 { ost << "executing -test-exchanges" << endl;
 

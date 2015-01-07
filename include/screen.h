@@ -209,7 +209,7 @@ protected:
   bool    _leaveok;            ///< whether leaveok is set
 
   bool    _echoing;            ///< whether echoing characters
-  bool    _vertical;           ///< containers of strings are to be displayed vertically
+  bool    _vertical;           ///< whether containers of strings are to be displayed vertically
   unsigned int _column_width;  ///< width of columns
 
   int     _y;                  ///< y of origin (in proper coordinates)
@@ -232,8 +232,6 @@ protected:
   int    _fg;                  ///< foreground colour
   int    _bg;                  ///< background colour
 
-//  std::string _input_buffer;   ///< a place to put characters that have been input to the window
-
   WINDOW_PROCESS_INPUT_TYPE _process_input;    ///< function to handle input to this window
 
 // perform common portion of initialisation
@@ -253,17 +251,14 @@ protected:
     
 public:
 
-/*! \brief  default constructor
+/*! \brief          Default constructor
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
     The window is not ready for use after this constructor. It still needs to be initialised.
 */
   window(const unsigned int flags = 0);
-  
-/// create from an x, y, w, h array
-//  window(const std::array<int, 4>& xywh, const unsigned int flags = 0);
 
-/*! \brief          create using position and size information from the configuration file
+/*! \brief          Create using position and size information from the configuration file
     \param  wi      window position and size
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
@@ -301,9 +296,9 @@ public:
 // RW access
   READ_AND_WRITE(bg);               ///< background colour
   READ_AND_WRITE(column_width);     ///< width of columns
-  READ_AND_WRITE(fg);
-  READ_AND_WRITE(insert);
-  READ_AND_WRITE(vertical);
+  READ_AND_WRITE(fg);               ///< foreground colour
+  READ_AND_WRITE(insert);           ///< whether in insert mode
+  READ_AND_WRITE(vertical);         ///< whether containers of strings are to be displayed vertically
   
   inline WINDOW* wp(void)
     { return _wp; }

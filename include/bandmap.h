@@ -66,7 +66,7 @@ public:
     _is_needed(false)
   { }
 
-/*! \brief  constructor from a needed value
+/*! \brief      Constructor from a needed value
     \param  v   needed value
 */
   needed_mult_details(const T& v) :
@@ -82,7 +82,7 @@ public:
   inline const std::set<T> values(void) const
     { return _values; }
 
-/*! \brief      add a needed value
+/*! \brief      Add a needed value
     \param  v   needed value
     \return     whether <i>v</i> was actually inserted
 */
@@ -92,7 +92,7 @@ public:
     return (_values.insert(v)).second;
   }
 
-/*! \brief      is a particular value needed?
+/*! \brief      Is a particular value needed?
     \param  v   value to test
     \return     whether <i>v</i> is needed
 */
@@ -103,7 +103,7 @@ public:
     return (_values.find(v) == _values.cend());
   }
 
-/*! \brief      remove a needed value
+/*! \brief      Remove a needed value
     \param  v   value to remove
     \return     whether <i>v</i> was actually removed
 
@@ -291,18 +291,23 @@ public:
 */
   void calculate_mult_status(contest_rules& rules, running_statistics& statistics);
 
+/// return the details of any callsign mults
   inline const decltype(_is_needed_callsign_mult) is_needed_callsign_mult_details(void) const
     { return _is_needed_callsign_mult; }
 
+/// return the details of a country mults
   inline const decltype(_is_needed_country_mult) is_needed_country_mult_details(void) const
     { return _is_needed_country_mult; }
 
+/// return the details of any exchange mults
   inline const decltype(_is_needed_exchange_mult) is_needed_exchange_mult_details(void) const
     { return _is_needed_exchange_mult; }
 
+/// is this a needed callsign mult?
   inline const bool is_needed_callsign_mult(void) const
     { return _is_needed_callsign_mult.is_any_value_needed(); }
 
+/// is this a needed country mult?
   inline const bool is_needed_country_mult(void) const
     { return _is_needed_country_mult.is_any_value_needed(); }
 
