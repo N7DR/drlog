@@ -1,4 +1,4 @@
-// $Id: functions.h 88 2014-12-27 15:19:42Z  $
+// $Id: functions.h 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -40,6 +40,8 @@ const float bearing(const float& lat1, const float& long1, const float& lat2, co
 */
 const float distance(const float& lat1, const float& long1, const float& lat2, const float& long2);
 
+const std::string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset);
+
 /*! \brief              Calculate the time of sunrise or sunset
     \param  lat         latitude of target, in degrees (+ve north)
     \param  long        longitude of target, in degrees (+ve east)
@@ -49,7 +51,8 @@ const float distance(const float& lat1, const float& long1, const float& lat2, c
     Default is to calculate sunrise if <i>calc_sunset</i> is absent.
     See http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
 */
-const std::string sunrise(const float& lat, const float& lon, const bool calc_sunset = false);
+inline const std::string sunrise(const float& lat, const float& lon)
+  { return sunrise_or_sunset(lat, lon, false); }
 
 /*! \brief          Calculate the time of sunset
     \param  lat     latitude of target, in degrees (+ve north)
@@ -57,6 +60,7 @@ const std::string sunrise(const float& lat, const float& lon, const bool calc_su
     \return         sunset in the form HH:MM
 */
 inline const std::string sunset(const float& lat, const float& lon)
-  { return sunrise(lat, lon, true); }
+  { return sunrise_or_sunset(lat, lon, true); }
+
 
 #endif /* FUNCTIONS_H_ */

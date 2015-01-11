@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 89 2015-01-03 13:59:15Z  $
+// $Id: bandmap.cpp 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -121,6 +121,7 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
 void bandmap_entry::freq(const frequency& f)
 { _freq = f;
   _frequency_str = _freq.display_string();
+  _band = to_BAND(f);
 
   _mode = putative_mode();
 }
@@ -262,7 +263,14 @@ const MODE bandmap_entry::putative_mode(void) const
 { if (source() == BANDMAP_ENTRY_RBN)
     return MODE_CW;
 
-  return ( (_freq < MODE_BREAK_POINT.at(band()) ) ? MODE_CW : MODE_SSB);
+  try
+  { return ( (_freq < MODE_BREAK_POINT.at(band()) ) ? MODE_CW : MODE_SSB);
+  }
+
+  catch (...)
+  { ost << "ERROR in putative_mode(); band = " << band() << endl;
+    return MODE_CW;
+  }
 }
 
 /// ostream << bandmap_entry

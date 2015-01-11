@@ -1,4 +1,4 @@
-// $Id: diskfile.cpp 56 2014-03-29 19:12:12Z  $
+// $Id: diskfile.cpp 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

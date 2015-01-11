@@ -1,4 +1,4 @@
-// $Id: qso.h 89 2015-01-03 13:59:15Z  $
+// $Id: qso.h 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,19 +44,18 @@ class QSO
 {
 protected:
   
-  unsigned int _number;            ///< qso number
-  std::string  _date;              ///< yyyy-mm-dd
-  std::string  _utc;               ///< hh:mm:ss
   std::string  _callsign;          ///< call
-  enum MODE    _mode;              ///< mode
   enum BAND    _band;              ///< band
+  std::string  _date;              ///< yyyy-mm-dd
+  enum MODE    _mode;              ///< mode
+  unsigned int _number;            ///< qso number
+  std::string  _utc;               ///< hh:mm:ss
+
   std::string  _frequency;         ///< frequency in form xxxxx.y (kHz)
   std::string  _comment;           ///< comment to be carried with QSO
   std::string  _canonical_prefix;  ///< NOT automatically set when callsign is set
   std::string  _continent;         ///< NOT automatically set when callsign is set
-  
   time_t       _epoch_time;        ///< time in seconds since the UNIX epoch
-
   std::string  _my_call;           ///< my call
 
 // contest-specific
@@ -101,11 +100,11 @@ public:
   virtual ~QSO(void)
     { }
 
-  READ_AND_WRITE(number);            ///< qso number
-  READ_AND_WRITE(callsign);          ///< call
-  READ_AND_WRITE(mode);              ///< mode
   READ_AND_WRITE(band);              ///< band
+  READ_AND_WRITE(callsign);          ///< call
   READ_AND_WRITE(date);              ///< yyyy-mm-dd
+  READ_AND_WRITE(mode);              ///< mode
+  READ_AND_WRITE(number);            ///< qso number
   READ_AND_WRITE(utc);               ///< hh:mm:ss
 
 /// get frequency as a string
@@ -160,7 +159,12 @@ public:
   inline const bool earlier_than(const QSO& qso) const
     { return (_epoch_time < qso.epoch_time()); }
     
-/// re-format according to a Cabrillo template
+/*! \brief                          Re-format according to a Cabrillo template
+    \param  cabrillo_qso_template   template for the QSO: line in a Cabrillo file, from configuration file
+
+    Example template:
+      CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
+*/
   const std::string cabrillo_format(const std::string& cabrillo_qso_template) const;
   
 /// format for writing to disk (in the actual drlog log)
@@ -177,7 +181,13 @@ public:
 */
   void populate_from_verbose_format(const drlog_context& context, const std::string& str, const contest_rules& rules, running_statistics& statistics);
 
-/// does the QSO match an expression for a received exchange field?
+/*! \brief                  Does the QSO match an expression for a received exchange field?
+    \param  rule_to_match   boolean rule to attempt to match
+    \return                 whether the exchange in the QSO matches <i>rule_to_match</i>
+
+    <i>rule_to_match is from the configuration file, and looks like:
+      [IOTA != -----]
+*/
   const bool exchange_match(const std::string& rule_to_match) const;
 
 /// return a single field from the received exchange
@@ -203,11 +213,12 @@ public:
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-    { ar & _number
+    { ar & _callsign
          & _date
-         & _utc
-         & _callsign
          & _mode
+         & _number
+         & _utc
+
          & _band
          & _frequency
          & _comment

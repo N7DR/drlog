@@ -1,4 +1,4 @@
-// $Id: string_functions.h 89 2015-01-03 13:59:15Z  $
+// $Id: string_functions.h 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,9 +91,9 @@ const T from_string(const std::string& s)
   return t;
 }
 
-/*! \brief  generic conversion to string
-  \param  val value to convert
-  \return string  <i>val</i>converted to a string
+/*! \brief      Generic conversion to string
+    \param  val value to convert
+    \return     <i>val</i>converted to a string
 */
 template <class T>
 const std::string to_string(const T val)
@@ -103,7 +103,7 @@ const std::string to_string(const T val)
   return stream.str();
 }
 
-/*! \brief              safe version of the substr() member function
+/*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
     \param  start_posn  position at which to start operation
     \param  length      length of substring to be extracted
@@ -113,7 +113,7 @@ const std::string to_string(const T val)
 */
 const std::string substring(const std::string& str, const size_t start_posn, const size_t length);
 
-/*! \brief              safe version of the substr() member function
+/*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
     \param  start_posn  position at which to start operation
     \return             substring starting at position <i>start_posn</i>
@@ -122,7 +122,7 @@ const std::string substring(const std::string& str, const size_t start_posn, con
 */
 const std::string substring(const std::string& str, const size_t start_posn);
 
-/*! \brief              replace every instance of one character with another
+/*! \brief              Replace every instance of one character with another
     \param  s           string on which to operate
     \param  old_char    character to be replaced
     \param  new_char    replacement character
@@ -130,7 +130,7 @@ const std::string substring(const std::string& str, const size_t start_posn);
 */
 const std::string replace_char(const std::string& s, char old_char, char new_char);
 
-/*! \brief              replace every instance of one string with another
+/*! \brief              Replace every instance of one string with another
     \param  s           string on which to operate
     \param  old_str     string to be replaced
     \param  new_str     replacement string
@@ -138,41 +138,48 @@ const std::string replace_char(const std::string& s, char old_char, char new_cha
 */
 const std::string replace(const std::string& s, const std::string& old_str, const std::string& new_str);
 
-/*! \brief              does a string contain a particular substring?
-    \param  s           string to test
-    \param  ss          substring for which to search
-    \return             whether <i>s</i> contains the substring <i>ss</i>
+/*! \brief      Does a string contain a particular substring?
+    \param  s   string to test
+    \param  ss  substring for which to search
+    \return     whether <i>s</i> contains the substring <i>ss</i>
 */
 inline const bool contains(const std::string& s, const std::string& ss)
   { return s.find(ss) != std::string::npos; }
 
-/*! \brief does a string contain a particular character?
+/*! \brief      Does a string contain a particular character?
+    \param  s   string to test
+    \param  c   character for which to search
+    \return     whether <i>s</i> contains the character <i>c</i>
 */
 inline const bool contains(const std::string& s, const char c)
   { return s.find(c) != std::string::npos; }
 
-/*! \brief does a string contain any letters?
+/*! \brief          Does a string contain any letters?
+    \param  str     string to test
+    \return         whether <i>str</i> contains any letters
 */
 const bool contains_letter(const std::string& str);
 
-/*! \brief does a string contain any digits?
+/*! \brief          Does a string contain any digits?
+    \param  str     string to test
+    \return         whether <i>str</i> contains any digits
 */
 const bool contains_digit(const std::string& str);
 
-/*! \brief  pad a string to a particular size
-  \param  s original string
-  \param  len length of returned string
-  \param  pad_sude  side on which to pad
-  \param  pad_char  character with which to pad
-  \return padded version of <i>s</i>
+/*! \brief              Pad a string to a particular size
+    \param  s           original string
+    \param  len         length of returned string
+    \param  pad_side    side on which to pad
+    \param  pad_char    character with which to pad
+    \return             padded version of <i>s</i>
   
-  If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
+    If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
 const std::string pad_string(const std::string& s, const unsigned int len, const enum pad_direction pad_side = PAD_LEFT, const char pad_char = ' ');
 
-/*! \brief  Read the contents of a file into a single string
-    \param  filename  Name of file to be read
-    \return Contents of file <i>filename</i>
+/*! \brief              Read the contents of a file into a single string
+    \param  filename    name of file to be read
+    \return             contents of file <i>filename</i>
   
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 89 2015-01-03 13:59:15Z  $
+// $Id: drlog.cpp 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -111,13 +111,8 @@ void restore_data(const string& archive_filename);  ///< Extract the data from t
 void rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
 
-//void send_qtc(const string& destination_callsign);
-//const string serial_number_string(const unsigned int n);    ///< Convert a serial number to a string
 void start_of_thread(void);                             ///< Increase the counter for the number of running threads
-//const string sunrise(const string& callsign,
-//                     const bool calc_sunset = false);
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
-//const string sunset(const string& callsign);
 void swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
 
 //#if defined(NEW_CONSTRUCTOR)
@@ -128,54 +123,24 @@ void test_exchange_templates(const contest_rules&, const string& test_filename);
 
 void toggle_drlog_mode(void);   ///< Toggle between CQ mode and SAP mode
 
-void update_batch_messages_window(const string& callsign = string());
-void update_fuzzy_window(const string& callsign);
-void update_individual_messages_window(const string& callsign = string());
-void update_known_callsign_mults(const string& callsign);
-void update_known_country_mults(const string& callsign);
-void update_local_time(void);
-void update_mult_value(void);
-void update_rate_window(void);
-void update_scp_window(const string& callsign);
-
-// simple inline functions
-
-/*! \brief      Convert a serial number to a string
-    \param  n   serial number
-    \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
-*/
-inline const string serial_number_string(const unsigned int n)
-  { return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) ); }
-
-/*! \brief              Calculate the sunrise time for a station
-    \param  callsign    call of the station for which sunset is desired
-    \return             sunrise in the form HHMM
-
-    Returns "9999" if it's always dark, and "8888" if it's always light
- */
-inline const string sunrise(const string& callsign)
-  { return sunrise_or_sunset(callsign, false); }
-
-/*! \brief              Calculate the sunset time for a station
-    \param  callsign    call of the station for which sunset is desired
-    \return             sunset in the form HHMM
-
-    Returns "9999" if it's always dark, and "8888" if it's always light
- */
-inline const string sunset(const string& callsign)
-  { return sunrise_or_sunset(callsign, true); }
+void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
+//void update_fuzzy_window(const string& callsign);
+void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
+void update_known_callsign_mults(const string& callsign);                   ///< Possibly add a new callsign mult
+void update_known_country_mults(const string& callsign);                    ///< Possibly add a new country to the known country mults
+void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
+void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
+void update_rate_window(void);                                              ///< Update the QSO and score values in <i>win_rate</i>
+//void update_scp_window(const string& callsign);
 
 // functions for processing input to windows
-void process_CALL_input(window* wp,
-                        const keyboard_event& e);
-void process_EXCHANGE_input(window* wp,
-                            const keyboard_event& e);
-void process_LOG_input(window* wp,
-                       const keyboard_event& e);
-void process_QTC_input(window* wp,
-                       const keyboard_event& e);
+void process_CALL_input(window* wp, const keyboard_event& e);               ///< Process an event in CALL window
+void process_EXCHANGE_input(window* wp, const keyboard_event& e);           ///< Process an event in EXCHANGE window
+void process_LOG_input(window* wp, const keyboard_event& e);                ///< Process an event in LOG window
+void process_QTC_input(window* wp, const keyboard_event& e);                ///< Process an event in QTC window
 
-void* auto_backup(void* vp);
+// thread functions
+void* auto_backup(void* vp);                                                        ///< Copy a file to a backup directory
 void* auto_screenshot(void* vp);
 void display_call_info(const string& callsign, const bool display_extract = true);
 void* display_rig_status(void* vp);
@@ -474,6 +439,45 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
   else
     win <= WINDOW_CLEAR;
 }
+
+// simple inline functions
+
+/*! \brief      Convert a serial number to a string
+    \param  n   serial number
+    \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
+*/
+inline const string serial_number_string(const unsigned int n)
+  { return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) ); }
+
+/*! \brief              Calculate the sunrise time for a station
+    \param  callsign    call of the station for which sunset is desired
+    \return             sunrise in the form HHMM
+
+    Returns "9999" if it's always dark, and "8888" if it's always light
+ */
+inline const string sunrise(const string& callsign)
+  { return sunrise_or_sunset(callsign, false); }
+
+/*! \brief              Calculate the sunset time for a station
+    \param  callsign    call of the station for which sunset is desired
+    \return             sunset in the form HHMM
+
+    Returns "9999" if it's always dark, and "8888" if it's always light
+ */
+inline const string sunset(const string& callsign)
+  { return sunrise_or_sunset(callsign, true); }
+
+/*! \brief              Update the fuzzy window with matches for a particular call
+    \param  callsign    callsign against which to generate the fuzzy matches
+*/
+inline void update_fuzzy_window(const string& callsign)
+  { update_matches_window(fuzzy_dbs[callsign], fuzzy_matches, win_fuzzy, callsign); }
+
+/*! \brief              Update the SCP window with matches for a particular call
+    \param  callsign    callsign against which to generate the SCP matches
+*/
+inline void update_scp_window(const string& callsign)
+  { update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign); }
 
 int main(int argc, char** argv)
 { try
@@ -975,7 +979,7 @@ int main(int argc, char** argv)
 
 // SRSS window
   win_srss.init(context.window_info("SRSS"), WINDOW_NO_CURSOR);
-  win_srss <= ( (string)"SR/SS: " + sunrise(context.my_latitude(), context.my_longitude()) + "/" + sunrise(context.my_latitude(), context.my_longitude(), true));
+  win_srss <= ( (string)"SR/SS: " + sunrise(context.my_latitude(), context.my_longitude()) + "/" + sunset(context.my_latitude(), context.my_longitude()) );
 
 // SUMMARY window
   win_summary.init(context.window_info("SUMMARY"), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
@@ -2165,6 +2169,8 @@ void* prune_bandmap(void* vp)
     CURSOR UP -- go to log window
     CURSOR DOWN -- possibly replace call with SCP info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
     CTRL-CURSOR DOWN -- possibly replace call with fuzzy info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
+    ALT-KP+ -- increment octothorpe
+    ALT-KP- -- decrement octothorpe
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2785,18 +2791,17 @@ ost << "processing command: " << command << endl;
         { if (drlog_mode == CQ_MODE)
           { (*cw_p) << callsign;
 
-            SAFELOCK(last_exchange);
+            SAFELOCK(last_exchange);  // we need to keep track of the last message, so it can be re-sent
 
             last_exchange = expand_cw_message( context.exchange_cq() );
             (*cw_p) << last_exchange;
             last_exchange = callsign /* + " " */ + last_exchange;  // add the call so that we can re-send the entire sequence easily
-
-//            (*cw_p) << expand_cw_message( context.exchange_cq() );
-//            ost << "sent CQ exchange: " << callsign << " " << expand_cw_message( context.exchange_cq() ) << endl;
           }
           else
             (*cw_p) << cwm[XK_KP_0];    // send contents of KP0, which is assumed to be my call
         }
+
+//        ost << "message sent" << endl;
 
 // what exchange do we expect?
         string exchange_str;
@@ -2805,11 +2810,17 @@ ost << "processing command: " << command << endl;
         const vector<exchange_field> expected_exchange = rules.exch(canonical_prefix, cur_mode);
         map<string, string> mult_exchange_field_value;                  // the values of exchange fields that are mults
 
+        ost << "Expected exchange for " << contents << " is: ";
+        for (const auto& ef : expected_exchange)
+          ost << ef.name() << " ";
+        ost << endl;
+
         for (const auto& exf : expected_exchange)
         { ost << "Exchange field: " << exf << endl;
           bool processed_field = false;
 
-// &&& if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty
+// &&& if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
+// need to figure out a way to generalise all this
           if (exf.is_choice())
           { ost << "Exchange field " << exf.name() << " is a choice" << endl;
 
@@ -2845,12 +2856,18 @@ ost << "processing command: " << command << endl;
 
               ost << "state guess for " << contents << " = " << state_guess << endl;
 
-//              string iaru_guess = society_guess;
-
               exchange_str += state_guess;
               processed_field = true;
             }
+
+            if (exf.name() == "HADXC+QTHX[HA]")
+            {  ost << "Attempting to handle HADXC+QTHX[HA] exchange field" << endl;
+            }
+
           }
+
+          ost << "Before RST, exf.name() = " << exf.name() << endl;
+          ost << "Before RST, exchange_str = " << exchange_str << endl;
 
           if (exf.name() == "RST")
           { if (cur_mode == MODE_CW /* or current_mode == MODE_DIGI */ )
@@ -2869,7 +2886,11 @@ ost << "processing command: " << command << endl;
 
           if (!processed_field)
           { if (!(variable_exchange_fields < exf.name()))
-            { const string guess = rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name()));
+            { //ost << "about to guess" << endl;
+
+              const string guess = rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name()));
+
+              //ost << "guess is: " << guess << endl;
 
               if (!guess.empty())
               { if ((exf.name() == "RDA") and (guess.length() == 2))  // RDA guess might just have first two characters
@@ -2887,23 +2908,48 @@ ost << "processing command: " << command << endl;
           processed = true;
         }
 
+//        ost << "exchange_str: " << exchange_str << endl;
+
         update_known_callsign_mults(callsign);
         update_known_country_mults(callsign);
+
+//        ost << "about to send to EXCHANGE window" << endl;
 
         win_exchange <= exchange_str;
         win_active_p = &win_exchange;
       }
 
+//      ost << "about to create bandmap entry [1]" << endl;
+//      sleep_for(seconds(5));
+
 // add to bandmap if we're in SAP mode
       if (drlog_mode == SAP_MODE)
-      { bandmap_entry be;
+      { //ost << "about to create bandmap entry [2]" << endl;
 
-        be.freq(rig.rig_frequency());
+        bandmap_entry be;
+
+//        ost << "about to set frequency" << endl;
+
+        be.freq(rig.rig_frequency());  // also sets band
+
+//        ost << "about to set callsign" << endl;
+
         be.callsign(callsign);
-        be.band(cur_band);
+
+//        ost << "about to set band" << endl;
+
+//        be.band(cur_band);
+
+ //       ost << "about to set expiration time" << endl;
+
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
         be.is_needed(!is_dupe);
+
+//        ost << "about to calculate mult status" << endl;
+
         be.calculate_mult_status(rules, statistics);
+
+//        ost << "mult status calculated" << endl;
 
         bandmap& bandmap_this_band = bandmaps[cur_band];
         const bandmap_entry old_be = bandmap_this_band[callsign];
@@ -4706,7 +4752,7 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
 
   const float lat = location_db.latitude(callsign);
   const float lon = -location_db.longitude(callsign);    // minus sign to get in the correct direction
-  const string rv = sunrise(lat, lon, calc_sunset);
+  const string rv = sunrise_or_sunset(lat, lon, calc_sunset);
 
   return rv;
 }
@@ -4990,17 +5036,15 @@ ost << "QSY to " << frequency(str_frequency).hz() << " Hz" << endl;
   pthread_exit(nullptr);
 }
 
-/*!     \brief  Possibly add a new callsign mult
-        \param  msg     callsign
+/*! \brief          Possibly add a new callsign mult
+    \param  msg     callsign
 
-        Supports: AA, SAC. Updates as necessary the container of
-        known callsign mults. Also updates the window that displays the
-        known callsign mults.
+    Supports: AA, OC, SAC. Updates as necessary the container of
+    known callsign mults. Also updates the window that displays the
+    known callsign mults.
 */
 void update_known_callsign_mults(const string& callsign)
-{ //ost << "called update_known_callsign_mults(" << callsign << ")" << endl;
-
-  if (callsign.empty())
+{ if (callsign.empty())
     return;
 
   if (context.auto_remaining_callsign_mults())
@@ -5066,31 +5110,31 @@ void update_known_callsign_mults(const string& callsign)
   }
 }
 
-/*!     \brief  Possibly add a new country to the known country mults
-        \param  callsign     callsign
+/*! \brief              Possibly add a new country to the known country mults
+    \param  callsign    callsign from the country possibly to be added
 
-        Adds only if REMAINING COUNTRY MULTS has been set to AUTO in the configuration file
+    Adds only if REMAINING COUNTRY MULTS has been set to AUTO in the configuration file
 */
 void update_known_country_mults(const string& callsign)
 { if (callsign.empty())
     return;
 
-  ost << "inside update_known_country_mults for " << callsign << endl;
-  ost << "initial number of known country mults = " << statistics.n_known_country_mults() << endl;
+//  ost << "inside update_known_country_mults for " << callsign << endl;
+//  ost << "initial number of known country mults = " << statistics.n_known_country_mults() << endl;
 
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-    ost << "about to add " << canonical_prefix << endl;
+//    ost << "about to add " << canonical_prefix << endl;
 
     if (rules.country_mults() < canonical_prefix)            // don't add if the rules don't recognise it as a country mult
-    { ost << "prefix is known to rules" << endl;
+    { //ost << "prefix is known to rules" << endl;
       statistics.add_known_country_mult(canonical_prefix);
 
-      ost << "number of known country mults = " << statistics.n_known_country_mults() << endl;
+      //ost << "number of known country mults = " << statistics.n_known_country_mults() << endl;
     }
-    else
-      ost << "prefix is NOT known to rules; size = " << rules.country_mults().size() << endl;
+//    else
+//      ost << "prefix is NOT known to rules; size = " << rules.country_mults().size() << endl;
   }
 }
 
@@ -5247,7 +5291,7 @@ void rig_error_alert(const string& msg)
   alert(msg);
 }
 
-/// update the QSO and score values in the rate window
+/// update the QSO and score values in <i>win_rate</i>
 void update_rate_window(void)
 { const vector<unsigned int> rate_periods = context.rate_periods();    // in minutes
   string rate_str = pad_string("", 3) + pad_string("Qs", 3) + pad_string("Score", 10);
@@ -5350,7 +5394,7 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
   }
 }
 
-/*! \brief  Copy a file to a destination directory
+/*! \brief  Copy a file to a backup directory
 *
 *   This is intended to be used as a separate thread, so the parameters are passed
 *   in the usual void*
@@ -5465,13 +5509,16 @@ void exit_drlog(void)
 //{ return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) );
 //}
 
-void update_scp_window(const string& callsign)
-{ update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign);
-}
+//void update_scp_window(const string& callsign)
+//{ update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign);
+//}
 
-void update_fuzzy_window(const string& callsign)
-{ update_matches_window(fuzzy_dbs[callsign], fuzzy_matches, win_fuzzy, callsign);
-}
+/*! \brief              Update the fuzzy window with matches for a particular call
+    \param  callsign    callsign against which to generate the fuzzy matches
+*/
+//void update_fuzzy_window(const string& callsign)
+//{ update_matches_window(fuzzy_dbs[callsign], fuzzy_matches, win_fuzzy, callsign);
+//}
 
 /*! \brief          Get best fuzzy or SCP match
     \param  matches vector of fuzzy or SCP matches, colour coded
@@ -5588,7 +5635,7 @@ void add_qso(const QSO& qso)
   rate.insert(qso.epoch_time(), statistics.points(rules));
 }
 
-/*! \brief  update the individual_messages window with the message (if any) associated with a call
+/*! \brief              Update the individual_messages window with the message (if any) associated with a call
     \param  callsign    callsign with which the message is associated
 
     Clears the window if there is no individual message associated with <i>callsign</i>
@@ -5611,7 +5658,7 @@ void update_individual_messages_window(const string& callsign)
     win_individual_messages < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
 }
 
-/*! \brief  update the batch_messages window with the message (if any) associated with a call
+/*! \brief              Update the batch_messages window with the message (if any) associated with a call
     \param  callsign    callsign with which the message is associated
 
     Clears the window if there is no batch message associated with <i>callsign</i>
@@ -6423,6 +6470,7 @@ void test_exchange_templates(const string& test_filename)
 }
 #endif
 
+/// calculate the value of a mult and update <i>win_mult_value</i>
 void update_mult_value(void)
 { const float mult_value = statistics.mult_to_qso_value(rules, safe_get_band(), safe_get_mode());
   const unsigned int mult_value_10 = static_cast<unsigned int>( (mult_value * 10) + 0.5);

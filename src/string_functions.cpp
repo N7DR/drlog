@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 89 2015-01-03 13:59:15Z  $
+// $Id: string_functions.cpp 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,6 +11,7 @@
 #include "macros.h"
 #include "string_functions.h"
 
+#include <fstream>
 #include <iostream>
 
 #include <cctype>
@@ -20,9 +21,6 @@
 
 #include <arpa/inet.h>
 #include <sys/stat.h>
-
-#include <fstream>
-#include <iostream>
 
 using namespace std;
 
@@ -103,7 +101,7 @@ const vector<string> from_csv(const string& line)
   return rv;
 }
 
-/* \brief       Duplicate a particular character within a string
+/*  \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
@@ -163,7 +161,6 @@ const string date_time_string(void)
 
   gmtime_r(&now, &structured_time);         // convert to UTC
 
-//  char buf[26];                             // buffer to hold the ASCII date/time info; see man page for gmtime()
   array<char, 26> buf;                           // buffer to hold the ASCII date/time info; see man page for gmtime()
 
   asctime_r(&structured_time, buf.data());                     // convert to ASCII
@@ -177,7 +174,7 @@ const string date_time_string(void)
   return _date + "T" + _utc;
 }
 
-/*! \brief  convert struct tm pointer to formatted string
+/*! \brief          Convert struct tm pointer to formatted string
     \param  format  format to be used
     \param  tmp     date/time to be formatted
     \return         formatted string
@@ -195,7 +192,7 @@ const string format_time(const string& format, const tm* tmp)
   return string(buf);
 }
 
-/*! \brief              replace every instance of one character with another
+/*! \brief              Replace every instance of one character with another
     \param  s           string on which to operate
     \param  old_char    character to be replaced
     \param  new_char    replacement character
@@ -204,15 +201,12 @@ const string format_time(const string& format, const tm* tmp)
 const string replace_char(const string& s, char old_char, char new_char)
 { string rv;
 
-//  for (size_t n = 0; n < s.length(); ++n)
-//    rv += ( (s[n] == old_char) ? new_char : s[n] );
-
   FOR_ALL(s, [=, &rv] (const char c) { rv += ( (c == old_char) ? new_char : c ); } );
 
   return rv;
 }
 
-/*! \brief              replace every instance of one string with another
+/*! \brief              Replace every instance of one string with another
     \param  s           string on which to operate
     \param  old_str     string to be replaced
     \param  new_str     replacement string

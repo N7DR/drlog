@@ -1,4 +1,4 @@
-// $Id: qso.cpp 89 2015-01-03 13:59:15Z  $
+// $Id: qso.cpp 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -309,9 +309,11 @@ const bool QSO::is_exchange_mult(void) const
   return false;
 }
 
-/// re-format according to a Cabrillo template
-/*
-  CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1 
+/*! \brief                          Re-format according to a Cabrillo template
+    \param  cabrillo_qso_template   template for the QSO: line in a Cabrillo file, from configuration file
+
+    Example template:
+      CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
 */
 const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
 { static unsigned int record_length = 0;
@@ -565,8 +567,13 @@ const string QSO::verbose_format(void) const
   return rv; 
 }
 
-/// does the QSO match an expression for a received exchange field?
-/// [IOTA != -----]
+/*! \brief                  Does the QSO match an expression for a received exchange field?
+    \param  rule_to_match   boolean rule to attempt to match
+    \return                 whether the exchange in the QSO matches <i>rule_to_match</i>
+
+    <i>rule_to_match is from the configuration file, and looks like:
+      [IOTA != -----]
+*/
 const bool QSO::exchange_match(const string& rule_to_match) const
 {
   ost << "testing exchange match rule: " << rule_to_match << " on QSO: " << *this << endl;

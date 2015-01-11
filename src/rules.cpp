@@ -1,4 +1,4 @@
-// $Id: rules.cpp 89 2015-01-03 13:59:15Z  $
+// $Id: rules.cpp 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -362,6 +362,19 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     permitted_exchange_fields.insert( { pce.first, vs } );
   }
 
+  ost << "in _parse_context_exchange()" << endl;
+  ost << "permitted_exchange_fields size = " << permitted_exchange_fields.size() << endl;
+
+  for (const auto& pmsvs : permitted_exchange_fields)
+  { ost << "  prefix = " << pmsvs.first << endl;
+    const auto& vs = pmsvs.second;
+
+    for (const auto& s : vs)
+      ost << s << "  ";
+
+    ost << endl;
+  }
+
 // add the ordinary exchange to the permitted exchange fields
   const vector<string> exchange_vec = remove_peripheral_spaces(split_string(context.exchange(), ","));
   permitted_exchange_fields.insert( { "", exchange_vec } );
@@ -369,12 +382,28 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   const vector<string> exchange_mults_vec = remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
   map<string, vector<exchange_field>> single_mode_rv_rst;
   map<string, vector<exchange_field>> single_mode_rv_rs;
-  vector<exchange_field> vef_rst;
-  vector<exchange_field> vef_rs;
+//  vector<exchange_field> vef_rst;
+//  vector<exchange_field> vef_rs;
+
+  ost << "about to run through permitted_exchange_fields" << endl;
+  ost << "permitted_exchange_fields size = " << permitted_exchange_fields.size() << endl;
+
+  for (const auto& pmsvs : permitted_exchange_fields)
+  { ost << "  prefix = " << pmsvs.first << endl;
+    const auto& vs = pmsvs.second;
+
+    for (const auto& s : vs)
+      ost << s << "  ";
+
+    ost << endl;
+  }
 
   for (const auto& mpef : permitted_exchange_fields)
   { const vector<string>& vs = mpef.second;
     vector<exchange_field> vef = _inner_parse(vs, exchange_mults_vec);
+    vector<exchange_field> vef_rst;
+    vector<exchange_field> vef_rs;
+
 
 // adjust RST/RS to match mode; ideally we would have done this later, when
 // it would be far simpler to iterate through the map, changing values, but
@@ -401,8 +430,58 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     single_mode_rv_rs.insert( {  mpef.first, vef_rs } );
   }
 
+  ost << "single_mode_rv_rst: " << endl;
+//  map<string, vector<exchange_field>>
+
+  for (const auto& psvef : single_mode_rv_rst)
+  { ost << "prefix = " << psvef.first << endl;
+
+    for (const auto& ef : psvef.second)
+      ost << ef.name() << "  ";
+
+    ost << endl;
+  }
+
+
+  ost << "about to insert into _received_exchange" << endl;
+  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
+
+  for (const auto& pMmsvef : _received_exchange)
+  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
+
+    const auto& msvef = pMmsvef.second;
+    for (const auto& psvef : msvef)
+    { ost << "prefix = " << psvef.first;
+
+      for (const auto& ef : psvef.second)
+      { ost << endl << ef.name() << "  ";
+      }
+
+      ost << endl;
+    }
+  }
+
   for (const auto& m : _permitted_modes)
     _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
+
+  ost << "leaving _parse_context_exchange" << endl;
+  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
+
+  for (const auto& pMmsvef : _received_exchange)
+  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
+
+    const auto& msvef = pMmsvef.second;
+    for (const auto& psvef : msvef)
+    { ost << "prefix = " << psvef.first;
+
+      for (const auto& ef : psvef.second)
+      { ost << endl << ef.name() << "  ";
+      }
+
+      ost << endl;
+    }
+  }
+
 }
 
 /*!     \brief              Initialize an object that was created from the default constructor
@@ -412,7 +491,29 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
         After calling this function, the object is ready for use
 */
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
-{ const vector<string> path = context.path();
+{
+  ost << "in contest_rules::_init()" << endl;
+
+//  std::map<enum MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded
+
+  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
+
+  for (const auto& pMmsvef : _received_exchange)
+  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
+
+    const auto& msvef = pMmsvef.second;
+    for (const auto& psvef : msvef)
+    { ost << "prefix = " << psvef.first;
+
+      for (const auto& ef : psvef.second)
+      { ost << endl << ef.name() << "  ";
+      }
+
+      ost << endl;
+    }
+  }
+
+  const vector<string> path = context.path();
 
 // personal information, taken from context
   _my_continent = context.my_continent();
@@ -507,6 +608,24 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_used = !_exchange_mults.empty();
 
 // build expanded version of _received_exchange
+  ost << "about to build expanded exchange" << endl;
+  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
+
+  for (const auto& pMmsvef : _received_exchange)
+  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
+
+    const auto& msvef = pMmsvef.second;
+    for (const auto& psvef : msvef)
+    { ost << "prefix = " << psvef.first;
+
+      for (const auto& ef : psvef.second)
+      { ost << endl << ef.name() << "  ";
+      }
+
+      ost << endl;
+    }
+  }
+
   for (const auto& m : _permitted_modes)
   { map<string, vector<exchange_field>> expanded_exch;
     auto& unexpanded_exch = _received_exchange.at(m);
@@ -783,6 +902,17 @@ const vector<exchange_field> contest_rules::exch(const string& canonical_prefix,
   SAFELOCK(rules);
 
   const map<string, vector<exchange_field>>& unexpanded_exchange = _received_exchange.at(m);
+
+  ost << "unexpanded exchange:";
+
+  for (const auto& pmsvef : unexpanded_exchange)
+  { ost << endl << "  prefix = " << pmsvef.first << endl;
+    for (const auto& ef : pmsvef.second)
+      ost << "  field = " << ef.name();
+  }
+  ost << endl;
+
+
   auto cit = unexpanded_exchange.find(canonical_prefix);
 
   if (cit != unexpanded_exchange.cend())

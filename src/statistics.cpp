@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 89 2015-01-03 13:59:15Z  $
+// $Id: statistics.cpp 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -465,6 +465,13 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
 { string rv;
 
+  ost << "in _summary_string; modes = { ";
+
+  for (const auto & m : modes)
+    ost << MODE_NAME[m] << " ";
+
+  ost << "}" << endl;
+
   const unsigned int FIRST_FIELD_WIDTH = 10;
   const unsigned int FIELD_WIDTH       = 6;          // width of other fields
   const set<MODE> permitted_modes = rules.permitted_modes();
@@ -487,21 +494,27 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 // QSOs
     line = pad_string("QSOs", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');                                          // accumulator for total qsos
 
-    for (const auto& m : modes)
-    { const auto& nq = _n_qsos[m];
+//    for (const auto& m : modes)
+//    { const auto& nq = _n_qsos[m];
 
 //    for (unsigned int n = 0; n < permitted_bands.size(); ++n)
       for (const auto& b : permitted_bands)
-      { //const int band_nr = static_cast<int>(permitted_bands[n]);
+      { for (const auto& m : modes)
+        { const auto& nq = _n_qsos[m];
 
-//        line += pad_string(to_string(nq[b]), FIELD_WIDTH);
+        if (modes.size() == 1)
+          line += pad_string(to_string(nq[b]), FIELD_WIDTH);
         qsos += nq[b];
 
         ost << "adding " << nq[b] <<"; total = " << qsos << endl;
       }
+      if (modes.size() != 1)
+        line += pad_string(to_string(qsos), FIELD_WIDTH);
+
     }
 
-    line += pad_string(to_string(qsos), FIELD_WIDTH);
+
+//    line += pad_string(to_string(qsos), FIELD_WIDTH);
 
 //    if (permitted_bands.size() != 1)
 //       line += pad_string(to_string(qsos), FIELD_WIDTH);
@@ -604,43 +617,55 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
       unsigned int total = 0;
 
 //      for (unsigned int n1 = 0; n1 < permitted_bands.size(); ++n1)
-      for (const auto& m : modes)
-      { for (const auto& b : permitted_bands)
-        { //const int band_nr = static_cast<int>(permitted_bands[n1]);
-          const unsigned int n_exchange_mults = mult.n_worked(b, m);
 
-//          line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
+       for (const auto& b : permitted_bands)
+        {       for (const auto& m : modes)
+
+          {const unsigned int n_exchange_mults = mult.n_worked(b, m);
+
+          if (modes.size() == 1)
+            line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
 
           if (exchange_mults_per_band)
             total += n_exchange_mults;
+
+          if (!exchange_mults_per_band)
+            total = mult.n_worked(ANY_BAND, m);
+
         }
 
-        if (!exchange_mults_per_band)
-          total = mult.n_worked(ANY_BAND, m);
+
+        if (modes.size() != 1)
+          line += pad_string(to_string(total), FIELD_WIDTH);
       }
 
-      if (permitted_bands.size() != 1)
-        line += pad_string(to_string(total), FIELD_WIDTH);
+//      if (permitted_bands.size() != 1)
+//        line += pad_string(to_string(total), FIELD_WIDTH);
+       add_all_bands(permitted_bands.size(), total);
+
+//      ost << "line is currently: " << line << endl;
+      rv += line + LF;
+
      }
 
 // dupes
     line = pad_string("Dupes", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
 
+      for (const auto& b : permitted_bands)
+      {     for (const auto& m : modes)
+      { const auto& nd = _n_dupes[m];
 
-    for (const auto& m : modes)
-    {     const auto& nd = _n_dupes[m];
-
-//      for (unsigned int n = 0; n < permitted_bands.size(); ++n)
-        for (const auto& b : permitted_bands)
-      { //const int band_nr = static_cast<int>(permitted_bands[n]);
-
-//        line += pad_string(to_string(nd.at(band_nr)), FIELD_WIDTH);
+        if (modes.size() == 1)
+        line += pad_string(to_string(nd[b]), FIELD_WIDTH);
         dupes += nd[b];
       }
+      if (modes.size() != 1)
+        line += pad_string(to_string(dupes), FIELD_WIDTH);
+
     }
 
-    line += pad_string(to_string(dupes), FIELD_WIDTH);
+//    line += pad_string(to_string(dupes), FIELD_WIDTH);
 
     add_all_bands(permitted_bands.size(), dupes);
 
@@ -656,15 +681,14 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     { const auto& qp = _qso_points[m];
 
       for (const auto& b : permitted_bands)
-//      for (unsigned int n = 0; n < permitted_bands.size(); ++n)
       { //const int band_nr = static_cast<int>(permitted_bands[n]);
 
-//        line += pad_string(to_string(qp.at(band_nr)), FIELD_WIDTH);
+        line += pad_string(to_string(qp[b]), FIELD_WIDTH);
         points += qp[b];
       }
     }
 
-    line += pad_string(to_string(points), FIELD_WIDTH);
+//    line += pad_string(to_string(points), FIELD_WIDTH);
 
 
 //    if (permitted_bands.size() != 1)

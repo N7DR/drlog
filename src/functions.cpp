@@ -1,4 +1,4 @@
-// $Id: functions.cpp 88 2014-12-27 15:19:42Z  $
+// $Id: functions.cpp 90 2015-01-10 17:10:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -99,7 +99,7 @@ const float bearing(const float& lat1, const float& long1, const float& lat2, co
     Default is to calculate sunrise if <i>calc_sunset</i> is absent.
     See http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
 */
-const string sunrise(const float& lat, const float& lon, const bool calc_sunset)
+const string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset)
 { static const float pi = 3.14159265;
   static const float dtor = pi / 180.0;
   static const float rtod = 1.0 / dtor;
