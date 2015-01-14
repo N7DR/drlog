@@ -1545,7 +1545,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
 
-//  ost << "constructed EFT: " << (*this) << endl;
+  ost << "constructed EFT: " << (*this) << endl;
 }
 
 #if 0
@@ -1659,26 +1659,34 @@ const bool EFT::read_values_file(const vector<string>& path, const string& filen
     \param  location_db location database
 */
 void EFT::parse_context_qthx(const drlog_context& context, location_database& location_db)
-{ const auto& context_qthx = context.qthx();  // map; key = canonical prefix; value = set of legal values
+{ if (!starts_with(_name, "QTHX["))
+    return;
+
+  const auto& context_qthx = context.qthx();  // map; key = canonical prefix; value = set of legal values
 
   if (context_qthx.empty())
     return;
 
-  for (const auto this_qthx : context_qthx)
+  for (const auto& this_qthx : context_qthx)
   { const string canonical_prefix = location_db.canonical_prefix(this_qthx.first);
-    const set<string> ss = this_qthx.second;
 
-    for (const auto this_value : ss)
-    { if (!contains(this_value, "|"))
-        add_canonical_value(this_value);
-      else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
-      { const vector<string> equivalent_values = remove_peripheral_spaces(split_string(this_value, "|"));
+//    ost << "in EFT::parse_context_qthx, name = " << _name << ", canonical_prefix = " << canonical_prefix << endl;
 
-        if (!equivalent_values.empty())
-          add_canonical_value(equivalent_values[0]);
+    if (canonical_prefix == location_db.canonical_prefix(delimited_substring(_name, '[', ']')))
+    { const set<string> ss = this_qthx.second;
 
-        for (size_t n = 1; n < equivalent_values.size(); ++n)
-          add_legal_value(equivalent_values[0], equivalent_values[n]);
+      for (const auto this_value : ss)
+      { if (!contains(this_value, "|"))
+          add_canonical_value(this_value);
+        else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
+        { const vector<string> equivalent_values = remove_peripheral_spaces(split_string(this_value, "|"));
+
+          if (!equivalent_values.empty())
+            add_canonical_value(equivalent_values[0]);
+
+          for (size_t n = 1; n < equivalent_values.size(); ++n)
+            add_legal_value(equivalent_values[0], equivalent_values[n]);
+        }
       }
     }
   }

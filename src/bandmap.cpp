@@ -37,7 +37,7 @@ extern const set<string> CONTINENT_SET;         ///< two-letter abbreviations fo
 */
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
-extern exchange_field_database exchange_db;                          ///< dynamic database of exchange field values for calls; automatically thread-safe
+extern exchange_field_database exchange_db;     ///< dynamic database of exchange field values for calls; automatically thread-safe
 
 const string MY_MARKER("--------");             ///< the string that marks my position in the bandmap
 bandmap_filter_type bmf;                        ///< the global bandmap filter
@@ -164,21 +164,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   for (const auto& exch_mult_name : exch_mults)
   { string guess = exchange_db.guess_value(_callsign, exch_mult_name);
 
-//    ost << "guess for " << _callsign << ", exchange mult " << exch_mult_name << " is: " << guess << endl;
     guess = rules.canonical_value(exch_mult_name, guess);
-//    ost << "converted to canonical value: " << guess << endl;
 
-    if (!guess.empty())
-    { //ost << "is needed exchange mult = " << statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band) << endl;
-
-      if (statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode))
-      { //add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
-
-        /* const bool status = */ add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
-
-        //ost << "attempt to add returned: " << status << endl;
-      }
-    }
+    if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
+        add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
   }
 }
 
@@ -675,7 +664,7 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
   _dirty_entries();
 }
 
-/*! \brief                          set the needed callsign mult status of all matching callsign mults to <i>false</i>
+/*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
     \param  pf                      pointer to function to return the callsign mult value
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
@@ -698,14 +687,17 @@ void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string
 
       if (this_callsign_mult == callsign_mult_string)
       { be.remove_callsign_mult(mult_type, callsign_mult_string);
-//        _filtered_entries_dirty = true;
-//        _rbn_threshold_and_filtered_entries_dirty = true;
         _dirty_entries();
       }
     }
   }
 }
 
+/*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
+    \param  mult_type               name of mult type
+    \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
+*/
+#if 0
 void bandmap::not_needed_callsign_mult(const string& mult_type /* e.g., "WPXPX" */,
                                        const string& callsign_mult_string /* e.g., SM1 */)
 { if (callsign_mult_string.empty() or mult_type.empty())
@@ -714,14 +706,11 @@ void bandmap::not_needed_callsign_mult(const string& mult_type /* e.g., "WPXPX" 
   SAFELOCK(_bandmap);
 
 // change status for all entries with this particular callsign mult
-//  for (auto& be : _entries)
-//    be.remove_callsign_mult(mult_type, callsign_mult_string);
   FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_callsign_mult(mult_type, callsign_mult_string); } );
 
-//  _filtered_entries_dirty = true;
-//  _rbn_threshold_and_filtered_entries_dirty = true;
   _dirty_entries();
 }
+#endif
 
 void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
 { if (mult_name.empty() or mult_value.empty())

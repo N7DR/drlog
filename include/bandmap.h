@@ -635,9 +635,13 @@ public:
 /*! \brief set the needed callsign mult status of all calls in a particular country to false
     \param  target_values   vector of target multiplier names and values
 */
-  void not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
-                                const std::vector<std::pair<std::string /* e.g., "WPXPX" */, std::string /* e.g., SM1 */>>& target_values);
+//  void not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
+//                                const std::vector<std::pair<std::string /* e.g., "WPXPX" */, std::string /* e.g., SM1 */>>& target_values);
 
+/*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
+    \param  mult_type               name of mult type
+    \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
+*/
   void not_needed_callsign_mult(const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., SM1 */);
 
   void not_needed_exchange_mult(const std::string& mult_name, const std::string& mult_value);

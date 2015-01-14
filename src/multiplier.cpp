@@ -44,8 +44,12 @@ multiplier::multiplier(void) :
 const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
+  ost << "inside multiplier::add_worked(); str = " << str << ", band = " << BAND_NAME[b] << ", mode = " << MODE_NAME[m] << endl;
+
   if ((_used) and is_known(str))                                          // add only known mults
-  { const int b_nr = static_cast<int>(b);
+  { ost << "used and known" << endl;
+
+    const int b_nr = static_cast<int>(b);
     const int m_nr = static_cast<int>(m);
 
     ost << "multiplier; adding worked " << str << ", band = " << BAND_NAME[b] << ", mode = " << MODE_NAME[m] << endl;
@@ -188,6 +192,7 @@ const set<string> multiplier::worked(const int b, const int m) const
 
   ost << "multiplier::worked for band = " << BAND_NAME[b] << ", mode = " << MODE_NAME[m] << " is:" << endl;
   ost << "_per_mode = " << boolalpha << _per_mode << noboolalpha << endl;
+  ost << "_per_band = " << boolalpha << _per_band << noboolalpha << endl;
 
   set<string> tmp = pb[ (_per_band ? b : ANY_BAND) ];
   string str("  ");

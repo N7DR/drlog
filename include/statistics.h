@@ -225,7 +225,7 @@ public:
     { return _country_multipliers.n_known(); }
 
 /// worked exchange mults for a particular band
-  const std::map<std::string /* field name */, std::set<std::string> /* values */ >   worked_exchange_mults(const BAND b);
+  const std::map<std::string /* field name */, std::set<std::string> /* values */ >   worked_exchange_mults(const BAND b, const MODE m);
 
 /*! \brief  is a particular string a known callsign mult name?
     \param  putative_callsign_mult_name     string to test

@@ -84,6 +84,7 @@ void cw_speed(const unsigned int new_speed);                                    
 
 void debug_dump(void);                                                                      ///< Dump useful information to disk
 void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode); ///< Display band and mode
+void display_call_info(const string& callsign, const bool display_extract = true);          ///< Update several call-related windows
 void display_nearby_callsign(const string& callsign);                                       ///< Display a callsign in the NEARBY window, in the correct colour
 void display_statistics(const string& summary_str);                                         ///< Display the current statistics
 const string dump_screen(const string& filename = string());                                ///< Dump a screen image to PNG file
@@ -115,13 +116,8 @@ void start_of_thread(void);                             ///< Increase the counte
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
 void swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
 
-//#if defined(NEW_CONSTRUCTOR)
 void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
-//#else
-//void test_exchange_templates(const string& test_filename);
-//#endif
-
-void toggle_drlog_mode(void);   ///< Toggle between CQ mode and SAP mode
+void toggle_drlog_mode(void);                                                       ///< Toggle between CQ mode and SAP mode
 
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 //void update_fuzzy_window(const string& callsign);
@@ -140,16 +136,15 @@ void process_LOG_input(window* wp, const keyboard_event& e);                ///<
 void process_QTC_input(window* wp, const keyboard_event& e);                ///< Process an event in QTC window
 
 // thread functions
-void* auto_backup(void* vp);                                                        ///< Copy a file to a backup directory
-void* auto_screenshot(void* vp);
-void display_call_info(const string& callsign, const bool display_extract = true);
-void* display_rig_status(void* vp);
-void* display_date_and_time(void* vp);
-void* get_cluster_info(void* vp);
-void* keyboard_test(void* vp);
-void* prune_bandmap(void* vp);
-void* process_rbn_info(void* vp);
-void* p3_screenshot_thread(void* vp);
+void* auto_backup(void* vp);                                                    ///< Copy a file to a backup directory
+void* auto_screenshot(void* vp);                                                ///< Write a screenshot to a file
+void* display_rig_status(void* vp);                                             ///< Thread function to display status of the rig
+void* display_date_and_time(void* vp);                                          ///< Thread function to display the date and time
+void* get_cluster_info(void* vp);                                               ///< Thread function to obtain data from the cluster
+void* keyboard_test(void* vp);                                                  ///< Thread function to simulate keystrokes
+void* prune_bandmap(void* vp);                                                  ///< Thread function to prune the bandmaps once per minute
+void* process_rbn_info(void* vp);                                               ///< Thread function to process data from the cluster or the RBN
+void* p3_screenshot_thread(void* vp);                                           ///< Thread function to generate a screenshot of a P3 and store it in a BMP file
 void* reset_connection(void* vp);
 void* simulator_thread(void* vp);
 void* spawn_dx_cluster(void*);
@@ -935,8 +930,7 @@ int main(int argc, char** argv)
 
 // SCORE window
   win_score.init(context.window_info("SCORE"), WINDOW_NO_CURSOR);
-  { // const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
-    const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
+  { const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
     win_score < CURSOR_START_OF_LINE < "Score: " <= score_str;
   }
@@ -1495,7 +1489,7 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
   }
 }
 
-/// thread to display the date and time
+/// Thread function to display the date and time
 void* display_date_and_time(void* vp)
 { start_of_thread();
 
@@ -1610,9 +1604,12 @@ void* display_date_and_time(void* vp)
   pthread_exit(nullptr);
 }
 
-// thread to display the rig status -- also displays bandmap if the frequency changes
-// the bandmap is actually updated on screen before any change in status
-// NB It doesn't matter *how* the rig's frequency came to change ... it could be manual
+
+/*! \brief  Thread function to display status of the rig
+
+    Also displays bandmap if the frequency changes. The bandmap is actually updated on screen before any change in status
+    NB It doesn't matter *how* the rig's frequency came to change ... it could be manual
+*/
 void* display_rig_status(void* vp)
 { start_of_thread();
 
@@ -1872,8 +1869,11 @@ void* display_rig_status(void* vp)
   pthread_exit(nullptr);
 }
 
-// thread to process data from the cluster or the RBN; must start the thread to obtain data before trying to process it with this one;
-// pulls the data from the cluster object [and removes the data from it]
+/*! \brief  Thread to process data from the cluster or the RBN.
+
+    Must start the thread to obtain data before trying to process it with this one;
+    pulls the data from the cluster object [and removes the data from it]
+*/
 void* process_rbn_info(void* vp)
 { start_of_thread();
 
@@ -2083,7 +2083,7 @@ void* process_rbn_info(void* vp)
   pthread_exit(nullptr);
 }
 
-// thread to obtain data from the cluster
+/// Thread function to obtain data from the cluster
 void* get_cluster_info(void* vp)
 { start_of_thread();
 
@@ -2110,7 +2110,7 @@ void* get_cluster_info(void* vp)
   pthread_exit(nullptr);
 }
 
-// thread to prune the bandmaps once per minute
+/// Thread function to prune the bandmaps once per minute
 void* prune_bandmap(void* vp)
 { start_of_thread();
 
@@ -3860,14 +3860,21 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band, cur_mode);
 
 // and any exch multipliers
-        map<string /* field name */, set<string> /* values */ >   old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band);
+        ost << "about to add worked exchange mults to statistics" << endl;
+
+        map<string /* field name */, set<string> /* values */ >   old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
 
         const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix, qso.mode());
 
         for (const auto& exch_field : exchange_fields)
         { const string value = qso.received_exchange(exch_field.name());
 
-          statistics.add_worked_exchange_mult(exch_field.name(), value, rules.exchange_mults_per_band() ? cur_band : ALL_BANDS);
+          ost << "adding " << exch_field.name() << endl;
+//          statistics.add_worked_exchange_mult(exch_field.name(), value, rules.exchange_mults_per_band() ? cur_band : ALL_BANDS);
+          statistics.add_worked_exchange_mult(exch_field.name(), value, qso.band(), qso.mode());
+
+          ost << "finished adding exch_field.name()" << endl;
+
         }
 
         add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
@@ -3913,7 +3920,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         }
 
 // was the just-logged QSO an exchange mult?
-        map<string /* field name */, set<string> /* values */ >   new_worked_exchange_mults = statistics.worked_exchange_mults(cur_band);
+        map<string /* field name */, set<string> /* values */ >   new_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
         bool no_exchange_mults_this_qso = true;
 
         for (map<string, set<string> >::const_iterator cit = old_worked_exchange_mults.begin(); cit != old_worked_exchange_mults.end(); ++cit)
@@ -3931,6 +3938,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         }
 
 // what exchange mults came from this qso? there ought to be a better way of doing this
+        ost << "exchange_mults_this_qso = " << boolalpha << !no_exchange_mults_this_qso << noboolalpha << endl;
+
         if (!no_exchange_mults_this_qso)
         { for (const auto& current_exchange_mult : new_worked_exchange_mults)
           { set<string> difference;
@@ -4933,6 +4942,7 @@ const string expand_cw_message(const string& msg)
   return asterisk_replaced;
 }
 
+/// Thread function to simulate keystrokes
 void* keyboard_test(void* vp)
 { XFlush(keyboard.display_p());
 
@@ -5330,7 +5340,7 @@ void* reset_connection(void* vp)
     \return         whether any exchange fields are new mults
 */
 const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
-{ // ost << "Inside calculate_exchange_mults()" << endl;
+{ ost << "Inside calculate_exchange_mults()" << endl;
 
   const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix(), qso.mode());        // exchange_field = name, is_mult
   const vector<received_field> received_exchange = qso.received_exchange();
@@ -5357,6 +5367,8 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
   }
 
   qso.received_exchange(new_received_exchange);
+
+  ost << "leaving calculate_exchange_mults()" << endl;
 
   return rv;
 }
@@ -5715,7 +5727,7 @@ void* start_cluster_thread(void* vp)
 }
 #endif    // 0
 
-/*! \brief update several call-related windows
+/*! \brief          Update several call-related windows
     \param callsign call to use as a basis for the updated windows
 
     Updates the following windows:
@@ -5752,7 +5764,7 @@ void p3_screenshot(void)
   }
 }
 
-/// thread to generate a screenshot of a P3 and store it in a BMP file
+/// Thread function to generate a screenshot of a P3 and store it in a BMP file
 void* p3_screenshot_thread(void* vp)
 { const string image = rig.raw_command("#BMP;", true);
   const string checksum_str = image.substr(image.length() - 2, 2);
@@ -6503,7 +6515,7 @@ void update_mult_value(void)
   }
 }
 
-/*! \brief
+/*! \brief  Write a screenshot to a file
 *
 *   This is intended to be used as a separate thread, so the parameters are passed
 *   in the usual void*
