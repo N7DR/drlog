@@ -41,7 +41,7 @@ enum BAND { BAND_160 = 0,
 
 const unsigned int NUMBER_OF_BANDS = MAX_BAND + 1;                          ///< how many bands does drlog know about?
 const unsigned int N_BANDS = NUMBER_OF_BANDS;                               ///< how many bands does drlog know about?
-const unsigned int ALL_BANDS = N_BANDS;             // static_cast<unsigned int>(MAX_BAND) + 1;     ///< indicator used to mean "all bands"
+const unsigned int ALL_BANDS = N_BANDS;                                     ///< indicator used to mean "all bands"
 
 static std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160",
                                                               "80",
@@ -76,7 +76,7 @@ enum MODE { MODE_CW = 0,
 
 const unsigned int NUMBER_OF_MODES = MAX_MODE + 1;  ///< how many modes does drlog know about?
 const unsigned int N_MODES = NUMBER_OF_MODES;       ///< how many modes does drlog know about?
-const unsigned int ALL_MODES = N_MODES;          // static_cast<unsigned int>(MAX_MODE) + 1;  ///< indicator used to mean "all modes"
+const unsigned int ALL_MODES = N_MODES;             ///< indicator used to mean "all modes"
 
 /// mode names
 static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW",
@@ -107,18 +107,18 @@ public:
 /// default constructor
   frequency(void);
 
-/*! \brief      construct from a double
+/*! \brief      Construct from a double
     \param f    frequency in Hz, kHz or MHz
 */
   explicit frequency(const double f);
 
-/*! \brief      construct from a string
+/*! \brief      Construct from a string
     \param str  frequency in Hz, kHz or MHz
 */
   explicit frequency(const std::string& str)
     { *this = frequency(from_string<double>(str)); }
 
-/*! \brief      construct from a band
+/*! \brief      Construct from a band
     \param b    band
 
     Sets the frequency to the low edge of the band <i>b</i>
@@ -157,14 +157,14 @@ public:
   inline const int rounded_kHz(void) const
     { return static_cast<int>(kHz() + 0.5); }
 
-/*! \brief      return string suitable for use in bandmap
+/*! \brief      Return string suitable for use in bandmap
     \return     string of the frequency in kHz, to one decimal place ([x]xxxx.y)
 
     Sets the frequency to the low edge of the band <i>b</i>
 */
   const std::string display_string(void) const;
 
-/*! \brief      convert to BAND
+/*! \brief      Convert to BAND
     \return     BAND in which the frequency is located
 
     Returns BAND_160 if the frequency is outside all bands
@@ -201,7 +201,7 @@ public:
   inline const bool operator>=(const frequency& f) const
     { return (_hz >= f._hz); }
 
-/// allow archiving
+/// serialize using boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _hz;
@@ -274,7 +274,7 @@ inline const BAND to_BAND(const std::string& str)
 inline const BAND to_BAND(const frequency& f)
   { return to_BAND(f.hz()); }
 
-/*!  \brief         Convert a frequency to a string
+/*!  \brief         Convert a frequency to a printable string
      \param  f      frequency to convert
      \return        comma-separated string of the frequency in Hz
 

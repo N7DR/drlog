@@ -903,9 +903,13 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
     }
 
-// REMAINING COUNTRY MULTS
-      if (starts_with(testline, "REMAINING EXCHANGE MULTS"))
-        _auto_remaining_exchange_mults = (RHS == "AUTO");
+// REMAINING EXCHANGE MULTS
+      if (starts_with(testline, "AUTO REMAINING EXCHANGE MULTS"))
+      { const vector<string> mult_names = remove_peripheral_spaces(split_string(RHS, ","));
+
+        for (const auto& str : mult_names)
+          _auto_remaining_exchange_mults.insert(str);
+      }
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
@@ -1265,7 +1269,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _archive_name("drlog-restart"),                                // name for the archive written when leaving drlog
   _auto_backup(""),                                              // no auto backup directory
   _auto_remaining_country_mults(false),                          // do not add country mults as we detect them
-  _auto_remaining_exchange_mults(false),                         // do not add exchange mults as we detect them
+  _auto_remaining_exchange_mults( { } ),                         // do not add any exchange mults as we detect them
   _auto_screenshot(false),                                       // do not generate horal screenshots
   _bandmap_decay_time_local(60),                                 // stay on bandmap for one hour
   _bandmap_decay_time_cluster(60),                               // stay on bandmap for one hour

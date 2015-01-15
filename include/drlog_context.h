@@ -57,7 +57,7 @@ protected:
   std::string                                  _auto_backup;                    ///< directory for auto backup files
   bool                                         _auto_remaining_callsign_mults;  ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;   ///< do we auto-generate the remaining country mults?
-  bool                                         _auto_remaining_exchange_mults;  ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
+  std::set<std::string>                        _auto_remaining_exchange_mults;  ///< the exchange mults for which we autoi-generate the values
   bool                                         _auto_screenshot;                ///< do we create a screenshot every hour?
 
   unsigned int                                 _bandmap_decay_time_local;           ///< time (in minutes) for an entry to age off the bandmap (local entries)
@@ -251,7 +251,15 @@ public:
   SAFEREAD(auto_backup, _context);                      ///< directory for auto backup files
   SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?
   SAFEREAD(auto_remaining_country_mults, _context);     ///< do we auto-generate the remaining country mults?
-  SAFEREAD(auto_remaining_exchange_mults, _context);    ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
+//  SAFEREAD(auto_remaining_exchange_mults, _context);    ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
+
+  inline const bool auto_remaining_exchange_mults(const std::string& mult_name) const
+    { SAFELOCK(_context);
+
+      return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
+    }
+
+
   SAFEREAD(auto_screenshot, _context);                  ///< do we create a screenshot every hour?
 
   SAFEREAD(bandmap_decay_time_local, _context);         ///< time (in minutes) for an entry to age off the bandmap (local entries)

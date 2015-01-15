@@ -136,20 +136,19 @@ void process_LOG_input(window* wp, const keyboard_event& e);                ///<
 void process_QTC_input(window* wp, const keyboard_event& e);                ///< Process an event in QTC window
 
 // thread functions
-void* auto_backup(void* vp);                                                    ///< Copy a file to a backup directory
-void* auto_screenshot(void* vp);                                                ///< Write a screenshot to a file
-void* display_rig_status(void* vp);                                             ///< Thread function to display status of the rig
-void* display_date_and_time(void* vp);                                          ///< Thread function to display the date and time
-void* get_cluster_info(void* vp);                                               ///< Thread function to obtain data from the cluster
-void* keyboard_test(void* vp);                                                  ///< Thread function to simulate keystrokes
-void* prune_bandmap(void* vp);                                                  ///< Thread function to prune the bandmaps once per minute
-void* process_rbn_info(void* vp);                                               ///< Thread function to process data from the cluster or the RBN
-void* p3_screenshot_thread(void* vp);                                           ///< Thread function to generate a screenshot of a P3 and store it in a BMP file
-void* reset_connection(void* vp);
-void* simulator_thread(void* vp);
-void* spawn_dx_cluster(void*);
-void* spawn_rbn(void*);
-//void* start_cluster_thread(void* vp);
+void* auto_backup(void* vp);                                                ///< Copy a file to a backup directory
+void* auto_screenshot(void* vp);                                            ///< Write a screenshot to a file
+void* display_rig_status(void* vp);                                         ///< Thread function to display status of the rig
+void* display_date_and_time(void* vp);                                      ///< Thread function to display the date and time
+void* get_cluster_info(void* vp);                                           ///< Thread function to obtain data from the cluster
+void* keyboard_test(void* vp);                                              ///< Thread function to simulate keystrokes
+void* prune_bandmap(void* vp);                                              ///< Thread function to prune the bandmaps once per minute
+void* process_rbn_info(void* vp);                                           ///< Thread function to process data from the cluster or the RBN
+void* p3_screenshot_thread(void* vp);                                       ///< Thread function to generate a screenshot of a P3 and store it in a BMP file
+void* reset_connection(void* vp);                                           ///< Thread function to reset the RBN or cluster connection
+void* simulator_thread(void* vp);                                           ///< Thread function to simulate a contest from an extant log
+void* spawn_dx_cluster(void*);                                              ///< Thread function to spawn the cluster
+void* spawn_rbn(void*);                                                     ///< Thread function to spawn the RBN
 
 // functions that include thread safety
 const BAND safe_get_band(void);
@@ -1988,16 +1987,18 @@ void* process_rbn_info(void* vp)
               update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
-              if (context.auto_remaining_exchange_mults())
+//              if (context.auto_remaining_exchange_mults())
               { const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
 
                 for (const auto& exch_mult_name : exch_mults)
-                { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
+                { if (context.auto_remaining_exchange_mults(exch_mult_name))
+                  { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
 //                ost << "guess in drlog = " << guess << ", MULT VALUE = " << MULT_VALUE(exch_mult_name, guess) << endl;
 
                   if (!guess.empty())
                     statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+                  }
                 }
               }
 
@@ -3851,7 +3852,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // is this an exchange mult?
         if (exchange_mults_used)
-          calculate_exchange_mults(qso, rules);  // may modify qso
+        { const bool is_exchange_mult = calculate_exchange_mults(qso, rules);  // may modify qso
+
+          ost << "QSO is " << (is_exchange_mult ? "" : "not ") << " an exchange mult" << endl;
+        }
+
+        ost << "after calculate_exchange_mults; qso = " << qso << endl;
 
 // if callsign mults matter, add more to the qso
         allow_for_callsign_mults(qso);
@@ -3860,9 +3866,20 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band, cur_mode);
 
 // and any exch multipliers
-        ost << "about to add worked exchange mults to statistics" << endl;
+//        ost << "about to add worked exchange mults to statistics" << endl;
 
         map<string /* field name */, set<string> /* values */ >   old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
+
+// calculate number of exchange mults
+        { // ost << "old number of exchange mults = ";
+
+          unsigned int n = 0;
+
+          for (const auto& psss : old_worked_exchange_mults)
+            n += psss.second.size();
+
+          ost << n << endl;
+        }
 
         const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix, qso.mode());
 
@@ -3870,10 +3887,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         { const string value = qso.received_exchange(exch_field.name());
 
           ost << "adding " << exch_field.name() << endl;
+          ost << "  " << exch_field << endl;
+
 //          statistics.add_worked_exchange_mult(exch_field.name(), value, rules.exchange_mults_per_band() ? cur_band : ALL_BANDS);
           statistics.add_worked_exchange_mult(exch_field.name(), value, qso.band(), qso.mode());
 
-          ost << "finished adding exch_field.name()" << endl;
+          ost << "finished adding " << exch_field.name() << endl;
 
         }
 
@@ -3890,6 +3909,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 //          ost<< "  " <<  se[n].first << " = " << se[n].second;
 
         win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
+
+        ost << "log line: " << qso.log_line() << endl;
 
         win_exchange <= WINDOW_CLEAR;
         win_call <= WINDOW_CLEAR;
@@ -3921,9 +3942,21 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // was the just-logged QSO an exchange mult?
         map<string /* field name */, set<string> /* values */ >   new_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
+
+        // calculate number of exchange mults
+                { ost << "new number of exchange mults = ";
+
+                  unsigned int n = 0;
+
+                  for (const auto& psss : new_worked_exchange_mults)
+                    n += psss.second.size();
+
+                  ost << n << endl;
+                }
+
         bool no_exchange_mults_this_qso = true;
 
-        for (map<string, set<string> >::const_iterator cit = old_worked_exchange_mults.begin(); cit != old_worked_exchange_mults.end(); ++cit)
+        for (map<string, set<string> >::const_iterator cit = old_worked_exchange_mults.begin(); cit != old_worked_exchange_mults.end() and no_exchange_mults_this_qso; ++cit)
         { const size_t old_size = (cit->second).size();
           map<string, set<string> >::const_iterator ncit = new_worked_exchange_mults.find(cit->first);
 
@@ -4972,6 +5005,7 @@ void* keyboard_test(void* vp)
   return NULL;
 }
 
+/// Thread function to simulate a contest from an extant log
 void* simulator_thread(void* vp)
 { start_of_thread();
 
@@ -5324,6 +5358,7 @@ void update_rate_window(void)
            < CURSOR_DOWN < CURSOR_START_OF_LINE <= rate_str;
 }
 
+/// Thread function to reset the RBN or cluster connection
 void* reset_connection(void* vp)
 { // no start_of_thread for this one, since it's all asynchronous
   dx_cluster* rbn_p = static_cast<dx_cluster*>(vp);
@@ -5347,16 +5382,18 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 //  const BAND b = qso.band();
   vector<received_field> new_received_exchange;
   bool rv = false;
-  const bool auto_mults = (context.auto_remaining_exchange_mults());
+//  const bool auto_mults = (context.auto_remaining_exchange_mults());
 
   for (auto field : received_exchange)
-  { if (field.is_possible_mult())                              // see if it's really a mult
-    { if (auto_mults)
+  { ost << "received exchange field = " << field << endl;
+
+    if (field.is_possible_mult())                              // see if it's really a mult
+    { if (context.auto_remaining_exchange_mults(field.name()))
         statistics.add_known_exchange_mult(field.name(), field.value());
 
       const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), qso.band(), qso.mode());
 
-// ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
+ ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 
       field.is_mult(is_needed_exchange_mult);
       if (is_needed_exchange_mult)
@@ -5811,6 +5848,7 @@ void* p3_screenshot_thread(void* vp)
   pthread_exit(nullptr);
 }
 
+/// Thread function to spawn the cluster
 void* spawn_dx_cluster(void* vp)
 { cluster_p = new dx_cluster(context, POSTING_CLUSTER);
 
@@ -5829,10 +5867,11 @@ void* spawn_dx_cluster(void* vp)
   }
 }
 
+/// Thread function to spawn the RBN
 void* spawn_rbn(void* vp)
-{ ost << "about to create RBN" << endl;
+{ //ost << "about to create RBN" << endl;
   rbn_p = new dx_cluster(context, POSTING_RBN);
-  ost << "RBN created" << endl;
+  //ost << "RBN created" << endl;
 
   static cluster_info rbn_info_for_thread(&win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps);
   static pthread_t   thread_id_2;

@@ -195,39 +195,37 @@ inline std::ostream& operator<<(std::ostream& ost, const nm& type)  \
 }
 
 /// tuple class (3)
-#define WRAPPER_3_NC(nm, a0, a1, b0, b1, c0, c1)                   \
-                                                                          \
-class nm : public std::tuple < a0, b0, c0 >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X, b0 Y, c0 Z)                                                       \
-    { std::get<0>(*this) = X;                                                    \
-      std::get<1>(*this) = Y;                                                    \
-      std::get<2>(*this) = Z;                                                    \
-    }                                                                     \
-                                                                          \
-  inline a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(a0 var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-  inline b0 b1(void) const                                                    \
-    { return std::get<1>(*this); }                              \
-                                                                          \
-  inline void b1(b0 var)                                          \
-    { std::get<1>(*this) = var; }                               \
-                                                                          \
-  inline c0 c1(void) const                                                    \
-    { return std::get<2>(*this); }                              \
-                                                                          \
-  inline void c1(c0 var)                                          \
-    { std::get<2>(*this) = var; }                               \
-                                                                          \
-                                                                          \
+#define WRAPPER_3_NC(nm, a0, a1, b0, b1, c0, c1)        \
+                                                        \
+class nm : public std::tuple < a0, b0, c0 >             \
+{                                                       \
+protected:                                              \
+                                                        \
+public:                                                 \
+                                                        \
+  nm( a0 X, b0 Y, c0 Z)                                 \
+    { std::get<0>(*this) = X;                           \
+      std::get<1>(*this) = Y;                           \
+      std::get<2>(*this) = Z;                           \
+    }                                                   \
+                                                        \
+  inline a0 a1(void) const                              \
+    { return std::get<0>(*this); }                      \
+                                                        \
+  inline void a1(a0 var)                                \
+    { std::get<0>(*this) = var; }                       \
+                                                        \
+  inline b0 b1(void) const                              \
+    { return std::get<1>(*this); }                      \
+                                                        \
+  inline void b1(b0 var)                                \
+    { std::get<1>(*this) = var; }                       \
+                                                        \
+  inline c0 c1(void) const                              \
+    { return std::get<2>(*this); }                      \
+                                                        \
+  inline void c1(c0 var)                                \
+    { std::get<2>(*this) = var; }                       \
 }
 
 // tuple class (3)
@@ -369,6 +367,16 @@ template<typename Archive>                                   \
          & std::get<3>(*this);                                                  \
     }                                                           \
                                                                           \
+}; \
+                                                       \
+inline std::ostream& operator<<(std::ostream& ost, const nm& type)  \
+{ ost << #nm << ": " << std::endl                                   \
+      << #a1 << ": " << type.a1() << std::endl                      \
+      << #b1 << ": " << type.b1() << std::endl                      \
+      << #c1 << ": " << type.c1() << std::endl                      \
+      << #d1 << ": " << type.d1();                                  \
+                                                                    \
+  return ost;                                                       \
 }
 
 /// tuple class (5)

@@ -204,7 +204,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     { const string name_upper = to_upper(name.substr(9));
       const bool is_possible_mult = rules.is_exchange_mult(name_upper);
 
-      if (is_possible_mult and context.auto_remaining_exchange_mults())
+      if (is_possible_mult and context.auto_remaining_exchange_mults(name_upper))
         statistics.add_known_exchange_mult(name_upper, value);
 
       const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band, _mode) : false;
@@ -682,9 +682,9 @@ const string QSO::log_line(void)
   rv += pad_string(freq(), 8);
   rv += pad_string(pad_string(callsign(), CALL_FIELD_LENGTH, PAD_RIGHT), CALL_FIELD_LENGTH + 1);
 
-  ost << "sent exchange: size = " << _sent_exchange.size() << endl;
-  for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
-    ost<< "  " <<  _sent_exchange[n].first << " = " << _sent_exchange[n].second;
+//  ost << "sent exchange: size = " << _sent_exchange.size() << endl;
+//  for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
+//    ost << "  " <<  _sent_exchange[n].first << " = " << _sent_exchange[n].second;
 
   FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += " " + se.second; });
 
@@ -767,6 +767,8 @@ const string QSO::log_line(void)
      if (QSO_MULT_WIDTH)
        field_width = QSO_MULT_WIDTH;
 
+     ost << "field " << field.name() << " IS " << (!field.is_mult() ? "NOT " : "") << " a mult" << endl;
+
      rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
    }
 
@@ -797,8 +799,8 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q)
       << ", Date: " << q.date()
       << ", UTC: " << q.utc()
       << ", Call: " << q.callsign()
-      << ", Mode: " << (int)(q.mode())
-      << ", Band: " << (int)(q.band())
+      << ", Mode: " << MODE_NAME[q.mode()]
+      << ", Band: " << BAND_NAME[q.band()]
       << ", Freq: " << q.freq()
       << ", Sent: ";
       
@@ -815,11 +817,8 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q)
 //    ost << received_exchange[n].name() << " " << received_exchange[n].value() << " ";
 
     for (const auto& received_exchange_field : received_exchange)
-      ost << received_exchange_field.name() << " " << received_exchange_field.value() << " ";
-
-//    const map<string, string> received_exchange = q.received_exchange();
-//    for (map<string, string>::const_iterator cit = received_exchange.begin(); cit != received_exchange.end(); ++cit)
-//      ost << (cit->first) << " " << (cit->second) << " ";
+//      ost << received_exchange_field.name() << " " << received_exchange_field.value() << " ";
+      ost << received_exchange_field << "  ";
 
       
 //  ost << ", Rcvd: " << q.received_exchange()
