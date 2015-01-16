@@ -31,7 +31,7 @@ pt_mutex statistics_mutex;      ///< mutex for the running_statistics object
 
 // -----------  running_statistics  ----------------
 
-/*! \brief  add a callsign mult name, value and band to those worked
+/*! \brief              Add a callsign mult name, value and band to those worked
     \param  mult_name   name of callsign mult
     \param  mult_value  value of callsign mult
     \param  band_nr     band on which callsign mult was worked
@@ -231,7 +231,7 @@ const bool running_statistics::add_known_country_mult(const string& str)
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
 { SAFELOCK(statistics);
 
-  ost << "inside running_statistics::add_qso()" << endl;
+//  ost << "inside running_statistics::add_qso()" << endl;
   
   const BAND& b = qso.band();
   const unsigned int band_nr = static_cast<int>(b);
@@ -242,7 +242,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   auto& pb = _n_qsos[mode_nr];
   pb[band_nr]++;
   
-  ost << "in add_qso(); pb[band_nr] = " << pb[band_nr] << endl;
+//  ost << "in add_qso(); pb[band_nr] = " << pb[band_nr] << endl;
 
 // multipliers
 
@@ -257,7 +257,6 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 //    ost << "callsign = " << qso.callsign() << "; prefix = " << qso.prefix() << endl;
 //    ost << "initial m = " << m << endl;
 
-//    m.unconditional_add_worked(qso.prefix(), band_nr);
     m.unconditional_add_worked(qso.prefix(), static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
 //    ost << "middle m = " << m << endl;
@@ -290,9 +289,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 //    ost << "mult value: " << mv << endl;
 
     if (!value.empty())
-    { //m.unconditional_add_worked(mv, band_nr);
       mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
-    }
 
 //    ost << "exchange multiplier object: " << m << endl;
   }
@@ -300,9 +297,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   const bool is_dupe = log.is_dupe(qso, rules);
 
   if (is_dupe)
-  { //_n_dupes[band_nr]++;
-
-    auto& pb = _n_dupes[mode_nr];
+  { auto& pb = _n_dupes[mode_nr];
     pb[band_nr]++;
   }
   else    // not a dupe; add qso points; this may not be a very clean algorithm; I should be able to do better
@@ -344,15 +339,12 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
 //  ost << "in add_known_exchange_mult; name = " << name << ", value = " << value << endl;
 //  ost << "size of _exchange_multipliers = " << _exchange_multipliers.size() << endl;
 
-//  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
   for (auto& psm : _exchange_multipliers)
-  { //pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
-
-    if (psm.first == name)
+  { if (psm.first == name)
     { const bool added = psm.second.add_known(MULT_VALUE(name, value));
 
       if (added)
-      { ost << "added known exchange mult: " << name << ", value = " << value << ", mult value = " << MULT_VALUE(name, value) << endl;
+      { // ost << "added known exchange mult: " << name << ", value = " << value << ", mult value = " << MULT_VALUE(name, value) << endl;
         return true;
       }
     }
@@ -368,11 +360,8 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
 const set<string> running_statistics::known_exchange_mults(const string& name)
 { SAFELOCK(statistics);
 
-//  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
   for (const auto& psm : _exchange_multipliers)
-  { //pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
-
-    if (psm.first == name)
+  { if (psm.first == name)
       return psm.second.known();
   }
 
@@ -1163,9 +1152,95 @@ const bool call_history::worked(const std::string& s, const BAND b , const MODE 
   return (scit != sbm.end());
 }
 
+const bool call_history::worked(const string& s, const BAND b)
+{ SAFELOCK(_history);
+
+  for (const auto& pssbm : _history)
+  { const string& call = pssbm.first;
+
+    if (s == call)
+    { for (const auto& bm : pssbm.second)
+      { if (bm.first == b)
+          return true;
+      }
+    }
+  }
+
+  return false;
+//return (worked(s, b, MODE_CW) or worked(s, b, MODE_SSB));
+}
+
+const bool call_history::worked(const string& s, const MODE m)
+{ SAFELOCK(_history);
+
+  for (const auto& pssbm : _history)
+  { const string& call = pssbm.first;
+
+    if (s == call)
+    { for (const auto& bm : pssbm.second)
+      { if (bm.second == m)
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 const bool call_history::worked(const string& s)
 { SAFELOCK(_history);
   return (_history.find(s) != _history.end());
+}
+
+const bool call_history::worked_on_another_band(const std::string& s, const BAND b)
+{ SAFELOCK(_history);
+
+  for (const auto& pssbm : _history)
+  { const string& call = pssbm.first;
+
+    if (s == call)
+    { for (const auto& bm : pssbm.second)
+      { if (bm.first != b)
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+const bool call_history::worked_on_another_mode(const string& s, const MODE m)
+{ SAFELOCK(_history);
+
+  for (const auto& pssbm : _history)
+  { const string& call = pssbm.first;
+
+    if (s == call)
+    { for (const auto& bm : pssbm.second)
+      { if (bm.second != m)
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+const bool call_history::worked_on_another_band_and_mode(const std::string& s, const BAND b, const MODE m)
+{ SAFELOCK(_history);
+
+  for (const auto& pssbm : _history)
+  { const string& call = pssbm.first;
+
+    if (s == call)
+    { for (const auto& bm : pssbm.second)
+      { if ( (bm.first != b) and (bm.second != m) )
+          return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 void call_history::clear(void)

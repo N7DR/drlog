@@ -151,17 +151,16 @@ void* spawn_dx_cluster(void*);                                              ///<
 void* spawn_rbn(void*);                                                     ///< Thread function to spawn the RBN
 
 // functions that include thread safety
-const BAND safe_get_band(void);
-void safe_set_band(const BAND b);
-const MODE safe_get_mode(void);
-void safe_set_mode(const MODE m);
+const BAND safe_get_band(void);                             ///< get value of <i>current_band</i>
+void safe_set_band(const BAND b);                           ///< set value of <i>current_band</i>
+const MODE safe_get_mode(void);                             ///< get value of <i>current_mode</i>
+void safe_set_mode(const MODE m);                           ///< set value of <i>current_mode</i>
 
 // more forward declarations (dependent on earlier ones)
-const bool is_needed_qso(const string& callsign, const BAND b = safe_get_band());
+const bool is_needed_qso(const string& callsign, const BAND b, const MODE m);
 
-void update_remaining_callsign_mults_window(running_statistics&,
-                                            const string& mult_name = string(),
-                                            const BAND b = safe_get_band());
+// TODO: pass mode as parameter
+void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name = string(), const BAND b = safe_get_band());
 
 inline void update_remaining_callsign_mults_window(running_statistics& statistics,
                                                    const BAND b)
@@ -1974,7 +1973,7 @@ void* process_rbn_info(void* vp)
                 be.posters( { poster } );
 
 // do we still need this guy?
-              const bool is_needed = is_needed_qso(dx_callsign, dx_band);
+              const bool is_needed = is_needed_qso(dx_callsign, dx_band, be.mode());
 
               be.is_needed(is_needed);
 
@@ -2172,6 +2171,8 @@ void* prune_bandmap(void* vp)
     CTRL-CURSOR DOWN -- possibly replace call with fuzzy info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
     ALT-KP+ -- increment octothorpe
     ALT-KP- -- decrement octothorpe
+    CTRL-KP+ -- increment qso number
+    CTRL-KP- -- decrement qso number
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2863,6 +2864,21 @@ ost << "processing command: " << command << endl;
 
             if (exf.name() == "HADXC+QTHX[HA]")
             {  ost << "Attempting to handle HADXC+QTHX[HA] exchange field" << endl;
+
+              string guess = exchange_db.guess_value(contents, "HADXC");
+
+              ost << "HADXC guess = " << guess << endl;
+
+              if (guess.empty())
+                guess = exchange_db.guess_value(contents, "QTHX[HA]");
+
+              ost << "best guess = " << guess << endl;
+
+              if (!guess.empty())
+              { exchange_str += guess;
+                processed_field = true;
+              }
+
             }
 
           }
@@ -2887,11 +2903,14 @@ ost << "processing command: " << command << endl;
 
           if (!processed_field)
           { if (!(variable_exchange_fields < exf.name()))
-            { //ost << "about to guess" << endl;
+            { ost << "!processed and !variable exchange field: " << exf.name() << endl;
+
+
+               ost << "about to guess" << endl;
 
               const string guess = rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name()));
 
-              //ost << "guess is: " << guess << endl;
+              ost << "guess is: " << guess << endl;
 
               if (!guess.empty())
               { if ((exf.name() == "RDA") and (guess.length() == 2))  // RDA guess might just have first two characters
@@ -3089,7 +3108,7 @@ ost << "processing command: " << command << endl;
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
 
 // do we still need this guy?
-        const bool is_needed = is_needed_qso(contents, be.band());
+        const bool is_needed = is_needed_qso(contents, cur_band, safe_get_mode());
 
         if (!is_needed /* worked_this_band_mode */)
         { const cursor posn = win.cursor_position();
@@ -4569,28 +4588,30 @@ ost << "Adding new QSO(s)" << endl;
 }
 
 // functions that include thread safety
+/// get value of <i>current_band</i>
 const BAND safe_get_band(void)
 { SAFELOCK(current_band);
 
   return current_band;
 }
 
+/// set value of <i>current_band</i>
 void safe_set_band(const BAND b)
 { SAFELOCK(current_band);
 
   current_band = b;
 }
 
+/// get value of <i>current_mode</i>
 const MODE safe_get_mode(void)
 { SAFELOCK(current_mode);
 
   return current_mode;
 }
 
+/// set value of <i>current_mode</i>
 void safe_set_mode(const MODE m)
 { SAFELOCK(current_mode);
-
-//  ost << "setting mode to " << m << " from " << current_mode << endl;
 
   current_mode = m;
 }
@@ -5602,15 +5623,47 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
   return new_callsign;
 }
 
-const bool is_needed_qso(const string& callsign, const BAND b)
+const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
 { //const BAND b = safe_get_band();
-  const MODE m = safe_get_mode();
-  const bool multiple_band_qsos = context.qso_multiple_bands();    // ok to work on multiple bands?
-  const bool worked_this_band_mode = q_history.worked(callsign, b, m);
+  //const MODE m = safe_get_mode();
+//  const bool multiple_band_qsos = rules.work_if_different_band();    // ok to work on multiple bands?
+//  const bool multiple_mode_qsos = rules.work_if_different_mode();
   const bool worked_at_all = q_history.worked(callsign);
-  const bool is_needed = (!worked_this_band_mode and multiple_band_qsos) or (!worked_at_all and !multiple_band_qsos);
 
-  return is_needed;
+  if (!worked_at_all)
+    return true;
+
+  const bool worked_this_band_mode = q_history.worked(callsign, b, m);
+
+  if (worked_this_band_mode)
+    return false;
+
+// worked on same band, different mode
+  if (q_history.worked(callsign, b))
+    return rules.work_if_different_mode();
+
+// different band, same mode
+  if (q_history.worked(callsign, m))
+    return rules.work_if_different_band();
+
+// different band, different mode
+  if (q_history.worked_on_another_band_and_mode(callsign, b, m))
+    return ( rules.work_if_different_band() and rules.work_if_different_mode() );
+
+  ost << "ERROR in is_needed_qso for " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << endl;
+  return false;    // should never get here
+//  if (rules.work_if_different_band() and q_history.worked(callsign, m))
+//    return false;
+
+//  if (rules.work_if_different_mode() and q_history.worked(callsign, b))
+//    return false;
+
+
+
+
+//  const bool is_needed = (!worked_this_band_mode and multiple_band_qsos) or (!worked_at_all and !multiple_band_qsos);
+
+//  return is_needed;
 }
 
 /*! \brief      Control RIT using the SHIFT keys

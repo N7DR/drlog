@@ -489,7 +489,7 @@ public:
       _score_modes = _original_score_modes;
     }
 
-/*! \brief  Define a new set of bands to be scored
+/*! \brief              Define a new set of bands to be scored
     \param  new_bands   the set of bands to be scored
 
     Does nothing if <i>new_bands</i> is empty
@@ -511,22 +511,22 @@ public:
 */
   const bool is_exchange_mult(const std::string& name) const;
 
-/*! \brief  All the canonical values for a particular exchange field
-    \param  field_name   name of an exchange field (received)
+/*! \brief              All the canonical values for a particular exchange field
+    \param  field_name  name of an exchange field (received)
 
     Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
 */
   const std::vector<std::string> exch_canonical_values(const std::string& field_name) const;
 
-/*! \brief  The permitted values for a particular exchange field
-    \param  field_name   name of an exchange field (received)
+/*! \brief              The permitted values for a particular exchange field
+    \param  field_name  name of an exchange field (received)
 
     Returns empty set if the field can take any value
 */
   const std::set<std::string> exch_permitted_values(const std::string& field_name) const;
 
-/*! \brief  Is a particular exchange field limited to only permitted values?
-    \param  field_name   name of an exchange field (received)
+/*! \brief              Is a particular exchange field limited to only permitted values?
+    \param  field_name  name of an exchange field (received)
 */
   inline const bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
@@ -534,9 +534,9 @@ public:
       return (_permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend());
     }
 
-/*! \brief  A canonical value
-    \param  field_name   name of an exchange field (received)
-    \param  acual_value  received value of the field
+/*! \brief                  A canonical value
+    \param  field_name      name of an exchange field (received)
+    \param  acual_value     received value of the field
 
     Returns the received value if there are no canonical values
 */

@@ -33,7 +33,7 @@ extern message_stream ost;                  ///< for debugging, info
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line
-    \return         The next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
+    \return         the next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
 
     Correctly handles extraneous spaces in <i>str</i>.
     <i>str</i> looks like:
@@ -227,7 +227,7 @@ void QSO::populate_from_log_line(const string& str)
 // separate the line into fields
   const vector<string> vec = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
 
-  if (vec.size() != _log_line_fields.size())                        // output debuggig info
+  if (vec.size() != _log_line_fields.size())                        // output debugging info
   { ost << "populate_from_log_line parameter: " << str << endl;
     ost << "squashed: " << squash(str, ' ') << endl;
 
@@ -238,7 +238,7 @@ void QSO::populate_from_log_line(const string& str)
       ost << "vec[" << n << "] = " << vec[n] << endl;
 
     for (size_t n = 0; n < _log_line_fields.size(); ++n)
-          ost << "_log_line_fields[" << n << "] = " << _log_line_fields[n] << endl;
+      ost << "_log_line_fields[" << n << "] = " << _log_line_fields[n] << endl;
   }
 
   size_t sent_index = 0;
@@ -425,10 +425,11 @@ mo is mode:
     { switch (_mode)
       { case MODE_CW:
           value = "CW";
-    break;
-  case MODE_SSB:
-    value = "PH";
-    break;
+         break;
+
+        case MODE_SSB:
+          value = "PH";
+          break;
 //  case MODE_DIGI:
 //    value = "RY";
 //    break;
@@ -456,16 +457,12 @@ specification tells us otherwise, that's what we do.
 // TEXCH-xxx
     if (name.substr(0, 6) == "TEXCH-")
     { const string field_name = name.substr(6);
-
-      //ost << "T field name = " << field_name << endl;
     
       if (contains(field_name, "+"))
       { const vector<string> vec = remove_peripheral_spaces(split_string(field_name, "+"));
 
         for (const auto& name : vec)
-        { //ost << "name = " << name << endl;
-
-          for (const auto& pss : _sent_exchange)
+        { for (const auto& pss : _sent_exchange)
             if (pss.first == name)
               value = pss.second;
         }
@@ -481,14 +478,14 @@ specification tells us otherwise, that's what we do.
     if (name.substr(0, 6) == "REXCH-")
     { const string field_name = substring(name, 6);
     
-      ost << "R field name = " << field_name << endl;
+//      ost << "R field name = " << field_name << endl;
 
       if (contains(field_name, "+"))
       { const vector<string> vec = remove_peripheral_spaces(split_string(field_name, "+"));
 
         for (const auto& name : vec)
-        { ost << "name = " << name << endl;
-          ost << "received_exchange(name) = " << received_exchange(name) << endl;
+        { //ost << "name = " << name << endl;
+          //ost << "received_exchange(name) = " << received_exchange(name) << endl;
 
           if (!received_exchange(name).empty())
             value = received_exchange(name);
@@ -625,11 +622,11 @@ const bool QSO::exchange_match(const string& rule_to_match) const
 
 }
 
-/*!     \brief  Return a single field from the received exchange
-        \param  field_name  The name of the field
-        \return The value of <i>field_name</i> in the received exchange
+/*! \brief              Return a single field from the received exchange
+    \param  field_name  the name of the field
+    \return             the value of <i>field_name</i> in the received exchange
 
-        Returns the empty string if <i>field_name</i> is not found in the exchange
+    Returns the empty string if <i>field_name</i> is not found in the exchange
  */
 const string QSO::received_exchange(const string& field_name) const
 { for (const auto& field : _received_exchange)
@@ -640,12 +637,12 @@ const string QSO::received_exchange(const string& field_name) const
   return string();
 }
 
-/*!     \brief  Return a single field from the sent exchange
-        \param  field_name  The name of the field
-        \return The value of <i>field_name</i> in the sent exchange
+/*! \brief              Return a single field from the sent exchange
+    \param  field_name  the name of the field
+    \return             the value of <i>field_name</i> in the sent exchange
 
-        Returns the empty string if <i>field_name</i> is not found in the exchange
- */
+    Returns the empty string if <i>field_name</i> is not found in the exchange
+*/
 const string QSO::sent_exchange(const string& field_name) const
 { for (const auto& field : _sent_exchange)
   { if (field.first == field_name)
@@ -655,11 +652,11 @@ const string QSO::sent_exchange(const string& field_name) const
   return string();
 }
 
-/*!     \brief  Does the sent exchange include a particular field?
-        \param  field_name  The name of the field
-        \return Whether <i>field_name</i> is present in the sent exchange
- */
-const bool QSO::sent_exchange_includes(const std::string& field_name)
+/*! \brief              Does the sent exchange include a particular field?
+    \param  field_name  the name of the field
+    \return             whether <i>field_name</i> is present in the sent exchange
+*/
+const bool QSO::sent_exchange_includes(const string& field_name)
 { for (const auto& field : _sent_exchange)
   { if (field.first == field_name)
       return true;

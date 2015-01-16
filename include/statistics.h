@@ -284,10 +284,20 @@ public:
 
   const bool worked(const std::string& s, const BAND b, const MODE m);
 
-  inline const bool worked(const std::string& s, const BAND b)
-    { return (worked(s, b, MODE_CW) or worked(s, b, MODE_SSB)); }
+//  inline const bool worked(const std::string& s, const BAND b)
+//    { return (worked(s, b, MODE_CW) or worked(s, b, MODE_SSB)); }
+
+  const bool worked(const std::string& s, const BAND b);
+
+  const bool worked(const std::string& s, const MODE m);
 
   const bool worked(const std::string& s);
+
+  const bool worked_on_another_band(const std::string& s, const BAND b);
+
+  const bool worked_on_another_mode(const std::string& s, const MODE m);
+
+  const bool worked_on_another_band_and_mode(const std::string& s, const BAND b, const MODE m);
 
   void rebuild(const logbook& logbk);
 

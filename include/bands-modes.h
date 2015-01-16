@@ -159,8 +159,6 @@ public:
 
 /*! \brief      Return string suitable for use in bandmap
     \return     string of the frequency in kHz, to one decimal place ([x]xxxx.y)
-
-    Sets the frequency to the low edge of the band <i>b</i>
 */
   const std::string display_string(void) const;
 
