@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 90 2015-01-10 17:10:56Z  $
+// $Id: statistics.cpp 91 2015-01-17 18:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -799,16 +799,16 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
 }
 
 /// worked callsign mults for a particular band
-const set<string> running_statistics::worked_callsign_mults(const string& mult_name, const BAND b)
+const set<string> running_statistics::worked_callsign_mults(const string& mult_name, const BAND b, const MODE m)
 { SAFELOCK(statistics);
 
   if (mult_name == string() and _callsign_multipliers.size() == 1)
-    return _callsign_multipliers.cbegin()->second.worked(b);
+    return _callsign_multipliers.cbegin()->second.worked(b, m);
 
   const auto& cit = _callsign_multipliers.find(mult_name);
 
   if (cit != _callsign_multipliers.cend())
-    return cit->second.worked(b);
+    return cit->second.worked(b, m);
 
   return set<string>();
 }

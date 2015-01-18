@@ -1,4 +1,4 @@
-// $Id: rules.cpp 90 2015-01-10 17:10:56Z  $
+// $Id: rules.cpp 91 2015-01-17 18:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -224,11 +224,11 @@ points_structure::points_structure(void) :
         strings in libstdc++.
 */
 
-/*!     \brief              Parse and incorporate the "QTHX[xx] = " lines from context
-        \param  context     drlog context
-        \param  location_db location database
+/*! \brief              Parse and incorporate the "QTHX[xx] = " lines from context
+    \param  context     drlog context
+    \param  location_db location database
 
-        Incorporates the parsed information into _exch_values
+    Incorporates the parsed information into _exch_values
 */
 void contest_rules::_parse_context_qthx(const drlog_context& context, location_database& location_db)
 { const auto& context_qthx = context.qthx();
@@ -263,11 +263,11 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
   }
 }
 
-/*!     \brief              Private function used to obtain all the understood values for a particular exchange field
-        \param  field_name  name of the field for which the understood values are required
-        \return             set of all the legal values for the field <i>field_name</i>
+/*! \brief              Private function used to obtain all the understood values for a particular exchange field
+    \param  field_name  name of the field for which the understood values are required
+    \return             set of all the legal values for the field <i>field_name</i>
 
-        Uses the variable <i>_exch_values</i> to obtain the returned value
+    Uses the variable <i>_exch_values</i> to obtain the returned value
 */
 const set<string> contest_rules::_all_exchange_values(const string& field_name) const
 { SAFELOCK(rules);
@@ -277,10 +277,10 @@ const set<string> contest_rules::_all_exchange_values(const string& field_name) 
   return ( (cit == _exch_values.cend()) ? set<string>() : cit->all_values() );
 }
 
-/*!     \brief                      Parse exchange line from context
-        \param  exchange_fields     container of fields taken from line in configuration file
-        \param  exchange_mults_vec  container of fields that are mults
-        \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
+/*! \brief                      Parse exchange line from context
+    \param  exchange_fields     container of fields taken from line in configuration file
+    \param  exchange_mults_vec  container of fields that are mults
+    \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
 */
 const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchange_fields , const vector<string>& exchange_mults_vec) const
 { vector<exchange_field> rv;
@@ -343,14 +343,25 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
   return rv;
 }
 
-/*!     \brief              Parse the "exchange = " and all the "exchange [xx] = " lines from context
-        \param  context     drlog context
-        \return             name/mult/optional/choice status for exchange fields
+/*! \brief              Parse the "exchange = " and all the "exchange [xx] = " lines from context
+    \param  context     drlog context
+    \return             name/mult/optional/choice status for exchange fields
 
-        Puts correct values in _received_exchange
+    Puts correct values in _received_exchange
 */
 void contest_rules::_parse_context_exchange(const drlog_context& context)
 {
+//  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
+
+//  const auto& per_country_exchanges = context.exchange_per_country();
+
+//  for (const auto& pce : per_country_exchanges)
+//  { const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
+//
+//    _per_country_exchange_fields.insert( { pce.first, set<string>(vs.cbegin(), vs.cend()) } );
+//  }
+
+
 // generate vector of all permitted exchange fields
   map<string, vector<string>> permitted_exchange_fields;  // use a map so that each value is inserted only once
 
@@ -359,12 +370,30 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   for (const auto& pce : per_country_exchanges)
   { const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
 
-    permitted_exchange_fields.insert( { pce.first, vs } );
+    permitted_exchange_fields.insert( { pce.first, vs } );   // unexpanded choice
+//    _per_country_exchange_fields.insert( { pce.first, set<string>(vs.cbegin(), vs.cend()) } );
   }
 
-  ost << "in _parse_context_exchange()" << endl;
-  ost << "permitted_exchange_fields size = " << permitted_exchange_fields.size() << endl;
+  for (const auto& pce : per_country_exchanges)
+  { const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
+    set<string> ss;
 
+    for (auto str : vs)
+    { if (begins_with(str, "CHOICE:"))
+        str = substring(str, 7);
+
+      const vector<string> expanded_choice = remove_peripheral_spaces(split_string(str, "/"));
+
+      for (const auto& s : expanded_choice)
+        ss.insert(s);
+    }
+
+    _per_country_exchange_fields.insert( { pce.first, ss } );
+  }
+
+//  ost << "in _parse_context_exchange()" << endl;
+//  ost << "permitted_exchange_fields size = " << permitted_exchange_fields.size() << endl;
+#if 0
   for (const auto& pmsvs : permitted_exchange_fields)
   { ost << "  prefix = " << pmsvs.first << endl;
     const auto& vs = pmsvs.second;
@@ -374,6 +403,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
     ost << endl;
   }
+#endif
 
 // add the ordinary exchange to the permitted exchange fields
   const vector<string> exchange_vec = remove_peripheral_spaces(split_string(context.exchange(), ","));
@@ -382,12 +412,11 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   const vector<string> exchange_mults_vec = remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
   map<string, vector<exchange_field>> single_mode_rv_rst;
   map<string, vector<exchange_field>> single_mode_rv_rs;
-//  vector<exchange_field> vef_rst;
-//  vector<exchange_field> vef_rs;
 
-  ost << "about to run through permitted_exchange_fields" << endl;
-  ost << "permitted_exchange_fields size = " << permitted_exchange_fields.size() << endl;
+//  ost << "about to run through permitted_exchange_fields" << endl;
+//  ost << "permitted_exchange_fields size = " << permitted_exchange_fields.size() << endl;
 
+#if 0
   for (const auto& pmsvs : permitted_exchange_fields)
   { ost << "  prefix = " << pmsvs.first << endl;
     const auto& vs = pmsvs.second;
@@ -397,13 +426,13 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
     ost << endl;
   }
+#endif
 
   for (const auto& mpef : permitted_exchange_fields)
   { const vector<string>& vs = mpef.second;
     vector<exchange_field> vef = _inner_parse(vs, exchange_mults_vec);
     vector<exchange_field> vef_rst;
     vector<exchange_field> vef_rs;
-
 
 // adjust RST/RS to match mode; ideally we would have done this later, when
 // it would be far simpler to iterate through the map, changing values, but
@@ -430,9 +459,9 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     single_mode_rv_rs.insert( {  mpef.first, vef_rs } );
   }
 
-  ost << "single_mode_rv_rst: " << endl;
-//  map<string, vector<exchange_field>>
+//  ost << "single_mode_rv_rst: " << endl;
 
+#if 0
   for (const auto& psvef : single_mode_rv_rst)
   { ost << "prefix = " << psvef.first << endl;
 
@@ -441,11 +470,12 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
     ost << endl;
   }
+#endif
 
+//  ost << "about to insert into _received_exchange" << endl;
+//  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
 
-  ost << "about to insert into _received_exchange" << endl;
-  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
-
+#if 0
   for (const auto& pMmsvef : _received_exchange)
   { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
 
@@ -460,13 +490,15 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
       ost << endl;
     }
   }
+#endif
 
   for (const auto& m : _permitted_modes)
     _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
 
-  ost << "leaving _parse_context_exchange" << endl;
-  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
+//  ost << "leaving _parse_context_exchange" << endl;
+//  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
 
+#if 0
   for (const auto& pMmsvef : _received_exchange)
   { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
 
@@ -481,14 +513,15 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
       ost << endl;
     }
   }
+#endif
 
 }
 
-/*!     \brief              Initialize an object that was created from the default constructor
-        \param  context     drlog context
-        \param  location_db location database
+/*! \brief              Initialize an object that was created from the default constructor
+    \param  context     drlog context
+    \param  location_db location database
 
-        After calling this function, the object is ready for use
+    After calling this function, the object is ready for use
 */
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
 {
@@ -1331,6 +1364,47 @@ const bool contest_rules::sent_exchange_includes(const std::string& str, const M
   { ost << "ERROR: mode " << m << " is not a key in contest_rules::_sent_exchange_names" << endl;
     return false;
   }
+}
+
+const bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
+{  SAFELOCK(rules);
+
+//  ost << "in contest_rules::is_exchange_field_used_for_country(): field_name = " << field_name << ", prefix = " << canonical_prefix << endl;
+
+//     std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
+//  if (find(_exchange_field_eft.cbegin(), _exchange_field_eft.cend(), canonical_prefix) == _exchange_field_eft.cend())
+//    return false;    // not a known field name
+//   for (const auto& tmp : _exchange_field_eft)
+//     ost << "exchange_field_eft name = " << tmp.first << endl;
+
+    if (_exchange_field_eft.find(field_name)  == _exchange_field_eft.cend())
+    { //ost << "could not find field name in _exchange_field_eft; returning false" << endl;
+      return false;    // not a known field name
+    }
+
+
+// if a field appears in the per-country rules, are we in the right country?
+//    std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
+    bool is_a_per_country_field = false;
+
+    for (const auto& ssets : _per_country_exchange_fields)
+    { //ost << "ssets.first = " << ssets.first << endl;
+
+      if (ssets.second < field_name)
+        is_a_per_country_field = true;
+
+      if (ssets.first == canonical_prefix)
+      { //for (const auto& str : ssets.second)
+        //  ost << "set member = " << str << endl;
+
+        return (ssets.second < field_name);
+      }
+    }
+
+    if (is_a_per_country_field)
+      return false;
+
+    return true;  // a known field, and this is not a special country
 }
 
 // The intention here is to follow the WPX definition. It would be

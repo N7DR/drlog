@@ -1,4 +1,4 @@
-// $Id: rules.h 90 2015-01-10 17:10:56Z  $
+// $Id: rules.h 91 2015-01-17 18:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -318,6 +318,8 @@ protected:
 
   std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
+  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
+
 // copied from context, so that we can score correctly without loading context
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score
   std::set<BAND>                               _original_score_bands;   ///< bands that were originally used to calculate score (from the configuration file)
@@ -606,6 +608,8 @@ public:
 
   inline const std::set<BAND> permitted_bands_set(void) const
     { return std::set<BAND>(_permitted_bands.cbegin(), _permitted_bands.cend() ); }
+
+  const bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
 
 /// read from and write to disk
   template<typename Archive>

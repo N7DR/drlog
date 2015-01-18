@@ -1,4 +1,4 @@
-// $Id: bandmap.h 90 2015-01-10 17:10:56Z  $
+// $Id: bandmap.h 91 2015-01-17 18:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

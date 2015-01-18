@@ -1,4 +1,4 @@
-// $Id: multiplier.h 89 2015-01-03 13:59:15Z  $
+// $Id: multiplier.h 91 2015-01-17 18:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,9 +25,9 @@
 #include <set>
 #include <string>
 
-extern message_stream    ost;      ///< for debugging and logging
+extern message_stream    ost;       ///< for debugging and logging
 
-extern pt_mutex multiplier_mutex;
+extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
 
 // -----------  multiplier  ----------------
 
@@ -60,18 +60,18 @@ public:
   READ_AND_WRITE(per_mode);                       ///< is this multiplier accumulated per-mode?
   READ_AND_WRITE(used);                           ///< is this object in use?
 
-/*! \brief  add a value to the set of known values
+/*! \brief      Add a value to the set of known values
     \param  str value to add
-    \return whether the addition was successful
+    \return     whether the addition was successful
 
     Returns false if the value <i>str</i> was already known
 */
   inline const bool add_known(const std::string& str)
     { SAFELOCK(multiplier); return ( _used ? ( (_known.insert(str)).second ) : false ); }
 
-/*! \brief  add a container of string values to the set of known values
+/*! \brief      Add a container of string values to the set of known values
     \param  k   container of values to add
-    \return     Number of values added
+    \return     number of values added
 */
   template<typename T>
   inline const unsigned int add_known(const T& k)
@@ -85,11 +85,19 @@ public:
       return rv;
     }
 
-/// add the value <i>str</i> to the known values
+/*! \brief          Add a value to the known values
+    \param  str     value to be added
+
+    Does nothing if <i>str</i> is already known
+*/
   inline void operator+=(const std::string& str)
     { add_known(str); }
 
-/// remove the value <i>str</i> from the known values (if it is known)
+/*! \brief          Remove a value from the known values
+    \param  str     value to be removed
+
+    Does nothing if <i>str</i> is not known
+*/
   inline void remove_known(const std::string& str)
     { SAFELOCK(multiplier);
 
@@ -97,7 +105,11 @@ public:
         _known.erase(str);
     }
 
-/// remove the value <i>str</i> from the known values (if it is known)
+/*! \brief          Remove a value from the known values
+    \param  str     value to be removed
+
+    Does nothing if <i>str</i> is not known
+*/
   inline void operator-=(const std::string& str)
     { remove_known(str); }
 

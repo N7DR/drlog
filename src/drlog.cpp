@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 90 2015-01-10 17:10:56Z  $
+// $Id: drlog.cpp 91 2015-01-17 18:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -159,15 +159,15 @@ void safe_set_mode(const MODE m);                           ///< set value of <i
 // more forward declarations (dependent on earlier ones)
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m);
 
-// TODO: pass mode as parameter
-void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name = string(), const BAND b = safe_get_band());
+//void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name = string(), const BAND b = safe_get_band());
+void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name, const BAND b, const MODE m);
 
-inline void update_remaining_callsign_mults_window(running_statistics& statistics,
-                                                   const BAND b)
-  { update_remaining_callsign_mults_window(statistics, string(), b);}
+//inline void update_remaining_callsign_mults_window(running_statistics& statistics, const BAND b, const MODE m)
+//  { update_remaining_callsign_mults_window(statistics, string(), b, m);}
 
-void update_remaining_country_mults_window(running_statistics&,
-                                           const BAND b = safe_get_band(), const MODE m = safe_get_mode());
+//void update_remaining_country_mults_window(running_statistics&, const BAND b = safe_get_band(), const MODE m = safe_get_mode());
+void update_remaining_country_mults_window(running_statistics&, const BAND b, const MODE m);
+
 void update_remaining_exch_mults_window(const string&,
                                         const contest_rules&,
                                         running_statistics&,
@@ -892,14 +892,14 @@ int main(int argc, char** argv)
 // REMAINING CALLSIGN MULTS window
   win_remaining_callsign_mults.init(context.window_info("REMAINING CALLSIGN MULTS"), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
   if (restored_data)
-    update_remaining_callsign_mults_window(statistics);
+    update_remaining_callsign_mults_window(statistics, "", safe_get_band(), safe_get_mode());
   else
     win_remaining_callsign_mults <= (context.remaining_callsign_mults_list());
 
 // REMAINING COUNTRY MULTS window
   win_remaining_country_mults.init(context.window_info("REMAINING COUNTRY MULTS"), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
   if (restored_data)
-    update_remaining_country_mults_window(statistics);
+    update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
   else
   { const set<string> set_from_context = context.remaining_country_mults_list();
     const string& target_continent = *(set_from_context.cbegin());
@@ -1312,10 +1312,8 @@ int main(int argc, char** argv)
         cur_band = b;
       }
 
-//      MODE cur_mode = safe_get_mode();
-
-      update_remaining_callsign_mults_window(statistics, cur_band);
-      update_remaining_country_mults_window(statistics, cur_band);
+      update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
+      update_remaining_country_mults_window(statistics, cur_band, cur_mode);
       update_remaining_exchange_mults_windows(rules, statistics);
 
 // QTCs
@@ -2063,7 +2061,7 @@ void* process_rbn_info(void* vp)
       cluster_line_win < CURSOR_START_OF_LINE < WINDOW_CLEAR <= last_processed_line;  // display the last processed line on the screen
 
     if (context.auto_remaining_country_mults())
-      update_remaining_country_mults_window(statistics);  // might have added a new one if in auto mode
+      update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());  // might have added a new one if in auto mode
 
     for (const auto n : RANGE<unsigned int>(1, 10) )    // wait 10 seconds before getting any more unprocessed info
     {
@@ -2275,7 +2273,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       display_nearby_callsign(nearby_callsign);  // clears nearby window if call is empty
 
 // update displays of needed mults
-      update_remaining_callsign_mults_window(statistics, cur_band);
+      update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
       update_remaining_country_mults_window(statistics, cur_band, cur_mode);
       update_remaining_exchange_mults_windows(rules, statistics, cur_band);
 
@@ -2283,8 +2281,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     }
 
     catch (const rig_interface_error& e)
-    { //ost << "Error in band up/down" << endl;
-      alert(e.reason());
+    { alert(e.reason());
     }
 
     processed = true;
@@ -2368,7 +2365,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // F10 -- toggle filter_remaining_country_mults
   if (!processed and (e.symbol() == XK_F10))
   { filter_remaining_country_mults = !filter_remaining_country_mults;
-    update_remaining_country_mults_window(statistics);
+    update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
     processed = true;
   }
 
@@ -2712,8 +2709,9 @@ ost << "processing command: " << command << endl;
             { cur_band = new_band;
               display_band_mode(win_band_mode, cur_band, cur_mode);
 
-              SAFELOCK(current_band);
-              current_band = new_band;
+//              SAFELOCK(current_band);
+//              current_band = new_band;
+              safe_set_band(new_band);
 
               bandmap& bm = bandmaps[cur_band];
               win_bandmap <= bm;
@@ -2721,7 +2719,7 @@ ost << "processing command: " << command << endl;
               win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
 // update displays of needed mults
-              update_remaining_callsign_mults_window(statistics, cur_band);
+              update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
               update_remaining_country_mults_window(statistics, cur_band, cur_mode);
               update_remaining_exchange_mults_windows(rules, statistics, cur_band);
             }
@@ -3095,6 +3093,7 @@ ost << "processing command: " << command << endl;
 
         bandmap_entry be;                        // default source is BANDMAP_ENTRY_LOCAL
         const BAND cur_band = safe_get_band();
+        const MODE cur_mode = safe_get_mode();
 
         be.freq(rig.rig_frequency());
         be.callsign(contents);
@@ -3113,8 +3112,6 @@ ost << "processing command: " << command << endl;
         if (!is_needed /* worked_this_band_mode */)
         { const cursor posn = win.cursor_position();
           win < WINDOW_CLEAR < CURSOR_START_OF_LINE < (contents + " DUPE") <= posn;
-
-//          win < WINDOW_CLEAR < CURSOR_START_OF_LINE < contents <= " DUPE";
         }
 
         be.calculate_mult_status(rules, statistics);
@@ -3129,8 +3126,8 @@ ost << "processing command: " << command << endl;
           last_call_inserted_with_space = contents;
         }
 
-        update_remaining_callsign_mults_window(statistics, cur_band);
-        update_remaining_country_mults_window(statistics);
+        update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
+        update_remaining_country_mults_window(statistics, cur_band, cur_mode);
         update_remaining_exchange_mults_windows(rules, statistics);
       }
     }
@@ -3212,8 +3209,8 @@ ost << "processing command: " << command << endl;
         next_qso_number = (next_qso_number == 0 ? next_qso_number : next_qso_number -1);
         win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
 
-        update_remaining_callsign_mults_window(statistics, safe_get_band());
-        update_remaining_country_mults_window(statistics);
+        update_remaining_callsign_mults_window(statistics, string(), safe_get_band(), safe_get_mode());
+        update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
         update_remaining_exchange_mults_windows(rules, statistics);
 
 // remove the last line from the log on disk
@@ -3952,7 +3949,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // remaining mults: callsign, country, exchange
         update_known_callsign_mults(qso.callsign());
-        update_remaining_callsign_mults_window(statistics);
+        update_remaining_callsign_mults_window(statistics, "", safe_get_band(), safe_get_mode());
 
         if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band, cur_mode).size())
         { update_remaining_country_mults_window(statistics, cur_band, cur_mode);
@@ -4511,9 +4508,9 @@ ost << "Adding new QSO(s)" << endl;
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
-        update_remaining_country_mults_window(statistics);
+        update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
         update_remaining_exchange_mults_windows(rules, statistics);
-        update_remaining_callsign_mults_window(statistics);
+        update_remaining_callsign_mults_window(statistics, "", safe_get_band(), safe_get_mode());
 
         next_qso_number = logbk.n_qsos() + 1;
         win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
@@ -4669,8 +4666,8 @@ void toggle_drlog_mode(void)
     enter_cq_mode();
 }
 
-void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b)
-{ const set<string> worked_callsign_mults = statistics.worked_callsign_mults(mult_name, b);
+void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b, const MODE m)
+{ const set<string> worked_callsign_mults = statistics.worked_callsign_mults(mult_name, b, m);
 
 //  ost << "update_remaining_callsign_mults_window: mult_name = " << mult_name << ", band = " << b << endl;
 //  ost << "update_remaining_callsign_mults_window: number of worked callsign mults on this band = " << worked_callsign_mults.size() << endl;
@@ -4917,11 +4914,15 @@ void populate_win_info(const string& callsign)
     { bool output_this_mult = true;
 
 // output QTHX mults only if they apply to this callsign
-      if (starts_with(exch_mult_field, "QTHX["))
-      { const string target_canonical_prefix = delimited_substring(exch_mult_field, '[', ']');
+//      if (starts_with(exch_mult_field, "QTHX["))
+//      { const string target_canonical_prefix = delimited_substring(exch_mult_field, '[', ']');
+//
+//        output_this_mult = (target_canonical_prefix == canonical_prefix);
+//      }
 
-        output_this_mult = (target_canonical_prefix == canonical_prefix);
-      }
+      output_this_mult = rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix);
+
+      ost << "mult name: " << exch_mult_field << ", output_this_mult = " << boolalpha << output_this_mult << noboolalpha << endl;
 
       if (output_this_mult)
       { //ost << "guessing for mult field " << exch_mult_field << endl;
@@ -5052,7 +5053,7 @@ ost << "QSY to " << frequency(str_frequency).hz() << " Hz" << endl;
       { safe_set_band(static_cast<BAND>(frequency(str_frequency)));
         const BAND cur_band = safe_get_band();
 
-        update_remaining_country_mults_window(statistics, cur_band);
+        update_remaining_country_mults_window(statistics, cur_band, safe_get_mode());
         update_remaining_exchange_mults_windows(rules, statistics, cur_band);
       }
 
@@ -5130,7 +5131,7 @@ void update_known_callsign_mults(const string& callsign)
           known_callsign_mults.insert(prefix);
         }
 
-        update_remaining_callsign_mults_window(statistics);
+        update_remaining_callsign_mults_window(statistics, "AAPX", safe_get_band(), safe_get_mode());
       }
     }
 
@@ -5147,7 +5148,7 @@ void update_known_callsign_mults(const string& callsign)
           known_callsign_mults.insert(prefix);
         }
 
-        update_remaining_callsign_mults_window(statistics);
+        update_remaining_callsign_mults_window(statistics, "OCPX", safe_get_band(), safe_get_mode());
       }
     }
 
@@ -5168,7 +5169,7 @@ void update_known_callsign_mults(const string& callsign)
             known_callsign_mults.insert(prefix);
           }
 
-          update_remaining_callsign_mults_window(statistics);
+          update_remaining_callsign_mults_window(statistics, "SACPX", safe_get_band(), safe_get_mode());
         }
       }
     }

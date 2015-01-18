@@ -1,4 +1,4 @@
-// $Id: statistics.h 90 2015-01-10 17:10:56Z  $
+// $Id: statistics.h 91 2015-01-17 18:18:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -211,7 +211,8 @@ public:
   const unsigned int points(const contest_rules& rules) const;
 
 /// worked callsign mults for a particular band
-  const std::set<std::string> worked_callsign_mults(const std::string& mult_name, const BAND b);
+//  const std::set<std::string> worked_callsign_mults(const std::string& mult_name, const BAND b);
+  const std::set<std::string> worked_callsign_mults(const std::string& mult_name, const BAND b, const MODE m);
 
 /// worked country mults for a particular band and mode
   const std::set<std::string> worked_country_mults(const BAND b, const MODE m);
