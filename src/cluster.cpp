@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 68 2014-06-28 15:42:35Z  $
+// $Id: cluster.cpp 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,13 +28,13 @@ using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
 
-extern message_stream ost;
-extern pt_mutex thread_check_mutex;
+extern message_stream ost;              ///< for debugging and logging
+extern pt_mutex thread_check_mutex;     ///< mutex for controlling threads
 
-extern bool exiting;
+extern bool exiting;                    ///< is the program exiting?
 
-pt_mutex buffer_mutex;
-pt_mutex rbn_buffer_mutex;
+pt_mutex buffer_mutex;                  ///< mutex for the cluster buffer
+pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
 
 // -----------  dx_cluster  ----------------
 

@@ -30,9 +30,9 @@ extern int  QSO_MULT_WIDTH;             ///< width of mult fields on log line
 // forward declarations
 class running_statistics;
 
-/// tuple for encapsulating received-fields
-WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool, is_possible_mult, bool, is_mult);  // fundamental types are initialized with zero Josuttis, 2nd ed. p. 69
+// fundamental types are initialized with zero Josuttis, 2nd ed. p. 69
 // (We need the is_possible mult field so that things align correctly on the log line)
+WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool, is_possible_mult, bool, is_mult);  ///< class to encapsulate received fields
 
 // -----------  QSO  ----------------
 
@@ -44,34 +44,26 @@ class QSO
 {
 protected:
   
-  std::string  _callsign;          ///< call
-  enum BAND    _band;              ///< band
-  std::string  _date;              ///< yyyy-mm-dd
-  enum MODE    _mode;              ///< mode
-  unsigned int _number;            ///< qso number
-  std::string  _utc;               ///< hh:mm:ss
-
-  std::string  _frequency;         ///< frequency in form xxxxx.y (kHz)
-  std::string  _comment;           ///< comment to be carried with QSO
-  std::string  _canonical_prefix;  ///< NOT automatically set when callsign is set
-  std::string  _continent;         ///< NOT automatically set when callsign is set
-  time_t       _epoch_time;        ///< time in seconds since the UNIX epoch
-  std::string  _my_call;           ///< my call
-
-// contest-specific
-  unsigned int _points;            ///< points for this QSO
-  bool         _is_dupe;           ///< is this QSO a dupe?
-
-  std::string  _prefix;            ///< prefix, according to the contest's definition
-
-  std::vector<std::pair<std::string, std::string> >           _sent_exchange;       ///< vector<pair<name, value>>; names do not include the TEXCH-
-  std::vector<received_field>                                 _received_exchange;   ///< names do not include the REXCH-
-
-  std::vector<std::string>  _log_line_fields;       ///< separate fields from the log line
-
-// mults
-  bool _is_country_mult;            ///< is this QSO a country mult?
-  bool _is_prefix_mult;             ///< is this QSO a prefix mult?
+  enum BAND                                         _band;              ///< band
+  std::string                                       _callsign;          ///< call
+  std::string                                       _canonical_prefix;  ///< NOT automatically set when callsign is set
+  std::string                                       _comment;           ///< comment to be carried with QSO (unused)
+  std::string                                       _continent;         ///< NOT automatically set when callsign is set
+  std::string                                       _date;              ///< yyyy-mm-dd
+  time_t                                            _epoch_time;        ///< time in seconds since the UNIX epoch
+  std::string                                       _frequency;         ///< frequency in form xxxxx.y (kHz)
+  bool                                              _is_country_mult;   ///< is this QSO a country mult?
+  bool                                              _is_prefix_mult;    ///< is this QSO a prefix mult?
+  bool                                              _is_dupe;           ///< is this QSO a dupe?
+  std::vector<std::string>                          _log_line_fields;   ///< separate fields from the log line
+  enum MODE                                         _mode;              ///< mode
+  std::string                                       _my_call;           ///< my call
+  unsigned int                                      _number;            ///< qso number
+  unsigned int                                      _points;            ///< points for this QSO (unused)
+  std::string                                       _prefix;            ///< prefix, according to the contest's definition
+  std::vector<received_field>                       _received_exchange; ///< names do not include the REXCH-
+  std::vector<std::pair<std::string, std::string> > _sent_exchange;     ///< vector<pair<name, value>>; names do not include the TEXCH-
+  std::string                                       _utc;               ///< hh:mm:ss
   
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line

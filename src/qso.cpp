@@ -1,4 +1,4 @@
-// $Id: qso.cpp 91 2015-01-17 18:18:31Z  $
+// $Id: qso.cpp 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -215,7 +215,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     }
   }
 
-  _is_country_mult = statistics.is_needed_country_mult(_callsign, _band);
+  _is_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 91 2015-01-17 18:18:31Z  $
+// $Id: drlog_context.cpp 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,11 +22,11 @@
 
 using namespace std;
 
-extern message_stream ost;                   ///< for debugging, info
-extern bool QSO_DISPLAY_COUNTRY_MULT;        ///< controls whether country mults are written on the log line
-extern int  QSO_MULT_WIDTH;                  ///< controls width of zone mults field in log line
+extern message_stream   ost;                        ///< for debugging, info
+extern bool             QSO_DISPLAY_COUNTRY_MULT;   ///< controls whether country mults are written on the log line
+extern int              QSO_MULT_WIDTH;             ///< controls width of zone mults field in log line
 
-/// cabrillo qso = template: CQ WW
+/// example: cabrillo qso = template: CQ WW
 static const map<string, string> cabrillo_qso_templates { { "ARRL DX", "ARRL DX" }, // placeholder; mode chosen before we exit this function
                                                           { "ARRL DX CW", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1" },
                                                           { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" },
@@ -48,9 +48,9 @@ static const map<string, string> cabrillo_qso_templates { { "ARRL DX", "ARRL DX"
 
 pt_mutex _context_mutex;                    ///< mutex for the context
 
-/*!     \brief              Set the value of points, using the POINTS [CW|SSB] command
-        \param  command     the complete line from the configuration file
-        \param  m           mode
+/*! \brief              Set the value of points, using the POINTS [CW|SSB] command
+    \param  command     the complete line from the configuration file
+    \param  m           mode
 */
 void drlog_context::_set_points(const string& command, const MODE m)
 { if (command.empty())
@@ -147,10 +147,10 @@ void drlog_context::_set_points(const string& command, const MODE m)
   }
 }
 
-/*!     \brief              Process a configuration file
-        \param  filename    name of file to process
+/*! \brief              Process a configuration file
+    \param  filename    name of file to process
 
-        This routine may be called recursively (by the RULES statement in the processed file)
+    This routine may be called recursively (by the RULES statement in the processed file)
 */
 void drlog_context::_process_configuration_file(const string& filename)
 { string entire_file;
@@ -200,12 +200,12 @@ void drlog_context::_process_configuration_file(const string& filename)
       _bandmap_decay_time_local = from_string<int>(rhs);
 
 // BAND MAP DECAY TIME RBN
-    if (starts_with(testline, "BAND MAP DECAY TIME RBN") or starts_with(testline, "BANDMAP DECAY TIME RBN"))
+    if ( (LHS == "BAND MAP DECAY TIME RBN") or (LHS == "BANDMAP DECAY TIME RBN") )
       _bandmap_decay_time_rbn = from_string<int>(rhs);
 
 // BAND MAP FADE COLOURS
-    if (starts_with(testline, "BAND MAP FADE COLOURS") or starts_with(testline, "BANDMAP FADE COLOURS") or
-        starts_with(testline, "BAND MAP FADE COLORS") or starts_with(testline, "BANDMAP FADE COLORS"))
+    if ( (LHS == "BAND MAP FADE COLOURS") or (LHS == "BANDMAP FADE COLOURS") or
+         (LHS == "BAND MAP FADE COLORS") or (LHS == "BANDMAP FADE COLORS") )
     { _bandmap_fade_colours.clear();
 
       if (!RHS.empty())
@@ -216,11 +216,13 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER
-    if ( (starts_with(testline, "BAND MAP FILTER") or starts_with(testline, "BANDMAP FILTER")) and
-        !(starts_with(testline, "BAND MAP FILTER ENABLE") or starts_with(testline, "BANDMAP FILTER ENABLE")) and
-        !(starts_with(testline, "BAND MAP FILTER MODE") or starts_with(testline, "BANDMAP FILTER MODE")) and
-        !(starts_with(testline, "BAND MAP FILTER COLOURS") or starts_with(testline, "BAND MAP FILTER COLORS")) and
-        !(starts_with(testline, "BANDMAP FILTER COLOURS") or starts_with(testline, "BANDMAP FILTER COLORS")) )
+//    if ( (starts_with(testline, "BAND MAP FILTER") or starts_with(testline, "BANDMAP FILTER")) and
+//        !(starts_with(testline, "BAND MAP FILTER ENABLE") or starts_with(testline, "BANDMAP FILTER ENABLE")) and
+//        !(starts_with(testline, "BAND MAP FILTER MODE") or starts_with(testline, "BANDMAP FILTER MODE")) and
+//        !(starts_with(testline, "BAND MAP FILTER COLOURS") or starts_with(testline, "BAND MAP FILTER COLORS")) and
+//        !(starts_with(testline, "BANDMAP FILTER COLOURS") or starts_with(testline, "BANDMAP FILTER COLORS")) )
+
+    if ( (LHS == "BAND MAP FILTER") or (LHS == "BANDMAP FILTER") )
     { if (!RHS.empty())
       { vector<string> filters = remove_peripheral_spaces(split_string(RHS, ","));
 
@@ -229,9 +231,11 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
     }
 
-// BAND MAP FILTER ENABLED
-    if (starts_with(testline, "BAND MAP FILTER COLOURS") or starts_with(testline, "BAND MAP FILTER COLORS") or
-        starts_with(testline, "BANDMAP FILTER COLOURS") or starts_with(testline, "BANDMAP FILTER COLORS"))
+// BAND MAP FILTER COLOURS
+//    if (starts_with(testline, "BAND MAP FILTER COLOURS") or starts_with(testline, "BAND MAP FILTER COLORS") or
+//        starts_with(testline, "BANDMAP FILTER COLOURS") or starts_with(testline, "BANDMAP FILTER COLORS"))
+    if ( (LHS == "BAND MAP FILTER COLOURS") or (LHS == "BAND MAP FILTER COLORS") or
+         (LHS == "BANDMAP FILTER COLOURS") or (LHS == "BANDMAP FILTER COLORS") )
     { if (!RHS.empty())
       { vector<string> colours = split_string(RHS, ",");
 
@@ -249,25 +253,31 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
     }
 
-// BAND MAP FILTER ENABLED
-    if (starts_with(testline, "BAND MAP FILTER ENABLE") or starts_with(testline, "BANDMAP FILTER ENABLE"))
+// BAND MAP FILTER ENABLE
+//    if (starts_with(testline, "BAND MAP FILTER ENABLE") or starts_with(testline, "BANDMAP FILTER ENABLE"))
+    if ( (LHS == "BAND MAP FILTER ENABLE") or (LHS == "BANDMAP FILTER ENABLE") )
       _bandmap_filter_enabled = is_true;
 
 // BAND MAP FILTER MODE
-    if (starts_with(testline, "BAND MAP FILTER MODE") or starts_with(testline, "BANDMAP FILTER MODE"))
+//    if (starts_with(testline, "BAND MAP FILTER MODE") or starts_with(testline, "BANDMAP FILTER MODE"))
+    if ( (LHS == "BAND MAP FILTER MODE") or (LHS == "BANDMAP FILTER MODE") )
       _bandmap_filter_show = (RHS == "SHOW");
 
 // BAND MAP GUARD BAND CW
-    if (starts_with(testline, "BAND MAP GUARD BAND CW") or starts_with(testline, "BANDMAP GUARD BAND CW"))
+//    if (starts_with(testline, "BAND MAP GUARD BAND CW") or starts_with(testline, "BANDMAP GUARD BAND CW"))
+    if ( (LHS == "BAND MAP GUARD BAND CW") or (LHS == "BANDMAP GUARD BAND CW") )
       _guard_band[MODE_CW] = from_string<int>(rhs);
 
 // BAND MAP GUARD BAND SSB
-    if (starts_with(testline, "BAND MAP GUARD BAND SSB") or starts_with(testline, "BANDMAP GUARD BAND SSB"))
+//    if (starts_with(testline, "BAND MAP GUARD BAND SSB") or starts_with(testline, "BANDMAP GUARD BAND SSB"))
+    if ( (LHS == "BAND MAP GUARD BAND SSB") or (LHS == "BANDMAP GUARD BAND SSB") )
       _guard_band[MODE_SSB] = from_string<int>(rhs);
 
 // BAND MAP RECENT COLOUR
-    if (starts_with(testline, "BAND MAP RECENT COLOUR") or starts_with(testline, "BANDMAP RECENT COLOUR") or
-        starts_with(testline, "BAND MAP RECENT COLOR") or starts_with(testline, "BANDMAP RECENT COLOR"))
+//    if (starts_with(testline, "BAND MAP RECENT COLOUR") or starts_with(testline, "BANDMAP RECENT COLOUR") or
+//        starts_with(testline, "BAND MAP RECENT COLOR") or starts_with(testline, "BANDMAP RECENT COLOR"))
+    if ( (LHS == "BAND MAP RECENT COLOUR") or (LHS == "BANDMAP RECENT COLOUR") or
+         (LHS == "BANDMAP RECENT COLOR") or (LHS == "BANDMAP RECENT COLOR") )
     { if (!RHS.empty())
       { string name = remove_peripheral_spaces(RHS);
 
@@ -276,11 +286,11 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BANDS
-    if (starts_with(testline, "BANDS"))
+    if (LHS == "BANDS")
       _bands = RHS;
 
 // BATCH MESSAGES FILE
-    if (starts_with(testline, "BATCH MESSAGES FILE"))
+    if (LHS == "BATCH MESSAGES FILE")
       _batch_messages_file = rhs;
 
 // CABRILLO FILENAME

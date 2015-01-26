@@ -1,4 +1,4 @@
-// $Id: bandmap.h 91 2015-01-17 18:18:31Z  $
+// $Id: bandmap.h 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -311,18 +311,36 @@ public:
   inline const bool is_needed_country_mult(void) const
     { return _is_needed_country_mult.is_any_value_needed(); }
 
+/// is this a needed exchange mult?
   inline const bool is_needed_exchange_mult(void) const
     { return _is_needed_exchange_mult.is_any_value_needed(); }
 
+/*! \brief          Add a value of callsign mult
+    \param  name    name of the mult
+    \param  value   value of the mult
+
+    Does nothing if the value <i>value</i> is already known for the mult <i>name</i>
+*/
   inline void add_callsign_mult(const std::string& name, const std::string& value)
     { _is_needed_callsign_mult.add( { name, value } ); }
 
+/*! \brief          Add a value of country mult
+    \param  value   value of the mult
+
+    Does nothing if the value <i>value</i> is already known
+*/
   inline void add_country_mult(const std::string& value)
     { _is_needed_country_mult.add(value); }
 
+/*! \brief          Add a value of exchange mult
+    \param  name    name of the mult
+    \param  value   value of the mult
+    \return         whether the mult was actually added
+*/
   inline const bool add_exchange_mult(const std::string& name, const std::string& value)
     { return (_is_needed_exchange_mult.add( { name, value } ) ); }
 
+/// remove all callsign mults
   inline void clear_callsign_mult(void)
     { _is_needed_callsign_mult.clear(); }
 

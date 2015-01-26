@@ -34,10 +34,10 @@
 #if (!defined(READ_AND_WRITE))
 
 /// Syntactic sugar for read/write access
-#define READ_AND_WRITE(y) \
-/*! Read access to _##y */ \
-  inline const decltype(_##y)& y(void) const { return _##y; } \
-/*! Write access to _##y */ \
+#define READ_AND_WRITE(y)                                       \
+/*! Read access to _##y */                                      \
+  inline const decltype(_##y)& y(void) const { return _##y; }   \
+/*! Write access to _##y */                                     \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
 #endif    // !READ_AND_WRITE
@@ -45,10 +45,10 @@
 #if (!defined(SAFE_READ_AND_WRITE))
 
 /// Syntactic sugar for read/write access
-#define SAFE_READ_AND_WRITE(y, z) \
-/*! Read access to _##y */ \
-  inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; } \
-/*! Write access to _##y */ \
+#define SAFE_READ_AND_WRITE(y, z)                                           \
+/*! Read access to _##y */                                                  \
+  inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }  \
+/*! Write access to _##y */                                                 \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
 #endif    // !SAFE_READ_AND_WRITE
@@ -56,8 +56,8 @@
 #if (!defined(READ))
 
 /// Syntactic sugar for read-only access
-#define READ(y) \
-/*! Read-only access to _##y */ \
+#define READ(y)                                                 \
+/*! Read-only access to _##y */                                 \
   inline const decltype(_##y)& y(void) const { return _##y; }
 
 #endif    // !READ
@@ -65,8 +65,8 @@
 #if (!defined(SAFEREAD))
 
 /// Syntactic sugar for read-only access
-#define SAFEREAD(y, z) \
-/*! Read-only access to _##y */ \
+#define SAFEREAD(y, z)                                                      \
+/*! Read-only access to _##y */                                             \
   inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD
@@ -229,48 +229,48 @@ public:                                                 \
 }
 
 // tuple class (3)
-#define WRAPPER_3_SERIALIZE(nm, a0, a1, b0, b1, c0, c1)                   \
-                                                                          \
-class nm : public std::tuple < a0, b0, c0 >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X, b0 Y, c0 Z)                                                       \
-    { std::get<0>(*this) = X;                                                    \
-      std::get<1>(*this) = Y;                                                    \
-      std::get<2>(*this) = Z;                                                    \
-    }                                                                     \
-                                                                          \
-                                                                          \
-  nm( void ) { }                                                          \
-                                                                          \
-  inline const a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(a0 var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-  inline const b0 b1(void) const                                                    \
-    { return std::get<1>(*this); }                              \
-                                                                          \
-  inline void b1(b0 var)                                          \
-    { std::get<1>(*this) = var; }                               \
-                                                                          \
-  inline const c0 c1(void) const                                                    \
-    { return std::get<2>(*this); }                              \
-                                                                          \
-  inline void c1(c0 var)                                          \
-    { std::get<2>(*this) = var; }                               \
-                                                                          \
-    template<typename Archive>                                   \
-  void serialize(Archive& ar, const unsigned version)           \
-    { ar & std::get<0>(*this)                                                  \
-         & std::get<1>(*this)                                                   \
-         & std::get<2>(*this);                                                  \
-    }                                                           \
-                                                                          \
+#define WRAPPER_3_SERIALIZE(nm, a0, a1, b0, b1, c0, c1)                     \
+                                                                            \
+class nm : public std::tuple < a0, b0, c0 >                                 \
+{                                                                           \
+protected:                                                                  \
+                                                                            \
+public:                                                                     \
+                                                                            \
+  nm( a0 X, b0 Y, c0 Z)                                                     \
+    { std::get<0>(*this) = X;                                               \
+      std::get<1>(*this) = Y;                                               \
+      std::get<2>(*this) = Z;                                               \
+    }                                                                       \
+                                                                            \
+                                                                            \
+  nm( void ) { }                                                            \
+                                                                            \
+  inline const a0 a1(void) const                                            \
+    { return std::get<0>(*this); }                                          \
+                                                                            \
+  inline void a1(a0 var)                                                    \
+    { std::get<0>(*this) = var; }                                           \
+                                                                            \
+  inline const b0 b1(void) const                                            \
+    { return std::get<1>(*this); }                                          \
+                                                                            \
+  inline void b1(b0 var)                                                    \
+    { std::get<1>(*this) = var; }                                           \
+                                                                            \
+  inline const c0 c1(void) const                                            \
+    { return std::get<2>(*this); }                                          \
+                                                                            \
+  inline void c1(c0 var)                                                    \
+    { std::get<2>(*this) = var; }                                           \
+                                                                            \
+    template<typename Archive>                                              \
+  void serialize(Archive& ar, const unsigned version)                       \
+    { ar & std::get<0>(*this)                                               \
+         & std::get<1>(*this)                                               \
+         & std::get<2>(*this);                                              \
+    }                                                                       \
+                                                                            \
 }
 
 /// tuple class (4)

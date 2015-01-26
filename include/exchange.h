@@ -1,4 +1,4 @@
-// $Id: exchange.h 90 2015-01-10 17:10:56Z  $
+// $Id: exchange.h 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,9 +24,9 @@ class exchange_field_template;                  ///< forward declaration
 
 extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
 
-#if !defined(NEW_CONSTRUCTOR)
-extern exchange_field_template EXCHANGE_FIELD_TEMPLATES;
-#endif
+//#if !defined(NEW_CONSTRUCTOR)
+//extern exchange_field_template EXCHANGE_FIELD_TEMPLATES;
+//#endif
 
 // -------------------------  parsed_exchange_field  ---------------------------
 
@@ -87,7 +87,7 @@ protected:
   std::vector<parsed_exchange_field>    _fields;              ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   bool                                  _valid;               ///< is the object valid? (i.e., was parsing successful?)
 
-#if !defined(NEW_CONSTRUCTOR)
+//#if !defined(NEW_CONSTRUCTOR)
 /*! \brief  Given several possible field names, choose one that fits the data
     \param  choice_name   the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
     \param  received_field the value of the received field
@@ -96,8 +96,8 @@ protected:
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-  const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
-#endif
+//  const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
+//#endif
 
 /*! \brief                      Try to fill exchange fields with received field matches
     \param  matches             the names of the matching fields, for each received field number
@@ -105,19 +105,17 @@ protected:
 */
   void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
 
-#if defined(NEW_CONSTRUCTOR)
 /*! \brief      Print the values of a <int, string, set<string>> tuple to the debug file
     \param  t   the tuple to print
 */
   void _print_tuple(const std::tuple<int, std::string, std::set<std::string>>& t) const;
-#endif
 
 public:
 
-/*!     \brief                      Constructor
-        \param  callsign            callsign of the station from which the exchange was received
-        \param  rules               rules for the contest
-        \param  received_values     the received values, in the order that they were received
+/*! \brief                      Constructor
+    \param  callsign            callsign of the station from which the exchange was received
+    \param  rules               rules for the contest
+    \param  received_values     the received values, in the order that they were received
 */
   parsed_exchange(const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
 
@@ -229,62 +227,16 @@ public:
 */
   const std::string guess_value(const std::string& callsign, const std::string& field_name);
 
-/*! \brief  Set a value in the database
-    \param  callsign   callsign for the new entry
-    \param  field_name name of the field for the new entry
-    \param  value      the new entry
+/*! \brief              Set a value in the database
+    \param  callsign    callsign for the new entry
+    \param  field_name  name of the field for the new entry
+    \param  value       the new entry
 */
   void set_value(const std::string& callsign, const std::string& field_name, const std::string& value);
 
   inline const size_t size(void) const
     { return _db.size(); }
 };
-
-#if !defined(NEW_CONSTRUCTOR)
-// -------------------------  exchange_field_template  ---------------------------
-
-/*!     \class exchange_field_template
-        \brief used for managing and parsing exchange fields
-*/
-class exchange_field_template
-{
-protected:
-
-  std::map<std::string /* name */, boost::regex> _db;       ///< database of regular expressions for named exchange fields
-
-public:
-
-/*! \brief  Fill the database
-    \param  path        directories to search (in order) for the filename
-    \param  filename    name of the file that holds regex expressions for fields
-*/
-  void prepare(const std::vector<std::string>& path, const std::string& filename);
-
-  READ(db);
-
-/// is <i>name</i> the name of a recognised field?
-  inline const bool is_valid_field_name(const std::string& name) const
-    { return (_db.find(name) != _db.cend()); }
-
-/*! \brief  Is a particular received string a valid value for a named field?
-    \param  name        name of the exchange field
-    \param  str         string to test for validity
-*/
-  const bool is_valid(const std::string& name /* field name */, const std::string& str);
-
-/*! \brief      What fields are a valid match for a particular received string?
-    \param  str string to test
-    \return     Names of fields for which <i>str</i> is a valid value
-*/
-  const std::vector<std::string> valid_matches(const std::string& str);
-
-/// Return all the names of exchange fields in the database
-  const std::set<std::string> names(void) const;
-
-/// Return regex for a name; returns empty regex if the name is invalid
-  const boost::regex expression(const std::string& str) const;
-};
-#endif
 
 #if !defined(NEW_CONSTRUCTOR)
 /*! \brief  Is a string a valid callsign?

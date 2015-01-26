@@ -125,14 +125,14 @@ const string sunrise_or_sunset(const float& lat, const float& lon, const bool ca
 
   if (l < 0)
     l += 360;
-  if (l > 360)
+  if (l >= 360)
     l -= 360;
 
   float ra = atan(0.91764 * tan(l * dtor)) * rtod;
 
   if (ra < 0)
     ra += 360;
-  if (ra > 360)
+  if (ra >= 360)
     ra -= 360;
 
   const float lquadrant = (floor(l / 90) ) * 90;
@@ -147,10 +147,10 @@ const string sunrise_or_sunset(const float& lat, const float& lon, const bool ca
   float cos_h = (cos (90.9 * dtor) - (sindec * sin(lat * dtor))) / (cosdec * cos(lat * dtor));
 
   if (cos_h > 1)
-    return "9999";    // always dark
+    return "DARK";    // always dark
 
   if (cos_h < -1)
-    return "8888";    // always light
+    return "LIGHT";    // always light
 
   float h = (calc_sunset ? (acos(cos_h) * rtod) : (360 - acos(cos_h) * rtod));
 

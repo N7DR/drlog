@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 91 2015-01-17 18:18:31Z  $
+// $Id: drlog.cpp 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -112,7 +112,7 @@ void restore_data(const string& archive_filename);  ///< Extract the data from t
 void rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
 
-void start_of_thread(void);                             ///< Increase the counter for the number of running threads
+void start_of_thread(void);                                                     ///< Increase the counter for the number of running threads
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
 void swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
 
@@ -120,14 +120,12 @@ void test_exchange_templates(const contest_rules&, const string& test_filename);
 void toggle_drlog_mode(void);                                                       ///< Toggle between CQ mode and SAP mode
 
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
-//void update_fuzzy_window(const string& callsign);
 void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
 void update_known_callsign_mults(const string& callsign);                   ///< Possibly add a new callsign mult
 void update_known_country_mults(const string& callsign);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_rate_window(void);                                              ///< Update the QSO and score values in <i>win_rate</i>
-//void update_scp_window(const string& callsign);
 
 // functions for processing input to windows
 void process_CALL_input(window* wp, const keyboard_event& e);               ///< Process an event in CALL window
@@ -157,177 +155,179 @@ const MODE safe_get_mode(void);                             ///< get value of <i
 void safe_set_mode(const MODE m);                           ///< set value of <i>current_mode</i>
 
 // more forward declarations (dependent on earlier ones)
-const bool is_needed_qso(const string& callsign, const BAND b, const MODE m);
+const bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                   ///<   Is a callsign needed on a particular band and mode?
 
-//void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name = string(), const BAND b = safe_get_band());
-void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name, const BAND b, const MODE m);
-
-//inline void update_remaining_callsign_mults_window(running_statistics& statistics, const BAND b, const MODE m)
-//  { update_remaining_callsign_mults_window(statistics, string(), b, m);}
+void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name, const BAND b, const MODE m);  ///< Update the REMAINING CALLSIGN MULTS window for a particular mult
 
 //void update_remaining_country_mults_window(running_statistics&, const BAND b = safe_get_band(), const MODE m = safe_get_mode());
-void update_remaining_country_mults_window(running_statistics&, const BAND b, const MODE m);
+void update_remaining_country_mults_window(running_statistics&, const BAND b, const MODE m);                        ///< Update the REMAINING COUNTRY MULTS window
 
-void update_remaining_exch_mults_window(const string&,
-                                        const contest_rules&,
-                                        running_statistics&,
-                                        const BAND b = safe_get_band(),
-                                        const MODE m = safe_get_mode());
-void update_remaining_exchange_mults_windows(const contest_rules&,
-                                             running_statistics&,
-                                             const BAND b = safe_get_band(),
-                                             const MODE m = safe_get_mode());
+//void update_remaining_exch_mults_window(const string&,
+//                                        const contest_rules&,
+//                                        running_statistics&,
+//                                        const BAND b = safe_get_band(),
+//                                        const MODE m = safe_get_mode());
 
-string last_call_inserted_with_space;  // probably should be per band
-pt_mutex dupe_check_mutex;
+void update_remaining_exch_mults_window(const string& mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m);   ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
+
+void update_remaining_exchange_mults_windows(const contest_rules&, running_statistics&, const BAND b, const MODE m);    ///< Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
 
 // values that are used by multiple threads
 // mostly these are essentially RO, so locking is overkill; but we do it anyway,
 // otherwise Murphy dictates that we'll hit a race condition at the worst possible time
 
-pt_mutex alert_mutex;
-time_t   alert_time = 0;
+pt_mutex alert_mutex;                       ///< mutex for the user alert
+time_t   alert_time = 0;                    ///< time of last alert
 
-pt_mutex  cq_mode_frequency_mutex;
-frequency cq_mode_frequency;
+pt_mutex            batch_messages_mutex;   ///< mutex for batch messages
+map<string, string> batch_messages;         ///< batch messages associated with calls
 
-pt_mutex  last_exchange_mutex;
-string    last_exchange;
+pt_mutex  cq_mode_frequency_mutex;          ///< mutex for the frequency in CQ mode
+frequency cq_mode_frequency;                ///< frequency in CQ mode
 
-pt_mutex            thread_check_mutex;                       ///< both the following variables are under this mutex
-int                 n_running_threads = 0;
-bool                exiting = false;
+pt_mutex dupe_check_mutex;                  ///< mutex for <i>last_call_inserted_with_space</i>
+string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band
 
-pt_mutex            current_band_mutex;                       ///< mutex for setting/getting the current band
-BAND                current_band;                             ///< the current band
+pt_mutex            individual_messages_mutex;  ///< mutex for individual messages
+map<string, string> individual_messages;        ///< individual messages associated with calls
 
-pt_mutex            current_mode_mutex;                       ///< mutex for setting/getting the current mode
-MODE                current_mode;                             ///< the current mode
+pt_mutex  last_exchange_mutex;              ///< mutex for getting and setting the last sent exchange
+string    last_exchange;                    ///< the last sent exchange
 
-exchange_field_database exchange_db;                          ///< dynamic database of exchange field values for calls; automatically thread-safe
+pt_mutex            thread_check_mutex;                     ///< mutex for controlling threads; both the following variables are under this mutex
+int                 n_running_threads = 0;                  ///< how many additional threads are running?
+bool                exiting = false;                        ///< is the program exiting?
 
-string              my_continent;                             ///< what continent am I on?
+pt_mutex            current_band_mutex;                     ///< mutex for setting/getting the current band
+BAND                current_band;                           ///< the current band
 
-running_statistics  statistics;                               ///< all the QSO statistics to date
+pt_mutex            current_mode_mutex;                     ///< mutex for setting/getting the current mode
+MODE                current_mode;                           ///< the current mode
 
-pt_mutex            drlog_mode_mutex;                         ///< mutex for accessing the drlog_mode
-DRLOG_MODE          drlog_mode = SAP_MODE;                    ///< CQ_MODE or SAP_MODE
+pt_mutex            drlog_mode_mutex;                       ///< mutex for accessing <i>drlog_mode</i>
+DRLOG_MODE          drlog_mode = SAP_MODE;                  ///< CQ_MODE or SAP_MODE
 
-// callsign mults we know about in AUTO mode
-pt_mutex            known_callsign_mults_mutex;
-set<string>         known_callsign_mults;
+pt_mutex            known_callsign_mults_mutex;             ///< mutex for the callsign mults we know about in AUTO mode
+set<string>         known_callsign_mults;                   ///< callsign mults we know about in AUTO mode
 
-unsigned int        next_qso_number = 1;                      ///< actual number of next QSO
-unsigned int        n_modes = 0;                              ///< number of modes allowed in the contest
-unsigned int        octothorpe = 1;                           ///< serial number of next QSO
-string              at_call;                                  ///< call that should replace comat in "call ok now" message
+// global variables
 
-vector<pair<string, string> > sent_exchange;    //name/value pairs for the sent exchange
+string                  at_call;                            ///< call that should replace comat in "call ok now" message
 
-logbook             logbk;                      // can't be called log if mathcalls.h is in the compilation path
+drlog_context           context;                            ///< context taken from configuration file
 
-drlog_context       context;
+exchange_field_database exchange_db;                        ///< dynamic database of exchange field values for calls; automatically thread-safe
 
-bool                filter_remaining_country_mults(false);
-bool                restored_data(false);                           ///< did we restore from an archive?
+bool                    filter_remaining_country_mults(false);  ///< whether to apply filter to remaining country mults
 
-pt_mutex            individual_messages_mutex;
-map<string, string> individual_messages;
+logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 
-pt_mutex            batch_messages_mutex;
-map<string, string> batch_messages;
+string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
 
-cached_data<string, string> WPX_DB(&wpx_prefix);
+unsigned int            next_qso_number = 1;                ///< actual number of next QSO
+unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
 
-qtc_database qtc_db;    ///< sent QTCs
-qtc_buffer   qtc_buf;   ///< all sent and unsent QTCs
-bool send_qtcs = false;  // whether QTCs are used; set from rules later
+unsigned int            octothorpe = 1;                     ///< serial number of next QSO
 
-EFT CALLSIGN_EFT("CALLSIGN");
+bool                    restored_data(false);               ///< did we restore from an archive?
+
+running_statistics      statistics;                         ///< all the QSO statistics to date
+
+//vector<pair<string, string> > sent_exchange;                ///< name/value pairs for the sent exchange
+
+//cached_data<string, string> WPX_DB(&wpx_prefix);
+
+// QTC variables
+qtc_database qtc_db;        ///< sent QTCs
+qtc_buffer   qtc_buf;       ///< all sent and unsent QTCs
+bool send_qtcs = false;     ///< whether QTCs are used; set from rules later
+
+EFT CALLSIGN_EFT("CALLSIGN");   ///< EFT for CALLSIGN
 
 /* The K3's handling of commands from the computer is rubbish. This variable
-   is a simple way to cease polling when we are moving RIT with the shift keys,
-   because there's a pause in the RIT adjustment if we happen to poll the
+   is a simple way to cease polling when we are moving RIT with the shift keys:
+   there's a perceptible pause in the RIT adjustment if we happen to poll the
    rig while adjusting RIT
 */
-bool ok_to_poll_k3 = true;
+bool ok_to_poll_k3 = true;                  ///< is it safe to poll the K3?
 
 // windows -- these should automatically be thread_safe
-window win_band_mode,               ///< the band and mode indicator
-       win_bandmap,                 ///< the bandmap for the current band
-       win_bandmap_filter,          ///< bandmap filter information
-       win_batch_messages,          ///< messages from the batch messages file
-       win_call,                    ///< callsign of other station, or command
-       win_cluster_line,            ///< last line received from cluster
-       win_cluster_mult,            ///< mults received from cluster
-       win_cluster_screen,          ///< interactive screen on to the cluster
-       win_date,                    ///< the date
-       win_drlog_mode,              ///< indicate whether in CQ or SAP mode
-       win_exchange,                ///< QSO exchange received from other station
-       win_log_extract,             ///< to show earlier QSOs
-       win_fuzzy,                   ///< fuzzy lookups
-       win_individual_messages,     ///< messages from the individual messages file
-       win_individual_qtc_count,    ///< number of QTCs sent to an individual
-       win_info,                    ///< summary of info about current station being worked
-       win_local_time,              ///< window for local time
-       win_log,                     ///< main visible log
-       win_message,                 ///< messages from drlog to the user
-       win_mult_value,              ///< value of a mult
-       win_nearby,                  ///< nearby station
-       win_qso_number,              ///< number of the next QSO
-       win_qtc_status,              ///< status of QTCs
-       win_rate,                    ///< QSO and point rates
-       win_rbn_line,                ///< last line received from the RBN
-       win_remaining_callsign_mults, ///< the remaining callsign mults
-       win_remaining_country_mults, ///< the remaining country mults
-       win_rig,                     ///< rig status
-       win_score,                   ///< total number of points
-       win_score_bands,             ///< which bands contribute to score
-       win_score_modes,             ///< which modes contribute to score
-       win_scp,                     ///< SCP lookups
-       win_scratchpad,              ///< scratchpad
-       win_serial_number,           ///< next serial number (octothorpe)
-       win_srss,                    ///< my sunrise/sunset
-       win_summary,                 ///< overview of score
-       win_time,                    ///< current UTC
-       win_title,                   ///< title of the contest
-       win_wpm;                     ///< CW speed in WPM
+window win_band_mode,                   ///< the band and mode indicator
+       win_bandmap,                     ///< the bandmap for the current band
+       win_bandmap_filter,              ///< bandmap filter information
+       win_batch_messages,              ///< messages from the batch messages file
+       win_call,                        ///< callsign of other station, or command
+       win_cluster_line,                ///< last line received from cluster
+       win_cluster_mult,                ///< mults received from cluster
+       win_cluster_screen,              ///< interactive screen on to the cluster
+       win_date,                        ///< the date
+       win_drlog_mode,                  ///< indicate whether in CQ or SAP mode
+       win_exchange,                    ///< QSO exchange received from other station
+       win_log_extract,                 ///< to show earlier QSOs
+       win_fuzzy,                       ///< fuzzy lookups
+       win_individual_messages,         ///< messages from the individual messages file
+       win_individual_qtc_count,        ///< number of QTCs sent to an individual
+       win_info,                        ///< summary of info about current station being worked
+       win_local_time,                  ///< window for local time
+       win_log,                         ///< main visible log
+       win_message,                     ///< messages from drlog to the user
+       win_mult_value,                  ///< value of a mult
+       win_nearby,                      ///< nearby station
+       win_qso_number,                  ///< number of the next QSO
+       win_qtc_status,                  ///< status of QTCs
+       win_rate,                        ///< QSO and point rates
+       win_rbn_line,                    ///< last line received from the RBN
+       win_remaining_callsign_mults,    ///< the remaining callsign mults
+       win_remaining_country_mults,     ///< the remaining country mults
+       win_rig,                         ///< rig status
+       win_score,                       ///< total number of points
+       win_score_bands,                 ///< which bands contribute to score
+       win_score_modes,                 ///< which modes contribute to score
+       win_scp,                         ///< SCP lookups
+       win_scratchpad,                  ///< scratchpad
+       win_serial_number,               ///< next serial number (octothorpe)
+       win_srss,                        ///< my sunrise/sunset
+       win_summary,                     ///< overview of score
+       win_time,                        ///< current UTC
+       win_title,                       ///< title of the contest
+       win_wpm;                         ///< CW speed in WPM
 
-map<string /* name */, window*> win_remaining_exch_mults_p;
+map<string /* name */, window*>     win_remaining_exch_mults_p; ///< map from name of an exchange mult to a pointer to the corresponding window
 
 vector<pair<string /* contents*/, window*> > static_windows_p;  ///< static windows
 
 // the visible bits of logs
-log_extract editable_log(win_log);
-log_extract extract(win_log_extract);
+log_extract editable_log(win_log);          ///< the most recent QSOs
+log_extract extract(win_log_extract);       ///< earlier QSOs with a station
 
 // some windows are accessed from multiple threads
-pt_mutex band_mode_mutex;
-pt_mutex bandmap_mutex;
+pt_mutex band_mode_mutex;                   ///< mutex for win_band_mode
+pt_mutex bandmap_mutex;                     ///< mutex for win_bandmap
 
-cw_messages cwm;
+cw_messages cwm;                            ///< pre-defined CW messages
 
-contest_rules rules;
-cw_buffer*       cw_p  = nullptr;
-drmaster*       drm_p  = nullptr;
-dx_cluster* cluster_p = nullptr;
-dx_cluster*     rbn_p = nullptr;
+contest_rules rules;                        ///< the rules for this contest
+cw_buffer*       cw_p  = nullptr;           ///< pointer to buffer that holds outbound CW message
+drmaster*       drm_p  = nullptr;           ///< pointer to drmaster information
+dx_cluster* cluster_p = nullptr;            ///< pointer to cluster information
+dx_cluster*     rbn_p = nullptr;            ///< pointer to RBN information
 
-location_database location_db;
-rig_interface rig;
+location_database location_db;              ///< global location database
+rig_interface rig;                          ///< rig control
 
-thread_attribute attr_detached(PTHREAD_DETACHED);
+thread_attribute attr_detached(PTHREAD_DETACHED);   ///< default attribute for threads
 
-window* win_active_p = &win_call;             // start with the CALL window active
-window* last_active_win_p = nullptr;
+window* win_active_p = &win_call;               ///< start with the CALL window active
+window* last_active_win_p = nullptr;            ///< keep track of the last window that was active, before the current one
 
-const string OUTPUT_FILENAME("output.txt");
-message_stream ost(OUTPUT_FILENAME);
+const string OUTPUT_FILENAME("output.txt");     ///< file to which debugging output is directed
+message_stream ost(OUTPUT_FILENAME);            ///< message stream for debugging output
 
-typedef array<bandmap, NUMBER_OF_BANDS>  BM_ARRAY;
+//typedef array<bandmap, NUMBER_OF_BANDS>  BM_ARRAY;
 
 // create one bandmap per band
-BM_ARRAY  bandmaps;
+//BM_ARRAY  bandmaps;
+array<bandmap, NUMBER_OF_BANDS>  bandmaps;
 
 // history of calls worked
 call_history q_history;
@@ -363,7 +363,8 @@ WRAPPER_7_NC(cluster_info,
     running_statistics*, statistics_p,
     location_database*, location_database_p,
     window*, win_bandmap_p,
-    BM_ARRAY*, bandmaps_p);
+    decltype(bandmaps)*, bandmaps_p);
+//    BM_ARRAY*, bandmaps_p);
 
 WRAPPER_3_NC(big_cluster_info,
     drlog_context*, context_p,
@@ -372,7 +373,8 @@ WRAPPER_3_NC(big_cluster_info,
 
 WRAPPER_2_NC(bandmap_info,
     window*, win_bandmap_p,
-    BM_ARRAY*, bandmaps_p);
+    decltype(bandmaps)*, bandmaps_p);
+//    BM_ARRAY*, bandmaps_p);
 
 WRAPPER_2_NC(rig_status_info,
     unsigned int, poll_time,
@@ -1173,17 +1175,17 @@ int main(int argc, char** argv)
   { string fn = context.logfile();
     int index = 0;
 
-    ost << "fn is: " << fn << endl;
+//    ost << "fn is: " << fn << endl;
 
     while (file_exists(fn + "-" + to_string(index)))
       index++;
 
-    ost << "index = " << index << endl;
+//    ost << "index = " << index << endl;
 
     if (file_exists(fn))
-    { ost << "file " << fn << " exists" << endl;
+    { //ost << "file " << fn << " exists" << endl;
       file_copy(fn, fn + "-" + to_string(index));
-      ost << "copied to " << fn + "-" + to_string(index) << endl;
+      //ost << "copied to " << fn + "-" + to_string(index) << endl;
     }
   }
 
@@ -1218,7 +1220,7 @@ int main(int argc, char** argv)
 
             qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
 
-            ost << "QSO: " << qso << endl;
+//            ost << "QSO: " << qso << endl;
 
 // callsign mults
             allow_for_callsign_mults(qso);
@@ -1314,7 +1316,7 @@ int main(int argc, char** argv)
 
       update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
       update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-      update_remaining_exchange_mults_windows(rules, statistics);
+      update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
 
 // QTCs
       if (send_qtcs)
@@ -2275,7 +2277,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
       update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-      update_remaining_exchange_mults_windows(rules, statistics, cur_band);
+      update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
 
       win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
     }
@@ -2721,7 +2723,7 @@ ost << "processing command: " << command << endl;
 // update displays of needed mults
               update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
               update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-              update_remaining_exchange_mults_windows(rules, statistics, cur_band);
+              update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
             }
 
             enter_sap_mode();    // we want to be in SAP mode after a frequency change
@@ -3128,7 +3130,7 @@ ost << "processing command: " << command << endl;
 
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-        update_remaining_exchange_mults_windows(rules, statistics);
+        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
       }
     }
 
@@ -3209,9 +3211,12 @@ ost << "processing command: " << command << endl;
         next_qso_number = (next_qso_number == 0 ? next_qso_number : next_qso_number -1);
         win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
 
-        update_remaining_callsign_mults_window(statistics, string(), safe_get_band(), safe_get_mode());
-        update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
-        update_remaining_exchange_mults_windows(rules, statistics);
+        const BAND cur_band = safe_get_band();
+        const MODE cur_mode = safe_get_mode();
+
+        update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
+        update_remaining_country_mults_window(statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
 
 // remove the last line from the log on disk
         string disk_log = read_file(context.logfile());
@@ -3859,7 +3864,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         if (country_mults_used)
         { update_known_country_mults(qso.callsign());  // does nothing if not auto remaining country mults
 
-          const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), cur_band);
+          const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode);
 
 //          ost << "QSO with " << qso.callsign() << "; is_country_mult = " << is_country_mult << endl;
 
@@ -3982,7 +3987,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             no_exchange_mults_this_qso = (old_size == new_size);
 
             if (!no_exchange_mults_this_qso)
-              update_remaining_exchange_mults_windows(rules, statistics);
+              update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
           }
         }
 
@@ -4413,7 +4418,7 @@ ost << "Adding new QSO(s)" << endl;
             update_known_country_mults(qso.callsign());
 
 // is this a country mult?
-            const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), qso.band());
+            const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode());
             qso.is_country_mult(is_country_mult);
 
 //            ost << "is_country_mult after QSO has been rebuilt: " << is_country_mult << endl;
@@ -4508,9 +4513,12 @@ ost << "Adding new QSO(s)" << endl;
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
-        update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
-        update_remaining_exchange_mults_windows(rules, statistics);
-        update_remaining_callsign_mults_window(statistics, "", safe_get_band(), safe_get_mode());
+        const BAND cur_band = safe_get_band();
+        const MODE cur_mode = safe_get_mode();
+
+        update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
+        update_remaining_country_mults_window(statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
 
         next_qso_number = logbk.n_qsos() + 1;
         win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
@@ -4666,6 +4674,12 @@ void toggle_drlog_mode(void)
     enter_cq_mode();
 }
 
+/*! \brief              Update the REMAINING CALLSIGN MULTS window for a particular mult
+    \param  statistics  current statistics for the contest
+    \param  mult_name   name of the callsign mult
+    \param  b           current band
+    \param  m           current mode
+*/
 void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b, const MODE m)
 { const set<string> worked_callsign_mults = statistics.worked_callsign_mults(mult_name, b, m);
 
@@ -4712,6 +4726,11 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   win_remaining_callsign_mults < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
 }
 
+/*! \brief              Update the REMAINING COUNTRY MULTS window
+    \param  statistics  current statistics for the contest
+    \param  b           current band
+    \param  m           current mode
+*/
 void update_remaining_country_mults_window(running_statistics& statistics, const BAND b, const MODE m)
 { const set<string> worked_country_mults = statistics.worked_country_mults(b, m);
   const set<string> known_country_mults = statistics.known_country_mults();
@@ -4741,6 +4760,13 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   win_remaining_country_mults < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
 }
 
+/*! \brief                  Update the REMAINING EXCHANGE MULTS window for a particular mult
+    \param  exch_mult_name  name of the exchange mult
+    \param  rules           rules for the contest
+    \param  statistics      current statistics for the contest
+    \param  b               current band
+    \param  m               current mode
+*/
 void update_remaining_exch_mults_window(const string& exch_mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
 { const set<string> known_exchange_values_set = statistics.known_exchange_mults(exch_mult_name);
   const vector<string> known_exchange_values(known_exchange_values_set.cbegin(), known_exchange_values_set.cend());
@@ -4760,6 +4786,12 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
    win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
 }
 
+/*! \brief                  Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
+    \param  rules           rules for the contest
+    \param  statistics      current statistics for the contest
+    \param  b               current band
+    \param  m               current mode
+*/
 void update_remaining_exchange_mults_windows(const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
 { for_each(win_remaining_exch_mults_p.begin(), win_remaining_exch_mults_p.end(), [&] (const map<string, window*>::value_type& mult)  // Josuttis 2nd ed., p. 338
     { update_remaining_exch_mults_window(mult.first, rules, statistics, b, m); } );
@@ -4876,7 +4908,7 @@ void populate_win_info(const string& callsign)
       string line = pad_string("QSO", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
       for (const auto& b : permitted_bands)
-        line += pad_string( ( q_history.worked(callsign, b, this_mode) ? "-" : BAND_NAME.at(b) ), FIELD_WIDTH);
+        line += pad_string( ( q_history.worked(callsign, b, this_mode) ? "-" : BAND_NAME[b] ), FIELD_WIDTH);
 
       win_info < cursor(0, next_y_value--) < line;
 
@@ -4894,7 +4926,7 @@ void populate_win_info(const string& callsign)
           { string per_band_indicator;
 
             if (known_country_mults < canonical_prefix)
-              per_band_indicator = ( statistics.is_needed_country_mult(callsign, b) ? BAND_NAME.at(b) : "-" );
+              per_band_indicator = ( statistics.is_needed_country_mult(callsign, b, this_mode) ? BAND_NAME[b] : "-" );
           else
             per_band_indicator = BAND_NAME.at(b);
 
@@ -4963,7 +4995,7 @@ void populate_win_info(const string& callsign)
         { line = pad_string(callsign_mult + " [" + callsign_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
           for (const auto& b : permitted_bands)
-            line += pad_string( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b) ? BAND_NAME.at(b) : "-" ), FIELD_WIDTH);
+            line += pad_string( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? BAND_NAME[b] : "-" ), FIELD_WIDTH);
 
           win_info < cursor(0, next_y_value-- ) < line;
         }
@@ -5052,9 +5084,10 @@ ost << "QSY to " << frequency(str_frequency).hz() << " Hz" << endl;
       if (static_cast<BAND>(frequency(last_frequency)) != static_cast<BAND>(frequency(str_frequency)))
       { safe_set_band(static_cast<BAND>(frequency(str_frequency)));
         const BAND cur_band = safe_get_band();
+        const MODE cur_mode = safe_get_mode();
 
-        update_remaining_country_mults_window(statistics, cur_band, safe_get_mode());
-        update_remaining_exchange_mults_windows(rules, statistics, cur_band);
+        update_remaining_country_mults_window(statistics, cur_band, cur_mode);
+        update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
       }
 
       last_frequency = str_frequency;
@@ -5624,6 +5657,12 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
   return new_callsign;
 }
 
+/*! \brief              Is a callsign needed on a particular band and mode?
+    \param  callsign    target callsign
+    \param  b           target band
+    \param  m           target mode
+    \return             whether we still need to work <i>callsign</i> on <i>b</i> and <i>m</i>
+*/
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
 { //const BAND b = safe_get_band();
   //const MODE m = safe_get_mode();
@@ -6069,11 +6108,11 @@ void allow_for_callsign_mults(QSO& qso)
 // see if it's a mult... requires checking if mults are per-band
     if (!qso.prefix().empty() and !mult_name.empty())
     { if (rules.callsign_mults_per_band())
-      { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), qso.band()))
+      { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), qso.band(), qso.mode()))
           qso.is_prefix_mult(true);
       }
       else
-      { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), static_cast<BAND>(ALL_BANDS)) )
+      { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), static_cast<BAND>(ALL_BANDS), qso.mode()) )
           qso.is_prefix_mult(true);
       }
     }

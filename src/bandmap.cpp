@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 91 2015-01-17 18:18:31Z  $
+// $Id: bandmap.cpp 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -143,7 +143,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   { const string callsign_mult_val = callsign_mult_value(callsign_mult_name, _callsign);
 
     if (!callsign_mult_val.empty())
-    { if (statistics.is_needed_callsign_mult(callsign_mult_name, callsign_mult_val, _band))
+    { if (statistics.is_needed_callsign_mult(callsign_mult_name, callsign_mult_val, _band, _mode))
         add_callsign_mult(callsign_mult_name, callsign_mult_val);
     }
   }
@@ -151,7 +151,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // country mult status
   clear_country_mult();
 
-  const bool is_needed_country_mult = statistics.is_needed_country_mult(_callsign, _band);
+  const bool is_needed_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
 
   if (is_needed_country_mult)
     add_country_mult(_canonical_prefix);

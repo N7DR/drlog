@@ -1,4 +1,4 @@
-// $Id: statistics.h 91 2015-01-17 18:18:31Z  $
+// $Id: statistics.h 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,11 +42,11 @@ class running_statistics
 {
 protected:
   
-  location_database                                  _location_db;          ///< database for location-based lookups
+  location_database _location_db;                                           ///< database for location-based lookups
 
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_dupes;         ///< number of dupes, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_qsos;          ///< number of QSOs, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _qso_points;      ///< number of QSO points, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_dupes;       ///< number of dupes, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_qsos;        ///< number of QSOs, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _qso_points;    ///< number of QSO points, per band and mode
 
   std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
 
@@ -131,8 +131,8 @@ public:
     \param  mult_value  value of mult to test
     \param  b           band to test
 */
-  inline const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const
-    { return is_needed_callsign_mult(mult_name, mult_value, b, ANY_MODE); }
+//  inline const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const
+//    { return is_needed_callsign_mult(mult_name, mult_value, b, ANY_MODE); }
 
 /*! \brief          Add a known value of country mult
     \param  str     Canonical prefix of mult
@@ -155,8 +155,8 @@ public:
     \param  b           band to test
     \return             Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i>.
 */
-  inline const bool is_needed_country_mult(const std::string& callsign, const BAND b)
-    { return is_needed_country_mult(callsign, b, ANY_MODE); }
+//  inline const bool is_needed_country_mult(const std::string& callsign, const BAND b)
+//    { return is_needed_country_mult(callsign, b, ANY_MODE); }
   
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add

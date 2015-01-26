@@ -1,4 +1,4 @@
-// $Id: multiplier.h 91 2015-01-17 18:18:31Z  $
+// $Id: multiplier.h 92 2015-01-24 22:36:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -254,7 +254,7 @@ public:
   const std::set<std::string> worked(const int b, const int m) const;
 
 /// All the mults worked on a particular band, regardless of mode
-  const std::set<std::string> worked(const int b) const;
+//  const std::set<std::string> worked(const int b) const;
 
 /// All the known mults
   inline const std::set<std::string> known(void) const
