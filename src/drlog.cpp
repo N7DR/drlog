@@ -54,6 +54,7 @@ using namespace   chrono;        // std::chrono
 using namespace   placeholders;  // std::placeholders
 using namespace   this_thread;   // std::this_thread
 
+extern cpair colours;                       ///< program-wide definitions of colour pairs in use
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
 enum DRLOG_MODE { CQ_MODE = 0,              ///< I'm calling the other station
@@ -323,20 +324,13 @@ window* last_active_win_p = nullptr;            ///< keep track of the last wind
 const string OUTPUT_FILENAME("output.txt");     ///< file to which debugging output is directed
 message_stream ost(OUTPUT_FILENAME);            ///< message stream for debugging output
 
-//typedef array<bandmap, NUMBER_OF_BANDS>  BM_ARRAY;
+array<bandmap, NUMBER_OF_BANDS>  bandmaps;      ///< one bandmap per band
 
-// create one bandmap per band
-//BM_ARRAY  bandmaps;
-array<bandmap, NUMBER_OF_BANDS>  bandmaps;
+call_history q_history;                         ///< history of calls worked
 
-// history of calls worked
-call_history q_history;
+rate_meter rate;                                ///< QSO and point rates
 
-rate_meter rate;
-
-extern cpair colours;
-
-vector<string> win_log_snapshot;
+vector<string> win_log_snapshot;                ///< individual lines in the LOG window
 
 scp_database  scp_db,
               scp_dynamic_db;
@@ -2870,7 +2864,9 @@ ost << "processing command: " << command << endl;
               ost << "HADXC guess = " << guess << endl;
 
               if (guess.empty())
-                guess = exchange_db.guess_value(contents, "QTHX[HA]");
+              { guess = exchange_db.guess_value(contents, "QTHX[HA]");
+                ost << "QTHX[HA] guess = " << guess << endl;
+              }
 
               ost << "best guess = " << guess << endl;
 

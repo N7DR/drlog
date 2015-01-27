@@ -33,8 +33,6 @@
 const unsigned int MAX_MEMORY_MESSAGES = 12;        ///< number of memory messages
 const unsigned int CQ_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in CALL window; must not exceed 9 without changes to drlog_context.cpp
 const unsigned int EX_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in EXCHANGE window; must not exceed 9 without changes to drlog_context.cppmust not exceed 9 without changes to drlog_context.cpp
-//const unsigned int EX_ALT_MEMORY_MESSAGES  = 9;    // must not exceed 9 without changes to drlog_context.cpp
-//const unsigned int CQ_CTRL_MEMORY_MESSAGES  = 10;  // change already made in drlog_context.cpp; copy the logic for other memories if necessary
 
 enum country_multiplier_type { COUNTRY_MULT_NONE,       ///< no country multipliers
                                COUNTRY_MULT_DXCC,       ///< use DXCC list
@@ -150,7 +148,11 @@ protected:
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;   ///< frequency ranges to be marked on-screen
   unsigned int                                 _match_minimum;                      ///< number of characters before SCP or fuzzy match kicks in
-  std::array<std::string, MAX_MEMORY_MESSAGES> _memory_messages;                    ///< canned messages
+//  std::array<std::string, MAX_MEMORY_MESSAGES> _memory_messages;                    ///< canned messages
+
+// we use the KeySymbol as the integer, although other I/O implementations could use something else
+  std::map<int, std::string >                  _messages;                           ///< CW messages
+
   std::string                                  _message_cq_1;                       ///< CQ message #1 (generally, a short CQ)
   std::string                                  _message_cq_2;                       ///< CQ message #2 (generally, a long CQ)
   std::string                                  _modes;                              ///< comma-delimited modes CW, SSB
@@ -219,22 +221,19 @@ protected:
   bool                                         _test;                           ///< whether to put rig in TEST mode
   std::string                                  _thousands_separator;            ///< character used as thousands separator in numbers
 
-  std::map<std::string, window_information >   _windows;             ///< size and position info for each window
-  std::string                                  _worked_mults_colour; ///< colour of worked mults in the mult windows
+  std::map<std::string, window_information >   _windows;                        ///< size and position info for each window
+  std::string                                  _worked_mults_colour;            ///< colour of worked mults in the mult windows
 
-// we use the KeySymbol as the integer, although other I/O implementations could use something else
-  std::map<int, std::string >                  _messages;            ///< CW messages
+/*! \brief              Process a configuration file
+    \param  filename    name of file to process
 
-/*!     \brief              Process a configuration file
-        \param  filename    name of file to process
-
-        This routine may be called recursively (by the RULES statement in the processed file)
+    This routine may be called recursively (by the RULES statement in the processed file)
 */
   void _process_configuration_file(const std::string& filename);
 
-/*!     \brief              Set the value of points, using the POINTS [CW|SSB] command
-        \param  command     the complete line from the configuration file
-        \param  m           mode
+/*! \brief              Set the value of points, using the POINTS [CW|SSB] command
+    \param  command     the complete line from the configuration file
+    \param  m           mode
 */
   void _set_points(const std::string& command, const MODE m);
 
@@ -251,14 +250,12 @@ public:
   SAFEREAD(auto_backup, _context);                      ///< directory for auto backup files
   SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?
   SAFEREAD(auto_remaining_country_mults, _context);     ///< do we auto-generate the remaining country mults?
-//  SAFEREAD(auto_remaining_exchange_mults, _context);    ///< do we auto-generate the remaining exchange mults? Applies to all exchange mults
 
   inline const bool auto_remaining_exchange_mults(const std::string& mult_name) const
     { SAFELOCK(_context);
 
       return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
     }
-
 
   SAFEREAD(auto_screenshot, _context);                  ///< do we create a screenshot every hour?
 
@@ -327,10 +324,10 @@ public:
   SAFEREAD(cty_filename, _context);                     ///< filename of country file (default = "cty.dat")
   SAFEREAD(cw_speed, _context);                         ///< speed in WPM
 
-  SAFEREAD(decimal_point, _context);
-  SAFEREAD(do_not_show, _context);
-  SAFEREAD(do_not_show_filename, _context);
-  SAFEREAD(drmaster_filename, _context);
+  SAFEREAD(decimal_point, _context);                    ///< character to use as decimal point
+  SAFEREAD(do_not_show, _context);                      ///< do not show these calls when spotted (MY CALL is automatically not shown)
+  SAFEREAD(do_not_show_filename, _context);             ///< filename of calls (one per line) not to be shown
+  SAFEREAD(drmaster_filename, _context);                ///< filename of drmaster file (default = "drmaster")
 
   SAFEREAD(exchange, _context);
   SAFEREAD(exchange_cq, _context);

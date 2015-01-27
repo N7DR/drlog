@@ -1007,6 +1007,36 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
+  if (field_name == "FDEPT")
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.qth();
+
+      if (!rv.empty())
+      { //rv = rules.canonical_value(field_name, rv);
+        _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
+  if (field_name == "HADXC")     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.qth();
+
+      if (!rv.empty())
+      { //rv = rules.canonical_value(field_name, rv);
+        _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
   if (field_name == "ITUZONE")
   { string rv;
 
@@ -1054,6 +1084,21 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
       if (!rv.empty())
       { rv = rules.canonical_value(field_name, rv);
+        _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
+  if (starts_with(field_name, "QTHX["))  // by the time we get here, the call should match the canoncial prefix in the name of the exchange field
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.qth();
+
+      if (!rv.empty())
+      { //rv = rules.canonical_value(field_name, rv);
         _db.insert( { { callsign, field_name }, rv } );
 
         return rv;
