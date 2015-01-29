@@ -195,6 +195,7 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
     \param  callsign    call to test
     \param  b           band to test
     \param  m           mode to test
+    \return             whether the country in which <i>callsign</i> is located is needed as a mult on <i>b</i> and <i>m</i>
 */
 const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
 { try
@@ -230,8 +231,6 @@ const bool running_statistics::add_known_country_mult(const string& str)
 */
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
 { SAFELOCK(statistics);
-
-//  ost << "inside running_statistics::add_qso()" << endl;
   
   const BAND& b = qso.band();
   const unsigned int band_nr = static_cast<int>(b);
@@ -241,57 +240,35 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // increment the number of QSOs
   auto& pb = _n_qsos[mode_nr];
   pb[band_nr]++;
-  
-//  ost << "in add_qso(); pb[band_nr] = " << pb[band_nr] << endl;
 
 // multipliers
 
 // callsign mults
 // for now, just assume that there's at most one possible callsign mult, and the value is in qso.prefix()
-
   if (!_callsign_multipliers.empty() and !(qso.prefix().empty()) )
   { const string mult_name = _callsign_multipliers.begin()->first;
     multiplier& m = _callsign_multipliers.begin()->second;
 
-//    ost << "inside running_statistics::add_qso(), processing callsign mult " << mult_name << endl;
-//    ost << "callsign = " << qso.callsign() << "; prefix = " << qso.prefix() << endl;
-//    ost << "initial m = " << m << endl;
-
     m.unconditional_add_worked(qso.prefix(), static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
-//    ost << "middle m = " << m << endl;
     _callsign_multipliers[mult_name] = m;
-//    ost << "final m = " << m << endl;
   }
 
 // country mults
   const string& call = qso.callsign();
   const string& canonical_prefix = _location_db.canonical_prefix(call);
 
-//  ost << "adding worked country mult: " << canonical_prefix << " on band " << BAND_NAME[band_nr] << " and mode " << MODE_NAME[mo] << endl;
-//  _country_multipliers.add_worked(canonical_prefix, band_nr);
-  /* bool added = */ _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
-
-//  ost << "was added? = " << added << endl;
+  _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
 // exchange mults
-//  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  // vector so we can keep the correct order
   for (auto& exchange_multiplier : _exchange_multipliers)
   { const string& field_name = exchange_multiplier.first;
     multiplier& mult = exchange_multiplier.second;
     const string value = qso.received_exchange(field_name);
-    const string mv = MULT_VALUE(field_name, value);  // the mult value of the received field
-
-//    ost << "Inside running_statistics::add_qso()" << endl;
-//    ost << "QSO: " << qso << endl;
-//    ost << "field_name = " << field_name << endl;
-//    ost << "value: " << value << endl;
-//    ost << "mult value: " << mv << endl;
+    const string mv = MULT_VALUE(field_name, value);            // the mult value of the received field
 
     if (!value.empty())
       mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
-
-//    ost << "exchange multiplier object: " << m << endl;
   }
   
   const bool is_dupe = log.is_dupe(qso, rules);
@@ -302,13 +279,8 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   }
   else    // not a dupe; add qso points; this may not be a very clean algorithm; I should be able to do better
   {
-// ost << "Trying to calculate QSO points for statistics" << endl;
 // try to calculate the points for this QSO; start with a default value
-//    unsigned int points_this_qso = rules.points(qso.band(), qso.call(), _location_db);             // points based on country; something like ::3
     unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like ::3
-
-//    ost << "initial points this qso with " << qso.callsign() << " = " << points_this_qso << endl;
-
     const map<string, unsigned int>& exchange_points = rules.exchange_value_points();
 
     for (map<string, unsigned int>::const_iterator cit = exchange_points.begin(); cit != exchange_points.end(); ++cit)
@@ -322,9 +294,6 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
       }
     }
 
-//    ost << "final points this qso with " << qso.callsign() << " = " << points_this_qso << endl;
-
-//    _qso_points[band_nr] += points_this_qso;
     _qso_points[mode_nr][band_nr] += points_this_qso;
   }
 }
@@ -336,17 +305,13 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 */
 const bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
 { SAFELOCK(statistics);
-//  ost << "in add_known_exchange_mult; name = " << name << ", value = " << value << endl;
-//  ost << "size of _exchange_multipliers = " << _exchange_multipliers.size() << endl;
 
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == name)
     { const bool added = psm.second.add_known(MULT_VALUE(name, value));
 
       if (added)
-      { // ost << "added known exchange mult: " << name << ", value = " << value << ", mult value = " << MULT_VALUE(name, value) << endl;
         return true;
-      }
     }
   }
 
@@ -402,38 +367,27 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
   }
 }
 
-/// do we still need to work a particular exchange mult on a particular band and mode?
+/*! \brief                          Do we still need to work a particular exchange mult on a particular band and mode?
+    \param  exchange_field_name     name of the target exchange field
+    \param  exchange_field_value    value of the target exchange field
+    \param  b                       target band
+    \param  m                       target mode
+    \return                         Whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
+*/
 const bool running_statistics::is_needed_exchange_mult(const string& exchange_field_name, const string& exchange_field_value, const BAND b, const MODE m) const
 { const string mv = MULT_VALUE(exchange_field_name, exchange_field_value);  // the mult value of the received field
 
   SAFELOCK(statistics);
 
-//  ost << "in is_needed_exchange_mult for field " << exchange_field_name << ", value = " << exchange_field_value << ", and band = " << b << ", mult value = " << mv << endl;
-
   for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
   { const pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
 
-//    ost << "checking exchange field name = " << sm.first << endl;
-
     if (sm.first == exchange_field_name and sm.second.is_known(mv) /* sm.second.is_known(exchange_field_value) */)
-    { //ost << "found field name " << sm.first << "; is needed: " << boolalpha << !(sm.second.is_worked(mv, b)) << noboolalpha << endl;;
-//      return !(sm.second.is_worked(exchange_field_value, b));
       return !(sm.second.is_worked(mv, b, m));
-    }
   }
 
   return false;
 }
-
-/// a string list of bands on which a particular exchange mult value is needed
-//const std::string running_statistics::exchange_mult_needed(const string& exchange_field_name, const string& exchange_field_value, const contest_rules& rules)
-//{ string rv;
-//
-//  for (const auto& b : rules.permitted_bands())
-//    rv += ((is_needed_exchange_mult(exchange_field_name, exchange_field_value, b)) ?  BAND_NAME[static_cast<int>(b)] : "   ");
-//
-//  return rv;
-//}
 
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
 { string rv;

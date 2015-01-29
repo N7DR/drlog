@@ -332,21 +332,20 @@ rate_meter rate;                                ///< QSO and point rates
 
 vector<string> win_log_snapshot;                ///< individual lines in the LOG window
 
-scp_database  scp_db,
-              scp_dynamic_db;
-scp_databases scp_dbs;
+scp_database  scp_db,                           ///< static SCP database from file
+              scp_dynamic_db;                   ///< dynamic SCP database from QSOs
+scp_databases scp_dbs;                          ///< container for the SCP databases
 
-// SCP matches colour pair = COLOUR_GREEN => worked on a different band; OK to work on this band
-vector<pair<string /* callsign */, int /* colour pair number */ > > scp_matches;
-vector<pair<string /* callsign */, int /* colour pair number */ > > fuzzy_matches;
+// foreground = COLOUR_GREEN => worked on a different band and OK to work on this band; foreground = COLOUR_RED => dupe
+vector<pair<string /* callsign */, int /* colour pair number */ > > scp_matches;    ///< SCP matches
+vector<pair<string /* callsign */, int /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
 
-fuzzy_database  fuzzy_db,
-                fuzzy_dynamic_db;
-fuzzy_databases fuzzy_dbs;
+fuzzy_database  fuzzy_db,                       ///< static fuzzy database from file
+                fuzzy_dynamic_db;               ///< dynamic SCP database from QSOs
+fuzzy_databases fuzzy_dbs;                      ///< container for the fuzzy databases
 
-// thread IDs
-pthread_t thread_id_display_date_and_time,
-          thread_id_rig_status;
+pthread_t thread_id_display_date_and_time,      ///< thread ID for the thread that displays date and time
+          thread_id_rig_status;                 ///< thread ID for the thread that displays rig status
 
 /// define wrappers to pass parameters to threads
 
@@ -358,25 +357,23 @@ WRAPPER_7_NC(cluster_info,
     location_database*, location_database_p,
     window*, win_bandmap_p,
     decltype(bandmaps)*, bandmaps_p);
-//    BM_ARRAY*, bandmaps_p);
 
-WRAPPER_3_NC(big_cluster_info,
-    drlog_context*, context_p,
-    POSTING_SOURCE*, source_p,
-    cluster_info*, info_p);
+//WRAPPER_3_NC(big_cluster_info,
+//    drlog_context*, context_p,
+//    POSTING_SOURCE*, source_p,
+//    cluster_info*, info_p);
 
 WRAPPER_2_NC(bandmap_info,
     window*, win_bandmap_p,
     decltype(bandmaps)*, bandmaps_p);
-//    BM_ARRAY*, bandmaps_p);
 
 WRAPPER_2_NC(rig_status_info,
     unsigned int, poll_time,
     rig_interface*, rigp);
 
 // prepare for terminal I/O
-screen monitor;                            // declare at global scope solely so that its destructor is called when exit() is executed
-keyboard_queue keyboard;
+screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed
+keyboard_queue keyboard;                    ///< queue of keyboard events
 
 // quick access to whether particular types of mults are in use; these are written only once, so we don't bother to protect them
 bool callsign_mults_used(false);
@@ -2952,6 +2949,12 @@ ost << "processing command: " << command << endl;
 
         be.callsign(callsign);
 
+        const location_info li = location_db.info(callsign);
+        const string canonical_prefix = li.canonical_prefix();
+
+        be.canonical_prefix(canonical_prefix);
+        be.continent(li.continent());
+
 //        ost << "about to set band" << endl;
 
 //        be.band(cur_band);
@@ -2967,11 +2970,17 @@ ost << "processing command: " << command << endl;
 
 //        ost << "mult status calculated" << endl;
 
-        bandmap& bandmap_this_band = bandmaps[cur_band];
+        bandmap& bandmap_this_band = bandmaps[be.band()];
         const bandmap_entry old_be = bandmap_this_band[callsign];
+
+        ost << "old frequency for " << callsign << " = " << old_be.frequency_str() << "; new frequency = " << be.frequency_str() << endl;
 
         if (!old_be.callsign().empty() and (old_be.frequency_str() != be.frequency_str()))  // update bandmap only if there's a change
         { bandmap_this_band += be;
+
+          ost << "old_be = " << old_be << endl;
+          ost << "added to bandmap: " << be << endl;
+
           win_bandmap <= bandmap_this_band;
         }
       }
@@ -3093,7 +3102,7 @@ ost << "processing command: " << command << endl;
         const BAND cur_band = safe_get_band();
         const MODE cur_mode = safe_get_mode();
 
-        be.freq(rig.rig_frequency());
+        be.freq(rig.rig_frequency());       // also sets band
         be.callsign(contents);
 
         const location_info li = location_db.info(contents);
@@ -3101,7 +3110,7 @@ ost << "processing command: " << command << endl;
 
         be.canonical_prefix(canonical_prefix);
         be.continent(li.continent());
-        be.band(static_cast<BAND>(be.freq()));
+ //       be.band(static_cast<BAND>(be.freq()));
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
 
 // do we still need this guy?

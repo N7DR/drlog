@@ -310,7 +310,7 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
          for (auto& choice_field_name : choice_fields)
            full_name += choice_field_name + "+";
 
-         ost << "CHOICE field: " << full_name << endl;
+//         ost << "CHOICE field: " << full_name << endl;
 
          exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
 
@@ -351,17 +351,6 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
 */
 void contest_rules::_parse_context_exchange(const drlog_context& context)
 {
-//  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
-
-//  const auto& per_country_exchanges = context.exchange_per_country();
-
-//  for (const auto& pce : per_country_exchanges)
-//  { const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
-//
-//    _per_country_exchange_fields.insert( { pce.first, set<string>(vs.cbegin(), vs.cend()) } );
-//  }
-
-
 // generate vector of all permitted exchange fields
   map<string, vector<string>> permitted_exchange_fields;  // use a map so that each value is inserted only once
 
@@ -371,7 +360,6 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   { const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
 
     permitted_exchange_fields.insert( { pce.first, vs } );   // unexpanded choice
-//    _per_country_exchange_fields.insert( { pce.first, set<string>(vs.cbegin(), vs.cend()) } );
   }
 
   for (const auto& pce : per_country_exchanges)
@@ -391,20 +379,6 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     _per_country_exchange_fields.insert( { pce.first, ss } );
   }
 
-//  ost << "in _parse_context_exchange()" << endl;
-//  ost << "permitted_exchange_fields size = " << permitted_exchange_fields.size() << endl;
-#if 0
-  for (const auto& pmsvs : permitted_exchange_fields)
-  { ost << "  prefix = " << pmsvs.first << endl;
-    const auto& vs = pmsvs.second;
-
-    for (const auto& s : vs)
-      ost << s << "  ";
-
-    ost << endl;
-  }
-#endif
-
 // add the ordinary exchange to the permitted exchange fields
   const vector<string> exchange_vec = remove_peripheral_spaces(split_string(context.exchange(), ","));
   permitted_exchange_fields.insert( { "", exchange_vec } );
@@ -412,21 +386,6 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   const vector<string> exchange_mults_vec = remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
   map<string, vector<exchange_field>> single_mode_rv_rst;
   map<string, vector<exchange_field>> single_mode_rv_rs;
-
-//  ost << "about to run through permitted_exchange_fields" << endl;
-//  ost << "permitted_exchange_fields size = " << permitted_exchange_fields.size() << endl;
-
-#if 0
-  for (const auto& pmsvs : permitted_exchange_fields)
-  { ost << "  prefix = " << pmsvs.first << endl;
-    const auto& vs = pmsvs.second;
-
-    for (const auto& s : vs)
-      ost << s << "  ";
-
-    ost << endl;
-  }
-#endif
 
   for (const auto& mpef : permitted_exchange_fields)
   { const vector<string>& vs = mpef.second;
@@ -459,62 +418,8 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     single_mode_rv_rs.insert( {  mpef.first, vef_rs } );
   }
 
-//  ost << "single_mode_rv_rst: " << endl;
-
-#if 0
-  for (const auto& psvef : single_mode_rv_rst)
-  { ost << "prefix = " << psvef.first << endl;
-
-    for (const auto& ef : psvef.second)
-      ost << ef.name() << "  ";
-
-    ost << endl;
-  }
-#endif
-
-//  ost << "about to insert into _received_exchange" << endl;
-//  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
-
-#if 0
-  for (const auto& pMmsvef : _received_exchange)
-  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
-
-    const auto& msvef = pMmsvef.second;
-    for (const auto& psvef : msvef)
-    { ost << "prefix = " << psvef.first;
-
-      for (const auto& ef : psvef.second)
-      { ost << endl << ef.name() << "  ";
-      }
-
-      ost << endl;
-    }
-  }
-#endif
-
   for (const auto& m : _permitted_modes)
     _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
-
-//  ost << "leaving _parse_context_exchange" << endl;
-//  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
-
-#if 0
-  for (const auto& pMmsvef : _received_exchange)
-  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
-
-    const auto& msvef = pMmsvef.second;
-    for (const auto& psvef : msvef)
-    { ost << "prefix = " << psvef.first;
-
-      for (const auto& ef : psvef.second)
-      { ost << endl << ef.name() << "  ";
-      }
-
-      ost << endl;
-    }
-  }
-#endif
-
 }
 
 /*! \brief              Initialize an object that was created from the default constructor
@@ -525,26 +430,25 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 */
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
 {
-  ost << "in contest_rules::_init()" << endl;
+//  ost << "in contest_rules::_init()" << endl;
 
-//  std::map<enum MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded
 
-  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
+//  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
 
-  for (const auto& pMmsvef : _received_exchange)
-  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
-
-    const auto& msvef = pMmsvef.second;
-    for (const auto& psvef : msvef)
-    { ost << "prefix = " << psvef.first;
-
-      for (const auto& ef : psvef.second)
-      { ost << endl << ef.name() << "  ";
-      }
-
-      ost << endl;
-    }
-  }
+//  for (const auto& pMmsvef : _received_exchange)
+//  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
+//
+//    const auto& msvef = pMmsvef.second;
+//    for (const auto& psvef : msvef)
+//    { ost << "prefix = " << psvef.first;
+//
+//      for (const auto& ef : psvef.second)
+//      { ost << endl << ef.name() << "  ";
+//      }
+//
+//      ost << endl;
+//    }
+//  }
 
   const vector<string> path = context.path();
 
@@ -567,10 +471,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (context.country_mults_filter() == "ALL")
     copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
 
-//  ost << "context.country_mults_filter() = " << context.country_mults_filter() << endl;
-//  ost << "size of rules::_countries after initial copy = " << _countries.size() << endl;
-//  ost << "size of rules::_country_mults after initial copy = " << _country_mults.size() << endl;
-
   if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
 
@@ -587,8 +487,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _callsign_mults_per_band = context.callsign_mults_per_band();
   _callsign_mults_per_mode = context.callsign_mults_per_mode();
   _callsign_mults_used = !_callsign_mults.empty();
-
-//  ost << "number of possible country mults = " << _country_mults.size() << endl;
 
   _country_mults_used = !_country_mults.empty();
   _country_mults_per_band = context.country_mults_per_band();
@@ -641,23 +539,23 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_used = !_exchange_mults.empty();
 
 // build expanded version of _received_exchange
-  ost << "about to build expanded exchange" << endl;
-  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
+//  ost << "about to build expanded exchange" << endl;
+//  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
 
-  for (const auto& pMmsvef : _received_exchange)
-  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
-
-    const auto& msvef = pMmsvef.second;
-    for (const auto& psvef : msvef)
-    { ost << "prefix = " << psvef.first;
-
-      for (const auto& ef : psvef.second)
-      { ost << endl << ef.name() << "  ";
-      }
-
-      ost << endl;
-    }
-  }
+//  for (const auto& pMmsvef : _received_exchange)
+//  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
+//
+//    const auto& msvef = pMmsvef.second;
+//    for (const auto& psvef : msvef)
+//    { ost << "prefix = " << psvef.first;
+//
+//      for (const auto& ef : psvef.second)
+//      { ost << endl << ef.name() << "  ";
+//      }
+//
+//      ost << endl;
+//    }
+//  }
 
   for (const auto& m : _permitted_modes)
   { map<string, vector<exchange_field>> expanded_exch;
@@ -669,7 +567,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       vector<exchange_field> expanded_vef;
 
       for (const auto& field : vef)
-      { ost << "field: " << field.name() << "; is_choice: " << field.is_choice() << endl;
+      { //ost << "field: " << field.name() << "; is_choice: " << field.is_choice() << endl;
 
         if (!field.is_choice())
           expanded_vef.push_back(field);
@@ -690,7 +588,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
       for (const auto& ef : vef)
       { _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
-        ost << "Added exchange_field_eft for field " << ef.name() << endl;  // this happens once for each field name; not mode-dependent (except that RST and RS can both appear)
+//        ost << "Added exchange_field_eft for field " << ef.name() << endl;  // this happens once for each field name; not mode-dependent (except that RST and RS can both appear)
       }
     }
   }
@@ -770,9 +668,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
           { const string& f0 = fields[0];
 
             if ((f0.find("[") != string::npos) and (f0.find("]") != string::npos))
-            { _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
-//            ost << "inserted " << fields[1] << " points for condition: " << f0 << endl;
-            }
+              _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
           }
 
           pb[b] = points_this_band;    // overwrite default
@@ -783,17 +679,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // legal values for the exchange fields
   _parse_context_qthx(context, location_db);  // qth-dependent fields
-
-#if 0
-  std::vector                                               /* one entry for each exchange field */
-    <std::pair
-      <std::string,                                         /* exch field name */
-         <std::map
-           <std::string,                                   /* a canonical field value */
-             std::set                                      /* each equivalent value is a member of the vector, including the canonical value */
-               <std::string                                /* indistinguishable legal values */
-                  > > > > >                                _exch_values;
-#endif
 
   vector<exchange_field> leaves_vec;
 
@@ -813,11 +698,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
 
-//  set<exchange_field> leaves;
-
-//  for (const auto& v : leaves_vec)
-//    leaves.insert(v);
-
   for (/*vector<exchange_field>::const_iterator*/ auto cit = leaves.cbegin(); cit != leaves.cend(); ++cit)
   { static const set<string> no_canonical_values( { "RS", "RST", "SERNO" } );    // some field values don't have canonical values
     const string& field_name = cit->name();
@@ -828,7 +708,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { try
       { entire_file = read_file(path, field_name + ".values");
         read_file_ok = true;
-        ost << "read values file: " << (field_name + ".values") << endl;
+//        ost << "read values file: " << (field_name + ".values") << endl;
       }
 
       catch (...)
@@ -896,9 +776,9 @@ contest_rules::contest_rules(void) :
   _send_qtcs(false)
 { }
 
-/*!     \brief              Construct an object ready for use
-        \param  context     context for this contest
-        \param  location_db location database
+/*! \brief              Construct an object ready for use
+    \param  context     context for this contest
+    \param  location_db location database
 */
 contest_rules::contest_rules(const drlog_context& context, location_database& location_db) :
   _work_if_different_band(context.qso_multiple_bands()),
@@ -910,9 +790,9 @@ contest_rules::contest_rules(const drlog_context& context, location_database& lo
 { _init(context, location_db);
 }
 
-/*!     \brief              prepare for use an object that was created from the default constructor
-        \param  context     context for this contest
-        \param  location_db location database
+/*! \brief              prepare for use an object that was created from the default constructor
+    \param  context     context for this contest
+    \param  location_db location database
 */
 void contest_rules::prepare(const drlog_context& context, location_database& location_db)
 { _work_if_different_band = context.qso_multiple_bands();
@@ -1190,11 +1070,11 @@ void contest_rules::add_permitted_band(const BAND b)
 }
 
 /// is a particular band permitted?
-const bool contest_rules::permitted_band(const BAND b) const
-{ SAFELOCK(rules);
-
-  return (find(_permitted_bands.begin(), _permitted_bands.end(), b) != _permitted_bands.end());
-}
+//const bool contest_rules::permitted_band(const BAND b) const
+//{ SAFELOCK(rules);
+//
+//  return (find(_permitted_bands.begin(), _permitted_bands.end(), b) != _permitted_bands.end());
+//}
 
 /// get the next band up
 const BAND contest_rules::next_band_up(const BAND current_band) const

@@ -151,7 +151,7 @@ public:
 */
   const bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
 
-/// read from and write to disk
+/// serialize with boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _name
@@ -199,11 +199,11 @@ public:
 */
   const std::vector<exchange_field> expand(void) const;
 
-// needed for set<exchange_field> to work
-  inline const bool operator<(const exchange_field& ef) const
+/// exchange_field < exchange_field
+  inline const bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to work
     { return (_name < ef.name()); }
 
-/// read from and write to disk
+/// serialize with boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _name
@@ -240,7 +240,7 @@ public:
   READ_AND_WRITE(continent_points);    ///< per-continent points
   READ_AND_WRITE(points_type);         ///< is the points structure too complex for the configuration notation?
 
-/// read from and write to disk
+/// serialize with boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
   { ar & _default_points
@@ -265,21 +265,22 @@ class contest_rules
 {
 protected:
     
-  std::set<MODE>    _permitted_modes;            ///< modes allowed in this contest
-  std::vector<BAND> _permitted_bands;            ///< bands allowed in this contest; use a vector container in order to keep the frequency order
-  
-  std::map<enum MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded
-  std::map<enum MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;  ///< details of the received exchange fields; choices expanded
+  std::map<std::string, unsigned int>  _exchange_present_points;                                                            ///< number of points if a particular exchange field is received
+  std::map<std::string, unsigned int>  _exchange_value_points;                                                              ///< number of points if a particular exchange field has a particular value
+  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded
 
-  std::map<enum MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
+  std::vector<BAND> _permitted_bands;                               ///< bands allowed in this contest; use a vector container in order to keep the frequency order
+  std::set<MODE>    _permitted_modes;                               ///< modes allowed in this contest
+  std::array<std::map<BAND, points_structure>, N_MODES> _points;    ///< points structure for each band and mode
+  
+  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded
+
+  std::map<MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
 
   bool              _work_if_different_band;     ///< is it OK to work the same station on different bands?
   bool              _work_if_different_mode;     ///< is it OK to work the same station on different modes?
   
-  std::array<std::map<BAND, points_structure>, N_MODES> _points;  ///< points structure for each band and mode
 
-  std::map<std::string, unsigned int>  _exchange_present_points;  ///< number of points if a particular exchange field is received
-  std::map<std::string, unsigned int>  _exchange_value_points;    ///< number of points if a particular exchange field has a particular value
 
   std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
   bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
@@ -398,8 +399,8 @@ public:
 
     Returns <i>false</i> if <i>mode</i> was already permitted
 */
-  inline const bool permitted_mode(const MODE mode) const
-    { SAFELOCK(rules); return (_permitted_modes < mode); }
+//  inline const bool permitted_mode(const MODE mode) const
+//    { SAFELOCK(rules); return (_permitted_modes < mode); }
     
 /// add a mode to the list of permitted modes
   inline void add_permitted_mode(const MODE mode)
@@ -412,7 +413,7 @@ public:
   void add_permitted_band(const BAND b);
   
 /// is a particular band permitted?
-  const bool permitted_band(const BAND b) const;
+//  const bool permitted_band(const BAND b) const;
 
 /// get the next band that is higher in frequency than a given band
   const BAND next_band_up(const BAND current_band) const;
@@ -425,17 +426,17 @@ public:
   SAFEREAD(permitted_bands, rules);                      ///< bands allowed in this contest
   SAFEREAD(permitted_modes, rules);                      ///< modes allowed in this contest
 
-/*!     \brief                      Get the expected exchange fields for a particular canonical prefix
-        \param  canonical_prefix    canonical prefix
-        \return                     The exchange fields associated with <i>canonical_prefix</i>
+/*! \brief                      Get the expected exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
   const std::vector<exchange_field> exch(const std::string& canonical_prefix, const MODE m) const;
 
-/*!     \brief                      Get the expected exchange fields for a particular canonical prefix
-        \param  canonical_prefix    canonical prefix
-        \return                     The exchange fields associated with <i>canonical_prefix</i>
+/*! \brief                      Get the expected exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange fields associated with <i>canonical_prefix</i>
 
-        CHOICE fields ARE expanded
+    CHOICE fields ARE expanded
 */
   const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const;
 
