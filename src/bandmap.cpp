@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 92 2015-01-24 22:36:02Z  $
+// $Id: bandmap.cpp 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,10 +24,14 @@
 
 using namespace std;
 
-extern message_stream      ost;                 ///< debugging/logging output
-extern pt_mutex            bandmap_mutex;       ///< used when writing to the bandmap window
+extern pt_mutex                 bandmap_mutex;      ///< used when writing to the bandmap window
+extern exchange_field_database  exchange_db;        ///< dynamic database of exchange field values for calls; automatically thread-safe
+extern location_database        location_db;
+//extern string                   my_continent;
+//extern string                   my_country;
+extern message_stream           ost;                ///< debugging/logging output
 
-extern const set<string> CONTINENT_SET;         ///< two-letter abbreviations for all the continents
+extern const set<string> CONTINENT_SET;             ///< two-letter abbreviations for all the continents
 
 /*! \brief                      Obtain value corresponding to a type of callsign mult from a callsign
     \param  callsign_mult_name  the type of the callsign mult
@@ -37,10 +41,9 @@ extern const set<string> CONTINENT_SET;         ///< two-letter abbreviations fo
 */
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
-extern exchange_field_database exchange_db;     ///< dynamic database of exchange field values for calls; automatically thread-safe
+const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
 
-const string MY_MARKER("--------");             ///< the string that marks my position in the bandmap
-bandmap_filter_type bmf;                        ///< the global bandmap filter
+bandmap_filter_type bmf;                            ///< the global bandmap filter
 
 /*! \brief      Printable version of the name of a bandmap_entry source
     \param  bes source of a bandmap entry
@@ -115,14 +118,28 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _expiration_time(0)
 { }
 
-/*! \brief      Set <i>_freq</i> and <i>_frequency_str</i>
+void bandmap_entry::callsign(const string& call)
+{ _callsign = call;
+
+  if (_callsign != MY_MARKER)
+  { const location_info li = location_db.info(_callsign);
+
+    _canonical_prefix = li.canonical_prefix();
+    _continent = li.continent();
+  }
+//  else                                  // do we really need this?
+//  { _canonical_prefix = my_country;
+//    _continent = my_continent;
+//  }
+}
+
+/*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
     \param  f   frequency used to set the values
 */
 void bandmap_entry::freq(const frequency& f)
 { _freq = f;
   _frequency_str = _freq.display_string();
   _band = to_BAND(f);
-
   _mode = putative_mode();
 }
 
@@ -300,7 +317,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      \param bme                     band map entries
      \param target_frequency_in_khz the target frequency, in kHz
      \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
+     \return                        callsign of a station within the guard band
 
      Returns the nearest station within the guard band, or the null string if no call is found.
 */
@@ -512,7 +529,7 @@ void bandmap::operator+=(const bandmap_entry& be)
 
               old_be.add_poster(poster);
 
-                ost << "added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
+///                ost << "added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
               (*this) -= callsign;
               _insert(old_be);
             }
@@ -529,7 +546,7 @@ void bandmap::operator+=(const bandmap_entry& be)
 
               old_be.add_poster(poster);
 
-              ost << "new expiration; added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
+//              ost << "new expiration; added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
 
               old_be.expiration_time(be.expiration_time());
 
@@ -598,7 +615,8 @@ void bandmap::prune(void)
 const bandmap_entry bandmap::operator[](const string& str)
 { SAFELOCK(_bandmap);
 
-  const auto cit = find_if(_entries.cbegin(), _entries.cend(), [=] (const bandmap_entry& be) { return (be.callsign() == str); });
+//  const auto cit = find_if(_entries.cbegin(), _entries.cend(), [=] (const bandmap_entry& be) { return (be.callsign() == str); });
+  const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); });
 
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
 }
@@ -612,7 +630,8 @@ const bandmap_entry bandmap::operator[](const string& str)
 const bandmap_entry bandmap::substr(const string& str)
 { SAFELOCK(_bandmap);
 
-  const auto cit = find_if(_entries.cbegin(), _entries.cend(), [=] (const bandmap_entry& be) { return be.is_substr(str); });
+//  const auto cit = find_if(_entries.cbegin(), _entries.cend(), [=] (const bandmap_entry& be) { return be.is_substr(str); });
+  const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return be.is_substr(str); });
 
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
 }
@@ -683,8 +702,6 @@ void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string
     { const string& callsign = be.callsign();
       const string this_callsign_mult = (*pf)(mult_type, callsign);
 
-      ost << "callsign = " << callsign << ", this_callsign_mult = " << this_callsign_mult << ", callsign_mult_string = " << callsign_mult_string << endl;
-
       if (this_callsign_mult == callsign_mult_string)
       { be.remove_callsign_mult(mult_type, callsign_mult_string);
         _dirty_entries();
@@ -693,37 +710,17 @@ void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string
   }
 }
 
-/*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
-    \param  mult_type               name of mult type
-    \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
+/*! \brief              Set the needed exchange mult status of a particular exchange mult to <i>false</i>
+    \param  mult_name   name of exchange mult
+    \param  mult_value  value of <i>mult_name</i> that is no longer a multiplier
 */
-#if 0
-void bandmap::not_needed_callsign_mult(const string& mult_type /* e.g., "WPXPX" */,
-                                       const string& callsign_mult_string /* e.g., SM1 */)
-{ if (callsign_mult_string.empty() or mult_type.empty())
-    return;
-
-  SAFELOCK(_bandmap);
-
-// change status for all entries with this particular callsign mult
-  FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_callsign_mult(mult_type, callsign_mult_string); } );
-
-  _dirty_entries();
-}
-#endif
-
 void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mult_value)
 { if (mult_name.empty() or mult_value.empty())
     return;
 
   SAFELOCK(_bandmap);
 
-//  for (auto& be : _entries)
-//    be.remove_exchange_mult(mult_name, mult_value);
   FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
-
-//  _filtered_entries_dirty = true;
-//  _rbn_threshold_and_filtered_entries_dirty = true;
   _dirty_entries();
 }
 

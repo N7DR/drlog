@@ -1,4 +1,4 @@
-// $Id: statistics.h 92 2015-01-24 22:36:02Z  $
+// $Id: statistics.h 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -103,16 +103,16 @@ public:
   SAFEREAD(country_mults_used, statistics);                   ///< are country mults used?
   SAFEREAD(exchange_mults_used, statistics);                  ///< are exchange mults used?
 
-/*! \brief                  How many QSOs have been made?
-    \param  rules           rules for this contest
+/*! \brief          How many QSOs have been made?
+    \param  rules   rules for this contest
 
     Counts only those QSOs on bands being used to calculate the score. Includes dupes.
 */
   const unsigned int n_qsos(const contest_rules& rules) const;
 
-/*! \brief                  How many QSOs have been made in a particular mode?
-    \param  rules           rules for this contest
-    \param  m               target mode
+/*! \brief          How many QSOs have been made in a particular mode?
+    \param  rules   rules for this contest
+    \param  m       target mode
 
     Counts only those QSOs on bands being used to calculate the score. Includes dupes.
 */
@@ -125,14 +125,6 @@ public:
     \param  m           mode to test
 */
   const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
-
-/*! \brief              Do we still need to work a particular callsign mult on a particular band (and any mode)?
-    \param  mult_name   name of mult
-    \param  mult_value  value of mult to test
-    \param  b           band to test
-*/
-//  inline const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b) const
-//    { return is_needed_callsign_mult(mult_name, mult_value, b, ANY_MODE); }
 
 /*! \brief          Add a known value of country mult
     \param  str     Canonical prefix of mult

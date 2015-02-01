@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 92 2015-01-24 22:36:02Z  $
+// $Id: drlog.cpp 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -213,6 +213,7 @@ set<string>         known_callsign_mults;                   ///< callsign mults 
 
 // global variables
 
+int                     ACCEPT_COLOUR(COLOUR_GREEN);        ///< colour for calls that have been worked, but are not dupes
 string                  at_call;                            ///< call that should replace comat in "call ok now" message
 
 drlog_context           context;                            ///< context taken from configuration file
@@ -224,12 +225,14 @@ bool                    filter_remaining_country_mults(false);  ///< whether to 
 logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 
 string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
+//string                  my_country;                         ///< canonical prefix for my country
 
 unsigned int            next_qso_number = 1;                ///< actual number of next QSO
 unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
 
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
 
+int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
 bool                    restored_data(false);               ///< did we restore from an archive?
 
 running_statistics      statistics;                         ///< all the QSO statistics to date
@@ -336,7 +339,7 @@ scp_database  scp_db,                           ///< static SCP database from fi
               scp_dynamic_db;                   ///< dynamic SCP database from QSOs
 scp_databases scp_dbs;                          ///< container for the SCP databases
 
-// foreground = COLOUR_GREEN => worked on a different band and OK to work on this band; foreground = COLOUR_RED => dupe
+// foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
 vector<pair<string /* callsign */, int /* colour pair number */ > > scp_matches;    ///< SCP matches
 vector<pair<string /* callsign */, int /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
 
@@ -376,11 +379,16 @@ screen monitor;                             ///< the ncurses screen;  declare at
 keyboard_queue keyboard;                    ///< queue of keyboard events
 
 // quick access to whether particular types of mults are in use; these are written only once, so we don't bother to protect them
-bool callsign_mults_used(false);
-bool country_mults_used(false);
-bool exchange_mults_used(false);
+bool callsign_mults_used(false);            ///< do the rules call for callsign mults?
+bool country_mults_used(false);             ///< do the rules call for country mults?
+bool exchange_mults_used(false);            ///< do the rules call for exchange mults?
 
-// update the SCP or fuzzy window and vector of matches
+/*! \brief                  Update the SCP or fuzzy window and vector of matches
+    \param  matches         container of matches
+    \param  match_vector    output vector of pairs of calls and colours (in display order)
+    \param  win             window to be updated
+    \param  callsign        callsign to be patched
+*/
 template <typename T>
 void update_matches_window(const T& matches, vector<pair<string, int>>& match_vector, window& win, const string& callsign)
 { if (callsign.length() >= context.match_minimum())
@@ -412,10 +420,10 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
       int colour_pair_number = colours.add(win.fg(), win.bg());
 
       if (qso_b4)
-        colour_pair_number = colours.add(COLOUR_GREEN, win.bg());
+        colour_pair_number = colours.add(ACCEPT_COLOUR, win.bg());
 
       if (dupe)
-        colour_pair_number = colours.add(COLOUR_RED, win.bg());
+        colour_pair_number = colours.add(REJECT_COLOUR, win.bg());
 
       match_vector.push_back( { cs, colour_pair_number } );
     }
@@ -439,7 +447,7 @@ inline const string serial_number_string(const unsigned int n)
     \param  callsign    call of the station for which sunset is desired
     \return             sunrise in the form HHMM
 
-    Returns "9999" if it's always dark, and "8888" if it's always light
+    Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
 inline const string sunrise(const string& callsign)
   { return sunrise_or_sunset(callsign, false); }
@@ -448,7 +456,7 @@ inline const string sunrise(const string& callsign)
     \param  callsign    call of the station for which sunset is desired
     \return             sunset in the form HHMM
 
-    Returns "9999" if it's always dark, and "8888" if it's always light
+    Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
 inline const string sunset(const string& callsign)
   { return sunrise_or_sunset(callsign, true); }
@@ -466,7 +474,9 @@ inline void update_scp_window(const string& callsign)
   { update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign); }
 
 int main(int argc, char** argv)
-{ try
+{
+// generate version information
+  try
   { const map<string, string> MONTH_NAME_TO_NUMBER( { { "Jan", "01" },
                                                       { "Feb", "02" },
                                                       { "Mar", "03" },
@@ -494,10 +504,10 @@ int main(int argc, char** argv)
     VERSION = string("Unknown version ") + VERSION;  // because VERSION may be used elsewhere
   }
 
-  command_line cl(argc, argv);
+  command_line cl(argc, argv);                                                              ///< for parsing the ocmmand line
   const string config_filename = (cl.value_present("-c") ? cl.value("-c") : "logcfg.dat");
 
-  try    // put it all in one big try block
+  try    // put it all in one big try block (one of the few things in C++ I have hated ever since we introduced it)
   {
 // read configuration data (typically from logcfg.dat)
     drlog_context* context_p = nullptr;
@@ -515,8 +525,11 @@ int main(int argc, char** argv)
     context = *context_p;
     delete context_p;
 
-    DP = context.decimal_point();
-    TS = context.thousands_separator();
+// set some variables that will not be written again
+    DP = context.decimal_point();               // correct decimal point indicator
+    TS = context.thousands_separator();         // correct thousands separator
+    ACCEPT_COLOUR = context.accept_colour();    // colour for calls it is OK to work
+    REJECT_COLOUR = context.reject_colour();    // colour for calls it is not OK to work
 
 // read the country data
     cty_data* country_data_p = nullptr;
@@ -531,9 +544,6 @@ int main(int argc, char** argv)
     }
 
     const cty_data& country_data = *country_data_p;
-
-// make some things available file-wide
-    my_continent = context.my_continent();
 
 // read drmaster database
     try
@@ -571,10 +581,7 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-    location_db.add_russian_database(context.path(), context.russian_filename());
-
-// make callsign parser available now that we can create it
-    CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context.path(), context.exchange_fields_filename(), context, location_db);
+    location_db.add_russian_database(context.path(), context.russian_filename());  // add Russian information
 
 // build super check partial database from the drmaster information
     try
@@ -612,6 +619,12 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
+// make some things available file-wide
+    my_continent = context.my_continent();
+
+// make callsign parser available now that we can create it
+    CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context.path(), context.exchange_fields_filename(), context, location_db);
+
     send_qtcs = rules.send_qtcs();    // grab it once
     n_modes = rules.n_modes();        // grab this once too
 
@@ -621,13 +634,8 @@ int main(int argc, char** argv)
     exchange_mults_used = rules.exchange_mults_used();
 
 // possibly test regex exchanges; this will exit if it executes
-#if defined(NEW_CONSTRUCTOR)
     if (cl.value_present("-test-exchanges"))
       test_exchange_templates(rules, cl.value("-test-exchanges"));
-#else
-    if (cl.value_present("-test-exchanges"))
-      test_exchange_templates(cl.value("-test-exchanges"));
-#endif    // NEW_CONSTRUCTOR
 
 // real-time statistics
     try
@@ -654,12 +662,12 @@ int main(int argc, char** argv)
 
 // possibly set up CW buffer
     if (contains(to_upper(context.modes()), "CW") and !context.keyer_port().empty())
-    { const string cw_port = context.keyer_port();
-      const unsigned int ptt_delay = context.ptt_delay();
-      const unsigned int cw_speed = context.cw_speed();
+    { //const string cw_port = context.keyer_port();
+      //const unsigned int ptt_delay = context.ptt_delay();
+      //const unsigned int cw_speed = context.cw_speed();
 
       try
-      { cw_p = new cw_buffer(cw_port, ptt_delay, cw_speed);
+      { cw_p = new cw_buffer(context.keyer_port(), context.ptt_delay(), context.cw_speed());
       }
 
       catch (const parallel_port_error& e)
@@ -677,7 +685,7 @@ int main(int argc, char** argv)
     safe_set_band(context.start_band());
     safe_set_mode(context.start_mode());
 
-// see if the rig is on the right band and mode (as defined in the configuration file), and if not then move it
+// see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
     { const frequency rf = rig.rig_frequency();
       const MODE rm = rig.rig_mode();
       const bool mode_matches = ((current_mode == MODE_CW and rm == MODE_CW ) or
@@ -697,12 +705,11 @@ int main(int argc, char** argv)
 // configure bandmaps so user's call does not display
   { const string my_call = context.my_call();
 
-//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(my_call); } );
     FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
   }
 
+// ditto for other calls in the do-not-show list or file
   for (const auto& callsign : context.do_not_show())
-//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(callsign); } );
     FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
 
   if (!context.do_not_show_filename().empty())
@@ -710,8 +717,7 @@ int main(int argc, char** argv)
     { const vector<string> lines = remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), context.do_not_show_filename()))));
 
       for (const auto& callsign : lines)
-//        for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.do_not_add(callsign); } );
-      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
     }
 
     catch (...)
@@ -724,7 +730,6 @@ int main(int argc, char** argv)
   { const unsigned int rbn_threshold = context.rbn_threshold();
 
     if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
-//      for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
       FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
   }
 
@@ -744,7 +749,7 @@ int main(int argc, char** argv)
   }
 
   for (auto& swin : static_windows_p)
-    *(swin.second) <= swin.first;
+    *(swin.second) <= swin.first;       // display contents of the static window
 
 // BAND/MODE window
   win_band_mode.init(context.window_info("BAND/MODE"), WINDOW_NO_CURSOR);
@@ -754,8 +759,8 @@ int main(int argc, char** argv)
 
   if (!context.batch_messages_file().empty())
   { try
-    { const string all_messages = read_file(context.path(), context.batch_messages_file());
-      const vector<string> messages = to_lines(all_messages);
+    { //const string all_messages = read_file(context.path(), context.batch_messages_file());
+      const vector<string> messages = to_lines(read_file(context.path(), context.batch_messages_file()));
 
       SAFELOCK(batch_messages);
 
@@ -764,7 +769,7 @@ int main(int argc, char** argv)
       for (const auto& messages_line : messages)
       { if (!messages_line.empty())
         { if (contains(messages_line, "["))
-            current_message = substring(messages_line, 1, messages_line.length() - 2);
+            current_message = delimited_substring(messages_line, '[', ']'); //substring(messages_line, 1, messages_line.length() - 2);
           else
           { const string callsign = remove_peripheral_spaces(messages_line);
 
@@ -809,8 +814,8 @@ int main(int argc, char** argv)
 
   if (!context.individual_messages_file().empty())
   { try
-    { const string all_messages = read_file(context.path(), context.individual_messages_file());
-      const vector<string> messages = to_lines(all_messages);
+    { //const string all_messages = read_file(context.path(), context.individual_messages_file());
+      const vector<string> messages = to_lines(read_file(context.path(), context.individual_messages_file()));
 
       SAFELOCK(individual_messages);
 
@@ -818,7 +823,7 @@ int main(int argc, char** argv)
       { vector<string> fields = split_string(messages_line, ":");
 
         if (!fields.empty())
-        { const string callsign = fields[0];
+        { const string& callsign = fields[0];
           const size_t posn = messages_line.find(":");
 
           if (posn != messages_line.length() - 1)    // if the colon isn't the last character
@@ -837,7 +842,6 @@ int main(int argc, char** argv)
   }
 
 // INDIVIDUAL QTC COUNT window
-//  ost << "send_qtcs = " << send_qtcs << endl;
   if (send_qtcs)
   { win_individual_qtc_count.init(context.window_info("INDIVIDUAL QTC COUNT"), WINDOW_NO_CURSOR);
     win_individual_qtc_count <= WINDOW_CLEAR;
@@ -895,10 +899,10 @@ int main(int argc, char** argv)
     update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
   else
   { const set<string> set_from_context = context.remaining_country_mults_list();
-    const string& target_continent = *(set_from_context.cbegin());
+    const string& target_continent = *(set_from_context.cbegin());                  // set might contain a continent instead of countries
 
     if ((set_from_context.size() == 1) and (CONTINENT_SET < target_continent))
-      win_remaining_country_mults <= location_db.countries(target_continent);
+      win_remaining_country_mults <= location_db.countries(target_continent);       // all the countries in the continent
     else
       win_remaining_country_mults <= (context.remaining_country_mults_list());
   }
@@ -913,7 +917,7 @@ int main(int argc, char** argv)
     wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
     win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
 
-    (*wp) <= rules.exch_canonical_values(exchange_mult_name);
+    (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values
   }
 
 // RIG window (rig status)
@@ -921,9 +925,10 @@ int main(int argc, char** argv)
 
 // SCORE window
   win_score.init(context.window_info("SCORE"), WINDOW_NO_CURSOR);
-  { const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
+  { static const string RUBRIC("Score: ");
+    const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - RUBRIC.length());
 
-    win_score < CURSOR_START_OF_LINE < "Score: " <= score_str;
+    win_score < CURSOR_START_OF_LINE < RUBRIC <= score_str;
   }
 
 // SCORE BANDS window
@@ -931,8 +936,9 @@ int main(int argc, char** argv)
   { const set<BAND> score_bands = rules.score_bands();
     string bands_str;
 
-    for (const auto& b : score_bands)
-      bands_str += (BAND_NAME[b] + " ");
+//    for (const auto& b : score_bands)
+//      bands_str += (BAND_NAME[b] + " ");
+    FOR_ALL(score_bands, [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + " "); } );
 
     win_score_bands < CURSOR_START_OF_LINE < "Score Bands: " <= bands_str;
   }
@@ -968,7 +974,6 @@ int main(int argc, char** argv)
 
 // SUMMARY window
   win_summary.init(context.window_info("SUMMARY"), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-//  win_summary < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
   display_statistics(statistics.summary_string(rules));
 
 // TITLE window
@@ -982,7 +987,7 @@ int main(int argc, char** argv)
   win_wpm.init(context.window_info("WPM"), WINDOW_NO_CURSOR);
   win_wpm <= to_string(context.cw_speed()) + " WPM";
   if (cw_p)
-    cw_p->speed(context.cw_speed());
+    cw_p->speed(context.cw_speed());                    // set computer keyer speed
 
   try
   { if (context.sync_keyer())
@@ -992,10 +997,6 @@ int main(int argc, char** argv)
   catch (const rig_interface_error& e)
   { alert("Error setting CW speed on rig");
   }
-
-// CW window
-  //win_cw.init(context.window_info("CW BUFFER"), WINDOW_NO_CURSOR);
-  //cw_buffer cw(win_cw);
 
   display_band_mode(win_band_mode, safe_get_band(), safe_get_mode());
 
@@ -1010,7 +1011,7 @@ int main(int argc, char** argv)
   }
 
 // start to display the rig status (in the RIG window); also get rig frequency for bandmap
-  rig_status_info rig_status_thread_parameters(1000 /* poll time */, &rig);
+  rig_status_info rig_status_thread_parameters(1000 /* poll time */, &rig);         // poll rig once per second
 
   try
   { create_thread(&thread_id_rig_status, &(attr_detached.attr()), display_rig_status, &rig_status_thread_parameters, "rig status");
@@ -1036,12 +1037,18 @@ int main(int argc, char** argv)
   win_bandmap.init(context.window_info("BANDMAP"), WINDOW_NO_CURSOR);
 
   { const vector<int> fc = context.bandmap_fade_colours();
-
-    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.fade_colours(fc); } );
-
     const int rc = context.bandmap_recent_colour();
 
-    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.recent_colour(rc); } );
+//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.fade_colours(fc); } );
+//    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.fade_colours(fc); } );
+
+
+
+//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.recent_colour(rc); } );
+//    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.recent_colour(rc); } );
+    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.fade_colours(fc);
+                                          bm.recent_colour(rc);
+                                        } );
   }
 
 // create thread to prune the bandmaps every minute
@@ -1068,38 +1075,28 @@ int main(int argc, char** argv)
   if (!bandmap_filtering_enabled)                                                                          // disabled
     win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
   else
-  { if (context.bandmap_filter_hide())                                                                     // hide
-      win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_hide_colour());
-    else                                                                                                   // show
-      win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_show_colour());
+  { //if (context.bandmap_filter_hide())                                                                     // hide
+     // win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_hide_colour());
+    //else                                                                                                   // show
+    //  win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_show_colour());
+    win_bandmap_filter.default_colours(win_bandmap_filter.fg(), (context.bandmap_filter_hide() ? context.bandmap_filter_hide_colour() : context.bandmap_filter_show_colour()));
   }
 
   BAND cur_band = safe_get_band();
   MODE cur_mode = safe_get_mode();
 
-  if (bandmaps.size() > static_cast<int>(cur_band))
-  { bandmap& bm = bandmaps[cur_band];         // use map for current band, so column offset is correct
+  if (bandmaps.size() > static_cast<int>(cur_band))     // should always be true; test is to ensure next line is OK
+  { bandmap& bm = bandmaps[cur_band];                   // use map for current band, so column offset is correct
 
     bm.filter_enabled(context.bandmap_filter_enabled());
     bm.filter_hide(context.bandmap_filter_hide());
 
     const vector<string>& original_filter = context.bandmap_filter();
 
-//    for_each(original_filter.begin(), original_filter.end(), [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
     FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
-    win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
+    win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();       // display filter
   }
-
-  /*
-  dx_post dxa("DX de RX9WN:     14001.0  UE9WFA       see UE9WURC  QRZ.COM           1932Z ");
-  bandmaps[BAND_20] += bandmap_entry(dxa);
-  win_bandmap <= bandmaps[BAND_20];
-
-  dx_post dxb("DX de RX9WN:     14002.0  UE9WFB       see UE9WURC  QRZ.COM           1932Z ");
-  bandmaps[BAND_20] += bandmap_entry(dxb);
-  win_bandmap <= bandmaps[BAND_20];
-   */
 
   //  ost << "About to read Cabrillo log" << endl;
 
@@ -1134,7 +1131,7 @@ int main(int argc, char** argv)
   //  win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= vec.size();
 
 // create the cluster, and package it for use by the process_cluster_info() thread
-// coinstructor for cluster has to be in a diffreent thread, so that we don't block this one
+// constructor for cluster has to be in a different thread, so that we don't block this one
   if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
   { static pthread_t spawn_thread_id;
 
@@ -1163,21 +1160,24 @@ int main(int argc, char** argv)
   }
 
 // backup the last-used log, if one exists
-  { string fn = context.logfile();
-    int index = 0;
-
-//    ost << "fn is: " << fn << endl;
-
-    while (file_exists(fn + "-" + to_string(index)))
-      index++;
-
-//    ost << "index = " << index << endl;
+  { const string fn = context.logfile();
 
     if (file_exists(fn))
-    { //ost << "file " << fn << " exists" << endl;
+    { int index = 0;
+
+      while (file_exists(fn + "-" + to_string(index)))
+        index++;
+
       file_copy(fn, fn + "-" + to_string(index));
-      //ost << "copied to " << fn + "-" + to_string(index) << endl;
     }
+
+//    int index = 0;
+
+//    while (file_exists(fn + "-" + to_string(index)))
+//      index++;
+
+//    if (file_exists(fn))
+//      file_copy(fn, fn + "-" + to_string(index));
   }
 
 // now we can restore data from the last run
@@ -1211,8 +1211,6 @@ int main(int argc, char** argv)
 
             qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
 
-//            ost << "QSO: " << qso << endl;
-
 // callsign mults
             allow_for_callsign_mults(qso);
 
@@ -1228,31 +1226,21 @@ int main(int argc, char** argv)
                 exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
             }
 
-//            ost << "size of exchange_db = " << exchange_db.size() << endl;
-//             ost << "adding to statistics" << endl;
-
             statistics.add_qso(qso, logbk, rules);
-
-//            ost << "added to statistics" << endl;
-
             logbk += qso;
             rate.insert(qso.epoch_time(), statistics.points(rules));
 
             win_message <= WINDOW_CLEAR;
           }
 
-//          ost << "CW QSOs = " << statistics.n_qsos(rules, MODE_CW) << endl;
-
 // rebuild the history
           rebuild_history(logbk, rules, statistics, q_history, rate);
-
-//          ost << "CW QSOs [1] = " << statistics.n_qsos(rules, MODE_CW) << endl;
 
 // rescore the log
           rescore(rules);
           update_rate_window();
 
-          scp_dynamic_db.clear();  // clears cache of parent
+          scp_dynamic_db.clear();       // clears cache of parent
           fuzzy_dynamic_db.clear();
 
           const vector<QSO> qso_vec = logbk.as_vector();
@@ -1260,10 +1248,11 @@ int main(int argc, char** argv)
           for (const auto& qso : qso_vec)
           { if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
               scp_dynamic_db.add_call(qso.callsign());
-          }
+//          }
 
-          for (const auto& qso : qso_vec)
-          { if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
+//          for (const auto& qso : qso_vec)
+//          {
+            if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
               fuzzy_dynamic_db.add_call(qso.callsign());
           }
         }
@@ -1271,18 +1260,17 @@ int main(int argc, char** argv)
 // octothorpe
         if (logbk.size() >= 1)
         { const QSO last_qso = logbk[logbk.size()];    // wrt 1
-          const MODE m = last_qso.mode();
+          //const MODE m = last_qso.mode();
 
-          if (rules.sent_exchange_includes("SERNO", m))
+          if (rules.sent_exchange_includes("SERNO", last_qso.mode()))
             octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1;
         }
         else
           octothorpe = 1;
       }
 
-//    ost << "CW QSOs [2] = " << statistics.n_qsos(rules, MODE_CW) << endl;
-
-// display most recent lines from log
+// &&&
+// display most-recent lines from log
       editable_log.recent_qsos(logbk, true);
 
 // correct QSO number (and octothorpe)
@@ -1613,7 +1601,7 @@ void* display_rig_status(void* vp)
 
 // populate the bandmap entry stuff that won't change
   be.callsign(MY_MARKER);
-  be.time(::time(NULL));
+//  be.time(::time(NULL));
   be.source(BANDMAP_ENTRY_LOCAL);
   be.expiration_time(be.time() + 1000000);    // a million seconds in the future
 
@@ -1670,7 +1658,7 @@ void* display_rig_status(void* vp)
           { const BAND b = static_cast<BAND>(f);
 
             be.freq(f);
-            be.band(b);
+//            be.band(b);
             safe_set_band(b);
 
 //            const MODE m = safe_get_mode();
@@ -1949,15 +1937,15 @@ void* process_rbn_info(void* vp)
               const string& dx_callsign = post.callsign();
               const string& poster = post.poster();
               const pair<string, BAND> target { dx_callsign, dx_band };
-              const location_info li = location_db.info(dx_callsign);
+//              const location_info li = location_db.info(dx_callsign);
 
               bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
 
               be.freq(post.freq());
               be.callsign(dx_callsign);
-              be.canonical_prefix(li.canonical_prefix());
-              be.continent(li.continent());
-              be.band(dx_band);
+//              be.canonical_prefix(li.canonical_prefix());
+//              be.continent(li.continent());
+//              be.band(dx_band);
               be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
               if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
@@ -2158,8 +2146,8 @@ void* prune_bandmap(void* vp)
     SHIFT (RIT control)
     ALT-Y -- delete last QSO
     CURSOR UP -- go to log window
-    CURSOR DOWN -- possibly replace call with SCP info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
-    CTRL-CURSOR DOWN -- possibly replace call with fuzzy info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
+    CURSOR DOWN -- possibly replace call with SCP info
+    CTRL-CURSOR DOWN -- possibly replace call with fuzzy info
     ALT-KP+ -- increment octothorpe
     ALT-KP- -- decrement octothorpe
     CTRL-KP+ -- increment qso number
@@ -2755,12 +2743,12 @@ ost << "processing command: " << command << endl;
           be.freq(rig.rig_frequency());
           be.callsign(contents);
 
-          const location_info li = location_db.info(contents);
-          const string canonical_prefix = li.canonical_prefix();
+//          const location_info li = location_db.info(contents);
+//          const string canonical_prefix = li.canonical_prefix();
 
-          be.canonical_prefix(canonical_prefix);
-          be.continent(li.continent());
-          be.band(static_cast<BAND>(be.freq()));
+//          be.canonical_prefix(canonical_prefix);
+//          be.continent(li.continent());
+//          be.band(static_cast<BAND>(be.freq()));
           be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
           be.calculate_mult_status(rules, statistics);
           be.is_needed(false);
@@ -2949,11 +2937,11 @@ ost << "processing command: " << command << endl;
 
         be.callsign(callsign);
 
-        const location_info li = location_db.info(callsign);
-        const string canonical_prefix = li.canonical_prefix();
+//        const location_info li = location_db.info(callsign);
+//        const string canonical_prefix = li.canonical_prefix();
 
-        be.canonical_prefix(canonical_prefix);
-        be.continent(li.continent());
+//        be.canonical_prefix(canonical_prefix);
+//        be.continent(li.continent());
 
 //        ost << "about to set band" << endl;
 
@@ -3105,11 +3093,11 @@ ost << "processing command: " << command << endl;
         be.freq(rig.rig_frequency());       // also sets band
         be.callsign(contents);
 
-        const location_info li = location_db.info(contents);
-        const string canonical_prefix = li.canonical_prefix();
+//        const location_info li = location_db.info(contents);
+//        const string canonical_prefix = li.canonical_prefix();
 
-        be.canonical_prefix(canonical_prefix);
-        be.continent(li.continent());
+//        be.canonical_prefix(canonical_prefix);
+//        be.continent(li.continent());
  //       be.band(static_cast<BAND>(be.freq()));
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
 
@@ -3256,7 +3244,7 @@ ost << "processing command: " << command << endl;
     processed = true;
   }
 
-// CURSOR DOWN -- possibly replace call with SCP info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
+// CURSOR DOWN -- possibly replace call with SCP info
   if (!processed and e.is_unmodified() and e.symbol() == XK_Down)
   { string new_callsign = match_callsign(scp_matches);
 
@@ -3271,7 +3259,7 @@ ost << "processing command: " << command << endl;
     processed = true;
   }
 
-// CTRL-CURSOR DOWN -- possibly replace call with fuzzy info; NB this assumes COLOUR_GREEN and COLOUR_RED are the hardwired colours in the SCP window
+// CTRL-CURSOR DOWN -- possibly replace call with fuzzy info
   if (!processed and e.is_ctrl() and e.symbol() == XK_Down)
   { const string new_callsign = match_callsign(fuzzy_matches);
 
@@ -4059,11 +4047,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
          be.freq(rig.rig_frequency());
          be.callsign(qso.callsign());
 
-         const location_info li = location_db.info(qso.callsign());
+//         const location_info li = location_db.info(qso.callsign());
 
-         be.canonical_prefix(li.canonical_prefix());
-         be.continent(li.continent());
-         be.band(cur_band);
+//         be.canonical_prefix(li.canonical_prefix());
+//         be.continent(li.continent());
+//         be.band(cur_band);
          be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
          be.is_needed(false);
 
@@ -5641,7 +5629,7 @@ void exit_drlog(void)
 const string match_callsign(const vector<pair<string /* callsign */, int /* colour pair number */ > >& matches)
 { string new_callsign;
 
-  if ((matches.size() == 1) and (colours.fg(matches[0].second) != COLOUR_RED))
+  if ((matches.size() == 1) and (colours.fg(matches[0].second) != REJECT_COLOUR))
     new_callsign = matches[0].first;
 
   if (new_callsign == string())
@@ -5649,7 +5637,7 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
     string tmp_callsign;
 
     for (size_t n = 0; n < matches.size(); ++n)
-    { if (colours.fg(matches[n].second) == COLOUR_GREEN)
+    { if (colours.fg(matches[n].second) == ACCEPT_COLOUR)
       { n_green++;
         tmp_callsign = matches[n].first;
       }
@@ -6522,10 +6510,10 @@ void display_nearby_callsign(const string& callsign)
     int colour_pair_number = colours.add(foreground, background);
 
     if (!worked)
-      colour_pair_number = colours.add(COLOUR_GREEN,  background);
+      colour_pair_number = colours.add(ACCEPT_COLOUR,  background);
 
     if (dupe)
-      colour_pair_number = colours.add(COLOUR_RED,  background);
+      colour_pair_number = colours.add(REJECT_COLOUR,  background);
 
     win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE;
     win_nearby.cpair(colour_pair_number);

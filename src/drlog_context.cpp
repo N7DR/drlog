@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 92 2015-01-24 22:36:02Z  $
+// $Id: drlog_context.cpp 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -179,6 +179,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     const string lhs = squash( (fields.empty()) ? "" : remove_peripheral_spaces(fields[0]) ); // the stuff to the left of the "="
     const string LHS = to_upper(lhs);                                                         // converted to upper case
 
+// ACCEPT COLOUR
+    if ( ( (LHS == "ACCEPT COLOUR") or (LHS == "ACCEPT COLOR") ) and !rhs.empty() )
+      _accept_colour = string_to_colour(RHS);
+
 // ARCHIVE
     if ( (LHS == "ARCHIVE") and !rhs.empty() )
       _archive_name = rhs;
@@ -294,26 +298,27 @@ void drlog_context::_process_configuration_file(const string& filename)
       _batch_messages_file = rhs;
 
 // CABRILLO FILENAME
-    if (starts_with(testline, "CABRILLO FILENAME"))
+    if (LHS == "CABRILLO FILENAME")
       _cabrillo_filename = rhs;
 
 // CALL OK NOW MESSAGE
-    if (starts_with(testline, "CALL OK NOW MESSAGE"))
+    if (LHS == "CALL OK NOW MESSAGE")
       _call_ok_now_message = rhs;
 
 // CALLSIGN MULTS
-    if (starts_with(testline, "CALLSIGN MULTS") and !starts_with(testline, "CALLSIGN MULTS PER BAND"))
+//    if (starts_with(testline, "CALLSIGN MULTS") and !starts_with(testline, "CALLSIGN MULTS PER BAND"))
+    if (LHS == "CALLSIGN MULTS")
     { const vector<string> callsign_mults_vec = remove_peripheral_spaces(split_string(RHS, ","));
 
       move(callsign_mults_vec.cbegin(), callsign_mults_vec.cend(), inserter(_callsign_mults, _callsign_mults.begin()));
     }
 
 // CALLSIGN MULTS PER BAND
-    if (starts_with(testline, "CALLSIGN MULTS PER BAND"))
+    if (LHS == "CALLSIGN MULTS PER BAND")
       _callsign_mults_per_band = is_true;
 
 // CALLSIGN MULTS PER MODE
-    if (starts_with(testline, "CALLSIGN MULTS PER MODE"))
+    if (LHS == "CALLSIGN MULTS PER MODE")
       _callsign_mults_per_mode = is_true;
 
 // CLUSTER PORT
@@ -764,6 +769,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // RBN USERNAME
     if (starts_with(testline, "RBN USERNAME"))
       _rbn_username = rhs;
+
+// REJECT COLOUR
+    if ( ( (LHS == "REJECT COLOUR") or (LHS == "REJECT COLOR") ) and !rhs.empty() )
+      _reject_colour = string_to_colour(RHS);
 
 // RIG 1 BAUD
     if (starts_with(testline, "RIG 1 BAUD") or starts_with(testline, "RIG BAUD"))
@@ -1276,6 +1285,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 /// construct from file
 drlog_context::drlog_context(const std::string& filename) :
+  _accept_colour(COLOUR_GREEN),                                  // green for calls that are OK to work
   _archive_name("drlog-restart"),                                // name for the archive written when leaving drlog
   _auto_backup(""),                                              // no auto backup directory
   _auto_remaining_country_mults(false),                          // do not add country mults as we detect them
@@ -1374,6 +1384,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _rbn_server("telnet.reversebeacon.net"),    // domain name of the reverse beacon network telnet server
   _rbn_threshold(1),                          // all received spots are posted
   _rbn_username(""),                          // no default name to access the RBN
+  _reject_colour(COLOUR_RED),                 // red for dupes
   _remaining_country_mults_list(),            // no remaining country mults
   _rig1_baud(4800),                           // 4800 baud
   _rig1_data_bits(8),                         // 8-bit data

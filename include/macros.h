@@ -1,4 +1,4 @@
-// $Id: macros.h 91 2015-01-17 18:18:31Z  $
+// $Id: macros.h 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -73,7 +73,13 @@
 
 // classes for tuples... it seems like there should be a way to do this with TMP,
 // but the level-breaking caused by the need to control textual names seems to make
-// this impossible without resorting to #defines
+// this impossible without resorting to #defines. So since I don't immediately see
+// a way to avoid #defines completely while keeping the usual access syntax
+// (i.e., obj.name()), we might as well use a sledgehammer and do everything with #defines.
+
+// we could access with something like obj.at<name>, but that would mean a different access
+// style for this kind of object as compared to ordinary classes using the READ and READ_AND_WRITE
+// macros
 
 /// tuple class (1) -- complete overkill
 #define WRAPPER_1(nm, a0, a1)                          \
@@ -274,46 +280,44 @@ public:                                                                     \
 }
 
 /// tuple class (4)
-#define WRAPPER_4_NC(nm, a0, a1, b0, b1, c0, c1, d0, d1)                   \
-                                                                          \
-class nm : public std::tuple < a0, b0, c0, d0 >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X, b0 Y, c0 Z, d0 A)                                                       \
-    { std::get<0>(*this) = X;                                                    \
-      std::get<1>(*this) = Y;                                                    \
-      std::get<2>(*this) = Z;                                                    \
-      std::get<3>(*this) = A;                                                    \
-}                                                                     \
-                                                                          \
-  inline a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(a0 var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-  inline b0 b1(void) const                                                    \
-    { return std::get<1>(*this); }                              \
-                                                                          \
-  inline void b1(b0 var)                                          \
-    { std::get<1>(*this) = var; }                               \
-                                                                          \
-  inline c0 c1(void) const                                                    \
-    { return std::get<2>(*this); }                              \
-                                                                          \
-  inline void c1(c0 var)                                          \
-    { std::get<2>(*this) = var; }                               \
-                                                                          \
-  inline d0 d1(void) const                                                    \
-    { return std::get<3>(*this); }                              \
-                                                                          \
-  inline void d1(d0 var)                                          \
-    { std::get<3>(*this) = var; }                               \
-                                                                          \
-                                                                          \
+#define WRAPPER_4_NC(nm, a0, a1, b0, b1, c0, c1, d0, d1)                    \
+                                                                            \
+class nm : public std::tuple < a0, b0, c0, d0 >                             \
+{                                                                           \
+protected:                                                                  \
+                                                                            \
+public:                                                                     \
+                                                                            \
+  nm( a0 X, b0 Y, c0 Z, d0 A)                                               \
+    { std::get<0>(*this) = X;                                               \
+      std::get<1>(*this) = Y;                                               \
+      std::get<2>(*this) = Z;                                               \
+      std::get<3>(*this) = A;                                               \
+}                                                                           \
+                                                                            \
+  inline a0 a1(void) const                                                  \
+    { return std::get<0>(*this); }                                          \
+                                                                            \
+  inline void a1(a0 var)                                                    \
+    { std::get<0>(*this) = var; }                                           \
+                                                                            \
+  inline b0 b1(void) const                                                  \
+    { return std::get<1>(*this); }                                          \
+                                                                            \
+  inline void b1(b0 var)                                                    \
+    { std::get<1>(*this) = var; }                                           \
+                                                                            \
+  inline c0 c1(void) const                                                  \
+    { return std::get<2>(*this); }                                          \
+                                                                            \
+  inline void c1(c0 var)                                                    \
+    { std::get<2>(*this) = var; }                                           \
+                                                                            \
+  inline d0 d1(void) const                                                  \
+    { return std::get<3>(*this); }                                          \
+                                                                            \
+  inline void d1(d0 var)                                                    \
+    { std::get<3>(*this) = var; }                                           \
 }
 
 // tuple class (4)

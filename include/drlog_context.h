@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 92 2015-01-24 22:36:02Z  $
+// $Id: drlog_context.h 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -51,6 +51,7 @@ class drlog_context
 {
 protected:
 
+  int                                          _accept_colour;                  ///< colour for calls that have been worked, but are not dupes
   std::string                                  _archive_name;                   ///< name of the archive for save/restore information
   std::string                                  _auto_backup;                    ///< directory for auto backup files
   bool                                         _auto_remaining_callsign_mults;  ///< do we auto-generate the remaining callsign mults?
@@ -191,6 +192,7 @@ protected:
   std::string                                  _rbn_server;                     ///< hostname or IP of RBN server
   unsigned int                                 _rbn_threshold;                  ///< number of different stations that have to post to RBN before it shows on the bandmap
   std::string                                  _rbn_username;                   ///< username to use on the RBN
+  int                                          _reject_colour;                  ///< colour for calls that are dupes
   std::set<std::string>                        _remaining_callsign_mults_list;  ///< callsign mults to display
   std::set<std::string>                        _remaining_country_mults_list;   ///< country mults to display
   unsigned int                                 _rig1_baud;                      ///< baud rate for rig
@@ -246,6 +248,7 @@ public:
 /// construct from file
   drlog_context( const std::string& filename );
 
+  SAFEREAD(accept_colour, _context);                    ///< colour for calls that have been worked, but are not dupes
   SAFEREAD(archive_name, _context);                     ///< name of the archive for save/restore information
   SAFEREAD(auto_backup, _context);                      ///< directory for auto backup files
   SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?
@@ -420,6 +423,7 @@ public:
   SAFEREAD(rbn_server, _context);
   SAFEREAD(rbn_threshold, _context);
   SAFEREAD(rbn_username, _context);
+  SAFEREAD(reject_colour, _context);                   ///< colour for calls that are dupes
   SAFEREAD(remaining_callsign_mults_list, _context);
   SAFEREAD(remaining_country_mults_list, _context);
   SAFEREAD(rig1_baud, _context);

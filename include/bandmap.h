@@ -1,4 +1,4 @@
-// $Id: bandmap.h 92 2015-01-24 22:36:02Z  $
+// $Id: bandmap.h 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -251,25 +251,28 @@ public:
   inline const bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
-  READ(freq);                    ///< QRG
-  READ(frequency_str);           ///< QRG (kHz)
+  READ(freq);                           ///< QRG
+  READ(frequency_str);                  ///< QRG (kHz)
 
-/*! \brief      Set _freq and _frequency_str
+/*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
     \param  f   frequency used to set the values
 */
-  void freq(const frequency& f);           ///< set _freq and _frequency_str
+  void freq(const frequency& f);
 
-  READ_AND_WRITE(callsign);                ///< call
-  READ_AND_WRITE(canonical_prefix);        ///< canonical prefix corresponding to the call
-  READ_AND_WRITE(continent);               ///< continent corresponding to the call
-  READ_AND_WRITE(band);                    ///< band
-  READ_AND_WRITE(mode);                    ///< mode
-  READ_AND_WRITE(posters);                 ///< source(s) of posting (if the source is RBN)
-  READ_AND_WRITE(time);                    ///< time (in seconds since the epoch) at which the object was created
-  READ_AND_WRITE(expiration_time);         ///< time at which this entry expires (in seconds since the epoch)
-  READ_AND_WRITE(source);                  ///< the source of this entry
+  READ(callsign);                       ///< call
 
-  READ_AND_WRITE(is_needed);               ///< do we need this call?
+  void callsign(const std::string& call);
+
+  READ(canonical_prefix);               ///< canonical prefix corresponding to the call
+  READ(continent);                      ///< continent corresponding to the call
+  READ(band);                           ///< band
+  READ_AND_WRITE(mode);                 ///< mode
+  READ_AND_WRITE(posters);              ///< source(s) of posting (if the source is RBN)
+  READ(time);                           ///< time (in seconds since the epoch) at which the object was created
+  READ_AND_WRITE(expiration_time);      ///< time at which this entry expires (in seconds since the epoch)
+  READ_AND_WRITE(source);               ///< the source of this entry
+
+  READ_AND_WRITE(is_needed);            ///< do we need this call?
 
 /// was this bandmap_entry generated from the RBN?
   inline const bool is_rbn(void) const
@@ -344,15 +347,28 @@ public:
   inline void clear_callsign_mult(void)
     { _is_needed_callsign_mult.clear(); }
 
+/// remove all country mults
   inline void clear_country_mult(void)
     { _is_needed_country_mult.clear(); }
 
+/// remove all exchange mults
   inline void clear_exchange_mult(void)
     { _is_needed_exchange_mult.clear(); }
 
+/*! \brief          Remove a particular value of a callsign mult
+    \param  name    name of the mult
+    \param  value   value of the mult
+
+    Does nothing if the value <i>value</i> of mult <i>name</i> is unknown
+*/
   inline void remove_callsign_mult(const std::string& name, const std::string& value)
     { _is_needed_callsign_mult.remove( { name, value } ); }
 
+/*! \brief          Remove a particular value of country mult
+    \param  value   value of the mult
+
+    Does nothing if the value <i>value</i> is unknown
+*/
   inline void remove_country_mult(const std::string& value)
     { _is_needed_country_mult.remove(value); }
 
@@ -662,6 +678,10 @@ public:
 */
   void not_needed_callsign_mult(const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., SM1 */);
 
+/*! \brief              Set the needed exchange mult status of a particular exchange mult to <i>false</i>
+    \param  mult_name   name of exchange mult
+    \param  mult_value  value of <i>mult_name</i> that is no longer a multiplier
+*/
   void not_needed_exchange_mult(const std::string& mult_name, const std::string& mult_value);
 
 /// prune the bandmap

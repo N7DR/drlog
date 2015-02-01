@@ -1,4 +1,4 @@
-// $Id: multiplier.h 92 2015-01-24 22:36:02Z  $
+// $Id: multiplier.h 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -113,54 +113,15 @@ public:
   inline void operator-=(const std::string& str)
     { remove_known(str); }
 
-/*! \brief  add a worked multiplier
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
-
-    Returns false if the value <i>str</i> is not known
-*/
-//  const bool add_worked(const std::string& str, const int b);
-
-/*! \brief  add a worked multiplier
+/*! \brief      Add a worked multiplier
     \param  str value that has been worked
     \param  b   band on which <i>str</i> has been worked
     \param  m   mode on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
+    \return     whether <i>str</i> was successfully added to the worked multipliers
 
     Returns false if the value <i>str</i> is not known
 */
-//    const bool add_worked(const std::string& str, const int b, const int m);
-
-/*! \brief  add a worked multiplier
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
-
-    Returns false if the value <i>str</i> is not known
-*/
-//  inline const bool add_worked(const std::string& str, const BAND b)
-//    { return (add_worked(str, static_cast<int>(b))); }
-
-/*! \brief  add a worked multiplier
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
-
-    Returns false if the value <i>str</i> is not known
-*/
-//  inline const bool add_worked(const std::string& str, const BAND b, const MODE m)
-//    { return (add_worked(str, static_cast<int>(b), m)); }
   const bool add_worked(const std::string& str, const BAND b, const MODE m);
-
-/*! \brief  add a worked multiplier, even if it is unknown
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
-
-    Makes <i>str</i> known if it was previously unknown
-*/
-//  const bool unconditional_add_worked(const std::string& str, const int b);
 
 /*! \brief  add a worked multiplier, even if it is unknown
     \param  str value that has been worked

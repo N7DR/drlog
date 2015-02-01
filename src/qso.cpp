@@ -1,4 +1,4 @@
-// $Id: qso.cpp 92 2015-01-24 22:36:02Z  $
+// $Id: qso.cpp 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -385,29 +385,21 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
     if (name == "FREQ")
     { if (!_frequency.empty())                                      // frequency is available
         value = to_string(from_string<unsigned int>(_frequency));
-      else                                                          // we have only the band
-      { switch (_band)
-        { case BAND_160:
-            value = "1800";
-            break;
-          case BAND_80:
-            value = "3500";
-            break;
-          case BAND_40:
-            value = "7000";
-            break;
-          case BAND_20:
-            value = "14000";
-            break;
-          case BAND_15:
-            value = "21000";
-            break;
-          case BAND_10:
-            value = "28000";
-            break;
-          default:
-            value = "UNK";
-            break;
+      else                                                          // we have only the band; this should never be true
+      { static const std::map<BAND, string> BOTTOM_OF_BAND { { BAND_160, "1800" },
+                                                             { BAND_80,  "3500" },
+                                                             { BAND_40,  "7100" },
+                                                             { BAND_20,  "14000" },
+                                                             { BAND_15,  "21000" },
+                                                             { BAND_10,  "28000" }
+                                                           };
+
+        try
+        { value = BOTTOM_OF_BAND.at(_band);
+        }
+
+        catch (...)
+        { value = "1800";    // default
         }
       }
     }
@@ -477,17 +469,12 @@ specification tells us otherwise, that's what we do.
 // REXCH-xxx
     if (name.substr(0, 6) == "REXCH-")
     { const string field_name = substring(name, 6);
-    
-//      ost << "R field name = " << field_name << endl;
 
       if (contains(field_name, "+"))
       { const vector<string> vec = remove_peripheral_spaces(split_string(field_name, "+"));
 
         for (const auto& name : vec)
-        { //ost << "name = " << name << endl;
-          //ost << "received_exchange(name) = " << received_exchange(name) << endl;
-
-          if (!received_exchange(name).empty())
+        { if (!received_exchange(name).empty())
             value = received_exchange(name);
         }
       }
@@ -506,7 +493,7 @@ specification tells us otherwise, that's what we do.
     value = pad_string(value, len, pdirn, pad_char);
     record.replace(posn, len, value);             // put into record
     
-    ost << "record: " << record << endl;
+ //   ost << "record: " << record << endl;
   }
 
   return record;
@@ -573,7 +560,7 @@ const string QSO::verbose_format(void) const
 */
 const bool QSO::exchange_match(const string& rule_to_match) const
 {
-  ost << "testing exchange match rule: " << rule_to_match << " on QSO: " << *this << endl;
+//  ost << "testing exchange match rule: " << rule_to_match << " on QSO: " << *this << endl;
 
 // remove the [] markers
   const string target = rule_to_match.substr(1, rule_to_match.length() - 2);
@@ -587,16 +574,7 @@ const bool QSO::exchange_match(const string& rule_to_match) const
     string exchange_field_value;                                   // default is empty field
 
 // is this field present?
-  //  for (unsigned int n = 0; n < _received_exchange.size(); ++n)
-  //  { ost << "comparing " << _received_exchange[n].first << ", which has the value: " << _received_exchange[n].second << " with " << exchange_field_name << endl;
-
-  //    if (_received_exchange[n].first == exchange_field_name)
-  //      exchange_field_value = _received_exchange[n].second;
-  //  }
-
-      exchange_field_value = received_exchange(exchange_field_name);
-
-
+    exchange_field_value = received_exchange(exchange_field_name);
 
 // now try the various legal operations
     const string op = remove_peripheral_spaces(tokens[1]);
@@ -616,7 +594,6 @@ const bool QSO::exchange_match(const string& rule_to_match) const
     }
 
   }
-//  std::vector<std::pair<std::string, std::string> >   _received_exchange;  // vector<name, value>
 
   return false;
 
@@ -667,7 +644,7 @@ const bool QSO::sent_exchange_includes(const string& field_name)
 
 /// for use in the log window
 const string QSO::log_line(void)
-{ ost << "Inside QSO::log_line()" << endl;
+{ //ost << "Inside QSO::log_line()" << endl;
 
   static const size_t CALL_FIELD_LENGTH = 12;
   string rv;
@@ -679,10 +656,6 @@ const string QSO::log_line(void)
   rv += pad_string(freq(), 8);
   rv += pad_string(pad_string(callsign(), CALL_FIELD_LENGTH, PAD_RIGHT), CALL_FIELD_LENGTH + 1);
 
-//  ost << "sent exchange: size = " << _sent_exchange.size() << endl;
-//  for (unsigned int n = 0; n < _sent_exchange.size(); ++n)
-//    ost << "  " <<  _sent_exchange[n].first << " = " << _sent_exchange[n].second;
-
   FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += " " + se.second; });
 
 // print in same order the are present in the config file
@@ -690,7 +663,7 @@ const string QSO::log_line(void)
     { unsigned int field_width = 5;
       const string& name = field.name();
 
-      ost << "field name in log line: " << name << endl;
+//      ost << "field name in log line: " << name << endl;
 
       if (name == "CQZONE")
         field_width = 2;
@@ -764,7 +737,7 @@ const string QSO::log_line(void)
      if (QSO_MULT_WIDTH)
        field_width = QSO_MULT_WIDTH;
 
-     ost << "field " << field.name() << " IS " << (!field.is_mult() ? "NOT " : "") << " a mult" << endl;
+//     ost << "field " << field.name() << " IS " << (!field.is_mult() ? "NOT " : "") << " a mult" << endl;
 
      rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
    }

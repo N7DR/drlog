@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 91 2015-01-17 18:18:31Z  $
+// $Id: statistics.cpp 93 2015-01-31 14:59:51Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
