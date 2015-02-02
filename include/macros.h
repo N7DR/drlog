@@ -321,66 +321,64 @@ public:                                                                     \
 }
 
 // tuple class (4)
-#define WRAPPER_4_SERIALIZE(nm, a0, a1, b0, b1, c0, c1, d0, d1)                   \
-                                                                          \
-class nm : public std::tuple < a0, b0, c0, d0  >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X, b0 Y, c0 Z, d0 A)                                                       \
-    { std::get<0>(*this) = X;                                                    \
-      std::get<1>(*this) = Y;                                                    \
-      std::get<2>(*this) = Z;                                                    \
-      std::get<3>(*this) = A;                                                    \
-}                                                                     \
-                                                                          \
-                                                                          \
-  nm( void ) { }                                                          \
-                                                                          \
-  inline const a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(a0 var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-  inline const b0 b1(void) const                                                    \
-    { return std::get<1>(*this); }                              \
-                                                                          \
-  inline void b1(b0 var)                                          \
-    { std::get<1>(*this) = var; }                               \
-                                                                          \
-  inline const c0 c1(void) const                                                    \
-    { return std::get<2>(*this); }                              \
-                                                                          \
-  inline void c1(c0 var)                                          \
-    { std::get<2>(*this) = var; }                               \
-                                                                          \
-  inline const d0 d1(void) const                                                    \
-    { return std::get<3>(*this); }                              \
-                                                                          \
-  inline void d1(d0 var)                                          \
-    { std::get<3>(*this) = var; }                               \
-                                                                          \
-template<typename Archive>                                   \
-  void serialize(Archive& ar, const unsigned version)           \
-    { ar & std::get<0>(*this)                                                  \
-         & std::get<1>(*this)                                                   \
-         & std::get<2>(*this)                                                  \
-         & std::get<3>(*this);                                                  \
-    }                                                           \
-                                                                          \
-}; \
-                                                       \
-inline std::ostream& operator<<(std::ostream& ost, const nm& type)  \
-{ ost << #nm << ": " << std::endl                                   \
-      << #a1 << ": " << type.a1() << std::endl                      \
-      << #b1 << ": " << type.b1() << std::endl                      \
-      << #c1 << ": " << type.c1() << std::endl                      \
-      << #d1 << ": " << type.d1();                                  \
-                                                                    \
-  return ost;                                                       \
+#define WRAPPER_4_SERIALIZE(nm, a0, a1, b0, b1, c0, c1, d0, d1)             \
+                                                                            \
+class nm : public std::tuple < a0, b0, c0, d0  >                            \
+{                                                                           \
+protected:                                                                  \
+                                                                            \
+public:                                                                     \
+                                                                            \
+  nm( a0 X, b0 Y, c0 Z, d0 A)                                               \
+    { std::get<0>(*this) = X;                                               \
+      std::get<1>(*this) = Y;                                               \
+      std::get<2>(*this) = Z;                                               \
+      std::get<3>(*this) = A;                                               \
+    }                                                                       \
+                                                                            \
+  nm( void ) { }                                                            \
+                                                                            \
+  inline const a0 a1(void) const                                            \
+    { return std::get<0>(*this); }                                          \
+                                                                            \
+  inline void a1(a0 var)                                                    \
+    { std::get<0>(*this) = var; }                                           \
+                                                                            \
+  inline const b0 b1(void) const                                            \
+    { return std::get<1>(*this); }                                          \
+                                                                            \
+  inline void b1(b0 var)                                                    \
+    { std::get<1>(*this) = var; }                                           \
+                                                                            \
+  inline const c0 c1(void) const                                            \
+    { return std::get<2>(*this); }                                          \
+                                                                            \
+  inline void c1(c0 var)                                                    \
+    { std::get<2>(*this) = var; }                                           \
+                                                                            \
+  inline const d0 d1(void) const                                            \
+    { return std::get<3>(*this); }                                          \
+                                                                            \
+  inline void d1(d0 var)                                                    \
+    { std::get<3>(*this) = var; }                                           \
+                                                                            \
+template<typename Archive>                                                  \
+  void serialize(Archive& ar, const unsigned version)                       \
+    { ar & std::get<0>(*this)                                               \
+         & std::get<1>(*this)                                               \
+         & std::get<2>(*this)                                               \
+         & std::get<3>(*this);                                              \
+    }                                                                       \
+};                                                                          \
+                                                                            \
+inline std::ostream& operator<<(std::ostream& ost, const nm& type)          \
+{ ost << #nm << ": " << std::endl                                           \
+      << #a1 << ": " << type.a1() << std::endl                              \
+      << #b1 << ": " << type.b1() << std::endl                              \
+      << #c1 << ": " << type.c1() << std::endl                              \
+      << #d1 << ": " << type.d1();                                          \
+                                                                            \
+  return ost;                                                               \
 }
 
 /// tuple class (5)

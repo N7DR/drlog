@@ -301,11 +301,20 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
   _condvar.set_mutex(_condvar_mutex);
   _port.control(0);                            // explicitly turn off PTT
 
-  int ret =  pthread_create( &_thread_id, NULL, &_static_play, this);
+//  int ret =  pthread_create( &_thread_id, NULL, &_static_play, this);
 
-  if (ret)
-  { cout << "Error creating thread" << endl;
-    throw exception();
+//  if (ret)
+//  { cout << "Error creating thread" << endl;
+//    throw exception();
+//  }
+
+  try
+  { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
+  }
+
+  catch (const pthread_error& e)
+  { ost << "Error creating thread: CW BUFFER" << endl;
+    throw;
   }
 }
 

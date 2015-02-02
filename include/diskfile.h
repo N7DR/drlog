@@ -95,6 +95,14 @@ const bool directory_exists(const std::string& dirname);
 */
 const std::vector<std::string> directory_contents(const std::string& dirname);
 
+/*! \brief              Truncate a file
+    \param  filename    name of file to truncate
+
+    Creates <i>filename</i> if it does not exist
+*/
+inline void file_truncate(const std::string& filename)
+  { std::ofstream(filename, std::ios_base::trunc); }
+
 #endif    // DISKFILE_H
 
 

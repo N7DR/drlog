@@ -464,9 +464,9 @@ void drlog_context::_process_configuration_file(const string& filename)
       _cq_auto_rit = is_true;
 
 // CQ MEMORY n (wrt 1)
-    for (unsigned int memory = 1; memory <= CQ_MEMORY_MESSAGES; ++memory)
-      if (starts_with(testline, "CQ MEMORY " + to_string(memory)))
-        _cq_memory[memory] = RHS;
+//    for (unsigned int memory = 1; memory <= CQ_MEMORY_MESSAGES; ++memory)
+//      if (starts_with(testline, "CQ MEMORY " + to_string(memory)))
+//        _cq_memory[memory] = RHS;
 
 // CW SPEED
     if (starts_with(testline, "CW SPEED"))
@@ -489,9 +489,9 @@ void drlog_context::_process_configuration_file(const string& filename)
       _drmaster_filename = rhs;
 
 // EX MEMORY Fn
-    for (unsigned int memory = 1; memory <= EX_MEMORY_MESSAGES; ++memory)
-      if (starts_with(testline, "EX MEMORY F" + to_string(memory)))
-        _ex_memory[memory - 1] = remove_peripheral_spaces(RHS);
+//    for (unsigned int memory = 1; memory <= EX_MEMORY_MESSAGES; ++memory)
+//      if (starts_with(testline, "EX MEMORY F" + to_string(memory)))
+//        _ex_memory[memory - 1] = remove_peripheral_spaces(RHS);
 
 // EXCHANGE
     if (starts_with(testline, "EXCHANGE"))

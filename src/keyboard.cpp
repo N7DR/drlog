@@ -93,10 +93,16 @@ keyboard_queue::keyboard_queue(void) :
   XSelectInput(_display_p, _window_id, KeyPressMask | KeyReleaseMask);
 
   pthread_t   thread_id_1;
-  int ret = pthread_create(&thread_id_1, NULL, runit, this);
+//  int ret = pthread_create(&thread_id_1, NULL, runit, this);
 
-//  pthread_t   thread_id_2;
-//  ret = pthread_create(&thread_id_2, NULL, runflush, this);
+  try
+  { create_thread(&thread_id_1, NULL, runit, this, "KEYBOARD");
+  }
+
+  catch (const pthread_error& e)
+  { cerr << "Error creating thread: KEYBOARD" << endl;
+    exit(-1);
+  }
 }
 
 // place keyboard events in the queue

@@ -130,27 +130,27 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
   if (status != 0)
   { string errname;
 
-   switch (status)
-   { case EAGAIN :
-       errname = "EAGAIN";
-       break;
+    switch (status)
+    { case EAGAIN :
+        errname = "EAGAIN";
+        break;
 
-     case EINVAL :
-       errname = "EINVAL";
-       break;
+      case EINVAL :
+        errname = "EINVAL";
+        break;
 
-     case EPERM :
-       errname = "EPERM";
-       break;
+      case EPERM :
+        errname = "EPERM";
+        break;
 
-     default :
-       errname = "UNKNOWN [" + to_string(status) + "]";
-   }
+      default :
+        errname = "UNKNOWN [" + to_string(status) + "]";
+    }
 
-   const string message = errname + ": " + strerror(status);
+    const string message = errname + ": " + strerror(status);
 
-   throw pthread_error(PTHREAD_CREATION_ERROR, thread_name + " error: " + message);
- }
+    throw pthread_error(PTHREAD_CREATION_ERROR, thread_name + " error: " + message);
+  }
 }
 
 // -------------------------------------------  thread_attribute  -----------------------

@@ -18,7 +18,7 @@
 
 #include <array>
 #include <exception>
-#include <fstream>
+//#include <fstream>
 
 #include <dirent.h>
 #include <stdio.h>
@@ -147,3 +147,14 @@ const vector<string> directory_contents(const string& dirname)
   return rv;
 }
 
+/*! \brief              Truncate a file
+    \param  filename    name of file to truncate
+
+    Creates <i>filename</i> if it does not exist
+*/
+//void file_truncate(const string& filename)
+//{ //FILE* fp = fopen(filename.c_str(), "w");
+//
+//  //fclose(fp);
+//  ofstream(filename, ios_base::trunc);
+//}

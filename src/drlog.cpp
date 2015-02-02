@@ -1269,7 +1269,6 @@ int main(int argc, char** argv)
           octothorpe = 1;
       }
 
-// &&&
 // display most-recent lines from log
       editable_log.recent_qsos(logbk, true);
 
@@ -1291,6 +1290,7 @@ int main(int argc, char** argv)
         safe_set_band(b);
 
         cur_band = b;
+        cur_mode = m;
       }
 
       update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
@@ -1302,7 +1302,7 @@ int main(int argc, char** argv)
       {
 // number of EU QSOs from logbook
         const unsigned int n_eu_qsos = logbk.filter([] (const QSO& q) { return (q.continent() == string("EU")); } ).size();
-        ost << "number of EU QSOs in log = " << n_eu_qsos << endl;
+//        ost << "number of EU QSOs in log = " << n_eu_qsos << endl;
 
         try
         { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
@@ -1313,12 +1313,7 @@ int main(int argc, char** argv)
           exit(-1);
         }
 
-//        ost << "Number of QTC series read from QTC file= " << qtc_db.size() << endl;
-//        ost << "Total number of QTC QSOs already sent = " << qtc_db.n_qtc_entries_sent() << endl;
-
         qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
-
-//        ost << "Total QTC-able QSOs in QTC buffer = " << qtc_buf.size() << endl;
 
         if (n_eu_qsos != qtc_buf.size())
           alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS");
@@ -1326,15 +1321,8 @@ int main(int argc, char** argv)
 // move the sent ones to the sent buffer
         const vector<qtc_series>& vec_qs = qtc_db.qtc_db();    ///< the QTC series
 
-//        ost << "Number of QTC series to be processed = " << vec_qs.size() << endl;
-
-//        ost << "Before unsent_to_sent, number of QTC QSOs sent = " << qtc_buf.n_sent_qsos() << endl;
-//        ost << "Before unsent_to_sent, number of QTC QSOs unsent = " << qtc_buf.n_unsent_qsos() << endl;
-
-        for_each(vec_qs.cbegin(), vec_qs.cend(), [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
-
-//        ost << "Number of QTC QSOs sent = " << qtc_buf.n_sent_qsos() << endl;
-//        ost << "Number of QTC QSOs unsent = " << qtc_buf.n_unsent_qsos() << endl;
+//        for_each(vec_qs.cbegin(), vec_qs.cend(), [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+        FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
 
         statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
         statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
@@ -1342,27 +1330,22 @@ int main(int argc, char** argv)
         if (!vec_qs.empty())
         { const qtc_series& last_qs = vec_qs[vec_qs.size() - 1];
 
-//          ost << "Last QTC series: " << last_qs.complete_output_string() << endl;
-
           win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Last QTC: " < last_qs.id() < " to " <= last_qs.target();
         }
       }
 
 // display the current statistics
-//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
       display_statistics(statistics.summary_string(rules));
 
-//      const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
       const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
       win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
-
       update_mult_value();
     }
 
 // now delete the archive file if it exists, regardless of whether we've used it
-    if (file_exists(context.archive_name()))
-      file_delete(context.archive_name());
+//    if (file_exists(context.archive_name()))  // not necessary; file_delete makes this check
+    file_delete(context.archive_name());
 
     if (cl.parameter_present("-clean"))                          // start with clean slate
     { int index = 0;
@@ -1371,26 +1354,28 @@ int main(int argc, char** argv)
       while (file_exists(target))
         file_delete(OUTPUT_FILENAME + "-" + to_string(index++));
 
-      FILE* fp_log = fopen(context.logfile().c_str(), "w");
-      fclose(fp_log);
+//      FILE* fp_log = fopen(context.logfile().c_str(), "w");
+//      fclose(fp_log);
+      file_truncate(context.logfile());
 
-      FILE* fp_archive = fopen(context.archive_name().c_str(), "w");
-      fclose(fp_archive);
+//      FILE* fp_archive = fopen(context.archive_name().c_str(), "w");
+//      fclose(fp_archive);
+
+      file_truncate(context.archive_name());
 
       if (send_qtcs)
-      { FILE* fp_qtc = fopen(context.qtc_filename().c_str() , "w");
-        fclose(fp_qtc);
+      { //FILE* fp_qtc = fopen(context.qtc_filename().c_str() , "w");
+        //fclose(fp_qtc);
+
+        file_truncate(context.qtc_filename());
       }
     }
 
-// explicitly enter SAP mode
-    enter_sap_mode();
+    enter_sap_mode();                   // explicitly enter SAP mode
+    win_active_p = &win_call;           // set the active window
+    win_call <= CURSOR_START_OF_LINE;   // explicitly force the cursor into the call window
 
-    win_active_p = &win_call;
-
-// explicitly force the cursor into the call window
-    win_call <= CURSOR_START_OF_LINE;
-
+// some testing stuff
 //  keyboard.push_key_press("g4amt", 1000);  // hi, Terry
 
 //  XSynchronize(keyboard.display_p(), true);
@@ -1407,6 +1392,7 @@ int main(int argc, char** argv)
 
 //  keyboard.push_key_press('/');
 
+// possibly set up the simulator
     if (cl.value_present("-sim"))
     { static pthread_t simulator_thread_id;
       static tuple<string, int> params {cl.value("-sim"), cl.value_present("-n") ? from_string<int>(cl.value("-n")) : 0 };
@@ -1420,20 +1406,21 @@ int main(int argc, char** argv)
         exit(-1);
       }
     }
-    else
-      keyboard.x_multithreaded(false);    // make xlib more efficient
+    else                                    // not the simulator
+      keyboard.x_multithreaded(false);      // make xlib more efficient
 
-// everything is set up and running. Now we simply loop
+// everything is set up and running. Now we simply loop.
     while (1)
     { while (keyboard.empty())
         sleep_for(milliseconds(10));
 
-      const keyboard_event e = keyboard.pop();
+//      const keyboard_event e = keyboard.pop();
 
-      win_active_p -> process_input(e);
+      win_active_p -> process_input(keyboard.pop());
     }
   }
 
+// handle some specific errors that might occur
   catch (const socket_support_error& e)
   { cout << "Socket support error # " << e.code() << "; reason = " << e.reason() << endl;
     exit(-1);
@@ -1445,6 +1432,7 @@ int main(int argc, char** argv)
   }
 }
 
+// &&&
 /*! \brief          Display band and mode
     \param  win     window in which to display information
     \param  b       band
@@ -1489,7 +1477,9 @@ void* display_date_and_time(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { n_running_threads--;
+        { ost << "display_date_and_time() is exiting" << endl;
+
+          n_running_threads--;
           return nullptr;
         }
       }
@@ -1836,7 +1826,9 @@ void* display_rig_status(void* vp)
     { SAFELOCK(thread_check);
 
       if (exiting)
-      { n_running_threads--;
+      { ost << "display_rig_status() is exiting" << endl;
+
+        n_running_threads--;
         return nullptr;
       }
     }
@@ -2049,7 +2041,9 @@ void* process_rbn_info(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { n_running_threads--;
+        { ost << "process_rbn_info() is exiting" << endl;
+
+          n_running_threads--;
           return nullptr;
         }
       }
@@ -2076,7 +2070,9 @@ void* get_cluster_info(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { n_running_threads--;
+        { ost << "get_cluster_info() is exiting" << endl;
+
+          n_running_threads--;
           return nullptr;
         }
       }
@@ -2110,7 +2106,9 @@ void* prune_bandmap(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { n_running_threads--;
+        { ost << "prune_bandmap() is exiting" << endl;
+
+          n_running_threads--;
           return nullptr;
         }
       }
@@ -2594,12 +2592,18 @@ ost << "processing command: " << command << endl;
       if (command == "RESET RBN")
       { //win_message <= "Resetting RBN connection";
         static pthread_t thread_id_reset;
-        const int ret = pthread_create(&thread_id_reset, &(attr_detached.attr()), reset_connection, rbn_p);
+//        const int ret = pthread_create(&thread_id_reset, &(attr_detached.attr()), reset_connection, rbn_p);
 
-        if (ret)
-          alert("Error creating reset_connection thread");
+//        if (ret)
+//          alert("Error creating reset_connection thread");
 
-        //win_message <= "RBN connection";
+        try
+        { create_thread(&thread_id_reset, &(attr_detached.attr()), reset_connection, rbn_p, "RESET RBN");
+        }
+
+        catch (const pthread_error& e)
+        { alert("Error creating thread: RESET RBN");
+        }
       }
 
       processed = true;
@@ -5118,7 +5122,9 @@ ost << "QSY to " << frequency(str_frequency).hz() << " Hz" << endl;
     { SAFELOCK(thread_check);
 
       if (exiting)
-      { n_running_threads--;
+      { ost << "simulator_thread() is exiting" << endl;
+
+        n_running_threads--;
         return nullptr;
       }
     }

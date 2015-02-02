@@ -31,8 +31,8 @@
 */
 
 const unsigned int MAX_MEMORY_MESSAGES = 12;        ///< number of memory messages
-const unsigned int CQ_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in CALL window; must not exceed 9 without changes to drlog_context.cpp
-const unsigned int EX_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in EXCHANGE window; must not exceed 9 without changes to drlog_context.cppmust not exceed 9 without changes to drlog_context.cpp
+//const unsigned int CQ_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in CALL window; must not exceed 9 without changes to drlog_context.cpp
+//const unsigned int EX_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in EXCHANGE window; must not exceed 9 without changes to drlog_context.cppmust not exceed 9 without changes to drlog_context.cpp
 
 enum country_multiplier_type { COUNTRY_MULT_NONE,       ///< no country multipliers
                                COUNTRY_MULT_DXCC,       ///< use DXCC list
@@ -118,8 +118,8 @@ protected:
   bool                                         _country_mults_per_mode;     ///< are country mults per-mode?
   bool                                         _cq_auto_lock;               ///< whether to lock the transmitter in CQ mode
   bool                                         _cq_auto_rit;                ///< whether to enable RIT in CQ mode
-  std::array<std::string, CQ_MEMORY_MESSAGES + 1>
-                                               _cq_memory;                  ///< CQ memories, counted wrt 1
+ // std::array<std::string, CQ_MEMORY_MESSAGES + 1>
+ //                                              _cq_memory;                  ///< CQ memories, counted wrt 1
   std::string                                  _cty_filename;               ///< filename of country file (default = "cty.dat")
   unsigned int                                 _cw_speed;                   ///< speed in WPM
 
@@ -136,8 +136,8 @@ protected:
   bool                                         _exchange_mults_per_mode;    ///< are exchange mults per-mode?
   std::map<std::string, std::string>           _exchange_per_country;       ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::string                                  _exchange_sap;               ///< exchange in SAP mode
-  std::vector<std::string>                     _exchanges;                  ///< optional exchange choices
-  std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                  ///< exchange memories
+ // std::vector<std::string>                     _exchanges;                  ///< optional exchange choices
+//  std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                  ///< exchange memories
 
   std::map<MODE, unsigned int>                 _guard_band;                 ///< guard band, in Hz
 
@@ -323,7 +323,7 @@ public:
   SAFEREAD(country_mults_per_mode, _context);           ///< are country mults per-mode?
   SAFEREAD(cq_auto_lock, _context);                     ///< whether to lock the transmitter in CQ mode
   SAFEREAD(cq_auto_rit, _context);                      ///< whether to enable RIT in CQ mode
-  SAFEREAD(cq_memory, _context);                        ///< CQ memories, counted wrt 1
+//  SAFEREAD(cq_memory, _context);                        ///< CQ memories, counted wrt 1
   SAFEREAD(cty_filename, _context);                     ///< filename of country file (default = "cty.dat")
   SAFEREAD(cw_speed, _context);                         ///< speed in WPM
 
@@ -332,19 +332,20 @@ public:
   SAFEREAD(do_not_show_filename, _context);             ///< filename of calls (one per line) not to be shown
   SAFEREAD(drmaster_filename, _context);                ///< filename of drmaster file (default = "drmaster")
 
-  SAFEREAD(exchange, _context);
-  SAFEREAD(exchange_cq, _context);
-  SAFEREAD(exchange_fields_filename, _context);
-  SAFEREAD(exchange_mults, _context);
-  SAFEREAD(exchange_mults_per_band, _context);
-  SAFEREAD(exchange_mults_per_mode, _context);
-  SAFEREAD(exchange_sap, _context);
+  SAFEREAD(exchange, _context);                         ///< comma-delimited received exchange
+  SAFEREAD(exchange_cq, _context);                      ///< exchange in CQ mode
+  SAFEREAD(exchange_fields_filename, _context);         ///< file that holds regex templates of exchange fields
+  SAFEREAD(exchange_mults, _context);                   ///< comma-delimited exchange fields that are mults
+  SAFEREAD(exchange_mults_per_band, _context);          ///< are exchange mults per-band?
+  SAFEREAD(exchange_mults_per_mode, _context);          ///< are exchange mults per-mode?
 
   const std::map<std::string, std::string> exchange_per_country(void) const
     { SAFELOCK(_context);
 
       return _exchange_per_country;
-    }
+    }                                                   ///< per-country exchanges; key = prefix-or-call; value = exchange
+
+  SAFEREAD(exchange_sap, _context);                     ///< exchange in SAP mode
 
   const unsigned int guard_band(const MODE m)
   { SAFELOCK(_context);
@@ -494,9 +495,9 @@ public:
     }
 
 /// a CQ memory
-  inline const std::string cq_memory(const unsigned int n) const
-    { SAFELOCK(_context);
-      return (n < _cq_memory.size() ? _cq_memory[n] : std::string()); }
+//  inline const std::string cq_memory(const unsigned int n) const
+//    { SAFELOCK(_context);
+//      return (n < _cq_memory.size() ? _cq_memory[n] : std::string()); }
 
   SAFEREAD(messages, _context);
 
