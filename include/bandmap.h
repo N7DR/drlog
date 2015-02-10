@@ -1,4 +1,4 @@
-// $Id: bandmap.h 93 2015-01-31 14:59:51Z  $
+// $Id: bandmap.h 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -220,25 +220,22 @@ class bandmap_entry
 {
 protected:
 
-  frequency                 _freq;                    ///< QRG
-  std::string               _frequency_str;           ///< QRG (kHz)
-  std::string               _callsign;                ///< call
-  std::string               _canonical_prefix;        ///< canonical prefix corresponding to the call
-  std::string               _continent;               ///< continent corresponding to the call
-  enum BAND                 _band;                    ///< band
-  enum MODE                 _mode;                    ///< mode
-  time_t                    _time;                    ///< time (in seconds since the epoch) at which the object was created
-  enum BANDMAP_ENTRY_SOURCE _source;                  ///< the source of this entry
-  time_t                    _expiration_time;         ///< time at which this entry expires (in seconds since the epoch)
-
-  bool                      _is_needed;               ///< do we need this call?
-  bool                      _is_needed_mult;          ///< is this a needed mult?
-
-  std::set<std::string>     _posters;                 ///< stations that posted this entry
-
-  needed_mult_details<std::pair<std::string, std::string>> _is_needed_callsign_mult;    ///< details of needed callsign mults
-  needed_mult_details<std::string>                         _is_needed_country_mult;     ///< details of needed country mults
-  needed_mult_details<std::pair<std::string, std::string>> _is_needed_exchange_mult;    ///< details of needed exchange mults
+  enum BAND                                                 _band;                      ///< band
+  std::string                                               _callsign;                  ///< call
+  std::string                                               _canonical_prefix;          ///< canonical prefix corresponding to the call
+  std::string                                               _continent;                 ///< continent corresponding to the call
+  time_t                                                    _expiration_time;           ///< time at which this entry expires (in seconds since the epoch)
+  frequency                                                 _freq;                      ///< QRG
+  std::string                                               _frequency_str;             ///< QRG (kHz)
+  bool                                                      _is_needed;                 ///< do we need this call?
+  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;   ///< details of needed callsign mults
+  needed_mult_details<std::string>                          _is_needed_country_mult;    ///< details of needed country mults
+  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;   ///< details of needed exchange mults
+  bool                                                      _is_needed_mult;            ///< is this a needed mult?
+  enum MODE                                                 _mode;                      ///< mode
+  std::set<std::string>                                     _posters;                   ///< stations that posted this entry
+  enum BANDMAP_ENTRY_SOURCE                                 _source;                    ///< the source of this entry
+  time_t                                                    _time;                      ///< time (in seconds since the epoch) at which the object was created
 
 public:
 
@@ -251,28 +248,28 @@ public:
   inline const bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
-  READ(freq);                           ///< QRG
-  READ(frequency_str);                  ///< QRG (kHz)
-
-/*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
-    \param  f   frequency used to set the values
-*/
-  void freq(const frequency& f);
-
+  READ(band);                           ///< band
   READ(callsign);                       ///< call
 
   void callsign(const std::string& call);
 
   READ(canonical_prefix);               ///< canonical prefix corresponding to the call
   READ(continent);                      ///< continent corresponding to the call
-  READ(band);                           ///< band
+  READ_AND_WRITE(expiration_time);      ///< time at which this entry expires (in seconds since the epoch)
+
+  READ(freq);                           ///< QRG
+
+/*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
+    \param  f   frequency used to set the values
+*/
+  void freq(const frequency& f);
+
+  READ(frequency_str);                  ///< QRG (kHz)
+  READ_AND_WRITE(is_needed);            ///< do we need this call?
   READ_AND_WRITE(mode);                 ///< mode
   READ_AND_WRITE(posters);              ///< source(s) of posting (if the source is RBN)
-  READ(time);                           ///< time (in seconds since the epoch) at which the object was created
-  READ_AND_WRITE(expiration_time);      ///< time at which this entry expires (in seconds since the epoch)
   READ_AND_WRITE(source);               ///< the source of this entry
-
-  READ_AND_WRITE(is_needed);            ///< do we need this call?
+  READ(time);                           ///< time (in seconds since the epoch) at which the object was created
 
 /// was this bandmap_entry generated from the RBN?
   inline const bool is_rbn(void) const
@@ -475,22 +472,22 @@ public:
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-    { ar & _callsign
+    { ar & _band
+         & _callsign
          & _canonical_prefix
+         & _continent
+         & _expiration_time
          & _freq
          & _frequency_str
-         & _posters
-         & _continent
-         & _band
-//         & _mode
-         & _time
-         & _source
-         & _expiration_time
          & _is_needed
-         & _is_needed_mult
          & _is_needed_callsign_mult
          & _is_needed_country_mult
-         & _is_needed_exchange_mult;
+         & _is_needed_exchange_mult
+         & _is_needed_mult
+         & _mode
+         & _posters
+         & _source
+         & _time;
     }
 };
 

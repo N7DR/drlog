@@ -143,7 +143,10 @@ protected:
 
   pt_mutex _keyboard_mutex;
 
-// X error handler
+/*! \brief                  X error handler
+    \param  display_p       pointer to X display
+    \param  error_event_p   pointer to X error event
+*/
   static int _x_error_handler(Display* display_p, XErrorEvent* error_event_p);
 
 public:

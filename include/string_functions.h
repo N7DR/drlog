@@ -1,4 +1,4 @@
-// $Id: string_functions.h 90 2015-01-10 17:10:56Z  $
+// $Id: string_functions.h 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -186,20 +186,20 @@ const std::string pad_string(const std::string& s, const unsigned int len, const
 */
 const std::string read_file(const std::string& filename);
 
-/*! \brief  Read the contents of a file into a single string
-    \param  path the different directories to try, in order
-    \param  filename  Name of file to be read
-    \return Contents of file <i>filename</i>
+/*! \brief              Read the contents of a file into a single string
+    \param  path        the different directories to try, in order
+    \param  filename    name of file to be read
+    \return             C\contents of file <i>filename</i>
 
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
 const std::string read_file(const std::vector<std::string>& path, const std::string& filename);
 
-/*! \brief  Read the contents of a file into a single string
-    \param  filename  Name of file to be read
-    \param  path the different directories to try, in order
-    \return Contents of file <i>filename</i>
+/*! \brief              Read the contents of a file into a single string
+    \param  filename    name of file to be read
+    \param  path        the different directories to try, in order
+    \return             contents of file <i>filename</i>
 
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
@@ -207,30 +207,28 @@ const std::string read_file(const std::vector<std::string>& path, const std::str
 inline const std::string read_file(const std::string& filename, const std::vector<std::string>& path)
   { return read_file(path, filename); }
 
-/*! \brief  Write a string to a file
-    \param  cs  String to be written to file
-    \param  filename  Name of file to be written
+/*! \brief              Write a string to a file
+    \param  cs          string to be written to file
+    \param  filename    name of file to be written
 
     Throws exception if the file cannot be written
 */
 void write_file(const std::string& cs, const std::string& filename);
 
-
-/*! \brief remove characters from the end of a string
-    \param  s original string
-    \param  n number of chars to remove
-    \return <i>s</i> with the last <i>n</i> characters removed
+/*! \brief      Remove characters from the end of a string
+    \param  s   original string
+    \param  n   number of chars to remove
+    \return     <i>s</i> with the last <i>n</i> characters removed
   
     If <i>n</i> is equal to or greater than the length of <i>s</i>, then
     the empty string is returned.
 */
 const std::string remove_from_end(const std::string& s, const unsigned int n);
 
-/*! \brief  split a string into components
-    \param  cs    Original string
-    \param  separator Separator string (typically a single character)
-
-    \return Vector containing the separate components
+/*! \brief              Split a string into components
+    \param  cs          original string
+    \param  separator   separator string (typically a single character)
+    \return             vector containing the separate components
 */
 const std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
 
@@ -285,7 +283,7 @@ inline const std::vector<std::string> to_lines(const std::string& cs, const std:
 const std::string remove_leading(const std::string& cs, const char c);
 
 /*! \brief  Remove leading spaces
-  \param  cs  Original string
+    \param  cs  Original string
   \return <i>cs</i> with any leading spaces removed
 */
 inline const std::string remove_leading_spaces(const std::string& cs)

@@ -63,12 +63,12 @@ protected:
 
   rig_interface*        _rigp;                      ///< associated rig
 
-/*!     \brief      Add an action to the key buffer
-        \param  n   coded action
+/*! \brief      Add an action to the key buffer
+    \param  n   coded action
 
-        positive values of <i>n</i> represent key down;
-        negative values represent key up;
-        zero represents the start of an embedded command
+    positive values of <i>n</i> represent key down;
+    negative values represent key up;
+    zero represents the start of an embedded command
 */
   void _add_action(const int n);
 

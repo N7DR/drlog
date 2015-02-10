@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 93 2015-01-31 14:59:51Z  $
+// $Id: drlog_context.h 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -111,7 +111,7 @@ protected:
   std::string                                  _cluster_server;             ///< hostname or IP of cluster server
   std::string                                  _cluster_username;           ///< username to use on the cluster
   std::string                                  _contest_name;               ///< name of the contest
-  std::vector<std::pair<std::string, std::string>> _country_exceptions;     ///< calls to be placed in non-default country -- DOES NOT SEEM TO BE USED
+//  std::vector<std::pair<std::string, std::string>> _country_exceptions;     ///< calls to be placed in non-default country -- DOES NOT SEEM TO BE USED
   enum country_list_type                       _country_list;               ///< DXCC or WAE list?
   std::string                                  _country_mults_filter;       ///< the command from the configuration file
   bool                                         _country_mults_per_band;     ///< are country mults per-band?

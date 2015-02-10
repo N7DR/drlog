@@ -1,4 +1,4 @@
-// $Id: screen.cpp 90 2015-01-10 17:10:56Z  $
+// $Id: screen.cpp 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -172,29 +172,6 @@ window::~window(void)
 void window::init(const window_information& wi, const unsigned int flags)
 { _init(wi, flags);
 
-#if 0
-  _x = wi.x();
-  _y = wi.y();
-  _width = wi.w();
-  _height = wi.h();
-  _vertical = false;
-  _column_width = 0;
-  _wp = nullptr;
-  _scrolling = false;
-  _hidden_cursor = (flags & WINDOW_NO_CURSOR);
-  _insert = (flags & WINDOW_INSERT);
-  _pp = nullptr;
-  
-  if (_width and _height)
-  { SAFELOCK(screen);
-
-    _wp = newwin(_height, _width, LINES - _y /* - 1 */ - _height, /*COLS - */_x);
-    keypad(_wp, true);
-
-    _pp = new_panel(_wp);
-  }
-#endif
-
   _fg = string_to_colour(wi.fg_colour());
   _bg = string_to_colour(wi.bg_colour());
 
@@ -215,28 +192,6 @@ void window::init(const window_information& wi, const unsigned int flags)
 */
 void window::init(const window_information& wi, int fg, int bg, const unsigned int flags)
 { _init(wi, flags);
-
-#if 0
-  _x = wi.x();
-  _y = wi.y();
-  _width = wi.w();
-  _height = wi.h();
-  _vertical = false;
-  _column_width = 0;
-  _wp = nullptr;
-  _scrolling = false;
-  _hidden_cursor = (flags & WINDOW_NO_CURSOR);
-  _insert = (flags & WINDOW_INSERT);
-  _pp = nullptr;
-
-  if (_width and _height)
-  { SAFELOCK(screen);
-
-    _wp = newwin(_height, _width, LINES - _y /* - 1 */ - _height, /*COLS - */_x);
-    keypad(_wp, true);
-    _pp = new_panel(_wp);
-  }
-#endif
 
   if (wi.colours_set())
   { _fg = string_to_colour(wi.fg_colour());
@@ -342,7 +297,11 @@ window& window::operator<(const set<string>& ss)
   return *this;
 }
 
-/// write a vector of strings to a window
+/*! \brief      Write a vector of strings to a window
+    \param  v   vector to write
+
+    Wraps words to new lines. Stops writing if there's insufficient room for the next string.
+*/
 window& window::operator<(const vector<string>& v)
 { if (!_wp)
     return *this;
@@ -377,8 +336,12 @@ window& window::operator<(const vector<string>& v)
   return *this;
 }
 
-/// write a vector of strings with possible different colours
-window& window::operator<(const std::vector<std::pair<std::string /* callsign */, int /* colour pair number */ > >& vec)
+/*! \brief          Write a vector of strings with possible different colours to a window
+    \param  vec     vector of pairs <string, int [colour number]> to write
+
+    Wraps words to new lines. Stops writing if there's insufficient room for the next string.
+*/
+window& window::operator<(const std::vector<std::pair<std::string, int /* colour pair number */ > >& vec)
 { if (!_wp)
     return *this;
 

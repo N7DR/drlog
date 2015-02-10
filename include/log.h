@@ -1,4 +1,4 @@
-// $Id: log.h 89 2015-01-03 13:59:15Z  $
+// $Id: log.h 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -58,11 +58,11 @@ protected:
 
 public:
   
-/*!     \brief      Return an individual QSO by number (wrt 1)
-        \param  n   QSO number to return
-        \return     The <i>n</i>th QSO
+/*! \brief      Return an individual QSO by number (wrt 1)
+    \param  n   QSO number to return
+    \return     the <i>n</i>th QSO
 
-        If <i>n</i> is out of range, then returns an empty QSO
+    If <i>n</i> is out of range, then returns an empty QSO
 */
   const QSO operator[](const size_t n) const;
 
@@ -73,15 +73,15 @@ public:
       return ( (*this)[size()] );
     }
 
-/*!     \brief      Add a QSO to the logbook
-        \param  q   QSO to add
+/*! \brief      Add a QSO to the logbook
+    \param  q   QSO to add
 */
   void operator+=(const QSO& q);
     
-/*!     \brief      Remove an individual QSO by number (wrt 1)
-        \param  n   QSO number to remove
+/*! \brief      Remove an individual QSO by number (wrt 1)
+    \param  n   QSO number to remove
 
-        If <i>n</i> is out of range, then does nothing
+    If <i>n</i> is out of range, then does nothing
 */
   void operator-=(const unsigned int n);
 
@@ -92,17 +92,17 @@ public:
       *this -= size();    // remember, numbering is wrt 1
     }
 
-/*!     \brief          All the QSOs with a particular call, in chronological order
-        \param  call    Target callsign
-        \return         Vector of QSOs in chronological order
+/*! \brief          All the QSOs with a particular call, in chronological order
+    \param  call    target callsign
+    \return         vector of QSOs in chronological order
 
-        If there are no QSOs with <i>call</i>, returns an empty vector
+    If there are no QSOs with <i>call</i>, returns an empty vector
 */
   const std::vector<QSO> worked(const std::string& call) const;
   
-/*!     \brief          The number of times that a particular call has been worked
-        \param  call    Target callsign
-        \return         Number of times that <i>call</i> has been worked
+/*! \brief          The number of times that a particular call has been worked
+    \param  call    target callsign
+    \return         number of times that <i>call</i> has been worked
 */
   const unsigned int n_worked(const std::string& call) const;
 

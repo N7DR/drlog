@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 93 2015-01-31 14:59:51Z  $
+// $Id: drlog_context.cpp 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -220,12 +220,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER
-//    if ( (starts_with(testline, "BAND MAP FILTER") or starts_with(testline, "BANDMAP FILTER")) and
-//        !(starts_with(testline, "BAND MAP FILTER ENABLE") or starts_with(testline, "BANDMAP FILTER ENABLE")) and
-//        !(starts_with(testline, "BAND MAP FILTER MODE") or starts_with(testline, "BANDMAP FILTER MODE")) and
-//        !(starts_with(testline, "BAND MAP FILTER COLOURS") or starts_with(testline, "BAND MAP FILTER COLORS")) and
-//        !(starts_with(testline, "BANDMAP FILTER COLOURS") or starts_with(testline, "BANDMAP FILTER COLORS")) )
-
     if ( (LHS == "BAND MAP FILTER") or (LHS == "BANDMAP FILTER") )
     { if (!RHS.empty())
       { vector<string> filters = remove_peripheral_spaces(split_string(RHS, ","));
@@ -236,8 +230,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER COLOURS
-//    if (starts_with(testline, "BAND MAP FILTER COLOURS") or starts_with(testline, "BAND MAP FILTER COLORS") or
-//        starts_with(testline, "BANDMAP FILTER COLOURS") or starts_with(testline, "BANDMAP FILTER COLORS"))
     if ( (LHS == "BAND MAP FILTER COLOURS") or (LHS == "BAND MAP FILTER COLORS") or
          (LHS == "BANDMAP FILTER COLOURS") or (LHS == "BANDMAP FILTER COLORS") )
     { if (!RHS.empty())
@@ -258,7 +250,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER ENABLE
-//    if (starts_with(testline, "BAND MAP FILTER ENABLE") or starts_with(testline, "BANDMAP FILTER ENABLE"))
     if ( (LHS == "BAND MAP FILTER ENABLE") or (LHS == "BANDMAP FILTER ENABLE") )
       _bandmap_filter_enabled = is_true;
 
@@ -322,31 +313,31 @@ void drlog_context::_process_configuration_file(const string& filename)
       _callsign_mults_per_mode = is_true;
 
 // CLUSTER PORT
-    if (starts_with(testline, "CLUSTER PORT"))
+    if (LHS == "CLUSTER PORT")
       _cluster_port = from_string<int>(rhs);
 
 // CLUSTER SERVER
-    if (starts_with(testline, "CLUSTER SERVER"))
+    if (LHS == "CLUSTER SERVER")
       _cluster_server = rhs;
 
 // CLUSTER USERNAME
-    if (starts_with(testline, "CLUSTER USERNAME"))
+    if (LHS == "CLUSTER USERNAME")
       _cluster_username = rhs;
 
 // CONTEST
-    if (starts_with(testline, "CONTEST"))
+    if (LHS == "CONTEST")
       _contest_name = RHS;
 
 // COUNTRY EXCEPTION -- SEEMS NOT TO BE USED
-    if (starts_with(testline, "COUNTRY EXCEPTION"))
-    { if (testline.length() > 18)
-      { string exception_string = testline.substr(18);  // callsign = country
-        const vector<string> fields = remove_peripheral_spaces(split_string(exception_string, "="));
-
-        if (fields.size() == 2)
-          _country_exceptions.push_back( { fields[0], fields[1] } );
-      }
-    }
+//    if (starts_with(testline, "COUNTRY EXCEPTION"))
+//    { if (testline.length() > 18)
+//      { string exception_string = testline.substr(18);  // callsign = country
+//        const vector<string> fields = remove_peripheral_spaces(split_string(exception_string, "="));
+//
+//        if (fields.size() == 2)
+//          _country_exceptions.push_back( { fields[0], fields[1] } );
+//      }
+//    }
 
 // COUNTRY FILENAME
     if (starts_with(testline, "COUNTRY FILENAME"))

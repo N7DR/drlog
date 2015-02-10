@@ -604,15 +604,20 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 // QSO points
     line = pad_string("Qpoints", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
-    for (const auto& m : modes)
+    for (const auto& b : permitted_bands)
+    { for (const auto& m : modes)
     { const auto& qp = _qso_points[m];
 
-      for (const auto& b : permitted_bands)
-      { //const int band_nr = static_cast<int>(permitted_bands[n]);
 
+       //const int band_nr = static_cast<int>(permitted_bands[n]);
+    if (modes.size() == 1)
         line += pad_string(to_string(qp[b]), FIELD_WIDTH);
         points += qp[b];
       }
+
+    if (modes.size() != 1)
+      line += pad_string(to_string(points), FIELD_WIDTH);
+
     }
 
 //    line += pad_string(to_string(points), FIELD_WIDTH);

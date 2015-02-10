@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 93 2015-01-31 14:59:51Z  $
+// $Id: drlog.cpp 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1432,7 +1432,6 @@ int main(int argc, char** argv)
   }
 }
 
-// &&&
 /*! \brief          Display band and mode
     \param  win     window in which to display information
     \param  b       band
@@ -1571,11 +1570,10 @@ void* display_date_and_time(void* vp)
   pthread_exit(nullptr);
 }
 
-
 /*! \brief  Thread function to display status of the rig
 
     Also displays bandmap if the frequency changes. The bandmap is actually updated on screen before any change in status
-    NB It doesn't matter *how* the rig's frequency came to change ... it could be manual
+    NB It doesn't matter *how* the rig's frequency came to change; it could be manual
 */
 void* display_rig_status(void* vp)
 { start_of_thread();
@@ -1585,13 +1583,11 @@ void* display_rig_status(void* vp)
 
   static long microsecond_poll_period = rig_status_thread_parameters.poll_time() * 1000;
 
-//  ost << "microsecond_poll_period inside thread = " << microsecond_poll_period << endl;
   DRLOG_MODE last_drlog_mode = SAP_MODE;
   bandmap_entry be;
 
 // populate the bandmap entry stuff that won't change
   be.callsign(MY_MARKER);
-//  be.time(::time(NULL));
   be.source(BANDMAP_ENTRY_LOCAL);
   be.expiration_time(be.time() + 1000000);    // a million seconds in the future
 
@@ -1601,7 +1597,7 @@ void* display_rig_status(void* vp)
     { const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
 
        try
-      { while ( rig_status_thread_parameters.rigp()-> is_transmitting() )  // don't poll while transmitting                   // don't poll when transmitting
+      { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // don't poll while transmitting; although this check is not foolproof
           sleep_for(microseconds(microsecond_poll_period / 10));
       }
 
@@ -1611,52 +1607,33 @@ void* display_rig_status(void* vp)
       }
 
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
-
       if (ok_to_poll_k3)
       {
         const string status_str = (rig_status_thread_parameters.rigp())->raw_command("IF;", 38);          // K3 returns 38 characters
 
-//        ost << "status string: " << status_str << endl;
-
-        if (status_str.length() == 38)
-        { const frequency f(from_string<unsigned int>(substring(status_str, 2, 11)));
-          const frequency target = SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency);
-
-          const frequency f_b = rig.rig_frequency_b();
-
-//        ost << "f = " << f.hz() << ", target = " << target.hz() << endl;
-//        ost << "mode: " << ( (drlog_mode == CQ_MODE) ? "CQ" : "SAP") << endl;
-//        ost << "equality: " << ( (target == f) ? "TRUE" : "FALSE") << endl;
-//        ost << "inequality: " << ( (target != f) ? "NOT EQUAL" : "EQUAL") << endl;
-//        ost << "equality of hz: " << ( (target.hz() == f.hz()) ? "TRUE" : "FALSE") << endl;
-
-// explicitly set to SAP mode if we have QSYed.
-          const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
+        if (status_str.length() == 38)                                                          // do something only if it's the correct length
+        { const frequency f(from_string<unsigned int>(substring(status_str, 2, 11)));           // frequency of VFO A
+          const frequency target = SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency);    // frequency in CQ mode
+          const frequency f_b = rig.rig_frequency_b();                                          // frequency of VFO B
+          const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);     // explicitly set to SAP mode if we have QSYed
 
           if ( (current_drlog_mode == CQ_MODE) and (last_drlog_mode == CQ_MODE) and (target != f) )
-            enter_sap_mode();
+            enter_sap_mode();                                                                   // switch to SAP if we've moved
 
-          last_drlog_mode = current_drlog_mode;
+          last_drlog_mode = current_drlog_mode;                                                 // keep track of drlog mode
 
-          const MODE m = safe_get_mode();
-
-//        ost << "f.display_string() = " << f.display_string() << endl;
-//        ost << "be.freq().display_string() = " << be.freq().display_string() << endl;
+//          const MODE m = safe_get_mode();                                                       // mode as determined by drlog, not by rig
+          const MODE m = rig_status_thread_parameters.rigp() -> rig_mode();                     // actual mode of rig (in case there's been a manual mode change)
 
 // possibly update bandmap entry and nearby callsign, if any
           if (f.display_string() != be.freq().display_string())  // redraw if moved > 100 Hz
-          { const BAND b = static_cast<BAND>(f);
+          { be.freq(f);
+            be.mode(m);
 
-            be.freq(f);
-//            be.band(b);
-            safe_set_band(b);
-
-//            const MODE m = safe_get_mode();
-
-            display_band_mode(win_band_mode, b, m);
+            display_band_mode(win_band_mode, be.band(), be.mode());
 
 // update and display the correct bandmap
-            bandmap& bandmap_this_band = bandmaps[b];
+            bandmap& bandmap_this_band = bandmaps[be.band()];
 
             bandmap_this_band += be;
             win_bandmap <= bandmap_this_band;
@@ -1665,8 +1642,6 @@ void* display_rig_status(void* vp)
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
             const string nearby_callsign = bandmap_this_band.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
-
- //         ost << "nearby callsign = " << nearby_callsign << " at " << f.display_string() << endl;
 
             if (!nearby_callsign.empty())
             { display_nearby_callsign(nearby_callsign);
@@ -1708,8 +1683,6 @@ void* display_rig_status(void* vp)
 
                       last_call = last_call_inserted_with_space;
                     }
-
-//              ost << "last_call_inserted_with_space = *" << last_call_inserted_with_space << "*; call_contents = *" << call_contents << "*" << endl;
 
                     if ((call_contents == last_call) or (call_contents == (last_call + " DUPE")) )
                       win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
@@ -1785,11 +1758,6 @@ void* display_rig_status(void* vp)
 // now display the status
           win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
 
-//          ost << "background colour is " << (context.mark_frequency(m, f) ? "RED" : "BLACK") << " for frequency " << f.display_string() << " and mode " << m << endl;
-
-//          ost << "clg tx_vfo()" << endl;
-//          const VFO tx_vfo = rig_status_thread_parameters.rigp()-> tx_vfo();
-//          ost << "tx vfo is: " << tx_vfo << endl;
           const bool sub_rx = (rig_status_thread_parameters.rigp())->sub_receiver_enabled();
           const auto fg = win_rig.fg();    // original foreground colour
 
@@ -1912,10 +1880,7 @@ void* process_rbn_info(void* vp)
       { const bool is_beacon = contains(line, " BCN ");
 
         if (!is_beacon or rbn_beacons)
-        {
-//ost << "processing rbn line: " << line << endl;
-//ost << "rbn line has length " << line.size() << endl;
-          last_processed_line = line;
+        { last_processed_line = line;
 
 // display if this is a new mult on any band, and if the poster is on our own continent
           const dx_post post(line, location_db, rbn.source());
@@ -1929,15 +1894,11 @@ void* process_rbn_info(void* vp)
               const string& dx_callsign = post.callsign();
               const string& poster = post.poster();
               const pair<string, BAND> target { dx_callsign, dx_band };
-//              const location_info li = location_db.info(dx_callsign);
 
               bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
 
               be.freq(post.freq());
               be.callsign(dx_callsign);
-//              be.canonical_prefix(li.canonical_prefix());
-//              be.continent(li.continent());
-//              be.band(dx_band);
               be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
               if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
@@ -1957,24 +1918,20 @@ void* process_rbn_info(void* vp)
               update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
-//              if (context.auto_remaining_exchange_mults())
-              { const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
+              const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
 
-                for (const auto& exch_mult_name : exch_mults)
-                { if (context.auto_remaining_exchange_mults(exch_mult_name))
-                  { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
-
-//                ost << "guess in drlog = " << guess << ", MULT VALUE = " << MULT_VALUE(exch_mult_name, guess) << endl;
+              for (const auto& exch_mult_name : exch_mults)
+              { if (context.auto_remaining_exchange_mults(exch_mult_name))
+                { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
                   if (!guess.empty())
                     statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
-                  }
                 }
               }
 
               be.calculate_mult_status(rules, statistics);
 
-             const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
+              const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
 
               if (!is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult()  or be.is_needed_exchange_mult()))            // if it's a mult and not recently posted...
               { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
@@ -2056,16 +2013,16 @@ void* process_rbn_info(void* vp)
   pthread_exit(nullptr);
 }
 
-/// Thread function to obtain data from the cluster
+/// thread function to obtain data from the cluster
 void* get_cluster_info(void* vp)
 { start_of_thread();
 
-  dx_cluster& cluster = *(static_cast<dx_cluster*>(vp)); // make the cluster available
+  dx_cluster& cluster = *(static_cast<dx_cluster*>(vp));    // make the cluster available
 
-  while(1)                                           // forever
-  { cluster.read();                                  // reads the socket and stores the data
+  while(1)                                                  // forever
+  { cluster.read();                                         // reads the socket and stores the data
 
-    for (const auto n : RANGE<unsigned int>(1, 5) )    // check the socket every 5 seconds
+    for (const auto n : RANGE<unsigned int>(1, 5) )         // check the socket every 5 seconds
     {
       { SAFELOCK(thread_check);
 
@@ -2085,7 +2042,7 @@ void* get_cluster_info(void* vp)
   pthread_exit(nullptr);
 }
 
-/// Thread function to prune the bandmaps once per minute
+/// thread function to prune the bandmaps once per minute
 void* prune_bandmap(void* vp)
 { start_of_thread();
 
@@ -2095,11 +2052,9 @@ void* prune_bandmap(void* vp)
   array<bandmap, NUMBER_OF_BANDS>& bandmaps = *(cip->bandmaps_p());  // bandmaps
 
   while (1)
-  { const enum BAND cur_band = safe_get_band();
+  { FOR_ALL(bandmaps, [](bandmap& bm) { bm.prune(); } );
 
-    FOR_ALL(bandmaps, [](bandmap& bm) { bm.prune(); } );
-
-    bandmap_win <= bandmaps[cur_band];
+    bandmap_win <= bandmaps[safe_get_band()];
 
     for (const auto n : RANGE<unsigned int>(1, 60) )    // check once per second for a minute
     {
@@ -2150,6 +2105,9 @@ void* prune_bandmap(void* vp)
     ALT-KP- -- decrement octothorpe
     CTRL-KP+ -- increment qso number
     CTRL-KP- -- decrement qso number
+    BACKSLASH -- send to the scratchpad
+    ALT--> -- VFO A -> VFO B
+    ALT-<- -- VFO B -> VFO A
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -2186,7 +2144,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // populate the info and extract windows if we have already processed the input
   if (processed and !win_call.empty())
-  { const string callsign = remove_peripheral_spaces(win_call.read());
+  { //const string callsign = remove_peripheral_spaces(win_call.read());
+    const string& callsign = prior_contents;
 
     display_call_info(callsign);
   }
@@ -2199,7 +2158,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       if (prior_contents.empty())
         octothorpe--;
 
-//      ost << "sending CW message: " << expand_cw_message(cwm[e.symbol()]) << endl;
       (*cw_p) << expand_cw_message(cwm[e.symbol()]);
 
       if (prior_contents.empty())
@@ -2215,9 +2173,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ALT-B and ALT-V (band up and down)
   if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
-  { // ost << "processing band change" << endl;
-
-    try
+  { try
     { BAND cur_band       = safe_get_band();
       const MODE cur_mode = safe_get_mode();
 
@@ -2238,12 +2194,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // clear the call window (since we're now on a new band)
       win < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
-
       display_band_mode(win_band_mode, cur_band, cur_mode);
 
 // update bandmap; note that it will be updated at the next poll anyway (typically within one second)
       bandmap& bm = bandmaps[cur_band];
-
       win_bandmap <= bm;
 
 // is there a station close to our frequency?
@@ -2348,11 +2302,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
-//  if (!processed and (e.symbol() == XK_F1))
-//  { ost << "Rig test status = " << rig.test() << endl;
-//    processed = true;
-//  }
-
 // F11 -- band map filtering
   if (!processed and (e.symbol() == XK_F11))
   { const string contents = remove_peripheral_spaces(win.read());
@@ -2434,7 +2383,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     if (!processed and contents[0] == COMMAND_CHAR)
     { const string command = substring(contents, 1);
 
-ost << "processing command: " << command << endl;
+//ost << "processing command: " << command << endl;
 
 // .ABORT -- immediate exit, simulating power failure
       if (substring(command, 0, 5) == "ABORT")
@@ -2529,10 +2478,8 @@ ost << "processing command: " << command << endl;
         update_rate_window();
 
 // display the current statistics
-//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
         display_statistics(statistics.summary_string(rules));
 
-//        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
@@ -2580,7 +2527,6 @@ ost << "processing command: " << command << endl;
         update_rate_window();
 
 // display the current statistics
-//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
         display_statistics(statistics.summary_string(rules));
 
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
@@ -2590,12 +2536,7 @@ ost << "processing command: " << command << endl;
 
 // .RESET RBN -- get a new connection
       if (command == "RESET RBN")
-      { //win_message <= "Resetting RBN connection";
-        static pthread_t thread_id_reset;
-//        const int ret = pthread_create(&thread_id_reset, &(attr_detached.attr()), reset_connection, rbn_p);
-
-//        if (ret)
-//          alert("Error creating reset_connection thread");
+      { static pthread_t thread_id_reset;
 
         try
         { create_thread(&thread_id_reset, &(attr_detached.attr()), reset_connection, rbn_p, "RESET RBN");
@@ -2609,7 +2550,7 @@ ost << "processing command: " << command << endl;
       processed = true;
     }
 
-// send to the scratchpad?
+// BACKSLASH -- send to the scratchpad
     if (!processed and contents[0] == '\\')
     { const string scratchpad_str = substring(hhmmss(), 0, 5) + " " + rig.rig_frequency().display_string() + " " + substring(contents, 1);
 
@@ -2675,9 +2616,6 @@ ost << "processing command: " << command << endl;
           const BAND new_band = to_BAND(new_frequency);
           bool valid = ( rules.permitted_bands_set() < new_band );
 
-//          ost << "new frequency = " << new_frequency.hz() << endl;
-//          ost << "new band = " << new_band << " : " << BAND_NAME[new_band] << endl;
-
           if ( (valid) and (new_band == BAND_160))
             valid = ( (new_frequency.hz() >= 1800000) and (new_frequency.hz() <= 2000000) );
 
@@ -2688,14 +2626,10 @@ ost << "processing command: " << command << endl;
             rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
             rig.rig_frequency(new_frequency);
 
-//          const BAND new_band = static_cast<BAND>(new_frequency);
-
             if (new_band != cur_band)
             { cur_band = new_band;
               display_band_mode(win_band_mode, cur_band, cur_mode);
 
-//              SAFELOCK(current_band);
-//              current_band = new_band;
               safe_set_band(new_band);
 
               bandmap& bm = bandmaps[cur_band];
@@ -2746,13 +2680,6 @@ ost << "processing command: " << command << endl;
 
           be.freq(rig.rig_frequency());
           be.callsign(contents);
-
-//          const location_info li = location_db.info(contents);
-//          const string canonical_prefix = li.canonical_prefix();
-
-//          be.canonical_prefix(canonical_prefix);
-//          be.continent(li.continent());
-//          be.band(static_cast<BAND>(be.freq()));
           be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
           be.calculate_mult_status(rules, statistics);
           be.is_needed(false);
@@ -2786,8 +2713,6 @@ ost << "processing command: " << command << endl;
             (*cw_p) << cwm[XK_KP_0];    // send contents of KP0, which is assumed to be my call
         }
 
-//        ost << "message sent" << endl;
-
 // what exchange do we expect?
         string exchange_str;
         const string canonical_prefix = location_db.canonical_prefix(contents);
@@ -2795,10 +2720,10 @@ ost << "processing command: " << command << endl;
         const vector<exchange_field> expected_exchange = rules.exch(canonical_prefix, cur_mode);
         map<string, string> mult_exchange_field_value;                  // the values of exchange fields that are mults
 
-        ost << "Expected exchange for " << contents << " is: ";
-        for (const auto& ef : expected_exchange)
-          ost << ef.name() << " ";
-        ost << endl;
+//        ost << "Expected exchange for " << contents << " is: ";
+//        for (const auto& ef : expected_exchange)
+//          ost << ef.name() << " ";
+//        ost << endl;
 
         for (const auto& exf : expected_exchange)
         { ost << "Exchange field: " << exf << endl;
@@ -2829,9 +2754,7 @@ ost << "processing command: " << command << endl;
             }
 
             if (exf.name() == "10MSTATE+SERNO")
-            { //ost << "Attempting to handle 10MSTATE+SERNO exchange field" << endl;    // &&&
-
-              static const set<string> state_multiplier_countries( { "K", "VE", "XE" } );
+            { static const set<string> state_multiplier_countries( { "K", "VE", "XE" } );
               const string canonical_prefix = location_db.canonical_prefix(contents);
               string state_guess;
 
@@ -2850,14 +2773,14 @@ ost << "processing command: " << command << endl;
 
               string guess = exchange_db.guess_value(contents, "HADXC");
 
-              ost << "HADXC guess = " << guess << endl;
+//              ost << "HADXC guess = " << guess << endl;
 
               if (guess.empty())
               { guess = exchange_db.guess_value(contents, "QTHX[HA]");
-                ost << "QTHX[HA] guess = " << guess << endl;
+//                ost << "QTHX[HA] guess = " << guess << endl;
               }
 
-              ost << "best guess = " << guess << endl;
+//              ost << "best guess = " << guess << endl;
 
               if (!guess.empty())
               { exchange_str += guess;
@@ -2868,8 +2791,8 @@ ost << "processing command: " << command << endl;
 
           }
 
-          ost << "Before RST, exf.name() = " << exf.name() << endl;
-          ost << "Before RST, exchange_str = " << exchange_str << endl;
+//          ost << "Before RST, exf.name() = " << exf.name() << endl;
+//          ost << "Before RST, exchange_str = " << exchange_str << endl;
 
           if (exf.name() == "RST")
           { if (cur_mode == MODE_CW /* or current_mode == MODE_DIGI */ )
@@ -2888,14 +2811,14 @@ ost << "processing command: " << command << endl;
 
           if (!processed_field)
           { if (!(variable_exchange_fields < exf.name()))
-            { ost << "!processed and !variable exchange field: " << exf.name() << endl;
+            { //ost << "!processed and !variable exchange field: " << exf.name() << endl;
 
 
-               ost << "about to guess" << endl;
+               //ost << "about to guess" << endl;
 
               const string guess = rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name()));
 
-              ost << "guess is: " << guess << endl;
+              //ost << "guess is: " << guess << endl;
 
               if (!guess.empty())
               { if ((exf.name() == "RDA") and (guess.length() == 2))  // RDA guess might just have first two characters
@@ -2913,65 +2836,35 @@ ost << "processing command: " << command << endl;
           processed = true;
         }
 
-//        ost << "exchange_str: " << exchange_str << endl;
-
         update_known_callsign_mults(callsign);
         update_known_country_mults(callsign);
-
-//        ost << "about to send to EXCHANGE window" << endl;
 
         win_exchange <= exchange_str;
         win_active_p = &win_exchange;
       }
 
-//      ost << "about to create bandmap entry [1]" << endl;
-//      sleep_for(seconds(5));
-
 // add to bandmap if we're in SAP mode
       if (drlog_mode == SAP_MODE)
-      { //ost << "about to create bandmap entry [2]" << endl;
-
-        bandmap_entry be;
-
-//        ost << "about to set frequency" << endl;
+      { bandmap_entry be;
 
         be.freq(rig.rig_frequency());  // also sets band
 
-//        ost << "about to set callsign" << endl;
-
         be.callsign(callsign);
-
-//        const location_info li = location_db.info(callsign);
-//        const string canonical_prefix = li.canonical_prefix();
-
-//        be.canonical_prefix(canonical_prefix);
-//        be.continent(li.continent());
-
-//        ost << "about to set band" << endl;
-
-//        be.band(cur_band);
-
- //       ost << "about to set expiration time" << endl;
-
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
         be.is_needed(!is_dupe);
 
-//        ost << "about to calculate mult status" << endl;
-
         be.calculate_mult_status(rules, statistics);
-
-//        ost << "mult status calculated" << endl;
 
         bandmap& bandmap_this_band = bandmaps[be.band()];
         const bandmap_entry old_be = bandmap_this_band[callsign];
 
-        ost << "old frequency for " << callsign << " = " << old_be.frequency_str() << "; new frequency = " << be.frequency_str() << endl;
+//        ost << "old frequency for " << callsign << " = " << old_be.frequency_str() << "; new frequency = " << be.frequency_str() << endl;
 
         if (!old_be.callsign().empty() and (old_be.frequency_str() != be.frequency_str()))  // update bandmap only if there's a change
         { bandmap_this_band += be;
 
-          ost << "old_be = " << old_be << endl;
-          ost << "added to bandmap: " << be << endl;
+//          ost << "old_be = " << old_be << endl;
+//          ost << "added to bandmap: " << be << endl;
 
           win_bandmap <= bandmap_this_band;
         }
@@ -3027,7 +2920,6 @@ ost << "processing command: " << command << endl;
         if (!msg.empty())
           (*cw_p) << msg;
       }
-//      processed = true;
     }
 
     processed = true;
@@ -3096,13 +2988,6 @@ ost << "processing command: " << command << endl;
 
         be.freq(rig.rig_frequency());       // also sets band
         be.callsign(contents);
-
-//        const location_info li = location_db.info(contents);
-//        const string canonical_prefix = li.canonical_prefix();
-
-//        be.canonical_prefix(canonical_prefix);
-//        be.continent(li.continent());
- //       be.band(static_cast<BAND>(be.freq()));
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
 
 // do we still need this guy?
@@ -3156,7 +3041,7 @@ ost << "processing command: " << command << endl;
   }
 
 // SHIFT (RIT control)
-// RIT changes via hamlib, at least on the K3, are *very* slow
+// RIT changes via hamlib, at least on the K3, are very slow
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
   { rit_control(e);
 
@@ -3195,7 +3080,6 @@ ost << "processing command: " << command << endl;
           fuzzy_dbs.remove_call(qso.callsign());
 
 // display the current statistics
-//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
         display_statistics(statistics.summary_string(rules));
 
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
@@ -3303,10 +3187,6 @@ ost << "processing command: " << command << endl;
   if (!processed and e.symbol() == XK_KP_Delete)
   { const string callsign = remove_peripheral_spaces(win.read());
 
-//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm -= callsign;
-//                                                                   bm.do_not_add(callsign);
-//                                                                 } );
-
     FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
                                           bm.do_not_add(callsign);
                                         } );
@@ -3371,15 +3251,9 @@ ost << "processing command: " << command << endl;
   if (!processed and e.is_alt('s'))
   { try
     { if (rig.sub_receiver_enabled())
-      { //ost << "going to disable SUBRX" << endl;
         rig.sub_receiver_disable();
-      //ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
-      }
       else
-      { //ost << "going to enable SUBRX" << endl;
         rig.sub_receiver_enable();
-      //ost << "SUBRX is now " << (rig.sub_receiver_enabled() ? "enabled" : "disabled") << endl;
-      }
     }
 
     catch (const rig_interface_error& e)
@@ -3401,7 +3275,6 @@ ost << "processing command: " << command << endl;
     { const bool contains_plus  = (contents[0] == '+');        // this can be entered from the keypad w/o using shift
       const bool contains_minus = (contents[0] == '-');
       double value = from_string<double>(contents);      // what happens when contents can't be parsed as a number?
-//      const frequency f_b = rig.rig_frequency_b();;
 
 // if there's a plus or minus we interpret the value as kHz and move up or down from the current QRG
       {
@@ -3414,13 +3287,8 @@ ost << "processing command: " << command << endl;
           if (possible_qsy)
           {
 // get band of VFO B
-//            frequency f_b = rig.rig_frequency_b();
             const BAND band_b = to_BAND(f_b);
             float band_edge_in_khz = f_b.lower_band_edge().khz();
-
-//            ost << "f_b = " << f_b.display_string() << endl;
-//            ost << "band_b = " << band_b << endl;
-//            ost << "band edge = " << band_edge_in_khz << endl;
 
             switch (band_b)
             { case BAND_160 :
@@ -3444,9 +3312,6 @@ ost << "processing command: " << command << endl;
               default :
                 break;
             }
-
-//            ost << "value = " << value << endl;
-
           }
         }
 
@@ -3471,7 +3336,7 @@ ost << "processing command: " << command << endl;
 
       if (!(be.callsign().empty()))
         rig.rig_frequency_b(be.freq());
-      else    // didn't find an exact match; try a substring search
+      else                                          // didn't find an exact match; try a substring search
       { be = bandmaps[band_b].substr(contents);
 
         if (!(be.callsign().empty()))
@@ -3485,14 +3350,14 @@ ost << "processing command: " << command << endl;
     processed = true;
   }
 
-// ALT-> VFO A -> VFO B
+// ALT--> -- VFO A -> VFO B
   if (!processed and (e.is_alt('>') or e.is_alt('.')))
   { rig.rig_frequency_b(rig.rig_frequency());
 
     processed = true;
   }
 
-// ALT-< VFO B -> VFO A
+// ALT-<- -- VFO B -> VFO A
   if (!processed and (e.is_alt('<') or e.is_alt(',')))
   { rig.rig_frequency(rig.rig_frequency_b());
 
@@ -3518,6 +3383,15 @@ ost << "processing command: " << command << endl;
 }
 
 // function to process input to the EXCHANGE window
+/* // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+// ALT-K -- toggle CW
+ // ESCAPE
+  // COMMA -- place contents of call window into this window, preceeded by a dot
+// FULL STOP
+ // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
+ // ENTER, KP_ENTER, ALT -Q -- thanks and log the contact; also perhaps start QTC process
+
+*/
 void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 {
 // syntactic sugar
@@ -3609,7 +3483,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   if (!processed and (e.is_char('.')))
   { static const string full_stop(".");
 
-//    win <= (full_stop + remove_peripheral_spaces(win_call.read()));
     win <= full_stop;
     processed = true;
   }
@@ -3643,14 +3516,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     const MODE cur_mode = safe_get_mode();
     const string call_contents = remove_peripheral_spaces(win_call.read());
 
-    ost << "going to log QSO with " << call_contents << endl;
+//    ost << "going to log QSO with " << call_contents << endl;
 
     const string canonical_prefix = location_db.canonical_prefix(call_contents);
     const string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
     const vector<string> exchange_field_values = split_string(exchange_contents, ' ');
     const vector<exchange_field> exchange_template = rules.exch(canonical_prefix, cur_mode);
 
-    ost << "Contents of exchange_template:" << endl;
+//    ost << "Contents of exchange_template:" << endl;
 
     for (unsigned int n = 0; n < exchange_template.size(); ++n)
       ost << n << ": " << exchange_template[n] << endl;
@@ -3680,8 +3553,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       if (!processed)
       { parsed_exchange pexch(canonical_prefix, rules, cur_mode, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 
-        ost << "is exchange valid? " << pexch.valid() << endl;
-        ost << pexch << endl;
+//        ost << "is exchange valid? " << pexch.valid() << endl;
+//        ost << pexch << endl;
 
         if (pexch.valid())
         { if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
@@ -3695,7 +3568,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               else                                                         // SAP exchange
               { if (!send_qtc)
                   (*cw_p) << expand_cw_message( context.exchange_sap() );
-                ost << "sent SAP exchange: " << expand_cw_message( context.exchange_sap() ) << endl;
+//                ost << "sent SAP exchange: " << expand_cw_message( context.exchange_sap() ) << endl;
               }
               sent_acknowledgement = true;  // should rename now that we've added QTC processing here
             }
@@ -3705,7 +3578,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           { if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == SAP_MODE))    // in SAP mode, he doesn't care that we might have changed his call
             { if (!send_qtc)
               { (*cw_p) << expand_cw_message(context.exchange_sap());
-                ost << " sent: " << expand_cw_message(context.exchange_sap()) << endl;
+//                ost << " sent: " << expand_cw_message(context.exchange_sap()) << endl;
               }
             }
 
@@ -3764,106 +3637,42 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
           qso.sent_exchange(sent_exchange);
 
-//          ost << "QSO: " << qso << endl;
-
 // build name/value pairs for the received exchange
           vector<received_field>  received_exchange;
-
-#if defined(NEW_CONSTRUCTOR)
           vector<parsed_exchange_field> vec_pef = pexch.chosen_fields(rules);
 
 // keep track of which fields are mults
           for (auto& pef : vec_pef)
             pef.is_mult(rules.is_exchange_mult(pef.name()));
 
-//ost << "vec_pef: " << endl;
-//   for (const auto& pef : vec_pef)
-//     ost << pef << endl;
+          for (const auto& pef : vec_pef)
+          { const bool is_mult_field = pef.is_mult();
 
-//   for (size_t n = 0; n < pexch.n_fields(); ++n)
-   for (const auto& pef : vec_pef)
-   { const bool is_mult_field = pef.is_mult();
+            received_exchange.push_back( { pef.name(), pef.value(), is_mult_field /* pexch.field_is_mult(n) */, false } );
 
-     received_exchange.push_back( { pef.name(), pef.value(), is_mult_field /* pexch.field_is_mult(n) */, false } );
+// ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
 
- ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
+            if (!(variable_exchange_fields < pef.name()))
+              exchange_db.set_value(callsign, pef.name(), pef.value());   // add it to the database of exchange fields
 
-     if (!(variable_exchange_fields < pef.name()))
-       exchange_db.set_value(callsign, pef.name(), pef.value());   // add it to the database of exchange fields
-
-   ost << "canonical value = " << rules.canonical_value(pef.name(), pef.value()) << endl;
-
-// possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
-     if (is_mult_field)
-     { ost << "Adding canonical value " << pef.value() << " for multiplier exchange field " << pef.name() << ", mult value = " << pef.mult_value() << endl;
-
-       if (!rules.is_canonical_value(pef.name(), pef.mult_value()))
-         rules.add_exch_canonical_value(pef.name(), pef.mult_value());
-   }
- }
-
-
-
-#else
-
-   for (size_t n = 0; n < pexch.n_fields(); ++n)
-   { const bool is_mult_field = rules.is_exchange_mult(pexch.field_name(n));
-
-     received_exchange.push_back( { pexch.field_name(n), pexch.field_value(n), is_mult_field /* pexch.field_is_mult(n) */, false } );
-
- ost << "added pexch: name = " << pexch.field_name(n) << ", value = " << pexch.field_value(n) << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
-
-     if (!(variable_exchange_fields < pexch.field_name(n)))
-       exchange_db.set_value(callsign, pexch.field_name(n), pexch.field_value(n));   // add it to the database of exchange fields
-
-   ost << "canonical value = " << rules.canonical_value(pexch.field_name(n), pexch.field_value(n)) << endl;
-
-// possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
-     if (is_mult_field)
-     { ost << "Adding canonical value " << pexch.field_value(n) << " for multiplier exchange field " << pexch.field_name(n) << ", mult value = " << pexch.mult_value(n) << endl;
-
-       if (!rules.is_canonical_value(pexch.field_name(n), pexch.mult_value(n)))
-         rules.add_exch_canonical_value(pexch.field_name(n), pexch.mult_value(n));
-   }
- }
-
-
-
-
-#endif    // NEW_CONSTRUCTOR
-
-#if 0
-   for (size_t n = 0; n < pexch.n_fields(); ++n)
-          { const bool is_mult_field = rules.is_exchange_mult(pexch.field_name(n));
-
-            received_exchange.push_back( { pexch.field_name(n), pexch.field_value(n), is_mult_field /* pexch.field_is_mult(n) */, false } );
-
-        ost << "added pexch: name = " << pexch.field_name(n) << ", value = " << pexch.field_value(n) << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
-
-            if (!(variable_exchange_fields < pexch.field_name(n)))
-              exchange_db.set_value(callsign, pexch.field_name(n), pexch.field_value(n));   // add it to the database of exchange fields
-
-          ost << "canonical value = " << rules.canonical_value(pexch.field_name(n), pexch.field_value(n)) << endl;
+//   ost << "canonical value = " << rules.canonical_value(pef.name(), pef.value()) << endl;
 
 // possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
             if (is_mult_field)
-            { ost << "Adding canonical value " << pexch.field_value(n) << " for multiplier exchange field " << pexch.field_name(n) << ", mult value = " << pexch.mult_value(n) << endl;
+            { //ost << "Adding canonical value " << pef.value() << " for multiplier exchange field " << pef.name() << ", mult value = " << pef.mult_value() << endl;
 
-              if (!rules.is_canonical_value(pexch.field_name(n), pexch.mult_value(n)))
-                rules.add_exch_canonical_value(pexch.field_name(n), pexch.mult_value(n));
+              if (!rules.is_canonical_value(pef.name(), pef.mult_value()))
+                rules.add_exch_canonical_value(pef.name(), pef.mult_value());
+            }
           }
-        }
-#endif
 
-        qso.received_exchange(received_exchange);
+          qso.received_exchange(received_exchange);
 
 // is this a country mult?
-        if (country_mults_used)
-        { update_known_country_mults(qso.callsign());  // does nothing if not auto remaining country mults
+          if (country_mults_used)
+          { update_known_country_mults(qso.callsign());  // does nothing if not auto remaining country mults
 
-          const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode);
-
-//          ost << "QSO with " << qso.callsign() << "; is_country_mult = " << is_country_mult << endl;
+            const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode);
 
           qso.is_country_mult(is_country_mult);
         }
@@ -3872,10 +3681,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         if (exchange_mults_used)
         { const bool is_exchange_mult = calculate_exchange_mults(qso, rules);  // may modify qso
 
-          ost << "QSO is " << (is_exchange_mult ? "" : "not ") << " an exchange mult" << endl;
+//          ost << "QSO is " << (is_exchange_mult ? "" : "not ") << " an exchange mult" << endl;
         }
 
-        ost << "after calculate_exchange_mults; qso = " << qso << endl;
+//        ost << "after calculate_exchange_mults; qso = " << qso << endl;
 
 // if callsign mults matter, add more to the qso
         allow_for_callsign_mults(qso);
@@ -3884,51 +3693,42 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band, cur_mode);
 
 // and any exch multipliers
-//        ost << "about to add worked exchange mults to statistics" << endl;
-
         map<string /* field name */, set<string> /* values */ >   old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
 
 // calculate number of exchange mults
-        { // ost << "old number of exchange mults = ";
-
-          unsigned int n = 0;
-
-          for (const auto& psss : old_worked_exchange_mults)
-            n += psss.second.size();
-
-          ost << n << endl;
-        }
+//        { unsigned int n = 0;
+//
+//          for (const auto& psss : old_worked_exchange_mults)
+//            n += psss.second.size();
+//
+ //         ost << n << endl;
+//        }
 
         const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix, qso.mode());
 
         for (const auto& exch_field : exchange_fields)
         { const string value = qso.received_exchange(exch_field.name());
 
-          ost << "adding " << exch_field.name() << endl;
-          ost << "  " << exch_field << endl;
+//          ost << "adding " << exch_field.name() << endl;
+//          ost << "  " << exch_field << endl;
 
 //          statistics.add_worked_exchange_mult(exch_field.name(), value, rules.exchange_mults_per_band() ? cur_band : ALL_BANDS);
           statistics.add_worked_exchange_mult(exch_field.name(), value, qso.band(), qso.mode());
 
-          ost << "finished adding " << exch_field.name() << endl;
+//          ost << "finished adding " << exch_field.name() << endl;
 
         }
 
         add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
 
 // write the log line
-
-        ost << "about to write log line" << endl;
+//        ost << "about to write log line" << endl;
 
         const auto se = qso.sent_exchange();
 
-//        ost << "sent exchange: size = " << se.size() << endl;
-//        for (unsigned int n = 0; n < se.size(); ++n)
-//          ost<< "  " <<  se[n].first << " = " << se[n].second;
-
         win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
 
-        ost << "log line: " << qso.log_line() << endl;
+//        ost << "log line: " << qso.log_line() << endl;
 
         win_exchange <= WINDOW_CLEAR;
         win_call <= WINDOW_CLEAR;
@@ -3940,7 +3740,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         }
 
 // display the current statistics
-//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
         display_statistics(statistics.summary_string(rules));
 
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
@@ -3962,15 +3761,15 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         map<string /* field name */, set<string> /* values */ >   new_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
 
         // calculate number of exchange mults
-                { ost << "new number of exchange mults = ";
-
-                  unsigned int n = 0;
-
-                  for (const auto& psss : new_worked_exchange_mults)
-                    n += psss.second.size();
-
-                  ost << n << endl;
-                }
+//                { ost << "new number of exchange mults = ";
+//
+//                  unsigned int n = 0;
+//
+//                  for (const auto& psss : new_worked_exchange_mults)
+//                    n += psss.second.size();
+//
+//                  ost << n << endl;
+//                }
 
         bool no_exchange_mults_this_qso = true;
 
@@ -3989,7 +3788,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         }
 
 // what exchange mults came from this qso? there ought to be a better way of doing this
-        ost << "exchange_mults_this_qso = " << boolalpha << !no_exchange_mults_this_qso << noboolalpha << endl;
+//        ost << "exchange_mults_this_qso = " << boolalpha << !no_exchange_mults_this_qso << noboolalpha << endl;
 
         if (!no_exchange_mults_this_qso)
         { for (const auto& current_exchange_mult : new_worked_exchange_mults)
@@ -4050,12 +3849,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
          be.freq(rig.rig_frequency());
          be.callsign(qso.callsign());
-
-//         const location_info li = location_db.info(qso.callsign());
-
-//         be.canonical_prefix(li.canonical_prefix());
-//         be.continent(li.continent());
-//         be.band(cur_band);
          be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
          be.is_needed(false);
 
@@ -4094,20 +3887,20 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       }
 
 // exchange mult status
-      if (exchange_mults_used and !exchange_mults_this_qso.empty())
-      { if (rules.exchange_mults_per_band())
-        { for (const auto& pss : exchange_mults_this_qso)
-            bandmap_this_band.not_needed_exchange_mult(pss.first, pss.second);
-        }
-        else
-        { for (const auto& pss : exchange_mults_this_qso)
-          { for (auto& bmap : bandmaps)
-              bmap.not_needed_exchange_mult(pss.first, pss.second);
+          if (exchange_mults_used and !exchange_mults_this_qso.empty())
+          { if (rules.exchange_mults_per_band())
+            { for (const auto& pss : exchange_mults_this_qso)
+                bandmap_this_band.not_needed_exchange_mult(pss.first, pss.second);
+            }
+            else
+            { for (const auto& pss : exchange_mults_this_qso)
+              { for (auto& bmap : bandmaps)
+                  bmap.not_needed_exchange_mult(pss.first, pss.second);
+              }
+            }
           }
-        }
-      }
 
-      win_bandmap <= bandmap_this_band;
+          win_bandmap <= bandmap_this_band;
 
 // keep track of QSO number
           win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
@@ -4115,8 +3908,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
 
           display_call_info(qso.callsign(), DO_NOT_DISPLAY_EXTRACT);
-
-
         } // end pexch.valid()
         else  // unable to parse exchange
           alert("Unable to parse exchange");
@@ -4169,8 +3960,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             { win <= cursor(word_posn[index - 1], original_posn.y());  // are at the start of a word (but not the first word)
               break;
             }
-//            win <= ( (index == 0) ? CURSOR_START_OF_LINE : cursor(word_posn[index - 1], original_posn.y()) );  // invalid ternary op
-//            break;
           }
 
           if (word_posn[index] > original_posn.x())
@@ -4182,8 +3971,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             { win <= cursor(word_posn[index - 1], original_posn.y());  // go to the start of the current word
               break;
             }
-//            win <= ( (index == 0) ? CURSOR_START_OF_LINE : cursor(word_posn[index - 1], original_posn.y()) );  // invalid ternary op
-//            break;
           }
         }
 
@@ -4257,25 +4044,18 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           new_contents += substring(contents, end_current_word + 1);
 
           win < WINDOW_CLEAR < new_contents <= cursor(start_current_word, original_posn.y());
-
-//          win <= cursor(start_current_word, original_posn.y());
         }
         else
-        { //const string new_contents = substring(contents, 0, next_start - 1);
-          string new_contents;
+        { string new_contents;
+
           if (start_current_word != 0)
             new_contents = substring(contents, 0, start_current_word - 1);
 
           win < WINDOW_CLEAR < new_contents <= cursor(start_current_word, original_posn.y());
-//          win <= original_posn;
-//          win <= cursor(start_current_word, original_posn.y());
         }
       }
       else  // we are at a space
       { const size_t next_start = next_word_posn(contents, original_posn.x());
-
-//        ost << "x_0 = " << original_posn.x() << endl;
-//        ost << "next_start = " << next_start << endl;
 
         if (next_start != string::npos)
         { const size_t next_end = contents.find_first_of(" ", next_start);
@@ -4284,13 +4064,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           { const string new_contents = substring(contents, 0, next_start) + substring(contents, next_end + 1);
 
             win < WINDOW_CLEAR < new_contents <= cursor(original_posn.x() + 1, original_posn.y());
-//            win <= cursor(original_posn.x() + 1, original_posn.y());
           }
           else
           { const string new_contents = substring(contents, 0, next_start - 1);
 
             win < WINDOW_CLEAR < new_contents <= original_posn;
-//            win <= original_posn;
           }
         }
       }
@@ -4337,11 +4115,11 @@ ost << "processing LOG input; event string: " << e.str() << endl;
 
       const vector<string> new_win_log_snapshot = win_log.snapshot();  // [0] is the top line
 
-      for (size_t n = 0; n < win_log_snapshot.size(); ++n)
-        ost << "Original line #" << n << ": " << win_log_snapshot[n] << endl;
+//      for (size_t n = 0; n < win_log_snapshot.size(); ++n)
+//        ost << "Original line #" << n << ": " << win_log_snapshot[n] << endl;
 
-      for (size_t n = 0; n < new_win_log_snapshot.size(); ++n)
-        ost << " Current line #" << n << ": " << new_win_log_snapshot[n] << endl;
+//      for (size_t n = 0; n < new_win_log_snapshot.size(); ++n)
+//        ost << " Current line #" << n << ": " << new_win_log_snapshot[n] << endl;
 
 // has anything been changed?
       bool changed = false;
@@ -4350,7 +4128,7 @@ ost << "processing LOG input; event string: " << e.str() << endl;
 
       if (changed)
       {
-ost << hhmmss() << " starting changed log" << endl;
+//ost << hhmmss() << " starting changed log" << endl;
 
 // get the original QSOs that were in the window
         int number_of_qsos_in_original_window = 0;
@@ -4359,7 +4137,7 @@ ost << hhmmss() << " starting changed log" << endl;
           if (!remove_peripheral_spaces(win_log_snapshot[n]).empty())
             number_of_qsos_in_original_window++;
 
-ost << "number of QSOs in original window = " << number_of_qsos_in_original_window << endl;
+//ost << "number of QSOs in original window = " << number_of_qsos_in_original_window << endl;
 
         deque<QSO> original_qsos;
 
@@ -4379,37 +4157,36 @@ ost << "number of QSOs in original window = " << number_of_qsos_in_original_wind
         for (unsigned int n = 0; n < n_to_remove; ++n)
           logbk.remove_last_qso();
 
-ost << "removed " << n_to_remove << " QSOs from log" << endl;
-ost << "length of log is now: " << logbk.size() << endl;
-ost << hhmmss() << " about to rebuild history" << endl;
+//ost << "removed " << n_to_remove << " QSOs from log" << endl;
+//ost << "length of log is now: " << logbk.size() << endl;
+//ost << hhmmss() << " about to rebuild history" << endl;
 
         rebuild_history(logbk, rules, statistics, q_history, rate);
 
-ost << hhmmss() << " finished rebuilding history" << endl;
-ost << "Adding new QSO(s)" << endl;
+//ost << hhmmss() << " finished rebuilding history" << endl;
+//ost << "Adding new QSO(s)" << endl;
 
 // add the new QSOs
         for (size_t n = 0; n < new_win_log_snapshot.size(); ++n)
         { if (!remove_peripheral_spaces(new_win_log_snapshot[n]).empty())
-          { ost << "Adding a qso" << endl;
-            ost << "n = " << n << endl;
-            ost << "size of old qsos = " << original_qsos.size();
+          { //ost << "Adding a qso" << endl;
+            //ost << "n = " << n << endl;
+            //ost << "size of old qsos = " << original_qsos.size();
 
             QSO qso = original_qsos[n];
             qso.log_line();
 
-        ost << "qso.log_line() = " <<  qso.log_line() << endl;
-        ost << " new line from snapshot: " << new_win_log_snapshot[n] << endl;
-        ost << " old line from snapshot: " << win_log_snapshot[n] << endl;
-        ost << " old QSO call from QSO: " << original_qsos[n].callsign() << endl;
+       // ost << "qso.log_line() = " <<  qso.log_line() << endl;
+        //ost << " new line from snapshot: " << new_win_log_snapshot[n] << endl;
+        //ost << " old line from snapshot: " << win_log_snapshot[n] << endl;
+        //ost << " old QSO call from QSO: " << original_qsos[n].callsign() << endl;
 
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 
-        ost << " new QSO call from QSO: " << qso.callsign() << endl;
+        //ost << " new QSO call from QSO: " << qso.callsign() << endl;
 
 // we can't assume anything about the mult status
             const BAND b = qso.band();
-//            ost << "band of reconstituted QSO = " << BAND_NAME[b] << endl;
 
             update_known_callsign_mults(qso.callsign());
             update_known_country_mults(qso.callsign());
@@ -4417,9 +4194,6 @@ ost << "Adding new QSO(s)" << endl;
 // is this a country mult?
             const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode());
             qso.is_country_mult(is_country_mult);
-
-//            ost << "is_country_mult after QSO has been rebuilt: " << is_country_mult << endl;
-//            ost << "is_exchange_mult after QSO has been rebuilt: " << qso.is_exchange_mult() << endl;
 
 // exchange mults
             if (exchange_mults_used)
@@ -4434,7 +4208,7 @@ ost << "Adding new QSO(s)" << endl;
           }
         }
 
-        ost << hhmmss() << " added QSOs" << endl;
+//        ost << hhmmss() << " added QSOs" << endl;
 
 // re-write the logfile
         { FILE* fp = fopen(context.logfile().c_str(), "w");
@@ -4453,18 +4227,9 @@ ost << "Adding new QSO(s)" << endl;
           else
             alert("Unable to open log file " + context.logfile() + " for writing: ");
         }
-//ost << hhmmss() << " about to do second rebuild" << endl;
 
-// rebuild the history
         rebuild_history(logbk, rules, statistics, q_history, rate);
-
-//ost << hhmmss() << " completed second rebuild" << endl;
-
-// rescore the log
         rescore(rules);
-
-//ost << hhmmss() << " completed rescore" << endl;
-
         update_rate_window();
 
         scp_dynamic_db.clear();  // clears cache of parent
@@ -4472,8 +4237,7 @@ ost << "Adding new QSO(s)" << endl;
 
         const vector<QSO> qso_vec = logbk.as_vector();
 
- //       ost << "n QSOs in logbook = " << qso_vec.size() << endl;
-        ost << hhmmss() << " about to re-fill databases" << endl;
+//        ost << hhmmss() << " about to re-fill databases" << endl;
 
         for (const auto& qso : qso_vec)
         { const string& callsign = qso.callsign();
@@ -4485,28 +4249,12 @@ ost << "Adding new QSO(s)" << endl;
             fuzzy_dynamic_db.add_call(callsign);
         }
 
- //       ost << hhmmss() << " re-filled first database" << endl;
-
-//        for (const auto& qso : qso_vec)
-//        { //if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
-            //scp_dynamic_db.add_call(qso.callsign());
-
-//          if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
-//            fuzzy_dynamic_db.add_call(qso.callsign());
-//        }
-
-//        ost << hhmmss() << " completed re-filling databases" << endl;
-
-//        ost << "About to display; number of QSOs in logbook = " << logbk.size() << endl;
-
 // all the QSOs are added; now display the last few in the log window
         editable_log.recent_qsos(logbk, true);
 
 // display the current statistics
-//        win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
         display_statistics(statistics.summary_string(rules));
 
-//        const string score_str = pad_string(comma_separated_string(statistics.points(rules)), win_score.width() - string("Score: ").length());
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
@@ -4540,9 +4288,7 @@ ost << "Adding new QSO(s)" << endl;
             win_bandmap <= bm;
         }
 
-//        win_bandmap <= bandmaps[safe_get_band()];
-
-        ost << hhmmss() << " all done" << endl;
+//        ost << hhmmss() << " all done" << endl;
       }
 
       win_active_p = &win_call;
@@ -4680,9 +4426,6 @@ void toggle_drlog_mode(void)
 void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b, const MODE m)
 { const set<string> worked_callsign_mults = statistics.worked_callsign_mults(mult_name, b, m);
 
-//  ost << "update_remaining_callsign_mults_window: mult_name = " << mult_name << ", band = " << b << endl;
-//  ost << "update_remaining_callsign_mults_window: number of worked callsign mults on this band = " << worked_callsign_mults.size() << endl;
-
 // the original list of callsign mults
   set<string> original;
 
@@ -4710,11 +4453,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   vector<pair<string /* country */, int /* colour pair number */ > > vec;
 
   for (const auto& canonical_prefix : vec_str)
-  { //ost << "updating callsign mults, processing: *" << canonical_prefix << "*" << endl;
-
-    const bool is_needed = ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() );
-
-    //ost << "is_needed = " << is_needed << "for callsign mult: " << canonical_prefix << endl;
+  { const bool is_needed = ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() );
     const int colour_pair_number = colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : string_to_colour(context.worked_mults_colour()) ), win_remaining_callsign_mults.bg());
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
@@ -4732,8 +4471,6 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
 { const set<string> worked_country_mults = statistics.worked_country_mults(b, m);
   const set<string> known_country_mults = statistics.known_country_mults();
 
-//  ost << "number of known country mults = " << known_country_mults.size() << endl;
-
 // put in right order and get the colours right
   vector<string> vec_str;
 
@@ -4745,7 +4482,6 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   for (size_t n = 0; n < vec_str.size(); ++n)
   { const string& canonical_prefix = vec_str[n];
     const bool is_needed = worked_country_mults.find(canonical_prefix) == worked_country_mults.end();
-
     int colour_pair_number = colours.add(win_remaining_country_mults.fg(), win_remaining_country_mults.bg());
 
     if (!is_needed)
@@ -4830,7 +4566,7 @@ const string bearing(const string& callsign)
     \param  calc_sunset whether to calculate sunset
     \return             sunrise or sunset in the form HHMM
 
-    Returns "9999" if it's always dark, and "8888" if it's always light
+    Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
 { const location_info li = location_db.info(callsign);
@@ -4845,24 +4581,6 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
 
   return rv;
 }
-
-/*! \brief              Calculate the sunrise time for a station
-    \param  callsign    call of the station for which sunset is desired
-    \return             sunrise in the form HHMM
-
-    Returns "9999" if it's always dark, and "8888" if it's always light
- */
-//const string sunrise(const string& callsign)
-//  { return sunrise_or_sunset(callsign, false); }
-
-/*! \brief              Calculate the sunset time for a station
-    \param  callsign    call of the station for which sunset is desired
-    \return             sunset in the form HHMM
-
-    Returns "9999" if it's always dark, and "8888" if it's always light
- */
-//inline const string sunset(const string& callsign)
-//  { return sunrise_or_sunset(callsign, true); }
 
 /*! \brief  Populate the information window
     \param  full or partial call
@@ -4937,28 +4655,15 @@ void populate_win_info(const string& callsign)
 // exch mults
     const vector<string>& exch_mults = rules.exchange_mults();
 
-//    ost << "about to guess exch mults for " << callsign << endl;
-
     for (const auto& exch_mult_field : exch_mults)
     { bool output_this_mult = true;
 
-// output QTHX mults only if they apply to this callsign
-//      if (starts_with(exch_mult_field, "QTHX["))
-//      { const string target_canonical_prefix = delimited_substring(exch_mult_field, '[', ']');
-//
-//        output_this_mult = (target_canonical_prefix == canonical_prefix);
-//      }
-
       output_this_mult = rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix);
 
-      ost << "mult name: " << exch_mult_field << ", output_this_mult = " << boolalpha << output_this_mult << noboolalpha << endl;
+//      ost << "mult name: " << exch_mult_field << ", output_this_mult = " << boolalpha << output_this_mult << noboolalpha << endl;
 
       if (output_this_mult)
-      { //ost << "guessing for mult field " << exch_mult_field << endl;
-
-        const string exch_mult_value = exchange_db.guess_value(callsign, exch_mult_field);    // make best guess as to to value of this field
-
-        //ost << "guessed value is " << exch_mult_value << endl;
+      { const string exch_mult_value = exchange_db.guess_value(callsign, exch_mult_field);    // make best guess as to to value of this field
 
         line = pad_string(exch_mult_field + " [" + exch_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
@@ -5040,17 +4745,14 @@ void* keyboard_test(void* vp)
 
   keyboard.push_key_press('a');
   XFlush(keyboard.display_p());
-//  sleep(4);
   sleep_for(seconds(4));
 
   keyboard.push_key_press('m');
   XFlush(keyboard.display_p());
-//  sleep(8);
   sleep_for(seconds(8));
 
   keyboard.push_key_press('t');
   XFlush(keyboard.display_p());
-//  sleep(1);
   sleep_for(seconds(1));
 
   return NULL;
@@ -5076,7 +4778,7 @@ void* simulator_thread(void* vp)
     if (str_frequency != last_frequency)
     { rig.rig_frequency(frequency(str_frequency));
 
-ost << "QSY to " << frequency(str_frequency).hz() << " Hz" << endl;
+      ost << "QSY to " << frequency(str_frequency).hz() << " Hz" << endl;
 
       if (static_cast<BAND>(frequency(last_frequency)) != static_cast<BAND>(frequency(str_frequency)))
       { safe_set_band(static_cast<BAND>(frequency(str_frequency)));
@@ -5217,22 +4919,11 @@ void update_known_country_mults(const string& callsign)
 { if (callsign.empty())
     return;
 
-//  ost << "inside update_known_country_mults for " << callsign << endl;
-//  ost << "initial number of known country mults = " << statistics.n_known_country_mults() << endl;
-
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-//    ost << "about to add " << canonical_prefix << endl;
-
     if (rules.country_mults() < canonical_prefix)            // don't add if the rules don't recognise it as a country mult
-    { //ost << "prefix is known to rules" << endl;
       statistics.add_known_country_mult(canonical_prefix);
-
-      //ost << "number of known country mults = " << statistics.n_known_country_mults() << endl;
-    }
-//    else
-//      ost << "prefix is NOT known to rules; size = " << rules.country_mults().size() << endl;
   }
 }
 
@@ -5402,7 +5093,6 @@ void update_rate_window(void)
     const pair<unsigned int, unsigned int> qs = rate.calculate_rate(rate_period * 60, context.normalise_rate() ? 3600 : 0);
 
     str += pad_string(to_string(qs.first), 3);
-//    str += pad_string(comma_separated_string(qs.second), 10);
     str += pad_string(separated_string(qs.second, TS), 10);
 
     rate_str += (str + (str.length() == static_cast<unsigned int>(win_rate.width()) ? "" : LF) );      // LF is added automatically if a string fills a line
@@ -5433,13 +5123,11 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 
   const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix(), qso.mode());        // exchange_field = name, is_mult
   const vector<received_field> received_exchange = qso.received_exchange();
-//  const BAND b = qso.band();
   vector<received_field> new_received_exchange;
   bool rv = false;
-//  const bool auto_mults = (context.auto_remaining_exchange_mults());
 
   for (auto field : received_exchange)
-  { ost << "received exchange field = " << field << endl;
+  { //ost << "received exchange field = " << field << endl;
 
     if (field.is_possible_mult())                              // see if it's really a mult
     { if (context.auto_remaining_exchange_mults(field.name()))
@@ -5447,19 +5135,17 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 
       const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), qso.band(), qso.mode());
 
- ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
+// ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 
       field.is_mult(is_needed_exchange_mult);
       if (is_needed_exchange_mult)
         rv = true;
     }
-//    else    // field is not allowed to be a mult by the rules
+
     new_received_exchange.push_back(field);  // leave it unchanged
   }
 
   qso.received_exchange(new_received_exchange);
-
-  ost << "leaving calculate_exchange_mults()" << endl;
 
   return rv;
 }
@@ -5604,28 +5290,9 @@ void exit_drlog(void)
   exit(0);
 }
 
-/*! \brief      Convert a serial number to a string
-    \param  n   serial number
-    \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
-*/
-//const string serial_number_string(const unsigned int n)
-//{ return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) );
-//}
-
-//void update_scp_window(const string& callsign)
-//{ update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign);
-//}
-
-/*! \brief              Update the fuzzy window with matches for a particular call
-    \param  callsign    callsign against which to generate the fuzzy matches
-*/
-//void update_fuzzy_window(const string& callsign)
-//{ update_matches_window(fuzzy_dbs[callsign], fuzzy_matches, win_fuzzy, callsign);
-//}
-
-/*! \brief          Get best fuzzy or SCP match
-    \param  matches vector of fuzzy or SCP matches, colour coded
-    \return         best of the matches
+/*! \brief              Get best fuzzy or SCP match
+    \param  matches     vector of fuzzy or SCP matches, colour coded
+    \return             best of the matches
 
     The returned value, if any, is the match that is most likely to be the correct call, according to the algorithm in this routine.
     This routine is very conservative. Hence, it should almost always return a value with which
@@ -5663,11 +5330,7 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
     \return             whether we still need to work <i>callsign</i> on <i>b</i> and <i>m</i>
 */
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
-{ //const BAND b = safe_get_band();
-  //const MODE m = safe_get_mode();
-//  const bool multiple_band_qsos = rules.work_if_different_band();    // ok to work on multiple bands?
-//  const bool multiple_mode_qsos = rules.work_if_different_mode();
-  const bool worked_at_all = q_history.worked(callsign);
+{ const bool worked_at_all = q_history.worked(callsign);
 
   if (!worked_at_all)
     return true;
@@ -5689,20 +5352,10 @@ const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
   if (q_history.worked_on_another_band_and_mode(callsign, b, m))
     return ( rules.work_if_different_band() and rules.work_if_different_mode() );
 
+// should never get here
   ost << "ERROR in is_needed_qso for " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << endl;
-  return false;    // should never get here
-//  if (rules.work_if_different_band() and q_history.worked(callsign, m))
-//    return false;
 
-//  if (rules.work_if_different_mode() and q_history.worked(callsign, b))
-//    return false;
-
-
-
-
-//  const bool is_needed = (!worked_this_band_mode and multiple_band_qsos) or (!worked_at_all and !multiple_band_qsos);
-
-//  return is_needed;
+  return false;
 }
 
 /*! \brief      Control RIT using the SHIFT keys
@@ -5754,8 +5407,8 @@ void swap_rit_xit(void)
   }
 }
 
-/*! \brief      Add a QSO into the all the objects that need to know about it
-    \param  qso the QSO to add
+/*! \brief          Add a QSO into the all the objects that need to know about it
+    \param  qso     the QSO to add
 */
 void add_qso(const QSO& qso)
 { statistics.add_qso(qso, logbk, rules);    // add it to the running statistics before we add it to the log so we can check for dupes against the current log
@@ -5822,9 +5475,10 @@ void update_batch_messages_window(const string& callsign)
     win_batch_messages < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
 }
 
-/*! \brief  Obtain value corresponding to a type of callsign mult from a callsign
+/*! \brief                      Obtain value corresponding to a type of callsign mult from a callsign
     \param  callsign_mult_name  the type of the callsign mult
     \param  callsign            the call for which the mult value is required
+    \return                     value of <i>callsign_mult_name</i> for <i>callsign</i>
 
     Returns the empty string if no sensible result can be returned
 */

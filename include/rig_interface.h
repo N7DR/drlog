@@ -49,7 +49,7 @@ enum VFO { VFO_A = 0,                       ///< VFO A
            VFO_B                            ///< VFO B
          };
 
-extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band andn per-mode
+extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band and per-mode
 
 // ---------------------------------------- rig_status -------------------------
 
@@ -68,45 +68,42 @@ WRAPPER_2(rig_status, frequency, freq, MODE, mode);
 class rig_interface
 {
 protected:
-  hamlib_port_t    _port;                                ///< hamlib port
-  std::string      _port_name;                           ///< name of port
+  frequency                                     _last_commanded_frequency;      ///< last frequency to which the rig was commanded to QSY
+  frequency                                     _last_commanded_frequency_b;    ///< last frequency to which the VFO B was commanded to QSY
+  MODE                                          _last_commanded_mode;           ///< last mode into which the rig was commanded
+  std::map< std::pair <BAND, MODE>, frequency > _last_frequency;                ///< last-used frequencies on per-band, per-mode basis
+  rig_model_t                                   _model;                         ///< hamlib model
+  hamlib_port_t                                 _port;                          ///< hamlib port
+  std::string                                   _port_name;                     ///< name of port
+  RIG*                                          _rigp;                          ///< hamlib handle
+  bool                                          _rig_connected;                 ///< is a rig connected?
+  pt_mutex                                      _rig_mutex;                     ///< mutex for all operations
+  unsigned int                                  _rig_poll_interval;             ///< interval between polling for rig status, in milliseconds
+  rig_status                                    _status;                        ///< most recent rig frequency and mode from the periodic poll
+  pthread_t                                     _thread_id;                     ///< ID for the thread that polls the rig for status
 
-  RIG*             _rigp;                                ///< hamlib handle
-  rig_model_t      _model;                               ///< hamlib model
-
-  rig_status       _status;                              ///< most recent rig frequency and mode from the periodic poll
-  pt_mutex         _rig_mutex;                           ///< mutex for all operations
-
-  unsigned int     _rig_poll_interval;                   ///< interval between polling for rig status, in milliseconds
-  pthread_t        _thread_id;                           ///< ID for the thread that polls the rig for status
-
-  std::map< std::pair <BAND, MODE>, frequency > _last_frequency;  ///< last-used frequencies on per-band, per-mode basis
-
-  bool              _rig_connected;                      ///< is a rig connected?
-  frequency         _last_commanded_frequency;           ///< last frequency to which the rig was commanded to QSY
-  MODE              _last_commanded_mode;                ///< last mode into which the rig was commanded
-
-  frequency         _last_commanded_frequency_b;         ///< last frequency to which the VFO B was commanded to QSY
-
-/*! \brief      poll rig for status, forever
+/*! \brief      Thread function to poll rig for status, forever
     \param  vp  unused (should be nullptr)
     \return     nullptr
 
     Sets the frequency and mode in the <i>_status</i> object
 */
-void*            _poll_thread_function(void* vp);
+  void* _poll_thread_function(void* vp);
 
 /*! \brief      static wrapper for function to poll rig for status
     \param  vp  the this pointer, in order to allow static member access to a real object
     \return     nullptr
 */
-  static void*     _static_poll_thread_function(void* vp);
+  static void* _static_poll_thread_function(void* vp);
 
 ///< allow direct access to the underlying file descriptor used to communicate with the rig
   inline const int  _file_descriptor(void) const
     { return _rigp->state.rigport.fd; }
 
-  void (*_error_alert_function)(const std::string&);
+/*! \brief          Pointer to function used to alert the user to an error
+    \param  msg     message to be presented to the user
+*/
+  void (*_error_alert_function)(const std::string& msg);
 
 /*! \brief       Alert the user with a message
     \param  msg  message for the user

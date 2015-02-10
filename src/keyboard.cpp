@@ -1,4 +1,4 @@
-// $Id: keyboard.cpp 58 2014-04-12 17:23:28Z  $
+// $Id: keyboard.cpp 94 2015-02-07 15:06:10Z  $
 
 /*!     \file keyboard.cpp
 
@@ -20,11 +20,7 @@ using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
 
-extern message_stream           ost;
-
-//int (*XSetErrorHandler(handler))()
-//      int (*handler)(Display *, XErrorEvent *)
-
+extern message_stream           ost;    ///< for debugging, info
 
 // -------------------------------------  keyboard_queue  ---------------------------
 
@@ -33,12 +29,19 @@ extern message_stream           ost;
         around an STL deque
 */
 
-// X error handler
+/*! \brief                  X error handler
+    \param  display_p       pointer to X display
+    \param  error_event_p   pointer to X error event
+*/
 int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_event_p)
 { cerr << "X Error" << endl;
   exit(-1);
 }
 
+/*! \brief      Thread function to run the X event loop
+    \param  vp  pointer to keyboard queue
+    \return     nullptr
+*/
 void* runit(void* vp)
 { keyboard_queue* kqp = static_cast<keyboard_queue*>(vp);
 
@@ -47,20 +50,7 @@ void* runit(void* vp)
   return nullptr;
 }
 
-/*
-/void* runflush(void* vp)
-{ keyboard_queue* kqp = static_cast<keyboard_queue*>(vp);
-
-  while (1)
-  { XFlush(kqp->display_p());
-    sleep(1);
-  }
-
-  return nullptr;
-}
-*/
-
-// default constructor
+/// default constructor
 keyboard_queue::keyboard_queue(void) :
   _display_p(nullptr),
   _window_id(0),
@@ -92,8 +82,7 @@ keyboard_queue::keyboard_queue(void) :
 // we are interested only in key events
   XSelectInput(_display_p, _window_id, KeyPressMask | KeyReleaseMask);
 
-  pthread_t   thread_id_1;
-//  int ret = pthread_create(&thread_id_1, NULL, runit, this);
+  static pthread_t   thread_id_1;
 
   try
   { create_thread(&thread_id_1, NULL, runit, this, "KEYBOARD");

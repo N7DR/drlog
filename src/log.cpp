@@ -1,4 +1,4 @@
-// $Id: log.cpp 88 2014-12-27 15:19:42Z  $
+// $Id: log.cpp 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,16 +34,16 @@ extern string VERSION;          ///< version string
         \brief The log
 */
 
-/*!     \brief      Is one QSO earlier than another?
-        \param  q1  First QSO
-        \param  q2  Second QSO
-        \return     Whether <i>q1</i> is earlier than <i>q2</i>
+/*! \brief      Is one QSO earlier than another?
+    \param  q1  first QSO
+    \param  q2  second QSO
+    \return     whether <i>q1</i> is earlier than <i>q2</i>
 */
 const bool qso_sort_by_time(const QSO& q1, const QSO& q2)
   { return q1.earlier_than(q2); }
 
-/*!     \brief      add a QSO to the logbook
-        \param  q   QSO to add
+/*! \brief      Add a QSO to the logbook
+    \param  q   QSO to add
 */
 void logbook::operator+=(const QSO& q)
 { SAFELOCK(_log);
@@ -52,11 +52,11 @@ void logbook::operator+=(const QSO& q)
   _log_vec.push_back(q);
 }
 
-/*!     \brief      Return an individual QSO by number (wrt 1)
-        \param  n   QSO number to return
-        \return     The <i>n</i>th QSO
+/*! \brief      Return an individual QSO by number (wrt 1)
+    \param  n   QSO number to return
+    \return     the <i>n</i>th QSO
 
-        If <i>n</i> is out of range, then returns an empty QSO
+    If <i>n</i> is out of range, then returns an empty QSO
 */
 const QSO logbook::operator[](const size_t n) const
 { SAFELOCK(_log);
@@ -67,10 +67,10 @@ const QSO logbook::operator[](const size_t n) const
   return _log_vec[n - 1];
 }
 
-/*!     \brief      Remove an individual QSO by number (wrt 1)
-        \param  n   QSO number to remove
+/*! \brief      Remove an individual QSO by number (wrt 1)
+    \param  n   QSO number to remove
 
-        If <i>n</i> is out of range, then does nothing
+    If <i>n</i> is out of range, then does nothing
 */
 void logbook::operator-=(const unsigned int n)
 { SAFELOCK(_log);
@@ -88,11 +88,11 @@ void logbook::operator-=(const unsigned int n)
   FOR_ALL(_log_vec, [&](const QSO& qso) { _log.insert( { qso.callsign(), qso } ); } );
 }
 
-/*!     \brief          All the QSOs with a particular call, in chronological order
-        \param  call    Target callsign
-        \return         Vector of QSOs in chronological order
+/*! \brief          All the QSOs with a particular call, in chronological order
+    \param  call    target callsign
+    \return         vector of QSOs in chronological order
 
-        If there are no QSOs with <i>call</i>, returns an empty vector
+    If there are no QSOs with <i>call</i>, returns an empty vector
 */
 const vector<QSO> logbook::worked(const string& call) const
 { vector<QSO> rv;

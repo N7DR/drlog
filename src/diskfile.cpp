@@ -1,4 +1,4 @@
-// $Id: diskfile.cpp 90 2015-01-10 17:10:56Z  $
+// $Id: diskfile.cpp 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -18,7 +18,6 @@
 
 #include <array>
 #include <exception>
-//#include <fstream>
 
 #include <dirent.h>
 #include <stdio.h>
@@ -29,9 +28,9 @@
 
 using namespace std;
 
-/*! \brief  What is the size of a file?
-    \param  filename    Filename
-    \return Length of the file in bytes
+/*! \brief              What is the size of a file?
+    \param  filename    name of file
+    \return             length of the file <i>filename</i> in bytes
 
     Returns 0 if the file does not exist or is not readable.
 */
@@ -46,64 +45,44 @@ const unsigned long file_size(const string& filename)
     return 0;
 }
 
-// delete a file
+/*! \brief              Delete a file
+    \param  filename    name of file
+*/
 void file_delete(const string& filename)
 { if (file_exists(filename))
     unlink(filename.c_str());
 }
 
-// copy a file -- does nothing if the source does not exist; assumes that the source does not change size
-// while the copy is being made
+/*! \brief                          Copy a file
+    \param  source_filename         name of the source file
+    \param  destination_filename    name of the destination file
+
+    Does nothing if the source file does not exist
+*/
 void file_copy(const string& source_filename, const string& destination_filename)
-{ const unsigned int BUFFER_SIZE = 8192;
-
-  if (file_exists(source_filename))
-  {
-    ofstream(destination_filename) << ifstream(source_filename).rdbuf();          // perform the copy
-
-
-
-#if 0
-
-    FILE* fps = fopen(source_filename.c_str(), "rb");
-    FILE* fpd = fopen(destination_filename.c_str(), "wb");
-    array<char, BUFFER_SIZE> pc;
-
-// get the length of the source
-    fseek(fps, 0, SEEK_END);
-    unsigned long filesize = ftell(fps);
-    fseek(fps, 0, SEEK_SET);
-
-    while (filesize)
-    { unsigned long bytes_to_transfer = ((filesize >= BUFFER_SIZE) ? BUFFER_SIZE : filesize);
-
-      const size_t bytes_read = fread(pc.data(), bytes_to_transfer, 1, fps);
-
-//      if (bytes_read != bytes_to_transfer)
-//        throw exception();
-
-      fwrite(pc.data(), bytes_read, 1, fpd);
-      filesize -= bytes_read;
-    }
-    fclose(fps);
-    fclose(fpd);
-#endif
-
+{ if (file_exists(source_filename))
+  { ofstream(destination_filename) << ifstream(source_filename).rdbuf();          // perform the copy
   }
 }
 
-/*! \brief  Rename a file
-    \param  source_filename Original filename
-    \param  destination_filename    Final filename
+/*! \brief                          Rename a file
+    \param  source_filename         original name of file
+    \param  destination_filename    final name of file
+
+    Does nothing if the source file does not exist
 */
 void file_rename(const string& source_filename, const string& destination_filename)
-{ const int status = rename(source_filename.c_str(), destination_filename.c_str());
+{ if (file_exists(source_filename))
+  { const int status = rename(source_filename.c_str(), destination_filename.c_str());
 
-  if (status)
-    throw exception();
+    if (status)
+      throw exception();
+  }
 }
 
-// create a directory
+/*! \brief              Create a directory
+    \param  dirname     name of the directory to create
+*/
 void directory_create(const string& dirname)
 { const int status = mkdir(dirname.c_str(), 0xff);
 

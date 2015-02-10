@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 43 2013-12-07 20:29:56Z  $
+// $Id: cw_buffer.cpp 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,16 +26,17 @@ using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
 
-const unsigned int MIN_SPEED = 12;
-const unsigned int MAX_SPEED = 50;
+const unsigned int MIN_SPEED = 12;      ///< minimum CW speed, in wpm
+const unsigned int MAX_SPEED = 50;      ///< maximum CW speed, in wpm
 
-const int CMD_CLEAR_RIT = 0,
-          CMD_SLOWER    = 1,
-          CMD_FASTER    = 2;
+// special commands that may be embedded in the CW stream
+const int CMD_CLEAR_RIT = 0,            ///< clear the RIT
+          CMD_SLOWER    = 1,            ///< decrease speed by 1 wpm
+          CMD_FASTER    = 2;            ///< increase speed by 1 wpm
 
 extern message_stream ost;
 
-// just to be sure
+// just to be sure; we do not want these to be defined in this file
 #undef KEY_DOWN
 #undef KEY_UP
 
@@ -45,7 +46,13 @@ extern message_stream ost;
         \brief A buffer for sending CW
 */
 
-// add an action to the key buffer
+/*! \brief      Add an action to the key buffer
+    \param  n   coded action
+
+    positive values of <i>n</i> represent key down;
+    negative values represent key up;
+    zero represents the start of an embedded command
+*/
 void cw_buffer::_add_action(const int n)
 { SAFELOCK(_key_buffer);
 

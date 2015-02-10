@@ -1,4 +1,4 @@
-// $Id: pthread_support.cpp 59 2014-04-19 20:17:18Z  $
+// $Id: pthread_support.cpp 94 2015-02-07 15:06:10Z  $
 
 // Source code copyright 2000, 2001, 2002, 2003, 2004, 2005 IPfonix, Inc.
 // Unauthorized copying strictly prohibited
@@ -16,7 +16,7 @@
 
 #include <cstring>
 
-extern message_stream ost;
+extern message_stream ost;                        ///< for debugging, info
 
 using namespace std;
 
@@ -120,10 +120,18 @@ one consequence of this is that sched_yield() is not guaranteed to yield
 
 */
 
-// object to hold error messages
+/// object to hold error messages
 const pthread_error_messages pthread_error_message;
 
-// wrapper for pthread_create
+/*! \brief                  Wrapper for pthread_create
+    \param  thread          pointer to thread ID
+    \param  attr            pointer to pthread attributes
+    \param  start_routine   name of function to run in the new thread
+    \param  arg             arguments to be passed to <i>start_function</i>
+    \param  thread_name     name of the thread
+
+    The first four parameters are passed without change to <i>pthread_create</i>
+*/
 void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name)
 { const int status = pthread_create(thread, attr, start_routine, arg);
 
@@ -159,15 +167,6 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     \brief  Encapsulate pthread_attr information
 */
 
-/*
-/thread_attribute::thread_attribute(void)
-{ const int status = pthread_attr_init(&_attr);
-
-  if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init()");
-}
-*/
-
 /// construct with some attributes already set
 thread_attribute::thread_attribute(const unsigned int initial_attributes)
 { const int status = pthread_attr_init(&_attr);
@@ -187,7 +186,7 @@ thread_attribute::~thread_attribute(void)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_destroy()");
 }
 
-// get/set detached state
+/// Set detached state
 void thread_attribute::detached(const bool b)
 { const int status = pthread_attr_setdetachstate(&_attr, (b ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE));
 
@@ -195,6 +194,7 @@ void thread_attribute::detached(const bool b)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure setting detached state of attribute");
 }
 
+/// Get detached state
 const bool thread_attribute::detached(void)
 { int state;
   const int status = pthread_attr_getdetachstate(&_attr, &state);
@@ -207,8 +207,7 @@ const bool thread_attribute::detached(void)
 
 // -------------------------------------- pt_mutex ------------------------
 
-/*! \brief  Default Constructor
-*/
+/// default constructor
 pt_mutex::pt_mutex(void)
 { pthread_mutex_init(&_mutex, NULL);
 }

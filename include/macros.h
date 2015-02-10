@@ -1,4 +1,4 @@
-// $Id: macros.h 93 2015-01-31 14:59:51Z  $
+// $Id: macros.h 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

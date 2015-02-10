@@ -1,4 +1,4 @@
-// $Id: diskfile.h 70 2014-08-04 22:42:51Z  $
+// $Id: diskfile.h 94 2015-02-07 15:06:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,19 +21,18 @@
 #include <string>
 #include <vector>
 
-/*! \brief  Append a string to a file
-    \param  filename    Filename
+/*! \brief              Append a string to a file
+    \param  filename    name of file
     \param  str         string to be appended
 
-    reates <i.filename</i> if it does not exist
+    Creates <i.filename</i> if it does not exist
 */
 inline void append_to_file(const std::string& filename, const std::string& str)
-{ std::ofstream(filename, std::ios_base::app) << str;
-}
+  { std::ofstream(filename, std::ios_base::app) << str; }
 
-/*! \brief  Does a file exist?
-    \param  filename    Filename
-    \return Whether the file exists
+/*! \brief              Does a file exist?
+    \param  filename    name of file
+    \return             whether file <i>filename</i> exists
 
     Actually checks for existence AND readability, which is much simpler
     than checking for existence.
@@ -41,31 +40,41 @@ inline void append_to_file(const std::string& filename, const std::string& str)
 inline const bool file_exists(const std::string& filename)
   { return std::ifstream(filename); }
 
-/*! \brief  What is the size of a file?
-    \param  filename    Filename
-    \return Length of the file in bytes
+/*! \brief              What is the size of a file?
+    \param  filename    name of file
+    \return             length of the file <i>filename</i> in bytes
 
     Returns 0 if the file does not exist or is not readable.
 */
 const unsigned long file_size(const std::string& filename);
 
+/*! \brief              Is a file empty?
+    \param  filename    name of file
+    \return             whether the file <i>filename</i> is empty
+
+    Returns <i>true</i> if the file does not exist or is not readable.
+*/
 inline const bool file_empty(const std::string& filename)
   { return (file_size(filename) == 0); }
 
-/*! \brief  Delete a file
-    \param  filename    Filename
+/*! \brief              Delete a file
+    \param  filename    name of file
 */
 void file_delete(const std::string& filename);
 
-/*! \brief  Copy a file
-    \param  source_filename Filename of the source
-    \param  destination_filename    Filename of the destination
+/*! \brief                          Copy a file
+    \param  source_filename         name of the source file
+    \param  destination_filename    name of the destination file
+
+    Does nothing if the source does not exist
 */
 void file_copy(const std::string& source_filename, const std::string& destination_filename);       // does nothing if the source does not exist
 
-/*! \brief  Rename a file
-    \param  source_filename Original filename
-    \param  destination_filename    Final filename
+/*! \brief                          Rename a file
+    \param  source_filename         original name of file
+    \param  destination_filename    final name of file
+
+    Does nothing if the source file does not exist
 */
 void file_rename(const std::string& source_filename, const std::string& destination_filename);
 
@@ -76,8 +85,8 @@ void file_rename(const std::string& source_filename, const std::string& destinat
 inline void file_move(const std::string& source_filename, const std::string& destination_filename)
   { file_rename(source_filename, destination_filename); }
 
-/*! \brief  Create a directory
-    \param  dirname Name of the directory to create
+/*! \brief              Create a directory
+    \param  dirname     name of the directory to create
 */
 void directory_create(const std::string& dirname);
 
