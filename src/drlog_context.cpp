@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 94 2015-02-07 15:06:10Z  $
+// $Id: drlog_context.cpp 95 2015-02-15 22:41:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -340,11 +340,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 //    }
 
 // COUNTRY FILENAME
-    if (starts_with(testline, "COUNTRY FILENAME"))
+    if (LHS == "COUNTRY FILENAME")
       _cty_filename = rhs;
 
 // COUNTRY LIST
-    if (starts_with(testline, "COUNTRY LIST"))
+    if ( LHS == "COUNTRY LIST")
     { if (RHS == "DXCC")
         _country_list = COUNTRY_LIST_DXCC;
 
@@ -353,7 +353,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // COUNTRY MULT FACTOR
-    if (starts_with(testline, "COUNTRY MULT FACTOR"))  // there may be an "=" in the points definitions
+    if (LHS == "COUNTRY MULT FACTOR")  // there may be an "=" in the points definitions
     { const vector<string> str_vec = split_string(line, "=");
 
       if (!str_vec.empty())
@@ -439,11 +439,11 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // COUNTRY MULTS PER BAND
-    if (starts_with(testline, "COUNTRY MULTS PER BAND"))
+    if (LHS == "COUNTRY MULTS PER BAND")
       _country_mults_per_band = is_true;
 
 // COUNTRY MULTS PER MODE
-    if (starts_with(testline, "COUNTRY MULTS PER MODE"))
+    if (LHS == "COUNTRY MULTS PER MODE")
       _country_mults_per_mode = is_true;
 
 // CQ AUTO LOCK

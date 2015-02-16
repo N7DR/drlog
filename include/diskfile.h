@@ -1,4 +1,4 @@
-// $Id: diskfile.h 94 2015-02-07 15:06:10Z  $
+// $Id: diskfile.h 95 2015-02-15 22:41:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -10,7 +10,7 @@
 
 /*! \file diskfile.h
 
-    Useful file-related functions. This file is derived from proprietary code
+    Useful file-related functions. This file is derived, with permission, from proprietary code
     owned by IPfonix, Inc.
 */
 
@@ -68,7 +68,7 @@ void file_delete(const std::string& filename);
 
     Does nothing if the source does not exist
 */
-void file_copy(const std::string& source_filename, const std::string& destination_filename);       // does nothing if the source does not exist
+void file_copy(const std::string& source_filename, const std::string& destination_filename);
 
 /*! \brief                          Rename a file
     \param  source_filename         original name of file
@@ -78,9 +78,11 @@ void file_copy(const std::string& source_filename, const std::string& destinatio
 */
 void file_rename(const std::string& source_filename, const std::string& destination_filename);
 
-/*! \brief  Move a file
-    \param  source_filename Original filename
-    \param  destination_filename    Final filename
+/*! \brief                          Move a file
+    \param  source_filename         original filename
+    \param  destination_filename    final filename
+
+    Does nothing if the source file does not exist
 */
 inline void file_move(const std::string& source_filename, const std::string& destination_filename)
   { file_rename(source_filename, destination_filename); }
@@ -90,17 +92,18 @@ inline void file_move(const std::string& source_filename, const std::string& des
 */
 void directory_create(const std::string& dirname);
 
-/*! \brief  Does a directory exist?
-    \param  dirname Name of the directory
-    \return Whether the directory exists
+/*! \brief              Does a directory exist?
+    \param  dirname     name of the directory
+    \return             whether the directory exists
 */
 const bool directory_exists(const std::string& dirname);
 
-/*! \brief  What files does a directory contain?
-    \param  dirname Name of the directory to examine
-    \return Vector of filenames
+/*! \brief              What files does a directory contain?
+    \param  dirname     name of the directory to examine
+    \return             vector of filenames
 
-    The returned vector does not include "." or ".."
+    The returned vector does not include "." or "..".
+    Returns empty vector if the directory <i>dirname</i> does not exist
 */
 const std::vector<std::string> directory_contents(const std::string& dirname);
 

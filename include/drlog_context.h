@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 94 2015-02-07 15:06:10Z  $
+// $Id: drlog_context.h 95 2015-02-15 22:41:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,7 +30,7 @@
     \brief The variables and constants that comprise the context for operation
 */
 
-const unsigned int MAX_MEMORY_MESSAGES = 12;        ///< number of memory messages
+//const unsigned int MAX_MEMORY_MESSAGES = 12;        ///< number of memory messages
 //const unsigned int CQ_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in CALL window; must not exceed 9 without changes to drlog_context.cpp
 //const unsigned int EX_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in EXCHANGE window; must not exceed 9 without changes to drlog_context.cppmust not exceed 9 without changes to drlog_context.cpp
 
@@ -141,7 +141,7 @@ protected:
 
   std::map<MODE, unsigned int>                 _guard_band;                 ///< guard band, in Hz
 
-  std::string                                  _individual_messages_file;   ///< file that contains per-call individual messages
+  std::string                                  _individual_messages_file;   ///< name of file that contains per-call individual messages
 
   std::string                                  _keyer_port;                 ///< the device that is to be used as a keyer
 
@@ -338,15 +338,20 @@ public:
   SAFEREAD(exchange_mults, _context);                   ///< comma-delimited exchange fields that are mults
   SAFEREAD(exchange_mults_per_band, _context);          ///< are exchange mults per-band?
   SAFEREAD(exchange_mults_per_mode, _context);          ///< are exchange mults per-mode?
+  SAFEREAD(exchange_per_country, _context);             ///< per-country exchanges; key = prefix-or-call; value = exchange
 
-  const std::map<std::string, std::string> exchange_per_country(void) const
-    { SAFELOCK(_context);
-
-      return _exchange_per_country;
-    }                                                   ///< per-country exchanges; key = prefix-or-call; value = exchange
+//  const std::map<std::string, std::string> exchange_per_country(void) const
+//    { SAFELOCK(_context);
+//
+//      return _exchange_per_country;
+//    }                                                   ///< per-country exchanges; key = prefix-or-call; value = exchange
 
   SAFEREAD(exchange_sap, _context);                     ///< exchange in SAP mode
 
+/*! \brief      Get the guard band for a particular mode
+    \param  m   target mode
+    \return     guard band for mode <i>m</i>, in Hz
+*/
   const unsigned int guard_band(const MODE m)
   { SAFELOCK(_context);
 
@@ -355,9 +360,9 @@ public:
     return  ( (cit == _guard_band.end()) ? 1000 : cit->second );
   }
 
-  SAFEREAD(individual_messages_file, _context);
+  SAFEREAD(individual_messages_file, _context);     ///< name of file that contains per-call individual messages
 
-  SAFEREAD(keyer_port, _context);
+  SAFEREAD(keyer_port, _context);                   ///< the device that is to be used as a keyer
 
   SAFEREAD(logfile, _context);
 

@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 86 2014-12-13 20:06:24Z  $
+// $Id: rig_interface.h 95 2015-02-15 22:41:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -188,6 +188,7 @@ public:
 /// disable split operation; see caveats under split_enable()
   void split_disable(void);
 
+/// is split enabled?
   const bool split_enabled(void);
 
 /*! \brief      Set mode

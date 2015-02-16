@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 86 2014-12-13 20:06:24Z  $
+// $Id: rig_interface.cpp 95 2015-02-15 22:41:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -113,8 +113,8 @@ void rig_interface::_error_alert(const string& msg)
 
 // ---------------------------------------- rig_interface -------------------------
 
-/*!     \class rig_interface
-        \brief The interface to a rig
+/*! \class rig_interface
+    \brief The interface to a rig
 */
 
 /// default constructor
@@ -279,7 +279,6 @@ void rig_interface::rig_mode(const MODE m)
           if (m == MODE_SSB)
             new_bandwidth = last_ssb_bandwidth;
 
-//          status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : rig_passband_normal(_rigp, hamlib_m) ));
           status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
         }
 
@@ -355,10 +354,9 @@ void rig_interface::split_enable(void)
 
   if (status != RIG_OK)
     _error_alert("Error executing SPLIT command");
-
-//  ost << "SPLIT has been enabled" << endl;
 }
 
+/// disable split operation; see caveats under split_enable()
 void rig_interface::split_disable(void)
 { if (!_rig_connected)
     return;
@@ -372,16 +370,16 @@ void rig_interface::split_disable(void)
   }
 
 // not a K3
-//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_B, RIG_SPLIT_OFF, RIG_VFO_A);
 //  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_OFF, RIG_VFO_A);
   const int status = rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A);  // the line above also works
 
   if (status != RIG_OK)
     _error_alert("Error executing SPLIT command");
 
-  ost << "SPLIT has been disabled" << endl;
+//  ost << "SPLIT has been disabled" << endl;
 }
 
+/// is split enabled?
 const bool rig_interface::split_enabled(void)
 { if (!_rig_connected)
     return false;
@@ -411,8 +409,8 @@ const bool rig_interface::split_enabled(void)
     return false;
   }
 
-  ost << "SPLIT mode is " << (split_mode == RIG_SPLIT_ON ? "ON" : "OFF") << endl;
-  ost << "VFO is " << tx_vfo << endl;
+//  ost << "SPLIT mode is " << (split_mode == RIG_SPLIT_ON ? "ON" : "OFF") << endl;
+//  ost << "VFO is " << tx_vfo << endl;
 
   return (split_mode == RIG_SPLIT_ON);
 }

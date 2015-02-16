@@ -1,4 +1,4 @@
-// $Id: keyboard.h 79 2014-10-11 15:09:04Z  $
+// $Id: keyboard.h 95 2015-02-15 22:41:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,7 @@
 #include <string>
 #include <unordered_set>
 
-//#include <X11/keysymdef.h>    // /usr/include/X11/keysymdef.h
+//#include <X11/keysymdef.h>    // /usr/include/X11/keysymdef.h; leave this comment so it is easy to find the keysymdef file
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -34,23 +34,33 @@ extern const std::unordered_set<KeySym>         keypad_numbers;         ///< the
 
 enum key_event_type { KEY_PRESS,
                       KEY_RELEASE
-                    };
+                    };                                                  ///< key events
 
-typedef unsigned int key_code;
+typedef unsigned int key_code;                                          ///< syntactic sugar
 
 // helper functions for KeySyms
 
+/// is a KeySym an upper-case letter?
 inline const bool is_upper_case_letter(const KeySym ks)
   { return ((ks >= XK_A) and (ks <= XK_Z)); }
 
+/// is a KeySym a lower-case letter?
 inline const bool is_lower_case_letter(const KeySym ks)
   { return ((ks >= XK_a) and (ks <= XK_z)); }
 
+/// is a KeySym a letter?
 inline const bool is_letter(const KeySym ks)
   { return (is_upper_case_letter(ks) or is_lower_case_letter(ks)); }
 
+/// is a KeySym a digit? (Cannot name this function is_digit, becasue that is already in use.)
 inline const bool symbol_is_digit(const KeySym ks)
   { return ((ks >= XK_0) and (ks <= XK_9)); }
+
+// -------------------------------------------------  keyboard_event  -----------------------------------
+
+/*! \class  keyboard_event
+    \brief  encapsulate an event from the keyboard
+*/
 
 class keyboard_event
 {

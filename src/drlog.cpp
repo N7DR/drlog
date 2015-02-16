@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 94 2015-02-07 15:06:10Z  $
+// $Id: drlog.cpp 95 2015-02-15 22:41:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2078,7 +2078,10 @@ void* prune_bandmap(void* vp)
 
 // -------------------------------------------------  functions to process input to various windows  -----------------------------
 
-// function to process input to the CALL window
+/*! \brief      Function to process input to the CALL window
+    \param  wp  pointer to window
+    \param  e   keyboard event to process
+*/
 /*  KP numbers -- CW messages
     CTRL-C -- EXIT (same as .QUIT)
     ALT-M -- change mode
@@ -2142,12 +2145,14 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
+  const string call_contents = remove_peripheral_spaces(win.read());
+
 // populate the info and extract windows if we have already processed the input
   if (processed and !win_call.empty())
   { //const string callsign = remove_peripheral_spaces(win_call.read());
-    const string& callsign = prior_contents;
+    //const string& callsign = prior_contents;
 
-    display_call_info(callsign);
+    display_call_info(call_contents);
   }
 
 // KP numbers -- CW messages
@@ -5566,13 +5571,13 @@ void* p3_screenshot_thread(void* vp)
     const unsigned char uch = static_cast<unsigned char>(checksum_str[index]);
     const uint16_t uint = static_cast<uint16_t>(uch);
 
-    ost << n << ": " << hex << uint << endl;
+//    ost << n << ": " << hex << uint << endl;
 
     received_checksum = (received_checksum << 8) + uint;  // 256 == << 8
   }
 
-  ost << "calculated checksum = " << hex << calculated_checksum << endl;
-  ost << "received checksum = " << hex << received_checksum << dec << endl;
+//  ost << "calculated checksum = " << hex << calculated_checksum << endl;
+//  ost << "received checksum = " << hex << received_checksum << dec << endl;
 
   const string base_filename = context.p3_snapshot_file() + ((calculated_checksum == received_checksum) ? "" : "-error");
   int index = 0;
@@ -5615,9 +5620,7 @@ void* spawn_dx_cluster(void* vp)
 
 /// Thread function to spawn the RBN
 void* spawn_rbn(void* vp)
-{ //ost << "about to create RBN" << endl;
-  rbn_p = new dx_cluster(context, POSTING_RBN);
-  //ost << "RBN created" << endl;
+{ rbn_p = new dx_cluster(context, POSTING_RBN);
 
   static cluster_info rbn_info_for_thread(&win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps);
   static pthread_t   thread_id_2;
@@ -5662,15 +5665,12 @@ void debug_dump(void)
     from the context, and a string "-<n>" is appended.
 */
 const string dump_screen(const string& dump_filename)
-{ //ost << "dump_screen called with parameter: " << dump_filename << endl;
-
-  Display* display_p = keyboard.display_p();
+{ Display* display_p = keyboard.display_p();
   const Window window_id = keyboard.window_id();
   XWindowAttributes win_attr;
 
-  //ost << hhmmss() << ": locking display 1" << endl;
-
   XLockDisplay(display_p);
+
   const Status status = XGetWindowAttributes(display_p, window_id, &win_attr);
 
   if (status == 0)
@@ -5678,18 +5678,12 @@ const string dump_screen(const string& dump_filename)
 
   XUnlockDisplay(display_p);
 
-  //ost << hhmmss() << ": unlocked display 2" << endl;
-
   const int width = win_attr.width;
   const int height = win_attr.height;
-
-  //ost << hhmmss() << ": locking display 2" << endl;
 
   XLockDisplay(display_p);
   XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
   XUnlockDisplay(display_p);
-
-  //ost << hhmmss() << ": unlocked display 2" << endl;
 
   png::image< png::rgb_pixel > image(width, height);
 
@@ -5708,8 +5702,6 @@ const string dump_screen(const string& dump_filename)
     }
   }
 
-  //ost << hhmmss() << ": prepared image" << endl;
-
   string filename;
 
   if (dump_filename.empty())
@@ -5726,14 +5718,12 @@ const string dump_screen(const string& dump_filename)
 
   image.write(filename);
 
-  //ost << hhmmss() << ": image file written" << endl;
-
   alert("screenshot file " + filename + " written");
 
   return filename;
 }
 
-/// add info to QSO if callsign mults are in use; may change qso
+/// add info to a QSO if callsign mults are in use; may change <i>qso</i>
 void allow_for_callsign_mults(QSO& qso)
 { if (callsign_mults_used)
   { string mult_name;
@@ -5772,6 +5762,25 @@ void allow_for_callsign_mults(QSO& qso)
   }
 }
 
+// &&&
+/*! \brief      Function to process input to the QTC window
+    \param  wp  pointer to window
+    \param  e   keyboard event to process
+*/
+/* ALT-Q - start process of sending QTC batch
+   ESCAPE - abort CW
+   R -- repeat introduction (i.e., no QTCs sent)
+   ENTER - send next QSO or finish
+   CTRL-X, ALT-X -- Abort and go back to prior window
+   ALT-Y -- mark most-recently sent QTC as unsent
+   T, U -- repeat time
+   C -- repeat call
+   N, S -- repeat number
+   A, R -- repeat all
+   PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+   ALT-K -- toggle CW
+   CTRL-P -- dump screen
+*/
 void process_QTC_input(window* wp, const keyboard_event& e)
 { static bool sending_series = false;
   static unsigned int total_qtcs_to_send;
@@ -5885,7 +5894,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     }
   }
 
-// ESCAPE
+// ESCAPE - abort CW
   if (!processed and e.symbol() == XK_Escape)
   {
 // abort sending CW if we are currently sending
@@ -5907,7 +5916,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
-// ENTER
+// ENTER - send next QSO or finish
   if (!processed and e.is_unmodified() and (e.symbol() == XK_Return))
   { if (qtcs_sent != total_qtcs_to_send)
     { const qtc_entry& qe = series[qtcs_sent].first;
@@ -5936,15 +5945,12 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     else    // we have sent the last QTC; cleanup
     { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
-      ost << "Sent QTC " << qtc_id << " to " << series.destination() << endl;
+//      ost << "Sent QTC " << qtc_id << " to " << series.destination() << endl;
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sent QTC " < qtc_id < " to " <= series.destination();
 
       series.date(substring(date_time_string(), 0, 10));
       series.utc(hhmmss());
       series.frequency_str(rig.rig_frequency());
-
-//      ost << "QTC frequency_str set = " << rig.rig_frequency() << endl;
-//      ost << "QTC frequency_str get = " << series.frequency_str() << endl;
 
       sending_series = false;
       qtc_db += series;                  // add to database of sent QTCs
@@ -5957,8 +5963,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       (*win_active_p) <= WINDOW_CLEAR;
 
 // log the QTC series
-//      string entries_str;
-
       append_to_file(context.qtc_filename(), series.complete_output_string());
 
       win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
@@ -5966,7 +5970,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // update statistics and summary window
       statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
       statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
-//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
       display_statistics(statistics.summary_string(rules));
 
       processed = true;
@@ -5975,12 +5978,12 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
 // CTRL-X, ALT-X -- Abort and go back to prior window
   if (!processed and (e.is_control('x') or e.is_alt('x')))
-  { ost << "Aborting; n_sent = " << series.n_sent() << endl;
+  { //ost << "Aborting; n_sent = " << series.n_sent() << endl;
 
     if (series.n_sent() != 0)
     { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
-      ost << "Aborted sending QTC " << qtc_id << " to " << series.destination() << endl;
+      //ost << "Aborted sending QTC " << qtc_id << " to " << series.destination() << endl;
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Aborted sending QTC " < qtc_id < " to " <= series.destination();
 
       series.date(substring(date_time_string(), 0, 10));
@@ -5999,17 +6002,15 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // update statistics and summary window
       statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
       statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
-//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
       display_statistics(statistics.summary_string(rules));
     }
     else  // none sent
-    { ost << "Completely aborted; QTC " << qtc_id << " not sent to " << series.destination() << endl;
+    { //ost << "Completely aborted; QTC " << qtc_id << " not sent to " << series.destination() << endl;
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Completely aborted; QTC " < qtc_id < " not sent to " <= series.destination();
 
     (*win_active_p) <= WINDOW_CLEAR;
 
       win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
-//      win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT <= statistics.summary_string(rules);
       display_statistics(statistics.summary_string(rules));
     }
     processed = true;
@@ -6181,7 +6182,6 @@ void display_nearby_callsign(const string& callsign)
   }
 }
 
-#if defined(NEW_CONSTRUCTOR)
 /*! \brief                  Debug exchange templates
     \param  rules           rules for the contest
     \param  test_filename   name of file to test
@@ -6227,47 +6227,8 @@ void test_exchange_templates(const contest_rules& rules, const string& test_file
 
   exit(0);
 }
-#else    // !NEW_CONSTRUCTOR
-void test_exchange_templates(const string& test_filename)
-{ ost << "executing -test-exchanges" << endl;
-  ost << "exchange templates:" << endl;
 
-  const auto db = EXCHANGE_FIELD_TEMPLATES.db();
-
-  for (const auto& kv : db)
-    ost << "  " << kv.first << " : " << kv.second << endl;
-
-//  const string test_filename = cl.value("-test-exchanges");
-
-  ost << "reading file: " << test_filename << endl;
-
-  try
-  { const vector<string> targets = to_lines(read_file(test_filename));
-
-    ost << "contents: " << endl;
-
-    for (const auto& target : targets)
-      ost << "  " << target << endl;
-
-    for (const auto& target : targets)
-    { const vector<string> matches = EXCHANGE_FIELD_TEMPLATES.valid_matches(target);
-
-      ost << "matches for " << target << ": " << endl;
-      for (const auto& match : matches)
-      { ost << "  " << match << endl;
-      }
-    }
-  }
-
-  catch (const string_function_error& e)
-  { ost << "Error: unable to read file: " << test_filename << endl;
-  }
-
-  exit(0);
-}
-#endif
-
-/// calculate the value of a mult and update <i>win_mult_value</i>
+/// calculate the time/QSO value of a mult and update <i>win_mult_value</i>
 void update_mult_value(void)
 { const float mult_value = statistics.mult_to_qso_value(rules, safe_get_band(), safe_get_mode());
   const unsigned int mult_value_10 = static_cast<unsigned int>( (mult_value * 10) + 0.5);
@@ -6300,7 +6261,7 @@ void update_mult_value(void)
   }
 }
 
-/*! \brief  Write a screenshot to a file
+/*! \brief  Thread function to write a screenshot to a file
 *
 *   This is intended to be used as a separate thread, so the parameters are passed
 *   in the usual void*
