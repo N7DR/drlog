@@ -300,8 +300,8 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
 /*! \brief          Add a known legal value for a particular exchange multiplier
     \param  name    name of the exchange multiplier
-    \param  value   New legal value for the exchange multiplier <i>name</i>
-    \return         Whether <i>value</i> was actually added
+    \param  value   new legal value for the exchange multiplier <i>name</i>
+    \return         whether <i>value</i> was actually added
 */
 const bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
 { SAFELOCK(statistics);
@@ -320,7 +320,7 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
 
 /*! \brief          Return all known legal value for a particular exchange multiplier
     \param  name    name of the exchange multiplier
-    \return         All the known legal values of <i>name</i>
+    \return         all the known legal values of <i>name</i>
 */
 const set<string> running_statistics::known_exchange_mults(const string& name)
 { SAFELOCK(statistics);
@@ -333,10 +333,10 @@ const set<string> running_statistics::known_exchange_mults(const string& name)
   return set<string>();
 }
 
-/*! \brief  Add a worked exchange mult
-    \param  field_name    Exchange mult field name
-    \param  field_value   Value of the field <i>field_name</i>
-    \param  band_nr       Number of the band on which worked mult is to be added
+/*! \brief                  Add a worked exchange mult
+    \param  field_name      exchange mult field name
+    \param  field_value     value of the field <i>field_name</i>
+    \param  band_nr         number of the band on which worked mult is to be added
 
     Doesn't add if the value is unknown.
 */
@@ -404,10 +404,10 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
   const set<MODE> permitted_modes = rules.permitted_modes();
   const vector<BAND> permitted_bands = rules.permitted_bands();
 
-  unsigned int qsos = 0;
-  unsigned int countries = 0;
-  unsigned int dupes = 0;
-  unsigned int points = 0;
+  unsigned int qsos_all_bands = 0;
+  unsigned int countries_all_bands = 0;
+  unsigned int dupes_all_bands = 0;
+  unsigned int points_all_bands = 0;
 
   string line;
 
@@ -415,19 +415,16 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
                                                                                  line += pad_string(to_string(n), FIELD_WIDTH);
                                                                              };
 
-//  for (const auto& m : modes)
   { SAFELOCK(statistics);
 
 // QSOs
     line = pad_string("QSOs", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');                                          // accumulator for total qsos
 
-//    for (const auto& m : modes)
-//    { const auto& nq = _n_qsos[m];
+    for (const auto& b : permitted_bands)
+    { unsigned int qsos = 0;
 
-//    for (unsigned int n = 0; n < permitted_bands.size(); ++n)
-      for (const auto& b : permitted_bands)
-      { for (const auto& m : modes)
-        { const auto& nq = _n_qsos[m];
+      for (const auto& m : modes)
+      { const auto& nq = _n_qsos[m];
 
         if (modes.size() == 1)
           line += pad_string(to_string(nq[b]), FIELD_WIDTH);
@@ -435,17 +432,14 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
         ost << "adding " << nq[b] <<"; total = " << qsos << endl;
       }
+
+      qsos_all_bands += qsos;
+
       if (modes.size() != 1)
         line += pad_string(to_string(qsos), FIELD_WIDTH);
-
     }
 
-
-//    line += pad_string(to_string(qsos), FIELD_WIDTH);
-
-//    if (permitted_bands.size() != 1)
-//       line += pad_string(to_string(qsos), FIELD_WIDTH);
-    add_all_bands(permitted_bands.size(), qsos);
+    add_all_bands(permitted_bands.size(), qsos_all_bands);
 
     rv += line + LF;
 
@@ -453,23 +447,32 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     if (_country_multipliers.used())                                         // if countries are mults
     { line = pad_string("Countries", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
-//      for (unsigned int n = 0; n < permitted_bands.size(); ++n)
-      for (const auto& m : modes)
-      { for (const auto& b : permitted_bands)
-        { //const int band_nr = static_cast<int>(permitted_bands[n]);
-          const unsigned int n_countries = _country_multipliers.n_worked(b, m);
+        for (const auto& b : permitted_bands)
+        { unsigned int countries = 0;
+
+          for (const auto& m : modes)
+          { const unsigned int n_countries = _country_multipliers.n_worked(b, m);
+
+            if (modes.size() == 1)
+              line += pad_string(to_string(n_countries), FIELD_WIDTH);
+
 
           ost << "band " << BAND_NAME[b] << "; n_countries = " << n_countries << endl;
 
-//          line += pad_string(to_string(n_countries), FIELD_WIDTH);
           countries += n_countries;
         }
+
+        countries_all_bands += countries;
+
+        if (modes.size() != 1)
+          line += pad_string(to_string(countries), FIELD_WIDTH);
       }
 
-      line += pad_string(to_string(countries), FIELD_WIDTH);
+//      line += pad_string(to_string(countries), FIELD_WIDTH);
 
-        if (permitted_bands.size() != 1)
-          line += pad_string(to_string(countries), FIELD_WIDTH);
+////      if (permitted_bands.size() != 1)
+//        line += pad_string(to_string(countries), FIELD_WIDTH);
+        add_all_bands(permitted_bands.size(), countries_all_bands);
 
       rv += line + LF;
     }
@@ -484,36 +487,41 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     { for (const auto mult_name : callsign_mults)
       { //ost << "mult name = " << mult_name << endl;
 
+        const MODE m = ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE);
+
         line = pad_string(mult_name, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
         const auto& cit = _callsign_multipliers.find(mult_name);
+//        unsigned int total_all_bands = 0;
 
         if (cit != _callsign_multipliers.end())    // should always be true
         { //ost << "found callsign multiplier: " << cit->first << endl;
 
           const multiplier& mult = cit->second;
-          unsigned int total = 0;
+//          unsigned int total_all_bands = 0;
 
-          for (const auto& m : modes)
-//          for (unsigned int n1 = 0; n1 < permitted_bands.size(); ++n1)
-          { for (const auto& b : permitted_bands)
-            { //const int band_nr = static_cast<int>(permitted_bands[n1]);
-              const unsigned int n_callsign_mults = mult.n_worked(b, m);
+          for (const auto& b : permitted_bands)
+          { //unsigned int total = 0;
 
-//              line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
+//            for (const auto& m : modes)
+            { const unsigned int n_callsign_mults = mult.n_worked(b, m);
 
-              if (callsign_mults_per_band)
-                total += n_callsign_mults;
+//            if (modes.size() == 1)
+              line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
+
+//              if (callsign_mults_per_band)
+//                total += n_callsign_mults;
             }
 
-
-//          line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
-
-          if (!callsign_mults_per_band)
-            total = mult.n_worked(ANY_BAND, m);
+//            if (callsign_mults_per_band)
+//              total_all_bands += total;
           }
+//
+//          if (!callsign_mults_per_band)
+//            total_all_bands = mult.n_worked(ANY_BAND, m);
 
-          line += pad_string(to_string(total), FIELD_WIDTH);
+//          if (modes.size() != 1)
+            line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
 
 //        ost << "line is: " << line << endl;
         }
@@ -526,6 +534,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
         }
       }
 
+//      add_all_bands(permitted_bands.size(), total_all_bands);
       rv += line + LF;
     }
 
@@ -540,94 +549,85 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
       line = pad_string(field_name, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
       const multiplier& mult = sm.second;
-
       unsigned int total = 0;
 
-//      for (unsigned int n1 = 0; n1 < permitted_bands.size(); ++n1)
+      const MODE m = ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE);
 
-       for (const auto& b : permitted_bands)
-        {       for (const auto& m : modes)
+      for (const auto& b : permitted_bands)
+      { //for (const auto& m : modes)
+        { const unsigned int n_exchange_mults = mult.n_worked(b, m);
 
-          {const unsigned int n_exchange_mults = mult.n_worked(b, m);
-
-          if (modes.size() == 1)
+//          if (modes.size() == 1)
             line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
 
           if (exchange_mults_per_band)
             total += n_exchange_mults;
 
-          if (!exchange_mults_per_band)
-            total = mult.n_worked(ANY_BAND, m);
-
+//          if (!exchange_mults_per_band)
+//            total = mult.n_worked(ANY_BAND, m);
         }
 
-
-        if (modes.size() != 1)
-          line += pad_string(to_string(total), FIELD_WIDTH);
+//        if (modes.size() != 1)
+//          line += pad_string(to_string(total), FIELD_WIDTH);
       }
 
-//      if (permitted_bands.size() != 1)
-//        line += pad_string(to_string(total), FIELD_WIDTH);
-       add_all_bands(permitted_bands.size(), total);
+      if (exchange_mults_per_band)
+        add_all_bands(permitted_bands.size(), total);
+      else
+        line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
 
 //      ost << "line is currently: " << line << endl;
-      rv += line + LF;
+//      line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
 
+      rv += line + LF;
      }
 
 // dupes
-    line = pad_string("Dupes", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+     line = pad_string("Dupes", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
+     for (const auto& b : permitted_bands)
+     { unsigned int dupes = 0;
 
-      for (const auto& b : permitted_bands)
-      {     for (const auto& m : modes)
-      { const auto& nd = _n_dupes[m];
+       for (const auto& m : modes)
+       { const auto& nd = _n_dupes[m];
 
-        if (modes.size() == 1)
-        line += pad_string(to_string(nd[b]), FIELD_WIDTH);
+         if (modes.size() == 1)
+           line += pad_string(to_string(nd[b]), FIELD_WIDTH);
         dupes += nd[b];
-      }
-      if (modes.size() != 1)
-        line += pad_string(to_string(dupes), FIELD_WIDTH);
+       }
 
-    }
+//       if (modes.size() != 1)
+//         line += pad_string(to_string(dupes), FIELD_WIDTH);
+       dupes_all_bands += dupes;
 
-//    line += pad_string(to_string(dupes), FIELD_WIDTH);
+       if (modes.size() != 1)
+         line += pad_string(to_string(dupes), FIELD_WIDTH);
+     }
 
-    add_all_bands(permitted_bands.size(), dupes);
-
-//    if (permitted_bands.size() != 1)
-//      line += pad_string(to_string(dupes), FIELD_WIDTH);
-
+    add_all_bands(permitted_bands.size(), dupes_all_bands);
     rv += line + LF;
 
 // QSO points
     line = pad_string("Qpoints", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
     for (const auto& b : permitted_bands)
-    { for (const auto& m : modes)
-    { const auto& qp = _qso_points[m];
+    { unsigned int points = 0;
 
+      for (const auto& m : modes)
+      { const auto& qp = _qso_points[m];
 
-       //const int band_nr = static_cast<int>(permitted_bands[n]);
-    if (modes.size() == 1)
-        line += pad_string(to_string(qp[b]), FIELD_WIDTH);
+        if (modes.size() == 1)
+          line += pad_string(to_string(qp[b]), FIELD_WIDTH);
         points += qp[b];
       }
 
-    if (modes.size() != 1)
-      line += pad_string(to_string(points), FIELD_WIDTH);
+      points_all_bands += points;
 
+      if (modes.size() != 1)
+        line += pad_string(to_string(points), FIELD_WIDTH);
     }
 
-//    line += pad_string(to_string(points), FIELD_WIDTH);
-
-
-//    if (permitted_bands.size() != 1)
-//      line += pad_string(to_string(points), FIELD_WIDTH);
-    add_all_bands(permitted_bands.size(), points);
-
-
+    add_all_bands(permitted_bands.size(), points_all_bands);
     rv += line;
 
     if (_include_qtcs)
