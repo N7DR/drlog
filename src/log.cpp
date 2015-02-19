@@ -383,6 +383,9 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
   if (score)
     rv += "CLAIMED-SCORE: " + to_string(score) + LF;   
 
+// certificate
+    rv += "CERTIFICATE: " + context.cabrillo_certificate() + LF;
+
 /* the QSOs. The Cabrillo so-called "specification" provides not even a semblance of a computer-parsable 
    grammar for QSOs, so a lot of this is guesswork.
    

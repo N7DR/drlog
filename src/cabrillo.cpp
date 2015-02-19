@@ -75,25 +75,18 @@ void cabrillo_tag_template::operator=(const string& nm)
 cabrillo_tag_templates::cabrillo_tag_templates(void)
 { 
 // START-OF-LOG
-//  cabrillo_tag_template tag("START-OF-LOG");
-  
-//  _templates.push_back(tag);
   _add("START-OF-LOG");
 
 // ADDRESS (up to four of these are allowed)
-//  tag = "ADDRESS";
   _add("ADDRESS");
 
 // ADDRESS-CITY
-//  tag = "ADDRESS-CITY";
   _add("ADDRESS-CITY");
 
 // ADDRESS-COUNTRY
-//  tag = "ADDRESS-COUNTRY";
   _add("ADDRESS-COUNTRY");
   
 // ADDRESS-POSTALCODE
-//  tag = "ADDRESS-POSTALCODE";
   _add("ADDRESS-POSTALCODE");
   
 // ADDRESS-STATE-PROVINCE
@@ -141,7 +134,10 @@ cabrillo_tag_templates::cabrillo_tag_templates(void)
 //  tag = "CATEGORY-TRANSMITTER:LIMITED,ONE,SWL,TWO,UNLIMITED";
   _add("CATEGORY-TRANSMITTER:LIMITED,ONE,SWL,TWO,UNLIMITED");
 
-// CERTIFICATE
+// CERTIFICATE; the specification says: "The contest sponsor may or may not honor this tag, and if so may or may not use opt-in or opt-out
+// as the default. YES is the default." Absent is any explanation of the bizarre sequence of words: "may or may not use opt-in or opt-out".
+// There is no explanation of how a default value can have any meaning if the recipient can interpret the lack of an explicit
+// entry as meaning either YES or NO.
 //  tag = "CERTIFICATE:YES,NO";
   _add("CERTIFICATE:YES,NO");
 
@@ -155,7 +151,11 @@ cabrillo_tag_templates::cabrillo_tag_templates(void)
   
 // CONTEST
 //  tag = "CONTEST:AP-SPRINT,ARRL-10,ARRL-160,ARRL-DX-CW,ARRL-DX-SSB,ARRL-SS-CW,ARRL-SS-SSB,ARRL-UHF-AUG,ARRL-VHF-JAN,ARRL-VHF-JUN,ARRL-VHF-SEP,ARRL-RTTY,BARTG-RTTY,CQ-160-CW,CQ-160-SSB,CQ-WPX-CW,CQ-WPX-RTTY,CQ-WPX-SSB,CQ-VHF,CQ-WW-CW,CQ-WW-RTTY,CQ-WW-SSB,DARC-WAEDC-CW,DARC-WAEDC-RTTY,DARC-WAEDC-SSB,FCG-FQP,IARU-HF,JIDX-CW,JIDX-SSB,NAQP-CW,NAQP-RTTY,NAQP-SSB,NA-SPRINT-CW,NA-SPRINT-SSB,NCCC-CQP,NEQP,OCEANIA-DX-CW,OCEANIA-DX-SSB,RDXC,RSGB-IOTA,SAC-CW,SAC-SSB,STEW-PERRY,TARA-RTTY";
-  _add("CONTEST:AP-SPRINT,ARRL-10,ARRL-160,ARRL-DX-CW,ARRL-DX-SSB,ARRL-SS-CW,ARRL-SS-SSB,ARRL-UHF-AUG,ARRL-VHF-JAN,ARRL-VHF-JUN,ARRL-VHF-SEP,ARRL-RTTY,BARTG-RTTY,CQ-160-CW,CQ-160-SSB,CQ-WPX-CW,CQ-WPX-RTTY,CQ-WPX-SSB,CQ-VHF,CQ-WW-CW,CQ-WW-RTTY,CQ-WW-SSB,DARC-WAEDC-CW,DARC-WAEDC-RTTY,DARC-WAEDC-SSB,FCG-FQP,IARU-HF,JIDX-CW,JIDX-SSB,NAQP-CW,NAQP-RTTY,NAQP-SSB,NA-SPRINT-CW,NA-SPRINT-SSB,NCCC-CQP,NEQP,OCEANIA-DX-CW,OCEANIA-DX-SSB,RDXC,RSGB-IOTA,SAC-CW,SAC-SSB,STEW-PERRY,TARA-RTTY");
+//  _add("CONTEST:AP-SPRINT,ARRL-10,ARRL-160,ARRL-DX-CW,ARRL-DX-SSB,ARRL-SS-CW,ARRL-SS-SSB,ARRL-UHF-AUG,ARRL-VHF-JAN,ARRL-VHF-JUN,ARRL-VHF-SEP,ARRL-RTTY,BARTG-RTTY,CQ-160-CW,CQ-160-SSB,CQ-WPX-CW,CQ-WPX-RTTY,CQ-WPX-SSB,CQ-VHF,CQ-WW-CW,CQ-WW-RTTY,CQ-WW-SSB,DARC-WAEDC-CW,DARC-WAEDC-RTTY,DARC-WAEDC-SSB,FCG-FQP,IARU-HF,JIDX-CW,JIDX-SSB,NAQP-CW,NAQP-RTTY,NAQP-SSB,NA-SPRINT-CW,NA-SPRINT-SSB,NCCC-CQP,NEQP,OCEANIA-DX-CW,OCEANIA-DX-SSB,RDXC,RSGB-IOTA,SAC-CW,SAC-SSB,STEW-PERRY,TARA-RTTY");
+// the specification has been changed to say: "Note: Contest sponsors may create their own contest values".
+// This was done WITHOUT CHANGING THE VERSION NUMBER OF THE SPECIFICATION
+// And, of course, it makes a mockery of the values that are in the specification
+  _add("CONTEST");
 
 // CREATED-BY
 //  tag = "CREATED-BY";

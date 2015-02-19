@@ -95,6 +95,7 @@ protected:
   std::string                                  _cabrillo_category_station;          ///< CATEGORY-STATION:
   std::string                                  _cabrillo_category_time;             ///< CATEGORY-TIME:
   std::string                                  _cabrillo_category_transmitter;      ///< CATEGORY-TRANSMITTER:
+  std::string                                  _cabrillo_certificate;               ///< CERTIFICATE:
   std::string                                  _cabrillo_club;                      ///< CLUB:
   std::string                                  _cabrillo_contest;                   ///< CONTEST:
   std::string                                  _cabrillo_e_mail;                    ///< EMAIL: (sic)
@@ -300,6 +301,7 @@ public:
   SAFEREAD(cabrillo_category_station, _context);        ///< CATEGORY-STATION:
   SAFEREAD(cabrillo_category_time, _context);           ///< CATEGORY-TIME:
   SAFEREAD(cabrillo_category_transmitter, _context);    ///< CATEGORY-TRANSMITTER:
+  SAFEREAD(cabrillo_certificate, _context);             ///< CERTIFICATE:
   SAFEREAD(cabrillo_club, _context);                    ///< CLUB:
   SAFEREAD(cabrillo_contest, _context);                 ///< CONTEST:
   SAFEREAD(cabrillo_e_mail, _context);                  ///< EMAIL: (sic)
