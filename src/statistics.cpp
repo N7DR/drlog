@@ -389,6 +389,11 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
   return false;
 }
 
+/*! \brief          Generate a summary string for display
+    \param  rules   rules for this contest
+    \param  modes   the set of modes that are to be included in the summary string
+    \return         summary string for modes in <i>modes</i>
+*/
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
 { string rv;
 
@@ -468,12 +473,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
           line += pad_string(to_string(countries), FIELD_WIDTH);
       }
 
-//      line += pad_string(to_string(countries), FIELD_WIDTH);
-
-////      if (permitted_bands.size() != 1)
-//        line += pad_string(to_string(countries), FIELD_WIDTH);
-        add_all_bands(permitted_bands.size(), countries_all_bands);
-
+      add_all_bands(permitted_bands.size(), countries_all_bands);
       rv += line + LF;
     }
 
@@ -481,49 +481,26 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     const set<string>&  callsign_mults = rules.callsign_mults();      // collection of types of mults based on callsign (e.g., "WPXPX")
     const bool callsign_mults_per_band = rules.callsign_mults_per_band();
 
-//  ost << "about to test for callsign mults in summary_string()" << endl;
-
     if (!callsign_mults.empty())
     { for (const auto mult_name : callsign_mults)
-      { //ost << "mult name = " << mult_name << endl;
-
-        const MODE m = ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE);
+      { const MODE m = ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE);
 
         line = pad_string(mult_name, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
         const auto& cit = _callsign_multipliers.find(mult_name);
-//        unsigned int total_all_bands = 0;
 
         if (cit != _callsign_multipliers.end())    // should always be true
-        { //ost << "found callsign multiplier: " << cit->first << endl;
-
-          const multiplier& mult = cit->second;
-//          unsigned int total_all_bands = 0;
+        { const multiplier& mult = cit->second;
 
           for (const auto& b : permitted_bands)
-          { //unsigned int total = 0;
-
-//            for (const auto& m : modes)
+          {
             { const unsigned int n_callsign_mults = mult.n_worked(b, m);
 
-//            if (modes.size() == 1)
               line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
-
-//              if (callsign_mults_per_band)
-//                total += n_callsign_mults;
             }
-
-//            if (callsign_mults_per_band)
-//              total_all_bands += total;
           }
-//
-//          if (!callsign_mults_per_band)
-//            total_all_bands = mult.n_worked(ANY_BAND, m);
 
-//          if (modes.size() != 1)
-            line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
-
-//        ost << "line is: " << line << endl;
+          line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
         }
         else
         { ost << "Error: did not find mult name: " << mult_name << endl;
@@ -534,7 +511,6 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
         }
       }
 
-//      add_all_bands(permitted_bands.size(), total_all_bands);
       rv += line + LF;
     }
 
@@ -641,8 +617,10 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
   return rv;
 }
 
-
-/// a (multi-line) string that summarizes the statistics
+/*! \brief          A complete (multi-line) string that summarizes the statistics, for display in the SUMMARY window
+    \param  rules   rules for this contest
+    \return         summary string for display in the SUMMARY window
+*/
 const string running_statistics::summary_string(const contest_rules& rules)
 { string rv;
   const unsigned int FIRST_FIELD_WIDTH = 10;

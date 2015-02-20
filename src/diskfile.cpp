@@ -90,7 +90,10 @@ void directory_create(const string& dirname)
     throw exception();
 }
 
-// does a directory exist?
+/*! \brief              Does a directory exist?
+    \param  dirname     name of the directory to test for existence
+    \return             whether <i>dirname</i> exists
+*/
 const bool directory_exists(const string& filename)
 { struct stat stat_buffer;
   int status = stat(filename.c_str(), &stat_buffer);
@@ -102,7 +105,13 @@ const bool directory_exists(const string& filename)
     return rv;
 }
 
-// list all the files in a directory
+/*! \brief              What files does a directory contain?
+    \param  dirname     name of the directory to examine
+    \return             vector of filenames
+
+    The returned vector does not include "." or "..".
+    Returns empty vector if the directory <i>dirname</i> does not exist
+*/
 const vector<string> directory_contents(const string& dirname)
 { vector<string> rv;
 
@@ -126,14 +135,3 @@ const vector<string> directory_contents(const string& dirname)
   return rv;
 }
 
-/*! \brief              Truncate a file
-    \param  filename    name of file to truncate
-
-    Creates <i>filename</i> if it does not exist
-*/
-//void file_truncate(const string& filename)
-//{ //FILE* fp = fopen(filename.c_str(), "w");
-//
-//  //fclose(fp);
-//  ofstream(filename, ios_base::trunc);
-//}

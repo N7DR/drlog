@@ -93,8 +93,8 @@ inline void file_move(const std::string& source_filename, const std::string& des
 void directory_create(const std::string& dirname);
 
 /*! \brief              Does a directory exist?
-    \param  dirname     name of the directory
-    \return             whether the directory exists
+    \param  dirname     name of the directory to test for existence
+    \return             whether <i>dirname</i> exists
 */
 const bool directory_exists(const std::string& dirname);
 

@@ -63,10 +63,10 @@ protected:
   unsigned int  _qtc_qsos_sent;         ///< total number of QSOs sent in QTCs
   unsigned int  _qtc_qsos_unsent;       ///< total number of (legal) QSOs available but not yet sent in QTCs
 
-/*! \brief            Generate the summary string for display
-    \param  rules     rules for this contest
-    \param  modes     the set of modes that are to be included in the summary string
-    \return           summary string for modes in <i>modes</i>
+/*! \brief          Generate a summary string for display
+    \param  rules   rules for this contest
+    \param  modes   the set of modes that are to be included in the summary string
+    \return         summary string for modes in <i>modes</i>
 */
   const std::string _summary_string(const contest_rules& rules, const std::set<MODE>& modes);
 
@@ -196,7 +196,10 @@ public:
 */
   void add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
 
-/// a (multi-line) string that summarizes the statistics
+/*! \brief          A complete (multi-line) string that summarizes the statistics, for display in the SUMMARY window
+    \param  rules   rules for this contest
+    \return         summary string for display in the SUMMARY window
+*/
   const std::string summary_string(const contest_rules& rules);
 
 /// total points
