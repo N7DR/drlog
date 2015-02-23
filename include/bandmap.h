@@ -226,7 +226,7 @@ protected:
   std::string                                               _continent;                 ///< continent corresponding to the call
   time_t                                                    _expiration_time;           ///< time at which this entry expires (in seconds since the epoch)
   frequency                                                 _freq;                      ///< QRG
-  std::string                                               _frequency_str;             ///< QRG (kHz)
+  std::string                                               _frequency_str;             ///< QRG (kHz, to 1 dp)
   bool                                                      _is_needed;                 ///< do we need this call?
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;   ///< details of needed callsign mults
   needed_mult_details<std::string>                          _is_needed_country_mult;    ///< details of needed country mults
@@ -264,7 +264,7 @@ public:
 */
   void freq(const frequency& f);
 
-  READ(frequency_str);                  ///< QRG (kHz)
+  READ(frequency_str);                  ///< QRG (kHz, to 1 dp)
   READ_AND_WRITE(is_needed);            ///< do we need this call?
   READ_AND_WRITE(mode);                 ///< mode
   READ_AND_WRITE(posters);              ///< source(s) of posting (if the source is RBN)

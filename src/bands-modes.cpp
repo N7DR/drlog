@@ -12,6 +12,8 @@
 
 using namespace std;
 
+extern string FREQUENCY_STRING_POINT;
+
 // ----------------------------------------------------  frequency  -----------------------------------------------
 
 /*!     \class frequency
@@ -92,7 +94,7 @@ frequency::frequency(const enum BAND b)
     Sets the frequency to the low edge of the band <i>b</i>
 */
 const string frequency::display_string(void) const
-{ static const string POINT(".");
+{ const string POINT(".");                                      // during termination, static can cause a core dump; https://stackoverflow.com/questions/246564/what-is-the-lifetime-of-a-static-variable-in-a-c-function
 
   unsigned int khz = _hz / 1000;
   unsigned int hhz = ( ( _hz - (khz * 1000) ) / 10 + 5 ) / 10;  // first decimal place in kHz frequency

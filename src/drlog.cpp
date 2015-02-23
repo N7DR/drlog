@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 95 2015-02-15 22:41:49Z  $
+// $Id: drlog.cpp 96 2015-02-23 00:02:56Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -64,6 +64,7 @@ enum DRLOG_MODE { CQ_MODE = 0,              ///< I'm calling the other station
 string VERSION;         ///< version string
 string DP("·");         ///< character for decimal point
 string TS(",");         ///< character for thousands separator
+//string FREQUENCY_STRING_POINT(".");  ///< character used for decimal point in frequency string
 
 static const set<string> variable_exchange_fields { "SERNO" };  ///< mutable exchange fields
 
@@ -1797,7 +1798,8 @@ void* display_rig_status(void* vp)
       { ost << "display_rig_status() is exiting" << endl;
 
         n_running_threads--;
-        return nullptr;
+//        return nullptr;
+        pthread_exit(nullptr);
       }
     }
   }
