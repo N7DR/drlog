@@ -167,6 +167,7 @@ protected:
   float                                        _my_latitude;                        ///< latitude in degrees (north +ve)
   float                                        _my_longitude;                       ///< longitude in degrees (east +ve)
 
+  bool                                         _nearby_extract;      ///< whether to display NEARBY calls in EXTRACT window
   bool                                         _normalise_rate;      ///< whether to display rates as per-hour
   std::string                                  _not_country_mults;   ///< comma-separated list of countries that are explicitly NOT country mults
 
@@ -380,6 +381,7 @@ public:
   SAFEREAD(my_latitude, _context);
   SAFEREAD(my_longitude, _context);
 
+  SAFEREAD(nearby_extract, _context);       ///< whether to display NEARBY calls in EXTRACT window
   SAFEREAD(normalise_rate, _context);
   SAFEREAD(not_country_mults, _context);
 

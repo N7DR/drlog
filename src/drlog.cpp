@@ -6159,10 +6159,16 @@ const string active_window_name(void)
 
 /*! \brief              Display a callsign in the NEARBY window, in the correct colour
     \param  callsign    Call to display
+
+    Optionally displays log extract data
 */
 void display_nearby_callsign(const string& callsign)
 { if (callsign.empty())
-    win_nearby <= WINDOW_CLEAR;
+  { win_nearby <= WINDOW_CLEAR;
+
+    if (context.nearby_extract())
+      win_log_extract <= WINDOW_CLEAR;
+  }
   else
   { const bool dupe = logbk.is_dupe(callsign, safe_get_band(), safe_get_mode(), rules);
     const bool worked = q_history.worked(callsign, safe_get_band(), safe_get_mode());
@@ -6181,6 +6187,11 @@ void display_nearby_callsign(const string& callsign)
     win_nearby < WINDOW_CLEAR < CURSOR_START_OF_LINE;
     win_nearby.cpair(colour_pair_number);
     win_nearby < callsign <= COLOURS(foreground, background);
+
+    if (context.nearby_extract())
+    { extract = logbk.worked( callsign );
+      extract.display();
+    }
   }
 }
 

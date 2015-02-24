@@ -125,8 +125,8 @@ public:
 */
   void prepare(const drlog_context& context);
 
-/*! \brief              Is a rig ready for use?
-    \return             Whether a rig is available
+/*! \brief      Is a rig ready for use?
+    \return     whether a rig is available
 */
   inline const bool valid(void) const
     { return (_rigp != nullptr); }
@@ -191,21 +191,23 @@ public:
 /// is split enabled?
   const bool split_enabled(void);
 
+/// get mode
+  const MODE rig_mode(void);
+
 /*! \brief      Set mode
     \param  m   new mode
 
                 Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
 */
-  const MODE rig_mode(void);
-
   void rig_mode(const MODE m);
 
-// is rig in TEST mode?
+/// is rig in TEST mode?
   const bool test(void);
 
+/// set or unset test mode
   void test(const bool);
 
-// set rit offset
+/// set rit offset
   void rit(const int hz);
 
 // get rit offset

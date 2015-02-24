@@ -644,6 +644,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "MY ITU ZONE"))
       _my_itu_zone = from_string<int>(RHS);
 
+// NEARBY EXTRACT
+    if (starts_with(testline, "NEARBY EXTRACT"))
+      _nearby_extract = is_true;
+
 // NORMALISE RATE
     if (starts_with(testline, "NORMALISE RATE") or starts_with(testline, "NORMALIZE RATE"))
       _normalise_rate = is_true;
@@ -1360,6 +1364,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _my_continent("XX"),                        // set continent to an invalid value
   _my_latitude(0),                            // at the equator
   _my_longitude(0),                           // Greenwich meridian
+  _nearby_extract(false),                       // do not display NEARBY calls in the EXTRACT window
   _normalise_rate(false),                     // do not normalise rates to one-hour values
   _not_country_mults(),                       // no countries are explicitly not country mults
   _path( { "." } ),                           // search only the current directory
