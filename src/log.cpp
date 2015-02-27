@@ -107,9 +107,9 @@ const vector<QSO> logbook::worked(const string& call) const
   return rv;
 }
 
-/*!     \brief          The number of times that a particular call has been worked
-        \param  call    Target callsign
-        \return         Number of times that <i>call</i> has been worked
+/*! \brief          The number of times that a particular call has been worked
+    \param  call    target callsign
+    \return         number of times that <i>call</i> has been worked
 */
 const unsigned int logbook::n_worked(const string& call) const
 { SAFELOCK(_log);
@@ -119,10 +119,10 @@ const unsigned int logbook::n_worked(const string& call) const
   return distance(range.first, range.second);
 }
 
-/*!     \brief          has a call been worked on a particular band?
-        \param  call    target callsign
-        \param  b       target band
-        \return         whether <i>call</i> has been worked on <i>b</i>
+/*! \brief          has a call been worked on a particular band?
+    \param  call    target callsign
+    \param  b       target band
+    \return         whether <i>call</i> has been worked on <i>b</i>
 */
 const bool logbook::qso_b4(const string& call, const BAND b) const
 { SAFELOCK(_log);
@@ -134,10 +134,10 @@ const bool logbook::qso_b4(const string& call, const BAND b) const
   return false;
 }
 
-/*!     \brief          has a call been worked on a particular mode?
-        \param  call    target callsign
-        \param  m       target mode
-        \return         whether <i>call</i> has been worked on <i>m</i>
+/*! \brief          has a call been worked on a particular mode?
+    \param  call    target callsign
+    \param  m       target mode
+    \return         whether <i>call</i> has been worked on <i>m</i>
 */
 const bool logbook::qso_b4(const string& call, const enum MODE m) const
 { SAFELOCK(_log);
@@ -149,11 +149,11 @@ const bool logbook::qso_b4(const string& call, const enum MODE m) const
   return false;
 }
 
-/*!     \brief          has a call been worked on a particular band and mode?
-        \param  call    target callsign
-        \param  b       target band
-        \param  m       target mode
-        \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
+/*! \brief          has a call been worked on a particular band and mode?
+    \param  call    target callsign
+    \param  b       target band
+    \param  m       target mode
+    \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
 */
 const bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 { SAFELOCK(_log);
@@ -165,10 +165,10 @@ const bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) 
   return false;
 }
 
-/*!     \brief          get a string list of bands on which a call is needed
-        \param  call    target callsign
-        \param  rules   rules for the contest
-        \return         string list of bands on which a call is needed (separated by three spaces)
+/*! \brief          get a string list of bands on which a call is needed
+    \param  call    target callsign
+    \param  rules   rules for the contest
+    \return         string list of bands on which a call is needed (separated by three spaces)
 */
 const string logbook::call_needed(const string& call, const contest_rules& rules) const
 { string rv;

@@ -367,10 +367,11 @@ public:
 
   SAFEREAD(keyer_port, _context);                   ///< the device that is to be used as a keyer
 
-  SAFEREAD(logfile, _context);
+  SAFEREAD(logfile, _context);                      ///< name of the log filename
 
-  SAFEREAD(mark_frequencies, _context);
-  SAFEREAD(match_minimum, _context);
+  SAFEREAD(mark_frequencies, _context);             ///< frequency ranges to be marked on-screen
+  SAFEREAD(match_minimum, _context);                ///< number of characters before SCP or fuzzy match kicks in
+  SAFEREAD(messages, _context);                     ///< CW messages
   SAFEREAD(modes, _context);
   SAFEREAD(my_call, _context);
   SAFEREAD(my_continent, _context);
@@ -508,7 +509,7 @@ public:
 //    { SAFELOCK(_context);
 //      return (n < _cq_memory.size() ? _cq_memory[n] : std::string()); }
 
-  SAFEREAD(messages, _context);
+
 
 /*! \brief              all the windows whose name contains a particular substring
     \param      subst   substring for which to search

@@ -2862,12 +2862,14 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
         be.calculate_mult_status(rules, statistics);
 
+//        ost << "called " << callsign << " and added to bandmap for band " << BAND_NAME[be.band()] << endl;
+
         bandmap& bandmap_this_band = bandmaps[be.band()];
         const bandmap_entry old_be = bandmap_this_band[callsign];
 
 //        ost << "old frequency for " << callsign << " = " << old_be.frequency_str() << "; new frequency = " << be.frequency_str() << endl;
 
-        if (!old_be.callsign().empty() and (old_be.frequency_str() != be.frequency_str()))  // update bandmap only if there's a change
+        if ( (old_be.callsign().empty()) or ( /* !old_be.callsign().empty() and */ (old_be.frequency_str() != be.frequency_str())))  // update bandmap only if there's a change
         { bandmap_this_band += be;
 
 //          ost << "old_be = " << old_be << endl;

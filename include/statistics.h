@@ -152,8 +152,8 @@ public:
   
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add
-    \param  log     Logbook (without the qso <i>qso</i>)
-    \param  rules   Contest rules
+    \param  log     logbook (without the qso <i>qso</i>)
+    \param  rules   contest rules
 */
   void add_qso(const QSO& qso, const logbook& log, const contest_rules& rules);
   
@@ -165,8 +165,8 @@ public:
 
 /*! \brief          Add a known legal value for a particular exchange multiplier
     \param  name    name of the exchange multiplier
-    \param  value   New legal value for the exchange multiplier <i>name</i>
-    \return         Whether <i>value</i> was actually added
+    \param  value   new legal value for the exchange multiplier <i>name</i>
+    \return         whether <i>value</i> was actually added
 */
   const bool add_known_exchange_mult(const std::string& name, const std::string& value);
 
@@ -181,18 +181,14 @@ public:
     \param  exchange_field_value    value of the target exchange field
     \param  b                       target band
     \param  m                       target mode
-    \return                         Whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
+    \return                         whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
 */
   const bool is_needed_exchange_mult(const std::string& exchange_field_name, const std::string& exchange_field_value, const BAND b, const MODE m) const;
 
-//  const std::array<std::set<std::string>, N_BANDS> worked_exchange_mults(const std::string& exchange_field_name);
-
-//  const std::set<std::string> worked_exchange_mults(const std::string& exchange_field_name, const BAND b);
-
-/*! \brief  Add a worked exchange mult
-    \param  field_name    Exchange mult field name
-    \param  field_value   Value of the field <i>field_name</i>
-    \param  band_nr       Number of the band on which worked mult is to be added
+/*! \brief                  Add a worked exchange mult
+    \param  field_name      exchange mult field name
+    \param  field_value     value of the field <i>field_name</i>
+    \param  band_nr         number of the band on which worked mult is to be added
 */
   void add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
 

@@ -254,23 +254,18 @@ void drlog_context::_process_configuration_file(const string& filename)
       _bandmap_filter_enabled = is_true;
 
 // BAND MAP FILTER MODE
-//    if (starts_with(testline, "BAND MAP FILTER MODE") or starts_with(testline, "BANDMAP FILTER MODE"))
     if ( (LHS == "BAND MAP FILTER MODE") or (LHS == "BANDMAP FILTER MODE") )
       _bandmap_filter_show = (RHS == "SHOW");
 
 // BAND MAP GUARD BAND CW
-//    if (starts_with(testline, "BAND MAP GUARD BAND CW") or starts_with(testline, "BANDMAP GUARD BAND CW"))
     if ( (LHS == "BAND MAP GUARD BAND CW") or (LHS == "BANDMAP GUARD BAND CW") )
       _guard_band[MODE_CW] = from_string<int>(rhs);
 
 // BAND MAP GUARD BAND SSB
-//    if (starts_with(testline, "BAND MAP GUARD BAND SSB") or starts_with(testline, "BANDMAP GUARD BAND SSB"))
     if ( (LHS == "BAND MAP GUARD BAND SSB") or (LHS == "BANDMAP GUARD BAND SSB") )
       _guard_band[MODE_SSB] = from_string<int>(rhs);
 
 // BAND MAP RECENT COLOUR
-//    if (starts_with(testline, "BAND MAP RECENT COLOUR") or starts_with(testline, "BANDMAP RECENT COLOUR") or
-//        starts_with(testline, "BAND MAP RECENT COLOR") or starts_with(testline, "BANDMAP RECENT COLOR"))
     if ( (LHS == "BAND MAP RECENT COLOUR") or (LHS == "BANDMAP RECENT COLOUR") or
          (LHS == "BANDMAP RECENT COLOR") or (LHS == "BANDMAP RECENT COLOR") )
     { if (!RHS.empty())
@@ -297,7 +292,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       _call_ok_now_message = rhs;
 
 // CALLSIGN MULTS
-//    if (starts_with(testline, "CALLSIGN MULTS") and !starts_with(testline, "CALLSIGN MULTS PER BAND"))
     if (LHS == "CALLSIGN MULTS")
     { const vector<string> callsign_mults_vec = remove_peripheral_spaces(split_string(RHS, ","));
 
