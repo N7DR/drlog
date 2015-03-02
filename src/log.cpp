@@ -1,4 +1,4 @@
-// $Id: log.cpp 96 2015-02-23 00:02:56Z  $
+// $Id: log.cpp 97 2015-02-28 17:27:29Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

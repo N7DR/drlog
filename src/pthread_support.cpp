@@ -233,7 +233,7 @@ void pt_mutex::lock(void)
   if (*ip == 0)
   { const int status = pthread_mutex_lock(&_mutex);
     if (status != 0)
-    { ost << "ERROR LOCKING MUTEX: " + to_string(status) << endl;
+    { // ost << "ERROR LOCKING MUTEX: " + to_string(status) << endl;  // since this locks the log_message message mutex, don't output, since that may be the very mutex that failed
       throw pthread_error(PTHREAD_LOCK_ERROR, (string)"ERROR LOCKING MUTEX: " + to_string(status));
     }
 

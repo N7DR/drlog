@@ -19,7 +19,7 @@
 using namespace std;
 
 // constructor from a file name
-message_stream::message_stream(const std::string& filename) //:
+message_stream::message_stream(const string& filename, const string& error_name) //:
   //_ost(filename.c_str())
 { if (file_exists(filename))
   { int index = 0;
@@ -33,6 +33,7 @@ message_stream::message_stream(const std::string& filename) //:
   }
 
   _ost.open(filename);
+  _err.open(error_name);
 }
 
 

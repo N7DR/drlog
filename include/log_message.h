@@ -32,20 +32,30 @@ class message_stream
 {
 protected:
   std::ofstream     _ost;                       ///< the output stream
+  std::ofstream     _err;                       ///< the error stream
   
   pt_mutex          _message_stream_mutex;      ///< mutex for the stream
 
 public:
 
 /// constructor from a file name
-explicit message_stream(const std::string& filename);
+message_stream(const std::string& filename, const std::string& error_name = "drlog-errors");
 
 /// message_stream << <generic object>
 template <typename T>
   message_stream& operator<<(const T obj)
-  { SAFELOCK(_message_stream);
+  { //SAFELOCK(_message_stream);
+    try
+    { SAFELOCK(_message_stream);
 
-    _ost << obj;
+      _ost << obj;
+    }
+
+    catch (...)
+    { _err << "Error writing to stream" << std::endl;
+      _err << obj;
+    }
+
     return *this;
   }
 
@@ -53,9 +63,19 @@ template <typename T>
 // I have no idea why this is necessary, since it seems to me that the
 // (identical) generic version should work just fine
   message_stream& operator<<(std::ostream&(*obj)(std::ostream&))
-  { SAFELOCK(_message_stream);
+  { //SAFELOCK(_message_stream);
   
-    _ost << obj;
+    try
+    { SAFELOCK(_message_stream);
+
+      _ost << obj;
+    }
+
+    catch (...)
+    { _err << "Error writing to stream" << std::endl;
+      _err << obj;
+    }
+
     return *this;
   }
 };
