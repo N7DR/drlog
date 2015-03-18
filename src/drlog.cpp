@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 97 2015-02-28 17:27:29Z  $
+// $Id: drlog.cpp 99 2015-03-14 16:36:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3373,6 +3373,12 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
+// CTRL-Q -- swap QSL and QUICK QSL messages
+    if (!processed and (e.is_control('q')))
+    { context.swap_qsl_messages();
+      processed = true;
+    }
+
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())
@@ -4950,6 +4956,10 @@ void archive_data(void)
      & next_qso_number & octothorpe
      & rig.rig_frequency();
 
+// bandmap filter
+  alert("Archiving bandmap filter");
+  ar & BMF;
+
 // bandmaps
   alert("Archiving bandmaps");
   ar & bandmaps;
@@ -4992,6 +5002,10 @@ void restore_data(const string& archive_filename)
       ar & current_band & current_mode
          & next_qso_number & octothorpe
          & rig_frequency;
+
+// bandmap filter
+      alert("Restoring bandmap filter");
+      ar & BMF;
 
 // bandmaps
       alert("Restoring bandmaps");

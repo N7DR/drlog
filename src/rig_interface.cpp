@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 95 2015-02-15 22:41:49Z  $
+// $Id: rig_interface.cpp 98 2015-03-07 15:30:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,7 +35,7 @@ using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
 
-const bool RESPONSE_EXPECTED = true;
+const bool RESPONSE_EXPECTED = true;    ///< used to signal that a response is expected
 
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
  * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
@@ -60,9 +60,9 @@ const bool RESPONSE_EXPECTED = true;
 /* But there are many problems with the K3 soi-disant protocol as well. Even after trying to get clear answers from Elecraft, the following
  * issues (at least) remain:
  *
- *   1. Which commands might cause a "?;" response if the K3 is "busy";
+ *   1. Which commands might cause a "?;" response if the K3 is "busy"?
  *   2. Do these include commands that don't normally return a response?
- *   3. Which commands do eventually get executed even if the K3 is "busy";
+ *   3. Which commands do eventually get executed even if the K3 is "busy"?
  *   4. How long might one have to wait for some commands to execute if the K3 is "busy"?
  *   5. Which commands are subject to delay if the K3 is "busy"?
  *   6. What is the precise definition of "busy"?
@@ -70,6 +70,10 @@ const bool RESPONSE_EXPECTED = true;
  *   All in all, the only thing to do seems to be to throw commands at the K3 and hope that they stick. It is impractical to
  *   check each time whether a command was executed, because the documentation says that certain (undefined) commands might take as
  *   long as half a second to execute if the K3 is "busy".
+ *
+ *   The fundamental problem in all this is that the protocol has no concept of a transaction. It is unclear why simple 1980s-era
+ *   protocols are still being used to exchange information with rigs. Baud rates now are fast enough that, even for serial lines, real
+ *   protocols could be run over, for example, SLIP.
 */
 
 /*! \brief      static wrapper for function to poll rig for status
@@ -84,11 +88,13 @@ void* rig_interface::_static_poll_thread_function(void* arg)
   return nullptr;
 }
 
-/*! \brief      poll rig for status, forever
+/*! \brief      Thread function used to poll rig for status, forever
     \param  vp  unused (should be nullptr)
     \return     nullptr
 
     Sets the frequency and mode in the <i>_status</i> object
+
+    *** Should be modified to provide guaranteed graceful exit during program shutdown
 */
 void* rig_interface::_poll_thread_function(void* vp)
 { while (true)
@@ -181,7 +187,7 @@ void rig_interface::prepare(const drlog_context& context)
 /*! \brief      Set frequency of VFO A
     \param  f   frequency to which to QSY
 
-                Does nothing if <i>f</i> is not within a ham band
+    Does nothing if <i>f</i> is not within a ham band
 */
 void rig_interface::rig_frequency(const frequency& f)
 { if (f.is_within_ham_band())
@@ -204,7 +210,7 @@ void rig_interface::rig_frequency(const frequency& f)
 /*! \brief      Set frequency of VFO B
     \param  f   frequency to which to QSY
 
-                Does nothing if <i>f</i> is not within a ham band
+    Does nothing if <i>f</i> is not within a ham band
 */
 void rig_interface::rig_frequency_b(const frequency& f)
 { if (f.hz())
@@ -227,7 +233,7 @@ void rig_interface::rig_frequency_b(const frequency& f)
 /*! \brief      Set mode
     \param  m   new mode
 
-                Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
+    Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
 */
 void rig_interface::rig_mode(const MODE m)
 { static pbwidth_t last_cw_bandwidth  = 200;
@@ -308,7 +314,7 @@ const frequency rig_interface::rig_frequency(void)
   }
 }
 
-// get frequency of VFO B
+/// get frequency of VFO B
 const frequency rig_interface::rig_frequency_b(void)
 { if (!_rig_connected)
     return _last_commanded_frequency_b;
@@ -330,7 +336,7 @@ const frequency rig_interface::rig_frequency_b(void)
 /*! \brief  Enable split operation
 
             hamlib has no good definition of exactly what split operation really means, and, hence,
-            has no clear description of precisely what the hamlib  rig_set_split_vfo() function is supposed
+            has no clear description of precisely what the hamlib rig_set_split_vfo() function is supposed
             to do for various values of the permitted parameters. There is general agreement on the reflector
             that the call contained herein *should* do the "right" thing -- but since there's no precise definition
             of any of this, not all backends are guaranteed to behave the same.
@@ -370,13 +376,11 @@ void rig_interface::split_disable(void)
   }
 
 // not a K3
-//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_OFF, RIG_VFO_A);
-  const int status = rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A);  // the line above also works
+//  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_OFF, RIG_VFO_A);    // do not delete this line, in case we ever need to use this version instead of the following line
+  const int status = rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A);         // the line above also works
 
   if (status != RIG_OK)
     _error_alert("Error executing SPLIT command");
-
-//  ost << "SPLIT has been disabled" << endl;
 }
 
 /// is split enabled?
@@ -408,9 +412,6 @@ const bool rig_interface::split_enabled(void)
   { _error_alert("Error getting SPLIT");
     return false;
   }
-
-//  ost << "SPLIT mode is " << (split_mode == RIG_SPLIT_ON ? "ON" : "OFF") << endl;
-//  ost << "VFO is " << tx_vfo << endl;
 
   return (split_mode == RIG_SPLIT_ON);
 }

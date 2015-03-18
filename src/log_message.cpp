@@ -1,4 +1,4 @@
-// $Id: log_message.cpp 64 2014-05-31 21:25:48Z  $
+// $Id: log_message.cpp 98 2015-03-07 15:30:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -18,12 +18,16 @@
 
 using namespace std;
 
-// constructor from a file name
-message_stream::message_stream(const string& filename, const string& error_name) //:
-  //_ost(filename.c_str())
+/*! \brief  Constructor
+    \param  filename    name of file to which output is to be written
+    \param  error_name  name of file to which errors in message_stream operation are to be written
+
+    The file <i>error_name</i> is used if a failure is detected when writing to <i>filename</i>.
+    An extant file called <i>filename</i> is renamed, not overwritten
+*/
+message_stream::message_stream(const string& filename, const string& error_name)
 { if (file_exists(filename))
   { int index = 0;
-
     string target = filename + "-" + to_string(index);
 
     while (file_exists(target))
@@ -35,7 +39,5 @@ message_stream::message_stream(const string& filename, const string& error_name)
   _ost.open(filename);
   _err.open(error_name);
 }
-
-
 
 

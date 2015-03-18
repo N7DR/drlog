@@ -1,4 +1,4 @@
-// $Id: pthread_support.cpp 95 2015-02-15 22:41:49Z  $
+// $Id: pthread_support.cpp 98 2015-03-07 15:30:35Z  $
 
 // Source code copyright 2000, 2001, 2002, 2003, 2004, 2005 IPfonix, Inc.
 // Unauthorized copying strictly prohibited
@@ -212,7 +212,7 @@ pt_mutex::pt_mutex(void)
 { pthread_mutex_init(&_mutex, NULL);
 }
 
-// destructor
+/// destructor
 pt_mutex::~pt_mutex(void)
 { pthread_mutex_destroy(&_mutex);
   int* ip;
@@ -220,7 +220,7 @@ pt_mutex::~pt_mutex(void)
   delete ip; 
 }
 
-// lock
+/// lock
 void pt_mutex::lock(void)
 { int* ip;
   ip = _tsd_refcount.get();        // defined to return 0 if it has not been set in this thread
@@ -243,7 +243,7 @@ void pt_mutex::lock(void)
   (*ip)++;
 }
 
-// unlock
+/// unlock
 void pt_mutex::unlock(void)
 { int* ip;
 
@@ -274,7 +274,7 @@ void pt_mutex::unlock(void)
 
 // ------------------------------ condition variable ------------------------------
 
-// default constructor
+/// default constructor
 pt_condition_variable::pt_condition_variable(void) :
   _mutex_p(NULL),
   _predicate(false)

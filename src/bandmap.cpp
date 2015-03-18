@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 94 2015-02-07 15:06:10Z  $
+// $Id: bandmap.cpp 99 2015-03-14 16:36:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,9 +26,7 @@ using namespace std;
 
 extern pt_mutex                 bandmap_mutex;      ///< used when writing to the bandmap window
 extern exchange_field_database  exchange_db;        ///< dynamic database of exchange field values for calls; automatically thread-safe
-extern location_database        location_db;
-//extern string                   my_continent;
-//extern string                   my_country;
+extern location_database        location_db;        ///< location information
 extern message_stream           ost;                ///< debugging/logging output
 
 extern const set<string> CONTINENT_SET;             ///< two-letter abbreviations for all the continents
@@ -43,7 +41,7 @@ extern const string callsign_mult_value(const string& callsign_mult_name, const 
 
 const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
 
-bandmap_filter_type bmf;                            ///< the global bandmap filter
+bandmap_filter_type BMF;                            ///< the global bandmap filter
 
 /*! \brief      Printable version of the name of a bandmap_entry source
     \param  bes source of a bandmap entry
@@ -84,8 +82,8 @@ const vector<string> bandmap_filter_type::filter(void) const
   return rv;
 }
 
-/*!  \brief     Add a string to, or remove a string from, the filter
-     \param str string to add or subtract
+/*!  \brief         Add a string to, or remove a string from, the filter
+     \param str     string to add or subtract
 
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
      if it's not already in the filter; otherwise it is removed.
@@ -118,6 +116,9 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _expiration_time(0)
 { }
 
+/*! \brief          Set the callsign
+    \param  call    the callsign to set
+*/
 void bandmap_entry::callsign(const string& call)
 { _callsign = call;
 
@@ -127,10 +128,6 @@ void bandmap_entry::callsign(const string& call)
     _canonical_prefix = li.canonical_prefix();
     _continent = li.continent();
   }
-//  else                                  // do we really need this?
-//  { _canonical_prefix = my_country;
-//    _continent = my_continent;
-//  }
 }
 
 /*! \brief      Set <i>_freq</i>, <i>_frequency_str</i>, <i>_band</i> and <i>_mode</i>
@@ -383,7 +380,7 @@ void bandmap::_dirty_entries(void)
 
 /// default constructor
 bandmap::bandmap(void) :
-  _filter_p(&bmf),
+  _filter_p(&BMF),
   _column_offset(0),
   _rbn_threshold(1),
   _filtered_entries_dirty(false),

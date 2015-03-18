@@ -1,4 +1,4 @@
-// $Id: bandmap.h 97 2015-02-28 17:27:29Z  $
+// $Id: bandmap.h 99 2015-03-14 16:36:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,10 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
                          BANDMAP_DIRECTION_UP
                        };                                          ///< search directions for the bandmap
 
+class bandmap_filter_type;
+
 extern const std::string MY_MARKER;                                ///< the string that marks my position in the bandmap
+extern bandmap_filter_type BMF;
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -208,6 +211,15 @@ public:
      if it's not already in the filter; otherwise it is removed.
 */
   void add_or_subtract(const std::string& str);
+
+/// archive using boost serialization
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version)
+  { ar & _enabled
+       & _hide
+       & _prefixes
+       & _continents;
+  }
 };
 
 // -----------  bandmap_entry  ----------------
@@ -251,6 +263,9 @@ public:
   READ(band);                           ///< band
   READ(callsign);                       ///< call
 
+/*! \brief          Set the callsign
+    \param  call    the callsign to set
+*/
   void callsign(const std::string& call);
 
   READ(canonical_prefix);               ///< canonical prefix corresponding to the call
@@ -369,9 +384,16 @@ public:
   inline void remove_country_mult(const std::string& value)
     { _is_needed_country_mult.remove(value); }
 
+/*! \brief          Remove a particular value of an exchange mult
+    \param  name    name of the exchange mult
+    \param  value   value of the mult
+
+    Does nothing if the value <i>value</i> is unknown for the mult <i>name</i>
+*/
   inline void remove_exchange_mult(const std::string& name, const std::string& value)
     { _is_needed_exchange_mult.remove( { name, value } ); }
 
+/// is this a needed mult of any type?
   inline const bool is_needed_mult(void) const
     { return is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult(); }
 
@@ -389,10 +411,11 @@ public:
   inline const bool is_frequency_str(const std::string& target) const
     { return (_frequency_str == target); }
 
-/// a simple definition of whether there's useful information in the object
+/// a simple definition of whether there is no useful information in the object
   inline const bool empty(void) const
     { return _callsign.empty(); }
 
+/// a simple definition of whether there is useful information in the object
   inline const bool valid(void) const
     { return !empty(); }
 
@@ -406,7 +429,7 @@ public:
    
 /// how long (in seconds) has it been since this entry was inserted into a bandmap?
   inline const time_t time_since_inserted(void) const
-    { return ::time(NULL) - _time; }
+    { return (::time(NULL) - _time); }
 
 /*! \brief  Should this bandmap_entry be removed?
     \param  now current time
@@ -510,42 +533,22 @@ class bandmap
 {
 protected:
 
-  bool                      _filtered_entries_dirty;                               ///< is the filtered version dirty?
-  bool                      _rbn_threshold_and_filtered_entries_dirty;             ///< is the RBN threshold and filtered version dirty?
-  
-  BM_ENTRIES                _entries;                             ///< all the entries
-  BM_ENTRIES                _filtered_entries;                    ///< entries, with the filter applied
-  BM_ENTRIES                _rbn_threshold_and_filtered_entries;  ///< entries, with the filter and RBN threshold applied
-  
-//  auto lt = [] (const bandmap_entry& be1, const bandmap_entry& be2) { return be1.callsign() < be2.callsign(); };
+  pt_mutex                  _bandmap_mutex;                             ///< mutex for this bandmap
+  int                       _column_offset;                             ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
+  std::set<std::string>     _do_not_add;                                ///< do not add these calls
+  BM_ENTRIES                _entries;                                   ///< all the entries
+  std::vector<int>          _fade_colours;                              ///< the colours to use as entries age
+  decltype(_entries)        _filtered_entries;                          ///< entries, with the filter applied
+  bool                      _filtered_entries_dirty;                    ///< is the filtered version dirty?
+  bandmap_filter_type*      _filter_p;                                  ///< pointer to a bandmap filter
+  unsigned int              _rbn_threshold;                             ///< number of posters needed before a station appears in the bandmap
+  decltype(_entries)        _rbn_threshold_and_filtered_entries;        ///< entries, with the filter and RBN threshold applied
+  bool                      _rbn_threshold_and_filtered_entries_dirty;  ///< is the RBN threshold and filtered version dirty?
+  std::set<std::string>     _recent_calls;                              ///< calls recently added
+  int                       _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
 
-//  std::set<bandmap_entry, decltype<lt>>  _call_entries;
-
-  // recommended
-//  std::set< int, std::function< bool(int,int) > > set_two(
-//                                          [] ( int x, int y ) { return x>y ; } ) ; // fine
-
-  std::set<std::string>     _recent_calls;     ///< calls recently added
-  std::set<std::string>     _do_not_add;       ///< do not add these calls
-  std::vector<int>          _fade_colours;     ///< the colours to use as entries age
-  int                       _recent_colour;    ///< colour to use for entries < 120 seconds old (if black, then not used)
-
-  bandmap_filter_type*      _filter_p;         ///< pointer to a bandmap filter
-  int                       _column_offset;    ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
-
-  pt_mutex                  _bandmap_mutex;    ///< mutex for this bandmap
-
-  unsigned int _rbn_threshold;                 ///< number of posters needed before a station appears in the bandmap
-
-/*!  \brief                         Return the callsign closest to a particular frequency, if it is within the guard band
-     \param bme                     band map entries
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
-
-     Returns the nearest station within the guard band, or the null string if no call is found.
-*/
-  const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
+///  Mark filtered and rbn/filtered entries as dirty
+  void _dirty_entries(void);
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
@@ -562,16 +565,27 @@ protected:
      or
        its source is RBN and the call is already present in the bandmap at the same QRG with the poster of <i>be</i>
 */
-  const bool _mark_as_recent(const bandmap_entry& be);
+    const bool _mark_as_recent(const bandmap_entry& be);
 
-/*!  \brief Mark filtered and rbn/filtered entries as dirty
+/*!  \brief                         Return the callsign closest to a particular frequency, if it is within the guard band
+     \param bme                     band map entries
+     \param target_frequency_in_khz the target frequency, in kHz
+     \param guard_band_in_hz        how far from the target to search, in Hz
+     \return                        Callsign of a station within the guard band
+
+     Returns the nearest station within the guard band, or the null string if no call is found.
 */
-  void _dirty_entries(void);
+  const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
 
 public:
 
 /// default constructor
   bandmap(void);
+
+  inline const bandmap_filter_type bandmap_filter(void)
+  { SAFELOCK (_bandmap);
+    return *(_filter_p);
+  }
 
 /// set the RBN threshold
   inline void rbn_threshold(const unsigned int n)
@@ -812,8 +826,17 @@ public:
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(_bandmap);
 
-      ar & _entries
-         & _do_not_add;
+      ar & _column_offset
+         & _do_not_add
+         & _entries
+         & _fade_colours
+         & _filtered_entries
+         & _filtered_entries_dirty    // filter_p ??
+         & _rbn_threshold
+         & _rbn_threshold_and_filtered_entries
+         & _rbn_threshold_and_filtered_entries_dirty
+         & _recent_calls
+         & _recent_colour;
     }
 };
 

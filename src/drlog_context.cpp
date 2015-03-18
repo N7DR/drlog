@@ -1539,3 +1539,8 @@ const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const
 
   return rv;
 }
+
+// swap QSL and QUICK QSL messages
+//void drlog_context::swap_qsl_messages(void)
+//{ swap(_qsl_message, _quick_qsl_message);
+//}

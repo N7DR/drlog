@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 97 2015-02-28 17:27:29Z  $
+// $Id: drlog_context.h 99 2015-03-14 16:36:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -146,7 +146,7 @@ protected:
 
   std::string                                  _keyer_port;                 ///< the device that is to be used as a keyer
 
-  std::string                                  _logfile;                    ///< name of the log filename
+  std::string                                  _logfile;                    ///< name of the log file
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;   ///< frequency ranges to be marked on-screen
   unsigned int                                 _match_minimum;                      ///< number of characters before SCP or fuzzy match kicks in
@@ -161,20 +161,20 @@ protected:
   std::string                                  _my_call;                            ///< my call
   std::string                                  _my_continent;                       ///< my continent
   unsigned int                                 _my_cq_zone;                         ///< my CQ zone
-  std::string                                  _my_grid;                            ///< grid square identifier
+  std::string                                  _my_grid;                            ///< my grid square identifier
   std::string                                  _my_ip;                              ///< my IP address
   unsigned int                                 _my_itu_zone;                        ///< my ITU zone
-  float                                        _my_latitude;                        ///< latitude in degrees (north +ve)
-  float                                        _my_longitude;                       ///< longitude in degrees (east +ve)
+  float                                        _my_latitude;                        ///< my latitude in degrees (north +ve)
+  float                                        _my_longitude;                       ///< my longitude in degrees (east +ve)
 
   bool                                         _nearby_extract;      ///< whether to display NEARBY calls in EXTRACT window
   bool                                         _normalise_rate;      ///< whether to display rates as per-hour
   std::string                                  _not_country_mults;   ///< comma-separated list of countries that are explicitly NOT country mults
 
   std::vector<std::string>                     _path;                             ///< directories to search, in order
-  std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;                  ///< points structure for each band and mode
-
   std::map<BAND, int>                          _per_band_country_mult_factor;     ///< country mult factor structure for each band
+  std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;              ///< points structure for each band and mode
+
   unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
   std::string                                  _p3_snapshot_file;                 ///< base name of file for P3 snapshot
 
@@ -191,16 +191,16 @@ protected:
   std::vector<unsigned int>                    _rate_periods;                   ///< periods (in minutes) over which rates should be calculated
   bool                                         _rbn_beacons;                    ///< whether to place RBN posts from beacons on the bandmap
   unsigned int                                 _rbn_port;                       ///< port number on the RBN server
-  std::string                                  _rbn_server;                     ///< hostname or IP of RBN server
-  unsigned int                                 _rbn_threshold;                  ///< number of different stations that have to post to RBN before it shows on the bandmap
-  std::string                                  _rbn_username;                   ///< username to use on the RBN
+  std::string                                  _rbn_server;                     ///< hostname or IP address of RBN server
+  unsigned int                                 _rbn_threshold;                  ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
+  std::string                                  _rbn_username;                   ///< username to use on the RBN server
   int                                          _reject_colour;                  ///< colour for calls that are dupes
   std::set<std::string>                        _remaining_callsign_mults_list;  ///< callsign mults to display
   std::set<std::string>                        _remaining_country_mults_list;   ///< country mults to display
   unsigned int                                 _rig1_baud;                      ///< baud rate for rig
   unsigned int                                 _rig1_data_bits;                 ///< number of data bits for rig
   std::string                                  _rig1_name;                      ///< name of rig
-  std::string                                  _rig1_port;                      ///< port to communicate with rig
+  std::string                                  _rig1_port;                      ///< port over which to communicate with rig
   unsigned int                                 _rig1_stop_bits;                 ///< number of stop bits for rig
   std::string                                  _rig1_type;                      ///< model name of rig
   std::string                                  _russian_filename;               ///< filename of russian location file (default = "russian-data")
@@ -367,28 +367,30 @@ public:
 
   SAFEREAD(keyer_port, _context);                   ///< the device that is to be used as a keyer
 
-  SAFEREAD(logfile, _context);                      ///< name of the log filename
+  SAFEREAD(logfile, _context);                      ///< name of the log file
 
   SAFEREAD(mark_frequencies, _context);             ///< frequency ranges to be marked on-screen
   SAFEREAD(match_minimum, _context);                ///< number of characters before SCP or fuzzy match kicks in
   SAFEREAD(messages, _context);                     ///< CW messages
-  SAFEREAD(modes, _context);
-  SAFEREAD(my_call, _context);
-  SAFEREAD(my_continent, _context);
-  SAFEREAD(my_cq_zone, _context);
-  SAFEREAD(my_grid, _context);
-  SAFEREAD(my_ip, _context);
-  SAFEREAD(my_itu_zone, _context);
-  SAFEREAD(my_latitude, _context);
-  SAFEREAD(my_longitude, _context);
+  SAFEREAD(message_cq_1, _context);                 ///< CQ message #1 (generally, a short CQ)
+  SAFEREAD(message_cq_2, _context);                 ///< CQ message #2 (generally, a long CQ)
+  SAFEREAD(modes, _context);                        ///< comma-delimited modes CW, SSB
+  SAFEREAD(my_call, _context);                      ///< my call
+  SAFEREAD(my_continent, _context);                 ///< my continent
+  SAFEREAD(my_cq_zone, _context);                   ///< my CQ zone
+  SAFEREAD(my_grid, _context);                      ///< my grid square identifier
+  SAFEREAD(my_ip, _context);                        ///< my IP address
+  SAFEREAD(my_itu_zone, _context);                  ///< my ITU zone
+  SAFEREAD(my_latitude, _context);                  ///< my latitude in degrees (north +ve)
+  SAFEREAD(my_longitude, _context);                 ///< my longitude in degrees (east +ve)
 
-  SAFEREAD(nearby_extract, _context);       ///< whether to display NEARBY calls in EXTRACT window
-  SAFEREAD(normalise_rate, _context);
-  SAFEREAD(not_country_mults, _context);
+  SAFEREAD(nearby_extract, _context);               ///< whether to display NEARBY calls in EXTRACT window
+  SAFEREAD(normalise_rate, _context);               ///< whether to display rates as per-hour
+  SAFEREAD(not_country_mults, _context);            ///< comma-separated list of countries that are explicitly NOT country mults
 
-  SAFEREAD(path, _context);
-  SAFEREAD(per_band_country_mult_factor, _context);
-  SAFEREAD(per_band_points, _context);
+  SAFEREAD(path, _context);                         ///< directories to search, in order
+  SAFEREAD(per_band_country_mult_factor, _context); ///< country mult factor structure for each band
+  SAFEREAD(per_band_points, _context);              ///< points structure for each band and mode
 
   const std::string points(const BAND b, const MODE m) const
     { SAFELOCK(_context);
@@ -401,73 +403,57 @@ public:
         return std::string();
     }
 
-#if 0
-  const std::string points(const BAND b, const MODE m) const
-    { SAFELOCK(_context);
+  SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
+  SAFEREAD(p3_snapshot_file, _context);             ///< base name of file for P3 snapshot
 
-//    std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;                  ///< points structure for each band and mode
-      const auto& pbb = _per_band_points[m];
+  SAFEREAD(quick_qsl_message, _context);            ///< hurried confirm at end of QSO
+  SAFEREAD(qsl_message, _context);                  ///< confirm at end of QSO
+  SAFEREAD(qso_multiple_bands, _context);           ///< whether OK to work station on another band
+  SAFEREAD(qso_multiple_modes, _context);           ///< whether OK to work station on another mode
+  SAFEREAD(qtcs, _context);                         ///< whether QTCs are enabled
+  SAFEREAD(qtc_double_space, _context);             ///< whether to leave a longer pause between elements of a QTC
+  SAFEREAD(qtc_filename, _context);                 ///< name of file where QTCs are stored
+  SAFEREAD(qtc_qrs, _context);                      ///< WPM decrease when sending QTC
+  SAFEREAD(qthx, _context);                         ///< allowed exchanges values as a function of country
 
-      if (_per_band_points.find(b) != _per_band_points.end())
-        return _per_band_points.at(b);
-      else
-        return std::string();
-    }
-#endif
+  SAFEREAD(rate_periods, _context);                     ///< periods (in minutes) over which rates should be calculated
+  SAFEREAD(rbn_beacons, _context);                      ///< whether to place RBN posts from beacons on the bandmap
+  SAFEREAD(rbn_port, _context);                         ///< port number on the RBN server
+  SAFEREAD(rbn_server, _context);                       ///< hostname or IP address of RBN server
+  SAFEREAD(rbn_threshold, _context);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
+  SAFEREAD(rbn_username, _context);                     ///< username to use on the RBN server
+  SAFEREAD(reject_colour, _context);                    ///< colour for calls that are dupes
+  SAFEREAD(remaining_callsign_mults_list, _context);    ///< callsign mults to display
+  SAFEREAD(remaining_country_mults_list, _context);     ///< country mults to display
+  SAFEREAD(rig1_baud, _context);                        ///< baud rate for rig
+  SAFEREAD(rig1_data_bits, _context);                   ///< number of data bits for rig
+  SAFEREAD(rig1_name, _context);                        ///< name of rig
+  SAFEREAD(rig1_port, _context);                        ///< port over which to communicate with rig
+  SAFEREAD(rig1_stop_bits, _context);                   ///< number of stop bits for rig
+  SAFEREAD(rig1_type, _context);                        ///< model name of rig
+  SAFEREAD(russian_filename, _context);                 ///< filename of russian location file (default = "russian-data")
 
-  SAFEREAD(ptt_delay, _context);
-  SAFEREAD(p3_snapshot_file, _context);
+  SAFEREAD(score_bands, _context);                      ///< which bands are going to be scored?
+  SAFEREAD(score_modes, _context);                      ///< which modes are going to be scored?
+  SAFEREAD(screen_snapshot_file, _context);             ///< base name of file for screenshot
 
-  SAFEREAD(qsl_message, _context);
-  SAFEREAD(qso_multiple_bands, _context);
-  SAFEREAD(qso_multiple_modes, _context);
-  SAFEREAD(qtcs, _context);
-  SAFEREAD(qtc_double_space, _context);
-  SAFEREAD(qtc_filename, _context);
-  SAFEREAD(qtc_qrs, _context);
-  SAFEREAD(qthx, _context);         ///< allowed exchanges values as a function of country
-  SAFEREAD(quick_qsl_message, _context);
+  const decltype(_sent_exchange) sent_exchange(const MODE m);   ///< names and values of sent exchange fields for mode <i>m</i>
 
-  SAFEREAD(rate_periods, _context);
-  SAFEREAD(rbn_beacons, _context);
-  SAFEREAD(rbn_port, _context);
-  SAFEREAD(rbn_server, _context);
-  SAFEREAD(rbn_threshold, _context);
-  SAFEREAD(rbn_username, _context);
-  SAFEREAD(reject_colour, _context);                   ///< colour for calls that are dupes
-  SAFEREAD(remaining_callsign_mults_list, _context);
-  SAFEREAD(remaining_country_mults_list, _context);
-  SAFEREAD(rig1_baud, _context);
-  SAFEREAD(rig1_data_bits, _context);
-  SAFEREAD(rig1_port, _context);
-  SAFEREAD(rig1_stop_bits, _context);
-  SAFEREAD(rig1_type, _context);
-  SAFEREAD(russian_filename, _context);
+  SAFEREAD(sent_exchange_cw, _context);                 ///< names and values of sent exchange fields, CW
+  SAFEREAD(sent_exchange_ssb, _context);                ///< names and values of sent exchange fields, SSB
+  SAFEREAD(shift_delta, _context);                      ///< how many Hertz to QSY per poll of the shift key
+  SAFEREAD(shift_poll, _context);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
+  SAFEREAD(start_band, _context);                       ///< on what band do we start?
+  SAFEREAD(start_mode, _context);                       ///< on which mode do we start?
+  SAFEREAD(static_windows, _context);                   ///< size, position and content information for each static window
+  SAFEREAD(sync_keyer, _context);                       ///< whether to synchronise the rig keyer speed with the computer
 
-//  typedef std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > STATIC_WINDOWS;
+  SAFEREAD(test, _context);                             ///< whether to put rig in TEST mode
+  SAFEREAD(thousands_separator, _context);              ///< character used as thousands separator in numbers
 
-  SAFEREAD(score_bands, _context);
-  SAFEREAD(score_modes, _context);
-  SAFEREAD(screen_snapshot_file, _context);
-//  SAFEREAD(sent_exchange, _context);
+  SAFEREAD(worked_mults_colour, _context);              ///< colour of worked mults in the mult windows
 
-  const decltype(_sent_exchange) sent_exchange(const MODE m);
-
-  SAFEREAD(sent_exchange_cw, _context);
-  SAFEREAD(sent_exchange_ssb, _context);
-  SAFEREAD(shift_delta, _context);
-  SAFEREAD(shift_poll, _context);
-  SAFEREAD(start_band, _context);
-  SAFEREAD(start_mode, _context);
-  SAFEREAD(static_windows, _context);
-  SAFEREAD(sync_keyer, _context);
-
-  SAFEREAD(test, _context);
-  SAFEREAD(thousands_separator, _context);  ///< character used as thousands separator in numbers
-
-  SAFEREAD(worked_mults_colour, _context);
-
-/*! \brief              linformation pertaining to a particular window
+/*! \brief              Information pertaining to a particular window
     \param      name    name of window
     \return             location, size and colour information
 */
@@ -477,8 +463,8 @@ public:
   const std::string message(const int symbol);    // we use the KeySymbol as the integer, although other I/O implementations could use something else
 
 // CQ messages
-  SAFEREAD(message_cq_1, _context);
-  SAFEREAD(message_cq_2, _context);
+//  SAFEREAD(message_cq_1, _context);
+//  SAFEREAD(message_cq_2, _context);
 
 /// vector of the names of bands (e.g., "160", "80", etc.)
   inline const std::vector<std::string> band_names(void) const
@@ -527,6 +513,10 @@ public:
   const std::vector<std::string> sent_exchange_names(void) const;
   const std::vector<std::string> sent_exchange_cw_names(void) const;
   const std::vector<std::string> sent_exchange_ssb_names(void) const;
+
+// swap QSL and QUICK QSL messages
+  inline void swap_qsl_messages(void)
+    { swap(_qsl_message, _quick_qsl_message); }
 };
 
 #endif    // DRLOG_CONTEXT_H

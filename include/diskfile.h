@@ -1,4 +1,4 @@
-// $Id: diskfile.h 96 2015-02-23 00:02:56Z  $
+// $Id: diskfile.h 98 2015-03-07 15:30:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,7 +25,7 @@
     \param  filename    name of file
     \param  str         string to be appended
 
-    Creates <i.filename</i> if it does not exist
+    Creates <i>filename</i> if it does not exist
 */
 inline void append_to_file(const std::string& filename, const std::string& str)
   { std::ofstream(filename, std::ios_base::app) << str; }
@@ -44,7 +44,7 @@ inline const bool file_exists(const std::string& filename)
     \param  filename    name of file
     \return             length of the file <i>filename</i> in bytes
 
-    Returns 0 if the file does not exist or is not readable.
+    Returns <i>false</i> if the file does not exist or it exists and is not readable.
 */
 const unsigned long file_size(const std::string& filename);
 
@@ -52,7 +52,7 @@ const unsigned long file_size(const std::string& filename);
     \param  filename    name of file
     \return             whether the file <i>filename</i> is empty
 
-    Returns <i>true</i> if the file does not exist or is not readable.
+    Returns <i>true</i> if the file does not exist or it exists and is not readable.
 */
 inline const bool file_empty(const std::string& filename)
   { return (file_size(filename) == 0); }

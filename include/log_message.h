@@ -1,4 +1,4 @@
-// $Id: log_message.h 88 2014-12-27 15:19:42Z  $
+// $Id: log_message.h 98 2015-03-07 15:30:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,13 @@ protected:
 
 public:
 
-/// constructor from a file name
+/*! \brief  Constructor
+    \param  filename    name of file to which output is to be written
+    \param  error_name  name of file to which errors in message_stream operation are to be written
+
+    The file <i>error_name</i> is used if a failure is detected when writing to <i>filename</i>.
+    An extant file called <i>filename</i> is renamed, not overwritten
+*/
 message_stream(const std::string& filename, const std::string& error_name = "drlog-errors");
 
 /// message_stream << <generic object>
