@@ -35,8 +35,7 @@ extern ofstream ost;
 
 // ---------------------------------  tcp_socket  -------------------------------
 
-/*! \brief close the socket
-*/
+/// close the socket
 void tcp_socket::_close_the_socket(void)
 { if (_sock)
   { SAFELOCK(_tcp_socket);
@@ -47,7 +46,7 @@ void tcp_socket::_close_the_socket(void)
   }
 }
 
-// default constructor
+/// default constructor
 tcp_socket::tcp_socket(void)  :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
   _preexisting_socket(false),
@@ -77,10 +76,10 @@ tcp_socket::tcp_socket(void)  :
   }
 }
 
-/*! \brief  Encapsulate a pre-existing socket
-  \param  sock_p  Pointer to socket
+/*! \brief          Encapsulate a pre-existing socket
+    \param  sock_p  Pointer to socket
   
-  Acts as default constructor if passed pointer is NULL
+    Acts as default constructor if passed pointer is NULL
 */
 tcp_socket::tcp_socket(SOCKET* sp) :
   _destination_is_set(false),
@@ -117,8 +116,8 @@ tcp_socket::tcp_socket(SOCKET* sp) :
   }
 }
 
-/*! \brief  Encapsulate a pre-existing socket
-  \param  sock  Socket
+/*! \brief          Encapsulate a pre-existing socket
+    \param  sp      socket
 */
 tcp_socket::tcp_socket(SOCKET sp) :
   _destination_is_set(false),
@@ -132,7 +131,6 @@ tcp_socket::tcp_socket(SOCKET sp) :
 #include <chrono>
 #include <thread>
 using namespace   chrono;        // std::chrono
-//using namespace   placeholders;  // std::placeholders
 using namespace   this_thread;   // std::this_thread
 void alert(const string& msg);
 
@@ -186,6 +184,8 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 // resolve the name
             const string dotted_decimal = name_to_dotted_decimal(destination_ip_address_or_fqdn);
             
+            ost << "name " << destination_ip_address_or_fqdn << " resolved to: " << dotted_decimal << endl;
+
             destination(dotted_decimal, destination_port, TIMEOUT );
           }
 
@@ -767,6 +767,8 @@ string name_to_dotted_decimal(const string& fqdn)
   void* vp;
   
   { // SAFELOCK(gethostbyname);                    // reinstate if we need a thread-safe lookup
+
+#if 0
     vp = gethostbyname(fqdn.c_str());
 
     if (vp == NULL)
@@ -777,6 +779,35 @@ string name_to_dotted_decimal(const string& fqdn)
     const uint32_t kdc_addr_long = htonl(*(uint32_t*)(*h_addr_list));    // host order
 
     return convert_to_dotted_decimal(kdc_addr_long);
+#endif
+
+//    struct hostent *ret, char *buf, size_t buflen,
+//    struct hostent **result, int *h_errnop);
+
+    const int BUF_LEN = 2048;
+
+    struct hostent ret;
+    char buf[BUF_LEN];
+    size_t buflen(BUF_LEN);
+    struct hostent* result;
+    int h_errnop;
+
+    const int status = gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop);
+
+    ost << "name_to_dotted_decimal status = " << status << endl;
+
+    if ( (status == 0) and (result != nullptr) )    // success; the second test should be redundant
+    { char** h_addr_list = result->h_addr_list;
+      const uint32_t addr_long = htonl(*(uint32_t*)(*h_addr_list));    // host order
+
+      return convert_to_dotted_decimal(addr_long);
+    }
+    else
+    { ost << "Error return";
+
+      throw(tcp_socket_error(TCP_SOCKET_UNABLE_TO_RESOLVE, (string)"Unable to resolve name: " + fqdn));
+    }
+
   } 
 }
 

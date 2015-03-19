@@ -49,14 +49,17 @@ const int TCP_SOCKET_UNKNOWN_DESTINATION  = -1,     ///< Destination not set
           TCP_SOCKET_ERROR_IN_WRITE       = -2,     ///< Error received from write()
           TCP_SOCKET_ERROR_IN_RECV        = -3,     ///< Error received from recv()
           TCP_SOCKET_UNABLE_TO_SET_OPTION = -4,     ///< Error setting a socket option
-          TCP_SOCKET_UNABLE_TO_CLOSE      = -5;     ///< Error closing socket
+          TCP_SOCKET_UNABLE_TO_CLOSE      = -5,     ///< Error closing socket
+          TCP_SOCKET_UNABLE_TO_RESOLVE    = -6;     ///< Error resolving destination
 
 /// TCP socket error messages
-const std::string tcp_socket_error_string[5] = { "",
+const std::string tcp_socket_error_string[7] = { "",
                                                  "Destination not set",
                                                  "Error return from write()",
                                                  "Error return from recv()",
-                                                 "Error return from setsockopt()"
+                                                 "Error return from setsockopt()",
+                                                 "Error closing socket",
+                                                 "Error resolving destination"
                                                };
 
 const int SOCKET_ERROR = -1;
