@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 99 2015-03-14 16:36:48Z  $
+// $Id: drlog.cpp 100 2015-03-22 20:59:38Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1879,7 +1879,7 @@ void* process_rbn_info(void* vp)
       unprocessed_input = substring(unprocessed_input, posn + 2);  // delete the line (including the CRLF) from the buffer
 
       if (!line.empty())
-      { const bool is_beacon = contains(line, " BCN ");
+      { const bool is_beacon = contains(line, " BCN ") or contains(line, "/B ");
 
         if (!is_beacon or rbn_beacons)
         { last_processed_line = line;
@@ -1934,8 +1934,9 @@ void* process_rbn_info(void* vp)
               be.calculate_mult_status(rules, statistics);
 
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
+              const bool is_me = (be.callsign() == context.my_call());
 
-              if (!is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult()  or be.is_needed_exchange_mult()))            // if it's a mult and not recently posted...
+              if (!is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
               { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
                 { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
                   recent_mult_calls.push_back(target);
@@ -1946,13 +1947,21 @@ void* process_rbn_info(void* vp)
                   cluster_mult_win < CURSOR_TOP_LEFT < WINDOW_SCROLL_DOWN;
 
 // highlight it if it's on our current band
-                  if (dx_band == cur_band)
+                  if ( (dx_band == cur_band) or is_me)
                     cluster_mult_win < WINDOW_HIGHLIGHT;
+
+                  const int bg_colour = cluster_mult_win.bg();
+
+                  if (is_me)
+                    cluster_mult_win.bg(COLOUR_YELLOW);
 
                   const string frequency_str = pad_string(post.frequency_str(), 7);
                   cluster_mult_win < pad_string(frequency_str + " " + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
 
-                  if (dx_band == cur_band)
+                  if (is_me)
+                    cluster_mult_win.bg(bg_colour);
+
+                  if ( (dx_band == cur_band) or is_me)
                     cluster_mult_win < WINDOW_NORMAL;    // removed refresh
                 }
               }

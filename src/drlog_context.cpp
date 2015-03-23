@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 97 2015-02-28 17:27:29Z  $
+// $Id: drlog_context.cpp 100 2015-03-22 20:59:38Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -791,7 +791,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "RULES"))
       _process_configuration_file(rhs);
 
-// RULES
+// RUSSIAN DATA
     if (starts_with(testline, "RUSSIAN DATA"))
       _russian_filename = rhs;
 

@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 61 2014-05-03 16:34:34Z  $
+// $Id: socket_support.cpp 100 2015-03-22 20:59:38Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
