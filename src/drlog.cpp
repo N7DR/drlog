@@ -4185,7 +4185,11 @@ ost << "processing LOG input; event string: " << e.str() << endl;
 //ost << "length of log is now: " << logbk.size() << endl;
 //ost << hhmmss() << " about to rebuild history" << endl;
 
+        ost << "Before rebuild, n worked exchange mults = " << statistics.n_worked_exchange_mults(rules) << endl;
+
         rebuild_history(logbk, rules, statistics, q_history, rate);
+
+        ost << "After rebuild, n worked exchange mults = " << statistics.n_worked_exchange_mults(rules) << endl;
 
 //ost << hhmmss() << " finished rebuilding history" << endl;
 //ost << "Adding new QSO(s)" << endl;

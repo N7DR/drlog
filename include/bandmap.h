@@ -45,7 +45,7 @@ extern bandmap_filter_type BMF;
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
-    \return         Printable version of <i>bes</i>
+    \return         printable version of <i>bes</i>
 */
 const std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 
@@ -419,9 +419,9 @@ public:
   inline const bool valid(void) const
     { return !empty(); }
 
-/*! \brief  Does this object match another bandmap_entry?
+/*! \brief      Does this object match another bandmap_entry?
     \param  be  target bandmap entry
-    \return whether frequency_str or callsign match
+    \return     whether frequency_str or callsign match
 
     Used in += function.
 */
@@ -431,9 +431,9 @@ public:
   inline const time_t time_since_inserted(void) const
     { return (::time(NULL) - _time); }
 
-/*! \brief  Should this bandmap_entry be removed?
-    \param  now current time
-    \return whether this bandmap_entry has expired
+/*! \brief          Should this bandmap_entry be removed?
+    \param  now     current time
+    \return         whether this bandmap_entry has expired
 */
   inline const bool should_prune(const time_t now = ::time(NULL)) const
     { return ( (_expiration_time < now) and (_callsign != MY_MARKER)); }
@@ -582,6 +582,7 @@ public:
 /// default constructor
   bandmap(void);
 
+/// get the current bandmap filter
   inline const bandmap_filter_type bandmap_filter(void)
   { SAFELOCK (_bandmap);
     return *(_filter_p);
@@ -613,7 +614,9 @@ public:
 
 /// set the colours to use as entries age
   inline void fade_colours(const std::vector<int> fc)
-    { _fade_colours = fc; }
+    { SAFELOCK(_bandmap);
+      _fade_colours = fc;
+    }
 
 /// the colour used for recent entries
   inline const int recent_colour(void)

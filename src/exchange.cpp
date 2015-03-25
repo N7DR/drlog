@@ -848,8 +848,15 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   { static const set<string> countries { "R1FJ", "UA", "UA2", "UA9" };
     string rv;
 
-    if (!drm_line.empty() and (countries < location_db.canonical_prefix(callsign)))
-    { rv = drm_line.qth();
+//    ost << "RDA/RD2 lookup for " << callsign << endl;
+
+    if (!drm_line.empty() and ( (countries < location_db.canonical_prefix(callsign)) or starts_with(callsign, "RI1AN")) )
+    { //ost << "looking in database" << endl;
+
+      rv = drm_line.qth();
+
+      if (field_name == "RD2" and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
+        rv = substring(rv, 0, 2);
 
       if (!rv.empty())
       { rv = rules.canonical_value(field_name, rv);
@@ -1364,12 +1371,12 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
     \return             whether values were read
 */
 const bool EFT::read_values_file(const vector<string>& path, const string& filename)
-{ ost << "EFT reading values file: " << filename << endl;
+{ //ost << "EFT reading values file: " << filename << endl;
 
   try
   { const vector<string> lines = to_lines(read_file(path, filename + ".values"));
 
-    ost << "Read values file OK: " << lines.size() << " lines" << endl;
+    //ost << "Read values file OK: " << lines.size() << " lines" << endl;
 
     for (const auto& line : lines)
     { set<string> equivalent_values;    // includes the canonical

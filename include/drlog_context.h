@@ -490,31 +490,28 @@ public:
       return mode_names().size();
     }
 
-/// a CQ memory
-//  inline const std::string cq_memory(const unsigned int n) const
-//    { SAFELOCK(_context);
-//      return (n < _cq_memory.size() ? _cq_memory[n] : std::string()); }
-
-
-
-/*! \brief              all the windows whose name contains a particular substring
+/*! \brief              All the windows whose name contains a particular substring
     \param      subst   substring for which to search
     \return             all the window names that include <i>substr</i>
 */
   const std::vector<std::string> window_name_contains(const std::string& substr) const;
 
-/*! \brief              is a particular frequency within any marked range?
+/*! \brief              Is a particular frequency within any marked range?
     \param      m       mode
     \param      f       frequency to test
     \return             whether <i>f</i> is in any marked range for the mode <i>m</i>
 */
   const bool mark_frequency(const MODE, const frequency& f);
 
+/*! \brief              Get all the names in the sent exchange
+    \return             the names of all the fields in the sent exchange
+*/
   const std::vector<std::string> sent_exchange_names(void) const;
+
   const std::vector<std::string> sent_exchange_cw_names(void) const;
   const std::vector<std::string> sent_exchange_ssb_names(void) const;
 
-// swap QSL and QUICK QSL messages
+/// swap QSL and QUICK QSL messages
   inline void swap_qsl_messages(void)
     { swap(_qsl_message, _quick_qsl_message); }
 };

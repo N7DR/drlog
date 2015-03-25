@@ -441,24 +441,19 @@ void drlog_context::_process_configuration_file(const string& filename)
       _country_mults_per_mode = is_true;
 
 // CQ AUTO LOCK
-    if (starts_with(testline, "CQ AUTO LOCK"))
+    if (LHS == "CQ AUTO LOCK")
       _cq_auto_lock = is_true;
 
 // CQ AUTO RIT
-    if (starts_with(testline, "CQ AUTO RIT"))
+    if (LHS == "CQ AUTO RIT")
       _cq_auto_rit = is_true;
 
-// CQ MEMORY n (wrt 1)
-//    for (unsigned int memory = 1; memory <= CQ_MEMORY_MESSAGES; ++memory)
-//      if (starts_with(testline, "CQ MEMORY " + to_string(memory)))
-//        _cq_memory[memory] = RHS;
-
 // CW SPEED
-    if (starts_with(testline, "CW SPEED"))
+    if (LHS == "CW SPEED")
       _cw_speed = from_string<unsigned int>(RHS);
 
 // DECIMAL POINT
-    if (starts_with(testline, "DECIMAL POINT"))
+    if (LHS == "DECIMAL POINT")
       _decimal_point = rhs;
 
 // DO NOT SHOW
@@ -1540,7 +1535,3 @@ const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const
   return rv;
 }
 
-// swap QSL and QUICK QSL messages
-//void drlog_context::swap_qsl_messages(void)
-//{ swap(_qsl_message, _quick_qsl_message);
-//}

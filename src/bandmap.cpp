@@ -310,11 +310,11 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
         \brief A bandmap
 */
 
-/*!  \brief                         Return the callsign closest to a particular frequency, if it is within the guard band
-     \param bme                     band map entries
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        callsign of a station within the guard band
+/*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
+     \param bme                         band map entries
+     \param target_frequency_in_khz     the target frequency, in kHz
+     \param guard_band_in_hz            how far from the target to search, in Hz
+     \return                            callsign of a station within the guard band
 
      Returns the nearest station within the guard band, or the null string if no call is found.
 */
@@ -526,7 +526,6 @@ void bandmap::operator+=(const bandmap_entry& be)
 
               old_be.add_poster(poster);
 
-///                ost << "added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
               (*this) -= callsign;
               _insert(old_be);
             }
@@ -542,8 +541,6 @@ void bandmap::operator+=(const bandmap_entry& be)
             { const string& poster = *(be.posters().cbegin());
 
               old_be.add_poster(poster);
-
-//              ost << "new expiration; added poster " << poster << " to " << callsign << "; number of posters = " << old_be.n_posters() << endl;
 
               old_be.expiration_time(be.expiration_time());
 
@@ -612,7 +609,6 @@ void bandmap::prune(void)
 const bandmap_entry bandmap::operator[](const string& str)
 { SAFELOCK(_bandmap);
 
-//  const auto cit = find_if(_entries.cbegin(), _entries.cend(), [=] (const bandmap_entry& be) { return (be.callsign() == str); });
   const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); });
 
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
@@ -627,7 +623,6 @@ const bandmap_entry bandmap::operator[](const string& str)
 const bandmap_entry bandmap::substr(const string& str)
 { SAFELOCK(_bandmap);
 
-//  const auto cit = find_if(_entries.cbegin(), _entries.cend(), [=] (const bandmap_entry& be) { return be.is_substr(str); });
   const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return be.is_substr(str); });
 
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
@@ -727,8 +722,6 @@ void bandmap::filter_enabled(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->enabled(torf);
-//    _filtered_entries_dirty = true;
-//    _rbn_threshold_and_filtered_entries_dirty = true;
     _dirty_entries();
   }
 }
