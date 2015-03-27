@@ -14,13 +14,16 @@
     a much larger codebase from IPfonix, Inc. for socket-related functions.
 */
 
+#include "log_message.h"
 #include "pthread_support.h"
 #include "socket_support.h"
 #include "string_functions.h"
 
+#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <thread>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -30,8 +33,12 @@
 #include <unistd.h>
 
 using namespace std;
+using namespace   chrono;        // std::chrono
+using namespace   this_thread;   // std::this_thread
 
-extern ofstream ost;
+//extern ofstream ost;
+extern message_stream ost;              ///< for debugging and logging
+extern void alert(const string& msg);   ///< function to alert the user
 
 // ---------------------------------  tcp_socket  -------------------------------
 
@@ -67,7 +74,6 @@ tcp_socket::tcp_socket(void)  :
 
     if (status)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER");    
-
   }
 
   catch (...)
@@ -128,16 +134,10 @@ tcp_socket::tcp_socket(SOCKET sp) :
 { 
 }
 
-#include <chrono>
-#include <thread>
-using namespace   chrono;        // std::chrono
-using namespace   this_thread;   // std::this_thread
-void alert(const string& msg);
-
-/*! \brief  Construct and initialise with useful values
-  \param  destination_ip_address  Destination dotted decimal address or FQDN
-  \param  destination_port  Destination port
-  \param  source_ip_address Address to which the socket is to be bound
+/*! \brief                          Construct and initialise with useful values
+    \param  destination_ip_address  destination dotted decimal address or FQDN
+    \param  destination_port        destination port
+    \param  source_ip_address       address to which the socket is to be bound
 */
 tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn, 
                        const unsigned int destination_port, 
@@ -150,7 +150,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 { 
   try
   { 
-    ost << "Inside tcp_socket() constructor" << endl;
+//    ost << "Inside tcp_socket() constructor" << endl;
 
 // enable re-use
     static const int on = 1;
@@ -174,7 +174,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
       int n_timeouts = 0;
 
       while (!connected)
-      { ost << "about to try to connect to " << destination_ip_address_or_fqdn << ":" << destination_port << endl;
+      { //ost << "about to try to connect to " << destination_ip_address_or_fqdn << ":" << destination_port << endl;
 
         try
         { if (is_legal_ipv4_address(destination_ip_address_or_fqdn))
@@ -184,7 +184,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 // resolve the name
             const string dotted_decimal = name_to_dotted_decimal(destination_ip_address_or_fqdn);
             
-            ost << "name " << destination_ip_address_or_fqdn << " resolved to: " << dotted_decimal << endl;
+            //ost << "name " << destination_ip_address_or_fqdn << " resolved to: " << dotted_decimal << endl;
 
             destination(dotted_decimal, destination_port, TIMEOUT );
           }
@@ -195,7 +195,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
         catch (const socket_support_error& e)
         { ost << "caught socket_support_error exception" << endl;
           ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
-//          n_timeouts++;
+
           if (n_timeouts++ % 10 == 0)
             alert("Error setting socket destination: " + destination_ip_address_or_fqdn +":" + to_string(destination_port));
           ost << "sleeping for 10 seconds" << endl;
@@ -203,7 +203,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
         }
       }
 
-      ost << "tcp_socket connected, constructed OK" << endl;
+//      ost << "tcp_socket connected, constructed OK" << endl;
 
     }
   }
@@ -233,8 +233,9 @@ tcp_socket::~tcp_socket(void)
     _close_the_socket();
 }
 
-/*!     \brief  New socket
-        Switch to using a different underlying socket
+/*! \brief  New socket
+
+    Switch to using a different underlying socket
 */
 void tcp_socket::new_socket(void)
 { try
@@ -261,7 +262,9 @@ void tcp_socket::new_socket(void)
   }
 }
 
-// bind the socket
+/*! \brief                  Bind the socket to a local address
+    \param  local_address   address to which the socket is to be bound
+*/
 void tcp_socket::bind(const sockaddr_storage& local_address)
 { SAFELOCK(_tcp_socket);
   const int status = ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address));
@@ -588,9 +591,9 @@ void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, c
 // ----------------------------------  socket_error_name  -------------------------------
 
 // get the name of a socket error
-string socket_error_name(const int error_number)
-{ return strerror(error_number);  
-}
+//string socket_error_name(const int error_number)
+//{ return strerror(error_number);
+//}
 
 // read a message from a socket
 string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply)

@@ -694,7 +694,7 @@ int main(int argc, char** argv)
       const bool band_matches = (current_band == static_cast<BAND>(rf));
 
       if (!band_matches or !mode_matches)
-      { ost << "mismatch; setting frequency" << endl;
+      { //ost << "mismatch; setting frequency" << endl;
 
         rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
 
@@ -1899,7 +1899,7 @@ void* process_rbn_info(void* vp)
 
               bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
 
-              be.freq(post.freq());
+              be.freq(post.freq());    // also sets mode
               be.callsign(dx_callsign);
               be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
@@ -1935,8 +1935,9 @@ void* process_rbn_info(void* vp)
 
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
+              const bool is_interesting_mode = (rules.score_modes() < be.mode());
 
-              if (!is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
+              if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
               { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
                 { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
                   recent_mult_calls.push_back(target);
@@ -1967,12 +1968,14 @@ void* process_rbn_info(void* vp)
               }
 
 // add the post to the correct bandmap
-              bandmap& bandmap_this_band = bandmaps[dx_band];
+              if (is_interesting_mode)
+              { bandmap& bandmap_this_band = bandmaps[dx_band];
 
-              bandmap_this_band += be;
+                bandmap_this_band += be;
 
 // prepare to display the bandmap if we just made a change for this band
-              changed_bands.insert(dx_band);
+                changed_bands.insert(dx_band);
+              }
             }
             else
               { //ost << "not a contest posting" << endl;
@@ -2134,7 +2137,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
   // keyboard_queue::process_events() has already filtered out uninteresting events
 
-  ost << "processing CALL input; event string: " << e.str() << endl;
+//  ost << "processing CALL input; event string: " << e.str() << endl;
 //  ost << "event keysym: " << hex << e.symbol() << dec << endl;
 
   bool processed = win.common_processing(e);

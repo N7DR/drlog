@@ -155,10 +155,10 @@ void keyboard_queue::process_events(void)
     else
       XWindowEvent(_display_p, _window_id, KeyPressMask | KeyReleaseMask, &event);
 
-    ost << "Event: keycode = " << event.xkey.keycode << endl;
+//    ost << "Event: keycode = " << event.xkey.keycode << endl;
 
     if ((event.type == KeyPress) or (event.type == KeyRelease))    // should always be true
-    { ost << "KeyPress or KeyRelease" << endl;
+    { //ost << "KeyPress or KeyRelease" << endl;
 
       keyboard_event ke;
 
@@ -170,14 +170,14 @@ void keyboard_queue::process_events(void)
 // get the related KeySym and string representation
       const int n_chars = XLookupString((XKeyEvent*)(&event), buf, BUF_SIZE, &ks, NULL);
 
-      ost << "n_chars = " << n_chars << endl;
+      //ost << "n_chars = " << n_chars << endl;
 
       buf[n_chars] = static_cast<char>(0);
 
       ke.symbol(ks);
       ke.str(string(buf));
 
-      ost << "event string seems to be: " << ke.str() << endl;
+      //ost << "event string seems to be: " << ke.str() << endl;
 
 // for drlog we are interested only in:
 //   1. KeyPress
@@ -189,7 +189,7 @@ void keyboard_queue::process_events(void)
       interesting_event |= (event.type == KeyRelease and ((ks == XK_Shift_L) or (ks == XK_Shift_R)));
 
       if (interesting_event)
-      { ost << "event seems to be interesting" << endl;
+      { //ost << "event seems to be interesting" << endl;
 
         SAFELOCK(_keyboard);
 

@@ -31,6 +31,8 @@ pt_mutex rules_mutex;                   ///< mutex for the contest_rules object
 extern const set<string> CONTINENT_SET; ///< the abbreviations for the continents
 extern message_stream ost;              ///< for debugging and logging
 
+typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
+
 // -------------------------  exchange_field_values  ---------------------------
 
 /*!     \class exchange_field_values
@@ -310,8 +312,6 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
          for (auto& choice_field_name : choice_fields)
            full_name += choice_field_name + "+";
 
-//         ost << "CHOICE field: " << full_name << endl;
-
          exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
 
          this_field.choice(choices);
@@ -429,28 +429,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     After calling this function, the object is ready for use
 */
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
-{
-//  ost << "in contest_rules::_init()" << endl;
-
-
-//  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
-
-//  for (const auto& pMmsvef : _received_exchange)
-//  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
-//
-//    const auto& msvef = pMmsvef.second;
-//    for (const auto& psvef : msvef)
-//    { ost << "prefix = " << psvef.first;
-//
-//      for (const auto& ef : psvef.second)
-//      { ost << endl << ef.name() << "  ";
-//      }
-//
-//      ost << endl;
-//    }
-//  }
-
-  const vector<string> path = context.path();
+{ const vector<string> path = context.path();
 
 // personal information, taken from context
   _my_continent = context.my_continent();
@@ -539,24 +518,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_used = !_exchange_mults.empty();
 
 // build expanded version of _received_exchange
-//  ost << "about to build expanded exchange" << endl;
-//  ost << "length of _received_exchange = " << _received_exchange.size() << endl;
-
-//  for (const auto& pMmsvef : _received_exchange)
-//  { ost << "MODE = " << MODE_NAME[pMmsvef.first] << endl;
-//
-//    const auto& msvef = pMmsvef.second;
-//    for (const auto& psvef : msvef)
-//    { ost << "prefix = " << psvef.first;
-//
-//      for (const auto& ef : psvef.second)
-//      { ost << endl << ef.name() << "  ";
-//      }
-//
-//      ost << endl;
-//    }
-//  }
-
   for (const auto& m : _permitted_modes)
   { map<string, vector<exchange_field>> expanded_exch;
     auto& unexpanded_exch = _received_exchange.at(m);
@@ -567,9 +528,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       vector<exchange_field> expanded_vef;
 
       for (const auto& field : vef)
-      { //ost << "field: " << field.name() << "; is_choice: " << field.is_choice() << endl;
-
-        if (!field.is_choice())
+      { if (!field.is_choice())
           expanded_vef.push_back(field);
         else
         { const vector<exchange_field> vec = field.expand();
@@ -587,9 +546,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { const vector<exchange_field>& vef = psvef.second;
 
       for (const auto& ef : vef)
-      { _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
-//        ost << "Added exchange_field_eft for field " << ef.name() << endl;  // this happens once for each field name; not mode-dependent (except that RST and RS can both appear)
-      }
+        _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
     }
   }
 
@@ -712,7 +669,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       }
 
       catch (...)
-      { ost << "Failed to read file " << field_name << ".values" << endl;
+      { // ost << "Failed to read file " << field_name << ".values" << endl;
       }
     }
 
@@ -1009,7 +966,7 @@ const set<string> contest_rules::exch_permitted_values(const string& field_name)
     Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>
 */
 const string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
-{ ost << "attempting to get canonical value for field " << field_name << " with value " << actual_value << endl;
+{ //ost << "attempting to get canonical value for field " << field_name << " with value " << actual_value << endl;
 
   set<string> ss = exch_permitted_values(field_name);
 

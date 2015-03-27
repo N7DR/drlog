@@ -781,17 +781,17 @@ void log_extract::display(void)
 
 //  ost << "number of QSOS = " << vec.size() << endl;
 
-  ost << "vec size = " << vec.size() << ", _win_size = " << _win_size << endl;
+//  ost << "vec size = " << vec.size() << ", _win_size = " << _win_size << endl;
 
   if (vec.size() < _win_size)
-  { ost << "clearing window" << endl;
+  { //ost << "clearing window" << endl;
     _win < WINDOW_CLEAR;
   }
 
   if (!vec.empty())
   { const size_t n_to_display = min(vec.size(), _win_size);
 
-    ost << "n_to_display = " << n_to_display << endl;
+    //ost << "n_to_display = " << n_to_display << endl;
 
     for (size_t n = 0; n < n_to_display; ++n)
     { const size_t index = vec.size() - 1 - n;

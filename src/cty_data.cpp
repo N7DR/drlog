@@ -117,7 +117,6 @@ cty_record::cty_record(const string& record)
 
 // remove the '=' from all the the alternative calls
   FOR_ALL(alt_callsigns, [] (string& alt_callsign) { alt_callsign = remove_char(alt_callsign, '='); } );
-//  for_each(alt_callsigns.begin(), alt_callsigns.end(), [] (string& alt_callsign) { alt_callsign = remove_char(alt_callsign, '='); } );
 
 // save the alternative info; also modify the zone info now, since it will be faster later to retrieve it
 // directly from here than to check for zero here and then retrieve from the main record
@@ -243,7 +242,6 @@ cty_data::cty_data(const string& filename)
 // split into records
   const vector<string> records = split_string(entire_file, ";");
   
-//  for_each(records.cbegin(), records.cend(), [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
 
@@ -256,7 +254,6 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 // split into records
   const vector<string> records = split_string(entire_file, ";");
 
-//  for_each(records.cbegin(), records.cend(), [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
 
@@ -421,8 +418,6 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
       { const cty_record& rec = cty[n_country];
         const map<string, alternative_country_info>& alt_prefixes = rec.alt_prefixes();
         const bool country_is_waedc_only = rec.waedc_country_only();
-        
-        //cout << "Country " << rec.canonical_prefix() << " has " << alt_prefixes.size() << " alternative prefixes" << endl;
         
         for (map<string, alternative_country_info>::const_iterator cit = alt_prefixes.cbegin(); cit != alt_prefixes.cend(); ++cit)
         { const string& prefix = cit->first;
@@ -1039,8 +1034,8 @@ const set<string> location_database::countries(const string& cont_target)
 const string location_database::region_abbreviation(const string& callpart)
 { SAFELOCK(_location_database);
 
-  const auto i = info(callpart);
-        ost << "info(callpart) = " << i << std::endl;
+ // const auto i = info(callpart);
+ //       ost << "info(callpart) = " << i << std::endl;
 
   return info(callpart).region_abbreviation();
 }

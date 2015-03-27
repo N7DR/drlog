@@ -122,10 +122,11 @@ public:
 class alternative_country_info
 {
 protected:
+
   std::string  _identifier;             ///< the alternative prefix or callsign
+  std::string  _country;                ///< canonical country prefix
   unsigned int _cq_zone;                ///< alternative CQ zone
   unsigned int _itu_zone;               ///< alternative ITU zone
-  std::string  _country;                ///< canonical country prefix
 
 public:
 
@@ -143,9 +144,9 @@ public:
     { }
 
   READ(identifier);            ///< the alternative prefix or callsign
+  READ(country);               ///< canonical country prefix
   READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
   READ_AND_WRITE(itu_zone);    ///< alternative ITU zone
-  READ(country);               ///< canonical country prefix
 };
 
 /// ostream << alternative_country_info
@@ -167,20 +168,19 @@ std::ostream& operator<<(std::ostream& ost, const alternative_country_info& aci)
 class cty_record
 {
 protected:
-  std::string   _country_name;          ///< official name of the country
-  unsigned int  _cq_zone;               ///< CQ zone
-  unsigned int  _itu_zone;              ///< ITU zone
-  std::string   _continent;             ///< two-letter abbreviation for continent
-  float         _latitude;              ///< latitude in degrees (+ve north)
-  float         _longitude;             ///< longitude in degrees (+ve west)
-  int           _utc_offset;            ///< local-time offset from UTC, in minutes
-  std::string   _prefix;                ///< official DXCC prefix, in upper case
 
-  bool          _waedc_country_only;    ///< Is this only a country in the WAEDC (DARC) list?
+  std::map<std::string, alternative_country_info>   _alt_callsigns;         ///< alternative callsigns used by this country
+  std::map<std::string, alternative_country_info>   _alt_prefixes;          ///< alternative prefixes used by this country
+  std::string                                       _continent;             ///< two-letter abbreviation for continent
+  std::string                                       _country_name;          ///< official name of the country
+  unsigned int                                      _cq_zone;               ///< CQ zone
+  unsigned int                                      _itu_zone;              ///< ITU zone
+  float                                             _latitude;              ///< latitude in degrees (+ve north)
+  float                                             _longitude;             ///< longitude in degrees (+ve west)
+  std::string                                       _prefix;                ///< official DXCC prefix, in upper case
+  int                                               _utc_offset;            ///< local-time offset from UTC, in minutes
+  bool                                              _waedc_country_only;    ///< Is this only a country in the WAEDC (DARC) list?
 
-  std::map<std::string, alternative_country_info> _alt_callsigns;  ///< alternative callsigns used by this country
-  std::map<std::string, alternative_country_info> _alt_prefixes;   ///< alternative prefixes used by this country
-   
 public:
   
 /*! \brief  construct from a string
@@ -196,17 +196,17 @@ public:
     { }
 
 /// RO access
-  READ(waedc_country_only);     ///< Is this only a country in the WAEDC (DARC) list?
+  READ(alt_callsigns);          ///< alternative callsigns used by this country
+  READ(alt_prefixes);           ///< alternative prefixes used by this country
+  READ(continent);              ///< two-letter abbreviation for continent
   READ(country_name);           ///< official name of the country
   READ(cq_zone);                ///< CQ zone
   READ(itu_zone);               ///< ITU zone
-  READ(continent);              ///< two-letter abbreviation for continent
   READ(latitude);               ///< latitude in degrees (+ve north)
   READ(longitude);              ///< longitude in degrees (+ve west)
-  READ(utc_offset);             ///< local-time offset from UTC, in minutes
   READ(prefix);                 ///< official DXCC prefix
-  READ(alt_callsigns);          ///< alternative callsigns used by this country
-  READ(alt_prefixes);           ///< alternative prefixes used by this country
+  READ(utc_offset);             ///< local-time offset from UTC, in minutes
+  READ(waedc_country_only);     ///< Is this only a country in the WAEDC (DARC) list?
 
 /// return the canonical prefix for this country; prefixes such as "GM/s" or "JD/o" are rendered in upper case
   inline const std::string canonical_prefix(void) const

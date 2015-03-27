@@ -21,8 +21,8 @@
     to return to my old code.
 */
 
-#include "macros.h"
 #include "drlog_error.h"
+#include "macros.h"
 #include "pthread_support.h"
 
 #include <deque>
@@ -72,33 +72,34 @@ enum socket_family { IPV4_SOCKET,
                      IPV6_SOCKET
                    };
 
-/*! \brief  Return the name of an error
-    \param  error_number  Socket error number
-    \return Error string that corresponds to <i>error_number</i>
+/*! \brief                  Return the name of an error
+    \param  error_number    socket error number
+    \return                 error string that corresponds to <i>error_number</i>
 */
-std::string socket_error_name(const int error_number);
+inline const std::string socket_error_name(const int error_number)
+  { return strerror(error_number); }
 
-/*! \brief  Read a socket
-  \param  in_socket     Inbound socket
-  \param  timeout_in_tenths         Timeout in tenths of a second
-  \param  buffer_length_for_reply   Maximum allowed length of reply
-  \return Response
+/*! \brief                              Read a socket
+    \param  in_socket                   inbound socket
+    \param  timeout_in_tenths           timeout in tenths of a second
+    \param  buffer_length_for_reply     maximum allowed length of reply
+    \return                             response
   
-  Throws socket_support_error(SOCKET_TIMEOUT) if the socket times out
+    Throws socket_support_error(SOCKET_TIMEOUT) if the socket times out
 */
 std::string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply);
 
-/*! \brief  Flush a readable socket
-  \param  sock  Socket to flush
+/*! \brief          Flush a readable socket
+    \param  sock    socket to flush
 */
 void flush_read_socket(SOCKET& sock);
 
-/*! \brief  Generate a sockaddr_storage from an address and port
-  \param  ip_address  IP address in network order
-  \param  port_nr   Port number in host order
-  \return Equivalent sockaddr_storage
+/*! \brief              Generate a sockaddr_storage from an address and port
+    \param  ip_address  IP address in network order
+    \param  port_nr     port number in host order
+    \return             equivalent sockaddr_storage
 
-        The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
+    The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
 sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr = 0);
 

@@ -142,11 +142,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
   vector<string> copy_received_values(received_values);
 
-//  ost << "Inside parsed_exchange constructor" << endl;
-
   const vector<exchange_field> exchange_template = rules.exch(canonical_prefix, m);
-
-//  ost << "size of exchange template for prefix " << canonical_prefix << " is: " << exchange_template.size() << endl;
 
 // first time through, determine whether this is Sweepstakes
   if (first_time)
@@ -164,24 +160,13 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
                                                                 n_optional_fields++;
                                                             } );
 
-//  ost << "number of optional fields = " << n_optional_fields << endl;
-
 // prepare output; includes optional fields and all choices
   FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
-
-// print exchange template fields for debugging purposes
-//  ost << "details of exchange template fields:" << endl;
-//  ost << "  number of fields: " << _fields.size() << endl;
-
-//  for (auto& field : _fields)
-//    ost << "  field : " << field << endl;
 
 // if there's an explicit . field, use it to replace the call
   for (const auto& received_value : received_values)
   { if (contains(received_value, "."))
     { _replacement_call = remove_char(received_value, '.');
-
-//      ost << "explicit replacement call = " << _replacement_call << endl;
     }
   }
 
@@ -419,7 +404,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
       if (is_choice)
       { const vector<string> choices_vec = split_string(name, '+');
 
-        for (int n = 0; n < choices_vec.size() and !found_map; ++n)
+        for (unsigned int n = 0; n < choices_vec.size() and !found_map; ++n)
         { try
           { const auto& t = tuple_map_assignments.at(choices_vec[n]);
 
@@ -1309,7 +1294,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
 
-  ost << "constructed EFT: " << (*this) << endl;
+ // ost << "constructed EFT: " << (*this) << endl;
 }
 
 #if 0
@@ -1411,7 +1396,7 @@ const bool EFT::read_values_file(const vector<string>& path, const string& filen
   }
 
   catch (...)
-  { ost << "Failed to read values file " << filename << ".values" << endl;
+  { // ost << "Failed to read values file " << filename << ".values" << endl;
     return false;
   }
 

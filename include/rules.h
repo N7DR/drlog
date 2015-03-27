@@ -30,7 +30,7 @@
 
 extern pt_mutex  rules_mutex;                           ///< mutex for rules
 
-typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
+//typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 
 // forward declarations
 class EFT;
@@ -172,7 +172,7 @@ protected:
   std::string                 _name;            ///< name of field
   bool                        _is_mult;         ///< is this field a multiplier?
   bool                        _is_optional;     ///< is this an optional field?
-  std::vector<exchange_field> _choice;          ///< is this field a choice?
+  std::vector<exchange_field> _choice;          ///< equivalents if this is a choice
 
 public:
 
@@ -188,7 +188,7 @@ public:
   READ_AND_WRITE(name);                ///< name of field
   READ(is_mult);                       ///< is this field a multiplier?
   READ(is_optional);                   ///< is this an optional field?
-  READ_AND_WRITE(choice);              ///< is this field a choice?
+  READ_AND_WRITE(choice);              ///< equivalents if this is a choice
 
 /// is this field a choice?
   inline const bool is_choice(void) const
@@ -280,8 +280,6 @@ protected:
   bool              _work_if_different_band;     ///< is it OK to work the same station on different bands?
   bool              _work_if_different_mode;     ///< is it OK to work the same station on different modes?
   
-
-
   std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
   bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
   bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
@@ -345,13 +343,13 @@ protected:
 */
   const std::set<std::string> _all_exchange_values(const std::string& field_name) const;
 
-/*! \brief              Parse all the "exchange [xx] = " lines from context
-    \param  context     drlog context
-    \return             name/mult/optional/choice status for exchange fields
+/*! \brief              Initialize an object that was created from the default constructor
+    \param  context     context for this contest
+    \param  location_db location database
 
-    Puts correct values in _received_exchange
+    After calling this function, the object is ready for use
 */
-  void _parse_context_exchange(const drlog_context& context);
+  void _init(const drlog_context& context, location_database& location_db);
 
 /*! \brief                      Parse exchange line from context
     \param  exchange_fields     container of fields taken from line in configuration file
@@ -360,6 +358,14 @@ protected:
 */
   const std::vector<exchange_field> _inner_parse(const std::vector<std::string>& exchange_fields , const std::vector<std::string>& exchange_mults_vec) const;
 
+/*! \brief              Parse all the "exchange [xx] = " lines from context
+    \param  context     drlog context
+    \return             name/mult/optional/choice status for exchange fields
+
+    Puts correct values in _received_exchange
+*/
+  void _parse_context_exchange(const drlog_context& context);
+
 /*! \brief              Parse and incorporate the "QTHX[xx] = " lines from context
     \param  context     context for this contest
     \param  location_db location database
@@ -367,14 +373,6 @@ protected:
     Incorporates the parsed information into _exch
 */
   void _parse_context_qthx(const drlog_context& context, location_database& location_db);
-
-/*! \brief              Initialize an object that was created from the default constructor
-    \param  context     context for this contest
-    \param  location_db location database
-
-    After calling this function, the object is ready for use
-*/
-  void _init(const drlog_context& context, location_database& location_db);
 
 public:
   
@@ -387,20 +385,11 @@ public:
 */
   contest_rules(const drlog_context& context, location_database& location_db);
   
-/*! \brief              prepare for use an object that was created from the default constructor
+/*! \brief              Prepare for use an object that was created from the default constructor
     \param  context     context for this contest
     \param  location_db location database
 */
   void prepare(const drlog_context& context, location_database& location_db);
-
-/*! \brief          Add a new permitted mode
-    \param  mode    mode to add
-    \return         whether <i>mode</i> was actually added
-
-    Returns <i>false</i> if <i>mode</i> was already permitted
-*/
-//  inline const bool permitted_mode(const MODE mode) const
-//    { SAFELOCK(rules); return (_permitted_modes < mode); }
     
 /// add a mode to the list of permitted modes
   inline void add_permitted_mode(const MODE mode)

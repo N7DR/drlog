@@ -497,7 +497,7 @@ const MODE rig_interface::rig_mode(void)
 
 // set RIT/XIT
 void rig_interface::rit(const int hz)
-{ ost << "RIT should be set to " << hz << endl;
+{ //ost << "RIT should be set to " << hz << endl;
 
 // do nothing if no rig is connected
   if (!_rig_connected)

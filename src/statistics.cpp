@@ -397,12 +397,12 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
 { string rv;
 
-  ost << "in _summary_string; modes = { ";
+//  ost << "in _summary_string; modes = { ";
 
-  for (const auto & m : modes)
-    ost << MODE_NAME[m] << " ";
+//  for (const auto & m : modes)
+//    ost << MODE_NAME[m] << " ";
 
-  ost << "}" << endl;
+//  ost << "}" << endl;
 
   const unsigned int FIRST_FIELD_WIDTH = 10;
   const unsigned int FIELD_WIDTH       = 6;          // width of other fields
@@ -435,7 +435,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
           line += pad_string(to_string(nq[b]), FIELD_WIDTH);
         qsos += nq[b];
 
-        ost << "adding " << nq[b] <<"; total = " << qsos << endl;
+//        ost << "adding " << nq[b] <<"; total = " << qsos << endl;
       }
 
       qsos_all_bands += qsos;
@@ -462,7 +462,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
               line += pad_string(to_string(n_countries), FIELD_WIDTH);
 
 
-          ost << "band " << BAND_NAME[b] << "; n_countries = " << n_countries << endl;
+//          ost << "band " << BAND_NAME[b] << "; n_countries = " << n_countries << endl;
 
           countries += n_countries;
         }
@@ -520,7 +520,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     for (const auto& sm : _exchange_multipliers)
     { const string& field_name = sm.first;
 
-      ost << "in summary string(), exchange field name = " << field_name << endl;
+//      ost << "in summary string(), exchange field name = " << field_name << endl;
 
       line = pad_string(field_name, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
@@ -677,7 +677,7 @@ const string running_statistics::summary_string(const contest_rules& rules)
   
 /// total points
 const unsigned int running_statistics::points(const contest_rules& rules) const
-{ ost << "in statistics::points()" << endl;
+{ //ost << "in statistics::points()" << endl;
 
   unsigned int q_points = 0;
 //  unsigned int callsign_mults = 0;
@@ -698,7 +698,7 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
     }
   }
 
-  ost << "q_points = " << q_points << endl;
+  //ost << "q_points = " << q_points << endl;
 
 // callsign mults
   const unsigned int callsign_mults = n_worked_callsign_mults(rules);
@@ -714,7 +714,7 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
 // exchange mults
   const unsigned int exchange_mults = n_worked_exchange_mults(rules);
 
-  ost << "exchange_mults = " << exchange_mults << endl;
+  //ost << "exchange_mults = " << exchange_mults << endl;
 
 /*
   for (const auto& em : _exchange_multipliers)
@@ -1026,7 +1026,7 @@ const unsigned int running_statistics::n_worked_exchange_mults(const contest_rul
   { const multiplier& mult = em.second;
 
     if (mult.per_mode())
-    { ost << "mult " << em.first << " is per mode" << endl;
+    { //ost << "mult " << em.first << " is per mode" << endl;
 
       for (const auto& m : permitted_modes)
       { if (mult.per_band())
@@ -1038,7 +1038,7 @@ const unsigned int running_statistics::n_worked_exchange_mults(const contest_rul
       }
     }
     else
-    { ost << "mult " << em.first << " is NOT per mode" << endl;
+    { //ost << "mult " << em.first << " is NOT per mode" << endl;
 
 //      for (const auto& m : permitted_modes)
       { if (mult.per_band())
