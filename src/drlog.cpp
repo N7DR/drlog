@@ -4734,6 +4734,37 @@ void populate_win_info(const string& callsign)
         }
       }
     }
+    else    // not callsign mults per band
+    {const set<string> callsign_mults = rules.callsign_mults();
+
+    for (const auto& callsign_mult : callsign_mults)
+    { string callsign_mult_value;
+
+      if ( (callsign_mult == "AAPX")  and (location_db.continent(callsign) == "AS") )  // All Asian
+        callsign_mult_value = wpx_prefix(callsign);
+
+      if ( (callsign_mult == "OCPX")  and (location_db.continent(callsign) == "OC") )  // Oceania
+        callsign_mult_value = wpx_prefix(callsign);
+
+      if (callsign_mult == "SACPX")      // SAC
+        callsign_mult_value = sac_prefix(callsign);
+
+      if (callsign_mult == "WPXPX")
+        callsign_mult_value = wpx_prefix(callsign);
+
+      if (!callsign_mult_value.empty())
+      { line = pad_string(callsign_mult + " [" + callsign_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+
+ //       for (const auto& b : permitted_bands)
+ // the next line should work, but doesn't; prints name of band even after it's been worked on one band
+      line += pad_string( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, safe_get_band(), this_mode) ? BAND_NAME[safe_get_band()] : "-" ), FIELD_WIDTH);
+
+//        line += pad_string( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, ANY_BAND, this_mode) ? BAND_NAME[safe_get_band()] : "-" ), FIELD_WIDTH);
+
+        win_info < cursor(0, next_y_value-- ) < line;
+      }
+    }
+    }
   }
   }
 

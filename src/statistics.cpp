@@ -188,6 +188,8 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
   const multiplier& mult = cit->second;
   const bool worked = mult.is_worked(mult_value, b, m);
 
+  ost << "in is_needed_callsign_mult(), mult name " << mult_name << ", " << mult_value << " worked status on band " << b << " and mode " << m << " is: " << worked << endl;
+
   return !(worked);
 }
 

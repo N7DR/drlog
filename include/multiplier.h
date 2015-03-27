@@ -188,7 +188,7 @@ public:
     \param  str callsign to test
     \param  b   band to be tested
 */
-  const bool is_worked(const std::string& str, const int b, const MODE m) const;
+  const bool is_worked(const std::string& str, const BAND b, const MODE m) const;
 
 /*! \brief      Number of mults worked on a particular band and mode
     \param  b   band
