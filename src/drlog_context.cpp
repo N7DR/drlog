@@ -971,7 +971,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const string value = RHS; //to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
       if (is_legal_value(value, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES", ","))
-        _cabrillo_category_operator = value;
+        _cabrillo_category_overlay = value;
     }
 
 // CABRILLO CATEGORY-POWER

@@ -346,12 +346,15 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
 // band
   rv += "CATEGORY-BAND: " + context.cabrillo_category_band() + LF;
 
+// mode
+  rv += "CATEGORY-MODE: " + context.cabrillo_category_mode() + LF;
+
 // operator
   rv += "CATEGORY-OPERATOR: " + context.cabrillo_category_operator() + LF;  
 
 // overlay
   if (context.cabrillo_category_overlay() != string())
-    rv += "CATEGORY-STATION: " + context.cabrillo_category_overlay() + LF;  
+    rv += "CATEGORY-OVERLAY: " + context.cabrillo_category_overlay() + LF;
 
 // power
   rv += "CATEGORY-POWER: " + context.cabrillo_category_power() + LF;   
