@@ -779,6 +779,12 @@ const bool window::common_processing(const keyboard_event& e)
     return true;
   }
 
+// /
+  if (e.is_unmodified() and e.is_char('/'))
+  { win <= e.str();
+    return true;
+  }
+
 // BACKSPACE
   if (e.is_unmodified() and e.symbol() == XK_BackSpace)
   { win.delete_character(win.cursor_position().x() - 1);

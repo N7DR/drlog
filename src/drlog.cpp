@@ -2142,7 +2142,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
   bool processed = win.common_processing(e);
 
-  if (!processed and ((e.is_char('/') or e.is_char('.') or e.is_char('-')) or (e.is_unmodified() and ( (e.symbol() == XK_KP_Add) or (e.symbol() == XK_KP_Subtract)) )))
+  if (!processed and ( /* e.is_char('/') or */ (e.is_char('.') or e.is_char('-')) or (e.is_unmodified() and ( (e.symbol() == XK_KP_Add) or (e.symbol() == XK_KP_Subtract)) )))
   { win <= e.str();
     processed = true;
   }
@@ -2948,7 +2948,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
   if (!processed and e.is_control() and (e.symbol() == XK_KP_Enter))
-  { const string contents = remove_peripheral_spaces(win.read());
+  { ost << "CTRL-KP-ENTER pressed" << endl;
+
+    const string contents = remove_peripheral_spaces(win.read());
     const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
     string results;
 
@@ -3428,7 +3430,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
   bool processed = win.common_processing(e);
 
-  if (!processed and (e.is_char('/') or e.is_char(' ')))
+  if (!processed and ( /* e.is_char('/') or */ e.is_char(' ')))
   { win <= e.str();
     processed = true;
   }
@@ -4118,9 +4120,14 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // syntactic sugar
   window& win = *wp;
 
-ost << "processing LOG input; event string: " << e.str() << endl;
+// ost << "processing LOG input; event string: " << e.str() << endl;
 
   bool processed = win.common_processing(e);
+
+//  if (!processed and e.is_char('/'))
+//  { win <= e.str();
+//    processed = true;
+//  }
 
   if (!processed and e.is_char(' '))
   { win <= e.str();

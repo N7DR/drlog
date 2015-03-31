@@ -26,8 +26,7 @@ using namespace std;
 
 extern message_stream ost;      ///< for debugging and logging
 
-// there is just one running_statistics object, and it needs to be thread-safe
-pt_mutex statistics_mutex;      ///< mutex for the running_statistics object
+pt_mutex statistics_mutex;      ///< mutex for the (singleton) running_statistics object
 
 // -----------  running_statistics  ----------------
 
@@ -175,12 +174,13 @@ const bool running_statistics::known_callsign_mult_name(const string& putative_c
     \param  mult_value  value of mult to test
     \param  b           band to test
     \param  m           mode to test
+    \return             whether the callsign mult <i>mult_name</i> with the value <i>mult_value</i> is still needed on band <i>b</i> and mode <i>m</i>
 */
 const bool running_statistics::is_needed_callsign_mult(const string& mult_name, const string& mult_value, const BAND b, const MODE m) const
 { SAFELOCK(statistics);
 
   if (!known_callsign_mult_name(mult_name))
-  { ost << "in running_statistics::is_needed_callsign_mult(), unknown callsign mult name = " << mult_name << endl;
+  { //ost << "in running_statistics::is_needed_callsign_mult(), unknown callsign mult name = " << mult_name << endl;
     return false;
   }
 
@@ -188,7 +188,7 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
   const multiplier& mult = cit->second;
   const bool worked = mult.is_worked(mult_value, b, m);
 
-  ost << "in is_needed_callsign_mult(), mult name " << mult_name << ", " << mult_value << " worked status on band " << b << " and mode " << m << " is: " << worked << endl;
+  //ost << "in is_needed_callsign_mult(), mult name " << mult_name << ", " << mult_value << " worked status on band " << b << " and mode " << m << " is: " << worked << endl;
 
   return !(worked);
 }
@@ -197,7 +197,7 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
     \param  callsign    call to test
     \param  b           band to test
     \param  m           mode to test
-    \return             whether the country in which <i>callsign</i> is located is needed as a mult on <i>b</i> and <i>m</i>
+    \return             whether the country in which <i>callsign</i> is located is needed as a mult on band <i>b</i> and mode <i>m</i>
 */
 const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
 { try
@@ -215,10 +215,10 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 }
 
 /*! \brief          Add a known value of country mult
-    \param  str     Canonical prefix of mult
-    \return         Whether <i>str</i> was actually added
+    \param  str     canonical prefix of mult
+    \return         whether <i>str</i> was actually added
 
-    Does nothing and returns false if <i>str</i> is already known
+    Does nothing and returns <i>false<i> if <i>str</i> is already known
 */
 const bool running_statistics::add_known_country_mult(const string& str)
 { SAFELOCK(statistics);
@@ -228,8 +228,8 @@ const bool running_statistics::add_known_country_mult(const string& str)
 
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add
-    \param  log     Logbook (without the qso <i>qso</i>)
-    \param  rules   Contest rules
+    \param  log     logbook (without the qso <i>qso</i>)
+    \param  rules   contest rules
 */
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
 { SAFELOCK(statistics);
@@ -374,7 +374,7 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
     \param  exchange_field_value    value of the target exchange field
     \param  b                       target band
     \param  m                       target mode
-    \return                         Whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
+    \return                         whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
 */
 const bool running_statistics::is_needed_exchange_mult(const string& exchange_field_name, const string& exchange_field_value, const BAND b, const MODE m) const
 { const string mv = MULT_VALUE(exchange_field_name, exchange_field_value);  // the mult value of the received field
@@ -384,7 +384,7 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
   for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
   { const pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
 
-    if (sm.first == exchange_field_name and sm.second.is_known(mv) /* sm.second.is_known(exchange_field_value) */)
+    if (sm.first == exchange_field_name and sm.second.is_known(mv) )
       return !(sm.second.is_worked(mv, b, m));
   }
 
