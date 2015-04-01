@@ -1362,7 +1362,12 @@ const string wpx_prefix(const string& call)
 //  const size_t last_digit_posn = designator.find_last_of(digits);
 //  const string rv = substring(designator, 0, min(callsign.length(), last_digit_posn + 1));
 
-  const string rv = designator;
+  string rv = designator;
+
+  if (rv.length() == 1)
+  { if (rv[0] == call[0])  // if just the first character, add the next character (to deal with 7QAA)
+      rv = substring(call, 0, 2);
+  }
 
 //  ost << "WPX prefix for " << callsign << " is: " << rv << endl;
 
