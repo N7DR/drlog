@@ -1,4 +1,4 @@
-// $Id: statistics.h 97 2015-02-28 17:27:29Z  $
+// $Id: statistics.h 101 2015-04-04 01:49:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -63,13 +63,6 @@ protected:
   unsigned int  _qtc_qsos_sent;         ///< total number of QSOs sent in QTCs
   unsigned int  _qtc_qsos_unsent;       ///< total number of (legal) QSOs available but not yet sent in QTCs
 
-/*! \brief          Generate a summary string for display
-    \param  rules   rules for this contest
-    \param  modes   the set of modes that are to be included in the summary string
-    \return         summary string for modes in <i>modes</i>
-*/
-  const std::string _summary_string(const contest_rules& rules, const std::set<MODE>& modes);
-
 /*! \brief              Add a callsign mult name, value and band to those worked
     \param  mult_name   name of callsign mult
     \param  mult_value  value of callsign mult
@@ -79,6 +72,13 @@ protected:
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
     void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
+
+/*! \brief          Generate a summary string for display
+    \param  rules   rules for this contest
+    \param  modes   the set of modes that are to be included in the summary string
+    \return         summary string for modes in <i>modes</i>
+*/
+  const std::string _summary_string(const contest_rules& rules, const std::set<MODE>& modes);
 
 public:
 
@@ -113,6 +113,7 @@ public:
 /*! \brief          How many QSOs have been made in a particular mode?
     \param  rules   rules for this contest
     \param  m       target mode
+    \return         number of qsos on mode <i>m</i>
 
     Counts only those QSOs on bands being used to calculate the score. Includes dupes.
 */
@@ -123,6 +124,7 @@ public:
     \param  mult_value  value of mult to test
     \param  b           band to test
     \param  m           mode to test
+    \return             whether the mult <i>mult_name</i> with value <i>mult_value> is a needed callsign mult on band <i>b</i> and mode <i>m</i>
 */
   const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
 
@@ -138,17 +140,9 @@ public:
     \param  callsign    call to test
     \param  b           band to test
     \param  m           mode to test
-    \return             Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i> and mode <i>m</i>.
+    \return             whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i> and mode <i>m</i>.
 */
   const bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m);
-
-/*! \brief              Do we still need to work a particular country as a mult on a particular band (and any mode)?
-    \param  callsign    call to test
-    \param  b           band to test
-    \return             Whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i>.
-*/
-//  inline const bool is_needed_country_mult(const std::string& callsign, const BAND b)
-//    { return is_needed_country_mult(callsign, b, ANY_MODE); }
   
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add

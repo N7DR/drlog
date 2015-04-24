@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 92 2015-01-24 22:36:02Z  $
+// $Id: multiplier.cpp 101 2015-04-04 01:49:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -33,33 +33,33 @@ multiplier::multiplier(void) :
 {
 }
 
-/*! \brief      Add a worked multiplier
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \param  m   mode on which <i>str</i> has been worked
-    \return     whether <i>str</i> was successfully added to the worked multipliers
+/*! \brief          Add a worked multiplier
+    \param  str     value that has been worked
+    \param  b       band on which <i>str</i> has been worked
+    \param  m       mode on which <i>str</i> has been worked
+    \return         whether <i>str</i> was successfully added to the worked multipliers
 
     Returns false if the value <i>str</i> is not known
 */
 const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
-  ost << "inside multiplier::add_worked(); str = " << str << ", band = " << b << ", mode = " << m << endl;
+//  ost << "inside multiplier::add_worked(); str = " << str << ", band = " << b << ", mode = " << m << endl;
 
   if ((_used) and is_known(str))                                          // add only known mults
-  { ost << "used and known" << endl;
+  { //ost << "used and known" << endl;
 
     const int b_nr = static_cast<int>(b);
     const int m_nr = static_cast<int>(m);
 
-    ost << "multiplier; adding worked " << str << ", band = " << b << ", mode = " << m << endl;
+    //ost << "multiplier; adding worked " << str << ", band = " << b << ", mode = " << m << endl;
 
     auto& pb = _worked[m_nr];
 
     bool rv = (pb[b_nr].insert(str)).second;  // BAND, MODE
 
     if (rv)
-    { ost << "Adding ANY_BAND and ANY_MODE" << endl;
+    { //ost << "Adding ANY_BAND and ANY_MODE" << endl;
 
       pb[ANY_BAND].insert(str);        // ANY_BAND, MODE
 
@@ -75,11 +75,11 @@ const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
   return false;
 }
 
-/*! \brief      Add a worked multiplier, even if it is unknown
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \param  m   mode on which <i>str</i> has been worked
-    \return     whether <i>str</i> was successfully added to the worked multipliers
+/*! \brief          Add a worked multiplier, even if it is unknown
+    \param  str     value that has been worked
+    \param  b       band on which <i>str</i> has been worked
+    \param  m       mode on which <i>str</i> has been worked
+    \return         whether <i>str</i> was successfully added to the worked multipliers
 
     Makes <i>str</i> known if it was previously unknown
 */
@@ -89,10 +89,10 @@ const bool multiplier::unconditional_add_worked(const string& str, const BAND b,
   return add_worked(str, b, m);
 }
 
-/*! \brief      Remove a worked multiplier
-    \param  str value to be worked
-    \param  b   band on which <i>str</i> is to be removed
-    \param  m   mode on which <i>str</i> has been worked
+/*! \brief          Remove a worked multiplier
+    \param  str     value to be worked
+    \param  b       band on which <i>str</i> is to be removed
+    \param  m       mode on which <i>str</i> has been worked
 
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
@@ -132,9 +132,11 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
   }
 }
 
-/*! \brief      Has a station been worked on a particular band and mode?
-    \param  str callsign to test
-    \param  b   band to be tested
+/*! \brief          Has a station been worked on a particular band and mode?
+    \param  str     callsign to test
+    \param  b       band to test
+    \param  m       mode to test
+    \return         whether <i>str</i> has been worked on band <i>b</i> and mode <i>m</i>
 */
 const bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
 { SAFELOCK(multiplier);
@@ -146,8 +148,8 @@ const bool multiplier::is_worked(const string& str, const BAND b, const MODE m) 
 
   const set<string>& worked_this_band = pb[ (_per_band ? b : ANY_BAND) ];
 
-  ost << "in is_worked(), str = " << str << ", " << "band = " << b << ", mode = " << m << endl;
-  ost << "returning: " << boolalpha << (worked_this_band.find(str) != worked_this_band.cend()) << endl;
+//  ost << "in is_worked(), str = " << str << ", " << "band = " << b << ", mode = " << m << endl;
+//  ost << "returning: " << boolalpha << (worked_this_band.find(str) != worked_this_band.cend()) << endl;
 
   return (worked_this_band.find(str) != worked_this_band.cend());
 }
@@ -165,7 +167,6 @@ const size_t multiplier::n_worked(const BAND b, const MODE m) const
 
   const int b_nr = static_cast<int>(b);
   const int m_nr = static_cast<int>(m);
-
   const auto& pb = _worked[m_nr];
 
   return pb[b_nr].size();

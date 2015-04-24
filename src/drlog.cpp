@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 100 2015-03-22 20:59:38Z  $
+// $Id: drlog.cpp 101 2015-04-04 01:49:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2930,7 +2930,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // KP ENTER -- send CQ #2
-  if (!processed and (e.symbol() == XK_KP_Enter))
+  if (!processed and (!e.is_control()) and (e.symbol() == XK_KP_Enter))
   { const string contents = remove_peripheral_spaces(win.read());
 
 // if empty, send CQ #2

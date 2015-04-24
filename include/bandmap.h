@@ -1,4 +1,4 @@
-// $Id: bandmap.h 99 2015-03-14 16:36:48Z  $
+// $Id: bandmap.h 101 2015-04-04 01:49:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -256,7 +256,7 @@ public:
 */
   bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
 
-/// define the sorting criterion to be applied to a pair of bandmap entries
+/// define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
   inline const bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
@@ -310,7 +310,7 @@ public:
   inline const decltype(_is_needed_callsign_mult) is_needed_callsign_mult_details(void) const
     { return _is_needed_callsign_mult; }
 
-/// return the details of a country mults
+/// return the details of a country mult
   inline const decltype(_is_needed_country_mult) is_needed_country_mult_details(void) const
     { return _is_needed_country_mult; }
 
@@ -399,7 +399,7 @@ public:
 
 // next three needed in order to pass as parameters to find_if, since I don't know how to choose among multiple overloaded functions
 
-/// do we need this call?
+/// do we need to work this call?
   inline const bool is_stn_needed(void) const
     { return is_needed(); }
 
@@ -439,12 +439,12 @@ public:
     { return ( (_expiration_time < now) and (_callsign != MY_MARKER)); }
 
 /// needed for a functor in const bandmap_entry bandmap::operator[](const std::string& str)
-  const bool is_callsign(const std::string& str) const
-    { return _callsign == str; }
+//  const bool is_callsign(const std::string& str) const
+//    { return _callsign == str; }
 
 /// needed for a functor in const bandmap_entry bandmap::substr(const std::string& str)
-  const bool is_substr(const std::string& str) const
-    { return contains(_callsign, str); }
+//  const bool is_substr(const std::string& str) const
+//    { return contains(_callsign, str); }
 
 /*! \brief              Re-mark the need/mult status
     \param  rules       rules for the contest

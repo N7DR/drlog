@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 98 2015-03-07 15:30:35Z  $
+// $Id: rig_interface.cpp 101 2015-04-04 01:49:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -76,16 +76,14 @@ const bool RESPONSE_EXPECTED = true;    ///< used to signal that a response is e
  *   protocols could be run over, for example, SLIP.
 */
 
-/*! \brief      static wrapper for function to poll rig for status
-    \param  vp  the this pointer, in order to allow static member access to a real object
-    \return     nullptr
+/*! \brief       Alert the user with a message
+    \param  msg  message for the user
+
+    Calls <i>_error_alert_function</i> to perform the actual alerting
 */
-void* rig_interface::_static_poll_thread_function(void* arg)
-{ rig_interface* bufp = static_cast<rig_interface*>(arg);
-
-  bufp->_poll_thread_function(nullptr);
-
-  return nullptr;
+void rig_interface::_error_alert(const string& msg)
+{ if (_error_alert_function)
+    (*_error_alert_function)(msg);
 }
 
 /*! \brief      Thread function used to poll rig for status, forever
@@ -107,14 +105,16 @@ void* rig_interface::_poll_thread_function(void* vp)
   return nullptr;
 }
 
-/*! \brief       Alert the user with a message
-    \param  msg  message for the user
-
-    Calls <i>_error_alert_function</i> to perform the actual alerting
+/*! \brief      static wrapper for function to poll rig for status
+    \param  vp  the this pointer, in order to allow static member access to a real object
+    \return     nullptr
 */
-void rig_interface::_error_alert(const string& msg)
-{ if (_error_alert_function)
-    (*_error_alert_function)(msg);
+void* rig_interface::_static_poll_thread_function(void* arg)
+{ rig_interface* bufp = static_cast<rig_interface*>(arg);
+
+  bufp->_poll_thread_function(nullptr);
+
+  return nullptr;
 }
 
 // ---------------------------------------- rig_interface -------------------------
@@ -416,7 +416,7 @@ const bool rig_interface::split_enabled(void)
   return (split_mode == RIG_SPLIT_ON);
 }
 
-// get/set baud rate
+/// set baud rate
 void rig_interface::baud_rate(const unsigned int rate)
 { if (_rigp)
   { SAFELOCK(_rig);
@@ -425,13 +425,14 @@ void rig_interface::baud_rate(const unsigned int rate)
   }
 }
 
+/// get baud rate
 const unsigned int rig_interface::baud_rate(void)
 { SAFELOCK(_rig);
 
   return (_rigp ? _rigp->state.rigport.parm.serial.rate : 0);
 }
 
-// get/set number of data bits
+/// set number of data bits
 void rig_interface::data_bits(const unsigned int bits)
 { if (bits < 7 or bits > 8)
     throw rig_interface_error(RIG_INVALID_DATA_BITS, "Attempt to set invalid number of data bits: " + to_string(bits));
@@ -442,6 +443,7 @@ void rig_interface::data_bits(const unsigned int bits)
     _rigp->state.rigport.parm.serial.data_bits = bits;
 }
 
+/// get number of data bits
 const unsigned int rig_interface::data_bits(void)
 { SAFELOCK(_rig);
 

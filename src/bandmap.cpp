@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 99 2015-03-14 16:36:48Z  $
+// $Id: bandmap.cpp 101 2015-04-04 01:49:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -623,7 +623,8 @@ const bandmap_entry bandmap::operator[](const string& str)
 const bandmap_entry bandmap::substr(const string& str)
 { SAFELOCK(_bandmap);
 
-  const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return be.is_substr(str); });
+//  const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return be.is_substr(str); });
+  const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), str); });
 
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
 }

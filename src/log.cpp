@@ -1,4 +1,4 @@
-// $Id: log.cpp 97 2015-02-28 17:27:29Z  $
+// $Id: log.cpp 101 2015-04-04 01:49:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -179,10 +179,10 @@ const string logbook::call_needed(const string& call, const contest_rules& rules
   return rv;
 }
 
-/*!     \brief          would a QSO be a dupe, according to the rules?
-        \param  qso     target QSO
-        \param  rules   rules for the contest
-        \return         whether <i>qso</i> would be a dupe
+/*! \brief          would a QSO be a dupe, according to the rules?
+    \param  qso     target QSO
+    \param  rules   rules for the contest
+    \return         whether <i>qso</i> would be a dupe
 */
 const bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
 { bool rv = false;
@@ -213,7 +213,13 @@ const bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
   return rv;
 }
 
-/// would a QSO be a dupe?
+/*! \brief          Would a QSO be a dupe, according to the rules?
+    \param  call    callsign
+    \param  b       band
+    \param  m       mode
+    \param  rules   rules for the contest
+    \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
+*/
 const bool logbook::is_dupe(const string& call, const BAND b, const enum MODE m, const contest_rules& rules) const
 { QSO qso;
 
@@ -231,8 +237,6 @@ const list<QSO> logbook::as_list(void) const
 
   { SAFELOCK(_log);
   
-//    for (multimap<string, QSO>::const_iterator cit = _log.begin(); cit != _log.end(); ++cit)
-//      rv.push_back(cit->second);
     FOR_ALL(_log, [&rv] (const pair<string, QSO>& q) { rv.push_back(q.second); } );
   }
 
@@ -248,13 +252,11 @@ const vector<QSO> logbook::as_vector(void) const
   return _log_vec;
 }
 
-//const vector<QSO> logbook::filter(UnaryPredicate pred) const
-//{ vector<QSO> rv;
-//
-//  copy_if(_log_vec.cbegin(), _log_vec.cend(), back_inserter(rv),
-//}
-
-/// recalculate the dupes
+///
+/*! \brief          Recalculate the dupes
+    \param  rules   rules for the contest
+    \return         logbook with the dupes recalculated
+*/
 const logbook logbook::recalculate_dupes(const contest_rules& rules) const
 { logbook rv;
   
@@ -276,7 +278,7 @@ const logbook logbook::recalculate_dupes(const contest_rules& rules) const
     \param      context the drlog context
     \return     the Cabrillo log
     
-    The Cabrillo format id supposedly "specified" at:
+    The Cabrillo format is supposedly "specified" at:
       http://www.kkn.net/~trey/cabrillo/
         
     Just for the record, the "specification" at the above URL is grossly incomplete
