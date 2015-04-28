@@ -1,4 +1,4 @@
-// $Id: multiplier.h 101 2015-04-04 01:49:14Z  $
+// $Id: multiplier.h 102 2015-04-26 16:55:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,7 +26,6 @@
 #include <string>
 
 extern message_stream    ost;       ///< for debugging and logging
-
 extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
 
 // -----------  multiplier  ----------------
@@ -133,25 +132,6 @@ public:
 */
   const bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m);
 
-/*! \brief  add a worked multiplier, even if it is unknown
-    \param  str value that has been worked
-    \param  b   band on which <i>str</i> has been worked
-    \param  m   mode on which <i>str</i> has been worked
-    \return whether <i>str</i> was successfully added to the worked multipliers
-
-    Makes <i>str</i> known if it was previously unknown
-*/
-//  inline const bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m)
-//    { return (unconditional_add_worked(str, static_cast<int>(b), m)); }
-
-/*! \brief  remove a worked multiplier
-    \param  str value to be worked
-    \param  b   band on which <i>str</i> is to be removed
-
-    Does nothing if <i>str</i> was not worked on <i>b</i>
-*/
-//  void remove_worked(const std::string& str, const int b);
-
 /*! \brief  remove a worked multiplier
     \param  str value to be worked
     \param  b   band on which <i>str</i> is to be removed
@@ -168,12 +148,6 @@ public:
       return (_used ? (_known < str) : false);
     }
 
-/*! \brief      Has a station been worked on a particular band?
-    \param  str callsign to test
-    \param  b   band to be tested
-*/
-//  const bool is_worked(const std::string& str, const int b) const;
-
 /*! \brief      Has a station been worked on a particular band and mode?
     \param  str callsign to test
     \param  b   band to be tested
@@ -187,7 +161,10 @@ public:
 */
   const size_t n_worked(const BAND b, const MODE m) const;
 
-/// number of mults worked on a particular band, regardless of mode
+/*! \brief      Number of mults worked on a particular band, regardless of mode
+    \param  b   band
+    \return     number of mults worked on band <i>b</i>
+*/
   const size_t n_worked(const int b) const;
 
 /// Number of known mults
@@ -203,9 +180,6 @@ public:
     \return     all the mults worked on band <i>b</i> and mode <i>m</i>
 */
   const std::set<std::string> worked(const int b, const int m) const;
-
-/// All the mults worked on a particular band, regardless of mode
-//  const std::set<std::string> worked(const int b) const;
 
 /// All the known mults
   inline const std::set<std::string> known(void) const

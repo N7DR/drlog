@@ -457,26 +457,20 @@ void drlog_context::_process_configuration_file(const string& filename)
       _decimal_point = rhs;
 
 // DO NOT SHOW
-    if (starts_with(testline, "DO NOT SHOW") and !starts_with(testline, "DO NOT SHOW FILE"))
+    if (LHS == "DO NOT SHOW")
       _do_not_show = remove_peripheral_spaces(split_string(RHS, ","));
 
 // DO NOT SHOW FILE
-    if (starts_with(testline, "DO NOT SHOW FILE"))
+    if (LHS == "DO NOT SHOW FILE")
       _do_not_show_filename = rhs;
 
 // DRMASTER FILENAME
-    if (starts_with(testline, "DRMASTER FILENAME"))
+    if (LHS == "DRMASTER FILENAME")
       _drmaster_filename = rhs;
 
-// EX MEMORY Fn
-//    for (unsigned int memory = 1; memory <= EX_MEMORY_MESSAGES; ++memory)
-//      if (starts_with(testline, "EX MEMORY F" + to_string(memory)))
-//        _ex_memory[memory - 1] = remove_peripheral_spaces(RHS);
-
 // EXCHANGE
-    if (starts_with(testline, "EXCHANGE"))
-      if (starts_with(remove_leading_spaces(testline.substr(8)), "="))  // several commands start with "EXCHANGE"
-        _exchange = RHS;
+    if (LHS == "EXCHANGE")
+      _exchange = RHS;
 
 // EXCHANGE[
     if (starts_with(testline, "EXCHANGE["))

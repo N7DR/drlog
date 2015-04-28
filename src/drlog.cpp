@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 101 2015-04-04 01:49:14Z  $
+// $Id: drlog.cpp 102 2015-04-26 16:55:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3089,10 +3089,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
           }
         }
 
-// rebuild the history
         rebuild_history(logbk, rules, statistics, q_history, rate);
-
-// rescore the log
         rescore(rules);
         update_rate_window();
 
@@ -3121,6 +3118,21 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
         update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+
+// removal of a Q might change the colour indication of stations
+        for (auto& bm : bandmaps)
+        { BM_ENTRIES bme = bm.entries();
+
+          for (auto& be : bme)
+          { if (be.remark(rules, q_history, statistics))
+              bm += be;
+          }
+
+          if (&bm == &(bandmaps[safe_get_band()]))
+            win_bandmap <= bm;
+        }
+
+
 
 // remove the last line from the log on disk
         string disk_log = read_file(context.logfile());

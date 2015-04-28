@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 101 2015-04-04 01:49:14Z  $
+// $Id: multiplier.cpp 102 2015-04-26 16:55:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -172,13 +172,17 @@ const size_t multiplier::n_worked(const BAND b, const MODE m) const
   return pb[b_nr].size();
 }
 
+/*! \brief      Number of mults worked on a particular band, regardless of mode
+    \param  b   band
+    \return     number of mults worked on band <i>b</i>
+*/
 const size_t multiplier::n_worked(const int b) const
 { SAFELOCK(multiplier);
 
   if (!_used)
     return 0;
 
-  auto& pb = _worked[ N_MODES ];
+  const auto& pb = _worked[ N_MODES ];
 
   return pb[ (_per_band ? b : N_BANDS) ].size();
 }
@@ -194,37 +198,10 @@ const set<string> multiplier::worked(const int b, const int m) const
   if (!_used)
     return set<string>();
 
-  auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ];
-
-// ost << "multiplier::worked for band = " << BAND_NAME[b] << ", mode = " << MODE_NAME[m] << " is:" << endl;
-//  ost << "_per_mode = " << boolalpha << _per_mode << noboolalpha << endl;
-//  ost << "_per_band = " << boolalpha << _per_band << noboolalpha << endl;
-
-//  set<string> tmp = pb[ (_per_band ? b : ANY_BAND) ];
-//  string str("  ");
-
-//  for (auto& s : tmp)
-//    str += s + " ";
-
-//  ost << str << endl;
-
+  const auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ];
 
   return pb[ (_per_band ? b : ANY_BAND) ];
 }
-
-/// All the mults worked on a particular band, regardless of mode
-#if 0
-const set<string> multiplier::worked(const int b) const
-{ SAFELOCK(multiplier);
-
-  if (!_used)
-    return set<string>();
-
-  auto& pb = _worked[ N_MODES ];
-
-  return pb[ (_per_band ? b : N_BANDS) ];
-}
-#endif
 
 // ostream << multiplier
 ostream& operator<<(ostream& ost, const multiplier& m)

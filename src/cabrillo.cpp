@@ -31,8 +31,8 @@ extern ofstream            ost;                   ///< for debugging, info
         \brief template for a cabrillo tag
 */
 
-/*!     \brief  construct from name
-        \param  nm      tag name
+/*!     \brief      Construct from name
+        \param  nm  tag name
         
         Any tag value is legal for this tag
 */
@@ -46,21 +46,18 @@ cabrillo_tag_template::cabrillo_tag_template(const string& nm)
     const string values = nm.substr(nm.find(":") + 1);
     const vector<string> vec = remove_peripheral_spaces(split_string(values, ","));
 
-//    for_each(vec.cbegin(), vec.cend(), [&] (const string& str) { this->add_legal_value(str); });
     FOR_ALL(vec, [&] (const string& str) { this->add_legal_value(str); });
   }
 }
 
 /// cabrillo_tag_template = string
 void cabrillo_tag_template::operator=(const string& nm)
-{ if (nm.find(":") == string::npos)                              // no values included
+{ if (nm.find(":") == string::npos)                             // no values included
     _name = nm;
-  else
-// one or more values are included
+  else                                                          // one or more values are included
   { const string values = substring(nm, nm.find(":") + 1);
     const vector<string> vec = remove_peripheral_spaces(split_string(values, ","));
 
-//    for_each(vec.cbegin(), vec.cend(), [&] (const string& str) { this->add_legal_value(str); });
     FOR_ALL(vec, [&] (const string& str) { this->add_legal_value(str); });
   }
 }
@@ -109,11 +106,9 @@ cabrillo_tag_templates::cabrillo_tag_templates(void)
   _add("CATEGORY-OPERATOR:CHECKLOG,MULTI-OP,SINGLE-OP");
 
 // CATEGORY-OVERLAY
-//  tag = "CATEGORY-OVERLAY:NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES";
   _add("CATEGORY-OVERLAY:NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES");
   
 // CATEGORY-POWER
-//  tag = "CATEGORY-POWER:HIGH,LOW,QRP";
   _add("CATEGORY-POWER:HIGH,LOW,QRP");
 
 // CATEGORY-STATION
