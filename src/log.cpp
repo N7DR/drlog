@@ -748,6 +748,22 @@ const string logbook::exchange_field_value(const string& callsign, const string&
   return string();
 }
 
+/*! \brief          Return all the QSOs that contain an exchange field that matches a target
+    \param  target  target string for exchange fields
+    \return         All the QSOs that contain an exchange field that matches a target
+
+    If <i>n</i> is out of range, then returns an empty QSO
+*/
+const vector<QSO> logbook::match_exchange(const string& target) const
+{ vector<QSO> rv;
+
+  for (const auto& qso : _log_vec)
+    if (qso.exchange_match_string(target))
+      rv.push_back(qso);
+
+  return rv;
+}
+
 // -----------  log_extract  ----------------
 
 /*!     \class log_extract
@@ -829,3 +845,15 @@ void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
   	display();
 }
 
+// display the LAST matches
+void log_extract::match_exchange(const logbook& lgbook, const string& target)
+{ const vector<QSO> vec = lgbook.match_exchange(target);
+  const size_t n_to_copy = min(vec.size(), _win_size);
+
+  clear();    // empty the container of QSOs
+
+  for (size_t n = 0; n < n_to_copy; ++n)
+    (*this) += vec.at(vec.size() - n_to_copy + n);
+
+  display();
+}

@@ -182,6 +182,12 @@ public:
 */
   const bool exchange_match(const std::string& rule_to_match) const;
 
+/*! \brief          Do any of the exchange fields the QSO match a target string?
+    \param  target  target string
+    \return         whether any of the exchange fields contain the value <i>target</i>
+*/
+  const bool exchange_match_string(const std::string& target) const;
+
 /// return a single field from the received exchange
   const std::string received_exchange(const std::string& field_name) const;
 

@@ -599,12 +599,24 @@ const bool QSO::exchange_match(const string& rule_to_match) const
 
 }
 
+/*! \brief          Do any of the exchange fields the QSO match a target string?
+    \param  target  target string
+    \return         whether any of the exchange fields contain the value <i>target</i>
+*/
+const bool QSO::exchange_match_string(const string& target) const
+{ for (const auto& field : _received_exchange)
+    if (field.value() == target)
+      return true;
+
+  return false;
+}
+
 /*! \brief              Return a single field from the received exchange
     \param  field_name  the name of the field
     \return             the value of <i>field_name</i> in the received exchange
 
     Returns the empty string if <i>field_name</i> is not found in the exchange
- */
+*/
 const string QSO::received_exchange(const string& field_name) const
 { for (const auto& field : _received_exchange)
   { if (field.name() == field_name)

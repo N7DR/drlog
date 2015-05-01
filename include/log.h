@@ -237,6 +237,12 @@ public:
 */
   const std::string exchange_field_value(const std::string& callsign, const std::string& exchange_field_name);
 
+/*! \brief          Return all the QSOs that contain an exchange field that matches a target
+    \param  target  target string for exchange fields
+    \return         All the QSOs that contain an exchange field that matches a target
+*/
+  const std::vector<QSO> match_exchange(const std::string& target) const;
+
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
   { SAFELOCK(_log);
@@ -308,7 +314,9 @@ public:
   void display(void);
 
 // get recent QSOs from a log
-  void recent_qsos(const logbook&, const bool to_display = true);
+  void recent_qsos(const logbook& lgbook, const bool to_display = true);
+
+  void match_exchange(const logbook& lgbook, const std::string& target);
 
 template <typename T>
   void operator=(const T& t)

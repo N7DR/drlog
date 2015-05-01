@@ -2125,6 +2125,8 @@ void* prune_bandmap(void* vp)
     BACKSLASH -- send to the scratchpad
     ALT--> -- VFO A -> VFO B
     ALT-<- -- VFO B -> VFO A
+    CTRL-Q -- swap QSL and QUICK QSL messages
+    CTRL-F -- find matches for exchange in log
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -3403,6 +3405,16 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     if (!processed and (e.is_control('q')))
     { context.swap_qsl_messages();
       processed = true;
+    }
+
+// CTRL-F -- find matches for exchange in log
+    if (!processed and (e.is_control('f')))
+    { if (!prior_contents.empty())
+      { //extract = logbk.match_exchange(prior_contents);
+        extract.match_exchange(logbk, prior_contents);
+      }
+
+    processed = true;
     }
 
 // finished processing a keypress

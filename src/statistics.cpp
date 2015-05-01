@@ -481,7 +481,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
 // callsign mults
     const set<string>&  callsign_mults = rules.callsign_mults();      // collection of types of mults based on callsign (e.g., "WPXPX")
-    const bool callsign_mults_per_band = rules.callsign_mults_per_band();
+//    const bool callsign_mults_per_band = rules.callsign_mults_per_band();
 
     if (!callsign_mults.empty())
     { for (const auto mult_name : callsign_mults)
