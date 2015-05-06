@@ -210,17 +210,20 @@ public:
 /// set rit offset
   void rit(const int hz);
 
-// get rit offset
+/// get rit offset (in Hz)
   const int rit(void);
 
-// turn rit on/off
+/// turn rit on
   void rit_enable(void);
 
+/// turn rit off
   void rit_disable(void);
 
+/// turn rit off
   inline void disable_rit(void)
     { rit_disable(); }
 
+/// turn rit on
   inline void enable_rit(void)
     { rit_enable(); }
 

@@ -43,9 +43,9 @@ const string        MY_MARKER("--------");          ///< the string that marks m
 
 bandmap_filter_type BMF;                            ///< the global bandmap filter
 
-/*! \brief      Printable version of the name of a bandmap_entry source
-    \param  bes source of a bandmap entry
-    \return     Printable version of <i>bes</i>
+/*! \brief          Printable version of the name of a bandmap_entry source
+    \param  bes     source of a bandmap entry
+    \return         printable version of <i>bes</i>
 */
 const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
@@ -69,8 +69,8 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
         \brief Control bandmap filtering
 */
 
-/*! \brief  All the continents and canonical prefixes that are currently being filtered
-    \return all the continents and canonical prefixes that are currently being filtered
+/*! \brief      All the continents and canonical prefixes that are currently being filtered
+    \return     all the continents and canonical prefixes that are currently being filtered
 
     The continents precede the canonical prefixes
 */
@@ -739,8 +739,6 @@ void bandmap::filter_add_or_subtract(const string& str)
   { SAFELOCK(_bandmap);
 
     _filter_p->add_or_subtract(str);
-//    _filtered_entries_dirty = true;
-//    _rbn_threshold_and_filtered_entries_dirty = true;
     _dirty_entries();
   }
 }
@@ -751,8 +749,6 @@ void bandmap::filter_hide(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->hide(torf);
-//    _filtered_entries_dirty = true;
-//    _rbn_threshold_and_filtered_entries_dirty = true;
     _dirty_entries();
   }
 }
@@ -763,8 +759,6 @@ void bandmap::filter_show(const bool torf)
   { SAFELOCK(_bandmap);
 
     _filter_p->hide(!torf);
-//    _filtered_entries_dirty = true;
-//    _rbn_threshold_and_filtered_entries_dirty = true;
     _dirty_entries();
   }
 }

@@ -220,10 +220,13 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 
     Does nothing and returns <i>false<i> if <i>str</i> is already known
 */
-const bool running_statistics::add_known_country_mult(const string& str)
+const bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 { SAFELOCK(statistics);
 
-  return (_country_multipliers.add_known(str));
+  if (rules.country_mults() < str)                  // all the legal country mults
+    return (_country_multipliers.add_known(str));
+
+  return false;
 }
 
 /*! \brief          Add a QSO to the ongoing statistics
@@ -232,7 +235,9 @@ const bool running_statistics::add_known_country_mult(const string& str)
     \param  rules   contest rules
 */
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
-{ SAFELOCK(statistics);
+{ ost << "Adding QSO to statistics: " << qso << endl;
+
+  SAFELOCK(statistics);
   
   const BAND& b = qso.band();
   const unsigned int band_nr = static_cast<int>(b);

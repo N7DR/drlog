@@ -3410,11 +3410,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // CTRL-F -- find matches for exchange in log
     if (!processed and (e.is_control('f')))
     { if (!prior_contents.empty())
-      { //extract = logbk.match_exchange(prior_contents);
         extract.match_exchange(logbk, prior_contents);
-      }
 
-    processed = true;
+      processed = true;
     }
 
 // finished processing a keypress
@@ -4693,8 +4691,10 @@ void populate_win_info(const string& callsign)
       const set<string>& country_mults = rules.country_mults();
       const string canonical_prefix = location_db.canonical_prefix(callsign);
 
+      ost << "is " << canonical_prefix << " a country mult? " << ( (country_mults < canonical_prefix) ? "YES" : "NO" ) << endl;
+
       if (!country_mults.empty() or context.auto_remaining_country_mults())
-      { if ((country_mults < canonical_prefix) or context.auto_remaining_country_mults())
+      { if ((country_mults < canonical_prefix) /* or context.auto_remaining_country_mults() */)  // country_mults is from rules, and has all the valid mults for the contest
         { const set<string> known_country_mults = statistics.known_country_mults();
 
           line = pad_string(string("Country [") + canonical_prefix +"]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
@@ -4704,14 +4704,19 @@ void populate_win_info(const string& callsign)
 
             if (known_country_mults < canonical_prefix)
               per_band_indicator = ( statistics.is_needed_country_mult(callsign, b, this_mode) ? BAND_NAME[b] : "-" );
-          else
-            per_band_indicator = BAND_NAME.at(b);
+            else
+              per_band_indicator = BAND_NAME.at(b);
 
           line += pad_string(per_band_indicator, FIELD_WIDTH);
+
+ //         win_info < cursor(0, next_y_value--) < line;
         }
+
+          win_info < cursor(0, next_y_value--) < line;
+
       }
 
-      win_info < cursor(0, next_y_value--) < line;
+//      win_info < cursor(0, next_y_value--) < line;
     }
 
 // exch mults
@@ -5015,8 +5020,9 @@ void update_known_country_mults(const string& callsign)
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-    if (rules.country_mults() < canonical_prefix)            // don't add if the rules don't recognise it as a country mult
-      statistics.add_known_country_mult(canonical_prefix);
+// this test is now in statistics
+//    if (rules.country_mults() < canonical_prefix)            // don't add if the rules don't recognise it as a country mult
+      statistics.add_known_country_mult(canonical_prefix, rules);
   }
 }
 
@@ -6407,7 +6413,7 @@ void display_statistics(const string& summary_str)
   win_summary < WINDOW_CLEAR < CURSOR_TOP_LEFT < summary_str;
 
   if (rules.permitted_modes().size() > 1)
-  { for (unsigned int n = 0; n < win_summary.height(); ++n)
+  { for (unsigned int n = 0; n < static_cast<unsigned int>(win_summary.height()); ++n)
     {
 // we have to be a bit complicated because we need to have spaces after the string, so that the colours for the entire line are handled correctly
       const string line = remove_peripheral_spaces(win_summary.getline(n));

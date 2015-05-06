@@ -286,7 +286,7 @@ protected:
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
   std::set<std::string>               _countries;                     ///< collection of canonical prefixes for all the valid countries
-  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of country multipliers
+  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
   bool                                _country_mults_used;            ///< are country mults used?

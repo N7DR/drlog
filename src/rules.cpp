@@ -517,6 +517,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
 
+  ost << "exchange mults: " << context.exchange_mults() << endl;
+
 // build expanded version of _received_exchange
   for (const auto& m : _permitted_modes)
   { map<string, vector<exchange_field>> expanded_exch;
@@ -566,8 +568,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // parse the config file
       const string context_points = context.points(b, m);
-
-// ost << "points from context: " << context_points << endl;
 
       if (context_points == "IARU")  // special
       { points_structure ps = pb[b];
@@ -655,9 +655,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
 
-  for (/*vector<exchange_field>::const_iterator*/ auto cit = leaves.cbegin(); cit != leaves.cend(); ++cit)
+ // for (auto cit = leaves.cbegin(); cit != leaves.cend(); ++cit)
+  for (const auto& ef : leaves)
   { static const set<string> no_canonical_values( { "RS", "RST", "SERNO" } );    // some field values don't have canonical values
-    const string& field_name = cit->name();
+//    const string& field_name = cit->name();
+    const string& field_name = ef.name();
     string entire_file;
     bool   read_file_ok = false;
 
@@ -665,11 +667,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { try
       { entire_file = read_file(path, field_name + ".values");
         read_file_ok = true;
-//        ost << "read values file: " << (field_name + ".values") << endl;
       }
 
       catch (...)
-      { // ost << "Failed to read file " << field_name << ".values" << endl;
+      {
       }
     }
 
@@ -696,7 +697,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
               FOR_ALL(remaining_equivalent_values, [&] (const string& rev) { equivalent_values.insert(rev); });
 
               map_canonical_to_all.insert( { lhs, equivalent_values });
-
             }
           }
           else    // no "="
@@ -747,7 +747,7 @@ contest_rules::contest_rules(const drlog_context& context, location_database& lo
 { _init(context, location_db);
 }
 
-/*! \brief              prepare for use an object that was created from the default constructor
+/*! \brief              Prepare for use an object that was created from the default constructor
     \param  context     context for this contest
     \param  location_db location database
 */
@@ -759,11 +759,11 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
   _init(context, location_db);
 }
 
-/*!     \brief                      Get the expected exchange fields for a particular canonical prefix
-        \param  canonical_prefix    canonical prefix
-        \return                     The exchange fields associated with <i>canonical_prefix</i>
+/*! \brief                      Get the expected exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange fields associated with <i>canonical_prefix</i>
 
-        CHOICE fields are NOT expanded
+    CHOICE fields are NOT expanded
 */
 const vector<exchange_field> contest_rules::exch(const string& canonical_prefix, const MODE m) const
 { if (canonical_prefix.empty())
@@ -773,14 +773,14 @@ const vector<exchange_field> contest_rules::exch(const string& canonical_prefix,
 
   const map<string, vector<exchange_field>>& unexpanded_exchange = _received_exchange.at(m);
 
-  ost << "unexpanded exchange:";
+//  ost << "unexpanded exchange:";
 
-  for (const auto& pmsvef : unexpanded_exchange)
-  { ost << endl << "  prefix = " << pmsvef.first << endl;
-    for (const auto& ef : pmsvef.second)
-      ost << "  field = " << ef.name();
-  }
-  ost << endl;
+//  for (const auto& pmsvef : unexpanded_exchange)
+//  { ost << endl << "  prefix = " << pmsvef.first << endl;
+//    for (const auto& ef : pmsvef.second)
+//      ost << "  field = " << ef.name();
+//  }
+//  ost << endl;
 
 
   auto cit = unexpanded_exchange.find(canonical_prefix);
@@ -793,11 +793,11 @@ const vector<exchange_field> contest_rules::exch(const string& canonical_prefix,
   return ( (cit == unexpanded_exchange.cend()) ? vector<exchange_field>() : cit->second );
 }
 
-/*!     \brief                      Get the expected exchange fields for a particular canonical prefix
-        \param  canonical_prefix    canonical prefix
-        \return                     The exchange fields associated with <i>canonical_prefix</i>
+/*! \brief                      Get the expected exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange fields associated with <i>canonical_prefix</i>
 
-        CHOICE fields ARE expanded
+    CHOICE fields ARE expanded
 */
 const vector<exchange_field> contest_rules::expanded_exch(const string& canonical_prefix, const MODE m) const
 { if (canonical_prefix.empty())
@@ -836,11 +836,11 @@ const set<string> contest_rules::all_known_field_names(void) const
   return rv;
 }
 
-/*!     \brief              The exchange field template corresponding to a particular field
-        \param  field_name  name of the field
-        \return             The exchange field information associated with <i>field_name</i>
+/*! \brief              The exchange field template corresponding to a particular field
+    \param  field_name  name of the field
+    \return             the exchange field information associated with <i>field_name</i>
 
-        Returned EFT("none") if <i>field_name</i> is unknown.
+    Returned EFT("none") if <i>field_name</i> is unknown.
 */
 const EFT contest_rules::exchange_field_eft(const string& field_name) const
 { SAFELOCK(rules);

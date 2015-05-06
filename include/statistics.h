@@ -134,7 +134,7 @@ public:
 
     Does nothing and returns false if <i>str</i> is already known
 */
-  const bool add_known_country_mult(const std::string& str);
+  const bool add_known_country_mult(const std::string& str, const contest_rules& rules);
 
 /*! \brief              Do we still need to work a particular country as a mult on a particular band and a particular mode?
     \param  callsign    call to test
