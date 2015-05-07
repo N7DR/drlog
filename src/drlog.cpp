@@ -1203,7 +1203,9 @@ int main(int argc, char** argv)
         }
 
         if (!file.empty())
-        { win_message < WINDOW_CLEAR <= "Rebuilding...";
+        { const string rebuilding_msg("Rebuilding...");
+
+          win_message < WINDOW_CLEAR <= rebuilding_msg;
 
           const vector<string> lines = to_lines(file);
 
@@ -1231,7 +1233,7 @@ int main(int argc, char** argv)
             logbk += qso;
             rate.insert(qso.epoch_time(), statistics.points(rules));
 
-            win_message <= WINDOW_CLEAR;
+//            win_message <= WINDOW_CLEAR;
           }
 
 // rebuild the history
@@ -1256,6 +1258,11 @@ int main(int argc, char** argv)
             if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
               fuzzy_dynamic_db.add_call(qso.callsign());
           }
+
+          const string contents = remove_peripheral_spaces(win_message.read());
+
+          if (contents == rebuilding_msg)
+            win_message <= WINDOW_CLEAR;
         }
 
 // octothorpe

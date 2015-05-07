@@ -30,6 +30,8 @@ using namespace std;
 extern location_database location_db;       ///< location database
 extern message_stream ost;                  ///< for debugging, info
 
+extern void alert(const string& msg);
+
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line
@@ -202,6 +204,14 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 
     if (!processed and (name.substr(0, 9) == "received-"))
     { const string name_upper = to_upper(name.substr(9));
+
+      ost << "field " << name_upper << " in: " << *this << endl;
+
+      if (!(rules.all_known_field_names() < name_upper))
+      { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
+        alert("Unknown exch field: " + name_upper);
+      }
+
       const bool is_possible_mult = rules.is_exchange_mult(name_upper);
 
       if (is_possible_mult and context.auto_remaining_exchange_mults(name_upper))

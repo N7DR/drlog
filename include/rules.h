@@ -460,7 +460,7 @@ public:
         \param  field_name  name of the field
         \return             The exchange field information associated with <i>field_name</i>
 
-        Returned EFT("none") if <i>field_name</i> is unknown.
+        Returns EFT("none") if <i>field_name</i> is unknown.
 */
   const EFT exchange_field_eft(const std::string& field_name) const;
 
