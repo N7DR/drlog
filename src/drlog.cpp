@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 102 2015-04-26 16:55:31Z  $
+// $Id: drlog.cpp 103 2015-05-09 16:08:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3576,9 +3576,15 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 //    ost << "going to log QSO with " << call_contents << endl;
 
-    const string canonical_prefix = location_db.canonical_prefix(call_contents);
+    string canonical_prefix = location_db.canonical_prefix(call_contents);
     const string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
     const vector<string> exchange_field_values = split_string(exchange_contents, ' ');
+
+// if there's an explicit replacement call, we might need to change the template
+    for (const auto& value : exchange_field_values)
+      if ( contains(value, ".") and (value.size() != 1) )    // ignore a field that is just "."
+          canonical_prefix = location_db.canonical_prefix(remove_char(value, '.'));
+
     const vector<exchange_field> exchange_template = rules.exch(canonical_prefix, cur_mode);
 
 //    ost << "Contents of exchange_template:" << endl;

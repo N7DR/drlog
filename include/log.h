@@ -1,4 +1,4 @@
-// $Id: log.h 94 2015-02-07 15:06:10Z  $
+// $Id: log.h 103 2015-05-09 16:08:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -178,11 +178,11 @@ public:
 //    return rv;
 //  }
 
-/*!     \brief          Return the QSOs, filtered by some criterion
-        \param  pred    predicate to apply
-        \return         The QSOs for which <i>pred</i> is true
+/*! \brief          Return the QSOs, filtered by some criterion
+    \param  pred    predicate to apply
+    \return         the QSOs for which <i>pred</i> is true
 
-        The returned QSOs are in chronological order
+    The returned QSOs are in chronological order
 */
   template <class UnaryPredicate>
   const std::vector<QSO> filter(UnaryPredicate pred) const
@@ -193,19 +193,29 @@ public:
     return rv;
   }
   
-/// recalculate the dupes
+/*! \brief          Recalculate the dupes
+    \param  rules   rules for the contest
+    \return         logbook with the dupes recalculated
+*/
   const logbook recalculate_dupes(const contest_rules& rules) const;
   
-/// generate a Cabrillo log
+/*! \brief              Generate a Cabrillo log
+    \param  context     the drlog context
+    \param  score       score to be claimed
+    \return             the Cabrillo log
+*/
   const std::string cabrillo_log(const drlog_context& context, const unsigned int score) const;
   
-/// generate a trlog log
-  const std::string trlog_log(const drlog_context& context, const unsigned int score) const; 
-  
-/// read from a Cabrillo file
+/*! \brief                          Read from a Cabrillo file
+    \param  filename                name of Cabrillo file
+    \param  cabrillo_qso_template   template for the Cabrillo QSOs
+*/
   void read_cabrillo(const std::string& filename, const std::string& cabrillo_qso_template);
 
-/// read from a Cabrillo file using space-delimited fields
+/*! \brief                          Read from a Cabrillo file, using space-delimited fields
+    \param  filename                name of Cabrillo file
+    \param  cabrillo_fields         names of Cabrillo fields
+*/
   void read_cabrillo(const std::string& filename, const std::vector<std::string>& cabrillo_fields);
 
 /// read a trlog log

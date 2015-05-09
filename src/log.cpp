@@ -1,4 +1,4 @@
-// $Id: log.cpp 101 2015-04-04 01:49:14Z  $
+// $Id: log.cpp 103 2015-05-09 16:08:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -119,7 +119,7 @@ const unsigned int logbook::n_worked(const string& call) const
   return distance(range.first, range.second);
 }
 
-/*! \brief          has a call been worked on a particular band?
+/*! \brief          Has a call been worked on a particular band?
     \param  call    target callsign
     \param  b       target band
     \return         whether <i>call</i> has been worked on <i>b</i>
@@ -134,7 +134,7 @@ const bool logbook::qso_b4(const string& call, const BAND b) const
   return false;
 }
 
-/*! \brief          has a call been worked on a particular mode?
+/*! \brief          Has a call been worked on a particular mode?
     \param  call    target callsign
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>m</i>
@@ -149,7 +149,7 @@ const bool logbook::qso_b4(const string& call, const enum MODE m) const
   return false;
 }
 
-/*! \brief          has a call been worked on a particular band and mode?
+/*! \brief          Has a call been worked on a particular band and mode?
     \param  call    target callsign
     \param  b       target band
     \param  m       target mode
@@ -165,7 +165,7 @@ const bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) 
   return false;
 }
 
-/*! \brief          get a string list of bands on which a call is needed
+/*! \brief          Get a string list of bands on which a call is needed
     \param  call    target callsign
     \param  rules   rules for the contest
     \return         string list of bands on which a call is needed (separated by three spaces)
@@ -179,7 +179,7 @@ const string logbook::call_needed(const string& call, const contest_rules& rules
   return rv;
 }
 
-/*! \brief          would a QSO be a dupe, according to the rules?
+/*! \brief          Would a QSO be a dupe, according to the rules?
     \param  qso     target QSO
     \param  rules   rules for the contest
     \return         whether <i>qso</i> would be a dupe
@@ -252,7 +252,6 @@ const vector<QSO> logbook::as_vector(void) const
   return _log_vec;
 }
 
-///
 /*! \brief          Recalculate the dupes
     \param  rules   rules for the contest
     \return         logbook with the dupes recalculated
@@ -274,9 +273,10 @@ const logbook logbook::recalculate_dupes(const contest_rules& rules) const
   return rv;
 }
 
-/*! \brief generate a Cabrillo log
-    \param      context the drlog context
-    \return     the Cabrillo log
+/*! \brief              Generate a Cabrillo log
+    \param  context     the drlog context
+    \param  score       score to be claimed
+    \return             the Cabrillo log
     
     The Cabrillo format is supposedly "specified" at:
       http://www.kkn.net/~trey/cabrillo/
@@ -413,73 +413,10 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
   return rv;
 }
 
-/// generate a trlog log
-// just the main body with one QSO per line
-const string logbook::trlog_log(const drlog_context& context, const unsigned int score) const
-{ string rv;
-
-// generate time-ordered container
-  const list<QSO> qsos = as_list();
-  logbook         cumulative;
-
-//  for (list<QSO>::const_iterator cit = qsos.begin(); cit != qsos.end(); ++cit)
-  for (const auto& qso : qsos)
-  { string line(80, ' ');
-    
-// band
-    line.replace(0, 3, pad_string(BAND_NAME[qso.band()], 3));
-    
-// mode    
-    switch (qso.mode())
-    { case MODE_CW :
-        line.replace(3, 2, "CW");
-        break;
-  
-      case MODE_SSB :
-        line.replace(3, 3, "SSB");
-        break;
-  
-//      case MODE_DIGI :
-//        line.replace(3, 4, "RTTY");
-        break;
-    }
-
-// date
-    static const array<string, 12> MONTHS { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-    const string drlog_date = qso.date();
-    string trlog_date = drlog_date.substr(8, 2);
-    
-    trlog_date += "-";
-    
-    const int month_number = from_string<int>(drlog_date.substr(5, 2));
-
-    if ((month_number >= 1) and (month_number <= 12))
-      trlog_date += MONTHS[month_number - 1];
-    else
-      trlog_date += "UNK";
-    
-    trlog_date += "-";
-    trlog_date += drlog_date.substr(2, 4);
-    line.replace(7, 9, trlog_date);   
-  
-// time
-    line.replace(17, 5, qso.utc().substr(0, 2) + ":" + qso.utc().substr(3, 2));
-
-// frequency
-    line.replace(23, 4, ":" + last(qso.freq(), 3));
-    
-// call
-    line.replace(29, 15, qso.call());
-    
-// more here... it seems that the format changes as a function of contest, though
-  
-//   rv += cit->cabrillo_format(context.cabrillo_qso_template()) + LF;
-  }
-
-  return rv;
-}
-
-/// read from a Cabrillo file
+/*! \brief                          Read from a Cabrillo file
+    \param  filename                name of Cabrillo file
+    \param  cabrillo_qso_template   template for the Cabrillo QSOs
+*/
 void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_template)
 { string file_contents = remove_char(read_file(filename), '\r');
   const vector<string> lines = to_lines(file_contents);
@@ -617,7 +554,10 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   }
 }
 
-/// read from a Cabrillo file using space-delimited fields
+/*! \brief                          Read from a Cabrillo file, using space-delimited fields
+    \param  filename                name of Cabrillo file
+    \param  cabrillo_fields         names of Cabrillo fields
+*/
 void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
 { string file_contents = remove_char(read_file(filename), '\r');
   const vector<string> lines = to_lines(file_contents);
