@@ -195,22 +195,37 @@ public:
 /// total points
   const unsigned int points(const contest_rules& rules) const;
 
-/// worked callsign mults for a particular band
-//  const std::set<std::string> worked_callsign_mults(const std::string& mult_name, const BAND b);
+/*! \brief              Worked callsign mults for a particular band and mode
+    \param  mult_name   name of mult
+    \param  b           band
+    \param  m           mode
+    \return             callsign mults worked on band <i>b</i> and mode <i>m</i>
+*/
   const std::set<std::string> worked_callsign_mults(const std::string& mult_name, const BAND b, const MODE m);
 
-/// worked country mults for a particular band and mode
+/*! \brief              Worked country mults for a particular band and mode
+    \param  mult_name   name of mult
+    \param  b           band
+    \param  m           mode
+    \return             country mults worked on band <i>b</i> and mode <i>m</i>
+*/
   const std::set<std::string> worked_country_mults(const BAND b, const MODE m);
 
+/// all the known country mults
   inline const std::set<std::string> known_country_mults(void)
     { SAFELOCK(statistics);
       return _country_multipliers.known();
     }
 
+/// the number of known country mults
   inline const size_t n_known_country_mults(void) const
     { return _country_multipliers.n_known(); }
 
-/// worked exchange mults for a particular band
+/*! \brief              Worked exchange mults for a particular band and mode
+    \param  b           band
+    \param  m           mode
+    \return             all the exchange mults worked on band <i>b</i> and mode <i>m</i>
+*/
   const std::map<std::string /* field name */, std::set<std::string> /* values */ >   worked_exchange_mults(const BAND b, const MODE m);
 
 /*! \brief  is a particular string a known callsign mult name?

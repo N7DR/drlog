@@ -400,9 +400,6 @@ public:
 
 /// add a band to the list of those permitted
   void add_permitted_band(const BAND b);
-  
-/// is a particular band permitted?
-//  const bool permitted_band(const BAND b) const;
 
 /// get the next band that is higher in frequency than a given band
   const BAND next_band_up(const BAND current_band) const;
@@ -488,7 +485,7 @@ public:
 */
   void score_bands(const std::set<BAND>& new_bands);
 
-/*! \brief  Define a new set of modes to be scored
+/*! \brief              Define a new set of modes to be scored
     \param  new_modes   the set of modes to be scored
 
     Does nothing if <i>new_modes</i> is empty
@@ -534,30 +531,30 @@ public:
 */
   const std::string canonical_value(const std::string& field_name, const std::string& actual_value) const;
 
-/*! \brief                      Add a canonical value for a particular exchange field
-    \param  field_name          name of an exchange field (received)
-    \param  new_canonical_value the canonical value to add
+/*! \brief                          Add a canonical value for a particular exchange field
+    \param  field_name              name of an exchange field (received)
+    \param  new_canonical_value     the canonical value to add
 
     Also adds <i>new_canonical_value</i> to the legal values for the field <i>field_name</i>. Does nothing
     if <i>new_canonical_value</i> is already a canonical value.
 */
   void add_exch_canonical_value(const std::string& field_name, const std::string& new_canonical_value);
 
-/*! \brief                           Is a particular string the canonical value for a particular exchange field?
-    \param  field_name               name of an exchange field (received)
-    \param  putative_canonical_value the value to check
+/*! \brief                              Is a particular string the canonical value for a particular exchange field?
+    \param  field_name                  name of an exchange field (received)
+    \param  putative_canonical_value    the value to check
 
     Returns false if <i>field_name</i> is unrecognized
 */
   const bool is_canonical_value(const std::string& field_name, const std::string& putative_canonical_value) const;
 
-/*! \brief                           Is a particular string a legal value for a particular exchange field?
-    \param  field_name               name of an exchange field (received)
-    \param  putative_value           the value to check
+/*! \brief                  Is a particular string a legal value for a particular exchange field?
+    \param  field_name      name of an exchange field (received)
+    \param  putative_value  the value to check
 
     Returns false if <i>field_name</i> is unrecognized
 */
-    const bool is_legal_value(const std::string& field_name, const std::string& putative_canonical_value) const;
+  const bool is_legal_value(const std::string& field_name, const std::string& putative_canonical_value) const;
 
 /// number of points if a particular exchange field has a particular value
   inline const std::map<std::string, unsigned int> exchange_value_points(void) const

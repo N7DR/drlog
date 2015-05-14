@@ -4155,14 +4155,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // syntactic sugar
   window& win = *wp;
 
-// ost << "processing LOG input; event string: " << e.str() << endl;
-
   bool processed = win.common_processing(e);
-
-//  if (!processed and e.is_char('/'))
-//  { win <= e.str();
-//    processed = true;
-//  }
 
   if (!processed and e.is_char(' '))
   { win <= e.str();
@@ -4184,12 +4177,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
       const vector<string> new_win_log_snapshot = win_log.snapshot();  // [0] is the top line
 
-//      for (size_t n = 0; n < win_log_snapshot.size(); ++n)
-//        ost << "Original line #" << n << ": " << win_log_snapshot[n] << endl;
-
-//      for (size_t n = 0; n < new_win_log_snapshot.size(); ++n)
-//        ost << " Current line #" << n << ": " << new_win_log_snapshot[n] << endl;
-
 // has anything been changed?
       bool changed = false;
       for (size_t n = 0; !changed and n < new_win_log_snapshot.size(); ++n)
@@ -4197,16 +4184,12 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
       if (changed)
       {
-//ost << hhmmss() << " starting changed log" << endl;
-
 // get the original QSOs that were in the window
         int number_of_qsos_in_original_window = 0;
 
         for (size_t n = 0; n < win_log_snapshot.size(); ++n)
           if (!remove_peripheral_spaces(win_log_snapshot[n]).empty())
             number_of_qsos_in_original_window++;
-
-//ost << "number of QSOs in original window = " << number_of_qsos_in_original_window << endl;
 
         deque<QSO> original_qsos;
 
@@ -5877,7 +5860,6 @@ void allow_for_callsign_mults(QSO& qso)
   }
 }
 
-// &&&
 /*! \brief      Function to process input to the QTC window
     \param  wp  pointer to window
     \param  e   keyboard event to process
@@ -6060,7 +6042,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     else    // we have sent the last QTC; cleanup
     { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
-//      ost << "Sent QTC " << qtc_id << " to " << series.destination() << endl;
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sent QTC " < qtc_id < " to " <= series.destination();
 
       series.date(substring(date_time_string(), 0, 10));
@@ -6093,12 +6074,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
 // CTRL-X, ALT-X -- Abort and go back to prior window
   if (!processed and (e.is_control('x') or e.is_alt('x')))
-  { //ost << "Aborting; n_sent = " << series.n_sent() << endl;
-
-    if (series.n_sent() != 0)
+  { if (series.n_sent() != 0)
     { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
-      //ost << "Aborted sending QTC " << qtc_id << " to " << series.destination() << endl;
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Aborted sending QTC " < qtc_id < " to " <= series.destination();
 
       series.date(substring(date_time_string(), 0, 10));
@@ -6120,10 +6098,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       display_statistics(statistics.summary_string(rules));
     }
     else  // none sent
-    { //ost << "Completely aborted; QTC " << qtc_id << " not sent to " << series.destination() << endl;
-      win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Completely aborted; QTC " < qtc_id < " not sent to " <= series.destination();
+    { win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Completely aborted; QTC " < qtc_id < " not sent to " <= series.destination();
 
-    (*win_active_p) <= WINDOW_CLEAR;
+      (*win_active_p) <= WINDOW_CLEAR;
 
       win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
       display_statistics(statistics.summary_string(rules));

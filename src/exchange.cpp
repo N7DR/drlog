@@ -166,8 +166,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 // if there's an explicit . field, use it to replace the call
   for (const auto& received_value : received_values)
   { if (contains(received_value, "."))
-    { _replacement_call = remove_char(received_value, '.');
-    }
+      _replacement_call = remove_char(received_value, '.');
   }
 
   if (!_replacement_call.empty())    // remove the dotted field(s) from the received exchange
@@ -179,8 +178,6 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   map<int /* received field number */, set<string>> matches;
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
   int field_nr = 0;
-
-//  ost << "About to iterate through received values" << endl;
 
   for (const string& received_value : copy_received_values)
   { set<string> match;
@@ -246,9 +243,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
     for (const auto& t : tuple_deque)
     { if (get<2>(t).size() == 1)
-      { //ost << "map insertion: " << *(get<2>(t).cbegin()) << " and position " << get<0>(t) << endl;
-
-        const auto it = tuple_map_assignments.find( *(get<2>(t).cbegin()) );
+      { const auto it = tuple_map_assignments.find( *(get<2>(t).cbegin()) );
 
         if (it != tuple_map_assignments.end())
           tuple_map_assignments.erase(it);        // erase any previous entry with this key
@@ -490,17 +485,6 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
   return ost;
 }
 
-//#include "cty_data.h"
-//#include "drmaster.h"
-//#include "log.h"
-
-//extern drmaster* drm_p;                 ///< pointer to drmaster database
-//extern location_database location_db;
-//extern logbook logbk;
-//extern contest_rules     rules;
-
-//pt_mutex exchange_field_database_mutex;
-
 // -------------------------  exchange_field_database  ---------------------------
 
 /*!     \class exchange_field_database
@@ -509,17 +493,15 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
         There can be only one of these, and it is thread safe
 */
 
-/*! \brief  Guess the value of an exchange field
-    \param  callsign   callsign for the guess
-    \param  field_name name of the field for the guess
-    \return Guessed value of <i>field_name</i> for <i>callsign</i>
+/*! \brief              Guess the value of an exchange field
+    \param  callsign    callsign for the guess
+    \param  field_name  name of the field for the guess
+    \return             guessed value of <i>field_name</i> for <i>callsign</i>
 
     Returns empty string if no sensible guess can be made
 */
 const string exchange_field_database::guess_value(const string& callsign, const string& field_name)
-{ //ost << "guessing value of " << field_name << " field for " << callsign << endl;
-
-  SAFELOCK(exchange_field_database);
+{ SAFELOCK(exchange_field_database);
 
 // first, check the database
   const auto it = _db.find( pair<string, string>( { callsign, field_name } ) ) ;
@@ -534,22 +516,14 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   { string rv;
 
     if (!drm_line.empty())
-    { //ost << "drm_line = " << drm_line.to_string() << endl;
-
-      rv = to_upper(drm_line.state_10());
-
-      //ost << "state_10() = " << rv << endl;
+    { rv = to_upper(drm_line.state_10());
 
       if (rv.empty())                       ///< if no explicit 10MSTATE value, try the QTH value
         rv = to_upper(drm_line.qth());
     }
 
-//      ost << "guess so far is: " << rv << endl;
-
       if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE") )  // can often guess province for VEs
-      { //ost << "Guessing VE province" << endl;
-
-        const string pfx = wpx_prefix(callsign);
+      { const string pfx = wpx_prefix(callsign);
 
         if (pfx == "VY2")
           rv = "PE";
@@ -597,9 +571,6 @@ const string exchange_field_database::guess_value(const string& callsign, const 
               break;
           }
         }
-
-//        ost << "guessed VE province = " << rv << endl;
-
       }
 
       if (!rv.empty())
@@ -687,8 +658,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     { rv = drm_line.qth();
 
       if (!rv.empty())
-      { //rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
+      { _db.insert( { { callsign, field_name }, rv } );
 
         return rv;
       }
@@ -702,8 +672,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     { rv = drm_line.qth();
 
       if (!rv.empty())
-      { //rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
+      { _db.insert( { { callsign, field_name }, rv } );
 
         return rv;
       }
@@ -771,8 +740,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     { rv = drm_line.qth();
 
       if (!rv.empty())
-      { //rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
+      { _db.insert( { { callsign, field_name }, rv } );
 
         return rv;
       }
@@ -781,14 +749,11 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
   if ((field_name == "RDA") or (field_name == "RD2"))
   { static const set<string> countries { "R1FJ", "UA", "UA2", "UA9" };
+
     string rv;
 
-//    ost << "RDA/RD2 lookup for " << callsign << endl;
-
     if (!drm_line.empty() and ( (countries < location_db.canonical_prefix(callsign)) or starts_with(callsign, "RI1AN")) )
-    { //ost << "looking in database" << endl;
-
-      rv = drm_line.qth();
+    { rv = drm_line.qth();
 
       if (field_name == "RD2" and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
         rv = substring(rv, 0, 2);

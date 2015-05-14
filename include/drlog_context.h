@@ -112,15 +112,12 @@ protected:
   std::string                                  _cluster_server;             ///< hostname or IP of cluster server
   std::string                                  _cluster_username;           ///< username to use on the cluster
   std::string                                  _contest_name;               ///< name of the contest
-//  std::vector<std::pair<std::string, std::string>> _country_exceptions;     ///< calls to be placed in non-default country -- DOES NOT SEEM TO BE USED
   enum country_list_type                       _country_list;               ///< DXCC or WAE list?
   std::string                                  _country_mults_filter;       ///< the command from the configuration file
   bool                                         _country_mults_per_band;     ///< are country mults per-band?
   bool                                         _country_mults_per_mode;     ///< are country mults per-mode?
   bool                                         _cq_auto_lock;               ///< whether to lock the transmitter in CQ mode
   bool                                         _cq_auto_rit;                ///< whether to enable RIT in CQ mode
- // std::array<std::string, CQ_MEMORY_MESSAGES + 1>
- //                                              _cq_memory;                  ///< CQ memories, counted wrt 1
   std::string                                  _cty_filename;               ///< filename of country file (default = "cty.dat")
   unsigned int                                 _cw_speed;                   ///< speed in WPM
 
@@ -137,8 +134,6 @@ protected:
   bool                                         _exchange_mults_per_mode;    ///< are exchange mults per-mode?
   std::map<std::string, std::string>           _exchange_per_country;       ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::string                                  _exchange_sap;               ///< exchange in SAP mode
- // std::vector<std::string>                     _exchanges;                  ///< optional exchange choices
-//  std::array<std::string, EX_MEMORY_MESSAGES>  _ex_memory;                  ///< exchange memories
 
   std::map<MODE, unsigned int>                 _guard_band;                 ///< guard band, in Hz
 
@@ -150,7 +145,6 @@ protected:
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;   ///< frequency ranges to be marked on-screen
   unsigned int                                 _match_minimum;                      ///< number of characters before SCP or fuzzy match kicks in
-//  std::array<std::string, MAX_MEMORY_MESSAGES> _memory_messages;                    ///< canned messages
 
 // we use the KeySymbol as the integer, although other I/O implementations could use something else
   std::map<int, std::string >                  _messages;                           ///< CW messages

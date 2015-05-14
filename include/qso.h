@@ -51,7 +51,9 @@ protected:
   std::string                                       _continent;         ///< NOT automatically set when callsign is set
   std::string                                       _date;              ///< yyyy-mm-dd
   time_t                                            _epoch_time;        ///< time in seconds since the UNIX epoch
-  std::string                                       _frequency;         ///< frequency in form xxxxx.y (kHz)
+//  std::string                                       _frequency;         ///< frequency in form xxxxx.y (kHz)
+  std::string                                       _frequency_tx;      ///< TX frequency in form xxxxx.y (kHz)
+  std::string                                       _frequency_rx;      ///< RX frequency in form xxxxx.y (kHz)
   bool                                              _is_country_mult;   ///< is this QSO a country mult?
   bool                                              _is_prefix_mult;    ///< is this QSO a prefix mult?
   bool                                              _is_dupe;           ///< is this QSO a dupe?
@@ -99,13 +101,13 @@ public:
   READ_AND_WRITE(number);            ///< qso number
   READ_AND_WRITE(utc);               ///< hh:mm:ss
 
-/// get frequency as a string
-  inline const decltype(_frequency) freq(void) const
-    { return _frequency; }
+/// get TX frequency as a string
+  inline const decltype(_frequency_tx) freq(void) const
+    { return _frequency_tx; }
 
-/// set frequency from a string of the form xxxxx.y
-  inline void freq(const decltype(_frequency)& str)
-    { _frequency = str; }
+/// set TX frequency from a string of the form xxxxx.y
+  inline void freq(const decltype(_frequency_tx)& str)
+    { _frequency_tx = str; }
 
   READ_AND_WRITE(comment);           ///< comment to be carried with QSO
   READ_AND_WRITE(canonical_prefix);  ///< canonical prefix for the country
@@ -188,17 +190,35 @@ public:
 */
   const bool exchange_match_string(const std::string& target) const;
 
-/// return a single field from the received exchange
+/*! \brief              Return a single field from the received exchange
+    \param  field_name  name of field to return
+    \return             value of <i>field_name</i>
+
+    Returns the empty string if <i>field_name</i> is not found in the exchange
+*/
   const std::string received_exchange(const std::string& field_name) const;
 
-/// return a single field from the received exchange
+/*! \brief              Return a single field from the sent exchange
+    \param  field_name  name of field to return
+    \return             value of <i>field_name</i>
+
+    Returns the empty string if <i>field_name</i> is not found in the exchange
+*/
   const std::string sent_exchange(const std::string& field_name) const;
 
-/// return a single field from the received exchange
+/*! \brief              Return a single field from the sent exchange
+    \param  field_name  name of field to return
+    \return             value of <i>field_name</i>
+
+    Synonym for sent_exchange(<i>field_name</i>)
+*/
   inline const std::string sent_exchange_field(const std::string& field_name) const
     { return sent_exchange(field_name); }
 
-/// does the sent exchange include a particular field?
+/*! \brief              Does the sent exchange include a particular field?
+    \param  field_name  name of field to test
+    \return             whether the sent exchange includes the field <i>field_name</i>
+*/
   const bool sent_exchange_includes(const std::string& field_name);
 
 /// convert to a string suitable for display in the log window
@@ -211,18 +231,20 @@ public:
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-    { ar & _callsign
+    { ar & _band
+         & _callsign
+         & _comment
          & _date
+//         & _frequency
+         & _frequency_tx
+         & _frequency_rx
+         & _is_dupe
          & _mode
+         & _my_call
          & _number
+         & _points
          & _utc
 
-         & _band
-         & _frequency
-         & _comment
-         & _my_call
-         & _points
-         & _is_dupe
          & _sent_exchange
          & _received_exchange
          & _canonical_prefix

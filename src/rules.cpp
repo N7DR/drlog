@@ -517,7 +517,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
 
-  ost << "exchange mults: " << context.exchange_mults() << endl;
+//  ost << "exchange mults: " << context.exchange_mults() << endl;
 
 // build expanded version of _received_exchange
   for (const auto& m : _permitted_modes)
@@ -655,10 +655,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   set<exchange_field> leaves(leaves_vec.cbegin(), leaves_vec.cend());
 
- // for (auto cit = leaves.cbegin(); cit != leaves.cend(); ++cit)
   for (const auto& ef : leaves)
   { static const set<string> no_canonical_values( { "RS", "RST", "SERNO" } );    // some field values don't have canonical values
-//    const string& field_name = cit->name();
+
     const string& field_name = ef.name();
     string entire_file;
     bool   read_file_ok = false;
@@ -772,17 +771,6 @@ const vector<exchange_field> contest_rules::exch(const string& canonical_prefix,
   SAFELOCK(rules);
 
   const map<string, vector<exchange_field>>& unexpanded_exchange = _received_exchange.at(m);
-
-//  ost << "unexpanded exchange:";
-
-//  for (const auto& pmsvef : unexpanded_exchange)
-//  { ost << endl << "  prefix = " << pmsvef.first << endl;
-//    for (const auto& ef : pmsvef.second)
-//      ost << "  field = " << ef.name();
-//  }
-//  ost << endl;
-
-
   auto cit = unexpanded_exchange.find(canonical_prefix);
 
   if (cit != unexpanded_exchange.cend())
@@ -966,9 +954,7 @@ const set<string> contest_rules::exch_permitted_values(const string& field_name)
     Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>
 */
 const string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
-{ //ost << "attempting to get canonical value for field " << field_name << " with value " << actual_value << endl;
-
-  set<string> ss = exch_permitted_values(field_name);
+{ set<string> ss = exch_permitted_values(field_name);
 
   if (exch_permitted_values(field_name).empty())                         // if no permitted values => anything allowed
     return actual_value;
@@ -1014,8 +1000,8 @@ const MODE contest_rules::next_mode(const MODE current_mode) const
   return *cit;
 }
 
-/*! \brief               Add a band to the list of permitted bands
-    \param  b            Band to add
+/*! \brief      Add a band to the list of permitted bands
+    \param  b   band to add
 
     Does nothing if <i>b</i> is already permitted
 */
@@ -1025,13 +1011,6 @@ void contest_rules::add_permitted_band(const BAND b)
   if (find(_permitted_bands.begin(), _permitted_bands.end(), b) == _permitted_bands.end())
     _permitted_bands.push_back(b);
 }
-
-/// is a particular band permitted?
-//const bool contest_rules::permitted_band(const BAND b) const
-//{ SAFELOCK(rules);
-//
-//  return (find(_permitted_bands.begin(), _permitted_bands.end(), b) != _permitted_bands.end());
-//}
 
 /// get the next band up
 const BAND contest_rules::next_band_up(const BAND current_band) const
@@ -1161,7 +1140,7 @@ void contest_rules::score_bands(const set<BAND>& new_bands)
 /*! \brief              Define a new set of modes to be scored
     \param  new_modes   the set of modes to be scored
 
-    Does nothing if <i>new_mode</i> is empty
+    Does nothing if <i>new_modes</i> is empty
 */
 void contest_rules::score_modes(const set<MODE>& new_modes)
 { if (!new_modes.empty())

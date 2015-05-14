@@ -480,15 +480,16 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // EXCHANGE CQ
-    if (starts_with(testline, "EXCHANGE CQ"))
+    if (LHS == "EXCHANGE CQ")
       _exchange_cq = RHS;
 
 // EXCHANGE FIELDS FILENAME
-    if (starts_with(testline, "EXCHANGE FIELDS FILENAME"))
+    if (LHS == "EXCHANGE FIELDS FILENAME")
       _exchange_fields_filename = rhs;
 
 // EXCHANGE MULTS
-    if (starts_with(testline, "EXCHANGE MULTS") and !starts_with(testline, "EXCHANGE MULTS PER"))
+//    if (starts_with(testline, "EXCHANGE MULTS") and !starts_with(testline, "EXCHANGE MULTS PER"))
+    if (LHS == "EXCHANGE MULTS")
     { _exchange_mults = RHS;
 
       if (contains(_exchange_mults, ","))       // if there is more than one exchange mult
@@ -496,11 +497,11 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // EXCHANGE MULTS PER BAND
-    if (starts_with(testline, "EXCHANGE MULTS PER BAND"))
+    if (LHS == "EXCHANGE MULTS PER BAND")
       _exchange_mults_per_band = is_true;
 
 // EXCHANGE MULTS PER MODE
-    if (starts_with(testline, "EXCHANGE MULTS PER MODE"))
+    if (LHS == "EXCHANGE MULTS PER MODE")
       _exchange_mults_per_mode = is_true;
 
 // EXCHANGE SAP

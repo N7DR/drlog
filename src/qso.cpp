@@ -174,19 +174,42 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = true;
     }
 
-    if (!processed and (name == "frequency"))
-    { _frequency = value;
+    if (!processed and (name == "frequency"))               // old version
+    { _frequency_tx = value;
 
-      const double f = from_string<double>(_frequency);
+      const double f = from_string<double>(_frequency_tx);
       const frequency freq(f);
 
       _band = static_cast<BAND>(freq);
       processed = true;
     }
 
+    if (!processed and (name == "frequency-tx"))
+    { _frequency_tx = value;
+
+      if (!_frequency_tx.empty())
+      { const double f = from_string<double>(_frequency_tx);
+        const frequency freq(f);
+
+        _band = static_cast<BAND>(freq);
+      }
+      processed = true;
+    }
+
+    if (!processed and (name == "frequency-rx"))
+    { _frequency_rx = value;
+
+      if (!_frequency_rx.empty())
+      { //const double f = from_string<double>(_frequency_rx);
+        //const frequency freq(f);
+
+        //_band = static_cast<BAND>(freq);
+      }
+      processed = true;
+    }
+
     if (!processed and (name == "hiscall"))
     { _callsign = value;
-
       _canonical_prefix = location_db.canonical_prefix(_callsign);
       _continent = location_db.continent(_callsign);
       processed = true;
@@ -205,7 +228,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     if (!processed and (name.substr(0, 9) == "received-"))
     { const string name_upper = to_upper(name.substr(9));
 
-      ost << "field " << name_upper << " in: " << *this << endl;
+//      ost << "field " << name_upper << " in: " << *this << endl;
 
       if (!(rules.all_known_field_names() < name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
@@ -278,9 +301,9 @@ void QSO::populate_from_log_line(const string& str)
     }
 
     if (!processed and (_log_line_fields[n] == "FREQUENCY"))
-    { _frequency = vec[n];
+    { _frequency_tx = vec[n];
 
-      const double f = from_string<double>(_frequency);
+      const double f = from_string<double>(_frequency_tx);
       const frequency freq(f);
 
       _band = static_cast<BAND>(freq);
@@ -366,8 +389,9 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
 
     string value;          // hold the value that we are going to insert
     
-/*
-    * freq is frequency/band:
+/* http://wwrof.org/cabrillo/cabrillo-qso-templates/ says:
+    freq is frequency or band:
+
           o 1800 or actual frequency in KHz
           o 3500 or actual frequency in KHz
           o 7000 or actual frequency in KHz
@@ -391,10 +415,13 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
           o 142G
           o 241G
           o 300G 
+
+   Astonishingly, nowhere does it say *whose* "frequency or band" it is; we are left to guess.
+   I plump for my TX frequency.
 */    
     if (name == "FREQ")
-    { if (!_frequency.empty())                                      // frequency is available
-        value = to_string(from_string<unsigned int>(_frequency));
+    { if (!_frequency_tx.empty())                                      // frequency is available
+        value = to_string(from_string<unsigned int>(_frequency_tx));
       else                                                          // we have only the band; this should never be true
       { static const std::map<BAND, string> BOTTOM_OF_BAND { { BAND_160, "1800" },
                                                              { BAND_80,  "3500" },
@@ -502,8 +529,6 @@ specification tells us otherwise, that's what we do.
   
     value = pad_string(value, len, pdirn, pad_char);
     record.replace(posn, len, value);             // put into record
-    
- //   ost << "record: " << record << endl;
   }
 
   return record;
@@ -535,7 +560,8 @@ const string QSO::verbose_format(void) const
   rv += " hiscall=" + pad_string(_callsign, CALLSIGN_WIDTH, PAD_RIGHT);
   rv += " mode=" + pad_string(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH, PAD_RIGHT);
   rv += " band=" + pad_string(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH);
-  rv += " frequency=" + pad_string(_frequency, FREQUENCY_WIDTH);
+  rv += " frequency-tx=" + pad_string(_frequency_tx, FREQUENCY_WIDTH);
+  rv += " frequency-rx=" + pad_string(_frequency_rx, FREQUENCY_WIDTH);
   rv += " mycall=" + pad_string(_my_call, CALLSIGN_WIDTH, PAD_RIGHT);
 
   for (const auto& exch_field : _sent_exchange)
@@ -606,7 +632,6 @@ const bool QSO::exchange_match(const string& rule_to_match) const
   }
 
   return false;
-
 }
 
 /*! \brief          Do any of the exchange fields the QSO match a target string?
@@ -666,9 +691,7 @@ const bool QSO::sent_exchange_includes(const string& field_name)
 
 /// for use in the log window
 const string QSO::log_line(void)
-{ //ost << "Inside QSO::log_line()" << endl;
-
-  static const size_t CALL_FIELD_LENGTH = 12;
+{ static const size_t CALL_FIELD_LENGTH = 12;
   string rv;
 
   rv  = pad_string(to_string(number()), 5);
@@ -684,8 +707,6 @@ const string QSO::log_line(void)
     for (const auto& field : _received_exchange)
     { unsigned int field_width = 5;
       const string& name = field.name();
-
-//      ost << "field name in log line: " << name << endl;
 
       if (name == "CQZONE")
         field_width = 2;
@@ -759,8 +780,6 @@ const string QSO::log_line(void)
      if (QSO_MULT_WIDTH)
        field_width = QSO_MULT_WIDTH;
 
-//     ost << "field " << field.name() << " IS " << (!field.is_mult() ? "NOT " : "") << " a mult" << endl;
-
      rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
    }
 
@@ -800,20 +819,13 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q)
   for (unsigned int n = 0; n < sent_exchange.size(); ++n)
     ost << sent_exchange[n].first << " " << sent_exchange[n].second << " ";    
 
-    ost << ", Rcvd: ";
+  ost << ", Rcvd: ";
 
-//  const vector<pair<string, string> > received_exchange = q.received_exchange();
   const vector<received_field> received_exchange = q.received_exchange();
 
-//  for (unsigned int n = 0; n < received_exchange.size(); ++n)
-//    ost << received_exchange[n].name() << " " << received_exchange[n].value() << " ";
+  for (const auto& received_exchange_field : received_exchange)
+    ost << received_exchange_field << "  ";
 
-    for (const auto& received_exchange_field : received_exchange)
-//      ost << received_exchange_field.name() << " " << received_exchange_field.value() << " ";
-      ost << received_exchange_field << "  ";
-
-      
-//  ost << ", Rcvd: " << q.received_exchange()
   ost << ", Comment: " << q.comment()
       << ", Points: " << q.points();
   

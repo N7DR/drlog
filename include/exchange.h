@@ -24,10 +24,6 @@ class exchange_field_template;                  ///< forward declaration
 
 extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
 
-//#if !defined(NEW_CONSTRUCTOR)
-//extern exchange_field_template EXCHANGE_FIELD_TEMPLATES;
-//#endif
-
 // -------------------------  parsed_exchange_field  ---------------------------
 
 /*!     \class parsed_exchange_field
@@ -86,18 +82,6 @@ protected:
   std::string                           _replacement_call;    ///< a new callsign, to replace the one in the CALL window
   std::vector<parsed_exchange_field>    _fields;              ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   bool                                  _valid;               ///< is the object valid? (i.e., was parsing successful?)
-
-//#if !defined(NEW_CONSTRUCTOR)
-/*! \brief  Given several possible field names, choose one that fits the data
-    \param  choice_name   the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
-    \param  received_field the value of the received field
-    \return the individual name of a field in <i>choice_name</i> that fits the data
-
-    Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
-    If there is no fit, then returns the empty string.
-*/
-//  const std::string _resolve_choice(const std::string& canonical_prefix, const std::string& received_field, const contest_rules& rules);
-//#endif
 
 /*! \brief                      Try to fill exchange fields with received field matches
     \param  matches             the names of the matching fields, for each received field number
@@ -238,69 +222,6 @@ public:
     { return _db.size(); }
 };
 
-#if !defined(NEW_CONSTRUCTOR)
-/*! \brief  Is a string a valid callsign?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of callsign
-*/
-const bool is_valid_CALLSIGN(const std::string& str, const contest_rules& rules);
-
-/*! \brief  Is a string a valid CQ zone?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of CQ zone
-*/
-const bool is_valid_CQZONE(const std::string& str, const contest_rules& rules);
-
-/*! \brief  Is a string a valid CW power?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of CW power
-*/
-const bool is_valid_CWPOWER(const std::string& str, const contest_rules& rules);
-
-/*! \brief  Is a string a valid ITU zone?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of ITU zone
-*/
-const bool is_valid_ITUZONE(const std::string& str, const contest_rules& rules);
-
-/*! \brief  Is a string a valid RDA district?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of RDA district
-*/
-const bool is_valid_RDA(const std::string& str, const contest_rules& rules);
-
-/*! \brief  Is a string a valid RS value?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of RS
-*/
-const bool is_valid_RS(const std::string& str, const contest_rules& rules);
-
-/*! \brief  Is a string a valid RST value?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of RST
-*/
-const bool is_valid_RST(const std::string& str, const contest_rules& rules);
-
-/*! \brief  Is a string a valid IARU society?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of society
-
-    Doesn't actually compare against known societies; merely tests whether <i>str</i> comprises only letters
-*/
-const bool is_valid_SOCIETY(const std::string& str, const contest_rules& rules);
-
-/// match anything; simply returns true
-const bool is_valid_ANYTHING(const std::string&, const contest_rules& rules);
-
-typedef const bool (*VALIDITY_FUNCTION_TYPE)(const std::string& field_name, const contest_rules& rules);
-
-/*! \brief  Obtain the validity function corresponding to a particular exchange field name
-    \param  field_name   name of the field for which the validity function is requested
-    \return the validity function corresponding to <i>field_name</i>
-*/
-VALIDITY_FUNCTION_TYPE validity_function(const std::string& field_name, const contest_rules& rules);
-#endif
-
 // -------------------------  EFT  ---------------------------
 
 /*!     \class EFT (exchange_field_template)
@@ -354,8 +275,8 @@ public:
       const std::string& regex_filename,
       const drlog_context& context, location_database& location_db);
 
-  READ_AND_WRITE(is_mult);
-  READ_AND_WRITE(name);
+  READ_AND_WRITE(is_mult);              ///< is this field a mult?
+  READ_AND_WRITE(name);                 ///< name of exchange field
   READ(regex_expression);
   READ(values);
   READ(legal_non_regex_values);
