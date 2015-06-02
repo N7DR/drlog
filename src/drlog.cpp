@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 103 2015-05-09 16:08:33Z  $
+// $Id: drlog.cpp 104 2015-05-20 16:59:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1213,6 +1213,8 @@ int main(int argc, char** argv)
           { QSO qso;
 
             qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
+
+//            ost << "QSO frequency_rx read from disk: " << qso.frequency_rx() << endl;
 
 // callsign mults
             allow_for_callsign_mults(qso);
@@ -4274,6 +4276,10 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
             for (const auto& qso : vec)
             { const string line_to_write = qso.verbose_format() + EOL;
+
+//              ost << "QSO frequency_rx = " << qso.frequency_rx() << endl;
+
+//              ost << "line written to log file: " << line_to_write << endl;
 
               fwrite(line_to_write.c_str(), line_to_write.length(), 1, fp);
             }

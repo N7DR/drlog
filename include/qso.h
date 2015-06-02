@@ -1,4 +1,4 @@
-// $Id: qso.h 103 2015-05-09 16:08:33Z  $
+// $Id: qso.h 105 2015-06-01 19:33:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -108,6 +108,8 @@ public:
 /// set TX frequency from a string of the form xxxxx.y
   inline void freq(const decltype(_frequency_tx)& str)
     { _frequency_tx = str; }
+
+  READ_AND_WRITE(frequency_rx);
 
   READ_AND_WRITE(comment);           ///< comment to be carried with QSO
   READ_AND_WRITE(canonical_prefix);  ///< canonical prefix for the country
@@ -233,8 +235,11 @@ public:
   void serialize(Archive& ar, const unsigned version)
     { ar & _band
          & _callsign
+         & _canonical_prefix
          & _comment
+         & _continent
          & _date
+         & _epoch_time
 //         & _frequency
          & _frequency_tx
          & _frequency_rx
@@ -243,13 +248,9 @@ public:
          & _my_call
          & _number
          & _points
-         & _utc
-
-         & _sent_exchange
          & _received_exchange
-         & _canonical_prefix
-         & _continent
-         & _epoch_time;
+         & _sent_exchange
+         & _utc;
     }
 };
 

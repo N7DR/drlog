@@ -1,4 +1,4 @@
-// $Id: qso.cpp 103 2015-05-09 16:08:33Z  $
+// $Id: qso.cpp 105 2015-06-01 19:33:27Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -31,6 +31,9 @@ extern location_database location_db;       ///< location database
 extern message_stream ost;                  ///< for debugging, info
 
 extern void alert(const string& msg);
+
+bool QSO_DISPLAY_COUNTRY_MULT = true;
+int  QSO_MULT_WIDTH = 0;
 
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
@@ -76,6 +79,12 @@ const pair<string, string> QSO::_next_name_value_pair(const string& str, size_t&
 
   const string value = (space_posn == string::npos) ? str.substr(value_first_char_posn)
                                                     : str.substr(value_first_char_posn, space_posn - value_first_char_posn);
+
+// handle "frequency_rx=     mycall=N7DR"
+  if (contains(value, "="))
+  { posn = value_first_char_posn;
+    return pair<string, string> { name, string() };
+  }
 
   posn = space_posn;
 
@@ -227,8 +236,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 
     if (!processed and (name.substr(0, 9) == "received-"))
     { const string name_upper = to_upper(name.substr(9));
-
-//      ost << "field " << name_upper << " in: " << *this << endl;
 
       if (!(rules.all_known_field_names() < name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
@@ -534,7 +541,7 @@ specification tells us otherwise, that's what we do.
   return record;
 }
 
-/// format for writing to disk
+/// format for writing to disk (in the actual drlog log)
 const string QSO::verbose_format(void) const
 { static const int NUMBER_WIDTH   = 5;
   static const int CALLSIGN_WIDTH = 12;
@@ -689,7 +696,7 @@ const bool QSO::sent_exchange_includes(const string& field_name)
   return false;
 }
 
-/// for use in the log window
+/// convert to a string suitable for display in the log window
 const string QSO::log_line(void)
 { static const size_t CALL_FIELD_LENGTH = 12;
   string rv;
@@ -704,84 +711,84 @@ const string QSO::log_line(void)
   FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += " " + se.second; });
 
 // print in same order the are present in the config file
-    for (const auto& field : _received_exchange)
-    { unsigned int field_width = 5;
-      const string& name = field.name();
+  for (const auto& field : _received_exchange)
+  { unsigned int field_width = 5;
+    const string& name = field.name();
 
-      if (name == "CQZONE")
-        field_width = 2;
+    if (name == "CQZONE")
+      field_width = 2;
 
-      if (name == "CWPOWER")
-        field_width = 3;
+    if (name == "CWPOWER")
+      field_width = 3;
 
-      if (name == "DOK")
-        field_width = 1;
+    if (name == "DOK")
+      field_width = 1;
 
-      if (name == "ITUZONE")
-        field_width = 2;
+    if (name == "ITUZONE")
+      field_width = 2;
 
-      if (name == "RS")
-        field_width = 2;
+    if (name == "RS")
+      field_width = 2;
 
-      if (name == "RST")
-        field_width = 3;
+    if (name == "RST")
+      field_width = 3;
 
-      if (name == "RDA")
-        field_width = 4;
+    if (name == "RDA")
+      field_width = 4;
 
-      if (name == "SERNO")
-        field_width = 4;
+    if (name == "SERNO")
+      field_width = 4;
 
-      if (name == "10MSTATE")
-        field_width = 3;
+    if (name == "10MSTATE")
+      field_width = 3;
 
-      if (QSO_MULT_WIDTH)
-        field_width = QSO_MULT_WIDTH;
+    if (QSO_MULT_WIDTH)
+      field_width = QSO_MULT_WIDTH;
 
-      rv += " " + pad_string(field.value(), field_width);
-    }
+    rv += " " + pad_string(field.value(), field_width);
+  }
 
 // mults
 
 // callsign mult
-   if (_is_prefix_mult)
-     rv += pad_string(_prefix, 5);
+  if (_is_prefix_mult)
+    rv += pad_string(_prefix, 5);
 
 // country mult
-   if (QSO_DISPLAY_COUNTRY_MULT)                                            // set in drlog_context when parsing the config file
-     rv += (_is_country_mult ? pad_string(_canonical_prefix, 5) : "     "); // sufficient for VP2E
+  if (QSO_DISPLAY_COUNTRY_MULT)                                            // set in drlog_context when parsing the config file
+    rv += (_is_country_mult ? pad_string(_canonical_prefix, 5) : "     "); // sufficient for VP2E
 
 // exchange mult
-   for (const auto& field : _received_exchange)
-   { unsigned int field_width = 5;
-     const string& name = field.name();
+  for (const auto& field : _received_exchange)
+  { unsigned int field_width = 5;
+    const string& name = field.name();
 
-     if (name == "CQZONE" or name == "ITUZONE")
-       field_width = 2;
+    if (name == "CQZONE" or name == "ITUZONE")
+      field_width = 2;
 
-     if (name == "DOK")
-       field_width = 1;
+    if (name == "DOK")
+      field_width = 1;
 
-     if (name == "RS")
-       field_width = 2;
+    if (name == "RS")
+      field_width = 2;
 
-     if (name == "RST")
-       field_width = 3;
+    if (name == "RST")
+      field_width = 3;
 
-     if (name == "RDA")
-       field_width = 4;
+    if (name == "RDA")
+      field_width = 4;
 
-     if (name == "SERNO")
-       field_width = 4;
+    if (name == "SERNO")
+      field_width = 4;
 
-     if (name == "10MSTATE")
-       field_width = 3;
+    if (name == "10MSTATE")
+      field_width = 3;
 
-     if (QSO_MULT_WIDTH)
-       field_width = QSO_MULT_WIDTH;
+    if (QSO_MULT_WIDTH)
+      field_width = QSO_MULT_WIDTH;
 
-     rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
-   }
+    rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
+  }
 
   _log_line_fields.clear();    // make sure it's empty before we fill it
 
@@ -832,5 +839,5 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q)
   return ost;
 }
 
-bool QSO_DISPLAY_COUNTRY_MULT = true;
-int  QSO_MULT_WIDTH = 0;
+//bool QSO_DISPLAY_COUNTRY_MULT = true;
+//int  QSO_MULT_WIDTH = 0;

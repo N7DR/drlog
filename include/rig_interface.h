@@ -227,6 +227,7 @@ public:
   inline void enable_rit(void)
     { rit_enable(); }
 
+/// is rit enabled?
   const bool rit_enabled(void);
 
 // set xit offset
@@ -235,12 +236,16 @@ public:
 // get xit offset
   const int xit(void);
 
-// turn xit on/off
+// turn xit on
 // this is a kludge, since hamlib equates an offset with xit turned off (!)
   void xit_enable(void);
 
+// turn xit off
+// this is a kludge, since hamlib equates an offset with xit turned off (!)
   void xit_disable(void);
 
+// turn xit off
+// this is a kludge, since hamlib equates an offset with xit turned off (!)
   inline void disable_xit(void)
     { xit_disable(); }
 
