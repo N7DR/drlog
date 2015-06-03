@@ -315,6 +315,8 @@ public:
 //    { _poll_thread_function(nullptr); }
 };
 
+const std::string hamlib_error_code_to_string(const int e);
+
 // -------------------------------------- Errors  -----------------------------------
 
 /*! \class  rig_interface_error

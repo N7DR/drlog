@@ -174,7 +174,7 @@ void rig_interface::prepare(const drlog_context& context)
   const int status = rig_open(_rigp);
 
   if (status != RIG_OK)
-  { const string msg = "Unable to open the rig on port " + _port_name + ": Error = " + to_string(status);
+  { const string msg = "Unable to open the rig on port " + _port_name + ": Error = " + hamlib_error_code_to_string(status);
 
     _error_alert(msg);
     ost << msg << endl;
@@ -1211,6 +1211,74 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
 { SAFELOCK(_rig);
   _error_alert_function = error_alert_function;
 }
+
+const string hamlib_error_code_to_string(const int e)
+{ switch (e)
+  { case RIG_OK :
+      return "No error, operation completed sucessfully";
+
+    case RIG_EINVAL :
+      return "invalid parameter";
+
+    case RIG_ECONF :
+      return "invalid configuration (serial,..)";
+
+    case RIG_ENOMEM :
+      return "memory shortage";
+
+    case RIG_ENIMPL :
+      return "function not implemented, but will be";
+
+    case RIG_ETIMEOUT :
+      return "communication timed out";
+
+    case RIG_EIO :
+      return "IO error, including open failed";
+
+    case RIG_EINTERNAL :
+      return "Internal Hamlib error, huh!";
+
+    case RIG_EPROTO :
+      return "Protocol error";
+
+    case RIG_ERJCTED :
+      return "Command rejected by the rig";
+
+    case RIG_ETRUNC :
+      return "Command performed, but arg truncated";
+
+    case RIG_ENAVAIL :
+      return "function not available";
+
+    case RIG_ENTARGET :
+      return "VFO not targetable";
+
+    case RIG_BUSERROR :
+      return "Error talking on the bus";
+
+    case RIG_BUSBUSY :
+      return "Collision on the bus";
+
+    case RIG_EARG :
+      return "NULL RIG handle or any invalid pointer parameter in get arg";
+
+    case RIG_EVFO :
+      return "Invalid VFO";
+
+    case RIG_EDOM :
+      return "Argument out of domain of function";
+
+    default :
+      return "Unknown hamlib error number: " + to_string(e);
+  }
+}
+
+
+
+
+
+
+
 
 map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { { BAND_160, MODE_CW },  frequency(1800000) },
                                                           { { BAND_160, MODE_SSB }, frequency(1900000) },
