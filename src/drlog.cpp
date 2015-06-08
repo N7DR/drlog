@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 104 2015-05-20 16:59:12Z  $
+// $Id: drlog.cpp 106 2015-06-06 16:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2448,6 +2448,38 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // .QUIT
       if (command == "QUIT")
         exit_drlog();
+
+// .PPSTATUS
+      if (command == "PPSTATUS")
+      { //parallel_port& pp = cw_p -> port();
+
+        ost << "Testing parallel port. Initial status:" << endl;
+
+        ost << "Parallel port status: " << cw_p -> status_string() << endl;
+        ost << "Parallel port control status: " << cw_p -> control_status_string() << endl;
+
+        ost << "Now asserting PTT." << endl;
+
+        cw_p -> assert_ptt();
+
+        sleep_for(seconds(1));
+
+        ost << "PTT status:" << endl;
+
+        ost << "Parallel port status: " << cw_p -> status_string() << endl;
+        ost << "Parallel port control status: " << cw_p -> control_status_string() << endl;
+
+        ost << "Now clearing PTT." << endl;
+
+        cw_p -> clear_ptt();
+
+        sleep_for(seconds(1));
+
+        ost << "PTT status:" << endl;
+
+        ost << "Parallel port status: " << cw_p -> status_string() << endl;
+        ost << "Parallel port control status: " << cw_p -> control_status_string() << endl;
+      }
 
 // .REMOVE <call> -- remove call from bandmap and add it to the do-not-show list
       if (substring(command, 0, 6) == "REMOVE" or substring(command, 0, 2) == "RM")

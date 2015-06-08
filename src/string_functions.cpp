@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 90 2015-01-10 17:10:56Z  $
+// $Id: string_functions.cpp 106 2015-06-06 16:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -807,14 +807,15 @@ const bool is_legal_value(const string& value, const string& legal_values, const
 //    '0' is the highest digit
 //    numbers sort after letters
 //    '/' comes after all digits and letters
+//    '-' comes after all digits and letters; here because names of log files, at least as used by CQ, use "-" instead of "/"
 const bool compchar(const char c1, const char c2)
 { if (c1 == c2)
     return false;
 
-  if (c1 == '/')
+  if ( (c1 == '/') or (c1 == '-') )
     return false;
 
-  if (c2 == '/')
+  if ( (c2 == '/') or (c2 == '-') )
     return true;
 
   if (isalpha(c1) and isdigit(c2))

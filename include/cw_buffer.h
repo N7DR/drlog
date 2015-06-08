@@ -134,6 +134,21 @@ public:
 // is sending enabled?
   inline const bool enabled(void) const
     { return !disabled(); }
+
+// status of the associated port
+  inline const std::string status_string(void) const
+    { return _port.status_string(); }
+
+// status of the associated port
+  inline const std::string control_status_string(void) const
+    { return _port.control_status_string(); }
+
+  inline void assert_ptt(void)
+    { _port.control(_ptt_delay ? C1284_NINIT : 0);  }            // key up; PTT asserted
+
+  inline void clear_ptt(void)
+    { _port.control(0);  }
+
 };
 
 // ---------------------------------------- cw_messages -------------------------

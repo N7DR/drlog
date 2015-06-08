@@ -1,4 +1,4 @@
-// $Id: qso.cpp 105 2015-06-01 19:33:27Z  $
+// $Id: qso.cpp 106 2015-06-06 16:11:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,7 +30,7 @@ using namespace std;
 extern location_database location_db;       ///< location database
 extern message_stream ost;                  ///< for debugging, info
 
-extern void alert(const string& msg);
+extern void alert(const string& msg);       ///< alert the user
 
 bool QSO_DISPLAY_COUNTRY_MULT = true;
 int  QSO_MULT_WIDTH = 0;
@@ -148,8 +148,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 {
 // build a vector of name/value pairs
   size_t cur_posn = min(static_cast<size_t>(5), str.size());  // skip the "QSO: "
-
-//  string str_copy = str.substr(5);    // remove the "QSO: "
   vector<pair<string, string> > name_value;
 
   while (cur_posn != string::npos)
@@ -209,11 +207,8 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     { _frequency_rx = value;
 
       if (!_frequency_rx.empty())
-      { //const double f = from_string<double>(_frequency_rx);
-        //const frequency freq(f);
+      { }                                       // add something here when we actually use frequency-rx
 
-        //_band = static_cast<BAND>(freq);
-      }
       processed = true;
     }
 
@@ -839,5 +834,3 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q)
   return ost;
 }
 
-//bool QSO_DISPLAY_COUNTRY_MULT = true;
-//int  QSO_MULT_WIDTH = 0;
