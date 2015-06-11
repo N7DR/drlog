@@ -207,7 +207,7 @@ public:
 /// set or unset test mode
   void test(const bool);
 
-/// set rit offset
+/// set rit offset (in Hz)
   void rit(const int hz);
 
 /// get rit offset (in Hz)
@@ -230,22 +230,22 @@ public:
 /// is rit enabled?
   const bool rit_enabled(void);
 
-// set xit offset
+// set xit offset (in Hz)
   void xit(const int hz);
 
-// get xit offset
+// get xit offset (in Hz)
   const int xit(void);
 
 // turn xit on
-// this is a kludge, since hamlib equates an offset with xit turned off (!)
+// this is a kludge, since hamlib equates a zero offset with xit disabled (!)
   void xit_enable(void);
 
 // turn xit off
-// this is a kludge, since hamlib equates an offset with xit turned off (!)
+// this is a kludge, since hamlib equates a zero offset with xit disabled (!)
   void xit_disable(void);
 
 // turn xit off
-// this is a kludge, since hamlib equates an offset with xit turned off (!)
+// this is a kludge, since hamlib equates a zero offset with xit disabled (!)
   inline void disable_xit(void)
     { xit_disable(); }
 

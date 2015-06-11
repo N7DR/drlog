@@ -65,6 +65,8 @@ protected:
   void                  _add_action(const int n);
 
   void*                 _play(void*);               ///< pointer to object function to play the buffer
+
+/// private function to allow access to the function to play the buffer
   static void*          _static_play(void* arg);    ///< pointer to static function to play the buffer
 
 public:

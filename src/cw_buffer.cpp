@@ -20,11 +20,9 @@
 #include <iostream>
 #include <thread>
 
-//#include <unistd.h>        // for sleep()
-
 using namespace std;
-using namespace   chrono;        // std::chrono
-using namespace   this_thread;   // std::this_thread
+using namespace   chrono;               // std::chrono
+using namespace   this_thread;          // std::this_thread
 
 const unsigned int MIN_SPEED = 12;      ///< minimum CW speed, in wpm
 const unsigned int MAX_SPEED = 50;      ///< maximum CW speed, in wpm
@@ -34,7 +32,7 @@ const int CMD_CLEAR_RIT = 0,            ///< clear the RIT
           CMD_SLOWER    = 1,            ///< decrease speed by 1 wpm
           CMD_FASTER    = 2;            ///< increase speed by 1 wpm
 
-extern message_stream ost;
+extern message_stream ost;              ///< for debugging, info
 
 // just to be sure; we do not want these to be defined in this file
 #undef KEY_DOWN
@@ -59,7 +57,8 @@ void cw_buffer::_add_action(const int n)
   _key_buffer.push(n);
 }
 
-void* cw_buffer::_static_play(void* arg)    // arg is the this pointer, in order to allow static member access to a real object
+/// private function to allow access to the function to play the buffer
+void* cw_buffer::_static_play(void* arg)              // arg is the "this" pointer, in order to allow static member access to a real object
 { cw_buffer* bufp = static_cast<cw_buffer*>(arg);
 
   bufp->_play(nullptr);
@@ -67,11 +66,7 @@ void* cw_buffer::_static_play(void* arg)    // arg is the this pointer, in order
   return nullptr;
 }
 
-const int BUFFER_ESCAPE = 0;
-
-//const char PTT      = C1284_NINIT;
-//const char KEY_DOWN = C1284_NSELECTIN | PTT;
-//const char KEY_UP   = PTT;
+// const int BUFFER_ESCAPE = 0;
 
 // we have to use CW_ in order to avoid clashes with ncurses -- yes, it's silly that this file knows about ncurses
 void* cw_buffer::_play(void*)

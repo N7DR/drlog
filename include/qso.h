@@ -51,9 +51,8 @@ protected:
   std::string                                       _continent;         ///< NOT automatically set when callsign is set
   std::string                                       _date;              ///< yyyy-mm-dd
   time_t                                            _epoch_time;        ///< time in seconds since the UNIX epoch
-//  std::string                                       _frequency;         ///< frequency in form xxxxx.y (kHz)
-  std::string                                       _frequency_tx;      ///< TX frequency in form xxxxx.y (kHz)
   std::string                                       _frequency_rx;      ///< RX frequency in form xxxxx.y (kHz)
+  std::string                                       _frequency_tx;      ///< TX frequency in form xxxxx.y (kHz)
   bool                                              _is_country_mult;   ///< is this QSO a country mult?
   bool                                              _is_prefix_mult;    ///< is this QSO a prefix mult?
   bool                                              _is_dupe;           ///< is this QSO a dupe?
@@ -94,12 +93,16 @@ public:
   virtual ~QSO(void)
     { }
 
-  READ_AND_WRITE(band);              ///< band
-  READ_AND_WRITE(callsign);          ///< call
-  READ_AND_WRITE(date);              ///< yyyy-mm-dd
-  READ_AND_WRITE(mode);              ///< mode
-  READ_AND_WRITE(number);            ///< qso number
-  READ_AND_WRITE(utc);               ///< hh:mm:ss
+  READ_AND_WRITE(band);                 ///< band
+  READ_AND_WRITE(callsign);             ///< call
+  READ_AND_WRITE(canonical_prefix);     ///< canonical prefix for the country
+  READ_AND_WRITE(comment);              ///< comment to be carried with QSO
+  READ_AND_WRITE(continent);            ///< continent
+  READ_AND_WRITE(date);                 ///< yyyy-mm-dd
+  READ_AND_WRITE(mode);                 ///< mode
+  READ_AND_WRITE(number);               ///< qso number
+  READ_AND_WRITE(points);               ///< points for this QSO
+  READ_AND_WRITE(utc);                  ///< hh:mm:ss
 
 /// get TX frequency as a string
   inline const decltype(_frequency_tx) freq(void) const
@@ -109,24 +112,19 @@ public:
   inline void freq(const decltype(_frequency_tx)& str)
     { _frequency_tx = str; }
 
-  READ_AND_WRITE(frequency_rx);
-
-  READ_AND_WRITE(comment);           ///< comment to be carried with QSO
-  READ_AND_WRITE(canonical_prefix);  ///< canonical prefix for the country
-  READ_AND_WRITE(continent);         ///< continent
-  READ_AND_WRITE(points);            ///< points for this QSO
+  READ_AND_WRITE(frequency_rx);         ///< RX frequency in form xxxxx.y (kHz)
   
-  READ_AND_WRITE(prefix);            ///< prefix, according to the contest's definition
-  READ_AND_WRITE(my_call);           ///< my call
+  READ_AND_WRITE(prefix);               ///< prefix, according to the contest's definition
+  READ_AND_WRITE(my_call);              ///< my call
   
-  READ(epoch_time);                  ///< time in seconds since the UNIX epoch
+  READ(epoch_time);                     ///< time in seconds since the UNIX epoch
 
-  READ_AND_WRITE(sent_exchange);     ///< vector<pair<name, value>>; names do not include the TEXCH-
-  READ_AND_WRITE(received_exchange); ///< names do not include the REXCH-
-  READ_AND_WRITE(is_country_mult);   ///< is this QSO a country mult?
-  READ_AND_WRITE(is_prefix_mult);    ///< is this QSO a prefix mult?
+  READ_AND_WRITE(sent_exchange);        ///< vector<pair<name, value>>; names do not include the TEXCH-
+  READ_AND_WRITE(received_exchange);    ///< names do not include the REXCH-
+  READ_AND_WRITE(is_country_mult);      ///< is this QSO a country mult?
+  READ_AND_WRITE(is_prefix_mult);       ///< is this QSO a prefix mult?
 
-  READ(is_dupe);                     ///< is this QSO a dupe?
+  READ(is_dupe);                        ///< is this QSO a dupe?
   
 /// is any exchange field a mult?
   const bool is_exchange_mult(void) const;

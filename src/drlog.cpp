@@ -4791,6 +4791,9 @@ void populate_win_info(const string& callsign)
         if (callsign_mult == "SACPX")      // SAC
           callsign_mult_value = sac_prefix(callsign);
 
+        if ( (callsign_mult == "UBAPX")  and (location_db.canonical_prefix(callsign) == "ON") )  // UBA
+          callsign_mult_value = wpx_prefix(callsign);
+
         if (callsign_mult == "WPXPX")
           callsign_mult_value = wpx_prefix(callsign);
 
@@ -4818,6 +4821,9 @@ void populate_win_info(const string& callsign)
 
       if (callsign_mult == "SACPX")      // SAC
         callsign_mult_value = sac_prefix(callsign);
+
+      if ( (callsign_mult == "UBAPX")  and (location_db.canonical_prefix(callsign) == "ON") )  // UBA
+        callsign_mult_value = wpx_prefix(callsign);
 
       if (callsign_mult == "WPXPX")
         callsign_mult_value = wpx_prefix(callsign);
@@ -4981,6 +4987,7 @@ void update_known_callsign_mults(const string& callsign)
 
   if (context.auto_remaining_callsign_mults())
   { const string continent = location_db.continent(callsign);
+    const string country = location_db.canonical_prefix(callsign);
     const string prefix = wpx_prefix(callsign);
     const set<string> callsign_mults = rules.callsign_mults();           ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
@@ -5039,6 +5046,24 @@ void update_known_callsign_mults(const string& callsign)
         }
       }
     }
+
+    if ( (callsign_mults < string("UBAPX")) and (country == "ON") )
+    { bool is_known;
+
+      { SAFELOCK(known_callsign_mults);
+        is_known = (known_callsign_mults < prefix);
+      }
+
+      if (!is_known)
+      {
+        { SAFELOCK(known_callsign_mults);
+          known_callsign_mults.insert(prefix);
+        }
+
+        update_remaining_callsign_mults_window(statistics, "UBAPX", safe_get_band(), safe_get_mode());
+      }
+    }
+
   }
 }
 
@@ -5633,6 +5658,9 @@ const string callsign_mult_value(const string& callsign_mult_name, const string&
   if (callsign_mult_name == "SACPX")      // SAC
     return sac_prefix(callsign);
 
+  if ( (callsign_mult_name == "UBAPX")  and (location_db.canonical_prefix(callsign) == "ON") )  // UBA
+    return wpx_prefix(callsign);
+
   if (callsign_mult_name == "WPXPX")
     return wpx_prefix(callsign);
 
@@ -5877,6 +5905,11 @@ void allow_for_callsign_mults(QSO& qso)
     if ( (rules.callsign_mults() < static_cast<string>("SACPX")) )      // SAC
     { qso.prefix(sac_prefix(qso.callsign()));
       mult_name = "SACPX";
+    }
+
+    if ( (rules.callsign_mults() < static_cast<string>("UBAPX")) and (location_db.canonical_prefix(qso.callsign()) == "ON") )  // UBA
+    { qso.prefix(wpx_prefix(qso.callsign()));
+      mult_name = "UBAPX";
     }
 
     if (rules.callsign_mults() < static_cast<string>("WPXPX"))

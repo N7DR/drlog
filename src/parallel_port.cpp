@@ -24,7 +24,7 @@
 
 using namespace std;
 
-extern message_stream ost;
+extern message_stream ost;              ///< for debugging, info
 
 // ---------------------------------------- parallel_port -------------------------
 
@@ -36,8 +36,7 @@ extern message_stream ost;
     \param  filename    name of the port to open
 */
 parallel_port::parallel_port(const string& filename)
-{ //struct parport_list   list_from_library;     ///< list of parallel ports, from ieee1284 library
-  int status = ieee1284_find_ports(&_list_from_library, 0);
+{ int status = ieee1284_find_ports(&_list_from_library, 0);
 
   if (status != E1284_OK)
     throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_LIST, "Unable to list parallel ports.");
@@ -105,8 +104,6 @@ parallel_port::parallel_port(const string& filename)
 
   if (status != E1284_OK)
     throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_CLAIM, "Cannot claim parallel port " + filename + ".");
-
-//  ieee1284_free_ports(&list_from_library);
 }
 
 /// destructor -- closes the port
@@ -114,18 +111,14 @@ parallel_port::~parallel_port(void)
 { ieee1284_free_ports(&_list_from_library);
 }
 
-/*! \brief  Set control lines
+/*! \brief                  Set control lines
     \param  char_to_assert  bit pattern to assert
 */
 void parallel_port::control(const char c) const
 { ieee1284_write_control(_list_from_library.portv[_port_nr], c);
 }
 
-const int parallel_port::status(void) const
-{ int rv = ieee1284_read_status(_list_from_library.portv[_port_nr]);
-
-  return rv;
-}
+/*!  \brief status of the port
 
 //  There are five status lines, one of which is usually inverted on PC-style ports. Where they differ, libieee1284
 //  operates on the IEEE 1284 values, not the PC-style inverted values. The status lines are represented by the
@@ -137,10 +130,18 @@ const int parallel_port::status(void) const
 //  S1284_PERROR = 0x20,
 //  S1284_NACK = 0x40,
 //  S1284_BUSY = 0x80,
-//  /* To convert those values into PC-style register values, use this: */
+//  // To convert those values into PC-style register values, use this:
 //  S1284_INVERTED = S1284_BUSY,
 //  };
 
+*/
+const int parallel_port::status(void) const
+{ int rv = ieee1284_read_status(_list_from_library.portv[_port_nr]);
+
+  return rv;
+}
+
+/// status of the port, as a descriptive string
 const string parallel_port::status_string(void) const
 { const int status = this->status();
   string rv;
@@ -198,6 +199,8 @@ const string parallel_port::status_string(void) const
   }
 }
 
+/*!  \brief status of the port's control lines
+
 //
 //There are four control lines, three of which are usually inverted on PC-style ports. Where they differ, libieee1284 operates on the IEEE 1284 values, not the PC-style inverted values. The control lines are represented by the
 //following enumeration:
@@ -208,15 +211,13 @@ const string parallel_port::status_string(void) const
 //      C1284_NAUTOFD   = 0x02,
 //      C1284_NINIT     = 0x04,
 //      C1284_NSELECTIN = 0x08,
-//      /* To convert those values into PC-style register values, use this: */
+//      // To convert those values into PC-style register values, use this:
 //      C1284_INVERTED = (C1284_NSTROBE|
 //                        C1284_NAUTOFD|
 //                        C1284_NSELECTIN),
 //    };
 
-
-
-
+*/
 const int parallel_port::control_status(void) const
 { const int rv = ieee1284_read_control(_list_from_library.portv[_port_nr]);
 

@@ -600,7 +600,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
                 { const string countries = delimited_substring(fields[1], '[', ']');
 
                   if (!countries.empty())
-                  { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already spilt on commas
+                  { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already split on commas
 
                     FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } ); } );
                   }
