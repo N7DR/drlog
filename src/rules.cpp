@@ -447,8 +447,15 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _send_qtcs = context.qtcs() and (_my_continent != "EU");
 
 // generate the country mults; the value from context is either "ALL" or "NONE"
-  if (context.country_mults_filter() == "ALL")
-    copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
+  if (context.country_mults_filter() != "NONE")
+  { if (context.country_mults_filter() == "ALL")
+      copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
+    else
+    { const vector<string> countries = remove_peripheral_spaces(split_string(context.country_mults_filter(), ","));
+
+      FOR_ALL(countries, [this] (const string& str) { _country_mults.insert(str); } );
+    }
+  }
 
   if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
