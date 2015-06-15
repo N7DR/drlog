@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 104 2015-05-20 16:59:12Z  $
+// $Id: drlog_context.h 107 2015-06-15 17:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -218,6 +218,8 @@ protected:
 
   bool                                         _test;                           ///< whether to put rig in TEST mode
   std::string                                  _thousands_separator;            ///< character used as thousands separator in numbers
+
+  bool                                         _uba_bonus;                      ///< whether to add UBA bonus QSO points
 
   std::map<std::string, window_information >   _windows;                        ///< size and position info for each window
   std::string                                  _worked_mults_colour;            ///< colour of worked mults in the mult windows
@@ -444,6 +446,8 @@ public:
 
   SAFEREAD(test, _context);                             ///< whether to put rig in TEST mode
   SAFEREAD(thousands_separator, _context);              ///< character used as thousands separator in numbers
+
+  SAFEREAD(uba_bonus, _context);                        ///< whether to add UBA bonus QSO points
 
   SAFEREAD(worked_mults_colour, _context);              ///< colour of worked mults in the mult windows
 

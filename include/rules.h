@@ -1,4 +1,4 @@
-// $Id: rules.h 104 2015-05-20 16:59:12Z  $
+// $Id: rules.h 107 2015-06-15 17:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -334,6 +334,9 @@ protected:
   std::string                                  _my_grid;             ///< Maidenhead locator
 
   bool                                         _send_qtcs;           ///< whether to send QTCs
+  bool                                         _uba_bonus;           ///< the UBA contests have weird bonus points
+
+  std::set<std::string>                        _bonus_countries;     ///< countries that are eligible for bonus points
 
 /*! \brief              Private function used to obtain all the understood values for a particular exchange field
     \param  field_name  name of the field for which the understood values are required
@@ -407,10 +410,12 @@ public:
 /// get the next band that is lower in frequency than a given band
   const BAND next_band_down(const BAND current_band) const;
   
-  SAFEREAD(work_if_different_band, rules);               ///< whether it is OK to work the same station on different bands
-  SAFEREAD(work_if_different_mode, rules);               ///< whether it is OK to work the same station on different modes
+  SAFEREAD(bonus_countries, rules);                     ///< countries that are eligible for bonus points
   SAFEREAD(permitted_bands, rules);                      ///< bands allowed in this contest
   SAFEREAD(permitted_modes, rules);                      ///< modes allowed in this contest
+
+  SAFEREAD(work_if_different_band, rules);               ///< whether it is OK to work the same station on different bands
+  SAFEREAD(work_if_different_mode, rules);               ///< whether it is OK to work the same station on different modes
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
@@ -450,6 +455,7 @@ public:
   SAFEREAD(exchange_mults, rules);          ///< the exchange multipliers, in the same order as in the configuration file
 
   SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?
+  SAFEREAD(uba_bonus, rules);               ///< Do we have bonus points for ON stations?
 
   SAFEREAD(exchange_field_eft, rules);      ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 

@@ -1,4 +1,4 @@
-// $Id: rules.cpp 104 2015-05-20 16:59:12Z  $
+// $Id: rules.cpp 107 2015-06-15 17:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -445,6 +445,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _original_score_modes = _score_modes;
 
   _send_qtcs = context.qtcs() and (_my_continent != "EU");
+  _uba_bonus = context.uba_bonus();
+
+  if (_uba_bonus)
+    _bonus_countries.insert("ON");                  // weird UBA scoring adds bonus for QSOs with ON
 
 // generate the country mults; the value from context is either "ALL" or "NONE"
   if (context.country_mults_filter() != "NONE")
@@ -736,7 +740,8 @@ contest_rules::contest_rules(void) :
   _callsign_mults_used(false),
   _country_mults_used(false),
   _exchange_mults_used(false),
-  _send_qtcs(false)
+  _send_qtcs(false),
+  _uba_bonus(false)
 { }
 
 /*! \brief              Construct an object ready for use
@@ -744,12 +749,13 @@ contest_rules::contest_rules(void) :
     \param  location_db location database
 */
 contest_rules::contest_rules(const drlog_context& context, location_database& location_db) :
-  _work_if_different_band(context.qso_multiple_bands()),
-  _work_if_different_mode(context.qso_multiple_modes()),
-  _countries(location_db.countries()),
   _callsign_mults_used(false),
+  _countries(location_db.countries()),
   _country_mults_used(false),
-  _exchange_mults_used(false)
+  _exchange_mults_used(false),
+  _uba_bonus(false),
+  _work_if_different_band(context.qso_multiple_bands()),
+  _work_if_different_mode(context.qso_multiple_modes())
 { _init(context, location_db);
 }
 

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 104 2015-05-20 16:59:12Z  $
+// $Id: drlog_context.cpp 107 2015-06-15 17:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -505,12 +505,13 @@ void drlog_context::_process_configuration_file(const string& filename)
       _exchange_mults_per_mode = is_true;
 
 // EXCHANGE SAP
-    if (starts_with(testline, "EXCHANGE SAP"))
+    if (LHS == "EXCHANGE SAP")
       _exchange_sap = RHS;
 
 // EXCHANGE SENT std::vector<std::pair<std::string, std::string> >  sent_exchange(void) const
 // exchange sent = RST:599, CQZONE:4
-    if (starts_with(testline, "EXCHANGE SENT") and !starts_with(testline, "EXCHANGE SENT CW ") and !starts_with(testline, "EXCHANGE SENT SSB "))
+//    if (starts_with(testline, "EXCHANGE SENT") and !starts_with(testline, "EXCHANGE SENT CW ") and !starts_with(testline, "EXCHANGE SENT SSB "))
+    if (LHS == "EXCHANGE SENT")
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
@@ -522,7 +523,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // EXCHANGE SENT CW
-    if (starts_with(testline, "EXCHANGE SENT CW"))
+    if (LHS == "EXCHANGE SENT CW")
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
@@ -534,7 +535,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // EXCHANGE SENT SSB
-    if (starts_with(testline, "EXCHANGE SENT SSB"))
+    if (LHS == "EXCHANGE SENT SSB")
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
@@ -546,7 +547,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // INDIVIDUAL MESSAGES FILE
-    if (starts_with(testline, "INDIVIDUAL MESSAGES FILE"))
+    if (LHS == "INDIVIDUAL MESSAGES FILE")
       _individual_messages_file = rhs;
 
 // KEYER PORT
@@ -859,6 +860,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // THOUSANDS SEPARATOR
     if (starts_with(testline, "THOUSANDS SEPARATOR"))
       _thousands_separator = rhs;
+
+// UBA BONUS
+    if (starts_with(testline, "UBA BONUS"))
+      _uba_bonus = is_true;
 
 // WORKED MULTS COLOUR
     if (starts_with(testline, "WORKED MULTS COLOUR") or starts_with(testline, "WORKED MULTS COLOR"))
@@ -1388,6 +1393,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _sync_keyer(false),                         // do not synchronise rig keyer with computer
   _test(false),                               // transmit is not disabled
   _thousands_separator(","),                  // numbers are written with ","
+  _uba_bonus(false),                          // do not add UBA bonus points
   _worked_mults_colour("RED")                 // worked mults are in red
 { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
     _per_band_country_mult_factor.insert( { static_cast<BAND>(n), 1 } );

@@ -1,4 +1,4 @@
-// $Id: statistics.h 104 2015-05-20 16:59:12Z  $
+// $Id: statistics.h 107 2015-06-15 17:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,6 +47,7 @@ protected:
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_dupes;       ///< number of dupes, per band and mode
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_qsos;        ///< number of QSOs, per band and mode
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _qso_points;    ///< number of QSO points, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_ON_qsos;     ///< number of ON QSOs, per band and mode -- for UBA
 
   std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
 

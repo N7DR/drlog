@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 103 2015-05-09 16:08:33Z  $
+// $Id: statistics.cpp 107 2015-06-15 17:29:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -293,7 +293,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     const map<string, unsigned int>& exchange_points = rules.exchange_value_points();
 
     for (map<string, unsigned int>::const_iterator cit = exchange_points.begin(); cit != exchange_points.end(); ++cit)
-    { const string condition = cit->first;
+    { const string& condition = cit->first;
       const unsigned int points = cit->second;
 
 // [IOTA != ------]:15 (15 points if the IOTA field is present and doesn't have the value "------")
@@ -304,6 +304,12 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     }
 
     _qso_points[mode_nr][band_nr] += points_this_qso;
+
+// if it's not a dupe, we may need to track whether it's an ON QSO
+    if (rules.uba_bonus())
+    { if (rules.bonus_countries() < canonical_prefix)
+        _n_ON_qsos[mode_nr][band_nr]++;
+    }
   }
 }
 
@@ -678,8 +684,37 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
 
 // exchange mults
   const unsigned int exchange_mults = n_worked_exchange_mults(rules);
-  const unsigned int rv = q_points * (country_mults + exchange_mults + callsign_mults);
+  unsigned int rv = q_points * (country_mults + exchange_mults + callsign_mults);
   
+// UBA?
+  if (rules.uba_bonus())
+  { int bonus_qsos = 0;
+
+    for (const auto& m : score_modes)
+    { const auto& qp = _n_ON_qsos[m];
+
+      for (const auto& b : score_bands)
+        bonus_qsos += qp[b];
+    }
+
+// total QSOs
+    int total_qsos = 0;
+
+    for (const auto& m : score_modes)
+    { for (const auto& b : score_bands)
+      { total_qsos += _n_qsos[m][b];
+        total_qsos -= _n_dupes[m][b];
+      }
+    }
+
+    const float on_fraction = static_cast<float>(bonus_qsos) / total_qsos;
+    const unsigned int points_ON_qso = 10;                                  // hardwire for now
+
+    const unsigned int bonus_points = on_fraction * bonus_qsos * points_ON_qso;
+
+    rv += bonus_points;
+  }
+
   return rv;
 }
 
