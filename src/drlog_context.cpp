@@ -183,6 +183,14 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( ( (LHS == "ACCEPT COLOUR") or (LHS == "ACCEPT COLOR") ) and !rhs.empty() )
       _accept_colour = string_to_colour(RHS);
 
+// ALTERNATIVE EXCHANGE CQ
+    if (LHS == "ALTERNATIVE EXCHANGE CQ")
+      _alternative_exchange_cq = RHS;
+
+// ALTERNATIVE EXCHANGE SAP
+    if (LHS == "ALTERNATIVE EXCHANGE SAP")
+      _alternative_exchange_sap = RHS;
+
 // ARCHIVE
     if ( (LHS == "ARCHIVE") and !rhs.empty() )
       _archive_name = rhs;

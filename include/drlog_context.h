@@ -52,6 +52,8 @@ class drlog_context
 protected:
 
   int                                          _accept_colour;                  ///< colour for calls that have been worked, but are not dupes
+  std::string                                  _alternative_exchange_cq;        ///< alternative exchange in CQ mode
+  std::string                                  _alternative_exchange_sap;       ///< alternative exchange in SAP mode
   std::string                                  _archive_name;                   ///< name of the archive for save/restore information
   std::string                                  _auto_backup;                    ///< directory for auto backup files
   bool                                         _auto_remaining_callsign_mults;  ///< do we auto-generate the remaining callsign mults?
@@ -247,6 +249,8 @@ public:
   drlog_context( const std::string& filename );
 
   SAFEREAD(accept_colour, _context);                    ///< colour for calls that have been worked, but are not dupes
+  SAFEREAD(alternative_exchange_cq, _context);          ///< alternative exchange in SAP mode
+  SAFEREAD(alternative_exchange_sap, _context);         ///< alternative exchange in SAP mode
   SAFEREAD(archive_name, _context);                     ///< name of the archive for save/restore information
   SAFEREAD(auto_backup, _context);                      ///< directory for auto backup files
   SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?

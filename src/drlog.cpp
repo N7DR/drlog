@@ -2116,7 +2116,7 @@ void* prune_bandmap(void* vp)
     F11 -- band map filtering
     ALT-KP_4 -- decrement bandmap column offset
     ALT-KP_6 -- increment bandmap column offset
-    ENTER
+    ENTER, ALT-ENTER
     CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
     KP ENTER -- send CQ #2
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
@@ -2394,8 +2394,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
-// ENTER -- a lot of complicated stuff
-  if (!processed and e.is_unmodified() and (e.symbol() == XK_Return))
+// ENTER, ALT-ENTER -- a lot of complicated stuff
+  if (!processed and (e.is_unmodified() or e.is_alt()) and (e.symbol() == XK_Return))
   { const string contents = remove_peripheral_spaces(win.read());
 
 // if empty, send CQ #1, regardless of whether I'm in CQ or SAP mode
@@ -2767,7 +2767,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
             SAFELOCK(last_exchange);  // we need to keep track of the last message, so it can be re-sent using the special character "*"
 
-            last_exchange = expand_cw_message( context.exchange_cq() );
+            last_exchange = expand_cw_message( e.is_unmodified() ? context.exchange_cq() : context.alternative_exchange_cq() );
             (*cw_p) << last_exchange;
             last_exchange = callsign /* + " " */ + last_exchange;  // add the call so that we can re-send the entire sequence easily
           }
@@ -3594,8 +3594,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
-// ENTER, KP_ENTER, ALT -Q -- thanks and log the contact; also perhaps start QTC process
-  bool log_the_qso = !processed and e.is_unmodified() and ( (e.symbol() == XK_Return) or (e.symbol() == XK_KP_Enter) );
+// ENTER, KP_ENTER, ALT-Q -- thanks and log the contact; also perhaps start QTC process
+  bool log_the_qso = !processed and ( e.is_unmodified() or e.is_alt() ) and ( (e.symbol() == XK_Return) or (e.symbol() == XK_KP_Enter) );
   bool send_qtc = false;
 
   if (!log_the_qso)
@@ -3665,7 +3665,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               }
               else                                                         // SAP exchange
               { if (!send_qtc)
-                  (*cw_p) << expand_cw_message( context.exchange_sap() );
+                  (*cw_p) << expand_cw_message( e.is_unmodified() ? context.exchange_sap() : context.alternative_exchange_sap()  );
 //                ost << "sent SAP exchange: " << expand_cw_message( context.exchange_sap() ) << endl;
               }
               sent_acknowledgement = true;  // should rename now that we've added QTC processing here
