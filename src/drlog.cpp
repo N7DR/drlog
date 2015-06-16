@@ -2765,7 +2765,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         { if (drlog_mode == CQ_MODE)
           { (*cw_p) << callsign;
 
-            SAFELOCK(last_exchange);  // we need to keep track of the last message, so it can be re-sent
+            SAFELOCK(last_exchange);  // we need to keep track of the last message, so it can be re-sent using the special character "*"
 
             last_exchange = expand_cw_message( context.exchange_cq() );
             (*cw_p) << last_exchange;
@@ -4178,6 +4178,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
   { dump_screen();
+
+    processed = true;
+  }
+
+// CTRL-ENTER -- repeat last message if in CQ mode
+  if (!processed and e.is_control() and (e.symbol() == XK_Return) and (drlog_mode == CQ_MODE) )
+  { (*cw_p) << expand_cw_message("*");
 
     processed = true;
   }

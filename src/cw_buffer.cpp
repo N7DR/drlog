@@ -57,7 +57,9 @@ void cw_buffer::_add_action(const int n)
   _key_buffer.push(n);
 }
 
-/// private function to allow access to the function to play the buffer
+/*! \brief          Wrapper function to play the buffer
+    \param  arg     "this" pointer
+*/
 void* cw_buffer::_static_play(void* arg)              // arg is the "this" pointer, in order to allow static member access to a real object
 { cw_buffer* bufp = static_cast<cw_buffer*>(arg);
 
@@ -66,11 +68,13 @@ void* cw_buffer::_static_play(void* arg)              // arg is the "this" point
   return nullptr;
 }
 
-// const int BUFFER_ESCAPE = 0;
 
-// we have to use CW_ in order to avoid clashes with ncurses -- yes, it's silly that this file knows about ncurses
+/// play the buffer
 void* cw_buffer::_play(void*)
-{ const char PTT      = (_ptt_delay ? C1284_NINIT : 0);
+{
+// we have to use CW_ prefix in order to avoid clashes with ncurses -- yes, it's ridiculous that this file knows about ncurses
+
+  const char PTT      = (_ptt_delay ? C1284_NINIT : 0);
   const char CW_KEY_DOWN = C1284_NSELECTIN | PTT;
   const char CW_KEY_UP   = PTT;
 
@@ -364,7 +368,11 @@ const unsigned int cw_buffer::ptt_delay(void)
   return _ptt_delay;
 }
 
-// add a key_down interval (100 = 1 dot)
+/*! \brief          Add a key-down interval, along with a subsequent gap
+    \param  n       key-down interval (100 = 1 dot)
+    \param  space   terminating key-up interval (100 = 1 dot)
+
+*/
 void cw_buffer::key_down(const int n, const int space)
 {
   try

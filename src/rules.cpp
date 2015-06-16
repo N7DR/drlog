@@ -1195,6 +1195,11 @@ const bool contest_rules::sent_exchange_includes(const std::string& str, const M
   }
 }
 
+/*! \brief                      Is a particular field used for QSOs with a particular country?
+    \param  field_name          name of exchange field to test
+    \param  canonical_prefix    country to test
+    \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
+*/
 const bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
 {  SAFELOCK(rules);
 

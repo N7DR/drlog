@@ -265,6 +265,11 @@ class contest_rules
 {
 protected:
     
+  std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+  bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
+  bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
+  bool                                _callsign_mults_used;      ///< are callsign mults used?
+
   std::map<std::string, unsigned int>  _exchange_present_points;                                                            ///< number of points if a particular exchange field is received
   std::map<std::string, unsigned int>  _exchange_value_points;                                                              ///< number of points if a particular exchange field has a particular value
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded
@@ -280,10 +285,6 @@ protected:
   bool              _work_if_different_band;     ///< is it OK to work the same station on different bands?
   bool              _work_if_different_mode;     ///< is it OK to work the same station on different modes?
   
-  std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
-  bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
-  bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
-  bool                                _callsign_mults_used;      ///< are callsign mults used?
 
   std::set<std::string>               _countries;                     ///< collection of canonical prefixes for all the valid countries
   std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
@@ -578,9 +579,9 @@ public:
   inline const unsigned int n_country_mults(void) const
     { SAFELOCK(rules); return _country_mults.size(); }
     
-/*! \brief  Points for a particular QSO
-    \param  qso          QSO for which the points are to be calculated
-    \param  location_db  location database
+/*! \brief                  Points for a particular QSO
+    \param  qso             QSO for which the points are to be calculated
+    \param  location_db     location database
 
     Return the (location-based) points for <i>qso</i>
 */
@@ -589,9 +590,6 @@ public:
 /// human-readable string
   const std::string to_string(void) const;
 
-// does the sent exchange include a particular field?
-//  inline const bool sent_exchange_includes(const std::string& str, const MODE m)
-//    { return (find(_sent_exchange.begin(), _sent_exchange.end(), str) != _sent_exchange.end()); }
 /*! \brief          Does the sent exchange include a particular field?
     \param  str     name of field to test
     \param  m       mode
@@ -599,9 +597,15 @@ public:
 */
   const bool sent_exchange_includes(const std::string& str, const MODE m) const;
 
+/// get the permitted bands as a set
   inline const std::set<BAND> permitted_bands_set(void) const
     { return std::set<BAND>(_permitted_bands.cbegin(), _permitted_bands.cend() ); }
 
+/*! \brief                      Is a particular field used for QSOs with a particular country?
+    \param  field_name          name of exchange field to test
+    \param  canonical_prefix    country to test
+    \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
+*/
   const bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
 
 /// read from and write to disk
@@ -609,21 +613,24 @@ public:
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(rules);
 
-      ar & _exchange_mults
+      ar & _callsign_mults
+         & _callsign_mults_per_band
+         & _callsign_mults_per_mode
+         & _callsign_mults_used
+         & _exchange_mults
          & _exchange_mults_used
+         & _exchange_present_points
+         & _exchange_value_points
+         & _expanded_received_exchange
          & _permitted_modes
          & _permitted_bands
          & _sent_exchange_names
          & _work_if_different_band
          & _points
-         & _exchange_present_points
-         & _exchange_value_points
          & _countries
          & _country_mults
          & _country_mults_used
-         & _callsign_mults
-         & _callsign_mults_used
-         & _callsign_mults_per_band
+
          & _exch_values
          & _permitted_exchange_values
          & _permitted_to_canonical

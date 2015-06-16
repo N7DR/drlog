@@ -64,9 +64,12 @@ protected:
 */
   void                  _add_action(const int n);
 
-  void*                 _play(void*);               ///< pointer to object function to play the buffer
+/// play the buffer
+  void*                 _play(void*);
 
-/// private function to allow access to the function to play the buffer
+/*! \brief          Wrapper function to play the buffer
+    \param  arg     "this" pointer
+*/
   static void*          _static_play(void* arg);    ///< pointer to static function to play the buffer
 
 public:
@@ -93,7 +96,11 @@ public:
 /// get the PTT delay in msec
   const unsigned int ptt_delay(void);
 
-// add a key-down interval (100 = 1 dot), along with a subsequent gap
+/*! \brief          Add a key-down interval, along with a subsequent gap
+    \param  n       key-down interval (100 = 1 dot)
+    \param  space   terminating key-up interval (100 = 1 dot)
+
+*/
   void key_down(const int n, const int space = 100);
 
 // add a key-up interval (no subsequent gap) 100 = 1 dot

@@ -551,11 +551,11 @@ void drlog_context::_process_configuration_file(const string& filename)
       _individual_messages_file = rhs;
 
 // KEYER PORT
-    if (starts_with(testline, "KEYER PORT") or starts_with(testline, "KEYER OUTPUT PORT"))
+    if (LHS == "KEYER PORT") /* or starts_with(testline, "KEYER OUTPUT PORT") ) */
       _keyer_port = rhs;
 
 // LOG
-    if (starts_with(testline, "LOG") and !rhs.empty())
+    if ( (LHS == "LOG") and !rhs.empty() )
       _logfile = rhs;
 
 // MARK FREQUENCIES [CW|SSB]
@@ -584,21 +584,21 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // MATCH MINIMUM
-    if (starts_with(testline, "MATCH MINIMUM"))
+    if (LHS == "MATCH MINIMUM")
       _match_minimum = from_string<int>(RHS);
 
 // MODES
-    if (starts_with(testline, "MODES"))
+    if (LHS == "MODES")
     { _modes = RHS;
 
       if (!contains(_modes, ","))
-      { if (to_upper(_modes) == "SSB")
+      { if (_modes == "SSB")
           _start_mode = MODE_SSB;
       }
     }
 
 // MY CALL
-    if (starts_with(testline, "MY CALL"))
+    if (LHS == "MY CALL")
       _my_call = RHS;
 
 // MY CONTINENT
@@ -1518,7 +1518,7 @@ const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const
   { rv = _sent_exchange;
 
 // fix RST/RS if using non-mode-specific exchange
-    for (int n = 0; n < rv.size(); ++n)
+    for (unsigned int n = 0; n < rv.size(); ++n)
     { pair<string, string>& pss = rv[n];
 
       if ( (m == MODE_SSB) and (pss.first == "RST") )

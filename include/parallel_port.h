@@ -116,7 +116,7 @@ protected:
 
 public:
 
-/*! \brief  Open a port
+/*! \brief              Open a port
     \param  filename    name of the port to open
 */
   parallel_port(const std::string& filename);
@@ -124,13 +124,14 @@ public:
 /// destructor -- closes the port
   virtual ~parallel_port(void);
 
-/*! \brief  Set control lines
+/*! \brief                  Set control lines
     \param  char_to_assert  bit pattern to assert
 */
   void control(const char char_to_assert) const;
 
-  const int status(void) const;
+/*! \brief  Get status
 
+    From the man page:
 //  There are five status lines, one of which is usually inverted on PC-style ports. Where they differ, libieee1284
 //  operates on the IEEE 1284 values, not the PC-style inverted values. The status lines are represented by the
 //  following enumeration:
@@ -141,13 +142,15 @@ public:
 //  S1284_PERROR = 0x20,
 //  S1284_NACK = 0x40,
 //  S1284_BUSY = 0x80,
-//  /* To convert those values into PC-style register values, use this: */
+//   To convert those values into PC-style register values, use this:
 //  S1284_INVERTED = S1284_BUSY,
 //  };
 
-  const std::string status_string(void) const;
+*/
+  const int status(void) const;
 
-// NEXT: ieee1284_read_control
+/// get status as a string
+  const std::string status_string(void) const;
 
   const int control_status(void) const;
 
