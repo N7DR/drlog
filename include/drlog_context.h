@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 107 2015-06-15 17:29:32Z  $
+// $Id: drlog_context.h 108 2015-06-20 18:33:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -326,7 +326,6 @@ public:
   SAFEREAD(country_mults_per_mode, _context);           ///< are country mults per-mode?
   SAFEREAD(cq_auto_lock, _context);                     ///< whether to lock the transmitter in CQ mode
   SAFEREAD(cq_auto_rit, _context);                      ///< whether to enable RIT in CQ mode
-//  SAFEREAD(cq_memory, _context);                        ///< CQ memories, counted wrt 1
   SAFEREAD(cty_filename, _context);                     ///< filename of country file (default = "cty.dat")
   SAFEREAD(cw_speed, _context);                         ///< speed in WPM
 
@@ -342,13 +341,6 @@ public:
   SAFEREAD(exchange_mults_per_band, _context);          ///< are exchange mults per-band?
   SAFEREAD(exchange_mults_per_mode, _context);          ///< are exchange mults per-mode?
   SAFEREAD(exchange_per_country, _context);             ///< per-country exchanges; key = prefix-or-call; value = exchange
-
-//  const std::map<std::string, std::string> exchange_per_country(void) const
-//    { SAFELOCK(_context);
-//
-//      return _exchange_per_country;
-//    }                                                   ///< per-country exchanges; key = prefix-or-call; value = exchange
-
   SAFEREAD(exchange_sap, _context);                     ///< exchange in SAP mode
 
 /*! \brief      Get the guard band for a particular mode
@@ -392,16 +384,12 @@ public:
   SAFEREAD(per_band_country_mult_factor, _context); ///< country mult factor structure for each band
   SAFEREAD(per_band_points, _context);              ///< points structure for each band and mode
 
-  const std::string points(const BAND b, const MODE m) const
-    { SAFELOCK(_context);
-
-      const auto& pbb = _per_band_points[m];
-
-      if (pbb.find(b) != pbb.end())
-        return pbb.at(b);
-      else
-        return std::string();
-    }
+/*! \brief      Get the points string for a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
+*/
+  const std::string points(const BAND b, const MODE m) const;
 
   SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
   SAFEREAD(p3_snapshot_file, _context);             ///< base name of file for P3 snapshot

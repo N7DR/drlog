@@ -1,4 +1,4 @@
-// $Id: string_functions.h 94 2015-02-07 15:06:10Z  $
+// $Id: string_functions.h 108 2015-06-20 18:33:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -232,44 +232,45 @@ const std::string remove_from_end(const std::string& s, const unsigned int n);
 */
 const std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
 
-/*! \brief  split a string into components
-    \param  cs              Original string
-    \param  separator       Separator character
+/*! \brief              Split a string into components
+    \param  cs          original string
+    \param  separator   separator character
 
     \return Vector containing the separate components
 */
 inline const std::vector<std::string> split_string(const std::string& cs, const char c)
   { return split_string(cs, std::string(1, c)); }
 
-/*! \brief  split a string into equal-length records
-    \param  cs              Original string
-    \param  record_length   Length of each record
-
-    \return Vector containing the separate components
+/*! \brief                  Split a string into equal-length records
+    \param  cs              original string
+    \param  record_length   length of each record
+    \return                 vector containing the separate components
 
     Any non-full record at the end is silently discarded
 */
 const std::vector<std::string> split_string(const std::string& cs, const unsigned int record_length);
 
-/*! \brief  split a string into equal-length records
-    \param  cs              Original string
-    \param  record_length   Length of each record
-
-    \return Vector containing the separate components
+/*! \brief                  Split a string into equal-length records
+    \param  cs              original string
+    \param  record_length   length of each record
+    \return                 vector containing the separate components
 
     Any non-full record at the end is silently discarded
 */
 inline const std::vector<std::string> split_string(const std::string& cs, const int record_length)
   { return split_string(cs, static_cast<unsigned int>(record_length)); }
 
-/// squash repeated occurrences of a character
+/*! \brief      Squash repeated occurrences of a character
+    \param  cs  original string
+    \param  c   character to squash
+    \return     <i>cs</i>, but with all consective instances of <i>c</i> converted to a single instance
+*/
 const std::string squash(const std::string& cs, const char c = ' ');
 
-/*! \brief  split a string into lines
-    \param  cs          Original string
+/*! \brief              Split a string into lines
+    \param  cs          original string
     \param  eol_marker  EOL marker
-
-    \return Vector containing the separate lines
+    \return             vector containing the separate lines
 */
 inline const std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
   { return split_string(cs, eol_marker); }

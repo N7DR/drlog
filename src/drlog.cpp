@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 107 2015-06-15 17:29:32Z  $
+// $Id: drlog.cpp 108 2015-06-20 18:33:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3482,6 +3482,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // FULL STOP
  // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
  // ENTER, KP_ENTER, ALT -Q -- thanks and log the contact; also perhaps start QTC process
+ // SHIFT -- RIT control
+  // ALT-S -- toggle sub receiver
 
 */
 void process_EXCHANGE_input(window* wp, const keyboard_event& e)
@@ -4019,6 +4021,22 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // RIT changes via hamlib, at least on the K3, are *very* slow
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
   { rit_control(e);
+
+    processed = true;
+  }
+
+// ALT-S -- toggle sub receiver
+  if (!processed and e.is_alt('s'))
+  { try
+    { if (rig.sub_receiver_enabled())
+        rig.sub_receiver_disable();
+      else
+        rig.sub_receiver_enable();
+    }
+
+    catch (const rig_interface_error& e)
+    { alert( (string)"Error toggling SUBRX: " + e.reason());
+    }
 
     processed = true;
   }

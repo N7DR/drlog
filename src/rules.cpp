@@ -1,4 +1,4 @@
-// $Id: rules.cpp 107 2015-06-15 17:29:32Z  $
+// $Id: rules.cpp 108 2015-06-20 18:33:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -528,8 +528,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
 
-//  ost << "exchange mults: " << context.exchange_mults() << endl;
-
 // build expanded version of _received_exchange
   for (const auto& m : _permitted_modes)
   { map<string, vector<exchange_field>> expanded_exch;
@@ -775,7 +773,7 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
     \param  canonical_prefix    canonical prefix
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 
-    CHOICE fields are NOT expanded
+    CHOICE fields ARE NOT expanded
 */
 const vector<exchange_field> contest_rules::exch(const string& canonical_prefix, const MODE m) const
 { if (canonical_prefix.empty())
@@ -854,7 +852,11 @@ const EFT contest_rules::exchange_field_eft(const string& field_name) const
   return (v->second);
 }
 
-// returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
+/*! \brief              All the canonical values for a particular exchange field
+    \param  field_name  name of an exchange field (received)
+
+    Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
+*/
 const vector<string> contest_rules::exch_canonical_values(const string& field_name) const
 { vector<string> rv;
 
@@ -864,7 +866,8 @@ const vector<string> contest_rules::exch_canonical_values(const string& field_na
     { if (_exch_values[n].name() == field_name)
       { const map<string, set<string> >& m = _exch_values[n].values();
 
-        for_each(m.cbegin(), m.cend(), [&rv] (const map<string, set<string> >::value_type& mss) { rv.push_back(mss.first); } );  // Josuttis 2nd ed., p. 338
+//        for_each(m.cbegin(), m.cend(), [&rv] (const map<string, set<string> >::value_type& mss) { rv.push_back(mss.first); } );  // Josuttis 2nd ed., p. 338
+        FOR_ALL(m, [&rv] (const map<string, set<string> >::value_type& mss) { rv.push_back(mss.first); } );  // Josuttis 2nd ed., p. 338
 
         sort(rv.begin(), rv.end());
       }
@@ -907,9 +910,9 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
                   > > > >                       _exch_values;
 #endif
 
-/*! \brief                           Is a particular string a canonical value for a particular exchange field?
-    \param  field_name               name of an exchange field (received)
-    \param  putative_canonical_value the value to check
+/*! \brief                              Is a particular string a canonical value for a particular exchange field?
+    \param  field_name                  name of an exchange field (received)
+    \param  putative_canonical_value    the value to check
 
     Returns false if <i>field_name</i> is unrecognized
 */
@@ -924,9 +927,9 @@ const bool contest_rules::is_canonical_value(const string& field_name, const str
   return false;
 }
 
-/*! \brief                           Is a particular string a legal value for a particular exchange field?
-    \param  field_name               name of an exchange field (received)
-    \param  putative_value           the value to check
+/*! \brief                  Is a particular string a legal value for a particular exchange field?
+    \param  field_name      name of an exchange field (received)
+    \param  putative_value  the value to check
 
     Returns false if <i>field_name</i> is unrecognized
 */
@@ -943,8 +946,8 @@ const bool contest_rules::is_legal_value(const string& field_name, const string&
   return false;
 }
 
-/*! \brief                           The permitted values for a field
-    \param  field_name               name of an exchange field (received)
+/*! \brief              The permitted values for a field
+    \param  field_name  name of an exchange field (received)
 
     Returns the empty set if the field <i>field_name</i> can take any value
 */

@@ -1,4 +1,4 @@
-// $Id: cty_data.h 101 2015-04-04 01:49:14Z  $
+// $Id: cty_data.h 108 2015-06-20 18:33:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -130,9 +130,9 @@ protected:
 
 public:
 
-/*!     \brief  construct from a string and a country ID
-        \param  record from which to contruct the alternative information
-        \param  id     canonical country ID
+/*!     \brief          Construct from a string and a country ID
+        \param  record  record from which to contruct the alternative information
+        \param  id      canonical country ID
 
         <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
         is optional
@@ -195,7 +195,6 @@ public:
   inline virtual ~cty_record(void)
     { }
 
-/// RO access
   READ(alt_callsigns);          ///< alternative callsigns used by this country
   READ(alt_prefixes);           ///< alternative prefixes used by this country
   READ(continent);              ///< two-letter abbreviation for continent
@@ -212,24 +211,25 @@ public:
   inline const std::string canonical_prefix(void) const
     { return prefix(); }
     
-/*!     \brief  remove an alternative callsign
-        \param  call    call to remove
+/*! \brief          Remove an alternative callsign
+    \param  call    alternative call to remove
         
-        It is not an error to attempt to remove a call that does not exist
+    It is not an error to attempt to remove a call that does not exist
 */
   inline void remove_alternative_callsign(const std::string& call)
     { _alt_callsigns.erase(call); }
 
-/*!     \brief  remove an alternative prefix
-        \param  prefix    prefix to remove
+/*! \brief          Remove an alternative prefix
+    \param  prefix  alternative prefix to remove
         
-        It is not an error to attempt to remove a prefix that does not exist
+    It is not an error to attempt to remove a prefix that does not exist
 */
   inline void remove_alternative_prefix(const std::string& prefix)
     { _alt_callsigns.erase(prefix); }   
 
-/*!     \brief  is a string an alternative callsign?
-        \param  call    call to check
+/*! \brief          Is a string an alternative callsign?
+    \param  call    string to check
+    \return         whether <i>call</i> is an alternative callsign
 */
   inline const bool is_alternative_callsign(const std::string& call)
     { return (_alt_callsigns.find(call) != _alt_callsigns.end()); }

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 107 2015-06-15 17:29:32Z  $
+// $Id: drlog_context.cpp 108 2015-06-20 18:33:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1480,6 +1480,22 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 
   return false;
 }
+
+/*! \brief      Get the points string for a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
+*/
+const string drlog_context::points(const BAND b, const MODE m) const
+  { SAFELOCK(_context);
+
+    const auto& pbb = _per_band_points[m];
+
+    if (pbb.find(b) != pbb.end())
+      return pbb.at(b);
+    else
+      return std::string();
+  }
 
 /*! \brief              Get all the names in the sent exchange
     \return             the names of all the fields in the sent exchange
