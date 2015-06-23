@@ -313,6 +313,13 @@ public:
 // get the band and mode from the rig, so that the status can be subsequently checked
 //  inline void get_status(void)
 //    { _poll_thread_function(nullptr); }
+
+  void bandwidth_a(const unsigned int hz);
+
+  inline void bandwidth(const unsigned int hz)
+    { bandwidth_a(hz); }
+
+  void bandwidth_b(const unsigned int hz);
 };
 
 const std::string hamlib_error_code_to_string(const int e);

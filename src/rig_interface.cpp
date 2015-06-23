@@ -1206,6 +1206,27 @@ const VFO rig_interface::tx_vfo(void)
 */
 }
 
+
+void rig_interface::bandwidth_a(const unsigned int hz)
+{ if (_rig_connected)
+  { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
+    { const string k3_bw_units = pad_string(to_string( (hz + 5) / 10 ), 4, PAD_LEFT, '0');
+
+      raw_command("BW" + k3_bw_units + ";");
+    }
+  }
+}
+
+void rig_interface::bandwidth_b(const unsigned int hz)
+{ if (_rig_connected)
+  { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
+    { const string k3_bw_units = pad_string(to_string( (hz + 5) / 10 ), 4, PAD_LEFT, '0');
+
+      raw_command("BW$" + k3_bw_units + ";");
+    }
+  }
+}
+
 // register a function for alerting the user
 void rig_interface::register_error_alert_function(void (*error_alert_function)(const string&) )
 { SAFELOCK(_rig);

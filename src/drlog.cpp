@@ -2136,6 +2136,7 @@ void* prune_bandmap(void* vp)
     ALT-<- -- VFO B -> VFO A
     CTRL-Q -- swap QSL and QUICK QSL messages
     CTRL-F -- find matches for exchange in log
+    CTRL-B -- fast bandwidth
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -3452,6 +3453,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     if (!processed and (e.is_control('f')))
     { if (!prior_contents.empty())
         extract.match_exchange(logbk, prior_contents);
+
+      processed = true;
+    }
+
+// CTRL-B -- fast CW bandwidth
+    if (!processed and (e.is_control('b')))
+    { if (safe_get_mode() == MODE_CW)
+      { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
+
+        rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
+      }
 
       processed = true;
     }

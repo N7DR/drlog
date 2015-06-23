@@ -137,6 +137,9 @@ protected:
   std::map<std::string, std::string>           _exchange_per_country;       ///< per-country exchanges; key = prefix-or-call; value = exchange
   std::string                                  _exchange_sap;               ///< exchange in SAP mode
 
+  unsigned int                                 _fast_cq_bandwidth;          ///< fast CW bandwidth in CQ mode, in Hz
+  unsigned int                                 _fast_sap_bandwidth;         ///< fast CW bandwidth in SAP mode, in Hz
+
   std::map<MODE, unsigned int>                 _guard_band;                 ///< guard band, in Hz
 
   std::string                                  _individual_messages_file;   ///< name of file that contains per-call individual messages
@@ -342,6 +345,9 @@ public:
   SAFEREAD(exchange_mults_per_mode, _context);          ///< are exchange mults per-mode?
   SAFEREAD(exchange_per_country, _context);             ///< per-country exchanges; key = prefix-or-call; value = exchange
   SAFEREAD(exchange_sap, _context);                     ///< exchange in SAP mode
+
+  SAFEREAD(fast_cq_bandwidth, _context);                ///< fast CW bandwidth in CQ mode, in Hz
+  SAFEREAD(fast_sap_bandwidth, _context);               ///< fast CW bandwidth in SAP mode, in Hz
 
 /*! \brief      Get the guard band for a particular mode
     \param  m   target mode
