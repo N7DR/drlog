@@ -175,6 +175,7 @@ protected:
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;              ///< points structure for each band and mode
 
   unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
+  bool                                         _p3;                               ///< is a P3 available?
   std::string                                  _p3_snapshot_file;                 ///< base name of file for P3 snapshot
 
   std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
@@ -398,6 +399,7 @@ public:
   const std::string points(const BAND b, const MODE m) const;
 
   SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
+  SAFEREAD(p3, _context);                           ///< is a P3 available?
   SAFEREAD(p3_snapshot_file, _context);             ///< base name of file for P3 snapshot
 
   SAFEREAD(quick_qsl_message, _context);            ///< hurried confirm at end of QSO

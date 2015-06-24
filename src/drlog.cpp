@@ -3283,7 +3283,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ALT-P -- Dump P3
   if (!processed and e.is_alt('p'))
-  { p3_screenshot();
+  { if (context.p3())
+      p3_screenshot();
 
     processed = true;
   }
@@ -5740,6 +5741,8 @@ void display_call_info(const string& callsign, const bool display_extract)
 
     Even though we use a separate thread to obtain the actual screenshot, it takes so long to transfer the data to the computer
     that one should not use this function except when it will be OK for communication with the rig to be interrupted.
+
+    The user should check that a P3 is available (context.p3()) before calling this function.
 */
 void p3_screenshot(void)
 { static pthread_t thread_id_p3_screenshot;

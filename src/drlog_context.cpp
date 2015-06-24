@@ -683,6 +683,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "PTT DELAY"))
       _ptt_delay = from_string<unsigned int>(RHS);
 
+// P3
+    if (LHS == "P3")
+      _p3 = is_true;
+
 // P3 SNAPSHOT FILE
     if (starts_with(testline, "P3 SNAPSHOT FILE"))
       _p3_snapshot_file = rhs;
@@ -1377,6 +1381,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _path( { "." } ),                           // search only the current directory
   _per_band_points( {} ),                     // no points awarded anywhere
   _ptt_delay(25),                             // PTT delay
+  _p3(false),                                 // no P3 is available
   _p3_snapshot_file("P3"),                    // P3 snapshots will be in P3-<n>
   _quick_qsl_message(),                       // no quick QSL message (default is changed once configuration file has been read)
   _qsl_message(),                             // no QSL message (default is changed once configuration file has been read)
