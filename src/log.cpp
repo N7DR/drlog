@@ -288,108 +288,115 @@ const logbook logbook::recalculate_dupes(const contest_rules& rules) const
 */
 const string logbook::cabrillo_log(const drlog_context& context, const unsigned int score) const
 { string rv;
+  string EOL_STRING = LF;
+
+  if (context.cabrillo_eol() == "CR")
+    EOL_STRING = CR;
+
+  if (context.cabrillo_eol() == "CRLF")
+    EOL_STRING = CRLF;
 
 // this goes first
-  rv += "START-OF-LOG: 3.0" + LF;
+  rv += "START-OF-LOG: 3.0" + EOL_STRING;
   
 // call
-  rv += "CALLSIGN: " + context.cabrillo_callsign() + LF;
+  rv += "CALLSIGN: " + context.cabrillo_callsign() + EOL_STRING;
   
 // contest
-  rv += "CONTEST: " + context.cabrillo_contest() + LF;
+  rv += "CONTEST: " + context.cabrillo_contest() + EOL_STRING;
   
 // drlog name / version
-  rv += "CREATED-BY: drlog version " + VERSION + LF;
+  rv += "CREATED-BY: drlog version " + VERSION + EOL_STRING;
   
 // name of operator
   if (context.cabrillo_name() != string())
-    rv += "NAME: " + context.cabrillo_name() + LF;
+    rv += "NAME: " + context.cabrillo_name() + EOL_STRING;
 
 // address lines http://www.kkn.net/~trey/cabrillo/tags.html: "A maximum of four ADDRESS: lines is permitted."
   if (context.cabrillo_address_1() != string())
-  { rv += "ADDRESS: " + context.cabrillo_address_1() + LF;
+  { rv += "ADDRESS: " + context.cabrillo_address_1() + EOL_STRING;
 
     if (context.cabrillo_address_2() != string())
-    { rv += "ADDRESS: " + context.cabrillo_address_2() + LF;
+    { rv += "ADDRESS: " + context.cabrillo_address_2() + EOL_STRING;
 
       if (context.cabrillo_address_3() != string())
-      { rv += "ADDRESS: " + context.cabrillo_address_3() + LF;
+      { rv += "ADDRESS: " + context.cabrillo_address_3() + EOL_STRING;
 
         if (context.cabrillo_address_4() != string())
-          rv += "ADDRESS: " + context.cabrillo_address_4() + LF;
+          rv += "ADDRESS: " + context.cabrillo_address_4() + EOL_STRING;
       }
     }
   }
  
 // address city
   if (context.cabrillo_address_city() != string())
-    rv += "ADDRESS-CITY: " + context.cabrillo_address_city() + LF; 
+    rv += "ADDRESS-CITY: " + context.cabrillo_address_city() + EOL_STRING;
   
 // address state/province
   if (context.cabrillo_address_state_province() != string())
-    rv += "ADDRESS-STATE-PROVINCE: " + context.cabrillo_address_state_province() + LF; 
+    rv += "ADDRESS-STATE-PROVINCE: " + context.cabrillo_address_state_province() + EOL_STRING;
   
 // address postcode
   if (context.cabrillo_address_postalcode() != string())
-    rv += "ADDRESS-POSTALCODE: " + context.cabrillo_address_postalcode() + LF; 
+    rv += "ADDRESS-POSTALCODE: " + context.cabrillo_address_postalcode() + EOL_STRING;
   
 // address country
   if (context.cabrillo_address_country() != string())
-    rv += "ADDRESS-COUNTRY: " + context.cabrillo_address_country() + LF;   
+    rv += "ADDRESS-COUNTRY: " + context.cabrillo_address_country() + EOL_STRING;
   
 // list of operators
   if (context.cabrillo_operators() != string())
-    rv += "OPERATORS: " + context.cabrillo_operators() + LF;
+    rv += "OPERATORS: " + context.cabrillo_operators() + EOL_STRING;
   
 // Categories
 // assisted
-  rv += "CATEGORY-ASSISTED: " + context.cabrillo_category_assisted() + LF;
+  rv += "CATEGORY-ASSISTED: " + context.cabrillo_category_assisted() + EOL_STRING;
  
 // band
-  rv += "CATEGORY-BAND: " + context.cabrillo_category_band() + LF;
+  rv += "CATEGORY-BAND: " + context.cabrillo_category_band() + EOL_STRING;
 
 // mode
-  rv += "CATEGORY-MODE: " + context.cabrillo_category_mode() + LF;
+  rv += "CATEGORY-MODE: " + context.cabrillo_category_mode() + EOL_STRING;
 
 // operator
-  rv += "CATEGORY-OPERATOR: " + context.cabrillo_category_operator() + LF;  
+  rv += "CATEGORY-OPERATOR: " + context.cabrillo_category_operator() + EOL_STRING;
 
 // overlay
   if (context.cabrillo_category_overlay() != string())
-    rv += "CATEGORY-OVERLAY: " + context.cabrillo_category_overlay() + LF;
+    rv += "CATEGORY-OVERLAY: " + context.cabrillo_category_overlay() + EOL_STRING;
 
 // power
-  rv += "CATEGORY-POWER: " + context.cabrillo_category_power() + LF;   
+  rv += "CATEGORY-POWER: " + context.cabrillo_category_power() + EOL_STRING;
 
 // station
   if (context.cabrillo_category_station() != string())
-    rv += "CATEGORY-STATION: " + context.cabrillo_category_station() + LF;  
+    rv += "CATEGORY-STATION: " + context.cabrillo_category_station() + EOL_STRING;
 
 // time
   if (context.cabrillo_category_time() != string())
-    rv += "CATEGORY-TIME: " + context.cabrillo_category_time() + LF;  
+    rv += "CATEGORY-TIME: " + context.cabrillo_category_time() + EOL_STRING;
 
 // transmitter
-  rv += "CATEGORY-TRANSMITTER: " + context.cabrillo_category_transmitter() + LF; 
+  rv += "CATEGORY-TRANSMITTER: " + context.cabrillo_category_transmitter() + EOL_STRING;
 
 // club
   if (context.cabrillo_club() != string())
-    rv += "CLUB: " + context.cabrillo_club() + LF;  
+    rv += "CLUB: " + context.cabrillo_club() + EOL_STRING;
 
 // location
   if (context.cabrillo_location() != string())
-    rv += "LOCATION: " + context.cabrillo_location() + LF;
+    rv += "LOCATION: " + context.cabrillo_location() + EOL_STRING;
     
 // e-mail
   if (context.cabrillo_e_mail() != string())
-    rv += "EMAIL: " + context.cabrillo_e_mail() + LF;    
+    rv += "EMAIL: " + context.cabrillo_e_mail() + EOL_STRING;
 
 // claimed score
   if (score)
-    rv += "CLAIMED-SCORE: " + to_string(score) + LF;   
+    rv += "CLAIMED-SCORE: " + to_string(score) + EOL_STRING;
 
 // certificate
-    rv += "CERTIFICATE: " + context.cabrillo_certificate() + LF;
+    rv += "CERTIFICATE: " + context.cabrillo_certificate() + EOL_STRING;
 
 /* the QSOs. The Cabrillo so-called "specification" provides not even a semblance of a computer-parsable 
    grammar for QSOs, so a lot of this is guesswork.
@@ -401,14 +408,14 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
   const list<QSO> qsos = as_list();
   const string cabrillo_qso_template = context.cabrillo_qso_template();
   
-//  for_each(qsos.cbegin(), qsos.cend(), [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + LF; } );
-  FOR_ALL(qsos, [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + LF; } );
+//  for_each(qsos.cbegin(), qsos.cend(), [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
+  FOR_ALL(qsos, [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
   
 // soapbox
-  rv += "SOAPBOX: " + LF;
+  rv += "SOAPBOX: " + EOL_STRING;
  
 // this goes at the end
-  rv += "END-OF-LOG:" + LF;
+  rv += "END-OF-LOG:" + EOL_STRING;
   
   return rv;
 }

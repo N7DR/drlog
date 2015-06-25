@@ -957,6 +957,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "CABRILLO E-MAIL") or starts_with(testline, "CABRILLO EMAIL"))
       _cabrillo_e_mail = rhs;
 
+// CABRILLO EOL
+    if (LHS == "CABRILLO EOL")
+      _cabrillo_eol = RHS;
+
 // CABRILLO LOCATION
     if (starts_with(testline, "CABRILLO LOCATION"))
       _cabrillo_location = rhs;
@@ -1342,6 +1346,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cabrillo_certificate("YES"),               // explicitly request a certificate, because of inanity in the specification
   _cabrillo_club(),
   _cabrillo_contest(),                        // CONTEST in Cabrillo file
+  _cabrillo_eol("LF"),                        // use LF as EOL in the Cabrillo file
   _cabrillo_e_mail(),
   _cabrillo_filename("cabrillo"),             // name of file that will store Cabrillo log
   _cabrillo_location(),

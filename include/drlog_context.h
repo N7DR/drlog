@@ -76,6 +76,7 @@ protected:
   std::string                                  _bands;                              ///< comma-delimited bands
   std::string                                  _batch_messages_file;                ///< file that contains per-call batch messages
 
+  std::string                                  _cabrillo_eol;                       ///< EOL used in the cabrillo file; one of: "LF", "CR" or "CRLF"
   std::string                                  _cabrillo_filename;                  ///< name of Cabrillo log
 
 // Cabrillo records
@@ -311,6 +312,7 @@ public:
   SAFEREAD(cabrillo_certificate, _context);             ///< CERTIFICATE:
   SAFEREAD(cabrillo_club, _context);                    ///< CLUB:
   SAFEREAD(cabrillo_contest, _context);                 ///< CONTEST:
+  SAFEREAD(cabrillo_eol, _context);                     ///< EOL used in the cabrillo file; one of: "LF", "CR" or "CRLF"
   SAFEREAD(cabrillo_e_mail, _context);                  ///< EMAIL: (sic)
   SAFEREAD(cabrillo_filename, _context);                ///< name of Cabrillo log
   SAFEREAD(cabrillo_location, _context);                ///< LOCATION:
