@@ -691,6 +691,14 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "P3 SNAPSHOT FILE"))
       _p3_snapshot_file = rhs;
 
+// P3 SPAN CQ
+    if (LHS == "P3 SPAN CQ")
+      _p3_span_cq = from_string<unsigned int>(RHS);
+
+// P3 SPAN SAP
+    if (LHS == "P3 SPAN SAP")
+      _p3_span_sap = from_string<unsigned int>(RHS);
+
 // QUICK QSL MESSAGE
     if (starts_with(testline, "QUICK QSL MESSAGE"))
       _quick_qsl_message = RHS;
@@ -1383,6 +1391,8 @@ drlog_context::drlog_context(const std::string& filename) :
   _ptt_delay(25),                             // PTT delay
   _p3(false),                                 // no P3 is available
   _p3_snapshot_file("P3"),                    // P3 snapshots will be in P3-<n>
+  _p3_span_cq(0),                             // no default span in CQ mode
+  _p3_span_sap(0),                            // no default span in SAP mode
   _quick_qsl_message(),                       // no quick QSL message (default is changed once configuration file has been read)
   _qsl_message(),                             // no QSL message (default is changed once configuration file has been read)
   _qso_multiple_bands(false),                 // each station may be worked on only one band

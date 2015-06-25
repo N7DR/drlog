@@ -103,6 +103,7 @@ const string match_callsign(const vector<pair<string /* callsign */,
 
 void populate_win_info(const string& str);      ///< Populate the information window
 void p3_screenshot(void);                       ///< Start a thread to take a snapshot of a P3
+void p3_span(const unsigned int khz_span);      ///< set the span of a P3
 
 void rebuild_history(const logbook& logbk,
                      const contest_rules& rules,
@@ -4517,6 +4518,8 @@ void enter_cq_mode(void)
     { rig.enable_rit();
       rig.rit(0);
     }
+
+    p3_span(context.p3_span_cq());
   }
 
   catch (const rig_interface_error& e)
@@ -4534,6 +4537,8 @@ void enter_sap_mode(void)
     rig.rit(0);
     rig.disable_xit();
     rig.disable_rit();
+
+    p3_span(context.p3_span_sap());
   }
 
   catch (const rig_interface_error& e)
@@ -6526,3 +6531,14 @@ void display_statistics(const string& summary_str)
 
   win_summary.refresh();        // now OK to refresh
 }
+
+void p3_span(const unsigned int khz_span)      // set the span of a P3
+{ if (context.p3())
+  { if (khz_span >= 2 and khz_span <= 200)
+    { const string span_str = pad_string(to_string(khz_span * 10), 6, PAD_LEFT, '0');
+
+      rig.raw_command("#SPN" + span_str + ";");
+    }
+  }
+}
+

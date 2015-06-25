@@ -177,6 +177,8 @@ protected:
   unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
   bool                                         _p3;                               ///< is a P3 available?
   std::string                                  _p3_snapshot_file;                 ///< base name of file for P3 snapshot
+  unsigned int                                 _p3_span_cq;                       ///< P3 span in CQ mode, in kHz
+  unsigned int                                 _p3_span_sap;                      ///< P3 span in SAP mode, in kHz
 
   std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
   std::string                                  _qsl_message;         ///< confirm at end of QSO
@@ -401,6 +403,8 @@ public:
   SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
   SAFEREAD(p3, _context);                           ///< is a P3 available?
   SAFEREAD(p3_snapshot_file, _context);             ///< base name of file for P3 snapshot
+  SAFEREAD(p3_span_cq, _context);                   ///< P3 span in CQ mode, in kHz
+  SAFEREAD(p3_span_sap, _context);                  ///< P3 span in SAP mode, in kHz
 
   SAFEREAD(quick_qsl_message, _context);            ///< hurried confirm at end of QSO
   SAFEREAD(qsl_message, _context);                  ///< confirm at end of QSO
