@@ -112,26 +112,21 @@ cabrillo_tag_templates::cabrillo_tag_templates(void)
   _add("CATEGORY-POWER:HIGH,LOW,QRP");
 
 // CATEGORY-STATION
-//  tag = "CATEGORY-STATION:EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL";
   _add("CATEGORY-STATION:EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL");
 
 // CATEGORY-TIME
-//  tag = "CATEGORY-TIME:6-HOURS,12-HOURS,24-HOURS";
   _add("CATEGORY-TIME:6-HOURS,12-HOURS,24-HOURS");
 
 // CATEGORY-TRANSMITTER
-//  tag = "CATEGORY-TRANSMITTER:LIMITED,ONE,SWL,TWO,UNLIMITED";
   _add("CATEGORY-TRANSMITTER:LIMITED,ONE,SWL,TWO,UNLIMITED");
 
 // CERTIFICATE; the specification says: "The contest sponsor may or may not honor this tag, and if so may or may not use opt-in or opt-out
 // as the default. YES is the default." Absent is any explanation of the bizarre sequence of words: "may or may not use opt-in or opt-out".
 // There is no explanation of how a default value can have any meaning if the recipient can interpret the lack of an explicit
 // entry as meaning either YES or NO.
-//  tag = "CERTIFICATE:YES,NO";
   _add("CERTIFICATE:YES,NO");
 
 // CLAIMED-SCORE
-//  tag = "CLAIMED-SCORE";
   _add("CLAIMED-SCORE");
 
 // CLUB

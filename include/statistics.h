@@ -1,4 +1,4 @@
-// $Id: statistics.h 107 2015-06-15 17:29:32Z  $
+// $Id: statistics.h 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,25 +42,27 @@ class running_statistics
 {
 protected:
   
-  location_database _location_db;                                           ///< database for location-based lookups
-
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_dupes;       ///< number of dupes, per band and mode
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_qsos;        ///< number of QSOs, per band and mode
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _qso_points;    ///< number of QSO points, per band and mode
   std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_ON_qsos;     ///< number of ON QSOs, per band and mode -- for UBA
 
-  std::set<std::string>                              _exch_mult_fields;     ///< names of the exch fields that are mults
-
   std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;  ///< callsign multipliers (supports more than one)
+  bool                                                              _callsign_mults_used;   ///< are callsign mults used? Copied from rules
+
   multiplier                                                        _country_multipliers;   ///< country multipliers
+  bool                                                              _country_mults_used;    ///< are country mults used? Copied from rules
+
   std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
+  bool                                                              _exchange_mults_used;   ///< are country mults used? Copied from rules
+  std::set<std::string>                                             _exch_mult_fields;      ///< names of the exch fields that are mults
 
-// these are copied from rules
-  bool          _callsign_mults_used;   ///< are callsign mults used?
-  bool          _country_mults_used;    ///< are country mults used?
-  bool          _exchange_mults_used;   ///< are country mults used?
+  bool                                                              _include_qtcs;          ///< do we include QTC information?
 
-  bool          _include_qtcs;          ///< do we include QTC information?
+  location_database                                                 _location_db;           ///< database for location-based lookups
+
+
+
   unsigned int  _qtc_qsos_sent;         ///< total number of QSOs sent in QTCs
   unsigned int  _qtc_qsos_unsent;       ///< total number of (legal) QSOs available but not yet sent in QTCs
 

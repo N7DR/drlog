@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 108 2015-06-20 18:33:09Z  $
+// $Id: cw_buffer.cpp 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -69,7 +69,9 @@ void* cw_buffer::_static_play(void* arg)              // arg is the "this" point
 }
 
 
-/// play the buffer
+/*! \brief  Play the buffer
+    \param  unused
+*/
 void* cw_buffer::_play(void*)
 {
 // we have to use CW_ prefix in order to avoid clashes with ncurses -- yes, it's ridiculous that this file knows about ncurses
@@ -78,42 +80,26 @@ void* cw_buffer::_play(void*)
   const char CW_KEY_DOWN = C1284_NSELECTIN | PTT;
   const char CW_KEY_UP   = PTT;
 
-//  bool starting = true;                   // true if PTT is not asserted
   bool ptt_asserted = false;
-
-//  ost << "starting CW play" << endl;
-//  ost << "length of buffer is: " << _key_buffer.size() << endl;
 
   while (true)
   { int next_action   = 0;                // next key up/down/command
-//    int command       = 0;
-//    int subcommand    = 0;
     bool buffer_was_empty;
 
 
     { SAFELOCK(_key_buffer);
 
       if (!_key_buffer.empty())
-      { //ost << "key buffer is not empty; next value = " << _key_buffer.front() << endl;
-
-        next_action = _key_buffer.front();
+      { next_action = _key_buffer.front();
         _key_buffer.pop();
         buffer_was_empty = false;
-
-//        if (next_action == BUFFER_ESCAPE)    // was it a zero?
-//        { if (!_key_buffer.empty())
-//          { command = _key_buffer.front();
-//            _key_buffer.pop();
-//          }                                  // what about the case where there is no commande actually present???
-//        }
       }
       else
         buffer_was_empty = true;
     }
 
     if (!buffer_was_empty)                                         // do we have something to do?
-    { //ost << "executing action: " << next_action << endl;
-
+    {
 // execute key down
       if (next_action > 0)
       { if (!ptt_asserted)                      // we need to assert PTT alone for a while
@@ -124,8 +110,6 @@ void* cw_buffer::_play(void*)
         }
 
         const unsigned int duration = _usec * next_action / 100;    // key-down duration in microseconds
-
-      //cout << "key down for " << duration << " microseconds" << endl;
 
         _port.control(CW_KEY_DOWN);
         sleep_for(microseconds(duration));
@@ -143,7 +127,6 @@ void* cw_buffer::_play(void*)
           _port.control(PTT);         // key up but keep PT asserted
           sleep_for(microseconds(1000));
 
- //ost << "PTT sending control(0)" << endl;
           _port.control(0);
           ptt_asserted = false;
         }
@@ -169,11 +152,9 @@ void* cw_buffer::_play(void*)
 
         if (buffer_is_empty)      // did we empty the buffer?
         {
-// possibly we should leave PTT asserted for a millisecond
-//          _port.control(PTT);         // key remains up but keep PT asserted
+// leave PTT asserted for a millisecond
           sleep_for(microseconds(1000));
 
- //ost << "PTT sending control(0)" << endl;
           _port.control(0);
           ptt_asserted = false;
         }
@@ -181,9 +162,7 @@ void* cw_buffer::_play(void*)
 
 // execute special command
       if (next_action == 0)
-      { //ost << "Next action is zero" << endl;
-
-        bool got_command = false;
+      { bool got_command = false;
         int  command;
         int time_out_counter = 0;
 
@@ -196,8 +175,7 @@ void* cw_buffer::_play(void*)
           }
 
           if (buffer_is_empty)
-          { //ost << "Sleeping for one millisecond inside cw buffer" << endl;
-            sleep_for(microseconds(1000));  // wait for one millisecond this should never happen: it means that we got an command indicator without a command
+          { sleep_for(microseconds(1000));  // wait for one millisecond this should never happen: it means that we got an command indicator without a command
 
             time_out_counter++;
           }
@@ -206,8 +184,6 @@ void* cw_buffer::_play(void*)
 
             command = _key_buffer.front();
             _key_buffer.pop();
-
-//            ost << "Got the command" << endl;
 
             got_command = true;
           }
@@ -248,7 +224,6 @@ void* cw_buffer::_play(void*)
           _port.control(PTT);         // key up but keep PTT asserted
           sleep_for(microseconds(1000));
 
-// ost << "PTT sending control(0)" << endl;
           _port.control(0);
           ptt_asserted = false;
         }
@@ -271,10 +246,8 @@ void* cw_buffer::_play(void*)
       ptt_asserted = false;
 
       try
-      { //cout << "waiting" << endl;
-        SAFELOCK(_condvar);            // must have the lock before waiting
+      { SAFELOCK(_condvar);            // must have the lock before waiting
         _condvar.wait();
-        //cout << "signal caught; end of waiting" << endl;
       }
 
       catch (const pthread_error& e)
@@ -288,31 +261,20 @@ void* cw_buffer::_play(void*)
   return nullptr;
 }
 
-// construct on a parallel port
+/*! \brief              Construct on a parallel port
+    \param  filename    device file
+    \param  delay       PTT delay (in milliseconds)
+    \param  speed       Speed (in WPM)
+*/
 cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed) :
   _port(filename),
   _ptt_delay(delay),
   _aborted(false),
   _rigp(nullptr),
   _disabled_cw(false)
-{
-//cout << "Setting up CW on " << filename << endl;
-//cout << "delay = " << delay << endl;
-//cout << "speed = " << wpm_speed << endl;
-
-//  exit(0);
-
-
-  speed(wpm_speed);
+{ speed(wpm_speed);
   _condvar.set_mutex(_condvar_mutex);
   _port.control(0);                            // explicitly turn off PTT
-
-//  int ret =  pthread_create( &_thread_id, NULL, &_static_play, this);
-
-//  if (ret)
-//  { cout << "Error creating thread" << endl;
-//    throw exception();
-//  }
 
   try
   { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
@@ -324,7 +286,7 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
   }
 }
 
-// destructor
+/// destructor
 cw_buffer::~cw_buffer(void)
 { SAFELOCK(_key_buffer);
 
@@ -332,10 +294,11 @@ cw_buffer::~cw_buffer(void)
     _key_buffer.pop();
 
   _port.control(0);
-//  pa_simple_free(_sp);
 }
 
-// set the speed in wpm
+/*! \brief          Set the speed
+    \param  wpm     speed in WPM
+*/
 void cw_buffer::speed(const unsigned int wpm)
 { unsigned int new_wpm = min(wpm, MAX_SPEED);
 

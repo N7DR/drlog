@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 108 2015-06-20 18:33:09Z  $
+// $Id: drlog_context.cpp 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -330,17 +330,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "CONTEST")
       _contest_name = RHS;
 
-// COUNTRY EXCEPTION -- SEEMS NOT TO BE USED
-//    if (starts_with(testline, "COUNTRY EXCEPTION"))
-//    { if (testline.length() > 18)
-//      { string exception_string = testline.substr(18);  // callsign = country
-//        const vector<string> fields = remove_peripheral_spaces(split_string(exception_string, "="));
-//
-//        if (fields.size() == 2)
-//          _country_exceptions.push_back( { fields[0], fields[1] } );
-//      }
-//    }
-
 // COUNTRY FILENAME
     if (LHS == "COUNTRY FILENAME")
       _cty_filename = rhs;
@@ -496,7 +485,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       _exchange_fields_filename = rhs;
 
 // EXCHANGE MULTS
-//    if (starts_with(testline, "EXCHANGE MULTS") and !starts_with(testline, "EXCHANGE MULTS PER"))
     if (LHS == "EXCHANGE MULTS")
     { _exchange_mults = RHS;
 
@@ -516,9 +504,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "EXCHANGE SAP")
       _exchange_sap = RHS;
 
-// EXCHANGE SENT std::vector<std::pair<std::string, std::string> >  sent_exchange(void) const
-// exchange sent = RST:599, CQZONE:4
-//    if (starts_with(testline, "EXCHANGE SENT") and !starts_with(testline, "EXCHANGE SENT CW ") and !starts_with(testline, "EXCHANGE SENT SSB "))
+// EXCHANGE SENT
+// e.g., exchange sent = RST:599, CQZONE:4
     if (LHS == "EXCHANGE SENT")
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
@@ -567,7 +554,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _individual_messages_file = rhs;
 
 // KEYER PORT
-    if (LHS == "KEYER PORT") /* or starts_with(testline, "KEYER OUTPUT PORT") ) */
+    if (LHS == "KEYER PORT")
       _keyer_port = rhs;
 
 // LOG
@@ -618,7 +605,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _my_call = RHS;
 
 // MY CONTINENT
-    if (starts_with(testline, "MY CONTINENT"))
+    if (LHS == "MY CONTINENT")
       _my_continent = RHS;
 
 // MY CQ ZONE
@@ -960,6 +947,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // CABRILLO EOL
     if (LHS == "CABRILLO EOL")
       _cabrillo_eol = RHS;
+
+// CABRILLO INCLUDE SCORE
+    if (LHS == "CABRILLO INCLUDE SCORE")
+      _cabrillo_include_score = is_true;
 
 // CABRILLO LOCATION
     if (starts_with(testline, "CABRILLO LOCATION"))
@@ -1349,6 +1340,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cabrillo_eol("LF"),                        // use LF as EOL in the Cabrillo file
   _cabrillo_e_mail(),
   _cabrillo_filename("cabrillo"),             // name of file that will store Cabrillo log
+  _cabrillo_include_score(true),              // include score in the Cabrillo file
   _cabrillo_location(),
   _cabrillo_name(),                           // NAME in Cabrillo file
   _cabrillo_qso_template(),

@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 108 2015-06-20 18:33:09Z  $
+// $Id: statistics.cpp 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -237,9 +237,7 @@ const bool running_statistics::add_known_country_mult(const string& str, const c
     \param  rules   contest rules
 */
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
-{ //ost << "Adding QSO to statistics: " << qso << endl;
-
-  SAFELOCK(statistics);
+{ SAFELOCK(statistics);
   
   const BAND& b = qso.band();
   const unsigned int band_nr = static_cast<int>(b);
@@ -662,7 +660,10 @@ const string running_statistics::summary_string(const contest_rules& rules)
   return rv;
 }
   
-/// total points
+/*! \brief          Total points
+    \param  rules   rules for this contest
+    \return         current point total
+*/
 const unsigned int running_statistics::points(const contest_rules& rules) const
 { unsigned int q_points = 0;
   const vector<BAND>& permitted_bands = rules.permitted_bands();
@@ -718,7 +719,12 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
   return rv;
 }
 
-/// worked callsign mults for a particular band
+/*! \brief              Worked callsign mults for a particular band and mode
+    \param  mult_name   name of the callsign mult
+    \param  b           target band
+    \param  m           target mode
+    \return             all the worked values of the callsign mult <i>mult_name</i> on band <i>b</i> and mode <i>m</i>
+*/
 const set<string> running_statistics::worked_callsign_mults(const string& mult_name, const BAND b, const MODE m)
 { SAFELOCK(statistics);
 
@@ -733,41 +739,31 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
   return set<string>();
 }
 
-/// worked country mults for a particular band
+/*! \brief      Worked country mults for a particular band and mode
+    \param  b   target band
+    \param  m   target mode
+    \return     all the worked country mults on band <i>b</i> and mode <i>m</i>
+*/
 const set<string> running_statistics::worked_country_mults(const BAND b, const MODE m)
 { SAFELOCK(statistics);
-
-//  return ( _country_multipliers.worked(static_cast<int>(b)) );
-
-//  const auto tmp = _country_multipliers.worked(b, m);
-
-//  ost << "running_statistics::worked_country_mults; band = " << BAND_NAME[b] << ", mode = " << MODE_NAME[m] << endl;
-//  ost << "number of mults worked = " << tmp.size() << endl;
-
-//  string str("  ");
-
-//  for (const auto& cm : tmp)
-//    str += cm + " ";
-
-//  ost << "str = " << str << endl;
 
   return ( _country_multipliers.worked(b, m) );
 }
 
-/// worked exchange mults for a particular band and mode -- &&& THINK ABOUT THIS
+/*! \brief      Worked exchange mults for a particular band and mode -- &&& THINK ABOUT THIS
+    \param  b   target band
+    \param  m   target mode
+    \return     all the values of all country mults worked on band <i>b</i> and mode <i>m</i>
+*/
 const map<string /* field name */, set<string> /* values */ >  running_statistics::worked_exchange_mults(const BAND b, const MODE m)
 { map<string, set<string> > rv;
 
   SAFELOCK(statistics);
 
-//   std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
-
   for (const auto& psm : _exchange_multipliers)
   { const string& field_name = psm.first;
     const multiplier& mult = psm.second;
-//    const bool& per_band = mult.per_band();
-//    const bool& per_mode = mult.per_mode();
-    set<string> mult_values = mult.worked(b, m);
+    const set<string> mult_values = mult.worked(b, m);
 
     rv.insert( { field_name, mult_values } );
   }

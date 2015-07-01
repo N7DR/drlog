@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 106 2015-06-06 16:11:23Z  $
+// $Id: rig_interface.cpp 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -450,7 +450,7 @@ const unsigned int rig_interface::data_bits(void)
   return (_rigp ? _rigp->state.rigport.parm.serial.data_bits : 0);
 }
 
-// get/set number of stop bits
+/// set number of stop bits
 void rig_interface::stop_bits(const unsigned int bits)
 { if (bits < 1 or bits > 2)
     throw rig_interface_error(RIG_INVALID_STOP_BITS, "Attempt to set invalid number of stop bits: " + to_string(bits));
@@ -461,12 +461,14 @@ void rig_interface::stop_bits(const unsigned int bits)
     _rigp->state.rigport.parm.serial.stop_bits = bits;
 }
 
+/// get number of stop bits
 const unsigned int rig_interface::stop_bits(void)
 { SAFELOCK(_rig);
 
   return (_rigp ? _rigp->state.rigport.parm.serial.stop_bits : 0);
 }
 
+/// get the rig's mode
 const MODE rig_interface::rig_mode(void)
 { if (!_rig_connected)
     return _last_commanded_mode;
@@ -497,10 +499,9 @@ const MODE rig_interface::rig_mode(void)
   }
 }
 
-// set RIT/XIT
+/// set rit offset (in Hz)
 void rig_interface::rit(const int hz)
-{ //ost << "RIT should be set to " << hz << endl;
-
+{
 // do nothing if no rig is connected
   if (!_rig_connected)
     return;
@@ -531,6 +532,7 @@ void rig_interface::rit(const int hz)
   }
 }
 
+/// get rit offset (in Hz)
 const int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
   { const string value = raw_command(string("RO;"), 8);
@@ -551,20 +553,23 @@ const int rig_interface::rit(void)
   }
 }
 
-// this is a kludge, since hamlib equates an offset with rit turned off (!)
+/*! \brief  Turn rit on
+
+    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+*/
 void rig_interface::rit_enable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("RT1;"), 0);
+    raw_command(string("RT1;"), 0); // proper enable for the K3
   else
-    rit(1);                 // 1 Hz offset
+    rit(1);                         // 1 Hz offset, since a zero offset would disable RIT
 }
 
-// this is a kludge, since hamlib equates an offset with rit turned off (!)
+/// turn rit off
 void rig_interface::rit_disable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("RT0;"), 0);
+    raw_command(string("RT0;"), 0); // proper disable for the K3
   else
-    rit(0);
+    rit(0);                         // 0 Hz offset, which hamlib regards as disabling RIT
 }
 
 const bool rig_interface::rit_enabled(void)

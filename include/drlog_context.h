@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 108 2015-06-20 18:33:09Z  $
+// $Id: drlog_context.h 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -78,6 +78,7 @@ protected:
 
   std::string                                  _cabrillo_eol;                       ///< EOL used in the cabrillo file; one of: "LF", "CR" or "CRLF"
   std::string                                  _cabrillo_filename;                  ///< name of Cabrillo log
+  bool                                         _cabrillo_include_score;             ///< is the CLAIMED-SCORE line included in the Cabrillo file?
 
 // Cabrillo records
   std::string                                  _cabrillo_address_1;                 ///< first ADDRESS: line
@@ -315,6 +316,7 @@ public:
   SAFEREAD(cabrillo_eol, _context);                     ///< EOL used in the cabrillo file; one of: "LF", "CR" or "CRLF"
   SAFEREAD(cabrillo_e_mail, _context);                  ///< EMAIL: (sic)
   SAFEREAD(cabrillo_filename, _context);                ///< name of Cabrillo log
+  SAFEREAD(cabrillo_include_score, _context);           ///< is the CLAIMED-SCORE line included in the Cabrillo file?
   SAFEREAD(cabrillo_location, _context);                ///< LOCATION:
   SAFEREAD(cabrillo_name, _context);                    ///< NAME:
   SAFEREAD(cabrillo_operators, _context);               ///< OPERATORS:
@@ -466,10 +468,6 @@ public:
 // cw messages
   const std::string message(const int symbol);    // we use the KeySymbol as the integer, although other I/O implementations could use something else
 
-// CQ messages
-//  SAFEREAD(message_cq_1, _context);
-//  SAFEREAD(message_cq_2, _context);
-
 /// vector of the names of bands (e.g., "160", "80", etc.)
   inline const std::vector<std::string> band_names(void) const
     { SAFELOCK(_context);
@@ -494,25 +492,32 @@ public:
       return mode_names().size();
     }
 
-/*! \brief              All the windows whose name contains a particular substring
-    \param      subst   substring for which to search
-    \return             all the window names that include <i>substr</i>
+/*! \brief          All the windows whose name contains a particular substring
+    \param  substr  substring for which to search
+    \return         all the window names that include <i>substr</i>
 */
   const std::vector<std::string> window_name_contains(const std::string& substr) const;
 
-/*! \brief              Is a particular frequency within any marked range?
-    \param      m       mode
-    \param      f       frequency to test
-    \return             whether <i>f</i> is in any marked range for the mode <i>m</i>
+/*! \brief      Is a particular frequency within any marked range?
+    \param  m   mode
+    \param  f   frequency to test
+    \return     whether <i>f</i> is in any marked range for the mode <i>m</i>
 */
   const bool mark_frequency(const MODE, const frequency& f);
 
-/*! \brief              Get all the names in the sent exchange
-    \return             the names of all the fields in the sent exchange
+/*! \brief      Get all the names in the sent exchange
+    \return     the names of all the fields in the sent exchange
 */
   const std::vector<std::string> sent_exchange_names(void) const;
 
+/*! \brief      Get all the names in the sent CW exchange
+    \return     the names of all the fields in the sent CW exchange
+*/
   const std::vector<std::string> sent_exchange_cw_names(void) const;
+
+/*! \brief      Get all the names in the sent SSB exchange
+    \return     the names of all the fields in the sent SSB exchange
+*/
   const std::vector<std::string> sent_exchange_ssb_names(void) const;
 
 /// swap QSL and QUICK QSL messages

@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 107 2015-06-15 17:29:32Z  $
+// $Id: rig_interface.h 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -230,22 +230,28 @@ public:
 /// is rit enabled?
   const bool rit_enabled(void);
 
-// set xit offset (in Hz)
+/// set xit offset (in Hz)
   void xit(const int hz);
 
-// get xit offset (in Hz)
+/// get xit offset (in Hz)
   const int xit(void);
 
-// turn xit on
-// this is a kludge, since hamlib equates a zero offset with xit disabled (!)
+/*! \brief  Turn xit on
+
+    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
+*/
   void xit_enable(void);
 
-// turn xit off
-// this is a kludge, since hamlib equates a zero offset with xit disabled (!)
+/*! \brief  Turn xit off
+
+    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
+*/
   void xit_disable(void);
 
-// turn xit off
-// this is a kludge, since hamlib equates a zero offset with xit disabled (!)
+/*! \brief  Turn xit off
+
+    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
+*/
   inline void disable_xit(void)
     { xit_disable(); }
 

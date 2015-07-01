@@ -270,6 +270,18 @@ protected:
   bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
+  std::set<std::string>               _countries;                     ///< collection of canonical prefixes for all the valid countries
+  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
+  bool                                _country_mults_per_band;        ///< are country mults counted per-band?
+  bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
+  bool                                _country_mults_used;            ///< are country mults used?
+  std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
+
+  std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
+  bool                                _exchange_mults_per_band;  ///< are exchange mults counted per-band?
+  bool                                _exchange_mults_per_mode;  ///< are exchange mults counted per-mode?
+  bool                                _exchange_mults_used;      ///< are exchange mults used?
+
   std::map<std::string, unsigned int>  _exchange_present_points;                                                            ///< number of points if a particular exchange field is received
   std::map<std::string, unsigned int>  _exchange_value_points;                                                              ///< number of points if a particular exchange field has a particular value
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded
@@ -285,19 +297,6 @@ protected:
   bool              _work_if_different_band;     ///< is it OK to work the same station on different bands?
   bool              _work_if_different_mode;     ///< is it OK to work the same station on different modes?
   
-
-  std::set<std::string>               _countries;                     ///< collection of canonical prefixes for all the valid countries
-  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
-  bool                                _country_mults_per_band;        ///< are country mults counted per-band?
-  bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
-  bool                                _country_mults_used;            ///< are country mults used?
-  std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
-
-  std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
-  bool                                _exchange_mults_per_band;  ///< are exchange mults counted per-band?
-  bool                                _exchange_mults_per_mode;  ///< are exchange mults counted per-mode?
-  bool                                _exchange_mults_used;      ///< are exchange mults used?
-
 // structures to hold information about the possible values of exchange fields
 
 /// all the equivalent values for all exchange fields; the map is empty if there are no canonical values
@@ -617,20 +616,25 @@ public:
          & _callsign_mults_per_band
          & _callsign_mults_per_mode
          & _callsign_mults_used
+         & _countries
+         & _country_mults
+         & _country_mults_per_band
+         & _country_mults_per_mode
+         & _country_mults_used
+         & _per_band_country_mult_factor
          & _exchange_mults
+         & _exchange_mults_per_band
+         & _exchange_mults_per_mode
          & _exchange_mults_used
          & _exchange_present_points
          & _exchange_value_points
          & _expanded_received_exchange
-         & _permitted_modes
          & _permitted_bands
+         & _permitted_modes
+
          & _sent_exchange_names
          & _work_if_different_band
          & _points
-         & _countries
-         & _country_mults
-         & _country_mults_used
-
          & _exch_values
          & _permitted_exchange_values
          & _permitted_to_canonical

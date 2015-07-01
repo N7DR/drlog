@@ -275,38 +275,37 @@ const std::string squash(const std::string& cs, const char c = ' ');
 inline const std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
   { return split_string(cs, eol_marker); }
 
-/*! \brief  Remove all instances of a specific leading character
-    \param  cs  Original string
-    \param  c Leading character to remove (if present)
-
-    \return <i>cs</i> with any leading octets with the value <i>c</i> removed
+/*! \brief      Remove all instances of a specific leading character
+    \param  cs  original string
+    \param  c   leading character to remove (if present)
+    \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
 const std::string remove_leading(const std::string& cs, const char c);
 
-/*! \brief  Remove leading spaces
-    \param  cs  Original string
-  \return <i>cs</i> with any leading spaces removed
+/*! \brief      Remove leading spaces
+    \param  cs  original string
+    \return     <i>cs</i> with any leading spaces removed
 */
 inline const std::string remove_leading_spaces(const std::string& cs)
   { return remove_leading(cs, ' '); }
 
-/*! \brief  Remove all instances of a specific trailing character
-  \param  cs  Original string
-  \param  c Trailing character to remove (if present)
-  \return <i>cs</i> with any trailing octets with the value <i>c</i> removed
+/*! \brief      Remove all instances of a specific trailing character
+    \param  cs  original string
+    \param  c   trailing character to remove (if present)
+    \return     <i>cs</i> with any trailing octets with the value <i>c</i> removed
 */
 const std::string remove_trailing(const std::string& cs, const char c);
 
-/*! \brief  Remove trailing spaces
-  \param  cs  Original string
-  \return <i>cs</i> with any trailing spaces removed
+/*! \brief      Remove trailing spaces
+    \param  cs  original string
+    \return     <i>cs</i> with any trailing spaces removed
 */
 inline const std::string remove_trailing_spaces(const std::string& cs)
   { return remove_trailing(cs, ' '); }
 
-/*!     \brief          Remove leading and trailing spaces
-        \param  cs      Original string
-        \return         <i>cs</i> with any leading or trailing spaces removed
+/*! \brief      Remove leading and trailing spaces
+    \param  cs  original string
+    \return     <i>cs</i> with any leading or trailing spaces removed
 */
 inline const std::string remove_peripheral_spaces(const std::string& cs)
   { return remove_trailing_spaces(remove_leading_spaces(cs)); }

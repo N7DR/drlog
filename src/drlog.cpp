@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 108 2015-06-20 18:33:09Z  $
+// $Id: drlog.cpp 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2435,7 +2435,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // .CABRILLO
       if (command == "CABRILLO")
       { const string cabrillo_filename = (context.cabrillo_filename().empty() ? "cabrillo" : context.cabrillo_filename());
-        const string log_str = logbk.cabrillo_log(context, statistics.points(rules));    // do I really want the points?
+        const string log_str = logbk.cabrillo_log(context, context.cabrillo_include_score() ? statistics.points(rules) : 0);    // 0 indicates that score is not to be included
 
         write_file(log_str, cabrillo_filename);
         alert((string("Cabrillo file ") + context.cabrillo_filename() + " written"));

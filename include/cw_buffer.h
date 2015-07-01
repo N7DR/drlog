@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 108 2015-06-20 18:33:09Z  $
+// $Id: cw_buffer.h 109 2015-06-27 15:28:31Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -64,7 +64,9 @@ protected:
 */
   void                  _add_action(const int n);
 
-/// play the buffer
+/*! \brief  Play the buffer
+    \param  unused
+*/
   void*                 _play(void*);
 
 /*! \brief          Wrapper function to play the buffer
@@ -84,7 +86,9 @@ public:
 /// destructor
   ~cw_buffer(void);
 
-/// set the speed in wpm
+/*! \brief          Set the speed
+    \param  wpm     speed in WPM
+*/
   void speed(const unsigned int wpm);
 
 /// get the speed in wpm
