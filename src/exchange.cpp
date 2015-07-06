@@ -850,6 +850,36 @@ void exchange_field_database::set_value(const string& callsign, const string& fi
   _db[ { callsign, field_name } ] = value;    // don't use insert, since we must overwrite
 }
 
+void exchange_field_database::set_values_from_file(const vector<string>& path, const string& filename, const string& field_name)
+{ try
+  { string contents = read_file(path, filename);
+
+    if (!contents.empty())
+    { contents = remove_char(contents, CR_CHAR);        // in case it's a silly Microsoft-format file
+
+      const vector<string> lines = to_lines(contents);
+
+      for (unsigned int n = 0; n < lines.size(); ++n)
+      { string line = lines[n];
+        line = squash(line, ' ');
+
+        const vector<string> tokens = remove_peripheral_spaces(split_string(line, " "));
+
+        if (tokens.size() == 2)
+        { if ( (n == 0) and (to_upper(tokens[0]) == "CALL") )
+            continue;
+
+          set_value(tokens[0], field_name, tokens[1]);
+        }
+      }
+    }
+  }
+
+  catch (...)
+  {
+  }
+}
+
 #if !defined(NEW_CONSTRUCTOR)
 // -------------------------  exchange_field_template  ---------------------------
 

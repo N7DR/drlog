@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 109 2015-06-27 15:28:31Z  $
+// $Id: drlog.cpp 110 2015-07-04 14:22:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -634,6 +634,10 @@ int main(int argc, char** argv)
     callsign_mults_used = rules.callsign_mults_used();
     country_mults_used = rules.country_mults_used();
     exchange_mults_used = rules.exchange_mults_used();
+
+// possibly get a list of IARU society exchanges
+    if (!context.society_list_filename().empty())
+      exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY");
 
 // possibly test regex exchanges; this will exit if it executes
     if (cl.value_present("-test-exchanges"))

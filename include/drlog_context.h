@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 109 2015-06-27 15:28:31Z  $
+// $Id: drlog_context.h 110 2015-07-04 14:22:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -219,6 +219,7 @@ protected:
 //  std::map<MODE, std::vector<std::pair<std::string, std::string> > >_sent_exchange;  ///< names and values of sent exchange fields, per mode
   unsigned int                                 _shift_delta;                    ///< how many Hertz to QSY per poll of the shift key
   unsigned int                                 _shift_poll;                     ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
+  std::string                                  _society_list_filename;          ///< name of file containing IARU society exchanges
   enum BAND                                    _start_band;                     ///< on what band do we start?
   enum MODE                                    _start_mode;                     ///< on which mode do we start?
   std::map<std::string /* name */,
@@ -447,6 +448,7 @@ public:
   SAFEREAD(sent_exchange_ssb, _context);                ///< names and values of sent exchange fields, SSB
   SAFEREAD(shift_delta, _context);                      ///< how many Hertz to QSY per poll of the shift key
   SAFEREAD(shift_poll, _context);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
+  SAFEREAD(society_list_filename, _context);            ///< name of file containing IARU society exchanges
   SAFEREAD(start_band, _context);                       ///< on what band do we start?
   SAFEREAD(start_mode, _context);                       ///< on which mode do we start?
   SAFEREAD(static_windows, _context);                   ///< size, position and content information for each static window

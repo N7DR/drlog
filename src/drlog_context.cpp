@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 109 2015-06-27 15:28:31Z  $
+// $Id: drlog_context.cpp 110 2015-07-04 14:22:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -850,6 +850,10 @@ void drlog_context::_process_configuration_file(const string& filename)
                                                       };
 #endif
 
+// SOCIETY LIST FILENAME
+    if (LHS == "SOCIETY LIST FILENAME")
+      _society_list_filename = rhs;
+
 // START BAND
     if (starts_with(testline, "START BAND"))
     { const string str = RHS;
@@ -1418,6 +1422,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _sent_exchange_ssb(),                       // no default sent SSB exchange
   _shift_delta(10),                           // shift RIT by 10 Hz
   _shift_poll(50),                            // poll every 50 milliseconds
+  _society_list_filename(""),                 // no default file for IARU society information
   _start_band(BAND_20),                       // start on 20m
   _start_mode(MODE_CW),                       // start on CW
   _sync_keyer(false),                         // do not synchronise rig keyer with computer

@@ -1,4 +1,4 @@
-// $Id: log.cpp 109 2015-06-27 15:28:31Z  $
+// $Id: log.cpp 110 2015-07-04 14:22:37Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -284,10 +284,19 @@ const logbook logbook::recalculate_dupes(const contest_rules& rules) const
     Just for the record, the "specification" at the above URL is grossly incomplete
     (even though the ARRL at http://www.arrl.org/contests/fileform.html
     explicitly claims that it is complete). But it *is* incomplete, and there are
-    places where an implementer has to to guess what to do.
+    many areas in which an implementer has to to guess what to do.
+
+    The format "specification" has been moved to:
+      http://wwrof.org/cabrillo/
+    It remains thoroughly deficient.
 */
 const string logbook::cabrillo_log(const drlog_context& context, const unsigned int score) const
 { string rv;
+
+// define a separate EOL for the Cabrillo file because JARL rejects logs that don't use CRLF, even though the
+// specification is silent as to what constitutes an EOL marker. The FAQ (why would a specification need
+// an FAQ if it were properly specified?) implies that the EOL of the underlying OS on the system that creates
+// the Cabrillo file should be accepted by the contest sponsor.
   string EOL_STRING = LF;
 
   if (context.cabrillo_eol() == "CR")
@@ -398,7 +407,7 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
 // certificate
     rv += "CERTIFICATE: " + context.cabrillo_certificate() + EOL_STRING;
 
-/* the QSOs. The Cabrillo so-called "specification" provides not even a semblance of a computer-parsable 
+/* the QSOs. The Cabrillo "specification" provides not even a semblance of a computer-parsable
    grammar for QSOs, so a lot of this is guesswork.
    
   CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R TXID:81:1 
@@ -441,34 +450,17 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
   unsigned int last_qso_number = 0; 
    
 // for each QSO line
-//  for (unsigned int n = 0; n < lines.size(); ++n)
   for (const auto& line : lines)
-  { //const string& line = lines[n];
-  
-//ost << n << ": " << line << endl;
-//ost << "length of line: " << line.length() << endl;
-  
-    if (line.substr(0, 3) == "QSO" or line.substr(0, 3) == "   ")
+  { if (line.substr(0, 3) == "QSO" or line.substr(0, 3) == "   ")
     { QSO qso;
   
 // go through the fields
       for (unsigned int n = 0; n < individual_values.size(); ++n)
       { const vector<string>& vec = individual_values[n];
         const string name = vec[0];
-  
-//ost << "Processing field: " << name << endl;
-  
         const unsigned int posn = from_string<unsigned int>(vec[1]) - 1;
-
-//ost << "posn: " << posn << endl;
-
         const unsigned int len  = from_string<unsigned int>(vec[2]);
-
-//ost << "len: " << len << endl;
-
         const string value = (line.length() >= posn + 1 ? remove_peripheral_spaces(line.substr(posn, len)) : "");
-  
-//ost << name << ": " << value << endl;
       
 // frequency
         if (name == "FREQ")
@@ -476,19 +468,6 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     
           const unsigned int _frequency = from_string<unsigned int>(value);
           const BAND _band = static_cast<BAND>(frequency(_frequency));
-      
-//          if (_frequency >= 1800 and _frequency <= 2000)
-//            _band = BAND_160;
-//          if (_frequency >= 3500 and _frequency <= 4000)
-//            _band = BAND_80;
-//          if (_frequency >= 7000 and _frequency <= 7300)
-//            _band = BAND_40;
-//          if (_frequency >= 14000 and _frequency <= 14350)
-//            _band = BAND_20;
-//          if (_frequency >= 21000 and _frequency <= 21450)
-//            _band = BAND_15;
-//          if (_frequency >= 28000 and _frequency <= 29700)
-//            _band = BAND_10;
 
           qso.band(_band);
   
@@ -513,14 +492,10 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
 // time
         if (name == "TIME")
-        { //ost << "TIME: " << value << endl;
-
-          if (value.length() == 5)
+        { if (value.length() == 5)
             qso.utc(value.substr(0, 2) + value.substr(3, 2));    // handle hh:mm format
           else
             qso.utc(value);                                      // hhmm
-
-    //ost << "UTC: " << qso.utc() << endl;
         }
 
 // tcall
@@ -532,14 +507,12 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
         { const string field_name = name.substr(6);
           vector<pair<string, string> > current_sent_exchange = qso.sent_exchange(); // do in two steps in order to remove constness of returned value
   
-//          qso.sent_exchange((current_sent_exchange.push_back(make_pair(field_name, value)), current_sent_exchange));
           qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
-
         }
 
 // rcall
         if (name == "RCALL")
-    qso.callsign(value);
+          qso.callsign(value);
 
 // received exchange
         if (name.substr(0, 5) == "REXCH")
@@ -553,35 +526,24 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
 // don't do TXID since we don't really need that (and there's currently nowhere in QSO to put it)
       }
-      
-//ost << "Processed QSO" << endl;      
+
       qso.number(++last_qso_number);
       *this += qso;
     }
   }
 }
 
-/*! \brief                          Read from a Cabrillo file, using space-delimited fields
-    \param  filename                name of Cabrillo file
-    \param  cabrillo_fields         names of Cabrillo fields
+/*! \brief                      Read from a Cabrillo file, using space-delimited fields
+    \param  filename            name of Cabrillo file
+    \param  cabrillo_fields     names of Cabrillo fields
 */
 void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
 { string file_contents = remove_char(read_file(filename), '\r');
   const vector<string> lines = to_lines(file_contents);
-
   unsigned int last_qso_number = 0; 
 
-//ost << "Reading file" << endl;
-
-// for each QSO line
-//  for (unsigned int n = 0; n < lines.size(); ++n)
   for (const auto& line : lines)
-  { //const string& line = lines[n];
-  
-//ost << n << ": " << line << endl;
-//ost << "length of line: " << line.length() << endl;
-  
-    if (line.substr(0, 3) == "QSO" or line.substr(0, 3) == "   ")
+  { if (line.substr(0, 3) == "QSO" or line.substr(0, 3) == "   ")
     { QSO qso;
   
       const vector<string> fields = split_string(remove_peripheral_spaces(squash(line.substr(4))), " ");
@@ -593,23 +555,17 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
       for (unsigned int n = 0; n < cabrillo_fields.size(); ++n)
       { const string name = cabrillo_fields[n];
         const string value = (n < fields.size() ? remove_peripheral_spaces(fields[n]) : "");
-  
-//ost << "name: " << name << endl;  
-//ost << "value: " << value << endl;  
-  
-// frequency
-      
 
+// frequency
   if (name == "FREQ")
   { qso.freq(value);
     
-  unsigned int _frequency = from_string<unsigned int>(value);
-  BAND _band = to_BAND(_frequency);
-
+    unsigned int _frequency = from_string<unsigned int>(value);
+    BAND _band = to_BAND(_frequency);
 
         qso.band(_band);
   
-  ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
+//  ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
   }
       
 
@@ -625,11 +581,11 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
   }
 
 // date
-        if (name == "DATE")
+  if (name == "DATE")
     qso.date(value);
 
 // time
-        if (name == "TIME")
+  if (name == "TIME")
   { if (value.find(":") == 2)  
       qso.utc(value.substr(0, 2) + value.substr(3, 2));
     else
@@ -637,11 +593,11 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
   }
 
 // tcall
-        if (name == "TCALL")
+  if (name == "TCALL")
     qso.my_call(value);
     
 // transmitted exchange
-        if (name.substr(0, 5) == "TEXCH")
+  if (name.substr(0, 5) == "TEXCH")
   { const string field_name = name.substr(6);
     vector<pair<string, string> > current_sent_exchange = qso.sent_exchange(); // do in two steps in order to remove constness of returned value
   
@@ -649,38 +605,36 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
   }   
 
 // rcall
-        if (name == "RCALL")
+  if (name == "RCALL")
     qso.callsign(value);
 
 // received exchange
-        if (name.substr(0, 5) == "REXCH")
+  if (name.substr(0, 5) == "REXCH")
   { const string field_name = name.substr(6);
-//    vector<pair<string, string> > current_received_exchange = qso.received_exchange(); // do in two steps in order to remove constness of returned value
     vector<received_field> current_received_exchange = qso.received_exchange(); // do in two steps in order to remove constness of returned value
-  
-    //qso.received_exchange((current_received_exchange.push_back(make_pair(field_name, value)), current_received_exchange));
 
-    // should have a function in the QSO class to add a field to the exchange
-     //   map<string, string> current_received_exchange = qso.received_exchange();
-        //current_received_exchange.insert(make_pair(field_name, value));
-        current_received_exchange.push_back( { field_name, value, false, false } );
-        qso.received_exchange(current_received_exchange);
+// should have a function in the QSO class to add a field to the exchange
+    current_received_exchange.push_back( { field_name, value, false, false } );
+    qso.received_exchange(current_received_exchange);
   }   
 
 // don't do TXID since we don't really need that (and there's currently nowhere in QSO to put it)
-      
       }
       
 //ost << "Processed QSO" << endl;      
       qso.number(++last_qso_number);
       *this += qso;
-      
-//      exit(0);
     }
   }
 }
 
-// get the value of an exchange field from the last QSO with someone; returns empty string if anything goes wrong
+/*! \brief                          Get the value of an exchange field from the last QSO with a station
+    \param  callsign                target call
+    \param  exchange_field_name     name of target exchange field
+    \return                         value of the most recent instance of the exchange field <i>exchange_field_name</i> received from <i>callsign</i>
+
+    Returns empty string if no returnable instance can be found
+*/
 const string logbook::exchange_field_value(const string& callsign, const string& exchange_field_name)
 { const vector<QSO> qsos = worked(callsign);
 

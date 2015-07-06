@@ -218,6 +218,8 @@ public:
 */
   void set_value(const std::string& callsign, const std::string& field_name, const std::string& value);
 
+  void set_values_from_file(const std::vector<std::string>& path, const std::string& filename, const std::string& field_name);
+
   inline const size_t size(void) const
     { return _db.size(); }
 };
