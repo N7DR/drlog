@@ -1434,8 +1434,6 @@ int main(int argc, char** argv)
     { while (keyboard.empty())
         sleep_for(milliseconds(10));
 
-//      const keyboard_event e = keyboard.pop();
-
       win_active_p -> process_input(keyboard.pop());
     }
   }
@@ -3492,15 +3490,30 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
       if (!(be.callsign().empty()))
       { found_call = true;
+
+        const BAND old_b_band = to_BAND(rig.rig_frequency_b());
+
         rig.rig_frequency_b(be.freq());
         win_bcall < WINDOW_CLEAR <= be.callsign();
+
+        if (old_b_band != to_BAND(be.freq()))  // stupid K3 swallows sub-receiver command if it's changed bands
+          sleep_for(milliseconds(100));
+
         rig.sub_receiver_enable();
       }
       else    // didn't find an exact match; try a substring search
       { be = bandmaps[safe_get_band()].substr(contents);
         found_call = true;
+
+        const BAND old_b_band = to_BAND(rig.rig_frequency_b());
+
         rig.rig_frequency_b(be.freq());
+
         win_bcall < WINDOW_CLEAR <= be.callsign();
+
+        if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows sub-receiver command if it's changed bands
+          sleep_for(milliseconds(100));
+
         rig.sub_receiver_enable();
       }
     }
