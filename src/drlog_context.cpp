@@ -609,23 +609,23 @@ void drlog_context::_process_configuration_file(const string& filename)
       _my_continent = RHS;
 
 // MY CQ ZONE
-    if (starts_with(testline, "MY CQ ZONE"))
+    if (LHS == "MY CQ ZONE")
       _my_cq_zone = from_string<int>(RHS);
 
 // MY GRID
-    if (starts_with(testline, "MY GRID"))
+    if (LHS == "MY GRID")
       _my_grid = rhs;
 
 // MY IP
-    if (starts_with(testline, "MY IP"))
+    if (LHS == "MY IP")
       _my_ip = rhs;
 
 // MY LATITUDE
-    if (starts_with(testline, "MY LATITUDE"))
+    if (LHS == "MY LATITUDE")
       _my_latitude = from_string<float>(rhs);
 
 // MY LATITUDE
-    if (starts_with(testline, "MY LONGITUDE"))
+    if (LHS == "MY LONGITUDE")
       _my_longitude = from_string<float>(rhs);
 
 // MY ITU ZONE

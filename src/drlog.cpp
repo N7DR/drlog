@@ -262,6 +262,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_bandmap,                     ///< the bandmap for the current band
        win_bandmap_filter,              ///< bandmap filter information
        win_batch_messages,              ///< messages from the batch messages file
+       win_bcall,                       ///< call associated with VFO B
        win_call,                        ///< callsign of other station, or command
        win_cluster_line,                ///< last line received from cluster
        win_cluster_mult,                ///< mults received from cluster
@@ -792,6 +793,10 @@ int main(int argc, char** argv)
       exit(-1);
     }
   }
+
+// BCALL window
+  win_bcall.init(context.window_info("BCALL"), WINDOW_NO_CURSOR);
+  win_bcall < WINDOW_BOLD <= "";
 
 // CALL window
   win_call.init(context.window_info("CALL"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
@@ -2142,6 +2147,7 @@ void* prune_bandmap(void* vp)
     CTRL-Q -- swap QSL and QUICK QSL messages
     CTRL-F -- find matches for exchange in log
     CTRL-B -- fast bandwidth
+    F1 -- first step in SAP QSO during run
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -3450,29 +3456,57 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // CTRL-Q -- swap QSL and QUICK QSL messages
-    if (!processed and (e.is_control('q')))
-    { context.swap_qsl_messages();
-      processed = true;
-    }
+  if (!processed and (e.is_control('q')))
+  { context.swap_qsl_messages();
+    processed = true;
+  }
 
 // CTRL-F -- find matches for exchange in log
-    if (!processed and (e.is_control('f')))
-    { if (!prior_contents.empty())
-        extract.match_exchange(logbk, prior_contents);
+  if (!processed and (e.is_control('f')))
+  { if (!prior_contents.empty())
+      extract.match_exchange(logbk, prior_contents);
 
-      processed = true;
-    }
+    processed = true;
+  }
 
 // CTRL-B -- fast CW bandwidth
-    if (!processed and (e.is_control('b')))
-    { if (safe_get_mode() == MODE_CW)
-      { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
+  if (!processed and (e.is_control('b')))
+  { if (safe_get_mode() == MODE_CW)
+    { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
 
-        rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
-      }
-
-      processed = true;
+      rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
     }
+
+    processed = true;
+  }
+
+//  F1 -- first step in SAP QSO during run
+  if (!processed and (e.symbol() == XK_F1))
+  { string contents = remove_peripheral_spaces(win.read());
+    bool found_call = false;
+
+    if (!contents.empty())
+    {
+// assume it's a call -- look for the same call in the current bandmap
+      bandmap_entry be = bandmaps[safe_get_band()][contents];
+
+      if (!(be.callsign().empty()))
+      { found_call = true;
+        rig.rig_frequency_b(be.freq());
+        win_bcall < WINDOW_CLEAR <= be.callsign();
+        rig.sub_receiver_enable();
+      }
+      else    // didn't find an exact match; try a substring search
+      { be = bandmaps[safe_get_band()].substr(contents);
+        found_call = true;
+        rig.rig_frequency_b(be.freq());
+        win_bcall < WINDOW_CLEAR <= be.callsign();
+        rig.sub_receiver_enable();
+      }
+    }
+
+    processed = true;
+  }
 
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)

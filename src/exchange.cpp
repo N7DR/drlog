@@ -33,8 +33,8 @@ pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange fi
 
 // -------------------------  parsed_exchange_field  ---------------------------
 
-/*!     \class parsed_exchange_field
-        \brief Encapsulates the name for an exchange field, its value after parsing an exchange, whether it's a mult, and, if so, the value of that mult
+/*! \class parsed_exchange_field
+    \brief Encapsulates the name for an exchange field, its value after parsing an exchange, whether it's a mult, and, if so, the value of that mult
 */
 
 /// default constructor
@@ -85,8 +85,8 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
 
 // -------------------------  parsed_exchange  ---------------------------
 
-/*!     \class parsed_exchange
-        \brief All the fields in the exchange, following parsing
+/*! \class parsed_exchange
+    \brief All the fields in the exchange, following parsing
 */
 
 /*! \brief                      Try to fill exchange fields with received field matches
@@ -487,10 +487,10 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 
 // -------------------------  exchange_field_database  ---------------------------
 
-/*!     \class exchange_field_database
-        \brief used for estimating the exchange field
+/*! \class exchange_field_database
+    \brief used for estimating the exchange field
 
-        There can be only one of these, and it is thread safe
+    There can be only one of these, and it is thread safe
 */
 
 /*! \brief              Guess the value of an exchange field
@@ -850,6 +850,16 @@ void exchange_field_database::set_value(const string& callsign, const string& fi
   _db[ { callsign, field_name } ] = value;    // don't use insert, since we must overwrite
 }
 
+/*! \brief              Set value of a field for multiple calls using a file
+    \param  path        path for file
+    \param  filename    name of file
+    \param  field_name  name of the field
+
+    Reads all the lines in the file, which is assumed to be in two columns:
+      call  field_value
+    Ignores the first line if the upper case version of the call in the first line is "CALL"
+    Creates a database entry for calls as necessary
+*/
 void exchange_field_database::set_values_from_file(const vector<string>& path, const string& filename, const string& field_name)
 { try
   { string contents = read_file(path, filename);
@@ -857,16 +867,17 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
     if (!contents.empty())
     { contents = remove_char(contents, CR_CHAR);        // in case it's a silly Microsoft-format file
 
-      const vector<string> lines = to_lines(contents);
+      const vector<string> lines = to_lines(to_upper(contents));
 
       for (unsigned int n = 0; n < lines.size(); ++n)
       { string line = lines[n];
+        line = replace_char(line, '\t', ' ');
         line = squash(line, ' ');
 
         const vector<string> tokens = remove_peripheral_spaces(split_string(line, " "));
 
         if (tokens.size() == 2)
-        { if ( (n == 0) and (to_upper(tokens[0]) == "CALL") )
+        { if ( (n == 0) and (tokens[0] == "CALL") )
             continue;
 
           set_value(tokens[0], field_name, tokens[1]);
@@ -949,23 +960,6 @@ const vector<string> exchange_field_template::valid_matches(const string& str)
   return rv;
 }
 
-/// Return all the names of exchange fields in the database
-const set<string> exchange_field_template::names(void) const
-{ set<string> rv;
-
-//  FOR_ALL(_db, [&rv] (const pair<string, boost::regex>& psr) { rv.insert(psr.first); } );
-  FOR_ALL(_db, [&rv] (const decltype(_db)::value_type& psr) { rv.insert(psr.first); } );
-
-  return rv;
-}
-
-/// Return regex for a name; returns empty regex if the name is invalid
-const boost::regex exchange_field_template::expression(const string& str) const
-{ if (!(names() < str))
-    return boost::regex();
-
-  return _db.at(str);
-}
 #endif
 
 /*! \brief          Replace cut numbers with real numbers

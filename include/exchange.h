@@ -79,8 +79,8 @@ class parsed_exchange
 {
 protected:
 
-  std::string                           _replacement_call;    ///< a new callsign, to replace the one in the CALL window
   std::vector<parsed_exchange_field>    _fields;              ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
+  std::string                           _replacement_call;    ///< a new callsign, to replace the one in the CALL window
   bool                                  _valid;               ///< is the object valid? (i.e., was parsing successful?)
 
 /*! \brief                      Try to fill exchange fields with received field matches
@@ -103,9 +103,9 @@ public:
 */
   parsed_exchange(const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
 
+  READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window
   READ(valid);                         ///< is the object valid? (i.e., was parsing successful?)
-  READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
 
 /// is the object valid? (i.e., was parsing successful?)
   inline const bool is_valid(void) const
@@ -218,8 +218,19 @@ public:
 */
   void set_value(const std::string& callsign, const std::string& field_name, const std::string& value);
 
+/*! \brief              Set value of a field for multiple calls using a file
+    \param  path        path for file
+    \param  filename    name of file
+    \param  field_name  name of the field
+
+    Reads all the lines in the file, which is assumed to be in two columns:
+      call  field_value
+    Ignores the first line if the upper case version of the call in the first line is "CALL"
+    Creates a database entry for calls as necessary
+*/
   void set_values_from_file(const std::vector<std::string>& path, const std::string& filename, const std::string& field_name);
 
+/// return number of calls in the database
   inline const size_t size(void) const
     { return _db.size(); }
 };
@@ -279,8 +290,8 @@ public:
 
   READ_AND_WRITE(is_mult);              ///< is this field a mult?
   READ_AND_WRITE(name);                 ///< name of exchange field
-  READ(regex_expression);
-  READ(values);
+  READ(regex_expression);               ///< regex expression that defines field
+  READ(values);                         ///< all the equivalent values, per canonical value
   READ(legal_non_regex_values);
   READ(value_to_canonical);
 

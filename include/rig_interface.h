@@ -255,17 +255,23 @@ public:
   inline void disable_xit(void)
     { xit_disable(); }
 
+/// is xit enabled?
   const bool xit_enabled(void);
 
+/*! \brief  Turn xit on
+
+    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
+*/
   inline void enable_xit(void)
     { xit_enable(); }
 
+/// get the rig's frequency and mode
   const rig_status status(void);                              // most recent rig status
 
-// is the VFO locked?
+/// is the VFO locked?
   const bool is_locked(void);
 
-// lock the VFO
+/// lock the VFO
   void lock(void);
 
 // unlock the VFO

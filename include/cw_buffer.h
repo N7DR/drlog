@@ -94,23 +94,30 @@ public:
 /// get the speed in wpm
   const unsigned int speed(void);
 
-/// set the PTT delay in msec
+/// set the PTT delay in milliseconds
   void ptt_delay(const unsigned int msec);
 
-/// get the PTT delay in msec
+/// get the PTT delay in milliseconds
   const unsigned int ptt_delay(void);
 
 /*! \brief          Add a key-down interval, along with a subsequent gap
     \param  n       key-down interval (100 = 1 dot)
     \param  space   terminating key-up interval (100 = 1 dot)
-
 */
   void key_down(const int n, const int space = 100);
 
-// add a key-up interval (no subsequent gap) 100 = 1 dot
+/*! \brief      Add a key-up interval, with no subsequent gap
+    \param  n   key-up interval (100 = 1 dot)
+*/
   void key_up(const int n);
 
-// send a single character
+/*! \brief                      Send a single character, along with a subsequent gap
+    \param  c                   character to send
+    \param  character_space     additional terminating key-up interval (100 = 1 dot)
+
+    There is always a 100-unit space appended to the character, in addition to
+    the interval defined by <i>character_space</i>
+*/
   void add(const char c, const int character_space = 200);
 
 // send a string

@@ -30,10 +30,6 @@
     \brief The variables and constants that comprise the context for operation
 */
 
-//const unsigned int MAX_MEMORY_MESSAGES = 12;        ///< number of memory messages
-//const unsigned int CQ_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in CALL window; must not exceed 9 without changes to drlog_context.cpp
-//const unsigned int EX_MEMORY_MESSAGES  = 9;         ///< number of memory messages when in EXCHANGE window; must not exceed 9 without changes to drlog_context.cppmust not exceed 9 without changes to drlog_context.cpp
-
 enum country_multiplier_type { COUNTRY_MULT_NONE,       ///< no country multipliers
                                COUNTRY_MULT_DXCC,       ///< use DXCC list
                                COUNTRY_MULT_WAEDC       ///< use DARC WAEDC list
@@ -215,8 +211,6 @@ protected:
   std::vector<std::pair<std::string, std::string> > _sent_exchange;             ///< names and values of sent exchange fields
   std::vector<std::pair<std::string, std::string> > _sent_exchange_cw;          ///< names and values of sent exchange fields, CW
   std::vector<std::pair<std::string, std::string> > _sent_exchange_ssb;         ///< names and values of sent exchange fields, SSB
-
-//  std::map<MODE, std::vector<std::pair<std::string, std::string> > >_sent_exchange;  ///< names and values of sent exchange fields, per mode
   unsigned int                                 _shift_delta;                    ///< how many Hertz to QSY per poll of the shift key
   unsigned int                                 _shift_poll;                     ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   std::string                                  _society_list_filename;          ///< name of file containing IARU society exchanges
@@ -468,7 +462,7 @@ public:
   const window_information window_info(const std::string& name) const;
 
 // cw messages
-  const std::string message(const int symbol);    // we use the KeySymbol as the integer, although other I/O implementations could use something else
+//  const std::string message(const int symbol);    // we use the KeySymbol as the integer, although other I/O implementations could use something else
 
 /// vector of the names of bands (e.g., "160", "80", etc.)
   inline const std::vector<std::string> band_names(void) const
@@ -507,17 +501,17 @@ public:
 */
   const bool mark_frequency(const MODE, const frequency& f);
 
-/*! \brief      Get all the names in the sent exchange
+/*! \brief      Get all the field names in the sent exchange
     \return     the names of all the fields in the sent exchange
 */
   const std::vector<std::string> sent_exchange_names(void) const;
 
-/*! \brief      Get all the names in the sent CW exchange
+/*! \brief      Get all the field names in the sent CW exchange
     \return     the names of all the fields in the sent CW exchange
 */
   const std::vector<std::string> sent_exchange_cw_names(void) const;
 
-/*! \brief      Get all the names in the sent SSB exchange
+/*! \brief      Get all the field names in the sent SSB exchange
     \return     the names of all the fields in the sent SSB exchange
 */
   const std::vector<std::string> sent_exchange_ssb_names(void) const;
