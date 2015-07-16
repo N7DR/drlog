@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 104 2015-05-20 16:59:12Z  $
+// $Id: exchange.cpp 111 2015-07-11 19:49:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

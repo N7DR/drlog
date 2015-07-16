@@ -237,7 +237,9 @@ const bool running_statistics::add_known_country_mult(const string& str, const c
     \param  rules   contest rules
 */
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
-{ SAFELOCK(statistics);
+{ ost << "in statistics.add_qso(); callsign = " << qso.callsign() << endl;
+
+  SAFELOCK(statistics);
   
   const BAND& b = qso.band();
   const unsigned int band_nr = static_cast<int>(b);
@@ -268,11 +270,19 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
 // exchange mults
+
+  ost << "number of exchange multipliers = " << _exchange_multipliers.size() << endl;
+
   for (auto& exchange_multiplier : _exchange_multipliers)
   { const string& field_name = exchange_multiplier.first;
     multiplier& mult = exchange_multiplier.second;
     const string value = qso.received_exchange(field_name);
     const string mv = MULT_VALUE(field_name, value);            // the mult value of the received field
+
+    ost << "in statistics.add_qso(); callsign = " << qso.callsign() << endl;
+    ost << "field_name = " << field_name << endl;
+    ost << "value = " << value << endl;
+    ost << "mv = " << mv << endl;
 
     if (!value.empty())
       mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));

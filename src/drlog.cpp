@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 110 2015-07-04 14:22:37Z  $
+// $Id: drlog.cpp 111 2015-07-11 19:49:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1229,6 +1229,9 @@ int main(int argc, char** argv)
 // callsign mults
             allow_for_callsign_mults(qso);
 
+// possibly add the call to the known prefixes
+            update_known_callsign_mults(qso.callsign());
+
 // country mults
             update_known_country_mults(qso.callsign());
             qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode()) );
@@ -1237,7 +1240,10 @@ int main(int argc, char** argv)
             const vector<received_field>& received_exchange = qso.received_exchange();
 
             for (const auto& exchange_field : received_exchange)
-            { if (!(variable_exchange_fields < exchange_field.name()))
+            { //if (rules.is_exchange_mult(exchange_field.name()))
+              //  statistics.add_known_exchange_mult(exchange_field.name(), exchange_field.value());
+
+              if (!(variable_exchange_fields < exchange_field.name()))
                 exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
             }
 
