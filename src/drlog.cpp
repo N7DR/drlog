@@ -2466,6 +2466,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         exit_drlog();
 
 // .PPSTATUS
+#if 0
       if (command == "PPSTATUS")
       { //parallel_port& pp = cw_p -> port();
 
@@ -2496,6 +2497,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         ost << "Parallel port status: " << cw_p -> status_string() << endl;
         ost << "Parallel port control status: " << cw_p -> control_status_string() << endl;
       }
+#endif
 
 // .REMOVE <call> -- remove call from bandmap and add it to the do-not-show list
       if (substring(command, 0, 6) == "REMOVE" or substring(command, 0, 2) == "RM")

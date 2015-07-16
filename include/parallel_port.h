@@ -1,4 +1,4 @@
-// $Id: parallel_port.h 108 2015-06-20 18:33:09Z  $
+// $Id: parallel_port.h 73 2014-08-30 14:44:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -116,7 +116,7 @@ protected:
 
 public:
 
-/*! \brief              Open a port
+/*! \brief  Open a port
     \param  filename    name of the port to open
 */
   parallel_port(const std::string& filename);
@@ -124,56 +124,11 @@ public:
 /// destructor -- closes the port
   virtual ~parallel_port(void);
 
-/*! \brief                  Set control lines
+/*! \brief  Set control lines
     \param  char_to_assert  bit pattern to assert
 */
   void control(const char char_to_assert) const;
-
-/*! \brief  Get status
-
-    From the man page:
-//  There are five status lines, one of which is usually inverted on PC-style ports. Where they differ, libieee1284
-//  operates on the IEEE 1284 values, not the PC-style inverted values. The status lines are represented by the
-//  following enumeration:
-//  enum ieee1284_status_bits
-//  {
-//  S1284_NFAULT = 0x08,
-//  S1284_SELECT = 0x10,
-//  S1284_PERROR = 0x20,
-//  S1284_NACK = 0x40,
-//  S1284_BUSY = 0x80,
-//   To convert those values into PC-style register values, use this:
-//  S1284_INVERTED = S1284_BUSY,
-//  };
-
-*/
-  const int status(void) const;
-
-/// get status as a string
-  const std::string status_string(void) const;
-
-  const int control_status(void) const;
-
-//  There are four control lines, three of which are usually inverted on PC-style ports. Where they differ, libieee1284 operates on the IEEE 1284 values, not the PC-style inverted values. The control lines are represented by the
-//  following enumeration:
-//
- //     enum ieee1284_control_bits
-//      {
-//        C1284_NSTROBE   = 0x01,
-//        C1284_NAUTOFD   = 0x02,
-//        C1284_NINIT     = 0x04,
-//        C1284_NSELECTIN = 0x08,
-//        /* To convert those values into PC-style register values, use this: */
-//        C1284_INVERTED = (C1284_NSTROBE|
-//                          C1284_NAUTOFD|
-//                          C1284_NSELECTIN),
-//      };
-
-  const std::string control_status_string(void) const;
 };
-
-
-
 
 // -------------------------------------- Errors  -----------------------------------
 
