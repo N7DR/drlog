@@ -667,6 +667,8 @@ const string running_statistics::summary_string(const contest_rules& rules)
       rv += LF;
   }
   
+  ost << "SUMMARY STRING: " << endl << rv << endl;
+
   return rv;
 }
   

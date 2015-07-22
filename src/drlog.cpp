@@ -96,6 +96,8 @@ void enter_sap_mode(void);                          ///< Enter SAP mode
 void exit_drlog(void);                              ///< Cleanup and exit
 const string expand_cw_message(const string& msg);  ///< Expand a CW message, replacing special characters
 
+void fast_cw_bandwidth(void);                       ///< set CW bandwidth to appropriate value for CQ/SAP mode
+
 const string hhmmss(void);                          ///< Obtain the current time in HHMMSS format
 
 const string match_callsign(const vector<pair<string /* callsign */,
@@ -2160,7 +2162,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
   static const char COMMAND_CHAR     = '.';                            // the character that introduces a command
   const MODE cur_mode = safe_get_mode();
-  const string prior_contents = remove_peripheral_spaces(win.read());  // the old contents of the window
+  const string prior_contents = remove_peripheral_spaces(win.read());  // the old contents of the window, before we respond to a keypress
 
   // keyboard_queue::process_events() has already filtered out uninteresting events
 
@@ -2180,7 +2182,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
-// question mark
+// question mark, which is displayed in response to pressing the equals sign
   if (!processed and (e.is_char('=')))
   { win <= "?";
     processed = true;
@@ -2190,23 +2192,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // populate the info and extract windows if we have already processed the input
   if (processed and !win_call.empty())
-  { //const string callsign = remove_peripheral_spaces(win_call.read());
-    //const string& callsign = prior_contents;
-
-    display_call_info(call_contents);
-  }
+    display_call_info(call_contents);    // display information in the INFO window
 
 // KP numbers -- CW messages
   if (!processed and cw_p and (cur_mode == MODE_CW))
   { if (e.is_unmodified() and (keypad_numbers < e.symbol()) )
-    {
-// may need to temporarily reduce octothorpe for when SAP asks for repeat of serno
-      if (prior_contents.empty())
+    { if (prior_contents.empty())               // may need to temporarily reduce octothorpe for when SAP asks for repeat of serno
         octothorpe--;
 
-      (*cw_p) << expand_cw_message(cwm[e.symbol()]);
+      (*cw_p) << expand_cw_message(cwm[e.symbol()]);    // send the message
 
-      if (prior_contents.empty())
+      if (prior_contents.empty())               // restore octothorpe
         octothorpe++;
 
       processed = true;
@@ -2305,7 +2301,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   if (!processed and e.is_alt('k') and cw_p)
   { cw_p->toggle();
 
-    win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );
+    win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );   // update display
 
     processed = true;
   }
@@ -2327,6 +2323,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       processed = true;
     }
 
+// go to CQ mode if we're in SAP mode
     if (!processed and drlog_mode == SAP_MODE)
     { enter_cq_mode();
       processed = true;
@@ -3477,11 +3474,13 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // CTRL-B -- fast CW bandwidth
   if (!processed and (e.is_control('b')))
-  { if (safe_get_mode() == MODE_CW)
-    { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
+  { fast_cw_bandwidth();
 
-      rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
-    }
+//    if (safe_get_mode() == MODE_CW)
+//    { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
+//
+//      rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
+//    }
 
     processed = true;
   }
@@ -3557,7 +3556,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
  // ENTER, KP_ENTER, ALT -Q -- thanks and log the contact; also perhaps start QTC process
  // SHIFT -- RIT control
   // ALT-S -- toggle sub receiver
-
+    CTRL-B -- fast bandwidth
 */
 void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 {
@@ -4279,6 +4278,19 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
     processed = true;
   }
+
+// CTRL-B -- fast CW bandwidth
+  if (!processed and (e.is_control('b')))
+  { fast_cw_bandwidth();
+
+//    if (safe_get_mode() == MODE_CW)
+//    { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
+//
+//      rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
+//    }
+
+    processed = true;
+  }
 }
 
 // function to process input to the (editable) LOG window
@@ -4827,7 +4839,7 @@ void populate_win_info(const string& callsign)
       const set<string>& country_mults = rules.country_mults();
       const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-      ost << "is " << canonical_prefix << " a country mult? " << ( (country_mults < canonical_prefix) ? "YES" : "NO" ) << endl;
+//      ost << "is " << canonical_prefix << " a country mult? " << ( (country_mults < canonical_prefix) ? "YES" : "NO" ) << endl;
 
       if (!country_mults.empty() or context.auto_remaining_country_mults())
       { if ((country_mults < canonical_prefix) /* or context.auto_remaining_country_mults() */)  // country_mults is from rules, and has all the valid mults for the contest
@@ -6601,3 +6613,11 @@ void p3_span(const unsigned int khz_span)      // set the span of a P3
   }
 }
 
+/// set CW bandwidth to appropriate value for CQ/SAP mode
+void fast_cw_bandwidth(void)                       ///< set CW bandwidth to appropriate value for CQ/SAP mode
+{ if (safe_get_mode() == MODE_CW)
+  { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
+
+    rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
+  }
+}
