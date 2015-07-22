@@ -29,7 +29,7 @@ extern const set<string> CONTINENT_SET { "AF", "AS", "EU", "NA", "OC", "SA", "AN
 const unsigned int CTY_FIELDS_PER_RECORD = 9;                                                   ///< Number of fields in a single CTY record
 const array<int, 10> VE_CQ = { { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 }  };  ///< default CQ zones for VE call areas; 0 to 9
 const array<int, 10> W_CQ = { { 4, 5, 5, 5, 5, 4, 3, 3, 4, 4 } };                               ///< default CQ zones for W call areas; 0 to 9
-const array<int, 10> VE_ITU = { { 8 /* probably not correct */, 9, 4, 7, 3, 3, 2, 2, 4, 9 }  }; ///< default ITU zones for VE call areas; 0 to 9
+const array<int, 10> VE_ITU = { { 8 /* probably not correct */, 9, 4, 4, 3, 3, 2, 2, 4, 9 }  }; ///< default ITU zones for VE call areas; 0 to 9
 const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };                              ///< default ITU zones for W call areas; 0 to 9
 
 // -----------  cty_record  ----------------
