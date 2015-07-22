@@ -697,7 +697,8 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     rv = to_string(location_db.itu_zone(callsign));
 
     if (!rv.empty())    // should always be true
-    { _db.insert( { { callsign, field_name }, rv } );
+    { rv = rules.canonical_value("ITUZONE", rv);
+      _db.insert( { { callsign, field_name }, rv } );
 
       return rv;
     }

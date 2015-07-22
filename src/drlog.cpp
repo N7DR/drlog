@@ -3817,25 +3817,34 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           for (auto& pef : vec_pef)
             pef.is_mult(rules.is_exchange_mult(pef.name()));
 
-          for (const auto& pef : vec_pef)
+          for ( /* const */ auto& pef : vec_pef)
           { const bool is_mult_field = pef.is_mult();
 
-            received_exchange.push_back( { pef.name(), pef.value(), is_mult_field /* pexch.field_is_mult(n) */, false } );
+// move later            received_exchange.push_back( { pef.name(), pef.value(), is_mult_field /* pexch.field_is_mult(n) */, false } );
 
-// ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
+ ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
 
             if (!(variable_exchange_fields < pef.name()))
-              exchange_db.set_value(callsign, pef.name(), pef.value());   // add it to the database of exchange fields
+//              exchange_db.set_value(callsign, pef.name(), pef.value());   // add it to the database of exchange fields
+              exchange_db.set_value(callsign, pef.name(), rules.canonical_value(pef.name(), pef.value()));   // add it to the database of exchange fields
 
-//   ost << "canonical value = " << rules.canonical_value(pef.name(), pef.value()) << endl;
+   ost << "canonical value = " << rules.canonical_value(pef.name(), pef.value()) << endl;
 
 // possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
             if (is_mult_field)
-            { //ost << "Adding canonical value " << pef.value() << " for multiplier exchange field " << pef.name() << ", mult value = " << pef.mult_value() << endl;
+            { // ost << "Adding canonical value " << pef.value() << " for multiplier exchange field " << pef.name() << ", mult value = " << pef.mult_value() << endl;
 
-              if (!rules.is_canonical_value(pef.name(), pef.mult_value()))
+//              if (!rules.is_canonical_value(pef.name(), pef.mult_value()))
+              if (rules.canonical_value(pef.name(), pef.value()).empty())
+              { ost << "Adding canonical value " << pef.value() << " for multiplier exchange field " << pef.name() << ", mult value = " << pef.mult_value() << endl;
                 rules.add_exch_canonical_value(pef.name(), pef.mult_value());
+              }
+              else    // replace value with canonical value <-  *****
+                pef.value(rules.canonical_value(pef.name(), pef.value()));
             }
+
+            received_exchange.push_back( { pef.name(), pef.value(), is_mult_field /* pexch.field_is_mult(n) */, false } );
+
           }
 
           qso.received_exchange(received_exchange);
@@ -3853,7 +3862,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         if (exchange_mults_used)
         { const bool is_exchange_mult = calculate_exchange_mults(qso, rules);  // may modify qso
 
-//          ost << "QSO is " << (is_exchange_mult ? "" : "not ") << " an exchange mult" << endl;
+          ost << "QSO is " << (is_exchange_mult ? "" : "not ") << " an exchange mult" << endl;
         }
 
 //        ost << "after calculate_exchange_mults; qso = " << qso << endl;
