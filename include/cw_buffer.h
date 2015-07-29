@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 111 2015-07-11 19:49:52Z  $
+// $Id: cw_buffer.h 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -120,19 +120,27 @@ public:
 */
   void add(const char c, const int character_space = 200);
 
-// send a string
+/*! \brief          Send a string
+    \param  str     string to send
+
+    Special characters and commands embedded in <i>str</i> are expanded and/or processed
+    prior to transmission
+*/
   void operator<<(const std::string& str);
 
-// abort sending
+/*! \brief  Abort sending
+
+    Sending halts (essentially) immediately  (even mid-character)
+*/
   void abort(void);
 
-// clear the buffer
+/// clear the buffer
   void clear(void);
 
-// associate a rig with the buffer
+/// associate a rig with the buffer
   void associate_rig(rig_interface* rigp);
 
-// is the buffer empty?
+/// is the buffer empty?
   const bool empty(void);
 
 // disable sending

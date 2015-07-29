@@ -1,4 +1,4 @@
-// $Id: qso.cpp 106 2015-06-06 16:11:23Z  $
+// $Id: qso.cpp 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -755,7 +755,9 @@ const string QSO::log_line(void)
 
 // exchange mult
   for (const auto& field : _received_exchange)
-  { unsigned int field_width = 5;
+  { ost << "in qso::log_line(); processing field: " << field << endl;
+
+    unsigned int field_width = 5;
     const string& name = field.name();
 
     if (name == "CQZONE" or name == "ITUZONE")

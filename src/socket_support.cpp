@@ -193,7 +193,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
         }
 
         catch (const socket_support_error& e)
-        { ost << "caught socket_support_error exception" << endl;
+        { ost << "caught socket_support_error exception while setting destination " << destination_ip_address_or_fqdn << " in tcp_socket constructor" << endl;
           ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
 
           if (n_timeouts++ % 10 == 0)
@@ -506,19 +506,23 @@ const string tcp_socket::read(const unsigned long timeout_secs)
     }
 
     default:                   // response is waiting to be read
-    { char cp[4096];    // a reasonable sized buffer
+    { const int BUFSIZE = 4096;
+
+      char cp[BUFSIZE];    // a reasonable sized buffer
       int status;
   
       do
-      { status  = ::recv(_sock, cp, 4096, 0);
+      { status  = ::recv(_sock, cp, BUFSIZE, 0);
 
         if (status == -1)
-        { ost << "Throwing TCP_SOCKET_ERROR_IN_RECV" << endl;
-          throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);
+        { const string msg = "errno = " + to_string(errno) + ": " + strerror(errno);
+
+          ost << "Throwing TCP_SOCKET_ERROR_IN_RECV;" << msg << endl;
+          throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV, msg);
         }
 
         rv += string(cp, status);
-      }     while (status == 4096);
+      }     while (status == BUFSIZE);
 
       break;
     }

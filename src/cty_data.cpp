@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 101 2015-04-04 01:49:14Z  $
+// $Id: cty_data.cpp 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -45,7 +45,7 @@ const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };              
     ";" for records.
 */
 
-/*! \brief  construct from a string
+/*! \brief  Construct from a string
 
             The string is assumed to contain a single record. We don't catch all
             possible errors, but we do test for the most obvious ones.
@@ -179,7 +179,7 @@ ostream& operator<<(ostream& ost, const cty_record& rec)
             CTY files may contain "alias" information. This encapsulates that information.
 */
 
-/*! \brief          construct from a string
+/*! \brief          Construct from a string
     \param  record  record from which to contruct the alternative information
     \param  id      canonical country ID
         
@@ -230,10 +230,12 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 // -----------  cty_data  ----------------
 
 /*! \class cty_data
-  \brief All the data from a CTY.DAT file
+    \brief All the data from a CTY.DAT file
 */
 
-/// construct from a file
+/*! \brief              Construct from a file
+    \param  filename    name of file
+*/
 cty_data::cty_data(const string& filename)
 { 
 // read file and remove EOL markers  
@@ -245,7 +247,10 @@ cty_data::cty_data(const string& filename)
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
 
-/// construct from a file
+/*! \brief              Construct from a file
+    \param  path        directories in which to search for <i>filename</i>, in order
+    \param  filename    name of file
+*/
 cty_data::cty_data(const vector<string>& path, const string& filename)
 {
 // read file and remove EOL markers

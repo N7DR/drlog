@@ -363,7 +363,11 @@ const std::string delimited_substring(const std::string& cs, const char delim_1,
 */
 const std::string join(const std::vector<std::string>& vec, const std::string& sep /* = " " */);
 
-// join all the elements of a string deque together, with a known separator
+/*! \brief      Join the elements of a string deque, using a provided separator
+    \param  vec container of strings
+    \param  sep separator inserted between the elements of <i>vec</i>
+    \return     all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
+*/
 const std::string join(const std::deque<std::string>& vec, const std::string& sep /* = " " */);
 
 /*! \brief  Create a string of a certain length, with all characters the same
@@ -374,9 +378,13 @@ const std::string join(const std::deque<std::string>& vec, const std::string& se
 inline const std::string create_string(const char c, const int n = 1)
   { return std::string(n, c); }
 
+/*! \brief          Centre a string
+    \param  str     string to be centred
+    \param  width   final width of the centred string
+    \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
+*/
 const std::string create_centred_string(const std::string& str, const unsigned int width);
 
-// simple functions for chars near the end of strings
 /// the last character in a string
 const char last_char(const std::string& cs);
 
@@ -386,13 +394,19 @@ const char penultimate_char(const std::string& cs);
 /// the antepenultimate character in a string
 const char antepenultimate_char(const std::string& cs);
 
+/*! \brief          Get the terminating part of a string
+    \param  cs      original string
+    \param  n       number of characters to return
+    \return         the last <i>n</i> characters of <i>cs</i>
+*/
 inline const std::string last(const std::string& cs, unsigned int n)
   { return (cs.length() < n ? cs : cs.substr(cs.length() - n)); }
 
-/*!   \brief  get an environment variable
-  \return the environment variable
+/*! \brief              Get an environment variable
+    \param  var_name    name of the environment variable
+    \return             the contents of the environment variable <i>var_name</i>
 
-  returns the empty string if the variable does not exist
+    Returns the empty string if the variable <i>var_name</i> does not exist
 */
 const std::string get_environment_variable(const std::string& var_name);
 

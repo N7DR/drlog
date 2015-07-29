@@ -45,12 +45,12 @@ public:
     The file <i>error_name</i> is used if a failure is detected when writing to <i>filename</i>.
     An extant file called <i>filename</i> is renamed, not overwritten
 */
-message_stream(const std::string& filename, const std::string& error_name = "drlog-errors");
+  message_stream(const std::string& filename, const std::string& error_name = "drlog-errors");
 
 /// message_stream << <generic object>
-template <typename T>
+  template <typename T>
   message_stream& operator<<(const T obj)
-  { //SAFELOCK(_message_stream);
+  {
     try
     { SAFELOCK(_message_stream);
 
@@ -67,10 +67,9 @@ template <typename T>
 
 // for manipulator (see "The C++ Standard Library", 13.6.1)
 // I have no idea why this is necessary, since it seems to me that the
-// (identical) generic version should work just fine
+// (identical) generic version should work just fine (since surely manipulators are constant?)
   message_stream& operator<<(std::ostream&(*obj)(std::ostream&))
-  { //SAFELOCK(_message_stream);
-  
+  {
     try
     { SAFELOCK(_message_stream);
 

@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 111 2015-07-11 19:49:52Z  $
+// $Id: exchange.cpp 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,7 +20,7 @@
 #include "log.h"
 #include "string_functions.h"
 
-using namespace boost;
+using namespace boost;                  // for regex
 using namespace std;
 
 extern contest_rules     rules;         ///< the rules for this contest
@@ -522,64 +522,63 @@ const string exchange_field_database::guess_value(const string& callsign, const 
         rv = to_upper(drm_line.qth());
     }
 
-      if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE") )  // can often guess province for VEs
-      { const string pfx = wpx_prefix(callsign);
+    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE") )  // can often guess province for VEs
+    { const string pfx = wpx_prefix(callsign);
 
-        if (pfx == "VY2")
-          rv = "PE";
+      if (pfx == "VY2")
+        rv = "PE";
 
-        if (rv.empty() and (pfx == "VO1"))
-          rv = "NF";
+      if (rv.empty() and (pfx == "VO1"))
+        rv = "NF";
 
-        if (rv.empty())
-        { const char call_area = pfx[pfx.length() - 1];
+      if (rv.empty())
+      { const char call_area = pfx[pfx.length() - 1];
 
-          switch (call_area)
-          { case '1' :
-              rv = "NS";
-              break;
+        switch (call_area)
+        { case '1' :
+            rv = "NS";
+            break;
 
-            case '2' :
-              rv = "PQ";
-              break;
+          case '2' :
+            rv = "PQ";
+            break;
 
-            case '3' :
-              rv = "ON";
-              break;
+          case '3' :
+            rv = "ON";
+            break;
 
-            case '4' :
-              rv = "MB";
-              break;
+          case '4' :
+            rv = "MB";
+            break;
 
-            case '5' :
-              rv = "SK";
-              break;
+          case '5' :
+            rv = "SK";
+            break;
 
-            case '6' :
-              rv = "MB";
-              break;
+          case '6' :
+            rv = "MB";
+            break;
 
-            case '7' :
-              rv = "BC";
-              break;
+          case '7' :
+            rv = "BC";
+            break;
 
-            case '9' :
-              rv = "NB";
-              break;
+          case '9' :
+            rv = "NB";
+            break;
 
-            default :
-              break;
-          }
+          default :
+            break;
         }
       }
+    }
 
-      if (!rv.empty())
-      { rv = rules.canonical_value("10MSTATE", rv);
-        _db.insert( { { callsign, field_name }, rv } );
+    if (!rv.empty())
+    { rv = rules.canonical_value("10MSTATE", rv);
+      _db.insert( { { callsign, field_name }, rv } );
 
-        return rv;
-      }
-
+      return rv;
+    }
   }
 
   if (field_name == "CHECK")
@@ -840,10 +839,10 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   return empty_string;
 }
 
-/*! \brief  Set a value in the database
-    \param  callsign   callsign for the new entry
-    \param  field_name name of the field for the new entry
-    \param  value      the new entry
+/*! \brief              Set a value in the database
+    \param  callsign    callsign for the new entry
+    \param  field_name  name of the field for the new entry
+    \param  value       the new entry
 */
 void exchange_field_database::set_value(const string& callsign, const string& field_name, const string& value)
 { SAFELOCK(exchange_field_database);
@@ -929,36 +928,6 @@ void exchange_field_template::prepare(const vector<string>& path, const string& 
   catch (...)
   { ost << "error trying to read exchange field template file " << filename << endl;
   }
-}
-
-/*! \brief  Is a particular received string a valid value for a named field?
-    \param  name        name of the exchange field
-    \param  str         string to test for validity
-*/
-const bool exchange_field_template::is_valid(const string& name /* field name */, const string& str)
-{ const auto it = _db.find(name);
-
-  if (it == _db.end())
-    return false;
-
-  const bool is_match = regex_match(str, it->second);
-
-  return is_match;
-}
-
-/*! \brief      What fields are a valid match for a particular received string?
-    \param  str string to test
-    \return     Names of fields for which <i>str</i> is a valid value
-*/
-const vector<string> exchange_field_template::valid_matches(const string& str)
-{ vector<string> rv;
-
-  for (const auto& db_entry : _db)
-  { if (is_valid(db_entry.first, str))
-      rv.push_back(db_entry.first);
-  }
-
-  return rv;
 }
 
 #endif

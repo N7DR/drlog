@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 109 2015-06-27 15:28:31Z  $
+// $Id: statistics.cpp 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -271,7 +271,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
 // exchange mults
 
-  ost << "number of exchange multipliers = " << _exchange_multipliers.size() << endl;
+//  ost << "number of exchange multipliers = " << _exchange_multipliers.size() << endl;
 
   for (auto& exchange_multiplier : _exchange_multipliers)
   { const string& field_name = exchange_multiplier.first;
@@ -279,10 +279,10 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     const string value = qso.received_exchange(field_name);
     const string mv = MULT_VALUE(field_name, value);            // the mult value of the received field
 
-    ost << "in statistics.add_qso(); callsign = " << qso.callsign() << endl;
-    ost << "field_name = " << field_name << endl;
-    ost << "value = " << value << endl;
-    ost << "mv = " << mv << endl;
+//    ost << "in statistics.add_qso(); callsign = " << qso.callsign() << endl;
+//    ost << "field_name = " << field_name << endl;
+//    ost << "value = " << value << endl;
+//    ost << "mv = " << mv << endl;
 
     if (!value.empty())
       mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
@@ -780,18 +780,7 @@ const map<string /* field name */, set<string> /* values */ >  running_statistic
     rv.insert( { field_name, mult_values } );
   }
 
-
-//  FOR_ALL(_exchange_multipliers, [=, &rv] (const pair<string, multiplier>& psm) { rv.insert( { psm.first, psm.second.worked(b) } ); } );
-
-
-//  for (const auto& psm : _exchange_multipliers)
-//  { const string& field_name = psm.first;
-//    const multiplier& m = psm.second;
-//
-//    rv.insert( { field_name, m.worked(b) } );
-//  }
-
-  ost << "worked_exchange_mults for " << BAND_NAME[b] << ", " << MODE_NAME[m] << " returning: " << endl;
+//  ost << "worked_exchange_mults for " << BAND_NAME[b] << ", " << MODE_NAME[m] << " returning: " << endl;
    for (const auto& psss : rv)
    { ost << "  " << psss.first << endl;
      for (const auto& s : psss.second)
@@ -803,40 +792,9 @@ const map<string /* field name */, set<string> /* values */ >  running_statistic
   return rv;
 }
 
-#if 0
-const set<string> running_statistics::worked_exchange_mults(const string& exchange_field_name, const BAND b)
-{ SAFELOCK(statistics);
-
-  for (const auto& psm : _exchange_multipliers)
-  { const string& field_name = psm.first;
-    const multiplier& m = psm.second;
-
-    if (field_name == exchange_field_name)
-      return m.worked(b);
-  }
-
-  return set<string>();
-}
-#endif
-
-#if 0
-const array<set<string>, N_BANDS> running_statistics::worked_exchange_mults(const string& exchange_field_name)
-{ array<set<string>, N_BANDS> rv;
-
-  for (size_t n = 0; n < N_BANDS; ++n)
-    rv[n] = worked_exchange_mults(exchange_field_name, static_cast<BAND>(n));
-
-  return rv;
-}
-#endif
-
-// clear dynamic info
+/// clear dynamic info
 void running_statistics::clear_info(void)
 { SAFELOCK(statistics);
-
-//  _n_dupes.fill(0);
-//  _n_qsos.fill(0);
-//  _qso_points.fill(0);
 
   _n_dupes = move(decltype(_n_dupes)( { { } } ));
   _n_qsos = move(decltype(_n_qsos)( { { } } ));
@@ -847,9 +805,8 @@ void running_statistics::clear_info(void)
 
   _country_multipliers.clear();
 
-//  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  // vector so we can keep the correct order
   for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
-  { pair<string, multiplier>& sm = _exchange_multipliers[n];
+  { pair<string, multiplier>& sm = _exchange_multipliers[n];  //  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers
 
     sm.second.clear();
   }

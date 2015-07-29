@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 111 2015-07-11 19:49:52Z  $
+// $Id: drlog.cpp 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1901,7 +1901,8 @@ void* process_rbn_info(void* vp)
     { const size_t posn = unprocessed_input.find(CRLF);
       const string line = substring(unprocessed_input, 0, posn);   // store the next unprocessed line
 
-      unprocessed_input = substring(unprocessed_input, posn + 2);  // delete the line (including the CRLF) from the buffer
+//      unprocessed_input = substring(unprocessed_input, posn + 2);  // delete the line (including the CRLF) from the buffer
+      unprocessed_input = substring(unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the buffer
 
       if (!line.empty())
       { const bool is_beacon = contains(line, " BCN ") or contains(line, "/B ");
@@ -3822,13 +3823,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // move later            received_exchange.push_back( { pef.name(), pef.value(), is_mult_field /* pexch.field_is_mult(n) */, false } );
 
- ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
+// ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
 
             if (!(variable_exchange_fields < pef.name()))
 //              exchange_db.set_value(callsign, pef.name(), pef.value());   // add it to the database of exchange fields
               exchange_db.set_value(callsign, pef.name(), rules.canonical_value(pef.name(), pef.value()));   // add it to the database of exchange fields
 
-   ost << "canonical value = " << rules.canonical_value(pef.name(), pef.value()) << endl;
+//   ost << "canonical value = " << rules.canonical_value(pef.name(), pef.value()) << endl;
 
 // possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
             if (is_mult_field)
@@ -3836,7 +3837,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 //              if (!rules.is_canonical_value(pef.name(), pef.mult_value()))
               if (rules.canonical_value(pef.name(), pef.value()).empty())
-              { ost << "Adding canonical value " << pef.value() << " for multiplier exchange field " << pef.name() << ", mult value = " << pef.mult_value() << endl;
+              { //ost << "Adding canonical value " << pef.value() << " for multiplier exchange field " << pef.name() << ", mult value = " << pef.mult_value() << endl;
                 rules.add_exch_canonical_value(pef.name(), pef.mult_value());
               }
               else    // replace value with canonical value <-  *****
@@ -5416,15 +5417,17 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
   bool rv = false;
 
   for (auto field : received_exchange)
-  { //ost << "received exchange field = " << field << endl;
+  { ost << "received exchange field = " << field << endl;
 
     if (field.is_possible_mult())                              // see if it's really a mult
-    { if (context.auto_remaining_exchange_mults(field.name()))
+    { ost << "is in auto list of exchange mults: " << boolalpha << context.auto_remaining_exchange_mults(field.name()) << endl;
+
+      if (context.auto_remaining_exchange_mults(field.name()))
         statistics.add_known_exchange_mult(field.name(), field.value());
 
       const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), qso.band(), qso.mode());
 
-// ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
+ ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 
       field.is_mult(is_needed_exchange_mult);
       if (is_needed_exchange_mult)
@@ -5890,7 +5893,19 @@ void* p3_screenshot_thread(void* vp)
 
 /// Thread function to spawn the cluster
 void* spawn_dx_cluster(void* vp)
-{ cluster_p = new dx_cluster(context, POSTING_CLUSTER);
+{ win_cluster_line <= "UNCONNECTED";
+
+  try
+  { cluster_p = new dx_cluster(context, POSTING_CLUSTER);
+  }
+
+  catch (...)
+  { ost << "UNABLE TO CREATE CLUSTER" << endl;
+    alert("UNABLE TO CREATE CLUSTER; PROCEEDING WITHOUT CLUSTER");
+    return nullptr;
+  }
+
+  win_cluster_line < CURSOR_START_OF_LINE < WINDOW_CLEAR <= "CONNECTED";
 
   static cluster_info cluster_info_for_thread(&win_cluster_line, &win_cluster_mult, cluster_p, &statistics, &location_db, &win_bandmap, &bandmaps);
   static pthread_t thread_id_2;

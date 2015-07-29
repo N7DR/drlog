@@ -259,6 +259,10 @@ public:
   SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?
   SAFEREAD(auto_remaining_country_mults, _context);     ///< do we auto-generate the remaining country mults?
 
+/*! \brief              Do we auto-generate remaining mults for a particular exchange mult?
+    \param  mult_name   name of the exchange mult
+    \return             whether the remaining values of the exchange mult <i>mult_name</i> are auto generated
+*/
   inline const bool auto_remaining_exchange_mults(const std::string& mult_name) const
     { SAFELOCK(_context);
 
@@ -455,14 +459,11 @@ public:
 
   SAFEREAD(worked_mults_colour, _context);              ///< colour of worked mults in the mult windows
 
-/*! \brief              Information pertaining to a particular window
-    \param      name    name of window
-    \return             location, size and colour information
+/*! \brief          Information pertaining to a particular window
+    \param  name    name of window
+    \return         location, size and colour information
 */
   const window_information window_info(const std::string& name) const;
-
-// cw messages
-//  const std::string message(const int symbol);    // we use the KeySymbol as the integer, although other I/O implementations could use something else
 
 /// vector of the names of bands (e.g., "160", "80", etc.)
   inline const std::vector<std::string> band_names(void) const

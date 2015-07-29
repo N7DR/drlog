@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 111 2015-07-11 19:49:52Z  $
+// $Id: drlog_context.cpp 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -629,19 +629,19 @@ void drlog_context::_process_configuration_file(const string& filename)
       _my_longitude = from_string<float>(rhs);
 
 // MY ITU ZONE
-    if (starts_with(testline, "MY ITU ZONE"))
+    if (LHS == "MY ITU ZONE")
       _my_itu_zone = from_string<int>(RHS);
 
 // NEARBY EXTRACT
-    if (starts_with(testline, "NEARBY EXTRACT"))
+    if (LHS == "NEARBY EXTRACT")
       _nearby_extract = is_true;
 
 // NORMALISE RATE
-    if (starts_with(testline, "NORMALISE RATE") or starts_with(testline, "NORMALIZE RATE"))
+    if ((LHS == "NORMALISE RATE") or (LHS == "NORMALIZE RATE"))
       _normalise_rate = is_true;
 
 // NOT COUNTRY MULTS
-    if (starts_with(testline, "NOT COUNTRY MULTS"))
+    if (LHS == "NOT COUNTRY MULTS")
     { if (!rhs.empty())
         _not_country_mults = rhs;
     }
@@ -925,7 +925,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
     }
 
-// REMAINING EXCHANGE MULTS
+// AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
       if (starts_with(testline, "AUTO REMAINING EXCHANGE MULTS"))
       { const vector<string> mult_names = remove_peripheral_spaces(split_string(RHS, ","));
 

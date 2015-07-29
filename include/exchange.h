@@ -1,4 +1,4 @@
-// $Id: exchange.h 111 2015-07-11 19:49:52Z  $
+// $Id: exchange.h 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -271,7 +271,7 @@ public:
 /*! \brief      construct from name
     \param  nm  name
 
-                Assumes not a mult. Object is not ready for use, except to test the name, after this constructor.
+    Assumes not a mult. Object is not ready for use, except to test the name, after this constructor.
 */
   EFT(const std::string& nm);
 
@@ -292,20 +292,20 @@ public:
   READ_AND_WRITE(name);                 ///< name of exchange field
   READ(regex_expression);               ///< regex expression that defines field
   READ(values);                         ///< all the equivalent values, per canonical value
-  READ(legal_non_regex_values);
-  READ(value_to_canonical);
+  READ(legal_non_regex_values);         ///< all legal values not obtained from a regex
+  READ(value_to_canonical);             ///< map of all value->canonical trsnaforms: key = value; value = corresponding canonical value
 
-/*! \brief  Get regex expression from file
-    \param  path      paths to try
-    \param  filename   name of file
-    \return whether a regex expression was read
+/*! \brief              Get regex expression from file
+    \param  path        paths to try
+    \param  filename    name of file
+    \return             whether a regex expression was read
 */
   const bool read_regex_expression_file(const std::vector<std::string>& path, const std::string& filename);
 
-/*! \brief  Get info from .values file
-    \param  path      paths to try
-    \param  filename   name of file (without .values extension)
-    \return whether values were read
+/*! \brief              Get info from .values file
+    \param  path        paths to try
+    \param  filename    name of file (without .values extension)
+    \return             whether values were read
 */
   const bool read_values_file(const std::vector<std::string>& path, const std::string& filename);
 

@@ -1,4 +1,4 @@
-// $Id: parallel_port.cpp 73 2014-08-30 14:44:01Z  $
+// $Id: parallel_port.cpp 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

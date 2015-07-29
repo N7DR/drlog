@@ -24,7 +24,7 @@
 #include <utility>
 
 using namespace std;
-using namespace std::placeholders;
+//using namespace std::placeholders;
 
 pt_mutex rules_mutex;                   ///< mutex for the contest_rules object
 
@@ -161,8 +161,8 @@ exchange_field::exchange_field(const string& nm, const bool mult, const bool opt
   _is_optional(opt)
 { }
 
-/*! \brief  Follow all trees to their leaves
-    \return The exchange field, expanded recursively into all possible choices
+/*! \brief      Follow all trees to their leaves
+    \return     the exchange field, expanded recursively into all possible choices
 */
 const vector<exchange_field> exchange_field::expand(void) const
 { vector<exchange_field> rv;
@@ -226,9 +226,9 @@ points_structure::points_structure(void) :
         strings in libstdc++.
 */
 
-/*! \brief              Parse and incorporate the "QTHX[xx] = " lines from context
-    \param  context     drlog context
-    \param  location_db location database
+/*! \brief                  Parse and incorporate the "QTHX[xx] = " lines from context
+    \param  context         drlog context
+    \param  location_db     location database
 
     Incorporates the parsed information into _exch_values
 */
@@ -422,9 +422,9 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     _received_exchange.insert( { m, ( (m == MODE_CW) ? single_mode_rv_rst : single_mode_rv_rs ) } );
 }
 
-/*! \brief              Initialize an object that was created from the default constructor
-    \param  context     drlog context
-    \param  location_db location database
+/*! \brief                  Initialize an object that was created from the default constructor
+    \param  context         drlog context
+    \param  location_db     location database
 
     After calling this function, the object is ready for use
 */

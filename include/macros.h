@@ -1,4 +1,4 @@
-// $Id: macros.h 106 2015-06-06 16:11:23Z  $
+// $Id: macros.h 112 2015-07-26 17:04:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -549,74 +549,72 @@ public:                                                                         
 }
 
 /// tuple class (8)
-#define WRAPPER_8_NC(nm, a0, a1, b0, b1, c0, c1, d0, d1, e0, e1, f0, f1, g0, g1, h0, h1)                   \
-                                                                          \
-class nm : public std::tuple < a0, b0, c0, d0, e0, f0, g0, h0 >                                        \
-{                                                                         \
-protected:                                                                \
-                                                                          \
-public:                                                                   \
-                                                                          \
-  nm( a0 X, b0 Y, c0 Z, d0 A, e0 B, f0 C, g0 D, h0 E)                                                       \
-    { std::get<0>(*this) = X;                                                    \
-      std::get<1>(*this) = Y;                                                    \
-      std::get<2>(*this) = Z;                                                    \
-      std::get<3>(*this) = A;                                                    \
-      std::get<4>(*this) = B;                                                    \
-      std::get<5>(*this) = C;                                                    \
-      std::get<6>(*this) = D;                                                    \
-      std::get<7>(*this) = E;                                                    \
-}                                                                     \
-                                                                          \
-  inline a0 a1(void) const                                                     \
-    { return std::get<0>(*this); }                              \
-                                                                          \
-  inline void a1(a0 var)                                          \
-    { std::get<0>(*this) = var; }                               \
-                                                                          \
-  inline b0 b1(void) const                                                    \
-    { return std::get<1>(*this); }                              \
-                                                                          \
-  inline void b1(b0 var)                                          \
-    { std::get<1>(*this) = var; }                               \
-                                                                          \
-  inline c0 c1(void) const                                                    \
-    { return std::get<2>(*this); }                              \
-                                                                          \
-  inline void c1(c0 var)                                          \
-    { std::get<2>(*this) = var; }                               \
-                                                                          \
-  inline d0 d1(void) const                                                    \
-    { return std::get<3>(*this); }                              \
-                                                                          \
-  inline void d1(d0 var)                                          \
-    { std::get<3>(*this) = var; }                               \
-                                                                           \
-  inline e0 e1(void) const                                                    \
-    { return std::get<4>(*this); }                              \
-                                                                          \
-  inline void e1(e0 var)                                          \
-    { std::get<4>(*this) = var; }                               \
-                                                                           \
-  inline f0 f1(void) const                                                    \
-    { return std::get<5>(*this); }                              \
-                                                                          \
-  inline void f1(f0 var)                                          \
-    { std::get<5>(*this) = var; }                               \
-                                                                           \
-  inline g0 g1(void) const                                                    \
-    { return std::get<6>(*this); }                              \
-                                                                          \
-  inline void g1(g0 var)                                          \
-    { std::get<6>(*this) = var; }                               \
-                                                                           \
-  inline h0 h1(void) const                                                    \
-    { return std::get<7>(*this); }                              \
-                                                                          \
-  inline void h1(h0 var)                                          \
-    { std::get<7>(*this) = var; }                               \
-                                                                         \
-                                                                          \
+#define WRAPPER_8_NC(nm, a0, a1, b0, b1, c0, c1, d0, d1, e0, e1, f0, f1, g0, g1, h0, h1)    \
+                                                                                            \
+class nm : public std::tuple < a0, b0, c0, d0, e0, f0, g0, h0 >                             \
+{                                                                                           \
+protected:                                                                                  \
+                                                                                            \
+public:                                                                                     \
+                                                                                            \
+  nm( a0 X, b0 Y, c0 Z, d0 A, e0 B, f0 C, g0 D, h0 E)                                       \
+    { std::get<0>(*this) = X;                                                               \
+      std::get<1>(*this) = Y;                                                               \
+      std::get<2>(*this) = Z;                                                               \
+      std::get<3>(*this) = A;                                                               \
+      std::get<4>(*this) = B;                                                               \
+      std::get<5>(*this) = C;                                                               \
+      std::get<6>(*this) = D;                                                               \
+      std::get<7>(*this) = E;                                                               \
+}                                                                                           \
+                                                                                            \
+  inline a0 a1(void) const                                                                  \
+    { return std::get<0>(*this); }                                                          \
+                                                                                            \
+  inline void a1(a0 var)                                                                    \
+    { std::get<0>(*this) = var; }                                                           \
+                                                                                            \
+  inline b0 b1(void) const                                                                  \
+    { return std::get<1>(*this); }                                                          \
+                                                                                            \
+  inline void b1(b0 var)                                                                    \
+    { std::get<1>(*this) = var; }                                                           \
+                                                                                            \
+  inline c0 c1(void) const                                                                  \
+    { return std::get<2>(*this); }                                                          \
+                                                                                            \
+  inline void c1(c0 var)                                                                    \
+    { std::get<2>(*this) = var; }                                                           \
+                                                                                            \
+  inline d0 d1(void) const                                                                  \
+    { return std::get<3>(*this); }                                                          \
+                                                                                            \
+  inline void d1(d0 var)                                                                    \
+    { std::get<3>(*this) = var; }                                                           \
+                                                                                            \
+  inline e0 e1(void) const                                                                  \
+    { return std::get<4>(*this); }                                                          \
+                                                                                            \
+  inline void e1(e0 var)                                                                    \
+    { std::get<4>(*this) = var; }                                                           \
+                                                                                            \
+  inline f0 f1(void) const                                                                  \
+    { return std::get<5>(*this); }                                                          \
+                                                                                            \
+  inline void f1(f0 var)                                                                    \
+    { std::get<5>(*this) = var; }                                                           \
+                                                                                            \
+  inline g0 g1(void) const                                                                  \
+    { return std::get<6>(*this); }                                                          \
+                                                                                            \
+  inline void g1(g0 var)                                                                    \
+    { std::get<6>(*this) = var; }                                                           \
+                                                                                            \
+  inline h0 h1(void) const                                                                  \
+    { return std::get<7>(*this); }                                                          \
+                                                                                            \
+  inline void h1(h0 var)                                                                    \
+    { std::get<7>(*this) = var; }                                                           \
 }
 
 /*! \brief      Is an object a member of a set?

@@ -123,9 +123,9 @@ class alternative_country_info
 {
 protected:
 
-  std::string  _identifier;             ///< the alternative prefix or callsign
   std::string  _country;                ///< canonical country prefix
   unsigned int _cq_zone;                ///< alternative CQ zone
+  std::string  _identifier;             ///< the alternative prefix or callsign
   unsigned int _itu_zone;               ///< alternative ITU zone
 
 public:
@@ -143,9 +143,9 @@ public:
   inline virtual ~alternative_country_info(void)
     { }
 
-  READ(identifier);            ///< the alternative prefix or callsign
   READ(country);               ///< canonical country prefix
   READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
+  READ(identifier);            ///< the alternative prefix or callsign
   READ_AND_WRITE(itu_zone);    ///< alternative ITU zone
 };
 
@@ -270,12 +270,14 @@ protected:
 
 public:
 
-/// construct from a file
+/*! \brief              Construct from a file
+    \param  filename    name of file
+*/
   cty_data(const std::string& filename = "cty.dat");   // somewhere along the way the default name changed from CTY.DAT
 
-/*! \brief  construct from a file
-    \param  path        The directory path to be searched in order
-    \param  filename    The name of the file to be read
+/*! \brief              Construct from a file
+    \param  path        directories in which to search for <i>filename</i>, in order
+    \param  filename    name of file
 */
   cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat");   // somewhere along the way the default name changed from CTY.DA
 
@@ -302,32 +304,34 @@ class russian_data_per_substring
 {
 protected:
   std::string _sstring;               ///< substring that matches this district
-  std::string _region_name;           ///< name of district
-  std::string _region_abbreviation;   ///< abbreviation of district (2 letters)
+
+  std::string _continent;             ///< two-letter abbreviation for continent
   unsigned int _cq_zone;              ///< CQ zone
   unsigned int _itu_zone;             ///< ITU zone
-  std::string _continent;             ///< two-letter abbreviation for continent
-  int _utc_offset;                    ///< offset from UTC
   float _latitude;                    ///< latitude in degrees (+ve north)
   float _longitude;                   ///< longitude in degrees (+ve east)
+  std::string _region_abbreviation;   ///< abbreviation of district (2 letters)
+  std::string _region_name;           ///< name of district
+  int _utc_offset;                    ///< offset from UTC
 
 public:
 
-/*! \brief  construct from a prefix and a line
-    \param  sbstring        The prefix for the Russian district
-    \param  line            Line from Russian data file
+/*! \brief                  Construct from a prefix and a line
+    \param  sbstring        the prefix for the Russian district
+    \param  line            line from Russian data file
 */
   russian_data_per_substring(const std::string& sbstring, const std::string& line);
 
   READ(sstring);               ///< substring that matches this district
-  READ(region_name);           ///< name of district
-  READ(region_abbreviation);   ///< abbreviation of district (2 letters)
+
+  READ(continent);             ///< two-letter abbreviation for continent
   READ(cq_zone);               ///< CQ zone
   READ(itu_zone);              ///< ITU zone
-  READ(continent);             ///< two-letter abbreviation for continent
-  READ(utc_offset);            ///< offset from UTC
   READ(latitude);              ///< latitude in degrees (+ve north)
   READ(longitude);             ///< longitude in degrees (+ve east)
+  READ(region_abbreviation);   ///< abbreviation of district (2 letters)
+  READ(region_name);           ///< name of district
+  READ(utc_offset);            ///< offset from UTC
 
 /// archive using boost
   template<typename Archive>
