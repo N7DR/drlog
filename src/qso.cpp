@@ -693,7 +693,10 @@ const bool QSO::sent_exchange_includes(const string& field_name)
 
 /// convert to a string suitable for display in the log window
 const string QSO::log_line(void)
-{ static const size_t CALL_FIELD_LENGTH = 12;
+{
+  ost << "Inside log_line()" << endl;
+
+  static const size_t CALL_FIELD_LENGTH = 12;
   string rv;
 
   rv  = pad_string(to_string(number()), 5);

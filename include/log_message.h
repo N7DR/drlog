@@ -1,4 +1,4 @@
-// $Id: log_message.h 98 2015-03-07 15:30:35Z  $
+// $Id: log_message.h 113 2015-08-01 14:57:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

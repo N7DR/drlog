@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 112 2015-07-26 17:04:33Z  $
+// $Id: drlog.cpp 113 2015-08-01 14:57:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2397,13 +2397,16 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   if (!processed and e.is_alt() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                   or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
   { bandmap& bm = bandmaps[safe_get_band()];
+    const bool is_increment = (e.symbol() == XK_KP_6) or (e.symbol() == XK_KP_Right);
 
-    bm.column_offset(bm.column_offset() + ( ( (e.symbol() == XK_KP_6 ) or (e.symbol() == XK_KP_Right ) ) ? 1 : -1 ) );
+    if ( is_increment or (bm.column_offset() != 0) )
+    { bm.column_offset( bm.column_offset() + ( is_increment ? 1 : -1 ) ) ;
 
-    alert(string("Bandmap column offset set to: ") + to_string(bm.column_offset()));
+      alert(string("Bandmap column offset set to: ") + to_string(bm.column_offset()));
 
-    win_bandmap <= bm;
-    win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
+      win_bandmap <= bm;
+      win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
+    }
 
     processed = true;
   }
@@ -3823,7 +3826,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // move later            received_exchange.push_back( { pef.name(), pef.value(), is_mult_field /* pexch.field_is_mult(n) */, false } );
 
-// ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
+ ost << "added pef: name = " << pef.name() << ", value = " << pef.value() << ", IS " << (is_mult_field ? "" : "NOT ") << "mult" << endl;  // canonical at this point
 
             if (!(variable_exchange_fields < pef.name()))
 //              exchange_db.set_value(callsign, pef.name(), pef.value());   // add it to the database of exchange fields

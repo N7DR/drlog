@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 111 2015-07-11 19:49:52Z  $
+// $Id: drlog_context.h 113 2015-08-01 14:57:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,7 +54,7 @@ protected:
   std::string                                  _auto_backup;                    ///< directory for auto backup files
   bool                                         _auto_remaining_callsign_mults;  ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;   ///< do we auto-generate the remaining country mults?
-  std::set<std::string>                        _auto_remaining_exchange_mults;  ///< the exchange mults for which we autoi-generate the values
+  std::set<std::string>                        _auto_remaining_exchange_mults;  ///< the exchange mults for which we auto-generate the values
   bool                                         _auto_screenshot;                ///< do we create a screenshot every hour?
 
   unsigned int                                 _bandmap_decay_time_local;           ///< time (in minutes) for an entry to age off the bandmap (local entries)

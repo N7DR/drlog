@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 92 2015-01-24 22:36:02Z  $
+// $Id: cluster.cpp 113 2015-08-01 14:57:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,9 +38,9 @@ pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
 
 // -----------  dx_cluster  ----------------
 
-/*! \brief  constructor
-    \param  context  the drlog context
-    \param  src      whether this is a real DX cluster or the RBN
+/*! \brief              Constructor
+    \param  context     the drlog context
+    \param  src         whether this is a real DX cluster or the RBN
 */
 dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _server(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server()),
@@ -52,7 +52,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _connection(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server(),
               src == POSTING_CLUSTER ? context.cluster_port() :  context.rbn_port(),
               context.my_ip())
-{ ost << "inside body of dx_cluster constructor" << endl;
+{ //ost << "inside body of dx_cluster constructor" << endl;
 
 // set the keepalive option
   _connection.keep_alive(300, 60, 2);
@@ -62,7 +62,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
 // send the login information as soon as we receive anything from the server
   while (buf.empty())
   { try
-    { ost << "about to read cluster connection" << endl;
+    { //ost << "about to read cluster connection" << endl;
 
       buf = _connection.read(_timeout);
 
@@ -86,7 +86,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
     }
   }
   
-  ost << "about to send to cluster connection" << endl;
+//  ost << "about to send to cluster connection" << endl;
 
   _connection.send(_login_id + CRLF);
 
@@ -171,8 +171,8 @@ void dx_cluster::reset(void)
   ost << "Completed reset of connection" << endl;
 }
 
-/*! \brief  read from the cluster socket
-    \return the current bytes waiting on the cluster socket
+/*! \brief      Read from the cluster socket
+    \return     the current bytes waiting on the cluster socket
 */
 const string dx_cluster::read(void)
 { string buf;
@@ -208,15 +208,15 @@ const string dx_cluster::read(void)
   return _unprocessed_input;
 }
 
-/*! \brief      send a message to the cluster
-    \return msg the message to be sent
+/*! \brief          Send a message to the cluster
+    \return msg     the message to be sent
 */
 void dx_cluster::send(const string& msg)
 { _connection.send(msg);
 }
 
-/*! \brief  read from the cluster socket
-    \return the information that has been read from the socket but has not yet been processed
+/*! \brief      Read from the cluster socket
+    \return     the information that has been read from the socket but has not yet been processed
 */
 const string dx_cluster::get_unprocessed_input(void)
 { string rv;
@@ -235,7 +235,7 @@ const string dx_cluster::get_unprocessed_input(void)
         \brief Convert a line from the cluster to a DX posting
 */
 
-/*! \brief  constructor
+/*! \brief                  Constructor
     \param  received_info   a line received from the cluster or RBN
     \param  db              the location database for this contest
     \param  post_source     the origin of the post

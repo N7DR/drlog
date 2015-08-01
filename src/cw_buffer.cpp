@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 109 2015-06-27 15:28:31Z  $
+// $Id: cw_buffer.cpp 113 2015-08-01 14:57:22Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -310,7 +310,7 @@ void cw_buffer::speed(const unsigned int wpm)
   _usec = 1200000 / _wpm;
 }
 
-// get the speed in wpm
+/// get the speed in wpm
 const unsigned int cw_buffer::speed(void)
 { SAFELOCK(_speed);
 
@@ -324,7 +324,7 @@ void cw_buffer::ptt_delay(const unsigned int msec)
   _ptt_delay = msec;
 }
 
-// get the PTT delay in msec
+/// get the PTT delay in msec
 const unsigned int cw_buffer::ptt_delay(void)
 { SAFELOCK(_speed);
 
@@ -339,7 +339,7 @@ const unsigned int cw_buffer::ptt_delay(void)
 void cw_buffer::key_down(const int n, const int space)
 {
   try
-  { //cout << "inside key-down" << endl;
+  {
     { SAFELOCK(_key_buffer);
 
       _key_buffer.push(n);
@@ -349,10 +349,7 @@ void cw_buffer::key_down(const int n, const int space)
         _key_buffer.push(-space);
     }
 
-    //cout << "sending signal on key-down" << endl;
     _condvar.signal();
-    //cout << "sent signal on key-down" << endl;
-
   }
 
   catch (const pthread_error& e)
@@ -361,7 +358,9 @@ void cw_buffer::key_down(const int n, const int space)
   }
 }
 
-// add a key-up interval (no subsequent gap) 100 = 1 dot
+/*! \brief      Add a key-up interval, with no subsequent gap
+    \param  n   key-up interval (100 = 1 dot)
+*/
 void cw_buffer::key_up(const int n)
 {
   { SAFELOCK(_key_buffer);
@@ -369,10 +368,7 @@ void cw_buffer::key_up(const int n)
     _key_buffer.push(-n);
   }
 
-  //cout << "sending signal on key-up" << endl;
   _condvar.signal();
-  //cout << "sent signal on key-up" << endl;
-
 }
 
 // there *is* a use for #define in C++
@@ -380,11 +376,12 @@ void cw_buffer::key_up(const int n)
 #define DIT key_down(100)
 #define DAH key_down(300)
 
-// send a single character (followed by a character_space)
+/*! \brief                      Send a single character (followed by a character_space)
+    \param  c                   character to send
+    \param  character_space     duration of the character space (100 = 1 dot)
+*/
 void cw_buffer::add(const char c, const int character_space)
-{ // ost << "adding char: " << c << endl;
-
-  if (disabled())
+{ if (disabled())
     return;
 
   int space = character_space;                                 // a non-constant version
@@ -593,13 +590,11 @@ void cw_buffer::add(const char c, const int character_space)
     case '^' :                               // half-length space
       space = 0;
       key_up(150);                         // 100 from last character + 50 = 150 = (300 / 2)
-//      key_up(50);
       break;
 
     case '!' :                               // quarter-length space (not available in TR)
       space = 0;
-      key_up(25);                         // 100 from last character + 50 = 150 = (300 / 2)
-//      key_up(50);
+      key_up(25);
       break;
 
 // prosigns; compatible with TRLOG
@@ -617,72 +612,60 @@ void cw_buffer::add(const char c, const int character_space)
 
 // short/long dits and dahs, compatible with TRLOG's very peculiar conventions,
 // which were presumably driven by some limitation in DOS
-    case static_cast<char>(16) :             // ctrl-P 60% dit
+    case static_cast<char>(16) :                // ctrl-P 60% dit
       space = 0;
       key_down(60);
       break;
 
-    case static_cast<char>(17) :             // ctrl-Q 80% dit
+    case static_cast<char>(17) :                // ctrl-Q 80% dit
       space = 0;
       key_down(80);
       break;
 
-    case static_cast<char>(28) :             // ctrl-\ 100% dit
+    case static_cast<char>(28) :                // ctrl-\ 100% dit
       space = 0;
       key_down(100);
       break;
 
-    case static_cast<char>(22) :             // ctrl-V 120% dit
+    case static_cast<char>(22) :                // ctrl-V 120% dit
       space = 0;
       key_down(120);
       break;
 
-    case static_cast<char>(12) :             // ctrl-L 140% dit
+    case static_cast<char>(12) :                // ctrl-L 140% dit
       space = 0;
       key_down(140);
       break;
 
-    case static_cast<char>(5) :             // ctrl-E 73% dah
+    case static_cast<char>(5) :                 // ctrl-E 73% dah
       space = 0;
       key_down(219);
       break;
 
-    case static_cast<char>(4) :             // ctrl-D 87% dah
+    case static_cast<char>(4) :                 // ctrl-D 87% dah
       space = 0;
       key_down(261);
       break;
 
-    case static_cast<char>(11) :             // ctrl-K 100% dah
+    case static_cast<char>(11) :                // ctrl-K 100% dah
       space = 0;
       key_down(300);
       break;
 
-    case static_cast<char>(14) :             // ctrl-N 113% dah
+    case static_cast<char>(14) :                // ctrl-N 113% dah
       space = 0;
       key_down(339);
       break;
 
-    case static_cast<char>(15) :             // ctrl-O 127% dah
+    case static_cast<char>(15) :                // ctrl-O 127% dah
       space = 0;
       key_down(381);
       break;
 
-    case ')' :                               // 150% dah; '-' in TRLOG
+    case ')' :                                  // 150% dah; '-' in TRLOG
       space = 0;
       key_down(450);
       break;
-
-// inline speed controls; not compatible with TRLOG,
-// although in practice should give very similar results to TRLOG's ±6% increment
-//    case static_cast<char>(19) :             // ctrl-S decrease speed by 1 wpm
-//      space = 0;
-//      speed(speed() - 1);
-//      break;
-
-//    case static_cast<char>(6) :              // ctrl-F increase speed by 1 wpm
-//      space = 0;
-//      speed(speed() + 1);
-//      break;
 
 // special commands
     case '>' :                               // clear RIT
@@ -702,12 +685,6 @@ void cw_buffer::add(const char c, const int character_space)
       _key_buffer.push(0);                   // command
       _key_buffer.push(CMD_FASTER);
       break;
-
-//    case '#' :                               // send a number; optionally followed by -N or +N
-//      space = 0;
-//      _key_buffer.push(0);                   // command
-//      _key_buffer.push(CMD_CLEAR_RIT);
-//      break;
 
     default:
       key_down(1000);
