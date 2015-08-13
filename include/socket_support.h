@@ -103,28 +103,28 @@ void flush_read_socket(SOCKET& sock);
 */
 sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr = 0);
 
-/*! \brief  Generate a sockaddr_storage from an address and port
-  \param  dotted_decimal_address  IP address as a dotted decimal
-  \param  port_nr   Port number in host order
-  \return Equivalent sockaddr_storage
+/*! \brief                          Generate a sockaddr_storage from an address and port
+    \param  dotted_decimal_address  IP address as a dotted decimal
+    \param  port_nr                 port number in host order
+    \return                         equivalent sockaddr_storage
 
-        The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
+    The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
 inline sockaddr_storage socket_address(const std::string& dotted_decimal_address, const short port_nr = 0)
   { return socket_address(inet_addr(dotted_decimal_address.c_str()), port_nr); }
 
-/*! \brief  Extract port from a sockaddr_in
-  \param  sin          sockaddr_in
-  \return port number
+/*! \brief          Extract port from a sockaddr_in
+    \param  sin     sockaddr_in
+    \return         port number
 */
 inline const unsigned int port(const sockaddr_in& sin)
   { return ntohs((unsigned int)(sin.sin_port)); }
 
-/*! \brief  Extract port from a sockaddr
-  \param  sin          sockaddr
-  \return port number
+/*! \brief          Extract port from a sockaddr
+    \param  sin     sockaddr
+    \return         port number
 
-  Assumes that the sockaddr is for the Internet family
+    Assumes that the sockaddr is for the Internet family
 */
 inline const unsigned int port(const sockaddr& sin)
   { return ntohs((unsigned int)(((sockaddr_in*)(&sin))->sin_port)); }

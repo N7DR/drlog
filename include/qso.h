@@ -184,7 +184,7 @@ public:
 */
   const bool exchange_match(const std::string& rule_to_match) const;
 
-/*! \brief          Do any of the exchange fields the QSO match a target string?
+/*! \brief          Do the values of any of the exchange fields in the QSO match a target string?
     \param  target  target string
     \return         whether any of the exchange fields contain the value <i>target</i>
 */
@@ -197,6 +197,9 @@ public:
     Returns the empty string if <i>field_name</i> is not found in the exchange
 */
   const std::string received_exchange(const std::string& field_name) const;
+
+  inline const bool is_exchange_field_present(const std::string& field_name) const
+    { return !(received_exchange(field_name).empty()); }
 
 /*! \brief              Return a single field from the sent exchange
     \param  field_name  name of field to return

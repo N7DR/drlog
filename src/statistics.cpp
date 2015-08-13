@@ -298,6 +298,8 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   {
 // try to calculate the points for this QSO; start with a default value
     unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like ::3
+
+#if 0
     const map<string, unsigned int>& exchange_points = rules.exchange_value_points();
 
     for (map<string, unsigned int>::const_iterator cit = exchange_points.begin(); cit != exchange_points.end(); ++cit)
@@ -310,6 +312,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
         ost << "matched condition: " << condition << " ..... points = " << points << endl;
       }
     }
+#endif
 
     _qso_points[mode_nr][band_nr] += points_this_qso;
 

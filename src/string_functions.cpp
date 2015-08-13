@@ -226,12 +226,12 @@ const string replace(const string& s, const string& old_str, const string& new_s
   return rv;
 }
 
-/*! \brief  pad a string to a particular size
-    \param  s original string
-    \param  len length of returned string
-    \param  pad_direction side on which to pad
-    \param  pad_char  character with which to pad
-    \return padded version of <i>s</i>
+/*! \brief                  Pad a string to a particular size
+    \param  s               original string
+    \param  len             length of returned string
+    \param  pad_direction   side on which to pad
+    \param  pad_char        character with which to pad
+    \return                 padded version of <i>s</i>
   
   If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
@@ -252,9 +252,9 @@ const string pad_string(const string& s, const unsigned int len, const enum pad_
   return rv;
 }
 
-/*! \brief  Read the contents of a file into a single string
-  \param  filename  Name of file to be read
-  \return Contents of file <i>filename</i>
+/*! \brief              Read the contents of a file into a single string
+    \param  filename    name of file to be read
+    \return             contents of file <i>filename</i>
   
   Throws exception if the file does not exist, or if any
   of several bad things happen. Assumes that the file is a reasonable length.
@@ -309,10 +309,10 @@ const string read_file(const string& filename)
   return string();
 }
 
-/*! \brief  Read the contents of a file into a single string
-    \param  path the different directories to try, in order
-    \param  filename  Name of file to be read
-    \return Contents of file <i>filename</i>
+/*! \brief              Read the contents of a file into a single string
+    \param  path        the different directories to try, in order
+    \param  filename    name of file to be read
+    \return             contents of file <i>filename</i>
 
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
@@ -331,7 +331,12 @@ const string read_file(const vector<string>& path, const string& filename)
   throw string_function_error(STRING_INVALID_FILE, "Cannot open file: " + filename + " with non-trivial path");
 }
 
-// write a string to a binary file; throws exception if cannot be written
+/*! \brief              Write a string to a (binary) file
+    \param  s           string to write
+    \param  filename    name of file to be written
+
+    Throws exception if the file cannot be written
+*/
 void write_file(const string& s, const string& filename)
 { FILE* fp = fopen(filename.c_str(), "wb");
   if (fp == 0)
@@ -353,11 +358,10 @@ void write_file(const string& s, const string& filename)
   fclose(fp);
 }
 
-/*! \brief  split a string into components
-  \param  cs  Original string
-  \param  separator Separator string (typically a single character)
-
-  \return Vector containing the separate components
+/*! \brief              Split a string into components
+    \param  cs          original string
+    \param  separator   separator string (typically a single character)
+    \return             vector containing the separate components
 */
 const vector<string> split_string(const string& cs, const string& separator)
 { size_t start_posn = 0;

@@ -58,10 +58,131 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
   const vector<string> str_vec = split_string(command, "=");
 
+  if (str_vec.size() != 2)
+  { ost << "Invalid command: " << command << endl;
+    exit(0);
+  }
+
   if (!str_vec.empty())
   { string tmp_points_str;
     const string lhs = str_vec[0];
     auto& pbb = _per_band_points[m];
+
+    if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
+    {
+
+#if 0
+      string new_str;
+
+      for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+      { new_str += str_vec[n];
+        if (n != str_vec.size() - 1)
+          new_str += "=";
+      }
+
+      tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
+
+      ost << "points string inserted (1): " << tmp_points_str << endl;
+
+      for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
+        pbb.insert( {static_cast<BAND>(n), tmp_points_str} );
+#endif
+
+      const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
+
+      for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
+        pbb.insert( { static_cast<BAND>(n), RHS } );
+    }
+    else    // not all bands
+    { size_t left_bracket_posn = lhs.find('[');
+      size_t right_bracket_posn = lhs.find(']');
+
+      const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
+
+      if (valid)
+      { string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
+        vector<string> bands = split_string(bands_str, ",");
+
+        for (size_t n = 0; n < bands.size(); ++n)
+          bands[n] = remove_peripheral_spaces(bands[n]);
+
+        for (size_t n = 0; n < bands.size(); ++n)
+        { int wavelength = from_string<size_t>(bands[n]);
+          BAND b;
+
+          switch (wavelength)
+          { case 160 :
+              b = BAND_160;
+              break;
+            case 80 :
+              b = BAND_80;
+              break;
+            case 60 :
+              b = BAND_60;
+              break;
+            case 40 :
+              b = BAND_40;
+              break;
+            case 30 :
+              b = BAND_30;
+              break;
+            case 20 :
+              b = BAND_20;
+              break;
+            case 17 :
+              b = BAND_17;
+              break;
+            case 15 :
+              b = BAND_15;
+              break;
+            case 12 :
+              b = BAND_12;
+              break;
+            case 10 :
+              b = BAND_10;
+              break;
+            default :
+              continue;
+          }
+
+//#if 0
+          string new_str;
+
+          for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+          { new_str += str_vec[n];
+
+            if (n != str_vec.size() - 1)
+              new_str += "=";
+          }
+
+          tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
+
+          pbb.insert( {b, tmp_points_str} );
+
+          ost << "points string inserted (2): " << tmp_points_str << endl;
+
+//#endif
+//          pbb.insert( { b, RHS } );
+
+        }
+      }
+    }
+  }
+}
+
+#if 0
+void drlog_context::_set_points(const string& exchange_field, const string& command, const MODE m)
+{ if (command.empty())
+    return;
+
+  const vector<string> str_vec = split_string(command, "=");
+
+  decltype(_per_band_points) PBB;
+
+  if (!str_vec.empty())
+  { string tmp_points_str;
+    const string lhs = str_vec[0];
+    auto& pbb = PBB[m];
 
     if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
     { string new_str;
@@ -144,8 +265,11 @@ void drlog_context::_set_points(const string& command, const MODE m)
         }
       }
     }
+
+    _per_band_points_with_exchange_field.insert( { exchange_field, PBB } );
   }
 }
+#endif
 
 /*! \brief              Process a configuration file
     \param  filename    name of file to process
@@ -636,8 +760,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "NEARBY EXTRACT")
       _nearby_extract = is_true;
 
-// NORMALISE RATE
-    if ((LHS == "NORMALISE RATE") or (LHS == "NORMALIZE RATE"))
+// NORMALISE RATE(S)
+    if ( (LHS == "NORMALISE RATE") or (LHS == "NORMALIZE RATE") or (LHS == "NORMALISE RATES") or (LHS == "NORMALIZE RATES") )
       _normalise_rate = is_true;
 
 // NOT COUNTRY MULTS
@@ -647,13 +771,15 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // PATH
-    if (starts_with(testline, "PATH"))
+    if (LHS == "PATH")
     { if (!rhs.empty())
         _path = remove_peripheral_spaces(split_string(rhs, ";"));
     }
 
 // POINTS
+// don't use LHS here because the command might be somthing like "POINTS[80] ="
     if (starts_with(testline, "POINTS") and !starts_with(testline, "POINTS CW") and !starts_with(testline, "POINTS SSB"))  // there may be an "=" in the points definitions
+//    if (LHS == "POINTS")
     { _set_points(testline, MODE_CW);
       _set_points(testline, MODE_SSB);
     }
@@ -666,8 +792,19 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "POINTS SSB"))
       _set_points(testline, MODE_SSB);
 
+#if 0
+// POINTS WITH EXCHANGE FIELD
+    if ( starts_with(testline, "POINTS WITH EXCHANGE FIELD") and !starts_with(testline, "POINTS WITH EXCHANGE FIELD CW") and !starts_with(testline, "POINTS WITH EXCHANGE FIELD SSB") )
+    { const string exchange_field = remove_peripheral_spaces(split_string(RHS, "|")[0]);
+      const string new_command = LHS + " = " + remove_peripheral_spaces(split_string(RHS, "|")[1]);
+
+      _set_points(exchange_field, new_command, MODE_CW);
+      _set_points(exchange_field, new_command, MODE_SSB);
+    }
+#endif
+
 // PTT DELAY (0 => no PTT)
-    if (starts_with(testline, "PTT DELAY"))
+    if (LHS == "PTT DELAY")
       _ptt_delay = from_string<unsigned int>(RHS);
 
 // P3
@@ -1514,15 +1651,42 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
     \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
 */
 const string drlog_context::points(const BAND b, const MODE m) const
-  { SAFELOCK(_context);
+{ SAFELOCK(_context);
 
-    const auto& pbb = _per_band_points[m];
+  const auto& pbb = _per_band_points[m];
 
-    if (pbb.find(b) != pbb.end())
-      return pbb.at(b);
-    else
-      return std::string();
-  }
+  return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string() );
+
+//  if (pbb.find(b) != pbb.end())
+//    return pbb.at(b);
+//  else
+//    return string();
+}
+
+/*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
+    \param  exchange_field  exchange field
+    \param  b               band
+    \param  m               mode
+    \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
+*/
+const string drlog_context::points(const std::string& exchange_field, const BAND b, const MODE m) const
+{ SAFELOCK(_context);
+
+  const auto cit = _per_band_points_with_exchange_field.find(exchange_field);
+
+  if (cit == _per_band_points_with_exchange_field.cend())    // if this exchange field has no points entry
+     return string();
+
+  const auto& points_per_band_per_mode = cit->second;
+  const auto& pbb = points_per_band_per_mode[m];
+
+  return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string() );
+
+//  if (pbb.find(b) != pbb.end())
+//    return pbb.at(b);
+//  else
+//    return string();
+}
 
 /*! \brief              Get all the names in the sent exchange
     \return             the names of all the fields in the sent exchange
@@ -1587,3 +1751,15 @@ const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const
   return rv;
 }
 
+/*
+const set<string> drlog_context::points_depend_on_which_exchange_fields(void) const
+{ SAFELOCK(_context);
+
+  set<string> rv;
+
+  for (const auto& entry : _per_band_points_with_exchange_field)
+    rv.insert(entry.first);
+
+  return rv;
+}
+*/

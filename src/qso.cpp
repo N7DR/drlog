@@ -663,6 +663,15 @@ const string QSO::received_exchange(const string& field_name) const
   return string();
 }
 
+//const bool QSO::is_exchange_field_present(const string& field_name) const
+//{ for (const auto& field : _received_exchange)
+//  { if (field.name() == field_name)
+//      return true;
+//  }
+//
+//  return false;
+//}
+
 /*! \brief              Return a single field from the sent exchange
     \param  field_name  the name of the field
     \return             the value of <i>field_name</i> in the sent exchange

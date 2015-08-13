@@ -150,8 +150,6 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 { 
   try
   { 
-//    ost << "Inside tcp_socket() constructor" << endl;
-
 // enable re-use
     static const int on = 1;
     int status = setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) );      // char* cast is needed for Windows
@@ -174,17 +172,13 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
       int n_timeouts = 0;
 
       while (!connected)
-      { //ost << "about to try to connect to " << destination_ip_address_or_fqdn << ":" << destination_port << endl;
-
-        try
+      { try
         { if (is_legal_ipv4_address(destination_ip_address_or_fqdn))
             destination(destination_ip_address_or_fqdn, destination_port, TIMEOUT);
           else                                                                // FQDN was passed instead of dotted decimal
           {
 // resolve the name
             const string dotted_decimal = name_to_dotted_decimal(destination_ip_address_or_fqdn);
-            
-            //ost << "name " << destination_ip_address_or_fqdn << " resolved to: " << dotted_decimal << endl;
 
             destination(dotted_decimal, destination_port, TIMEOUT );
           }
@@ -202,9 +196,6 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
           sleep_for(seconds(10));
         }
       }
-
-//      ost << "tcp_socket connected, constructed OK" << endl;
-
     }
   }
 
@@ -284,9 +275,9 @@ void tcp_socket::bind(const string& dotted_decimal_address, const short port_nr)
 void tcp_socket::destination(const sockaddr_storage& adr)
 { SAFELOCK(_tcp_socket);
 
-  ost << "inside destination() without timeout; about to connect" << endl;
+//  ost << "inside destination() without timeout; about to connect" << endl;
   const int status = ::connect(_sock, (sockaddr*)(&adr), sizeof(adr));
-  ost << "connect returned " << status << endl;
+//  ost << "connect returned " << status << endl;
 
   if (status == 0)
   { _destination = adr; 
@@ -304,17 +295,13 @@ void tcp_socket::destination(const sockaddr_storage& adr)
 
 
 
-/*! \brief  Connect to the far-end, with explicit time-out when trying to make connection
-    \param  adr Address/port of the far end
-    \param  timeout timeout in seconds
+/*! \brief              Connect to the far-end, with explicit time-out when trying to make connection
+    \param  adr         address/port of the far end
+    \param  timeout     timeout in seconds
 */
 // https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
-//#if 0
 void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long timeout_secs)
-{
-
-
-  struct timeval timeout;
+{ struct timeval timeout;
   timeout.tv_sec = timeout_secs;
   timeout.tv_usec = 0L;
 
@@ -373,29 +360,9 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
     _destination_is_set = true;
   }
 }
-//#endif
 
-#if 0
-if( (ret = connect(sock, (struct sockaddr *)&sa, 16)) < 0 )
-    if (errno != EINPROGRESS)
-        return -1;
-
-if(ret == 0)    //then connect succeeded right away
-    goto done;
-
-//we are waiting for connect to complete now
-if( (ret = select(sock + 1, &rset, &wset, NULL, (timeout) ? &ts : NULL)) < 0)
-    return -1;
-if(ret == 0){   //we had a timeout
-    errno = ETIMEDOUT;
-    return -1;
-}
-#endif
-
-
-
-/*! \brief  Mark as connected to the far-end
-    \param  adr Address/port of the far end
+/*! \brief          Mark as connected to the far-end
+    \param  adr     address/port of the far end
 
     Used for server sockets returned by .accept()
 */

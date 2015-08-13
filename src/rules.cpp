@@ -562,14 +562,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   }
 
 // define the points structure; this can be quite complex
-  const points_structure empty_ps { };
+  const points_structure EMPTY_PS { };
 
 // fill the points structure
   for (const auto& m : _permitted_modes)
   { auto& pb = _points[m];
 
     for (const auto& b : _permitted_bands)
-    { pb.insert( {b, empty_ps} );  // default is no points
+    { pb.insert( {b, EMPTY_PS} );  // default is no points
 
       points_structure points_this_band;
       MSI     country_points_this_band;
@@ -629,12 +629,28 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
             }
           }
 
-// [field-name-condition]:points // [IOTA != ------]:15
+// [field-name-condition]:points // [IOTA != ------]:15 ... not yet supported
+// [field-name]:points
           if (fields.size() == 2)
           { const string& f0 = fields[0];
+            const string inside_square_brackets = delimited_substring(f0, '[', ']');
 
-            if ((f0.find("[") != string::npos) and (f0.find("]") != string::npos))
-              _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
+            if (!inside_square_brackets.empty())
+            { const set<string> all_exchange_field_names = exchange_field_names();
+
+              if (!all_exchange_field_names.empty())
+              {  const auto cit = all_exchange_field_names.find(inside_square_brackets);
+
+                if (cit != all_exchange_field_names.cend())  // if found a valid exchange field name (as opposed to a name with a condition)
+                { const int n_points = from_string<int>(fields[1]);    // the value after the colon
+
+                  _exchange_present_points.insert( { inside_square_brackets, n_points } );    // there is just one value for all bands and modes; this will overwrite any previous value
+                }
+              }
+            }
+
+//            if ((f0.find("[") != string::npos) and (f0.find("]") != string::npos))
+//              _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
           }
 
           pb[b] = points_this_band;    // overwrite default
@@ -642,6 +658,21 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       }  // not IARU
     }
   }
+
+#if 0
+  if (context.points_depend_on_exchange_field())
+  { const set<string> exchange_fields = context.points_depend_on_which_exchange_fields();
+
+    for (const string& exchange_field : exchange_fields)
+    { decltype(_points)& this_points = _points_with_exchange_field[exchange_field];  // create if doesn't exist (which should always be true)
+
+
+
+
+
+    }
+  }
+#endif
 
 // legal values for the exchange fields
   _parse_context_qthx(context, location_db);  // qth-dependent fields
@@ -1068,13 +1099,31 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
   if (!(_score_bands < b))    // no points if we're not scoring this band
     return 0;
 
+  const MODE m = qso.mode();
+  if (!(_score_modes < m))    // no points if we're not scoring this mode
+    return 0;
+
+// is an exchange field that will determine the number of points present?
+//  ost << "about to check exchange fields" << endl;
+
+  for (const auto& this_exchange_present_points : _exchange_present_points)
+  { const string& exchange_field_name = this_exchange_present_points.first;
+
+//    ost << "checking exchange field name: " << exchange_field_name << endl;
+
+    if (qso.is_exchange_field_present(exchange_field_name))
+      return this_exchange_present_points.second;
+
+//    ost << "no value returned" << endl;
+  }
+
   const string call = qso.callsign();
   const string canonical_prefix = location_db.canonical_prefix(call);
 
   if (canonical_prefix == "NONE")      // unable to determine country
     return 0;
 
-  const MODE m = qso.mode();
+//  const MODE m = qso.mode();
   const auto& pb = _points[m];          // select the correct mode
 
   SAFELOCK(rules);
@@ -1242,6 +1291,17 @@ const bool contest_rules::is_exchange_field_used_for_country(const string& field
       return false;
 
     return true;  // a known field, and this is not a special country
+}
+
+//   std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
+
+const set<string> contest_rules::exchange_field_names(void) const
+{ set<string> rv;
+
+  for (const auto& eft : _exchange_field_eft)
+    rv.insert(eft.first);
+
+  return rv;
 }
 
 // The intention here is to follow the WPX definition. It would be

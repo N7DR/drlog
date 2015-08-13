@@ -171,6 +171,8 @@ protected:
   std::vector<std::string>                     _path;                             ///< directories to search, in order
   std::map<BAND, int>                          _per_band_country_mult_factor;     ///< country mult factor structure for each band
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;              ///< points structure for each band and mode
+//  std::map<std::string /* exchange field */, std::array<std::map<BAND, std::string>, N_MODES> > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
+  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
   unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
   bool                                         _p3;                               ///< is a P3 available?
@@ -241,6 +243,8 @@ protected:
     \param  m           mode
 */
   void _set_points(const std::string& command, const MODE m);
+
+//  void _set_points(const std::string& exchange_field, const std::string& command, const MODE m);
 
 public:
 
@@ -345,7 +349,7 @@ public:
 
   SAFEREAD(exchange, _context);                         ///< comma-delimited received exchange
   SAFEREAD(exchange_cq, _context);                      ///< exchange in CQ mode
-  SAFEREAD(exchange_fields_filename, _context);         ///< file that holds regex templates of exchange fields
+  SAFEREAD(exchange_fields_filename, _context);         ///< file that holds regex templates of values of exchange fields
   SAFEREAD(exchange_mults, _context);                   ///< comma-delimited exchange fields that are mults
   SAFEREAD(exchange_mults_per_band, _context);          ///< are exchange mults per-band?
   SAFEREAD(exchange_mults_per_mode, _context);          ///< are exchange mults per-mode?
@@ -396,12 +400,24 @@ public:
   SAFEREAD(per_band_country_mult_factor, _context); ///< country mult factor structure for each band
   SAFEREAD(per_band_points, _context);              ///< points structure for each band and mode
 
+
+//  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
+
+
 /*! \brief      Get the points string for a particular band and mode
     \param  b   band
     \param  m   mode
     \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
 */
   const std::string points(const BAND b, const MODE m) const;
+
+/*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
+    \param  exchange_field  exchange field
+    \param  b               band
+    \param  m               mode
+    \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange fieldd <i>exchange_field</i> is present
+*/
+  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
 
   SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
   SAFEREAD(p3, _context);                           ///< is a P3 available?
@@ -519,7 +535,16 @@ public:
 
 /// swap QSL and QUICK QSL messages
   inline void swap_qsl_messages(void)
-    { swap(_qsl_message, _quick_qsl_message); }
+    { SAFELOCK(_context);
+      swap(_qsl_message, _quick_qsl_message);
+    }
+
+//  inline const bool points_depend_on_exchange_field(void) const
+//    { SAFELOCK(_context);
+//      return !(_per_band_points_with_exchange_field.empty());
+//    }
+
+//  const std::set<std::string> points_depend_on_which_exchange_fields(void) const;
 };
 
 #endif    // DRLOG_CONTEXT_H

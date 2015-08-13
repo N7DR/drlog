@@ -228,6 +228,10 @@ protected:
   unsigned int                        _default_points;      ///< default points
   std::map<std::string, unsigned int> _country_points;      ///< per-country points
   std::map<std::string, unsigned int> _continent_points;    ///< per-continent points
+
+
+
+
   enum points_type                    _points_type;         ///< is the points structure too complex for the configuration notation?
 
 public:
@@ -282,13 +286,15 @@ protected:
   bool                                _exchange_mults_per_mode;  ///< are exchange mults counted per-mode?
   bool                                _exchange_mults_used;      ///< are exchange mults used?
 
-  std::map<std::string, unsigned int>  _exchange_present_points;                                                            ///< number of points if a particular exchange field is received
-  std::map<std::string, unsigned int>  _exchange_value_points;                                                              ///< number of points if a particular exchange field has a particular value
+  std::map<std::string /* exchange field name */, unsigned int>  _exchange_present_points;        ///< number of points if a particular exchange field is received; only one value for all bands and modes
+//  std::map<std::string, unsigned int>  _exchange_value_points;                                                              ///< number of points if a particular exchange field has a particular value
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded
 
   std::vector<BAND> _permitted_bands;                               ///< bands allowed in this contest; use a vector container in order to keep the frequency order
   std::set<MODE>    _permitted_modes;                               ///< modes allowed in this contest
   std::array<std::map<BAND, points_structure>, N_MODES> _points;    ///< points structure for each band and mode
+//  std::array<std::map<BAND, points_structure>, N_MODES> _points_with_exchange_field;    ///< points structure for each band and mode, if a particular exchange field is present
+//  std::map<std::string, decltype(_points)> _points_with_exchange_field;    ///< points structure for each band and mode, if a particular exchange field is present
   
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded
 
@@ -563,8 +569,8 @@ public:
   const bool is_legal_value(const std::string& field_name, const std::string& putative_canonical_value) const;
 
 /// number of points if a particular exchange field has a particular value
-  inline const std::map<std::string, unsigned int> exchange_value_points(void) const
-    { SAFELOCK(rules); return _exchange_value_points; };
+//  inline const std::map<std::string, unsigned int> exchange_value_points(void) const
+//    { SAFELOCK(rules); return _exchange_value_points; };
 
 /// number of permitted bands
   inline const unsigned int n_bands(void) const
@@ -607,6 +613,8 @@ public:
 */
   const bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
 
+  const std::set<std::string> exchange_field_names(void) const;
+
 /// read from and write to disk
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -627,7 +635,7 @@ public:
          & _exchange_mults_per_mode
          & _exchange_mults_used
          & _exchange_present_points
-         & _exchange_value_points
+//         & _exchange_value_points
          & _expanded_received_exchange
          & _permitted_bands
          & _permitted_modes
