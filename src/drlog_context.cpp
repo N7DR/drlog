@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 113 2015-08-01 14:57:22Z  $
+// $Id: drlog_context.cpp 114 2015-08-15 15:19:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -824,11 +824,11 @@ void drlog_context::_process_configuration_file(const string& filename)
       _p3_span_sap = from_string<unsigned int>(RHS);
 
 // QUICK QSL MESSAGE
-    if (starts_with(testline, "QUICK QSL MESSAGE"))
+    if (LHS == "QUICK QSL MESSAGE")
       _quick_qsl_message = RHS;
 
 // QSL MESSAGE
-    if (starts_with(testline, "QSL MESSAGE"))
+    if (LHS == "QSL MESSAGE")
       _qsl_message = RHS;
 
 // QSO MULTIPLE BANDS
@@ -836,15 +836,15 @@ void drlog_context::_process_configuration_file(const string& filename)
       _qso_multiple_bands = is_true;
 
 // QSO MULTIPLE MODES
-    if (starts_with(testline, "QSO MULTIPLE MODES"))
+    if (LHS == "QSO MULTIPLE MODES")
       _qso_multiple_modes = is_true;
 
 // QTCS
-    if (starts_with(testline, "QTCS"))
+    if (LHS == "QTCS")
       _qtcs = is_true;
 
 // QTC DOUBLE SPACE
-    if (starts_with(testline, "QTC DOUBLE SPACE"))
+    if (LHS == "QTC DOUBLE SPACE")
       _qtc_double_space = is_true;
 
 // QTC FILENAME
@@ -1206,6 +1206,9 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "CABRILLO ADDRESS-COUNTRY"))
       _cabrillo_address_country = remove_peripheral_spaces((split_string(line, "="))[1]);
 
+// CABRILLO OPERATORS
+    if (starts_with(testline, "CABRILLO OPERATORS"))
+      _cabrillo_operators = RHS;
 
 /*
                            --------info sent------- -------info rcvd--------
@@ -1669,6 +1672,7 @@ const string drlog_context::points(const BAND b, const MODE m) const
     \param  m               mode
     \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
 */
+#if 0
 const string drlog_context::points(const std::string& exchange_field, const BAND b, const MODE m) const
 { SAFELOCK(_context);
 
@@ -1687,6 +1691,7 @@ const string drlog_context::points(const std::string& exchange_field, const BAND
 //  else
 //    return string();
 }
+#endif
 
 /*! \brief              Get all the names in the sent exchange
     \return             the names of all the fields in the sent exchange

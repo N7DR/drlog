@@ -1,4 +1,4 @@
-// $Id: string_functions.h 113 2015-08-01 14:57:22Z  $
+// $Id: string_functions.h 114 2015-08-15 15:19:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -410,33 +410,42 @@ inline const std::string last(const std::string& cs, unsigned int n)
 */
 const std::string get_environment_variable(const std::string& var_name);
 
-// begins with a string
-inline const bool begins_with(const std::string& str, const std::string& test)
-  { return (str.substr(0, test.length()) == test); }
-
-/*! \brief  Transform a string
-  \param  cs  original string
-  \return <i>cs</i> with the transformation applied
+/*! \brief      Transform a string
+    \param  cs  original string
+    \param  pf  pointer to transformation function
+    \return     <i>cs</i> with the transformation <i>*pf</i> applied
 */
 const std::string transform_string(const std::string& cs, int(*pf)(int));
 
-/*! \brief  Convert to upper case
-  \param  cs  original string
-  \return <i>cs</i> converted to upper case
+/*! \brief      Convert string to upper case
+    \param  cs  original string
+    \return     <i>cs</i> converted to upper case
 */
-inline std::string to_upper(const std::string& cs)
+inline const std::string to_upper(const std::string& cs)
   { return transform_string(cs, std::toupper); }
 
-/*! \brief  Convert to upper case
+/*! \brief      Convert string to lower case
     \param  cs  original string
-    \return <i>cs</i> converted to upper case
+    \return     <i>cs</i> converted to lower case
 */
-inline std::string to_lower(const std::string& cs)
+inline const std::string to_lower(const std::string& cs)
   { return transform_string(cs, std::tolower); }
 
-/// does a string start with a particular substring?
-inline bool starts_with(const std::string& cs, const std::string& ss)
-  { return cs.find(ss) == 0; }
+/*! \brief      Does a string begin with a particular substring?
+    \param  cs  string to test
+    \param  ss  substring to look for
+    \return     whether <i>cs</i> begins with <i>ss</i>
+*/
+inline const bool starts_with(const std::string& cs, const std::string& ss)
+  { return (cs.find(ss) == 0); }
+
+/*! \brief      Does a string begin with a particular substring?
+    \param  cs  string to test
+    \param  ss  substring to look for
+    \return     whether <i>cs</i> begins with <i>ss</i>
+*/
+inline const bool begins_with(const std::string& cs, const std::string& ss)
+  { return (starts_with(cs, ss) ); }
 
 /// convert an integer to a character-separated string
 const std::string separated_string(const int n, const std::string& sep = ",");

@@ -1,4 +1,4 @@
-// $Id: rules.h 110 2015-07-04 14:22:37Z  $
+// $Id: rules.h 114 2015-08-15 15:19:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,8 +29,6 @@
 #include <vector>
 
 extern pt_mutex  rules_mutex;                           ///< mutex for rules
-
-//typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 
 // forward declarations
 class EFT;
@@ -293,8 +291,6 @@ protected:
   std::vector<BAND> _permitted_bands;                               ///< bands allowed in this contest; use a vector container in order to keep the frequency order
   std::set<MODE>    _permitted_modes;                               ///< modes allowed in this contest
   std::array<std::map<BAND, points_structure>, N_MODES> _points;    ///< points structure for each band and mode
-//  std::array<std::map<BAND, points_structure>, N_MODES> _points_with_exchange_field;    ///< points structure for each band and mode, if a particular exchange field is present
-//  std::map<std::string, decltype(_points)> _points_with_exchange_field;    ///< points structure for each band and mode, if a particular exchange field is present
   
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded
 
@@ -352,9 +348,9 @@ protected:
 */
   const std::set<std::string> _all_exchange_values(const std::string& field_name) const;
 
-/*! \brief              Initialize an object that was created from the default constructor
-    \param  context     context for this contest
-    \param  location_db location database
+/*! \brief                  Initialize an object that was created from the default constructor
+    \param  context         context for this contest
+    \param  location_db     location database
 
     After calling this function, the object is ready for use
 */
@@ -375,9 +371,9 @@ protected:
 */
   void _parse_context_exchange(const drlog_context& context);
 
-/*! \brief              Parse and incorporate the "QTHX[xx] = " lines from context
-    \param  context     context for this contest
-    \param  location_db location database
+/*! \brief                  Parse and incorporate the "QTHX[xx] = " lines from context
+    \param  context         context for this contest
+    \param  location_db     location database
 
     Incorporates the parsed information into _exch
 */

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 113 2015-08-01 14:57:22Z  $
+// $Id: drlog.cpp 114 2015-08-15 15:19:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1949,7 +1949,7 @@ void* process_rbn_info(void* vp)
               const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
 
               for (const auto& exch_mult_name : exch_mults)
-              { if (context.auto_remaining_exchange_mults(exch_mult_name))
+              { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
                 { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
                   if (!guess.empty())

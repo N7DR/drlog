@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 113 2015-08-01 14:57:22Z  $
+// $Id: drlog_context.h 114 2015-08-15 15:19:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -171,8 +171,7 @@ protected:
   std::vector<std::string>                     _path;                             ///< directories to search, in order
   std::map<BAND, int>                          _per_band_country_mult_factor;     ///< country mult factor structure for each band
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;              ///< points structure for each band and mode
-//  std::map<std::string /* exchange field */, std::array<std::map<BAND, std::string>, N_MODES> > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
-  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
+//  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
   unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
   bool                                         _p3;                               ///< is a P3 available?
@@ -243,8 +242,6 @@ protected:
     \param  m           mode
 */
   void _set_points(const std::string& command, const MODE m);
-
-//  void _set_points(const std::string& exchange_field, const std::string& command, const MODE m);
 
 public:
 
@@ -417,7 +414,7 @@ public:
     \param  m               mode
     \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange fieldd <i>exchange_field</i> is present
 */
-  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
+//  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
 
   SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
   SAFEREAD(p3, _context);                           ///< is a P3 available?
@@ -538,13 +535,6 @@ public:
     { SAFELOCK(_context);
       swap(_qsl_message, _quick_qsl_message);
     }
-
-//  inline const bool points_depend_on_exchange_field(void) const
-//    { SAFELOCK(_context);
-//      return !(_per_band_points_with_exchange_field.empty());
-//    }
-
-//  const std::set<std::string> points_depend_on_which_exchange_fields(void) const;
 };
 
 #endif    // DRLOG_CONTEXT_H
