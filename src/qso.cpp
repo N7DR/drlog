@@ -561,9 +561,9 @@ const string QSO::verbose_format(void) const
   rv += " utc=" + _utc;
   rv += " hiscall=" + pad_string(_callsign, CALLSIGN_WIDTH, PAD_RIGHT);
   rv += " mode=" + pad_string(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH, PAD_RIGHT);
-  rv += " band=" + pad_string(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH);
-  rv += " frequency-tx=" + pad_string(_frequency_tx, FREQUENCY_WIDTH);
-  rv += " frequency-rx=" + _frequency_rx.empty() ? pad_string(string("0"), FREQUENCY_WIDTH) : pad_string(_frequency_rx, FREQUENCY_WIDTH);
+  rv += " band=" + pad_string(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH, PAD_RIGHT);
+  rv += " frequency-tx=" + pad_string(_frequency_tx, FREQUENCY_WIDTH, PAD_RIGHT);
+  rv += " frequency-rx=" + pad_string( (_frequency_rx.empty() ? "0" : _frequency_rx), FREQUENCY_WIDTH, PAD_RIGHT );
   rv += " mycall=" + pad_string(_my_call, CALLSIGN_WIDTH, PAD_RIGHT);
 
   for (const auto& exch_field : _sent_exchange)

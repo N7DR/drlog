@@ -1229,7 +1229,9 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
     return false;
 
   try
-  { const vector<string> lines = to_lines(read_file(path, filename));
+  { ost << "Trying to read regex file: " << filename << endl;
+
+    const vector<string> lines = to_lines(read_file(path, filename));
     bool found_it = false;
 
     for (const auto& line : lines)
