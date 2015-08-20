@@ -20,10 +20,13 @@
         (even though the ARRL at http://www.arrl.org/contests/fileform.html
         explicitly claims that it is complete). As a result, there are several places
         where one has to guess what might be intended.
-*/
 
-// The definition of Cabrillo has now been moved to:
-//   http://wwrof.org/cabrillo. One hopes for improvement.
+        The URL for the "specification" is now:
+          http://wwrof.org/cabrillo/
+
+        The version number at this site claims to be version 3; but it's different (but,
+        in general, no less ambiguous) than the "version 3" that was at the original site.
+*/
 
 #include <string>
 #include <vector>

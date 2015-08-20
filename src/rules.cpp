@@ -24,7 +24,6 @@
 #include <utility>
 
 using namespace std;
-//using namespace std::placeholders;
 
 pt_mutex rules_mutex;                   ///< mutex for the contest_rules object
 
@@ -648,9 +647,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
                 }
               }
             }
-
-//            if ((f0.find("[") != string::npos) and (f0.find("]") != string::npos))
-//              _exchange_value_points.insert(make_pair(f0, from_string<unsigned int>(fields[1])));  // we keep the delimiters here; they are stripped before the comparison
           }
 
           pb[b] = points_this_band;    // overwrite default
@@ -658,21 +654,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       }  // not IARU
     }
   }
-
-#if 0
-  if (context.points_depend_on_exchange_field())
-  { const set<string> exchange_fields = context.points_depend_on_which_exchange_fields();
-
-    for (const string& exchange_field : exchange_fields)
-    { decltype(_points)& this_points = _points_with_exchange_field[exchange_field];  // create if doesn't exist (which should always be true)
-
-
-
-
-
-    }
-  }
-#endif
 
 // legal values for the exchange fields
   _parse_context_qthx(context, location_db);  // qth-dependent fields
@@ -897,7 +878,6 @@ const vector<string> contest_rules::exch_canonical_values(const string& field_na
     { if (_exch_values[n].name() == field_name)
       { const map<string, set<string> >& m = _exch_values[n].values();
 
-//        for_each(m.cbegin(), m.cend(), [&rv] (const map<string, set<string> >::value_type& mss) { rv.push_back(mss.first); } );  // Josuttis 2nd ed., p. 338
         FOR_ALL(m, [&rv] (const map<string, set<string> >::value_type& mss) { rv.push_back(mss.first); } );  // Josuttis 2nd ed., p. 338
 
         sort(rv.begin(), rv.end());
@@ -908,9 +888,9 @@ const vector<string> contest_rules::exch_canonical_values(const string& field_na
   return rv;
 }
 
-/*! \brief                      Add a canonical value for a particular exchange field
-    \param  field_name          name of an exchange field (received)
-    \param  new_canonical_value the canonical value to add
+/*! \brief                          Add a canonical value for a particular exchange field
+    \param  field_name              name of an exchange field (received)
+    \param  new_canonical_value     the canonical value to add
 
     Also adds <i>new_canonical_value</i> to the legal values for the field <i>field_name</i>. Does nothing
     if <i>new_canonical_value</i> is already a canonical value.
@@ -1024,9 +1004,9 @@ const string contest_rules::canonical_value(const string& field_name, const stri
   return (cit == p_to_c.cend() ? actual_value : (cit->second));
 }
 
-/*! \brief                          Get the next mode
-    \param  current_mode            Current mode
-    \return                         Next mode in sequence
+/*! \brief                  Get the next mode
+    \param  current_mode    current mode
+    \return                 next mode in sequence
 
     Cycles through the available modes.
     Currently supports only MODE_CW and MODE_SSB

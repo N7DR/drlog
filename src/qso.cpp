@@ -32,8 +32,8 @@ extern message_stream ost;                  ///< for debugging, info
 
 extern void alert(const string& msg);       ///< alert the user
 
-bool QSO_DISPLAY_COUNTRY_MULT = true;
-int  QSO_MULT_WIDTH = 0;
+bool QSO_DISPLAY_COUNTRY_MULT = true;       ///< whether to display country mults in log window (may be changed in config file)
+const unsigned int  QSO_MULT_WIDTH = 5;     ///< default width of QSO mult fields in log window (0 =
 
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
@@ -719,7 +719,7 @@ const string QSO::log_line(void)
 
 // print in same order the are present in the config file
   for (const auto& field : _received_exchange)
-  { unsigned int field_width = 5;
+  { unsigned int field_width = QSO_MULT_WIDTH;
     const string& name = field.name();
 
     if (name == "CQZONE")
@@ -749,8 +749,8 @@ const string QSO::log_line(void)
     if (name == "10MSTATE")
       field_width = 3;
 
-    if (QSO_MULT_WIDTH)
-      field_width = QSO_MULT_WIDTH;
+//    if (QSO_MULT_WIDTH)
+//      field_width = QSO_MULT_WIDTH;
 
     rv += " " + pad_string(field.value(), field_width);
   }
@@ -769,7 +769,7 @@ const string QSO::log_line(void)
   for (const auto& field : _received_exchange)
   { ost << "in qso::log_line(); processing field: " << field << endl;
 
-    unsigned int field_width = 5;
+    unsigned int field_width = QSO_MULT_WIDTH;
     const string& name = field.name();
 
     if (name == "CQZONE" or name == "ITUZONE")
@@ -793,8 +793,8 @@ const string QSO::log_line(void)
     if (name == "10MSTATE")
       field_width = 3;
 
-    if (QSO_MULT_WIDTH)
-      field_width = QSO_MULT_WIDTH;
+//    if (QSO_MULT_WIDTH)
+//      field_width = QSO_MULT_WIDTH;
 
     rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
   }

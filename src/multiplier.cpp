@@ -44,24 +44,16 @@ multiplier::multiplier(void) :
 const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
-//  ost << "inside multiplier::add_worked(); str = " << str << ", band = " << b << ", mode = " << m << endl;
-
   if ((_used) and is_known(str))                                          // add only known mults
-  { //ost << "used and known" << endl;
-
-    const int b_nr = static_cast<int>(b);
+  { const int b_nr = static_cast<int>(b);
     const int m_nr = static_cast<int>(m);
-
-    //ost << "multiplier; adding worked " << str << ", band = " << b << ", mode = " << m << endl;
 
     auto& pb = _worked[m_nr];
 
     bool rv = (pb[b_nr].insert(str)).second;  // BAND, MODE
 
     if (rv)
-    { //ost << "Adding ANY_BAND and ANY_MODE" << endl;
-
-      pb[ANY_BAND].insert(str);        // ANY_BAND, MODE
+    { pb[ANY_BAND].insert(str);        // ANY_BAND, MODE
 
       auto& pb_any = _worked[ANY_MODE];
 
@@ -148,9 +140,6 @@ const bool multiplier::is_worked(const string& str, const BAND b, const MODE m) 
 
   const set<string>& worked_this_band = pb[ (_per_band ? b : ANY_BAND) ];
 
-//  ost << "in is_worked(), str = " << str << ", " << "band = " << b << ", mode = " << m << endl;
-//  ost << "returning: " << boolalpha << (worked_this_band.find(str) != worked_this_band.cend()) << endl;
-
   return (worked_this_band.find(str) != worked_this_band.cend());
 }
 
@@ -176,7 +165,7 @@ const size_t multiplier::n_worked(const BAND b, const MODE m) const
     \param  b   band
     \return     number of mults worked on band <i>b</i>
 */
-const size_t multiplier::n_worked(const int b) const
+const size_t multiplier::n_worked(const BAND b) const
 { SAFELOCK(multiplier);
 
   if (!_used)

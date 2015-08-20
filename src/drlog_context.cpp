@@ -792,17 +792,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (starts_with(testline, "POINTS SSB"))
       _set_points(testline, MODE_SSB);
 
-#if 0
-// POINTS WITH EXCHANGE FIELD
-    if ( starts_with(testline, "POINTS WITH EXCHANGE FIELD") and !starts_with(testline, "POINTS WITH EXCHANGE FIELD CW") and !starts_with(testline, "POINTS WITH EXCHANGE FIELD SSB") )
-    { const string exchange_field = remove_peripheral_spaces(split_string(RHS, "|")[0]);
-      const string new_command = LHS + " = " + remove_peripheral_spaces(split_string(RHS, "|")[1]);
-
-      _set_points(exchange_field, new_command, MODE_CW);
-      _set_points(exchange_field, new_command, MODE_SSB);
-    }
-#endif
-
 // PTT DELAY (0 => no PTT)
     if (LHS == "PTT DELAY")
       _ptt_delay = from_string<unsigned int>(RHS);
@@ -812,7 +801,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _p3 = is_true;
 
 // P3 SNAPSHOT FILE
-    if (starts_with(testline, "P3 SNAPSHOT FILE"))
+    if (LHS == "P3 SNAPSHOT FILE")
       _p3_snapshot_file = rhs;
 
 // P3 SPAN CQ
@@ -832,7 +821,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _qsl_message = RHS;
 
 // QSO MULTIPLE BANDS
-    if (starts_with(testline, "QSO MULTIPLE BANDS"))
+    if (LHS == "QSO MULTIPLE BANDS")
       _qso_multiple_bands = is_true;
 
 // QSO MULTIPLE MODES
@@ -848,11 +837,11 @@ void drlog_context::_process_configuration_file(const string& filename)
       _qtc_double_space = is_true;
 
 // QTC FILENAME
-    if (starts_with(testline, "QTC FILENAME"))
+    if (LHS == "QTC FILENAME")
       _qtc_filename = rhs;
 
 // QTC QRS
-    if (starts_with(testline, "QTC QRS"))
+    if (LHS == "QTC QRS")
       _qtc_qrs = from_string<unsigned int>(rhs);
 
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...

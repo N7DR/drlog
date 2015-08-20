@@ -219,15 +219,6 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
     matches.insert( { field_nr++, match } );
   }
 
-// debug; print status
-//  for (const auto& m : matches)
-//  { ost << "field nr " << m.first << " [" << copy_received_values[m.first] << "]: ";
-//    for (const string& str : m.second)
-//      ost << str << "  ";
-//
-//    ost << endl;
-//  }
-
   deque<tuple<int, string, set<string>>> tuple_deque;
 
   for (const auto& m : matches)
@@ -891,47 +882,6 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
   }
 }
 
-#if !defined(NEW_CONSTRUCTOR)
-// -------------------------  exchange_field_template  ---------------------------
-
-/*!     \class exchange_field_template
-        \brief used for managing and parsing exchange fields
-*/
-
-/*! \brief  Fill the database
-    \param  path        directories to search (in order) for the filename
-    \param  filename    name of the file that holds regex expressions for fields
-*/
-void exchange_field_template::prepare(const vector<string>& path, const string& filename)
-{ if (filename.empty())
-    return;
-
-  try
-  { const vector<string> lines = to_lines(read_file(path, filename));
-
-    for (const auto& line : lines)
-    { if (!line.empty())
-      { const vector<string> fields = split_string(line, ":");
-
-        if (fields.size() >= 2)
-        { const string field_name = remove_peripheral_spaces(fields[0]);
-          const size_t posn = line.find(":");
-          const string regex_str = remove_peripheral_spaces(substring(line, posn + 1));
-          const regex expression(regex_str);
-
-          _db.insert( { field_name, expression } );
-        }
-      }
-    }
-  }
-
-  catch (...)
-  { ost << "error trying to read exchange field template file " << filename << endl;
-  }
-}
-
-#endif
-
 /*! \brief          Replace cut numbers with real numbers
     \param  input   string possibly containing cut numbers
     \return         <i.input</i> but with cut numbers replaced by actual digits
@@ -956,50 +906,6 @@ const string process_cut_digits(const string& input)
 }
 
 #if !defined(NEW_CONSTRUCTOR)
-/*! \brief  Is a string a valid CW power?
-    \param  str   the string to test
-    \return whether <i>str</i> is a legal value of CW power
-*/
-const bool is_valid_CWPOWER(const string& str, const contest_rules& rules)
-  { return is_valid_ANYTHING(str, rules); }
-
-const bool is_valid_RS(const string& str, const contest_rules& rules)
-{ if (str.length() != 2)
-    return false;
-
-  if ( (str[0] < '1') or (str[0] > '5') )
-    return false;
-
-  if ( (str[1] < '1') or (str[1] > '9') )
-    return false;
-
-  return true;
-}
-
-// for now, include RS in RST, just to get slopbucket working
-const bool is_valid_RST(const string& str, const contest_rules& rules)
-{ if (str.length() != 3 and str.length() != 2)
-    return false;
-
-  if (str.length() == 3)
-  { if ( (str[0] < '1') or (str[0] > '5') )
-      return false;
-
-    if ( (str[1] < '1') or (str[1] > '9') )
-      return false;
-
-    if ( (str[2] < '1') or (str[2] > '9') )
-      return false;
-  }
-
-  if (str.length() == 3)
-//    return true;
-    return (str == string("599"));
-
-  return is_valid_RS(str, rules);
-
-//  return true;
-}
 
 const bool is_valid_CALLSIGN(const string& str, const contest_rules& rules)
 { if (str.length() < 3)
@@ -1247,6 +1153,8 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
           if (field_name == _name)
           { _regex_expression = regex(regex_str);
             found_it = true;
+
+            ost << "found regex for field: " << field_name << endl;
           }
         }
       }

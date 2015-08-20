@@ -132,10 +132,10 @@ public:
 */
   const bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m);
 
-/*! \brief  remove a worked multiplier
-    \param  str value to be worked
-    \param  b   band on which <i>str</i> is to be removed
-    \param  m   mode on which <i>str</i> has been worked
+/*! \brief          Remove a worked multiplier
+    \param  str     value to be removed
+    \param  b       band on which <i>str</i> is to be removed
+    \param  m       mode on which <i>str</i> is to be removed
 
     Does nothing if <i>str</i> was not worked on <i>b</i>
 */
@@ -148,9 +148,10 @@ public:
       return (_used ? (_known < str) : false);
     }
 
-/*! \brief      Has a station been worked on a particular band and mode?
-    \param  str callsign to test
-    \param  b   band to be tested
+/*! \brief          Has a station been worked on a particular band and mode?
+    \param  str     callsign to test
+    \param  b       band to be tested
+    \param  m       mode to be tested
 */
   const bool is_worked(const std::string& str, const BAND b, const MODE m) const;
 
@@ -165,7 +166,7 @@ public:
     \param  b   band
     \return     number of mults worked on band <i>b</i>
 */
-  const size_t n_worked(const int b) const;
+  const size_t n_worked(const BAND b) const;
 
 /// Number of known mults
   inline const size_t n_known(void) const

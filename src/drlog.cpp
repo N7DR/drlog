@@ -163,18 +163,8 @@ void safe_set_mode(const MODE m);                           ///< set value of <i
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                   ///<   Is a callsign needed on a particular band and mode?
 
 void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name, const BAND b, const MODE m);  ///< Update the REMAINING CALLSIGN MULTS window for a particular mult
-
-//void update_remaining_country_mults_window(running_statistics&, const BAND b = safe_get_band(), const MODE m = safe_get_mode());
 void update_remaining_country_mults_window(running_statistics&, const BAND b, const MODE m);                        ///< Update the REMAINING COUNTRY MULTS window
-
-//void update_remaining_exch_mults_window(const string&,
-//                                        const contest_rules&,
-//                                        running_statistics&,
-//                                        const BAND b = safe_get_band(),
-//                                        const MODE m = safe_get_mode());
-
 void update_remaining_exch_mults_window(const string& mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m);   ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
-
 void update_remaining_exchange_mults_windows(const contest_rules&, running_statistics&, const BAND b, const MODE m);    ///< Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
 
 // values that are used by multiple threads
@@ -229,7 +219,6 @@ bool                    filter_remaining_country_mults(false);  ///< whether to 
 logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 
 string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
-//string                  my_country;                         ///< canonical prefix for my country
 
 unsigned int            next_qso_number = 1;                ///< actual number of next QSO
 unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
@@ -240,8 +229,6 @@ int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for call
 bool                    restored_data(false);               ///< did we restore from an archive?
 
 running_statistics      statistics;                         ///< all the QSO statistics to date
-
-//vector<pair<string, string> > sent_exchange;                ///< name/value pairs for the sent exchange
 
 //cached_data<string, string> WPX_DB(&wpx_prefix);
 
@@ -1193,6 +1180,14 @@ int main(int argc, char** argv)
 //      file_copy(fn, fn + "-" + to_string(index));
   }
 
+// for now, require one of -clean or -rebuild
+// once data restoration works completely correctly, this requirement should be removed;
+// changing this is a low priority until serialization of unordered sets becomes possible
+  if (cl.parameter_present("-clean") == cl.parameter_present("-rebuild"))
+  { ost << "Need exactly one of \"-clean\" or \"-rebuild\"" << endl;
+    exit(-1);
+  }
+
 // now we can restore data from the last run
     if (!cl.parameter_present("-clean"))
     { if (!cl.parameter_present("-rebuild"))    // if -rebuild is present, then don't restore from archive; rebuild only from logbook
@@ -1949,7 +1944,8 @@ void* process_rbn_info(void* vp)
               const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
 
               for (const auto& exch_mult_name : exch_mults)
-              { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
+              { //if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
+// *** consider putting the regex into the multiplier object (in addition to the list of known values)
                 { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
                   if (!guess.empty())

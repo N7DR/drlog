@@ -25,7 +25,7 @@
 #include <utility>
 
 extern bool QSO_DISPLAY_COUNTRY_MULT;   ///< whether country mults are written on the log line
-extern int  QSO_MULT_WIDTH;             ///< width of mult fields on log line
+extern const unsigned int QSO_MULT_WIDTH;             ///< width of mult fields on log line
 
 // forward declarations
 class running_statistics;
@@ -99,9 +99,13 @@ public:
   READ_AND_WRITE(comment);              ///< comment to be carried with QSO
   READ_AND_WRITE(continent);            ///< continent
   READ_AND_WRITE(date);                 ///< yyyy-mm-dd
+  READ_AND_WRITE(frequency_rx);         ///< RX frequency in form xxxxx.y (kHz)
   READ_AND_WRITE(mode);                 ///< mode
+  READ_AND_WRITE(my_call);              ///< my call
   READ_AND_WRITE(number);               ///< qso number
   READ_AND_WRITE(points);               ///< points for this QSO
+  READ_AND_WRITE(prefix);               ///< prefix, according to the contest's definition
+  READ_AND_WRITE(sent_exchange);        ///< vector<pair<name, value>>; names do not include the TEXCH-
   READ_AND_WRITE(utc);                  ///< hh:mm:ss
 
 /// get TX frequency as a string
@@ -111,15 +115,9 @@ public:
 /// set TX frequency from a string of the form xxxxx.y
   inline void freq(const decltype(_frequency_tx)& str)
     { _frequency_tx = str; }
-
-  READ_AND_WRITE(frequency_rx);         ///< RX frequency in form xxxxx.y (kHz)
-  
-  READ_AND_WRITE(prefix);               ///< prefix, according to the contest's definition
-  READ_AND_WRITE(my_call);              ///< my call
   
   READ(epoch_time);                     ///< time in seconds since the UNIX epoch
 
-  READ_AND_WRITE(sent_exchange);        ///< vector<pair<name, value>>; names do not include the TEXCH-
   READ_AND_WRITE(received_exchange);    ///< names do not include the REXCH-
   READ_AND_WRITE(is_country_mult);      ///< is this QSO a country mult?
   READ_AND_WRITE(is_prefix_mult);       ///< is this QSO a prefix mult?
@@ -198,6 +196,10 @@ public:
 */
   const std::string received_exchange(const std::string& field_name) const;
 
+/*! \brief              Is a particular field present in the received exchange?
+    \param  field_name  name of field for whose presence to test
+    \return             whether <i>field_name</i> is present
+*/
   inline const bool is_exchange_field_present(const std::string& field_name) const
     { return !(received_exchange(field_name).empty()); }
 

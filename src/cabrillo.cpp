@@ -12,6 +12,17 @@
 
         Classes and functions related to the Cabrillo format defined at:
         http://www.kkn.net/~trey/cabrillo/
+
+        Just for the record, the "specification" at the above URL is grossly incomplete
+        (even though the ARRL at http://www.arrl.org/contests/fileform.html
+        explicitly claims that it is complete). As a result, there are several places
+        where one has to guess what might be intended.
+
+        The URL for the "specification" is now:
+          http://wwrof.org/cabrillo/
+
+        The version number at this site claims to be version 3; but it's different (but,
+        in general, no less ambiguous) than the "version 3" that was at the original site.
 */
 
 #include "cabrillo.h"
@@ -148,19 +159,15 @@ cabrillo_tag_templates::cabrillo_tag_templates(void)
   _add("END-OF-LOG");
 
 // LOCATION
-//  tag = "LOCATION";
   _add("LOCATION");
 
 // NAME
-//  tag = "NAME";
   _add("NAME");
 
 // OFFTIME
-//  tag = "OFFTIME";
   _add("OFFTIME");
   
 // OPERATORS
-//  tag = "OPERATORS";
   _add("OPERATORS");
 
 // QSO

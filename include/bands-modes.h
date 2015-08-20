@@ -35,13 +35,14 @@ enum BAND { BAND_160 = 0,
             BAND_12,
             BAND_10,
             ANY_BAND,
+            ALL_BANDS = ANY_BAND,
             MIN_BAND = BAND_160,
             MAX_BAND = BAND_10
           };                                        ///< bands that drlog knows about
 
 const unsigned int NUMBER_OF_BANDS = MAX_BAND + 1;                          ///< how many bands does drlog know about?
 const unsigned int N_BANDS = NUMBER_OF_BANDS;                               ///< how many bands does drlog know about?
-const unsigned int ALL_BANDS = N_BANDS;                                     ///< indicator used to mean "all bands"
+//const unsigned int ALL_BANDS = N_BANDS;                                     ///< indicator used to mean "all bands"
 
 static std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160",
                                                               "80",
