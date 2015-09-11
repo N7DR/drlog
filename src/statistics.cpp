@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 114 2015-08-15 15:19:01Z  $
+// $Id: statistics.cpp 116 2015-09-05 16:14:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -749,7 +749,7 @@ const set<string> running_statistics::worked_country_mults(const BAND b, const M
     \param  m   target mode
     \return     all the values of all country mults worked on band <i>b</i> and mode <i>m</i>
 */
-const map<string /* field name */, set<string> /* values */ >  running_statistics::worked_exchange_mults(const BAND b, const MODE m)
+const map<string /* field name */, set<string> /* values */ >  running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
 { map<string, set<string> > rv;
 
   SAFELOCK(statistics);
@@ -971,6 +971,16 @@ const unsigned int running_statistics::n_worked_exchange_mults(const contest_rul
       }
     }
   }
+
+  return rv;
+}
+
+const unsigned int running_statistics::n_worked_exchange_mults(const BAND b, const MODE m) const
+{ const map<string, set<string> > worked = worked_exchange_mults(b, m);
+  unsigned int rv = 0;
+
+  for (const auto& psss : worked)
+    rv += psss.second.size();
 
   return rv;
 }

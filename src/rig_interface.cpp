@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 110 2015-07-04 14:22:37Z  $
+// $Id: rig_interface.cpp 116 2015-09-05 16:14:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -713,6 +713,13 @@ const bool rig_interface::sub_receiver(void)
   }
 
   return false;    // keep compiler happy
+}
+
+void rig_interface::sub_receiver_toggle(void)
+{ if (sub_receiver_enabled())
+    sub_receiver_disable();
+  else
+    sub_receiver_enable();
 }
 
 // most recent rig status

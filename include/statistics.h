@@ -1,4 +1,4 @@
-// $Id: statistics.h 109 2015-06-27 15:28:31Z  $
+// $Id: statistics.h 116 2015-09-05 16:14:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -229,7 +229,7 @@ public:
     \param  m           mode
     \return             all the exchange mults worked on band <i>b</i> and mode <i>m</i>
 */
-  const std::map<std::string /* field name */, std::set<std::string> /* values */ >   worked_exchange_mults(const BAND b, const MODE m);
+  const std::map<std::string /* field name */, std::set<std::string> /* values */ > worked_exchange_mults(const BAND b, const MODE m) const;
 
 /*! \brief  is a particular string a known callsign mult name?
     \param  putative_callsign_mult_name     string to test
@@ -247,6 +247,8 @@ public:
   const unsigned int n_worked_country_mults(const contest_rules& rules) const;
 
   const unsigned int n_worked_exchange_mults(const contest_rules& rules) const;
+
+  const unsigned int n_worked_exchange_mults(const BAND b, const MODE m) const;
 
   const float mult_to_qso_value(const contest_rules& rules, const BAND b, const MODE m) const;
 

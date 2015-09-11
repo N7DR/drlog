@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 111 2015-07-11 19:49:52Z  $
+// $Id: rig_interface.h 116 2015-09-05 16:14:12Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -291,6 +291,11 @@ public:
 
   inline void sub_receiver_disable(void)
     { sub_receiver(false); }
+
+  void sub_receiver_toggle(void);
+
+  inline void toggle_sub_receiver(void)
+    { sub_receiver_toggle(); }
 
 // get the bandwidth in Hz
   const int bandwidth(void);
