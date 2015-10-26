@@ -499,7 +499,9 @@ const MODE rig_interface::rig_mode(void)
   }
 }
 
-/// set rit offset (in Hz)
+/*! \brief      Set rit offset (in Hz)
+    \param  hz  offset in Hz
+*/
 void rig_interface::rit(const int hz)
 {
 // do nothing if no rig is connected
@@ -512,12 +514,16 @@ void rig_interface::rit(const int hz)
       raw_command(string("RC;"));
     else
     { const int positive_hz = abs(hz);
+      const string hz_str = ( (hz >= 0) ? string("+") : string("-") ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
+
+#if 0
       string hz_str = pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
 
       if (hz >= 0)
         hz_str = string("+") + hz_str;
       else
         hz_str = string("-") + hz_str;
+#endif
 
       raw_command(string("RO") + hz_str +";", false);
     }
@@ -536,9 +542,11 @@ void rig_interface::rit(const int hz)
 const int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
   { const string value = raw_command(string("RO;"), 8);
-    const int rv = from_string<int>(substring(value, 2, 5));
 
-    return rv;
+    return from_string<int>(substring(value, 2, 5));
+//    const int rv = from_string<int>(substring(value, 2, 5));
+
+//    return rv;
   }
   else
   { SAFELOCK(_rig);
@@ -564,7 +572,10 @@ void rig_interface::rit_enable(void)
     rit(1);                         // 1 Hz offset, since a zero offset would disable RIT
 }
 
-/// turn rit off
+/*! \brief  Turn rit off
+
+    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+*/
 void rig_interface::rit_disable(void)
 { if (_model == RIG_MODEL_K3)
     raw_command(string("RT0;"), 0); // proper disable for the K3
@@ -572,6 +583,7 @@ void rig_interface::rit_disable(void)
     rit(0);                         // 0 Hz offset, which hamlib regards as disabling RIT
 }
 
+/// is rit enabled?
 const bool rig_interface::rit_enabled(void)
 { string response;
 
@@ -584,7 +596,10 @@ const bool rig_interface::rit_enabled(void)
   return (response[2] == '1');
 }
 
-// this is a kludge, since hamlib equates an offset with rit turned off (!)
+/*! \brief  Turn xit on
+
+    This is a kludge, since hamlib equates an offset of zero with xit turned off (!)
+*/
 void rig_interface::xit_enable(void)
 { if (_model == RIG_MODEL_K3)
     raw_command(string("XT1;"), 0);
@@ -592,7 +607,10 @@ void rig_interface::xit_enable(void)
     xit(1);                 // 1 Hz offset
 }
 
-// this is a kludge, since hamlib equates an offset with rit turned off (!)
+/*! \brief  Turn xit off
+
+    This is a kludge, since hamlib equates an offset of zero with xit turned off (!)
+*/
 void rig_interface::xit_disable(void)
 { if (_model == RIG_MODEL_K3)
     raw_command(string("XT0;"), 0);
@@ -600,6 +618,7 @@ void rig_interface::xit_disable(void)
     xit(1);                 // 1 Hz offset
 }
 
+/// is xit enabled?
 const bool rig_interface::xit_enabled(void)
 { string response;
 
@@ -612,7 +631,11 @@ const bool rig_interface::xit_enabled(void)
   return (response[2] == '1');
 }
 
-// set XIT; on the K3 this also sets the RIT
+/*! \brief      Set xit offset (in Hz)
+    \param  hz  offset in Hz
+
+    On the K3 this also sets the RIT
+*/
 void rig_interface::xit(const int hz)
 { // hamlib's behaviour anent the K3 is not what we want
   if (_model == RIG_MODEL_K3)
@@ -620,12 +643,16 @@ void rig_interface::xit(const int hz)
       raw_command(string("RC;"), 0);
     else
     { const int positive_hz = abs(hz);
+      const string hz_str = ( (hz >= 0) ? string("+") : string("-") ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
+
+#if 0
       string hz_str = pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
 
       if (hz >= 0)
         hz_str = string("+") + hz_str;
       else
         hz_str = string("-") + hz_str;
+#endif
 
       raw_command(string("RO") + hz_str +";", 0);
     }
@@ -641,6 +668,7 @@ void rig_interface::xit(const int hz)
   }
 }
 
+/// get xit offset (in Hz)
 const int rig_interface::xit(void)
 { shortfreq_t hz;
   SAFELOCK(_rig);
@@ -653,7 +681,7 @@ const int rig_interface::xit(void)
   return static_cast<int>(hz);
 }
 
-// lock the VFO
+/// lock the VFO
 void rig_interface::lock(void)
 { SAFELOCK(_rig);
 
@@ -661,7 +689,6 @@ void rig_interface::lock(void)
     raw_command("LK1;", 0);
   else
   { const int v = 1;
-
     const int status = rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v);
 
     if (status != RIG_OK)
@@ -669,7 +696,7 @@ void rig_interface::lock(void)
   }
 }
 
-// unlock the VFO
+/// unlock the VFO
 void rig_interface::unlock(void)
 { SAFELOCK(_rig);
 
@@ -677,7 +704,6 @@ void rig_interface::unlock(void)
     raw_command("LK0;", 0);
   else
   { const int v = 0;
-
     const int status = rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v);
 
     if (status != RIG_OK)
@@ -685,13 +711,15 @@ void rig_interface::unlock(void)
   }
 }
 
-// sub-receiver on/off
+/*! \brief      Turn sub-receiver on/off
+    \param  b   turn sub-receiver on if TRUE, otherwise turn off
+*/
 void rig_interface::sub_receiver(const bool b)
 { if (_model == RIG_MODEL_K3)
     raw_command( b ? "SB1;" : "SB0;", 0);
 }
 
-// is sub-receiver on?
+/// is sub-receiver on?
 const bool rig_interface::sub_receiver(void)
 { if (_model == RIG_MODEL_K3)
   { try
@@ -715,6 +743,7 @@ const bool rig_interface::sub_receiver(void)
   return false;    // keep compiler happy
 }
 
+/// toggle sub-receiver between on and off
 void rig_interface::sub_receiver_toggle(void)
 { if (sub_receiver_enabled())
     sub_receiver_disable();
@@ -722,14 +751,16 @@ void rig_interface::sub_receiver_toggle(void)
     sub_receiver_enable();
 }
 
-// most recent rig status
+/// return most recent rig status
 const rig_status rig_interface::status(void)
 { SAFELOCK(_rig);
 
   return _status;
 }
 
-// set the keyer speed in WPM
+/*! \brief          Set the keyer speed
+    \param  wpm     keyer speed in WPM
+*/
 void rig_interface::keyer_speed(const int wpm)
 { SAFELOCK(_rig);
 
@@ -748,7 +779,7 @@ void rig_interface::keyer_speed(const int wpm)
   }
 }
 
-// get the keyer speed in WPM
+/// get the keyer speed in WPM
 const int rig_interface::keyer_speed(void)
 { SAFELOCK(_rig);
 
@@ -1096,7 +1127,7 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
 }
 #endif
 
-// is the VFO locked?
+/// is the VFO locked?
 const bool rig_interface::is_locked(void)
 { if (_model == RIG_MODEL_K3)
   { const string status_str = raw_command("LK;", 4);
@@ -1117,7 +1148,7 @@ const bool rig_interface::is_locked(void)
   }
 }
 
-// get the bandwidth in Hz
+/// get the bandwidth in Hz
 const int rig_interface::bandwidth(void)
 { if (!_rig_connected)
     return 0;
@@ -1130,6 +1161,11 @@ const int rig_interface::bandwidth(void)
   return from_string<int>(substring(status_str, 2, 4)) * 10;
 }
 
+/*! \brief      Get the most recent frequency for a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     the rig's most recent frequency for band <i>b</i> and mode <i>m</i>.
+*/
 const frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
 { SAFELOCK(_rig);
 
@@ -1138,12 +1174,22 @@ const frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
   return ( ( cit == _last_frequency.cend() ) ? frequency() : cit->second );    // return 0 if there's no last frequency
 }
 
+/*! \brief      Set a new value for the most recent frequency for a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \param  f   frequency
+*/
 void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequency& f) noexcept
 { SAFELOCK(_rig);
 
   _last_frequency[ { b, m } ] = f;
 }
 
+/*! \brief Is the rig transmitting?
+
+    With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
+    (This is, unfortunately, just one example of the unreliability of the K3 in responding to commands.)
+*/
 const bool rig_interface::is_transmitting(void)
 { if (_rig_connected)
   { bool rv = true;                                        // default: be paranoid
@@ -1163,7 +1209,7 @@ const bool rig_interface::is_transmitting(void)
     return false;
 }
 
-// is rig in TEST mode?
+/// is the rig in TEST mode?
 const bool rig_interface::test(void)
 { if (_model == RIG_MODEL_DUMMY)
     return true;
@@ -1186,6 +1232,11 @@ const bool rig_interface::test(void)
   return rv;
 }
 
+/*! \brief      Explicitly put the rig into or out of TEST mode
+    \param  b   whether to enter TEST mode
+
+    This works only with the K3.
+*/
 void rig_interface::test(const bool b)
 { if (test() != b)
   { if (_rig_connected)
@@ -1199,15 +1250,19 @@ void rig_interface::test(const bool b)
   }
 }
 
+/// which VFO is currently used for transmitting?
 const VFO rig_interface::tx_vfo(void)
 { if (!_rig_connected)
     return VFO_A;
 
   return (split_enabled() ? VFO_B : VFO_A);  // this is the recommended procedure from the hamlib reflector
 // I think this is ridiculous, because it does not allow for the case where the rig is in reverse split,
-// with the TX on A and RX on B
+// with the TX on A and RX on B.
 
-  /*
+// Even worse, something like the next few lines, which logically should provide the desired result, is,
+// according to comments on the hamlib reflector, NOT guaranteed to give the correct answer
+
+/*
   vfo_t v;
   const int status = rig_get_vfo(_rigp, &v);
 
@@ -1218,7 +1273,9 @@ const VFO rig_interface::tx_vfo(void)
 */
 }
 
-
+/*! \brief      Set the bandwidth of VFO A
+    \param  hz  desired bandwidth, in Hz
+*/
 void rig_interface::bandwidth_a(const unsigned int hz)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
@@ -1229,6 +1286,9 @@ void rig_interface::bandwidth_a(const unsigned int hz)
   }
 }
 
+/*! \brief      Set the bandwidth of VFO B
+    \param  hz  desired bandwidth, in Hz
+*/
 void rig_interface::bandwidth_b(const unsigned int hz)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
@@ -1239,12 +1299,16 @@ void rig_interface::bandwidth_b(const unsigned int hz)
   }
 }
 
-// register a function for alerting the user
+/// register a function for alerting the user
 void rig_interface::register_error_alert_function(void (*error_alert_function)(const string&) )
 { SAFELOCK(_rig);
   _error_alert_function = error_alert_function;
 }
 
+/*! \brief      Convert a hamlib error code to a printable string
+    \param  e   hamlib error code
+    \return     Printable string corresponding to error code <i>e</i>
+*/
 const string hamlib_error_code_to_string(const int e)
 { switch (e)
   { case RIG_OK :
@@ -1306,13 +1370,7 @@ const string hamlib_error_code_to_string(const int e)
   }
 }
 
-
-
-
-
-
-
-
+/// default frequencies for bands and modes
 map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { { BAND_160, MODE_CW },  frequency(1800000) },
                                                           { { BAND_160, MODE_SSB }, frequency(1900000) },
                                                           { { BAND_80,  MODE_CW },  frequency(3500000) },

@@ -156,8 +156,20 @@ public:
 */
   void rig_frequency(const frequency& f);
 
+/*! \brief      Set frequency of VFO A
+    \param  f   frequency to which to QSY
+
+                Does nothing if <i>f</i> is not within a ham band
+*/
+  inline void rig_frequency_a(const frequency& f)
+    { rig_frequency(f); }
+
 /// get the frequency of VFO A
   const frequency rig_frequency(void);
+
+/// get the frequency of VFO A
+  inline const frequency rig_frequency_a(void)
+    { return rig_frequency(); }
 
 /*! \brief      Set frequency of VFO B
     \param  f   frequency to which to QSY
@@ -201,25 +213,40 @@ public:
 */
   void rig_mode(const MODE m);
 
-/// is rig in TEST mode?
+/// is the rig in TEST mode?
   const bool test(void);
 
-/// set or unset test mode
+/*! \brief      Explicitly put the rig into or out of TEST mode
+    \param  b   whether to enter TEST mode
+
+    This works only with the K3.
+*/
   void test(const bool);
 
-/// set rit offset (in Hz)
+/*! \brief      Set rit offset (in Hz)
+    \param  hz  offset in Hz
+*/
   void rit(const int hz);
 
 /// get rit offset (in Hz)
   const int rit(void);
 
-/// turn rit on
+/*! \brief  Turn rit on
+
+    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+*/
   void rit_enable(void);
 
-/// turn rit off
+/*! \brief  Turn rit off
+
+    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+*/
   void rit_disable(void);
 
-/// turn rit off
+/*! \brief  Turn rit off
+
+    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+*/
   inline void disable_rit(void)
     { rit_disable(); }
 
@@ -230,7 +257,11 @@ public:
 /// is rit enabled?
   const bool rit_enabled(void);
 
-/// set xit offset (in Hz)
+/*! \brief      Set xit offset (in Hz)
+    \param  hz  offset in Hz
+
+    On the K3 this also sets the RIT
+*/
   void xit(const int hz);
 
 /// get xit offset (in Hz)
@@ -274,15 +305,18 @@ public:
 /// lock the VFO
   void lock(void);
 
-// unlock the VFO
+/// unlock the VFO
   void unlock(void);
 
-// sub-receiver on/off
+/*! \brief      Turn sub-receiver on/off
+    \param  b   turn sub-receiver on if TRUE, otherwise turn off
+*/
   void sub_receiver(const bool);
 
-// is sub-receiver on?
+/// is sub-receiver on?
   const bool sub_receiver(void);
 
+/// is sub-receiver on?
   inline const bool sub_receiver_enabled(void)
     { return sub_receiver(); }
 
@@ -292,6 +326,7 @@ public:
   inline void sub_receiver_disable(void)
     { sub_receiver(false); }
 
+/// toggle sub-receiver between on and off
   void sub_receiver_toggle(void);
 
   inline void toggle_sub_receiver(void)
@@ -300,10 +335,12 @@ public:
 // get the bandwidth in Hz
   const int bandwidth(void);
 
-// set the keyer speed in WPM
+/*! \brief          Set the keyer speed
+    \param  wpm     keyer speed in WPM
+*/
   void keyer_speed(const int wpm);
 
-// get the keyer speed in WPM
+/// get the keyer speed in WPM
   const int keyer_speed(void);
 
 // explicit K3 commands
@@ -317,28 +354,57 @@ public:
                                 const unsigned int expected_length);
 #endif
 
-  const frequency get_last_frequency(const BAND b, const MODE m);
+/*! \brief      Get the most recent frequency for a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     the rig's most recent frequency for band <i>b</i> and mode <i>m</i>.
+*/  const frequency get_last_frequency(const BAND b, const MODE m);
+
+/*! \brief      Set a new value for the most recent frequency for a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \param  f   frequency
+*/
   void set_last_frequency(const BAND b, const MODE m, const frequency& f) noexcept;
 
+/*! \brief Is the rig transmitting?
+
+    With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
+    (This is, unfortunately, just one example of the unreliability of the K3 in responding to commands.)
+*/
   const bool is_transmitting(void);
 
 // register a function for alerting the user
   void register_error_alert_function(void (*error_alert_function)(const std::string&) );
 
+/// which VFO is currently used for transmitting?
   const VFO tx_vfo(void);
 
 // get the band and mode from the rig, so that the status can be subsequently checked
 //  inline void get_status(void)
 //    { _poll_thread_function(nullptr); }
 
+/*! \brief      Set the bandwidth of VFO A
+    \param  hz  desired bandwidth, in Hz
+*/
   void bandwidth_a(const unsigned int hz);
 
+/*! \brief      Set the bandwidth of VFO A
+    \param  hz  desired bandwidth, in Hz
+*/
   inline void bandwidth(const unsigned int hz)
     { bandwidth_a(hz); }
 
+/*! \brief      Set the bandwidth of VFO B
+    \param  hz  desired bandwidth, in Hz
+*/
   void bandwidth_b(const unsigned int hz);
 };
 
+/*! \brief      Convert a hamlib error code to a printable string
+    \param  e   hamlib error code
+    \return     Printable string corresponding to error code <i>e</i>
+*/
 const std::string hamlib_error_code_to_string(const int e);
 
 // -------------------------------------- Errors  -----------------------------------
