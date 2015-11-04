@@ -990,6 +990,15 @@ int main(int argc, char** argv)
   if (cw_p)
     cw_p->speed(context.cw_speed());                    // set computer keyer speed
 
+
+// &&&
+//  const string test = "RW6AA/9";
+
+//  ost << test << ": " << location_db.canonical_prefix(test) << endl;
+//  exit(0);
+// &&&
+
+
   try
   { if (context.sync_keyer())
       rig.keyer_speed(context.cw_speed());
@@ -4487,7 +4496,7 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
     \param  m               current mode
 */
 void update_remaining_exch_mults_window(const string& exch_mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
-{ const set<string> known_exchange_values_set = statistics.known_exchange_mults(exch_mult_name);
+{ const set<string> known_exchange_values_set = statistics.known_exchange_mult_values(exch_mult_name);
   const vector<string> known_exchange_values(known_exchange_values_set.cbegin(), known_exchange_values_set.cend());
 //  window* wp = win_remaining_exch_mults_p[exch_mult_name];
 //  window& win = (*wp);

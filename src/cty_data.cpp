@@ -600,21 +600,21 @@ void location_database::add_alt_call(const string& call, const location_info& li
 }
 
 const location_info location_database::info(const string& cs)
-{ const string callsign = remove_peripheral_spaces(cs);
+{ string callsign = remove_peripheral_spaces(cs);                  // make callsign mutable, for handling case of /n
   
   SAFELOCK(_location_database);
-  //ost << "Searching for: " << callsign << endl;
+  ost << "Searching for: " << callsign << endl;
 
   auto db_posn = _db_checked.find(callsign);
 
 // it's easy if there's already an entry
   if (db_posn != _db_checked.end())
-  { //ost << "There was exact entry found and returned for " << callsign << endl;
-    //ost << db_posn->second << endl;
+  { ost << "There was exact entry found and returned for " << callsign << endl;
+    ost << db_posn->second << endl;
     return db_posn->second;
   }
   
-//  ost << "There was no exact entry" << endl;
+  ost << "There was no exact entry" << endl;
   
 // see if there's an exact match in the alternative call db
   db_posn = _alt_call_db.find(callsign);
@@ -624,7 +624,7 @@ const location_info location_database::info(const string& cs)
     return db_posn->second;  
   }
 
-//ost << "There was no exact entry in the alternative call database" << endl;
+ost << "There was no exact entry in the alternative call database" << endl;
 
 // see if it's some guy already in the db but now signing /QRP
   if (callsign.length() >= 5 and last(callsign, 4) == "/QRP")
@@ -648,8 +648,8 @@ const location_info location_database::info(const string& cs)
     }
   }
   
-//ost << "It is not a /QRP" << endl;
-//ost << "last: " << last(callsign, 3) << endl;
+ost << "It is not a /QRP" << endl;
+ost << "last: " << last(callsign, 3) << endl;
 
 // /MM and /AM are in no country
   if (last(callsign, 3) == "/AM" or last(callsign, 3) == "/MM")
@@ -659,12 +659,12 @@ const location_info location_database::info(const string& cs)
     return rv;
   }
   
-//ost << "it is not /AM or MM" << endl;
+ost << "it is not /AM or MM" << endl;
   
 // try to determine the canonical prefix
   if (!contains(callsign, "/") or (callsign.length() >= 2 and penultimate_char(callsign) == '/'))    // "easy" -- no portable indicator
   {
-//ost << "No portable indicator" << endl;
+ost << "No portable indicator" << endl;
 // country is determined by the longest substring starting at the start of the call and which is already
 // in the database. This assumes that, for example, G4AMJ is in the same country as G4AM [if G4AM has already been worked]).
 // I can think of counter-examples to do with the silly US call system, but at least this is a starting point.
@@ -672,11 +672,22 @@ const location_info location_database::info(const string& cs)
     string best_fit;
     location_info best_info;
     unsigned int len = 1;
+
+    if ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )    // if /n
+    { static const string digits( { "0123456789" } );
+
+      const size_t last_digit_posn = substring(callsign, 0, callsign.length() - 2).find_last_of(digits);
+
+      if (last_digit_posn != string::npos)
+      { callsign[last_digit_posn] = last_char(callsign);
+        callsign = substring(callsign, 0, callsign.length() - 2);
+      }
+    }
      
     while (len <= callsign.length())
     { string target = callsign.substr(0, len);
      
-//ost << "Target: " << target << endl;
+ost << "Target: " << target << endl;
      
       map<string, location_info>::iterator db_posn = _db.find(target);
      

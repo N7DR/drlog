@@ -42,11 +42,6 @@ class running_statistics
 {
 protected:
   
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_dupes;       ///< number of dupes, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_qsos;        ///< number of QSOs, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _qso_points;    ///< number of QSO points, per band and mode
-  std::array<std::array<unsigned int, N_BANDS>, N_MODES>    _n_ON_qsos;     ///< number of ON QSOs, per band and mode -- for UBA
-
   std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;  ///< callsign multipliers (supports more than one)
   bool                                                              _callsign_mults_used;   ///< are callsign mults used? Copied from rules
 
@@ -61,10 +56,13 @@ protected:
 
   location_database                                                 _location_db;           ///< database for location-based lookups
 
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_dupes;               ///< number of dupes, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_qsos;                ///< number of QSOs, per band and mode
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _n_ON_qsos;             ///< number of ON QSOs, per band and mode -- for UBA
+  std::array<std::array<unsigned int, N_BANDS>, N_MODES>            _qso_points;            ///< number of QSO points, per band and mode
 
-
-  unsigned int  _qtc_qsos_sent;         ///< total number of QSOs sent in QTCs
-  unsigned int  _qtc_qsos_unsent;       ///< total number of (legal) QSOs available but not yet sent in QTCs
+  unsigned int                                                      _qtc_qsos_sent;         ///< total number of QSOs sent in QTCs
+  unsigned int                                                      _qtc_qsos_unsent;       ///< total number of (legal) QSOs available but not yet sent in QTCs
 
 /*! \brief              Add a callsign mult name, value and band to those worked
     \param  mult_name   name of callsign mult
@@ -132,7 +130,8 @@ public:
   const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
 
 /*! \brief          Add a known value of country mult
-    \param  str     Canonical prefix of mult
+    \param  str     canonical prefix of mult
+    \param  rules   rules for this contest
     \return         Whether <i>str</i> was actually added
 
     Does nothing and returns false if <i>str</i> is already known
@@ -156,7 +155,7 @@ public:
   
 /*! \brief          Perform a complete rebuild
     \param  log     logbook
-    \param  rules   contest rules
+    \param  rules   rules for this contest
 */
   void rebuild(const logbook& log, const contest_rules& rules);
 
@@ -167,11 +166,11 @@ public:
 */
   const bool add_known_exchange_mult(const std::string& name, const std::string& value);
 
-/*! \brief          Return all known legal value for a particular exchange multiplier
+/*! \brief          Return all known legal values for a particular exchange multiplier
     \param  name    name of the exchange multiplier
     \return         All the known legal values of <i>name</i>
 */
-  const std::set<std::string> known_exchange_mults(const std::string& name);
+  const std::set<std::string> known_exchange_mult_values(const std::string& name);
 
 /*! \brief                          Do we still need to work a particular exchange mult on a particular band and mode?
     \param  exchange_field_name     name of the target exchange field
@@ -195,7 +194,10 @@ public:
 */
   const std::string summary_string(const contest_rules& rules);
 
-/// total points
+/*! \brief          Total points
+    \param  rules   rules for this contest
+    \return         current point total
+*/
   const unsigned int points(const contest_rules& rules) const;
 
 /*! \brief              Worked callsign mults for a particular band and mode
@@ -224,34 +226,66 @@ public:
   inline const size_t n_known_country_mults(void) const
     { return _country_multipliers.n_known(); }
 
-/*! \brief              Worked exchange mults for a particular band and mode
-    \param  b           band
-    \param  m           mode
-    \return             all the exchange mults worked on band <i>b</i> and mode <i>m</i>
+/*! \brief      Worked exchange mults for a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     all the exchange mults worked on band <i>b</i> and mode <i>m</i>
 */
   const std::map<std::string /* field name */, std::set<std::string> /* values */ > worked_exchange_mults(const BAND b, const MODE m) const;
 
-/*! \brief  is a particular string a known callsign mult name?
+/*! \brief                                  Is a particular string a known callsign mult name?
     \param  putative_callsign_mult_name     string to test
-    \return whether <i>putative_callsign_mult_name</i> is a known callsign mult name
+    \return                                 whether <i>putative_callsign_mult_name</i> is a known callsign mult name
 */
   const bool known_callsign_mult_name(const std::string& putative_callsign_mult_name) const;
 
+/// clear the dynamic information
   void clear_info(void);
 
+/*! \brief      Set the number of sent QTC QSOs
+    \param  n   number of sent QTC QSOs
+*/
   void qtc_qsos_sent(const unsigned int n);
+
+/*! \brief      Set the number of unsent QTC QSOs
+    \param  n   number of unsent QTC QSOs
+*/
   void qtc_qsos_unsent(const unsigned int n);
 
+/*! \brief          Get the number of worked callsign mults
+    \param  rules   rules for this contest
+    \return         the number of callsign mults worked
+*/
   const unsigned int n_worked_callsign_mults(const contest_rules& rules) const;
 
+/*! \brief          Get the number of worked country mults
+    \param  rules   rules for this contest
+    \return         the number of country mults worked
+*/
   const unsigned int n_worked_country_mults(const contest_rules& rules) const;
 
+/*! \brief          Get the number of worked exchange mults
+    \param  rules   rules for this contest
+    \return         the number of exchange mults worked
+*/
   const unsigned int n_worked_exchange_mults(const contest_rules& rules) const;
 
+/*! \brief      Get the number of exchange mults worked on a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     the number of exchange mults worked on band <i>b</i> and mode <i>m</i>
+*/
   const unsigned int n_worked_exchange_mults(const BAND b, const MODE m) const;
 
+/*! \brief          What is the ratio of the value of a new mult to the value of a new (non-mult) QSO?
+    \param  rules   rules for this contest
+    \param  b       band
+    \param  m       mode
+    \return         the ratio of the value of a new mult QSO on band <i>b</i> and mode <i>m</i> to the value of a new non-mult QSO on the same band and mode
+*/
   const float mult_to_qso_value(const contest_rules& rules, const BAND b, const MODE m) const;
 
+/// serialise contest_statistics
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(statistics);
@@ -262,10 +296,15 @@ public:
          & _country_mults_used
          & _exchange_multipliers
          & _exchange_mults_used
+         & _exch_mult_fields
+         & _include_qtcs
          & _location_db
          & _n_dupes
          & _n_qsos
-         & _qso_points;
+         & _n_ON_qsos
+         & _qso_points
+         & _qtc_qsos_sent
+         & _qtc_qsos_unsent;
     }
 };
 
@@ -280,23 +319,43 @@ public:
 class call_history
 {
 protected:
-  std::map<std::string, std::set<bandmode> > _history;
+  std::map<std::string, std::set<bandmode> > _history;              ///< container for the history
 
-  pt_mutex _history_mutex;
+  pt_mutex _history_mutex;                                          ///< mutex for the container
 
 public:
 
+/*! \brief          Add a QSO to the history
+    \param  qso     QSO to add
+*/
   void operator+=(const QSO& qso);
 
+/*! \brief      Has a call been worked on a particular band and mode?
+    \param  s   callsign to test
+    \param  b   band to test
+    \param  m   mode to test
+    \return     whether <i>s</i> has been worked on band <i>b</i> and mode <i>m</i>
+*/
   const bool worked(const std::string& s, const BAND b, const MODE m);
 
-//  inline const bool worked(const std::string& s, const BAND b)
-//    { return (worked(s, b, MODE_CW) or worked(s, b, MODE_SSB)); }
-
+/*! \brief      Has a call been worked on a particular band?
+    \param  s   callsign to test
+    \param  b   band to test
+    \return     whether <i>s</i> has been worked on band <i>b</i>
+*/
   const bool worked(const std::string& s, const BAND b);
 
+/*! \brief      Has a call been worked on a particular mode?
+    \param  s   callsign to test
+    \param  m   mode to test
+    \return     whether <i>s</i> has been worked on mode <i>m</i>
+*/
   const bool worked(const std::string& s, const MODE m);
 
+/*! \brief      Has a call been worked?
+    \param  s   callsign to test
+    \return     whether <i>s</i> has been worked
+*/
   const bool worked(const std::string& s);
 
   const bool worked_on_another_band(const std::string& s, const BAND b);

@@ -523,11 +523,11 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
   return false;
 }
 
-/*! \brief          Return all known legal value for a particular exchange multiplier
+/*! \brief          Return all known legal values for a particular exchange multiplier
     \param  name    name of the exchange multiplier
     \return         all the known legal values of <i>name</i>
 */
-const set<string> running_statistics::known_exchange_mults(const string& name)
+const set<string> running_statistics::known_exchange_mult_values(const string& name)
 { SAFELOCK(statistics);
 
   for (const auto& psm : _exchange_multipliers)
@@ -765,7 +765,7 @@ const map<string /* field name */, set<string> /* values */ >  running_statistic
  return rv;
 }
 
-/// clear dynamic info
+/// clear the dynamic information
 void running_statistics::clear_info(void)
 { SAFELOCK(statistics);
 
@@ -785,6 +785,9 @@ void running_statistics::clear_info(void)
   }
 }
 
+/*! \brief      Set the number of sent QTC QSOs
+    \param  n   number of sent QTC QSOs
+*/
 void running_statistics::qtc_qsos_sent(const unsigned int n)
 { SAFELOCK(statistics);
 
@@ -792,12 +795,22 @@ void running_statistics::qtc_qsos_sent(const unsigned int n)
     _qtc_qsos_sent = n;
 }
 
+/*! \brief      Set the number of unsent QTC QSOs
+    \param  n   number of unsent QTC QSOs
+*/
 void running_statistics::qtc_qsos_unsent(const unsigned int n)
 { SAFELOCK(statistics);
 
   if (_include_qtcs)
     _qtc_qsos_unsent = n;
 }
+
+/*! \brief          What is the ratio of the value of a new mult to the value of a new (non-mult) QSO?
+    \param  rules   rules for this contest
+    \param  b       band
+    \param  m       mode
+    \return         the ratio of the value of a new mult QSO on band <i>b</i> and mode <i>m</i> to the value of a new non-mult QSO on the same band and mode
+*/
 
 // lots of ways to come up with a plausible definition for the value of a mult
 const float running_statistics::mult_to_qso_value(const contest_rules& rules, const BAND b, const MODE m) const
@@ -895,6 +908,10 @@ const unsigned int running_statistics::n_qsos(const contest_rules& rules, const 
   return rv;
 }
 
+/*! \brief          Get the number of worked callsign mults
+    \param  rules   rules for this contest
+    \return         the number of callsign mults worked
+*/
 const unsigned int running_statistics::n_worked_callsign_mults(const contest_rules& rules) const
 { const vector<BAND>& permitted_bands = rules.permitted_bands();
   const set<BAND>& score_bands = rules.score_bands();
@@ -917,6 +934,10 @@ const unsigned int running_statistics::n_worked_callsign_mults(const contest_rul
   return rv;
 }
 
+/*! \brief          Get the number of worked country mults
+    \param  rules   rules for this contest
+    \return         the number of country mults worked
+*/
 const unsigned int running_statistics::n_worked_country_mults(const contest_rules& rules) const
 { //const vector<BAND>& permitted_bands = rules.permitted_bands();
   const set<BAND>& score_bands = rules.score_bands();
@@ -935,6 +956,10 @@ const unsigned int running_statistics::n_worked_country_mults(const contest_rule
   return rv;
 }
 
+/*! \brief          Get the number of worked exchange mults
+    \param  rules   rules for this contest
+    \return         the number of exchange mults worked
+*/
 const unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& rules) const
 { const vector<BAND> permitted_bands = rules.permitted_bands();
   const set<MODE> permitted_modes = rules.permitted_modes();
@@ -975,6 +1000,12 @@ const unsigned int running_statistics::n_worked_exchange_mults(const contest_rul
   return rv;
 }
 
+
+/*! \brief      Get the number of exchange mults worked on a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     the number of exchange mults worked on band <i>b</i> and mode <i>m</i>
+*/
 const unsigned int running_statistics::n_worked_exchange_mults(const BAND b, const MODE m) const
 { const map<string, set<string> > worked = worked_exchange_mults(b, m);
   unsigned int rv = 0;
@@ -1000,12 +1031,21 @@ void call_history::rebuild(const logbook& logbk)
     (*this) += qso;
 }
 
+/*! \brief          Add a QSO to the history
+    \param  qso     QSO to add
+*/
 void call_history::operator+=(const QSO& qso)
 { SAFELOCK(_history);
 
   _history[qso.callsign()].insert( { qso.band(), qso.mode() } );
 }
 
+/*! \brief      Has a call been worked on a particular band and mode?
+    \param  s   callsign to test
+    \param  b   band to test
+    \param  m   mode to test
+    \return     whether <i>s</i> has been worked on band <i>b</i> and mode <i>m</i>
+*/
 const bool call_history::worked(const std::string& s, const BAND b , const MODE m)
 { SAFELOCK(_history);
 
@@ -1020,6 +1060,11 @@ const bool call_history::worked(const std::string& s, const BAND b , const MODE 
   return (scit != sbm.end());
 }
 
+/*! \brief      Has a call been worked on a particular band?
+    \param  s   callsign to test
+    \param  b   band to test
+    \return     whether <i>s</i> has been worked on band <i>b</i>
+*/
 const bool call_history::worked(const string& s, const BAND b)
 { SAFELOCK(_history);
 
@@ -1038,6 +1083,11 @@ const bool call_history::worked(const string& s, const BAND b)
 //return (worked(s, b, MODE_CW) or worked(s, b, MODE_SSB));
 }
 
+/*! \brief      Has a call been worked on a particular mode?
+    \param  s   callsign to test
+    \param  m   mode to test
+    \return     whether <i>s</i> has been worked on mode <i>m</i>
+*/
 const bool call_history::worked(const string& s, const MODE m)
 { SAFELOCK(_history);
 
@@ -1055,6 +1105,10 @@ const bool call_history::worked(const string& s, const MODE m)
   return false;
 }
 
+/*! \brief      Has a call been worked?
+    \param  s   callsign to test
+    \return     whether <i>s</i> has been worked
+*/
 const bool call_history::worked(const string& s)
 { SAFELOCK(_history);
   return (_history.find(s) != _history.end());
