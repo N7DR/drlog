@@ -993,8 +993,9 @@ int main(int argc, char** argv)
 
 // &&&
 //  const string test = "RW6AA/9";
-
-//  ost << test << ": " << location_db.canonical_prefix(test) << endl;
+//
+//  ost << "1 " << test << ": " << location_db.canonical_prefix(test) << endl;
+//  ost << "2 " << test << ": " << location_db.canonical_prefix(test) << endl;
 //  exit(0);
 // &&&
 

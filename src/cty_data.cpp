@@ -532,6 +532,10 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
       break;
     }    
   }
+
+  ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+  ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+
 }
 
 void location_database::_insert_alternatives(const location_info& info, const map<string, alternative_country_info>& alternatives)
@@ -600,10 +604,14 @@ void location_database::add_alt_call(const string& call, const location_info& li
 }
 
 const location_info location_database::info(const string& cs)
-{ string callsign = remove_peripheral_spaces(cs);                  // make callsign mutable, for handling case of /n
+{ const string original_callsign = remove_peripheral_spaces(cs);
+  string callsign = original_callsign;                  // make callsign mutable, for handling case of /n
   
   SAFELOCK(_location_database);
   ost << "Searching for: " << callsign << endl;
+
+  ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+  ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
 
   auto db_posn = _db_checked.find(callsign);
 
@@ -664,7 +672,7 @@ ost << "it is not /AM or MM" << endl;
 // try to determine the canonical prefix
   if (!contains(callsign, "/") or (callsign.length() >= 2 and penultimate_char(callsign) == '/'))    // "easy" -- no portable indicator
   {
-ost << "No portable indicator" << endl;
+//ost << "No portable indicator" << endl;
 // country is determined by the longest substring starting at the start of the call and which is already
 // in the database. This assumes that, for example, G4AMJ is in the same country as G4AM [if G4AM has already been worked]).
 // I can think of counter-examples to do with the silly US call system, but at least this is a starting point.
@@ -673,7 +681,7 @@ ost << "No portable indicator" << endl;
     location_info best_info;
     unsigned int len = 1;
 
-    if ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )    // if /n
+    if ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )    // if /n; this changes callsign
     { static const string digits( { "0123456789" } );
 
       const size_t last_digit_posn = substring(callsign, 0, callsign.length() - 2).find_last_of(digits);
@@ -684,10 +692,18 @@ ost << "No portable indicator" << endl;
       }
     }
      
+    ost << "found_any_fits (1) = " << boolalpha << found_any_hits << endl;
+
     while (len <= callsign.length())
-    { string target = callsign.substr(0, len);
+    { ost << "found_any_fits (3)= " << boolalpha << found_any_hits << endl;
+
+      const string target = callsign.substr(0, len);
      
 ost << "Target: " << target << endl;
+
+ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+
      
       map<string, location_info>::iterator db_posn = _db.find(target);
      
@@ -695,7 +711,7 @@ ost << "Target: " << target << endl;
       { found_any_hits = true;
         best_fit = target;
         best_info = db_posn->second;
-//         cout << "Best fit : " << best_fit << endl; 
+        ost << "Best fit : " << best_fit << endl;
       }
       else                                   // didn't find this substring
       { // delete this because of KH6, where K is a hit, KH6 is a hit, but KH is not
@@ -703,6 +719,8 @@ ost << "Target: " << target << endl;
 
       len++;
     }
+
+//    ost << "found_any_fits (2)= " << boolalpha << found_any_hits << endl;
 
 // Guantanamo Bay is a mess
     if (best_fit == "KG4" and (callsign.length() != 5) )
@@ -807,7 +825,8 @@ ost << "Target: " << target << endl;
         }
       }
 
-      _db_checked.insert( { callsign, best_info } );
+//      _db_checked.insert( { callsign, best_info } );
+      _db_checked.insert( { original_callsign, best_info } );
 
 //      ost << "data inserted for callsign " << callsign << ":" << endl;
 //      ost << best_info << endl;
