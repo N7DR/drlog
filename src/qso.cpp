@@ -33,7 +33,7 @@ extern message_stream ost;                  ///< for debugging, info
 extern void alert(const string& msg);       ///< alert the user
 
 bool QSO_DISPLAY_COUNTRY_MULT = true;       ///< whether to display country mults in log window (may be changed in config file)
-const unsigned int  QSO_MULT_WIDTH = 5;     ///< default width of QSO mult fields in log window (0 =
+unsigned int  QSO_MULT_WIDTH = 5;           ///< default width of QSO mult fields in log window
 
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
@@ -343,6 +343,17 @@ const bool QSO::is_exchange_mult(void) const
 
   return false;
 }
+
+void QSO::set_exchange_mult(const string& field_name)
+{ for (auto& field : _received_exchange)
+  {
+    if (field.is_possible_mult() and field.name() == field_name)
+    { field.is_mult(true);
+      //ost << "set exchange mult " << field_name << " for QSO: " << *this << endl;
+    }
+  }
+}
+
 
 /*! \brief                          Re-format according to a Cabrillo template
     \param  cabrillo_qso_template   template for the QSO: line in a Cabrillo file, from configuration file
@@ -663,15 +674,6 @@ const string QSO::received_exchange(const string& field_name) const
   return string();
 }
 
-//const bool QSO::is_exchange_field_present(const string& field_name) const
-//{ for (const auto& field : _received_exchange)
-//  { if (field.name() == field_name)
-//      return true;
-//  }
-//
-//  return false;
-//}
-
 /*! \brief              Return a single field from the sent exchange
     \param  field_name  the name of the field
     \return             the value of <i>field_name</i> in the sent exchange
@@ -749,9 +751,6 @@ const string QSO::log_line(void)
     if (name == "10MSTATE")
       field_width = 3;
 
-//    if (QSO_MULT_WIDTH)
-//      field_width = QSO_MULT_WIDTH;
-
     rv += " " + pad_string(field.value(), field_width);
   }
 
@@ -767,7 +766,7 @@ const string QSO::log_line(void)
 
 // exchange mult
   for (const auto& field : _received_exchange)
-  { ost << "in qso::log_line(); processing field: " << field << endl;
+  { ost << "in qso::log_line(); processing exchange field: " << field << endl;
 
     unsigned int field_width = QSO_MULT_WIDTH;
     const string& name = field.name();
@@ -792,9 +791,6 @@ const string QSO::log_line(void)
 
     if (name == "10MSTATE")
       field_width = 3;
-
-//    if (QSO_MULT_WIDTH)
-//      field_width = QSO_MULT_WIDTH;
 
     rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
   }

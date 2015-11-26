@@ -626,7 +626,6 @@ template <class T>
 const bool operator<(const std::set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
-
 /*! \brief      Is an object a member of an unordered set?
     \param  s   unordered set to be tested
     \param  v   object to be tested for membership
@@ -636,8 +635,11 @@ template <class T>
 const bool operator<(const std::unordered_set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
-
-
+/*! \brief      Make an explicit safelock from a mutex
+    \param  m   the mutex to be locked
+    \param  v   object to be returned after the call to the lock (and implied unlock, in the destructor)
+    \return     <i>v</i>, following a lock and unlock
+*/
 template <class T>
 const T SAFELOCK_GET(pt_mutex& m, const T& v)
 { safelock safelock_z(m, "SAFELOCK_GET");
@@ -645,6 +647,11 @@ const T SAFELOCK_GET(pt_mutex& m, const T& v)
   return v;
 }
 
+/*! \brief          Make an explicit safelock from a mutex, then set a value
+    \param  m       the mutex to be locked
+    \param  var     variable to be set
+    \param  val     value to which <i>var</i> is to be set following the lock
+*/
 template <class T>
 void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
 { safelock safelock_z(m, "SAFELOCK_SET");
@@ -652,6 +659,10 @@ void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
   var = val;
 }
 
+/*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
+    \param  original_mapping    original mapping
+    \return                     inverted mapping
+*/
 template <typename M>  // M = map<T, set<T> >
 auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
 { std::map<typename M::key_type, typename M::key_type> rv;
@@ -670,6 +681,7 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 typedef std::chrono::duration<long, std::centi> centiseconds;
 typedef std::chrono::duration<long, std::deci>  deciseconds;
 
+#if 0
 template <class D, class P> // P = parameter; D = data in the database
 class cached_data
 {
@@ -716,6 +728,7 @@ public:
     _db.erase(param);
   }
 };
+#endif
 
 // allow easy execution of a loop a predetermined number of times.
 // This does throw a warning, but I can't think of a better way to
@@ -777,6 +790,8 @@ template <typename Input, typename UnaryPredicate>
 
 // ------------------------ container for per-band and per-mode information ------------
 
+#if 0
+
 #include <array>
 
 template <typename T>
@@ -813,5 +828,7 @@ public:
     { ar & _data;
     }
 };
+
+#endif    // 0
 
 #endif    // MACROS_H

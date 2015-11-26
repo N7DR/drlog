@@ -497,8 +497,12 @@ int main(int argc, char** argv)
     VERSION = string("Unknown version ") + VERSION;  // because VERSION may be used elsewhere
   }
 
+//  ost << "creating command line" << endl;
+
   command_line cl(argc, argv);                                                              ///< for parsing the ocmmand line
   const string config_filename = (cl.value_present("-c") ? cl.value("-c") : "logcfg.dat");
+
+//  ost << "config filename: " << config_filename << endl;
 
   try    // put it all in one big try block (one of the few things in C++ I have hated ever since we introduced it)
   {
@@ -506,13 +510,20 @@ int main(int argc, char** argv)
     drlog_context* context_p = nullptr;
 
     try
-    { context_p = new drlog_context(config_filename);
+    { //ost << "sleep 5" << endl;
+      //sleep_for(seconds(5));
+
+//      ost << "about to read configuration file: " << config_filename << endl;
+      context_p = new drlog_context(config_filename);
+//      ost << "Read configuration file: " << config_filename << endl;
     }
 
     catch (...)
-    { cerr << "Error reading configuration data" << endl;
+    { ost << "Error reading configuration data from " << config_filename << endl;
       exit(-1);
     }
+
+//    ost << "after reading configuration file" << endl;
 
 // make the context available globally and cleanup the context pointer
     context = *context_p;
@@ -529,10 +540,11 @@ int main(int argc, char** argv)
 
     try
     { country_data_p = new cty_data(context.path(), context.cty_filename());
+//      ost << "Read country data from " <<  context.cty_filename()<< endl;
     }
 
     catch (...)
-    { cerr << "Error reading country data: does the file " << context.cty_filename() << " exist?" << endl;
+    { ost << "Error reading country data: does the file " << context.cty_filename() << " exist?" << endl;
       exit(-1);
     }
 
@@ -1926,12 +1938,14 @@ void* process_rbn_info(void* vp)
               const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
 
               for (const auto& exch_mult_name : exch_mults)
-              { //if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
+              { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
 // *** consider putting the regex into the multiplier object (in addition to the list of known values)
                 { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
                   if (!guess.empty())
+                  { //ost << "HERE1: " << exch_mult_name << ", " << MULT_VALUE(exch_mult_name, guess) << endl;
                     statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+                  }
                 }
               }
 
@@ -2733,7 +2747,7 @@ ost << "processing command: " << command << endl;
 // what exchange do we expect?
         string exchange_str;
         const string canonical_prefix = location_db.canonical_prefix(contents);
-        const vector<exchange_field> expected_exchange = rules.exch(canonical_prefix, cur_mode);
+        const vector<exchange_field> expected_exchange = rules.unexpanded_exch(canonical_prefix, cur_mode);
         map<string, string> mult_exchange_field_value;                                                     // the values of exchange fields that are mults
 
         for (const auto& exf : expected_exchange)
@@ -3609,7 +3623,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       if ( contains(value, ".") and (value.size() != 1) )    // ignore a field that is just "."
         canonical_prefix = location_db.canonical_prefix(remove_char(value, '.'));
 
-    const vector<exchange_field> exchange_template = rules.exch(canonical_prefix, cur_mode);
+    const vector<exchange_field> exchange_template = rules.unexpanded_exch(canonical_prefix, cur_mode);
     unsigned int n_optional_fields = 0;
 
     FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
@@ -3751,14 +3765,19 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // get the current list of country mults
         const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band, cur_mode);
 
-// and any exch multipliers
+// and any exchange multipliers
         const map<string /* field name */, set<string> /* values */ >  old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
         const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix, qso.mode());
 
         for (const auto& exch_field : exchange_fields)
-        { const string value = qso.received_exchange(exch_field.name());
+        {
+          const string value = qso.received_exchange(exch_field.name());
+          //ost << "checking field " << exch_field.name() << " = " << value << " as mult" << endl;
 
-          statistics.add_worked_exchange_mult(exch_field.name(), value, qso.band(), qso.mode());
+          if (statistics.add_worked_exchange_mult(exch_field.name(), value, qso.band(), qso.mode()))
+          { //ost << "setting exchange mult for " << exch_field.name() << " for QSO: " << qso << endl;
+            qso.set_exchange_mult(exch_field.name());
+          }
         }
 
         add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
@@ -4506,11 +4525,15 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
 // get the colours right
   vector<pair<string /* exch value */, int /* colour pair number */ > > vec;
 
+  ost << "updating widow for : " << exch_mult_name << endl;
+
    for (const auto& known_value : known_exchange_values)
    { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
      const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
 
      vec.push_back( { known_value, colour_pair_number } );
+
+     ost << "value: " << known_value << " is colour " << colour_pair_number << endl;
    }
 
    win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
@@ -5126,7 +5149,9 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
     { //ost << "is in auto list of exchange mults: " << boolalpha << context.auto_remaining_exchange_mults(field.name()) << endl;
 
       if (context.auto_remaining_exchange_mults(field.name()))
+      { //ost << "HERE2: " << field.name() << ", " << field.value() << endl;
         statistics.add_known_exchange_mult(field.name(), field.value());
+      }
 
       const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), qso.band(), qso.mode());
 

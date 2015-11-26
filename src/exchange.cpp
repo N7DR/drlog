@@ -142,7 +142,7 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 
   vector<string> copy_received_values(received_values);
 
-  const vector<exchange_field> exchange_template = rules.exch(canonical_prefix, m);
+  const vector<exchange_field> exchange_template = rules.unexpanded_exch(canonical_prefix, m);
 
 // first time through, determine whether this is Sweepstakes
   if (first_time)
@@ -494,11 +494,22 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 const string exchange_field_database::guess_value(const string& callsign, const string& field_name)
 { SAFELOCK(exchange_field_database);
 
+
 // first, check the database
   const auto it = _db.find( pair<string, string>( { callsign, field_name } ) ) ;
 
   if (it != _db.end())
     return it->second;
+
+// if it's a QTHX, then don't go any further if the country doesn't match
+  if (starts_with(field_name, "QTHX["))
+  { const string canonical_prefix = delimited_substring(field_name, '[', ']');
+
+    if (canonical_prefix != location_db.canonical_prefix(callsign))
+    { _db.insert( { { callsign, field_name }, string() } );                     // so that it can be found immediately in future
+      return string();
+    }
+  }
 
 // no prior QSO; is it in the drmaster database?
   const drmaster_line drm_line = (*drm_p)[callsign];
@@ -724,8 +735,15 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (starts_with(field_name, "QTHX["))  // by the time we get here, the call should match the canoncial prefix in the name of the exchange field
-  { string rv;
+  if (starts_with(field_name, "QTHX["))  // by the time we get here, the call should match the canonical prefix in the name of the exchange field
+  { const string canonical_prefix = delimited_substring(field_name, '[', ']');
+
+    if (canonical_prefix != location_db.canonical_prefix(callsign))
+    { ost << "Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
+      return string();
+    }
+
+    string rv;
 
     if (!drm_line.empty())
     { rv = drm_line.qth();

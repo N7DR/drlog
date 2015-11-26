@@ -277,14 +277,17 @@ void drlog_context::_set_points(const string& exchange_field, const string& comm
     This routine may be called recursively (by the RULES statement in the processed file)
 */
 void drlog_context::_process_configuration_file(const string& filename)
-{ string entire_file;
+{
+//  ost << "processing configuration file: " << filename << endl;
+
+  string entire_file;
 
   try
   { entire_file = remove_char(read_file(filename), CR_CHAR);
   }
 
   catch (...)
-  { cerr << "Unable to open configuration file " << filename << endl;
+  { ost << "Unable to open configuration file " << filename << endl;
     exit(-1);
   }
 
@@ -293,7 +296,8 @@ void drlog_context::_process_configuration_file(const string& filename)
   const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
 
   for (const auto& line : lines)                                    // process each line
-  {
+  { //ost << "processing line: " << line << endl;
+
 // generate a number of useful variables
     const string testline = remove_leading_spaces(to_upper(line));
     const vector<string> fields = split_string(line, "=");
@@ -614,6 +618,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       if (contains(_exchange_mults, ","))       // if there is more than one exchange mult
         QSO_MULT_WIDTH = 4;                     // make them all the same width, so that the log line looks OK
+
+//      ost << "finished EXCHANGE MULTS; _exchange_mults = " << _exchange_mults << endl;
     }
 
 // EXCHANGE MULTS PER BAND
@@ -1052,12 +1058,12 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
-      if (starts_with(testline, "AUTO REMAINING EXCHANGE MULTS"))
-      { const vector<string> mult_names = remove_peripheral_spaces(split_string(RHS, ","));
+    if (starts_with(testline, "AUTO REMAINING EXCHANGE MULTS"))
+    { const vector<string> mult_names = remove_peripheral_spaces(split_string(RHS, ","));
 
-        for (const auto& str : mult_names)
-          _auto_remaining_exchange_mults.insert(str);
-      }
+      for (const auto& str : mult_names)
+        _auto_remaining_exchange_mults.insert(str);
+    }
 
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
@@ -1375,6 +1381,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       if (tokens.size() == 2)
         _message_cq_2 = tokens[1];
     }
+
+//    ost << "end of processing line: " << testline << endl;
   }
 
 // set some new defaults if we haven't explicitly set them

@@ -727,15 +727,15 @@ void log_extract::display(void)
 // get recent QSOs from a log, and possibly display them
 void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
 {
-  ost << "logbook size = " << lgbook.size() << endl;
+//  ost << "logbook size = " << lgbook.size() << endl;
 
   const vector<QSO>& vec = lgbook.as_vector();
 
-  ost << " vector size = " << vec.size() << endl;
+//  ost << " vector size = " << vec.size() << endl;
 
   const size_t n_to_copy = min(vec.size(), _win_size);
 
-  ost << "in recent_qsos(), n_to_copy = " << n_to_copy << endl;
+//  ost << "in recent_qsos(), n_to_copy = " << n_to_copy << endl;
 
   clear();    // empty the container of QSOs
 

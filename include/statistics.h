@@ -185,8 +185,9 @@ public:
     \param  field_name      exchange mult field name
     \param  field_value     value of the field <i>field_name</i>
     \param  band_nr         number of the band on which worked mult is to be added
+    \return                 whether the exchange mult was added
 */
-  void add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
+  const bool add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
 
 /*! \brief          A complete (multi-line) string that summarizes the statistics, for display in the SUMMARY window
     \param  rules   rules for this contest
@@ -358,14 +359,35 @@ public:
 */
   const bool worked(const std::string& s);
 
+/*! \brief      Has a call been worked on any other band?
+    \param  s   callsign to test
+    \param  b   band NOT to test
+    \return     whether <i>s</i> has been worked on a band other than <i>b</i>
+*/
   const bool worked_on_another_band(const std::string& s, const BAND b);
 
+/*! \brief      Has a call been worked on any other mode?
+    \param  s   callsign to test
+    \param  m   mode NOT to test
+    \return     whether <i>s</i> has been worked on a mode other than <i>m</i>
+*/
   const bool worked_on_another_mode(const std::string& s, const MODE m);
 
+/*! \brief      Has a call been worked on any other band and mode combination?
+    \param  s   callsign to test
+    \param  b   band not to include
+    \param  m   mode not to include
+    \return     whether <i>s</i> has been worked on a band and mode other than <i>b</i> and <i>m</i>
+*/
   const bool worked_on_another_band_and_mode(const std::string& s, const BAND b, const MODE m);
 
+/*! \brief          Perform a complete rebuild
+    \param  log     logbook
+    \param  rules   contest rules
+*/
   void rebuild(const logbook& logbk);
 
+/// clear the history
   void clear(void);
 
   template<typename Archive>
@@ -373,7 +395,6 @@ public:
     { SAFELOCK(_history);
       ar & _history;
     }
-
 };
 
 #endif    // STATISTICS_H

@@ -65,137 +65,160 @@ inline const bool symbol_is_digit(const KeySym ks)
 class keyboard_event
 {
 protected:
-  key_event_type _event;
-  key_code       _code;
-  KeySym         _symbol;
-  std::string    _str;
-  unsigned int   _xkey_state;    // the XKeyEvent.state value
-  Time           _xkey_time;     // the XKeyEvent.time value
+  key_code       _code;         ///< code for the relevant key
+  key_event_type _event;        ///< the event
+  std::string    _str;          ///< string version of the character
+  KeySym         _symbol;       ///< symbol that corresponds to the key
+  unsigned int   _xkey_state;   ///< the XKeyEvent.state value
+  Time           _xkey_time;    ///< the XKeyEvent.time value
 
 public:
 
-  READ_AND_WRITE(event);
-  READ_AND_WRITE(code);
-  READ_AND_WRITE(symbol);
-  READ_AND_WRITE(str);
-  READ_AND_WRITE(xkey_state);
-  READ_AND_WRITE(xkey_time);
+  READ_AND_WRITE(code);         ///< code for the relevant key
+  READ_AND_WRITE(event);        ///< the event
+  READ_AND_WRITE(str);          ///< string version of the character
+  READ_AND_WRITE(symbol);       ///< symbol that corresponds to the key
+  READ_AND_WRITE(xkey_state);   ///< the XKeyEvent.state value
+  READ_AND_WRITE(xkey_time);    ///< the XKeyEvent.time value
 
 // return values related to the state. These are the values immediately
 // PRIOR to the event: http://www.tronche.com/gui/x/xlib/events/keyboard-pointer/keyboard-pointer.html#XKeyEvent
 
+/// is the shift keys pressed?
   inline const bool is_shifted(void) const
     { return (_xkey_state bitand ShiftMask); }
 
+/// is one of the control keys pressed?
   inline const bool is_control(void) const
     { return (_xkey_state bitand ControlMask); }
 
+/// is one of the control keys pressed?
   inline const bool is_ctrl(void) const
     { return (is_control()); }
 
+/// is one of the alt keys pressed?
   inline const bool is_alt(void) const
     { return (_xkey_state bitand Mod1Mask); }
 
-// Numlock is Mod2Mask (see xmodmap command), so we can't merely test _xkey_state against zero
+/// is the key unmodified?
+// NB: Numlock is Mod2Mask (see xmodmap command), so we can't merely test _xkey_state against zero
   inline const bool is_unmodified(void) const
     { return ( (_xkey_state bitand (ShiftMask bitor ControlMask bitor Mod1Mask) ) == 0  ); }
 
+/// is the key modified?
   inline const bool is_modified(void) const
     { return !is_unmodified(); }
 
+/// is the key an upper case letter?
   inline const bool is_upper_case_letter(void) const
     { return (is_unmodified() and ::is_upper_case_letter(_symbol)); }
 
+/// is the key a lower case letter?
   inline const bool is_lower_case_letter(void) const
     { return (is_unmodified() and ::is_lower_case_letter(_symbol)); }
 
+/// is the key a letter?
   inline const bool is_letter(void) const
     { return (is_unmodified() and ::is_letter(_symbol)); }
 
+/// is the key a digit?
   inline const bool is_digit(void) const
     { return (is_unmodified() and symbol_is_digit(_symbol)); }
 
+/// does a character match the value of <i>_str</i>?
   inline const bool is_char(const char c) const
      { return (is_unmodified() and (_str == create_string(c))); }
 
+/// does a character number match the value of <i>_str</i>?
   inline const bool is_char(const int n) const
      { return (is_char(static_cast<char>(n))); }
 
+/// is a character a control character version of the character in <i>_str</i>?
   inline const bool is_control(const char c) const
     { return (is_control() and (_str == create_string(c - 'a' + 1))); }
 
+/// is a character an alt version of the character in <i>_str</i>?
   inline const bool is_alt(const char c) const
     { return (is_alt() and (_str == create_string(c))); }
-
-//  inline const bool is_shift(const char c) const
-//    { return (is_shifted() and (_str == create_string(c))); }
 };
 
 
 // -------------------------------------  keyboard_queue  ---------------------------
 
 /*!     \class keyboard_queue
-        \brief The basic queue of keyboard events, which is just a wrapper
-        around an STL deque
+        \brief The basic queue of keyboard events, which is just a wrapper around an STL deque
 */
 
 class keyboard_queue
 {
 protected:
-  std::deque<keyboard_event>  _events;      // the actual queue
+  Display*                    _display_p;           ///< the X display pointer
+  std::deque<keyboard_event>  _events;              ///< the actual queue
+  keyboard_event              _last_event;          ///< the event most recently removed from the queue
+  Window                      _window_id;           ///< the X window ID
+  bool                        _x_multithreaded;     ///< do we permit multiple threads in X?
 
-  Display*                    _display_p;   // the X display pointer
-  Window                      _window_id;   // the X window ID
-
-  keyboard_event              _last_event;  // the event most recently removed from the queue
-
-  bool                        _x_multithreaded;    // do we want to permit multiple threads in X?
-
-  pt_mutex _keyboard_mutex;
+  pt_mutex _keyboard_mutex;                         ///< mutex to keep the object thread-safe
 
 /*! \brief                  X error handler
     \param  display_p       pointer to X display
     \param  error_event_p   pointer to X error event
+    \return                 ignored value (see man XSetErrorHandler)
 */
   static int _x_error_handler(Display* display_p, XErrorEvent* error_event_p);
 
 public:
 
-// default constructor
+/// default constructor
   keyboard_queue(void);
 
-// destructor
+/// destructor
   virtual ~keyboard_queue(void)
   { }
 
-  READ_AND_WRITE(x_multithreaded);
+  READ(display_p);                      ///< the X display pointer
+  READ(window_id);                      ///< the X window ID
+  READ_AND_WRITE(x_multithreaded);      ///< do we permit multiple threads in X?
 
+/// how many events are in the queue?
   const size_t size(void);
 
+/// is the queue empty?
   const bool empty(void);
 
-// place keyboard events in the queue
+/// move pending X keyboard events to the queue
   void process_events(void);
 
-// peek at the front of the queue
+/// peek at the front of the queue
   const keyboard_event peek(void);
 
-// pop the frontmost event
+/// pop the frontmost event
   const keyboard_event pop(void);
 
-// get the most-recently removed event
+/// get the most-recently removed event
   const keyboard_event last(void);
 
-  inline Display* display_p(void) const
-    { return _display_p; }
+/// get the X display pointer
+//  inline Display* display_p(void) const
+//    { return _display_p; }
 
-  inline const Window window_id(void) const
-    { return _window_id; }
+//  inline const Window window_id(void) const
+//    { return _window_id; }
 
+/*! \brief      Emulate the pressing of a character key
+    \param  c   pressed character
+*/
   void push_key_press(const char c);
 
+/*! \brief      Emulate the addition of a KeySym
+    \param  ks  KeySym to add
+*/
   void push_key_press(const KeySym ks);
 
+/*! \brief              Emulate the pressing of a sequence of characters
+    \param  str         pressed string
+    \param  ms_delay    delay in milliseconds between each character in <i>str</i>
+*/
   void push_key_press(const std::string& str, const int ms_delay = 0);
 };
 

@@ -340,7 +340,13 @@ ostream& operator<<(ostream& ost, const location_info& info)
   return ost;
 }
 
-// guess the CQ zone if the canonical prefix indicates a country with multiple zones
+/*! \brief          Guess the CQ and ITU zones if the canonical prefix indicates a country with multiple zones
+    \param  call    callsign
+    \param  li      location_info to use for the guess
+    \return         best guess for the CQ and ITU zones
+
+    Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
+ */
 const location_info guess_zones(const string& callsign, const location_info& bi)
 { location_info rv = bi;
 
@@ -533,8 +539,8 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
     }    
   }
 
-  ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
-  ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+//  ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+//  ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
 
 }
 
@@ -589,14 +595,14 @@ void location_database::add_russian_database(const vector<string>& path, const s
 
   try
   { _russian_db = russian_data(path, filename).data();
-    ost << "added Russian data from file: " << filename << endl;
+//    ost << "added Russian data from file: " << filename << endl;
   }
 
   catch (...)
   { ost << "Error attempting to add Russian database from file: " << filename << endl;
   }
 
-  ost << "written length of Russian data = " << _russian_db.size() << endl;
+//  ost << "written length of Russian data = " << _russian_db.size() << endl;
 }
 
 void location_database::add_alt_call(const string& call, const location_info& li)
@@ -608,21 +614,21 @@ const location_info location_database::info(const string& cs)
   string callsign = original_callsign;                  // make callsign mutable, for handling case of /n
   
   SAFELOCK(_location_database);
-  ost << "Searching for: " << callsign << endl;
+//  ost << "Searching for: " << callsign << endl;
 
-  ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
-  ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+//  ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+//  ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
 
   auto db_posn = _db_checked.find(callsign);
 
 // it's easy if there's already an entry
   if (db_posn != _db_checked.end())
-  { ost << "There was exact entry found and returned for " << callsign << endl;
-    ost << db_posn->second << endl;
+  { //ost << "There was exact entry found and returned for " << callsign << endl;
+    //ost << db_posn->second << endl;
     return db_posn->second;
   }
   
-  ost << "There was no exact entry" << endl;
+//  ost << "There was no exact entry" << endl;
   
 // see if there's an exact match in the alternative call db
   db_posn = _alt_call_db.find(callsign);
@@ -632,7 +638,7 @@ const location_info location_database::info(const string& cs)
     return db_posn->second;  
   }
 
-ost << "There was no exact entry in the alternative call database" << endl;
+//ost << "There was no exact entry in the alternative call database" << endl;
 
 // see if it's some guy already in the db but now signing /QRP
   if (callsign.length() >= 5 and last(callsign, 4) == "/QRP")
@@ -656,8 +662,8 @@ ost << "There was no exact entry in the alternative call database" << endl;
     }
   }
   
-ost << "It is not a /QRP" << endl;
-ost << "last: " << last(callsign, 3) << endl;
+//ost << "It is not a /QRP" << endl;
+//ost << "last: " << last(callsign, 3) << endl;
 
 // /MM and /AM are in no country
   if (last(callsign, 3) == "/AM" or last(callsign, 3) == "/MM")
@@ -667,7 +673,7 @@ ost << "last: " << last(callsign, 3) << endl;
     return rv;
   }
   
-ost << "it is not /AM or MM" << endl;
+//ost << "it is not /AM or MM" << endl;
   
 // try to determine the canonical prefix
   if (!contains(callsign, "/") or (callsign.length() >= 2 and penultimate_char(callsign) == '/'))    // "easy" -- no portable indicator
@@ -692,17 +698,17 @@ ost << "it is not /AM or MM" << endl;
       }
     }
      
-    ost << "found_any_fits (1) = " << boolalpha << found_any_hits << endl;
+//    ost << "found_any_fits (1) = " << boolalpha << found_any_hits << endl;
 
     while (len <= callsign.length())
-    { ost << "found_any_fits (3)= " << boolalpha << found_any_hits << endl;
+    { //ost << "found_any_fits (3)= " << boolalpha << found_any_hits << endl;
 
       const string target = callsign.substr(0, len);
      
-ost << "Target: " << target << endl;
+//ost << "Target: " << target << endl;
 
-ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
-ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+//ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
+//ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
 
      
       map<string, location_info>::iterator db_posn = _db.find(target);
@@ -711,7 +717,7 @@ ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << 
       { found_any_hits = true;
         best_fit = target;
         best_info = db_posn->second;
-        ost << "Best fit : " << best_fit << endl;
+//        ost << "Best fit : " << best_fit << endl;
       }
       else                                   // didn't find this substring
       { // delete this because of KH6, where K is a hit, KH6 is a hit, but KH is not

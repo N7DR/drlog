@@ -227,9 +227,6 @@ protected:
   std::map<std::string, unsigned int> _country_points;      ///< per-country points
   std::map<std::string, unsigned int> _continent_points;    ///< per-continent points
 
-
-
-
   enum points_type                    _points_type;         ///< is the points structure too complex for the configuration notation?
 
 public:
@@ -379,6 +376,14 @@ protected:
 */
   void _parse_context_qthx(const drlog_context& context, location_database& location_db);
 
+/*! \brief                      Get the expected exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \param  m                   mode
+    \param  expand_choices      whether to expand CHOICE fields
+    \return                     the exchange fields associated with <i>canonical_prefix</i>
+*/
+  const std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const bool expand_choices) const;
+
 public:
   
 /// default constructor
@@ -421,17 +426,23 @@ public:
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
+    \param  m                   mode
     \return                     the exchange fields associated with <i>canonical_prefix</i>
+
+    CHOICE fields ARE NOT expanded
 */
-  const std::vector<exchange_field> exch(const std::string& canonical_prefix, const MODE m) const;
+  inline const std::vector<exchange_field> unexpanded_exch(const std::string& canonical_prefix, const MODE m) const
+    { return _exchange_fields(canonical_prefix, m, false); }
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
+    \param  m                   mode
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 
     CHOICE fields ARE expanded
 */
-  const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const;
+  inline const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
+    { return _exchange_fields(canonical_prefix, m, true); }
 
   SAFEREAD(country_mults, rules);       ///< collection of canonical prefixes of country multipliers
   SAFEREAD(callsign_mults, rules);      ///< collection of types of mults based on callsign (e.g., "WPXPX")

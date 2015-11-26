@@ -234,8 +234,9 @@ public:
   inline const bool is_alternative_callsign(const std::string& call)
     { return (_alt_callsigns.find(call) != _alt_callsigns.end()); }
 
-/*!     \brief  is a string an alternative prefix?
-        \param  pfx    prefix to check
+/*! \brief  is a string an alternative prefix?
+    \param  pfx    prefix to check
+    \return        whether <i>pfx</i> is an alternative prefix
 */
   inline const bool is_alternative_prefix(const std::string& pfx)
     { return (_alt_prefixes.find(pfx) != _alt_prefixes.end()); }
@@ -337,14 +338,14 @@ public:
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _sstring
-         & _region_name
-         & _region_abbreviation
+         & _continent
          & _cq_zone
          & _itu_zone
-         & _continent
-         & _utc_offset
          & _latitude
-         & _longitude;
+         & _longitude
+         & _region_abbreviation
+         & _region_name
+         & _utc_offset;
     }
 };
 
@@ -387,14 +388,14 @@ class location_info
 {
 protected:
 
+  std::string   _canonical_prefix;      ///< official prefix
+  std::string   _continent;             ///< two-letter abbreviation for continent
   std::string   _country_name;          ///< official name of the country
   unsigned int  _cq_zone;               ///< CQ zone
   unsigned int  _itu_zone;              ///< ITU zone
-  std::string   _continent;             ///< two-letter abbreviation for continent
   float         _latitude;              ///< latitude in degrees (+ve north)
   float         _longitude;             ///< longitude in degrees (+ve west)
   int           _utc_offset;            ///< local-time offset from UTC, in minutes
-  std::string   _canonical_prefix;      ///< official prefix
   
 // used only by Russian stations
   std::string  _region_name;            ///< name of region in which station resides
@@ -414,42 +415,43 @@ public:
 /// location_info == location_info
   const bool operator==(const location_info& li) const;
 
+  READ(canonical_prefix);      ///< official prefix
+  READ(continent);             ///< two-letter abbreviation for continent
   READ(country_name);          ///< official name of the country
   READ_AND_WRITE(cq_zone);     ///< CQ zone
   READ_AND_WRITE(itu_zone);    ///< ITU zone
-  READ(continent);             ///< two-letter abbreviation for continent
   READ_AND_WRITE(latitude);    ///< latitude in degrees (+ve north)
   READ_AND_WRITE(longitude);   ///< longitude in degrees (+ve west)
   READ(utc_offset);            ///< local-time offset from UTC, in minutes
-  READ(canonical_prefix);      ///< official prefix
 
-  READ_AND_WRITE(region_name);           ///< (Russian) name of region
   READ_AND_WRITE(region_abbreviation);   ///< (Russian) abbreviation for region
+  READ_AND_WRITE(region_name);           ///< (Russian) name of region
 
 /// archive using boost
    template<typename Archive>
    void serialize(Archive& ar, const unsigned version)
-     { ar & _country_name
+     { ar & _canonical_prefix
+          & _continent
+          & _country_name
           & _cq_zone
           & _itu_zone
-          & _continent
           & _latitude
           & _longitude
           & _utc_offset
-          & _canonical_prefix
-          & _region_name
-          & _region_abbreviation;
+          & _region_abbreviation
+          & _region_name;
      }
 };
 
 /// ostream << location_info
 std::ostream& operator<<(std::ostream& ost, const location_info& info);
 
-/*!     \brief guess the CQ and ITU zones if the canonical prefix indicates a country with multiple zones
-        \param  call    callsign
-        \param  li      location_info to use for the guess
+/*! \brief          Guess the CQ and ITU zones if the canonical prefix indicates a country with multiple zones
+    \param  call    callsign
+    \param  li      location_info to use for the guess
+    \return         best guess for the CQ and ITU zones
 
-        Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
+    Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
 const location_info guess_zones(const std::string& call, const location_info& li);
 

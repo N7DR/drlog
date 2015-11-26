@@ -320,15 +320,18 @@ public:
   inline const bool sub_receiver_enabled(void)
     { return sub_receiver(); }
 
+/// enable the sub-receiver
   inline void sub_receiver_enable(void)
     { sub_receiver(true); }
 
+/// disable the sub-receiver
   inline void sub_receiver_disable(void)
     { sub_receiver(false); }
 
 /// toggle sub-receiver between on and off
   void sub_receiver_toggle(void);
 
+/// toggle sub-receiver between on and off
   inline void toggle_sub_receiver(void)
     { sub_receiver_toggle(); }
 
@@ -374,15 +377,13 @@ public:
 */
   const bool is_transmitting(void);
 
-// register a function for alerting the user
+/*! \brief                          Register a function for alerting the user
+    \param  error_alert_function    pointer to function for alerting the user
+*/
   void register_error_alert_function(void (*error_alert_function)(const std::string&) );
 
 /// which VFO is currently used for transmitting?
   const VFO tx_vfo(void);
-
-// get the band and mode from the rig, so that the status can be subsequently checked
-//  inline void get_status(void)
-//    { _poll_thread_function(nullptr); }
 
 /*! \brief      Set the bandwidth of VFO A
     \param  hz  desired bandwidth, in Hz

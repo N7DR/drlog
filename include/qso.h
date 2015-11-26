@@ -25,7 +25,7 @@
 #include <utility>
 
 extern bool QSO_DISPLAY_COUNTRY_MULT;   ///< whether country mults are written on the log line
-extern const unsigned int QSO_MULT_WIDTH;             ///< width of mult fields on log line
+extern unsigned int QSO_MULT_WIDTH;             ///< width of mult fields on log line
 
 // forward declarations
 class running_statistics;
@@ -54,8 +54,8 @@ protected:
   std::string                                       _frequency_rx;      ///< RX frequency in form xxxxx.y (kHz)
   std::string                                       _frequency_tx;      ///< TX frequency in form xxxxx.y (kHz)
   bool                                              _is_country_mult;   ///< is this QSO a country mult?
-  bool                                              _is_prefix_mult;    ///< is this QSO a prefix mult?
   bool                                              _is_dupe;           ///< is this QSO a dupe?
+  bool                                              _is_prefix_mult;    ///< is this QSO a prefix mult?
   std::vector<std::string>                          _log_line_fields;   ///< separate fields from the log line
   enum MODE                                         _mode;              ///< mode
   std::string                                       _my_call;           ///< my call
@@ -126,6 +126,8 @@ public:
   
 /// is any exchange field a mult?
   const bool is_exchange_mult(void) const;
+
+  void set_exchange_mult(const std::string& field_name);
 
 /// synonym for callsign()
   inline const std::string call(void) const
@@ -243,14 +245,17 @@ public:
          & _continent
          & _date
          & _epoch_time
-//         & _frequency
-         & _frequency_tx
          & _frequency_rx
+         & _frequency_tx
+         & _is_country_mult
          & _is_dupe
+         & _is_prefix_mult
+         & _log_line_fields
          & _mode
          & _my_call
          & _number
          & _points
+         & _prefix
          & _received_exchange
          & _sent_exchange
          & _utc;

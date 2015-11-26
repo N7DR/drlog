@@ -439,7 +439,7 @@ const bool running_statistics::add_known_country_mult(const string& str, const c
     \param  rules   contest rules
 */
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
-{ ost << "in statistics.add_qso(); callsign = " << qso.callsign() << endl;
+{ //ost << "in statistics.add_qso(); callsign = " << qso.callsign() << endl;
 
   SAFELOCK(statistics);
   
@@ -511,9 +511,13 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 const bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
 { SAFELOCK(statistics);
 
+  ost << "adding known legal value of " << value << " to exchange mult: " << name << endl;
+
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == name)
-    { const bool added = psm.second.add_known(MULT_VALUE(name, value));
+    { ost << "MULT_VALUE = " << MULT_VALUE(name, value) << endl;
+
+      const bool added = psm.second.add_known(MULT_VALUE(name, value));
 
       if (added)
         return true;
@@ -542,12 +546,13 @@ const set<string> running_statistics::known_exchange_mult_values(const string& n
     \param  field_name      exchange mult field name
     \param  field_value     value of the field <i>field_name</i>
     \param  band_nr         number of the band on which worked mult is to be added
+    \return                 whether the exchange mult was added
 
     Doesn't add if the value is unknown.
 */
-void running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int b, const int m)
+const bool running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int b, const int m)
 { if (field_value.empty())
-    return;
+    return false;
 
   const string mv = MULT_VALUE(field_name, field_value);  // the mult value of the received field
 
@@ -555,7 +560,9 @@ void running_statistics::add_worked_exchange_mult(const string& field_name, cons
 
   for (auto& psm : _exchange_multipliers)
     if (psm.first == field_name)
-      psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m));
+      return (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
+
+  return false;
 }
 
 /*! \brief          Perform a complete rebuild
@@ -649,7 +656,7 @@ const string running_statistics::summary_string(const contest_rules& rules)
       rv += LF;
   }
   
-  ost << "SUMMARY STRING: " << endl << rv << endl;
+//  ost << "SUMMARY STRING: " << endl << rv << endl;
 
   return rv;
 }
@@ -1114,6 +1121,11 @@ const bool call_history::worked(const string& s)
   return (_history.find(s) != _history.end());
 }
 
+/*! \brief      Has a call been worked on any other band?
+    \param  s   callsign to test
+    \param  b   band NOT to test
+    \return     whether <i>s</i> has been worked on a band other than <i>b</i>
+*/
 const bool call_history::worked_on_another_band(const std::string& s, const BAND b)
 { SAFELOCK(_history);
 
@@ -1131,6 +1143,11 @@ const bool call_history::worked_on_another_band(const std::string& s, const BAND
   return false;
 }
 
+/*! \brief      Has a call been worked on any other mode?
+    \param  s   callsign to test
+    \param  m   mode NOT to test
+    \return     whether <i>s</i> has been worked on a mode other than <i>m</i>
+*/
 const bool call_history::worked_on_another_mode(const string& s, const MODE m)
 { SAFELOCK(_history);
 
@@ -1148,6 +1165,12 @@ const bool call_history::worked_on_another_mode(const string& s, const MODE m)
   return false;
 }
 
+/*! \brief      Has a call been worked on any other band and mode combination?
+    \param  s   callsign to test
+    \param  b   band not to include
+    \param  m   mode not to include
+    \return     whether <i>s</i> has been worked on a band and mode other than <i>b</i> and <i>m</i>
+*/
 const bool call_history::worked_on_another_band_and_mode(const std::string& s, const BAND b, const MODE m)
 { SAFELOCK(_history);
 
@@ -1165,6 +1188,7 @@ const bool call_history::worked_on_another_band_and_mode(const std::string& s, c
   return false;
 }
 
+/// clear the history
 void call_history::clear(void)
 { SAFELOCK(_history);
   _history.clear();

@@ -57,9 +57,10 @@ void exchange_field_values::add_canonical_value(const string& cv)
 void exchange_field_values::add_value(const string& cv, const string& v)
 { add_canonical_value(cv);
 
-  set<string>& ss = _values[cv];
+//  set<string>& ss = _values[cv];
 
-  ss.insert(v);
+//  ss.insert(v);
+  _values[cv].insert(v);
 }
 
 /*! \brief      Number of possible values for a particular canonical value
@@ -120,7 +121,7 @@ const set<string> exchange_field_values::all_values(void) const
 const bool exchange_field_values::is_legal_value(const string& value) const
 { for (const auto& cv : canonical_values())  // for each canonical value
   { if (is_legal_value(cv, value))
-        return true;
+      return true;
   }
 
   return false;
@@ -278,6 +279,29 @@ const set<string> contest_rules::_all_exchange_values(const string& field_name) 
   return ( (cit == _exch_values.cend()) ? set<string>() : cit->all_values() );
 }
 
+/*! \brief                      Get the expected exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \param  m                   mode
+    \param  expand_choices      whether to expand CHOICE fields
+    \return                     the exchange fields associated with <i>canonical_prefix</i>
+*/
+const vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_prefix, const MODE m, const bool expand_choices) const
+{ if (canonical_prefix.empty())
+    return vector<exchange_field>();
+
+  SAFELOCK(rules);
+
+  const map<string, vector<exchange_field>>& exchange = (expand_choices ? _expanded_received_exchange.at(m) : _received_exchange.at(m) );
+  auto cit = exchange.find(canonical_prefix);
+
+  if (cit != exchange.cend())
+    return cit->second;
+
+  cit = exchange.find(string());
+
+  return ( (cit == exchange.cend()) ? vector<exchange_field>() : cit->second );
+}
+
 /*! \brief                      Parse exchange line from context
     \param  exchange_fields     container of fields taken from line in configuration file
     \param  exchange_mults_vec  container of fields that are mults
@@ -294,34 +318,34 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
     { const vector<string> choice_vec = split_string(field_name, ":");
       string full_name;  // pseudo name of the choice
 
-       if (choice_vec.size() == 2)    // true if legal
-       { vector<string> choice_fields = remove_peripheral_spaces(split_string(choice_vec[1], "/"));
-         vector<exchange_field> choices;
+      if (choice_vec.size() == 2)    // true if legal
+      { vector<string> choice_fields = remove_peripheral_spaces(split_string(choice_vec[1], "/"));
+        vector<exchange_field> choices;
 
-         for (auto& choice_field_name : choice_fields)
-         { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend();
-           exchange_field this_choice(choice_field_name, is_mult);
+        for (auto& choice_field_name : choice_fields)
+        { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend();
+          exchange_field this_choice(choice_field_name, is_mult);
 
-           choices.push_back(this_choice);
-         }
+          choices.push_back(this_choice);
+        }
 
 // put into alphabetical order
-         sort(choice_fields.begin(), choice_fields.end());
+        sort(choice_fields.begin(), choice_fields.end());
 
-         for (auto& choice_field_name : choice_fields)
-           full_name += choice_field_name + "+";
+        for (auto& choice_field_name : choice_fields)
+          full_name += choice_field_name + "+";
 
-         exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
+        exchange_field this_field(substring(full_name, 0, full_name.length() - 1), false);  // name is of form CHOICE1+CHOICE2
 
-         this_field.choice(choices);
-         rv.push_back(this_field);
-       }
-     }
+        this_field.choice(choices);
+        rv.push_back(this_field);
+      }
+    }
 
     if (is_opt)
     { try
-      { const string name = split_string(field_name, ":")[1];
-        const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), name) != exchange_mults_vec.cend();
+      { const string name = split_string(field_name, ":").at(1);
+        const bool is_mult = ( find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), name) != exchange_mults_vec.cend() );
 
         rv.push_back( exchange_field(name, is_mult, is_opt) );
       }
@@ -333,7 +357,7 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
     }
 
     if (!is_choice and !is_opt)
-    { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend();
+    { const bool is_mult = ( find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), field_name) != exchange_mults_vec.cend() );
 
       rv.push_back( exchange_field(field_name, is_mult) );
     }
@@ -371,8 +395,10 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
       const vector<string> expanded_choice = remove_peripheral_spaces(split_string(str, "/"));
 
-      for (const auto& s : expanded_choice)
-        ss.insert(s);
+      FOR_ALL(expanded_choice, [&ss] (const string& s) { ss.insert(s); } );
+
+//      for (const auto& s : expanded_choice)
+//        ss.insert(s);
     }
 
     _per_country_exchange_fields.insert( { pce.first, ss } );
@@ -463,11 +489,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
 
-    copy_if(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()), [=, &location_db] (const string& cp) {return (location_db.continent(cp) == target_continent); } );
+    copy_if(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()), [=, &location_db] (const string& cp) { return (location_db.continent(cp) == target_continent); } );
   }
 
-// remove any that are explicitly not allowed
-  vector<string> not_country_mults_vec = remove_peripheral_spaces(split_string(context.not_country_mults(), ","));  // may not be actual canonical prefixes
+// remove any country mults that are explicitly not allowed
+  const vector<string> not_country_mults_vec = remove_peripheral_spaces(split_string(context.not_country_mults(), ","));  // may not be actual canonical prefixes
 
   FOR_ALL(not_country_mults_vec, [&] (const string& not_country_mult) { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
 
@@ -666,8 +692,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     for (auto cit = unexpanded_exch.cbegin(); cit != unexpanded_exch.cend(); ++cit)
     { const vector<exchange_field> vec_1 = cit->second;
 
-      for (auto cit3 = vec_1.cbegin(); cit3 != vec_1.cend(); ++cit3)
-      { const vector<exchange_field> vec = cit3->expand();
+//      for (auto cit3 = vec_1.cbegin(); cit3 != vec_1.cend(); ++cit3)
+//      { const vector<exchange_field> vec = cit3->expand();
+//
+//        copy(vec.cbegin(), vec.cend(), back_inserter(leaves_vec));
+//      }
+
+      for (const auto& ef: vec_1)
+      { const vector<exchange_field> vec = ef.expand();
 
         copy(vec.cbegin(), vec.cend(), back_inserter(leaves_vec));
       }
@@ -787,7 +819,8 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
 
     CHOICE fields ARE NOT expanded
 */
-const vector<exchange_field> contest_rules::exch(const string& canonical_prefix, const MODE m) const
+#if 0
+const vector<exchange_field> contest_rules::unexpanded_exch(const string& canonical_prefix, const MODE m) const
 { if (canonical_prefix.empty())
     return vector<exchange_field>();
 
@@ -826,6 +859,7 @@ const vector<exchange_field> contest_rules::expanded_exch(const string& canonica
 
   return ( (cit == expanded_exchange.cend()) ? vector<exchange_field>() : cit->second );
 }
+#endif 0
 
 /// Get all the known names of exchange fields (for all modes)
 const set<string> contest_rules::all_known_field_names(void) const
