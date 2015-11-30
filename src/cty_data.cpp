@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 113 2015-08-01 14:57:22Z  $
+// $Id: cty_data.cpp 118 2015-11-30 22:32:04Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
