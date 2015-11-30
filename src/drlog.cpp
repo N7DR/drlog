@@ -2157,10 +2157,20 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // keyboard_queue::process_events() has already filtered out uninteresting events
   bool processed = win.common_processing(e);
 
+  // BACKSPACE
+    if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
+    { win.delete_character(win.cursor_position().x() - 1);
+      win.refresh();
+      processed = true;
+    }
+
   if (!processed and ( (e.is_char('.') or e.is_char('-')) or (e.is_unmodified() and ( (e.symbol() == XK_KP_Add) or (e.symbol() == XK_KP_Subtract)) )))
   { win <= e.str();
     processed = true;
   }
+
+
+
 
 // need comma and asterisk for rescore options, backslash for scratchpad
   if (!processed and (e.is_char(',') or e.is_char('*') or e.is_char('\\')))
@@ -3478,6 +3488,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
   bool processed = win.common_processing(e);
 
+  // BACKSPACE
+    if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
+    { win.delete_character(win.cursor_position().x() - 1);
+      win.refresh();
+      processed = true;
+    }
+
   if (!processed and e.is_char(' '))
   { win <= e.str();
     processed = true;
@@ -4142,6 +4159,25 @@ void process_LOG_input(window* wp, const keyboard_event& e)
   window& win = *wp;
 
   bool processed = win.common_processing(e);
+
+  // BACKSPACE -- just move cursor to left
+    if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
+    { //const cursor cursor_posn = win.cursor_position();
+      //string str = win.getline(cursor_posn.y());
+
+      //if (cursor_posn.x() != 0)
+      //{
+      //}
+
+
+
+      win <= cursor_relative(-1, 0);
+
+
+      //win.delete_character(win.cursor_position().x() - 1);
+      //win.refresh();
+      processed = true;
+    }
 
   if (!processed and e.is_char(' '))
   { win <= e.str();

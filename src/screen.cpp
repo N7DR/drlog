@@ -785,12 +785,12 @@ const bool window::common_processing(const keyboard_event& e)
     return true;
   }
 
-// BACKSPACE
-  if (e.is_unmodified() and e.symbol() == XK_BackSpace)
-  { win.delete_character(win.cursor_position().x() - 1);
-    win.refresh();
-    return true;
-  }
+// BACKSPACE -- remove because LOG window is different
+//  if (e.is_unmodified() and e.symbol() == XK_BackSpace)
+//  { win.delete_character(win.cursor_position().x() - 1);
+//    win.refresh();
+//    return true;
+//  }
 
 // DELETE
   if (e.is_unmodified() and e.symbol() == XK_Delete)
