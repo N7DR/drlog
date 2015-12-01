@@ -1752,7 +1752,7 @@ void* display_rig_status(void* vp)
           if (rit_is_on or xit_is_on)
           { const int rit_xit_value = from_string<int>(substring(status_str, 19, 4));
 
-           rit_xit_str += status_str[18] + to_string(rit_xit_value);
+            rit_xit_str += status_str[18] + to_string(rit_xit_value);
             rit_xit_str = pad_string(rit_xit_str, 7);
           }
 
@@ -1796,8 +1796,20 @@ void* display_rig_status(void* vp)
           if (sub_rx)
             win_rig < COLOURS(fg, win_rig.bg());
 
+//          win_rig < CURSOR_DOWN
+//                  < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
+
           win_rig < CURSOR_DOWN
-                  < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
+                  < CURSOR_START_OF_LINE;
+
+          const size_t x_posn = rit_xit_str.find_first_of("X");
+
+          if (x_posn == string::npos)
+            win_rig < rit_xit_str;
+          else
+            win_rig < substring(rit_xit_str, 0, x_posn) < WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X" < WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring(rit_xit_str, x_posn + 1);
+
+          win_rig < "   " <= bandwidth_str;
         }
       }
     }
@@ -2157,20 +2169,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // keyboard_queue::process_events() has already filtered out uninteresting events
   bool processed = win.common_processing(e);
 
-  // BACKSPACE
-    if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
-    { win.delete_character(win.cursor_position().x() - 1);
-      win.refresh();
-      processed = true;
-    }
+// BACKSPACE
+  if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
+  { win.delete_character(win.cursor_position().x() - 1);
+    win.refresh();
+    processed = true;
+  }
 
   if (!processed and ( (e.is_char('.') or e.is_char('-')) or (e.is_unmodified() and ( (e.symbol() == XK_KP_Add) or (e.symbol() == XK_KP_Subtract)) )))
   { win <= e.str();
     processed = true;
   }
-
-
-
 
 // need comma and asterisk for rescore options, backslash for scratchpad
   if (!processed and (e.is_char(',') or e.is_char('*') or e.is_char('\\')))
