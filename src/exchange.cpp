@@ -31,6 +31,8 @@ extern logbook logbk;                   ///< the (global) logbook
 
 pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
 
+static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };
+
 // -------------------------  parsed_exchange_field  ---------------------------
 
 /*! \class parsed_exchange_field
@@ -81,6 +83,89 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
       << "  mult_value: " << pef.mult_value() << endl;
 
   return ost;
+}
+
+// -------------------------  parsed_ss_exchange  ---------------------------
+
+/*!     \class parsed_ss_exchange
+        \brief All the fields in the SS exchange, following parsing
+*/
+
+const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
+{ bool possible = true;
+
+  for (size_t n = 0; n < str.length() - 1; ++n)
+    if (possible)
+      possible = (isdigit(str[n]));
+
+  if (possible)
+  { const char& lchar = last_char(str);
+
+    possible = isdigit(lchar) or  (legal_prec < lchar);
+  }
+
+  return possible;
+}
+
+const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
+{ if (str.length() == 1)
+    return (legal_prec < last_char(str));
+
+  return _is_possible_serno(str) and (legal_prec < last_char(str));
+}
+
+const bool parsed_ss_exchange::_is_possible_check(const string& str) const
+{ if (str.length() == 1 or str.length() == 3)
+    return false;
+
+  if (str.length() == 2)
+  { for (size_t n = 0; n < str.length() - 1; ++n)
+      if (!isdigit(str[n]))
+        return false;
+
+    return true;
+  }
+
+  if (isdigit(str[0]) and isdigit(str[1]))
+    return true;
+}
+
+parsed_ss_exchange::parsed_ss_exchange(const string& call, const string& received_str) :
+  _callsign(call)
+{ const vector<string> fields = split_string(squash(to_upper(received_str), ' '), " ");
+
+//  count the number fields that might be, or might contain, a serial number
+// i.e., all digits, or digits followed by a single letter
+  vector<size_t> possible_serial_numbers;
+  size_t index = 0;
+
+  for (const auto& field : fields)
+  { if (_is_possible_serno(field))
+      possible_serial_numbers.push_back(index);
+
+    index++;
+  }
+
+  vector<size_t> possible_prec;
+  index = 0;
+
+  for (const auto& field : fields)
+  { if (_is_possible_prec(field))
+      possible_prec.push_back(index);
+
+    index++;
+  }
+
+  vector<size_t> possible_check;
+  index = 0;
+
+  for (const auto& field : fields)
+  { if (_is_possible_check(field))
+      possible_check.push_back(index);
+
+    index++;
+  }
+
 }
 
 // -------------------------  parsed_exchange  ---------------------------
@@ -493,7 +578,6 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 */
 const string exchange_field_database::guess_value(const string& callsign, const string& field_name)
 { SAFELOCK(exchange_field_database);
-
 
 // first, check the database
   const auto it = _db.find( pair<string, string>( { callsign, field_name } ) ) ;

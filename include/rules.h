@@ -193,7 +193,7 @@ public:
     { return !_choice.empty(); }
 
 /*! \brief  Follow all trees to their leaves
-    \return The exchange field, expanded recursively into all possible choices
+    \return the exchange field, expanded recursively into all possible choices
 */
   const std::vector<exchange_field> expand(void) const;
 
@@ -223,10 +223,9 @@ std::ostream& operator<<(std::ostream& ost, const exchange_field& exch_f);
 class points_structure
 {
 protected:
-  unsigned int                        _default_points;      ///< default points
-  std::map<std::string, unsigned int> _country_points;      ///< per-country points
   std::map<std::string, unsigned int> _continent_points;    ///< per-continent points
-
+  std::map<std::string, unsigned int> _country_points;      ///< per-country points
+  unsigned int                        _default_points;      ///< default points
   enum points_type                    _points_type;         ///< is the points structure too complex for the configuration notation?
 
 public:
@@ -242,9 +241,9 @@ public:
 /// serialize with boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-  { ar & _default_points
+  { ar & _continent_points
        & _country_points
-       & _continent_points
+       & _default_points
        & _points_type;
   }
 };
@@ -281,8 +280,7 @@ protected:
   bool                                _exchange_mults_per_mode;  ///< are exchange mults counted per-mode?
   bool                                _exchange_mults_used;      ///< are exchange mults used?
 
-  std::map<std::string /* exchange field name */, unsigned int>  _exchange_present_points;        ///< number of points if a particular exchange field is received; only one value for all bands and modes
-//  std::map<std::string, unsigned int>  _exchange_value_points;                                                              ///< number of points if a particular exchange field has a particular value
+  std::map<std::string /* exchange field name */, unsigned int>  _exchange_present_points;                                  ///< number of points if a particular exchange field is received; only one value for all bands and modes
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded
 
   std::vector<BAND> _permitted_bands;                               ///< bands allowed in this contest; use a vector container in order to keep the frequency order
@@ -298,7 +296,7 @@ protected:
   
 // structures to hold information about the possible values of exchange fields
 
-/// all the equivalent values for all exchange fields; the map is empty if there are no canonical values
+/// all the equivalent values for all exchange fields; the enclosed map is empty if there are no canonical values
   std::vector<exchange_field_values>  _exch_values;
 
 /// all the legal values for each exchange field that has defined legal values
@@ -329,8 +327,8 @@ protected:
   std::string                                  _my_continent;        ///< my continent
   std::string                                  _my_country;          ///< canonical prefix for my country
   unsigned int                                 _my_cq_zone;          ///< CQ zone
-  unsigned int                                 _my_itu_zone;         ///< ITU zone
   std::string                                  _my_grid;             ///< Maidenhead locator
+  unsigned int                                 _my_itu_zone;         ///< ITU zone
 
   bool                                         _send_qtcs;           ///< whether to send QTCs
   bool                                         _uba_bonus;           ///< the UBA contests have weird bonus points
@@ -521,6 +519,7 @@ public:
 
 /*! \brief              All the canonical values for a particular exchange field
     \param  field_name  name of an exchange field (received)
+    \return             all the canonical values for the exchange field <i>field_name</i>
 
     Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
 */
@@ -528,6 +527,7 @@ public:
 
 /*! \brief              The permitted values for a particular exchange field
     \param  field_name  name of an exchange field (received)
+    \return             all the permitted values for the exchange field <i>field_name</i>
 
     Returns empty set if the field can take any value
 */
@@ -535,6 +535,7 @@ public:
 
 /*! \brief              Is a particular exchange field limited to only permitted values?
     \param  field_name  name of an exchange field (received)
+    \return             whether field <i>field_name</i> has permitted values
 */
   inline const bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
@@ -544,7 +545,8 @@ public:
 
 /*! \brief                  A canonical value
     \param  field_name      name of an exchange field (received)
-    \param  acual_value     received value of the field
+    \param  actual_value    received value of the field
+    \return                 the canonical value of the field <i>field_name</i> associated with the value <i>actual_value</i>
 
     Returns the received value if there are no canonical values
 */
@@ -562,6 +564,7 @@ public:
 /*! \brief                              Is a particular string the canonical value for a particular exchange field?
     \param  field_name                  name of an exchange field (received)
     \param  putative_canonical_value    the value to check
+    \return                             whether <i>putative_canonical_value</i> is an actual canonical value for the field <i>field_name</i>
 
     Returns false if <i>field_name</i> is unrecognized
 */
@@ -570,14 +573,11 @@ public:
 /*! \brief                  Is a particular string a legal value for a particular exchange field?
     \param  field_name      name of an exchange field (received)
     \param  putative_value  the value to check
+    \return                 whether <i>putative_value</i> is a legal value for the field <i>field_name</i>
 
     Returns false if <i>field_name</i> is unrecognized
 */
   const bool is_legal_value(const std::string& field_name, const std::string& putative_canonical_value) const;
-
-/// number of points if a particular exchange field has a particular value
-//  inline const std::map<std::string, unsigned int> exchange_value_points(void) const
-//    { SAFELOCK(rules); return _exchange_value_points; };
 
 /// number of permitted bands
   inline const unsigned int n_bands(void) const
@@ -594,8 +594,7 @@ public:
 /*! \brief                  Points for a particular QSO
     \param  qso             QSO for which the points are to be calculated
     \param  location_db     location database
-
-    Return the (location-based) points for <i>qso</i>
+    \return                 the (location-based) points for <i>qso</i>
 */
   const unsigned int points(const QSO& qso, location_database& location_db) const;
 
@@ -620,6 +619,7 @@ public:
 */
   const bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
 
+/// the names of all the possible exchange fields
   const std::set<std::string> exchange_field_names(void) const;
 
 /// read from and write to disk
@@ -642,26 +642,31 @@ public:
          & _exchange_mults_per_mode
          & _exchange_mults_used
          & _exchange_present_points
-//         & _exchange_value_points
          & _expanded_received_exchange
          & _permitted_bands
          & _permitted_modes
-
+         & _points
+         & _received_exchange
          & _sent_exchange_names
          & _work_if_different_band
-         & _points
+         & _work_if_different_mode
          & _exch_values
          & _permitted_exchange_values
          & _permitted_to_canonical
+//         & _exchange_field_eft        // won't serialize
+         & _per_country_exchange_fields
          & _score_bands
          & _original_score_bands
+         & _score_modes
+         & _original_score_modes
          & _my_continent
          & _my_country
          & _my_cq_zone
-         & _received_exchange
          & _my_grid
-         & _my_itu_zone;
-//         & _qthx_vector;              // &&& MORE HERE
+         & _my_itu_zone
+         & _send_qtcs
+         & _uba_bonus
+         & _bonus_countries;
     }
 };
 
@@ -682,7 +687,7 @@ const std::string sac_prefix(const std::string& call);
 /*! \brief  Given a received value of a particular multiplier field, what is the actual mult value?
     \param  field_name         name of the field
     \param  received_value     received value for field <i>field_name</i>
-    \return                    The multiplier value for the field <i>field_name</i>
+    \return                    the multiplier value for the field <i>field_name</i>
 
     For example, the mult value for a DOK field with the value A01 is A.
 */

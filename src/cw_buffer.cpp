@@ -76,9 +76,20 @@ void* cw_buffer::_play(void*)
 {
 // we have to use CW_ prefix in order to avoid clashes with ncurses -- yes, it's ridiculous that this file knows about ncurses
 
+#if 1
+  const char STROBE = C1284_NSTROBE;
   const char PTT      = (_ptt_delay ? C1284_NINIT : 0);
   const char CW_KEY_DOWN = C1284_NSELECTIN | PTT;
   const char CW_KEY_UP   = PTT;
+#endif
+
+#if 0
+  const char STROBE = C1284_NSTROBE;
+  const char PTT      = (_ptt_delay ? C1284_NINIT | C1284_NSTROBE: 0);
+  const char CW_KEY_DOWN = C1284_NSELECTIN | PTT  | C1284_NSTROBE;
+  const char CW_KEY_UP   = PTT | C1284_NSTROBE;
+#endif
+
 
   bool ptt_asserted = false;
 
@@ -104,6 +115,13 @@ void* cw_buffer::_play(void*)
       if (next_action > 0)
       { if (!ptt_asserted)                      // we need to assert PTT alone for a while
         { ptt_asserted = true;
+
+ // &&& NEW
+//        _port.control(STROBE);
+//        _port.control(0);
+//        sleep_for(microseconds(1));
+
+
           _port.control(PTT);              // assert PTT
 
           sleep_for(microseconds(_ptt_delay * 1000));

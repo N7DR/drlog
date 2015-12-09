@@ -29,6 +29,7 @@ pt_mutex rules_mutex;                   ///< mutex for the contest_rules object
 
 extern const set<string> CONTINENT_SET; ///< the abbreviations for the continents
 extern message_stream ost;              ///< for debugging and logging
+extern location_database location_db;   ///< location information
 
 typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 
@@ -1269,36 +1270,18 @@ const bool contest_rules::sent_exchange_includes(const std::string& str, const M
 const bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
 {  SAFELOCK(rules);
 
-//  ost << "in contest_rules::is_exchange_field_used_for_country(): field_name = " << field_name << ", prefix = " << canonical_prefix << endl;
-
-//     std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
-//  if (find(_exchange_field_eft.cbegin(), _exchange_field_eft.cend(), canonical_prefix) == _exchange_field_eft.cend())
-//    return false;    // not a known field name
-//   for (const auto& tmp : _exchange_field_eft)
-//     ost << "exchange_field_eft name = " << tmp.first << endl;
-
     if (_exchange_field_eft.find(field_name)  == _exchange_field_eft.cend())
-    { //ost << "could not find field name in _exchange_field_eft; returning false" << endl;
       return false;    // not a known field name
-    }
-
 
 // if a field appears in the per-country rules, are we in the right country?
-//    std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
     bool is_a_per_country_field = false;
 
     for (const auto& ssets : _per_country_exchange_fields)
-    { //ost << "ssets.first = " << ssets.first << endl;
-
-      if (ssets.second < field_name)
+    { if (ssets.second < field_name)
         is_a_per_country_field = true;
 
       if (ssets.first == canonical_prefix)
-      { //for (const auto& str : ssets.second)
-        //  ost << "set member = " << str << endl;
-
         return (ssets.second < field_name);
-      }
     }
 
     if (is_a_per_country_field)
@@ -1307,8 +1290,7 @@ const bool contest_rules::is_exchange_field_used_for_country(const string& field
     return true;  // a known field, and this is not a special country
 }
 
-//   std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
-
+/// the names of all the possible exchange fields
 const set<string> contest_rules::exchange_field_names(void) const
 { set<string> rv;
 
@@ -1323,7 +1305,7 @@ const set<string> contest_rules::exchange_field_names(void) const
 // an ambiguous definition. What follows attempts to implement my guess as to what
 // they mean.
 
-extern location_database location_db;
+//extern location_database location_db;
 
 /*
  *  1. A PREFIX is the letter/numeral combination which forms the first part of the amateur call.
@@ -1410,9 +1392,8 @@ const string wpx_prefix(const string& call)
 
 // we have a (meaningful) slash in the call
   const string left = substring(callsign, 0, slash_posn);
-  const string right = substring(callsign, slash_posn + 1);
-
   const size_t left_size = left.size();
+  const string right = substring(callsign, slash_posn + 1);
   const size_t right_size = right.size();
 
   if (left_size == right_size)
@@ -1428,13 +1409,8 @@ const string wpx_prefix(const string& call)
 
   string designator = (left_size < right_size ? left : right);
 
-//  ost << "designator = " << designator << endl;
-
   if (designator.find_first_of(digits) == string::npos)
     designator += "0";
-
-//  const size_t last_digit_posn = designator.find_last_of(digits);
-//  const string rv = substring(designator, 0, min(callsign.length(), last_digit_posn + 1));
 
   string rv = designator;
 
@@ -1443,9 +1419,6 @@ const string wpx_prefix(const string& call)
       rv = substring(call, 0, 2);
   }
 
-//  ost << "WPX prefix for " << callsign << " is: " << rv << endl;
-
-//  return substring(designator, 0, min(callsign.length(), last_digit_posn + 1));
   return rv;
 }
 
@@ -1454,6 +1427,20 @@ const string wpx_prefix(const string& call)
     \return         the SAC prefix corresponding to <i>call</i>
 
     The SAC rules as written do not allow for weird prefixes such as LA100, etc.
+
+From SAC rules, the relevant countries are:
+  Svalbard and Bear Island JW
+  Jan Mayen JX
+  Norway LA – LB – LG – LJ – LN
+  Finland OF – OG – OH – OI
+  Aland Islands OFØ – OGØ – OHØ
+  Market Reef OJØ
+  Greenland OX – XP
+  Faroe Islands OW – OY
+  Denmark 5P – 5Q – OU – OV – OZ
+  Sweden 7S – 8S – SA – SB – SC – SD – SE – SF – SG – SH – SI – SJ – SK – SL – SM
+  Iceland TF
+
 */
 const string sac_prefix(const string& call)
 { static const set<string> scandinavian_countries { "JW", "JX", "LA", "OH", "OH0", "OJ0", "OX", "OY", "OZ", "SM", "TF" };
@@ -1478,30 +1465,16 @@ const string sac_prefix(const string& call)
     return prefix;
   }
   else
-  { return canonical_prefix;
-  }
+    return canonical_prefix;
 }
 
-/*
-Svalbard and Bear Island JW
-Jan Mayen JX
-Norway LA – LB – LG – LJ – LN
-Finland OF – OG – OH – OI
-Aland Islands OFØ – OGØ – OHØ
-Market Reef OJØ
-Greenland OX – XP
-Faroe Islands OW – OY
-Denmark 5P – 5Q – OU – OV – OZ
-Sweden 7S – 8S – SA – SB – SC – SD – SE – SF – SG – SH – SI – SJ – SK – SL – SM
-Iceland TF
-*/
-
-/*! \brief  Given a received value of a particular multiplier field, what is the actual mult value?
-    \param  field_name         name of the field
-    \param  received_value     received value for field <i>field_name</i>
-    \return                    The multiplier value for the field <i>field_name</i>
+/*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?
+    \param  field_name      name of the field
+    \param  received_value  received value for field <i>field_name</i>
+    \return                 the multiplier value for the field <i>field_name</i>
 
     For example, the mult value for a DOK field with the value A01 is A.
+    Currently, the only field name that precipitates special processing is DOK.
 */
 const string MULT_VALUE(const string& field_name, const string& received_value)
 { if (field_name == "DOK")

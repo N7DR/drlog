@@ -557,71 +557,68 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
         const string value = (n < fields.size() ? remove_peripheral_spaces(fields[n]) : "");
 
 // frequency
-  if (name == "FREQ")
-  { qso.freq(value);
+        if (name == "FREQ")
+        { qso.freq(value);
     
-    unsigned int _frequency = from_string<unsigned int>(value);
-    BAND _band = to_BAND(_frequency);
+          unsigned int _frequency = from_string<unsigned int>(value);
+          const BAND _band = to_BAND(_frequency);
 
-        qso.band(_band);
-  
-//  ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
-  }
-      
-
+          qso.band(_band);
+        }
 
 // mode
         if (name == "MODE")
-  { if (value == "CW")
-      qso.mode(MODE_CW);
-    if (value == "SSB")
-      qso.mode(MODE_SSB);
+        { if (value == "CW")
+            qso.mode(MODE_CW);
+
+          if (value == "SSB")
+            qso.mode(MODE_SSB);
 //    if (value == "RTTY")
 //      qso.mode(MODE_DIGI);
-  }
+        }
 
 // date
-  if (name == "DATE")
-    qso.date(value);
+        if (name == "DATE")
+          qso.date(value);
 
 // time
-  if (name == "TIME")
-  { if (value.find(":") == 2)  
-      qso.utc(value.substr(0, 2) + value.substr(3, 2));
-    else
-      qso.utc(value);
-  }
+        if (name == "TIME")
+        { if (value.find(":") == 2)
+            qso.utc(value.substr(0, 2) + value.substr(3, 2));
+          else
+            qso.utc(value);
+        }
 
 // tcall
-  if (name == "TCALL")
-    qso.my_call(value);
+        if (name == "TCALL")
+          qso.my_call(value);
     
 // transmitted exchange
-  if (name.substr(0, 5) == "TEXCH")
-  { const string field_name = name.substr(6);
-    vector<pair<string, string> > current_sent_exchange = qso.sent_exchange(); // do in two steps in order to remove constness of returned value
+        if (name.substr(0, 5) == "TEXCH")
+        { const string field_name = name.substr(6);
+          vector<pair<string, string> > current_sent_exchange = qso.sent_exchange(); // do in two steps in order to remove constness of returned value
   
-    qso.sent_exchange((current_sent_exchange.push_back(make_pair(field_name, value)), current_sent_exchange)); 
-  }   
+//          qso.sent_exchange((current_sent_exchange.push_back(make_pair(field_name, value)), current_sent_exchange));
+          qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
+        }
 
 // rcall
-  if (name == "RCALL")
-    qso.callsign(value);
+        if (name == "RCALL")
+          qso.callsign(value);
 
 // received exchange
-  if (name.substr(0, 5) == "REXCH")
-  { const string field_name = name.substr(6);
-    vector<received_field> current_received_exchange = qso.received_exchange(); // do in two steps in order to remove constness of returned value
+        if (name.substr(0, 5) == "REXCH")
+        { const string field_name = name.substr(6);
+          vector<received_field> current_received_exchange = qso.received_exchange(); // do in two steps in order to remove constness of returned value
 
 // should have a function in the QSO class to add a field to the exchange
-    current_received_exchange.push_back( { field_name, value, false, false } );
-    qso.received_exchange(current_received_exchange);
-  }   
+          current_received_exchange.push_back( { field_name, value, false, false } );
+          qso.received_exchange(current_received_exchange);
+        }
 
 // don't do TXID since we don't really need that (and there's currently nowhere in QSO to put it)
       }
-      
-//ost << "Processed QSO" << endl;      
+
       qso.number(++last_qso_number);
       *this += qso;
     }
@@ -680,10 +677,16 @@ log_extract::log_extract(window& w) :
 {
 }
 
+/// prepare for use
 void log_extract::prepare(void)
 { _win_size = _win.height();
 }
 
+/*! \brief          Add a QSO to the extract
+    \param  qso     QSO to add
+
+    Auto resizes the extract by removing old QSOs so that it does not exceed the window size
+*/
 void log_extract::operator+=(const QSO& qso)
 { SAFELOCK(_extract);
 
@@ -693,6 +696,11 @@ void log_extract::operator+=(const QSO& qso)
     _qsos.pop_front();
 }
 
+/*! \brief  Display the extract in the associated window
+
+    Displayed in order from oldest to newest. If the extract contains more QSOs than the window
+    allows, only the most recent QSOs are displayed.
+*/
 void log_extract::display(void)
 { vector<QSO> vec;
 
@@ -701,22 +709,15 @@ void log_extract::display(void)
     copy(_qsos.cbegin(), _qsos.cend(), back_inserter(vec));
   }
 
-//  ost << "number of QSOS = " << vec.size() << endl;
-
-//  ost << "vec size = " << vec.size() << ", _win_size = " << _win_size << endl;
-
   if (vec.size() < _win_size)
-  { //ost << "clearing window" << endl;
     _win < WINDOW_CLEAR;
-  }
 
   if (!vec.empty())
   { const size_t n_to_display = min(vec.size(), _win_size);
 
-    //ost << "n_to_display = " << n_to_display << endl;
-
     for (size_t n = 0; n < n_to_display; ++n)
-    { const size_t index = vec.size() - 1 - n;
+    { const size_t index = vec.size() - 1 - n;              // write so that most recent is at the bottom
+
       _win < cursor(0, n) < vec[index].log_line();
     }
   }
@@ -724,21 +725,19 @@ void log_extract::display(void)
   _win < WINDOW_REFRESH;
 }
 
-// get recent QSOs from a log, and possibly display them
+/*! \brief              Get recent QSOs from a log, and possibly display them
+    \param  lgbook      logbook to use
+    \param  to_display  whether to display the extract
+
+    Displayed in order from oldest to newest
+*/
 void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
-{
-//  ost << "logbook size = " << lgbook.size() << endl;
-
-  const vector<QSO>& vec = lgbook.as_vector();
-
-//  ost << " vector size = " << vec.size() << endl;
-
+{ const vector<QSO>& vec = lgbook.as_vector();
   const size_t n_to_copy = min(vec.size(), _win_size);
-
-//  ost << "in recent_qsos(), n_to_copy = " << n_to_copy << endl;
 
   clear();    // empty the container of QSOs
 
+// extract the QSOs
   for (size_t n = 0; n < n_to_copy; ++n)
   	(*this) += vec.at(vec.size() - n_to_copy + n);
 
@@ -746,7 +745,13 @@ void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
   	display();
 }
 
-// display the LAST matches
+/*! \brief              Get the QSOs that match an exchange from a log, and display them
+    \param  lgbook      logbook to use
+    \param  target      string to match in the QSO exchanges
+
+    Displayed in order from oldest to newest. If the extract contains more QSOs than the window
+    allows, only the most recent QSOs are displayed.
+*/
 void log_extract::match_exchange(const logbook& lgbook, const string& target)
 { const vector<QSO> vec = lgbook.match_exchange(target);
   const size_t n_to_copy = min(vec.size(), _win_size);

@@ -69,6 +69,37 @@ public:
 /// ostream << parsed_exchange_field
 std::ostream& operator<<(std::ostream& ost, const parsed_exchange_field& pef);
 
+// -------------------------  parsed_ss_exchange  ---------------------------
+
+/*!     \class parsed_ss_exchange
+        \brief All the fields in the SS exchange, following parsing
+*/
+
+class parsed_ss_exchange
+{
+protected:
+  unsigned int _serno;          ///< serial number
+  char         _prec;           ///< precedence
+  std::string  _callsign;       ///< callsign
+  unsigned int _check;          ///< check
+  std::string  _section;        ///< section
+
+  const bool _is_possible_serno(const std::string& str) const;
+  const bool _is_possible_prec(const std::string& str) const;
+  const bool _is_possible_check(const std::string& str) const;
+
+public:
+
+  parsed_ss_exchange(const std::string& call, const std::string& received_str);
+
+  READ(serno);
+  READ(prec);
+  READ(callsign);
+  READ(check);
+  READ(section);
+
+};
+
 // -------------------------  parsed_exchange  ---------------------------
 
 /*!     \class parsed_exchange
@@ -334,6 +365,18 @@ public:
 
 // all canonical values
   const std::set<std::string> canonical_values(void) const;
+
+/// serialise
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version)
+  { ar & _name
+//       & _regex_expression  // won't serialize
+       & _values
+       & _legal_non_regex_values
+       & _value_to_canonical
+       & _is_mult;
+  }
+
 };
 
 std::ostream& operator<<(std::ostream& ost, const EFT& eft);

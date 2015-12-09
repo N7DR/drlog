@@ -286,46 +286,76 @@ public:
 */
   explicit log_extract(window& w);
 
+/// prepare for use
   void prepare(void);
 
+/// number of QSOs in the extract
   inline const size_t size(void)
   { SAFELOCK(_extract);
     return _qsos.size();
   }
 
+/// is the extract empty?
   inline const bool empty(void)
   { SAFELOCK(_extract);
     return _qsos.empty();
   }
 
+/// height of the associated window
   inline const unsigned int win_size(void)
   { SAFELOCK(_extract);
     return _win_size;
   }
 
+/// QSOs contained in the extract
   inline const std::deque<QSO> qsos(void)
   { SAFELOCK(_extract);
     return _qsos;
   }
 
+/*! \brief          Add a QSO to the extract
+    \param  qso     QSO to add
+
+    Auto resizes the extract by removing old QSOs so that it does not exceed the window size
+*/
   void operator+=(const QSO& qso);
 
-// augment without limiting the size of the deque
+/*! \brief          Unconditionally add a QSO to the extract
+    \param  qso     QSO to add
+*/
   inline void add_without_limit(const QSO& qso)
   { SAFELOCK(_extract);
     _qsos.push_back(qso);
   }
 
+/// clear the extract
   inline void clear(void)
   { SAFELOCK(_extract);
     _qsos.clear();
   }
 
+/*! \brief  Display the extract in the associated window
+
+    Displayed in order from oldest to newest. If the extract contains more QSOs than the window
+    allows, only the most recent QSOs are displayed.
+*/
   void display(void);
 
-// get recent QSOs from a log
+/*! \brief              Get recent QSOs from a log, and possibly display them
+    \param  lgbook      logbook to use
+    \param  to_display  whwther to display the extract
+
+    Displayed in order from oldest to newest
+*/
   void recent_qsos(const logbook& lgbook, const bool to_display = true);
 
+/*! \brief              Get the QSOs that match an exchange from a log, and display them
+    \param  lgbook      logbook to use
+    \param  target      string to match in the QSO exchanges
+
+    Displayed in order from oldest to newest. If the extract contains more QSOs than the window
+    allows, only the most recent QSOs are displayed.
+*/
   void match_exchange(const logbook& lgbook, const std::string& target);
 
 template <typename T>

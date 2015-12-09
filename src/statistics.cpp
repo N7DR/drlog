@@ -171,6 +171,8 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 // Exchange mults
     const bool exchange_mults_per_band = rules.exchange_mults_per_band();
 
+    ost << "Number of exchange multipliers = " << _exchange_multipliers.size() << endl;
+
     for (const auto& sm : _exchange_multipliers)
     { const string& field_name = sm.first;
 
@@ -193,12 +195,17 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
         }
       }
 
-      if (exchange_mults_per_band)
-        add_all_bands(permitted_bands.size(), total);
-      else
-        line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
+      if (permitted_bands.size() != 1)
+      { if (exchange_mults_per_band)
+          add_all_bands(permitted_bands.size(), total);
+        else
+          line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
+      }
 
       rv += line + LF;
+
+      ost << "line = " << line << endl;
+
      }
 
 // dupes
