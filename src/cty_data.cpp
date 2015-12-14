@@ -237,12 +237,8 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
     \param  filename    name of file
 */
 cty_data::cty_data(const string& filename)
-{ 
-// read file and remove EOL markers  
-  const string entire_file = remove_char(remove_char(read_file(filename), LF_CHAR), CR_CHAR);
-
-// split into records
-  const vector<string> records = split_string(entire_file, ";");
+{ const string entire_file = remove_char(remove_char(read_file(filename), LF_CHAR), CR_CHAR);   // read file and remove EOL markers
+  const vector<string> records = split_string(entire_file, ";");        // split into records
   
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
@@ -252,12 +248,8 @@ cty_data::cty_data(const string& filename)
     \param  filename    name of file
 */
 cty_data::cty_data(const vector<string>& path, const string& filename)
-{
-// read file and remove EOL markers
-  const string entire_file = remove_char(remove_char(read_file(path, filename), LF_CHAR), CR_CHAR);
-
-// split into records
-  const vector<string> records = split_string(entire_file, ";");
+{ const string entire_file = remove_char(remove_char(read_file(path, filename), LF_CHAR), CR_CHAR); // read file and remove EOL markers
+  const vector<string> records = split_string(entire_file, ";");        // split into records
 
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
@@ -433,11 +425,8 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
         for (map<string, alternative_country_info>::const_iterator cit = alt_prefixes.cbegin(); cit != alt_prefixes.cend(); ++cit)
         { const string& prefix = cit->first;
           const alternative_country_info& aci = cit->second;
-          
-          //cout << "Prefix: " << rec.canonical_prefix() << "; alt prefix: " << prefix << endl;
         
-// if country is WAEDC only and there's an entry already for this prefix, delete it before inserting
-          if (country_is_waedc_only)
+          if (country_is_waedc_only)            // if country is WAEDC only and there's an entry already for this prefix, delete it before inserting
           { map<string, location_info>::const_iterator db_posn = _db.find(prefix);
           
             if (db_posn != _db.cend())
@@ -449,18 +438,8 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
             info.itu_zone(aci.itu_zone());         
             
             _db.insert( { prefix, info } );
-//            cout << "Inserted WAEDC prefix: " << prefix << " for " << info.canonical_prefix() << endl;
-//            cout << "Prefix length: " << prefix.length() << endl;
-//  if (_db.find(prefix) != _db.end())
-//    cout << "FOUND " << prefix << endl;
-//  else
-//    cout << "UNABLE TO FIND " << prefix << endl;
-//  if (_db.find("R") != _db.end())
-//    cout << "FOUND R" << endl;
-//  else
-//    cout << "UNABLE TO FIND R" << endl;
           }
-          else            // country is in DXCC list; don't add if there's an entry already
+          else                                  // country is in DXCC list; don't add if there's an entry already
           { map<string, location_info>::const_iterator db_posn = _db.find(prefix);
           
             if (db_posn == _db.cend())    // if it's not already in the database
@@ -470,31 +449,10 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
               info.itu_zone(aci.itu_zone());         
             
               _db.insert( { prefix, info } );
-//              cout << "Inserted non-WAEDC prefix: " << prefix << " for " << info.canonical_prefix() << endl;
-//            cout << "Prefix length: " << prefix.length() << endl;
-//              if (_db.find(prefix) != _db.end())
-//    cout << "FOUND " << prefix << endl;
-//  else
-//    cout << "UNABLE TO FIND " << prefix << endl;
-//  if (_db.find("R") != _db.end())
-//    cout << "FOUND R" << endl;
-//  else
-//    cout << "UNABLE TO FIND R" << endl;
             }
           }
         }
-//  cout << "AFTER COUNTRY " << cty[n_country].canonical_prefix() << endl;
-//  if (_db.find("R") != _db.end())
-//    cout << "FOUND R" << endl;
-//  else
-//    cout << "UNABLE TO FIND R" << endl;
       }
-
-//  cout << "AFTER ALTERNATIVE PREFIXES" << endl;
-//  if (_db.find("R") != _db.end())
-//    cout << "FOUND R" << endl;
-//  else
-//    cout << "UNABLE TO FIND R" << endl;
 
 // do essentially the same for the alternative callsigns -- we should just make this a callable private function and call it twice;
 // these go into the _alt_call_db
@@ -507,8 +465,7 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
         { const string callsign = cit->first;
           const alternative_country_info& aci = cit->second;
         
-// if country is WAEDC only and there's an entry already for this callsign, delete it before inserting
-          if (country_is_waedc_only)
+          if (country_is_waedc_only)        // if country is WAEDC only and there's an entry already for this callsign, delete it before inserting
           { const auto db_posn = _alt_call_db.find(callsign);
           
             if (db_posn != _alt_call_db.end())
@@ -521,7 +478,7 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
             
             _alt_call_db.insert( { callsign, info } );
           }
-          else            // country is in DXCC list; don't add if there's an entry already for this callsign
+          else                              // country is in DXCC list; don't add if there's an entry already for this callsign
           { const auto db_posn = _alt_call_db.find(callsign);
           
             if (db_posn == _alt_call_db.end())
@@ -538,10 +495,6 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
       break;
     }    
   }
-
-//  ost << "RW9AA is " << ( (_db.find("RW9AA") == _db.end()) ? "NOT " : "" ) << "present" << endl;
-//  ost << "RW6AA/9 is " << ( (_db.find("RW6AA/9") == _db.end()) ? "NOT " : "" ) << "present" << endl;
-
 }
 
 void location_database::_insert_alternatives(const location_info& info, const map<string, alternative_country_info>& alternatives)
@@ -559,12 +512,11 @@ location_database::location_database(void)
 
 // construct from CTY.DAT filename and the definition of which country list to use
 location_database::location_database(const string& filename, const enum country_list_type country_list)
-{ if (filename.empty())
-    return;
+{ if (!filename.empty())
+  { //const cty_data cty(filename);
 
-  const cty_data cty(filename);
-
-  _init(cty, country_list);
+    _init(cty_data(filename), country_list);
+  }
 }
 
 // construct from CTY.DAT data and the definition of which country list to use
@@ -588,7 +540,10 @@ void location_database::prepare(const cty_data& cty, const enum country_list_typ
   _init(cty, country_list);
 }
 
-// add Russian information
+/*! \brief              Add Russian information
+    \param  path        vector of directories to check for file <i>filename</i>
+    \param  filename    name of file containing Russian information
+*/
 void location_database::add_russian_database(const vector<string>& path, const string& filename)
 { if (filename.empty())
     return;
@@ -605,9 +560,13 @@ void location_database::add_russian_database(const vector<string>& path, const s
 //  ost << "written length of Russian data = " << _russian_db.size() << endl;
 }
 
-void location_database::add_alt_call(const string& call, const location_info& li)
-{ _alt_call_db.insert(make_pair(call, li));    // overwrites any prior entry with call as the key
-}
+/*! \brief              Add Russian information
+    \param  path        vector of directories to check for file <i>filename</i>
+    \param  filename    name of file containing Russian information
+*/
+//void location_database::add_alt_call(const string& call, const location_info& li)
+//{ _alt_call_db.insert(make_pair(call, li));    // overwrites any prior entry with call as the key
+//}
 
 const location_info location_database::info(const string& cs)
 { const string original_callsign = remove_peripheral_spaces(cs);
@@ -1196,9 +1155,9 @@ const float drlog_qth_database::latitude(const string& call, const float initial
     \param  initial_cq_zone     default value of latitude, if none is found
     \return                     latitude corresponding to call area <i>call_area</i> in country <i>country</i>
 */
-const float drlog_qth_database::latitude(const string& country, const unsigned int area, const float initial_latitude) const
+const float drlog_qth_database::latitude(const string& country, const unsigned int call_area, const float initial_latitude) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == country and _db[n].get_area(10) == area)  // 10 is an invalid area
+    if (_db[n].get_id() == country and _db[n].get_area(10) == call_area)  // 10 is an invalid area
       return _db[n].get_latitude(initial_latitude);
 
   return 0;
@@ -1217,9 +1176,15 @@ const float drlog_qth_database::longitude(const string& call, const float initia
   return 0;
 }
 
-const float drlog_qth_database::longitude(const string& country, const unsigned int area, const float initial_longitude) const
+/*! \brief                      Get the longitude corresponding to a call area in a country
+    \param  country             country identifier
+    \param  call_area           call area (0 - 9)
+    \param  initial_cq_zone     default value of longitude, if none is found
+    \return                     longitude corresponding to call area <i>call_area</i> in country <i>country</i>
+*/
+const float drlog_qth_database::longitude(const string& country, const unsigned int call_area, const float initial_longitude) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == country and _db[n].get_area(10) == area)  // 10 is an invalid area
+    if (_db[n].get_id() == country and _db[n].get_area(10) == call_area)  // 10 is an invalid area
       return _db[n].get_longitude(initial_longitude);
 
   return 0;

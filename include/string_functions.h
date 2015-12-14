@@ -447,6 +447,10 @@ inline const bool starts_with(const std::string& cs, const std::string& ss)
 inline const bool begins_with(const std::string& cs, const std::string& ss)
   { return (starts_with(cs, ss) ); }
 
+/// is a call a maritime mobile?
+inline const bool is_maritime_mobile(const std::string& callsign)
+  { return ( to_upper(last(callsign, 3)) == "/MM" ); }
+
 /// convert an integer to a character-separated string
 const std::string separated_string(const int n, const std::string& sep = ",");
 

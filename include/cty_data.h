@@ -467,7 +467,7 @@ class drlog_qth_database_record
 {
 protected:
   std::string         _id;          ///< ID for the record (typically, a callsign)
-  value<unsigned int> _area;        ///< not sure what this is
+  value<unsigned int> _area;        ///< call area
   value<unsigned int> _cq_zone;     ///< CQ zone
   value<float>        _latitude;    ///< latitude in degrees (+ve north)
   value<float>        _longitude;   ///< longitude in degrees (+ve west)
@@ -566,7 +566,7 @@ public:
     \param  initial_cq_zone     default value of latitude, if none is found
     \return                     latitude corresponding to call area <i>call_area</i> in country <i>country</i>
 */
-  const float latitude(const std::string& country, const unsigned int area, const float initial_latitude) const;
+  const float latitude(const std::string& country, const unsigned int call_area, const float initial_latitude) const;
  
 /*! \brief                      Get the longitude corresponding to a call
     \param  call                callsign
@@ -575,8 +575,15 @@ public:
 */
   const float longitude(const std::string& call, const float initial_longitude) const;
 
-  const float longitude(const std::string& country, const unsigned int area, const float initial_longitude) const;
+/*! \brief                      Get the longitude corresponding to a call area in a country
+    \param  country             country identifier
+    \param  call_area           call area (0 - 9)
+    \param  initial_cq_zone     default value of longitude, if none is found
+    \return                     longitude corresponding to call area <i>call_area</i> in country <i>country</i>
+*/
+  const float longitude(const std::string& country, const unsigned int call_area, const float initial_longitude) const;
   
+/// number of records in the database
   inline const size_t size(void) const
     { return _db.size(); }
   
@@ -633,14 +640,24 @@ public:
 /// prepare a default-constructed object for use
   void prepare(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary);
 
-// add Russian information
+/*! \brief              Add Russian information
+    \param  path        vector of directories to check for file <i>filename</i>
+    \param  filename    name of file containing Russian information
+*/
   void add_russian_database(const std::vector<std::string>& path, const std::string& filename);
 
 /// how large is the main database?
   inline const size_t size(void)
     { return (SAFELOCK_GET( _location_database_mutex, _db.size() )); }
 
-  void add_alt_call(const std::string& call, const location_info& li);
+/*! \brief          Add a call to the alt_call database
+    \param  call    callsign to add
+    \param  li      location information for <i>call</i>
+
+    Overwrites any extant entry with <i>call</i> as the key
+*/
+  inline void add_alt_call(const std::string& call, const location_info& li)
+    { _alt_call_db.insert( { call, li } ); }
 
 /// return all the useful information, given a callsign
   const location_info info(const std::string& callpart);

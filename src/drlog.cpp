@@ -1909,7 +1909,8 @@ void* process_rbn_info(void* vp)
       if (!line.empty())
       { const bool is_beacon = contains(line, " BCN ") or contains(line, "/B ");
 
-        if (!is_beacon or rbn_beacons)
+//        if (!is_beacon or rbn_beacons)
+        if (rbn_beacons or (!rbn_beacons and !is_beacon) )
         { last_processed_line = line;
 
 // display if this is a new mult on any band, and if the poster is on our own continent
@@ -1955,9 +1956,7 @@ void* process_rbn_info(void* vp)
                 { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
                   if (!guess.empty())
-                  { //ost << "HERE1: " << exch_mult_name << ", " << MULT_VALUE(exch_mult_name, guess) << endl;
                     statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
-                  }
                 }
               }
 
@@ -2329,10 +2328,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     }
 
 // go to CQ mode if we're in SAP mode
-    if (!processed and drlog_mode == SAP_MODE)
-    { enter_cq_mode();
-      processed = true;
-    }
+//    if (!processed and drlog_mode == SAP_MODE)
+//    { enter_cq_mode();
+//      processed = true;
+//    }
 
     processed = true;
   }
@@ -2401,21 +2400,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   if (!processed and e.is_alt() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                   or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
   { process_change_in_bandmap_column_offset(e.symbol());
-
-#if 0
-    bandmap& bm = bandmaps[safe_get_band()];
-    const bool is_increment = (e.symbol() == XK_KP_6) or (e.symbol() == XK_KP_Right);
-
-    if ( is_increment or (bm.column_offset() != 0) )
-    { bm.column_offset( bm.column_offset() + ( is_increment ? 1 : -1 ) ) ;
-
-      alert(string("Bandmap column offset set to: ") + to_string(bm.column_offset()));
-
-      win_bandmap <= bm;
-      win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
-    }
-#endif
-
     processed = true;
   }
 
@@ -2438,7 +2422,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     if (!processed and contents[0] == COMMAND_CHAR)
     { const string command = substring(contents, 1);
 
-ost << "processing command: " << command << endl;
+//ost << "processing command: " << command << endl;
 
 // .ABORT -- immediate exit, simulating power failure
       if (substring(command, 0, 5) == "ABORT")
@@ -2507,8 +2491,9 @@ ost << "processing command: " << command << endl;
 
             catch (...)
             { if (band_str == "*")
-              { for (const auto& b : rules.permitted_bands())
-                  score_bands.insert(b);
+              { //for (const auto& b : rules.permitted_bands())
+                //  score_bands.insert(b);
+                score_bands = set<BAND>(rules.permitted_bands().cbegin(), rules.permitted_bands().cend());
               }
               else
                 alert("Error parsing [RE]SCOREB command");
@@ -2523,16 +2508,15 @@ ost << "processing command: " << command << endl;
         { const set<BAND> score_bands = rules.score_bands();
           string bands_str;
 
-          for (const auto& b : score_bands)
-            bands_str += (BAND_NAME[b] + " ");
+//          for (const auto& b : score_bands)
+//            bands_str += (BAND_NAME[b] + " ");
+          FOR_ALL(score_bands, [&] (const BAND& b) { bands_str += (BAND_NAME[b] + " "); } );
 
           win_score_bands < WINDOW_CLEAR < "Score Bands: " <= bands_str;
         }
 
         rescore(rules);
         update_rate_window();
-
-// display the current statistics
         display_statistics(statistics.summary_string(rules));
 
         const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
@@ -2556,8 +2540,9 @@ ost << "processing command: " << command << endl;
 
             catch (...)
             { if (mode_str == "*")
-              { for (const auto& m : rules.permitted_modes())
-                  score_modes.insert(m);
+              { //for (const auto& m : rules.permitted_modes())
+                  //score_modes.insert(m);
+                score_modes = set<MODE>(rules.permitted_modes().cbegin(), rules.permitted_modes().cend());
               }
               else
                 alert("Error parsing [RE]SCOREM command");

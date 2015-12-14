@@ -154,7 +154,8 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
             }
           }
 
-          line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
+          if (permitted_bands.size() != 1)
+            line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
         }
         else
         { ost << "Error: did not find mult name: " << mult_name << endl;
@@ -171,7 +172,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 // Exchange mults
     const bool exchange_mults_per_band = rules.exchange_mults_per_band();
 
-    ost << "Number of exchange multipliers = " << _exchange_multipliers.size() << endl;
+//    ost << "Number of exchange multipliers = " << _exchange_multipliers.size() << endl;
 
     for (const auto& sm : _exchange_multipliers)
     { const string& field_name = sm.first;
@@ -204,7 +205,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
       rv += line + LF;
 
-      ost << "line = " << line << endl;
+//      ost << "line = " << line << endl;
 
      }
 
@@ -219,7 +220,8 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
          if (modes.size() == 1)
            line += pad_string(to_string(nd[b]), FIELD_WIDTH);
-        dupes += nd[b];
+
+         dupes += nd[b];
        }
 
        dupes_all_bands += dupes;
@@ -446,9 +448,7 @@ const bool running_statistics::add_known_country_mult(const string& str, const c
     \param  rules   contest rules
 */
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
-{ //ost << "in statistics.add_qso(); callsign = " << qso.callsign() << endl;
-
-  SAFELOCK(statistics);
+{ SAFELOCK(statistics);
   
   const BAND& b = qso.band();
   const unsigned int band_nr = static_cast<int>(b);
@@ -502,7 +502,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
     _qso_points[mode_nr][band_nr] += points_this_qso;
 
-// if it's not a dupe, we may need to track whether it's an ON QSO
+// if it's not a dupe, we may need to track whether it's an ON QSO in the UBA contest
     if (rules.uba_bonus())
     { if (rules.bonus_countries() < canonical_prefix)
         _n_ON_qsos[mode_nr][band_nr]++;
@@ -518,11 +518,11 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 const bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
 { SAFELOCK(statistics);
 
-  ost << "adding known legal value of " << value << " to exchange mult: " << name << endl;
+//  ost << "adding known legal value of " << value << " to exchange mult: " << name << endl;
 
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == name)
-    { ost << "MULT_VALUE = " << MULT_VALUE(name, value) << endl;
+    { //ost << "MULT_VALUE = " << MULT_VALUE(name, value) << endl;
 
       const bool added = psm.second.add_known(MULT_VALUE(name, value));
 
@@ -608,8 +608,6 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
   return false;
 }
 
-
-
 /*! \brief          A complete (multi-line) string that summarizes the statistics, for display in the SUMMARY window
     \param  rules   rules for this contest
     \return         summary string for display in the SUMMARY window
@@ -662,8 +660,6 @@ const string running_statistics::summary_string(const contest_rules& rules)
     if ( (vsm.size() != 1) and (mode_set.size() == 1) )
       rv += LF;
   }
-  
-//  ost << "SUMMARY STRING: " << endl << rv << endl;
 
   return rv;
 }
@@ -695,7 +691,7 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
   const unsigned int exchange_mults = n_worked_exchange_mults(rules);
   unsigned int rv = q_points * (country_mults + exchange_mults + callsign_mults);
   
-// UBA?
+// UBA has weird rules
   if (rules.uba_bonus())
   { int bonus_qsos = 0;
 
@@ -717,8 +713,7 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
     }
 
     const float on_fraction = static_cast<float>(bonus_qsos) / total_qsos;
-    const unsigned int points_ON_qso = 10;                                  // hardwire for now
-
+    const unsigned int points_ON_qso = 10;                                      // hardwire the ON points for now
     const unsigned int bonus_points = on_fraction * bonus_qsos * points_ON_qso;
 
     rv += bonus_points;
@@ -787,16 +782,20 @@ void running_statistics::clear_info(void)
   _n_qsos = move(decltype(_n_qsos)( { { } } ));
   _qso_points = move(decltype(_qso_points)( { { } } ));
 
-  for (auto& callsign_m : _callsign_multipliers)
-    callsign_m.second.clear();
+//  for (auto& callsign_m : _callsign_multipliers)
+//    callsign_m.second.clear();
+
+  FOR_ALL(_callsign_multipliers, [] (pair<const string, multiplier>& callsign_m) { callsign_m.second.clear(); } );
 
   _country_multipliers.clear();
 
-  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
-  { pair<string, multiplier>& sm = _exchange_multipliers[n];  //  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers
+//  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
+//  { pair<string, multiplier>& sm = _exchange_multipliers[n];  //  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers
+//
+//    sm.second.clear();
+//  }
 
-    sm.second.clear();
-  }
+  FOR_ALL(_exchange_multipliers, [] (pair<string, multiplier>& sm) { sm.second.clear(); } );
 }
 
 /*! \brief      Set the number of sent QTC QSOs
@@ -953,17 +952,11 @@ const unsigned int running_statistics::n_worked_callsign_mults(const contest_rul
     \return         the number of country mults worked
 */
 const unsigned int running_statistics::n_worked_country_mults(const contest_rules& rules) const
-{ //const vector<BAND>& permitted_bands = rules.permitted_bands();
-  const set<BAND>& score_bands = rules.score_bands();
+{ const set<BAND>& score_bands = rules.score_bands();
   const map<BAND, int>& per_band_country_mult_factor = rules.per_band_country_mult_factor();
   unsigned int rv = 0;
 
   SAFELOCK(statistics);
-
-//  for (const auto& b : permitted_bands)
-//  { if (score_bands < b)
-//      rv += (_country_multipliers.n_worked(b) * per_band_country_mult_factor.at(b));
-//  }
 
   FOR_ALL(score_bands, [&] (const BAND& b) { rv += (_country_multipliers.n_worked(b) * per_band_country_mult_factor.at(b)); } );
 
@@ -977,7 +970,6 @@ const unsigned int running_statistics::n_worked_country_mults(const contest_rule
 const unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& rules) const
 { const vector<BAND> permitted_bands = rules.permitted_bands();
   const set<MODE> permitted_modes = rules.permitted_modes();
-//  const set<BAND> score_bands = rules.score_bands();
   unsigned int rv = 0;
 
   SAFELOCK(statistics);
@@ -986,9 +978,7 @@ const unsigned int running_statistics::n_worked_exchange_mults(const contest_rul
   { const multiplier& mult = em.second;
 
     if (mult.per_mode())
-    { //ost << "mult " << em.first << " is per mode" << endl;
-
-      for (const auto& m : permitted_modes)
+    { for (const auto& m : permitted_modes)
       { if (mult.per_band())
         { for (const auto& b : permitted_bands)
               rv += mult.n_worked(b, m);
@@ -998,16 +988,12 @@ const unsigned int running_statistics::n_worked_exchange_mults(const contest_rul
       }
     }
     else
-    { //ost << "mult " << em.first << " is NOT per mode" << endl;
-
-//      for (const auto& m : permitted_modes)
-      { if (mult.per_band())
-        { for (const auto& b : permitted_bands)
-              rv += mult.n_worked(b, ANY_MODE);
-        }
-        else
-          rv += mult.n_worked(ANY_BAND, ANY_MODE);
+    { if (mult.per_band())
+      { for (const auto& b : permitted_bands)
+          rv += mult.n_worked(b, ANY_MODE);
       }
+      else
+        rv += mult.n_worked(ANY_BAND, ANY_MODE);
     }
   }
 
@@ -1060,7 +1046,7 @@ void call_history::operator+=(const QSO& qso)
     \param  m   mode to test
     \return     whether <i>s</i> has been worked on band <i>b</i> and mode <i>m</i>
 */
-const bool call_history::worked(const std::string& s, const BAND b , const MODE m)
+const bool call_history::worked(const string& s, const BAND b , const MODE m)
 { SAFELOCK(_history);
 
   const auto& cit = _history.find(s);
@@ -1094,7 +1080,6 @@ const bool call_history::worked(const string& s, const BAND b)
   }
 
   return false;
-//return (worked(s, b, MODE_CW) or worked(s, b, MODE_SSB));
 }
 
 /*! \brief      Has a call been worked on a particular mode?
@@ -1133,7 +1118,7 @@ const bool call_history::worked(const string& s)
     \param  b   band NOT to test
     \return     whether <i>s</i> has been worked on a band other than <i>b</i>
 */
-const bool call_history::worked_on_another_band(const std::string& s, const BAND b)
+const bool call_history::worked_on_another_band(const string& s, const BAND b)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
