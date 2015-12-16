@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file Version.cpp
+/*!     \file version.cpp
 
         version information
 */

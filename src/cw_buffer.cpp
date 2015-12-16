@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file cwbuffer.cpp
+/*!     \file cw_buffer.cpp
 
         Classes and functions related to sending CW
 */
@@ -59,6 +59,7 @@ void cw_buffer::_add_action(const int n)
 
 /*! \brief          Wrapper function to play the buffer
     \param  arg     "this" pointer
+    \return         nullptr
 */
 void* cw_buffer::_static_play(void* arg)              // arg is the "this" pointer, in order to allow static member access to a real object
 { cw_buffer* bufp = static_cast<cw_buffer*>(arg);
@@ -69,8 +70,9 @@ void* cw_buffer::_static_play(void* arg)              // arg is the "this" point
 }
 
 
-/*! \brief  Play the buffer
-    \param  unused
+/*! \brief      Play the buffer
+    \param      unused
+    \return     nullptr
 */
 void* cw_buffer::_play(void*)
 {
@@ -115,14 +117,7 @@ void* cw_buffer::_play(void*)
       if (next_action > 0)
       { if (!ptt_asserted)                      // we need to assert PTT alone for a while
         { ptt_asserted = true;
-
- // &&& NEW
-//        _port.control(STROBE);
-//        _port.control(0);
-//        sleep_for(microseconds(1));
-
-
-          _port.control(PTT);              // assert PTT
+          _port.control(PTT);                   // assert PTT
 
           sleep_for(microseconds(_ptt_delay * 1000));
         }
@@ -714,34 +709,39 @@ void cw_buffer::add(const char c, const int character_space)
     key_up(space);
 }
 
-// send a string
-void cw_buffer::operator<<(const std::string& str)
+/*! \brief          Send a string
+    \param  str     string to send
+
+    Special characters and commands embedded in <i>str</i> are expanded and/or processed
+    prior to transmission
+*/
+void cw_buffer::operator<<(const string& str)
 { for (size_t n = 0; n < str.length(); ++n)
     add(str[n]);
-
-//  cerr << "added to buffer: " << str << endl;
 }
 
 // abort sending -- not sure whether just clearing the buffer is sufficient
-void cw_buffer::abort(void)
-{ clear();
-}
+//void cw_buffer::abort(void)
+//{ clear();
+//}
 
-// clear the buffer
+/// clear the buffer
 void cw_buffer::clear(void)
 { SAFELOCK(_key_buffer);
 
-  while (!_key_buffer.empty())
+  while (!_key_buffer.empty())              // deques have no clear() member
     _key_buffer.pop();
 }
 
-// associate a rig with the buffer
+/*! \brief          Associate a rig with the buffer
+    \param  rigp    pointer to rig interface to be associated with the buffer
+*/
 void cw_buffer::associate_rig(rig_interface* rigp)
 { if (rigp)
     _rigp = rigp;
 }
 
-// is the buffer empty?
+/// is the buffer empty?
 const bool cw_buffer::empty(void)
 { SAFELOCK(_key_buffer);
 
@@ -750,11 +750,17 @@ const bool cw_buffer::empty(void)
 
 // ---------------------------------------- cw_messages -------------------------
 
+/*! \brief      Get a particular CW message
+    \param  n   number of message to return
+    \return     CW message number <i>n</i>
+
+     Returns empty string if message number <i>n</i> does not exist
+*/
 const string cw_messages::operator[](const int n)
 { SAFELOCK(_messages);
 
   map<int, string>::const_iterator cit = _messages.find(n);
 
-  return (cit == _messages.cend() ? "" : cit->second);
+  return (cit == _messages.cend() ? string() : cit->second);
 }
 

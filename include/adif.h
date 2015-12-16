@@ -4883,7 +4883,6 @@ public:
     \brief All ADIF countries
 */
 
-
 class adif_countries
 {
 protected:
@@ -4930,6 +4929,10 @@ public:
 
 // ---------------------------------------------------  adif_AWARD_LIST -----------------------------------------
 
+/*! \class  adif_AWARD_LIST
+    \brief  Encapsulate ADIF AwardList
+*/
+
 class adif_AWARD_LIST : public adif_type
 {
 protected:
@@ -4948,6 +4951,10 @@ public:
 
 // ---------------------------------------------------  adif_BOOLEAN -----------------------------------------
 
+/*! \class  adif_BOOLEAN
+    \brief  Encapsulate ADIF Boolean
+*/
+
 class adif_BOOLEAN : public adif_type
 {
 protected:
@@ -4965,6 +4972,10 @@ public:
 };
 
 // ---------------------------------------------------  adif_DATE -----------------------------------------
+
+/*! \class  adif_DATE
+    \brief  Encapsulate ADIF Date
+*/
 
 class adif_DATE : public adif_type
 {
@@ -4991,6 +5002,10 @@ public:
 
 // ---------------------------------------------------  adif_ENUMERATION -----------------------------------------
 
+/*! \class  adif_ENUMERATION
+    \brief  Encapsulate ADIF Enumeration
+*/
+
 class adif_ENUMERATION : public adif_type
 {
 protected:
@@ -5008,6 +5023,10 @@ public:
 };
 
 // ---------------------------------------------------  adif_ENUM -----------------------------------------
+
+/*! \class  adif_ENUM
+    \brief  Encapsulate ADIF Enumeration with explicit types, names and values
+*/
 
 template <class T>
 class adif_ENUM : public adif_type
@@ -5045,6 +5064,10 @@ public:
 };
 // ---------------------------------------------------  adif_LOCATION -----------------------------------------
 
+/*! \class  adif_LOCATION
+    \brief  Encapsulate ADIF Location
+*/
+
 class adif_LOCATION : public adif_type
 {
 protected:
@@ -5063,7 +5086,12 @@ public:
 
 // ---------------------------------------------------  adif_MULTILINE_STRING -----------------------------------------
 
-// a sequence of Characters and line-breaks, where a line break is an ASCII CR (code 13) followed immediately by an ASCII LF (code 10)
+/*! \class  adif_MULTILINE_STRING
+    \brief  Encapsulate ADIF MultilineString
+
+    defined as: "a sequence of Characters and line-breaks, where a line break is an ASCII CR (code 13) followed immediately by an ASCII LF (code 10)"
+*/
+
 class adif_MULTILINE_STRING : public adif_type
 {
 protected:
@@ -5082,7 +5110,12 @@ public:
 
 // ---------------------------------------------------  adif_NUMBER -----------------------------------------
 
-// a sequence of Digits optionally preceded by a minus sign (ASCII  code 45) and optionally including a single decimal point  (ASCII  code 46)
+/*! \class  adif_NUMBER
+    \brief  Encapsulate ADIF Number
+
+    defined as: "a sequence of Digits optionally preceded by a minus sign (ASCII code 45) and optionally including a single decimal point (ASCII code 46)"
+*/
+
 class adif_NUMBER : public adif_type
 {
 protected:
@@ -5101,7 +5134,12 @@ public:
 
 // ---------------------------------------------------  adif_STRING -----------------------------------------
 
-//  a sequence of Characters
+/*! \class  adif_STRING
+    \brief  Encapsulate ADIF String
+
+    defined as: "a sequence of Characters"
+*/
+
 class adif_STRING : public adif_type
 {
 protected:
@@ -5127,6 +5165,10 @@ public:
 
 // ---------------------------------------------------  adif_TIME -----------------------------------------
 
+/*! \class  adif_TIME
+    \brief  Encapsulate ADIF Time
+*/
+
 class adif_TIME : public adif_type
 {
 protected:
@@ -5151,6 +5193,10 @@ public:
 };
 
 // ---------------------------------------------------  adif_record-----------------------------------------
+
+/*! \class  adif_record
+    \brief  a single ADIF record
+*/
 
 class adif_record
 {

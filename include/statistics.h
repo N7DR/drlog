@@ -383,7 +383,6 @@ public:
 
 /*! \brief          Perform a complete rebuild
     \param  log     logbook
-    \param  rules   contest rules
 */
   void rebuild(const logbook& logbk);
 

@@ -201,16 +201,26 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 
   catch (const socket_support_error& e)
   { if (e.code() == SOCKET_SUPPORT_CONNECT_ERROR)
-    { ost << e.reason() << endl;
+    { ost << "SOCKET_SUPPORT_CONNECT_ERROR" << e.reason() << endl;
     }
     else
-    { _close_the_socket();
+    { ost << "socket_support_error:" << e.code() << ": " << e.reason() << endl;
+      _close_the_socket();
+      throw;
+    }
+  }
+
+  catch (const tcp_socket_error& e)
+  {
+    { ost << "tcp_socket_error:" << e.code() << ": " << e.reason() << endl;
+      _close_the_socket();
       throw;
     }
   }
 
   catch (...)                       // to ensure that socket is properly closed
-  { _close_the_socket();
+  { ost << "Caught miscellaneous exception" << endl;
+    _close_the_socket();
     throw;
   }
 }

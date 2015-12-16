@@ -85,12 +85,17 @@ public:
 */
   void operator-=(const unsigned int n);
 
-/// remove most-recent qso
+/*! \brief      Remove most-recent qso
+
+    Does nothing if there are no QSOs in the log
+*/
   inline void remove_last_qso(void)
     { SAFELOCK(_log);
 
       *this -= size();    // remember, numbering is wrt 1
     }
+
+  void remove_last_qsos(const unsigned int n_to_remove);
 
 /*! \brief          All the QSOs with a particular call, in chronological order
     \param  call    target callsign

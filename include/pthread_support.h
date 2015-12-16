@@ -54,7 +54,7 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 
 // -------------------------------------------  thread_attribute  -----------------------
 
-/*! \class  pthread_attribute
+/*! \class  thread_attribute
     \brief  Encapsulate pthread_attr information
 */
 

@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file cwbuffer.h
+/*!     \file cw_buffer.h
 
         Classes and functions related to sending CW
 */
@@ -128,38 +128,41 @@ public:
 */
   void operator<<(const std::string& str);
 
-/*! \brief  Abort sending
-
-    Sending halts (essentially) immediately  (even mid-character)
-*/
-  void abort(void);
-
 /// clear the buffer
   void clear(void);
 
-/// associate a rig with the buffer
+/*! \brief  Abort sending
+
+    Sending halts (essentially) immediately (even mid-character)
+*/
+  inline void abort(void)
+    { clear(); }
+
+/*! \brief          Associate a rig with the buffer
+    \param  rigp    pointer to rig interface to be associated with the buffer
+*/
   void associate_rig(rig_interface* rigp);
 
 /// is the buffer empty?
   const bool empty(void);
 
-// disable sending
+/// disable sending
   inline void disable(void)
     { _disabled_cw = true; }
 
-// enable sending
+/// enable sending
   inline void enable(void)
     { _disabled_cw = false; }
 
-// toggle sending
+/// toggle sending
   inline void toggle(void)
     { _disabled_cw = !_disabled_cw; }
 
-// is sending disabled?
+/// is sending disabled?
   inline const bool disabled(void) const
     { return _disabled_cw; }
 
-// is sending enabled?
+/// is sending enabled?
   inline const bool enabled(void) const
     { return !disabled(); }
 
@@ -200,6 +203,12 @@ public:
   cw_messages(void)
   { }
 
+/*! \brief      Get a particular CW message
+    \param  n   number of message to return
+    \return     CW message number <i>n</i>
+
+    Returns empty string if message number <i>n</i> does not exist
+*/
   const std::string operator[](const int n);
 };
 

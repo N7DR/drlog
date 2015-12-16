@@ -92,10 +92,10 @@ extern pt_mutex screen_mutex;                       ///< mutex for the screen
 
 WRAPPER_2(cursor, int, x, int, y);
 
-// -----------  colour_pair  ----------------
+// -----------  cpair  ----------------
 
-/*! \class colour_pair
-    \brief A class to hold information about used colour pairs
+/*! \class  cpair
+    \brief  A class to hold information about used colour pairs
 */
 
 class cpair
@@ -106,21 +106,21 @@ protected:
 
   pt_mutex _colours_mutex;                         ///< allow thread-safe access
 
-/*!     \brief          Private function to add a new pair of colours
-        \param  p       foreground colour, background colour
-        \return         the number of the colour pair
+/*! \brief          Private function to add a new pair of colours
+    \param  p       foreground colour, background colour
+    \return         the number of the colour pair
 */
   const unsigned int _add_to_vector(const std::pair< int, int>& p);
 
 public:
 
-/*!     \brief          Add a pair of colours
-        \param  fg      foreground colour
-        \param  bg      background colour
-        \return         the number of the colour pair
+/*! \brief          Add a pair of colours
+    \param  fg      foreground colour
+    \param  bg      background colour
+    \return         the number of the colour pair
 
-        If the pair is already known, returns the number of the known pair.
-        Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
+    If the pair is already known, returns the number of the known pair.
+    Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
   const unsigned int add(const int fg, const int bg);
 
@@ -151,6 +151,10 @@ public:
 };
 
 // -----------  window_information ----------------
+
+/*! \class  window_information
+    \brief  encapsulate position and colour information of a window
+*/
 
 class window_information
 {
@@ -306,14 +310,22 @@ public:
 /*! \brief          Move the logical cursor
     \param  new_x   x position
     \param  new_y   y position
+    \return         the window
 */
   window& move_cursor(const int new_x, const int new_y);
   
-/// move cursor
+/*! \brief          Move the logical cursor
+    \param  c       new cursor (used to derive the new location)
+    \return         the window
+*/
   inline window& move_cursor(const cursor& c)
     { return move_cursor(c.x(), c.y()); }
   
-/// move cursor relative
+/*! \brief              Move the logical cursor (relative to current location)
+    \param  delta_x     change in x position
+    \param  delta_y     change in y position
+    \return             the window
+*/
   window& move_cursor_relative(const int delta_x, const int delta_y);  
   
 /// get cursor position
@@ -438,7 +450,7 @@ public:
 /// clear a window
   window& clear(void);
   
-/*! \brief      read to end of window
+/*! \brief      Read to end of window
     \param  x   x value from which to read (0 is leftmost column)
     \param  y   y value from which to read (0 is bottommost row)
     \return     contents of the window, starting at the position (<i>x</i>, <i>y</i>)
@@ -451,7 +463,7 @@ public:
   inline const std::string getline(const int line_nr = 0)
     { return read(0, line_nr); }
 
-/// snapshot of all the contents
+/// line by line snapshot of all the contents; lines go from top to bottom
   const std::vector<std::string> snapshot(void);
 
 /// is a line empty?
@@ -464,7 +476,7 @@ public:
 /// delete a character in the current line
   window& delete_character(const int n);
 
-/// delete a character within a line
+/// delete a character within a particular line
   window& delete_character( const int n, const int line_nr );
 
 /// set function used to process input
@@ -532,13 +544,15 @@ template
 };
 
 /// window < cursor
-window& operator<(window& win, const cursor& c);
+inline window& operator<(window& win, const cursor& c)
+  { return win.move_cursor(c.x(), c.y()); }
 
 /// trivial class for moving the cursor (relative)
 WRAPPER_2(cursor_relative, int, x, int, y);
 
 /// window < cursor_relative
-window& operator<(window& win, const cursor_relative& cr);
+inline window& operator<(window& win, const cursor_relative& cr)
+  { return win.move_cursor_relative(cr.x(), cr.y()); }
 
 /// trivial class for centring a string on line y of a window
 WRAPPER_2(centre, std::string, s, int, y);
@@ -560,11 +574,11 @@ WRAPPER_2(COLOURS, int, fg, int, bg);
 inline window& operator<(window& win, const COLOURS& CP)
   { return win.cpair(colours.add(CP.fg(), CP.bg())); }
 
+/// obtain colour pair corresponding to foreground and background colours
 inline const int FGBG(const int fg, const int bg)
-{ return COLOUR_PAIR(colours.add(fg, bg));
-}
+  { return COLOUR_PAIR(colours.add(fg, bg)); }
 
-// convert the name of a colour to a colour
+/// convert the name of a colour to a colour
 const int string_to_colour(const std::string& str);
 
 #endif    // SCREEN_H

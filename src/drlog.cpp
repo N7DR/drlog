@@ -1153,7 +1153,7 @@ int main(int argc, char** argv)
   //  vector<QSO> vec = cablog.as_vector();
   //  win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= vec.size();
 
-// create the cluster, and package it for use by the process_cluster_info() thread
+// create the cluster, and package it for use by the process_rbn_info() thread dedicated to the cluster
 // constructor for cluster has to be in a different thread, so that we don't block this one
   if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
   { static pthread_t spawn_thread_id;
@@ -1907,7 +1907,7 @@ void* process_rbn_info(void* vp)
       unprocessed_input = substring(unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the buffer
 
       if (!line.empty())
-      { const bool is_beacon = contains(line, " BCN ") or contains(line, "/B ");
+      { const bool is_beacon = contains(line, " BCN ") or contains(line, "/B ")  or contains(line, "/B2 ");
 
 //        if (!is_beacon or rbn_beacons)
         if (rbn_beacons or (!rbn_beacons and !is_beacon) )
@@ -1919,7 +1919,7 @@ void* process_rbn_info(void* vp)
           if (post.valid())
           { const BAND dx_band = post.band();
 
-            if (permitted_bands < dx_band)
+            if (permitted_bands < dx_band)              // process only if is on a band we care about
             { const BAND cur_band = safe_get_band();
               const string& dx_callsign = post.callsign();
               const string& poster = post.poster();
@@ -1927,15 +1927,14 @@ void* process_rbn_info(void* vp)
 
               bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
 
-              be.freq(post.freq());    // also sets mode
+              be.freq(post.freq());        // also sets band and mode
               be.callsign(dx_callsign);
               be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
               if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
                 be.posters( { poster } );
 
-// do we still need this guy?
-              const bool is_needed = is_needed_qso(dx_callsign, dx_band, be.mode());
+              const bool is_needed = is_needed_qso(dx_callsign, dx_band, be.mode());  // do we still need this guy?
 
               be.is_needed(is_needed);
 
@@ -1992,7 +1991,7 @@ void* process_rbn_info(void* vp)
                     cluster_mult_win.bg(bg_colour);
 
                   if ( (dx_band == cur_band) or is_me)
-                    cluster_mult_win < WINDOW_NORMAL;    // removed refresh
+                    cluster_mult_win < WINDOW_NORMAL;
                 }
               }
 
@@ -2407,7 +2406,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   if (!processed and (e.is_unmodified() or e.is_alt()) and (e.symbol() == XK_Return))
   { const string contents = remove_peripheral_spaces(win.read());
 
-// if empty, send CQ #1, regardless of whether I'm in CQ or SAP mode
+// if empty, send CQ #1, if in CQ mode
     if (contents.empty())
     { if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))
       { const string msg = context.message_cq_1();
@@ -3062,6 +3061,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   { if (remove_peripheral_spaces(win.read()).empty())                // process only if empty
     { if (!logbk.empty())
       { const QSO qso = logbk[logbk.n_qsos()];
+
+        ost << "Deleting QSO: " << qso << endl;
 
         logbk.remove_last_qso();
 
@@ -4154,7 +4155,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
   bool processed = win.common_processing(e);
 
-  // BACKSPACE -- just move cursor to left
+// BACKSPACE -- just move cursor to left
     if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
     { //const cursor cursor_posn = win.cursor_position();
       //string str = win.getline(cursor_posn.y());
@@ -4173,22 +4174,25 @@ void process_LOG_input(window* wp, const keyboard_event& e)
       processed = true;
     }
 
+// SPACE
   if (!processed and e.is_char(' '))
   { win <= e.str();
     processed = true;
   }
 
+// CURSOR UP
   if (!processed and e.is_unmodified() and e.symbol() == XK_Up)
   { win <= CURSOR_UP;
     processed = true;
   }
 
+// CURSOR DOWN
   if (!processed and e.is_unmodified() and e.symbol() == XK_Down)
   { const cursor posn = win.cursor_position();
     if (posn.y() != 0)
       win <= CURSOR_DOWN;
-    else                                   // bottom line
-    { win_log.toggle_hidden();
+    else                                    // bottom line
+    { win_log.toggle_hidden();              // hide cursor
       win_log < WINDOW_REFRESH;
 
       const vector<string> new_win_log_snapshot = win_log.snapshot();  // [0] is the top line
@@ -4221,10 +4225,13 @@ void process_LOG_input(window* wp, const keyboard_event& e)
           }
         }
 
-// remove that number of QSOs from the log
-        for (unsigned int n = 0; n < n_to_remove; ++n)
-          logbk.remove_last_qso();
+// debug: print out the original QSOs
+        ost << "Original QSOs:" << endl;
+        for (const auto& qso : original_qsos)
+          ost << "    " << qso << endl;
+        ost << "New QSOs: " << endl;
 
+        logbk.remove_last_qsos(n_to_remove);                        // remove that number of QSOs from the log
         rebuild_history(logbk, rules, statistics, q_history, rate);
 
 // add the new QSOs
@@ -4255,6 +4262,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // add it to the running statistics; do this before we add it to the log so we can check for dupes against the current log
             statistics.add_qso(qso, logbk, rules);
             logbk += qso;
+
+            ost << "    " << qso << endl;
           }
         }
 
@@ -4555,7 +4564,7 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
 // get the colours right
   vector<pair<string /* exch value */, int /* colour pair number */ > > vec;
 
-  ost << "updating widow for : " << exch_mult_name << endl;
+//  ost << "updating widow for : " << exch_mult_name << endl;
 
    for (const auto& known_value : known_exchange_values)
    { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
@@ -4563,7 +4572,7 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
 
      vec.push_back( { known_value, colour_pair_number } );
 
-     ost << "value: " << known_value << " is colour " << colour_pair_number << endl;
+//     ost << "value: " << known_value << " is colour " << colour_pair_number << endl;
    }
 
    win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;

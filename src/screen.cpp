@@ -211,6 +211,7 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
 /*! \brief          Move the logical cursor
     \param  new_x   x position
     \param  new_y   y position
+    \return     the window
 */
 window& window::move_cursor(const int new_x, const int new_y)
 { if (!_wp)
@@ -224,9 +225,9 @@ window& window::move_cursor(const int new_x, const int new_y)
   return *this;
 }
 
-/*! \brief  write a string to the window
+/*! \brief      Write a string to the window
     \param  s   string to write
-    \return the window
+    \return     the window
 
     wprintw has fairly obnoxious behaviour regarding newlines: if a string
     reaches the end of a window line, then an LF is automatically added. For
@@ -256,6 +257,7 @@ window& window::operator<(const string& s)
 
 /*! \brief          Write a set of strings to a window
     \param  ss      set to write
+    \return     the window
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
@@ -299,6 +301,7 @@ window& window::operator<(const set<string>& ss)
 
 /*! \brief      Write a vector of strings to a window
     \param  v   vector to write
+    \return     the window
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
@@ -338,6 +341,7 @@ window& window::operator<(const vector<string>& v)
 
 /*! \brief          Write a vector of strings with possible different colours to a window
     \param  vec     vector of pairs <string, int [colour number]> to write
+    \return         the window
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
@@ -392,7 +396,11 @@ const cursor window::cursor_position(void)
   return cursor(_cursor_x, _cursor_y);
 }
 
-/// move cursor relative
+/*! \brief              Move the logical cursor (relative to current location)
+    \param  delta_x     change in x position
+    \param  delta_y     change in y position
+    \return             the window
+*/
 window& window::move_cursor_relative(const int delta_x, const int delta_y)
 { if (!_wp)
     return *this;
@@ -611,19 +619,18 @@ window& window::leave_cursor(const bool enable_or_disable)
 }
 
 /// window << cursor
-window& operator<(window& win, const cursor& c)
-{ return win.move_cursor(c.x(), c.y());
-}
+//window& operator<(window& win, const cursor& c)
+//{ return win.move_cursor(c.x(), c.y());
+//}
 
 /// window << cursor_relative
-window& operator<(window& win, const cursor_relative& cr)
-{ return win.move_cursor_relative(cr.x(), cr.y());
-}
+//window& operator<(window& win, const cursor_relative& cr)
+//{ return win.move_cursor_relative(cr.x(), cr.y());
+//}
 
 /// window << centre
 window& operator<(window& win, const centre& c)
-{ //win.move_cursor((win.width() - c.s().length()) / 2, c.y());
-  win.move_cursor((win.width() - n_chars(c.s())) / 2, c.y());    // correctly accounts for UTF-8 encoding
+{ win.move_cursor((win.width() - n_chars(c.s())) / 2, c.y());    // correctly accounts for UTF-8 encoding
 
   return win < c.s();
 }
@@ -657,7 +664,7 @@ const string window::read(int x, int y)
   return string(tmp);
 }
 
-/// snapshot of all the contents
+/// line by line snapshot of all the contents; lines go from top to bottom
 const vector<string> window::snapshot(void)
 { vector<string> rv;
 
@@ -693,7 +700,7 @@ window& window::delete_character(const int n)
   return delete_character( n, cursor_position().y() );
 }
 
-/// delete a character within a line
+/// delete a character within a particular line
 window& window::delete_character(const int n, const int line_nr)
 
 { if (!_wp)
@@ -846,9 +853,9 @@ window& operator<(window& win, const colour_pair& cpair)
     \brief A class to hold information about used colour pairs
 */
 
-/*!     \brief          Private function to add a new pair of colours
-        \param  p       foreground colour, background colour
-        \return         the number of the colour pair
+/*! \brief          Private function to add a new pair of colours
+    \param  p       foreground colour, background colour
+    \return         the number of the colour pair
 */
 const unsigned int cpair::_add_to_vector(const pair< int, int>& fgbg)
 { _colours.push_back(fgbg);
@@ -857,13 +864,13 @@ const unsigned int cpair::_add_to_vector(const pair< int, int>& fgbg)
   return _colours.size();
 }
 
-/*!     \brief          Add a pair of colours
-        \param  fg      foreground colour
-        \param  bg      background colour
-        \return         the number of the colour pair
+/*! \brief          Add a pair of colours
+    \param  fg      foreground colour
+    \param  bg      background colour
+    \return         the number of the colour pair
 
-        If the pair is already known, returns the number of the known pair.
-        Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
+    If the pair is already known, returns the number of the known pair.
+    Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
 const unsigned int cpair::add(const int fg, const int bg)
 { const pair<int, int> fgbg { fg, bg };

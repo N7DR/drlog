@@ -730,10 +730,13 @@ public:
 };
 #endif
 
-// allow easy execution of a loop a predetermined number of times.
-// This does throw a warning, but I can't think of a better way to
-// execute a loop a predetermined number of times. C++14 might be going
-// to provide a better mechanism.
+/*! \class  RANGE
+    \brief  allow easy execution of a loop a predetermined number of times
+
+    This does throw a warning, but I can't think of a better way to
+    execute a loop a predetermined number of times. C++14 might be going
+    to provide a better mechanism.
+*/
 template <typename T>
 class RANGE : public std::vector<T>
 {

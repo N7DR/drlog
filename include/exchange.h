@@ -268,8 +268,10 @@ public:
 
 // -------------------------  EFT  ---------------------------
 
-/*!     \class EFT (exchange_field_template)
+/*!     \class EFT
         \brief Manage a single exchange field
+
+        <i>EFT</i> stands for "exchange field template"
 */
 
 class EFT

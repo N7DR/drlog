@@ -662,6 +662,11 @@ const vector<QSO> logbook::match_exchange(const string& target) const
   return rv;
 }
 
+void logbook::remove_last_qsos(const unsigned int n_to_remove)
+{ for (unsigned int n = 0; n < n_to_remove; ++n)
+    remove_last_qso();
+}
+
 // -----------  log_extract  ----------------
 
 /*!     \class log_extract
