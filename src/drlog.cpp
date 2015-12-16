@@ -4228,7 +4228,9 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // debug: print out the original QSOs
         ost << "Original QSOs:" << endl;
         for (const auto& qso : original_qsos)
+        { ost << "QSO with " << qso.callsign() << endl;
           ost << "    " << qso << endl;
+        }
         ost << "New QSOs: " << endl;
 
         logbk.remove_last_qsos(n_to_remove);                        // remove that number of QSOs from the log

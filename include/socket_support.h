@@ -355,13 +355,16 @@ const std::string read(const unsigned long timeout_secs);
   void keep_alive(const unsigned int idle, const unsigned int retry, const unsigned int n);
 };
 
-/*!     \brief  Convert a name to a dotted decimal IP address
-        \param  fqdn                    Name to be resolved
+/*!     \brief              Convert a name to a dotted decimal IP address
+        \param  fqdn        name to be resolved
+        \param  n_tries     maximum number of tries
         \return Equivalent IP address in dotted decimal format
 
-        Throws exception if the name cannot be resolved. Uses gethostbyname() to perform the lookup.
+        Throws exception if the name cannot be resolved. Uses gethostbyname_r() to perform the lookup.
+        <i>n_tries</i> is present because gethostbyname_r() cannot be relied on to complete a remote
+        lookup before deciding to return with an error.
 */   
-std::string name_to_dotted_decimal(const std::string& fqdn);
+std::string name_to_dotted_decimal(const std::string& fqdn, const unsigned int n_tries = 1);
 
 // ---------------------------------------  Errors  ------------------------------------
 

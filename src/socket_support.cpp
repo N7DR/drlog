@@ -178,7 +178,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
           else                                                                // FQDN was passed instead of dotted decimal
           {
 // resolve the name
-            const string dotted_decimal = name_to_dotted_decimal(destination_ip_address_or_fqdn);
+            const string dotted_decimal = name_to_dotted_decimal(destination_ip_address_or_fqdn, 10);       // up to ten attempts at one-second intervals
 
             destination(dotted_decimal, destination_port, TIMEOUT );
           }
@@ -204,7 +204,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
     { ost << "SOCKET_SUPPORT_CONNECT_ERROR" << e.reason() << endl;
     }
     else
-    { ost << "socket_support_error:" << e.code() << ": " << e.reason() << endl;
+    { ost << "socket_support_error: " << e.code() << ": " << e.reason() << endl;
       _close_the_socket();
       throw;
     }
@@ -212,7 +212,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 
   catch (const tcp_socket_error& e)
   {
-    { ost << "tcp_socket_error:" << e.code() << ": " << e.reason() << endl;
+    { ost << "tcp_socket_error: " << e.code() << ": " << e.reason() << endl;
       _close_the_socket();
       throw;
     }
@@ -736,13 +736,16 @@ const sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
   return rv;
 }
 
-/*!     \brief  Convert a name to a dotted decimal IP address
-        \param  fqdn                    Name to be resolved
+/*!     \brief              Convert a name to a dotted decimal IP address
+        \param  fqdn        name to be resolved
+        \param  n_tries     maximum number of tries
         \return Equivalent IP address in dotted decimal format
 
-        Throws exception if the name cannot be resolved. Uses gethostbyname() to perform the lookup.
-*/   
-string name_to_dotted_decimal(const string& fqdn)
+        Throws exception if the name cannot be resolved. Uses gethostbyname_r() to perform the lookup.
+        <i>n_tries</i> is present because gethostbyname_r() cannot be relied on to complete a remote
+        lookup before deciding to return with an error.
+*/
+string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
 { if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
     throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to lookup empty name");
 
@@ -776,18 +779,28 @@ string name_to_dotted_decimal(const string& fqdn)
     struct hostent* result;
     int h_errnop;
 
-    const int status = gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop);
+    int n_try = 0;
+    bool success = false;
+    int status;
 
-    ost << "name_to_dotted_decimal status = " << status << endl;
+    while (n_try++ < n_tries and !success)
+    { status = gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop);
 
-    if ( (status == 0) and (result != nullptr) )    // success; the second test should be redundant
+      ost << "name_to_dotted_decimal status = " << status << endl;
+      success = (status == 0) and (result != nullptr);    // the second test should be redundant
+
+      if (!success and n_try != n_tries)
+        sleep_for(seconds(1));
+    }
+
+    if (success)
     { char** h_addr_list = result->h_addr_list;
       const uint32_t addr_long = htonl(*(uint32_t*)(*h_addr_list));    // host order
 
       return convert_to_dotted_decimal(addr_long);
     }
     else
-    { ost << "Error return";
+    { ost << "Error return" << endl;
 
       throw(tcp_socket_error(TCP_SOCKET_UNABLE_TO_RESOLVE, (string)"Unable to resolve name: " + fqdn));
     }
