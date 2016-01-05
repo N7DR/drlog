@@ -130,9 +130,9 @@ protected:
 
 public:
 
-/*!     \brief          Construct from a string and a country ID
-        \param  record  record from which to contruct the alternative information
-        \param  id      canonical country ID
+/*!     \brief                      Construct from a string and a country ID
+        \param  record              record from which to construct the alternative information
+        \param  caconical_prefix    canonical country prefix
 
         <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
         is optional
@@ -410,7 +410,8 @@ public:
   explicit location_info(const cty_record& rec);
 
 /// destructor
-  virtual ~location_info(void);
+  inline virtual ~location_info(void)
+    { }
 
 /// location_info == location_info
   const bool operator==(const location_info& li) const;
@@ -595,8 +596,8 @@ public:
 
 // -----------  location_database  ----------------
 
-/*!     \class location_database
-        \brief The country-based location information packaged for use by drlog
+/*! \class location_database
+    \brief The country-based location information packaged for use by drlog
 */
 
 class location_database
@@ -615,7 +616,16 @@ protected:
   
   drlog_qth_database                   _qth_db;      ///< additional database
 
+/*! \brief                  Initialise the database
+    \param  cty             cty.dat data
+    \param  country_list    type of country list
+*/
   void _init(const cty_data& cty, const enum country_list_type country_list);
+
+/*! \brief                  Insert alternatives into the database
+    \param  info            the original location information
+    \param  alternatives    alternative country information
+*/
   void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
 
   pt_mutex                             _location_database_mutex;  ///< to make location_database objects thread-safe;
@@ -625,19 +635,36 @@ public:
 /// default constructor
   location_database(void);
 
-/// construct from CTY.DAT filename and the definition of which country list to use
+/*! \brief                  Constructor
+    \param  filename        name of cty.dat file
+    \param  country_list    type of country list
+*/
   location_database(const std::string& filename, const enum country_list_type country_list = COUNTRY_LIST_DXCC);
 
-/// construct from CTY.DAT data and the definition of which country list to use
+/*! \brief                  Constructor
+    \param  cty             cty.dat data
+    \param  country_list    type of country list
+*/
   location_database(const cty_data& cty, const enum country_list_type country_list = COUNTRY_LIST_DXCC);
 
-/// construct from CTY.DAT data, the definition of which country list to use and a secondary qth database
+/*! \brief                  Constructor
+    \param  cty             cty.dat data
+    \param  country_list    type of country list
+    \param  secondary       secondary QTH database
+*/
   location_database(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary);
 
-/// prepare a default-constructed object for use
+/*! \brief                  Prepare a default-constructed object for use
+    \param  cty             cty.dat data
+    \param  country_list    type of country list
+*/
   void prepare(const cty_data& cty, const enum country_list_type country_list = COUNTRY_LIST_DXCC);
 
-/// prepare a default-constructed object for use
+/*! \brief                  Prepare a default-constructed object for use
+    \param  cty             cty.dat data
+    \param  country_list    type of country list
+    \param  secondary       secondary QTH database
+*/
   void prepare(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary);
 
 /*! \brief              Add Russian information
@@ -659,7 +686,10 @@ public:
   inline void add_alt_call(const std::string& call, const location_info& li)
     { _alt_call_db.insert( { call, li } ); }
 
-/// return all the useful information, given a callsign
+/*! \brief      Get location information for a particular call or partial call
+    \param  cs  call (or partial call)
+    \return     location information corresponding to <i>call</i>
+*/
   const location_info info(const std::string& callpart);
   
   inline const std::map<std::string, location_info> db(void)
@@ -699,7 +729,12 @@ public:
   inline const std::string region_name(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
 
-  const std::string region_abbreviation(const std::string& callpart);
+/*! \brief      Get location information for a particular call or partial call
+    \param  cs  call (or partial call)
+    \return     location information corresponding to <i>call</i>
+*/
+  inline const std::string region_abbreviation(const std::string& callpart)
+    { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

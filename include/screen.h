@@ -238,7 +238,18 @@ protected:
 
   WINDOW_PROCESS_INPUT_TYPE _process_input;    ///< function to handle input to this window
 
-// perform common portion of initialisation
+/*! \brief          Set the default colours; does NOT change _fg/_bg because I can't find a guaranteed
+    \param  fgbg    colour pair
+
+    Does not change _fg/_bg because I can't find a guaranteed way to go from a big integer that
+    combines the two colours to the individual colours
+*/
+    window& _default_colours(const chtype fgbg);
+
+/*! \brief          Perform common portion of initialisation
+    \param  wi      window information
+    \param  flags   possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+*/
   void _init(const window_information& wi, const unsigned int flags);
 
 /// forbid copying
@@ -439,7 +450,7 @@ public:
   
 /// set the default colours; does NOT change _fg/_bg because I can't find a guaranteed
 /// way to go from a big integer that combines the two colours to the individual colours
-  window& default_colours(chtype bg);
+//  window& default_colours(chtype bg);
 
 /// set the default colours; DOES change _fg/_bg
   window& default_colours(const int foreground_colour, const int background_colour);
@@ -447,7 +458,7 @@ public:
 /// control an attribute
   window& operator<(const enum WINDOW_ATTRIBUTES);
   
-/// clear a window
+/// clear the window
   window& clear(void);
   
 /*! \brief      Read to end of window

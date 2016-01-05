@@ -14,14 +14,22 @@ using namespace std;
 
 // ---------------------------------------------------  adif_type  -----------------------------------------
 
-adif_type::adif_type(const char ty, const std::string& nm, const std::string& v) :
+/*! \class adif_type
+    \brief Base class for all the ADIF types
+*/
+
+/*! \brief      Constructor
+    \param  ty  letter used to identify the type
+    \param  nm  name of the instance of the type
+    \param  v   value of the instance of the type
+*/
+adif_type::adif_type(const char ty, const string& nm, const string& v) :
     _name(nm),
     _type_indicator(ty),
     _value(v)
-{
+{ }
 
-}
-
+/// convert to printable string
 const string adif_type::to_string(void) const
 { if (_name.empty() or _value.empty())
     return string();
@@ -31,17 +39,28 @@ const string adif_type::to_string(void) const
 
 // ---------------------------------------------------  adif_ AWARD_LIST -----------------------------------------
 
-// default constructor
+/*! \class  adif_AWARD_LIST
+    \brief  Encapsulate ADIF AwardList
+*/
+
+/// default constructor
 adif_AWARD_LIST::adif_AWARD_LIST(void) :
     adif_type('A')
 { }
 
-// construct with name and value
+/*! \brief      Constructor
+    \param  nm  name
+    \param  v   value
+*/
 adif_AWARD_LIST::adif_AWARD_LIST(const string& nm, const string& v) :
     adif_type('A', nm, v)
 { }
 
-// construct with name
+/*! \brief      Constructor
+    \param  nm  name
+
+    Sets <i>_value</i> to the empty string.
+*/
 adif_AWARD_LIST::adif_AWARD_LIST(const string& nm) :
     adif_type('A', nm, string())
 { }

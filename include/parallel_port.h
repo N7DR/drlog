@@ -104,8 +104,8 @@ Pin No (DB25)   Pin No (36 pin)     Signal name     Direction   Register - bit  
 
 // ---------------------------------------- parallel_port -------------------------
 
-/*!     \class parallel_port
-        \brief Access and control a port
+/*! \class  parallel_port
+    \brief  Access and control a port
 */
 
 class parallel_port
@@ -124,10 +124,11 @@ public:
 /// destructor -- closes the port
   virtual ~parallel_port(void);
 
-/*! \brief  Set control lines
+/*! \brief                  Set control lines
     \param  char_to_assert  bit pattern to assert
 */
-  void control(const char char_to_assert) const;
+  inline void control(const char char_to_assert) const
+    { ieee1284_write_control(_list_from_library.portv[_port_nr], char_to_assert); }
 };
 
 // -------------------------------------- Errors  -----------------------------------
@@ -142,14 +143,13 @@ protected:
 
 public:
 
-/*! \brief  Construct from error code and reason
-  \param  n Error code
-  \param  s Reason
+/*! \brief      Construct from error code and reason
+    \param  n   error code
+    \param  s   reason
 */
   inline parallel_port_error(const int n, const std::string& s) :
     x_error(n, s)
   { }
 };
-
 
 #endif    // PARALLEL_PORT_H

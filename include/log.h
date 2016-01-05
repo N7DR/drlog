@@ -95,6 +95,12 @@ public:
       *this -= size();    // remember, numbering is wrt 1
     }
 
+/*! \brief                  Remove several recent QSOs
+    \param  n_to_remove     number of QSOs to remove
+
+    It is legal to call this function even if <i>n_to_remove</i> is greater than
+    the number of QSOs in the logbook
+*/
   void remove_last_qsos(const unsigned int n_to_remove);
 
 /*! \brief          All the QSOs with a particular call, in chronological order
@@ -169,20 +175,6 @@ public:
 /// return time-ordered container of QSOs
   const std::vector<QSO> as_vector(void) const;
   
-//  template <typename T>
-//  const T as(void) const
-//  { T rv;
-//
-//    { SAFELOCK(_log);
-//
-//      copy(_log.cbegin(), _log.cend(), back_inserter(rv));
-//    }
-//
-//    rv.sort(earlier);    // sorts according to earlier(const QSO&, const QSO&)
-//
-//    return rv;
-//  }
-
 /*! \brief          Return the QSOs, filtered by some criterion
     \param  pred    predicate to apply
     \return         the QSOs for which <i>pred</i> is true
@@ -217,13 +209,15 @@ public:
 */
   void read_cabrillo(const std::string& filename, const std::string& cabrillo_qso_template);
 
-/*! \brief                          Read from a Cabrillo file, using space-delimited fields
-    \param  filename                name of Cabrillo file
-    \param  cabrillo_fields         names of Cabrillo fields
+/*! \brief                      Read from a Cabrillo file, using space-delimited fields
+    \param  filename            name of Cabrillo file
+    \param  cabrillo_fields     names of Cabrillo fields
 */
   void read_cabrillo(const std::string& filename, const std::vector<std::string>& cabrillo_fields);
 
-/// read a trlog log
+/*! \brief                          Read from a TRLOG file
+    \param  filename                name of TRLOG file
+*/
   void read_trlog_log(const std::string& filename);
   
 /// clear the logbook
@@ -242,19 +236,18 @@ public:
   inline const bool empty(void) const
     { return _log.empty(); }
 
-// get the value of an exchange field from the last QSO with someone; returns empty string if anything goes wrong
-/*!     \brief                          Get the value of an exchange field from the most recent QSO with a station
-        \param  callsign                call for which the information is required
-        \param  exchange_field_name     name of the exchange field for which the information is required
-        \return                         Value received from <i>callsign</i> for the field <i>exchange_field_name</i> during the most recent QSO with <i>callsign</i>
+/*! \brief                          Get the value of an exchange field from the most recent QSO with a station
+    \param  callsign                call for which the information is required
+    \param  exchange_field_name     name of the exchange field for which the information is required
+    \return                         value received from <i>callsign</i> for the field <i>exchange_field_name</i> during the most recent QSO with <i>callsign</i>
 
-        Returns empty string if anything goes wrong.
+    Returns empty string if anything goes wrong.
 */
   const std::string exchange_field_value(const std::string& callsign, const std::string& exchange_field_name);
 
 /*! \brief          Return all the QSOs that contain an exchange field that matches a target
     \param  target  target string for exchange fields
-    \return         All the QSOs that contain an exchange field that matches a target
+    \return         all the QSOs that contain an exchange field that matches a target
 */
   const std::vector<QSO> match_exchange(const std::string& target) const;
 
@@ -348,21 +341,22 @@ public:
 
 /*! \brief              Get recent QSOs from a log, and possibly display them
     \param  lgbook      logbook to use
-    \param  to_display  whwther to display the extract
+    \param  to_display  whether to display the extract
 
     Displayed in order from oldest to newest
 */
   void recent_qsos(const logbook& lgbook, const bool to_display = true);
 
-/*! \brief              Get the QSOs that match an exchange from a log, and display them
-    \param  lgbook      logbook to use
-    \param  target      string to match in the QSO exchanges
+/*! \brief          Display the QSOs from a log that match an exchange
+    \param  lgbook  logbook to use
+    \param  target  string to match in the QSO exchanges
 
     Displayed in order from oldest to newest. If the extract contains more QSOs than the window
     allows, only the most recent QSOs are displayed.
 */
   void match_exchange(const logbook& lgbook, const std::string& target);
 
+/// log_extract = <something>
 template <typename T>
   void operator=(const T& t)
   { SAFELOCK(_extract);

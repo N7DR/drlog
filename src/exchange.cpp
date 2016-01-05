@@ -1025,7 +1025,7 @@ EFT::EFT(const string& nm) :
   _name(nm)
 { }
 
-/*! \brief                  construct from several parameters
+/*! \brief                  Construct from several parameters
     \param  nm              name
     \param  path            path for the regex and values files
     \param  regex_filename  name of file that contains the regex filter
@@ -1049,19 +1049,6 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
  // ost << "constructed EFT: " << (*this) << endl;
 }
 
-#if 0
-/// is an algorithm defined?
-const bool EFT::defined(void) const
-{ if (!_values.empty())
-    return true;
-
-  if (!_regex_expression.empty())
-    return true;
-
-  return false;
-}
-#endif
-
 /*! \brief              Get regex expression from file
     \param  paths       paths to try
     \param  filename    name of file
@@ -1072,7 +1059,7 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
     return false;
 
   try
-  { ost << "Trying to read regex file: " << filename << endl;
+  { //ost << "Trying to read regex file: " << filename << endl;
 
     const vector<string> lines = to_lines(read_file(path, filename));
     bool found_it = false;
@@ -1091,7 +1078,7 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
           { _regex_expression = regex(regex_str);
             found_it = true;
 
-            ost << "found regex for field: " << field_name << endl;
+//            ost << "found regex for field: " << field_name << endl;
           }
         }
       }
@@ -1112,12 +1099,8 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
     \return             whether values were read
 */
 const bool EFT::read_values_file(const vector<string>& path, const string& filename)
-{ //ost << "EFT reading values file: " << filename << endl;
-
-  try
+{ try
   { const vector<string> lines = to_lines(read_file(path, filename + ".values"));
-
-    //ost << "Read values file OK: " << lines.size() << " lines" << endl;
 
     for (const auto& line : lines)
     { set<string> equivalent_values;    // includes the canonical
@@ -1152,16 +1135,15 @@ const bool EFT::read_values_file(const vector<string>& path, const string& filen
   }
 
   catch (...)
-  { // ost << "Failed to read values file " << filename << ".values" << endl;
-    return false;
+  { return false;
   }
 
   return (!_values.empty());
 }
 
-/*! \brief              Parse and incorporate QTHX values from context
-    \param  context     context for the contest
-    \param  location_db location database
+/*! \brief                  Parse and incorporate QTHX values from context
+    \param  context         context for the contest
+    \param  location_db     location database
 */
 void EFT::parse_context_qthx(const drlog_context& context, location_database& location_db)
 { if (!starts_with(_name, "QTHX["))
@@ -1174,8 +1156,6 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
 
   for (const auto& this_qthx : context_qthx)
   { const string canonical_prefix = location_db.canonical_prefix(this_qthx.first);
-
-//    ost << "in EFT::parse_context_qthx, name = " << _name << ", canonical_prefix = " << canonical_prefix << endl;
 
     if (canonical_prefix == location_db.canonical_prefix(delimited_substring(_name, '[', ']')))
     { const set<string> ss = this_qthx.second;
@@ -1196,17 +1176,6 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
     }
   }
 }
-
-#if 0
-const string EFT::_equivalent_canonical_value(const string& str) const
-{ for (const auto& pss: _values)
-  { if (pss.second < str)
-      return pss.first;
-  }
-
-  return string();
-}
-#endif
 
 void EFT::add_canonical_value(const string& new_canonical_value)
 { if (!is_canonical_value(new_canonical_value))

@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file version.cpp
+/*! \file version.cpp
 
-        version information
+    version information
 */
 
 #include "version.h"
@@ -22,6 +22,3 @@ using namespace std;
 const string VERSION_TYPE("β");   ///< level of release: α, β, γ
 const string DATE_STR(__DATE__);  ///< Mmm dd yyyy
 const string TIME_STR(__TIME__);  ///< hh:mm:ss
-
-
-

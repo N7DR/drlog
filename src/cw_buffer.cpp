@@ -78,20 +78,10 @@ void* cw_buffer::_play(void*)
 {
 // we have to use CW_ prefix in order to avoid clashes with ncurses -- yes, it's ridiculous that this file knows about ncurses
 
-#if 1
-  const char STROBE = C1284_NSTROBE;
+//  const char STROBE = C1284_NSTROBE;
   const char PTT      = (_ptt_delay ? C1284_NINIT : 0);
   const char CW_KEY_DOWN = C1284_NSELECTIN | PTT;
   const char CW_KEY_UP   = PTT;
-#endif
-
-#if 0
-  const char STROBE = C1284_NSTROBE;
-  const char PTT      = (_ptt_delay ? C1284_NINIT | C1284_NSTROBE: 0);
-  const char CW_KEY_DOWN = C1284_NSELECTIN | PTT  | C1284_NSTROBE;
-  const char CW_KEY_UP   = PTT | C1284_NSTROBE;
-#endif
-
 
   bool ptt_asserted = false;
 
@@ -277,7 +267,7 @@ void* cw_buffer::_play(void*)
 /*! \brief              Construct on a parallel port
     \param  filename    device file
     \param  delay       PTT delay (in milliseconds)
-    \param  speed       Speed (in WPM)
+    \param  speed       speed in WPM
 */
 cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed) :
   _port(filename),
@@ -330,7 +320,9 @@ const unsigned int cw_buffer::speed(void)
   return _wpm;
 }
 
-// set the PTT delay in msec
+/*! \brief          Set the PTT delay
+    \param  msec    delay in milliseconds
+*/
 void cw_buffer::ptt_delay(const unsigned int msec)
 { SAFELOCK(_speed);
 
@@ -357,8 +349,7 @@ void cw_buffer::key_down(const int n, const int space)
 
       _key_buffer.push(n);
 
-// add the space if it's non-zero
-      if (space)
+      if (space)                    // add the space if it's non-zero
         _key_buffer.push(-space);
     }
 
@@ -720,11 +711,6 @@ void cw_buffer::operator<<(const string& str)
     add(str[n]);
 }
 
-// abort sending -- not sure whether just clearing the buffer is sufficient
-//void cw_buffer::abort(void)
-//{ clear();
-//}
-
 /// clear the buffer
 void cw_buffer::clear(void)
 { SAFELOCK(_key_buffer);
@@ -749,6 +735,10 @@ const bool cw_buffer::empty(void)
 }
 
 // ---------------------------------------- cw_messages -------------------------
+
+/*! \class  cw_messages
+    \brief  A class for managing CW messages
+*/
 
 /*! \brief      Get a particular CW message
     \param  n   number of message to return

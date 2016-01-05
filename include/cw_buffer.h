@@ -25,8 +25,8 @@
 
 // ---------------------------------------- cw_buffer -------------------------
 
-/*!     \class cw_buffer
-        \brief A buffer for sending CW
+/*! \class cw_buffer
+    \brief A buffer for sending CW
 */
 
 class cw_buffer
@@ -64,13 +64,15 @@ protected:
 */
   void                  _add_action(const int n);
 
-/*! \brief  Play the buffer
-    \param  unused
+/*! \brief      Play the buffer
+    \param      unused
+    \return     nullptr
 */
   void*                 _play(void*);
 
 /*! \brief          Wrapper function to play the buffer
     \param  arg     "this" pointer
+    \return         nullptr
 */
   static void*          _static_play(void* arg);    ///< pointer to static function to play the buffer
 
@@ -79,12 +81,12 @@ public:
 /*! \brief              Construct on a parallel port
     \param  filename    device file
     \param  delay       PTT delay (in milliseconds)
-    \param  speed       Speed (in WPM)
+    \param  speed       speed in WPM
 */
   cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int speed);
 
 /// destructor
-  ~cw_buffer(void);
+  virtual ~cw_buffer(void);
 
 /*! \brief          Set the speed
     \param  wpm     speed in WPM
@@ -94,7 +96,9 @@ public:
 /// get the speed in wpm
   const unsigned int speed(void);
 
-/// set the PTT delay in milliseconds
+/*! \brief          Set the PTT delay
+    \param  msec    delay in milliseconds
+*/
   void ptt_delay(const unsigned int msec);
 
 /// get the PTT delay in milliseconds
@@ -166,42 +170,40 @@ public:
   inline const bool enabled(void) const
     { return !disabled(); }
 
-// status of the associated port
-//  inline const std::string status_string(void) const
-//    { return _port.status_string(); }
-
-// status of the associated port
-//  inline const std::string control_status_string(void) const
-//    { return _port.control_status_string(); }
-
+/// assert PTT
   inline void assert_ptt(void)
     { _port.control(_ptt_delay ? C1284_NINIT : 0);  }            // key up; PTT asserted
 
+/// clear (i.e., de-assert) PTT
   inline void clear_ptt(void)
     { _port.control(0);  }
-
 };
 
 // ---------------------------------------- cw_messages -------------------------
 
-/*!     \class cw_messages
-        \brief A class for managing CW messages
+/*! \class  cw_messages
+    \brief  A class for managing CW messages
 */
 
 class cw_messages
 {
 protected:
+
   std::map<int, std::string > _messages;          ///< sparse vector to hold the messages
   pt_mutex                    _messages_mutex;    ///< mutex to allow for thread-safe access
 
 public:
 
-  explicit cw_messages(const std::map<int, std::string >& m) :
+/*! \brief      Constructor
+    \param  m   map of message numbers and message contents
+*/
+  inline explicit cw_messages(const std::map<int /* message number */, std::string >& m) :
     _messages(m)
-  { }
+    { }
 
-  cw_messages(void)
-  { }
+/// default constructor
+  inline cw_messages(void)
+    { }
 
 /*! \brief      Get a particular CW message
     \param  n   number of message to return
@@ -211,6 +213,5 @@ public:
 */
   const std::string operator[](const int n);
 };
-
 
 #endif /* CWBUFFER_H */

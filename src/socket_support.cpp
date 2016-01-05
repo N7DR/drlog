@@ -40,6 +40,8 @@ using namespace   this_thread;   // std::this_thread
 extern message_stream ost;              ///< for debugging and logging
 extern void alert(const string& msg);   ///< function to alert the user
 
+const int SOCKET_ERROR = -1;            ///< error return from various socket-related system functions
+
 // ---------------------------------  tcp_socket  -------------------------------
 
 /// close the socket
@@ -83,7 +85,7 @@ tcp_socket::tcp_socket(void)  :
 }
 
 /*! \brief          Encapsulate a pre-existing socket
-    \param  sock_p  Pointer to socket
+    \param  sock_p  Ppinter to socket
   
     Acts as default constructor if passed pointer is NULL
 */
@@ -122,8 +124,8 @@ tcp_socket::tcp_socket(SOCKET* sp) :
   }
 }
 
-/*! \brief          Encapsulate a pre-existing socket
-    \param  sp      socket
+/*! \brief      Encapsulate a pre-existing socket
+    \param  sp  socket
 */
 tcp_socket::tcp_socket(SOCKET sp) :
   _destination_is_set(false),
@@ -277,17 +279,14 @@ void tcp_socket::bind(const sockaddr_storage& local_address)
 }
 
 // bind the socket
-void tcp_socket::bind(const string& dotted_decimal_address, const short port_nr)
-{ bind(socket_address(dotted_decimal_address, port_nr)); 
-}
+//void tcp_socket::bind(const string& dotted_decimal_address, const short port_nr)
+//{ bind(socket_address(dotted_decimal_address, port_nr));
+//}
 
 // connect to the far-end
 void tcp_socket::destination(const sockaddr_storage& adr)
 { SAFELOCK(_tcp_socket);
-
-//  ost << "inside destination() without timeout; about to connect" << endl;
   const int status = ::connect(_sock, (sockaddr*)(&adr), sizeof(adr));
-//  ost << "connect returned " << status << endl;
 
   if (status == 0)
   { _destination = adr; 
@@ -328,10 +327,9 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   flags = fcntl(_sock, F_GETFL, 0);
   fcntl(_sock, F_SETFL, flags | O_NONBLOCK);
 
-//  ost << "about to connect" << endl;
-  ost << "inside destination() with timeout; about to connect" << endl;
+//  ost << "inside destination() with timeout; about to connect" << endl;
   int status = ::connect(_sock, (sockaddr*)(&adr), sizeof(adr));
-  ost << "connect returned " << status << endl;
+//  ost << "connect returned " << status << endl;
 
   if (status == 0)        // all OK
   { _destination = adr;
@@ -339,22 +337,18 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   }
   else
   { _destination_is_set = false;
-    ost << "errno = " << errno << endl;
-    ost << "error string = " << strerror(errno) << endl;
+//    ost << "errno = " << errno << endl;
+//    ost << "error string = " << strerror(errno) << endl;
 
     const string address = dotted_decimal_address(*(sockaddr*)(&adr));
           const unsigned int p = port(*(sockaddr*)(&adr));
 
     if (errno != EINPROGRESS)
-    { //const string address = dotted_decimal_address(*(sockaddr*)(&adr));
-      //const unsigned int p = port(*(sockaddr*)(&adr));
-
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status " + to_string(errno) + " received from ::connect; " + strerror(errno) + " while trying to connect to address " + address + "; port " + to_string(p));
-    }
 
     status = select(_sock + 1, &r_set, &w_set, NULL, (timeout_secs) ? &timeout : NULL);
 
-    ost << "status from select in destination() = " << status << endl;
+//    ost << "status from select in destination() = " << status << endl;
 
     if (status < 0)
     { ost << "about to throw exception" << endl;
@@ -383,16 +377,16 @@ void tcp_socket::connected(const sockaddr_storage& adr)
   _destination_is_set = true;
 }
 
-/*! \brief  Simple send
-  \param  msg Message to send
+/*! \brief          Simple send
+    \param  msg     message to send
   
-  This is not very useful, since it doesn't look for a response
+    This is not very useful, since it doesn't look for a response
 */
 void tcp_socket::send(const std::string& msg)
-{ ost << "inside tcp_socket::send()" << endl;
+{ //ost << "inside tcp_socket::send()" << endl;
 
   if (!_destination_is_set)
-  { ost << "Error: destination is not set" << endl;
+  { //ost << "Error: destination is not set" << endl;
     throw tcp_socket_error(TCP_SOCKET_UNKNOWN_DESTINATION);
   }
 
@@ -400,7 +394,7 @@ void tcp_socket::send(const std::string& msg)
 
   const int status = ::send(_sock, msg.c_str(), msg.length(), 0);
 
-  ost << "send status = " << status << endl;
+  //ost << "send status = " << status << endl;
   
   if (status == -1)
     throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);   

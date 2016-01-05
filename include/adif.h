@@ -38,15 +38,16 @@ enum  ANT_PATH_ENUM { ANT_PATH_GREYLINE,
                       ANT_PATH_SHORT_PATH,
                       ANT_PATH_LONG_PATH,
                       N_ANT_PATHS
-                    };
+                    };                                                      ///< enum for antenna path
 
-typedef std::array<std::string, N_ANT_PATHS> ANT_PATH_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ANT_PATHS> ANT_PATH_ENUMERATION_TYPE;     ///< type for antenna path enumeration
 
+/// legal values of ANT_PATH_ENUMERATION
 static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION = { { "G",
                                                             "O",
                                                             "S",
                                                             "L"
-                                                        } };
+                                                        } };                ///< values for antenna path
 
 // mode  -------------------------------------------------------
 
@@ -122,9 +123,9 @@ enum MODE_ENUM { ADIF_MODE_AM,              // 0
                  ADIF_MODE_WINMOR,
                  ADIF_MODE_WSPR,            // 70
                  N_ADIF_MODES
-               };
+               };                                                       ///< enum for modes
 
-typedef std::array<std::string, N_ADIF_MODES> MODE_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ADIF_MODES> MODE_ENUMERATION_TYPE;    ///< type for mode enumeration
 
 static MODE_ENUMERATION_TYPE MODE_ENUMERATION = { { "AM",               // 0
                                                     "AMTORFEC",
@@ -197,7 +198,7 @@ static MODE_ENUMERATION_TYPE MODE_ENUMERATION = { { "AM",               // 0
                                                     "VOI",
                                                     "WINMOR",
                                                     "WSPR"              // 70
-                                                } };
+                                                } };                            ///< values for mode
 
 // ARRL section  -------------------------------------------------------
 
@@ -282,9 +283,9 @@ enum SECTION_ENUM { SECTION_AL,
                     SECTION_WI,
                     SECTION_WY,
                     N_SECTIONS
-                  };
+                  };                                                        ///< enum for sections
 
-typedef std::array<std::string, N_SECTIONS> SECTION_ENUMERATION_TYPE;
+typedef std::array<std::string, N_SECTIONS> SECTION_ENUMERATION_TYPE;       ///< type for section enumeration
 
 static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION = { { "AL",
                                                           "AK",
@@ -366,7 +367,7 @@ static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION = { { "AL",
                                                           "WWA",
                                                           "WI",
                                                           "WY"
-                                                      } };
+                                                      } };                  ///< values for section
 
 // awards  -------------------------------------------------------
 
@@ -400,9 +401,9 @@ enum AWARD_ENUM { AWARD_AJA,
                   AWARD_USACA,
                   AWARD_VUCC,
                   N_AWARDS
-                };
+                };                                                      ///< enum for awards
 
-typedef std::array<std::string, N_AWARDS> AWARD_ENUMERATION_TYPE;
+typedef std::array<std::string, N_AWARDS> AWARD_ENUMERATION_TYPE;       ///< type for award enumeration
 
 static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION = { { "AJA",
                                                       "CQDX",
@@ -433,7 +434,7 @@ static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION = { { "AJA",
                                                       "WAZ",
                                                       "USACA",
                                                       "VUCC"
-                                                  } } ;
+                                                  } } ;                 ///< values for awards
 
 // band  -------------------------------------------------------
 
@@ -4912,10 +4913,10 @@ protected:
 
 public:
 
-/*! \brief  constructor
-    \param  ty              letter used to identify the type
-    \param  nm              name of the instance of the type
-    \param  v               value of the instance of the type
+/*! \brief      Constructor
+    \param  ty  letter used to identify the type
+    \param  nm  name of the instance of the type
+    \param  v   value of the instance of the type
 */
   adif_type(const char ty, const std::string& nm = "", const std::string& v = "");
 
@@ -4939,13 +4940,20 @@ protected:
 
 public:
 
-// default constructor
+/// default constructor
   adif_AWARD_LIST(void);
 
-// construct with name and value
+/*! \brief      Constructor
+    \param  nm  name
+    \param  v   value
+*/
   adif_AWARD_LIST(const std::string& nm, const std::string& val);
 
-// construct with name
+/*! \brief      Constructor
+    \param  nm  name
+
+    Sets <i>_value</i> to the empty string.
+*/
   explicit adif_AWARD_LIST(const std::string& nm);
 };
 
@@ -5651,6 +5659,7 @@ public:
     inline void op(const adif_STRING& n)
       { _operator = n; }
 
+/// direct write access to member values using ordinary non-ADIF types
 #define DIRECT_WRITE(x) \
   template <class T> \
   inline void x(const T& v) \

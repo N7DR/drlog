@@ -471,7 +471,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
           qso.band(_band);
   
-          ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
+//          ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
         }
       
       
@@ -662,6 +662,12 @@ const vector<QSO> logbook::match_exchange(const string& target) const
   return rv;
 }
 
+/*! \brief                  Remove several recent QSOs
+    \param  n_to_remove     number of QSOs to remove
+
+    It is legal to call this function even if <i>n_to_remove</i> is greater than
+    the number of QSOs in the logbook
+*/
 void logbook::remove_last_qsos(const unsigned int n_to_remove)
 { for (unsigned int n = 0; n < n_to_remove; ++n)
     remove_last_qso();

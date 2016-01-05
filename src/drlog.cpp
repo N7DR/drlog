@@ -3518,30 +3518,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
-#if 0
-  { int change = (e.is_control() ? 1 : 3);
-
-    if (e.symbol() == XK_Prior)
-      change = -change;
-
-    if (cw_p)
-    { cw_p->speed(cw_p->speed() - change);
-      win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(cw_p->speed()) + " WPM");
-
-      try
-      { if (context.sync_keyer())
-          rig.keyer_speed(cw_p->speed());
-      }
-
-      catch (const rig_interface_error& e)
-      { alert("Error setting CW speed on rig");
-      }
-    }
-
-    processed = true;
-  }
-#endif
-
 // ALT-K -- toggle CW
   if (!processed and e.is_alt('k') and cw_p)
   { cw_p->toggle();
@@ -3593,23 +3569,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
   if (!processed and e.is_alt() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                      or(e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-  {
-    process_change_in_bandmap_column_offset(e.symbol());
-
-#if 0
-    bandmap& bm = bandmaps[safe_get_band()];
-    const bool is_increment = (e.symbol() == XK_KP_6) or (e.symbol() == XK_KP_Right);
-
-    if ( is_increment or (bm.column_offset() != 0) )
-    { bm.column_offset( bm.column_offset() + ( is_increment ? 1 : -1 ) ) ;
-
-      alert(string("Bandmap column offset set to: ") + to_string(bm.column_offset()));
-
-      win_bandmap <= bm;
-      win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
-    }
-#endif
-
+  { process_change_in_bandmap_column_offset(e.symbol());
     processed = true;
   }
 
@@ -4228,8 +4188,12 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // debug: print out the original QSOs
         ost << "Original QSOs:" << endl;
         for (const auto& qso : original_qsos)
-        { ost << "QSO with " << qso.callsign() << endl;
-          ost << "    " << qso << endl;
+        { if (!qso.empty())
+          { ost << "QSO with " << qso.callsign() << endl;
+            ost << "    " << qso << endl;
+          }
+          else
+            ost << "Blank QSO" << endl;
         }
         ost << "New QSOs: " << endl;
 

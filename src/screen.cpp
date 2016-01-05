@@ -72,7 +72,28 @@ screen::~screen(void)
         \brief A single ncurses window
 */
 
-// perform common portion of initialisation
+/*! \brief          Set the default colours
+    \param  fgbg    colour pair
+
+    Does NOT change _fg/_bg because I can't find a guaranteed way to go from a big integer that
+    combines the two colours to the individual colours.
+*/
+window& window::_default_colours(const chtype fgbg)
+{ if (!_wp)
+    return *this;
+
+  { SAFELOCK(screen);
+
+    wbkgd(_wp, fgbg);
+  }
+
+  return *this;
+}
+
+/*! \brief          Perform common portion of initialisation
+    \param  wi      window information
+    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
+*/
 void window::_init(const window_information& wi, const unsigned int flags)
 { _x = wi.x();
   _y = wi.y();
@@ -116,8 +137,9 @@ window::window(const unsigned int flags) :
   _process_input(nullptr),
   _fg(COLOUR_WHITE),
   _bg(COLOUR_BLACK)
-{  const int pair_nr = colours.add(_fg, _bg);
-   default_colours(COLOUR_PAIR(pair_nr));
+{  //const int pair_nr = colours.add(_fg, _bg);
+   //default_colours(COLOUR_PAIR(pair_nr));
+  _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
 }
 
 /*! \brief          Create using position and size information from the configuration file
@@ -148,9 +170,9 @@ window::window(const window_information& wi, const unsigned int flags) :
     keypad(_wp, true);
     _pp = new_panel(_wp);
 
-    const int pair_nr = colours.add(_fg, _bg);
+//    const int pair_nr = colours.add(_fg, _bg);
 
-    default_colours(COLOUR_PAIR(pair_nr));
+    _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
   }
 }
 
@@ -175,9 +197,9 @@ void window::init(const window_information& wi, const unsigned int flags)
   _fg = string_to_colour(wi.fg_colour());
   _bg = string_to_colour(wi.bg_colour());
 
-  const int pair_nr = colours.add(_fg, _bg);
+//  const int pair_nr = colours.add(_fg, _bg);
 
-  default_colours(COLOUR_PAIR(pair_nr));
+  _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
   (*this) <= WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
@@ -202,16 +224,16 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
     _bg = bg;
   }
 
-  const int pair_nr = colours.add(_fg, _bg);
+//  const int pair_nr = colours.add(_fg, _bg);
 
-  default_colours(COLOUR_PAIR(pair_nr));
+  _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
   (*this) <= WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
 /*! \brief          Move the logical cursor
     \param  new_x   x position
     \param  new_y   y position
-    \return     the window
+    \return         the window
 */
 window& window::move_cursor(const int new_x, const int new_y)
 { if (!_wp)
@@ -257,7 +279,7 @@ window& window::operator<(const string& s)
 
 /*! \brief          Write a set of strings to a window
     \param  ss      set to write
-    \return     the window
+    \return         the window
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
@@ -345,7 +367,7 @@ window& window::operator<(const vector<string>& v)
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
-window& window::operator<(const std::vector<std::pair<std::string, int /* colour pair number */ > >& vec)
+window& window::operator<(const vector<pair<string, int /* colour pair number */ > >& vec)
 { if (!_wp)
     return *this;
 
@@ -424,20 +446,6 @@ window& window::cpair(const int pair_nr)
   return *this;
 }
 
-/// set the background (which also sets the foreground!!
-/// bg is actually a number that is both foreground and background
-window& window::default_colours(chtype bg)
-{ if (!_wp)
-    return *this;
-    
-  { SAFELOCK(screen);  
-
-    wbkgd(_wp, bg);
-  }
-  
-  return *this;
-}
-
 /// set the default colours
 window& window::default_colours(const int foreground_colour, const int background_colour)
 { if (!_wp)
@@ -446,7 +454,7 @@ window& window::default_colours(const int foreground_colour, const int backgroun
   _fg = foreground_colour;
   _bg = background_colour;
 
-  return default_colours(FGBG(foreground_colour, background_colour));
+  return _default_colours(FGBG(foreground_colour, background_colour));
 }
 
 /// control an attribute or perform a simple operation
@@ -460,16 +468,19 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
         wstandend(_wp);
       }
       break;
+
     case WINDOW_BOLD :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_BOLD, NULL);
       }
       break;
+
     case WINDOW_HIGHLIGHT :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_STANDOUT, NULL);
       }
       break;
+
     case WINDOW_DIM :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_DIM, NULL);
@@ -480,59 +491,74 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
         wattr_on(_wp, WA_REVERSE, NULL);
       }
       break;
+
     case WINDOW_REFRESH :
     case WINDOW_UPDATE :
       { SAFELOCK(screen);
         refresh();
       }
       break;
+
     case CURSOR_TOP_LEFT :
     case WINDOW_TOP_LEFT :    
       move_cursor(0, height() - 1);
       break;
+
     case CURSOR_TOP_RIGHT :
     case WINDOW_TOP_RIGHT :
       move_cursor(width() - 1, height() - 1);
       break;
+
     case CURSOR_BOTTOM_LEFT :
     case WINDOW_BOTTOM_LEFT :
       move_cursor(0, 0);
       break;
+
     case CURSOR_BOTTOM_RIGHT :
     case WINDOW_BOTTOM_RIGHT :
       move_cursor(width() - 1, 0);
       break;
+
     case WINDOW_CLEAR :
       clear();
       break;
+
     case WINDOW_CLEAR_TO_EOL :
       { SAFELOCK(screen);
         wclrtoeol(_wp);
       }
       break;
+
     case WINDOW_CLEAR_TO_END :
       { SAFELOCK(screen);
         wclrtobot(_wp);
       }
       break;  
+
     case CURSOR_START_OF_LINE :
       move_cursor(0, cursor_position().y());
-      break;  
+      break;
+
     case CURSOR_UP :
       move_cursor_relative(0, 1);
       break;
+
     case CURSOR_DOWN :
       move_cursor_relative(0, -1);
       break;  
+
     case WINDOW_SCROLL_UP :
       scrollit(1);
       break; 
+
     case WINDOW_SCROLL_DOWN :
       scrollit(-1);
       break;
+
     case CURSOR_HIDE :
       _hidden_cursor = true;
       break;
+
     case CURSOR_END_OF_LINE :
     { const size_t posn = read().find_last_not_of(" ");
 
@@ -544,7 +570,7 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
   return *this;
 }
 
-/// clear a window
+/// clear the window
 window& window::clear(void)
 { if (!_wp)
     return *this;

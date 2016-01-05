@@ -186,24 +186,20 @@ public:
 /// is the queue empty?
   const bool empty(void);
 
-/// move pending X keyboard events to the queue
+/// move any pending X keyboard events to the queue
   void process_events(void);
 
-/// peek at the front of the queue
+/*! \brief  what event is at the front of the queue?
+
+    Returns the default keyboad_event() if the queue is empty
+*/
   const keyboard_event peek(void);
 
 /// pop the frontmost event
   const keyboard_event pop(void);
 
-/// get the most-recently removed event
+/// get the event most recently popped
   const keyboard_event last(void);
-
-/// get the X display pointer
-//  inline Display* display_p(void) const
-//    { return _display_p; }
-
-//  inline const Window window_id(void) const
-//    { return _window_id; }
 
 /*! \brief      Emulate the pressing of a character key
     \param  c   pressed character

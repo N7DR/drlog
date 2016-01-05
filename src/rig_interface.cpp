@@ -58,7 +58,7 @@ const bool RESPONSE_EXPECTED = true;    ///< used to signal that a response is e
  */
 
 /* But there are many problems with the K3 soi-disant protocol as well. Even after trying to get clear answers from Elecraft, the following
- * issues (at least) remain:
+ * issues (at least) remain (after incorporating the Elecraft responses):
  *
  *   1. Which commands might cause a "?;" response if the K3 is "busy"?
  *   2. Do these include commands that don't normally return a response?
@@ -233,7 +233,7 @@ void rig_interface::rig_frequency_b(const frequency& f)
 /*! \brief      Set mode
     \param  m   new mode
 
-    Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
+    Also sets the bandwidth (because it's easier to follow hamlib's model, even though it is flawed)
 */
 void rig_interface::rig_mode(const MODE m)
 { static pbwidth_t last_cw_bandwidth  = 200;
@@ -516,15 +516,6 @@ void rig_interface::rit(const int hz)
     { const int positive_hz = abs(hz);
       const string hz_str = ( (hz >= 0) ? string("+") : string("-") ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
 
-#if 0
-      string hz_str = pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
-
-      if (hz >= 0)
-        hz_str = string("+") + hz_str;
-      else
-        hz_str = string("-") + hz_str;
-#endif
-
       raw_command(string("RO") + hz_str +";", false);
     }
   }
@@ -544,9 +535,6 @@ const int rig_interface::rit(void)
   { const string value = raw_command(string("RO;"), 8);
 
     return from_string<int>(substring(value, 2, 5));
-//    const int rv = from_string<int>(substring(value, 2, 5));
-
-//    return rv;
   }
   else
   { SAFELOCK(_rig);
@@ -644,15 +632,6 @@ void rig_interface::xit(const int hz)
     else
     { const int positive_hz = abs(hz);
       const string hz_str = ( (hz >= 0) ? string("+") : string("-") ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
-
-#if 0
-      string hz_str = pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
-
-      if (hz >= 0)
-        hz_str = string("+") + hz_str;
-      else
-        hz_str = string("-") + hz_str;
-#endif
 
       raw_command(string("RO") + hz_str +";", 0);
     }

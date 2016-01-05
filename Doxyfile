@@ -58,6 +58,8 @@ PROJECT_LOGO           =
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
+# N7DR: ~ does not work here
+
 OUTPUT_DIRECTORY       = /home/n7dr/drlog-documentation
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 4096 sub-

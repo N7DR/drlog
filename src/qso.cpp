@@ -335,6 +335,32 @@ void QSO::populate_from_log_line(const string& str)
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 
+void QSO::new_populate_from_log_line(const string& str, const string& mycall)
+{ if (str.empty())
+    return;
+
+  const vector<string> fields = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
+
+// number, date, UTC, mode, frequency
+  number(from_string<unsigned int>(fields[0]));
+  date(fields[1]);
+  utc(fields[2]);
+  mode( (fields[3] == string("CW") ? MODE_CW : MODE_SSB) );
+  freq(fields[4]);
+
+  const double f = from_string<double>(_frequency_tx);
+  const frequency freq(f);
+
+  band(static_cast<BAND>(freq));
+  callsign(fields[5]);
+  canonical_prefix(location_db.canonical_prefix(callsign()));
+  continent(location_db.continent(callsign()));
+  epoch_time(_to_epoch_time(date(), utc()));
+
+  my_call(mycall);
+
+}
+
 /// is any of the exchange fields a mult?
 const bool QSO::is_exchange_mult(void) const
 { for (const auto& field : _received_exchange)
@@ -344,16 +370,17 @@ const bool QSO::is_exchange_mult(void) const
   return false;
 }
 
+/*! \brief              Set a field to be an exchange mult
+    \param  field_name  name of field
+
+    Does nothing if <i>field_name</i> is not a possible mult
+*/
 void QSO::set_exchange_mult(const string& field_name)
 { for (auto& field : _received_exchange)
-  {
-    if (field.is_possible_mult() and field.name() == field_name)
-    { field.is_mult(true);
-      //ost << "set exchange mult " << field_name << " for QSO: " << *this << endl;
-    }
+  { if (field.is_possible_mult() and field.name() == field_name)
+      field.is_mult(true);
   }
 }
-
 
 /*! \brief                          Re-format according to a Cabrillo template
     \param  cabrillo_qso_template   template for the QSO: line in a Cabrillo file, from configuration file

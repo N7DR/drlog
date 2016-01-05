@@ -167,14 +167,18 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     \brief  Encapsulate pthread_attr information
 */
 
-/// construct with some attributes already set
+/*! \brief                      Construct with some attributes already set
+    \param  initial_attributes  mask of attributes to be set at time of thread creation
+
+    Supports only the PTHREAD_DETACHED attribute
+*/
 thread_attribute::thread_attribute(const unsigned int initial_attributes)
 { const int status = pthread_attr_init(&_attr);
 
   if (status)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init()");
 
-  if (initial_attributes & PTHREAD_DETACHED)
+  if (initial_attributes bitand PTHREAD_DETACHED)
     detached(true);
 }
 
@@ -186,7 +190,7 @@ thread_attribute::~thread_attribute(void)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_destroy()");
 }
 
-/// Set detached state
+/// set detached state
 void thread_attribute::detached(const bool b)
 { const int status = pthread_attr_setdetachstate(&_attr, (b ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE));
 
@@ -194,7 +198,7 @@ void thread_attribute::detached(const bool b)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure setting detached state of attribute");
 }
 
-/// Get detached state
+/// get detached state
 const bool thread_attribute::detached(void)
 { int state;
   const int status = pthread_attr_getdetachstate(&_attr, &state);

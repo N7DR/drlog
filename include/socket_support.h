@@ -62,12 +62,12 @@ const std::string tcp_socket_error_string[7] = { "",
                                                  "Error resolving destination"
                                                };
 
-const int SOCKET_ERROR = -1;
+//const int SOCKET_ERROR = -1;
 
 /// Type that holds a socket -- syntactic sugar
 typedef int SOCKET;
 
-// used to create sockets of different protocol families
+/// used to create sockets of different protocol families
 enum socket_family { IPV4_SOCKET,
                      IPV6_SOCKET
                    };
@@ -129,18 +129,18 @@ inline const unsigned int port(const sockaddr_in& sin)
 inline const unsigned int port(const sockaddr& sin)
   { return ntohs((unsigned int)(((sockaddr_in*)(&sin))->sin_port)); }
 
-/*! \brief  Extract address from a sockaddr_in
-  \param  sin          sockaddr_in
-  \return dotted decimal string
+/*! \brief          Extract address from a sockaddr_in
+    \param  sin     sockaddr_in
+    \return         dotted decimal string
 */
 inline const std::string dotted_decimal_address(const sockaddr_in& sin)
   { return (inet_ntoa(sin.sin_addr)); }
 
-/*! \brief  Extract address from a sockaddr
-  \param  sin          sockaddr_in
-  \return dotted decimal string
+/*! \brief          Extract address from a sockaddr
+    \param  sin     sockaddr_in
+    \return         dotted decimal string
 
-  Assumes that the sockaddr is for the Internet family
+    Assumes that the sockaddr is for the Internet family
 */
 inline const std::string dotted_decimal_address(const sockaddr& sin)
   { return (inet_ntoa(((sockaddr_in*)(&sin))->sin_addr)); }
@@ -266,7 +266,8 @@ public:
   \param  dotted_decimal_address  Address to which the socket is to be bound
   \param  port_nr     Port to which the socket is to be bound
 */
-  void bind(const std::string& dotted_decimal_address, const short port_nr = 0);
+  inline void bind(const std::string& dotted_decimal_address, const short port_nr = 0)
+    { bind(socket_address(dotted_decimal_address, port_nr)); }
 
 /*! \brief  Connect to the far-end
   \param  dotted_ip_address Address of the far end

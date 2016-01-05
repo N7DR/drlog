@@ -69,26 +69,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
     auto& pbb = _per_band_points[m];
 
     if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
-    {
-
-#if 0
-      string new_str;
-
-      for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
-      { new_str += str_vec[n];
-        if (n != str_vec.size() - 1)
-          new_str += "=";
-      }
-
-      tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
-
-      ost << "points string inserted (1): " << tmp_points_str << endl;
-
-      for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
-        pbb.insert( {static_cast<BAND>(n), tmp_points_str} );
-#endif
-
-      const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
+    { const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
 
       for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
         pbb.insert( { static_cast<BAND>(n), RHS } );
@@ -170,117 +151,13 @@ void drlog_context::_set_points(const string& command, const MODE m)
   }
 }
 
-#if 0
-void drlog_context::_set_points(const string& exchange_field, const string& command, const MODE m)
-{ if (command.empty())
-    return;
-
-  const vector<string> str_vec = split_string(command, "=");
-
-  decltype(_per_band_points) PBB;
-
-  if (!str_vec.empty())
-  { string tmp_points_str;
-    const string lhs = str_vec[0];
-    auto& pbb = PBB[m];
-
-    if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
-    { string new_str;
-
-      for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
-      { new_str += str_vec[n];
-        if (n != str_vec.size() - 1)
-          new_str += "=";
-      }
-
-      tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
-
-      for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
-        pbb.insert( {static_cast<BAND>(n), tmp_points_str} );
-    }
-    else    // not all bands
-    { size_t left_bracket_posn = lhs.find('[');
-      size_t right_bracket_posn = lhs.find(']');
-
-      const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
-
-      if (valid)
-      { string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
-        vector<string> bands = split_string(bands_str, ",");
-
-        for (size_t n = 0; n < bands.size(); ++n)
-          bands[n] = remove_peripheral_spaces(bands[n]);
-
-        for (size_t n = 0; n < bands.size(); ++n)
-        { int wavelength = from_string<size_t>(bands[n]);
-          BAND b;
-
-          switch (wavelength)
-          { case 160 :
-              b = BAND_160;
-              break;
-            case 80 :
-              b = BAND_80;
-              break;
-            case 60 :
-              b = BAND_60;
-              break;
-            case 40 :
-              b = BAND_40;
-              break;
-            case 30 :
-              b = BAND_30;
-              break;
-            case 20 :
-              b = BAND_20;
-              break;
-            case 17 :
-              b = BAND_17;
-              break;
-            case 15 :
-              b = BAND_15;
-              break;
-            case 12 :
-              b = BAND_12;
-              break;
-            case 10 :
-              b = BAND_10;
-              break;
-            default :
-              continue;
-          }
-
-          string new_str;
-
-          for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
-          { new_str += str_vec[n];
-
-            if (n != str_vec.size() - 1)
-              new_str += "=";
-          }
-
-          tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
-
-          pbb.insert( {b, tmp_points_str} );
-        }
-      }
-    }
-
-    _per_band_points_with_exchange_field.insert( { exchange_field, PBB } );
-  }
-}
-#endif
-
 /*! \brief              Process a configuration file
     \param  filename    name of file to process
 
     This routine may be called recursively (by the RULES statement in the processed file)
 */
 void drlog_context::_process_configuration_file(const string& filename)
-{
-//  ost << "processing configuration file: " << filename << endl;
-
-  string entire_file;
+{ string entire_file;
 
   try
   { entire_file = remove_char(read_file(filename), CR_CHAR);
@@ -296,8 +173,7 @@ void drlog_context::_process_configuration_file(const string& filename)
   const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
 
   for (const auto& line : lines)                                    // process each line
-  { //ost << "processing line: " << line << endl;
-
+  {
 // generate a number of useful variables
     const string testline = remove_leading_spaces(to_upper(line));
     const vector<string> fields = split_string(line, "=");
@@ -618,8 +494,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       if (contains(_exchange_mults, ","))       // if there is more than one exchange mult
         QSO_MULT_WIDTH = 4;                     // make them all the same width, so that the log line looks OK
-
-//      ost << "finished EXCHANGE MULTS; _exchange_mults = " << _exchange_mults << endl;
     }
 
 // EXCHANGE MULTS PER BAND
@@ -785,7 +659,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 // POINTS
 // don't use LHS here because the command might be somthing like "POINTS[80] ="
     if (starts_with(testline, "POINTS") and !starts_with(testline, "POINTS CW") and !starts_with(testline, "POINTS SSB"))  // there may be an "=" in the points definitions
-//    if (LHS == "POINTS")
     { _set_points(testline, MODE_CW);
       _set_points(testline, MODE_SSB);
     }
@@ -1391,11 +1264,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
   if (_cabrillo_callsign == string())
     _cabrillo_callsign = _my_call;
-
-#if !defined(NEW_CONSTRUCTOR)
-  if (!_exchange_fields_filename.empty())
-    EXCHANGE_FIELD_TEMPLATES.prepare(_path, _exchange_fields_filename);
-#endif
 
   if (_qsl_message.empty())
     _qsl_message = "tu " + _my_call + " test";

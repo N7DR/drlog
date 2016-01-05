@@ -94,7 +94,7 @@ keyboard_queue::keyboard_queue(void) :
   }
 }
 
-// place keyboard events in the queue
+/// move any pending X keyboard events to the queue
 void keyboard_queue::process_events(void)
 { XEvent event;                    // the X event
 
@@ -131,9 +131,6 @@ void keyboard_queue::process_events(void)
   while (1)
   {
 // get the next event
-//    sleep(10);
-//    XFlush(_display_p);
-
     if (_x_multithreaded)
     { bool got_event = false;
 
@@ -189,26 +186,31 @@ void keyboard_queue::process_events(void)
   }
 }
 
+/// how many events are in the queue?
 const size_t keyboard_queue::size(void)
 { SAFELOCK(_keyboard);
 
   return _events.size();
 }
 
+/// is the queue empty?
 const bool keyboard_queue::empty(void)
 { SAFELOCK(_keyboard);
 
   return _events.empty();
 }
 
-// peek at the front of the queue
+/*! \brief  what event is at the front of the queue?
+
+    Returns the default keyboad_event() if the queue is empty
+*/
 const keyboard_event keyboard_queue::peek(void)
 { SAFELOCK (_keyboard);
 
   return (!_events.empty() ? _events.front() : keyboard_event());
 }
 
-// pop the frontmost event
+/// pop the frontmost event
 const keyboard_event keyboard_queue::pop(void)
 { SAFELOCK(_keyboard);
 
@@ -217,63 +219,45 @@ const keyboard_event keyboard_queue::pop(void)
   if (!_events.empty())
   { _events.pop_front();
     _last_event = rv;
-
-//    const KeyCode kc4 = XKeysymToKeycode(_display_p, XK_g);
-
-//    ost << "After XKeysymToKeycode() kc4" << endl;
   }
 
   return rv;
 }
 
-// get the most-recently removed event
- const keyboard_event keyboard_queue::last(void)
- { SAFELOCK(_keyboard);
+/// get the event most recently popped
+const keyboard_event keyboard_queue::last(void)
+{ SAFELOCK(_keyboard);
 
-   return _last_event;
- }
+  return _last_event;
+}
 
- void keyboard_queue::push_key_press(const char c)
- {   //ost << "inside push_key_press" << endl;
+/*! \brief      Emulate the pressing of a character key
+    \param  c   pressed character
 
- //const KeyCode kc5 = XKeysymToKeycode(_display_p, XK_g);
+    The corresponding Release event is not performed, since it is not processed by the drlog code
+*/
+void keyboard_queue::push_key_press(const char c)
+{ switch (c)
+  { case '/' :
+      push_key_press(static_cast<KeySym>(XK_slash));    // the default algorithm doesn't work for the solidus
+      break;
 
- //ost << "After XKeysymToKeycode() kc5" << endl;
+    default:
+    { const string c_str = create_string(c);
+      const KeySym ks = XStringToKeysym(c_str.c_str());
 
+      push_key_press(ks);
+    }
+  }
+}
 
+/*! \brief      Emulate the addition of a KeySym
+    \param  ks  KeySym to add
 
-// XEvent event;    // the X event
-
-//   event.type = KeyPress;
-
-   switch (c)
-   { case '/' :
-       push_key_press(static_cast<KeySym>(XK_slash));    // the default algorithm doesn't work for the solidus
-       break;
-
-     default:
-     { const string c_str = create_string(c);
-
-
- //  ost << "calling XStringToKeysym" << endl;
-
-       const KeySym ks = XStringToKeysym(c_str.c_str());
-
-//   ost << "returned KeySym = " << ks << endl;
-
-//   const char* cp = XKeysymToString(ks);
-
-//   ost << "string equivalent = " << string(cp) << endl;
-
-//       ost << "calling XKeysymToKeycode" << endl;
-
-       push_key_press(ks);
-     }
-   }
- }
-
- void keyboard_queue::push_key_press(const KeySym ks)
- {XEvent event;    // the X event
+    The corresponding Release event is not performed, since it is not processed by the drlog code
+*/
+void keyboard_queue::push_key_press(const KeySym ks)
+ { XEvent event;    // the X event
 
  event.type = KeyPress;
 
@@ -335,6 +319,10 @@ const keyboard_event keyboard_queue::pop(void)
 //   ost << "XSendEvent status = " << status << endl;
  }
 
+/*! \brief              Emulate the pressing of a sequence of characters
+    \param  str         pressed string
+    \param  ms_delay    delay in milliseconds between each character in <i>str</i>
+*/
 void keyboard_queue::push_key_press(const string& str, const int ms_delay)
 { for (size_t n = 0; n < str.length(); ++n)
   { push_key_press(str[n]);
@@ -345,31 +333,35 @@ void keyboard_queue::push_key_press(const string& str, const int ms_delay)
   }
 }
 
- // maps key names in the config file to KeySym numbers (which are integers)
- // This is used to decode access to the correct CW messages when a key is pressed
- // See the file drlog_context.cpp to see this in use
- const map<string, int> key_names = { { "kp_0",      XK_KP_0 },
-                                      { "kp_1",      XK_KP_1 },
-                                      { "kp_2",      XK_KP_2 },
-                                      { "kp_3",      XK_KP_3 },
-                                      { "kp_4",      XK_KP_4 },
-                                      { "kp_5",      XK_KP_5 },
-                                      { "kp_6",      XK_KP_6 },
-                                      { "kp_7",      XK_KP_7 },
-                                      { "kp_8",      XK_KP_8 },
-                                      { "kp_9",      XK_KP_9 },
-                                      { "kp_insert", XK_KP_Insert },
-                                      { "kp_end",    XK_KP_End },
-                                      { "kp_down",   XK_KP_Down },
-                                      { "kp_next",   XK_KP_Next },
-                                      { "kp_left",   XK_KP_Left },
-                                      { "kp_begin",  XK_KP_Begin },
-                                      { "kp_right",  XK_KP_Right },
-                                      { "kp_home",   XK_KP_Home },
-                                      { "kp_up",     XK_KP_Up },
-                                      { "kp_prior",  XK_KP_Prior }
-                                    };
+/*! \brief  Map key names in the config file to KeySym numbers (which are integers)
 
+   This is used to decode access to the correct CW messages when a key is pressed
+   See the file drlog_context.cpp to see this in use
+
+*/
+const map<string, int> key_names = { { "kp_0",      XK_KP_0 },
+                                     { "kp_1",      XK_KP_1 },
+                                     { "kp_2",      XK_KP_2 },
+                                     { "kp_3",      XK_KP_3 },
+                                     { "kp_4",      XK_KP_4 },
+                                     { "kp_5",      XK_KP_5 },
+                                     { "kp_6",      XK_KP_6 },
+                                     { "kp_7",      XK_KP_7 },
+                                     { "kp_8",      XK_KP_8 },
+                                     { "kp_9",      XK_KP_9 },
+                                     { "kp_insert", XK_KP_Insert },
+                                     { "kp_end",    XK_KP_End },
+                                     { "kp_down",   XK_KP_Down },
+                                     { "kp_next",   XK_KP_Next },
+                                     { "kp_left",   XK_KP_Left },
+                                     { "kp_begin",  XK_KP_Begin },
+                                     { "kp_right",  XK_KP_Right },
+                                     { "kp_home",   XK_KP_Home },
+                                     { "kp_up",     XK_KP_Up },
+                                     { "kp_prior",  XK_KP_Prior }
+                                   };
+
+/// key names that are equivalent to one another
 const map<string, string> equivalent_key_names = { { "kp_0", "kp_insert" },
                                                    { "kp_1", "kp_end" },
                                                    { "kp_2", "kp_down" },
@@ -382,8 +374,9 @@ const map<string, string> equivalent_key_names = { { "kp_0", "kp_insert" },
                                                    { "kp_9", "kp_prior" }
                                                  };
 
+/// names of keys on the keypad
 const unordered_set<KeySym> keypad_numbers({ { XK_KP_0 }, { XK_KP_1 }, { XK_KP_2 }, { XK_KP_3 }, { XK_KP_4 },
                                              { XK_KP_5 }, { XK_KP_6 }, { XK_KP_7 }, { XK_KP_8 }, { XK_KP_9 },
                                              { XK_KP_Insert }, { XK_KP_End }, { XK_KP_Down }, { XK_KP_Next }, { XK_KP_Left },
                                              { XK_KP_Begin }, { XK_KP_Right }, { XK_KP_Home }, { XK_KP_Up }, { XK_KP_Prior }
-                                           });
+                                          });

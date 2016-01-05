@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/regex.hpp>    // because libstdc++ support for regex is essentially nonexistent
+#include <boost/regex.hpp>    // because libstdc++ support for regex is currently essentially nonexistent, even though it's in the standard
 
 class exchange_field_template;                  ///< forward declaration
 
@@ -84,20 +84,41 @@ protected:
   unsigned int _check;          ///< check
   std::string  _section;        ///< section
 
+/*! \brief          Does a string possibly contain a serial number?
+    \param  str     string to check
+    \return         whether <i>str</i> contains a possible serial number
+
+    Currently returns true only for strings of the form <n><precedence>
+*/
   const bool _is_possible_serno(const std::string& str) const;
+
+/*! \brief          Does a string possibly contain a precedence?
+    \param  str     string to check
+    \return         whether <i>str</i> contains a possible serial precedence
+
+    Currently returns true only for strings of the form <n><precedence>
+*/
   const bool _is_possible_prec(const std::string& str) const;
+
+/*! \brief          Does a string possibly contain a check?
+    \param  str     string to check
+    \return         whether <i>str</i> is a (two-digit) check
+*/
   const bool _is_possible_check(const std::string& str) const;
 
 public:
 
+/*! \brief                  Constructor
+    \param  call            callsign
+    \param  received_str    exchange string
+*/
   parsed_ss_exchange(const std::string& call, const std::string& received_str);
 
-  READ(serno);
-  READ(prec);
-  READ(callsign);
-  READ(check);
-  READ(section);
-
+  READ(serno);          ///< serial number
+  READ(prec);           ///< precedence
+  READ(callsign);       ///< callsign
+  READ(check);          ///< check
+  READ(section);        ///< section
 };
 
 // -------------------------  parsed_exchange  ---------------------------

@@ -24,7 +24,7 @@
 
 using namespace std;
 
-extern message_stream ost;
+extern message_stream ost;                                  ///< for debugging, info
 
 // ---------------------------------------- parallel_port -------------------------
 
@@ -32,7 +32,7 @@ extern message_stream ost;
         \brief Access and control a port
 */
 
-/*! \brief  Open a port
+/*! \brief              Open a port
     \param  filename    name of the port to open
 */
 parallel_port::parallel_port(const string& filename)
@@ -96,11 +96,9 @@ parallel_port::~parallel_port(void)
 { ieee1284_free_ports(&_list_from_library);
 }
 
-/*! \brief  Set control lines
+/*! \brief                  Set control lines
     \param  char_to_assert  bit pattern to assert
 */
-void parallel_port::control(const char c) const
-{ ieee1284_write_control(_list_from_library.portv[_port_nr], c);
-}
-
-
+//void parallel_port::control(const char c) const
+//{ ieee1284_write_control(_list_from_library.portv[_port_nr], c);
+//}

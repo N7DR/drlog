@@ -11,7 +11,7 @@
 #ifndef PTHREADSUPPORTH
 #define PTHREADSUPPORTH
 
-/*! \file pthread_support.h
+/*! \file   pthread_support.h
 
     Support for pthreads
 */
@@ -32,13 +32,6 @@
 /// Syntactic sugar to create a safe lock
 #define SAFELOCK(z) safelock safelock_z(z##_mutex, (std::string)(#z))
 
-//template <class T>
-//const T SAFELOCK_GET(const T& v, pt_mutex& m)
-//{ safelock safelock_z(m, "SAFELOCK_GET");
-//
-//  return v;
-//}
-
 // errors
 const int PTHREAD_LOCK_ERROR            = -1,    ///< Error locking mutex
           PTHREAD_UNLOCK_ERROR          = -2,    ///< Error unlocking mutex
@@ -46,10 +39,18 @@ const int PTHREAD_LOCK_ERROR            = -1,    ///< Error locking mutex
           PTHREAD_ATTR_ERROR            = -4,    ///< Error when managing a thread_attribute
           PTHREAD_CREATION_ERROR        = -5;    ///< Error attempting to create a pthread
 
-// attributes that can be set at cthe time that a thread_attribute object is created
-const unsigned int PTHREAD_DETACHED     = 1;
+// attributes that can be set at the time that a thread_attribute object is created
+const unsigned int PTHREAD_DETACHED     = 1;    ///< detached pthread
 
-// wrapper for pthread_create
+/*! \brief                  Wrapper for pthread_create()
+    \param  thread          pointer to thread ID
+    \param  attr            pointer to pthread attributes
+    \param  start_routine   name of function to run in the new thread
+    \param  arg             arguments to be passed to <i>start_function</i>
+    \param  thread_name     name of the thread
+
+    The first four parameters are passed without change to <i>pthread_create</i>
+*/
 void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = "");
 
 // -------------------------------------------  thread_attribute  -----------------------
@@ -61,27 +62,29 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 class thread_attribute
 {
 protected:
-  pthread_attr_t    _attr;
+  pthread_attr_t    _attr;          ///< attributes
 
 public:
 
-/// default constructor
-//  thread_attribute(void);
+/*! \brief                      Construct with some attributes already set
+    \param  initial_attributes  mask of attributes to be set at time of thread creation
 
-/// construct with some attributes already set
+    Supports only the PTHREAD_DETACHED attribute
+*/
   explicit thread_attribute(const unsigned int initial_attributes = 0);
 
 /// destructor
   virtual ~thread_attribute(void);
 
-// get/set detached state
+/// set detached state
   void detached(const bool b);
 
+/// get detached state
   const bool detached(void);
 
+/// get attributes
   inline const pthread_attr_t& attr(void) const  // note the reference
     { return _attr; }
-
 };
 
 // -------------------------------------------  thread_specific_data  -----------------------
@@ -95,12 +98,11 @@ public:
 template<class T> class thread_specific_data
 {
 protected:
-  pthread_key_t _key;     ///< Key into thread-specific data
+  pthread_key_t _key;                       ///< key into thread-specific data
 
 public:
 
-/*! \brief  Default Constructor
-*/
+/// constructor
   thread_specific_data(void)
     { pthread_key_create(&_key, NULL); }
 

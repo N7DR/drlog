@@ -11,9 +11,7 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-// temporary, until I am convinced that the new constructor in exchange functions at least as well as the old one
-#define NEW_CONSTRUCTOR
-#undef NEW_RAW_COMMAND
+#undef NEW_RAW_COMMAND  // experiment to try to improve the reliability of the awful rig interface
 
 /*!     \file macros.h
 
@@ -678,8 +676,8 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 // syntactic suger for time-related use
 #include <chrono>
 
-typedef std::chrono::duration<long, std::centi> centiseconds;
-typedef std::chrono::duration<long, std::deci>  deciseconds;
+typedef std::chrono::duration<long, std::centi> centiseconds;           ///< hundredths of a second
+typedef std::chrono::duration<long, std::deci>  deciseconds;            ///< tenths of a second
 
 #if 0
 template <class D, class P> // P = parameter; D = data in the database
@@ -742,6 +740,10 @@ class RANGE : public std::vector<T>
 {
 public:
 
+/*! \brief      Generate a range
+    \param  v1  lowest value
+    \param  v2  highest value
+*/
   RANGE(const T& v1, const T& v2)
   { if (v1 > v2)
     { T value = v1;
@@ -761,26 +763,48 @@ public:
 
 // convenient syntactic sugar for some STL functions
 
+/*! \brief          Apply a function to all in a container
+    \param  first   container
+    \param  fn      function
+    \return         <i>fn</i>
+*/
 template<class Input, class Function>
   Function FOR_ALL(Input& first, Function fn)
 { return (std::for_each(first.begin(), first.end(), fn));
 }
 
+/*! \brief          Copy all in a container to another container
+    \param  first   initial container
+    \param  oi      iterator on final container
+    \return         <i>oi</i>
+*/
 template<class Input, class OutputIterator>
   OutputIterator COPY_ALL(Input& first, OutputIterator oi)
 { return (std::copy(first.begin(), first.end(), oi));
 }
 
+/*! \brief          Remove values in a container that match a predicate, and resize the container
+    \param  first   container
+    \param  pred    predicate to apply
+*/
 template <class Input, class UnaryPredicate>
   void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
 { first.erase(std::remove_if(first.begin(), first.end(), pred), first.end());
 }
 
+/*! \brief      Reverse the contents of a container
+    \param  v   container
+*/
 template <class Input>
   void REVERSE(Input& v)
 { std::reverse(v.begin(), v.end());
 }
 
+/*! \brief          Find first value in a container that matches a predicate
+    \param  v       container
+    \param  pred    (boolean) predicate to apply
+    \return         first value in <i>v</i> for which <i>pred</i> is true
+*/
 template <typename Input, typename UnaryPredicate>
   auto FIND_IF(Input& v, UnaryPredicate pred) -> typename Input::iterator
 { return std::find_if(v.begin(), v.end(), pred);

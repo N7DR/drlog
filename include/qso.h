@@ -24,7 +24,7 @@
 #include <string>
 #include <utility>
 
-extern bool QSO_DISPLAY_COUNTRY_MULT;   ///< whether country mults are written on the log line
+extern bool QSO_DISPLAY_COUNTRY_MULT;           ///< whether country mults are written on the log line
 extern unsigned int QSO_MULT_WIDTH;             ///< width of mult fields on log line
 
 // forward declarations
@@ -46,9 +46,9 @@ protected:
   
   enum BAND                                         _band;              ///< band
   std::string                                       _callsign;          ///< call
-  std::string                                       _canonical_prefix;  ///< NOT automatically set when callsign is set
+  std::string                                       _canonical_prefix;  ///< canonical prefix of country; NOT automatically set when callsign is set
   std::string                                       _comment;           ///< comment to be carried with QSO (unused)
-  std::string                                       _continent;         ///< NOT automatically set when callsign is set
+  std::string                                       _continent;         ///< continent; NOT automatically set when callsign is set
   std::string                                       _date;              ///< yyyy-mm-dd
   time_t                                            _epoch_time;        ///< time in seconds since the UNIX epoch
   std::string                                       _frequency_rx;      ///< RX frequency in form xxxxx.y (kHz)
@@ -116,7 +116,7 @@ public:
   inline void freq(const decltype(_frequency_tx)& str)
     { _frequency_tx = str; }
   
-  READ(epoch_time);                     ///< time in seconds since the UNIX epoch
+  READ_AND_WRITE(epoch_time);           ///< time in seconds since the UNIX epoch
 
   READ_AND_WRITE(received_exchange);    ///< names do not include the REXCH-
   READ_AND_WRITE(is_country_mult);      ///< is this QSO a country mult?
@@ -127,6 +127,11 @@ public:
 /// is any exchange field a mult?
   const bool is_exchange_mult(void) const;
 
+/*! \brief              Set a field to be an exchange mult
+    \param  field_name  name of field
+
+    Does nothing if <i>field_name</i> is not a possible mult
+*/
   void set_exchange_mult(const std::string& field_name);
 
 /// synonym for callsign()
@@ -235,6 +240,9 @@ public:
     \param  str     string from visible log window
 */
   void populate_from_log_line(const std::string& str);
+
+// new
+  void new_populate_from_log_line(const std::string& str, const std::string& mycall);
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
