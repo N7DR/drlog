@@ -1,4 +1,4 @@
-// $Id: rules.cpp 118 2015-11-30 22:32:04Z  $
+// $Id: rules.cpp 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -897,6 +897,47 @@ const EFT contest_rules::exchange_field_eft(const string& field_name) const
     return EFT("none");
 
   return (v->second);
+}
+
+/*! \brief                      Get the names of the exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange field names associated with <i>canonical_prefix</i>
+*/
+//const set<string> contest_rules::exchange_fields(const string& canonical_prefix) const
+//{ SAFELOCK(rules);
+
+//  set<string> rv;
+
+//  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
+//  return _per_country_exchange_fields[canonical_prefix);
+//}
+
+/*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange field names associated with <i>canonical_prefix</i>
+*/
+const vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
+{ const vector<exchange_field> vef = _exchange_fields(canonical_prefix, m, true);
+  vector<string> rv;
+
+  for (const auto& ef : vef)
+    rv.push_back(ef.name());
+
+  return rv;
+}
+
+/*! \brief                      Get the unexpanded expanded names of the exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange field names associated with <i>canonical_prefix</i>
+*/
+const vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
+{ const vector<exchange_field> vef = _exchange_fields(canonical_prefix, m, false);
+  vector<string> rv;
+
+  for (const auto& ef : vef)
+    rv.push_back(ef.name());
+
+  return rv;
 }
 
 /*! \brief              All the canonical values for a particular exchange field

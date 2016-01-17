@@ -1,4 +1,4 @@
-// $Id: macros.h 118 2015-11-30 22:32:04Z  $
+// $Id: macros.h 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -786,11 +786,34 @@ template<class Input, class OutputIterator>
 /*! \brief          Remove values in a container that match a predicate, and resize the container
     \param  first   container
     \param  pred    predicate to apply
+
+    Does not work for maps; see MAP_REMOVE_IF
 */
 template <class Input, class UnaryPredicate>
   void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
 { first.erase(std::remove_if(first.begin(), first.end(), pred), first.end());
 }
+
+// https://stackoverflow.com/questions/800955/remove-if-equivalent-for-stdmap
+// there should be some way to choose this function instead of the prior one, based on
+// traits, but I can't figure out a way to tell whether T is a map
+//template< typename ContainerT, typename PredicateT >
+//void MAP_REMOVE_IF( ContainerT& items, const PredicateT& predicate ) {
+//  for( auto it = items.begin(); it != items.end(); ) {
+//    if( predicate(*it) ) it = items.erase(it);
+//    else ++it;
+//  }
+//};
+
+template< typename K, typename V, typename PredicateT >
+void REMOVE_IF_AND_RESIZE( std::map<K, V>& items, const PredicateT& predicate ) {
+  for( auto it = items.begin(); it != items.end(); ) {
+    if( predicate(*it) ) it = items.erase(it);
+    else ++it;
+  }
+};
+
+
 
 /*! \brief      Reverse the contents of a container
     \param  v   container

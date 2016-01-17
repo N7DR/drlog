@@ -1,4 +1,4 @@
-// $Id: rules.h 118 2015-11-30 22:32:04Z  $
+// $Id: rules.h 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -281,13 +281,13 @@ protected:
   bool                                _exchange_mults_used;      ///< are exchange mults used?
 
   std::map<std::string /* exchange field name */, unsigned int>  _exchange_present_points;                                  ///< number of points if a particular exchange field is received; only one value for all bands and modes
-  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded
+  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded; key = string() is default exchange
 
   std::vector<BAND> _permitted_bands;                               ///< bands allowed in this contest; use a vector container in order to keep the frequency order
   std::set<MODE>    _permitted_modes;                               ///< modes allowed in this contest
   std::array<std::map<BAND, points_structure>, N_MODES> _points;    ///< points structure for each band and mode
   
-  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded
+  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
 
   std::map<MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
 
@@ -477,6 +477,18 @@ public:
         Returns EFT("none") if <i>field_name</i> is unknown.
 */
   const EFT exchange_field_eft(const std::string& field_name) const;
+
+/*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange field names associated with <i>canonical_prefix</i>
+*/
+  const std::vector<std::string> expanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
+
+/*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix
+    \param  canonical_prefix    canonical prefix
+    \return                     the exchange field names associated with <i>canonical_prefix</i>
+*/
+  const std::vector<std::string> unexpanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
 
 /// Return all the known names of exchange fields
   const std::set<std::string> all_known_field_names(void) const;

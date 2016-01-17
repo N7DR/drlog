@@ -1,4 +1,4 @@
-// $Id: pthread_support.cpp 98 2015-03-07 15:30:35Z  $
+// $Id: pthread_support.cpp 119 2016-01-16 18:32:13Z  $
 
 // Source code copyright 2000, 2001, 2002, 2003, 2004, 2005 IPfonix, Inc.
 // Unauthorized copying strictly prohibited
@@ -285,44 +285,48 @@ pt_condition_variable::pt_condition_variable(void) :
 { pthread_cond_init(&_cond, NULL);
 }
 
-// constructor from a pt_mutex
+/*! \brief          Construct and associate a mutex with the condition variable
+    \param  mtx     mutex to be associated with the condition variable
+*/
 pt_condition_variable::pt_condition_variable(pt_mutex& mutex) :
   _mutex_p(&mutex),
   _predicate(false)
 { pthread_cond_init(&_cond, NULL);
 }
 
-// destructor
+/// destructor
 pt_condition_variable::~pt_condition_variable(void)
 { pthread_cond_destroy(&_cond);
 }
 
-// set the value of the associated mutex (usually used with default constructor)
+/*! \brief          Set the value of the associated mutex
+    \param  mtx     mutex to associate with this condition variable
+
+    Typically used with the default constructor
+*/
 void pt_condition_variable::set_mutex(pt_mutex& mutex)
 { _mutex_p = &mutex; 
 }
 
-// wait on the condition variable; we MUST have the lock as we come into this routine
+/*! \brief  Wait on the condition variable
+
+    We MUST have the lock as we come into this routine
+*/
 void pt_condition_variable::wait(void)
 { if (_mutex_p == NULL)
     throw pthread_error(PTHREAD_INVALID_MUTEX, "pointer to mutex is NULL in untimed wait() function");
 
 // check that the predicate isn't somehow already true
   if (_predicate)
-  { _predicate = false;
-//    log_message((string)"pthread WARNING: predicate is true even though we have not yet begun to wait", MSG_WARNING);
-  }
+    _predicate = false;
 
 execute_wait:
-  int status = pthread_cond_wait(&_cond, &(_mutex_p->_mutex));
-//  if (status)
-//    log_message((string)"ERROR RETURN FROM pthread_cond_wait: " + long_to_string(status), MSG_WARNING);
+  /* int status = */ pthread_cond_wait(&_cond, &(_mutex_p->_mutex));
 
 // we have to check the predicate, to guard against a false wake-up (Solaris on MP boxes is hosed)
   if (!_predicate)
-  { //log_message((string)"pthread WARNING:: Detected false wake-up on condition variable!! Is this a Solaris MP box?", MSG_WARNING);
     goto execute_wait;
-  }
+
   _predicate = false;
 }
 

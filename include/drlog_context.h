@@ -155,6 +155,7 @@ protected:
   std::string                                  _message_cq_1;                       ///< CQ message #1 (generally, a short CQ)
   std::string                                  _message_cq_2;                       ///< CQ message #2 (generally, a long CQ)
   std::string                                  _modes;                              ///< comma-delimited modes CW, SSB
+  std::map<BAND, frequency>                    _mode_break_points;                  ///< override default mode break points
   std::string                                  _my_call;                            ///< my call
   std::string                                  _my_continent;                       ///< my continent
   unsigned int                                 _my_cq_zone;                         ///< my CQ zone
@@ -380,6 +381,7 @@ public:
   SAFEREAD(message_cq_1, _context);                 ///< CQ message #1 (generally, a short CQ)
   SAFEREAD(message_cq_2, _context);                 ///< CQ message #2 (generally, a long CQ)
   SAFEREAD(modes, _context);                        ///< comma-delimited modes CW, SSB
+  SAFEREAD(mode_break_points, _context);            ///< override default mode break points
   SAFEREAD(my_call, _context);                      ///< my call
   SAFEREAD(my_continent, _context);                 ///< my continent
   SAFEREAD(my_cq_zone, _context);                   ///< my CQ zone
@@ -535,6 +537,12 @@ public:
     { SAFELOCK(_context);
       swap(_qsl_message, _quick_qsl_message);
     }
+
+// are multiple modes permitted?
+  inline const bool multiple_modes(void) const
+  { SAFELOCK(_context);
+    return (_modes.size() != 1);
+  }
 };
 
 #endif    // DRLOG_CONTEXT_H

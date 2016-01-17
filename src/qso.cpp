@@ -1,4 +1,4 @@
-// $Id: qso.cpp 118 2015-11-30 22:32:04Z  $
+// $Id: qso.cpp 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -15,6 +15,7 @@
 
 #include "bands-modes.h"
 #include "cty_data.h"
+#include "exchange.h"
 #include "qso.h"
 #include "statistics.h"
 #include "string_functions.h"
@@ -27,8 +28,10 @@
 
 using namespace std;
 
+extern drlog_context context;               ///< configuration context
 extern location_database location_db;       ///< location database
 extern message_stream ost;                  ///< for debugging, info
+extern contest_rules rules;                 ///< rules for this contest
 
 extern void alert(const string& msg);       ///< alert the user
 
@@ -358,6 +361,37 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
   epoch_time(_to_epoch_time(date(), utc()));
 
   my_call(mycall);
+
+// the sent exchange starts at fields[6]
+  vector<pair<string, string> > tmp_sent_exchange = context.sent_exchange(mode());
+  const size_t n_sent_fields = tmp_sent_exchange.size();
+
+  for (size_t field_nr = 0; field_nr < n_sent_fields; ++field_nr)
+    tmp_sent_exchange[field_nr].second = fields[6 + field_nr];
+
+  sent_exchange(tmp_sent_exchange);
+
+  size_t index = 6 + n_sent_fields;      // index into received fields
+  vector<string> exchange_field_values;
+
+  for (size_t index = 6 + n_sent_fields; index < fields.size(); ++index)    // there must be a faster way to do this, via the constructor
+    exchange_field_values.push_back(fields[index]);
+
+// for now, the last parameter is ignored. Try it this way to see if the results are good;
+// if they aren't, then we need to include a separate branch for "true" in the parsed_exchange
+// constructor
+  const parsed_exchange pexch(canonical_prefix(), rules, mode(), exchange_field_values, true);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
+
+  if (!pexch.valid())
+  { alert("Unable to parse exchange in log line");
+    return;
+  }
+
+  const vector<parsed_exchange_field> received_fields = pexch.fields();
+
+  for (const auto& received_field : received_fields)
+  {
+  }
 
 }
 
@@ -732,7 +766,7 @@ const bool QSO::sent_exchange_includes(const string& field_name)
 /// convert to a string suitable for display in the log window
 const string QSO::log_line(void)
 {
-  ost << "Inside log_line()" << endl;
+//  ost << "Inside log_line()" << endl;
 
   static const size_t CALL_FIELD_LENGTH = 12;
   string rv;
@@ -793,7 +827,7 @@ const string QSO::log_line(void)
 
 // exchange mult
   for (const auto& field : _received_exchange)
-  { ost << "in qso::log_line(); processing exchange field: " << field << endl;
+  { //ost << "in qso::log_line(); processing exchange field: " << field << endl;
 
     unsigned int field_width = QSO_MULT_WIDTH;
     const string& name = field.name();

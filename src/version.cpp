@@ -1,4 +1,4 @@
-// $Id: version.cpp 86 2014-12-13 20:06:24Z  $
+// $Id: version.cpp 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

@@ -1,4 +1,4 @@
-// $Id: exchange.h 112 2015-07-26 17:04:33Z  $
+// $Id: exchange.h 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -152,8 +152,9 @@ public:
     \param  callsign            callsign of the station from which the exchange was received
     \param  rules               rules for the contest
     \param  received_values     the received values, in the order that they were received
+    ***
 */
-  parsed_exchange(const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values);
+  parsed_exchange(const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values, const bool truncate_received_values = false);
 
   READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window

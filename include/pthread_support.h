@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 59 2014-04-19 20:17:18Z  $
+// $Id: pthread_support.h 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -106,8 +106,8 @@ public:
   thread_specific_data(void)
     { pthread_key_create(&_key, NULL); }
 
-/*! \brief  Get a pointer into the thread-specific data
-    \return Pointer to thread-specific data
+/*! \brief      Get a pointer into the thread-specific data
+    \return     pointer to thread-specific data
 
     Returns 0 if the data do not exist
 */
@@ -119,8 +119,8 @@ public:
       return 0;
     }
 
-/*! \brief  Set thread-specific data
-    \param  tp  Pointer to data that is to become thread-specific
+/*! \brief      Set thread-specific data
+    \param  tp  pointer to data that is to become thread-specific
 */
   void set(const T* tp)
     { pthread_setspecific(_key, tp); }
@@ -138,9 +138,9 @@ public:
 class pt_mutex
 {
 protected:
-  pthread_mutex_t _mutex;     ///< Encapsulated mutex  
+  pthread_mutex_t _mutex;                       ///< Encapsulated mutex
   pthread_t       _thread_id;                   ///< ID of the thread that owns the locked mutex
-  thread_specific_data<int> _tsd_refcount;  ///< reference counter for recursive locking
+  thread_specific_data<int> _tsd_refcount;      ///< reference counter for recursive locking
 
 /*! \brief  Copy constructor
 
@@ -150,23 +150,19 @@ protected:
 
 public:
 
-/*! \brief  Default Constructor
-*/
+/// constructor
   pt_mutex(void);
 
-/*! \brief  Destructor
-*/
+/// destructor
   virtual ~pt_mutex(void);
 
-/*! \brief  Lock the mutex
-*/
+/// lock the mutex
   void lock(void);
 
-/*! \brief  Unlock the mutex
-*/
+/// unlock the mutex
   void unlock(void);
 
-/// Return the thread ID
+/// get the thread ID
   inline const pthread_t thread_id(void) const
     { return _thread_id; }
 
@@ -201,23 +197,24 @@ public:
 */
   pt_condition_variable(void);
 
-/*! \brief  Construct and associate a mutex with the condition variable
-  \param  mtx Mutex to be associated with the condition variable
+/*! \brief          Construct and associate a mutex with the condition variable
+    \param  mtx     mutex to be associated with the condition variable
 */
   pt_condition_variable(pt_mutex& mtx);
    
-/*! \brief  Destructor
-*/
+/// destructor
   virtual ~pt_condition_variable(void);
 
-/*! \brief  Set the value of the associated mutex
-    \param  mtx Mutex to associate with this condition variable
+/*! \brief          Set the value of the associated mutex
+    \param  mtx     mutex to associate with this condition variable
   
     Typically used with the default constructor
 */
   void set_mutex(pt_mutex& mtx);
 
 /*! \brief  Wait on the condition variable
+
+    We MUST have the lock as we come into this routine
 */
   void wait(void);
 

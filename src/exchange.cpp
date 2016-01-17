@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 118 2015-11-30 22:32:04Z  $
+// $Id: exchange.cpp 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -217,8 +217,9 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
     \param  callsign            callsign of the station from which the exchange was received
     \param  rules               rules for the contest
     \param  received_values     the received values, in the order that they were received
+    ***
 */
-parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
+parsed_exchange::parsed_exchange(const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values, const bool truncate_received_values) :
   _replacement_call(),
   _valid(false)
 { static const string EMPTY_STRING("");
@@ -258,6 +259,79 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
   { copy_received_values.clear();
     copy_if(received_values.cbegin(), received_values.cend(), back_inserter(copy_received_values), [] (const string& str) { return !contains(str, "."); } );
   }
+
+if (truncate_received_values)
+{ map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+
+  ost << "exchange_field_eft map: " << exchange_field_eft << endl;
+
+// remove any inappropriate RS(T)
+//  static const map<MODE, string> valid_rst_fields { { MODE_CW, "RST" }, { MODE_SSB, "RS" } };
+
+  auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST" and m != MODE_CW )  or
+                                                                    ( psE.first == "RS" and m != MODE_SSB )
+                                                                  );
+  };
+
+//  auto posn = remove_if(exchange_field_eft.begin(), exchange_field_eft.end(), pred_fn);
+  REMOVE_IF_AND_RESIZE(exchange_field_eft, pred_fn);
+//  int test_value = 4;  // or use whatever appropriate type and value
+//  erase_if(container, [&test_value]( item_type& item ) {
+//    return item.property < test_value;
+
+//  MAP_REMOVE_IF(exchange_field_eft, pred_fn);
+
+  ost << "NEW exchange_field_eft map: " << exchange_field_eft << endl;
+
+//  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
+
+  const vector<string> exchange_field_names = rules.unexpanded_exchange_field_names(canonical_prefix, m);
+
+  for (const auto& efn : exchange_field_names)
+    ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
+
+  map<string /* field name */, string /* value */> result_map;
+
+  const string rv0 = received_values[0];
+  bool found_match = false;
+
+  for (auto cit = exchange_field_names.cbegin(); !found_match and cit != exchange_field_names.cend(); ++cit)
+  { const string exchange_field_name = *cit;
+
+    if (contains(exchange_field_name, "+"))    // if a choice
+    { const vector<string> choices_vec = split_string(exchange_field_name, '+');
+
+      for (auto it = choices_vec.begin(); it != choices_vec.end(); )    // see Josuttis 2nd edition, p. 343
+      { const EFT& eft = exchange_field_eft.at(*it);
+
+        if (eft.is_legal_value(rv0))
+        { result_map[*it] = rv0;
+          found_match = true;
+          it = choices_vec.end();
+        }
+        else
+          it++;
+      }
+    }
+    else        // not a choice
+    { const EFT& eft = exchange_field_eft.at(exchange_field_name);
+
+      if (eft.is_legal_value(rv0))
+      { result_map[exchange_field_name] = rv0;
+        found_match - true;
+      }
+    }
+  }
+
+  if (!found_match)
+  { ost << "Error: cannot find match for exchange field: " << rv0 << endl;
+    //alert("No match for exchange field: " + rv0);
+  }
+
+}
+else        // !truncate received values
+{
+
 
 // for each received field, which output fields does it match?
   map<int /* received field number */, set<string>> matches;
@@ -457,6 +531,8 @@ parsed_exchange::parsed_exchange(const std::string& canonical_prefix, const cont
 // this means that we can't use a DOK.values file, because the received DOK will get changed here
   if (_valid)
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
+
+}  // end of !truncate received values
 }
 
 /*! \brief              Return the value of a particular field

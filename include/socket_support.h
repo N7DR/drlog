@@ -1,4 +1,4 @@
-// $Id: socket_support.h 114 2015-08-15 15:19:01Z  $
+// $Id: socket_support.h 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -229,7 +229,8 @@ public:
 */
   tcp_socket(const std::string& destination_ip_address_or_fqdn, 
              const unsigned int destination_port, 
-             const std::string& source_address);
+             const std::string& source_address,
+             const unsigned int retry_time_in_seconds = 10);
 
 /*! \brief  Encapsulate a pre-existing socket
   \param  sp  Pointer to socket
@@ -276,8 +277,8 @@ public:
   inline void destination(const std::string& dotted_ip_address, const short port_nr)
     { destination(socket_address(dotted_ip_address, port_nr)); }
 
-/*! \brief  Connect to the far-end
-  \param  adr Address/port of the far end
+/*! \brief          Connect to the far-end
+    \param  adr     distal address
 */
   void destination(const sockaddr_storage& adr);
 
@@ -289,51 +290,53 @@ public:
   inline void destination(const std::string& dotted_ip_address, const short port_nr, const unsigned long timeout_secs)
     { destination(socket_address(dotted_ip_address, port_nr), timeout_secs); }
 
-/*! \brief  Connect to the far-end, with explicit time-out when trying to make connection
-    \param  adr Address/port of the far end
-    \param  timeout timeout in seconds
+/*! \brief              Connect to the far-end, with explicit time-out when trying to make connection
+    \param  adr         address/port of the far end
+    \param  timeout     timeout in seconds
+
+    See https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
 */
   void destination(const sockaddr_storage& adr, const unsigned long timeout_secs);
 
-/*! \brief  Mark as connected to the far-end
-  \param  adr Address/port of the far end
+/*! \brief          Mark as connected to the far-end
+    \param  adr     address/port of the far end
 
-  Used for server sockets returned by .accept()
+    Used for server sockets returned by .accept()
 */
   void connected(const sockaddr_storage& adr);
 
-/*! \brief  Connect to the far-end
-  \param  dotted_ip_address Address of the far end
-  \param  port_nr     Port of the far end
+/*! \brief                      Connect to the far-end
+    \param  dotted_ip_address   address of the far end
+    \param  port_nr             port of the far end
 */
   inline void connect(const std::string& dotted_ip_address, const short port_nr)
     { destination(dotted_ip_address, port_nr); }
 
-/// Return the encapsulated socket
+/// return the encapsulated socket
   inline const SOCKET socket(void) const
     { return _sock; }
 
-/// Force closure in destructor even if it's a pre-existing socket
+/// force closure in destructor even if it's a pre-existing socket
   inline void force_closure(void)
     { _force_closure = true; }
 
-/*! \brief  Simple send
-  \param  msg Message to send
+/*! \brief          Simple send
+    \param  msg     message to send
   
-  This is not very useful, since it doesn't look for a response
+    This is not very useful, since it doesn't look for a response
 */
   void send(const std::string& msg);
 
-/*! \brief  Simple receive
-  \return Received string
+/*! \brief      Simple receive
+    \return     received string
 */
   const std::string read(void);
 
-/*! \brief                Simple receive
-        \param  timeout_secs  Timeout in seconds
-  \return               Received string
+/*! \brief                  Simple receive
+    \param  timeout_secs    timeout in seconds
+    \return                 received string
         
-        Throws an exception if the read times out
+    Throws an exception if the read times out
 */
 const std::string read(const unsigned long timeout_secs);
 

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 118 2015-11-30 22:32:04Z  $
+// $Id: drlog_context.cpp 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -601,6 +601,18 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (!contains(_modes, ","))
       { if (_modes == "SSB")
           _start_mode = MODE_SSB;
+      }
+    }
+
+// MODE BREAK POINTS
+    if (LHS == "MODE BREAK POINTS")
+    { const vector<string> break_points = remove_peripheral_spaces(split_string(RHS, ','));
+
+      for (const auto& break_point : break_points)
+      { const frequency f(break_point);
+        const BAND b = to_BAND(f);
+
+        _mode_break_points.insert( { b, f } );
       }
     }
 

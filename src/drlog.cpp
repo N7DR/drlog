@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 118 2015-11-30 22:32:04Z  $
+// $Id: drlog.cpp 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -85,6 +85,7 @@ const string callsign_mult_value(const string& callsign_mult_name, const string&
 void cw_speed(const unsigned int new_speed);                                                ///< Set speed of computer keyer
 
 void debug_dump(void);                                                                      ///< Dump useful information to disk
+const MODE default_mode(const frequency& f);                                                ///< get the default mode on a frequency
 void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode); ///< Display band and mode
 void display_call_info(const string& callsign, const bool display_extract = true);          ///< Update several call-related windows
 void display_nearby_callsign(const string& callsign);                                       ///< Display a callsign in the NEARBY window, in the correct colour
@@ -783,6 +784,8 @@ int main(int argc, char** argv)
           { const string callsign = remove_peripheral_spaces(messages_line);
 
             batch_messages.insert( { callsign, current_message } );
+
+//            ost << "inserted: " << callsign << " with message: " << current_message << endl;
           }
         }
       }
@@ -949,8 +952,6 @@ int main(int argc, char** argv)
   { const set<BAND> score_bands = rules.score_bands();
     string bands_str;
 
-//    for (const auto& b : score_bands)
-//      bands_str += (BAND_NAME[b] + " ");
     FOR_ALL(score_bands, [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + " "); } );
 
     win_score_bands < CURSOR_START_OF_LINE < "Score Bands: " <= bands_str;
@@ -1222,7 +1223,9 @@ int main(int argc, char** argv)
           alert("No archive data present");
       }
       else     // rebuild
-      { string file;
+      { ost << "rebuilding from: " << context.logfile() << endl;
+
+        string file;
 
         try
         { file = read_file(context.logfile());    // in current directory
@@ -1440,12 +1443,12 @@ int main(int argc, char** argv)
 
 // handle some specific errors that might occur
   catch (const socket_support_error& e)
-  { cout << "Socket support error # " << e.code() << "; reason = " << e.reason() << endl;
+  { ost << "Socket support error # " << e.code() << "; reason = " << e.reason() << endl;
     exit(-1);
   }
 
   catch (const drlog_error& e)
-  {   cout << "drlog error # " << e.code() << "; reason = " << e.reason() << endl;
+  { ost << "drlog error # " << e.code() << "; reason = " << e.reason() << endl;
     exit(-1);
   }
 }
@@ -2326,12 +2329,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       processed = true;
     }
 
-// go to CQ mode if we're in SAP mode
-//    if (!processed and drlog_mode == SAP_MODE)
-//    { enter_cq_mode();
-//      processed = true;
-//    }
-
     processed = true;
   }
 
@@ -2661,9 +2658,21 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
             rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
             rig.rig_frequency(new_frequency);
 
+            if (context.multiple_modes())
+            { const MODE m = default_mode(new_frequency);
+
+              if (m != cur_mode)
+              { rig.rig_mode(m);
+                cur_mode = m;
+                safe_set_mode(m);
+              }
+            }
+
+            display_band_mode(win_band_mode, new_band, cur_mode);
+
             if (new_band != cur_band)
             { cur_band = new_band;
-              display_band_mode(win_band_mode, cur_band, cur_mode);
+//              display_band_mode(win_band_mode, cur_band, cur_mode);
 
               safe_set_band(new_band);
 
@@ -2887,6 +2896,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     { found_call = true;
       rig.rig_frequency(be.freq());
       enter_sap_mode();
+
+// we may require a mode change
+      if (context.multiple_modes())
+      { const MODE m = default_mode(be.freq());
+
+        if (m != safe_get_mode())
+        { rig.rig_mode(m);
+          safe_set_mode(m);
+          display_band_mode(win_band_mode, safe_get_band(), m);
+        }
+      }
     }
     else    // didn't find an exact match; try a substring search
     { be = bandmaps[safe_get_band()].substr(contents);
@@ -3043,6 +3063,18 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       display_nearby_callsign(be.callsign());
       display_call_info(be.callsign());
       last_call_inserted_with_space = be.callsign();
+      enter_sap_mode();
+
+// we may require a mode change
+      if (context.multiple_modes())
+      { const MODE m = default_mode(be.freq());
+
+        if (m != safe_get_mode())
+        { rig.rig_mode(m);
+          safe_set_mode(m);
+          display_band_mode(win_band_mode, safe_get_band(), m);
+        }
+      }
     }
 
     processed = true;
@@ -3658,112 +3690,112 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               }
 
 // now send ordinary TU message
-            const bool quick_qsl = (e.symbol() == XK_KP_Enter);
+              const bool quick_qsl = (e.symbol() == XK_KP_Enter);
 
-            if (!send_qtc)
-              (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
+              if (!send_qtc)
+                (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
+            }
           }
-        }
 
 // generate the QSO info, then log it
-        QSO qso;                        // automatically fills in date and time
-        qso.number(next_qso_number);    // set QSO number
+          QSO qso;                        // automatically fills in date and time
+          qso.number(next_qso_number);    // set QSO number
 
-        set<pair<string /* field name */, string /* field value */> > exchange_mults_this_qso;    // needed when we do the bandmaps
+          set<pair<string /* field name */, string /* field value */> > exchange_mults_this_qso;    // needed when we do the bandmaps
 
 // callsign is the last entry in the CALL window
-        if (!call_contents.empty()) // to speed things up, probably should make this test earlier, before we send the exchange info
-        { const vector<string> call_contents_fields = split_string(call_contents, " ");
-          const string original_callsign = call_contents_fields[call_contents_fields.size() - 1];
-          string callsign = original_callsign;
+          if (!call_contents.empty()) // to speed things up, probably should make this test earlier, before we send the exchange info
+          { const vector<string> call_contents_fields = split_string(call_contents, " ");
+            const string original_callsign = call_contents_fields[call_contents_fields.size() - 1];
+            string callsign = original_callsign;
 
-          if (pexch.has_replacement_call())
-            callsign = pexch.replacement_call();
+            if (pexch.has_replacement_call())
+              callsign = pexch.replacement_call();
 
-          qso.callsign(callsign);
-          qso.canonical_prefix(location_db.canonical_prefix(callsign));
-          qso.continent(location_db.continent(callsign));
-          qso.mode(cur_mode);
-          qso.band(cur_band);
-          qso.my_call(context.my_call());
-          qso.freq( frequency(rig.rig_frequency()).display_string() );    // in kHz; 1dp
+            qso.callsign(callsign);
+            qso.canonical_prefix(location_db.canonical_prefix(callsign));
+            qso.continent(location_db.continent(callsign));
+            qso.mode(cur_mode);
+            qso.band(cur_band);
+            qso.my_call(context.my_call());
+            qso.freq( frequency(rig.rig_frequency()).display_string() );    // in kHz; 1dp
 
 // build name/value pairs for the sent exchange
-          vector<pair<string, string> > sent_exchange = context.sent_exchange(qso.mode());
+            vector<pair<string, string> > sent_exchange = context.sent_exchange(qso.mode());
 
-          for (auto& sent_exchange_field : sent_exchange)
-          { if (sent_exchange_field.second == "#")
-              sent_exchange_field.second = serial_number_string(octothorpe);
-          }
-
-          qso.sent_exchange(sent_exchange);
-
-// build name/value pairs for the received exchange
-          vector<received_field>  received_exchange;
-          vector<parsed_exchange_field> vec_pef = pexch.chosen_fields(rules);
-
-// keep track of which fields are mults
-          for (auto& pef : vec_pef)
-            pef.is_mult(rules.is_exchange_mult(pef.name()));
-
-          for (auto& pef : vec_pef)
-          { const bool is_mult_field = pef.is_mult();
-
-            if (!(variable_exchange_fields < pef.name()))
-              exchange_db.set_value(callsign, pef.name(), rules.canonical_value(pef.name(), pef.value()));   // add it to the database of exchange fields
-
-// possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
-            if (is_mult_field)
-            { if (rules.canonical_value(pef.name(), pef.value()).empty())
-                rules.add_exch_canonical_value(pef.name(), pef.mult_value());
-              else                                                          // replace value with canonical value
-                pef.value(rules.canonical_value(pef.name(), pef.value()));
+            for (auto& sent_exchange_field : sent_exchange)
+            { if (sent_exchange_field.second == "#")
+                sent_exchange_field.second = serial_number_string(octothorpe);
             }
 
-            received_exchange.push_back( { pef.name(), pef.value(), is_mult_field, false } );
-          }
+            qso.sent_exchange(sent_exchange);
 
-          qso.received_exchange(received_exchange);
+// build name/value pairs for the received exchange
+            vector<received_field>  received_exchange;
+            vector<parsed_exchange_field> vec_pef = pexch.chosen_fields(rules);
+
+// keep track of which fields are mults
+            for (auto& pef : vec_pef)
+              pef.is_mult(rules.is_exchange_mult(pef.name()));
+
+            for (auto& pef : vec_pef)
+            { const bool is_mult_field = pef.is_mult();
+
+              if (!(variable_exchange_fields < pef.name()))
+                exchange_db.set_value(callsign, pef.name(), rules.canonical_value(pef.name(), pef.value()));   // add it to the database of exchange fields
+
+// possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
+              if (is_mult_field)
+              { if (rules.canonical_value(pef.name(), pef.value()).empty())
+                  rules.add_exch_canonical_value(pef.name(), pef.mult_value());
+                else                                                          // replace value with canonical value
+                  pef.value(rules.canonical_value(pef.name(), pef.value()));
+              }
+
+              received_exchange.push_back( { pef.name(), pef.value(), is_mult_field, false } );
+            }
+
+            qso.received_exchange(received_exchange);
 
 // is this a country mult?
-          if (country_mults_used)
-          { update_known_country_mults(qso.callsign());  // does nothing if not auto remaining country mults
-            qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );  // set whether it's a country mult
-          }
+            if (country_mults_used)
+            { update_known_country_mults(qso.callsign());  // does nothing if not auto remaining country mults
+              qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );  // set whether it's a country mult
+            }
 
 // if callsign mults matter, add more to the qso
-        allow_for_callsign_mults(qso);
+            allow_for_callsign_mults(qso);
 
 // get the current list of country mults
-        const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band, cur_mode);
+            const set<string> old_worked_country_mults = statistics.worked_country_mults(cur_band, cur_mode);
 
 // and any exchange multipliers
-        const map<string /* field name */, set<string> /* values */ >  old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
-        const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix, qso.mode());
+            const map<string /* field name */, set<string> /* values */ >  old_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
+            const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix, qso.mode());
 
-        for (const auto& exch_field : exchange_fields)
-        {
-          const string value = qso.received_exchange(exch_field.name());
+            for (const auto& exch_field : exchange_fields)
+            {
+              const string value = qso.received_exchange(exch_field.name());
           //ost << "checking field " << exch_field.name() << " = " << value << " as mult" << endl;
 
-          if (statistics.add_worked_exchange_mult(exch_field.name(), value, qso.band(), qso.mode()))
-          { //ost << "setting exchange mult for " << exch_field.name() << " for QSO: " << qso << endl;
-            qso.set_exchange_mult(exch_field.name());
-          }
-        }
+              if (statistics.add_worked_exchange_mult(exch_field.name(), value, qso.band(), qso.mode()))
+              { //ost << "setting exchange mult for " << exch_field.name() << " for QSO: " << qso << endl;
+                qso.set_exchange_mult(exch_field.name());
+              }
+            }
 
-        add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
+            add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
 
 // write the log line
-        win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
-        win_exchange <= WINDOW_CLEAR;
-        win_call <= WINDOW_CLEAR;
-        win_nearby <= WINDOW_CLEAR;
+            win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
+            win_exchange <= WINDOW_CLEAR;
+            win_call <= WINDOW_CLEAR;
+            win_nearby <= WINDOW_CLEAR;
 
-        if (send_qtcs)
-        { qtc_buf += qso;
-          statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
-        }
+            if (send_qtcs)
+            { qtc_buf += qso;
+              statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+            }
 
 // display the current statistics
         display_statistics(statistics.summary_string(rules));
@@ -4207,6 +4239,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
             qso.log_line();                                                                 // fills some fields in the QSO
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
+//            qso.new_populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]), context.my_call());  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 
 // we can't assume anything about the mult status
             const BAND b = qso.band();
@@ -6396,6 +6429,30 @@ void process_change_in_bandmap_column_offset(const KeySym symbol)
 
     win_bandmap <= bm;
     win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
+  }
+}
+
+/// get the default mode on a frequency
+const MODE default_mode(const frequency& f)
+{ const BAND b = to_BAND(f);
+
+  try
+  { const auto break_points = context.mode_break_points();
+    const frequency bp = break_points.at(b);                // use any non-default definitions
+
+    if (f < bp)
+      return MODE_CW;
+
+    return MODE_SSB;
+  }
+
+  catch (...)                                               // use default break points (defined in bands-modes.h)
+  { const frequency bp = MODE_BREAK_POINT[b];
+
+    if (f < bp)
+      return MODE_CW;
+
+    return MODE_SSB;
   }
 }
 

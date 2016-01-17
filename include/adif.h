@@ -1,4 +1,4 @@
-// $Id: adif.h 4 2012-12-30 16:29:15Z  $
+// $Id: adif.h 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -4969,13 +4969,20 @@ protected:
 
 public:
 
-// default constructor
+/// default constructor
   adif_BOOLEAN(void);
 
-// construct with name and value
+/*! \brief      Constructor
+    \param  nm  name
+    \param  v   value
+*/
   adif_BOOLEAN(const std::string& nm, const std::string& val);
 
-// construct with name
+/*! \brief      Constructor
+    \param  nm  name
+
+    Sets <i>_value</i> to the empty string.
+*/
   explicit adif_BOOLEAN(const std::string& nm);
 };
 
@@ -4991,10 +4998,13 @@ protected:
 
 public:
 
-// default constructor
+/// default constructor
   adif_DATE(void);
 
-// construct with name and value
+/*! \brief      Constructor
+    \param  nm  name
+    \param  v   value
+*/
   adif_DATE(const std::string& nm, const std::string& val);
 
 // construct with name

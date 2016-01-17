@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 114 2015-08-15 15:19:01Z  $
+// $Id: socket_support.cpp 119 2016-01-16 18:32:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -85,7 +85,7 @@ tcp_socket::tcp_socket(void)  :
 }
 
 /*! \brief          Encapsulate a pre-existing socket
-    \param  sock_p  Ppinter to socket
+    \param  sock_p  Pointer to socket
   
     Acts as default constructor if passed pointer is NULL
 */
@@ -143,7 +143,8 @@ tcp_socket::tcp_socket(SOCKET sp) :
 */
 tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn, 
                        const unsigned int destination_port, 
-                       const string& source_address) :
+                       const string& source_address,
+                       const unsigned int retry_time_in_seconds) :
   _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
   _destination_is_set(false),
   _preexisting_socket(false),
@@ -192,10 +193,11 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
         { ost << "caught socket_support_error exception while setting destination " << destination_ip_address_or_fqdn << " in tcp_socket constructor" << endl;
           ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
 
-          if (n_timeouts++ % 10 == 0)
-            alert("Error setting socket destination: " + destination_ip_address_or_fqdn +":" + to_string(destination_port));
-          ost << "sleeping for 10 seconds" << endl;
-          sleep_for(seconds(10));
+//          if (n_timeouts++ % 10 == 0)
+          alert("Error setting socket destination: " + destination_ip_address_or_fqdn +":" + to_string(destination_port));
+
+          ost << "sleeping for " << retry_time_in_seconds << " seconds" << endl;
+          sleep_for(seconds(retry_time_in_seconds));
         }
       }
     }
@@ -232,7 +234,7 @@ tcp_socket::~tcp_socket(void)
 { if (!_preexisting_socket)
     _close_the_socket();        // we have to close the socket if we are finished with it
 
-  if (_preexisting_socket && _force_closure)
+  if (_preexisting_socket and _force_closure)
     _close_the_socket();
 }
 
@@ -278,12 +280,9 @@ void tcp_socket::bind(const sockaddr_storage& local_address)
   _bound_address = local_address;
 }
 
-// bind the socket
-//void tcp_socket::bind(const string& dotted_decimal_address, const short port_nr)
-//{ bind(socket_address(dotted_decimal_address, port_nr));
-//}
-
-// connect to the far-end
+/*! \brief          Connect to the far-end
+    \param  adr     distal address
+*/
 void tcp_socket::destination(const sockaddr_storage& adr)
 { SAFELOCK(_tcp_socket);
   const int status = ::connect(_sock, (sockaddr*)(&adr), sizeof(adr));
@@ -302,13 +301,12 @@ void tcp_socket::destination(const sockaddr_storage& adr)
   }
 }
 
-
-
 /*! \brief              Connect to the far-end, with explicit time-out when trying to make connection
     \param  adr         address/port of the far end
     \param  timeout     timeout in seconds
+
+    See https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
 */
-// https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
 void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long timeout_secs)
 { struct timeval timeout;
   timeout.tv_sec = timeout_secs;
@@ -327,9 +325,7 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   flags = fcntl(_sock, F_GETFL, 0);
   fcntl(_sock, F_SETFL, flags | O_NONBLOCK);
 
-//  ost << "inside destination() with timeout; about to connect" << endl;
   int status = ::connect(_sock, (sockaddr*)(&adr), sizeof(adr));
-//  ost << "connect returned " << status << endl;
 
   if (status == 0)        // all OK
   { _destination = adr;
@@ -337,8 +333,6 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   }
   else
   { _destination_is_set = false;
-//    ost << "errno = " << errno << endl;
-//    ost << "error string = " << strerror(errno) << endl;
 
     const string address = dotted_decimal_address(*(sockaddr*)(&adr));
           const unsigned int p = port(*(sockaddr*)(&adr));
@@ -348,10 +342,8 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
 
     status = select(_sock + 1, &r_set, &w_set, NULL, (timeout_secs) ? &timeout : NULL);
 
-//    ost << "status from select in destination() = " << status << endl;
-
     if (status < 0)
-    { ost << "about to throw exception" << endl;
+    { //ost << "about to throw exception" << endl;
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: " + to_string(errno) + " received from ::connect; " + strerror(errno) + " while trying to connect to address " + address + "; port " + to_string(p));
     }
 
