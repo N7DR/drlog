@@ -3774,17 +3774,24 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             const vector<exchange_field> exchange_fields = rules.expanded_exch(canonical_prefix, qso.mode());
 
             for (const auto& exch_field : exchange_fields)
-            {
-              const string value = qso.received_exchange(exch_field.name());
-          //ost << "checking field " << exch_field.name() << " = " << value << " as mult" << endl;
+            { const string& name = exch_field.name();
+              const string value = qso.received_exchange(name);
 
-              if (statistics.add_worked_exchange_mult(exch_field.name(), value, qso.band(), qso.mode()))
-              { //ost << "setting exchange mult for " << exch_field.name() << " for QSO: " << qso << endl;
-                qso.set_exchange_mult(exch_field.name());
+//              ost << "checking field " << name << " = " << value << " as mult" << endl;
+//              ost << "complete field information: " << exch_field << endl;
+
+              if (context.auto_remaining_exchange_mults(name))
+                statistics.add_known_exchange_mult(name, MULT_VALUE(name, value));
+
+              if (statistics.add_worked_exchange_mult(name, value, qso.band(), qso.mode()))
+              { //ost << "setting exchange mult for " << name << " for QSO: " << qso << endl;
+                qso.set_exchange_mult(name);
               }
             }
 
             add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
+
+//            ost << "Logged QSO: " << qso << endl;
 
 // write the log line
             win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();

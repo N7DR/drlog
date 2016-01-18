@@ -565,9 +565,18 @@ const bool running_statistics::add_worked_exchange_mult(const string& field_name
 
   SAFELOCK(statistics);
 
+//  ost << "adding worked exchange mult: " << field_name << " with MULT VALUE: " << mv << endl;
+
   for (auto& psm : _exchange_multipliers)
     if (psm.first == field_name)
-      return (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
+      { const bool rv = (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
+
+//        ost << "returning: " << boolalpha << rv << endl;
+
+        return rv;
+
+      //return (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
+      }
 
   return false;
 }
