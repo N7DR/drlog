@@ -809,6 +809,9 @@ const string QSO::log_line(void)
     if (name == "SERNO")
       field_width = 4;
 
+    if (name == "UKEICODE")
+      field_width = 2;
+
     if (name == "10MSTATE")
       field_width = 3;
 
@@ -850,6 +853,9 @@ const string QSO::log_line(void)
     if (name == "SERNO")
       field_width = 4;
 
+    if (name == "UKEICODE")
+      field_width = 2;
+
     if (name == "10MSTATE")
       field_width = 3;
 
@@ -873,6 +879,8 @@ const string QSO::log_line(void)
 
   for (const auto& field : _received_exchange)
     _log_line_fields.push_back("received-" + field.name());
+
+  ost << "Log line = *" << rv << "*" << endl;
 
   return rv;
 }

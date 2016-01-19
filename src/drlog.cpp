@@ -1941,6 +1941,8 @@ void* process_rbn_info(void* vp)
 
               be.is_needed(is_needed);
 
+              ost << "QSO with " << dx_callsign << " is " << (is_needed ? "" : "NOT ") << "needed" << endl;
+
 // update known mults before we test to see if this is a needed mult
 
 // possibly add the call to the known prefixes
@@ -1963,6 +1965,8 @@ void* process_rbn_info(void* vp)
               }
 
               be.calculate_mult_status(rules, statistics);
+
+              ost << "after calculating mult status: " << be << endl;
 
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
@@ -5394,15 +5398,26 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
     \return             whether we still need to work <i>callsign</i> on <i>b</i> and <i>m</i>
 */
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
-{ const bool worked_at_all = q_history.worked(callsign);
+{
+  ost << "Testing whether needed QSO: " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << endl;
+
+  const bool worked_at_all = q_history.worked(callsign);
+
+  ost << "Worked at all = " << boolalpha << worked_at_all << endl;
 
   if (!worked_at_all)
-    return true;
+  { ost << "Not worked at all; returning true" << endl;
+  return true;
+  }
 
   const bool worked_this_band_mode = q_history.worked(callsign, b, m);
 
+  ost << "Worked this bandmode = " << boolalpha << worked_this_band_mode << endl;
+
   if (worked_this_band_mode)
+  { ost << "Worked this bandmode, returning false" << endl;
     return false;
+  }
 
 // worked on same band, different mode
   if (q_history.worked(callsign, b))

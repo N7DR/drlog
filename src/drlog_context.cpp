@@ -475,9 +475,12 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // EXCHANGE[
     if (starts_with(testline, "EXCHANGE["))
-    { const string country = delimited_substring(LHS, '[', ']');
+    { const string country_list = delimited_substring(LHS, '[', ']');
+      const vector<string> countries = remove_peripheral_spaces(split_string(country_list, ','));
 
-      _exchange_per_country.insert( { country, RHS  } );
+      FOR_ALL(countries, [&] (const string& str) { _exchange_per_country.insert( { str, RHS } ); } );
+
+//      _exchange_per_country.insert( { country, RHS  } );
     }
 
 // EXCHANGE CQ
