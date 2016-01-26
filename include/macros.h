@@ -787,7 +787,7 @@ template<class Input, class OutputIterator>
     \param  first   container
     \param  pred    predicate to apply
 
-    Does not work for maps; see MAP_REMOVE_IF
+    Does not work for maps
 */
 template <class Input, class UnaryPredicate>
   void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
@@ -813,8 +813,6 @@ void REMOVE_IF_AND_RESIZE( std::map<K, V>& items, const PredicateT& predicate ) 
   }
 };
 
-
-
 /*! \brief      Reverse the contents of a container
     \param  v   container
 */
@@ -833,52 +831,14 @@ template <typename Input, typename UnaryPredicate>
 { return std::find_if(v.begin(), v.end(), pred);
 }
 
+/*! \brief          Find first value in a container that matches a predicate
+    \param  v       container (const)
+    \param  pred    (boolean) predicate to apply
+    \return         first value in <i>v</i> for which <i>pred</i> is true
+*/
 template <typename Input, typename UnaryPredicate>
   auto FIND_IF(const Input& v, UnaryPredicate pred) -> typename Input::const_iterator
 { return std::find_if(v.cbegin(), v.cend(), pred);
 }
-
-// ------------------------ container for per-band and per-mode information ------------
-
-#if 0
-
-#include <array>
-
-template <typename T>
-class BAND_MODE_CONTAINER
-{
-protected:
-
-  typedef std::array<T, N_BANDS> _ROW;
-
-  std::array<_ROW, N_MODES>                        _data;
-
-public:
-
-  inline const std::array<T, N_BANDS> band_data(const MODE m)
-    { return _data[static_cast<int>(m)]; }
-
-  const std::array<T, N_MODES> mode_data(const BAND b)
-    { std::array<T, N_MODES> rv;
-
-      for (int n = 0; n < N_MODES; ++n)
-      {  rv[n] = _data[n][static_cast<int>(b)];
-      }
-
-      return rv;
-    }
-
-  inline T& operator()(const BAND b, const MODE m)
-  { return _data[static_cast<int>(m)][static_cast<int>(b)];
-  }
-
-/// allow archiving
-  template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _data;
-    }
-};
-
-#endif    // 0
 
 #endif    // MACROS_H

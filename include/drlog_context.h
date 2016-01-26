@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 115 2015-08-29 15:44:57Z  $
+// $Id: drlog_context.h 120 2016-01-25 19:51:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -121,10 +121,11 @@ protected:
   std::string                                  _cty_filename;               ///< filename of country file (default = "cty.dat")
   unsigned int                                 _cw_speed;                   ///< speed in WPM
 
-  std::string                                  _decimal_point;         ///< character to use as decimal point
-  std::vector<std::string>                     _do_not_show;           ///< do not show these calls when spotted (MY CALL is automatically not shown)
-  std::string                                  _do_not_show_filename;  ///< filename of calls (one per line) not to be shown
-  std::string                                  _drmaster_filename;     ///< filename of drmaster file (default = "drmaster")
+  std::string                                  _decimal_point;                  ///< character to use as decimal point
+  bool                                         _display_communication_errors;   ///< whether to display errors communicating with rig
+  std::vector<std::string>                     _do_not_show;                    ///< do not show these calls when spotted (MY CALL is automatically not shown)
+  std::string                                  _do_not_show_filename;           ///< filename of calls (one per line) not to be shown
+  std::string                                  _drmaster_filename;              ///< filename of drmaster file (default = "drmaster")
 
   std::string                                  _exchange;                   ///< comma-delimited received exchange
   std::string                                  _exchange_cq;                ///< exchange in CQ mode
@@ -341,6 +342,7 @@ public:
   SAFEREAD(cw_speed, _context);                         ///< speed in WPM
 
   SAFEREAD(decimal_point, _context);                    ///< character to use as decimal point
+  SAFEREAD(display_communication_errors, _context);     ///< whether to display errors communicating with rig
   SAFEREAD(do_not_show, _context);                      ///< do not show these calls when spotted (MY CALL is automatically not shown)
   SAFEREAD(do_not_show_filename, _context);             ///< filename of calls (one per line) not to be shown
   SAFEREAD(drmaster_filename, _context);                ///< filename of drmaster file (default = "drmaster")

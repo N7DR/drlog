@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: drlog_context.cpp 120 2016-01-25 19:51:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -140,7 +140,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
           pbb.insert( {b, tmp_points_str} );
 
-          ost << "points string inserted (2): " << tmp_points_str << endl;
+//          ost << "points string inserted (2): " << tmp_points_str << endl;
 
 //#endif
 //          pbb.insert( { b, RHS } );
@@ -456,6 +456,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // DECIMAL POINT
     if (LHS == "DECIMAL POINT")
       _decimal_point = rhs;
+
+// DISPLAY COMMUNICATION ERRORS
+    if (LHS == "DISPLAY COMMUNICATION ERRORS")
+      _display_communication_errors = is_true;
 
 // DO NOT SHOW
     if (LHS == "DO NOT SHOW")
@@ -1381,6 +1385,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cty_filename("cty.dat"),                   // filename for country data
   _cw_speed(29),                              // 29 WPM
   _decimal_point("·"),                        // use centred dot as decimal point
+  _display_communication_errors(true),        // display errors communicating with rig
   _do_not_show(),                             // all calls (apart from my_call()) should be shown on the bandmap
   _do_not_show_filename(),                    // no do-not-show file
   _drmaster_filename("drmaster"),             // name of the drmaster file

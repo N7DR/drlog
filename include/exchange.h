@@ -370,24 +370,60 @@ public:
 */
   void parse_context_qthx(const drlog_context& context, location_database& location_db);
 
+/*! \brief          Is a particular string a canonical value?
+    \param  str     string to test
+    \return         whether <i>str is a canonical value
+*/
   inline const bool is_canonical_value(const std::string& str) const
     { return (_values.find(str)  != _values.end()); }
 
+/*! \brief                          Add a canonical value
+    \param  new_canonical_value     string to add
+
+    Does nothing if <i>new_canonical_value</i> is already known
+*/
   void add_canonical_value(const std::string& new_canonical_value);
 
+/*! \brief              Add a legal value that corresponds to a canonical value
+    \param  cv          canonical value
+    \param  new_value   value that correspond to <i>cv</i>
+
+    Does nothing if <i>new_value</i> is already known. Adds <i>cv</i> as a
+    canonical value if necessary.
+*/
   void add_legal_value(const std::string& cv, const std::string& new_value);
 
-  void add_legal_values(const std::string& cv, const std::set<std::string>& new_values);
+/*! \brief              Add legal values that corresponds to a canonical value
+    \param  cv          canonical value
+    \param  new_values  values that correspond to <i>cv</i>
 
-// check regex, then other values
+    Adds <i>cv</i> as a canonical value if necessary. Ignores any elements of
+    <i>cv</i> that are already known as being equivalent to <i>cv</i>.
+*/
+  inline void add_legal_values(const std::string& cv, const std::set<std::string>& new_values)
+    { FOR_ALL(new_values, [cv, this] (const std::string& str) { add_legal_value(cv, str); } ); }
+
+/*! \brief          Is a string a legal value?
+    \param  str     string to test
+    \return         whether <i>str</i> is a legal value
+*/
   const bool is_legal_value(const std::string& str) const;
 
+/*! \brief          What value should actually be logged for a given received value?
+    \param  str     received value
+    \return         value to be logged
+*/
   const std::string value_to_log(const std::string& str) const;
 
-// return canonical value for a received value
+/*! \brief          Obtain canonical value corresponding to a given received value?
+    \param  str     received value
+    \return         canonical value equivalent to <i>str</i>
+
+    Returns empty string if no equivalent canonical value can be found
+*/
   const std::string canonical_value(const std::string& str) const;
 
-// all canonical values
+/// all the canonical values
   const std::set<std::string> canonical_values(void) const;
 
 /// serialise
@@ -403,6 +439,7 @@ public:
 
 };
 
+/// ostream << EFT
 std::ostream& operator<<(std::ostream& ost, const EFT& eft);
 
 // -------------------------  sweepstakes_exchange  ---------------------------

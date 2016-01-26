@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: drlog.cpp 120 2016-01-25 19:51:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3515,7 +3515,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // syntactic sugar
   window& win = *wp;
 
-  ost << "processing EXCHANGE input; event string: " << e.str() << endl;
+//  ost << "processing EXCHANGE input; event string: " << e.str() << endl;
 
   bool processed = win.common_processing(e);
 
@@ -5135,14 +5135,16 @@ void alert(const string& msg)
   ost << "ALERT: " << hhmmss() << " " << msg << endl;
 }
 
-/*! \brief          Alert the user to a rig-related error
+/*! \brief          Logs a rig-related error
     \param  msg     message to display
 
-    Also logs the message
+    Also alerts on the screen if <i>context.display_communication_errors()</i> is <i>true</i>
 */
 void rig_error_alert(const string& msg)
 { ost << "Rig error: " << msg << endl;
-  alert(msg);
+
+  if (context.display_communication_errors())
+    alert(msg);
 }
 
 /// update the QSO and score values in <i>win_rate</i>

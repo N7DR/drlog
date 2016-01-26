@@ -1,4 +1,4 @@
-// $Id: qso.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: qso.cpp 120 2016-01-25 19:51:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -826,7 +826,7 @@ const string QSO::log_line(void)
 
 // country mult
   if (QSO_DISPLAY_COUNTRY_MULT)                                            // set in drlog_context when parsing the config file
-    rv += (_is_country_mult ? pad_string(_canonical_prefix, 5) : "     "); // sufficient for VP2E
+    rv += (_is_country_mult ? pad_string(_canonical_prefix, 5, PAD_LEFT) : "     "); // sufficient for VP2E
 
 // exchange mult
   for (const auto& field : _received_exchange)

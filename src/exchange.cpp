@@ -1253,6 +1253,11 @@ void EFT::parse_context_qthx(const drlog_context& context, location_database& lo
   }
 }
 
+/*! \brief                          Add a canonical value
+    \param  new_canonical_value     string to add
+
+    Does nothing if <i>new_canonical_value</i> is already known
+*/
 void EFT::add_canonical_value(const string& new_canonical_value)
 { if (!is_canonical_value(new_canonical_value))
     _values.insert( { new_canonical_value, { new_canonical_value } } );
@@ -1261,6 +1266,13 @@ void EFT::add_canonical_value(const string& new_canonical_value)
   _value_to_canonical.insert( { new_canonical_value, new_canonical_value } );
 }
 
+/*! \brief              Add a legal value that corresponds to a canonical value
+    \param  cv          canonical value
+    \param  new_value   value that correspond to <i>cv</i>
+
+    Does nothing if <i>new_value</i> is already known. Adds <i>cv</i> as a
+    canonical value if necessary.
+*/
 void EFT::add_legal_value(const string& cv, const string& new_value)
 { if (!is_canonical_value(cv))
     add_canonical_value(cv);
@@ -1274,54 +1286,75 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
   _value_to_canonical.insert( { new_value, cv } );
 }
 
-void EFT::add_legal_values(const string& cv, const set<string>& new_values)
-{ FOR_ALL(new_values, [cv, this] (const string& str) { add_legal_value(cv, str); } );
-}
+/*! \brief              Add legal values that corresponds to a canonical value
+    \param  cv          canonical value
+    \param  new_values  values that correspond to <i>cv</i>
 
+    Adds <i>cv</i> as a canonical value if necessary. Ignores any elements of
+    <i>cv</i> that are already known as being equivalent to <i>cv</i>.
+*/
+//void EFT::add_legal_values(const string& cv, const set<string>& new_values)
+//{ FOR_ALL(new_values, [cv, this] (const string& str) { add_legal_value(cv, str); } );
+//}
+
+/*! \brief          Is a string a legal value?
+    \param  str     string to test
+    \return         whether <i>str</i> is a legal value
+*/
 const bool EFT::is_legal_value(const string& str) const
-{ ost << "testing whether " << str << " is a legal value for field " << name() << endl;
-  ost << " ------------ " << endl;
+{ //ost << "testing whether " << str << " is a legal value for field " << name() << endl;
+  //ost << " ------------ " << endl;
 
-  ost << "is legal value(): regex expression = " << _regex_expression << endl;
-  ost << "str = " << str << endl;
+  //ost << "is legal value(): regex expression = " << _regex_expression << endl;
+  //ost << "str = " << str << endl;
 
+// test regex first
   if (!_regex_expression.empty() and regex_match(str, _regex_expression))
-  { ost << str << " IS a legal value for " << name() << endl;
+  { //ost << str << " IS a legal value for " << name() << endl;
     return true;
   }
 
   if (!_values.empty())
-  { ost << "_values is not empty" << endl;
-    ost << "  legal values: " << endl;
+  { //ost << "_values is not empty" << endl;
+    //ost << "  legal values: " << endl;
 
-    for (const auto& v : _legal_non_regex_values )
-      ost << v << " ";
+    //for (const auto& v : _legal_non_regex_values )
+    //  ost << v << " ";
 
-    if (_legal_non_regex_values.empty())
-      ost << "There are NO legal non-regex values" << endl;
+    //if (_legal_non_regex_values.empty())
+    //  ost << "There are NO legal non-regex values" << endl;
 
     const bool b = (_legal_non_regex_values < str);
 
-    if (b)
-      ost << str << " IS a legal value for " << name() << endl;
-    else
-      ost << str << " IS NOT a legal value for " << name() << endl;
+//    if (b)
+//      ost << str << " IS a legal value for " << name() << endl;
+//    else
+//      ost << str << " IS NOT a legal value for " << name() << endl;
 
     return (_legal_non_regex_values < str);
   }
 
-  ost << str << " IS NOT a legal value for " << name() << endl;
+//  ost << str << " IS NOT a legal value for " << name() << endl;
 
   return false;
 }
 
+/*! \brief          What value should actually be logged for a given received value?
+    \param  str     received value
+    \return         value to be logged
+*/
 const string EFT::value_to_log(const string& str) const
 { const string rv = canonical_value(str);
 
   return (rv.empty() ? str : rv);
 }
 
-// return canonical value for a received value
+/*! \brief          Obtain canonical value corresponding to a given received value?
+    \param  str     received value
+    \return         canonical value equivalent to <i>str</i>
+
+    Returns empty string if no equivalent canonical value can be found
+*/
 const string EFT::canonical_value(const std::string& str) const
 { const auto& it = _value_to_canonical.find(str);
 
@@ -1334,6 +1367,12 @@ const string EFT::canonical_value(const std::string& str) const
   return string();
 }
 
+/*! \brief          Obtain canonical value corresponding to a given received value?
+    \param  str     received value
+    \return         canonical value equivalent to <i>str</i>
+
+    Returns empty string if no equivalent canonical value can be found
+*/
 const set<string> EFT::canonical_values(void) const
 { set<string> rv;
 
@@ -1342,6 +1381,7 @@ const set<string> EFT::canonical_values(void) const
   return rv;
 }
 
+/// ostream << EFT
 ostream& operator<<(ostream& ost, const EFT& eft)
 { ost << "EFT name: " << eft.name() << endl
       << "  is_mult: " << eft.is_mult() << endl
@@ -1380,8 +1420,6 @@ ostream& operator<<(ostream& ost, const EFT& eft)
     for (const auto& pss : vcv)
       ost << "    " << pss.first << " -> " << pss.second << endl;
   }
-
-//      << endl;
 
   return ost;
 }

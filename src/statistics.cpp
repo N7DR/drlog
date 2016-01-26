@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: statistics.cpp 120 2016-01-25 19:51:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -498,7 +498,9 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   else    // not a dupe; add qso points; this may not be a very clean algorithm; I should be able to do better
   {
 // try to calculate the points for this QSO; start with a default value
-    const unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like ::3
+    const unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like :G:3
+
+    ost << "points_this_qso = " << points_this_qso << endl;
 
     _qso_points[mode_nr][band_nr] += points_this_qso;
 

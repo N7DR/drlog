@@ -1,4 +1,4 @@
-// $Id: rules.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: rules.cpp 120 2016-01-25 19:51:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -604,6 +604,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // parse the config file
       const string context_points = context.points(b, m);
 
+//      ost << "band/mode = " << BAND_NAME[b] << "/" << MODE_NAME[m] << "; points string = " << context_points << endl;
+
       if (context_points == "IARU")  // special
       { points_structure ps = pb[b];
 
@@ -615,6 +617,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
         for (unsigned int n = 0; n < points_str_vec.size(); ++n)
         { const string points_str = points_str_vec[n];
+
+
+
           const vector<string> fields = split_string(points_str, ":");
 
 // default?
@@ -1194,11 +1199,16 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
   switch (points_this_band.points_type())
   { default :
     case POINTS_NORMAL :
-    { const map<string, unsigned int>& country_points = points_this_band.country_points();
+    { //ost << "inside POINTS NORMAL" << endl;
+      //ost << "canonical prefix = " << canonical_prefix << endl;
+
+      const map<string, unsigned int>& country_points = points_this_band.country_points();
       auto cit = country_points.find(canonical_prefix);
 
       if (cit != country_points.cend())    // if points are defined for this country
+      { //ost << "points for " << canonical_prefix << " = " << cit->second << endl;
         return cit->second;
+      }
 
       const map<string, unsigned int>& continent_points = points_this_band.continent_points();
       cit = continent_points.find(location_db.continent(call));
