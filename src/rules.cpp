@@ -58,9 +58,6 @@ void exchange_field_values::add_canonical_value(const string& cv)
 void exchange_field_values::add_value(const string& cv, const string& v)
 { add_canonical_value(cv);
 
-//  set<string>& ss = _values[cv];
-
-//  ss.insert(v);
   _values[cv].insert(v);
 }
 
@@ -397,9 +394,6 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
       const vector<string> expanded_choice = remove_peripheral_spaces(split_string(str, "/"));
 
       FOR_ALL(expanded_choice, [&ss] (const string& s) { ss.insert(s); } );
-
-//      for (const auto& s : expanded_choice)
-//        ss.insert(s);
     }
 
     _per_country_exchange_fields.insert( { pce.first, ss } );
@@ -595,14 +589,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { auto& pb = _points[m];
 
     for (const auto& b : _permitted_bands)
-    { pb.insert( {b, EMPTY_PS} );  // default is no points
+    { pb.insert( { b, EMPTY_PS } );  // default is no points
 
       points_structure points_this_band;
       MSI     country_points_this_band;
       MSI     continent_points_this_band;
 
 // parse the config file
-      const string context_points = context.points(b, m);
+      string context_points = context.points(b, m);
 
 //      ost << "band/mode = " << BAND_NAME[b] << "/" << MODE_NAME[m] << "; points string = " << context_points << endl;
 
@@ -613,13 +607,15 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
         pb[b] = ps;
       }
       else
-      { const vector<string> points_str_vec = remove_peripheral_spaces( split_string(context_points, ",") );
+      { //ost << "context_points = " << context_points << endl;
+// remove commas inside the delimiters, because commas separate the point triplets
+        context_points = remove_char_from_delimited_substrings(context_points, ',', '[', ']');
+        //ost << "new context_points = " << context_points << endl;
+
+        const vector<string> points_str_vec = remove_peripheral_spaces( split_string(context_points, ",") );
 
         for (unsigned int n = 0; n < points_str_vec.size(); ++n)
         { const string points_str = points_str_vec[n];
-
-
-
           const vector<string> fields = split_string(points_str, ":");
 
 // default?
@@ -637,7 +633,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // country
               if (!processed and !fields[1].empty())
               { if (contains(fields[1], "["))    // possible multiple countries
-                { const string countries = delimited_substring(fields[1], '[', ']');
+                { const string countries = delimited_substring(fields[1], '[', ']');  // delimiter is now spaces, as commas have been removed
 
                   if (!countries.empty())
                   { const vector<string> country_vec = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' '));  // use space instead of comma because we've already split on commas
@@ -697,12 +693,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
     for (auto cit = unexpanded_exch.cbegin(); cit != unexpanded_exch.cend(); ++cit)
     { const vector<exchange_field> vec_1 = cit->second;
-
-//      for (auto cit3 = vec_1.cbegin(); cit3 != vec_1.cend(); ++cit3)
-//      { const vector<exchange_field> vec = cit3->expand();
-//
-//        copy(vec.cbegin(), vec.cend(), back_inserter(leaves_vec));
-//      }
 
       for (const auto& ef: vec_1)
       { const vector<exchange_field> vec = ef.expand();
@@ -818,54 +808,6 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
 
   _init(context, location_db);
 }
-
-/*! \brief                      Get the expected exchange fields for a particular canonical prefix
-    \param  canonical_prefix    canonical prefix
-    \return                     the exchange fields associated with <i>canonical_prefix</i>
-
-    CHOICE fields ARE NOT expanded
-*/
-#if 0
-const vector<exchange_field> contest_rules::unexpanded_exch(const string& canonical_prefix, const MODE m) const
-{ if (canonical_prefix.empty())
-    return vector<exchange_field>();
-
-  SAFELOCK(rules);
-
-  const map<string, vector<exchange_field>>& unexpanded_exchange = _received_exchange.at(m);
-  auto cit = unexpanded_exchange.find(canonical_prefix);
-
-  if (cit != unexpanded_exchange.cend())
-    return cit->second;
-
-  cit = unexpanded_exchange.find(string());
-
-  return ( (cit == unexpanded_exchange.cend()) ? vector<exchange_field>() : cit->second );
-}
-
-/*! \brief                      Get the expected exchange fields for a particular canonical prefix
-    \param  canonical_prefix    canonical prefix
-    \return                     the exchange fields associated with <i>canonical_prefix</i>
-
-    CHOICE fields ARE expanded
-*/
-const vector<exchange_field> contest_rules::expanded_exch(const string& canonical_prefix, const MODE m) const
-{ if (canonical_prefix.empty())
-    return vector<exchange_field>();
-
-  SAFELOCK(rules);
-
-  const map<string, vector<exchange_field>>& expanded_exchange = _expanded_received_exchange.at(m);
-  auto cit = expanded_exchange.find(canonical_prefix);
-
-  if (cit != expanded_exchange.cend())
-    return cit->second;
-
-  cit = expanded_exchange.find(string());
-
-  return ( (cit == expanded_exchange.cend()) ? vector<exchange_field>() : cit->second );
-}
-#endif 0
 
 /// Get all the known names of exchange fields (for all modes)
 const set<string> contest_rules::all_known_field_names(void) const

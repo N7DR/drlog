@@ -345,16 +345,34 @@ inline const std::string remove_peripheral_character(const std::string& cs, cons
 */
 const std::string remove_char(const std::string& cs, const char char_to_remove);
 
-/*! \brief          Obtain a delimited substring
-  \param  cs        Original string
-  \param  delim_1   opening delimiter
-  \param  delim_2   closing delimiter
-  \return           substring between <i>delim_1</i> and <i>delim_2</i>
+/*! \brief                  Remove all instances of a particular char from all delimited substrings
+    \param  cs              original string
+    \param  char_to_remove  character to be removed from delimited substrings in <i>cs</i>
+    \param  delim_1         opening delimiter
+    \param  delim_2         closing delimiter
+    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delim_1</i> and <i>delim_2</i>
+*/
+const std::string remove_char_from_delimited_substrings(const std::string& cs, const char char_to_remove, const char delim_1, const char delim_2);
+
+/*! \brief              Obtain a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             substring between <i>delim_1</i> and <i>delim_2</i>
   
-  Returns the empty string if the delimiters do not exist, or if
-  <i>delim_2</i> does not appear after <i>delim_1</i>
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
 */
 const std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2);
+
+/*! \brief              Obtain all occurrences of a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
+*/
+const std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2);
 
 /*! \brief      Join the elements of a string vector, using a provided separator
     \param  vec container of strings

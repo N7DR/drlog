@@ -505,14 +505,42 @@ const string remove_char(const string& s, const char c)
   return rv; 
 } 
 
-/*! \brief  Obtain a delimited substring
-  \param  cs  Original string
-  \param  delim_1 opening delimiter
-  \param  delim_2 closing delimiter
-  \return substring between <i>delim_1</i> and <i>delim_2</i>
+/*! \brief                  Remove all instances of a particular char from all delimited substrings
+    \param  cs              original string
+    \param  char_to_remove  character to be removed from delimited substrings in <i>cs</i>
+    \param  delim_1         opening delimiter
+    \param  delim_2         closing delimiter
+    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delim_1</i> and <i>delim_2</i>
+*/
+const string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
+{ string rv;
+  bool inside_delimiters = false;
+
+  for (unsigned int n = 0; n < cs.length(); n++)
+  { const char& c = cs[n];
+
+    if (!inside_delimiters or (c != char_to_remove))
+      rv += c;
+
+    if (c == delim_1)
+      inside_delimiters = true;
+
+    if (c == delim_2)
+      inside_delimiters = false;
+  }
+
+  return rv;
+}
+
+/*! \brief              Obtain a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             substring between <i>delim_1</i> and <i>delim_2</i>
   
-  Returns the empty string if the delimiters do not exist, or if
-  <i>delim_2</i> does not appear after <i>delim_1</i>
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
 */
 const string delimited_substring(const string& cs, const char delim_1, const char delim_2)
 { const size_t posn_1 = cs.find(delim_1);
@@ -527,6 +555,36 @@ const string delimited_substring(const string& cs, const char delim_1, const cha
   
   return cs.substr(posn_1 + 1, posn_2 - posn_1 - 1);
 }
+
+/*! \brief              Obtain all occurrences of a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
+*/
+const vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2)
+{ vector<string> rv;
+  size_t start_posn = 0;
+
+  while (!substring(cs, start_posn).empty())
+  { const string& sstring = substring(cs, start_posn);
+    const size_t posn_1 = sstring.find(delim_1);
+
+    if (posn_1 == string::npos)             // no more starting delimiters
+      return rv;
+
+    const size_t posn_2 = sstring.find(delim_2, posn_1 + 1);
+
+    if (posn_2 == string::npos)
+      return rv;                            // no more ending delimiters
+
+    rv.push_back( sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1) );
+    start_posn = posn_2 + 1;
+  }
+
+  return rv;
+}
+
 
 /*! \brief  Obtain a delimited substring
   \param  s Original string

@@ -63,13 +63,15 @@ void drlog_context::_set_points(const string& command, const MODE m)
     exit(0);
   }
 
+  const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
+
   if (!str_vec.empty())
   { string tmp_points_str;
     const string lhs = str_vec[0];
     auto& pbb = _per_band_points[m];
 
     if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
-    { const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
+    { //const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
 
       for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
         pbb.insert( { static_cast<BAND>(n), RHS } );
@@ -126,7 +128,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
               continue;
           }
 
-//#if 0
+#if 0
           string new_str;
 
           for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
@@ -140,10 +142,10 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
           pbb.insert( {b, tmp_points_str} );
 
-//          ost << "points string inserted (2): " << tmp_points_str << endl;
+//          ost << "points string inserted for band : " << BAND_NAME[b] << " = " << tmp_points_str << endl;
 
-//#endif
-//          pbb.insert( { b, RHS } );
+#endif
+          pbb.insert( { b, RHS } );
 
         }
       }
