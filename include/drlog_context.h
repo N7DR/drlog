@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 120 2016-01-25 19:51:49Z  $
+// $Id: drlog_context.h 121 2016-01-31 21:02:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -416,7 +416,7 @@ public:
     \param  exchange_field  exchange field
     \param  b               band
     \param  m               mode
-    \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange fieldd <i>exchange_field</i> is present
+    \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
 */
 //  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
 
@@ -540,7 +540,7 @@ public:
       swap(_qsl_message, _quick_qsl_message);
     }
 
-// are multiple modes permitted?
+/// are multiple modes permitted?
   inline const bool multiple_modes(void) const
   { SAFELOCK(_context);
     return (_modes.size() != 1);

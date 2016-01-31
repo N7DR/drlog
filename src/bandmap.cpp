@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 103 2015-05-09 16:08:33Z  $
+// $Id: bandmap.cpp 121 2016-01-31 21:02:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -181,7 +181,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     guess = rules.canonical_value(exch_mult_name, guess);
 
     if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
-        add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+      add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
   }
 }
 
@@ -541,7 +541,6 @@ void bandmap::operator+=(const bandmap_entry& be)
             { const string& poster = *(be.posters().cbegin());
 
               old_be.add_poster(poster);
-
               old_be.expiration_time(be.expiration_time());
 
               (*this) -= callsign;
@@ -569,7 +568,8 @@ void bandmap::operator+=(const bandmap_entry& be)
                                                             rv = bme.frequency_str() == current_be.frequency_str();
                                                         }
 
-                                                        return rv; } );
+                                                        return rv;
+                                                      } );
         }
       }
     }
@@ -623,7 +623,6 @@ const bandmap_entry bandmap::operator[](const string& str)
 const bandmap_entry bandmap::substr(const string& str)
 { SAFELOCK(_bandmap);
 
-//  const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return be.is_substr(str); });
   const auto cit = FIND_IF(_entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), str); });
 
   return ( (cit == _entries.cend()) ? bandmap_entry() : *cit );
@@ -714,6 +713,7 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
   SAFELOCK(_bandmap);
 
   FOR_ALL(_entries, [=] (bandmap_entry& be) { be.remove_exchange_mult(mult_name, mult_value); } );
+
   _dirty_entries();
 }
 

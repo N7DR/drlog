@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 120 2016-01-25 19:51:49Z  $
+// $Id: statistics.cpp 121 2016-01-31 21:02:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -172,8 +172,6 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 // Exchange mults
     const bool exchange_mults_per_band = rules.exchange_mults_per_band();
 
-//    ost << "Number of exchange multipliers = " << _exchange_multipliers.size() << endl;
-
     for (const auto& sm : _exchange_multipliers)
     { const string& field_name = sm.first;
 
@@ -204,9 +202,6 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
       }
 
       rv += line + LF;
-
-//      ost << "line = " << line << endl;
-
      }
 
 // dupes
@@ -500,7 +495,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // try to calculate the points for this QSO; start with a default value
     const unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like :G:3
 
-    ost << "points_this_qso = " << points_this_qso << endl;
+//    ost << "points_this_qso = " << points_this_qso << endl;
 
     _qso_points[mode_nr][band_nr] += points_this_qso;
 
@@ -520,13 +515,9 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 const bool running_statistics::add_known_exchange_mult(const string& name, const string& value)
 { SAFELOCK(statistics);
 
-//  ost << "adding known legal value of " << value << " to exchange mult: " << name << endl;
-
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == name)
-    { //ost << "MULT_VALUE = " << MULT_VALUE(name, value) << endl;
-
-      const bool added = psm.second.add_known(MULT_VALUE(name, value));
+    { const bool added = psm.second.add_known(MULT_VALUE(name, value));
 
       if (added)
         return true;
@@ -567,17 +558,11 @@ const bool running_statistics::add_worked_exchange_mult(const string& field_name
 
   SAFELOCK(statistics);
 
-//  ost << "adding worked exchange mult: " << field_name << " with MULT VALUE: " << mv << endl;
-
   for (auto& psm : _exchange_multipliers)
     if (psm.first == field_name)
       { const bool rv = (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
 
-//        ost << "returning: " << boolalpha << rv << endl;
-
         return rv;
-
-      //return (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
       }
 
   return false;

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 120 2016-01-25 19:51:49Z  $
+// $Id: drlog.cpp 121 2016-01-31 21:02:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -498,12 +498,8 @@ int main(int argc, char** argv)
     VERSION = string("Unknown version ") + VERSION;  // because VERSION may be used elsewhere
   }
 
-//  ost << "creating command line" << endl;
-
   command_line cl(argc, argv);                                                              ///< for parsing the ocmmand line
   const string config_filename = (cl.value_present("-c") ? cl.value("-c") : "logcfg.dat");
-
-//  ost << "config filename: " << config_filename << endl;
 
   try    // put it all in one big try block (one of the few things in C++ I have hated ever since we introduced it)
   {
@@ -511,20 +507,13 @@ int main(int argc, char** argv)
     drlog_context* context_p = nullptr;
 
     try
-    { //ost << "sleep 5" << endl;
-      //sleep_for(seconds(5));
-
-//      ost << "about to read configuration file: " << config_filename << endl;
-      context_p = new drlog_context(config_filename);
-//      ost << "Read configuration file: " << config_filename << endl;
+    { context_p = new drlog_context(config_filename);
     }
 
     catch (...)
     { ost << "Error reading configuration data from " << config_filename << endl;
       exit(-1);
     }
-
-//    ost << "after reading configuration file" << endl;
 
 // make the context available globally and cleanup the context pointer
     context = *context_p;
@@ -541,7 +530,6 @@ int main(int argc, char** argv)
 
     try
     { country_data_p = new cty_data(context.path(), context.cty_filename());
-//      ost << "Read country data from " <<  context.cty_filename()<< endl;
     }
 
     catch (...)
@@ -672,11 +660,7 @@ int main(int argc, char** argv)
 
 // possibly set up CW buffer
     if (contains(to_upper(context.modes()), "CW") and !context.keyer_port().empty())
-    { //const string cw_port = context.keyer_port();
-      //const unsigned int ptt_delay = context.ptt_delay();
-      //const unsigned int cw_speed = context.cw_speed();
-
-      try
+    { try
       { cw_p = new cw_buffer(context.keyer_port(), context.ptt_delay(), context.cw_speed());
       }
 
@@ -697,19 +681,19 @@ int main(int argc, char** argv)
 
 // see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
     { const frequency rf = rig.rig_frequency();
-      const MODE rm = rig.rig_mode();
-      const bool mode_matches = ((current_mode == MODE_CW and rm == MODE_CW ) or
-                                 (current_mode == MODE_SSB and (rm == MODE_SSB )));
-      const bool band_matches = (current_band == static_cast<BAND>(rf));
+//      const bool band_matches = (current_band == static_cast<BAND>(rf));
 
-      if (!band_matches or !mode_matches)
-      { //ost << "mismatch; setting frequency" << endl;
-
-        rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
-
-        if (!mode_matches)
-          rig.rig_mode(current_mode);
+      if (current_band != static_cast<BAND>(rf))
+      { rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
+        sleep_for(seconds(2));                                                       // give time for things to settle
       }
+
+// the rig might have changed mode if we just changed bands
+      const MODE rm = rig.rig_mode();
+//      const bool mode_matches = ((current_mode == rm);
+
+      if (current_mode != rm)
+        rig.rig_mode(current_mode);
     }
 
 // configure bandmaps so user's call does not display

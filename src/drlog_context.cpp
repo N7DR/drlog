@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 120 2016-01-25 19:51:49Z  $
+// $Id: drlog_context.cpp 121 2016-01-31 21:02:03Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -761,7 +761,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // RATE
-    if (starts_with(testline, "RATE"))
+    if (LHS == "RATE")
     { const vector<string> vec_rates = remove_peripheral_spaces(split_string(rhs, ","));
       vector<unsigned int> new_rates;
 
@@ -772,15 +772,15 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // RBN BEACONS
-    if (starts_with(testline, "RBN BEACONS"))
+    if (LHS == "RBN BEACONS")
       _rbn_beacons = is_true;
 
 // RBN PORT
-    if (starts_with(testline, "RBN PORT"))
+    if (LHS == "RBN PORT")
       _rbn_port = from_string<int>(rhs);
 
 // RBN SERVER
-    if (starts_with(testline, "RBN SERVER"))
+    if (LHS == "RBN SERVER")
       _rbn_server = rhs;
 
 // RBN THRESHOLD
