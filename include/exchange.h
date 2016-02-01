@@ -465,6 +465,11 @@ protected:
 
 public:
 
+/*! \brief                      Constructor
+    \param  rules               rules for this contest
+    \param  callsign            callsign to which the exchange is to be attributed
+    \param  received_exchange   exchange as received
+*/
   sweepstakes_exchange(const contest_rules& rules, const std::string& callsign, const std::string& received_exchange);
 
   READ(serno);    ///< serial number
@@ -473,6 +478,7 @@ public:
   READ(check);    ///< check
   READ(section);  ///< section
 
+/// does an instantiated object appear to be valid?
   inline const bool valid(void) const
     { return (!_serno.empty() and !_prec.empty() and !_call.empty() and !_check.empty() and !_section.empty() ); }
 };

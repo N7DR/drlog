@@ -625,7 +625,8 @@ const bool rig_interface::xit_enabled(void)
     On the K3 this also sets the RIT
 */
 void rig_interface::xit(const int hz)
-{ // hamlib's behaviour anent the K3 is not what we want
+{
+// hamlib's behaviour anent the K3 is not what we want
   if (_model == RIG_MODEL_K3)
   { if (hz == 0)                                // just clear the RIT/XIT
       raw_command(string("RC;"), 0);
@@ -885,8 +886,6 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
             else
             { n_read = read(fd, c_in.data(), 131640 - total_read);
 
-//              ost << "n_read = " << n_read << endl;
-
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
                 rcvd.append(c_in.data(), n_read);
@@ -902,7 +901,6 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
             const int percent = rcvd.length() * 100 / 131640;
 
             _error_alert(string("P3 screendump progress: ") + to_string(percent) + percent_str);
-//            ost << "not yet complete; counter now = " << counter << " and received length = " << rcvd.length() << endl;
             sleep_for(milliseconds(1000));  // we have the lock for all this time
           }
           else
@@ -1177,7 +1175,7 @@ const bool rig_interface::is_transmitting(void)
     { const string response = raw_command("TQ;", 4);
 
       if (response.length() < 4)
-      /* { } */   _error_alert("Unable to determine whether rig is transmitting");
+        _error_alert("Unable to determine whether rig is transmitting");
       else
         rv = (response[2] == '1');
     }

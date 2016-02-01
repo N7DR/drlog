@@ -2639,6 +2639,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
           if ( (valid) and (new_band == BAND_160))
             valid = ( (new_frequency.hz() >= 1800000) and (new_frequency.hz() <= 2000000) );
 
+//          ost << "valid = " << boolalpha << valid << endl;
+
           if (valid)
           { BAND cur_band = safe_get_band();
             MODE cur_mode = safe_get_mode();
@@ -2646,10 +2648,14 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
             rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
             rig.rig_frequency(new_frequency);
 
-            if (context.multiple_modes())
+//            if (context.multiple_modes())
             { const MODE m = default_mode(new_frequency);
 
-              if (m != cur_mode)
+//              ost << "default_mode = " << MODE_NAME[m] << endl;
+//              ost << "cur_mode = " << MODE_NAME[cur_mode] << endl;
+
+
+//              if (m != cur_mode)
               { rig.rig_mode(m);
                 cur_mode = m;
                 safe_set_mode(m);
@@ -2660,9 +2666,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
             if (new_band != cur_band)
             { cur_band = new_band;
-//              display_band_mode(win_band_mode, cur_band, cur_mode);
-
               safe_set_band(new_band);
+
+
 
               bandmap& bm = bandmaps[cur_band];
               win_bandmap <= bm;
