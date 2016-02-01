@@ -148,6 +148,9 @@ void bandmap_entry::freq(const frequency& f)
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
+
+//  ost << "calculating mult status for: " << callsign() << endl;
+
 // callsign mult status
   clear_callsign_mult();
 
@@ -158,7 +161,9 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
     if (!callsign_mult_val.empty())
     { if (statistics.is_needed_callsign_mult(callsign_mult_name, callsign_mult_val, _band, _mode))
+      { //ost << "is needed callsign mult" << endl;
         add_callsign_mult(callsign_mult_name, callsign_mult_val);
+      }
     }
   }
 
@@ -168,7 +173,9 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   const bool is_needed_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
 
   if (is_needed_country_mult)
+  { //ost << "is needed country mult" << endl;
     add_country_mult(_canonical_prefix);
+  }
 
 // exchange mult status
   clear_exchange_mult();
@@ -176,12 +183,29 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   const vector<string> exch_mults = rules.exchange_mults();                                  // the exchange multipliers, in the same order as in the configuration file
 
   for (const auto& exch_mult_name : exch_mults)
-  { string guess = exchange_db.guess_value(_callsign, exch_mult_name);
+  { const vector<string> exchange_field_names = rules.expanded_exchange_field_names(_canonical_prefix, _mode);
+//    if (exchange_field_names.find(exch_mult_name) != exchange_field_names.cend())
+
+    const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
+
+//    if (find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend())
+//      ost << "exch_mult_name " << exch_mult_name << " IS an expected field for " << _callsign << endl;
+//    else
+//      ost << "exch_mult_name " << exch_mult_name << "IS NOT an expected field for " << _callsign << endl;
+
+    if (is_possible_exchange_field)
+    {
+    string guess = exchange_db.guess_value(_callsign, exch_mult_name);
+
+//    ost << "guessed value of " << exch_mult_name << " for " << _callsign << " is: " << guess << endl;
 
     guess = rules.canonical_value(exch_mult_name, guess);
 
     if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
+    { //ost << "is needed exchange mult: " << exch_mult_name << ", value = " << MULT_VALUE(exch_mult_name, guess) << endl;
       add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+    }
+    }
   }
 }
 
