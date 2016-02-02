@@ -189,7 +189,7 @@ const std::string read_file(const std::string& filename);
 /*! \brief              Read the contents of a file into a single string
     \param  path        the different directories to try, in order
     \param  filename    name of file to be read
-    \return             C\contents of file <i>filename</i>
+    \return             contents of file <i>filename</i>
 
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
@@ -310,16 +310,16 @@ inline const std::string remove_trailing_spaces(const std::string& cs)
 inline const std::string remove_peripheral_spaces(const std::string& cs)
   { return remove_trailing_spaces(remove_leading_spaces(cs)); }
 
-/*!     \brief          Remove leading and trailing spaces
-        \param  s       Original string
-        \return         <i>s</i> with any leading or trailing spaces removed
+/*! \brief      Remove leading and trailing spaces
+    \param  s   original string
+    \return     <i>s</i> with any leading or trailing spaces removed
 */
 inline const std::string remove_peripheral_spaces(std::string& s)
   { return remove_trailing_spaces(remove_leading_spaces(s)); }
 
-/*!     \brief          Remove leading and trailing spaces
-        \param  t       Container of strings
-        \return         <i>t</i> with leading and trailing spaces removed from the individual elements
+/*! \brief      Remove leading and trailing spaces
+    \param  t   container of strings
+    \return     <i>t</i> with leading and trailing spaces removed from the individual elements
 */
 template <typename T>
 T remove_peripheral_spaces(T& t)
@@ -330,18 +330,18 @@ T remove_peripheral_spaces(T& t)
   return rv;
 }
 
-/*!     \brief          Remove peripheral instances of a specific character
-        \param  cs      Original string
-        \param  c       Character to remove
-        \return         <i>cs</i> with any leading or trailing instances of <i>c</i> removed
+/*! \brief      Remove peripheral instances of a specific character
+    \param  cs  original string
+    \param  c   character to remove
+    \return     <i>cs</i> with any leading or trailing instances of <i>c</i> removed
 */
 inline const std::string remove_peripheral_character(const std::string& cs, const char c)
   { return remove_trailing(remove_leading(cs, c), c); }
 
 /*! \brief                  Remove all instances of a particular char from a string
-  \param  cs                Original string
-  \param  char_to_remove    Character to be removed from <i>cs</i>
-  \return                   <i>cs</i> with all instances of <i>char_to_remove</i> removed
+    \param  cs              original string
+    \param  char_to_remove  character to be removed from <i>cs</i>
+    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
 const std::string remove_char(const std::string& cs, const char char_to_remove);
 
@@ -374,19 +374,19 @@ const std::string delimited_substring(const std::string& cs, const char delim_1,
 */
 const std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2);
 
-/*! \brief      Join the elements of a string vector, using a provided separator
-    \param  vec container of strings
-    \param  sep separator inserted between the elements of <i>vec</i>
-    \return     all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
+/*! \brief          Join the elements of a string vector, using a provided separator
+    \param  vec     vector of strings
+    \param  sep     separator inserted between the elements of <i>vec</i>
+    \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
 */
 const std::string join(const std::vector<std::string>& vec, const std::string& sep /* = " " */);
 
-/*! \brief      Join the elements of a string deque, using a provided separator
-    \param  vec container of strings
-    \param  sep separator inserted between the elements of <i>vec</i>
-    \return     all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
+/*! \brief          Join the elements of a string deque, using a provided separator
+    \param  deq     deque of strings
+    \param  sep     separator inserted between the elements of <i>vec</i>
+    \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
 */
-const std::string join(const std::deque<std::string>& vec, const std::string& sep /* = " " */);
+const std::string join(const std::deque<std::string>& deq, const std::string& sep /* = " " */);
 
 /*! \brief  Create a string of a certain length, with all characters the same
     \param  c   Character that the string will contain

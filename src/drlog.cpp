@@ -1941,11 +1941,20 @@ void* process_rbn_info(void* vp)
               for (const auto& exch_mult_name : exch_mults)
               { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
 // *** consider putting the regex into the multiplier object (in addition to the list of known values)
-                { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
+                { const vector<string> exchange_field_names = rules.expanded_exchange_field_names(be.canonical_prefix(), be.mode());
+                  const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
+
+                  if (is_possible_exchange_field)
+                  {
+
+
+
+                  const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
                   if (!guess.empty())
                     statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
-                }
+                  }
+                  }
               }
 
               be.calculate_mult_status(rules, statistics);

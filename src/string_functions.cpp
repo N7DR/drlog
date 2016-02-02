@@ -152,8 +152,8 @@ const string substring(const string& str, const size_t start_posn)
   return string();
 }
 
-/*! \brief  Provide a formatted date/time string
-    \return current date and time in the format: YYYY-MM-DDTHH:MM
+/*! \brief      Provide a formatted date/time string
+    \return     current date and time in the format: YYYY-MM-DDTHH:MM
 */
 const string date_time_string(void)
 { const time_t now = time(NULL);            // get the time from the kernel
@@ -383,13 +383,12 @@ const vector<string> split_string(const string& cs, const string& separator)
   return rv;
 }
 
-/*!     \brief  split a string into equal-length records
-        \param  cs              Original string
-        \param  record_length   Length of each record
+/*! \brief                  Split a string into equal-length records
+    \param  cs              original string
+    \param  record_length   length of each record
+    \return                 vector containing the separate components
 
-        \return Vector containing the separate components
-
-        Any non-full record at the end is silently discarded
+    Any non-full record at the end is silently discarded
 */
 const vector<string> split_string(const string& cs, const unsigned int record_length)
 { vector<string> rv;
@@ -403,7 +402,11 @@ const vector<string> split_string(const string& cs, const unsigned int record_le
   return rv;
 }
 
-/// squash repeated occurrences of a character
+/*! \brief      Squash repeated occurrences of a character
+    \param  cs  original string
+    \param  c   character to squash
+    \return     <i>cs</i>, but with all consective instances of <i>c</i> converted to a single instance
+*/
 const string squash(const string& cs, const char c)
 { string rv = cs;
   const string separator(1, c);
@@ -415,10 +418,10 @@ const string squash(const string& cs, const char c)
   return rv;
 }
 
-/*! \brief      Join the elements of a string vector, using a provided separator
-    \param  vec container of strings
-    \param  sep separator inserted between the elements of <i>vec</i>
-    \return     all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
+/*! \brief          Join the elements of a string vector, using a provided separator
+    \param  vec     vector of strings
+    \param  sep     separator inserted between the elements of <i>vec</i>
+    \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
 */
 const string join(const vector<string>& vec, const string& sep)
 { string rv;
@@ -433,27 +436,31 @@ const string join(const vector<string>& vec, const string& sep)
   return rv;
 }
 
-// join all the elements of a string array together, with a known separator
-const string join(const deque<string>& vec, const string& sep)
+/*! \brief          Join the elements of a string deque, using a provided separator
+    \param  deq     deque of strings
+    \param  sep     separator inserted between the elements of <i>vec</i>
+    \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
+*/
+const string join(const deque<string>& deq, const string& sep)
 { string rv;
 
-  for (unsigned int n = 0; n < vec.size(); ++n)
-  { rv += vec[n];
+  for (unsigned int n = 0; n < deq.size(); ++n)
+  { rv += deq[n];
 
-    if (n != vec.size() - 1)
+    if (n != deq.size() - 1)
       rv += sep;
   }
   
   return rv;
 }
 
-/*! \brief remove characters from the end of a string
-  \param  s original string
-  \param  n number of chars to remove
-  \return <i>s</i> with the last <i>n</i> characters removed
+/*! \brief      Remove characters from the end of a string
+    \param  s   original string
+    \param  n   number of chars to remove
+    \return     <i>s</i> with the last <i>n</i> characters removed
   
-  If <i>n</i> is equal to or greater than the length of <i>s</i>, then
-  the empty string is returned.
+    If <i>n</i> is equal to or greater than the length of <i>s</i>, then
+    the empty string is returned.
 */
 const string remove_from_end(const string& s, const unsigned int n)
 { if (n >= s.length())
