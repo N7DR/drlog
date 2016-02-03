@@ -774,3 +774,27 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
   display();
 }
+
+// -----------  old_log  ----------------
+#if 0
+const size_t old_log::n_qsls(const std::string& str) const
+{ auto pii = equal_range(str);
+
+  size_t rv = 0;
+
+//  std::multimap<char,int>::iterator it=ret.first; it!=ret.second; ++it
+  for (auto cit = pii.first; cit != pii.second; ++cit)
+    if (cit->second.qsl_received())
+      rv++;
+
+  return rv;
+}
+#endif
+
+//const bool old_log_record::operator<(const old_log_record& olr)
+//}
+//
+//BAND          _band;      ///< band
+//std::string   _callsign;  ///< callsign
+//MODE          _mode;      ///< mode
+//bool          _qsl_received;  ///< has a QSL been received?

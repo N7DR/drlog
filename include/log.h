@@ -363,7 +363,57 @@ template <typename T>
     _qsos.clear();
     copy(t.cbegin(), t.cend(), back_inserter(_qsos));
   }
+};
+
+// -----------  old_log_record  ----------------
+
+/*!     \class old_log_record
+        \brief A record in an old ADIF log
+
+        Not thread safe, so create once and then never change
+*/
+
+class old_log_record
+{
+protected:
+  BAND          _band;      ///< band
+  std::string   _callsign;  ///< callsign
+  MODE          _mode;      ///< mode
+  bool          _qsl_received;  ///< has a QSL been received?
+
+public:
+
+  READ_AND_WRITE(band);
+  READ_AND_WRITE(callsign);
+  READ_AND_WRITE(mode);
+  READ_AND_WRITE(qsl_received);
+
+//  const bool operator<(const old_log_record& olr);
 
 };
+
+//multimap<string /* callsign */, old_log_record>
+
+#if 0
+// -----------  old_log  ----------------
+
+/*!     \class old_log
+        \brief An old ADIF log
+
+        Not thread safe, so create once and then never change
+*/
+
+class old_log : public std::multimap<std::string /* callsign */, old_log_record>
+{
+protected:
+
+public:
+
+  inline const size_t n_qsos(const std::string& str) const
+    { return count(str); }
+
+  const size_t n_qsls(const std::string& str) const;
+};
+#endif
 
 #endif    // LOG_H

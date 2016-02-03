@@ -416,11 +416,11 @@ public:
   const BAND next_band_down(const BAND current_band) const;
   
   SAFEREAD(bonus_countries, rules);                     ///< countries that are eligible for bonus points
-  SAFEREAD(permitted_bands, rules);                      ///< bands allowed in this contest
-  SAFEREAD(permitted_modes, rules);                      ///< modes allowed in this contest
+  SAFEREAD(permitted_bands, rules);                     ///< bands allowed in this contest
+  SAFEREAD(permitted_modes, rules);                     ///< modes allowed in this contest
 
-  SAFEREAD(work_if_different_band, rules);               ///< whether it is OK to work the same station on different bands
-  SAFEREAD(work_if_different_mode, rules);               ///< whether it is OK to work the same station on different modes
+  SAFEREAD(work_if_different_band, rules);              ///< whether it is OK to work the same station on different bands
+  SAFEREAD(work_if_different_mode, rules);              ///< whether it is OK to work the same station on different modes
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
@@ -696,12 +696,12 @@ const std::string wpx_prefix(const std::string& call);
 */
 const std::string sac_prefix(const std::string& call);
 
-/*! \brief  Given a received value of a particular multiplier field, what is the actual mult value?
-    \param  field_name         name of the field
-    \param  received_value     received value for field <i>field_name</i>
-    \return                    the multiplier value for the field <i>field_name</i>
+/*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?
+    \param  field_name      name of the field
+    \param  received_value  received value for field <i>field_name</i>
+    \return                 the multiplier value for the field <i>field_name</i>
 
-    For example, the mult value for a DOK field with the value A01 is A.
+    For example, the mult value in WAG for a DOK field with the value A01 is A.
 */
 const std::string MULT_VALUE(const std::string& field_name, const std::string& received_value);
 

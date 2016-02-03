@@ -418,6 +418,17 @@ const string squash(const string& cs, const char c)
   return rv;
 }
 
+const vector<string> remove_empty_lines(const vector<string>& lines)
+{ vector<string> rv;
+
+  for (auto n = 0; n < lines.size(); ++n)
+    if (!lines[n].empty())
+      rv.push_back(lines[n]);
+
+  return rv;
+}
+
+
 /*! \brief          Join the elements of a string vector, using a provided separator
     \param  vec     vector of strings
     \param  sep     separator inserted between the elements of <i>vec</i>

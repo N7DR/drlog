@@ -132,6 +132,7 @@ void update_known_callsign_mults(const string& callsign);                   ///<
 void update_known_country_mults(const string& callsign);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
+void update_qsls_window(const string& = "");                                ///< QSL information from old QSOs
 void update_rate_window(void);                                              ///< Update the QSO and score values in <i>win_rate</i>
 
 // functions for processing input to windows
@@ -226,6 +227,9 @@ unsigned int            next_qso_number = 1;                ///< actual number o
 unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
 
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
+//multimap<string /* callsign */, old_log_record>    old_log;                            ///< log of old QSOs; should probably be an unordered set really, but then can't serialize and have to mess with hashes
+//old_log    olog;                            ///< log of old QSOs; should probably be an unordered set really, but then can't serialize and have to mess with hashes
+unordered_map<string /* callsign */, pair< unsigned int /* qsls */, unsigned int /* qsos */ >> olog;
 
 int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
 bool                    restored_data(false);               ///< did we restore from an archive?
@@ -271,6 +275,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_message,                     ///< messages from drlog to the user
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
+       win_qsls,                        ///< QSLs from old QSOs
        win_qso_number,                  ///< number of the next QSO
        win_qtc_status,                  ///< status of QTCs
        win_rate,                        ///< QSO and point rates
@@ -613,6 +618,112 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
+// is there a log of old QSOs?
+    if (!context.old_adif_log_name().empty())
+    {
+      ost << "before old log: " << hhmmss() << endl;
+
+      const string file_contents = read_file(context.path(), context.old_adif_log_name());
+      const vector<string> records = split_string(file_contents, string("<eor>") + EOL);
+
+//      ost << "number of records in old log = " << records.size() << endl;
+
+      for (auto rec_nr = 0; rec_nr < records.size(); ++rec_nr)
+      { const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines(records[rec_nr])));
+
+        old_log_record rec;
+
+        for (auto line_nr = 0; line_nr < lines.size(); ++line_nr)
+        { const string line = lines[line_nr];
+
+#if 0
+        if (starts_with(line, "<band"))
+          { // <band:3>20m
+            const string tag = delimited_substring(line, '<', '>');
+            const vector<string> vs = split_string(tag, ":");
+
+            if (vs.size() != 2)
+              ost << "ERROR parsing old log line: " << line << endl;
+            else
+            { const size_t n_chars = from_string<size_t>(vs[1]);
+              const size_t posn = line.find('>');
+              const string value = substring(line, posn + 1, n_chars - 1);  // don't include the "m" (and we assume that it *is* "m")
+
+              rec.band(BAND_FROM_NAME.at(value));
+
+            }
+          }
+#endif
+
+          if (starts_with(line, "<call"))
+          { // <call:5>RZ3FW
+            const string tag = delimited_substring(line, '<', '>');
+            const vector<string> vs = split_string(tag, ":");
+
+            if (vs.size() != 2)
+              ost << "ERROR parsing old log line: " << line << endl;
+            else
+            { const size_t n_chars = from_string<size_t>(vs[1]);
+              const size_t posn = line.find('>');
+              const string value = substring(line, posn + 1, n_chars);
+
+              rec.callsign(value);
+            }
+          }
+
+#if 0
+          if (starts_with(line, "<mode"))
+          { // <mode:2>CW
+            const string tag = delimited_substring(line, '<', '>');
+            const vector<string> vs = split_string(tag, ":");
+
+            if (vs.size() != 2)
+              ost << "ERROR parsing old log line: " << line << endl;
+            else
+            { const size_t n_chars = from_string<size_t>(vs[1]);
+              const size_t posn = line.find('>');
+              const string value = substring(line, posn + 1, n_chars);
+
+              rec.mode(MODE_FROM_NAME.at(value));
+
+            }
+          }
+#endif
+          if (starts_with(line, "<qsl_rcvd"))
+          { // <qsl_rcvd:1>Y
+            const string tag = delimited_substring(line, '<', '>');
+            const vector<string> vs = split_string(tag, ":");
+
+            if (vs.size() != 2)
+              ost << "ERROR parsing old log line: " << line << endl;
+            else
+            { const size_t n_chars = from_string<size_t>(vs[1]);
+              const size_t posn = line.find('>');
+              const string value = substring(line, posn + 1, n_chars);
+
+              rec.qsl_received(value == "Y");
+
+            }
+          }
+
+//          olog.insert( { rec.callsign(), rec } );
+
+
+        }
+//        olog.insert( { rec.callsign(), rec } );
+        auto& ii = olog[rec.callsign()];            // creates if doesn't exist; I assume with zeros
+
+        ii.second++;            // qsos
+
+        if (rec.qsl_received())
+          ii.first++;           // qsls
+
+     }
+      ost << "after old log: " << hhmmss() << endl;
+
+      ost << "old log read; size = " << olog.size() << " QSOs" << endl;
+    }
+
 // make some things available file-wide
     my_continent = context.my_continent();
 
@@ -873,6 +984,10 @@ int main(int argc, char** argv)
 
 // NEARBY window
   win_nearby.init(context.window_info("NEARBY"), WINDOW_NO_CURSOR);
+
+// QSLs window
+  win_qsls.init(context.window_info("QSLS"), WINDOW_NO_CURSOR);
+  update_qsls_window();;
 
 // QSO NUMBER window
   win_qso_number.init(context.window_info("QSO NUMBER"), WINDOW_NO_CURSOR);
@@ -5612,6 +5727,8 @@ void display_call_info(const string& callsign, const bool display_extract)
   { extract = logbk.worked( callsign );
     extract.display();
   }
+
+  update_qsls_window(callsign);
 }
 
 /*! \brief Start a thread to take a snapshot of a P3.
@@ -6476,6 +6593,16 @@ const MODE default_mode(const frequency& f)
       return MODE_CW;
 
     return MODE_SSB;
+  }
+}
+
+// QSL information from old QSOs
+void update_qsls_window(const string& str)
+{ win_qsls < WINDOW_CLEAR <= "QSLs: ";
+
+  if (!str.empty())
+  { //win_qsls < pad_string(to_string(olog.n_qsls(str)), 3, PAD_LEFT, '0') < "/" <= pad_string(to_string(olog.n_qsos(str)), 3, PAD_LEFT, '0');
+    win_qsls < pad_string(to_string(olog[str].first), 3, PAD_LEFT, '0') < "/" <= pad_string(to_string(olog[str].second), 3, PAD_LEFT, '0');
   }
 }
 

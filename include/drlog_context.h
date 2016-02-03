@@ -170,6 +170,8 @@ protected:
   bool                                         _normalise_rate;      ///< whether to display rates as per-hour
   std::string                                  _not_country_mults;   ///< comma-separated list of countries that are explicitly NOT country mults
 
+  std::string                                  _old_adif_log_name;  ///< name of ADIF file that contains old QSOs
+
   std::vector<std::string>                     _path;                             ///< directories to search, in order
   std::map<BAND, int>                          _per_band_country_mult_factor;     ///< country mult factor structure for each band
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;              ///< points structure for each band and mode
@@ -396,6 +398,8 @@ public:
   SAFEREAD(nearby_extract, _context);               ///< whether to display NEARBY calls in EXTRACT window
   SAFEREAD(normalise_rate, _context);               ///< whether to display rates as per-hour
   SAFEREAD(not_country_mults, _context);            ///< comma-separated list of countries that are explicitly NOT country mults
+
+  SAFEREAD(old_adif_log_name, _context);            ///< name of ADIF file that contains old QSOs
 
   SAFEREAD(path, _context);                         ///< directories to search, in order
   SAFEREAD(per_band_country_mult_factor, _context); ///< country mult factor structure for each band

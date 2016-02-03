@@ -32,16 +32,16 @@
 enum BANDMAP_ENTRY_SOURCE { BANDMAP_ENTRY_LOCAL,
                             BANDMAP_ENTRY_CLUSTER,
                             BANDMAP_ENTRY_RBN
-                          };                                       ///< possible sources for bandmap entries
+                          };                                    ///< possible sources for bandmap entries
 
 enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
                          BANDMAP_DIRECTION_UP
-                       };                                          ///< search directions for the bandmap
+                       };                                       ///< search directions for the bandmap
 
 class bandmap_filter_type;
 
-extern const std::string MY_MARKER;                                ///< the string that marks my position in the bandmap
-extern bandmap_filter_type BMF;
+extern const std::string MY_MARKER;                             ///< the string that marks my position in the bandmap
+extern bandmap_filter_type BMF;                                 ///< the bandmap filter
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -438,14 +438,6 @@ public:
   inline const bool should_prune(const time_t now = ::time(NULL)) const
     { return ( (_expiration_time < now) and (_callsign != MY_MARKER)); }
 
-/// needed for a functor in const bandmap_entry bandmap::operator[](const std::string& str)
-//  const bool is_callsign(const std::string& str) const
-//    { return _callsign == str; }
-
-/// needed for a functor in const bandmap_entry bandmap::substr(const std::string& str)
-//  const bool is_substr(const std::string& str) const
-//    { return contains(_callsign, str); }
-
 /*! \brief              Re-mark the need/mult status
     \param  rules       rules for the contest
     \param  q_history   history of all the QSOs
@@ -514,6 +506,7 @@ public:
     }
 };
 
+/// ostream << bandmap_entry
 std::ostream& operator<<(std::ostream& ost, const bandmap_entry& be);
 
 // you'd think that BM_ENTRIES should be std::multiset<bandmap_entry>, but that's a royal pain with g++...
@@ -678,19 +671,13 @@ public:
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
   void not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
-                                const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., SM1 */);
-
-/*! \brief set the needed callsign mult status of all calls in a particular country to false
-    \param  target_values   vector of target multiplier names and values
-*/
-//  void not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
-//                                const std::vector<std::pair<std::string /* e.g., "WPXPX" */, std::string /* e.g., SM1 */>>& target_values);
+                                const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-  void not_needed_callsign_mult(const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., SM1 */);
+  void not_needed_callsign_mult(const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief              Set the needed exchange mult status of a particular exchange mult to <i>false</i>
     \param  mult_name   name of exchange mult

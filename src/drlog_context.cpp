@@ -671,6 +671,10 @@ void drlog_context::_process_configuration_file(const string& filename)
         _not_country_mults = rhs;
     }
 
+// OLD ADIF LOG NAME
+    if (LHS == "OLD ADIF LOG NAME")
+      _old_adif_log_name = rhs;
+
 // PATH
     if (LHS == "PATH")
     { if (!rhs.empty())
@@ -1414,6 +1418,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _nearby_extract(false),                       // do not display NEARBY calls in the EXTRACT window
   _normalise_rate(false),                     // do not normalise rates to one-hour values
   _not_country_mults(),                       // no countries are explicitly not country mults
+  _old_adif_log_name(),                       // no ADIF log of old QSOs
   _path( { "." } ),                           // search only the current directory
   _per_band_points( {} ),                     // no points awarded anywhere
   _ptt_delay(25),                             // PTT delay

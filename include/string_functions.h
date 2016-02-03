@@ -263,9 +263,11 @@ inline const std::vector<std::string> split_string(const std::string& cs, const 
 /*! \brief      Squash repeated occurrences of a character
     \param  cs  original string
     \param  c   character to squash
-    \return     <i>cs</i>, but with all consective instances of <i>c</i> converted to a single instance
+    \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
 const std::string squash(const std::string& cs, const char c = ' ');
+
+const std::vector<std::string> remove_empty_lines(const std::vector<std::string>& lines);
 
 /*! \brief              Split a string into lines
     \param  cs          original string
