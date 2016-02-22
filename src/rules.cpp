@@ -1,4 +1,4 @@
-// $Id: rules.cpp 121 2016-01-31 21:02:03Z  $
+// $Id: rules.cpp 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -544,6 +544,21 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   _parse_context_exchange(context);                     // define the legal receive exchanges, and which fields are mults
   _exchange_mults = remove_peripheral_spaces( split_string(context.exchange_mults(), ",") );
+
+// create expanded version
+  for (const string& unexpanded_exchange_mult_name : _exchange_mults)
+  { if (!begins_with(unexpanded_exchange_mult_name, "CHOICE:"))
+      _expanded_exchange_mults.push_back(unexpanded_exchange_mult_name);
+    else
+    { const string str = substring(str, 7);    // remove "CHOICE:"
+      const vector<string> expanded_choice = remove_peripheral_spaces(split_string(str, "/"));
+
+      for (const string& this_expanded_name : expanded_choice)
+        if (find(_expanded_exchange_mults.begin(), _expanded_exchange_mults.end(), this_expanded_name) == _expanded_exchange_mults.end() )
+          _expanded_exchange_mults.push_back(this_expanded_name);
+    }
+  }
+
   _exchange_mults_per_band = context.exchange_mults_per_band();
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
@@ -607,10 +622,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
         pb[b] = ps;
       }
       else
-      { //ost << "context_points = " << context_points << endl;
+      {
 // remove commas inside the delimiters, because commas separate the point triplets
         context_points = remove_char_from_delimited_substrings(context_points, ',', '[', ']');
-        //ost << "new context_points = " << context_points << endl;
 
         const vector<string> points_str_vec = remove_peripheral_spaces( split_string(context_points, ",") );
 
@@ -797,9 +811,9 @@ contest_rules::contest_rules(const drlog_context& context, location_database& lo
 { _init(context, location_db);
 }
 
-/*! \brief              Prepare for use an object that was created from the default constructor
-    \param  context     context for this contest
-    \param  location_db location database
+/*! \brief                  Prepare for use an object that was created from the default constructor
+    \param  context         context for this contest
+    \param  location_db     location database
 */
 void contest_rules::prepare(const drlog_context& context, location_database& location_db)
 { _work_if_different_band = context.qso_multiple_bands();
@@ -845,19 +859,6 @@ const EFT contest_rules::exchange_field_eft(const string& field_name) const
 
   return (v->second);
 }
-
-/*! \brief                      Get the names of the exchange fields for a particular canonical prefix
-    \param  canonical_prefix    canonical prefix
-    \return                     the exchange field names associated with <i>canonical_prefix</i>
-*/
-//const set<string> contest_rules::exchange_fields(const string& canonical_prefix) const
-//{ SAFELOCK(rules);
-
-//  set<string> rv;
-
-//  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
-//  return _per_country_exchange_fields[canonical_prefix);
-//}
 
 /*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
@@ -1096,6 +1097,11 @@ const BAND contest_rules::next_band_down(const BAND current_band) const
   return *cit;
 }
 
+/*! \brief                  Points for a particular QSO
+    \param  qso             QSO for which the points are to be calculated
+    \param  location_db     location database
+    \return                 the (location-based) points for <i>qso</i>
+*/
 const unsigned int contest_rules::points(const QSO& qso, location_database& location_db) const
 { const BAND b = qso.band();
 
@@ -1107,17 +1113,11 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
     return 0;
 
 // is an exchange field that will determine the number of points present?
-//  ost << "about to check exchange fields" << endl;
-
   for (const auto& this_exchange_present_points : _exchange_present_points)
   { const string& exchange_field_name = this_exchange_present_points.first;
 
-//    ost << "checking exchange field name: " << exchange_field_name << endl;
-
     if (qso.is_exchange_field_present(exchange_field_name))
       return this_exchange_present_points.second;
-
-//    ost << "no value returned" << endl;
   }
 
   const string call = qso.callsign();
@@ -1126,7 +1126,6 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
   if (canonical_prefix == "NONE")      // unable to determine country
     return 0;
 
-//  const MODE m = qso.mode();
   const auto& pb = _points[m];          // select the correct mode
 
   SAFELOCK(rules);
@@ -1141,15 +1140,11 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
   switch (points_this_band.points_type())
   { default :
     case POINTS_NORMAL :
-    { //ost << "inside POINTS NORMAL" << endl;
-      //ost << "canonical prefix = " << canonical_prefix << endl;
-
-      const map<string, unsigned int>& country_points = points_this_band.country_points();
+    { const map<string, unsigned int>& country_points = points_this_band.country_points();
       auto cit = country_points.find(canonical_prefix);
 
       if (cit != country_points.cend())    // if points are defined for this country
-      { //ost << "points for " << canonical_prefix << " = " << cit->second << endl;
-        return cit->second;
+      { return cit->second;
       }
 
       const map<string, unsigned int>& continent_points = points_this_band.continent_points();
@@ -1179,15 +1174,13 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
       if ( (!same_zone) and (_my_continent != his_continent) )
         rv = 5;
 
-// is is an HQ station?
-//      ost << "Trying to score QSO: " << qso << endl;
-
+// is it an HQ station?
       const string society_value = qso.received_exchange("SOCIETY");
 
-      ost << "SOCIETY field is " << (society_value.empty() ? "NOT" : "") << " present" << endl;
+//      ost << "SOCIETY field is " << (society_value.empty() ? "NOT" : "") << " present" << endl;
 
-      if (!society_value.empty())
-          ost << "SOCIETY value = " << society_value << endl;
+//      if (!society_value.empty())
+//          ost << "SOCIETY value = " << society_value << endl;
 
       if (!society_value.empty())
         rv = 1;

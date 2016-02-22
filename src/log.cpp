@@ -1,4 +1,4 @@
-// $Id: log.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: log.cpp 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -756,9 +756,9 @@ void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
   	display();
 }
 
-/*! \brief              Get the QSOs that match an exchange from a log, and display them
-    \param  lgbook      logbook to use
-    \param  target      string to match in the QSO exchanges
+/*! \brief          Get the QSOs that match an exchange from a log, and display them
+    \param  lgbook  logbook to use
+    \param  target  string to match in the QSO exchanges
 
     Displayed in order from oldest to newest. If the extract contains more QSOs than the window
     allows, only the most recent QSOs are displayed.
@@ -774,27 +774,3 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
   display();
 }
-
-// -----------  old_log  ----------------
-#if 0
-const size_t old_log::n_qsls(const std::string& str) const
-{ auto pii = equal_range(str);
-
-  size_t rv = 0;
-
-//  std::multimap<char,int>::iterator it=ret.first; it!=ret.second; ++it
-  for (auto cit = pii.first; cit != pii.second; ++cit)
-    if (cit->second.qsl_received())
-      rv++;
-
-  return rv;
-}
-#endif
-
-//const bool old_log_record::operator<(const old_log_record& olr)
-//}
-//
-//BAND          _band;      ///< band
-//std::string   _callsign;  ///< callsign
-//MODE          _mode;      ///< mode
-//bool          _qsl_received;  ///< has a QSL been received?

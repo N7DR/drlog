@@ -1,4 +1,4 @@
-// $Id: string_functions.h 121 2016-01-31 21:02:03Z  $
+// $Id: string_functions.h 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,9 +91,9 @@ const T from_string(const std::string& s)
   return t;
 }
 
-/*! \brief      Generic conversion to string
-    \param  val value to convert
-    \return     <i>val</i>converted to a string
+/*! \brief          Generic conversion to string
+    \param  val     value to convert
+    \return         <i>val</i>converted to a string
 */
 template <class T>
 const std::string to_string(const T val)
@@ -267,6 +267,12 @@ inline const std::vector<std::string> split_string(const std::string& cs, const 
 */
 const std::string squash(const std::string& cs, const char c = ' ');
 
+/*! \brief          Remove empty lines from a vector of lines
+    \param  lines   the original vector of lines
+    \return         <i>lines</i>, but with all empty lines removed
+
+    If the line contains anything, even just whitespace, it is not removed
+*/
 const std::vector<std::string> remove_empty_lines(const std::vector<std::string>& lines);
 
 /*! \brief              Split a string into lines
@@ -405,13 +411,13 @@ inline const std::string create_string(const char c, const int n = 1)
 */
 const std::string create_centred_string(const std::string& str, const unsigned int width);
 
-/// the last character in a string
+/// get the last character in a string
 const char last_char(const std::string& cs);
 
-/// the penultimate character in a string
+/// get the penultimate character in a string
 const char penultimate_char(const std::string& cs);
 
-/// the antepenultimate character in a string
+/// get the antepenultimate character in a string
 const char antepenultimate_char(const std::string& cs);
 
 /*! \brief          Get the terminating part of a string
@@ -471,7 +477,11 @@ inline const bool begins_with(const std::string& cs, const std::string& ss)
 inline const bool is_maritime_mobile(const std::string& callsign)
   { return ( to_upper(last(callsign, 3)) == "/MM" ); }
 
-/// convert an integer to a character-separated string
+/*! \brief          Convert an integer to a character-separated string
+    \param  n       number to convert
+    \param  sep     string to act as the triplet separator
+    \return         <i>n</i> with the separator <i>sep</i> separating each triplet
+*/
 const std::string separated_string(const int n, const std::string& sep = ",");
 
 /// convert an integer to a comma-separated string

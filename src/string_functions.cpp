@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 121 2016-01-31 21:02:03Z  $
+// $Id: string_functions.cpp 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -418,6 +418,12 @@ const string squash(const string& cs, const char c)
   return rv;
 }
 
+/*! \brief          Remove empty lines from a vector of lines
+    \param  lines   the original vector of lines
+    \return         <i>lines</i>, but with all empty lines removed
+
+    If the line contains anything, even just whitespace, it is not removed
+*/
 const vector<string> remove_empty_lines(const vector<string>& lines)
 { vector<string> rv;
 
@@ -427,7 +433,6 @@ const vector<string> remove_empty_lines(const vector<string>& lines)
 
   return rv;
 }
-
 
 /*! \brief          Join the elements of a string vector, using a provided separator
     \param  vec     vector of strings
@@ -480,10 +485,10 @@ const string remove_from_end(const string& s, const unsigned int n)
   return s.substr(0, s.length() - n);
 }
 
-/*! \brief  Remove all instances of a specific leading character
-  \param  cs  Original string
-  \param  c Leading character to remove (if present)
-  \return <i>cs</i> with any leading octets with the value <i>c</i> removed
+/*! \brief      Remove all instances of a specific leading character
+    \param  cs  original string
+    \param  c   leading character to remove (if present)
+    \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
 const string remove_leading(const string& str, const char c)
 { string rv = str;
@@ -494,10 +499,10 @@ const string remove_leading(const string& str, const char c)
   return rv;
 }
 
-/*! \brief  Remove all instances of a specific trailing character
-  \param  cs  Original string
-  \param  c Trailing character to remove (if present)
-  \return <i>cs</i> with any trailing octets with the value <i>c</i> removed
+/*! \brief      Remove all instances of a specific trailing character
+    \param  cs  original string
+    \param  c   trailing character to remove (if present)
+    \return     <i>cs</i> with any trailing octets with the value <i>c</i> removed
 */
 const string remove_trailing(const string& s, const char c)
 { string rv = s;
@@ -508,10 +513,10 @@ const string remove_trailing(const string& s, const char c)
   return rv;
 }
 
-/*! \brief  Remove all instances of a particular char from a string
-  \param  cs  Original string
-  \param  char_to_remove  Character to be removed from <i>cs</i>
-  \return <i>cs</i> with all instances of <i>char_to_remove</i> removed
+/*! \brief                  Remove all instances of a particular char from a string
+    \param  cs              original string
+    \param  char_to_remove  character to be removed from <i>cs</i>
+    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
 const string remove_char(const string& s, const char c)
 { string rv;

@@ -1,4 +1,4 @@
-// $Id: adif.h 119 2016-01-16 18:32:13Z  $
+// $Id: adif.h 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -468,9 +468,9 @@ enum BAND_ENUM { ADIF_BAND_2190m,
                  ADIF_BAND_2mm,
                  ADIF_BAND_1mm,
                  N_ADIF_BANDS
-               };
+               };                                                       ///< enum for bands
 
-typedef std::array<std::string, N_ADIF_BANDS> BAND_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ADIF_BANDS> BAND_ENUMERATION_TYPE;    ///< type for band enumeration
 
 static BAND_ENUMERATION_TYPE BAND_ENUMERATION = { { "2190m",
                                                     "560m",
@@ -501,7 +501,7 @@ static BAND_ENUMERATION_TYPE BAND_ENUMERATION = { { "2190m",
                                                     "2.5mm",
                                                     "2mm",
                                                     "1mm"
-                                                } };
+                                                } };                    ///< values for bands
 
 // contest  -------------------------------------------------------
 
@@ -619,124 +619,124 @@ enum CONTEST_ENUM { CONTEST_7QP,                //      7th-Area QSO Party
                     CONTEST_WINTER_SPRINT,      //      FISTS Winter Sprint
                     CONTEST_YUDXC,              //      YU DX Contest
                     N_CONTESTS
-                  };
+                  };                                                                            ///< enum for contests
 
-typedef std::array<std::string, N_CONTESTS> CONTEST_ENUMERATION_TYPE;
+typedef std::array<std::string, N_CONTESTS> CONTEST_ENUMERATION_TYPE;                           ///< type for contest enumeration
 
-static CONTEST_ENUMERATION_TYPE CONTEST_ENUMERATION = { { "7QP",                    //   7th-Area QSO Party
-                                                          "ANARTS-RTTY",            //     ANARTS WW RTTY
-                                                          "ANATOLIAN-RTTY",         //  Anatolian WW RTTY
-                                                          "AP-SPRINT",              //   Asia - Pacific Sprint
-                                                          "ARI-DX",                 //  ARI DX Contest
-                                                          "ARRL-10",                //     ARRL 10 Meter Contest
-                                                          "ARRL-160",               //    ARRL 160 Meter Contest
-                                                          "ARRL-DX-CW",             //  ARRL International DX Contest (CW)
-                                                          "ARRL-DX-SSB",            //     ARRL International DX Contest (Phone)
-                                                          "ARRL-FIELD-DAY",         //  ARRL Field Day
-                                                          "ARRL-RTTY",              //   ARRL RTTY Round-Up
-                                                          "ARRL-SS-CW",             //  ARRL November Sweepstakes (CW)
-                                                          "ARRL-SS-SSB",            //     ARRL November Sweepstakes (Phone)
-                                                          "ARRL-UHF-AUG",         //    ARRL August UHF Contest
-                                                          "ARRL-VHF-JAN",         //    ARRL January VHF Sweepstakes
-                                                          "ARRL-VHF-JUN",         //    ARRL June VHF QSO Party
-                                                          "ARRL-VHF-SEP",         //    ARRL September VHF QSO Party
-                                                          "BARTG-RTTY",         //  BARTG Spring RTTY Contest
-                                                          "BARTG-SPRINT",         //    BARTG Sprint Contest
-                                                          "CA-QSO-PARTY",         //    California QSO Party
-                                                          "CQ-160-CW",         //   CQ WW 160 Meter DX Contest (CW)
-                                                          "CQ-160-SSB",         //  CQ WW 160 Meter DX Contest (SSB)
-                                                          "CQ-VHF",         //  CQ World-Wide VHF Contest
-                                                          "CQ-WPX-CW",         //   CQ WW WPX Contest (CW)
-                                                          "CQ-WPX-RTTY",         //     CQ/RJ WW RTTY WPX Contest
-                                                          "CQ-WPX-SSB",         //  CQ WW WPX Contest (SSB)
-                                                          "CQ-WW-CW",         //    CQ WW DX Contest (CW)
-                                                          "CQ-WW-RTTY",         //  CQ/RJ WW RTTY DX Contest
-                                                          "CQ-WW-SSB",         //   CQ WW DX Contest (SSB)
-                                                          "CWOPS-CWT",         //   CWops Mini-CWT Test
-                                                          "CIS-DX",         //  CIS DX Contest
-                                                          "DARC-WAEDC-CW",         //   WAE DX Contest (CW)
-                                                          "DARC-WAEDC-RTTY",         //     WAE DX Contest (RTTY)
-                                                          "DARC-WAEDC-SSB",         //  WAE DX Contest (SSB)
-                                                          "DL-DX-RTTY",         //  DL-DX RTTY Contest
-                                                          "EA-RTTY",         //, EA-WW-RTTY
-                                                          "EPC-PSK63",         //   PSK63 QSO Party
-                                                          "EU Sprint",         //   EU Sprint
-                                                          "EUCW160M",         //
-                                                          "EU-HF",         //   EU HF Championship
-                                                          "EU-PSK-DX",         //   EU PSK DX Contest
-                                                          "Fall Sprint",         //     FISTS Fall Sprint
-                                                          "FL-QSO-PARTY",         //    Florida QSO Party
-                                                          "GA-QSO-PARTY",         //    Georgia QSO Party
-                                                          "HELVETIA",         //    Helvetia Contest
-                                                          "IARU-HF",         //     IARU HF World Championship
-                                                          "IL QSO Party",         //    Illinois QSO Party
-                                                          "JARTS-WW-RTTY",         //   JARTS WW RTTY
-                                                          "JIDX-CW",         //     Japan International DX Contest (CW)
-                                                          "JIDX-SSB",         //    Japan International DX Contest (SSB)
-                                                          "LZ DX",         //   LZ DX Contest
-                                                          "MI-QSO-PARTY",         //    Michigan QSO Party
-                                                          "NAQP-CW",         //     North America QSO Party (CW)
-                                                          "NAQP-RTTY",         //   North America QSO Party (RTTY)
-                                                          "NAQP-SSB",         //   North America QSO Party (Phone)
-                                                          "NA-SPRINT-CW",         //    North America Sprint (CW)
-                                                          "NA-SPRINT-RTTY",         //  North America Sprint (RTTY)
-                                                          "NA-SPRINT-SSB",         //   North America Sprint (Phone)
-                                                          "NEQP",         //    New England QSO Party
-                                                          "NRAU-BALTIC-CW",         //  NRAU-Baltic Contest (CW)
-                                                          "NRAU-BALTIC-SSB",         //     NRAU-Baltic Contest (SSB)
-                                                          "OCEANIA-DX-CW",         //   Oceania DX Contest (CW)
-                                                          "OCEANIA-DX-SSB",         //  Oceania DX Contest (SSB)
-                                                          "OH-QSO-PARTY",         //    Ohio QSO Party
-                                                          "OK-DX-RTTY",         //
-                                                          "OK-OM-DX",         //    OK-OM DX Contest
-                                                          "ON-QSO-PARTY",         //    Ontario QSO Party
-                                                          "PACC",         //
-                                                          "QC-QSO-PARTY",         //    Quebec QSO Party
-                                                          "RAC, CANADA DAY, CANADA WINTER",         //  Canada Day, RAC Winter contests
-                                                          "RDAC",         //    Russian District Award Contest
-                                                          "RDXC",         //    Russian DX Contest
-                                                          "REF-160M",         //
-                                                          "REF-CW",         //
-                                                          "REF-SSB",         //
-                                                          "RSGB-160",         //    1.8Mhz Contest
-                                                          "RSGB-21/28-CW",         //   21/28 MHz Contest (CW)
-                                                          "RSGB-21/28-SSB",         //  21/28 MHz Contest (SSB)
-                                                          "RSGB-80M-CC",         //     80m Club Championships
-                                                          "RSGB-AFS-CW",         //     Affiliated Societies Team Contest (CW)
-                                                          "RSGB-AFS-SSB",         //    Affiliated Societies Team Contest (SSB)
-                                                          "RSGB-CLUB-CALLS",         //     Club Calls
-                                                          "RSGB-COMMONWEALTH",         //   Commonwealth Contest
-                                                          "RSGB-IOTA",         //   IOTA Contest
-                                                          "RSGB-LOW-POWER",         //  Low Power Field Day
-                                                          "RSGB-NFD",         //    National Field Day
-                                                          "RSGB-ROPOCO",         //     RoPoCo
-                                                          "RSGB-SSB-FD",         //     SSB Field Day
-                                                          "RUSSIAN-RTTY",         //
-                                                          "SAC-CW",         //  Scandinavian Activity Contest (CW)
-                                                          "SAC-SSB",         //     Scandinavian Activity Contest (SSB)
-                                                          "SARTG-RTTY",         //  SARTG WW RTTY
-                                                          "SCC-RTTY",         //    SCC RTTY Championship
-                                                          "SMP-AUG",         //     SSA Portabeltest
-                                                          "SMP-MAY",         //     SSA Portabeltest
-                                                          "SPDXContest",         //     SP DX Contest
-                                                          "Spring Sprint",         //   FISTS Spring Sprint
-                                                          "SR-MARATHON",         //     Scottish-Russian Marathon
-                                                          "STEW-PERRY",         //  Stew Perry Topband Distance Challenge
-                                                          "Summer Sprint",         //   FISTS Summer Sprint
-                                                          "TARA-RTTY",         //   TARA RTTY Mêlée
-                                                          "TMC-RTTY",         //    The Makrothen Contest
-                                                          "UBA-DX-CW",         //   UBA Contest (CW)
-                                                          "UBA-DX-SSB",         //  UBA Contest (SSB)
-                                                          "UK-DX-RTTY",         //  UK DX RTTY Contest
-                                                          "UKRAINIAN DX",         //    Ukrainian DX
-                                                          "UKR-CHAMP-RTTY",         //  Open Ukraine RTTY Championship
-                                                          "URE-DX",         //
-                                                          "Virginia QSO Party",         //  Virginia QSO Party
-                                                          "VOLTA-RTTY",         //  Alessandro Volta RTTY DX Contest
-                                                          "WI-QSO-PARTY",         //    Wisconsin QSO Party
-                                                          "Winter Sprint",         //   FISTS Winter Sprint
-                                                          "YUDXC",         //   YU DX Contest
-                                                      } };
+static CONTEST_ENUMERATION_TYPE CONTEST_ENUMERATION = { { "7QP",                                //  7th-Area QSO Party
+                                                          "ANARTS-RTTY",                        //  ANARTS WW RTTY
+                                                          "ANATOLIAN-RTTY",                     //  Anatolian WW RTTY
+                                                          "AP-SPRINT",                          //  Asia - Pacific Sprint
+                                                          "ARI-DX",                             //  ARI DX Contest
+                                                          "ARRL-10",                            //  ARRL 10 Meter Contest
+                                                          "ARRL-160",                           //  ARRL 160 Meter Contest
+                                                          "ARRL-DX-CW",                         //  ARRL International DX Contest (CW)
+                                                          "ARRL-DX-SSB",                        //  ARRL International DX Contest (Phone)
+                                                          "ARRL-FIELD-DAY",                     //  ARRL Field Day
+                                                          "ARRL-RTTY",                          //  ARRL RTTY Round-Up
+                                                          "ARRL-SS-CW",                         //  ARRL November Sweepstakes (CW)
+                                                          "ARRL-SS-SSB",                        //  ARRL November Sweepstakes (Phone)
+                                                          "ARRL-UHF-AUG",                       //  ARRL August UHF Contest
+                                                          "ARRL-VHF-JAN",                       //  ARRL January VHF Sweepstakes
+                                                          "ARRL-VHF-JUN",                       //  ARRL June VHF QSO Party
+                                                          "ARRL-VHF-SEP",                       //  ARRL September VHF QSO Party
+                                                          "BARTG-RTTY",                         //  BARTG Spring RTTY Contest
+                                                          "BARTG-SPRINT",                       //  BARTG Sprint Contest
+                                                          "CA-QSO-PARTY",                       //  California QSO Party
+                                                          "CQ-160-CW",                          //  CQ WW 160 Meter DX Contest (CW)
+                                                          "CQ-160-SSB",                         //  CQ WW 160 Meter DX Contest (SSB)
+                                                          "CQ-VHF",                             //  CQ World-Wide VHF Contest
+                                                          "CQ-WPX-CW",                          //  CQ WW WPX Contest (CW)
+                                                          "CQ-WPX-RTTY",                        //  CQ/RJ WW RTTY WPX Contest
+                                                          "CQ-WPX-SSB",                         //  CQ WW WPX Contest (SSB)
+                                                          "CQ-WW-CW",                           //  CQ WW DX Contest (CW)
+                                                          "CQ-WW-RTTY",                         //  CQ/RJ WW RTTY DX Contest
+                                                          "CQ-WW-SSB",                          //  CQ WW DX Contest (SSB)
+                                                          "CWOPS-CWT",                          //  CWops Mini-CWT Test
+                                                          "CIS-DX",                             //  CIS DX Contest
+                                                          "DARC-WAEDC-CW",                      //  WAE DX Contest (CW)
+                                                          "DARC-WAEDC-RTTY",                    //  WAE DX Contest (RTTY)
+                                                          "DARC-WAEDC-SSB",                     //  WAE DX Contest (SSB)
+                                                          "DL-DX-RTTY",                         //  DL-DX RTTY Contest
+                                                          "EA-RTTY",                            //  EA-WW-RTTY
+                                                          "EPC-PSK63",                          //  PSK63 QSO Party
+                                                          "EU Sprint",                          //  EU Sprint
+                                                          "EUCW160M",                           //
+                                                          "EU-HF",                              //  EU HF Championship
+                                                          "EU-PSK-DX",                          //  EU PSK DX Contest
+                                                          "Fall Sprint",                        //  FISTS Fall Sprint
+                                                          "FL-QSO-PARTY",                       //  Florida QSO Party
+                                                          "GA-QSO-PARTY",                       //  Georgia QSO Party
+                                                          "HELVETIA",                           //  Helvetia Contest
+                                                          "IARU-HF",                            //  IARU HF World Championship
+                                                          "IL QSO Party",                       //  Illinois QSO Party
+                                                          "JARTS-WW-RTTY",                      //  JARTS WW RTTY
+                                                          "JIDX-CW",                            //  Japan International DX Contest (CW)
+                                                          "JIDX-SSB",                           //  Japan International DX Contest (SSB)
+                                                          "LZ DX",                              //  LZ DX Contest
+                                                          "MI-QSO-PARTY",                       //  Michigan QSO Party
+                                                          "NAQP-CW",                            //  North America QSO Party (CW)
+                                                          "NAQP-RTTY",                          //  North America QSO Party (RTTY)
+                                                          "NAQP-SSB",                           //  North America QSO Party (Phone)
+                                                          "NA-SPRINT-CW",                       //  North America Sprint (CW)
+                                                          "NA-SPRINT-RTTY",                     //  North America Sprint (RTTY)
+                                                          "NA-SPRINT-SSB",                      //  North America Sprint (Phone)
+                                                          "NEQP",                               //  New England QSO Party
+                                                          "NRAU-BALTIC-CW",                     //  NRAU-Baltic Contest (CW)
+                                                          "NRAU-BALTIC-SSB",                    //  NRAU-Baltic Contest (SSB)
+                                                          "OCEANIA-DX-CW",                      //  Oceania DX Contest (CW)
+                                                          "OCEANIA-DX-SSB",                     //  Oceania DX Contest (SSB)
+                                                          "OH-QSO-PARTY",                       //  Ohio QSO Party
+                                                          "OK-DX-RTTY",                         //
+                                                          "OK-OM-DX",                           //  OK-OM DX Contest
+                                                          "ON-QSO-PARTY",                       //  Ontario QSO Party
+                                                          "PACC",                               //
+                                                          "QC-QSO-PARTY",                       //  Quebec QSO Party
+                                                          "RAC, CANADA DAY, CANADA WINTER",     //  Canada Day, RAC Winter contests
+                                                          "RDAC",                               //  Russian District Award Contest
+                                                          "RDXC",                               //  Russian DX Contest
+                                                          "REF-160M",                           //
+                                                          "REF-CW",                             //
+                                                          "REF-SSB",                            //
+                                                          "RSGB-160",                           //  1.8Mhz (sic) Contest
+                                                          "RSGB-21/28-CW",                      //  21/28 MHz Contest (CW)
+                                                          "RSGB-21/28-SSB",                     //  21/28 MHz Contest (SSB)
+                                                          "RSGB-80M-CC",                        //  80m Club Championships
+                                                          "RSGB-AFS-CW",                        //  Affiliated Societies Team Contest (CW)
+                                                          "RSGB-AFS-SSB",                       //  Affiliated Societies Team Contest (SSB)
+                                                          "RSGB-CLUB-CALLS",                    //  Club Calls
+                                                          "RSGB-COMMONWEALTH",                  //  Commonwealth Contest
+                                                          "RSGB-IOTA",                          //  IOTA Contest
+                                                          "RSGB-LOW-POWER",                     //  Low Power Field Day
+                                                          "RSGB-NFD",                           //  National Field Day
+                                                          "RSGB-ROPOCO",                        //  RoPoCo
+                                                          "RSGB-SSB-FD",                        //  SSB Field Day
+                                                          "RUSSIAN-RTTY",                       //
+                                                          "SAC-CW",                             //  Scandinavian Activity Contest (CW)
+                                                          "SAC-SSB",                            //  Scandinavian Activity Contest (SSB)
+                                                          "SARTG-RTTY",                         //  SARTG WW RTTY
+                                                          "SCC-RTTY",                           //  SCC RTTY Championship
+                                                          "SMP-AUG",                            //  SSA Portabeltest
+                                                          "SMP-MAY",                            //  SSA Portabeltest
+                                                          "SPDXContest",                        //  SP DX Contest
+                                                          "Spring Sprint",                      //  FISTS Spring Sprint
+                                                          "SR-MARATHON",                        //  Scottish-Russian Marathon
+                                                          "STEW-PERRY",                         //  Stew Perry Topband Distance Challenge
+                                                          "Summer Sprint",                      //  FISTS Summer Sprint
+                                                          "TARA-RTTY",                          //  TARA RTTY Mêlée
+                                                          "TMC-RTTY",                           //  The Makrothen Contest
+                                                          "UBA-DX-CW",                          //  UBA Contest (CW)
+                                                          "UBA-DX-SSB",                         //  UBA Contest (SSB)
+                                                          "UK-DX-RTTY",                         //  UK DX RTTY Contest
+                                                          "UKRAINIAN DX",                       //  Ukrainian DX
+                                                          "UKR-CHAMP-RTTY",                     //  Open Ukraine RTTY Championship
+                                                          "URE-DX",                             //
+                                                          "Virginia QSO Party",                 //  Virginia QSO Party
+                                                          "VOLTA-RTTY",                         //  Alessandro Volta RTTY DX Contest
+                                                          "WI-QSO-PARTY",                       //  Wisconsin QSO Party
+                                                          "Winter Sprint",                      //  FISTS Winter Sprint
+                                                          "YUDXC",                              //  YU DX Contest
+                                                      } };                                          ///< values for contests
 
 // propagation mode  -------------------------------------------------------
 
@@ -758,28 +758,28 @@ enum PROPAGATION_MODE_ENUM { PROP_MODE_AUR,         //      Aurora
                              PROP_MODE_TEP,         //      Trans-equatorial
                              PROP_MODE_TR,          //      Tropospheric ducting
                              N_PROP_MODES
-};
+};                                                      ///< enum for propagation mode
 
-typedef std::array<std::string, N_PROP_MODES> PROPAGATION_MODE_ENUMERATION_TYPE;
+typedef std::array<std::string, N_PROP_MODES> PROPAGATION_MODE_ENUMERATION_TYPE;    ///< type for propagation mode enumeration
 
-static PROPAGATION_MODE_ENUMERATION_TYPE PROPAGATION_MODE_ENUMERATION = { { "AUR",          //     Aurora
-                                                                            "AUE",          //     Aurora-E
+static PROPAGATION_MODE_ENUMERATION_TYPE PROPAGATION_MODE_ENUMERATION = { { "AUR",          //  Aurora
+                                                                            "AUE",          //  Aurora-E
                                                                             "BS",           //  Back scatter
-                                                                            "ECH",          //     EchoLink
-                                                                            "EME",          //     Earth-Moon-Earth
+                                                                            "ECH",          //  EchoLink
+                                                                            "EME",          //  Earth-Moon-Earth
                                                                             "ES",           //  Sporadic E
-                                                                            "FAI",          //     Field Aligned Irregularities
+                                                                            "FAI",          //  Field Aligned Irregularities
                                                                             "F2",           //  F2 Reflection
-                                                                            "INTERNET",     //    Internet-assisted
-                                                                            "ION",          //     Ionoscatter
-                                                                            "IRL",          //     IRLP
+                                                                            "INTERNET",     //  Internet-assisted
+                                                                            "ION",          //  Ionoscatter
+                                                                            "IRL",          //  IRLP
                                                                             "MS",           //  Meteor scatter
-                                                                            "RPT",          //     Terrestrial or atmospheric repeater or transponder
+                                                                            "RPT",          //  Terrestrial or atmospheric repeater or transponder
                                                                             "RS",           //  Rain scatter
-                                                                            "SAT",          //     Satellite
-                                                                            "TEP",          //     Trans-equatorial
-                                                                            "TR"            // Tropospheric ducting
-                                                                        } };
+                                                                            "SAT",          //  Satellite
+                                                                            "TEP",          //  Trans-equatorial
+                                                                            "TR"            //  Tropospheric ducting
+                                                                        } };                    ///< values for propagatiom mode
 
 // primary administrative subdivisions  -------------------------------------------------------
 
@@ -799,9 +799,9 @@ enum PRIMARY_ENUM_CANADA { CANADA_NS,                   // Nova Scotia
                            CANADA_PE,                   // Prince Edward Island
                            CANADA_NU,                   // Nunavut
                            N_CANADA_PRIMARIES
-                         };
+                         };                             ///< enum for Canada
 
-typedef std::array<std::string, N_CANADA_PRIMARIES> PRIMARY_CANADA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_CANADA_PRIMARIES> PRIMARY_CANADA_ENUMERATION_TYPE; ///< type for Canada enumeration
 
 static PRIMARY_CANADA_ENUMERATION_TYPE PRIMARY_CANADA_ENUMERATION = { { "NS",
                                                                         "QC",
@@ -815,7 +815,7 @@ static PRIMARY_CANADA_ENUMERATION_TYPE PRIMARY_CANADA_ENUMERATION = { { "NS",
                                                                         "YT",
                                                                         "PE",
                                                                         "NU"
-                                                                    } };
+                                                                    } };            ///< values for Canada
 
 // Aland Is.
 

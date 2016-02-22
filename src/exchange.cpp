@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 121 2016-01-31 21:02:03Z  $
+// $Id: exchange.cpp 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -31,7 +31,7 @@ extern logbook logbk;                   ///< the (global) logbook
 
 pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
 
-static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };
+static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
 
 // -------------------------  parsed_exchange_field  ---------------------------
 
@@ -91,6 +91,12 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
         \brief All the fields in the SS exchange, following parsing
 */
 
+/*! \brief          Does a string possibly contain a serial number?
+    \param  str     string to check
+    \return         whether <i>str</i> contains a possible serial number
+
+    Currently returns true only for strings of the form <n><precedence>
+*/
 const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 { bool possible = true;
 
@@ -107,6 +113,12 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
   return possible;
 }
 
+/*! \brief          Does a string possibly contain a precedence?
+    \param  str     string to check
+    \return         whether <i>str</i> contains a possible serial precedence
+
+    Currently returns true only for strings of the form <n><precedence>
+*/
 const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
 { if (str.length() == 1)
     return (legal_prec < last_char(str));
@@ -114,6 +126,10 @@ const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
   return _is_possible_serno(str) and (legal_prec < last_char(str));
 }
 
+/*! \brief          Does a string possibly contain a check?
+    \param  str     string to check
+    \return         whether <i>str</i> is a (two-digit) check
+*/
 const bool parsed_ss_exchange::_is_possible_check(const string& str) const
 { if (str.length() == 1 or str.length() == 3)
     return false;
@@ -130,6 +146,10 @@ const bool parsed_ss_exchange::_is_possible_check(const string& str) const
     return true;
 }
 
+/*! \brief                  Constructor
+    \param  call            callsign
+    \param  received_str    exchange string
+*/
 parsed_ss_exchange::parsed_ss_exchange(const string& call, const string& received_str) :
   _callsign(call)
 { const vector<string> fields = split_string(squash(to_upper(received_str), ' '), " ");

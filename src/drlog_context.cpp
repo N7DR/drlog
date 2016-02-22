@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 121 2016-01-31 21:02:03Z  $
+// $Id: drlog_context.cpp 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -788,11 +788,11 @@ void drlog_context::_process_configuration_file(const string& filename)
       _rbn_server = rhs;
 
 // RBN THRESHOLD
-    if (starts_with(testline, "RBN THRESHOLD"))
+    if (LHS == "RBN THRESHOLD")
       _rbn_threshold = from_string<unsigned int>(rhs);
 
 // RBN USERNAME
-    if (starts_with(testline, "RBN USERNAME"))
+    if (LHS == "RBN USERNAME")
       _rbn_username = rhs;
 
 // REJECT COLOUR
@@ -800,15 +800,15 @@ void drlog_context::_process_configuration_file(const string& filename)
       _reject_colour = string_to_colour(RHS);
 
 // RIG 1 BAUD
-    if (starts_with(testline, "RIG 1 BAUD") or starts_with(testline, "RIG BAUD"))
+    if ( (LHS == "RIG 1 BAUD") or (LHS == "RIG BAUD") )
       _rig1_baud = from_string<unsigned int>(rhs);
 
 // RIG 1 DATA BITS
-    if (starts_with(testline, "RIG 1 DATA BITS") or starts_with(testline, "RIG DATA BITS"))
+    if ( (LHS == "RIG 1 DATA BITS") or (LHS == "RIG DATA BITS") )
       _rig1_data_bits = from_string<unsigned int>(rhs);
 
 // RIG 1 NAME
-    if (starts_with(testline, "RIG 1 NAME") or starts_with(testline, "RADIO ONE NAME"))
+    if ( (LHS == "RIG 1 NAME") or (LHS == "RADIO ONE NAME") )
       _rig1_name = rhs;
 
 // RIG 1 PORT

@@ -1,4 +1,4 @@
-// $Id: rules.h 119 2016-01-16 18:32:13Z  $
+// $Id: rules.h 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -276,6 +276,8 @@ protected:
   std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
 
   std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
+  std::vector<std::string>            _expanded_exchange_mults;  ///< expanded names of the exchange fields that are mults, in the same order as in the configuration file
+
   bool                                _exchange_mults_per_band;  ///< are exchange mults counted per-band?
   bool                                _exchange_mults_per_mode;  ///< are exchange mults counted per-mode?
   bool                                _exchange_mults_used;      ///< are exchange mults used?
@@ -459,11 +461,12 @@ public:
   SAFEREAD(country_mults_used, rules);                   ///< are country mults used?
   SAFEREAD(exchange_mults_used, rules);                  ///< are exchange mults used?
 
-  SAFEREAD(score_bands, rules);             ///< bands currently used to calculate score
-  SAFEREAD(original_score_bands, rules);    ///< bands that were originally used to calculate score (from the configuration file)
-  SAFEREAD(score_modes, rules);             ///< modes currently used to calculate score
-  SAFEREAD(original_score_modes, rules);    ///< modes that were originally used to calculate score (from the configuration file)
-  SAFEREAD(exchange_mults, rules);          ///< the exchange multipliers, in the same order as in the configuration file
+  SAFEREAD(score_bands, rules);                 ///< bands currently used to calculate score
+  SAFEREAD(original_score_bands, rules);        ///< bands that were originally used to calculate score (from the configuration file)
+  SAFEREAD(score_modes, rules);                 ///< modes currently used to calculate score
+  SAFEREAD(original_score_modes, rules);        ///< modes that were originally used to calculate score (from the configuration file)
+  SAFEREAD(exchange_mults, rules);              ///< the exchange multipliers, in the same order as in the configuration file
+  SAFEREAD(expanded_exchange_mults, rules);     ///< expanded exchange multipliers
 
   SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?
   SAFEREAD(uba_bonus, rules);               ///< Do we have bonus points for ON stations?

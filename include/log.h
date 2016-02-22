@@ -1,4 +1,4 @@
-// $Id: log.h 119 2016-01-16 18:32:13Z  $
+// $Id: log.h 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -120,7 +120,6 @@ public:
 /// has a particular call been worked at all?
   inline const bool qso_b4(const std::string& call) const
     { SAFELOCK(_log);
-
       return (_log.lower_bound(call) != _log.upper_bound(call)); 
     }
     
@@ -215,8 +214,8 @@ public:
 */
   void read_cabrillo(const std::string& filename, const std::vector<std::string>& cabrillo_fields);
 
-/*! \brief                          Read from a TRLOG file
-    \param  filename                name of TRLOG file
+/*! \brief              Read from a TRLOG file
+    \param  filename    name of TRLOG file
 */
   void read_trlog_log(const std::string& filename);
   
@@ -370,15 +369,16 @@ template <typename T>
 /*!     \class old_log_record
         \brief A record in an old ADIF log
 
-        Not thread safe, so create once and then never change
+        Not thread safe, so create once and then never change. Just a trivial tuple.
 */
 
 class old_log_record
 {
 protected:
-  BAND          _band;      ///< band
-  std::string   _callsign;  ///< callsign
-  MODE          _mode;      ///< mode
+
+  BAND          _band;          ///< band
+  std::string   _callsign;      ///< callsign
+  MODE          _mode;          ///< mode
   bool          _qsl_received;  ///< has a QSL been received?
 
 public:
@@ -387,33 +387,6 @@ public:
   READ_AND_WRITE(callsign);
   READ_AND_WRITE(mode);
   READ_AND_WRITE(qsl_received);
-
-//  const bool operator<(const old_log_record& olr);
-
 };
-
-//multimap<string /* callsign */, old_log_record>
-
-#if 0
-// -----------  old_log  ----------------
-
-/*!     \class old_log
-        \brief An old ADIF log
-
-        Not thread safe, so create once and then never change
-*/
-
-class old_log : public std::multimap<std::string /* callsign */, old_log_record>
-{
-protected:
-
-public:
-
-  inline const size_t n_qsos(const std::string& str) const
-    { return count(str); }
-
-  const size_t n_qsls(const std::string& str) const;
-};
-#endif
 
 #endif    // LOG_H

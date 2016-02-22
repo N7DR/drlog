@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 121 2016-01-31 21:02:03Z  $
+// $Id: drlog.cpp 124 2016-02-22 20:32:20Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -195,6 +195,7 @@ string    last_exchange;                    ///< the last sent exchange
 pt_mutex            thread_check_mutex;                     ///< mutex for controlling threads; both the following variables are under this mutex
 int                 n_running_threads = 0;                  ///< how many additional threads are running?
 bool                exiting = false;                        ///< is the program exiting?
+bool                exiting_rig_status = false;             ///< turn off the display-rig_status thread first
 
 pt_mutex            current_band_mutex;                     ///< mutex for setting/getting the current band
 BAND                current_band;                           ///< the current band
@@ -1925,8 +1926,9 @@ void* display_rig_status(void* vp)
 
     { SAFELOCK(thread_check);
 
-      if (exiting)
+      if (exiting_rig_status)
       { ost << "display_rig_status() is exiting" << endl;
+        exiting = true;
 
         n_running_threads--;
         pthread_exit(nullptr);
@@ -2051,7 +2053,7 @@ void* process_rbn_info(void* vp)
               update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
-              const vector<string> exch_mults = rules.exchange_mults();                                      ///< the exchange multipliers, in the same order as in the configuration file
+              const vector<string> exch_mults = rules.expanded_exchange_mults();                                      ///< the exchange multipliers
 
               for (const auto& exch_mult_name : exch_mults)
               { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
@@ -3597,6 +3599,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     { win_info <= WINDOW_CLEAR;
       win_batch_messages <= WINDOW_CLEAR;
       win_individual_messages <= WINDOW_CLEAR;
+      update_qsls_window();                     // clears the window, except for the preliminary string
     }
     else
     { const string current_contents = remove_peripheral_spaces(win.read());
@@ -5443,8 +5446,8 @@ void exit_drlog(void)
 
     ost << "have the lock" << endl;
 
-    exiting = true;
-    ost << "exiting now true; number of threads = " << n_running_threads << endl;
+    exiting_rig_status = true;
+    ost << "exiting_rig_status now true; number of threads = " << n_running_threads << endl;
   }
 
   ost << "starting exit tests" << endl;
@@ -5515,23 +5518,23 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
 */
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
 {
-  ost << "Testing whether needed QSO: " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << endl;
+//  ost << "Testing whether needed QSO: " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << endl;
 
   const bool worked_at_all = q_history.worked(callsign);
 
-  ost << "Worked at all = " << boolalpha << worked_at_all << endl;
+//  ost << "Worked at all = " << boolalpha << worked_at_all << endl;
 
   if (!worked_at_all)
-  { ost << "Not worked at all; returning true" << endl;
-  return true;
+  { //ost << "Not worked at all; returning true" << endl;
+    return true;
   }
 
   const bool worked_this_band_mode = q_history.worked(callsign, b, m);
 
-  ost << "Worked this bandmode = " << boolalpha << worked_this_band_mode << endl;
+//  ost << "Worked this bandmode = " << boolalpha << worked_this_band_mode << endl;
 
   if (worked_this_band_mode)
-  { ost << "Worked this bandmode, returning false" << endl;
+  { //ost << "Worked this bandmode, returning false" << endl;
     return false;
   }
 

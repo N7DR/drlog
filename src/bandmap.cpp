@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 121 2016-01-31 21:02:03Z  $
+// $Id: bandmap.cpp 123 2016-02-14 20:16:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -40,6 +40,7 @@ extern const set<string> CONTINENT_SET;             ///< two-letter abbreviation
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
 const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
+const unsigned int  MAX_FREQUENCY_SKEW = 250;       ///< maximum separation, in hertz, to be treated as same frequency
 
 bandmap_filter_type BMF;                            ///< the global bandmap filter
 
@@ -148,9 +149,6 @@ void bandmap_entry::freq(const frequency& f)
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
-
-//  ost << "calculating mult status for: " << callsign() << endl;
-
 // callsign mult status
   clear_callsign_mult();
 
@@ -173,38 +171,25 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   const bool is_needed_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
 
   if (is_needed_country_mult)
-  { //ost << "is needed country mult" << endl;
-    add_country_mult(_canonical_prefix);
+  { add_country_mult(_canonical_prefix);
   }
 
 // exchange mult status
   clear_exchange_mult();
 
-  const vector<string> exch_mults = rules.exchange_mults();                                  // the exchange multipliers, in the same order as in the configuration file
+  const vector<string> exch_mults = rules.expanded_exchange_mults();                                  // the exchange multipliers
 
   for (const auto& exch_mult_name : exch_mults)
   { const vector<string> exchange_field_names = rules.expanded_exchange_field_names(_canonical_prefix, _mode);
-//    if (exchange_field_names.find(exch_mult_name) != exchange_field_names.cend())
-
     const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
 
-//    if (find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend())
-//      ost << "exch_mult_name " << exch_mult_name << " IS an expected field for " << _callsign << endl;
-//    else
-//      ost << "exch_mult_name " << exch_mult_name << "IS NOT an expected field for " << _callsign << endl;
-
     if (is_possible_exchange_field)
-    {
-    string guess = exchange_db.guess_value(_callsign, exch_mult_name);
+    { string guess = exchange_db.guess_value(_callsign, exch_mult_name);
 
-//    ost << "guessed value of " << exch_mult_name << " for " << _callsign << " is: " << guess << endl;
+      guess = rules.canonical_value(exch_mult_name, guess);
 
-    guess = rules.canonical_value(exch_mult_name, guess);
-
-    if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
-    { //ost << "is needed exchange mult: " << exch_mult_name << ", value = " << MULT_VALUE(exch_mult_name, guess) << endl;
-      add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
-    }
+      if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
+        add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
     }
   }
 }
@@ -497,7 +482,7 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if (!old_be.valid())    // not already present
     return false;
 
-  if (be.frequency_difference(old_be).hz() > 250)
+  if (be.frequency_difference(old_be).hz() > MAX_FREQUENCY_SKEW)       // treat anything within 250 Hz as the same frequency
     return false;         // we're going to write a new entry
 
   const unsigned int n_new_posters = be.n_posters();
@@ -535,7 +520,7 @@ void bandmap::operator+=(const bandmap_entry& be)
     { old_be = (*this)[callsign];
 
       if (old_be.valid())
-      { if (be.frequency_difference(old_be).hz() > 250)  // if not within 250 Hz
+      { if (be.frequency_difference(old_be).hz() > MAX_FREQUENCY_SKEW)  // if not within 250 Hz
         { (*this) -= callsign;
           _insert(be);
         }
