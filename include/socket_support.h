@@ -344,7 +344,9 @@ const std::string read(const unsigned long timeout_secs);
   
 // keep-alive  
   
-// set the time before a keep-alive is sent
+/*! \brief              Set the idle time before a keep-alive is sent
+    \param  seconds     time to wait idly before a keep-alive is sent
+*/
   void idle_time(const unsigned int seconds);
 
 // set the time between keep-alives

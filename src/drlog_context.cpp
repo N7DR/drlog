@@ -812,23 +812,23 @@ void drlog_context::_process_configuration_file(const string& filename)
       _rig1_name = rhs;
 
 // RIG 1 PORT
-    if (starts_with(testline, "RIG 1 PORT") or starts_with(testline, "RADIO ONE CONTROL PORT"))
+    if ( (LHS == "RIG 1 PORT") or (LHS == "RADIO ONE CONTROL PORT") )
       _rig1_port = rhs;
 
 // RIG 1 STOP BITS
-    if (starts_with(testline, "RIG 1 STOP BITS") or starts_with(testline, "RIG STOP BITS"))
+    if ( (LHS == "RIG 1 STOP BITS") or (LHS == "RIG STOP BITS") )
       _rig1_stop_bits = from_string<unsigned int>(rhs);
 
 // RIG 1 TYPE
-    if (starts_with(testline, "RIG 1 TYPE"))
+    if (LHS == "RIG 1 TYPE")
       _rig1_type = RHS;
 
 // RULES
-    if (starts_with(testline, "RULES"))
+    if (LHS == "RULES")
       _process_configuration_file(rhs);
 
 // RUSSIAN DATA
-    if (starts_with(testline, "RUSSIAN DATA"))
+    if (LHS == "RUSSIAN DATA")
       _russian_filename = rhs;
 
 // SCORE BANDS

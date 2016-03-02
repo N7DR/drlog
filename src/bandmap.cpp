@@ -474,7 +474,6 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if ( (be.source() == BANDMAP_ENTRY_LOCAL) or (be.source() == BANDMAP_ENTRY_CLUSTER) )
     return true;
 
-// RBN poster
   SAFELOCK(_bandmap);
 
   bandmap_entry old_be = (*this)[be.callsign()];
@@ -485,6 +484,7 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if (be.frequency_difference(old_be).hz() > MAX_FREQUENCY_SKEW)       // treat anything within 250 Hz as the same frequency
     return false;         // we're going to write a new entry
 
+// RBN poster
   const unsigned int n_new_posters = be.n_posters();
 
   if (n_new_posters != 1)
@@ -736,8 +736,8 @@ void bandmap::filter_enabled(const bool torf)
   }
 }
 
-/*!  \brief Add a string to, or remove a string from, the filter associated with this bandmap
-     \param str string to add or subtract
+/*!  \brief         Add a string to, or remove a string from, the filter associated with this bandmap
+     \param str     string to add or subtract
 
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
      if it's not already in the filter; otherwise it is removed. Currently, all bandmaps share a single
@@ -822,8 +822,7 @@ const BM_ENTRIES bandmap::filtered_entries(void)
 }
 
 const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
-{ // ost << "inside bandmap::rbn_threshold_and_filtered_entries()" << endl;
-
+{
   { SAFELOCK (_bandmap);
 
     if (!_rbn_threshold_and_filtered_entries_dirty)
@@ -838,12 +837,8 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 
   threshold = _rbn_threshold;
 
-//  ost << "filtering with rbn threshold = " << threshold << endl;
-
   for (const auto& be : filtered)
-  { //ost << "source for " << be.callsign() << " is " << be.source() << endl;
-
-    if (be.source() == BANDMAP_ENTRY_RBN)
+  { if (be.source() == BANDMAP_ENTRY_RBN)
     { if (be.n_posters() >= threshold)
         rv.push_back(be);
     }
@@ -852,16 +847,13 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
     }
   }
 
-//  ost << "size of filtered = " << filtered.size() << endl;
-//  ost << "size of returned = " << rv.size() << endl;
-
   _rbn_threshold_and_filtered_entries = rv;
   _rbn_threshold_and_filtered_entries_dirty = false;
 
   return rv;
 }
 
-/*!  \brief Find the next needed station up or down in frequency from the current loction
+/*!  \brief         Find the next needed station up or down in frequency from the current loction
      \param fp      pointer to function to be used to determine whether a station is needed
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
@@ -906,6 +898,7 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
   return bandmap_entry();
 }
 
+/// convert to a printable string
 const string bandmap::to_str(void)
 { string rv;
   BM_ENTRIES raw;
@@ -1026,8 +1019,9 @@ window& operator<(window& win, bandmap& bm)
   return win;
 }
 
-ostream& operator<<(ostream& ost, bandmap& be)
-{ ost << be.to_str(); // << endl;
+/// ostream << bandmap
+ostream& operator<<(ostream& ost, bandmap& bm)
+{ ost << bm.to_str();
 
   return ost;
 }

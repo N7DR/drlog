@@ -72,11 +72,11 @@ const bool DISPLAY_EXTRACT = true,
            DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;
 
 // some forward declarations; others, that depend on these, occur later
-const string active_window_name(void);      ///< Return the name of the active window in printable form
-void add_qso(const QSO& qso);               ///< Add a QSO into the all the objects that need to know about it
-void alert(const string& msg);              ///< Alert the user
-void allow_for_callsign_mults(QSO& qso);    ///< Add info to QSO if callsign mults are in use; may change qso
-void archive_data(void);                    ///< Send data to the archive file
+const string active_window_name(void);                          ///< Return the name of the active window in printable form
+void add_qso(const QSO& qso);                                   ///< Add a QSO into the all the objects that need to know about it
+void alert(const string& msg, const bool show_time = true);     ///< Alert the user
+void allow_for_callsign_mults(QSO& qso);                        ///< Add info to QSO if callsign mults are in use; may change qso
+void archive_data(void);                                        ///< Send data to the archive file
 
 const string bearing(const string& callsign);   ///< Return the bearing to a station
 
@@ -445,7 +445,7 @@ inline const string serial_number_string(const unsigned int n)
 
 /*! \brief              Calculate the sunrise time for a station
     \param  callsign    call of the station for which sunset is desired
-    \return             sunrise in the form HHMM
+    \return             sunrise in the form HH:MM
 
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
@@ -454,7 +454,7 @@ inline const string sunrise(const string& callsign)
 
 /*! \brief              Calculate the sunset time for a station
     \param  callsign    call of the station for which sunset is desired
-    \return             sunset in the form HHMM
+    \return             sunset in the form HH:MM
 
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
@@ -2042,7 +2042,7 @@ void* process_rbn_info(void* vp)
 
               be.is_needed(is_needed);
 
-              ost << "QSO with " << dx_callsign << " is " << (is_needed ? "" : "NOT ") << "needed" << endl;
+//              ost << "QSO with " << dx_callsign << " is " << (is_needed ? "" : "NOT ") << "needed" << endl;
 
 // update known mults before we test to see if this is a needed mult
 
@@ -2062,21 +2062,17 @@ void* process_rbn_info(void* vp)
                   const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
 
                   if (is_possible_exchange_field)
-                  {
+                  { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
-
-
-                  const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
-
-                  if (!guess.empty())
-                    statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+                    if (!guess.empty())
+                      statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
                   }
-                  }
+                }
               }
 
               be.calculate_mult_status(rules, statistics);
 
-              ost << "after calculating mult status: " << be << endl;
+//              ost << "after calculating mult status: " << be << endl;
 
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
@@ -3070,9 +3066,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
   if (!processed and e.is_control() and (e.symbol() == XK_KP_Enter))
-  { //ost << "CTRL-KP-ENTER pressed" << endl;
-
-    const string contents = remove_peripheral_spaces(win.read());
+  { const string contents = remove_peripheral_spaces(win.read());
     const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
     string results;
 
@@ -3088,14 +3082,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       }
     }
 
-//    if (results.empty())
-//      results = contents + ": No posts found";
-//    else
-//      results = contents + ": " + results;
-
     results = contents + ( results.empty() ? ": No posts found" : ( ": " + results ) );
 
-    win_message < WINDOW_CLEAR <= results;
+//    win_message < WINDOW_CLEAR <= results;
+    alert(results, false);
 
     processed = true;
   }
@@ -4750,7 +4740,7 @@ const string bearing(const string& callsign)
 /*! \brief              Calculate the sunrise or sunset time for a station
     \param  callsign    call of the station for which sunrise or sunset is desired
     \param  calc_sunset whether to calculate sunset
-    \return             sunrise or sunset in the form HHMM
+    \return             sunrise or sunset in the form HH:MM
 
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
@@ -4787,9 +4777,46 @@ void populate_win_info(const string& callsign)
   const string name_str = location_db.country_name(callsign);            // name of the country
 
   if (to_upper(name_str) != "NONE")
-  { win_info < cursor(0, win_info.height() - 2) < location_db.canonical_prefix(callsign) < ": "
+  { const string sunrise_time = sunrise(callsign);
+    const string sunset_time = sunset(callsign);
+//    const string sunrise_time_nc = substring(sunrise_time, 0, 2) + substring(sunrise_time, 3, 2);
+//    const string sunset_time_nc = substring(sunset_time, 0, 2) + substring(sunset_time, 3, 2);
+    const string current_time = substring(hhmmss(), 0, 2) + ":" + substring(hhmmss(), 2, 2);
+    bool is_daylight;
+    bool processed = false;
+
+    if (sunrise_time == "DARK")
+    { is_daylight = false;
+      processed = true;
+    }
+
+    if (!processed and (sunrise_time == "LIGHT"))
+    { is_daylight = true;
+      processed = true;
+    }
+
+    if ( !processed and (sunrise_time == sunset_time)  )
+    { is_daylight = false;              // keep it dark is sunrise and set are at same time
+      processed = true;
+    }
+
+    if ( !processed and (sunset_time > sunrise_time) )
+    { is_daylight = ( (current_time > sunrise_time) and (current_time < sunset_time) );
+      processed = true;
+    }
+
+    if ( !processed and (sunset_time < sunrise_time) )
+    { is_daylight = !( (current_time > sunset_time) and (current_time < sunrise_time) );
+      processed = true;
+    }
+
+    if (!processed)
+      ost << current_time << ": error calculating whether daylight for: " << callsign << endl;
+
+    win_info < cursor(0, win_info.height() - 2) < location_db.canonical_prefix(callsign) < ": "
                                                 < pad_string(bearing(callsign), 5)       < "  "
-                                                < sunrise(callsign)                      < "/"      < sunset(callsign);
+                                                < sunrise_time                           < "/"      < sunset_time
+                                                < (is_daylight ? "(D)" : "(N)");
 
     const size_t len = name_str.size();
 
@@ -5237,19 +5264,27 @@ const string hhmmss(void)
   return (substring(string(buf.data(), 26), 11, 8));
 }
 
-/*! \brief          Alert the user
-    \param  msg     Message to display
+/*! \brief              Alert the user
+    \param  msg         message to display
+    \param  show_time   whether to prepend HHMMSS
 
-    Also logs the message
+    Also logs the message (always with the time)
 */
-void alert(const string& msg)
+void alert(const string& msg, const bool show_time)
 {
   { SAFELOCK(alert);
     alert_time = ::time(NULL);
   }
 
-  win_message < WINDOW_CLEAR < hhmmss() < " " <= msg;
-  ost << "ALERT: " << hhmmss() << " " << msg << endl;
+  const string now = hhmmss();
+
+  win_message < WINDOW_CLEAR;
+
+  if (show_time)
+    win_message < now < " ";
+
+  win_message <= msg;
+  ost << "ALERT: " << now << " " << msg << endl;
 }
 
 /*! \brief          Logs a rig-related error
@@ -5878,25 +5913,37 @@ void debug_dump(void)
     from the context, and a string "-<n>" is appended.
 */
 const string dump_screen(const string& dump_filename)
-{ Display* display_p = keyboard.display_p();
+{ ost << hhmmss() << ": entered dump_screen()" << endl;
+
+  Display* display_p = keyboard.display_p();
   const Window window_id = keyboard.window_id();
   XWindowAttributes win_attr;
 
+  ost << hhmmss() << ": about to lock display [1] in dump_screen()" << endl;
   XLockDisplay(display_p);
+  ost << hhmmss() << ": locked display [1] in dump_screen()" << endl;
 
   const Status status = XGetWindowAttributes(display_p, window_id, &win_attr);
 
   if (status == 0)
     ost << hhmmss() << ": ERROR returned by XGetWindowAttributes: " << status << endl;
 
+  ost << hhmmss() << ": about to unlock display [1] in dump_screen()" << endl;
   XUnlockDisplay(display_p);
+  ost << hhmmss() << ": unlocked display [1] in dump_screen()" << endl;
 
   const int width = win_attr.width;
   const int height = win_attr.height;
 
+  ost << hhmmss() << ": about to lock display [2] in dump_screen()" << endl;
   XLockDisplay(display_p);
+  ost << hhmmss() << ": locked display [2] in dump_screen()" << endl;
+
   XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
+
+  ost << hhmmss() << ": about to unlock display [2] in dump_screen()" << endl;
   XUnlockDisplay(display_p);
+  ost << hhmmss() << ": unlocked display [2] in dump_screen()" << endl;
 
   png::image< png::rgb_pixel > image(width, height);
 
@@ -6495,8 +6542,10 @@ void* auto_screenshot(void* vp)
 
     try
     { const string* filename_p = static_cast<string*>(vp);
+      ost << hhmmss() << " calling dump_screen() with filename = " << *filename_p << endl;
 
       dump_screen(*filename_p);
+      ost << hhmmss() << " finished dump_screen() with filename = " << *filename_p << endl;
     }
 
     catch (...)

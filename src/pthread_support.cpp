@@ -120,8 +120,7 @@ one consequence of this is that sched_yield() is not guaranteed to yield
 
 */
 
-/// object to hold error messages
-const pthread_error_messages pthread_error_message;
+const pthread_error_messages pthread_error_message;     ///< object to hold error messages
 
 /*! \brief                  Wrapper for pthread_create
     \param  thread          pointer to thread ID
@@ -163,7 +162,7 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 
 // -------------------------------------------  thread_attribute  -----------------------
 
-/*! \class  pthread_attribute
+/*! \class  thread_attribute
     \brief  Encapsulate pthread_attr information
 */
 
@@ -211,6 +210,13 @@ const bool thread_attribute::detached(void)
 
 // -------------------------------------- pt_mutex ------------------------
 
+/*! \class  pt_mutex
+    \brief  Encapsulate a pthread_mutex_t
+
+    pt_mutex objects should be declared in global scope.
+    This class implements a recursive mutex
+*/
+
 /// default constructor
 pt_mutex::pt_mutex(void)
 { pthread_mutex_init(&_mutex, NULL);
@@ -237,9 +243,7 @@ void pt_mutex::lock(void)
   if (*ip == 0)
   { const int status = pthread_mutex_lock(&_mutex);
     if (status != 0)
-    { // ost << "ERROR LOCKING MUTEX: " + to_string(status) << endl;  // since this locks the log_message message mutex, don't output, since that may be the very mutex that failed
       throw pthread_error(PTHREAD_LOCK_ERROR, (string)"ERROR LOCKING MUTEX: " + to_string(status));
-    }
 
     _thread_id = pthread_self();
   }
@@ -276,7 +280,13 @@ void pt_mutex::unlock(void)
   }
 }
 
-// ------------------------------ condition variable ------------------------------
+// ------------------------------ pt_condition variable ------------------------------
+
+/*! \class  pt_condition_variable
+    \brief  Encapsulate a condition variable
+
+    Should also work on systems that allow false wake-ups
+*/
 
 /// default constructor
 pt_condition_variable::pt_condition_variable(void) :

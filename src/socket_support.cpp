@@ -36,9 +36,8 @@ using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
 
-//extern ofstream ost;
-extern message_stream ost;              ///< for debugging and logging
-extern void alert(const string& msg);   ///< function to alert the user
+extern message_stream ost;                                              ///< for debugging and logging
+extern void alert(const string& msg, const bool show_time = true);      ///< function to alert the user
 
 const int SOCKET_ERROR = -1;            ///< error return from various socket-related system functions
 
@@ -193,7 +192,6 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
         { ost << "caught socket_support_error exception while setting destination " << destination_ip_address_or_fqdn << " in tcp_socket constructor" << endl;
           ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
 
-//          if (n_timeouts++ % 10 == 0)
           alert("Error setting socket destination: " + destination_ip_address_or_fqdn +":" + to_string(destination_port));
 
           ost << "sleeping for " << retry_time_in_seconds << " seconds" << endl;
@@ -375,31 +373,23 @@ void tcp_socket::connected(const sockaddr_storage& adr)
     This is not very useful, since it doesn't look for a response
 */
 void tcp_socket::send(const std::string& msg)
-{ //ost << "inside tcp_socket::send()" << endl;
-
-  if (!_destination_is_set)
-  { //ost << "Error: destination is not set" << endl;
+{ if (!_destination_is_set)
     throw tcp_socket_error(TCP_SOCKET_UNKNOWN_DESTINATION);
-  }
 
   SAFELOCK(_tcp_socket);
 
   const int status = ::send(_sock, msg.c_str(), msg.length(), 0);
-
-  //ost << "send status = " << status << endl;
   
   if (status == -1)
     throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);   
 }
 
-/*! \brief  Simple receive
-  \return Received string
+/*! \brief      Simple receive
+    \return     received string
 */
 #if 1
 const string tcp_socket::read(void)
-{ //pointer<char> pc(4096);                   // a reasonable sized buffer
-  //char* cp = pc.ptr();
-  char cp[4096];
+{ char cp[4096];
 
   string rv;
   int status;
@@ -407,10 +397,10 @@ const string tcp_socket::read(void)
   SAFELOCK(_tcp_socket);
 
   do
-  { ost << "calling ::recv in tcp_socket::read" << endl;
+  { //ost << "calling ::recv in tcp_socket::read" << endl;
     status  = ::recv(_sock, cp, 4096, 0);
 
-    ost << "tcp_socket::read status: " << status << endl;
+    //ost << "tcp_socket::read status: " << status << endl;
 
     if (status == -1)
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);
@@ -426,8 +416,8 @@ const string tcp_socket::read(void)
 #endif
 
 /*! \brief                Simple receive
-    \param  timeout_secs  Timeout in seconds
-    \return               Received string
+    \param  timeout_secs  timeout in seconds
+    \return               received string
 
     Throws an exception if the read times out
 */
@@ -494,7 +484,9 @@ const string tcp_socket::read(const unsigned long timeout_secs)
   return rv;
 }
 
-// set the time before a keep-alive is sent
+/*! \brief              Set the idle time before a keep-alive is sent
+    \param  seconds     time to wait idly before a keep-alive is sent
+*/
 void tcp_socket::idle_time(const unsigned int seconds)
 { int optval = seconds;
   int optlen = sizeof(optval);

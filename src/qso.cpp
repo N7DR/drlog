@@ -33,7 +33,7 @@ extern location_database location_db;       ///< location database
 extern message_stream ost;                  ///< for debugging, info
 extern contest_rules rules;                 ///< rules for this contest
 
-extern void alert(const string& msg);       ///< alert the user
+extern void alert(const string& msg, const bool show_time = true);       ///< alert the user
 
 bool QSO_DISPLAY_COUNTRY_MULT = true;       ///< whether to display country mults in log window (may be changed in config file)
 unsigned int  QSO_MULT_WIDTH = 5;           ///< default width of QSO mult fields in log window
