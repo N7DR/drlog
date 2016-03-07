@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 119 2016-01-16 18:32:13Z  $
+// $Id: pthread_support.h 125 2016-03-07 17:50:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -138,8 +138,8 @@ public:
 class pt_mutex
 {
 protected:
-  pthread_mutex_t _mutex;                       ///< Encapsulated mutex
-  pthread_t       _thread_id;                   ///< ID of the thread that owns the locked mutex
+  pthread_mutex_t           _mutex;             ///< Encapsulated mutex
+  pthread_t                 _thread_id;         ///< ID of the thread that owns the locked mutex
   thread_specific_data<int> _tsd_refcount;      ///< reference counter for recursive locking
 
 /*! \brief  Copy constructor
@@ -166,7 +166,7 @@ public:
   inline const pthread_t thread_id(void) const
     { return _thread_id; }
 
-  friend class pt_condition_variable;
+  friend class pt_condition_variable;       ///< needs access to details of the mutex
 };
 
 // --------------------------------------------  pt_condition variable  --------------------------
@@ -180,8 +180,8 @@ public:
 class pt_condition_variable
 {
 protected:
-  pthread_cond_t _cond;     ///< Encapsulated condition variable
-  pt_mutex*      _mutex_p;    ///< Pointer to associated mutex
+  pthread_cond_t _cond;         ///< Encapsulated condition variable
+  pt_mutex*      _mutex_p;      ///< Pointer to associated mutex
   bool           _predicate;    ///< predicate used to handle false wake-ups on brain-dead systems
 
 /*! \brief  Copy constructor
@@ -249,18 +249,18 @@ class safelock
 {
 protected:
 
-  pt_mutex* _ptm_p;     ///< Encapsulated mutex
-  std::string _name;      ///< Name (if any)
+  pt_mutex* _ptm_p;         ///< encapsulated mutex
+  std::string _name;        ///< name (if any)
 
 /*! \brief  Copy constructor
 
-  Not public, so it cannot be called, since we should never copy a mutex
+    Not public, so it cannot be called, since we should never copy a mutex
 */
   safelock(const safelock&);
 
 /*! \brief  safelock = safelock
 
-  Not public, so it cannot be called, since we should never copy a mutex
+    Not public, so it cannot be called, since we should never copy a mutex
 */
   void operator=(const safelock&);
 

@@ -1,4 +1,4 @@
-// $Id: bandmap.h 122 2016-02-06 21:00:23Z  $
+// $Id: bandmap.h 125 2016-03-07 17:50:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -701,8 +701,8 @@ public:
   inline const std::vector<std::string> filter(void)
     { return _filter_p->filter(); }
 
-/*!  \brief Add a string to, or remove a string from, the filter associated with this bandmap
-     \param str string to add or subtract
+/*!  \brief         Add a string to, or remove a string from, the filter associated with this bandmap
+     \param str     string to add or subtract
 
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
      if it's not already in the filter; otherwise it is removed. Currently, all bandmaps share a single
@@ -740,10 +740,10 @@ public:
       _column_offset = n;
     }
 
-/*!  \brief Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
-     \param target_frequency_in_khz target frequency, in kHz
-     \param guard_band_in_hz        guard band, in Hz
-     \return    Closest bandmap entry (if any) to the target frequency and within the guard band
+/*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
+     \param target_frequency_in_khz     target frequency, in kHz
+     \param guard_band_in_hz            guard band, in Hz
+     \return                            closest bandmap entry (if any) to the target frequency and within the guard band
 
      Applies filtering and the RBN threshold before searching for the station. Returns the
      empty string if no station was found within the guard band.
@@ -751,7 +751,7 @@ public:
     inline const std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
       { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
-/*!  \brief Find the next needed station up or down in frequency from the current location
+/*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
@@ -761,7 +761,7 @@ public:
 */
   const bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn);
 
-/*!  \brief Find the next needed station (for a QSO) up or down in frequency from the current location
+/*!  \brief         Find the next needed station (for a QSO) up or down in frequency from the current location
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed station for a QSO in the direction <i>dirn</i>
 
@@ -770,7 +770,7 @@ public:
   inline const bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_stn_needed, dirn); }
 
-/*!  \brief Find the next needed multiplier up or down in frequency from the current location
+/*!  \brief         Find the next needed multiplier up or down in frequency from the current location
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed multiplier in the direction <i>dirn</i>
 
@@ -779,7 +779,7 @@ public:
   inline const bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_a_needed_mult, dirn); }
 
-/*!  \brief Was a call recently added?
+/*!  \brief             Was a call recently added?
      \param callsign    callsign to test
      \return            whether <i>callsign</i> was added since the bandmap was last pruned
 */

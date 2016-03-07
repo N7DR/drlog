@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 124 2016-02-22 20:32:20Z  $
+// $Id: drlog.cpp 125 2016-03-07 17:50:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -6654,7 +6654,26 @@ void update_qsls_window(const string& str)
 
   if (!str.empty())
   { //win_qsls < pad_string(to_string(olog.n_qsls(str)), 3, PAD_LEFT, '0') < "/" <= pad_string(to_string(olog.n_qsos(str)), 3, PAD_LEFT, '0');
+
+    const auto& n_qsls = olog[str].first;
+    const auto& n_qsos = olog[str].second;
+
+    int default_colour_pair = colours.add(win_qsls.fg(), win_qsls.bg());
+    int new_colour_pair = default_colour_pair;
+
+    if ( (n_qsls == 0) and (n_qsos != 0) )
+      new_colour_pair = colours.add(COLOUR_RED, win_qsls.bg());
+
+    if (n_qsls != 0)
+        new_colour_pair = colours.add(COLOUR_GREEN, win_qsls.bg());
+
+    if (new_colour_pair != default_colour_pair)
+      win_qsls.cpair(new_colour_pair);
+
     win_qsls < pad_string(to_string(olog[str].first), 3, PAD_LEFT, '0') < "/" <= pad_string(to_string(olog[str].second), 3, PAD_LEFT, '0');
+
+    if (new_colour_pair != default_colour_pair)
+      win_qsls.cpair(default_colour_pair);
   }
 }
 

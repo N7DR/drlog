@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: socket_support.cpp 125 2016-03-07 17:50:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -499,7 +499,9 @@ void tcp_socket::idle_time(const unsigned int seconds)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting idle time");
 }
 
-// set the time between keep-alives
+/*! \brief              Set the time between keep-alives
+    \param  seconds     time to wait idly before a keep-alive is sent
+*/
 void tcp_socket::retry_time(const unsigned int seconds)
 { int optval = seconds;
   int optlen = sizeof(optval);
@@ -512,7 +514,9 @@ void tcp_socket::retry_time(const unsigned int seconds)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting retry time");
 }
 
-// set the maximum number of retries
+/*! \brief      Set the maximum number of retries
+    \param  n   maximum number of retries
+*/
 void tcp_socket::max_retries(const unsigned int n)
 { int optval = n;
   int optlen = sizeof(optval);
@@ -525,7 +529,9 @@ void tcp_socket::max_retries(const unsigned int n)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting maximum number of retries");
 }
 
-// control keep-alive
+/*! \brief          Set or unset the use of keep-alives
+    \param  torf    whether to use keep-alives
+*/
 void tcp_socket::keep_alive(const bool torf)
 { int optval = torf ? 1 : 0;
   int optlen = sizeof(optval);
@@ -538,6 +544,11 @@ void tcp_socket::keep_alive(const bool torf)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error to control keep-alive");
 }
 
+/*! \brief          Set properties of the keep-alive
+    \param  idle    idle time in seconds
+    \param  retry   retry time in seconds
+    \param  n       maximum number of retries
+*/
 void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, const unsigned int n)
 { keep_alive();           // turn on keep-alive
   idle_time(idle);

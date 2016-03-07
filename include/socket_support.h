@@ -1,4 +1,4 @@
-// $Id: socket_support.h 119 2016-01-16 18:32:13Z  $
+// $Id: socket_support.h 125 2016-03-07 17:50:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -342,22 +342,31 @@ const std::string read(const unsigned long timeout_secs);
 
   READ_AND_WRITE(timeout_in_tenths);                       ///< RW access to timeout_in_tenths
   
-// keep-alive  
-  
 /*! \brief              Set the idle time before a keep-alive is sent
     \param  seconds     time to wait idly before a keep-alive is sent
 */
   void idle_time(const unsigned int seconds);
 
-// set the time between keep-alives
+/*! \brief              Set the time between keep-alives
+    \param  seconds     time to wait idly before a keep-alive is sent
+*/
   void retry_time(const unsigned int seconds);
 
-// set the maximum number of retries
+/*! \brief      Set the maximum number of retries
+    \param  n   maximum number of retries
+*/
   void max_retries(const unsigned int n); 
   
-// control keep-alive
+/*! \brief          Set or unset the use of keep-alives
+    \param  torf    whether to use keep-alives
+*/
   void keep_alive(const bool torf = true);
   
+/*! \brief          Set properties of the keep-alive
+    \param  idle    idle time in seconds
+    \param  retry   retry time in seconds
+    \param  n       maximum number of retries
+*/
   void keep_alive(const unsigned int idle, const unsigned int retry, const unsigned int n);
 };
 

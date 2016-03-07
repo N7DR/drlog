@@ -1,4 +1,4 @@
-// $Id: qso.cpp 120 2016-01-25 19:51:49Z  $
+// $Id: qso.cpp 125 2016-03-07 17:50:18Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -807,6 +807,9 @@ const string QSO::log_line(void)
       field_width = 4;
 
     if (name == "SERNO")
+      field_width = 4;
+
+    if (name == "SSBPOWER")
       field_width = 4;
 
     if (name == "UKEICODE")
