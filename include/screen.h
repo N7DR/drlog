@@ -1,4 +1,4 @@
-// $Id: screen.h 119 2016-01-16 18:32:13Z  $
+// $Id: screen.h 126 2016-03-18 23:22:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -383,9 +383,9 @@ public:
   inline const bool is_hidden(void) const
     { return hidden(); }
 
-/*! \brief  character processing that is the same in multiple windows
+/*! \brief      Character processing that is the same in multiple windows
     \param  e   keyboard event to be processed
-    \return whether the event was processed
+    \return     whether the event was processed
 */
   const bool common_processing(const keyboard_event& e);    // processing that is the same in multiple windows
 
@@ -445,18 +445,24 @@ public:
   inline window& operator<(const int n)
     { return (*this < to_string(n)); }
   
-/// set the colour pair
+/*! \brief              Set the colour pair
+    \param  pair_nr     number of the new colour pair
+    \return             the window
+*/
   window& cpair(const int pair_nr);
-  
-/// set the default colours; does NOT change _fg/_bg because I can't find a guaranteed
-/// way to go from a big integer that combines the two colours to the individual colours
-//  window& default_colours(chtype bg);
 
-/// set the default colours; DOES change _fg/_bg
+/*! \brief                      Set the default colours
+    \param  foreground_colour   foreground colour
+    \param  background_colour   background colour
+    \return                     the window
+*/
   window& default_colours(const int foreground_colour, const int background_colour);
   
-/// control an attribute
-  window& operator<(const enum WINDOW_ATTRIBUTES);
+/*! \brief      Control an attribute or perform a simple operation
+    \param  wa  the attribute or operation
+    \return     the window
+*/
+  window& operator<(const enum WINDOW_ATTRIBUTES wa);
   
 /// clear the window
   window& clear(void);

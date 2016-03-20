@@ -1,4 +1,4 @@
-// $Id: keyboard.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: keyboard.cpp 126 2016-03-18 23:22:48Z  $
 
 /*!     \file keyboard.cpp
 
@@ -200,7 +200,7 @@ const bool keyboard_queue::empty(void)
   return _events.empty();
 }
 
-/*! \brief  what event is at the front of the queue?
+/*! \brief  What event is at the front of the queue?
 
     Returns the default keyboad_event() if the queue is empty
 */
@@ -259,18 +259,12 @@ void keyboard_queue::push_key_press(const char c)
 void keyboard_queue::push_key_press(const KeySym ks)
  { XEvent event;    // the X event
 
- event.type = KeyPress;
+   event.type = KeyPress;
 
-//   const KeyCode kc = XKeysymToKeycode(_display_p, ks);
    if (_x_multithreaded)
      XLockDisplay(_display_p);
 
    const KeyCode kc = XKeysymToKeycode(_display_p, ks);
-
-//   if (x_multithreaded)
-//     XUnlockDisplay(_display_p);
-
-   ost << "after XKeysymToKeycode kc =" << static_cast<int>(kc) << endl;
 
    event.xkey.keycode = kc;
    event.xkey.state = 0;      // no modifiers
@@ -278,19 +272,14 @@ void keyboard_queue::push_key_press(const KeySym ks)
    const Window window_id = _window_id;
    Display* display_p = _display_p;
 
-   ost << "about to call XSendEvent" << endl;
-
 // TRY http://stackoverflow.com/questions/6560553/linux-x11-global-keyboard-hook
 
    XKeyEvent e;
 
- //  event.xkey.type = /* (const) */ KeyPress;
    event.xkey.display = _display_p;
    event.xkey.window = window_id;
    event.xkey.root = DefaultRootWindow(/* display = */ _display_p);
    event.xkey.subwindow = /* (const) */ None;
-//   event.xkey.time = 1000 * time(/* tloc = */ NULL);
-//   event.xkey.time = CurrentTime;
    event.xkey.time = CurrentTime;
    event.xkey.x = 0;
    event.xkey.y = 0;
@@ -306,18 +295,7 @@ void keyboard_queue::push_key_press(const KeySym ks)
 
    if (_x_multithreaded)
      XUnlockDisplay(_display_p);
-//   int pending = XPending(display_p);
-//   XSync(display_p, false);
-
-//   sleep(1);
-
-//   event.xkey.keycode = XKeysymToKeycode(/* display = */ _display_p, /* keysym = */ XK_h);
-//   usleep(1000);   // 1 millisecond
-
-//   XSendEvent(display_p, window_id, True, KeyReleaseMask, &event);
-
-//   ost << "XSendEvent status = " << status << endl;
- }
+}
 
 /*! \brief              Emulate the pressing of a sequence of characters
     \param  str         pressed string
@@ -326,7 +304,6 @@ void keyboard_queue::push_key_press(const KeySym ks)
 void keyboard_queue::push_key_press(const string& str, const int ms_delay)
 { for (size_t n = 0; n < str.length(); ++n)
   { push_key_press(str[n]);
-//    XFlush(_display_p);
 
     if (n != str.length() - 1)
       sleep_for(milliseconds(ms_delay));
@@ -335,9 +312,8 @@ void keyboard_queue::push_key_press(const string& str, const int ms_delay)
 
 /*! \brief  Map key names in the config file to KeySym numbers (which are integers)
 
-   This is used to decode access to the correct CW messages when a key is pressed
-   See the file drlog_context.cpp to see this in use
-
+    This is used to decode access to the correct CW messages when a key is pressed
+    See the file drlog_context.cpp to see this in use
 */
 const map<string, int> key_names = { { "kp_0",      XK_KP_0 },
                                      { "kp_1",      XK_KP_1 },

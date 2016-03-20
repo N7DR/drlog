@@ -1,4 +1,4 @@
-// $Id: keyboard.h 119 2016-01-16 18:32:13Z  $
+// $Id: keyboard.h 126 2016-03-18 23:22:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -84,7 +84,7 @@ public:
 // return values related to the state. These are the values immediately
 // PRIOR to the event: http://www.tronche.com/gui/x/xlib/events/keyboard-pointer/keyboard-pointer.html#XKeyEvent
 
-/// is the shift keys pressed?
+/// is one of the shift keys pressed?
   inline const bool is_shifted(void) const
     { return (_xkey_state bitand ShiftMask); }
 
@@ -145,8 +145,8 @@ public:
 
 // -------------------------------------  keyboard_queue  ---------------------------
 
-/*!     \class keyboard_queue
-        \brief The basic queue of keyboard events, which is just a wrapper around an STL deque
+/*!     \class  keyboard_queue
+        \brief  The basic queue of keyboard events, which is just a wrapper around an STL deque
 */
 
 class keyboard_queue

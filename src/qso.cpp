@@ -1,4 +1,4 @@
-// $Id: qso.cpp 125 2016-03-07 17:50:18Z  $
+// $Id: qso.cpp 126 2016-03-18 23:22:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -227,12 +227,14 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = true;
     }
 
-    if (!processed and (name.substr(0, 5) == "sent-"))
+//    if (!processed and (name.substr(0, 5) == "sent-"))
+    if (!processed and (starts_with(name, "sent-")))
     { _sent_exchange.push_back( { to_upper(name.substr(5)), value } );
       processed = true;
     }
 
-    if (!processed and (name.substr(0, 9) == "received-"))
+//    if (!processed and (name.substr(0, 9) == "received-"))
+    if (!processed and (starts_with(name, "received-")))
     { const string name_upper = to_upper(name.substr(9));
 
       if (!(rules.all_known_field_names() < name_upper))
@@ -284,28 +286,29 @@ void QSO::populate_from_log_line(const string& str)
 
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { bool processed = false;
+    const string& field = _log_line_fields[n];
 
-    if (!processed and (_log_line_fields[n] == "NUMBER"))
+    if (!processed and (field == "NUMBER"))
     { _number = from_string<decltype(_number)>(vec[n]);
       processed = true;
     }
 
-    if (!processed and (_log_line_fields[n] == "DATE"))
+    if (!processed and (field == "DATE"))
     { _date = vec[n];
       processed = true;
     }
 
-    if (!processed and (_log_line_fields[n] == "UTC"))
+    if (!processed and (field == "UTC"))
     { _utc = vec[n];
       processed = true;
     }
 
-    if (!processed and (_log_line_fields[n] == "MODE"))
+    if (!processed and (field == "MODE"))
     { _mode = ( (vec[n] == "CW") ? MODE_CW : MODE_SSB);
       processed = true;
     }
 
-    if (!processed and (_log_line_fields[n] == "FREQUENCY"))
+    if (!processed and (field == "FREQUENCY"))
     { _frequency_tx = vec[n];
 
       const double f = from_string<double>(_frequency_tx);
@@ -315,18 +318,20 @@ void QSO::populate_from_log_line(const string& str)
       processed = true;
     }
 
-    if (!processed and (_log_line_fields[n] == "CALLSIGN"))
+    if (!processed and (field == "CALLSIGN"))
     { _callsign = vec[n];
       processed = true;
     }
 
-    if (!processed and (_log_line_fields[n].substr(0, 5) == "sent-"))
+//    if (!processed and (_log_line_fields[n].substr(0, 5) == "sent-"))
+    if (!processed and (starts_with(field, "sent-")))
     { if (sent_index < _sent_exchange.size())
         _sent_exchange[sent_index++].second = vec[n];
       processed = true;
     }
 
-    if (!processed and (_log_line_fields[n].substr(0, 9) == "received-"))
+//    if (!processed and (_log_line_fields[n].substr(0, 9) == "received-"))
+    if (!processed and (starts_with(field, "received-")))
     { if (received_index < _received_exchange.size())
         _received_exchange[received_index++].value(vec[n]);
       processed = true;

@@ -1,4 +1,4 @@
-// $Id: screen.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: screen.cpp 126 2016-03-18 23:22:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -381,7 +381,7 @@ window& window::operator<(const vector<pair<string, int /* colour pair number */
     cursor_position();
     const int remaining_space = width() - _cursor_x;
 
- // stop writing if there's insufficient room for the next string
+// stop writing if there's insufficient room for the next string
     if (remaining_space < static_cast<int>(callsign.length()))
       if (!scrolling() and (_cursor_y == 0))
         break;
@@ -433,7 +433,10 @@ window& window::move_cursor_relative(const int delta_x, const int delta_y)
   return *this;
 }
 
-/// set the colour pair
+/*! \brief              Set the colour pair
+    \param  pair_nr     number of the new colour pair
+    \return             the window
+*/
 window& window::cpair(const int pair_nr)
 { if (!_wp)
     return *this;
@@ -446,7 +449,11 @@ window& window::cpair(const int pair_nr)
   return *this;
 }
 
-/// set the default colours
+/*! \brief                      Set the default colours
+    \param  foreground_colour   foreground colour
+    \param  background_colour   background colour
+    \return                     the window
+*/
 window& window::default_colours(const int foreground_colour, const int background_colour)
 { if (!_wp)
     return *this;
@@ -457,7 +464,10 @@ window& window::default_colours(const int foreground_colour, const int backgroun
   return _default_colours(FGBG(foreground_colour, background_colour));
 }
 
-/// control an attribute or perform a simple operation
+/*! \brief      Control an attribute or perform a simple operation
+    \param  wa  the attribute or operation
+    \return     the window
+*/
 window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
 { if (!_wp or (wa == WINDOW_NOP) )
     return *this;

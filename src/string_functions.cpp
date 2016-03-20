@@ -971,3 +971,13 @@ const bool contains_digit(const std::string& str)
   return false;
 }
 
+const string decimal_places(const string& str, const int n)
+{
+// for now, assume it's a number
+  const float fl = from_string<float>(str);
+  ostringstream stream;
+
+  stream << fixed << setprecision(n) << fl;
+  return stream.str();
+}
+

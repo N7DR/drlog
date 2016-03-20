@@ -246,6 +246,11 @@ const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) con
   return rv;
 }
 
+/// set frequency string to particular number of decimal places (in kHz)
+//void bandmap_entry::frequency_str_decimal_places(const int n)
+//{ _frequency_str = decimal_places(_frequency_str, n);
+//}
+
 /*! \brief          Add a call to the associated posters
     \param  call    call to add
     \return         number of posters associated with this call, after adding <i>call</i>

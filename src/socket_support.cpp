@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 125 2016-03-07 17:50:18Z  $
+// $Id: socket_support.cpp 126 2016-03-18 23:22:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -558,14 +558,14 @@ void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, c
 
 // ---------------------------------------------- generic socket functions ---------------------
 
-// ----------------------------------  socket_error_name  -------------------------------
+/*! \brief                              Read a socket
+    \param  in_socket                   inbound socket
+    \param  timeout_in_tenths           timeout in tenths of a second
+    \param  buffer_length_for_reply     maximum allowed length of reply
+    \return                             response
 
-// get the name of a socket error
-//string socket_error_name(const int error_number)
-//{ return strerror(error_number);
-//}
-
-// read a message from a socket
+    Throws socket_support_error(SOCKET_TIMEOUT) if the socket times out
+*/
 string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply)
 {
 // wait for response
@@ -587,21 +587,13 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
   int socket_status = select(max_socket_number, &ps_set, NULL, NULL, &timeout);  // under Linux, timeout has the remaining time, but this is not to be relied on because it's not generally true in other systems. See Linux select() man page
   switch (socket_status)
   { case 0:                    // timeout
-    { //log_message((string)"Socket timeout exceeded: " + to_string(timeout_in_tenths) + (string)" tenths of seconds", MSG_WARNING);
       throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, (string)"Socket timeout exceeded: " + to_string(timeout_in_tenths) + (string)" tenths of seconds");
-    }
 
     case SOCKET_ERROR:
-    { //log_message((string)"Socket error", MSG_WARNING);
       throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR);
-    }
 
     default:                   // response is waiting to be read
-    { //pointer<char> socket_buffer_p(buffer_length_for_reply);
-      //char* socket_buffer = socket_buffer_p.ptr();
-      char socket_buffer[4096];
-
-//      SOCKLEN_T from_length = sizeof(sockaddr_in);
+    { char socket_buffer[4096];
       socklen_t from_length = sizeof(sockaddr_storage);
       sockaddr_storage ps_sockaddr;                    // unused but needed in recvfrom
 
@@ -612,15 +604,10 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
         { 
 
           case EFAULT:
-            //log_message((string)"EFAULT error", MSG_WARNING);
             throw socket_support_error(SOCKET_SUPPORT_EFAULT);
-//              log_message((string)"Pointer error receiving message from provisioning server");
-            break;
 
           default:
-            //log_message((string)"RECVFROM Error", MSG_WARNING);
             throw socket_support_error(SOCKET_SUPPORT_RECVFROM_ERROR);
-            break;
         }
       }
       else                                   // have read message from other end OK
@@ -631,15 +618,16 @@ string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buf
   }
 }
 
-// ---------------------------  flush_read_socket  ------------------------------
-
-// flush a readable socket
+/*! \brief          Flush a readable socket
+    \param  sock    socket to flush
+*/
 void flush_read_socket(SOCKET& sock)
 { char socket_buffer[1024];                           // read 1024 octets at a time
-  struct timeval timeout;
+//  struct timeval timeout;
     
-  timeout.tv_sec = 0;
-  timeout.tv_usec = 0;
+//  timeout.tv_sec = 0;
+//  timeout.tv_usec = 0;
+  struct timeval timeout { 0, 0 };
 
   fd_set ps_set;
 
@@ -661,8 +649,6 @@ void flush_read_socket(SOCKET& sock)
 
     FD_ZERO(&ps_set);
     FD_SET(sock, &ps_set);
-
-
   }
 }
 

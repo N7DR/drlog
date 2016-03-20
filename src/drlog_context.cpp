@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 125 2016-03-07 17:50:18Z  $
+// $Id: drlog_context.cpp 126 2016-03-18 23:22:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -554,11 +554,11 @@ void drlog_context::_process_configuration_file(const string& filename)
       }
     }
 
-// FAST CQ BANDWIDTH
+// FAST CQ BANDWIDTH; used only in CW mode
     if (LHS == "FAST CQ BANDWIDTH")
       _fast_cq_bandwidth = from_string<decltype(_fast_cq_bandwidth)>(RHS);
 
-// FAST SAP BANDWIDTH
+// FAST SAP BANDWIDTH; used only in CW mode
     if (LHS == "FAST SAP BANDWIDTH")
       _fast_sap_bandwidth = from_string<decltype(_fast_sap_bandwidth)>(RHS);
 
@@ -855,41 +855,28 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // SCREEN SNAPSHOT FILE
-    if (starts_with(testline, "SCREEN SNAPSHOT FILE"))
+    if (LHS == "SCREEN SNAPSHOT FILE")
       _screen_snapshot_file = rhs;
 
 // SHIFT DELTA
-    if (starts_with(testline, "SHIFT DELTA"))
+    if (LHS == "SHIFT DELTA")
       _shift_delta = from_string<unsigned int>(rhs);
 
 // SHIFT POLL
-    if (starts_with(testline, "SHIFT POLL"))
-      _shift_poll = from_string<unsigned int>((split_string(line, "="))[1]);
-
-#if 0
-    static std::map<std::string, BAND> BAND_FROM_NAME { { "160", BAND_160 },
-                                                        { "80",  BAND_80 },
-                                                        { "60",  BAND_60 },
-                                                        { "40",  BAND_40 },
-                                                        { "30",  BAND_30 },
-                                                        { "20",  BAND_20 },
-                                                        { "17",  BAND_17 },
-                                                        { "15",  BAND_15 },
-                                                        { "12",  BAND_12 },
-                                                        { "10",  BAND_10 }
-                                                      };
-#endif
+    if (LHS == "SHIFT POLL")
+      _shift_poll = from_string<unsigned int>(rhs);
 
 // SOCIETY LIST FILENAME
     if (LHS == "SOCIETY LIST FILENAME")
       _society_list_filename = rhs;
 
 // START BAND
-    if (starts_with(testline, "START BAND"))
-    { const string str = RHS;
+    if (LHS == "START BAND")
+    { //const string str = RHS;
+      const auto cit = BAND_FROM_NAME.find(RHS);
 
-      if (BAND_FROM_NAME.find(str) != BAND_FROM_NAME.cend())
-        _start_band = BAND_FROM_NAME.find(str)->second;
+      if (cit != BAND_FROM_NAME.cend())
+        _start_band = cit->second;
     }
 
 // START MODE

@@ -411,6 +411,10 @@ public:
   inline const bool is_frequency_str(const std::string& target) const
     { return (_frequency_str == target); }
 
+/// set frequency string to particular number of decimal places (in kHz)
+  inline void frequency_str_decimal_places(const int n)
+    { _frequency_str = decimal_places(_frequency_str, n); }
+
 /// a simple definition of whether there is no useful information in the object
   inline const bool empty(void) const
     { return _callsign.empty(); }

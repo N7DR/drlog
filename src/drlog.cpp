@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 125 2016-03-07 17:50:18Z  $
+// $Id: drlog.cpp 126 2016-03-18 23:22:48Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1529,8 +1529,11 @@ int main(int argc, char** argv)
         exit(-1);
       }
     }
-    else                                    // not the simulator
-      keyboard.x_multithreaded(false);      // make xlib more efficient
+//    else                                    // not the simulator
+//      keyboard.x_multithreaded(false);      // make xlib more efficient
+
+// force multithreaded
+    keyboard.x_multithreaded(true);    // because we might perform an auto backup whilst doing other things with the display
 
 // everything is set up and running. Now we simply loop.
     while (1)
@@ -2032,6 +2035,11 @@ void* process_rbn_info(void* vp)
               bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
 
               be.freq(post.freq());        // also sets band and mode
+
+//              be.freq(decimal_places(post.freq(), 1));        // also sets band and mode
+//              be.frequency_str(decimal_places(be.frequency_str(), 1)));
+              be.frequency_str_decimal_places(1);
+
               be.callsign(dx_callsign);
               be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
@@ -5915,35 +5923,44 @@ void debug_dump(void)
 const string dump_screen(const string& dump_filename)
 { ost << hhmmss() << ": entered dump_screen()" << endl;
 
+  const bool multithreaded = keyboard.x_multithreaded();
   Display* display_p = keyboard.display_p();
   const Window window_id = keyboard.window_id();
   XWindowAttributes win_attr;
 
-  ost << hhmmss() << ": about to lock display [1] in dump_screen()" << endl;
-  XLockDisplay(display_p);
-  ost << hhmmss() << ": locked display [1] in dump_screen()" << endl;
+  if (multithreaded)
+  { ost << hhmmss() << ": about to lock display [1] in dump_screen()" << endl;
+    XLockDisplay(display_p);
+    ost << hhmmss() << ": locked display [1] in dump_screen()" << endl;
+  }
 
   const Status status = XGetWindowAttributes(display_p, window_id, &win_attr);
 
   if (status == 0)
     ost << hhmmss() << ": ERROR returned by XGetWindowAttributes: " << status << endl;
 
-  ost << hhmmss() << ": about to unlock display [1] in dump_screen()" << endl;
-  XUnlockDisplay(display_p);
-  ost << hhmmss() << ": unlocked display [1] in dump_screen()" << endl;
+  if (multithreaded)
+  { ost << hhmmss() << ": about to unlock display [1] in dump_screen()" << endl;
+    XUnlockDisplay(display_p);
+    ost << hhmmss() << ": unlocked display [1] in dump_screen()" << endl;
+  }
 
   const int width = win_attr.width;
   const int height = win_attr.height;
 
-  ost << hhmmss() << ": about to lock display [2] in dump_screen()" << endl;
-  XLockDisplay(display_p);
-  ost << hhmmss() << ": locked display [2] in dump_screen()" << endl;
+  if (multithreaded)
+  { ost << hhmmss() << ": about to lock display [2] in dump_screen()" << endl;
+    XLockDisplay(display_p);
+    ost << hhmmss() << ": locked display [2] in dump_screen()" << endl;
+  }
 
   XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
 
-  ost << hhmmss() << ": about to unlock display [2] in dump_screen()" << endl;
-  XUnlockDisplay(display_p);
-  ost << hhmmss() << ": unlocked display [2] in dump_screen()" << endl;
+  if (multithreaded)
+  { ost << hhmmss() << ": about to unlock display [2] in dump_screen()" << endl;
+    XUnlockDisplay(display_p);
+    ost << hhmmss() << ": unlocked display [2] in dump_screen()" << endl;
+  }
 
   png::image< png::rgb_pixel > image(width, height);
 

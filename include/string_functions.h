@@ -499,7 +499,7 @@ const std::string nth_word(const std::string& s, const unsigned int n, const uns
 
 // assumes UTF-8; TODO: generalise using locales/facets
 const size_t n_chars(const std::string& str);
-  
+
 /*!     \brief  Does a string contain a legal dotted-decimal IPv4 address
         \param  cs  Original string
         \return  Whether <i>cs</i> contains a legal dotted decimal IPv4 address
@@ -519,6 +519,8 @@ const bool is_legal_value(const std::string& value, const std::string& legal_val
 
 // return true if call1 < call2
 const bool compare_calls(const std::string& s1, const std::string& s2);
+
+const std::string decimal_places(const std::string& str, const int n);
 
 // -------------------------------------- Errors  -----------------------------------
 
