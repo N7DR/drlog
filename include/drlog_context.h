@@ -55,6 +55,7 @@ protected:
   bool                                         _auto_remaining_callsign_mults;  ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;   ///< do we auto-generate the remaining country mults?
   std::set<std::string>                        _auto_remaining_exchange_mults;  ///< the exchange mults for which we auto-generate the values
+  size_t                                       _auto_remaining_country_mults_threshold;     ///< number of times a canonical prefix must be seen before it becomes known
   bool                                         _auto_screenshot;                ///< do we create a screenshot every hour?
 
   unsigned int                                 _bandmap_decay_time_local;           ///< time (in minutes) for an entry to age off the bandmap (local entries)
@@ -256,13 +257,14 @@ public:
 /// construct from file
   drlog_context( const std::string& filename );
 
-  SAFEREAD(accept_colour, _context);                    ///< colour for calls that have been worked, but are not dupes
-  SAFEREAD(alternative_exchange_cq, _context);          ///< alternative exchange in SAP mode
-  SAFEREAD(alternative_exchange_sap, _context);         ///< alternative exchange in SAP mode
-  SAFEREAD(archive_name, _context);                     ///< name of the archive for save/restore information
-  SAFEREAD(auto_backup, _context);                      ///< directory for auto backup files
-  SAFEREAD(auto_remaining_callsign_mults, _context);    ///< do we auto-generate the remaining callsign mults?
-  SAFEREAD(auto_remaining_country_mults, _context);     ///< do we auto-generate the remaining country mults?
+  SAFEREAD(accept_colour, _context);                            ///< colour for calls that have been worked, but are not dupes
+  SAFEREAD(alternative_exchange_cq, _context);                  ///< alternative exchange in SAP mode
+  SAFEREAD(alternative_exchange_sap, _context);                 ///< alternative exchange in SAP mode
+  SAFEREAD(archive_name, _context);                             ///< name of the archive for save/restore information
+  SAFEREAD(auto_backup, _context);                              ///< directory for auto backup files
+  SAFEREAD(auto_remaining_callsign_mults, _context);            ///< do we auto-generate the remaining callsign mults?
+  SAFEREAD(auto_remaining_country_mults, _context);             ///< do we auto-generate the remaining country mults?
+  SAFEREAD(auto_remaining_country_mults_threshold, _context);   ///< number of times a canonical prefix must be seen before it becomes known
 
 /*! \brief              Do we auto-generate remaining mults for a particular exchange mult?
     \param  mult_name   name of the exchange mult

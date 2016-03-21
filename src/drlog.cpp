@@ -129,7 +129,7 @@ void toggle_drlog_mode(void);                                                   
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
 void update_known_callsign_mults(const string& callsign);                   ///< Possibly add a new callsign mult
-void update_known_country_mults(const string& callsign);                    ///< Possibly add a new country to the known country mults
+void update_known_country_mults(const string& callsign, const bool force_known = false);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_qsls_window(const string& = "");                                ///< QSL information from old QSOs
@@ -211,6 +211,7 @@ set<string>         known_callsign_mults;                   ///< callsign mults 
 
 // global variables
 
+accumulator<string>     acc;                                ///< accumulator for canonical prefixes for auto countries
 int                     ACCEPT_COLOUR(COLOUR_GREEN);        ///< colour for calls that have been worked, but are not dupes
 string                  at_call;                            ///< call that should replace comat in "call ok now" message
 
@@ -1112,6 +1113,9 @@ int main(int argc, char** argv)
 //  exit(0);
 // &&&
 
+// possibly set the auto country mults threshold
+  if (context.auto_remaining_country_mults())
+    acc.threshold(context.auto_remaining_country_mults_threshold());
 
   try
   { if (context.sync_keyer())
@@ -1354,7 +1358,7 @@ int main(int argc, char** argv)
             update_known_callsign_mults(qso.callsign());
 
 // country mults
-            update_known_country_mults(qso.callsign());
+            update_known_country_mults(qso.callsign(), true);
             qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode()) );
 
 // add exchange info for this call to the exchange db
@@ -2033,14 +2037,16 @@ void* process_rbn_info(void* vp)
               const pair<string, BAND> target { dx_callsign, dx_band };
 
               bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
+              be.callsign(dx_callsign);
 
               be.freq(post.freq());        // also sets band and mode
 
 //              be.freq(decimal_places(post.freq(), 1));        // also sets band and mode
 //              be.frequency_str(decimal_places(be.frequency_str(), 1)));
+//              ost << "frequency string for " << be.callsign() << " is: " << be.frequency_str() << endl;
               be.frequency_str_decimal_places(1);
+//              ost << "frequency string for " << be.callsign() << " is now: " << be.frequency_str() << endl;
 
-              be.callsign(dx_callsign);
               be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
               if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
@@ -2105,7 +2111,8 @@ void* process_rbn_info(void* vp)
                   if (is_me)
                     cluster_mult_win.bg(COLOUR_YELLOW);
 
-                  const string frequency_str = pad_string(post.frequency_str(), 7);
+//                  const string frequency_str = pad_string(post.frequency_str(), 7);
+                  const string frequency_str = pad_string(be.frequency_str(), 7);
                   cluster_mult_win < pad_string(frequency_str + " " + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
 
                   if (is_me)
@@ -2980,7 +2987,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         }
 
         update_known_callsign_mults(callsign);
-        update_known_country_mults(callsign);
+        update_known_country_mults(callsign, true);
 
         win_exchange <= exchange_str;
         win_active_p = &win_exchange;
@@ -3125,7 +3132,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       {
 // possibly add the call to known mults
         update_known_callsign_mults(contents);
-        update_known_country_mults(contents);
+        update_known_country_mults(contents, true);
 
         bandmap_entry be;                        // default source is BANDMAP_ENTRY_LOCAL
         const BAND cur_band = safe_get_band();
@@ -3878,7 +3885,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // is this a country mult?
             if (country_mults_used)
-            { update_known_country_mults(qso.callsign());  // does nothing if not auto remaining country mults
+            { update_known_country_mults(qso.callsign(), true);  // does nothing if not auto remaining country mults
               qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );  // set whether it's a country mult
             }
 
@@ -3938,7 +3945,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band, cur_mode).size())
         { update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-          update_known_country_mults(qso.callsign());
+          update_known_country_mults(qso.callsign(), true);
         }
 
 // was the just-logged QSO an exchange mult?
@@ -4371,7 +4378,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             const BAND b = qso.band();
 
             update_known_callsign_mults(qso.callsign());
-            update_known_country_mults(qso.callsign());
+            update_known_country_mults(qso.callsign(), true);
 
 // is this a country mult?
             const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode());
@@ -5123,16 +5130,24 @@ void update_known_callsign_mults(const string& callsign)
 /*! \brief              Possibly add a new country to the known country mults
     \param  callsign    callsign from the country possibly to be added
 
-    Adds only if REMAINING COUNTRY MULTS has been set to AUTO in the configuration file
+    Adds only if REMAINING COUNTRY MULTS has been set to AUTO in the configuration file,
+    and if the accumulator has reached the threshold
 */
-void update_known_country_mults(const string& callsign)
+void update_known_country_mults(const string& callsign, const bool force_known)
 { if (callsign.empty())
     return;
 
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-    statistics.add_known_country_mult(canonical_prefix, rules);   // don't add if the rules don't recognise it as a country mult
+//    ost << "accumulator for " << canonical_prefix << " is " << acc.value(canonical_prefix) << endl;
+
+    if ( acc.add(canonical_prefix, force_known ? context.auto_remaining_country_mults_threshold() : 1) )
+    { statistics.add_known_country_mult(canonical_prefix, rules);   // don't add if the rules don't recognise it as a country mult
+      ost << "ADDED" << endl;
+    }
+
+//    ost << "accumulator for " << canonical_prefix << " is now " << acc.value(canonical_prefix) << endl;
   }
 }
 

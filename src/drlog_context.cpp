@@ -933,9 +933,16 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // REMAINING COUNTRY MULTS
     if (starts_with(testline, "REMAINING COUNTRY MULTS"))
-    { _auto_remaining_country_mults = (RHS == "AUTO");
+    { //_auto_remaining_country_mults = (RHS == "AUTO");
+      _auto_remaining_country_mults = contains(RHS, "AUTO");
 
-      if (!_auto_remaining_country_mults)
+      if (_auto_remaining_country_mults)
+      { const vector<string> tokens = split_string(RHS, " ");
+
+        if (tokens.size() == 2)
+          _auto_remaining_country_mults_threshold = from_string<size_t>(tokens[1]);
+      }
+      else
       { const vector<string> countries = remove_peripheral_spaces(split_string(RHS, ","));
 
         _remaining_country_mults_list = set<string>(countries.cbegin(), countries.cend());

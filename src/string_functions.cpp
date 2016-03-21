@@ -973,11 +973,15 @@ const bool contains_digit(const std::string& str)
 
 const string decimal_places(const string& str, const int n)
 {
-// for now, assume it's a number
-  const float fl = from_string<float>(str);
-  ostringstream stream;
+// for now, assume that it's a number
+  if ( (str.length() >= 2) and (str[str.length() - 2] != '.') )
+  { const float fl = from_string<float>(str);
+    ostringstream stream;
 
-  stream << fixed << setprecision(n) << fl;
-  return stream.str();
+    stream << fixed << setprecision(n) << fl;
+    return stream.str();
+  }
+
+  return str;
 }
 

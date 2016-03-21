@@ -761,6 +761,44 @@ public:
   }
 };
 
+/*! \class  accumulator
+    \brief  accumulate values, and inform when a threshold is reached
+*/
+template <typename T>
+class accumulator
+{
+protected:
+
+  std::map<T, size_t> _values;
+  size_t              _threshold;
+
+public:
+
+  accumulator(const size_t thold = 1) :
+    _threshold(thold)
+  { }
+
+  READ_AND_WRITE(threshold);
+
+  const bool add(const T& val, const int n = 1)
+  { if (_values.find(val) == _values.end())
+      _values.insert( { val, n } );
+    else
+      _values[val] += n;
+
+//    ost << "accumulator for " << val << " is " << _values[val] << endl;
+
+    return (_values[val] >= _threshold);
+  }
+
+  const size_t value(const T& val) const
+  { if (_values.find(val) == _values.cend())
+      return 0;
+
+    return _values.at(val);
+  }
+};
+
 // convenient syntactic sugar for some STL functions
 
 /*! \brief          Apply a function to all in a container
