@@ -940,7 +940,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const vector<string> tokens = split_string(RHS, " ");
 
         if (tokens.size() == 2)
-          _auto_remaining_country_mults_threshold = from_string<size_t>(tokens[1]);
+          _auto_remaining_country_mults_threshold = from_string<unsigned int>(tokens[1]);
       }
       else
       { const vector<string> countries = remove_peripheral_spaces(split_string(RHS, ","));

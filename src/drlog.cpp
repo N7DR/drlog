@@ -69,7 +69,9 @@ string TS(",");         ///< character for thousands separator
 static const set<string> variable_exchange_fields { "SERNO" };  ///< mutable exchange fields
 
 const bool DISPLAY_EXTRACT = true,
-           DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;
+           DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;           ///< whether to display extracts
+
+const bool FORCE_THRESHOLD = true;                              ///< for forcing accumulator to threshold
 
 // some forward declarations; others, that depend on these, occur later
 const string active_window_name(void);                          ///< Return the name of the active window in printable form
@@ -84,13 +86,13 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules);      
 const string callsign_mult_value(const string& callsign_mult_name, const string& callsign); ///< Obtain value corresponding to a type of callsign mult from a callsign
 void cw_speed(const unsigned int new_speed);                                                ///< Set speed of computer keyer
 
-void debug_dump(void);                                                                      ///< Dump useful information to disk
-const MODE default_mode(const frequency& f);                                                ///< get the default mode on a frequency
-void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode); ///< Display band and mode
-void display_call_info(const string& callsign, const bool display_extract = true);          ///< Update several call-related windows
-void display_nearby_callsign(const string& callsign);                                       ///< Display a callsign in the NEARBY window, in the correct colour
-void display_statistics(const string& summary_str);                                         ///< Display the current statistics
-const string dump_screen(const string& filename = string());                                ///< Dump a screen image to PNG file
+void debug_dump(void);                                                                          ///< Dump useful information to disk
+const MODE default_mode(const frequency& f);                                                    ///< get the default mode on a frequency
+void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);     ///< Display band and mode
+void display_call_info(const string& callsign, const bool display_extract = DISPLAY_EXTRACT);   ///< Update several call-related windows
+void display_nearby_callsign(const string& callsign);                                           ///< Display a callsign in the NEARBY window, in the correct colour
+void display_statistics(const string& summary_str);                                             ///< Display the current statistics
+const string dump_screen(const string& filename = string());                                    ///< Dump a screen image to PNG file
 
 void enter_cq_mode(void);                           ///< Enter CQ mode
 void enter_sap_mode(void);                          ///< Enter SAP mode
@@ -116,8 +118,8 @@ void rebuild_history(const logbook& logbk,
                      rate_meter& rate);             ///< Rebuild the history (and statistics and rate), using the logbook
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
-void rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
+void rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 
 void start_of_thread(void);                                                     ///< Increase the counter for the number of running threads
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
@@ -148,8 +150,8 @@ void* display_rig_status(void* vp);                                         ///<
 void* display_date_and_time(void* vp);                                      ///< Thread function to display the date and time
 void* get_cluster_info(void* vp);                                           ///< Thread function to obtain data from the cluster
 void* keyboard_test(void* vp);                                              ///< Thread function to simulate keystrokes
-void* prune_bandmap(void* vp);                                              ///< Thread function to prune the bandmaps once per minute
 void* process_rbn_info(void* vp);                                           ///< Thread function to process data from the cluster or the RBN
+void* prune_bandmap(void* vp);                                              ///< Thread function to prune the bandmaps once per minute
 void* p3_screenshot_thread(void* vp);                                       ///< Thread function to generate a screenshot of a P3 and store it in a BMP file
 void* reset_connection(void* vp);                                           ///< Thread function to reset the RBN or cluster connection
 void* simulator_thread(void* vp);                                           ///< Thread function to simulate a contest from an extant log
@@ -1106,10 +1108,14 @@ int main(int argc, char** argv)
 
 
 // &&&
-//  const string test = "RW6AA/9";
+//  string test = "W4/VP9KF";
 //
 //  ost << "1 " << test << ": " << location_db.canonical_prefix(test) << endl;
+//
+//  test = "K4/RU4W";
+//
 //  ost << "2 " << test << ": " << location_db.canonical_prefix(test) << endl;
+//
 //  exit(0);
 // &&&
 
@@ -1358,7 +1364,7 @@ int main(int argc, char** argv)
             update_known_callsign_mults(qso.callsign());
 
 // country mults
-            update_known_country_mults(qso.callsign(), true);
+            update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
             qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode()) );
 
 // add exchange info for this call to the exchange db
@@ -2987,7 +2993,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         }
 
         update_known_callsign_mults(callsign);
-        update_known_country_mults(callsign, true);
+        update_known_country_mults(callsign, FORCE_THRESHOLD);
 
         win_exchange <= exchange_str;
         win_active_p = &win_exchange;
@@ -3132,7 +3138,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       {
 // possibly add the call to known mults
         update_known_callsign_mults(contents);
-        update_known_country_mults(contents, true);
+        update_known_country_mults(contents, FORCE_THRESHOLD);
 
         bandmap_entry be;                        // default source is BANDMAP_ENTRY_LOCAL
         const BAND cur_band = safe_get_band();
@@ -3885,7 +3891,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // is this a country mult?
             if (country_mults_used)
-            { update_known_country_mults(qso.callsign(), true);  // does nothing if not auto remaining country mults
+            { update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);  // does nothing if not auto remaining country mults
               qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );  // set whether it's a country mult
             }
 
@@ -3945,7 +3951,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band, cur_mode).size())
         { update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-          update_known_country_mults(qso.callsign(), true);
+          update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
         }
 
 // was the just-logged QSO an exchange mult?
@@ -4378,7 +4384,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             const BAND b = qso.band();
 
             update_known_callsign_mults(qso.callsign());
-            update_known_country_mults(qso.callsign(), true);
+            update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
 
 // is this a country mult?
             const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode());

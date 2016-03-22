@@ -777,6 +777,8 @@ const location_info location_database::info(const string& cs)
 
   if (parts.size() == 2)        // one slash
   {
+     ost << "one slash" << endl;
+
 // see if either part matches anything in the initial database
      map<string, location_info>::iterator db_posn_0 = _db.find(parts[0]);
      map<string, location_info>::iterator db_posn_1 = _db.find(parts[1]);
@@ -785,7 +787,9 @@ const location_info location_database::info(const string& cs)
      const bool found_1 = (db_posn_1 != _db.end());
 
      if (found_0 and !found_1)                        // first part had an exact match
-     { location_info best_info = db_posn_0->second;
+     { ost << "first part had exact match" <<endl;
+
+       location_info best_info = db_posn_0->second;
 
         best_info = guess_zones(callsign, best_info);
         _db_checked.insert( { callsign, best_info } );
@@ -793,17 +797,45 @@ const location_info location_database::info(const string& cs)
         return best_info;     
      }
 
-     if (found_1 and !found_0)                        // second part had an exact match
-     { location_info best_info = db_posn_1->second;
+// we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat
+// add them on a case by case basis, rather than using all possible long prefixes listed in cty.dat, since this
+// should be a very rare occurrence
+     static const set<string> russian_long_prefixes { "RU4W" };
 
-        best_info = guess_zones(callsign, best_info);
-        _db_checked.insert( { callsign, best_info } );
+     if (found_1 and !found_0)                        // second part had an exact match
+     {// ost << "second part had exact match" <<endl;
+
+       if (!(russian_long_prefixes < parts[1]))         // the normal case
+       { location_info best_info = db_posn_1->second;
+
+          best_info = guess_zones(callsign, best_info);
+          _db_checked.insert( { callsign, best_info } );
         
-        return best_info;     
+          return best_info;
+       }
+       else                                             // the pathological case, a call like "K4/RU4W"
+       { //ost << "second part was a Russian long prefix" <<endl;
+
+         location_info best_info = info(parts[0]);  // recursive
+
+         //ost << "got location info" << endl;
+
+//         best_info = guess_zones(parts[0], best_info);
+
+//        ost << "after guessing zones" << endl;
+
+         _db_checked.insert( { callsign, best_info } );
+
+         return best_info;
+
+
+       }
      }
 
     if (found_0 and found_1)                      // both parts had an exact match (should never happen: KH6/KP2
-    { if (parts[0].length() > parts[1].length())  // choose longest match
+    { ost << "both parts had exact match (should never happen)" <<endl;
+
+      if (parts[0].length() > parts[1].length())  // choose longest match
       {  location_info best_info = db_posn_0->second;
 
          best_info = guess_zones(callsign, best_info);

@@ -55,7 +55,7 @@ protected:
   bool                                         _auto_remaining_callsign_mults;  ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;   ///< do we auto-generate the remaining country mults?
   std::set<std::string>                        _auto_remaining_exchange_mults;  ///< the exchange mults for which we auto-generate the values
-  size_t                                       _auto_remaining_country_mults_threshold;     ///< number of times a canonical prefix must be seen before it becomes known
+  unsigned int                                 _auto_remaining_country_mults_threshold;     ///< number of times a canonical prefix must be seen before it becomes known
   bool                                         _auto_screenshot;                ///< do we create a screenshot every hour?
 
   unsigned int                                 _bandmap_decay_time_local;           ///< time (in minutes) for an entry to age off the bandmap (local entries)

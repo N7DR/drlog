@@ -769,12 +769,12 @@ class accumulator
 {
 protected:
 
-  std::map<T, size_t> _values;
-  size_t              _threshold;
+  std::map<T, unsigned int> _values;
+  unsigned int              _threshold;
 
 public:
 
-  accumulator(const size_t thold = 1) :
+  accumulator(const unsigned int thold = 1) :
     _threshold(thold)
   { }
 
@@ -786,12 +786,10 @@ public:
     else
       _values[val] += n;
 
-//    ost << "accumulator for " << val << " is " << _values[val] << endl;
-
     return (_values[val] >= _threshold);
   }
 
-  const size_t value(const T& val) const
+  const unsigned int value(const T& val) const
   { if (_values.find(val) == _values.cend())
       return 0;
 
