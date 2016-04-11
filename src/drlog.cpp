@@ -1083,7 +1083,7 @@ int main(int argc, char** argv)
 
 // SERIAL NUMBER window
   win_serial_number.init(context.window_info("SERIAL NUMBER"), WINDOW_NO_CURSOR);
-  win_serial_number <= serial_number_string(octothorpe);
+  win_serial_number <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
 
 // SRSS window
   win_srss.init(context.window_info("SRSS"), WINDOW_NO_CURSOR);
@@ -1422,7 +1422,8 @@ int main(int argc, char** argv)
       if (!logbk.empty())
       { next_qso_number = logbk[logbk.n_qsos()].number() /* logbook is wrt 1 */  + 1;
         win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
-        win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(octothorpe);
+//        win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(octothorpe);
+        win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
 
 // go to band and mode of last QSO
         const QSO& last_qso = logbk[logbk.size()];
@@ -3257,7 +3258,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
 
         octothorpe = (octothorpe == 0 ? octothorpe : octothorpe -1);
-        win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(octothorpe);
+//        win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(octothorpe);
+        win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
 
         next_qso_number = (next_qso_number == 0 ? next_qso_number : next_qso_number -1);
         win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
@@ -3344,13 +3346,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ALT-KP+ -- increment octothorpe
   if (!processed and e.is_alt() and e.symbol() == XK_KP_Add)
-  { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
+  { //win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
+    win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width());
+
     processed = true;
   }
 
 // ALT-KP- -- decrement octothorpe
   if (!processed and e.is_alt() and e.symbol() == XK_KP_Subtract)
-  { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(--octothorpe);
+  { //win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(--octothorpe);
+    win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width());
+
     processed = true;
   }
 
@@ -4070,7 +4076,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           win_bandmap <= bandmap_this_band;
 
 // keep track of QSO number
-          win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
+//          win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
+          win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width());
           next_qso_number = logbk.n_qsos() + 1;
           win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
 
@@ -5523,12 +5530,15 @@ void exit_drlog(void)
 
     { SAFELOCK(thread_check);
 
-    const int local_copy = n_running_threads;
+      const int local_copy = n_running_threads;
 
-    ost << "n_running_threads = " << local_copy << endl;
+      ost << "n_running_threads = " << local_copy << endl;
 
       if (local_copy == 0);
+      { ost << "all threads stopped; exiting" << endl;
+        sleep_for(seconds(1));                     // just alow some extra time
         exit(0);
+      }
     }
 
     ost << "after exit test; about to sleep for one second" << endl;
@@ -5818,18 +5828,63 @@ void p3_screenshot(void)
 }
 
 /// Thread function to generate a screenshot of a P3 and store it in a BMP file
+// #BMP (Bitmap upload, GET only)
+//RSP format: [bmp]cc where [bmp] is 131,638 bytes of binary image data in standard .BMP file format
+//and cc is a two-byte checksum. Note that the response does not include the command name and has no
+//terminating semicolon. The checksum is the modulo-65,536 sum of all 131,638 bytes, sent least significant
+//byte first.
+
+/*
+
+ */
+
 void* p3_screenshot_thread(void* vp)
-{ const string image = rig.raw_command("#BMP;", true);
+{ alert("Dumping P3 image");
+
+  const string image = rig.raw_command("#BMP;", true);
+
+//  write_file(image, "complete-response");
+
   const string checksum_str = image.substr(image.length() - 2, 2);
+
+//  ost << "image length with checksum = " << image.length() << endl;
+//  ost << "image length without checksum = " << image.length() - 2 << endl;
+
+  const unsigned char c0 = static_cast<unsigned char>(checksum_str[0]);
+  const unsigned char c1 = static_cast<unsigned char>(checksum_str[1]);
+
+//  ost << "chars as numbers: " << dec << static_cast<unsigned int>(static_cast<uint8_t>(c0)) << " " << static_cast<unsigned int>(static_cast<uint8_t>(c1)) << endl;
+
+//  ost << "chars: " << hex << static_cast<uint8_t>(c0) << " " << static_cast<uint8_t>(c1) << dec << endl;
+
+// print most significant byte first
+//  const uint16_t received_checksum = (static_cast<uint8_t>(checksum_str[1]) << 8) + static_cast<uint8_t>(checksum_str[0]);
+//  ost << "received checksum = " << hex << received_checksum << dec << endl;
+
+//  ost << "components = " << hex << (static_cast<uint8_t>(checksum_str[1]) << 8) << " " << static_cast<uint8_t>(checksum_str[0]) << endl;
+
+  const uint16_t received_checksum = (static_cast<uint8_t>(checksum_str[1]) << 8) bitor static_cast<uint8_t>(checksum_str[0]);
+//  ost << "received checksum bitor = " << hex << received_checksum_bitor << dec << endl;
+
   uint16_t calculated_checksum = 0;
+  long tmp = 0;
 
   for (size_t n = 0; n < image.length() - 2; ++n)
-  { const unsigned char uch = static_cast<unsigned char>(image[n]);
-    const uint16_t uint = static_cast<uint16_t>(uch);
+  { //const unsigned char uch = static_cast<unsigned char>(image[n]);
+    //const uint16_t uint = static_cast<uint16_t>(uch);
 
-    calculated_checksum += uint;
+    tmp += static_cast<unsigned char>(image[n]);
+
+    //calculated_checksum += uint;
+
+    //ost << dec << "n: " << n << " checksum = " << calculated_checksum << " " << hex << calculated_checksum << " increment = " << dec << uint << " " << hex << uint << dec << endl;
+
   }
 
+  calculated_checksum = static_cast<uint16_t>(tmp % 65536);
+//  ost << "tmp: " << tmp << " " << hex << tmp << " " << dec << tmp % 65536 << " " << hex << tmp % 65536 << dec << endl;
+
+#if 0
   uint16_t received_checksum = 0;
   for (size_t n = 0; n < checksum_str.length(); ++n)
   { const size_t index = 2 - n - 1;
@@ -5840,11 +5895,12 @@ void* p3_screenshot_thread(void* vp)
 
     received_checksum = (received_checksum << 8) + uint;  // 256 == << 8
   }
+#endif
 
-  ost << "calculated checksum = " << hex << calculated_checksum << endl;
-  ost << "received checksum = " << hex << received_checksum << dec << endl;
+//  ost << "calculated checksum = " << hex << calculated_checksum << dec << endl;
+//  ost << "received checksum = " << hex << received_checksum << dec << endl;
 
-  const string base_filename = context.p3_snapshot_file() + ((calculated_checksum == received_checksum) ? "" : "-error");
+  const string base_filename = context.p3_snapshot_file() + (((calculated_checksum == received_checksum) or context.p3_ignore_checksum_error()) ? "" : "-error");
   int index = 0;
   bool file_written = false;
 

@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 125 2016-03-07 17:50:18Z  $
+// $Id: bandmap.cpp 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -159,9 +159,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
     if (!callsign_mult_val.empty())
     { if (statistics.is_needed_callsign_mult(callsign_mult_name, callsign_mult_val, _band, _mode))
-      { //ost << "is needed callsign mult" << endl;
         add_callsign_mult(callsign_mult_name, callsign_mult_val);
-      }
     }
   }
 
@@ -171,8 +169,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   const bool is_needed_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
 
   if (is_needed_country_mult)
-  { add_country_mult(_canonical_prefix);
-  }
+    add_country_mult(_canonical_prefix);
 
 // exchange mult status
   clear_exchange_mult();
@@ -245,11 +242,6 @@ const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) con
 
   return rv;
 }
-
-/// set frequency string to particular number of decimal places (in kHz)
-//void bandmap_entry::frequency_str_decimal_places(const int n)
-//{ _frequency_str = decimal_places(_frequency_str, n);
-//}
 
 /*! \brief          Add a call to the associated posters
     \param  call    call to add
@@ -757,7 +749,9 @@ void bandmap::filter_add_or_subtract(const string& str)
   }
 }
 
-/// set or unset the filter to hide mode (as opposed to show)
+/*!  \brief         Set or unset the filter to hide mode (as opposed to show)
+     \param torf    whether to set to hide mode
+*/
 void bandmap::filter_hide(const bool torf)
 { if (torf != filter_hide())
   { SAFELOCK(_bandmap);
@@ -767,7 +761,9 @@ void bandmap::filter_hide(const bool torf)
   }
 }
 
-/// set or unset the filter to show mode (as opposed to hide)
+/*!  \brief         Set or unset the filter to show mode (as opposed to hide)
+     \param torf    whether to set to show mode
+*/
 void bandmap::filter_show(const bool torf)
 { if (torf != filter_show())
   { SAFELOCK(_bandmap);
@@ -826,6 +822,7 @@ const BM_ENTRIES bandmap::filtered_entries(void)
   return rv;
 }
 
+/// all the entries, after the RBN threshold and filtering have been applied
 const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 {
   { SAFELOCK (_bandmap);
@@ -836,11 +833,11 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 
   const BM_ENTRIES filtered = filtered_entries();
   BM_ENTRIES rv;
-  unsigned int threshold;
+//  unsigned int threshold;
 
   SAFELOCK(_bandmap);
 
-  threshold = _rbn_threshold;
+  const unsigned int threshold = _rbn_threshold;
 
   for (const auto& be : filtered)
   { if (be.source() == BANDMAP_ENTRY_RBN)

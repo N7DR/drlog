@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 123 2016-02-14 20:16:23Z  $
+// $Id: string_functions.cpp 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -233,7 +233,7 @@ const string replace(const string& s, const string& old_str, const string& new_s
     \param  pad_char        character with which to pad
     \return                 padded version of <i>s</i>
   
-  If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
+    If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
 const string pad_string(const string& s, const unsigned int len, const enum pad_direction pad_side, const char pad_char)
 { string rv = s;
@@ -256,8 +256,8 @@ const string pad_string(const string& s, const unsigned int len, const enum pad_
     \param  filename    name of file to be read
     \return             contents of file <i>filename</i>
   
-  Throws exception if the file does not exist, or if any
-  of several bad things happen. Assumes that the file is a reasonable length.
+    Throws exception if the file does not exist, or if any
+    of several bad things happen. Assumes that the file is a reasonable length.
 */
 const string read_file(const string& filename)
 { FILE* fp = fopen(filename.c_str(), "rb");
@@ -608,38 +608,11 @@ const vector<string> delimited_substrings(const string& cs, const char delim_1, 
   return rv;
 }
 
-
-/*! \brief  Obtain a delimited substring
-  \param  s Original string
-  \param  delim_1 opening delimiter
-  \param  delim_2 closing delimiter
-  \param  del     whether to remove substrings and delimiters from <i>s</i>
-  \return substring between <i>delim_1</i> and <i>delim_2</i>
-  
-  Returns the empty string if the delimiters do not exist, or if
-  <i>delim_2</i> does not appear after <i>delim_1</i>
+/*! \brief          Centre a string
+    \param  str     string to be centred
+    \param  width   final width of the centred string
+    \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
 */
-/*
-const string delimited_substring(string& s, const char delim_1, const char delim_2, const bool del)
-{ const size_t posn_1 = s.find(delim_1);
-  
-  if (posn_1 == string::npos)
-    return string();  
-  
-  const size_t posn_2 = s.find(delim_2, posn_1 + 1);
-  
-  if (posn_2 == string::npos)
-    return string();
-  
-  const string rv = s.substr(posn_1 + 1, posn_2 - posn_1 - 1);
-
-  if (del)
-    s = s.substr(0, posn_1) + s.substr(posn_2 + 1);  
-    
-  return rv;  
-}
-*/
-
 const string create_centred_string(const string& str, const unsigned int width)
 { const size_t len = str.length();
 
@@ -655,8 +628,7 @@ const string create_centred_string(const string& str, const unsigned int width)
   return (l + str + r);
 }
 
-// simple functions for chars near the end of strings
-/// the last character in a string
+/// get the last character in a string
 const char last_char(const string& cs)
 { if (cs.empty())
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character in empty string");
@@ -724,7 +696,10 @@ const string separated_string(const int n, const string& sep)
   return rv;
 }
 
-/// return the starting position for each word
+/*! \brief      Get location of start all words
+    \param  s   string to be analysed
+    \return     positions of all the starts of words in <i>s</i>
+*/
 const vector<size_t> starts_of_words(const string& s)
 { vector<size_t> rv;
 
@@ -755,7 +730,13 @@ const vector<size_t> starts_of_words(const string& s)
   }
 }
 
-/// get location of start of next word
+/*! \brief                  Get location of start of next word
+    \param  str             string which the next word is to be found
+    \param  current_posn    position from which to search
+    \return                 position of start of next word, beginning at position <i>current_posn</i> in <i>str</i>
+
+    Returns <i>string::npos</i> if no word can be found
+*/
 const size_t next_word_posn(const string& str, const size_t current_posn)
 { if (str.length() <= current_posn)
     return string::npos;
@@ -772,7 +753,14 @@ const size_t next_word_posn(const string& str, const size_t current_posn)
   return word_posn;
 }
 
-// get nth word
+/*! \brief          Get nth word in a string
+    \param  s       string to be analysed
+    \param  n       word number to be returned
+    \param  wrt     value with respoct to which <i>n</i> is counted
+    \return         the <i>n</i>th word, counting with respect to <i>wrt</i>
+
+    Returns <i>string::npos</i> if there is no <i>n</i>th word
+*/
 const string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
 { string rv;
 
@@ -794,7 +782,13 @@ const string nth_word(const string& s, const unsigned int n, const unsigned int 
   return rv;
 }
 
-// https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
+/*! \brief          Get the actual length, in bytes, of a UTF-8-encoded string
+    \param  str     UTF-8 string to be analysed
+    \return         number of bytes occupied by <i>str</i>
+
+    See: https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
+    TODO: generalise using locales/facets, instead of assuming UTF-8
+*/
 const size_t n_chars(const string& str)
 { if (string(nl_langinfo(CODESET)) != "UTF-8")
     throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: " + string(nl_langinfo(CODESET)));

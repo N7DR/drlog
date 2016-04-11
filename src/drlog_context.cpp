@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 126 2016-03-18 23:22:48Z  $
+// $Id: drlog_context.cpp 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -704,6 +704,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "P3")
       _p3 = is_true;
 
+// P3 IGNORE CHECKSUM ERROR
+    if (LHS == "P3 IGNORE CHECKSUM ERROR")
+      _p3_ignore_checksum_error = is_true;
+
 // P3 SNAPSHOT FILE
     if (LHS == "P3 SNAPSHOT FILE")
       _p3_snapshot_file = rhs;
@@ -880,25 +884,25 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // START MODE
-    if (starts_with(testline, "START MODE"))
+    if (LHS == "START MODE")
     { if (RHS == "SSB")
         _start_mode = MODE_SSB;
     }
 
 // SYNC KEYER
-    if (starts_with(testline, "SYNC KEYER"))
+    if (LHS == "SYNC KEYER")
       _sync_keyer = is_true;
 
 // TEST
-    if (starts_with(testline, "TEST"))
+    if (LHS == "TEST")
       _test = is_true;
 
 // THOUSANDS SEPARATOR
-    if (starts_with(testline, "THOUSANDS SEPARATOR"))
+    if (LHS == "THOUSANDS SEPARATOR")
       _thousands_separator = rhs;
 
 // UBA BONUS
-    if (starts_with(testline, "UBA BONUS"))
+    if (LHS == "UBA BONUS")
       _uba_bonus = is_true;
 
 // WORKED MULTS COLOUR
@@ -1417,6 +1421,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _per_band_points( {} ),                     // no points awarded anywhere
   _ptt_delay(25),                             // PTT delay
   _p3(false),                                 // no P3 is available
+  _p3_ignore_checksum_error(false),           // don't ignore checksum errors when acquiring P3 screendumps
   _p3_snapshot_file("P3"),                    // P3 snapshots will be in P3-<n>
   _p3_span_cq(0),                             // no default span in CQ mode
   _p3_span_sap(0),                            // no default span in SAP mode

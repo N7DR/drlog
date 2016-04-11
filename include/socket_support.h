@@ -1,4 +1,4 @@
-// $Id: socket_support.h 125 2016-03-07 17:50:18Z  $
+// $Id: socket_support.h 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,7 +87,7 @@ inline const std::string socket_error_name(const int error_number)
   
     Throws socket_support_error(SOCKET_TIMEOUT) if the socket times out
 */
-std::string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply);
+const std::string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply);
 
 /*! \brief          Flush a readable socket
     \param  sock    socket to flush
@@ -101,7 +101,7 @@ void flush_read_socket(SOCKET& sock);
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr = 0);
+const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr = 0);
 
 /*! \brief                          Generate a sockaddr_storage from an address and port
     \param  dotted_decimal_address  IP address as a dotted decimal
@@ -110,7 +110,7 @@ sockaddr_storage socket_address(const unsigned long ip_address, const short port
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-inline sockaddr_storage socket_address(const std::string& dotted_decimal_address, const short port_nr = 0)
+inline const sockaddr_storage socket_address(const std::string& dotted_decimal_address, const short port_nr = 0)
   { return socket_address(inet_addr(dotted_decimal_address.c_str()), port_nr); }
 
 /*! \brief          Extract port from a sockaddr_in
@@ -145,36 +145,33 @@ inline const std::string dotted_decimal_address(const sockaddr_in& sin)
 inline const std::string dotted_decimal_address(const sockaddr& sin)
   { return (inet_ntoa(((sockaddr_in*)(&sin))->sin_addr)); }
 
-// simple wrappers for stupid C-style functions
-/*! \brief  Bind a socket to an address
-  \param  sock    Socket to bind
-  \param  local_address Address to which to bind <i>sock</i>
-  \return Value returned from bind() system call
+/*! \brief                  Bind a socket to an address
+    \param  sock            socket to bind
+    \param  local_address   address to which to bind <i>sock</i>
+    \return                 value returned from bind() system call
 */
-inline int bind(SOCKET& sock, const sockaddr_in& local_address)
+inline const int bind(SOCKET& sock, const sockaddr_in& local_address)
   { return bind(sock, (sockaddr*)&local_address, sizeof(sockaddr_in)); }
 
-/*! \brief  Create a host-order 32-bit IP address
-  \param  s IP address as a dotted decimal
-  \return IP address in host order in a single variable
-  
-  Assumes that a long is 32 bits
+/*! \brief      Create a host-order 32-bit IP address
+    \param  s   IP address as a dotted decimal
+    \return     IP address in host order in a single variable
 */
-inline long host_order_inet_addr(const std::string& s)
+inline const uint32_t host_order_inet_addr(const std::string& s)
   { return ntohl(inet_addr(s.c_str())); }             // inet_addr returns network order
 
-/*! \brief  Process a socket error
-  \param  socket_status Value returned by a system call to a socket function
+/*! \brief                  Process a socket error
+    \param  socket_status   value returned by a system call to a socket function
   
-  This routine encapsulates OS differences in a single place
+    This routine encapsulates OS differences in a single place
 */
 void process_socket_error(const int socket_status);
 
-/*! \brief  Convert a sockaddr_storage to a sockaddr_in
-  \param  ss  Value to be converted
-        \return <i>ss</i> as a sockaddr_in
+/*! \brief      Convert a sockaddr_storage to a sockaddr_in
+    \param  ss  value to be converted
+    \return     <i>ss</i> as a sockaddr_in
   
-  Throws socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL) if <i>ss</i> is not an IPv4 address
+    Throws socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL) if <i>ss</i> is not an IPv4 address
 */
 const sockaddr_in to_sockaddr_in(const sockaddr_storage& ss);
 

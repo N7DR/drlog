@@ -76,7 +76,8 @@ public:
 /*! \brief      send a message to the cluster
     \return msg the message to be sent
 */
-  void send(const std::string& msg = "\r\n"); 
+  inline void send(const std::string& msg = "\r\n")
+   { _connection.send(msg); }
 
   READ(source);        ///< source for postings
 

@@ -1,4 +1,4 @@
-// $Id: bandmap.h 125 2016-03-07 17:50:18Z  $
+// $Id: bandmap.h 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,14 +456,23 @@ public:
   inline const unsigned int n_posters(void) const
     { return _posters.size(); }
 
-/// difference in frequency between two bandmap entries
+/*! \brief      Return the difference in frequency between two bandmap entries
+    \param  be  other bandmap entry
+    \return     difference in frequency between *this and <i>be</i>
+*/
   const frequency frequency_difference(const bandmap_entry& be) const;
 
-/// order two bandmap entries, in order of callsign
+/*! \brief      Is this bandmap entry less than another one, using callsign order
+    \param  be  other bandmap entry
+    \return     whether *this is less than <i>be</i>, using callsign order
+*/
   inline const bool less_by_callsign(const bandmap_entry& be) const
     { return (_callsign < be._callsign); }
 
-/// order two bandmap entries, in order of frequency
+/*! \brief      Is this bandmap entry less than another one, using frequency order
+    \param  be  other bandmap entry
+    \return     whether *this is less than <i>be</i>, using frequency order
+*/
   inline const bool less_by_frequency(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz()); }
 
@@ -585,7 +594,9 @@ public:
     return *(_filter_p);
   }
 
-/// set the RBN threshold
+/*!  \brief     Set the RBN threshold
+     \param n   new value of the threshold
+*/
   inline void rbn_threshold(const unsigned int n)
   { SAFELOCK (_bandmap);
     _rbn_threshold = n;
@@ -609,7 +620,9 @@ public:
       return _fade_colours;
     }
 
-/// set the colours to use as entries age
+/*!  \brief     Set the colours to use as entries age
+     \param fc  vector of colours to use as entries age; most recent entries first
+*/
   inline void fade_colours(const std::vector<int> fc)
     { SAFELOCK(_bandmap);
       _fade_colours = fc;

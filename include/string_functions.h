@@ -1,4 +1,4 @@
-// $Id: string_functions.h 123 2016-02-14 20:16:23Z  $
+// $Id: string_functions.h 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -484,20 +484,45 @@ inline const bool is_maritime_mobile(const std::string& callsign)
 */
 const std::string separated_string(const int n, const std::string& sep = ",");
 
-/// convert an integer to a comma-separated string
+/*! \brief      Convert an integer to a comma-separated string
+    \param  n   number to convert
+    \return     <i>n</i> with the separator <i>,</i> separating each triplet
+*/
 inline const std::string comma_separated_string(const int n)
   { return separated_string(n); }
 
-/// get location of start of next word
+/*! \brief                  Get location of start of next word
+    \param  str             string which the next word is to be found
+    \param  current_posn    position from which to search
+    \return                 position of start of next word, beginning at position <i>current_posn</i> in <i>str</i>
+
+    Returns <i>string::npos</i> if no word can be found
+*/
 const size_t next_word_posn(const std::string& str, const size_t current_posn);
 
-/// return the starting position for each word
+/*! \brief      Get location of start all words
+    \param  s   string to be analysed
+    \return     positions of all the starts of words in <i>s</i>
+*/
 const std::vector<size_t> starts_of_words(const std::string& s);
 
-// get nth word
+/*! \brief          Get nth word in a string
+    \param  s       string to be analysed
+    \param  n       word number to be returned
+    \param  wrt     value with respoct to which <i>n</i> is counted
+    \return         the <i>n</i>th word, counting with respect to <i>wrt</i>
+
+    Returns <i>string::npos</i> if there is no <i>n</i>th word
+*/
 const std::string nth_word(const std::string& s, const unsigned int n, const unsigned int wrt = 0);
 
-// assumes UTF-8; TODO: generalise using locales/facets
+/*! \brief          Get the actual length, in bytes, of a UTF-8-encoded string
+    \param  str     UTF-8 string to be analysed
+    \return         number of bytes occupied by <i>str</i>
+
+    See: https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
+    TODO: generalise using locales/facets, instead of assuming UTF-8
+*/
 const size_t n_chars(const std::string& str);
 
 /*!     \brief  Does a string contain a legal dotted-decimal IPv4 address

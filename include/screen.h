@@ -1,4 +1,4 @@
-// $Id: screen.h 126 2016-03-18 23:22:48Z  $
+// $Id: screen.h 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -464,7 +464,9 @@ public:
 */
   window& operator<(const enum WINDOW_ATTRIBUTES wa);
   
-/// clear the window
+/*! \brief      Clear the window
+    \return     the window
+*/
   window& clear(void);
   
 /*! \brief      Read to end of window
@@ -472,25 +474,47 @@ public:
     \param  y   y value from which to read (0 is bottommost row)
     \return     contents of the window, starting at the position (<i>x</i>, <i>y</i>)
 
-    By default reads the entirety of the bottom line
+    By default reads the entirety of the bottom line.
+    Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
 */
   const std::string read(int x = 0, int y = 0);
 
-/// read a line
+/*! \brief              Read a line
+    \param  line_nr     number of line to read (0 is bottommost row)
+    \return             contents of line number <i>line_nr</i>
+
+    Limits <i>line_nr</i> to a valid value for the window before reading the line.
+*/
   inline const std::string getline(const int line_nr = 0)
     { return read(0, line_nr); }
 
 /// line by line snapshot of all the contents; lines go from top to bottom
   const std::vector<std::string> snapshot(void);
 
-/// is a line empty?
+/*! \brief              Is a line empty?
+    \param  line_nr     number of line to test (0 is bottommost row)
+    \return             whether line number <i>line_nr</i> is empty
+
+    Removes any blank spaces before testing.
+    Limits <i>line_nr</i> to a valid value for the window before testing the line.
+*/
   inline const bool line_empty(const int line_nr = 0)
     { return remove_peripheral_spaces(getline(line_nr)).empty(); }
 
-/// clear a line
+/*! \brief              Clear a line
+    \param  line_nr     number of line to clear (0 is bottommost row)
+    \return             the window
+
+    Limits <i>line_nr</i> to a valid value for the window before clearing the line.
+*/
   window& clear_line(const int line_nr = 0);
 
-/// delete a character in the current line
+/*! \brief      Delete a character in the current line
+    \param  n   number of character to delete (wrt 0)
+    \return     the window
+
+    Does nothing if character number <i>n</i> does not exist
+*/
   window& delete_character(const int n);
 
 /// delete a character within a particular line

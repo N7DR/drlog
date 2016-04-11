@@ -52,8 +52,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _connection(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server(),
               src == POSTING_CLUSTER ? context.cluster_port() :  context.rbn_port(),
               context.my_ip())
-{ //ost << "inside body of dx_cluster constructor" << endl;
-
+{
 // set the keepalive option
   _connection.keep_alive(300, 60, 2);
   
@@ -62,9 +61,7 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
 // send the login information as soon as we receive anything from the server
   while (buf.empty())
   { try
-    { //ost << "about to read cluster connection" << endl;
-
-      buf = _connection.read(_timeout);
+    { buf = _connection.read(_timeout);
 
       { SAFELOCK(rbn_buffer);
         _unprocessed_input += buf;
@@ -85,8 +82,6 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
       throw;
     }
   }
-  
-//  ost << "about to send to cluster connection" << endl;
 
   _connection.send(_login_id + CRLF);
 
@@ -119,13 +114,13 @@ new_socket:
     }
 
     _connection.new_socket();                  // get a new socket
-    ost << "Set connection to use new socket OK" << endl;
+//    ost << "Set connection to use new socket OK" << endl;
 
     _connection.keep_alive(300, 60, 2);        // set the keepalive option
-    ost << "Keepalive parameters set" << endl;
+//    ost << "Keepalive parameters set" << endl;
 
     _connection.bind(_my_ip);                  // bind it to the correct IP address
-    ost << "Bind OK" << endl;
+//    ost << "Bind OK" << endl;
 
 // reconnect to the server
 reconnect:
@@ -149,9 +144,7 @@ reconnect:
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { //n_running_threads--;
           return;
-        }
       }
 
       goto reconnect;
@@ -211,9 +204,9 @@ const string dx_cluster::read(void)
 /*! \brief          Send a message to the cluster
     \return msg     the message to be sent
 */
-void dx_cluster::send(const string& msg)
-{ _connection.send(msg);
-}
+//void dx_cluster::send(const string& msg)
+//{ _connection.send(msg);
+//}
 
 /*! \brief      Read from the cluster socket
     \return     the information that has been read from the socket but has not yet been processed
@@ -284,15 +277,6 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
             if (bra_posn != string::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);
               _poster = copy.substr(bra_posn + 1, copy.length() - (bra_posn + 1) - 1);
-
-/*
-              ost << "frequency: " << _frequency_str << endl
-                   << "DX call: "   << _callsign << endl
-                   << "Date: " << date << endl
-                   << "Comment: " << _comment << endl
-                   << "Poster: " << _poster << endl;
-*/
-
               _valid = true;
               _time_processed = ::time(NULL);
             }
@@ -342,16 +326,6 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
             space_posn = copy.find_last_of(" ");
 
             _comment = copy.substr(char_posn);
-
-/*
-            ost << "DXPost format 2: " << endl
-                  << "frequency: " << _frequency_str << endl
-                   << "DX call: "   << _callsign << endl
- //                  << "Time: " << _time_claimed << endl
-                   << "Comment: " << _comment << endl
-                   << "Poster: " << _poster << endl;
-*/
-            
             _valid = true;
             _time_processed = ::time(NULL);
           }

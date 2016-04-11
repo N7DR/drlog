@@ -37,6 +37,8 @@ using namespace   this_thread;   // std::this_thread
 
 const bool RESPONSE_EXPECTED = true;    ///< used to signal that a response is expected
 
+void alert(const string& msg, const bool show_time = true);     ///< alert the user (not used for errors)
+
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
  * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
  *
@@ -900,11 +902,11 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           { static const string percent_str("%%");
             const int percent = rcvd.length() * 100 / 131640;
 
-            _error_alert(string("P3 screendump progress: ") + to_string(percent) + percent_str);
+            alert(string("P3 screendump progress: ") + to_string(percent) + percent_str);
             sleep_for(milliseconds(1000));  // we have the lock for all this time
           }
-          else
-            _error_alert("P3 screendump complete");
+//          else
+//            alert("P3 screendump complete");
         }
       }
       else

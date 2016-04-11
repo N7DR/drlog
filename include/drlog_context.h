@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 122 2016-02-06 21:00:23Z  $
+// $Id: drlog_context.h 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,16 +47,16 @@ class drlog_context
 {
 protected:
 
-  int                                          _accept_colour;                  ///< colour for calls that have been worked, but are not dupes
-  std::string                                  _alternative_exchange_cq;        ///< alternative exchange in CQ mode
-  std::string                                  _alternative_exchange_sap;       ///< alternative exchange in SAP mode
-  std::string                                  _archive_name;                   ///< name of the archive for save/restore information
-  std::string                                  _auto_backup;                    ///< directory for auto backup files
-  bool                                         _auto_remaining_callsign_mults;  ///< do we auto-generate the remaining callsign mults?
-  bool                                         _auto_remaining_country_mults;   ///< do we auto-generate the remaining country mults?
-  std::set<std::string>                        _auto_remaining_exchange_mults;  ///< the exchange mults for which we auto-generate the values
+  int                                          _accept_colour;                              ///< colour for calls that have been worked, but are not dupes
+  std::string                                  _alternative_exchange_cq;                    ///< alternative exchange in CQ mode
+  std::string                                  _alternative_exchange_sap;                   ///< alternative exchange in SAP mode
+  std::string                                  _archive_name;                               ///< name of the archive for save/restore information
+  std::string                                  _auto_backup;                                ///< directory for auto backup files
+  bool                                         _auto_remaining_callsign_mults;              ///< do we auto-generate the remaining callsign mults?
+  bool                                         _auto_remaining_country_mults;               ///< do we auto-generate the remaining country mults?
+  std::set<std::string>                        _auto_remaining_exchange_mults;              ///< the exchange mults for which we auto-generate the values
   unsigned int                                 _auto_remaining_country_mults_threshold;     ///< number of times a canonical prefix must be seen before it becomes known
-  bool                                         _auto_screenshot;                ///< do we create a screenshot every hour?
+  bool                                         _auto_screenshot;                            ///< do we create a screenshot every hour?
 
   unsigned int                                 _bandmap_decay_time_local;           ///< time (in minutes) for an entry to age off the bandmap (local entries)
   unsigned int                                 _bandmap_decay_time_cluster;         ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
@@ -180,6 +180,7 @@ protected:
 
   unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
   bool                                         _p3;                               ///< is a P3 available?
+  bool                                         _p3_ignore_checksum_error;         ///< should checksum errors be ignored when acquiring P3 screendumps?
   std::string                                  _p3_snapshot_file;                 ///< base name of file for P3 snapshot
   unsigned int                                 _p3_span_cq;                       ///< P3 span in CQ mode, in kHz
   unsigned int                                 _p3_span_sap;                      ///< P3 span in SAP mode, in kHz
@@ -428,6 +429,7 @@ public:
 
   SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
   SAFEREAD(p3, _context);                           ///< is a P3 available?
+  SAFEREAD(p3_ignore_checksum_error, _context);     ///< should checksum errors be ignored when acquiring P3 screendumps?
   SAFEREAD(p3_snapshot_file, _context);             ///< base name of file for P3 snapshot
   SAFEREAD(p3_span_cq, _context);                   ///< P3 span in CQ mode, in kHz
   SAFEREAD(p3_span_sap, _context);                  ///< P3 span in SAP mode, in kHz

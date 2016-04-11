@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 126 2016-03-18 23:22:48Z  $
+// $Id: socket_support.cpp 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -566,7 +566,7 @@ void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, c
 
     Throws socket_support_error(SOCKET_TIMEOUT) if the socket times out
 */
-string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply)
+const string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply)
 {
 // wait for response
   struct timeval timeout;
@@ -657,9 +657,8 @@ void flush_read_socket(SOCKET& sock)
 // ip_address_as_long is in network order
 // port_nr is in host order
 // this works only in IPv4
-sockaddr_storage socket_address(const unsigned long ip_address_as_long, const short port_nr)
-{ 
-  sockaddr_storage rv;
+const sockaddr_storage socket_address(const unsigned long ip_address_as_long, const short port_nr)
+{ sockaddr_storage rv;
   sockaddr_in* sinp = (sockaddr_in*)(&rv);
   
   sinp->sin_family = AF_INET;

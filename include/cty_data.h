@@ -701,16 +701,33 @@ public:
 /// create a set of all the canonical prefixes for a particular continent
   const std::set<std::string> countries(const std::string& cont_target);
   
-/// access individual items of information
+/*! \brief              Get official name of the country associated with a call or partial call
+    \param  callpart    call (or partial call)
+    \return             official name of the country corresponding to <i>callpart</i>
+*/
   inline const std::string country_name(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).country_name() )); }
 
+/*! \brief              Get CQ zone associated with a call or partial call
+    \param  callpart    call (or partial call)
+    \return             CQ zone corresponding to <i>callpart</i>
+*/
   inline const unsigned int cq_zone(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).cq_zone() )); }
 
+/*! \brief              Get ITU zone associated with a call or partial call
+    \param  callpart    call (or partial call)
+    \return             ITU zone corresponding to <i>callpart</i>
+*/
   inline const unsigned int itu_zone(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).itu_zone() )); }
 
+/*! \brief              Get the continent associated with a call or partial call
+    \param  callpart    call (or partial call)
+    \return             continent to <i>callpart</i>
+
+    The returned continent is in the form of the two-letter code
+*/
   inline const std::string continent(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).continent() )); }
 

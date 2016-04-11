@@ -1,4 +1,4 @@
-// $Id: screen.cpp 126 2016-03-18 23:22:48Z  $
+// $Id: screen.cpp 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -671,12 +671,13 @@ window& operator<(window& win, const centre& c)
   return win < c.s();
 }
 
-/*! \brief      read to end of window
+/*! \brief      Read to end of window
     \param  x   x value from which to read (0 is leftmost column)
     \param  y   y value from which to read (0 is bottommost row)
     \return     contents of the window, starting at the position (<i>x</i>, <i>y</i>)
 
-    By default reads the entirety of the bottom line
+    By default reads the entirety of the bottom line.
+    Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
 */
 const string window::read(int x, int y)
 { if (!_wp)
@@ -710,7 +711,12 @@ const vector<string> window::snapshot(void)
   return rv;
 }
 
-/// clear a line
+/*! \brief              Clear a line
+    \param  line_nr     number of line to clear (0 is bottommost row)
+    \return             the window
+
+    Limits <i>line_nr</i> to a valid value for the window before clearing the line.
+*/
 window& window::clear_line(const int line_nr)
 { if (!_wp)
     return *this;
@@ -726,7 +732,12 @@ window& window::clear_line(const int line_nr)
   return *this;
 }
 
-/// delete a character within the current line
+/*! \brief      Delete a character in the current line
+    \param  n   number of character to delete (wrt 0)
+    \return     the window
+
+    Does nothing if character number <i>n</i> does not exist
+*/
 window& window::delete_character(const int n)
 { if (!_wp)
     return *this;

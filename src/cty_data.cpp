@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: cty_data.cpp 127 2016-04-03 17:05:58Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -286,10 +286,6 @@ location_info::location_info(const cty_record& rec) :
   _canonical_prefix(rec.prefix())
 { }
 
-/// destructor
-//location_info::~location_info(void)
-//{ }
-
 /// location_info == location_info
 const bool location_info::operator==(const location_info& li) const
 { if (_country_name != li._country_name)
@@ -568,23 +564,12 @@ void location_database::add_russian_database(const vector<string>& path, const s
 
   try
   { _russian_db = russian_data(path, filename).data();
-//    ost << "added Russian data from file: " << filename << endl;
   }
 
   catch (...)
   { ost << "Error attempting to add Russian database from file: " << filename << endl;
   }
-
-//  ost << "written length of Russian data = " << _russian_db.size() << endl;
 }
-
-/*! \brief              Add Russian information
-    \param  path        vector of directories to check for file <i>filename</i>
-    \param  filename    name of file containing Russian information
-*/
-//void location_database::add_alt_call(const string& call, const location_info& li)
-//{ _alt_call_db.insert(make_pair(call, li));    // overwrites any prior entry with call as the key
-//}
 
 /*! \brief      Get location information for a particular call or partial call
     \param  cs  call (or partial call)
@@ -777,7 +762,7 @@ const location_info location_database::info(const string& cs)
 
   if (parts.size() == 2)        // one slash
   {
-     ost << "one slash" << endl;
+//     ost << "one slash" << endl;
 
 // see if either part matches anything in the initial database
      map<string, location_info>::iterator db_posn_0 = _db.find(parts[0]);
@@ -787,7 +772,7 @@ const location_info location_database::info(const string& cs)
      const bool found_1 = (db_posn_1 != _db.end());
 
      if (found_0 and !found_1)                        // first part had an exact match
-     { ost << "first part had exact match" <<endl;
+     { //ost << "first part had exact match" <<endl;
 
        location_info best_info = db_posn_0->second;
 
@@ -803,9 +788,7 @@ const location_info location_database::info(const string& cs)
      static const set<string> russian_long_prefixes { "RU4W" };
 
      if (found_1 and !found_0)                        // second part had an exact match
-     {// ost << "second part had exact match" <<endl;
-
-       if (!(russian_long_prefixes < parts[1]))         // the normal case
+     { if (!(russian_long_prefixes < parts[1]))         // the normal case
        { location_info best_info = db_posn_1->second;
 
           best_info = guess_zones(callsign, best_info);
@@ -814,26 +797,16 @@ const location_info location_database::info(const string& cs)
           return best_info;
        }
        else                                             // the pathological case, a call like "K4/RU4W"
-       { //ost << "second part was a Russian long prefix" <<endl;
-
-         location_info best_info = info(parts[0]);  // recursive
-
-         //ost << "got location info" << endl;
-
-//         best_info = guess_zones(parts[0], best_info);
-
-//        ost << "after guessing zones" << endl;
+       { const location_info best_info = info(parts[0]);  // recursive
 
          _db_checked.insert( { callsign, best_info } );
 
          return best_info;
-
-
        }
      }
 
     if (found_0 and found_1)                      // both parts had an exact match (should never happen: KH6/KP2
-    { ost << "both parts had exact match (should never happen)" <<endl;
+    { //ost << "both parts had exact match (should never happen)" <<endl;
 
       if (parts[0].length() > parts[1].length())  // choose longest match
       {  location_info best_info = db_posn_0->second;
@@ -973,7 +946,6 @@ const set<string> location_database::countries(void)
 
   set<string> rv;
 
-//  for_each(_db.cbegin(), _db.cend(), [&rv] (const pair<string, location_info>& prefix_li) { rv.insert((prefix_li.second).canonical_prefix()); } );  // there are a lot more entries in the db than there are countries
   FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv.insert((prefix_li.second).canonical_prefix()); } );  // there are a lot more entries in the db than there are countries
 
   return rv;
