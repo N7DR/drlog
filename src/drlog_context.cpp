@@ -1199,8 +1199,21 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
                 contents = substring(contents, 1, posn - 1);
             }
 
-            winfo.w(contents.length());
-            winfo.h(1);
+            ost << "contents of static window: " << contents << endl;
+
+            vector<string> lines = to_lines(contents);
+            ost << "number of lines: " << lines.size() << endl;
+
+            const string contents_1 = replace(contents, "\\n", EOL);
+            ost << "contents_1: " << contents_1 << endl;
+
+            lines = to_lines(contents_1);
+            ost << "number of lines: " << lines.size() << endl;
+
+ //           winfo.w(contents.length());
+ //           winfo.h(1);
+            winfo.w(longest_line(lines).length());
+            winfo.h(lines.size());
 
             if (window_info.size() >= 4)
             { winfo.fg_colour(window_info[3]);
@@ -1214,7 +1227,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             vector<window_information> vec = _static_windows[name].second;
 
             vec.push_back(winfo);
-            _static_windows[name] = { contents, vec };
+            _static_windows[name] = { contents_1, vec };
           }
         }
       }

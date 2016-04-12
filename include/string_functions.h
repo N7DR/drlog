@@ -547,6 +547,11 @@ const bool compare_calls(const std::string& s1, const std::string& s2);
 
 const std::string decimal_places(const std::string& str, const int n);
 
+const std::string longest_line(const std::vector<std::string>& lines);
+
+// deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
+const std::string reformat_for_wprintw(const std::string& str, const int width);
+
 // -------------------------------------- Errors  -----------------------------------
 
 /*! \class  string_function_error

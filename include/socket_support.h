@@ -62,8 +62,6 @@ const std::string tcp_socket_error_string[7] = { "",
                                                  "Error resolving destination"
                                                };
 
-//const int SOCKET_ERROR = -1;
-
 /// Type that holds a socket -- syntactic sugar
 typedef int SOCKET;
 
@@ -181,31 +179,26 @@ std::ostream& operator<<(std::ostream& ost, const struct sockaddr_in& pa);
 // ------------------------------------  tcp_socket  ----------------------------------
 
 /*! \class  tcp_socket
-  \brief  Encapsulate and manage a TCP socket 
+    \brief  Encapsulate and manage a TCP socket
 */
 
 class tcp_socket
 {
 protected:
 
+  sockaddr_storage  _bound_address;             ///< address to which port is bound
+  sockaddr_storage  _destination;               ///< destination
+  bool              _destination_is_set;        ///< is the destination known?
+  bool              _force_closure;             ///< force closure of socket in destructor, even for a pre-existing socket
   bool              _preexisting_socket;        ///< whether <i>_sock</i> exists outside the object
-  SOCKET            _sock;                      ///< Encapsulated socket
+  SOCKET            _sock;                      ///< encapsulated socket
+  pt_mutex          _tcp_socket_mutex;          ///< mutex to control access
+  unsigned int      _timeout_in_tenths;         ///< timeout in tenths of a second (currently unimplemented)
 
-  bool              _destination_is_set;        ///< Is the destination known?
-  sockaddr_storage  _destination;               ///< Destination
-
-  sockaddr_storage  _bound_address;                     ///< Address to which port is bound
-
-  bool              _force_closure;                     ///< force closure of socket in destructor, even for a pre-existing socket
-
-  unsigned int      _timeout_in_tenths;                 ///< timeout in tenths of a second (currently unimplemented)
-
-  pt_mutex          _tcp_socket_mutex;
-
-/*! \brief  Copy constructor
-  \param  obj   Object to be copied
+/*! \brief          Copy constructor
+    \param  obj     object to be copied
   
-  Protected function ensures that the socket cannot be copied
+    Protected function ensures that the socket cannot be copied
 */
   tcp_socket(const tcp_socket& obj);
 
@@ -320,7 +313,7 @@ public:
 /*! \brief          Simple send
     \param  msg     message to send
   
-    This is not very useful, since it doesn't look for a response
+    Does not look for a response
 */
   void send(const std::string& msg);
 

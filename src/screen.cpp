@@ -256,6 +256,8 @@ window& window::move_cursor(const int new_x, const int new_y)
     now we live with this, but we might want at some time to write a more complex
     function that performs the writes without ever (silently) adding something
     to the string
+
+    Also see the function reformat_for_wprintw().
 */
 window& window::operator<(const string& s)
 { if (!_wp)

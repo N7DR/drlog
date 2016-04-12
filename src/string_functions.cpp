@@ -979,3 +979,36 @@ const string decimal_places(const string& str, const int n)
   return str;
 }
 
+const string longest_line(const vector<string>& lines)
+{ string rv;
+
+  for (const string& line : lines)
+    if (line.length() > rv.length())
+      rv = line;
+
+  return rv;
+}
+
+// deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
+// http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
+const string reformat_for_wprintw(const string& str, const int width)
+{ string rv;
+  int since_last_newline = 0;
+
+  for (size_t posn = 0; posn < str.length(); ++posn)
+  { const char& c = str[posn];
+
+    if (c != EOL_CHAR)
+    { rv += c;
+      since_last_newline++;
+    }
+    else    // character is EOL
+    { if (since_last_newline != width)
+        rv += EOL;        // add the explicit EOL
+
+      since_last_newline = 0;
+    }
+  }
+
+  return rv;
+}

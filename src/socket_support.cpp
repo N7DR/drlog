@@ -84,9 +84,9 @@ tcp_socket::tcp_socket(void)  :
 }
 
 /*! \brief          Encapsulate a pre-existing socket
-    \param  sock_p  Pointer to socket
+    \param  sock_p  pointer to socket
   
-    Acts as default constructor if passed pointer is NULL
+    Acts as default constructor if passed pointer is nullptr
 */
 tcp_socket::tcp_socket(SOCKET* sp) :
   _destination_is_set(false),
@@ -95,7 +95,7 @@ tcp_socket::tcp_socket(SOCKET* sp) :
   _timeout_in_tenths(600)                     // 1 minute
 { if (sp)
     _sock = *sp;
-  else
+  else                          // sp is nullptr
   { try
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -341,9 +341,7 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
     status = select(_sock + 1, &r_set, &w_set, NULL, (timeout_secs) ? &timeout : NULL);
 
     if (status < 0)
-    { //ost << "about to throw exception" << endl;
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: " + to_string(errno) + " received from ::connect; " + strerror(errno) + " while trying to connect to address " + address + "; port " + to_string(p));
-    }
 
     if (status == 0)  // timed out
     { errno = ETIMEDOUT;
@@ -370,7 +368,7 @@ void tcp_socket::connected(const sockaddr_storage& adr)
 /*! \brief          Simple send
     \param  msg     message to send
   
-    This is not very useful, since it doesn't look for a response
+    Does not look for a response
 */
 void tcp_socket::send(const std::string& msg)
 { if (!_destination_is_set)
@@ -387,9 +385,9 @@ void tcp_socket::send(const std::string& msg)
 /*! \brief      Simple receive
     \return     received string
 */
-#if 1
 const string tcp_socket::read(void)
-{ char cp[4096];
+{ static const unsigned int BUFLEN = 4096;
+  char cp[BUFLEN];
 
   string rv;
   int status;
@@ -397,10 +395,7 @@ const string tcp_socket::read(void)
   SAFELOCK(_tcp_socket);
 
   do
-  { //ost << "calling ::recv in tcp_socket::read" << endl;
-    status  = ::recv(_sock, cp, 4096, 0);
-
-    //ost << "tcp_socket::read status: " << status << endl;
+  { status  = ::recv(_sock, cp, BUFLEN, 0);
 
     if (status == -1)
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);
@@ -409,11 +404,10 @@ const string tcp_socket::read(void)
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);    
     
     rv += string(cp, status);
-  } while (status == 4096);
+  } while (status == BUFLEN);
 
   return rv;
 }
-#endif
 
 /*! \brief                Simple receive
     \param  timeout_secs  timeout in seconds

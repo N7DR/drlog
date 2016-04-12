@@ -858,7 +858,8 @@ int main(int argc, char** argv)
   }
 
   for (auto& swin : static_windows_p)
-    *(swin.second) <= swin.first;       // display contents of the static window
+//    *(swin.second) <= swin.first;       // display contents of the static window
+    *(swin.second) <= reformat_for_wprintw(swin.first, swin.second->width());       // display contents of the static window
 
 // BAND/MODE window
   win_band_mode.init(context.window_info("BAND/MODE"), WINDOW_NO_CURSOR);
