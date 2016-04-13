@@ -189,7 +189,9 @@ thread_attribute::~thread_attribute(void)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_destroy()");
 }
 
-/// set detached state
+/*! \brief      Set the detached state
+    \param  b   whether to set to DETACHED (true) or JOINABLE (false)
+*/
 void thread_attribute::detached(const bool b)
 { const int status = pthread_attr_setdetachstate(&_attr, (b ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE));
 
@@ -197,8 +199,10 @@ void thread_attribute::detached(const bool b)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure setting detached state of attribute");
 }
 
-/// get detached state
-const bool thread_attribute::detached(void)
+/*! \brief      Get the detached state
+    \return     whether the thread is DETACHED
+*/
+const bool thread_attribute::detached(void) const
 { int state;
   const int status = pthread_attr_getdetachstate(&_attr, &state);
 
@@ -305,18 +309,18 @@ pt_condition_variable::pt_condition_variable(pt_mutex& mutex) :
 }
 
 /// destructor
-pt_condition_variable::~pt_condition_variable(void)
-{ pthread_cond_destroy(&_cond);
-}
+//pt_condition_variable::~pt_condition_variable(void)
+//{ pthread_cond_destroy(&_cond);
+//}
 
 /*! \brief          Set the value of the associated mutex
     \param  mtx     mutex to associate with this condition variable
 
     Typically used with the default constructor
 */
-void pt_condition_variable::set_mutex(pt_mutex& mutex)
-{ _mutex_p = &mutex; 
-}
+//void pt_condition_variable::set_mutex(pt_mutex& mutex)
+//{ _mutex_p = &mutex;
+//}
 
 /*! \brief  Wait on the condition variable
 
@@ -331,7 +335,17 @@ void pt_condition_variable::wait(void)
     _predicate = false;
 
 execute_wait:
-  /* int status = */ pthread_cond_wait(&_cond, &(_mutex_p->_mutex));
+  try
+  { const int status =  pthread_cond_wait(&_cond, &(_mutex_p->_mutex));
+
+    if (status != 0)
+      throw pthread_error(PTHREAD_CONDVAR_WAIT_ERROR, "Error waiting on condition variable");
+  }
+
+// for now, ignore any error
+  catch (...)
+  {
+  }
 
 // we have to check the predicate, to guard against a false wake-up (Solaris on MP boxes is hosed)
   if (!_predicate)
@@ -340,8 +354,11 @@ execute_wait:
   _predicate = false;
 }
 
-// wait for a number of seconds
-bool pt_condition_variable::wait(unsigned int n_secs)
+/*! \brief          Wait on the condition variable for a predefined duration
+    \param  n_secs  number of seconds to wait
+    \return         whether the wait timed-out
+*/
+const bool pt_condition_variable::wait(const unsigned int n_secs)
 { if (_mutex_p == NULL)
     throw pthread_error(PTHREAD_INVALID_MUTEX, "pointer to mutex is NULL in timed wait() function");
 
@@ -355,16 +372,19 @@ bool pt_condition_variable::wait(unsigned int n_secs)
   return (status != 0);
 }
 
-// signal the change; only one waiting thread gets woken; we MUST have the lock as we come into this routine
+/*! \brief  Signal the condition variable
+
+    According to POSIX, only one waiting thread gets woken. We MUST have the lock as we come into this routine.
+*/
 void pt_condition_variable::signal(void)
 { _predicate = true;                          // yes, we really mean it
   pthread_cond_signal(&_cond);
 }
 
 // broadcast; all waiting threads get woken
-void pt_condition_variable::broadcast(void)
-{ pthread_cond_broadcast(&_cond);
-}
+//void pt_condition_variable::broadcast(void)
+//{ pthread_cond_broadcast(&_cond);
+//}
 
 // -------------------------------------- safelock ------------------------
 

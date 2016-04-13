@@ -70,7 +70,7 @@ enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
 const unsigned int WINDOW_NO_CURSOR = 1,            ///< do not display the cursor
                    WINDOW_INSERT    = 2;            ///< INSERT mode
                     
-// allow English spelling for colour names
+/// allow English spelling for colour names
 const int COLOUR_BLACK   = COLOR_BLACK,
           COLOUR_RED     = COLOR_RED,
           COLOUR_GREEN   = COLOR_GREEN,
@@ -124,10 +124,16 @@ public:
 */
   const unsigned int add(const int fg, const int bg);
 
-/// return the foreground colour of a pair
+/*! \brief              Get the foreground colour of a pair
+    \param  pair_nr     number of the pair
+    \return             the foreground colour of the pair number <i>pair_nr</i>
+*/
   const int fg(const int pair_nr) const;
 
-/// return the background colour of a pair
+/*! \brief              Get the background colour of a pair
+    \param  pair_nr     number of the pair
+    \return             the background colour of the pair number <i>pair_nr</i>
+*/
   const int bg(const int pair_nr) const;
 };
 
@@ -209,12 +215,11 @@ class window
 {
 protected:
   
-  bool    _scrolling;          ///< whether scrolling is enabled
-  bool    _leaveok;            ///< whether leaveok is set
-
-  bool    _echoing;            ///< whether echoing characters
-  bool    _vertical;           ///< whether containers of strings are to be displayed vertically
-  unsigned int _column_width;  ///< width of columns
+  unsigned int  _column_width;      ///< width of columns
+  bool          _echoing;           ///< whether echoing characters
+  bool          _leaveok;           ///< whether leaveok is set
+  bool          _scrolling;         ///< whether scrolling is enabled
+  bool          _vertical;          ///< whether containers of strings are to be displayed vertically
 
   int     _y;                  ///< y of origin (in proper coordinates)
   int     _width;              ///< width
@@ -238,7 +243,7 @@ protected:
 
   WINDOW_PROCESS_INPUT_TYPE _process_input;    ///< function to handle input to this window
 
-/*! \brief          Set the default colours; does NOT change _fg/_bg because I can't find a guaranteed
+/*! \brief          Set the default colours
     \param  fgbg    colour pair
 
     Does not change _fg/_bg because I can't find a guaranteed way to go from a big integer that
@@ -269,7 +274,7 @@ public:
 /*! \brief          Default constructor
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
-    The window is not ready for use after this constructor. It still needs to be initialised.
+    The window is not ready for use after this constructor: it still needs to be initialised.
 */
   window(const unsigned int flags = 0);
 
@@ -315,7 +320,8 @@ public:
   READ_AND_WRITE(insert);           ///< whether in insert mode
   READ_AND_WRITE(vertical);         ///< whether containers of strings are to be displayed vertically
   
-  inline WINDOW* wp(void)
+/// Get a pointer to the underlying WINDOW
+  inline WINDOW* wp(void) const
     { return _wp; }
   
 /*! \brief          Move the logical cursor
@@ -341,8 +347,11 @@ public:
   
 /// get cursor position
   const cursor cursor_position(void);
-  
-/// control scrolling
+
+/*! \brief                      Control scrolling
+    \param  enable_or_disable   whether to enable scrolling
+    \return                     the window
+*/
   window& scrolling(const bool enable_or_disable);
 
 /// enable scrolling
@@ -357,14 +366,18 @@ public:
   inline const bool scrolling(void) const
     { return _scrolling; }
 
-/*!     \brief          scroll a window
-        \param  n       number of lines to by which to scroll
+/*! \brief          scroll a window
+    \param  n       number of lines to by which to scroll
+    \return                     the window
 
-        Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
+    Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
 */
   window& scrollit(const int n_lines);
 
-/// control leaveok
+/*! \brief                      Control leaveok
+    \param  enable_or_disable   whether to enable scrolling
+    \return                     the window
+*/
   window& leave_cursor(const bool enable_or_disable);  
   
 /// refresh

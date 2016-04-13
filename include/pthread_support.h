@@ -24,23 +24,24 @@
 #include <pthread.h>
 
 /// Lock a mutex
-#define LOCK(z)  /* cout << ((std::string)("LOCK ") + #z ) << endl; */ z##_mutex.lock()
+#define LOCK(z)  z##_mutex.lock()
 
 /// Unlock a mutex
-#define UNLOCK(z) /* cout << ((std::string)("UNLOCK ") + #z ) << endl; */ z##_mutex.unlock()
+#define UNLOCK(z) z##_mutex.unlock()
 
 /// Syntactic sugar to create a safe lock
 #define SAFELOCK(z) safelock safelock_z(z##_mutex, (std::string)(#z))
 
 // errors
-const int PTHREAD_LOCK_ERROR            = -1,    ///< Error locking mutex
-          PTHREAD_UNLOCK_ERROR          = -2,    ///< Error unlocking mutex
-          PTHREAD_INVALID_MUTEX         = -3,    ///< Attempt to operate on an invalid mutex
-          PTHREAD_ATTR_ERROR            = -4,    ///< Error when managing a thread_attribute
-          PTHREAD_CREATION_ERROR        = -5;    ///< Error attempting to create a pthread
+const int PTHREAD_LOCK_ERROR            = -1,       ///< Error locking mutex
+          PTHREAD_UNLOCK_ERROR          = -2,       ///< Error unlocking mutex
+          PTHREAD_INVALID_MUTEX         = -3,       ///< Attempt to operate on an invalid mutex
+          PTHREAD_ATTR_ERROR            = -4,       ///< Error when managing a thread_attribute
+          PTHREAD_CREATION_ERROR        = -5,       ///< Error attempting to create a pthread
+          PTHREAD_CONDVAR_WAIT_ERROR    = -6;       ///< Error while waiting on a condvar
 
 // attributes that can be set at the time that a thread_attribute object is created
-const unsigned int PTHREAD_DETACHED     = 1;    ///< detached pthread
+const unsigned int PTHREAD_DETACHED     = 1;        ///< detached pthread
 
 /*! \brief                  Wrapper for pthread_create()
     \param  thread          pointer to thread ID
@@ -76,11 +77,15 @@ public:
 /// destructor
   virtual ~thread_attribute(void);
 
-/// set detached state
+/*! \brief      Set the detached state
+    \param  b   whether to set to DETACHED (true) or JOINABLE (false)
+*/
   void detached(const bool b);
 
-/// get detached state
-  const bool detached(void);
+/*! \brief      Get the detached state
+    \return     whether the thread is DETACHED
+*/
+  const bool detached(void) const;
 
 /// get attributes
   inline const pthread_attr_t& attr(void) const  // note the reference
@@ -203,14 +208,16 @@ public:
   pt_condition_variable(pt_mutex& mtx);
    
 /// destructor
-  virtual ~pt_condition_variable(void);
+  inline virtual ~pt_condition_variable(void)
+    { pthread_cond_destroy(&_cond); }
 
 /*! \brief          Set the value of the associated mutex
     \param  mtx     mutex to associate with this condition variable
   
     Typically used with the default constructor
 */
-  void set_mutex(pt_mutex& mtx);
+  inline void set_mutex(pt_mutex& mtx)
+    { _mutex_p = &mtx; }
 
 /*! \brief  Wait on the condition variable
 
@@ -218,23 +225,24 @@ public:
 */
   void wait(void);
 
-/*! \brief  Wait on the condition variable for a predefined duration
-    \param  n_secs  Number of seconds to wait
-    \return Whether the wait timed-out
+/*! \brief          Wait on the condition variable for a predefined duration
+    \param  n_secs  number of seconds to wait
+    \return         whether the wait timed-out
 */
-  bool wait(unsigned int n_secs);
+  const bool wait(const unsigned int n_secs);
 
 /*! \brief  Signal the condition variable
 
-    According to POSIX, only one waiting thread gets woken
+    According to POSIX, only one waiting thread gets woken. We MUST have the lock as we come into this routine.
 */
   void signal(void);
 
 /*! \brief  Broadcast the condition variable
 
-    According to POSIX, all waiting threads get woken
+    According to POSIX, all waiting threads get woken.
 */
-  void broadcast(void);
+  inline void broadcast(void)
+    { pthread_cond_broadcast(&_cond); }
 };
 
 // ------------------------------------------------  safelock  ---------------------------

@@ -197,6 +197,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "ALTERNATIVE EXCHANGE SAP")
       _alternative_exchange_sap = RHS;
 
+// ALTERNATIVE QSL MESSAGE
+    if ( (LHS == "ALTERNATIVE QSL MESSAGE") or (LHS == "QUICK QSL MESSAGE") )
+      _alternative_qsl_message = RHS;
+
 // ARCHIVE
     if ( (LHS == "ARCHIVE") and !rhs.empty() )
       _archive_name = rhs;
@@ -719,10 +723,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 // P3 SPAN SAP
     if (LHS == "P3 SPAN SAP")
       _p3_span_sap = from_string<unsigned int>(RHS);
-
-// QUICK QSL MESSAGE
-    if (LHS == "QUICK QSL MESSAGE")
-      _quick_qsl_message = RHS;
 
 // QSL MESSAGE
     if (LHS == "QSL MESSAGE")
@@ -1304,8 +1304,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
   if (_qsl_message.empty())
     _qsl_message = "tu " + _my_call + " test";
 
-  if (_quick_qsl_message.empty())
-    _quick_qsl_message = "tu " + _my_call;
+  if (_alternative_qsl_message.empty())
+    _alternative_qsl_message = "tu " + _my_call;
 
   if (_message_cq_1.empty())
     _message_cq_1 = "test " + _my_call + " " + _my_call + " test";
@@ -1341,26 +1341,27 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 /// construct from file
 drlog_context::drlog_context(const std::string& filename) :
-  _accept_colour(COLOUR_GREEN),                                  // green for calls that are OK to work
-  _archive_name("drlog-restart"),                                // name for the archive written when leaving drlog
-  _auto_backup(""),                                              // no auto backup directory
-  _auto_remaining_country_mults(false),                          // do not add country mults as we detect them
-  _auto_remaining_exchange_mults( { } ),                         // do not add any exchange mults as we detect them
-  _auto_screenshot(false),                                       // do not generate horal screenshots
-  _bandmap_decay_time_local(60),                                 // stay on bandmap for one hour
-  _bandmap_decay_time_cluster(60),                               // stay on bandmap for one hour
-  _bandmap_decay_time_rbn(60),                                   // stay on bandmap for one hour
-  _bandmap_fade_colours( { 255, 200, 150, 100 } ),               // four colour steps
-  _bandmap_filter(),                                             // empty bandmap filter
-  _bandmap_filter_disabled_colour(string_to_colour("BLACK")),    // background colour when bandmap filter is disabled
-  _bandmap_filter_enabled(false),                                // do not filter bandmap
-  _bandmap_filter_foreground_colour(string_to_colour("WHITE")),  // letters are white
-  _bandmap_filter_hide_colour(string_to_colour("RED")),          // background colour when bandmap filter is in HIDE mode
-  _bandmap_filter_show(false),                                   // filter is used to hide entrie
-  _bandmap_filter_show_colour(string_to_colour("GREEN")),        // background colour when bandmap filter is in SHOW mode
-  _bandmap_recent_colour(string_to_colour("BLACK")),             // do not indicate recent postings with special colour
-  _bands("160, 80, 40, 20, 15, 10"),                             // legal bands for the contest
-  _batch_messages_file(),                                        // name for batch messages file
+  _accept_colour(COLOUR_GREEN),                                     // green for calls that are OK to work
+  _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
+  _archive_name("drlog-restart"),                                   // name for the archive written when leaving drlog
+  _auto_backup(""),                                                 // no auto backup directory
+  _auto_remaining_country_mults(false),                             // do not add country mults as we detect them
+  _auto_remaining_exchange_mults( { } ),                            // do not add any exchange mults as we detect them
+  _auto_screenshot(false),                                          // do not generate horal screenshots
+  _bandmap_decay_time_local(60),                                    // stay on bandmap for one hour
+  _bandmap_decay_time_cluster(60),                                  // stay on bandmap for one hour
+  _bandmap_decay_time_rbn(60),                                      // stay on bandmap for one hour
+  _bandmap_fade_colours( { 255, 200, 150, 100 } ),                  // four colour steps
+  _bandmap_filter(),                                                // empty bandmap filter
+  _bandmap_filter_disabled_colour(string_to_colour("BLACK")),       // background colour when bandmap filter is disabled
+  _bandmap_filter_enabled(false),                                   // do not filter bandmap
+  _bandmap_filter_foreground_colour(string_to_colour("WHITE")),     // letters are white
+  _bandmap_filter_hide_colour(string_to_colour("RED")),             // background colour when bandmap filter is in HIDE mode
+  _bandmap_filter_show(false),                                      // filter is used to hide entrie
+  _bandmap_filter_show_colour(string_to_colour("GREEN")),           // background colour when bandmap filter is in SHOW mode
+  _bandmap_recent_colour(string_to_colour("BLACK")),                // do not indicate recent postings with special colour
+  _bands("160, 80, 40, 20, 15, 10"),                                // legal bands for the contest
+  _batch_messages_file(),                                           // name for batch messages file
   _cabrillo_address_1(),
   _cabrillo_address_2(),
   _cabrillo_address_3(),
@@ -1438,7 +1439,6 @@ drlog_context::drlog_context(const std::string& filename) :
   _p3_snapshot_file("P3"),                    // P3 snapshots will be in P3-<n>
   _p3_span_cq(0),                             // no default span in CQ mode
   _p3_span_sap(0),                            // no default span in SAP mode
-  _quick_qsl_message(),                       // no quick QSL message (default is changed once configuration file has been read)
   _qsl_message(),                             // no QSL message (default is changed once configuration file has been read)
   _qso_multiple_bands(false),                 // each station may be worked on only one band
   _qso_multiple_modes(false),                 // each station may be worked on only one mode

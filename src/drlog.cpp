@@ -3798,7 +3798,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               { const bool quick_qsl = (e.symbol() == XK_KP_Enter);
 
                 if (!send_qtc)
-                  (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
+                  (*cw_p) << expand_cw_message( quick_qsl ? context.alternative_qsl_message() : context.qsl_message() );
               }
               else                                                         // SAP exchange
               { if (!send_qtc)
@@ -3832,7 +3832,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               const bool quick_qsl = (e.symbol() == XK_KP_Enter);
 
               if (!send_qtc)
-                (*cw_p) << expand_cw_message( quick_qsl ? context.quick_qsl_message() : context.qsl_message() );
+                (*cw_p) << expand_cw_message( quick_qsl ? context.alternative_qsl_message() : context.qsl_message() );
             }
           }
 

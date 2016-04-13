@@ -50,6 +50,7 @@ protected:
   int                                          _accept_colour;                              ///< colour for calls that have been worked, but are not dupes
   std::string                                  _alternative_exchange_cq;                    ///< alternative exchange in CQ mode
   std::string                                  _alternative_exchange_sap;                   ///< alternative exchange in SAP mode
+  std::string                                  _alternative_qsl_message;                    ///< alternative confirmation at end of QSO
   std::string                                  _archive_name;                               ///< name of the archive for save/restore information
   std::string                                  _auto_backup;                                ///< directory for auto backup files
   bool                                         _auto_remaining_callsign_mults;              ///< do we auto-generate the remaining callsign mults?
@@ -185,7 +186,7 @@ protected:
   unsigned int                                 _p3_span_cq;                       ///< P3 span in CQ mode, in kHz
   unsigned int                                 _p3_span_sap;                      ///< P3 span in SAP mode, in kHz
 
-  std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
+//  std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
   std::string                                  _qsl_message;         ///< confirm at end of QSO
   bool                                         _qso_multiple_bands;  ///< whether OK to work station on another band
   bool                                         _qso_multiple_modes;  ///< whether OK to work station on another mode
@@ -261,6 +262,7 @@ public:
   SAFEREAD(accept_colour, _context);                            ///< colour for calls that have been worked, but are not dupes
   SAFEREAD(alternative_exchange_cq, _context);                  ///< alternative exchange in SAP mode
   SAFEREAD(alternative_exchange_sap, _context);                 ///< alternative exchange in SAP mode
+  SAFEREAD(alternative_qsl_message, _context);                  ///< alternative confirmation at end of QSO
   SAFEREAD(archive_name, _context);                             ///< name of the archive for save/restore information
   SAFEREAD(auto_backup, _context);                              ///< directory for auto backup files
   SAFEREAD(auto_remaining_callsign_mults, _context);            ///< do we auto-generate the remaining callsign mults?
@@ -434,7 +436,6 @@ public:
   SAFEREAD(p3_span_cq, _context);                   ///< P3 span in CQ mode, in kHz
   SAFEREAD(p3_span_sap, _context);                  ///< P3 span in SAP mode, in kHz
 
-  SAFEREAD(quick_qsl_message, _context);            ///< hurried confirm at end of QSO
   SAFEREAD(qsl_message, _context);                  ///< confirm at end of QSO
   SAFEREAD(qso_multiple_bands, _context);           ///< whether OK to work station on another band
   SAFEREAD(qso_multiple_modes, _context);           ///< whether OK to work station on another mode
@@ -545,7 +546,7 @@ public:
 /// swap QSL and QUICK QSL messages
   inline void swap_qsl_messages(void)
     { SAFELOCK(_context);
-      swap(_qsl_message, _quick_qsl_message);
+      swap(_qsl_message, _alternative_qsl_message);
     }
 
 /// are multiple modes permitted?

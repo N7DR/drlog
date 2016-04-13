@@ -616,7 +616,10 @@ window& window::refresh(void)
   return *this;
 }
 
-/// control scrolling
+/*! \brief                      Control scrolling
+    \param  enable_or_disable   whether to enable scrolling
+    \return                     the window
+*/
 window& window::scrolling(const bool enable_or_disable)
 { if (!_wp)
     return *this;
@@ -630,7 +633,12 @@ window& window::scrolling(const bool enable_or_disable)
   return *this;
 }
 
-/// scroll
+/*! \brief          scroll a window
+    \param  n       number of lines to by which to scroll
+    \return                     the window
+
+    Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
+*/
 window& window::scrollit(const int n_lines)
 { if (!_wp)
     return *this;
@@ -642,7 +650,10 @@ window& window::scrollit(const int n_lines)
   return *this;
 }
 
-/// control leaveok
+/*! \brief                      Control leaveok
+    \param  enable_or_disable   whether to enable scrolling
+    \return                     the window
+*/
 window& window::leave_cursor(const bool enable_or_disable)
 { if (!_wp)
     return *this;
@@ -655,16 +666,6 @@ window& window::leave_cursor(const bool enable_or_disable)
   
   return *this;
 }
-
-/// window << cursor
-//window& operator<(window& win, const cursor& c)
-//{ return win.move_cursor(c.x(), c.y());
-//}
-
-/// window << cursor_relative
-//window& operator<(window& win, const cursor_relative& cr)
-//{ return win.move_cursor_relative(cr.x(), cr.y());
-//}
 
 /// window << centre
 window& operator<(window& win, const centre& c)
@@ -937,7 +938,10 @@ const unsigned int cpair::add(const int fg, const int bg)
     return (cit - _colours.cbegin() + 1);    // the first entry (at _colours.begin()) is ncurses colour pair number 1
 }
 
-/// return the foreground colour of a pair
+/*! \brief              Get the foreground colour of a pair
+    \param  pair_nr     number of the pair
+    \return             the foreground colour of the pair number <i>pair_nr</i>
+*/
 const int cpair::fg(const int pair_nr) const
 { short f;
   short b;
@@ -947,7 +951,10 @@ const int cpair::fg(const int pair_nr) const
   return static_cast<int>(f);
 }
 
-/// return the background colour of a pair
+/*! \brief              Get the background colour of a pair
+    \param  pair_nr     number of the pair
+    \return             the background colour of the pair number <i>pair_nr</i>
+*/
 const int cpair::bg(const int pair_nr) const
 { short f;
   short b;
