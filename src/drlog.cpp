@@ -900,7 +900,7 @@ int main(int argc, char** argv)
   }
 
 // BCALL window
-  win_bcall.init(context.window_info("BCALL"), WINDOW_NO_CURSOR);
+  win_bcall.init(context.window_info("BCALL"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
   win_bcall < WINDOW_BOLD <= "";
 
 // CALL window
@@ -2290,6 +2290,7 @@ void* prune_bandmap(void* vp)
     CTRL-F -- find matches for exchange in log
     CTRL-B -- fast bandwidth
     F1 -- first step in SAP QSO during run
+    F4 -- swap contents of CALL and BCALL windows
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -3568,7 +3569,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
-//  F1 -- first step in SAP QSO during run
+// F1 -- first step in SAP QSO during run
   if (!processed and (e.symbol() == XK_F1))
   { string contents = remove_peripheral_spaces(win.read());
     bool found_call = false;
@@ -3607,6 +3608,32 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         rig.sub_receiver_enable();
       }
     }
+
+    processed = true;
+  }
+
+// F4 -- swap contents of CALL and BCALL windows
+  if (!processed and (e.symbol() == XK_F4))
+  { const string tmp = win_call.read();
+    const string tmp_b = win_bcall.read();
+
+//    ost << "tmp: *" << tmp << "*" << endl;
+//    ost << "tmp_b: *" << tmp_b << "*" << endl;
+
+    win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE < tmp_b;
+
+// move cursor to first empty space
+    size_t posn = tmp_b.find(" ");
+
+//    ost << "posn: " << posn << endl;
+
+    win_call.move_cursor(posn, 0);
+    win_call.refresh();
+
+
+    win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+
+
 
     processed = true;
   }

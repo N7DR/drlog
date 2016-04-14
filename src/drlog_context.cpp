@@ -906,7 +906,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _uba_bonus = is_true;
 
 // WORKED MULTS COLOUR
-    if (starts_with(testline, "WORKED MULTS COLOUR") or starts_with(testline, "WORKED MULTS COLOR"))
+    if ( (LHS == "WORKED MULTS COLOUR") or (LHS == "WORKED MULTS COLOR") )
       _worked_mults_colour = RHS;
 
 // ---------------------------------------------  MULTIPLIERS  ---------------------------------
@@ -925,7 +925,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // REMAINING CALLSIGN MULTS
-    if (starts_with(testline, "REMAINING CALLSIGN MULTS"))
+    if (LHS == "REMAINING CALLSIGN MULTS")
     { _auto_remaining_callsign_mults = (RHS == "AUTO");
 
       if (!_auto_remaining_callsign_mults)
@@ -936,9 +936,8 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // REMAINING COUNTRY MULTS
-    if (starts_with(testline, "REMAINING COUNTRY MULTS"))
-    { //_auto_remaining_country_mults = (RHS == "AUTO");
-      _auto_remaining_country_mults = contains(RHS, "AUTO");
+    if (LHS == "REMAINING COUNTRY MULTS")
+    { _auto_remaining_country_mults = contains(RHS, "AUTO");
 
       if (_auto_remaining_country_mults)
       { const vector<string> tokens = split_string(RHS, " ");
@@ -954,7 +953,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
-    if (starts_with(testline, "AUTO REMAINING EXCHANGE MULTS"))
+    if (LHS == "AUTO REMAINING EXCHANGE MULTS")
     { const vector<string> mult_names = remove_peripheral_spaces(split_string(RHS, ","));
 
       for (const auto& str : mult_names)
@@ -964,13 +963,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
 // CABRILLO CONTEST
-//    if (starts_with(testline, "CABRILLO CONTEST") and
-//        (is_legal_value(RHS, "AP-SPRINT,ARRL-10,ARRL-160,ARRL-DX-CW,ARRL-DX-SSB,ARRL-SS-CW,ARRL-SS-SSB,ARRL-UHF-AUG,ARRL-VHF-JAN,ARRL-VHF-JUN,ARRL-VHF-SEP,ARRL-RTTY,BARTG-RTTY,CQ-160-CW,CQ-160-SSB,CQ-WPX-CW,CQ-WPX-RTTY,CQ-WPX-SSB,CQ-VHF,CQ-WW-CW,CQ-WW-RTTY,CQ-WW-SSB,DARC-WAEDC-CW,DARC-WAEDC-RTTY,DARC-WAEDC-SSB,FCG-FQP,IARU-HF,JIDX-CW,JIDX-SSB,NAQP-CW,NAQP-RTTY,NAQP-SSB,NA-SPRINT-CW,NA-SPRINT-SSB,NCCC-CQP,NEQP,OCEANIA-DX-CW,OCEANIA-DX-SSB,RDXC,RSGB-IOTA,SAC-CW,SAC-SSB,STEW-PERRY,TARA-RTTY", ",")))
-      if (starts_with(testline, "CABRILLO CONTEST"))
-        _cabrillo_contest = RHS;                        // required to be upper case
+    if (LHS == "CABRILLO CONTEST")
+      _cabrillo_contest = RHS;          // required to be upper case; don't limit to legal values defined in the "specification", since many contest require an illegal value
 
-    if (starts_with(testline, "CABRILLO CERTIFICATE") and is_legal_value(RHS, "YES,NO", ","))
-      _cabrillo_certificate = RHS;                        // required to be upper case
+    if ( (LHS == "CABRILLO CERTIFICATE") and is_legal_value(RHS, "YES,NO", ",") )
+      _cabrillo_certificate = RHS;
 
  // CABRILLO EMAIL (sic)
     if (starts_with(testline, "CABRILLO E-MAIL") or starts_with(testline, "CABRILLO EMAIL"))

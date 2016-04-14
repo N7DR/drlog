@@ -543,7 +543,7 @@ public:
 */
   const std::vector<std::string> sent_exchange_ssb_names(void) const;
 
-/// swap QSL and QUICK QSL messages
+/// swap QSL and ALTERNATIVE QSL messages
   inline void swap_qsl_messages(void)
     { SAFELOCK(_context);
       swap(_qsl_message, _alternative_qsl_message);
