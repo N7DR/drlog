@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 122 2016-02-06 21:00:23Z  $
+// $Id: rig_interface.cpp 128 2016-04-16 15:47:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,6 +34,8 @@
 using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
+
+extern bool rig_is_split;
 
 const bool RESPONSE_EXPECTED = true;    ///< used to signal that a response is expected
 
@@ -353,7 +355,7 @@ void rig_interface::split_enable(void)
 
   if (_model == RIG_MODEL_K3)
   { raw_command("FT1;");
-
+    rig_is_split = true;
     return;
   }
 
@@ -362,6 +364,8 @@ void rig_interface::split_enable(void)
 
   if (status != RIG_OK)
     _error_alert("Error executing SPLIT command");
+  else
+    rig_is_split = true;
 }
 
 /// disable split operation; see caveats under split_enable()
@@ -373,7 +377,7 @@ void rig_interface::split_disable(void)
 
   if (_model == RIG_MODEL_K3)
   { raw_command("FR0;");
-
+    rig_is_split = false;
     return;
   }
 
@@ -383,9 +387,12 @@ void rig_interface::split_disable(void)
 
   if (status != RIG_OK)
     _error_alert("Error executing SPLIT command");
+  else
+    rig_is_split = false;
 }
 
 /// is split enabled?
+// this interrogates the rig; it neither reads not writes rig_is_split
 const bool rig_interface::split_enabled(void)
 { if (!_rig_connected)
     return false;

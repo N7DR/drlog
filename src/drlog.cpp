@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 126 2016-03-18 23:22:48Z  $
+// $Id: drlog.cpp 128 2016-04-16 15:47:23Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -207,6 +207,7 @@ MODE                current_mode;                           ///< the current mod
 
 pt_mutex            drlog_mode_mutex;                       ///< mutex for accessing <i>drlog_mode</i>
 DRLOG_MODE          drlog_mode = SAP_MODE;                  ///< CQ_MODE or SAP_MODE
+DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 
 pt_mutex            known_callsign_mults_mutex;             ///< mutex for the callsign mults we know about in AUTO mode
 set<string>         known_callsign_mults;                   ///< callsign mults we know about in AUTO mode
@@ -237,6 +238,7 @@ unordered_map<string /* callsign */, pair< unsigned int /* qsls */, unsigned int
 
 int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
 bool                    restored_data(false);               ///< did we restore from an archive?
+bool                    rig_is_split = false;               ///< is the rig in split mode?
 
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
@@ -1744,8 +1746,7 @@ void* display_rig_status(void* vp)
 
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
       if (ok_to_poll_k3)
-      {
-        const string status_str = (rig_status_thread_parameters.rigp())->raw_command("IF;", 38);          // K3 returns 38 characters
+      { const string status_str = (rig_status_thread_parameters.rigp())->raw_command("IF;", 38);          // K3 returns 38 characters
 
         if (status_str.length() == 38)                                                          // do something only if it's the correct length
         { const frequency f(from_string<unsigned int>(substring(status_str, 2, 11)));           // frequency of VFO A
@@ -1879,7 +1880,8 @@ void* display_rig_status(void* vp)
 
           static const unsigned int SPLIT_ENTRY = 32;      // position of the SPLIT status byte in the K3 status string
 
-          const bool is_split = (status_str[SPLIT_ENTRY] == '1');
+//          const bool is_split = (status_str[SPLIT_ENTRY] == '1');
+          rig_is_split = (status_str[SPLIT_ENTRY] == '1');
 
 // remove TX indicator, since we no longer poll if we're TXing (modulo a µs or so)
 //          static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
@@ -1898,18 +1900,18 @@ void* display_rig_status(void* vp)
           const auto fg = win_rig.fg();    // original foreground colour
 
           win_rig < WINDOW_CLEAR < CURSOR_TOP_LEFT
-                  < ( is_split ? WINDOW_NOP : WINDOW_BOLD)
+                  < ( rig_is_split ? WINDOW_NOP : WINDOW_BOLD)
                   < pad_string(f.display_string(), 7)
-                  < ( is_split ? WINDOW_NOP : WINDOW_NORMAL)
+                  < ( rig_is_split ? WINDOW_NOP : WINDOW_NORMAL)
                   < ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
                   < mode_str /* < tx_str */
-                  < ( is_split ? WINDOW_BOLD : WINDOW_NORMAL);
+                  < ( rig_is_split ? WINDOW_BOLD : WINDOW_NORMAL);
 
           if (sub_rx)
             win_rig < COLOURS(COLOUR_GREEN, win_rig.bg());
 
           win_rig < frequency_b_str
-                  < ( is_split ? WINDOW_NORMAL : WINDOW_NOP);
+                  < ( rig_is_split ? WINDOW_NORMAL : WINDOW_NOP);
 
           if (sub_rx)
             win_rig < COLOURS(fg, win_rig.bg());
@@ -2535,7 +2537,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ENTER, ALT-ENTER -- a lot of complicated stuff
   if (!processed and (e.is_unmodified() or e.is_alt()) and (e.symbol() == XK_Return))
-  { const string contents = remove_peripheral_spaces(win.read());
+  { //const string contents = remove_peripheral_spaces( rig.split_enabled() ? win_bcall.read() : win.read() );
+    const string contents = remove_peripheral_spaces( win.read() );
 
 // if empty, send CQ #1, if in CQ mode
     if (contents.empty())
@@ -3612,28 +3615,41 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
+// F2 toggle: split and force SAP mode
+  if (!processed and (e.symbol() == XK_F2))
+  { if (rig.split_enabled())
+    { rig.split_disable();
+
+      switch (a_drlog_mode)
+      { case CQ_MODE :
+          enter_cq_mode();
+          break;
+
+        case SAP_MODE :
+          enter_sap_mode();
+          break;
+      }
+    }
+    else
+    { rig.split_enable();
+      a_drlog_mode = drlog_mode;
+      enter_sap_mode();
+    }
+
+    processed = true;
+  }
+
 // F4 -- swap contents of CALL and BCALL windows
   if (!processed and (e.symbol() == XK_F4))
   { const string tmp = win_call.read();
     const string tmp_b = win_bcall.read();
-
-//    ost << "tmp: *" << tmp << "*" << endl;
-//    ost << "tmp_b: *" << tmp_b << "*" << endl;
+    const size_t posn = tmp_b.find(" ");                    // first empty space
 
     win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE < tmp_b;
 
-// move cursor to first empty space
-    size_t posn = tmp_b.find(" ");
-
-//    ost << "posn: " << posn << endl;
-
     win_call.move_cursor(posn, 0);
     win_call.refresh();
-
-
     win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
-
-
 
     processed = true;
   }
@@ -3650,7 +3666,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     { const string current_contents = remove_peripheral_spaces(win.read());
 
       if (current_contents != prior_contents)
-      { update_scp_window(current_contents);
+      { display_call_info(current_contents);
+        update_scp_window(current_contents);
         update_fuzzy_window(current_contents);
       }
     }
@@ -3696,8 +3713,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // CW messages
   if (!processed and cw_p and (safe_get_mode() == MODE_CW))
   { if (e.is_unmodified() and (keypad_numbers < e.symbol()) )
-    { //ost << "sending CW message: " << expand_cw_message(cwm[e.symbol()]) << endl;
-      (*cw_p) << expand_cw_message(cwm[e.symbol()]);
+    { (*cw_p) << expand_cw_message(cwm[e.symbol()]);
       processed = true;
     }
   }
@@ -3884,7 +3900,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             qso.mode(cur_mode);
             qso.band(cur_band);
             qso.my_call(context.my_call());
-            qso.freq( frequency(rig.rig_frequency()).display_string() );    // in kHz; 1dp
+            qso.freq( frequency( rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency() ).display_string() );    // in kHz; 1dp
 
 // build name/value pairs for the sent exchange
             vector<pair<string, string> > sent_exchange = context.sent_exchange(qso.mode());
@@ -3971,123 +3987,124 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
 
 // display the current statistics
-        display_statistics(statistics.summary_string(rules));
+            display_statistics(statistics.summary_string(rules));
 
-        const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
+            const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - string("Score: ").length());
 
-        win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
-        win_active_p = &win_call;          // switch to the CALL window
-        win_call <= CURSOR_START_OF_LINE;
+            win_score < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Score: " <= score_str;
+            win_active_p = &win_call;          // switch to the CALL window
+            win_call <= CURSOR_START_OF_LINE;
 
 // remaining mults: callsign, country, exchange
-        update_known_callsign_mults(qso.callsign());
-        update_remaining_callsign_mults_window(statistics, "", safe_get_band(), safe_get_mode());
+            update_known_callsign_mults(qso.callsign());
+            update_remaining_callsign_mults_window(statistics, "", safe_get_band(), safe_get_mode());
 
-        if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band, cur_mode).size())
-        { update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-          update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
-        }
-
-// was the just-logged QSO an exchange mult?
-        const map<string /* field name */, set<string> /* values */ >   new_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
-        bool no_exchange_mults_this_qso = true;
-
-        for (map<string, set<string> >::const_iterator cit = old_worked_exchange_mults.begin(); cit != old_worked_exchange_mults.end() and no_exchange_mults_this_qso; ++cit)
-        { const size_t old_size = (cit->second).size();
-          map<string, set<string> >::const_iterator ncit = new_worked_exchange_mults.find(cit->first);
-
-          if (ncit != new_worked_exchange_mults.end())    // should never be equal
-          { const size_t new_size = (ncit->second).size();
-
-            no_exchange_mults_this_qso = (old_size == new_size);
-
-            if (!no_exchange_mults_this_qso)
-              update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
-          }
-        }
-
-// what exchange mults came from this qso? there ought to be a better way of doing this
-        if (!no_exchange_mults_this_qso)
-        { for (const auto& current_exchange_mult : new_worked_exchange_mults)
-          { set<string> difference;
-            const auto tmp = old_worked_exchange_mults.find(current_exchange_mult.first);
-            const set<string>& current_values = current_exchange_mult.second;
-
-            if (tmp != old_worked_exchange_mults.end())
-            { const set<string>& old_values = tmp->second;
-
-              set_difference(current_values.begin(), current_values.end(), old_values.begin(), old_values.end(), inserter(difference, difference.end()));
+            if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band, cur_mode).size())
+            { update_remaining_country_mults_window(statistics, cur_band, cur_mode);
+              update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
             }
 
-            if (!difference.empty())  // assume that there's at most one entry
-              exchange_mults_this_qso.insert( { current_exchange_mult.first, *(difference.begin()) } );
-          }
-        }
+// was the just-logged QSO an exchange mult?
+            const map<string /* field name */, set<string> /* values */ >   new_worked_exchange_mults = statistics.worked_exchange_mults(cur_band, cur_mode);
+            bool no_exchange_mults_this_qso = true;
+
+            for (map<string, set<string> >::const_iterator cit = old_worked_exchange_mults.begin(); cit != old_worked_exchange_mults.end() and no_exchange_mults_this_qso; ++cit)
+            { const size_t old_size = (cit->second).size();
+              map<string, set<string> >::const_iterator ncit = new_worked_exchange_mults.find(cit->first);
+
+              if (ncit != new_worked_exchange_mults.end())    // should never be equal
+              { const size_t new_size = (ncit->second).size();
+
+                no_exchange_mults_this_qso = (old_size == new_size);
+
+                if (!no_exchange_mults_this_qso)
+                  update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+              }
+            }
+
+// what exchange mults came from this qso? there ought to be a better way of doing this
+            if (!no_exchange_mults_this_qso)
+            { for (const auto& current_exchange_mult : new_worked_exchange_mults)
+              { set<string> difference;
+                const auto tmp = old_worked_exchange_mults.find(current_exchange_mult.first);
+                const set<string>& current_values = current_exchange_mult.second;
+
+                if (tmp != old_worked_exchange_mults.end())
+                { const set<string>& old_values = tmp->second;
+
+                  set_difference(current_values.begin(), current_values.end(), old_values.begin(), old_values.end(), inserter(difference, difference.end()));
+                }
+
+                if (!difference.empty())  // assume that there's at most one entry
+                  exchange_mults_this_qso.insert( { current_exchange_mult.first, *(difference.begin()) } );
+              }
+            }
 
 // writing to disk is slow, so start the QTC now, if applicable
-        if (send_qtc)
-        { last_active_win_p = win_active_p;  // this is now CALL
-          win_active_p = &win_log_extract;
-          win_active_p-> process_input(e);  // reprocess the alt-q
-        }
+            if (send_qtc)
+            { last_active_win_p = win_active_p;  // this is now CALL
+              win_active_p = &win_log_extract;
+              win_active_p-> process_input(e);  // reprocess the alt-q
+            }
 
 // write to disk
-        append_to_file(context.logfile(), (qso.verbose_format() + EOL) );
-        update_rate_window();
-      }
+            append_to_file(context.logfile(), (qso.verbose_format() + EOL) );
+            update_rate_window();
+          }
 
 // perform any changes to the bandmaps
 
 // if we are in CQ mode, then remove this call if it's present elsewhere in the bandmap ... we assume he isn't CQing and SAPing simultaneously on the same band
-      bandmap& bandmap_this_band = bandmaps[cur_band];
+          bandmap& bandmap_this_band = bandmaps[cur_band];
 
-      if (drlog_mode == CQ_MODE)
-      { bandmap_this_band -= qso.callsign();
+          if (drlog_mode == CQ_MODE)
+          { bandmap_this_band -= qso.callsign();
 
 // possibly change needed status of this call on other bandmaps
-        if (!rules.work_if_different_band())
-          FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed(qso.callsign()); } );
-      }
-      else    // SAP; if we are in SAP mode, we may need to change the work/mult designation in the bandmap
-      {
+            if (!rules.work_if_different_band())
+              FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed(qso.callsign()); } );
+          }
+          else    // SAP; if we are in SAP mode, we may need to change the work/mult designation in the bandmap
+          {
 // add the stn to the bandmap
-         bandmap_entry be;
+             bandmap_entry be;
 
-         be.freq(rig.rig_frequency());
-         be.callsign(qso.callsign());
-         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
-         be.is_needed(false);
+//         be.freq(rig.rig_frequency());
+             be.freq( rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency() );
+             be.callsign(qso.callsign());
+             be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
+             be.is_needed(false);
 
-         bandmap_this_band += be;
-      }
+             bandmap_this_band += be;
+          }
 
 // callsign mult status
-      if (callsign_mults_used)
-      { if (rules.callsign_mults_per_band())
-        { for (const auto& callsign_mult_name : rules.callsign_mults())
-          { const string target_value = callsign_mult_value(callsign_mult_name, qso.callsign());
+          if (callsign_mults_used)
+          { if (rules.callsign_mults_per_band())
+            { for (const auto& callsign_mult_name : rules.callsign_mults())
+              { const string target_value = callsign_mult_value(callsign_mult_name, qso.callsign());
 
-            bandmap_this_band.not_needed_callsign_mult(&callsign_mult_value, callsign_mult_name, target_value);
-          }
-        }
-        else
-        { for (const auto& callsign_mult_name : rules.callsign_mults())
-          { const string target_value = callsign_mult_value(callsign_mult_name, qso.callsign());
+                bandmap_this_band.not_needed_callsign_mult(&callsign_mult_value, callsign_mult_name, target_value);
+              }
+            }
+            else
+            { for (const auto& callsign_mult_name : rules.callsign_mults())
+              { const string target_value = callsign_mult_value(callsign_mult_name, qso.callsign());
 
-            FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_callsign_mult( &callsign_mult_value, callsign_mult_name, target_value ); } );
+                FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_callsign_mult( &callsign_mult_value, callsign_mult_name, target_value ); } );
+              }
+            }
           }
-        }
-      }
 
 // country mult status
-      if (country_mults_used)
-      { const string canonical_prefix = location_db.canonical_prefix(qso.callsign());
+          if (country_mults_used)
+          { const string canonical_prefix = location_db.canonical_prefix(qso.callsign());
 
-        if (rules.country_mults_per_band())
-          bandmap_this_band.not_needed_country_mult(canonical_prefix);
-        else                                                                            // country mults are not per band
-          FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_country_mult(canonical_prefix); } );
-      }
+            if (rules.country_mults_per_band())
+              bandmap_this_band.not_needed_country_mult(canonical_prefix);
+            else                                                                            // country mults are not per band
+              FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.not_needed_country_mult(canonical_prefix); } );
+          }
 
 // exchange mult status
           if (exchange_mults_used and !exchange_mults_this_qso.empty())
@@ -4104,7 +4121,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           win_bandmap <= bandmap_this_band;
 
 // keep track of QSO number
-//          win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
           win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width());
           next_qso_number = logbk.n_qsos() + 1;
           win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
