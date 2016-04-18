@@ -264,6 +264,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_bandmap_filter,              ///< bandmap filter information
        win_batch_messages,              ///< messages from the batch messages file
        win_bcall,                       ///< call associated with VFO B
+       win_bexchange,                   ///< exchnage associated with VFO B
        win_call,                        ///< callsign of other station, or command
        win_cluster_line,                ///< last line received from cluster
        win_cluster_mult,                ///< mults received from cluster
@@ -797,27 +798,28 @@ int main(int argc, char** argv)
     safe_set_mode(context.start_mode());
 
 // see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
-    { const frequency rf = rig.rig_frequency();
-//      const bool band_matches = (current_band == static_cast<BAND>(rf));
+    { //const frequency rf = rig.rig_frequency();
 
-      if (current_band != static_cast<BAND>(rf))
+      if (current_band != static_cast<BAND>(rig.rig_frequency()))
       { rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
         sleep_for(seconds(2));                                                       // give time for things to settle
       }
 
 // the rig might have changed mode if we just changed bands
-      const MODE rm = rig.rig_mode();
-//      const bool mode_matches = ((current_mode == rm);
+//      const MODE rm = rig.rig_mode();
 
-      if (current_mode != rm)
+      if (current_mode != rig.rig_mode())
         rig.rig_mode(current_mode);
     }
 
-// configure bandmaps so user's call does not display
-  { const string my_call = context.my_call();
 
-    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
-  }
+    rig.base_state();
+
+// configure bandmaps so user's call does not display
+    { const string my_call = context.my_call();
+
+      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
+    }
 
 // ditto for other calls in the do-not-show list or file
   for (const auto& callsign : context.do_not_show())
@@ -904,6 +906,12 @@ int main(int argc, char** argv)
 // BCALL window
   win_bcall.init(context.window_info("BCALL"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
   win_bcall < WINDOW_BOLD <= "";
+//  win_call.process_input_function(process_CALL_input);
+
+// BEXCHANGE window
+  win_bexchange.init(context.window_info("BEXCHANGE"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
+  win_bexchange <= WINDOW_BOLD;
+//  win_exchange.process_input_function(process_EXCHANGE_input);
 
 // CALL window
   win_call.init(context.window_info("CALL"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
@@ -1441,6 +1449,8 @@ int main(int argc, char** argv)
 
         cur_band = b;
         cur_mode = m;
+
+        rig.base_state();  // turn off RIT, split, sub-rx
       }
 
       update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
@@ -2375,6 +2385,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // make sure that it's in the right mode, since rigs can do weird things depending on what mode it was in the last time it was on this band
       rig.rig_mode(cur_mode);
       enter_sap_mode();
+      rig.base_state();    // turn off RIT, split and sub-rx
 
 // clear the call window (since we're now on a new band)
       win < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
@@ -2783,12 +2794,11 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
           const frequency new_frequency( (contains_plus or contains_minus) ? rig.rig_frequency().hz() + (value * 1000) : value);
           const BAND new_band = to_BAND(new_frequency);
+          const BAND old_band = to_BAND(rig.rig_frequency());
           bool valid = ( rules.permitted_bands_set() < new_band );
 
           if ( (valid) and (new_band == BAND_160))
             valid = ( (new_frequency.hz() >= 1800000) and (new_frequency.hz() <= 2000000) );
-
-//          ost << "valid = " << boolalpha << valid << endl;
 
           if (valid)
           { BAND cur_band = safe_get_band();
@@ -2797,18 +2807,14 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
             rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
             rig.rig_frequency(new_frequency);
 
-//            if (context.multiple_modes())
+            if (new_band != old_band)
+              rig.base_state();
+
             { const MODE m = default_mode(new_frequency);
 
-//              ost << "default_mode = " << MODE_NAME[m] << endl;
-//              ost << "cur_mode = " << MODE_NAME[cur_mode] << endl;
-
-
-//              if (m != cur_mode)
-              { rig.rig_mode(m);
-                cur_mode = m;
-                safe_set_mode(m);
-              }
+              rig.rig_mode(m);
+              cur_mode = m;
+              safe_set_mode(m);
             }
 
             display_band_mode(win_band_mode, new_band, cur_mode);
@@ -2816,8 +2822,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
             if (new_band != cur_band)
             { cur_band = new_band;
               safe_set_band(new_band);
-
-
 
               bandmap& bm = bandmaps[cur_band];
               win_bandmap <= bm;
@@ -2864,7 +2868,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
         { bandmap_entry be;
 
-          be.freq(rig.rig_frequency());
+//          be.freq(rig.rig_frequency());
+          be.freq(rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency());  // the TX frequency
           be.callsign(contents);
           be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
           be.calculate_mult_status(rules, statistics);
@@ -3009,7 +3014,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       if (drlog_mode == SAP_MODE)
       { bandmap_entry be;
 
-        be.freq(rig.rig_frequency());  // also sets band
+        be.freq(rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency());  // also sets band; TX frequency
         be.callsign(callsign);
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
         be.is_needed(!is_dupe);
@@ -3625,9 +3630,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
           enter_cq_mode();
           break;
 
-        case SAP_MODE :
-          enter_sap_mode();
-          break;
+         case SAP_MODE :
+           enter_sap_mode();
+           break;
       }
     }
     else
@@ -3639,20 +3644,116 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     processed = true;
   }
 
-// F4 -- swap contents of CALL and BCALL windows
+// F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
   if (!processed and (e.symbol() == XK_F4))
-  { const string tmp = win_call.read();
-    const string tmp_b = win_bcall.read();
-    const size_t posn = tmp_b.find(" ");                    // first empty space
+  { if (win_bcall.defined())
+    { const string tmp = win_call.read();
+      const string tmp_b = win_bcall.read();
 
-    win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE < tmp_b;
+      win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+      win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
 
-    win_call.move_cursor(posn, 0);
-    win_call.refresh();
-    win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+      const string call_contents = tmp_b;
+      string exchange_contents;
+
+      if (win_bexchange.defined())
+      { const string tmp = win_exchange.read();
+        const string tmp_b = win_bexchange.read();
+
+        win_exchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+
+        exchange_contents = tmp_b;
+
+        win_bexchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+      }
+
+// put cursor in correct window
+      if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to the CALL window
+      { const size_t posn = call_contents.find(" ");                    // first empty space
+        win_call.move_cursor(posn, 0);
+        win_call.refresh();
+        win_active_p = &win_call;
+        win_exchange.move_cursor(0, 0);
+      }
+      else
+      { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+
+        if (posn != string::npos)
+        { win_exchange.move_cursor(posn + 1, 0);
+          win_exchange.refresh();
+          win_active_p = &win_exchange;
+        }
+      }
+    }
 
     processed = true;
   }
+
+// F5 -- combine F2 and F4
+  if (!processed and (e.symbol() == XK_F5))
+  { if (rig.split_enabled())
+    { rig.split_disable();
+
+      switch (a_drlog_mode)
+      { case CQ_MODE :
+          enter_cq_mode();
+          break;
+
+         case SAP_MODE :
+           enter_sap_mode();
+           break;
+      }
+    }
+    else
+    { rig.split_enable();
+      a_drlog_mode = drlog_mode;
+      enter_sap_mode();
+    }
+
+  if (win_bcall.defined())
+      { const string tmp = win_call.read();
+        const string tmp_b = win_bcall.read();
+
+        win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+        win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+
+        const string call_contents = tmp_b;
+        string exchange_contents;
+
+        if (win_bexchange.defined())
+        { const string tmp = win_exchange.read();
+          const string tmp_b = win_bexchange.read();
+
+          win_exchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+
+          exchange_contents = tmp_b;
+
+          win_bexchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+        }
+
+  // put cursor in correct window
+        if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to the CALL window
+        { const size_t posn = call_contents.find(" ");                    // first empty space
+          win_call.move_cursor(posn, 0);
+          win_call.refresh();
+          win_active_p = &win_call;
+          win_exchange.move_cursor(0, 0);
+        }
+        else
+        { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+
+          if (posn != string::npos)
+          { win_exchange.move_cursor(posn + 1, 0);
+            win_exchange.refresh();
+            win_active_p = &win_exchange;
+          }
+        }
+      }
+
+
+    processed = true;
+  }
+
 
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
@@ -3688,17 +3789,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     SHIFT -- RIT control
     ALT-S -- toggle sub receiver
     CTRL-B -- fast bandwidth
+    F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
+
 */
 void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 {
 // syntactic sugar
   window& win = *wp;
 
-//  ost << "processing EXCHANGE input; event string: " << e.str() << endl;
-
   bool processed = win.common_processing(e);
 
-  // BACKSPACE
+// BACKSPACE
     if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
     { win.delete_character(win.cursor_position().x() - 1);
       win.refresh();
@@ -4307,6 +4408,72 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+  // F5 -- combine F2 and F4
+    if (!processed and (e.symbol() == XK_F5))
+    { if (rig.split_enabled())
+      { rig.split_disable();
+
+        switch (a_drlog_mode)
+        { case CQ_MODE :
+            enter_cq_mode();
+            break;
+
+           case SAP_MODE :
+             enter_sap_mode();
+             break;
+        }
+      }
+      else
+      { rig.split_enable();
+        a_drlog_mode = drlog_mode;
+        enter_sap_mode();
+      }
+
+    if (win_bcall.defined())
+        { const string tmp = win_call.read();
+          const string tmp_b = win_bcall.read();
+
+          win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+          win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+
+          const string call_contents = tmp_b;
+          string exchange_contents;
+
+          if (win_bexchange.defined())
+          { const string tmp = win_exchange.read();
+            const string tmp_b = win_bexchange.read();
+
+            win_exchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+
+            exchange_contents = tmp_b;
+
+            win_bexchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+          }
+
+    // put cursor in correct window
+          if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to the CALL window
+          { const size_t posn = call_contents.find(" ");                    // first empty space
+            win_call.move_cursor(posn, 0);
+            win_call.refresh();
+            win_active_p = &win_call;
+            win_exchange.move_cursor(0, 0);
+          }
+          else
+          { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+
+            if (posn != string::npos)
+            { win_exchange.move_cursor(posn + 1, 0);
+              win_exchange.refresh();
+              win_active_p = &win_exchange;
+            }
+          }
+        }
+
+
+      processed = true;
+    }
+
+
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
   { dump_screen();
@@ -4322,6 +4489,75 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // CTRL-B -- fast CW bandwidth
   if (!processed and (e.is_control('b')))
   { fast_cw_bandwidth();
+    processed = true;
+  }
+
+// F2 toggle: split and force SAP mode
+  if (!processed and (e.symbol() == XK_F2))
+  { if (rig.split_enabled())
+    { rig.split_disable();
+
+      switch (a_drlog_mode)
+      { case CQ_MODE :
+          enter_cq_mode();
+          break;
+
+        case SAP_MODE :
+          enter_sap_mode();
+          break;
+      }
+    }
+    else
+    { rig.split_enable();
+      a_drlog_mode = drlog_mode;
+      enter_sap_mode();
+    }
+
+    processed = true;
+  }
+
+// F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
+  if (!processed and (e.symbol() == XK_F4))
+  { if (win_bcall.defined())
+    { const string tmp = win_call.read();
+      const string tmp_b = win_bcall.read();
+
+      win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+      win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+
+      const string call_contents = tmp_b;
+      string exchange_contents;
+
+      if (win_bexchange.defined())
+      { const string tmp = win_exchange.read();
+        const string tmp_b = win_bexchange.read();
+
+        win_exchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+
+        exchange_contents = tmp_b;
+
+        win_bexchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+      }
+
+// put cursor in correct window
+      if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to the CALL window
+      { const size_t posn = call_contents.find(" ");                    // first empty space
+        win_call.move_cursor(posn, 0);
+        win_call.refresh();
+        win_active_p = &win_call;
+        win_exchange.move_cursor(0, 0);
+      }
+      else
+      { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+
+        if (posn != string::npos)
+        { win_exchange.move_cursor(posn + 1, 0);
+          win_exchange.refresh();
+          win_active_p = &win_exchange;
+        }
+      }
+    }
+
     processed = true;
   }
 }

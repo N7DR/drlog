@@ -324,6 +324,10 @@ public:
   inline WINDOW* wp(void) const
     { return _wp; }
   
+/// is the window usable?
+  inline const bool defined(void) const
+    { return (_wp != nullptr); }
+
 /*! \brief          Move the logical cursor
     \param  new_x   x position
     \param  new_y   y position

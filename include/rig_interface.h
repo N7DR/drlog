@@ -200,7 +200,11 @@ public:
 /// disable split operation; see caveats under split_enable()
   void split_disable(void);
 
-/// is split enabled?
+/*! \brief      Is split enabled?
+    \return     whether split is enabled on the rig
+
+                This interrogates the rig; it neither reads not writes the variable rig_is_split
+*/
   const bool split_enabled(void);
 
 /// get mode
@@ -260,7 +264,7 @@ public:
 /*! \brief      Set xit offset (in Hz)
     \param  hz  offset in Hz
 
-    On the K3 this also sets the RIT
+    On the K3 this also sets the RIT (!)
 */
   void xit(const int hz);
 
@@ -335,7 +339,7 @@ public:
   inline void toggle_sub_receiver(void)
     { sub_receiver_toggle(); }
 
-// get the bandwidth in Hz
+/// get the bandwidth in Hz
   const int bandwidth(void);
 
 /*! \brief          Set the keyer speed
@@ -361,7 +365,8 @@ public:
     \param  b   band
     \param  m   mode
     \return     the rig's most recent frequency for band <i>b</i> and mode <i>m</i>.
-*/  const frequency get_last_frequency(const BAND b, const MODE m);
+*/
+  const frequency get_last_frequency(const BAND b, const MODE m);
 
 /*! \brief      Set a new value for the most recent frequency for a particular band and mode
     \param  b   band
@@ -373,7 +378,7 @@ public:
 /*! \brief Is the rig transmitting?
 
     With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
-    (This is, unfortunately, just one example of the unreliability of the K3 in responding to commands.)
+    (This is, unfortunately, just one example of the basic unreliability of the K3 in responding to commands.)
 */
   const bool is_transmitting(void);
 
@@ -400,6 +405,9 @@ public:
     \param  hz  desired bandwidth, in Hz
 */
   void bandwidth_b(const unsigned int hz);
+
+// set RIT, split, sub-rx off
+  void base_state(void);
 };
 
 /*! \brief      Convert a hamlib error code to a printable string
@@ -420,9 +428,9 @@ protected:
 
 public:
 
-/*! \brief  Construct from error code and reason
-  \param  n Error code
-  \param  s Reason
+/*! \brief      Construct from error code and reason
+    \param  n   error code
+    \param  s   reason
 */
   inline rig_interface_error(const int n, const std::string& s) :
     x_error(n, s)

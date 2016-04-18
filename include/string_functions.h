@@ -47,7 +47,8 @@ const int STRING_UNDERFLOW            = -1,    ///< Underflow
           STRING_UNABLE_TO_STAT_FILE  = -6,    ///< Unable to stat a file
           STRING_BOUNDS_ERROR         = -7,    ///< Attempt to access range outside string
           STRING_CONVERSION_FAILURE   = -8,    ///< Attempt to convert the format of a string failed
-          STRING_UNKNOWN_ENCODING     = -9;    ///< Unknown character encoding
+          STRING_UNKNOWN_ENCODING     = -9,    ///< Unknown character encoding
+          STRING_UNWRITEABLE_FILE     = -10;   ///< File cannot be written
 
 /*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
@@ -525,28 +526,44 @@ const std::string nth_word(const std::string& s, const unsigned int n, const uns
 */
 const size_t n_chars(const std::string& str);
 
-/*!     \brief  Does a string contain a legal dotted-decimal IPv4 address
-        \param  cs  Original string
-        \return  Whether <i>cs</i> contains a legal dotted decimal IPv4 address
+/*! \brief      Does a string contain a legal dotted-decimal IPv4 address
+    \param  cs  original string
+    \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
 const bool is_legal_ipv4_address(const std::string& cs);  
 
-/*!     \brief  Convert a long to dotted decimal string
-        \param  val     Original value
-        \return Dotted decimal string
+/*! \brief          Convert a long to dotted decimal string
+    \param  val     original value
+    \return         dotted decimal string
         
-        Assumes that a long is four octets
+    Assumes that a long is four octets
 */
 std::string convert_to_dotted_decimal(const uint32_t val);
 
-/// is a string a legal value from a list?
+/*! \brief                  Is a string a legal value from a list?
+    \param  value           target string
+    \param  legal_values    all the legal values, separated by <i>separator</i>
+    \param  separator       separator in the string <i>legal_values</i>
+    \return                 whether <i>value</i> appears in <i>legal_values</i>
+*/
 const bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator);
 
 // return true if call1 < call2
 const bool compare_calls(const std::string& s1, const std::string& s2);
 
+/*! \brief          Return a number with a particular number of decimal places
+    \param  str     initial value
+    \param  n       number of decimal places
+    \return         <i>str</i> with <i>n</i> decimal places
+
+    Assumes that <i>str</i> is a number
+*/
 const std::string decimal_places(const std::string& str, const int n);
 
+/*! \brief          Return the longest line from a vector of lines
+    \param  lines   the lines to search
+    \return         the longest line in the vector <i>lines</i>
+*/
 const std::string longest_line(const std::vector<std::string>& lines);
 
 // deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window

@@ -280,14 +280,13 @@ void rig_interface::rig_mode(const MODE m)
         }
 
         { SAFELOCK(_rig);
+          const pbwidth_t new_bandwidth = ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth );
 
-          pbwidth_t new_bandwidth;
+//          if (m == MODE_CW)
+//            new_bandwidth = last_cw_bandwidth;
 
-          if (m == MODE_CW)
-            new_bandwidth = last_cw_bandwidth;
-
-          if (m == MODE_SSB)
-            new_bandwidth = last_ssb_bandwidth;
+//          if (m == MODE_SSB)
+//            new_bandwidth = last_ssb_bandwidth;
 
           status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
         }
@@ -306,7 +305,6 @@ const frequency rig_interface::rig_frequency(void)
   else
   { freq_t hz;
     SAFELOCK(_rig);
-
     const int status = rig_get_freq(_rigp, RIG_VFO_CURR, &hz);
 
     if (status != RIG_OK)
@@ -325,7 +323,6 @@ const frequency rig_interface::rig_frequency_b(void)
   else
   { freq_t hz;
     SAFELOCK(_rig);
-
     const int status = rig_get_freq(_rigp, RIG_VFO_B, &hz);
 
     if (status != RIG_OK)
@@ -348,7 +345,9 @@ const frequency rig_interface::rig_frequency_b(void)
             Hence we use the explicit K3 command, since at least we know what that will do on that rig.
 */
 void rig_interface::split_enable(void)
-{ if (!_rig_connected)
+{ ost << "called split enable()" << endl;
+
+  if (!_rig_connected)
     return;
 
   SAFELOCK(_rig);
@@ -391,15 +390,17 @@ void rig_interface::split_disable(void)
     rig_is_split = false;
 }
 
-/// is split enabled?
-// this interrogates the rig; it neither reads not writes rig_is_split
+/*! \brief      Is split enabled?
+    \return     whether split is enabled on the rig
+
+                This interrogates the rig; it neither reads not writes the variable rig_is_split
+*/
 const bool rig_interface::split_enabled(void)
 { if (!_rig_connected)
     return false;
 
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
-
     const string transmit_vfo = raw_command("FT;", true);
 
     if (transmit_vfo.length() >= 4)
@@ -414,7 +415,6 @@ const bool rig_interface::split_enabled(void)
   vfo_t  tx_vfo;
 
   SAFELOCK(_rig);
-
   const int status = rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo);
 
   if (status != RIG_OK)
@@ -429,7 +429,6 @@ const bool rig_interface::split_enabled(void)
 void rig_interface::baud_rate(const unsigned int rate)
 { if (_rigp)
   { SAFELOCK(_rig);
-
     _rigp->state.rigport.parm.serial.rate = rate;
   }
 }
@@ -437,7 +436,6 @@ void rig_interface::baud_rate(const unsigned int rate)
 /// get baud rate
 const unsigned int rig_interface::baud_rate(void)
 { SAFELOCK(_rig);
-
   return (_rigp ? _rigp->state.rigport.parm.serial.rate : 0);
 }
 
@@ -1289,6 +1287,27 @@ void rig_interface::bandwidth_b(const unsigned int hz)
 void rig_interface::register_error_alert_function(void (*error_alert_function)(const string&) )
 { SAFELOCK(_rig);
   _error_alert_function = error_alert_function;
+}
+
+// set RIT, split, sub-rx off
+void rig_interface::base_state(void)
+{ if (rit_enabled())
+  { rit_disable();
+    sleep_for(seconds(1));
+  }
+
+  if (split_enabled())
+  { //ost << "rig split was enabled" << endl;
+    split_disable();
+    sleep_for(seconds(1));
+  }
+  else
+    ost << "rig split was NOT enabled" << endl;
+
+  if (sub_receiver_enabled())
+  { sub_receiver_disable();
+    sleep_for(seconds(1));
+  }
 }
 
 /*! \brief      Convert a hamlib error code to a printable string

@@ -341,7 +341,8 @@ void write_file(const string& s, const string& filename)
 { FILE* fp = fopen(filename.c_str(), "wb");
   if (fp == 0)
 //    throw stringmanip_error(STRINGMANIP_INVALID_FILE, "Cannot open file: " + filename);
-    throw exception();
+//    throw exception();
+    throw string_function_error(STRING_UNWRITEABLE_FILE, "Cannot write to file: " + filename);
 
 // don't do this the obvious way because we don't know anything about threads here
 //  try
@@ -427,7 +428,7 @@ const string squash(const string& cs, const char c)
 const vector<string> remove_empty_lines(const vector<string>& lines)
 { vector<string> rv;
 
-  for (auto n = 0; n < lines.size(); ++n)
+  for (size_t n = 0; n < lines.size(); ++n)
     if (!lines[n].empty())
       rv.push_back(lines[n]);
 
@@ -479,10 +480,11 @@ const string join(const deque<string>& deq, const string& sep)
     the empty string is returned.
 */
 const string remove_from_end(const string& s, const unsigned int n)
-{ if (n >= s.length())
-    return s;
+{ //if (n >= s.length())
+  //  return s;
     
-  return s.substr(0, s.length() - n);
+  //return s.substr(0, s.length() - n);
+  return ( (n >= s.length()) ? s : s.substr(0, s.length() - n) );
 }
 
 /*! \brief      Remove all instances of a specific leading character
@@ -521,9 +523,10 @@ const string remove_trailing(const string& s, const char c)
 const string remove_char(const string& s, const char c)
 { string rv;
 
-  for (unsigned int n = 0; n < s.length(); n++)
-    if (s[n] != c)
-      rv += s[n];
+//  for (unsigned int n = 0; n < s.length(); n++)
+  for (const auto& ch : s)
+    if (ch != c)
+      rv += ch;
 
   return rv; 
 } 
@@ -652,19 +655,21 @@ const char antepenultimate_char(const std::string& cs)
   return cs[cs.length() - 3];
 }
 
-/*!   \brief  get an environment variable
-  \return the environment variable
+/*! \brief              Get an environment variable
+    \param  var_name    name of the environment variable
+    \return             the value of the environment variable <i>var_name</i>
 
-  returns the empty string if the variable does not exist
+    Returns the empty string if the variable does not exist
 */
-const string get_environment_variable(const std::string& var_name)
+const string get_environment_variable(const string& var_name)
 { const char* cp = getenv(var_name.c_str());
 
-  if (!cp)
-    return string();
-  else
-    return string(cp);
-  
+  return ( cp ? string(cp) : string() );
+
+//  if (!cp)
+//    return string();
+//  else
+//    return string(cp);
 }
 
 const string transform_string(const string& cs, int(*pf)(int))
@@ -874,7 +879,12 @@ string convert_to_dotted_decimal(const uint32_t val)
   return rv;
 }
 
-/// is a string a legal value from a list?
+/*! \brief                  Is a string a legal value from a list?
+    \param  value           target string
+    \param  legal_values    all the legal values, separated by <i>separator</i>
+    \param  separator       separator in the string <i>legal_values</i>
+    \return                 whether <i>value</i> appears in <i>legal_values</i>
+*/
 const bool is_legal_value(const string& value, const string& legal_values, const string& separator)
 { const vector<string> vec = split_string(legal_values, separator);
 
@@ -965,6 +975,13 @@ const bool contains_digit(const std::string& str)
   return false;
 }
 
+/*! \brief          Return a number with a particular number of decimal places
+    \param  str     initial value
+    \param  n       number of decimal places
+    \return         <i>str</i> with <i>n</i> decimal places
+
+    Assumes that <i>str</i> is a number
+*/
 const string decimal_places(const string& str, const int n)
 {
 // for now, assume that it's a number
@@ -979,6 +996,10 @@ const string decimal_places(const string& str, const int n)
   return str;
 }
 
+/*! \brief          Return the longest line from a vector of lines
+    \param  lines   the lines to search
+    \return         the longest line in the vector <i>lines</i>
+*/
 const string longest_line(const vector<string>& lines)
 { string rv;
 
