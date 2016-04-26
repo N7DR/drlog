@@ -406,7 +406,7 @@ public:
 */
   void bandwidth_b(const unsigned int hz);
 
-// set RIT, split, sub-rx off
+/// set RIT, split, sub-rx off
   void base_state(void);
 };
 

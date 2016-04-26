@@ -876,8 +876,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // START BAND
     if (LHS == "START BAND")
-    { //const string str = RHS;
-      const auto cit = BAND_FROM_NAME.find(RHS);
+    { const auto cit = BAND_FROM_NAME.find(RHS);
 
       if (cit != BAND_FROM_NAME.cend())
         _start_band = cit->second;
@@ -982,24 +981,24 @@ void drlog_context::_process_configuration_file(const string& filename)
       _cabrillo_include_score = is_true;
 
 // CABRILLO LOCATION
-    if (starts_with(testline, "CABRILLO LOCATION"))
+    if (LHS == "CABRILLO LOCATION")
       _cabrillo_location = rhs;
 
 // CABRILLO NAME
-    if (starts_with(testline, "CABRILLO NAME"))
+    if (LHS == "CABRILLO NAME")
       _cabrillo_name = rhs;
 
 // CABRILLO CATEGORY-ASSISTED
-    if (starts_with(testline, "CABRILLO CATEGORY-ASSISTED") and is_legal_value(RHS, "ASSISTED,NON-ASSISTED", ","))
+    if ( (LHS == "CABRILLO CATEGORY-ASSISTED") and is_legal_value(RHS, "ASSISTED,NON-ASSISTED", ",") )
       _cabrillo_category_assisted = RHS;
 
 // CABRILLO CATEGORY-BAND
-    if (starts_with(testline, "CABRILLO CATEGORY-BAND"))
-    { const string value = rhs; // remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (LHS == "CABRILLO CATEGORY-BAND")
+    { //const string value = rhs; // remove_peripheral_spaces((split_string(line, "="))[1]);
 
 // The spec calls for bizarre capitalization
-      if (is_legal_value(value, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light", ","))
-        _cabrillo_category_band = value;
+      if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light", ","))
+        _cabrillo_category_band = rhs;
     }
 
 // CABRILLO CATEGORY-MODE

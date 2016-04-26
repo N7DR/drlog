@@ -1289,7 +1289,7 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
   _error_alert_function = error_alert_function;
 }
 
-// set RIT, split, sub-rx off
+/// set RIT, split, sub-rx off
 void rig_interface::base_state(void)
 { if (rit_enabled())
   { rit_disable();
@@ -1297,12 +1297,11 @@ void rig_interface::base_state(void)
   }
 
   if (split_enabled())
-  { //ost << "rig split was enabled" << endl;
-    split_disable();
+  { split_disable();
     sleep_for(seconds(1));
   }
-  else
-    ost << "rig split was NOT enabled" << endl;
+//  else
+//    ost << "rig split was NOT enabled" << endl;
 
   if (sub_receiver_enabled())
   { sub_receiver_disable();

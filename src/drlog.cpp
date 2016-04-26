@@ -64,7 +64,6 @@ enum DRLOG_MODE { CQ_MODE = 0,              ///< I'm calling the other station
 string VERSION;         ///< version string
 string DP("·");         ///< character for decimal point
 string TS(",");         ///< character for thousands separator
-//string FREQUENCY_STRING_POINT(".");  ///< character used for decimal point in frequency string
 
 static const set<string> variable_exchange_fields { "SERNO" };  ///< mutable exchange fields
 
@@ -108,6 +107,7 @@ const string match_callsign(const vector<pair<string /* callsign */,
 
 void populate_win_info(const string& str);                          ///< Populate the information window
 void process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
+const bool process_keypress_F5(void);                               ///< process key F5
 void p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
 void p3_span(const unsigned int khz_span);                          ///< set the span of a P3
 
@@ -232,9 +232,7 @@ unsigned int            next_qso_number = 1;                ///< actual number o
 unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
 
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
-//multimap<string /* callsign */, old_log_record>    old_log;                            ///< log of old QSOs; should probably be an unordered set really, but then can't serialize and have to mess with hashes
-//old_log    olog;                            ///< log of old QSOs; should probably be an unordered set really, but then can't serialize and have to mess with hashes
-unordered_map<string /* callsign */, pair< unsigned int /* qsls */, unsigned int /* qsos */ >> olog;
+unordered_map<string /* callsign */, pair< unsigned int /* qsls */, unsigned int /* qsos */ >> olog;    ///< ADIF log of old QSOs (used for QSLs)
 
 int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
 bool                    restored_data(false);               ///< did we restore from an archive?
@@ -242,14 +240,12 @@ bool                    rig_is_split = false;               ///< is the rig in s
 
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
-//cached_data<string, string> WPX_DB(&wpx_prefix);
-
 // QTC variables
-qtc_database qtc_db;        ///< sent QTCs
-qtc_buffer   qtc_buf;       ///< all sent and unsent QTCs
-bool send_qtcs = false;     ///< whether QTCs are used; set from rules later
+qtc_database    qtc_db;                 ///< sent QTCs
+qtc_buffer      qtc_buf;                ///< all sent and unsent QTCs
+bool            send_qtcs(false);       ///< whether QTCs are used; set from rules later
 
-EFT CALLSIGN_EFT("CALLSIGN");   ///< EFT for CALLSIGN
+EFT CALLSIGN_EFT("CALLSIGN");           ///< EFT used in constructor for parsed_exchange (initialised from context during start-up, below)
 
 /* The K3's handling of commands from the computer is rubbish. This variable
    is a simple way to cease polling when we are moving RIT with the shift keys:
@@ -367,11 +363,6 @@ WRAPPER_7_NC(cluster_info,
     window*, win_bandmap_p,
     decltype(bandmaps)*, bandmaps_p);
 
-//WRAPPER_3_NC(big_cluster_info,
-//    drlog_context*, context_p,
-//    POSTING_SOURCE*, source_p,
-//    cluster_info*, info_p);
-
 WRAPPER_2_NC(bandmap_info,
     window*, win_bandmap_p,
     decltype(bandmaps)*, bandmaps_p);
@@ -384,7 +375,7 @@ WRAPPER_2_NC(rig_status_info,
 screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed
 keyboard_queue keyboard;                    ///< queue of keyboard events
 
-// quick access to whether particular types of mults are in use; these are written only once, so we don't bother to protect them
+// quick access to whether particular types of mults are in use; these are written only during start-up, so we don't bother to protect them
 bool callsign_mults_used(false);            ///< do the rules call for callsign mults?
 bool country_mults_used(false);             ///< do the rules call for country mults?
 bool exchange_mults_used(false);            ///< do the rules call for exchange mults?
@@ -393,7 +384,9 @@ bool exchange_mults_used(false);            ///< do the rules call for exchange 
     \param  matches         container of matches
     \param  match_vector    output vector of pairs of calls and colours (in display order)
     \param  win             window to be updated
-    \param  callsign        callsign to be patched
+    \param  callsign        (partial) callsign to be matched
+
+    Clears <i>win</i> if the length of <i>callsign</i> is less than the minimum specified by the MATCH MINIMUM command
 */
 template <typename T>
 void update_matches_window(const T& matches, vector<pair<string, int>>& match_vector, window& win, const string& callsign)
@@ -410,11 +403,14 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 // I found it hard to see an exact match (for V6A) far down the list;
 // also, putting it first ensures that it can't disappear off the end
 // put an exact match at the front (this will never happen with a fuzzy match)
-    vector<string> tmp_matches;
+    vector<string> tmp_matches;                 // variable in which to build interim ordered matches
 
-    for (const auto& cs : vec_str)
-      if (cs == callsign)
-        tmp_matches.push_back(cs);
+//    for (const auto& cs : vec_str)
+//      if (cs == callsign)
+//        tmp_matches.push_back(cs);
+
+    if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
+      tmp_matches.push_back(callsign);
 
     for (const auto& cs : vec_str)
       if (cs != callsign)
@@ -628,25 +624,24 @@ int main(int argc, char** argv)
 // is there a log of old QSOs?
     if (!context.old_adif_log_name().empty())
     {
-      ost << "before old log: " << hhmmss() << endl;
+//      ost << "before old log: " << hhmmss() << endl;
 
-      const string file_contents = read_file(context.path(), context.old_adif_log_name());
-      const vector<string> records = split_string(file_contents, string("<eor>") + EOL);
+//      const string file_contents = read_file(context.path(), context.old_adif_log_name());
+      const vector<string> records = split_string( read_file(context.path(), context.old_adif_log_name()) , string("<eor>") + EOL);
 
-//      ost << "number of records in old log = " << records.size() << endl;
-
-      for (auto rec_nr = 0; rec_nr < records.size(); ++rec_nr)
-      { const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines(records[rec_nr])));
+//      for (auto rec_nr = 0; rec_nr < records.size(); ++rec_nr)
+      for (const auto& record : records)
+      { const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines( record )));
+        //const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines(records[rec_nr])));
 
         old_log_record rec;
 
-        for (auto line_nr = 0; line_nr < lines.size(); ++line_nr)
-        { const string line = lines[line_nr];
+        for (const auto& line : lines)
+        {
 
 #if 0
-        if (starts_with(line, "<band"))
-          { // <band:3>20m
-            const string tag = delimited_substring(line, '<', '>');
+        if (starts_with(line, "<band"))                                     // <band:3>20m
+          { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
 
             if (vs.size() != 2)
@@ -657,14 +652,12 @@ int main(int argc, char** argv)
               const string value = substring(line, posn + 1, n_chars - 1);  // don't include the "m" (and we assume that it *is* "m")
 
               rec.band(BAND_FROM_NAME.at(value));
-
             }
           }
 #endif
 
-          if (starts_with(line, "<call"))
-          { // <call:5>RZ3FW
-            const string tag = delimited_substring(line, '<', '>');
+          if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
+          { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
 
             if (vs.size() != 2)
@@ -679,9 +672,8 @@ int main(int argc, char** argv)
           }
 
 #if 0
-          if (starts_with(line, "<mode"))
-          { // <mode:2>CW
-            const string tag = delimited_substring(line, '<', '>');
+          if (starts_with(line, "<mode"))                                   // <mode:2>CW
+          { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
 
             if (vs.size() != 2)
@@ -692,13 +684,12 @@ int main(int argc, char** argv)
               const string value = substring(line, posn + 1, n_chars);
 
               rec.mode(MODE_FROM_NAME.at(value));
-
             }
           }
 #endif
-          if (starts_with(line, "<qsl_rcvd"))
-          { // <qsl_rcvd:1>Y
-            const string tag = delimited_substring(line, '<', '>');
+
+          if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
+          { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
 
             if (vs.size() != 2)
@@ -709,26 +700,17 @@ int main(int argc, char** argv)
               const string value = substring(line, posn + 1, n_chars);
 
               rec.qsl_received(value == "Y");
-
             }
           }
-
-//          olog.insert( { rec.callsign(), rec } );
-
-
         }
-//        olog.insert( { rec.callsign(), rec } );
-        auto& ii = olog[rec.callsign()];            // creates if doesn't exist; I assume with zeros
+
+        auto& ii = olog[rec.callsign()];            // creates if doesn't exist; I assume that it does so with zeros
 
         ii.second++;            // qsos
 
         if (rec.qsl_received())
           ii.first++;           // qsls
-
-     }
-      ost << "after old log: " << hhmmss() << endl;
-
-      ost << "old log read; size = " << olog.size() << " QSOs" << endl;
+      }
     }
 
 // make some things available file-wide
@@ -3065,6 +3047,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         contents = be.callsign();
         rig.rig_frequency(be.freq());
         enter_sap_mode();
+
+        // we may require a mode change
+              if (context.multiple_modes())
+              { const MODE m = default_mode(be.freq());
+
+                if (m != safe_get_mode())
+                { rig.rig_mode(m);
+                  safe_set_mode(m);
+                  display_band_mode(win_band_mode, safe_get_band(), m);
+                }
+              }
       }
     }
 
@@ -3691,7 +3684,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // F5 -- combine F2 and F4
   if (!processed and (e.symbol() == XK_F5))
-  { if (rig.split_enabled())
+  { processed = process_keypress_F5();
+
+#if 0
+    if (rig.split_enabled())
     { rig.split_disable();
 
       switch (a_drlog_mode)
@@ -3752,6 +3748,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 
     processed = true;
+#endif
   }
 
 
@@ -4408,9 +4405,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
-  // F5 -- combine F2 and F4
+// F5 -- combine F2 and F4
     if (!processed and (e.symbol() == XK_F5))
-    { if (rig.split_enabled())
+    { processed = process_keypress_F5();
+
+#if 0
+      if (rig.split_enabled())
       { rig.split_disable();
 
         switch (a_drlog_mode)
@@ -4471,6 +4471,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 
       processed = true;
+#endif
+
     }
 
 
@@ -7004,21 +7006,23 @@ const MODE default_mode(const frequency& f)
 
   try
   { const auto break_points = context.mode_break_points();
-    const frequency bp = break_points.at(b);                // use any non-default definitions
+    //const frequency bp = break_points.at(b);                // use any non-default definitions
 
-    if (f < bp)
-      return MODE_CW;
+    //if (f < break_points.at(b))
+      //return MODE_CW;
+    return ( (f < break_points.at(b)) ? MODE_CW : MODE_SSB );
 
-    return MODE_SSB;
+    //return MODE_SSB;
   }
 
   catch (...)                                               // use default break points (defined in bands-modes.h)
-  { const frequency bp = MODE_BREAK_POINT[b];
+  { //const frequency bp = MODE_BREAK_POINT[b];
 
-    if (f < bp)
-      return MODE_CW;
+    //if (f < MODE_BREAK_POINT[b])
+    //  return MODE_CW;
 
-    return MODE_SSB;
+    //return MODE_SSB;
+    return ( (f < MODE_BREAK_POINT[b]) ? MODE_CW : MODE_SSB );
   }
 }
 
@@ -7027,9 +7031,7 @@ void update_qsls_window(const string& str)
 { win_qsls < WINDOW_CLEAR <= "QSLs: ";
 
   if (!str.empty())
-  { //win_qsls < pad_string(to_string(olog.n_qsls(str)), 3, PAD_LEFT, '0') < "/" <= pad_string(to_string(olog.n_qsos(str)), 3, PAD_LEFT, '0');
-
-    const auto& n_qsls = olog[str].first;
+  { const auto& n_qsls = olog[str].first;
     const auto& n_qsos = olog[str].second;
 
     int default_colour_pair = colours.add(win_qsls.fg(), win_qsls.bg());
@@ -7050,4 +7052,69 @@ void update_qsls_window(const string& str)
       win_qsls.cpair(default_colour_pair);
   }
 }
+
+// process an F5 keystroke in the CALL or EXCHANGE windows
+const bool process_keypress_F5(void)
+{ if (rig.split_enabled())      // split is enabled; go back to situation before it was enabled
+  { rig.split_disable();
+
+    switch (a_drlog_mode)
+    { case CQ_MODE :
+        enter_cq_mode();
+        break;
+
+      case SAP_MODE :
+        enter_sap_mode();
+        break;
+    }
+  }
+  else                          // split is disabled, enable and prepare to work stn on B VFO
+  { rig.split_enable();
+    a_drlog_mode = drlog_mode;
+    enter_sap_mode();
+  }
+
+  if (win_bcall.defined())              // swap contents of CALL and BCALL
+  { const string tmp = win_call.read();
+    const string tmp_b = win_bcall.read();
+
+    win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+    win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+
+    const string call_contents = tmp_b;
+    string exchange_contents;
+
+    if (win_bexchange.defined())        // swap contents of EXCHANGE and BEXCHANGE
+    { const string tmp = win_exchange.read();
+      const string tmp_b = win_bexchange.read();
+
+      win_exchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
+      win_bexchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
+
+      exchange_contents = tmp_b;
+    }
+
+// put cursor in correct window
+    if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to the CALL window
+    { const size_t posn = call_contents.find(" ");                    // first empty space
+
+      win_call.move_cursor(posn, 0);
+      win_call.refresh();
+      win_active_p = &win_call;
+      win_exchange.move_cursor(0, 0);
+    }
+    else
+    { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+
+      if (posn != string::npos)
+      { win_exchange.move_cursor(posn + 1, 0);
+        win_exchange.refresh();
+        win_active_p = &win_exchange;
+      }
+    }
+  }
+
+  return true;
+}
+
 
