@@ -232,7 +232,19 @@ unsigned int            next_qso_number = 1;                ///< actual number o
 unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
 
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
-unordered_map<string /* callsign */, pair< unsigned int /* qsls */, unsigned int /* qsos */ >> olog;    ///< ADIF log of old QSOs (used for QSLs)
+
+#if 0
+unordered_map<string /* callsign */,
+//              pair< unsigned int /* qsls */, unsigned int /* qsos */ >
+                tuple< unsigned int /* qsls */,
+                       unsigned int /* qsos */,
+                       set< pair< BAND, MODE > >,     /* set of band/mode from which QSLs have been received */
+                       multiset< pair< BAND, MODE > > /* QSOs per band/mode */
+                     >
+             > olog;    ///< ADIF log of old QSOs (used for QSLs)
+#endif
+
+old_log     olog;
 
 int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
 bool                    restored_data(false);               ///< did we restore from an archive?
@@ -639,7 +651,7 @@ int main(int argc, char** argv)
         for (const auto& line : lines)
         {
 
-#if 0
+#if 1
         if (starts_with(line, "<band"))                                     // <band:3>20m
           { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -671,7 +683,7 @@ int main(int argc, char** argv)
             }
           }
 
-#if 0
+#if 1
           if (starts_with(line, "<mode"))                                   // <mode:2>CW
           { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -704,12 +716,19 @@ int main(int argc, char** argv)
           }
         }
 
-        auto& ii = olog[rec.callsign()];            // creates if doesn't exist; I assume that it does so with zeros
+//        auto& ii = olog[rec.callsign()];            // creates if doesn't exist; I assume that it does so with zeros
 
-        ii.second++;            // qsos
+   //     ii.second++;            // qsos
+//        ii.set<1>(ii.get<1> + 1);
+        olog.increment_n_qsos(rec.callsign());
+        olog.increment_n_qsos(rec.callsign(), rec.band(), rec.mode());
 
         if (rec.qsl_received())
-          ii.first++;           // qsls
+//          ii.first++;           // qsls
+        { //ost << "drlog incrementing n_qsls for " << rec.callsign() << endl;
+          olog.increment_n_qsls(rec.callsign());
+          olog.qsl_received(rec.callsign(), rec.band(), rec.mode());
+        }
       }
     }
 
@@ -984,7 +1003,7 @@ int main(int argc, char** argv)
 
 // QSLs window
   win_qsls.init(context.window_info("QSLS"), WINDOW_NO_CURSOR);
-  update_qsls_window();;
+  update_qsls_window();
 
 // QSO NUMBER window
   win_qso_number.init(context.window_info("QSO NUMBER"), WINDOW_NO_CURSOR);
@@ -7006,23 +7025,12 @@ const MODE default_mode(const frequency& f)
 
   try
   { const auto break_points = context.mode_break_points();
-    //const frequency bp = break_points.at(b);                // use any non-default definitions
 
-    //if (f < break_points.at(b))
-      //return MODE_CW;
     return ( (f < break_points.at(b)) ? MODE_CW : MODE_SSB );
-
-    //return MODE_SSB;
   }
 
   catch (...)                                               // use default break points (defined in bands-modes.h)
-  { //const frequency bp = MODE_BREAK_POINT[b];
-
-    //if (f < MODE_BREAK_POINT[b])
-    //  return MODE_CW;
-
-    //return MODE_SSB;
-    return ( (f < MODE_BREAK_POINT[b]) ? MODE_CW : MODE_SSB );
+  { return ( (f < MODE_BREAK_POINT[b]) ? MODE_CW : MODE_SSB );
   }
 }
 
@@ -7031,8 +7039,13 @@ void update_qsls_window(const string& str)
 { win_qsls < WINDOW_CLEAR <= "QSLs: ";
 
   if (!str.empty())
-  { const auto& n_qsls = olog[str].first;
-    const auto& n_qsos = olog[str].second;
+  { //const auto& n_qsls = olog[str].first;
+    //const auto& n_qsos = olog[str].second;
+
+    const unsigned int n_qsls = olog.n_qsls(str);
+    const unsigned int n_qsos = olog.n_qsos(str);
+    const unsigned int n_qsos_this_band = olog.n_qsos(str, safe_get_band(), safe_get_mode());
+    const bool confirmed_this_band = olog.confirmed(str, safe_get_band(), safe_get_mode());
 
     int default_colour_pair = colours.add(win_qsls.fg(), win_qsls.bg());
     int new_colour_pair = default_colour_pair;
@@ -7041,14 +7054,20 @@ void update_qsls_window(const string& str)
       new_colour_pair = colours.add(COLOUR_RED, win_qsls.bg());
 
     if (n_qsls != 0)
-        new_colour_pair = colours.add(COLOUR_GREEN, win_qsls.bg());
+      new_colour_pair = colours.add(COLOUR_GREEN, win_qsls.bg());
 
     if (new_colour_pair != default_colour_pair)
       win_qsls.cpair(new_colour_pair);
 
-    win_qsls < pad_string(to_string(olog[str].first), 3, PAD_LEFT, '0') < "/" <= pad_string(to_string(olog[str].second), 3, PAD_LEFT, '0');
+//    win_qsls < pad_string(to_string(olog[str].first), 3, PAD_LEFT, '0') < "/" <= pad_string(to_string(olog[str].second), 3, PAD_LEFT, '0');
+    win_qsls < pad_string(to_string(n_qsls), 3, PAD_LEFT, '0')
+             < colour_pair(default_colour_pair) < "/"
+             < colour_pair(new_colour_pair) < pad_string(to_string(n_qsos), 3, PAD_LEFT, '0')
+             < colour_pair(default_colour_pair) < "/"
+             < colour_pair(colours.add( (confirmed_this_band ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) )
+               <= pad_string(to_string(n_qsos_this_band), 3, PAD_LEFT, '0');
 
-    if (new_colour_pair != default_colour_pair)
+//    if (new_colour_pair != default_colour_pair)
       win_qsls.cpair(default_colour_pair);
   }
 }

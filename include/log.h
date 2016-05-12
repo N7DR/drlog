@@ -389,4 +389,48 @@ public:
   READ_AND_WRITE(qsl_received);
 };
 
+// -----------  old_log  ----------------
+
+/*!     \class old_log
+        \brief An old ADIF log
+
+        Not thread safe.
+*/
+
+class old_log
+{
+protected:
+
+  std::unordered_map<std::string /* callsign */,
+                     std::tuple< unsigned int /* qsls */,
+                                 unsigned int /* qsos */,
+                                 std::set< std::pair< BAND, MODE > >,     /* set of band/mode from which QSLs have been received */
+                                 std::multiset< std::pair< BAND, MODE > > /* QSOs per band/mode */
+                               >
+                    > _olog;    ///< ADIF log of old QSOs (used for QSLs)
+public:
+
+  const unsigned int n_qsls(const std::string& call) const;
+
+  void n_qsls(const std::string& call, const unsigned int n);
+
+  const unsigned int increment_n_qsls(const std::string& call);
+
+  const unsigned int n_qsos(const std::string& call) const;
+
+  void n_qsos(const std::string& call, const unsigned int n);
+
+  const unsigned int increment_n_qsos(const std::string& call);
+
+  const unsigned int n_qsos(const std::string& call, const BAND b, const MODE m) const;
+
+  const unsigned int increment_n_qsos(const std::string& call, const BAND b, const MODE m);
+
+  const bool confirmed(const std::string& call, const BAND b, const MODE m) const;
+
+  void qsl_received(const std::string& call, const BAND b, const MODE m);
+
+};
+
+
 #endif    // LOG_H

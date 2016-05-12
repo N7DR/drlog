@@ -774,3 +774,144 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
   display();
 }
+
+
+// -----------  old_log  ----------------
+
+/*!     \class old_log
+        \brief An old ADIF log
+
+        Not thread safe, so create once and then never change.
+*/
+
+//pt_mutex old_log_mutex;                  ///< mutex for thread safety
+
+const unsigned int old_log::n_qsls(const string& call) const
+{ const auto cit = _olog.find(call);
+
+//  ost << "n_qsls() returning " << (cit == _olog.cend() ? 0 : get<0>(cit->second)) << " for call " << call << endl;
+
+  return (cit == _olog.cend() ? 0 : get<0>(cit->second));
+}
+
+void old_log::n_qsls(const string& call, const unsigned int n)
+{ //SAFELOCK(old_log);
+
+  auto it = _olog.find(call);
+
+  if (it == _olog.end())
+  { //_olog.insert(  { call } );
+    _olog[call];   // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
+    it = _olog.find(call);
+  }
+
+  get<0>(it->second) = n;
+}
+
+const unsigned int old_log::increment_n_qsls(const string& call)
+{ //ost << "incrementing qsls for " << call << endl;
+
+  //SAFELOCK(old_log);
+
+  auto it = _olog.find(call);
+
+  if (it == _olog.end())
+  { //_olog.insert(  { call } );
+    _olog[call];
+    n_qsls(call, 1);
+
+    return 1;
+  }
+
+  const unsigned int rv = n_qsls(call) + 1;
+
+  get<0>(it->second) = rv;
+
+  return rv;
+}
+
+const unsigned int old_log::n_qsos(const string& call) const
+{ const auto cit = _olog.find(call);
+
+//  ost << "n_qsos() returning " << (cit == _olog.cend() ? 0 : get<1>(cit->second)) << " for call " << call << endl;
+
+  return (cit == _olog.cend() ? 0 : get<1>(cit->second));
+}
+
+void old_log::n_qsos(const string& call, const unsigned int n)
+{ //SAFELOCK(old_log);
+
+  auto it = _olog.find(call);
+
+  if (it == _olog.end())
+  {// _olog.insert(  { call } );
+    _olog[call];
+    it = _olog.find(call);
+  }
+
+  get<1>(it->second) = n;
+}
+
+const unsigned int old_log::increment_n_qsos(const string& call)
+{ //ost << "incrementing qsos for " << call << endl;
+
+  //SAFELOCK(old_log);
+
+  auto it = _olog.find(call);
+
+  if (it == _olog.end())
+  { //_olog.insert(  { call } );
+    _olog[call];
+    n_qsos(call, 1);
+
+    return 1;
+  }
+
+  const unsigned int rv = n_qsos(call) + 1;
+
+  get<1>(it->second) = rv;
+
+  return rv;
+}
+
+const unsigned int old_log::n_qsos(const string& call, const BAND b, const MODE m) const
+{ const auto cit = _olog.find(call);
+
+  return (cit == _olog.cend() ? 0 : get<3>(cit->second).count( { b, m } ));
+}
+
+const unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const MODE m)
+{ auto it = _olog.find(call);
+
+  if (it == _olog.end())
+  { _olog[call];
+    it = _olog.find(call);
+  }
+
+  get<3>(it->second).insert( { b, m } );
+
+  return n_qsos(call, b, m);
+}
+
+const bool old_log::confirmed(const string& call, const BAND b, const MODE m) const
+{ const auto cit = _olog.find(call);
+
+  if (cit == _olog.cend())
+    return false;
+
+  return (get<2>(cit->second) < ( pair<BAND, MODE>( { b, m } ) ) );
+}
+
+void old_log::qsl_received(const string& call, const BAND b, const MODE m)
+{ auto it = _olog.find(call);
+
+  if (it == _olog.end())
+  { _olog[call];
+    it = _olog.find(call);
+  }
+
+  get<2>(it->second).insert( { b, m } );
+}
+
+
+
