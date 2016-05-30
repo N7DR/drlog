@@ -3202,7 +3202,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
-  if (!processed and (e.is_control() or e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
+  if (!processed and (e.is_control_and_not_alt() or e.is_alt_and_not_control()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
   { bandmap& bm = bandmaps[safe_get_band()];
 
     typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
@@ -3229,6 +3229,58 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
           display_band_mode(win_band_mode, safe_get_band(), m);
         }
       }
+    }
+
+    processed = true;
+  }
+
+// ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
+  if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
+  { //ost << "Processing new command" << endl;
+
+    bandmap& bm = bandmaps[safe_get_band()];
+
+    frequency target_frequency = rig.rig_frequency();
+
+    const BANDMAP_DIRECTION dirn = (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP;
+    bool finished = false;
+
+    while ( (target_frequency.hz() != 0) and !finished)
+    { const bandmap_entry be = bm.next_station(target_frequency, dirn);
+
+      //ost << "bandmap entry: " << be << endl;
+
+      if (!be.empty())
+      { const unsigned int n_qsos_this_band = olog.n_qsos(be.callsign(), safe_get_band(), safe_get_mode());
+
+        if (n_qsos_this_band == 0)
+        { rig.rig_frequency(be.freq());
+          win_call < WINDOW_CLEAR <= be.callsign();
+
+          display_nearby_callsign(be.callsign());
+          display_call_info(be.callsign());
+          last_call_inserted_with_space = be.callsign();
+          enter_sap_mode();
+
+// we may require a mode change
+          if (context.multiple_modes())
+          { const MODE m = default_mode(be.freq());
+
+            if (m != safe_get_mode())
+            { rig.rig_mode(m);
+              safe_set_mode(m);
+              display_band_mode(win_band_mode, safe_get_band(), m);
+            }
+          }
+
+          finished = true;
+        }
+
+// go to next station
+        target_frequency = be.freq();
+      }
+      else                          // be is empty
+        finished = true;            // unnecessary
     }
 
     processed = true;
@@ -7039,10 +7091,7 @@ void update_qsls_window(const string& str)
 { win_qsls < WINDOW_CLEAR <= "QSLs: ";
 
   if (!str.empty())
-  { //const auto& n_qsls = olog[str].first;
-    //const auto& n_qsos = olog[str].second;
-
-    const unsigned int n_qsls = olog.n_qsls(str);
+  { const unsigned int n_qsls = olog.n_qsls(str);
     const unsigned int n_qsos = olog.n_qsos(str);
     const unsigned int n_qsos_this_band = olog.n_qsos(str, safe_get_band(), safe_get_mode());
     const bool confirmed_this_band = olog.confirmed(str, safe_get_band(), safe_get_mode());
@@ -7063,12 +7112,15 @@ void update_qsls_window(const string& str)
     win_qsls < pad_string(to_string(n_qsls), 3, PAD_LEFT, '0')
              < colour_pair(default_colour_pair) < "/"
              < colour_pair(new_colour_pair) < pad_string(to_string(n_qsos), 3, PAD_LEFT, '0')
-             < colour_pair(default_colour_pair) < "/"
-             < colour_pair(colours.add( (confirmed_this_band ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) )
-               <= pad_string(to_string(n_qsos_this_band), 3, PAD_LEFT, '0');
+             < colour_pair(default_colour_pair) < "/";
+
+    if (n_qsos_this_band != 0)
+      win_qsls < colour_pair(colours.add( (confirmed_this_band ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) );
+
+    win_qsls <= pad_string(to_string(n_qsos_this_band), 3, PAD_LEFT, '0');
 
 //    if (new_colour_pair != default_colour_pair)
-      win_qsls.cpair(default_colour_pair);
+    win_qsls.cpair(default_colour_pair);
   }
 }
 

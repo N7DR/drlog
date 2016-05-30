@@ -340,22 +340,18 @@ const string read_file(const vector<string>& path, const string& filename)
 void write_file(const string& s, const string& filename)
 { FILE* fp = fopen(filename.c_str(), "wb");
   if (fp == 0)
-//    throw stringmanip_error(STRINGMANIP_INVALID_FILE, "Cannot open file: " + filename);
-//    throw exception();
     throw string_function_error(STRING_UNWRITEABLE_FILE, "Cannot write to file: " + filename);
 
-// don't do this the obvious way because we don't know anything about threads here
-//  try
   if (s.length())
   { char* cp = new char [s.length()];
 
-    for (unsigned int n = 0; n < s.length(); n++)
+    for (unsigned int n = 0; n < s.length(); ++n)
       cp[n] = s[n];
 
     fwrite(cp, s.length(), 1, fp);
-
     delete [] cp;
   }
+
   fclose(fp);
 }
 
@@ -479,6 +475,7 @@ const string join(const deque<string>& deq, const string& sep)
     If <i>n</i> is equal to or greater than the length of <i>s</i>, then
     the empty string is returned.
 */
+#if 0
 const string remove_from_end(const string& s, const unsigned int n)
 { //if (n >= s.length())
   //  return s;
@@ -486,6 +483,7 @@ const string remove_from_end(const string& s, const unsigned int n)
   //return s.substr(0, s.length() - n);
   return ( (n >= s.length()) ? s : s.substr(0, s.length() - n) );
 }
+#endif
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
@@ -523,7 +521,6 @@ const string remove_trailing(const string& s, const char c)
 const string remove_char(const string& s, const char c)
 { string rv;
 
-//  for (unsigned int n = 0; n < s.length(); n++)
   for (const auto& ch : s)
     if (ch != c)
       rv += ch;
@@ -641,7 +638,7 @@ const char last_char(const string& cs)
 
 /// the penultimate character in a string
 const char penultimate_char(const std::string& cs)
-{ if (cs.length() < 1)
+{ if (cs.length() < 2)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string");
     
   return cs[cs.length() - 2];
@@ -649,7 +646,7 @@ const char penultimate_char(const std::string& cs)
 
 /// the antepenultimate character in a string
 const char antepenultimate_char(const std::string& cs)
-{ if (cs.length() < 2)
+{ if (cs.length() < 3)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string");
     
   return cs[cs.length() - 3];
@@ -665,11 +662,6 @@ const string get_environment_variable(const string& var_name)
 { const char* cp = getenv(var_name.c_str());
 
   return ( cp ? string(cp) : string() );
-
-//  if (!cp)
-//    return string();
-//  else
-//    return string(cp);
 }
 
 const string transform_string(const string& cs, int(*pf)(int))

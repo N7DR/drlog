@@ -410,14 +410,35 @@ protected:
                     > _olog;    ///< ADIF log of old QSOs (used for QSLs)
 public:
 
+/*! \brief          Return total number of QSLs from a particular callsign
+    \param  call    callsign
+    \return         the number of QSLs from callsign <i>call</i>
+*/
   const unsigned int n_qsls(const std::string& call) const;
 
+/*! \brief          Set the number of QSLs from a particular callsign
+    \param  call    callsign
+    \param  n       number of QSLs from <i>call</i>
+*/
   void n_qsls(const std::string& call, const unsigned int n);
 
+
+/*! \brief          Increment the number of QSLs from a particular callsign
+    \param  call    callsign
+    \return         the new number of QSLs from callsign <i>call</i>
+*/
   const unsigned int increment_n_qsls(const std::string& call);
 
+/*! \brief          Return total number of QSOs with a particular callsign
+    \param  call    callsign
+    \return         the number of QSOs with callsign <i>call</i>
+*/
   const unsigned int n_qsos(const std::string& call) const;
 
+/*! \brief          Set the number of QSOs with a particular callsign
+    \param  call    callsign
+    \param  n       number of QSOs with <i>call</i>
+*/
   void n_qsos(const std::string& call, const unsigned int n);
 
   const unsigned int increment_n_qsos(const std::string& call);

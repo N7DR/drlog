@@ -796,6 +796,24 @@ public:
   inline const bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_a_needed_mult, dirn); }
 
+/*! \brief          Find the next station up or down in frequency from a given frequency
+    \param  f       starting frequency
+    \param  dirn    direction in which to search
+    \return         bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
+
+    The return value can be tested with .empty() to see if a station was found.
+    Applies filtering and the RBN threshold before searching for the next station.
+*/
+  const bandmap_entry next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn);
+
+/// lowest frequency on the bandmap
+// assumes that entries are in increasing order of frequency
+  const frequency lowest_frequency(void);
+
+/// highest frequency on the bandmap
+// assumes that entries are in increasing order of frequency
+  const frequency highest_frequency(void);
+
 /*!  \brief             Was a call recently added?
      \param callsign    callsign to test
      \return            whether <i>callsign</i> was added since the bandmap was last pruned

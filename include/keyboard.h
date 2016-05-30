@@ -100,6 +100,30 @@ public:
   inline const bool is_alt(void) const
     { return (_xkey_state bitand Mod1Mask); }
 
+/// is one of the control keys, but not one of the alt keys, pressed?
+  inline const bool is_control_and_not_alt(void) const
+    { return ( is_control() and !is_alt() ); }
+
+/// is one of the control keys, but not one of the alt keys, pressed?
+  inline const bool is_ctrl_and_not_alt(void) const
+    { return is_control_and_not_alt(); }
+
+/// is one of the alt keys, but not one of the control keys, pressed?
+  inline const bool is_alt_and_not_control(void) const
+    { return ( is_alt() and !is_control() ); }
+
+/// is one of the alt keys, but not one of the control keys, pressed?
+  inline const bool is_alt_and_not_ctrl(void) const
+    { return is_alt_and_not_control(); }
+
+/// are control and alt keys both pressed?
+  inline const bool is_alt_and_control(void) const
+    { return is_alt() and is_control(); }
+
+/// are control and alt keys both pressed?
+  inline const bool is_alt_and_ctrl(void) const
+    { return is_alt_and_control(); }
+
 /// is the key unmodified?
 // NB: Numlock is Mod2Mask (see xmodmap command), so we can't merely test _xkey_state against zero
   inline const bool is_unmodified(void) const

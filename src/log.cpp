@@ -784,40 +784,40 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
         Not thread safe, so create once and then never change.
 */
 
-//pt_mutex old_log_mutex;                  ///< mutex for thread safety
-
+/*! \brief          Return total number of QSLs from a particular callsign
+    \param  call    callsign
+    \return         the number of QSLs from callsign <i>call</i>
+*/
 const unsigned int old_log::n_qsls(const string& call) const
 { const auto cit = _olog.find(call);
-
-//  ost << "n_qsls() returning " << (cit == _olog.cend() ? 0 : get<0>(cit->second)) << " for call " << call << endl;
 
   return (cit == _olog.cend() ? 0 : get<0>(cit->second));
 }
 
+/*! \brief          Set the number of QSLs from a particular callsign
+    \param  call    callsign
+    \param  n       number of QSLs from <i>call</i>
+*/
 void old_log::n_qsls(const string& call, const unsigned int n)
-{ //SAFELOCK(old_log);
-
-  auto it = _olog.find(call);
+{ auto it = _olog.find(call);
 
   if (it == _olog.end())
-  { //_olog.insert(  { call } );
-    _olog[call];   // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
+  { _olog[call];   // Josuttis, 2 ed. p.186 implies that this works rather than _olog[call] = { };
     it = _olog.find(call);
   }
 
   get<0>(it->second) = n;
 }
 
+/*! \brief          Increment the number of QSLs from a particular callsign
+    \param  call    callsign
+    \return         the new number of QSLs from callsign <i>call</i>
+*/
 const unsigned int old_log::increment_n_qsls(const string& call)
-{ //ost << "incrementing qsls for " << call << endl;
-
-  //SAFELOCK(old_log);
-
-  auto it = _olog.find(call);
+{ auto it = _olog.find(call);
 
   if (it == _olog.end())
-  { //_olog.insert(  { call } );
-    _olog[call];
+  { _olog[call];
     n_qsls(call, 1);
 
     return 1;
@@ -830,22 +830,25 @@ const unsigned int old_log::increment_n_qsls(const string& call)
   return rv;
 }
 
+/*! \brief          Return total number of QSOs with a particular callsign
+    \param  call    callsign
+    \return         the number of QSOs with callsign <i>call</i>
+*/
 const unsigned int old_log::n_qsos(const string& call) const
 { const auto cit = _olog.find(call);
-
-//  ost << "n_qsos() returning " << (cit == _olog.cend() ? 0 : get<1>(cit->second)) << " for call " << call << endl;
 
   return (cit == _olog.cend() ? 0 : get<1>(cit->second));
 }
 
+/*! \brief          Set the number of QSOs with a particular callsign
+    \param  call    callsign
+    \param  n       number of QSOs with <i>call</i>
+*/
 void old_log::n_qsos(const string& call, const unsigned int n)
-{ //SAFELOCK(old_log);
-
-  auto it = _olog.find(call);
+{ auto it = _olog.find(call);
 
   if (it == _olog.end())
-  {// _olog.insert(  { call } );
-    _olog[call];
+  { _olog[call];
     it = _olog.find(call);
   }
 

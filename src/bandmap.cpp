@@ -332,7 +332,7 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
 
   const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
   bool finish_looking = false;
-  float smallest_difference = 1000000;
+  float smallest_difference = 1000000;              // start with a big number
   string rv;
 
   for (BM_ENTRIES::const_iterator cit = bme.cbegin(); (!finish_looking and cit != bme.cend()); ++cit)
@@ -833,7 +833,6 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 
   const BM_ENTRIES filtered = filtered_entries();
   BM_ENTRIES rv;
-//  unsigned int threshold;
 
   SAFELOCK(_bandmap);
 
@@ -855,7 +854,7 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
   return rv;
 }
 
-/*!  \brief         Find the next needed station up or down in frequency from the current loction
+/*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
      \param dirn    direction in which to search
      \return        bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
@@ -898,6 +897,91 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
   }
 
   return bandmap_entry();
+}
+
+/*! \brief          Find the next station up or down in frequency from a given frequency
+    \param  f       starting frequency
+    \param  dirn    direction in which to search
+    \return         bandmap entry (if any) corresponding to the next needed station in the direction <i>dirn</i>
+
+    The return value can be tested with .empty() to see if a station was found.
+    Applies filtering and the RBN threshold before searching for the next station.
+*/
+const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn)
+{ //ost << "inside bandmap::next_station()" << endl;
+
+  bandmap_entry rv;
+
+  const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
+
+  if (fe.empty())
+    return rv;
+
+  if (dirn == BANDMAP_DIRECTION_DOWN and f <= fe.front().freq())
+    return rv;
+
+  if (dirn == BANDMAP_DIRECTION_UP and f >= fe.back().freq())
+    return rv;
+
+  //ost << "about to look in direction " << (dirn == BANDMAP_DIRECTION_DOWN ? "DOWN" : "UP");
+
+  if (dirn == BANDMAP_DIRECTION_DOWN)
+  { if (f <= fe.front().freq())         // all frequencies are higher than the target
+      return rv;
+
+    rv = fe.front();
+
+    for (BM_ENTRIES::const_iterator cit = next(fe.cbegin()); cit != fe.cend(); ++cit)
+    { if (cit->freq() >= f)
+        return rv;
+
+      rv = *cit;
+    }
+
+// get here only if all frequencies are below the target
+    return rv;
+  }
+
+  if (dirn == BANDMAP_DIRECTION_UP)
+  { if (f >= fe.back().freq())         // all frequencies are lower than the target
+      return rv;
+
+    rv = fe.back();
+
+    for (BM_ENTRIES::const_reverse_iterator crit = next(fe.crbegin()); crit != fe.crend(); ++crit)
+    { if (crit->freq() <= f)
+        return rv;
+
+      rv = *crit;
+    }
+
+// get here only if all frequencies are above the target
+    return rv;
+  }
+
+  return bandmap_entry();       // keep compiler happy
+}
+
+/// lowest frequency on the bandmap
+// assumes that entries are in increasing order of frequency
+const frequency bandmap::lowest_frequency(void)
+{ const BM_ENTRIES bme = rbn_threshold_and_filtered_entries();
+
+  if (bme.empty())
+    return frequency();
+
+  return bme.front().freq();
+}
+
+/// highest frequency on the bandmap
+// assumes that entries are in increasing order of frequency
+const frequency bandmap::highest_frequency(void)
+{ const BM_ENTRIES bme = rbn_threshold_and_filtered_entries();
+
+  if (bme.empty())
+    return frequency();
+
+  return bme.back().freq();
 }
 
 /// convert to a printable string

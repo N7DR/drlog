@@ -224,7 +224,8 @@ void write_file(const std::string& cs, const std::string& filename);
     If <i>n</i> is equal to or greater than the length of <i>s</i>, then
     the empty string is returned.
 */
-const std::string remove_from_end(const std::string& s, const unsigned int n);
+inline const std::string remove_from_end(const std::string& s, const unsigned int n)
+  { return ( (n >= s.length()) ? std::string() : s.substr(0, s.length() - n) ); }
 
 /*! \brief              Split a string into components
     \param  cs          original string
