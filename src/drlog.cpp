@@ -633,26 +633,40 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
+// MESSAGE window (do this as early as is reasonable so that it's available for messages)
+    win_message.init(context.window_info("MESSAGE"), WINDOW_NO_CURSOR);
+    win_message < WINDOW_BOLD <= "";                                       // use bold in this window
+
 // is there a log of old QSOs?
     if (!context.old_adif_log_name().empty())
-    {
-//      ost << "before old log: " << hhmmss() << endl;
-
-//      const string file_contents = read_file(context.path(), context.old_adif_log_name());
+    { alert(string("reading old log file: ") + context.old_adif_log_name());
       const vector<string> records = split_string( read_file(context.path(), context.old_adif_log_name()) , string("<eor>") + EOL);
 
-//      for (auto rec_nr = 0; rec_nr < records.size(); ++rec_nr)
       for (const auto& record : records)
       { const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines( record )));
-        //const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines(records[rec_nr])));
+
+        auto adif_value = [](const string& this_line, const unsigned int offset = 0)
+          { const string tag = delimited_substring(this_line, '<', '>');
+            const vector<string> vs = split_string(tag, ":");
+
+            if (vs.size() != 2)
+            { ost << "ERROR parsing old log line: " << this_line << endl;
+              return string();
+            }
+            else
+            { const size_t n_chars = from_string<size_t>(vs[1]);
+              const size_t posn = this_line.find('>');
+
+              return substring(this_line, posn + 1, n_chars - offset);  // don't include the "m" (and we assume that it *is* "m")
+            }
+          };
 
         old_log_record rec;
 
         for (const auto& line : lines)
         {
-
-#if 1
-        if (starts_with(line, "<band"))                                     // <band:3>20m
+#if 0
+          if (starts_with(line, "<band"))                                     // <band:3>20m
           { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
 
@@ -667,6 +681,8 @@ int main(int argc, char** argv)
             }
           }
 #endif
+          if (starts_with(line, "<band"))                                     // <band:3>20m
+            rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));  // don't include the "m" (and we assume that it *is* "m")
 
           if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
           { const string tag = delimited_substring(line, '<', '>');
@@ -683,7 +699,6 @@ int main(int argc, char** argv)
             }
           }
 
-#if 1
           if (starts_with(line, "<mode"))                                   // <mode:2>CW
           { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -698,7 +713,6 @@ int main(int argc, char** argv)
               rec.mode(MODE_FROM_NAME.at(value));
             }
           }
-#endif
 
           if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
           { const string tag = delimited_substring(line, '<', '>');
@@ -716,20 +730,16 @@ int main(int argc, char** argv)
           }
         }
 
-//        auto& ii = olog[rec.callsign()];            // creates if doesn't exist; I assume that it does so with zeros
-
-   //     ii.second++;            // qsos
-//        ii.set<1>(ii.get<1> + 1);
         olog.increment_n_qsos(rec.callsign());
         olog.increment_n_qsos(rec.callsign(), rec.band(), rec.mode());
 
         if (rec.qsl_received())
-//          ii.first++;           // qsls
-        { //ost << "drlog incrementing n_qsls for " << rec.callsign() << endl;
-          olog.increment_n_qsls(rec.callsign());
+        { olog.increment_n_qsls(rec.callsign());
           olog.qsl_received(rec.callsign(), rec.band(), rec.mode());
         }
       }
+
+      win_message <= WINDOW_CLEAR;
     }
 
 // make some things available file-wide
@@ -765,8 +775,8 @@ int main(int argc, char** argv)
     }
 
 // MESSAGE window (do this as early as is reasonable so that it's available for messages)
-    win_message.init(context.window_info("MESSAGE"), WINDOW_NO_CURSOR);
-    win_message < WINDOW_BOLD <= "";                                       // use bold in this window
+//    win_message.init(context.window_info("MESSAGE"), WINDOW_NO_CURSOR);
+//    win_message < WINDOW_BOLD <= "";                                       // use bold in this window
 
 // possibly open communication with the rig
     rig.register_error_alert_function(rig_error_alert);

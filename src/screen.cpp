@@ -44,21 +44,55 @@ cpair colours;                  ///< global repository for information about col
 
 /// default constructor
 screen::screen(void)
-{ setlocale(LC_ALL, "");  // for wide characters; see http://www.roguebasin.com/index.php?title=Ncursesw
-  initscr();
-  start_color();
-
-  if (!has_colors())
-  { cerr << "NO COLOURS" << endl;
+{ if (setlocale(LC_ALL, "") == nullptr)
+  { cerr << "Unable to set locale" << endl;
+    sleep(2);
     exit(-1);
   }
 
-  refresh();               // clear the screen ready for use
+  if (initscr() == nullptr)
+  { cerr << "Unable to initialise curses" << endl;
+    sleep(2);
+    exit(-1);
+  }
+
+  if (start_color() == ERR)
+  { cerr << "Unable to start colours on screen" << endl;
+    sleep(2);
+    endwin();
+    exit(-1);
+  }
+
+  if (!has_colors())
+  { cerr << "NO COLOURS" << endl;
+    sleep(2);
+    endwin();
+    exit(-1);
+  }
+
+//  cerr << "HERE 6" << endl;
+
+  int status = refresh();               // clear the screen ready for use
+
+//  cerr << "status = " << status << endl;
+//  sleep(2);
+
+  if (status == ERR)
+  { cerr << "Error calling refresh()" << endl;
+    sleep(2);
+    endwin();
+    exit(-1);
+  }
+
+//  cerr << "HERE 7" << endl;
+
 
 // ncurses does not seem to supply any real control over the look of the cursor.
 // I would like a blinking underline, but there seems to be no way to get that.
 // TODO: look into this in more depth
   curs_set(1);             // a medium cursor
+
+//  cerr << "Exiting constructor" << endl;
 }
 
 /// destructor
