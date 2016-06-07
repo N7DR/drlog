@@ -11,9 +11,9 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-/*!     \file statistics.h
+/*! \file statistics.h
 
-        Classes and functions related to the statistics of an ongoing contest
+    Classes and functions related to the statistics of an ongoing contest
 */
 
 #include "cty_data.h"
@@ -34,8 +34,8 @@ extern pt_mutex statistics_mutex;       ///< mutex for statistics
 
 // -----------  running_statistics  ----------------
 
-/*!     \class running_statistics
-        \brief ongoing statistics
+/*! \class running_statistics
+    \brief ongoing contest-related statistics
 */
 
 class running_statistics
@@ -311,10 +311,10 @@ public:
 
 // -----------  call history  ----------------
 
-/*!     \class call_history
-        \brief History of each call worked
+/*! \class call_history
+    \brief History of each call worked
 
-        Instantiations of this class are automatically thread-safe.
+    Instantiations of this class are automatically thread-safe.
 */
 
 class call_history

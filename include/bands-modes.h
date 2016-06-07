@@ -8,15 +8,13 @@
 // Copyright owners:
 //    N7DR
 
-/*
- * bands-modes.h
- *
- *  Created on: Nov 24, 2010
- *      Author: n7dr
- */
-
 #ifndef BANDSMODES_H
 #define BANDSMODES_H
+
+/*! \file bands-modes.h
+
+    Classes and functions related to bands, frequencies and modes
+*/
 
 #include "string_functions.h"
 
@@ -89,6 +87,56 @@ static std::map<std::string, MODE> MODE_FROM_NAME { { "CW", MODE_CW },
                                                   };
 
 typedef std::pair<BAND, MODE> bandmode;    ///< tuple for encapsulating a band and mode
+
+/*!  \brief     Convert a frequency to a band
+     \param  f  frequency
+     \return    band corresponding to <i>f</i>
+
+     Frequency may be in Hz, kHz or MHz.
+*/
+template<class T> const BAND to_BAND(T f)
+{ if (f <= 0)
+    return MIN_BAND;
+
+  if (f < 1000)       // MHz
+    return to_BAND(static_cast<long>(f) * 1000000);
+
+  if (f < 1000000)    // kHz
+    return to_BAND(static_cast<long>(f) * 1000);
+
+// Hz
+  if ( (f >= 1800000) and (f <= 2000000) )
+    return BAND_160;
+
+  if ( (f >= 3500000) and (f <= 4000000) )
+    return BAND_80;
+
+  if ( (f >= 5000000) and (f <= 6000000) )
+    return BAND_60;
+
+  if ( (f >= 7000000) and (f <= 7300000) )
+    return BAND_40;
+
+  if ( (f >= 1010000) and (f <= 10150000) )
+    return BAND_30;
+
+  if ( (f >= 14000000) and (f <= 14350000) )
+    return BAND_20;
+
+  if ( (f >= 18068000) and (f <= 18168000) )
+    return BAND_17;
+
+  if ( (f >= 21000000) and (f <= 21450000) )
+    return BAND_15;
+
+  if ( (f >= 24890000) and (f <= 24990000) )
+    return BAND_12;
+
+  if ( (f >= 28000000) and (f <= 29700000) )
+    return BAND_10;
+
+  return MIN_BAND;
+}
 
 // ----------------------------------------------------  frequency  -----------------------------------------------
 
@@ -167,7 +215,8 @@ public:
 
     Returns BAND_160 if the frequency is outside all bands
 */
-  operator BAND(void) const;
+  inline operator BAND(void) const
+    { return to_BAND(hz()); }
 
 /// is the frequency within a band?
   const bool is_within_ham_band(void) const;
@@ -205,56 +254,6 @@ public:
     { ar & _hz;
     }
 };
-
-/*!  \brief     Convert a frequency to a band
-     \param  f  frequency
-     \return    band corresponding to <i>f</i>
-
-     Frequency may be in Hz, kHz or MHz.
-*/
-template<class T> const BAND to_BAND(T f)
-{ if (f <= 0)
-    return MIN_BAND;
-
-  if (f < 1000)       // MHz
-    return to_BAND(static_cast<long>(f) * 1000000);
-
-  if (f < 1000000)    // kHz
-    return to_BAND(static_cast<long>(f) * 1000);
-
-// Hz
-  if ( (f >= 1800000) and (f <= 2000000) )
-    return BAND_160;
-
-  if ( (f >= 3500000) and (f <= 4000000) )
-    return BAND_80;
-
-  if ( (f >= 5000000) and (f <= 6000000) )
-    return BAND_60;
-
-  if ( (f >= 7000000) and (f <= 7300000) )
-    return BAND_40;
-
-  if ( (f >= 1010000) and (f <= 10150000) )
-    return BAND_30;
-
-  if ( (f >= 14000000) and (f <= 14350000) )
-    return BAND_20;
-
-  if ( (f >= 18000000) and (f <= 19000000) )
-    return BAND_17;
-
-  if ( (f >= 21000000) and (f <= 21450000) )
-    return BAND_15;
-
-  if ( (f >= 24890000) and (f <= 25000000) )
-    return BAND_12;
-
-  if ( (f >= 28000000) and (f <= 29700000) )
-    return BAND_10;
-
-  return MIN_BAND;
-}
 
 /*!  \brief         Convert the string representation of a frequency to a band
      \param  str    any string representation of a frequency, such that the string can be converted to a frequency object

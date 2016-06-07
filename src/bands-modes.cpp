@@ -32,7 +32,7 @@ frequency::frequency(const double f)
 { if (f < 100)                  // MHz
     _hz = static_cast<unsigned int>(f * 1000000 + 0.5);
   else
-  { if (f < 100000)            // kHz
+  { if (f < 100000)             // kHz
       _hz = static_cast<unsigned int>(f * 1000 + 0.5);
     else
       _hz = static_cast<unsigned int>(f + 0.5);
@@ -71,7 +71,7 @@ frequency::frequency(const enum BAND b)
       break;
 
     case BAND_17 :
-      _hz = 18000000;
+      _hz = 18068000;
       break;
 
     case BAND_15 :
@@ -79,7 +79,7 @@ frequency::frequency(const enum BAND b)
       break;
 
     case BAND_12 :
-      _hz = 24900000;
+      _hz = 24890000;
       break;
 
     case BAND_10 :
@@ -112,9 +112,9 @@ const string frequency::display_string(void) const
 
     Returns BAND_160 if the frequency is outside all bands
 */
-frequency::operator BAND(void) const
-{ return to_BAND(hz());
-}
+//frequency::operator BAND(void) const
+//{ return to_BAND(hz());
+//}
 
 /// return lower band edge that corresponds to frequency
 const frequency frequency::lower_band_edge(void) const
@@ -146,7 +146,7 @@ const frequency frequency::lower_band_edge(void) const
       return frequency(21.0);
 
     case BAND_12 :
-      return frequency(0.0);  // dunno where band edge is;
+      return frequency(24.89);
 
     case BAND_10 :
       return frequency (28.0);

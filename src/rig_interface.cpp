@@ -80,6 +80,8 @@ void alert(const string& msg, const bool show_time = true);     ///< alert the u
  *   protocols could be run over, for example, SLIP.
 */
 
+// ---------------------------------------- rig_interface -------------------------
+
 /*! \brief       Alert the user with a message
     \param  msg  message for the user
 
@@ -110,7 +112,7 @@ void* rig_interface::_poll_thread_function(void* vp)
 }
 
 /*! \brief      static wrapper for function to poll rig for status
-    \param  vp  the this pointer, in order to allow static member access to a real object
+    \param  vp  the <i>this</i> pointer, in order to allow static member access to a real object
     \return     nullptr
 */
 void* rig_interface::_static_poll_thread_function(void* arg)
@@ -151,7 +153,8 @@ rig_interface::~rig_interface(void)
 void rig_interface::prepare(const drlog_context& context)
 { _port_name = context.rig1_port();
   rig_set_debug(RIG_DEBUG_NONE);
-  rig_load_all_backends();
+  rig_load_all_backends();              // this function returns an int -- in true Linux fashion, there is no documentation as to possible values and their meaning
+                                        // see: http://hamlib.sourceforge.net/manuals/1.2.15/group__rig.html
 
   const string rig_type = context.rig1_type();
 
@@ -237,7 +240,7 @@ void rig_interface::rig_frequency_b(const frequency& f)
 /*! \brief      Set mode
     \param  m   new mode
 
-    Also sets the bandwidth (because it's easier to follow hamlib's model, even though it is flawed)
+    Also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
 { static pbwidth_t last_cw_bandwidth  = 200;
@@ -281,12 +284,6 @@ void rig_interface::rig_mode(const MODE m)
 
         { SAFELOCK(_rig);
           const pbwidth_t new_bandwidth = ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth );
-
-//          if (m == MODE_CW)
-//            new_bandwidth = last_cw_bandwidth;
-
-//          if (m == MODE_SSB)
-//            new_bandwidth = last_ssb_bandwidth;
 
           status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
         }
@@ -345,7 +342,7 @@ const frequency rig_interface::rig_frequency_b(void)
             Hence we use the explicit K3 command, since at least we know what that will do on that rig.
 */
 void rig_interface::split_enable(void)
-{ ost << "called split enable()" << endl;
+{ //ost << "called split enable()" << endl;
 
   if (!_rig_connected)
     return;
@@ -558,7 +555,7 @@ const int rig_interface::rit(void)
 
 /*! \brief  Turn rit on
 
-    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+    This is a kludge, since hamlib brilliantly equates an offset of zero with rit turned off (!)
 */
 void rig_interface::rit_enable(void)
 { if (_model == RIG_MODEL_K3)
@@ -569,7 +566,7 @@ void rig_interface::rit_enable(void)
 
 /*! \brief  Turn rit off
 
-    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+    This is a kludge, since hamlib brilliantly equates an offset of zero with rit turned off (!)
 */
 void rig_interface::rit_disable(void)
 { if (_model == RIG_MODEL_K3)
@@ -593,7 +590,7 @@ const bool rig_interface::rit_enabled(void)
 
 /*! \brief  Turn xit on
 
-    This is a kludge, since hamlib equates an offset of zero with xit turned off (!)
+    This is a kludge, since hamlib brilliantly equates an offset of zero with xit turned off (!)
 */
 void rig_interface::xit_enable(void)
 { if (_model == RIG_MODEL_K3)
@@ -604,7 +601,7 @@ void rig_interface::xit_enable(void)
 
 /*! \brief  Turn xit off
 
-    This is a kludge, since hamlib equates an offset of zero with xit turned off (!)
+    This is a kludge, since hamlib brilliantly equates an offset of zero with xit turned off (!)
 */
 void rig_interface::xit_disable(void)
 { if (_model == RIG_MODEL_K3)

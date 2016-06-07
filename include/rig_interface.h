@@ -96,7 +96,10 @@ protected:
 */
   static void* _static_poll_thread_function(void* vp);
 
-///< allow direct access to the underlying file descriptor used to communicate with the rig
+
+/*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
+    \return     the file descriptor associated with the rig
+*/
   inline const int  _file_descriptor(void) const
     { return _rigp->state.rigport.fd; }
 
@@ -152,14 +155,14 @@ public:
 /*! \brief      Set frequency of VFO A
     \param  f   frequency to which to QSY
 
-                Does nothing if <i>f</i> is not within a ham band
+    Does nothing if <i>f</i> is not within a ham band
 */
   void rig_frequency(const frequency& f);
 
 /*! \brief      Set frequency of VFO A
     \param  f   frequency to which to QSY
 
-                Does nothing if <i>f</i> is not within a ham band
+    Does nothing if <i>f</i> is not within a ham band
 */
   inline void rig_frequency_a(const frequency& f)
     { rig_frequency(f); }
@@ -174,7 +177,7 @@ public:
 /*! \brief      Set frequency of VFO B
     \param  f   frequency to which to QSY
 
-                Does nothing if <i>f</i> is not within a ham band
+    Does nothing if <i>f</i> is not within a ham band
 */
   void rig_frequency_b(const frequency& f);
 

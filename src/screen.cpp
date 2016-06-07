@@ -70,29 +70,17 @@ screen::screen(void)
     exit(-1);
   }
 
-//  cerr << "HERE 6" << endl;
-
-  int status = refresh();               // clear the screen ready for use
-
-//  cerr << "status = " << status << endl;
-//  sleep(2);
-
-  if (status == ERR)
+  if (refresh() == ERR)
   { cerr << "Error calling refresh()" << endl;
     sleep(2);
     endwin();
     exit(-1);
   }
 
-//  cerr << "HERE 7" << endl;
-
-
 // ncurses does not seem to supply any real control over the look of the cursor.
 // I would like a blinking underline, but there seems to be no way to get that.
 // TODO: look into this in more depth
   curs_set(1);             // a medium cursor
-
-//  cerr << "Exiting constructor" << endl;
 }
 
 /// destructor
@@ -171,9 +159,7 @@ window::window(const unsigned int flags) :
   _process_input(nullptr),
   _fg(COLOUR_WHITE),
   _bg(COLOUR_BLACK)
-{  //const int pair_nr = colours.add(_fg, _bg);
-   //default_colours(COLOUR_PAIR(pair_nr));
-  _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
+{ _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
 }
 
 /*! \brief          Create using position and size information from the configuration file
@@ -204,8 +190,6 @@ window::window(const window_information& wi, const unsigned int flags) :
     keypad(_wp, true);
     _pp = new_panel(_wp);
 
-//    const int pair_nr = colours.add(_fg, _bg);
-
     _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
   }
 }
@@ -230,10 +214,8 @@ void window::init(const window_information& wi, const unsigned int flags)
 
   _fg = string_to_colour(wi.fg_colour());
   _bg = string_to_colour(wi.bg_colour());
-
-//  const int pair_nr = colours.add(_fg, _bg);
-
   _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
+
   (*this) <= WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
@@ -258,9 +240,8 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
     _bg = bg;
   }
 
-//  const int pair_nr = colours.add(_fg, _bg);
-
   _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
+
   (*this) <= WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
@@ -426,8 +407,7 @@ window& window::operator<(const vector<pair<string, int /* colour pair number */
       *this < "\n";
 
     this->cpair(cp);
-    *this < callsign;
-    *this < COLOURS(_fg, _bg);    // back to default colours
+    *this < callsign < COLOURS(_fg, _bg);    // back to default colours
 
 // add space unless we're at the end of a line or this is the last string
     const bool end_of_line = (remaining_space == static_cast<int>(callsign.length()));

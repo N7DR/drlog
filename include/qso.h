@@ -11,9 +11,9 @@
 #ifndef QSO_H
 #define QSO_H
 
-/*!     \file qso.h
+/*! \file qso.h
 
-        Classes and functions related to QSO information
+    Classes and functions related to QSO information
 */
 
 #include "drlog_context.h"
@@ -36,8 +36,8 @@ WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool,
 
 // -----------  QSO  ----------------
 
-/*!     \class QSO
-        \brief The details of a single QSO
+/*! \class QSO
+    \brief The details of a single QSO
 */
 
 class QSO
@@ -273,7 +273,11 @@ public:
 /// ostream << QSO
 std::ostream& operator<<(std::ostream& ost, const QSO& q);
 
-/// is one QSO earlier than another?
+/*! \brief          Is one QSO earlier than another?
+    \param  qso_1   first QSO
+    \param  qso_2   second QSO  name of field to test
+    \return         whether <i>qso_1</i> is earlier than <i>qso_2</i>
+*/
 inline const bool earlier(const QSO& qso_1, const QSO& qso_2)
   { return (qso_1.earlier_than(qso_2)); }
 

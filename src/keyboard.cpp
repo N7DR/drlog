@@ -35,6 +35,7 @@ extern message_stream           ost;    ///< for debugging, info
 */
 int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_event_p)
 { cerr << "X Error" << endl;
+  sleep(2);
   exit(-1);
 }
 
@@ -55,49 +56,41 @@ keyboard_queue::keyboard_queue(void) :
   _display_p(nullptr),
   _window_id(0),
   _x_multithreaded(true)        // to be safe, until we're sure we aren't running the simulator
-{ //cerr << "Inside keyboard_queue constructor" << endl;
-
-  //sleep(2);
+{
+// write a message, pause, then exit
+  auto delayed_exit = [] (const string& msg, const unsigned int delay_in_seconds)
+  { cerr << msg << endl;
+    sleep_for(seconds(delay_in_seconds));
+    exit(-1);
+  };
 
   XInitThreads();
-
-  //cerr << "HERE 1" << endl;
-  //sleep(2);
 
 // set the error handler for X
   XSetErrorHandler(_x_error_handler);
 
-  //cerr << "HERE 2" << endl;
-  //sleep(2);
-
   _display_p = XOpenDisplay(NULL);
 
   if (!_display_p)
-  { cerr << "Fatal error: unable to open display" << endl;
-    exit (-1);
-  }
-
-  //cerr << "HERE 3" << endl;
-  //sleep(2);
+    delayed_exit("Fatal error: unable to open display", 2);
+//  { cerr << "Fatal error: unable to open display" << endl;
+//    sleep(2);
+//    exit (-1);
+//  }
 
 // get the window ID
   const char* cp = getenv("WINDOWID");
   if (!cp)
-  { cerr << "Fatal error: unable to obtain window ID" << endl;
-    sleep(2);
-    exit (-1);
-  }
+    delayed_exit("Fatal error: unable to obtain window ID", 2);
+//  { cerr << "Fatal error: unable to obtain window ID" << endl;
+//    sleep(2);
+//    exit (-1);
+//  }
 
   _window_id = from_string<Window>(cp);
 
-  //cerr << "HERE 4" << endl;
-  //sleep(2);
-
 // we want to be the only process to have access to key presses in our window
   XGrabKey(_display_p, AnyKey, AnyModifier, _window_id, false, GrabModeAsync, GrabModeAsync);
-
-  //cerr << "HERE 5" << endl;
-  //sleep(2);
 
 // we are interested only in key events
   XSelectInput(_display_p, _window_id, KeyPressMask | KeyReleaseMask);
@@ -109,13 +102,11 @@ keyboard_queue::keyboard_queue(void) :
   }
 
   catch (const pthread_error& e)
-  { cerr << "Error creating thread: KEYBOARD" << endl;
-    sleep(2);
-    exit(-1);
+  { delayed_exit("Error creating thread: KEYBOARD", 2);
+//    cerr << "Error creating thread: KEYBOARD" << endl;
+//    sleep(2);
+//    exit(-1);
   }
-
-//  cerr << "Exiting keyboard_queue constructor" << endl;
-//  sleep(2);
 }
 
 /// move any pending X keyboard events to the queue

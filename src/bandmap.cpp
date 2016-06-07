@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file bandmap.cpp
+/*! \file bandmap.cpp
 
-        Classes and functions related to bandmaps
+    Classes and functions related to bandmaps
 */
 
 #include "bandmap.h"
@@ -66,8 +66,8 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 
 // -----------   bandmap_filter_type ----------------
 
-/*!     \class bandmap_filter_type
-        \brief Control bandmap filtering
+/*! \class bandmap_filter_type
+    \brief Control bandmap filtering
 */
 
 /*! \brief      All the continents and canonical prefixes that are currently being filtered
@@ -149,6 +149,8 @@ void bandmap_entry::freq(const frequency& f)
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
+  //ost << "inside calculate_mult_status()" << endl;
+
 // callsign mult status
   clear_callsign_mult();
 
@@ -183,12 +185,19 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     if (is_possible_exchange_field)
     { string guess = exchange_db.guess_value(_callsign, exch_mult_name);
 
+      //ost << "guess for " << exch_mult_name << " = " << guess << endl;
+
       guess = rules.canonical_value(exch_mult_name, guess);
+
+      //ost << "revised guess = " << guess << endl;
 
       if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
         add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
     }
   }
+
+  //ost << "leaving calculate_mult_status()" << endl;
+
 }
 
 /*! \brief      Does this object match another bandmap_entry?
@@ -214,18 +223,28 @@ const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 */
 const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, running_statistics& statistics)
 {
+//   ost << "Inside remark for call: " << _callsign << endl;
 // is needed?
   const bool original_is_needed = _is_needed;
 
 // to do: allow for SS rules and per-mode contests
   _is_needed = !q_history.worked(_callsign, _band);
 
-// callsign mult
   const bool original_is_needed_callsign_mult = is_needed_callsign_mult();
   const bool original_is_needed_country_mult = is_needed_country_mult();
   const bool original_is_needed_exchange_mult = is_needed_exchange_mult();
 
+//  ost << boolalpha << "original_is_needed: " << original_is_needed << endl;
+//  ost << "original_is_needed_callsign_mult: " << original_is_needed_callsign_mult << endl;
+//  ost << "original_is_needed_country_mult: " << original_is_needed_country_mult << endl;
+//  ost << "original_is_needed_exchange_mult: " << original_is_needed_exchange_mult << endl;
+
   calculate_mult_status(rules, statistics);
+
+//  ost << boolalpha << "final _is_needed: " << _is_needed << endl;
+//  ost << "final is_needed_callsign_mult: " << is_needed_callsign_mult() << endl;
+//  ost << "final is_needed_country_mult: " << is_needed_country_mult() << endl;
+//  ost << "final is_needed_exchange_mult: " << is_needed_exchange_mult() << endl;
 
   return ( (original_is_needed != _is_needed) or (original_is_needed_callsign_mult != is_needed_callsign_mult()) or
            (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));
@@ -312,8 +331,8 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
 
 // -----------  bandmap  ----------------
 
-/*!     \class bandmap
-        \brief A bandmap
+/*! \class  bandmap
+    \brief  A bandmap
 */
 
 /*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
@@ -323,6 +342,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      \return                            callsign of a station within the guard band
 
      Returns the nearest station within the guard band, or the null string if no call is found.
+     As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
 const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
 { if (target_frequency_in_khz < 1800 or target_frequency_in_khz > 29700)
@@ -906,11 +926,10 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
 
     The return value can be tested with .empty() to see if a station was found.
     Applies filtering and the RBN threshold before searching for the next station.
+    As currently implemented, assumes that entries are in increasing order of frequency.
 */
 const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn)
-{ //ost << "inside bandmap::next_station()" << endl;
-
-  bandmap_entry rv;
+{ bandmap_entry rv;
 
   const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
 
@@ -922,8 +941,6 @@ const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP
 
   if (dirn == BANDMAP_DIRECTION_UP and f >= fe.back().freq())
     return rv;
-
-  //ost << "about to look in direction " << (dirn == BANDMAP_DIRECTION_DOWN ? "DOWN" : "UP");
 
   if (dirn == BANDMAP_DIRECTION_DOWN)
   { if (f <= fe.front().freq())         // all frequencies are higher than the target
@@ -962,8 +979,12 @@ const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP
   return bandmap_entry();       // keep compiler happy
 }
 
-/// lowest frequency on the bandmap
-// assumes that entries are in increasing order of frequency
+/*! \brief      Get lowest frequency on the bandmap
+    \return     lowest frequency on the bandmap
+
+    Applies filtering and the RBN threshold before searching.
+    As currently implemented, assumes that entries are in increasing order of frequency.
+*/
 const frequency bandmap::lowest_frequency(void)
 { const BM_ENTRIES bme = rbn_threshold_and_filtered_entries();
 
@@ -973,8 +994,12 @@ const frequency bandmap::lowest_frequency(void)
   return bme.front().freq();
 }
 
-/// highest frequency on the bandmap
-// assumes that entries are in increasing order of frequency
+/*! \brief      Get highest frequency on the bandmap
+    \return     highest frequency on the bandmap
+
+    Applies filtering and the RBN threshold before searching.
+    As currently implemented, assumes that entries are in increasing order of frequency.
+*/
 const frequency bandmap::highest_frequency(void)
 { const BM_ENTRIES bme = rbn_threshold_and_filtered_entries();
 

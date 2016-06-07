@@ -11,9 +11,9 @@
 #ifndef BANDMAP_H
 #define BANDMAP_H
 
-/*!     \file bandmap.h
+/*! \file bandmap.h
 
-        Classes and functions related to bandmaps
+    Classes and functions related to bandmaps
 */
 
 #include "cluster.h"
@@ -171,8 +171,8 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<T>& nmd)
 
 // -----------   bandmap_filter_type ----------------
 
-/*!     \class bandmap_filter_type
-        \brief Control bandmap filtering
+/*! \class bandmap_filter_type
+    \brief Control bandmap filtering
 */
 
 class bandmap_filter_type
@@ -181,8 +181,8 @@ protected:
 
   bool                      _enabled;        ///< is bandmap filtering enabled?
   bool                      _hide;           ///< are we in hide mode? (as opposed to show)
-  std::vector<std::string>  _prefixes;       ///< canonical country prefixes to filter
   std::vector<std::string>  _continents;     ///< continents to filter
+  std::vector<std::string>  _prefixes;       ///< canonical country prefixes to filter
 
 public:
 
@@ -197,15 +197,15 @@ public:
   READ(continents);                             ///< continents to filter
   READ(prefixes);                               ///< canonical country prefixes to filter
 
-/*! \brief  All the continents and canonical prefixes that are currently being filtered
-    \return all the continents and canonical prefixes that are currently being filtered
+/*! \brief      All the continents and canonical prefixes that are currently being filtered
+    \return     all the continents and canonical prefixes that are currently being filtered
 
-            The continents precede the canonical prefixes
+    The continents precede the canonical prefixes
 */
   const std::vector<std::string> filter(void) const;
 
-/*!  \brief     Add a string to, or remove a string from, the filter
-     \param str string to add or subtract
+/*!  \brief         Add a string to, or remove a string from, the filter
+     \param str     string to add or subtract
 
      <i>str</i> may be either a continent identifier or a call or partial call. <i>str</i> is added
      if it's not already in the filter; otherwise it is removed.
@@ -256,7 +256,11 @@ public:
 */
   bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
 
-/// define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
+/*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
+    \param  be  comparison bandmap_entry
+    \return     whether <i>this</i> should be sorted earlier than <i>be</i>
+ *
+ */
   inline const bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
@@ -571,15 +575,16 @@ protected:
      or
        its source is RBN and the call is already present in the bandmap at the same QRG with the poster of <i>be</i>
 */
-    const bool _mark_as_recent(const bandmap_entry& be);
+  const bool _mark_as_recent(const bandmap_entry& be);
 
-/*!  \brief                         Return the callsign closest to a particular frequency, if it is within the guard band
-     \param bme                     band map entries
-     \param target_frequency_in_khz the target frequency, in kHz
-     \param guard_band_in_hz        how far from the target to search, in Hz
-     \return                        Callsign of a station within the guard band
+/*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
+     \param bme                         band map entries
+     \param target_frequency_in_khz     the target frequency, in kHz
+     \param guard_band_in_hz            how far from the target to search, in Hz
+     \return                            Callsign of a station within the guard band
 
      Returns the nearest station within the guard band, or the null string if no call is found.
+     As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
   const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
 
@@ -645,15 +650,15 @@ public:
 */
   void operator+=(const bandmap_entry& be);
 
-/*! \brief return the entry for a particular call
+/*! \brief              Return the entry for a particular call
     \param  callsign    call for which the entry should be returned
-    \return the bandmap_entry corresponding to <i>callsign</i>
+    \return             the bandmap_entry corresponding to <i>callsign</i>
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
   const bandmap_entry operator[](const std::string& callsign);
 
-/*! \brief return the first entry for a partial call
+/*! \brief              Return the first entry for a partial call
     \param  callsign    partial call for which the entry should be returned
     \return             the first bandmap_entry corresponding to <i>callsign</i>
 
@@ -661,7 +666,7 @@ public:
 */
   const bandmap_entry substr(const std::string& callsign);
 
-/*! \brief remove a call from the bandmap
+/*! \brief              Remove a call from the bandmap
     \param  callsign    call to be removed
 
     Does nothing if <i>callsign</i> is not in the bandmap
@@ -803,15 +808,24 @@ public:
 
     The return value can be tested with .empty() to see if a station was found.
     Applies filtering and the RBN threshold before searching for the next station.
+    As currently implemented, assumes that entries are in increasing order of frequency.
 */
   const bandmap_entry next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn);
 
-/// lowest frequency on the bandmap
-// assumes that entries are in increasing order of frequency
+/*! \brief      Get lowest frequency on the bandmap
+    \return     lowest frequency on the bandmap
+
+    Applies filtering and the RBN threshold before searching.
+    As currently implemented, assumes that entries are in increasing order of frequency.
+*/
   const frequency lowest_frequency(void);
 
-/// highest frequency on the bandmap
-// assumes that entries are in increasing order of frequency
+/*! \brief      Get highest frequency on the bandmap
+    \return     highest frequency on the bandmap
+
+    Applies filtering and the RBN threshold before searching.
+    As currently implemented, assumes that entries are in increasing order of frequency.
+*/
   const frequency highest_frequency(void);
 
 /*!  \brief             Was a call recently added?

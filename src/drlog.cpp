@@ -639,7 +639,9 @@ int main(int argc, char** argv)
 
 // is there a log of old QSOs?
     if (!context.old_adif_log_name().empty())
-    { alert(string("reading old log file: ") + context.old_adif_log_name());
+    { //alert(string("reading old log file: ") + context.old_adif_log_name());
+
+      win_message <= ( string("reading old log file: ") + context.old_adif_log_name() );
       const vector<string> records = split_string( read_file(context.path(), context.old_adif_log_name()) , string("<eor>") + EOL);
 
       for (const auto& record : records)
@@ -684,6 +686,7 @@ int main(int argc, char** argv)
           if (starts_with(line, "<band"))                                     // <band:3>20m
             rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));  // don't include the "m" (and we assume that it *is* "m")
 
+#if 0
           if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
           { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -698,7 +701,11 @@ int main(int argc, char** argv)
               rec.callsign(value);
             }
           }
+#endif
+          if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
+            rec.callsign( adif_value(line) );
 
+#if 0
           if (starts_with(line, "<mode"))                                   // <mode:2>CW
           { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -713,7 +720,11 @@ int main(int argc, char** argv)
               rec.mode(MODE_FROM_NAME.at(value));
             }
           }
+#endif
+          if (starts_with(line, "<mode"))                                   // <mode:2>CW
+            rec.mode(MODE_FROM_NAME.at( adif_value(line) ));
 
+#if 0
           if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
           { const string tag = delimited_substring(line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -728,6 +739,10 @@ int main(int argc, char** argv)
               rec.qsl_received(value == "Y");
             }
           }
+#endif
+          if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
+            rec.qsl_received( adif_value(line) == "Y");
+
         }
 
         olog.increment_n_qsos(rec.callsign());
@@ -774,10 +789,6 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-// MESSAGE window (do this as early as is reasonable so that it's available for messages)
-//    win_message.init(context.window_info("MESSAGE"), WINDOW_NO_CURSOR);
-//    win_message < WINDOW_BOLD <= "";                                       // use bold in this window
-
 // possibly open communication with the rig
     rig.register_error_alert_function(rig_error_alert);
     if (!context.rig1_port().empty() and !context.rig1_type().empty())
@@ -809,20 +820,14 @@ int main(int argc, char** argv)
     safe_set_mode(context.start_mode());
 
 // see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
-    { //const frequency rf = rig.rig_frequency();
-
-      if (current_band != static_cast<BAND>(rig.rig_frequency()))
-      { rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
-        sleep_for(seconds(2));                                                       // give time for things to settle
-      }
-
-// the rig might have changed mode if we just changed bands
-//      const MODE rm = rig.rig_mode();
-
-      if (current_mode != rig.rig_mode())
-        rig.rig_mode(current_mode);
+    if (current_band != static_cast<BAND>(rig.rig_frequency()))
+    { rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
+      sleep_for(seconds(2));                                                       // give time for things to settle
     }
 
+// the rig might have changed mode if we just changed bands
+    if (current_mode != rig.rig_mode())
+      rig.rig_mode(current_mode);
 
     rig.base_state();
 
@@ -2296,6 +2301,7 @@ void* prune_bandmap(void* vp)
     KP ENTER -- send CQ #2
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
     SPACE -- generally, dupe check
+    ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
     CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
     SHIFT (RIT control)
     ALT-Y -- delete last QSO
@@ -4102,7 +4108,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             for (auto& pef : vec_pef)
             { const bool is_mult_field = pef.is_mult();
 
-              if (!(variable_exchange_fields < pef.name()))
+               if (!(variable_exchange_fields < pef.name()))
                 exchange_db.set_value(callsign, pef.name(), rules.canonical_value(pef.name(), pef.value()));   // add it to the database of exchange fields
 
 // possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
@@ -4658,20 +4664,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // BACKSPACE -- just move cursor to left
     if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
-    { //const cursor cursor_posn = win.cursor_position();
-      //string str = win.getline(cursor_posn.y());
-
-      //if (cursor_posn.x() != 0)
-      //{
-      //}
-
-
-
-      win <= cursor_relative(-1, 0);
-
-
-      //win.delete_character(win.cursor_position().x() - 1);
-      //win.refresh();
+    { win <= cursor_relative(-1, 0);
       processed = true;
     }
 
@@ -4750,6 +4743,10 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 //            qso.new_populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]), context.my_call());  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 
+            //ost << "after populate_from_log_line(), QSO = " << qso << endl;
+
+            //ost << "log line from populated QSO: " << qso.log_line() << endl;
+
 // we can't assume anything about the mult status
             const BAND b = qso.band();
 
@@ -4762,7 +4759,15 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // exchange mults
             if (exchange_mults_used)
+            { //ost << "before calculate_exchange_mults for " << qso.callsign() << endl;
+              //ost << "QSO: " << qso << endl;
+
               calculate_exchange_mults(qso, rules);
+
+              //ost << "after calculate_exchange_mults for " << qso.callsign() << endl;
+              //ost << "QSO: " << qso << endl;
+
+            }
 
 // if callsign mults matter, add more to the qso
             allow_for_callsign_mults(qso);
@@ -4771,7 +4776,25 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             statistics.add_qso(qso, logbk, rules);
             logbk += qso;
 
-            ost << "    " << qso << endl;
+            //ost << "    " << qso << endl;
+
+// possibly change values in the exchange database
+            const vector<received_field> fields = qso.received_exchange();
+
+            //ost << "exchange fields from revised QSO:" << endl;
+
+            for (auto& field : fields)
+            { //ost << "  field: " << field << endl;
+
+              //const bool is_mult_field = field.is_mult();
+
+              if (!(variable_exchange_fields < field.name()))
+               exchange_db.set_value(qso.callsign(), field.name(), rules.canonical_value(field.name(), field.value()));   // add it to the database of exchange fields
+
+            }
+
+
+
           }
         }
 
@@ -4793,7 +4816,16 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             alert("Unable to open log file " + context.logfile() + " for writing: ");
         }
 
+//        ost << "Before rebuild_history()" << endl;
+
+//        ost << q_history << endl;
+
         rebuild_history(logbk, rules, statistics, q_history, rate);
+
+//        ost << "After rebuild_history()" << endl;
+
+//        ost << q_history << endl;
+
         rescore(rules);
         update_rate_window();
 
@@ -4838,13 +4870,27 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 //        for (auto& bm : bandmaps)
 //          bm.remark();
 
+        ost << "LOOKING AT BANDMAPS" << endl;
+
 // test --- change current bandmap
         for (auto& bm : bandmaps)
         { BM_ENTRIES bme = bm.entries();
 
           for (auto& be : bme)
           { if (be.remark(rules, q_history, statistics))
+            { ost << "remarked: " << be << endl;
               bm += be;
+            }
+            else
+            { ost << "NOT remarked: " << be << endl;
+            }
+          }
+
+// debugging
+          if (&bm == &(bandmaps[safe_get_band()]))
+          { for (auto& be : bme)
+            { ost << "bandmap_entry: " << be << endl;
+            }
           }
 
           if (&bm == &(bandmaps[safe_get_band()]))
