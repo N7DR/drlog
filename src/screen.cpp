@@ -220,7 +220,7 @@ void window::init(const window_information& wi, const unsigned int flags)
 }
 
 /*! \brief          Initialise using position and size information from the configuration file, and possibly set colours explicitly
-    \param  wi      window position and size
+    \param  wi      window position, size and (possibly) colour
     \param  fg      foreground colour
     \param  bg      background colour
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
@@ -764,7 +764,13 @@ window& window::delete_character(const int n)
   return delete_character( n, cursor_position().y() );
 }
 
-/// delete a character within a particular line
+/*! \brief          Delete a character within a particular line
+    \param  n       number of character to delete (wrt 0)
+    \param line_nr  number of line (wrt 0)
+    \return         the window
+
+    Line number zero is the bottom line
+*/
 window& window::delete_character(const int n, const int line_nr)
 
 { if (!_wp)

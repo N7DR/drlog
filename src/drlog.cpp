@@ -233,6 +233,8 @@ unsigned int            n_modes = 0;                        ///< number of modes
 
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
 
+unsigned int serno_spaces = 0;
+
 #if 0
 unordered_map<string /* callsign */,
 //              pair< unsigned int /* qsls */, unsigned int /* qsos */ >
@@ -417,10 +419,6 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 // put an exact match at the front (this will never happen with a fuzzy match)
     vector<string> tmp_matches;                 // variable in which to build interim ordered matches
 
-//    for (const auto& cs : vec_str)
-//      if (cs == callsign)
-//        tmp_matches.push_back(cs);
-
     if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
       tmp_matches.push_back(callsign);
 
@@ -544,6 +542,7 @@ int main(int argc, char** argv)
     TS = context.thousands_separator();         // correct thousands separator
     ACCEPT_COLOUR = context.accept_colour();    // colour for calls it is OK to work
     REJECT_COLOUR = context.reject_colour();    // colour for calls it is not OK to work
+    serno_spaces = context.serno_spaces();
 
 // read the country data
     cty_data* country_data_p = nullptr;
@@ -639,14 +638,15 @@ int main(int argc, char** argv)
 
 // is there a log of old QSOs?
     if (!context.old_adif_log_name().empty())
-    { //alert(string("reading old log file: ") + context.old_adif_log_name());
+    { alert(string("reading old log file: ") + context.old_adif_log_name(), false);
 
-      win_message <= ( string("reading old log file: ") + context.old_adif_log_name() );
+      //win_message <= ( string("reading old log file: ") + context.old_adif_log_name() );
       const vector<string> records = split_string( read_file(context.path(), context.old_adif_log_name()) , string("<eor>") + EOL);
 
       for (const auto& record : records)
       { const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines( record )));
 
+// extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
         auto adif_value = [](const string& this_line, const unsigned int offset = 0)
           { const string tag = delimited_substring(this_line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -659,90 +659,25 @@ int main(int argc, char** argv)
             { const size_t n_chars = from_string<size_t>(vs[1]);
               const size_t posn = this_line.find('>');
 
-              return substring(this_line, posn + 1, n_chars - offset);  // don't include the "m" (and we assume that it *is* "m")
+              return substring(this_line, posn + 1, n_chars - offset);
             }
           };
 
         old_log_record rec;
 
+// place values into the record
         for (const auto& line : lines)
-        {
-#if 0
-          if (starts_with(line, "<band"))                                     // <band:3>20m
-          { const string tag = delimited_substring(line, '<', '>');
-            const vector<string> vs = split_string(tag, ":");
+        { if (starts_with(line, "<band"))                                   // <band:3>20m
+            rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));             // don't include the "m" (and we assume that it *is* "m")
 
-            if (vs.size() != 2)
-              ost << "ERROR parsing old log line: " << line << endl;
-            else
-            { const size_t n_chars = from_string<size_t>(vs[1]);
-              const size_t posn = line.find('>');
-              const string value = substring(line, posn + 1, n_chars - 1);  // don't include the "m" (and we assume that it *is* "m")
-
-              rec.band(BAND_FROM_NAME.at(value));
-            }
-          }
-#endif
-          if (starts_with(line, "<band"))                                     // <band:3>20m
-            rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));  // don't include the "m" (and we assume that it *is* "m")
-
-#if 0
-          if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
-          { const string tag = delimited_substring(line, '<', '>');
-            const vector<string> vs = split_string(tag, ":");
-
-            if (vs.size() != 2)
-              ost << "ERROR parsing old log line: " << line << endl;
-            else
-            { const size_t n_chars = from_string<size_t>(vs[1]);
-              const size_t posn = line.find('>');
-              const string value = substring(line, posn + 1, n_chars);
-
-              rec.callsign(value);
-            }
-          }
-#endif
           if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
             rec.callsign( adif_value(line) );
 
-#if 0
-          if (starts_with(line, "<mode"))                                   // <mode:2>CW
-          { const string tag = delimited_substring(line, '<', '>');
-            const vector<string> vs = split_string(tag, ":");
-
-            if (vs.size() != 2)
-              ost << "ERROR parsing old log line: " << line << endl;
-            else
-            { const size_t n_chars = from_string<size_t>(vs[1]);
-              const size_t posn = line.find('>');
-              const string value = substring(line, posn + 1, n_chars);
-
-              rec.mode(MODE_FROM_NAME.at(value));
-            }
-          }
-#endif
           if (starts_with(line, "<mode"))                                   // <mode:2>CW
             rec.mode(MODE_FROM_NAME.at( adif_value(line) ));
 
-#if 0
-          if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
-          { const string tag = delimited_substring(line, '<', '>');
-            const vector<string> vs = split_string(tag, ":");
-
-            if (vs.size() != 2)
-              ost << "ERROR parsing old log line: " << line << endl;
-            else
-            { const size_t n_chars = from_string<size_t>(vs[1]);
-              const size_t posn = line.find('>');
-              const string value = substring(line, posn + 1, n_chars);
-
-              rec.qsl_received(value == "Y");
-            }
-          }
-#endif
           if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
             rec.qsl_received( adif_value(line) == "Y");
-
         }
 
         olog.increment_n_qsos(rec.callsign());
@@ -838,29 +773,29 @@ int main(int argc, char** argv)
     }
 
 // ditto for other calls in the do-not-show list or file
-  for (const auto& callsign : context.do_not_show())
-    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+    for (const auto& callsign : context.do_not_show())
+      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
 
-  if (!context.do_not_show_filename().empty())
-  { try
-    { const vector<string> lines = remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), context.do_not_show_filename()))));
+    if (!context.do_not_show_filename().empty())
+    { try
+      { const vector<string> lines = remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), context.do_not_show_filename()))));
 
-      for (const auto& callsign : lines)
-        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+        for (const auto& callsign : lines)
+          FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+      }
+
+      catch (...)
+      { cerr << "Unable to read do-not-show file: " << context.do_not_show_filename() << endl;
+        exit(-1);
+      }
     }
-
-    catch (...)
-    { cerr << "Unable to read do-not-show file: " << context.do_not_show_filename() << endl;
-      exit(-1);
-    }
-  }
 
 // set the RBN threshold for each bandmap
-  { const unsigned int rbn_threshold = context.rbn_threshold();
+    { const unsigned int rbn_threshold = context.rbn_threshold();
 
-    if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
-      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
-  }
+      if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
+        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
+    }
 
 // create and populate windows; do static windows first
   const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows = context.static_windows();;
@@ -878,8 +813,7 @@ int main(int argc, char** argv)
   }
 
   for (auto& swin : static_windows_p)
-//    *(swin.second) <= swin.first;       // display contents of the static window
-    *(swin.second) <= reformat_for_wprintw(swin.first, swin.second->width());       // display contents of the static window
+    *(swin.second) <= reformat_for_wprintw(swin.first, swin.second->width());       // display contents of the static window, working around wprintw weirdness
 
 // BAND/MODE window
   win_band_mode.init(context.window_info("BAND/MODE"), WINDOW_NO_CURSOR);
@@ -889,23 +823,19 @@ int main(int argc, char** argv)
 
   if (!context.batch_messages_file().empty())
   { try
-    { //const string all_messages = read_file(context.path(), context.batch_messages_file());
-      const vector<string> messages = to_lines(read_file(context.path(), context.batch_messages_file()));
+    { const vector<string> messages = to_lines(read_file(context.path(), context.batch_messages_file()));
+      string current_message;
 
       SAFELOCK(batch_messages);
-
-      string current_message;
 
       for (const auto& messages_line : messages)
       { if (!messages_line.empty())
         { if (contains(messages_line, "["))
-            current_message = delimited_substring(messages_line, '[', ']'); //substring(messages_line, 1, messages_line.length() - 2);
+            current_message = delimited_substring(messages_line, '[', ']');
           else
           { const string callsign = remove_peripheral_spaces(messages_line);
 
             batch_messages.insert( { callsign, current_message } );
-
-//            ost << "inserted: " << callsign << " with message: " << current_message << endl;
           }
         }
       }
@@ -956,8 +886,7 @@ int main(int argc, char** argv)
 
   if (!context.individual_messages_file().empty())
   { try
-    { //const string all_messages = read_file(context.path(), context.individual_messages_file());
-      const vector<string> messages = to_lines(read_file(context.path(), context.individual_messages_file()));
+    { const vector<string> messages = to_lines(read_file(context.path(), context.individual_messages_file()));
 
       SAFELOCK(individual_messages);
 
@@ -1003,7 +932,7 @@ int main(int argc, char** argv)
 
 // LOG EXTRACT window; also used for QTCs
   win_log_extract.init(context.window_info("LOG EXTRACT"), WINDOW_NO_CURSOR);
-  editable_log.prepare();    // now we can size the editable log
+  editable_log.prepare();                       // now we can size the editable log
   extract.prepare();
 
   if (send_qtcs)
@@ -1092,11 +1021,13 @@ int main(int argc, char** argv)
   { const set<MODE> score_modes = rules.score_modes();
     string modes_str;
 
-    if (score_modes < MODE_CW)
-      modes_str += "CW ";
+    FOR_ALL(score_modes, [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + " "); } );
 
-    if (score_modes < MODE_SSB)
-      modes_str += "SSB ";
+//    if (score_modes < MODE_CW)
+//      modes_str += "CW ";
+
+//    if (score_modes < MODE_SSB)
+//      modes_str += "SSB ";
 
     win_score_modes < CURSOR_START_OF_LINE < "Score Modes: " <= modes_str;
   }
@@ -1133,7 +1064,6 @@ int main(int argc, char** argv)
   if (cw_p)
     cw_p->speed(context.cw_speed());                    // set computer keyer speed
 
-
 // &&&
 //  string test = "W4/VP9KF";
 //
@@ -1150,6 +1080,7 @@ int main(int argc, char** argv)
   if (context.auto_remaining_country_mults())
     acc.threshold(context.auto_remaining_country_mults_threshold());
 
+// possibly set speed of internal keter
   try
   { if (context.sync_keyer())
       rig.keyer_speed(context.cw_speed());
@@ -1197,16 +1128,10 @@ int main(int argc, char** argv)
 // BANDMAP window
   win_bandmap.init(context.window_info("BANDMAP"), WINDOW_NO_CURSOR);
 
+// set recent and fade colours for each bandmap
   { const vector<int> fc = context.bandmap_fade_colours();
     const int rc = context.bandmap_recent_colour();
 
-//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.fade_colours(fc); } );
-//    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.fade_colours(fc); } );
-
-
-
-//    for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.recent_colour(rc); } );
-//    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.recent_colour(rc); } );
     FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.fade_colours(fc);
                                           bm.recent_colour(rc);
                                         } );
@@ -1236,12 +1161,7 @@ int main(int argc, char** argv)
   if (!bandmap_filtering_enabled)                                                                          // disabled
     win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
   else
-  { //if (context.bandmap_filter_hide())                                                                     // hide
-     // win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_hide_colour());
-    //else                                                                                                   // show
-    //  win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_show_colour());
     win_bandmap_filter.default_colours(win_bandmap_filter.fg(), (context.bandmap_filter_hide() ? context.bandmap_filter_hide_colour() : context.bandmap_filter_show_colour()));
-  }
 
   BAND cur_band = safe_get_band();
   MODE cur_mode = safe_get_mode();
@@ -1258,9 +1178,6 @@ int main(int argc, char** argv)
 
     win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();       // display filter
   }
-
-  //  ost << "About to read Cabrillo log" << endl;
-
 
   // read a Cabrillo log
   //  logbook cablog;
@@ -1331,14 +1248,6 @@ int main(int argc, char** argv)
 
       file_copy(fn, fn + "-" + to_string(index));
     }
-
-//    int index = 0;
-
-//    while (file_exists(fn + "-" + to_string(index)))
-//      index++;
-
-//    if (file_exists(fn))
-//      file_copy(fn, fn + "-" + to_string(index));
   }
 
 // for now, require one of -clean or -rebuild
@@ -1350,97 +1259,97 @@ int main(int argc, char** argv)
   }
 
 // now we can restore data from the last run
-    if (!cl.parameter_present("-clean"))
-    { if (!cl.parameter_present("-rebuild"))    // if -rebuild is present, then don't restore from archive; rebuild only from logbook
-      { const string archive_filename = context.archive_name();
+  if (!cl.parameter_present("-clean"))
+  { if (!cl.parameter_present("-rebuild"))    // if -rebuild is present, then don't restore from archive; rebuild only from logbook
+    { const string archive_filename = context.archive_name();
 
-        if (file_exists(archive_filename) and !file_empty(archive_filename))
-          restore_data(archive_filename);
-        else
-          alert("No archive data present");
+      if (file_exists(archive_filename) and !file_empty(archive_filename))
+        restore_data(archive_filename);
+      else
+        alert("No archive data present");
+    }
+    else     // rebuild
+    { ost << "rebuilding from: " << context.logfile() << endl;
+
+      string file;
+
+      try
+      { file = read_file(context.logfile());    // in current directory
       }
-      else     // rebuild
-      { ost << "rebuilding from: " << context.logfile() << endl;
 
-        string file;
+      catch (...)
+      { alert("Error reading log file: " + context.logfile());
+      }
 
-        try
-        { file = read_file(context.logfile());    // in current directory
-        }
+      if (!file.empty())
+      { static const string rebuilding_msg("Rebuilding...");
 
-        catch (...)
-        { alert("Error reading log file: " + context.logfile());
-        }
+        win_message < WINDOW_CLEAR <= rebuilding_msg;
 
-        if (!file.empty())
-        { const string rebuilding_msg("Rebuilding...");
+        const vector<string> lines = to_lines(file);
 
-          win_message < WINDOW_CLEAR <= rebuilding_msg;
+        for (const auto& line : lines)
+        { QSO qso;
 
-          const vector<string> lines = to_lines(file);
-
-          for (const auto& line : lines)
-          { QSO qso;
-
-            qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
+          qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
 
 // callsign mults
-            allow_for_callsign_mults(qso);
+          allow_for_callsign_mults(qso);
 
 // possibly add the call to the known prefixes
-            update_known_callsign_mults(qso.callsign());
+          update_known_callsign_mults(qso.callsign());
 
 // country mults
-            update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
-            qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode()) );
+          update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
+          qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode()) );
 
 // add exchange info for this call to the exchange db
-            const vector<received_field>& received_exchange = qso.received_exchange();
+          const vector<received_field>& received_exchange = qso.received_exchange();
 
-            for (const auto& exchange_field : received_exchange)
-            { if (!(variable_exchange_fields < exchange_field.name()))
-                exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
-            }
-
-            statistics.add_qso(qso, logbk, rules);
-            logbk += qso;
-            rate.insert(qso.epoch_time(), statistics.points(rules));
+          for (const auto& exchange_field : received_exchange)
+          { if (!(variable_exchange_fields < exchange_field.name()))
+              exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
           }
+
+          statistics.add_qso(qso, logbk, rules);
+          logbk += qso;
+          rate.insert(qso.epoch_time(), statistics.points(rules));
+        }
 
 // rebuild the history
-          rebuild_history(logbk, rules, statistics, q_history, rate);
+        rebuild_history(logbk, rules, statistics, q_history, rate);
 
 // rescore the log
-          rescore(rules);
-          update_rate_window();
+        rescore(rules);
+        update_rate_window();
 
-          scp_dynamic_db.clear();       // clears cache of parent
-          fuzzy_dynamic_db.clear();
+        scp_dynamic_db.clear();       // clears cache of parent
+        fuzzy_dynamic_db.clear();
 
-          const vector<QSO> qso_vec = logbk.as_vector();
+        const vector<QSO> qso_vec = logbk.as_vector();
 
-          for (const auto& qso : qso_vec)
-          { if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
-              scp_dynamic_db.add_call(qso.callsign());
+        for (const auto& qso : qso_vec)
+        { if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
+            scp_dynamic_db.add_call(qso.callsign());
 
-            if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
-              fuzzy_dynamic_db.add_call(qso.callsign());
-          }
-
-          if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
-            win_message <= WINDOW_CLEAR;
+          if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
+            fuzzy_dynamic_db.add_call(qso.callsign());
         }
+
+        if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
+          win_message <= WINDOW_CLEAR;
+      }
 
 // octothorpe
-        if (logbk.size() >= 1)
-        { const QSO last_qso = logbk[logbk.size()];    // wrt 1
+      if (logbk.size() >= 1)
+      { const QSO last_qso = logbk[logbk.size()];    // wrt 1
 
-          if (rules.sent_exchange_includes("SERNO", last_qso.mode()))
-            octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1;
-        }
-        else
-          octothorpe = 1;
+        if (rules.sent_exchange_includes("SERNO", last_qso.mode()))
+          octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1;
       }
+      else
+        octothorpe = 1;
+    }
 
 // display most-recent lines from log
       editable_log.recent_qsos(logbk, true);
@@ -1449,7 +1358,6 @@ int main(int argc, char** argv)
       if (!logbk.empty())
       { next_qso_number = logbk[logbk.n_qsos()].number() /* logbook is wrt 1 */  + 1;
         win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
-//        win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(octothorpe);
         win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
 
 // go to band and mode of last QSO
@@ -1569,8 +1477,6 @@ int main(int argc, char** argv)
         exit(-1);
       }
     }
-//    else                                    // not the simulator
-//      keyboard.x_multithreaded(false);      // make xlib more efficient
 
 // force multithreaded
     keyboard.x_multithreaded(true);    // because we might perform an auto backup whilst doing other things with the display
@@ -1897,7 +1803,7 @@ void* display_rig_status(void* vp)
           if (rit_is_on or xit_is_on)
           { const int rit_xit_value = from_string<int>(substring(status_str, 19, 4));
 
-            rit_xit_str += status_str[18] + to_string(rit_xit_value);
+            rit_xit_str += (status_str[18] + to_string(rit_xit_value));
             rit_xit_str = pad_string(rit_xit_str, 7);
           }
 
@@ -1906,15 +1812,7 @@ void* display_rig_status(void* vp)
 
           static const unsigned int SPLIT_ENTRY = 32;      // position of the SPLIT status byte in the K3 status string
 
-//          const bool is_split = (status_str[SPLIT_ENTRY] == '1');
           rig_is_split = (status_str[SPLIT_ENTRY] == '1');
-
-// remove TX indicator, since we no longer poll if we're TXing (modulo a µs or so)
-//          static const unsigned int TX_ENTRY = 28;      // position of the transmit-mode status byte in the K3 status string
-
-//          const bool transmitting = (status_str[TX_ENTRY] == '1');
-
-//          string tx_str(transmitting ? "TX " : "RX ");
 
           const string bandwidth_str = to_string(rig_status_thread_parameters.rigp()->bandwidth());
           const string frequency_b_str = f_b.display_string();
@@ -1930,7 +1828,7 @@ void* display_rig_status(void* vp)
                   < pad_string(f.display_string(), 7)
                   < ( rig_is_split ? WINDOW_NOP : WINDOW_NORMAL)
                   < ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
-                  < mode_str /* < tx_str */
+                  < mode_str
                   < ( rig_is_split ? WINDOW_BOLD : WINDOW_NORMAL);
 
           if (sub_rx)
@@ -1941,9 +1839,6 @@ void* display_rig_status(void* vp)
 
           if (sub_rx)
             win_rig < COLOURS(fg, win_rig.bg());
-
-//          win_rig < CURSOR_DOWN
-//                  < CURSOR_START_OF_LINE < rit_xit_str < "   " <= bandwidth_str;
 
           win_rig < CURSOR_DOWN
                   < CURSOR_START_OF_LINE;
@@ -3640,6 +3535,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // CTRL-Q -- swap QSL and QUICK QSL messages
   if (!processed and (e.is_control('q')))
   { context.swap_qsl_messages();
+    alert("QSL messages swapped", false);
     processed = true;
   }
 
@@ -4870,7 +4766,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 //        for (auto& bm : bandmaps)
 //          bm.remark();
 
-        ost << "LOOKING AT BANDMAPS" << endl;
+//        ost << "LOOKING AT BANDMAPS" << endl;
 
 // test --- change current bandmap
         for (auto& bm : bandmaps)
@@ -4878,18 +4774,18 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
           for (auto& be : bme)
           { if (be.remark(rules, q_history, statistics))
-            { ost << "remarked: " << be << endl;
+            { //ost << "remarked: " << be << endl;
               bm += be;
             }
             else
-            { ost << "NOT remarked: " << be << endl;
+            { //ost << "NOT remarked: " << be << endl;
             }
           }
 
 // debugging
           if (&bm == &(bandmaps[safe_get_band()]))
           { for (auto& be : bme)
-            { ost << "bandmap_entry: " << be << endl;
+            { //ost << "bandmap_entry: " << be << endl;
             }
           }
 
@@ -5087,13 +4983,8 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   vector<pair<string /* country */, int /* colour pair number */ > > vec;
 
   for (const auto& canonical_prefix : vec_str)
-  { const bool is_needed = worked_country_mults.find(canonical_prefix) == worked_country_mults.end();
-//    int colour_pair_number = colours.add(win_remaining_country_mults.fg(), win_remaining_country_mults.bg());
-
-//    if (!is_needed)
-//       colour_pair_number = colours.add(string_to_colour(context.worked_mults_colour()),  win_remaining_country_mults.bg());
-
-   const int colour_pair_number = colours.add( is_needed ? win_remaining_country_mults.fg() : string_to_colour(context.worked_mults_colour()), win_remaining_country_mults.bg());
+  { const bool is_needed = worked_country_mults.find(canonical_prefix) == worked_country_mults.cend();
+    const int colour_pair_number = colours.add( is_needed ? win_remaining_country_mults.fg() : string_to_colour(context.worked_mults_colour()), win_remaining_country_mults.bg());
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
   }
@@ -5111,22 +5002,16 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
 void update_remaining_exch_mults_window(const string& exch_mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
 { const set<string> known_exchange_values_set = statistics.known_exchange_mult_values(exch_mult_name);
   const vector<string> known_exchange_values(known_exchange_values_set.cbegin(), known_exchange_values_set.cend());
-//  window* wp = win_remaining_exch_mults_p[exch_mult_name];
-//  window& win = (*wp);
-  window& win = ( *win_remaining_exch_mults_p[exch_mult_name] );
+  window& win = ( *(win_remaining_exch_mults_p[exch_mult_name]) );
 
 // get the colours right
   vector<pair<string /* exch value */, int /* colour pair number */ > > vec;
 
-//  ost << "updating widow for : " << exch_mult_name << endl;
+  for (const auto& known_value : known_exchange_values)
+  { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
+    const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
 
-   for (const auto& known_value : known_exchange_values)
-   { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
-     const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
-
-     vec.push_back( { known_value, colour_pair_number } );
-
-//     ost << "value: " << known_value << " is colour " << colour_pair_number << endl;
+    vec.push_back( { known_value, colour_pair_number } );
    }
 
    win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
@@ -5216,8 +5101,6 @@ void populate_win_info(const string& callsign)
   if (to_upper(name_str) != "NONE")
   { const string sunrise_time = sunrise(callsign);
     const string sunset_time = sunset(callsign);
-//    const string sunrise_time_nc = substring(sunrise_time, 0, 2) + substring(sunrise_time, 3, 2);
-//    const string sunset_time_nc = substring(sunset_time, 0, 2) + substring(sunset_time, 3, 2);
     const string current_time = substring(hhmmss(), 0, 2) + ":" + substring(hhmmss(), 2, 2);
     bool is_daylight;
     bool processed = false;
@@ -5233,7 +5116,7 @@ void populate_win_info(const string& callsign)
     }
 
     if ( !processed and (sunrise_time == sunset_time)  )
-    { is_daylight = false;              // keep it dark is sunrise and set are at same time
+    { is_daylight = false;              // keep it dark if sunrise and set are at same time
       processed = true;
     }
 
@@ -5382,9 +5265,30 @@ void populate_win_info(const string& callsign)
     * -> last_exchange
  */
 const string expand_cw_message(const string& msg)
-{ const string octothorpe_str = pad_string(to_string(octothorpe), (octothorpe < 1000 ? 3 : 4), PAD_LEFT, 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
-  const string octothorpe_replaced = replace(msg, "#", octothorpe_str);
-  const string at_replaced = replace(octothorpe_replaced, "@", at_call);
+{ string octothorpe_replaced;
+
+  if (contains(msg, "#"))
+  { string octothorpe_str = pad_string(to_string(octothorpe), (octothorpe < 1000 ? 3 : 4), PAD_LEFT, 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
+
+    if (serno_spaces)
+    { const string spaces = create_string('^', serno_spaces);
+      string tmp = octothorpe_str;
+      octothorpe_str.clear();
+
+      for (auto n = 0; n < tmp.size() - 1; ++n)
+      { octothorpe_str += (tmp[n] + spaces);
+
+//        for (auto m = 0; m < serno_spaces; ++m)
+//          octothorpe_str += '^';
+      }
+
+      octothorpe_str += tmp[tmp.size() - 1];
+    }
+
+    octothorpe_replaced = replace(msg, "#", octothorpe_str);
+  }
+
+  const string at_replaced = replace( (octothorpe_replaced.empty() ? msg : octothorpe_replaced) , "@", at_call);
 
   SAFELOCK(last_exchange);
 
@@ -5510,8 +5414,8 @@ void update_known_callsign_mults(const string& callsign)
 
 // local function to perform the update
   auto perform_update = [=, &known_callsign_mults] (const string& callsign_mult_name, const string& prefix)
-    { if (!prefix.empty())    // because sac_prefix() can return an empty string
-      { bool is_known;
+    { if (!prefix.empty())      // because sac_prefix() can return an empty string
+      { bool is_known;          // we use the is_known variable because we don't want to perform a window update while holding a lock
 
         { SAFELOCK(known_callsign_mults);
           is_known = (known_callsign_mults < prefix);
@@ -5534,7 +5438,6 @@ void update_known_callsign_mults(const string& callsign)
     const string country = location_db.canonical_prefix(callsign);
     const set<string> callsign_mults = rules.callsign_mults();           ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
-// we use the is_known variable because we don't want to perform a window update while holding a lock
     if ( (callsign_mults < string("AAPX")) and (continent == "AS") )
       perform_update("AAPX", wpx_prefix(callsign));
 
@@ -5562,14 +5465,10 @@ void update_known_country_mults(const string& callsign, const bool force_known)
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-//    ost << "accumulator for " << canonical_prefix << " is " << acc.value(canonical_prefix) << endl;
-
     if ( acc.add(canonical_prefix, force_known ? context.auto_remaining_country_mults_threshold() : 1) )
     { statistics.add_known_country_mult(canonical_prefix, rules);   // don't add if the rules don't recognise it as a country mult
-      ost << "ADDED" << endl;
+      // ost << "ADDED" << endl;
     }
-
-//    ost << "accumulator for " << canonical_prefix << " is now " << acc.value(canonical_prefix) << endl;
   }
 }
 
@@ -5690,8 +5589,6 @@ void rescore(const contest_rules& rules)
     new_logbk += qso;
 
 // redo the historical Q-count and score... this is relatively time-consuming
-//    const time_t epoch_time = qso.epoch_time();
-
     rate.insert(qso.epoch_time(), statistics.points(rules));
   }
 }
@@ -5842,9 +5739,6 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
   for (const auto& qso : q_vec)
   { statistics.add_qso(qso, l, rules);
     q_history += qso;
-
-//    const time_t& epoch_time = qso.epoch_time();
-
     rate.insert(qso.epoch_time(), ++n_qsos, statistics.points(rules));
     l += qso;
   }
@@ -6000,26 +5894,15 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
     \return             whether we still need to work <i>callsign</i> on <i>b</i> and <i>m</i>
 */
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
-{
-//  ost << "Testing whether needed QSO: " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << endl;
-
-  const bool worked_at_all = q_history.worked(callsign);
-
-//  ost << "Worked at all = " << boolalpha << worked_at_all << endl;
+{ const bool worked_at_all = q_history.worked(callsign);
 
   if (!worked_at_all)
-  { //ost << "Not worked at all; returning true" << endl;
     return true;
-  }
 
   const bool worked_this_band_mode = q_history.worked(callsign, b, m);
 
-//  ost << "Worked this bandmode = " << boolalpha << worked_this_band_mode << endl;
-
   if (worked_this_band_mode)
-  { //ost << "Worked this bandmode, returning false" << endl;
     return false;
-  }
 
 // worked on same band, different mode
   if (q_history.worked(callsign, b))
@@ -6407,7 +6290,7 @@ void debug_dump(void)
     from the context, and a string "-<n>" is appended.
 */
 const string dump_screen(const string& dump_filename)
-{ ost << hhmmss() << ": entered dump_screen()" << endl;
+{ //ost << hhmmss() << ": entered dump_screen()" << endl;
 
   const bool multithreaded = keyboard.x_multithreaded();
   Display* display_p = keyboard.display_p();
@@ -6415,9 +6298,9 @@ const string dump_screen(const string& dump_filename)
   XWindowAttributes win_attr;
 
   if (multithreaded)
-  { ost << hhmmss() << ": about to lock display [1] in dump_screen()" << endl;
+  { //ost << hhmmss() << ": about to lock display [1] in dump_screen()" << endl;
     XLockDisplay(display_p);
-    ost << hhmmss() << ": locked display [1] in dump_screen()" << endl;
+    //ost << hhmmss() << ": locked display [1] in dump_screen()" << endl;
   }
 
   const Status status = XGetWindowAttributes(display_p, window_id, &win_attr);
@@ -6426,26 +6309,26 @@ const string dump_screen(const string& dump_filename)
     ost << hhmmss() << ": ERROR returned by XGetWindowAttributes: " << status << endl;
 
   if (multithreaded)
-  { ost << hhmmss() << ": about to unlock display [1] in dump_screen()" << endl;
+  { //ost << hhmmss() << ": about to unlock display [1] in dump_screen()" << endl;
     XUnlockDisplay(display_p);
-    ost << hhmmss() << ": unlocked display [1] in dump_screen()" << endl;
+    //ost << hhmmss() << ": unlocked display [1] in dump_screen()" << endl;
   }
 
   const int width = win_attr.width;
   const int height = win_attr.height;
 
   if (multithreaded)
-  { ost << hhmmss() << ": about to lock display [2] in dump_screen()" << endl;
+  { //ost << hhmmss() << ": about to lock display [2] in dump_screen()" << endl;
     XLockDisplay(display_p);
-    ost << hhmmss() << ": locked display [2] in dump_screen()" << endl;
+    //ost << hhmmss() << ": locked display [2] in dump_screen()" << endl;
   }
 
   XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
 
   if (multithreaded)
-  { ost << hhmmss() << ": about to unlock display [2] in dump_screen()" << endl;
+  { //ost << hhmmss() << ": about to unlock display [2] in dump_screen()" << endl;
     XUnlockDisplay(display_p);
-    ost << hhmmss() << ": unlocked display [2] in dump_screen()" << endl;
+    //ost << hhmmss() << ": unlocked display [2] in dump_screen()" << endl;
   }
 
   png::image< png::rgb_pixel > image(width, height);
@@ -7164,7 +7047,6 @@ void update_qsls_window(const string& str)
     if (new_colour_pair != default_colour_pair)
       win_qsls.cpair(new_colour_pair);
 
-//    win_qsls < pad_string(to_string(olog[str].first), 3, PAD_LEFT, '0') < "/" <= pad_string(to_string(olog[str].second), 3, PAD_LEFT, '0');
     win_qsls < pad_string(to_string(n_qsls), 3, PAD_LEFT, '0')
              < colour_pair(default_colour_pair) < "/"
              < colour_pair(new_colour_pair) < pad_string(to_string(n_qsos), 3, PAD_LEFT, '0')
@@ -7175,7 +7057,6 @@ void update_qsls_window(const string& str)
 
     win_qsls <= pad_string(to_string(n_qsos_this_band), 3, PAD_LEFT, '0');
 
-//    if (new_colour_pair != default_colour_pair)
     win_qsls.cpair(default_colour_pair);
   }
 }

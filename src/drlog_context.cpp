@@ -71,9 +71,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
     auto& pbb = _per_band_points[m];
 
     if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
-    { //const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
-
-      for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
+    { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
         pbb.insert( { static_cast<BAND>(n), RHS } );
     }
     else    // not all bands
@@ -84,13 +82,13 @@ void drlog_context::_set_points(const string& command, const MODE m)
 
       if (valid)
       { string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
-        vector<string> bands = split_string(bands_str, ",");
+        vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
+
+//        for (size_t n = 0; n < bands.size(); ++n)
+//          bands[n] = remove_peripheral_spaces(bands[n]);
 
         for (size_t n = 0; n < bands.size(); ++n)
-          bands[n] = remove_peripheral_spaces(bands[n]);
-
-        for (size_t n = 0; n < bands.size(); ++n)
-        { int wavelength = from_string<size_t>(bands[n]);
+        { const int wavelength = from_string<size_t>(bands[n]);
           BAND b;
 
           switch (wavelength)
@@ -128,25 +126,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
               continue;
           }
 
-#if 0
-          string new_str;
-
-          for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
-          { new_str += str_vec[n];
-
-            if (n != str_vec.size() - 1)
-              new_str += "=";
-          }
-
-          tmp_points_str = to_upper(remove_peripheral_spaces(new_str));
-
-          pbb.insert( {b, tmp_points_str} );
-
-//          ost << "points string inserted for band : " << BAND_NAME[b] << " = " << tmp_points_str << endl;
-
-#endif
           pbb.insert( { b, RHS } );
-
         }
       }
     }
@@ -862,6 +842,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "SCREEN SNAPSHOT FILE")
       _screen_snapshot_file = rhs;
 
+// SERIAL NUMBER SPACES
+    if (LHS == "SERIAL NUMBER SPACES")
+      _serno_spaces = from_string<unsigned int>(rhs);
+
 // SHIFT DELTA
     if (LHS == "SHIFT DELTA")
       _shift_delta = from_string<unsigned int>(rhs);
@@ -1460,6 +1444,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _sent_exchange(),                           // no default sent exchange
   _sent_exchange_cw(),                        // no default sent CW exchange
   _sent_exchange_ssb(),                       // no default sent SSB exchange
+  _serno_spaces(0),                           // no additional spaces in serial number
   _shift_delta(10),                           // shift RIT by 10 Hz
   _shift_poll(50),                            // poll every 50 milliseconds
   _society_list_filename(""),                 // no default file for IARU society information

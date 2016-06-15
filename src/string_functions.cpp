@@ -424,9 +424,11 @@ const string squash(const string& cs, const char c)
 const vector<string> remove_empty_lines(const vector<string>& lines)
 { vector<string> rv;
 
-  for (size_t n = 0; n < lines.size(); ++n)
-    if (!lines[n].empty())
-      rv.push_back(lines[n]);
+  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv.push_back(line); } );
+
+//  for (size_t n = 0; n < lines.size(); ++n)
+//    if (!lines[n].empty())
+//      rv.push_back(lines[n]);
 
   return rv;
 }

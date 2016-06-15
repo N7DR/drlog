@@ -219,6 +219,7 @@ protected:
   std::vector<std::pair<std::string, std::string> > _sent_exchange;             ///< names and values of sent exchange fields
   std::vector<std::pair<std::string, std::string> > _sent_exchange_cw;          ///< names and values of sent exchange fields, CW
   std::vector<std::pair<std::string, std::string> > _sent_exchange_ssb;         ///< names and values of sent exchange fields, SSB
+  unsigned int                                 _serno_spaces;                   ///< number of half-length spaces
   unsigned int                                 _shift_delta;                    ///< how many Hertz to QSY per poll of the shift key
   unsigned int                                 _shift_poll;                     ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   std::string                                  _society_list_filename;          ///< name of file containing IARU society exchanges
@@ -413,7 +414,6 @@ public:
 
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
-
 /*! \brief      Get the points string for a particular band and mode
     \param  b   band
     \param  m   mode
@@ -470,6 +470,7 @@ public:
 
   SAFEREAD(sent_exchange_cw, _context);                 ///< names and values of sent exchange fields, CW
   SAFEREAD(sent_exchange_ssb, _context);                ///< names and values of sent exchange fields, SSB
+  SAFEREAD(serno_spaces, _context);                     ///< number of half-length spaces
   SAFEREAD(shift_delta, _context);                      ///< how many Hertz to QSY per poll of the shift key
   SAFEREAD(shift_poll, _context);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   SAFEREAD(society_list_filename, _context);            ///< name of file containing IARU society exchanges

@@ -298,7 +298,7 @@ public:
   void init(const window_information& wi, const unsigned int flags = 0);
 
 /*! \brief          Initialise using position and size information from the configuration file, and possibly set colours explicitly
-    \param  wi      window position and size
+    \param  wi      window position, size and (possibly) colour
     \param  fg      foreground colour
     \param  bg      background colour
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
@@ -534,14 +534,20 @@ public:
 */
   window& delete_character(const int n);
 
-/// delete a character within a particular line
+/*! \brief          Delete a character within a particular line
+    \param  n       number of character to delete (wrt 0)
+    \param line_nr  number of line (wrt 0)
+    \return         the window
+
+    Line number zero is the bottom line
+*/
   window& delete_character( const int n, const int line_nr );
 
 /// set function used to process input
   inline void process_input_function(WINDOW_PROCESS_INPUT_TYPE pf)
     { _process_input = pf; }
 
-/// process input
+/// process a keyboard event
   inline void process_input(const keyboard_event& e)
     { if (_process_input)
         _process_input(this, e);
