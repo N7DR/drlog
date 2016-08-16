@@ -30,8 +30,8 @@ extern string VERSION;          ///< version string
 
 // -----------  logbook  ----------------
 
-/*!     \class logbook
-        \brief The log
+/*! \class logbook
+    \brief The log
 */
 
 /*! \brief      Is one QSO earlier than another?
@@ -417,7 +417,6 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
   const list<QSO> qsos = as_list();
   const string cabrillo_qso_template = context.cabrillo_qso_template();
   
-//  for_each(qsos.cbegin(), qsos.cend(), [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
   FOR_ALL(qsos, [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
   
 // soapbox
@@ -470,8 +469,6 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
           const BAND _band = static_cast<BAND>(frequency(_frequency));
 
           qso.band(_band);
-  
-//          ost << "_frequency: " << _frequency << ", _band: " << _band << endl;
         }
       
       
@@ -598,7 +595,6 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
         { const string field_name = name.substr(6);
           vector<pair<string, string> > current_sent_exchange = qso.sent_exchange(); // do in two steps in order to remove constness of returned value
   
-//          qso.sent_exchange((current_sent_exchange.push_back(make_pair(field_name, value)), current_sent_exchange));
           qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
         }
 

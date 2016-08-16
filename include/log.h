@@ -39,8 +39,8 @@ class running_statistics;                   // forward declaration
 
 // -----------  logbook  ----------------
 
-/*!     \class logbook
-        \brief The log
+/*! \class logbook
+    \brief The log
 */
 
 extern pt_mutex _log_mutex;                 ///< mutex for log; keep this outside the class so that const objects can lock the mutex
@@ -261,8 +261,8 @@ public:
 
 // -----------  log_extract  ----------------
 
-/*!     \class log_extract
-        \brief Support for bits of the log
+/*! \class log_extract
+    \brief Support for bits of the log
 */
 
 class log_extract
@@ -366,10 +366,10 @@ template <typename T>
 
 // -----------  old_log_record  ----------------
 
-/*!     \class old_log_record
-        \brief A record in an old ADIF log
+/*! \class old_log_record
+    \brief A record in an old ADIF log
 
-        Not thread safe, so create once and then never change. Just a trivial tuple.
+    Not thread safe, so create once and then never change. Just a trivial tuple.
 */
 
 class old_log_record
@@ -391,10 +391,10 @@ public:
 
 // -----------  old_log  ----------------
 
-/*!     \class old_log
-        \brief An old ADIF log
+/*! \class old_log
+    \brief An old ADIF log
 
-        Not thread safe.
+    Not thread safe.
 */
 
 class old_log
@@ -441,6 +441,10 @@ public:
 */
   void n_qsos(const std::string& call, const unsigned int n);
 
+/*! \brief          increment the number of QSOs associated with a particular callsign
+    \param  call    callsign for which the number of QSOs should be incremented
+    \return         number of QSOs associated with with <i>call</i>
+*/
   const unsigned int increment_n_qsos(const std::string& call);
 
   const unsigned int n_qsos(const std::string& call, const BAND b, const MODE m) const;

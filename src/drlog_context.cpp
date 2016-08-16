@@ -558,6 +558,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "LOG") and !rhs.empty() )
       _logfile = rhs;
 
+// LONG T
+    if (LHS == "LONG T")
+      _long_t = is_true;
+
 // MARK FREQUENCIES [CW|SSB]
     if (starts_with(testline, "MARK FREQUENCIES") and !rhs.empty())
     { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
@@ -911,7 +915,13 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "REMAINING CALLSIGN MULTS")
     { _auto_remaining_callsign_mults = (RHS == "AUTO");
 
-      if (!_auto_remaining_callsign_mults)
+      if (_auto_remaining_callsign_mults)
+      { const vector<string> tokens = split_string(RHS, " ");
+
+        if (tokens.size() == 2)
+          _auto_remaining_callsign_mults_threshold = from_string<unsigned int>(tokens[1]);
+      }
+      else
       { const vector<string> mults = remove_peripheral_spaces(split_string(RHS, ","));
 
         _remaining_callsign_mults_list = set<string>(mults.cbegin(), mults.cend());
@@ -953,7 +963,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _cabrillo_certificate = RHS;
 
  // CABRILLO EMAIL (sic)
-    if (starts_with(testline, "CABRILLO E-MAIL") or starts_with(testline, "CABRILLO EMAIL"))
+    if ( (LHS == "CABRILLO E-MAIL") or (LHS == "CABRILLO EMAIL") )
       _cabrillo_e_mail = rhs;
 
 // CABRILLO EOL
@@ -978,72 +988,71 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CABRILLO CATEGORY-BAND
     if (LHS == "CABRILLO CATEGORY-BAND")
-    { //const string value = rhs; // remove_peripheral_spaces((split_string(line, "="))[1]);
-
+    {
 // The spec calls for bizarre capitalization
       if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light", ","))
         _cabrillo_category_band = rhs;
     }
 
 // CABRILLO CATEGORY-MODE
-    if (starts_with(testline, "CABRILLO CATEGORY-MODE"))
-    { const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    if (LHS == "CABRILLO CATEGORY-MODE")
+    { //const string value = RHS;
 
-      if (is_legal_value(value, "CW,MIXED,RTTY,SSB", ","))
-        _cabrillo_category_mode = value;
+      if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB", ","))
+        _cabrillo_category_mode = RHS;
     }
 
 // CABRILLO CATEGORY-OPERATOR
-    if (starts_with(testline, "CABRILLO CATEGORY-OPERATOR"))
-    { const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    if (LHS == "CABRILLO CATEGORY-OPERATOR")
+    { //const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
-      if (is_legal_value(value, "CHECKLOG,MULTI-OP,SINGLE-OP", ","))
-        _cabrillo_category_operator = value;
+      if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP", ","))
+        _cabrillo_category_operator = RHS;
     }
 
 // CABRILLO CATEGORY-OVERLAY
-    if (starts_with(testline, "CABRILLO CATEGORY-OVERLAY"))
-    { const string value = RHS; //to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    if (LHS == "CABRILLO CATEGORY-OVERLAY")
+    { //const string value = RHS; //to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
-      if (is_legal_value(value, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES", ","))
-        _cabrillo_category_overlay = value;
+      if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES", ","))
+        _cabrillo_category_overlay = RHS;
     }
 
 // CABRILLO CATEGORY-POWER
-    if (starts_with(testline, "CABRILLO CATEGORY-POWER"))
-    { const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    if (LHS == "CABRILLO CATEGORY-POWER")
+    { //const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
-      if (is_legal_value(value, "HIGH,LOW,QRP", ","))
-        _cabrillo_category_power = value;
+      if (is_legal_value(RHS, "HIGH,LOW,QRP", ","))
+        _cabrillo_category_power = RHS;
     }
 
 // CABRILLO CATEGORY-STATION
-    if (starts_with(testline, "CABRILLO CATEGORY-STATION"))
-    { const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    if (LHS == "CABRILLO CATEGORY-STATION")
+    { //const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
-      if (is_legal_value(value, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL", ","))
-        _cabrillo_category_station = value;
+      if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL", ","))
+        _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TIME
-    if (starts_with(testline, "CABRILLO CATEGORY-TIME"))
-    { const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    if (LHS == "CABRILLO CATEGORY-TIME")
+    { //const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
-      if (is_legal_value(value, "6-HOURS,12-HOURS,24-HOURS", ","))
-        _cabrillo_category_station = value;
+      if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS", ","))
+        _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TRANSMITTER
-    if (starts_with(testline, "CABRILLO CATEGORY-TRANSMITTER"))
-    { const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    if (LHS == "CABRILLO CATEGORY-TRANSMITTER")
+    { //const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
 
-      if (is_legal_value(value, "LIMITED,ONE,SWL,TWO,UNLIMITED", ","))
-        _cabrillo_category_transmitter = value;
+      if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED", ","))
+        _cabrillo_category_transmitter = RHS;
     }
 
 // CABRILLO CLUB
-    if (starts_with(testline, "CABRILLO CLUB"))
-      _cabrillo_club = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
+    if (LHS == "CABRILLO CLUB")
+      _cabrillo_club = RHS;
 
 // CABRILLO ADDRESS first line
     if (starts_with(testline, "CABRILLO ADDRESS 1"))
@@ -1325,7 +1334,9 @@ drlog_context::drlog_context(const std::string& filename) :
   _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
   _archive_name("drlog-restart"),                                   // name for the archive written when leaving drlog
   _auto_backup(""),                                                 // no auto backup directory
+  _auto_remaining_callsign_mults_threshold(1),                      // a callsign mult must be seen only once before it becomes known
   _auto_remaining_country_mults(false),                             // do not add country mults as we detect them
+  _auto_remaining_country_mults_threshold(1),                       // a canonical prefix must be seen only once before it becomes known
   _auto_remaining_exchange_mults( { } ),                            // do not add any exchange mults as we detect them
   _auto_screenshot(false),                                          // do not generate horal screenshots
   _bandmap_decay_time_local(60),                                    // stay on bandmap for one hour
@@ -1398,6 +1409,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),  // 500 Hz guard band on CW, 2 kHz on slopbucket
   _individual_messages_file(),                // no file of individual messages
   _logfile("drlog.dat"),                      // name of log file
+  _long_t(false),                             // do not extend initial Ts in serial numbers
   _mark_frequencies(),                        // don't mark any frequencies
   _match_minimum(4),                          // 4 characters required for SCP or fuzzy match
   _message_cq_1(),                            // no short CQ (default is changed once configuration file has been read)

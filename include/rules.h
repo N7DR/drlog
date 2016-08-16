@@ -41,8 +41,8 @@ enum points_type { POINTS_NORMAL,                       ///< points defined in c
 
 // -------------------------  exchange_field_values  ---------------------------
 
-/*!     \class exchange_field_values
-        \brief Encapsulates the name and legal values for an exchange field
+/*! \class exchange_field_values
+    \brief Encapsulates the name and legal values for an exchange field
 */
 
 class exchange_field_values
@@ -216,8 +216,8 @@ std::ostream& operator<<(std::ostream& ost, const exchange_field& exch_f);
 
 // -------------------------  points_structure  ---------------------------
 
-/*!     \class points_structure
-        \brief Encapsulate the vagaries of points-per-QSO rules
+/*! \class points_structure
+    \brief Encapsulate the vagaries of points-per-QSO rules
 */
 
 class points_structure
@@ -250,13 +250,13 @@ public:
 
 // -------------------------  contest_rules  ---------------------------
 
-/*!     \class contest_rules
-        \brief A place to maintain all the rules
+/*! \class contest_rules
+    \brief A place to maintain all the rules
         
-        This object should be created and initialized early, and from that
-        point it should be treated as read-only. Being paranoid, though, there's still lots of
-        internal locking, since there are ongoing debates about the true thread safety of
-        strings in libstc++.
+    This object should be created and initialized early, and from that
+    point it should be treated as read-only. Being paranoid, though, there's still lots of
+    internal locking, since there are ongoing debates about the true thread safety of
+    strings in libstc++.
 */
 
 class contest_rules

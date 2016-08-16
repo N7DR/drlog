@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file cluster.cpp
+/*! \file cluster.cpp
 
-        Classes and functions related to a DX cluster
+    Classes and functions related to a DX cluster
 */
 
 #include "cluster.h"
@@ -114,13 +114,8 @@ new_socket:
     }
 
     _connection.new_socket();                  // get a new socket
-//    ost << "Set connection to use new socket OK" << endl;
-
     _connection.keep_alive(300, 60, 2);        // set the keepalive option
-//    ost << "Keepalive parameters set" << endl;
-
     _connection.bind(_my_ip);                  // bind it to the correct IP address
-//    ost << "Bind OK" << endl;
 
 // reconnect to the server
 reconnect:
@@ -201,13 +196,6 @@ const string dx_cluster::read(void)
   return _unprocessed_input;
 }
 
-/*! \brief          Send a message to the cluster
-    \return msg     the message to be sent
-*/
-//void dx_cluster::send(const string& msg)
-//{ _connection.send(msg);
-//}
-
 /*! \brief      Read from the cluster socket
     \return     the information that has been read from the socket but has not yet been processed
 */
@@ -224,8 +212,8 @@ const string dx_cluster::get_unprocessed_input(void)
 
 // -----------  dx_post  ----------------
 
-/*!     \class dx_post
-        \brief Convert a line from the cluster to a DX posting
+/*! \class  dx_post
+    \brief  Convert a line from the cluster to a DX posting
 */
 
 /*! \brief                  Constructor
@@ -272,7 +260,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
             space_posn = copy.find_first_of(" ", char_posn);
             char_posn = copy.find_first_not_of(" ", space_posn);
 
-            size_t bra_posn = copy.find_last_of("<");
+            const size_t bra_posn = copy.find_last_of("<");
 
             if (bra_posn != string::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);

@@ -483,6 +483,8 @@ inline const bool is_maritime_mobile(const std::string& callsign)
     \param  n       number to convert
     \param  sep     string to act as the triplet separator
     \return         <i>n</i> with the separator <i>sep</i> separating each triplet
+
+    Uses comma as separator if <i>sep</i> is empty.
 */
 const std::string separated_string(const int n, const std::string& sep = ",");
 

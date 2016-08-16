@@ -426,10 +426,6 @@ const vector<string> remove_empty_lines(const vector<string>& lines)
 
   FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv.push_back(line); } );
 
-//  for (size_t n = 0; n < lines.size(); ++n)
-//    if (!lines[n].empty())
-//      rv.push_back(lines[n]);
-
   return rv;
 }
 
@@ -468,24 +464,6 @@ const string join(const deque<string>& deq, const string& sep)
   
   return rv;
 }
-
-/*! \brief      Remove characters from the end of a string
-    \param  s   original string
-    \param  n   number of chars to remove
-    \return     <i>s</i> with the last <i>n</i> characters removed
-  
-    If <i>n</i> is equal to or greater than the length of <i>s</i>, then
-    the empty string is returned.
-*/
-#if 0
-const string remove_from_end(const string& s, const unsigned int n)
-{ //if (n >= s.length())
-  //  return s;
-    
-  //return s.substr(0, s.length() - n);
-  return ( (n >= s.length()) ? s : s.substr(0, s.length() - n) );
-}
-#endif
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
@@ -666,6 +644,11 @@ const string get_environment_variable(const string& var_name)
   return ( cp ? string(cp) : string() );
 }
 
+/*! \brief      Transform a string
+    \param  cs  original string
+    \param  pf  pointer to transformation function
+    \return     <i>cs</i> with the transformation <i>*pf</i> applied
+*/
 const string transform_string(const string& cs, int(*pf)(int))
 { string rv = cs;
   
@@ -674,10 +657,15 @@ const string transform_string(const string& cs, int(*pf)(int))
   return rv;
 }
 
-/// convert an integer to a comma-separated string
+/*! \brief          Convert an integer to a character-separated string
+    \param  n       number to convert
+    \param  sep     string to act as the triplet separator
+    \return         <i>n</i> with the separator <i>sep</i> separating each triplet
+
+    Uses comma as separator if <i>sep</i> is empty.
+*/
 const string separated_string(const int n, const string& sep)
-{ // char separator = ',';
-  const char separator = sep.at(0);
+{ const char separator = (sep.empty() ? ',' : sep[0]);
 
   string tmp = to_string(n);
   string rv;

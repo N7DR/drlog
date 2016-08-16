@@ -130,7 +130,7 @@ void toggle_drlog_mode(void);                                                   
 
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
-void update_known_callsign_mults(const string& callsign);                   ///< Possibly add a new callsign mult
+void update_known_callsign_mults(const string& callsign, const bool force_known = false);                   ///< Possibly add a new callsign mult
 void update_known_country_mults(const string& callsign, const bool force_known = false);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
@@ -214,7 +214,8 @@ set<string>         known_callsign_mults;                   ///< callsign mults 
 
 // global variables
 
-accumulator<string>     acc;                                ///< accumulator for canonical prefixes for auto countries
+map<string /* mult name */, accumulator<string> >     acc_callsigns;                      ///< accumulator for prefixes for auto callsign mults
+accumulator<string>     acc_countries;                      ///< accumulator for canonical prefixes for auto countries
 int                     ACCEPT_COLOUR(COLOUR_GREEN);        ///< colour for calls that have been worked, but are not dupes
 string                  at_call;                            ///< call that should replace comat in "call ok now" message
 
@@ -234,6 +235,7 @@ unsigned int            n_modes = 0;                        ///< number of modes
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
 
 unsigned int serno_spaces = 0;
+bool            long_t = false;
 
 #if 0
 unordered_map<string /* callsign */,
@@ -543,6 +545,7 @@ int main(int argc, char** argv)
     ACCEPT_COLOUR = context.accept_colour();    // colour for calls it is OK to work
     REJECT_COLOUR = context.reject_colour();    // colour for calls it is not OK to work
     serno_spaces = context.serno_spaces();
+    long_t = context.long_t();
 
 // read the country data
     cty_data* country_data_p = nullptr;
@@ -1076,9 +1079,17 @@ int main(int argc, char** argv)
 //  exit(0);
 // &&&
 
-// possibly set the auto country mults threshold
+// possibly set the auto country mults and auto callsign mults thresholds
+  if (context.auto_remaining_callsign_mults())
+  { const set<string>& callsign_mults = rules.callsign_mults();           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+
+    for (const auto& callsign_mult_name : callsign_mults)
+    { acc_callsigns[callsign_mult_name].threshold(context.auto_remaining_callsign_mults_threshold());
+    }
+  }
+
   if (context.auto_remaining_country_mults())
-    acc.threshold(context.auto_remaining_country_mults_threshold());
+    acc_countries.threshold(context.auto_remaining_country_mults_threshold());
 
 // possibly set speed of internal keter
   try
@@ -1951,7 +1962,6 @@ void* process_rbn_info(void* vp)
       if (!line.empty())
       { const bool is_beacon = contains(line, " BCN ") or contains(line, "/B ")  or contains(line, "/B2 ");
 
-//        if (!is_beacon or rbn_beacons)
         if (rbn_beacons or (!rbn_beacons and !is_beacon) )
         { last_processed_line = line;
 
@@ -1968,26 +1978,19 @@ void* process_rbn_info(void* vp)
               const pair<string, BAND> target { dx_callsign, dx_band };
 
               bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
+
               be.callsign(dx_callsign);
-
               be.freq(post.freq());        // also sets band and mode
-
-//              be.freq(decimal_places(post.freq(), 1));        // also sets band and mode
-//              be.frequency_str(decimal_places(be.frequency_str(), 1)));
-//              ost << "frequency string for " << be.callsign() << " is: " << be.frequency_str() << endl;
               be.frequency_str_decimal_places(1);
-//              ost << "frequency string for " << be.callsign() << " is now: " << be.frequency_str() << endl;
 
               be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
               if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
                 be.posters( { poster } );
 
-              const bool is_needed = is_needed_qso(dx_callsign, dx_band, be.mode());  // do we still need this guy?
+//              const bool is_needed = is_needed_qso(dx_callsign, dx_band, be.mode());  // do we still need this guy?
 
-              be.is_needed(is_needed);
-
-//              ost << "QSO with " << dx_callsign << " is " << (is_needed ? "" : "NOT ") << "needed" << endl;
+              be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
 
 // update known mults before we test to see if this is a needed mult
 
@@ -2017,8 +2020,6 @@ void* process_rbn_info(void* vp)
 
               be.calculate_mult_status(rules, statistics);
 
-//              ost << "after calculating mult status: " << be << endl;
-
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
               const bool is_interesting_mode = (rules.score_modes() < be.mode());
@@ -2042,7 +2043,6 @@ void* process_rbn_info(void* vp)
                   if (is_me)
                     cluster_mult_win.bg(COLOUR_YELLOW);
 
-//                  const string frequency_str = pad_string(post.frequency_str(), 7);
                   const string frequency_str = pad_string(be.frequency_str(), 7);
                   cluster_mult_win < pad_string(frequency_str + " " + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
 
@@ -2510,6 +2510,14 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       if (command == "CLEAR")
         win_message <= WINDOW_CLEAR;
 
+// .QTC QRS <n>
+      if (substring(command, 0, 8) == "QTC QRS ")
+      { const unsigned int new_qrs = from_string<unsigned int>(substring(command, 8));
+
+        context.qtc_qrs(new_qrs);
+        alert((string)"QTC QRS set to: " + to_string(new_qrs), false);
+      }
+
 // .QUIT
       if (command == "QUIT")
         exit_drlog();
@@ -2547,10 +2555,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
             catch (...)
             { if (band_str == "*")
-              { //for (const auto& b : rules.permitted_bands())
-                //  score_bands.insert(b);
                 score_bands = set<BAND>(rules.permitted_bands().cbegin(), rules.permitted_bands().cend());
-              }
               else
                 alert("Error parsing [RE]SCOREB command");
             }
@@ -5285,6 +5290,27 @@ const string expand_cw_message(const string& msg)
       octothorpe_str += tmp[tmp.size() - 1];
     }
 
+    if (long_t and (octothorpe < 100))
+    { //octothorpe_str[0] = static_cast<char>(15);        // 127%
+
+      //if (octothorpe < 10)
+        //octothorpe_str[1] = static_cast<char>(15);        // 127%
+
+      bool found_all = false;
+      const int n_to_find = (octothorpe < 10 ? 2 : 1);
+      int n_found = 0;
+
+      for (auto n = 0; !found_all and (n < octothorpe_str.size() - 1); ++n)
+      { if (!found_all and octothorpe_str[n] == '0')
+        { octothorpe_str[n] = static_cast<char>(15);        // 127%
+          found_all = (++n_found == n_to_find);
+        }
+//        else
+//          if (octothorpe_str[n] != '0')
+//            found_all = true;
+      }
+    }
+
     octothorpe_replaced = replace(msg, "#", octothorpe_str);
   }
 
@@ -5408,7 +5434,7 @@ void* simulator_thread(void* vp)
     known callsign mults. Also updates the window that displays the
     known callsign mults.
 */
-void update_known_callsign_mults(const string& callsign)
+void update_known_callsign_mults(const string& callsign, const bool force_known)
 { if (callsign.empty())
     return;
 
@@ -5424,7 +5450,11 @@ void update_known_callsign_mults(const string& callsign)
         if (!is_known)
         {
           { SAFELOCK(known_callsign_mults);
-            known_callsign_mults.insert(prefix);
+
+            if (context.auto_remaining_callsign_mults())
+            { if ( acc_callsigns[callsign_mult_name].add(prefix, force_known ? context.auto_remaining_callsign_mults_threshold() : 1) )
+                known_callsign_mults.insert(prefix);
+            }
           }
 
           update_remaining_callsign_mults_window(statistics, callsign_mult_name, safe_get_band(), safe_get_mode());
@@ -5465,7 +5495,7 @@ void update_known_country_mults(const string& callsign, const bool force_known)
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix = location_db.canonical_prefix(callsign);
 
-    if ( acc.add(canonical_prefix, force_known ? context.auto_remaining_country_mults_threshold() : 1) )
+    if ( acc_countries.add(canonical_prefix, force_known ? context.auto_remaining_country_mults_threshold() : 1) )
     { statistics.add_known_country_mult(canonical_prefix, rules);   // don't add if the rules don't recognise it as a country mult
       // ost << "ADDED" << endl;
     }

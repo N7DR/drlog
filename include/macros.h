@@ -769,17 +769,23 @@ class accumulator
 {
 protected:
 
-  std::map<T, unsigned int> _values;
-  unsigned int              _threshold;
+  std::map<T, unsigned int> _values;                ///< all the known values, with the number of times it's been added
+  unsigned int              _threshold;             ///< threshold value
 
 public:
 
+/// default constructor
   accumulator(const unsigned int thold = 1) :
     _threshold(thold)
   { }
 
-  READ_AND_WRITE(threshold);
+  READ_AND_WRITE(threshold);                        ///< threshold value
 
+/*! \brief          Add a value or increment it a known number of times
+    \param  val     value to add or increment
+    \param  n       number of times to add it
+    \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
+*/
   const bool add(const T& val, const int n = 1)
   { if (_values.find(val) == _values.end())
       _values.insert( { val, n } );
@@ -789,6 +795,10 @@ public:
     return (_values[val] >= _threshold);
   }
 
+/*! \brief          Number of times a value has been added
+    \param  val     target value
+    \return         total number of times <i>value</i> has been added
+*/
   const unsigned int value(const T& val) const
   { if (_values.find(val) == _values.cend())
       return 0;

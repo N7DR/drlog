@@ -11,9 +11,9 @@
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
-/*!     \file cluster.h
+/*! \file cluster.h
 
-        Classes and functions related to a DX cluster and the reverse beacon network
+    Classes and functions related to a DX cluster and the reverse beacon network
 */
 
 #include "drlog_context.h"
@@ -54,27 +54,27 @@ protected:
     
 public:
 
-/*! \brief  constructor
-    \param  context  the drlog context
-    \param  src      whether this is a real DX cluster or the RBN
+/*! \brief              Constructor
+    \param  context     the drlog context
+    \param  src         whether this is a real DX cluster or the RBN
 */
   dx_cluster (const drlog_context& context, const POSTING_SOURCE src);
   
 /// destructor
   virtual ~dx_cluster(void);
   
-/*! \brief  read from the cluster socket
-    \return the current bytes waiting on the cluster socket
+/*! \brief      Read from the cluster socket
+    \return     the current bytes waiting on the cluster socket
 */
   const std::string read(void);
   
-/*! \brief  read from the cluster socket
-    \return the information that has been read from the socket but has not yet been processed
+/*! \brief      Read from the cluster socket
+    \return     the information that has been read from the socket but has not yet been processed
 */
   const std::string get_unprocessed_input(void);
   
-/*! \brief      send a message to the cluster
-    \return msg the message to be sent
+/*! \brief          Send a message to the cluster
+    \return msg     the message to be sent
 */
   inline void send(const std::string& msg = "\r\n")
    { _connection.send(msg); }
@@ -88,8 +88,8 @@ public:
 
 // -----------  dx_post  ----------------
 
-/*!     \class dx_post
-        \brief Convert a line from the cluster to a DX posting
+/*! \class  dx_post
+    \brief  Convert a line from the cluster to a DX posting
 */
 
 class dx_post

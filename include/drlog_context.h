@@ -56,6 +56,7 @@ protected:
   bool                                         _auto_remaining_callsign_mults;              ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;               ///< do we auto-generate the remaining country mults?
   std::set<std::string>                        _auto_remaining_exchange_mults;              ///< the exchange mults for which we auto-generate the values
+  unsigned int                                 _auto_remaining_callsign_mults_threshold;    ///< number of times a callsign mult must be seen before it becomes known
   unsigned int                                 _auto_remaining_country_mults_threshold;     ///< number of times a canonical prefix must be seen before it becomes known
   bool                                         _auto_screenshot;                            ///< do we create a screenshot every hour?
 
@@ -148,6 +149,7 @@ protected:
   std::string                                  _keyer_port;                 ///< the device that is to be used as a keyer
 
   std::string                                  _logfile;                    ///< name of the log file
+  bool                                         _long_t;                     ///< whether to extend length of initial Ts in serial number
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;   ///< frequency ranges to be marked on-screen
   unsigned int                                 _match_minimum;                      ///< number of characters before SCP or fuzzy match kicks in
@@ -268,6 +270,7 @@ public:
   SAFEREAD(auto_backup, _context);                              ///< directory for auto backup files
   SAFEREAD(auto_remaining_callsign_mults, _context);            ///< do we auto-generate the remaining callsign mults?
   SAFEREAD(auto_remaining_country_mults, _context);             ///< do we auto-generate the remaining country mults?
+  SAFEREAD(auto_remaining_callsign_mults_threshold, _context);  ///< number of times a callsign mult must be seen before it becomes known
   SAFEREAD(auto_remaining_country_mults_threshold, _context);   ///< number of times a canonical prefix must be seen before it becomes known
 
 /*! \brief              Do we auto-generate remaining mults for a particular exchange mult?
@@ -384,6 +387,7 @@ public:
   SAFEREAD(keyer_port, _context);                   ///< the device that is to be used as a keyer
 
   SAFEREAD(logfile, _context);                      ///< name of the log file
+  SAFEREAD(long_t, _context);                       ///< whether to extend length of initial Ts in serial number
 
   SAFEREAD(mark_frequencies, _context);             ///< frequency ranges to be marked on-screen
   SAFEREAD(match_minimum, _context);                ///< number of characters before SCP or fuzzy match kicks in
@@ -554,6 +558,12 @@ public:
   inline const bool multiple_modes(void) const
   { SAFELOCK(_context);
     return (_modes.size() != 1);
+  }
+
+// change the amount of QRS associated with sending a QTC
+  inline void qtc_qrs(const unsigned int n)
+  { SAFELOCK(_context);
+    _qtc_qrs = n;
   }
 };
 
