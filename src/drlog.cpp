@@ -6467,21 +6467,23 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   static unsigned int qtcs_sent;
   static string qtc_id;
   static qtc_series series;
+  const unsigned int original_cw_speed = cw_p->speed();
+  const unsigned int qtc_qrs = context.qtc_qrs();
 
   const bool cw = (safe_get_mode() == MODE_CW);  // just to keep it easy to determine if we are on CW
   bool processed = false;
 
   auto send_msg = [=](const string& msg)
     { if (cw)
-      { const unsigned int qrs = context.qtc_qrs();
+      { //const unsigned int qrs = context.qtc_qrs();
 
-        if (qrs)
-          (*cw_p) << create_string('-', qrs);
+        //if (qrs)
+        //  (*cw_p) << create_string('-', qrs);
 
         (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
 
-        if (qrs)
-          (*cw_p) << create_string('+', qrs);
+        //if (qrs)
+        //  (*cw_p) << create_string('+', qrs);
       }
     };
 
@@ -6569,6 +6571,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
         total_qtcs_to_send = qtc_entries_to_send.size();
         qtcs_sent = 0;
+
+        if (cw and qtc_qrs)
+          cw_speed(original_cw_speed - qtc_qrs);
+
         processed = true;
       }
     }
@@ -6623,7 +6629,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       processed = true;
     }
     else    // we have sent the last QTC; cleanup
-    { qtc_buf.unsent_to_sent(series[series.size() - 1].first);
+    { if (cw and qtc_qrs)
+        cw_speed(original_cw_speed);
+
+      qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sent QTC " < qtc_id < " to " <= series.destination();
 
