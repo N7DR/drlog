@@ -4135,7 +4135,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // writing to disk is slow, so start the QTC now, if applicable
             if (send_qtc)
-            { last_active_win_p = win_active_p;  // this is now CALL
+            { sending_qtc_series = false;       // initialise variable
+              last_active_win_p = win_active_p;  // this is now CALL
               win_active_p = &win_log_extract;
               win_active_p-> process_input(e);  // reprocess the alt-q
             }
@@ -5844,6 +5845,8 @@ void start_of_thread(void)
 /// Cleanup and exit
 void exit_drlog(void)
 { ost << "Inside exit_drlog()" << endl;
+
+  dump_screen("screendump-EXIT");
 
   archive_data();
 

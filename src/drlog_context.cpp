@@ -843,8 +843,12 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // SCREEN SNAPSHOT FILE
-    if (LHS == "SCREEN SNAPSHOT FILE")
+    if ( (LHS == "SCREEN SNAPSHOT FILE") or (LHS == "SCREENSHOT FILE") )
       _screen_snapshot_file = rhs;
+
+// SCREEN SNAPSHOT ON EXIT
+    if ( (LHS == "SCREEN SNAPSHOT ON EXIT") or (LHS == "SCREENSHOT ON EXIT") )
+      _screen_snapshot_on_exit = is_true;
 
 // SERIAL NUMBER SPACES
     if (LHS == "SERIAL NUMBER SPACES")
@@ -1453,6 +1457,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _rig1_type(""),                             // no default rig type
   _russian_filename("russian-data"),          // default file for Russian location information
   _screen_snapshot_file("screen"),            // screen snapshots will be in screen-<n>
+  _screen_snapshot_on_exit(false),            // do not take a screenshot on exit
   _sent_exchange(),                           // no default sent exchange
   _sent_exchange_cw(),                        // no default sent CW exchange
   _sent_exchange_ssb(),                       // no default sent SSB exchange

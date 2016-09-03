@@ -218,6 +218,7 @@ protected:
   std::set<BAND>                               _score_bands;                    ///< which bands are going to be scored?
   std::set<MODE>                               _score_modes;                    ///< which modes are going to be scored?
   std::string                                  _screen_snapshot_file;           ///< base name of file for screenshot
+  bool                                         _screen_snapshot_on_exit;        ///< whether to take a screenshot on exit
   std::vector<std::pair<std::string, std::string> > _sent_exchange;             ///< names and values of sent exchange fields
   std::vector<std::pair<std::string, std::string> > _sent_exchange_cw;          ///< names and values of sent exchange fields, CW
   std::vector<std::pair<std::string, std::string> > _sent_exchange_ssb;         ///< names and values of sent exchange fields, SSB
@@ -469,6 +470,7 @@ public:
   SAFEREAD(score_bands, _context);                      ///< which bands are going to be scored?
   SAFEREAD(score_modes, _context);                      ///< which modes are going to be scored?
   SAFEREAD(screen_snapshot_file, _context);             ///< base name of file for screenshot
+  SAFEREAD(screen_snapshot_on_exit, _context);           ///< whether to take a screenshot on exit
 
   const decltype(_sent_exchange) sent_exchange(const MODE m);   ///< names and values of sent exchange fields for mode <i>m</i>
 
