@@ -873,12 +873,18 @@ const bool is_legal_value(const string& value, const string& legal_values, const
   return (find(vec.begin(), vec.end(), value) != vec.end());
 }
 
-// is c1 < c2?
-// changes to ordinary sort order:
-//    '0' is the highest digit
-//    numbers sort after letters
-//    '/' comes after all digits and letters
-//    '-' comes after all digits and letters; here because names of log files, at least as used by CQ, use "-" instead of "/"
+/*! \brief      Function to compare two characters in callsign order
+    \param  c1  first character
+    \param  c2  second character
+    \return     whether <i>c1</i> comes before <i>c2</i>
+
+    changes to ordinary sort order:
+        '0' is the highest digit
+        numbers sort after letters
+        '/' comes after all digits and letters
+        '-' comes after all digits and letters; here because names of log files, at least as used by CQ, use "-" instead of "/"
+*/
+#if 0
 const bool compchar(const char c1, const char c2)
 { if (c1 == c2)
     return false;
@@ -905,18 +911,55 @@ const bool compchar(const char c1, const char c2)
 
   return (c1 < c2);
 }
+#endif
 
-// return true if call1 < call2
-const bool compare_calls(const string& s1, const string& s2)
-{ const size_t l1 = s1.size();
-  const size_t l2 = s2.size();
+/// return true if call1 < call2, according to callsign sort order
+const bool compare_calls(const string& call1, const string& call2)
+{
+/* callsign sort order
+
+   changes to ordinary sort order:
+    '0' is the highest digit
+    numbers sort after letters
+    '/' comes after all digits and letters
+    '-' comes after all digits and letters; here because names of log files, at least as used by CQ, use "-" instead of "/"
+ */
+  const auto compchar = [] (const char c1, const char c2)
+    { if (c1 == c2)
+        return false;
+
+      if ( (c1 == '/') or (c1 == '-') )
+        return false;
+
+      if ( (c2 == '/') or (c2 == '-') )
+        return true;
+
+      if (isalpha(c1) and isdigit(c2))
+        return true;
+
+      if (isdigit(c1) and isalpha(c2))
+        return false;
+
+      if (isdigit(c1) and isdigit(c2))
+      { if (c1 == '0')
+          return false;
+
+        if (c2 == '0')
+          return true;
+      }
+
+      return (c1 < c2);
+    };
+
+  const size_t l1 = call1.size();
+  const size_t l2 = call2.size();
   const size_t n_to_compare = min(l1, l2);
 
   size_t index = 0;
 
   while (index < n_to_compare)
-  { if (s1[index] != s2[index])
-      return compchar(s1[index], s2[index]);
+  { if (call1[index] != call2[index])
+      return compchar(call1[index], call2[index]);
 
     index++;
   }
@@ -928,8 +971,8 @@ const bool compare_calls(const string& s1, const string& s2)
 }
 
 /*! \brief does a string contain any letters?
- *
- *  This should be faster than the find_next_of() or C++ is_letter or similar generic functions
+
+    This should be faster than the find_next_of() or C++ is_letter or similar generic functions
 */
 const bool contains_letter(const std::string& str)
 { for (unsigned int n = 0; n < str.size(); ++n)
@@ -943,8 +986,8 @@ const bool contains_letter(const std::string& str)
 }
 
 /*! \brief does a string contain any digits?
- *
- *  This should be faster than the find_next_of() or C++ is_digit or similar generic functions
+
+    This should be faster than the find_next_of() or C++ is_digit or similar generic functions
 */
 const bool contains_digit(const std::string& str)
 { for (unsigned int n = 0; n < str.size(); ++n)
@@ -992,8 +1035,13 @@ const string longest_line(const vector<string>& lines)
   return rv;
 }
 
-// deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
-// http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
+/*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
+    \param  str     string to be reformatted
+    \param  width   width of line in destination window
+    \return         <i>str</i> reformatted for the window
+
+    See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
+*/
 const string reformat_for_wprintw(const string& str, const int width)
 { string rv;
   int since_last_newline = 0;
@@ -1012,6 +1060,22 @@ const string reformat_for_wprintw(const string& str, const int width)
       since_last_newline = 0;
     }
   }
+
+  return rv;
+}
+
+/*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
+    \param  vecstr  vector of strings to be reformatted
+    \param  width   width of line in destination window
+    \return         <i>str</i> reformatted for the window
+
+    See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
+*/
+const vector<string> reformat_for_wprintw(const vector<string>& vecstr, const int width)
+{ vector<string> rv;
+
+  for (const auto& s : vecstr)
+    rv.push_back(reformat_for_wprintw(s, width));
 
   return rv;
 }

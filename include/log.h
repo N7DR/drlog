@@ -89,11 +89,22 @@ public:
 
     Does nothing if there are no QSOs in the log
 */
-  inline void remove_last_qso(void)
-    { SAFELOCK(_log);
+//  inline void remove_last_qso(void)
+//    { SAFELOCK(_log);
+//
+//      *this -= size();    // remember, numbering is wrt 1
+//    }
 
-      *this -= size();    // remember, numbering is wrt 1
-    }
+/*! \brief      Remove most-recent qso
+    \return     the removed QSO
+
+    Does nothing and returns an empty QSO if there are no QSOs in the log
+*/
+  const QSO remove_last_qso(void);
+  //    { SAFELOCK(_log);
+  //
+  //      *this -= size();    // remember, numbering is wrt 1
+  //    }
 
 /*! \brief                  Remove several recent QSOs
     \param  n_to_remove     number of QSOs to remove

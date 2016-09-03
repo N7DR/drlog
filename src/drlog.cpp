@@ -135,6 +135,7 @@ void update_known_country_mults(const string& callsign, const bool force_known =
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_qsls_window(const string& = "");                                ///< QSL information from old QSOs
+void update_qtc_queue_window(void);                                         ///< the head of the QTC queue
 void update_rate_window(void);                                              ///< Update the QSO and score values in <i>win_rate</i>
 
 // functions for processing input to windows
@@ -234,6 +235,7 @@ unsigned int            n_modes = 0;                        ///< number of modes
 
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
 
+bool                    sending_qtc_series = false;         ///< am I senting a QTC series?
 unsigned int serno_spaces = 0;
 bool            long_t = false;
 
@@ -296,6 +298,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_nearby,                      ///< nearby station
        win_qsls,                        ///< QSLs from old QSOs
        win_qso_number,                  ///< number of the next QSO
+       win_qtc_queue,                   ///< the head of the unsent QTC queue
        win_qtc_status,                  ///< status of QTCs
        win_rate,                        ///< QSO and point rates
        win_rbn_line,                    ///< last line received from the RBN
@@ -956,6 +959,9 @@ int main(int argc, char** argv)
   win_qso_number.init(context.window_info("QSO NUMBER"), WINDOW_NO_CURSOR);
   win_qso_number <= pad_string(to_string(next_qso_number), win_qso_number.width());
 
+// QTC QUEUE window
+  win_qtc_queue.init(context.window_info("QTC QUEUE"), WINDOW_NO_CURSOR);
+
 // QTC STATUS window
   win_qtc_status.init(context.window_info("QTC STATUS"), WINDOW_NO_CURSOR);
   win_qtc_status <= "Last QTC: None";
@@ -1025,12 +1031,6 @@ int main(int argc, char** argv)
     string modes_str;
 
     FOR_ALL(score_modes, [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + " "); } );
-
-//    if (score_modes < MODE_CW)
-//      modes_str += "CW ";
-
-//    if (score_modes < MODE_SSB)
-//      modes_str += "SSB ";
 
     win_score_modes < CURSOR_START_OF_LINE < "Score Modes: " <= modes_str;
   }
@@ -1425,6 +1425,8 @@ int main(int argc, char** argv)
 
           win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Last QTC: " < last_qs.id() < " to " <= last_qs.target();
         }
+
+        update_qtc_queue_window();
       }
 
 // display the current statistics
@@ -3214,11 +3216,14 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   if (!processed and e.is_alt('y'))
   { if (remove_peripheral_spaces(win.read()).empty())                // process only if empty
     { if (!logbk.empty())
-      { const QSO qso = logbk[logbk.n_qsos()];
+      { const QSO qso = logbk.remove_last_qso();
 
-        ost << "Deleting QSO: " << qso << endl;
+        if (send_qtcs)
+        { const qtc_entry qe(qso);
 
-        logbk.remove_last_qso();
+          qtc_buf -= qe;
+          update_qtc_queue_window();
+        }
 
 // remove the visual indication in the visible log
         bool cleared = false;
@@ -3400,9 +3405,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // ALT-Q -- send QTC
-  if (!processed and e.is_alt('q') and rules.send_qtcs())
+  if (!processed and e.is_alt('q') and send_qtcs)
   { last_active_win_p = win_active_p;
     win_active_p = &win_log_extract;
+    sending_qtc_series = false;       // initialise variable
     win_active_p-> process_input(e);  // reprocess the alt-q
 
     processed = true;
@@ -4070,6 +4076,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             if (send_qtcs)
             { qtc_buf += qso;
               statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+              update_qtc_queue_window();
             }
 
 // display the current statistics
@@ -4685,18 +4692,16 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             //ost << "exchange fields from revised QSO:" << endl;
 
             for (auto& field : fields)
-            { //ost << "  field: " << field << endl;
-
-              //const bool is_mult_field = field.is_mult();
-
-              if (!(variable_exchange_fields < field.name()))
+            { if (!(variable_exchange_fields < field.name()))
                exchange_db.set_value(qso.callsign(), field.name(), rules.canonical_value(field.name(), field.value()));   // add it to the database of exchange fields
-
             }
-
-
-
           }
+        }
+
+// the logbook is now rebuilt
+        if (send_qtcs)
+        { qtc_buf.rebuild(logbk);
+          update_qtc_queue_window();
         }
 
 // re-write the logfile
@@ -6462,38 +6467,34 @@ void allow_for_callsign_mults(QSO& qso)
    CTRL-P -- dump screen
 */
 void process_QTC_input(window* wp, const keyboard_event& e)
-{ static bool sending_series = false;
+{ //ost << "Inside process_QTC_input()" << endl;
+
+//  static bool sending_series = false;
   static unsigned int total_qtcs_to_send;
   static unsigned int qtcs_sent;
   static string qtc_id;
   static qtc_series series;
-  const unsigned int original_cw_speed = cw_p->speed();
+  static unsigned int original_cw_speed; // = cw_p->speed();
   const unsigned int qtc_qrs = context.qtc_qrs();
+
+//  ost << "original CW speed = " << original_cw_speed << endl;
 
   const bool cw = (safe_get_mode() == MODE_CW);  // just to keep it easy to determine if we are on CW
   bool processed = false;
 
   auto send_msg = [=](const string& msg)
     { if (cw)
-      { //const unsigned int qrs = context.qtc_qrs();
-
-        //if (qrs)
-        //  (*cw_p) << create_string('-', qrs);
-
         (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
-
-        //if (qrs)
-        //  (*cw_p) << create_string('+', qrs);
-      }
     };
 
-  ost << "processing QTC input; event string: " << e.str() << endl;
+//  ost << "processing QTC input; event string: " << e.str() << endl;
 
   window& win = *wp;   // syntactic sugar
 
 // ALT-Q - start process of sending QTC batch
-  if (!sending_series and e.is_alt('q'))
-  {
+  if (!sending_qtc_series and e.is_alt('q'))
+  { //ost << "processing ALT-Q inside LOG window" << endl;
+
 // destination for the QTC is the callsign in the CALL window; or, if the window is empty, the call of the last logged QSO
     const string call_window_contents = remove_peripheral_spaces(win_call.read());
     string destination_callsign = call_window_contents;
@@ -6522,6 +6523,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // check that it's OK to send a QTC to this call
     const unsigned int n_already_sent = qtc_db.n_qtcs_sent_to(destination_callsign);
 
+    ost << "n already sent to " << destination_callsign << " = " << n_already_sent << endl;
+
     if (!processed and n_already_sent >= 10)
     { alert(string("10 QSOs already sent to ") + destination_callsign);
       win_active_p = &win_call;
@@ -6530,7 +6533,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
 // check that we have at least one QTC that can be sent to this call
     const unsigned int n_to_send = 10 - n_already_sent;
-    const vector<qtc_entry> qtc_entries_to_send = qtc_buf.get_next_unsent_qtc(destination_callsign, n_to_send);
+    const vector<qtc_entry> qtc_entries_to_send = qtc_buf.get_next_unsent_qtc(n_to_send, destination_callsign);
+
+    ost << "n to be sent to " << destination_callsign << " = " << qtc_entries_to_send.size() << endl;
+
 
     if (!processed and qtc_entries_to_send.empty())
     { alert(string("No QSOs available to send to ") + destination_callsign);
@@ -6554,7 +6560,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       else
 
 // OK; we're going to send at least one QTC
-      { sending_series = true;
+      { sending_qtc_series = true;
+
+        if (cw)
+          original_cw_speed = cw_p->speed();
 
         const unsigned int number_of_qtc = qtc_db.size() + 1;
 
@@ -6586,9 +6595,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // abort sending CW if we are currently sending
     if (cw)
     { if (!cw_p->empty())
-      { cw_p->abort();
-        processed = true;
-      }
+        cw_p->abort();
+
+      if (qtc_qrs)
+        cw_speed(original_cw_speed);
     }
 
     processed = true;
@@ -6629,8 +6639,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       processed = true;
     }
     else    // we have sent the last QTC; cleanup
-    { if (cw and qtc_qrs)
-        cw_speed(original_cw_speed);
+    { if (cw)
+        cw_speed(original_cw_speed);    // always set the speed, just to be safe
 
       qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
@@ -6640,7 +6650,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       series.utc(hhmmss());
       series.frequency_str(rig.rig_frequency());
 
-      sending_series = false;
+//      sending_series = false;
       qtc_db += series;                  // add to database of sent QTCs
 
       if (cw)
@@ -6675,7 +6685,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       series.utc(hhmmss());
       series.frequency_str(rig.rig_frequency());
 
-      sending_series = false;
+//      sending_series = false;
       qtc_db += series;                  // add to database of sent QTCs
 
       (*win_active_p) <= WINDOW_CLEAR;
@@ -6697,6 +6707,16 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
       display_statistics(statistics.summary_string(rules));
     }
+
+
+//    if (!cw_p->empty())
+//      cw_p->abort();
+
+    if (cw)
+    { cw_p->abort();                  // stop sending any CW
+      cw_speed(original_cw_speed);    // always set the speed, just to be safe
+    }
+
     processed = true;
   }
 
@@ -6809,7 +6829,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 */
 void cw_speed(const unsigned int new_speed)
 { if (cw_p)
-  { cw_p->speed(new_speed);
+  { //ost << "Setting speed to " << new_speed << endl;
+
+    cw_p->speed(new_speed);
     win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(new_speed) + " WPM");
 
     try
@@ -7164,4 +7186,23 @@ const bool process_keypress_F5(void)
   return true;
 }
 
+/// update the QTC QUEUE window
+void update_qtc_queue_window(void)
+{ static const string SPACE(" ");
 
+  win_qtc_queue < WINDOW_CLEAR;
+
+  if (qtc_buf.n_unsent_qsos())
+  { const unsigned int win_height = win_qtc_queue.height();
+    const unsigned int n_to_display = min(qtc_buf.n_unsent_qsos(), win_height);
+    const vector<qtc_entry> qtc_entries_to_send = qtc_buf.get_next_unsent_qtc(n_to_display);
+    unsigned int index = 1;
+
+    win_qtc_queue.move_cursor(0, win_height - 1);
+
+    for (const auto& qe : qtc_entries_to_send)
+      win_qtc_queue <  reformat_for_wprintw(pad_string(to_string(index++), 2) + SPACE + qe.to_string(), win_qtc_queue.width());
+  }
+
+  win_qtc_queue.refresh();
+}

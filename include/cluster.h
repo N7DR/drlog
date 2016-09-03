@@ -35,17 +35,15 @@ enum POSTING_SOURCE { POSTING_CLUSTER,
 class dx_cluster
 {
 protected:
-  std::string         _server;                        ///< name or IP address of the server
-  unsigned int        _port;                          ///< server port
-  std::string         _my_ip;                         ///< my IP address
-  unsigned int        _timeout;                       ///< timeout in seconds (defaults to 1)
-  std::string         _login_id;                      ///< my login identifier
-  enum POSTING_SOURCE _source;                        ///< source for postings
-  
-  std::string         _unprocessed_input;             ///< buffer for messages from the network
-  
   tcp_socket          _connection;                    ///< TCP socket for communication with the network
-  
+  std::string         _login_id;                      ///< my login identifier
+  std::string         _my_ip;                         ///< my IP address
+  unsigned int        _port;                          ///< server port
+  std::string         _server;                        ///< name or IP address of the server
+  enum POSTING_SOURCE _source;                        ///< source for postings
+  unsigned int        _timeout;                       ///< timeout in seconds (defaults to 1)
+  std::string         _unprocessed_input;             ///< buffer for messages from the network
+
 /// process a read error
   void _process_error(void);
 
@@ -113,7 +111,7 @@ protected:
 
 public:
     
-/*! \brief  constructor
+/*! \brief                  Constructor
     \param  received_info   a line received from the cluster or RBN
     \param  db              the location database for this contest
     \param  post_source     the origin of the post

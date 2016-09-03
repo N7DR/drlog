@@ -262,10 +262,10 @@ public:
 /// construct from file
   drlog_context( const std::string& filename );
 
-  SAFEREAD(accept_colour, _context);                            ///< colour for calls that have been worked, but are not dupes
-  SAFEREAD(alternative_exchange_cq, _context);                  ///< alternative exchange in SAP mode
-  SAFEREAD(alternative_exchange_sap, _context);                 ///< alternative exchange in SAP mode
-  SAFEREAD(alternative_qsl_message, _context);                  ///< alternative confirmation at end of QSO
+  CONTEXTREAD(accept_colour);                            ///< colour for calls that have been worked, but are not dupes
+  CONTEXTREAD(alternative_exchange_cq);                  ///< alternative exchange in SAP mode
+  CONTEXTREAD(alternative_exchange_sap);                 ///< alternative exchange in SAP mode
+  CONTEXTREAD(alternative_qsl_message);                  ///< alternative confirmation at end of QSO
   SAFEREAD(archive_name, _context);                             ///< name of the archive for save/restore information
   SAFEREAD(auto_backup, _context);                              ///< directory for auto backup files
   SAFEREAD(auto_remaining_callsign_mults, _context);            ///< do we auto-generate the remaining callsign mults?
@@ -560,7 +560,9 @@ public:
     return (_modes.size() != 1);
   }
 
-// change the amount of QRS associated with sending a QTC
+/*! \brief      Change the amount of QRS associated with sending a QTC
+    \param  n   the amount, in WPM, to decrease the CW speed while sending a QTC
+*/
   inline void qtc_qrs(const unsigned int n)
   { SAFELOCK(_context);
     _qtc_qrs = n;

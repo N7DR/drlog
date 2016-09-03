@@ -11,9 +11,9 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-/*!     \file screen.h
+/*! \file screen.h
 
-        Classes and functions related to screen management
+    Classes and functions related to screen management
 */
 
 #include "keyboard.h"
@@ -153,7 +153,8 @@ public:
   screen(void);
 
 /// destructor
-  virtual ~screen(void);
+  virtual ~screen(void)
+  { endwin(); }
 };
 
 // -----------  window_information ----------------
@@ -202,8 +203,8 @@ public:
 
 // -----------  window  ----------------
 
-/*!     \class window
-        \brief A single ncurses window
+/*! \class window
+    \brief A single ncurses window
 */
 
 // forward declaration
@@ -221,10 +222,10 @@ protected:
   bool          _scrolling;         ///< whether scrolling is enabled
   bool          _vertical;          ///< whether containers of strings are to be displayed vertically
 
+  int     _x;                  ///< x of origin (in proper coordinates)
   int     _y;                  ///< y of origin (in proper coordinates)
   int     _width;              ///< width
   int     _height;             ///< height
-  int     _x;                  ///< x of origin (in proper coordinates)
 
   int    _cursor_x;            ///< used to hold x cursor
   int    _cursor_y;            ///< used to hold y cursor
@@ -394,7 +395,8 @@ public:
   void show(void);
 
 /// is the panel hidden?
-  const bool hidden(void) const;
+  inline const bool hidden(void) const
+    { return (_pp ? static_cast<bool>(panel_hidden(_pp)) : false); }
 
 /// is the panel hidden?
   inline const bool is_hidden(void) const

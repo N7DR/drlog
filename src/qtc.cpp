@@ -20,8 +20,8 @@ using namespace std;
 
 // -----------------------------------  qtc_entry  ----------------------------
 
-/*!     \class qtc_entry
-        \brief An entry in a QTC
+/*! \class qtc_entry
+    \brief An entry in a QTC
 */
 
 /// default constructor
@@ -61,6 +61,7 @@ const bool qtc_entry::operator==(const qtc_entry& entry) const
   return true;
 }
 
+/// qtc_entry < qtc_entry
 const bool qtc_entry::operator<(const qtc_entry& entry) const
 { if (_serno < entry._serno)
     return true;
@@ -74,6 +75,7 @@ const bool qtc_entry::operator<(const qtc_entry& entry) const
   return false;
 }
 
+/// convert to printable string
 const string qtc_entry::to_string(void) const
 { static const unsigned int CALL_WIDTH = 12;
   static const string SPACE(" ");
@@ -83,8 +85,8 @@ const string qtc_entry::to_string(void) const
 
 // -----------------------------------  qtc_series  ----------------------------
 
-/*!     \class qtc_series
-        \brief A QTC series as defined by the WAE rules
+/*! \class  qtc_series
+    \brief  A QTC series as defined by the WAE rules
 */
 
 const vector<qtc_entry> qtc_series::sent_qtc_entries(void) const
@@ -105,7 +107,11 @@ const vector<qtc_entry> qtc_series::unsent_qtc_entries(void) const
   return rv;
 }
 
-const bool qtc_series::operator+=(const std::pair<qtc_entry, bool>& p)
+/*! \brief          Add a qtc_entry
+    \param  param   entry to add, and whether the entry has been sent
+    \return         whether <i>param</i> was actually added
+*/
+const bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
 { const qtc_entry& entry = p.first;
   const bool sent = p.second;
 
@@ -117,6 +123,18 @@ const bool qtc_series::operator+=(const std::pair<qtc_entry, bool>& p)
   return false;
 }
 
+/*! \brief      Return an entry
+    \param  n   index number to return (wrt 0)
+    \return     <i>n</i>th entry
+
+    Returns empty pair if <i>n</i> is out of bounds.
+*/
+const pair<qtc_entry, bool>& qtc_series::operator[](const unsigned int n) const
+{ if (n < _qtc_entries.size())
+    return _qtc_entries[n];
+
+  return pair<qtc_entry, bool>{ };
+}
 
 // set a particular entry to sent
 void qtc_series::mark_as_sent(const unsigned int n)
@@ -214,9 +232,9 @@ const string qtc_series::complete_output_string(void) const
 
 //#include <array>
 
-const string qtc_series::to_string(const unsigned int n_rows) const
-{ return string();
-}
+//const string qtc_series::to_string(const unsigned int n_rows) const
+//{ return string();
+//}
 
 /// window < qtc_series
 window& operator<(window& win, const qtc_series& qs)
@@ -396,13 +414,23 @@ void qtc_buffer::operator+=(const QSO& qso)
   }
 }
 
-const vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const string& target, const unsigned int max_entries)
+/*! \brief          Recreate the unsent list
+    \param  logbk   logbook
+*/
+void qtc_buffer::rebuild(const logbook& logbk)
+{ _unsent_qtcs.clear();
+
+  *this += logbk;
+}
+
+const vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target)
 { vector<qtc_entry> rv;
 
   list<qtc_entry>::const_iterator cit = _unsent_qtcs.cbegin();
 
   while ( (rv.size() != max_entries) and (cit != _unsent_qtcs.cend()) )
-  { rv.push_back(*cit);
+  { if (cit->callsign() != target)
+      rv.push_back(*cit);               // don't send a QTC back to the station of the original QSO
     ++cit;
   }
 
@@ -433,3 +461,4 @@ void qtc_buffer::unsent_to_sent(const qtc_series& qs)
 //    unsent_to_sent(qe);
   FOR_ALL(sent_qtc_entries, [&] (const qtc_entry& qe) { unsent_to_sent(qe); } );
 }
+

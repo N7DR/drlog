@@ -551,8 +551,8 @@ std::string convert_to_dotted_decimal(const uint32_t val);
 */
 const bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator);
 
-// return true if call1 < call2
-const bool compare_calls(const std::string& s1, const std::string& s2);
+/// return true if call1 < call2, according to callsign sort order
+const bool compare_calls(const std::string& call1, const std::string& call2);
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value
@@ -569,13 +569,28 @@ const std::string decimal_places(const std::string& str, const int n);
 */
 const std::string longest_line(const std::vector<std::string>& lines);
 
-// deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
+/*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
+    \param  str     string to be reformatted
+    \param  width   width of line in destination window
+    \return         <i>str</i> reformatted for the window
+
+    See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
+*/
 const std::string reformat_for_wprintw(const std::string& str, const int width);
+
+/*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
+    \param  vecstr  vector of strings to be reformatted
+    \param  width   width of line in destination window
+    \return         <i>str</i> reformatted for the window
+
+    See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
+*/
+const std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& vecstr, const int width);
 
 // -------------------------------------- Errors  -----------------------------------
 
 /*! \class  string_function_error
-  \brief  Errors related to string processing
+    \brief  Errors related to string processing
 */
 
 class string_function_error : public x_error
@@ -584,9 +599,9 @@ protected:
 
 public:
 
-/*! \brief  Construct from error code and reason
-  \param  n Error code
-  \param  s Reason
+/*! \brief      Construct from error code and reason
+    \param  n   error code
+    \param  s   reason
 */
   inline string_function_error(const int n, const std::string& s) :
     x_error(n, s)

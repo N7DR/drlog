@@ -11,9 +11,9 @@
 #ifndef QTC_H
 #define QTC_H
 
-/*!     \file qtc.h
+/*! \file qtc.h
 
-        Classes and functions related to WAE QTCs
+    Classes and functions related to WAE QTCs
 */
 
 #include "log.h"
@@ -42,8 +42,8 @@ const bool QTC_SENT = true,
 
 // -----------------------------------  qtc_entry  ----------------------------
 
-/*!     \class qtc_entry
-        \brief An entry in a QTC
+/*! \class qtc_entry
+    \brief An entry in a QTC
 */
 
 class qtc_entry
@@ -108,8 +108,8 @@ public:
 
 // -----------------------------------  qtc_series  ----------------------------
 
-/*!     \class qtc_series
-        \brief A QTC series as defined by the WAE rules
+/*! \class qtc_series
+    \brief A QTC series as defined by the WAE rules
 */
 
 class qtc_series
@@ -185,12 +185,21 @@ public:
   inline const bool empty(void) const
     { return _qtc_entries.empty(); }
 
-  const bool operator+=(const std::pair<qtc_entry, bool>&);
+/*! \brief          Add a qtc_entry
+    \param  param   entry to add, and whether the entry has been sent
+    \return         whether <i>param</i> was actually added
+*/
+  const bool operator+=(const std::pair<qtc_entry, bool>& param);
 
-  inline std::pair<qtc_entry, bool>& operator[](const unsigned int n)
-    { return _qtc_entries[n]; }
+/*! \brief      Return an entry
+    \param  n   index number to return (wrt 0)
+    \return     <i>n</i>th entry
 
-  const std::string to_string(const unsigned int n_rows) const;
+    Returns empty pair if <i>n</i> is out of bounds.
+*/
+  const std::pair<qtc_entry, bool>& operator[](const unsigned int n) const;
+
+//  const std::string to_string(const unsigned int n_rows) const;
 
 // set a particular entry to sent
   void mark_as_sent(const unsigned int n);
@@ -290,13 +299,17 @@ protected:
 
 public:
 
-  const std::vector<qtc_entry> get_next_unsent_qtc(const std::string& target, const unsigned int max_entries = 10);
+  const std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string());
 
   void operator+=(const logbook&);
 
   void operator+=(const QSO&);
 
-  void operator-=(const qtc_entry& entry);
+/*! \brief          Remove a QTC if present in the unsent list
+    \param  entry   QTC to remove
+*/
+  inline void operator-=(const qtc_entry& entry)
+    { _unsent_qtcs.remove(entry); }
 
   void unsent_to_sent(const qtc_entry& entry);
 
@@ -313,6 +326,11 @@ public:
 
   inline const unsigned int size(void) const
     { return n_sent_qsos() + n_unsent_qsos(); }
+
+/*! \brief          Recreate the unsent list
+    \param  logbk   logbook
+*/
+  void rebuild(const logbook& logbk);
 
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

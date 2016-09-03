@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file screen.cpp
+/*! \file screen.cpp
 
-        Classes and functions related to screen management
+    Classes and functions related to screen management
 */
 
 #include "screen.h"
@@ -83,15 +83,10 @@ screen::screen(void)
   curs_set(1);             // a medium cursor
 }
 
-/// destructor
-screen::~screen(void)
-{ endwin();
-}
-
 // -----------  window  ----------------
 
-/*!     \class window
-        \brief A single ncurses window
+/*! \class window
+    \brief A single ncurses window
 */
 
 /*! \brief          Set the default colours
@@ -282,7 +277,7 @@ window& window::operator<(const string& s)
 
   if (!_insert)
     wprintw(_wp, s.c_str());
-  else    // insert mode
+  else                                           // insert mode
   { const cursor c = cursor_position();
     const string remainder = read(c.x(), c.y());
 
@@ -649,7 +644,7 @@ window& window::scrolling(const bool enable_or_disable)
 
 /*! \brief          scroll a window
     \param  n       number of lines to by which to scroll
-    \return                     the window
+    \return         the window
 
     Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
 */
@@ -830,12 +825,14 @@ void window::show(void)
 }
 
 /// is the panel hidden?
-const bool window::hidden(void) const
-{ if (_pp)
-    return static_cast<bool>(panel_hidden(_pp));
+//const bool window::hidden(void) const
+//{ //if (_pp)
+  //  return static_cast<bool>(panel_hidden(_pp));
 
-  return false;                // default
-}
+  //return false;                // default
+
+//  return (_pp ? static_cast<bool>(panel_hidden(_pp)) : false);
+//}
 
 /*! \brief  character processing that is the same in multiple windows
     \param  e   keyboard event to be processed

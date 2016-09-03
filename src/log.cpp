@@ -669,6 +669,24 @@ void logbook::remove_last_qsos(const unsigned int n_to_remove)
     remove_last_qso();
 }
 
+/*! \brief      Remove most-recent qso
+    \return     the removed QSO
+
+    Does nothing and returns an empty QSO if there are no QSOs in the log
+*/
+const QSO logbook::remove_last_qso(void)
+{ if (empty())
+    return QSO();
+
+  SAFELOCK(_log);
+
+  const QSO rv = _log_vec[size() - 1];
+
+  *this -= size();    // remember, numbering is wrt 1
+
+  return rv;
+}
+
 // -----------  log_extract  ----------------
 
 /*!     \class log_extract
