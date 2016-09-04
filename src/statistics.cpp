@@ -679,6 +679,9 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
       q_points += qp[b];
   }
 
+// QTC points
+  q_points += _qtc_qsos_sent;
+
 // callsign mults
   const unsigned int callsign_mults = n_worked_callsign_mults(rules);
   const unsigned int country_mults = n_worked_country_mults(rules);
