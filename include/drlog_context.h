@@ -267,11 +267,11 @@ public:
   CONTEXTREAD(alternative_exchange_cq);                  ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_exchange_sap);                 ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_qsl_message);                  ///< alternative confirmation at end of QSO
-  SAFEREAD(archive_name, _context);                             ///< name of the archive for save/restore information
-  SAFEREAD(auto_backup, _context);                              ///< directory for auto backup files
-  SAFEREAD(auto_remaining_callsign_mults, _context);            ///< do we auto-generate the remaining callsign mults?
-  SAFEREAD(auto_remaining_country_mults, _context);             ///< do we auto-generate the remaining country mults?
-  SAFEREAD(auto_remaining_callsign_mults_threshold, _context);  ///< number of times a callsign mult must be seen before it becomes known
+  CONTEXTREAD(archive_name);                             ///< name of the archive for save/restore information
+  CONTEXTREAD(auto_backup);                              ///< directory for auto backup files
+  CONTEXTREAD(auto_remaining_callsign_mults);            ///< do we auto-generate the remaining callsign mults?
+  CONTEXTREAD(auto_remaining_country_mults);             ///< do we auto-generate the remaining country mults?
+  CONTEXTREAD(auto_remaining_callsign_mults_threshold);  ///< number of times a callsign mult must be seen before it becomes known
   SAFEREAD(auto_remaining_country_mults_threshold, _context);   ///< number of times a canonical prefix must be seen before it becomes known
 
 /*! \brief              Do we auto-generate remaining mults for a particular exchange mult?

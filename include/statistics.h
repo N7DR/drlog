@@ -215,7 +215,17 @@ public:
     \param  m           mode
     \return             country mults worked on band <i>b</i> and mode <i>m</i>
 */
-  const std::set<std::string> worked_country_mults(const BAND b, const MODE m);
+//  const std::set<std::string> worked_country_mults(const BAND b, const MODE m);
+
+/*! \brief      Worked country mults for a particular band and mode
+    \param  b   target band
+    \param  m   target mode
+    \return     all the worked country mults on band <i>b</i> and mode <i>m</i>
+*/
+  inline const std::set<std::string> worked_country_mults(const BAND b, const MODE m)
+  { SAFELOCK(statistics);
+    return ( _country_multipliers.worked(b, m) );
+  }
 
 /// all the known country mults
   inline const std::set<std::string> known_country_mults(void)

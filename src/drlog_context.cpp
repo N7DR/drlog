@@ -13,6 +13,7 @@
         The basic context for operation of drlog
 */
 
+#include "diskfile.h"
 #include "drlog_context.h"
 #include "exchange.h"
 #include "string_functions.h"
@@ -1000,41 +1001,31 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CABRILLO CATEGORY-MODE
     if (LHS == "CABRILLO CATEGORY-MODE")
-    { //const string value = RHS;
-
-      if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB", ","))
+    { if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB", ","))
         _cabrillo_category_mode = RHS;
     }
 
 // CABRILLO CATEGORY-OPERATOR
     if (LHS == "CABRILLO CATEGORY-OPERATOR")
-    { //const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
-
-      if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP", ","))
+    { if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP", ","))
         _cabrillo_category_operator = RHS;
     }
 
 // CABRILLO CATEGORY-OVERLAY
     if (LHS == "CABRILLO CATEGORY-OVERLAY")
-    { //const string value = RHS; //to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
-
-      if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES", ","))
+    { if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES", ","))
         _cabrillo_category_overlay = RHS;
     }
 
 // CABRILLO CATEGORY-POWER
     if (LHS == "CABRILLO CATEGORY-POWER")
-    { //const string value = RHS; // to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
-
-      if (is_legal_value(RHS, "HIGH,LOW,QRP", ","))
+    { if (is_legal_value(RHS, "HIGH,LOW,QRP", ","))
         _cabrillo_category_power = RHS;
     }
 
 // CABRILLO CATEGORY-STATION
     if (LHS == "CABRILLO CATEGORY-STATION")
-    { //const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
-
-      if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL", ","))
+    { if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL", ","))
         _cabrillo_category_station = RHS;
     }
 
@@ -1157,19 +1148,31 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  STATIC WINDOWS  ---------------------------------
 
-    if (starts_with(testline, "STATIC WINDOW") and !starts_with(testline, "STATIC WINDOW INFO"))
+    map<string /* name */, bool /* whether verbatim */> verbatim;
+
+    if (LHS == "STATIC WINDOW")
     { const vector<string> fields = remove_peripheral_spaces(split_string(rhs, ","));
 
       if (fields.size() == 2)  // name, contents
       { const string name = fields[0];
-        string contents = fields[1];
+        string contents = fields[1];      // might be actual contents, or a fully-qualified filename
+        verbatim[name] = contains(fields[1], "\"");     // verbatimn if contains quotation mark
+
+        ost << "name = " << name << endl;
+        ost << "contents = " << contents << endl;
+
+        if (file_exists(contents))
+        { ost << "reading contents from file: " << contents << endl;
+          contents = read_file(contents);
+          ost << "new contents = " << contents << endl;
+        }
 
         _static_windows[name] = { contents, vector<window_information>() };
       }
     }
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
-    if (starts_with(testline, "STATIC WINDOW INFO"))  // must come after the corresponding STATIC WINDOW command
+    if (LHS == "STATIC WINDOW INFO")  // must come after the corresponding STATIC WINDOW command
     { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
 
       if (!window_info.empty())
@@ -1182,45 +1185,80 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             winfo.x(from_string<int>(window_info[1]));
             winfo.y(from_string<int>(window_info[2]));
 
-            string contents = _static_windows[name].first;
-
-            if (contents.size() >= 2)
-            { const char delimiter = contents[0];
-              const size_t posn = contents.find_first_of(delimiter, 1);
-
-              if (posn != 0)
-                contents = substring(contents, 1, posn - 1);
+            if (window_info.size() >= 5)
+            { winfo.w(from_string<int>(window_info[3]));
+              winfo.h(from_string<int>(window_info[4]));
             }
 
-            ost << "contents of static window: " << contents << endl;
+            string final_contents;
 
+            if (verbatim[name])
+            { string contents = _static_windows[name].first;
+
+              if (contents.size() >= 2)
+              { const char delimiter = contents[0];
+                const size_t posn = contents.find_first_of(delimiter, 1);
+
+                if (posn != 0)
+                  contents = substring(contents, 1, posn - 1);
+              }
+
+              ost << "contents of static window: " << contents << endl;
+
+              vector<string> lines = to_lines(contents);
+              ost << "number of lines: " << lines.size() << endl;
+
+              const string contents_1 = replace(contents, "\\n", EOL);
+              ost << "contents_1: " << contents_1 << endl;
+
+              lines = to_lines(contents_1);
+              ost << "number of lines: " << lines.size() << endl;
+
+//            if (!winfo.w())
+              winfo.w(longest_line(lines).length());
+//            if (!winfo.h())
+              winfo.h(lines.size());
+
+              if (window_info.size() >= 4)
+              { winfo.fg_colour(window_info[3]);
+
+                if (window_info.size() >= 5)
+                  winfo.bg_colour(window_info[4]);
+
+                winfo.colours_set(true);
+              }
+
+              final_contents = contents_1;
+            }    // end verbatim
+            else    // read from file
+            { ost << "not verbatim" << endl;
+            string contents = _static_windows[name].first;
             vector<string> lines = to_lines(contents);
-            ost << "number of lines: " << lines.size() << endl;
+              ost << "number of lines: " << lines.size() << endl;
 
-            const string contents_1 = replace(contents, "\\n", EOL);
-            ost << "contents_1: " << contents_1 << endl;
+              //            if (!winfo.w())
+                            winfo.w(longest_line(lines).length());
+              //            if (!winfo.h())
+                            winfo.h(lines.size());
 
-            lines = to_lines(contents_1);
-            ost << "number of lines: " << lines.size() << endl;
+                            if (window_info.size() >= 4)
+                            { winfo.fg_colour(window_info[3]);
 
- //           winfo.w(contents.length());
- //           winfo.h(1);
-            winfo.w(longest_line(lines).length());
-            winfo.h(lines.size());
+                              if (window_info.size() >= 5)
+                                winfo.bg_colour(window_info[4]);
 
-            if (window_info.size() >= 4)
-            { winfo.fg_colour(window_info[3]);
+                              winfo.colours_set(true);
+                            }
 
-              if (window_info.size() >= 5)
-                winfo.bg_colour(window_info[4]);
+                            final_contents = contents;
 
-              winfo.colours_set(true);
             }
 
             vector<window_information> vec = _static_windows[name].second;
 
             vec.push_back(winfo);
-            _static_windows[name] = { contents_1, vec };
+//            _static_windows[name] = { contents_1, vec };
+            _static_windows[name] = { final_contents, vec };
           }
         }
       }

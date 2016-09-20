@@ -215,10 +215,10 @@ set<string>         known_callsign_mults;                   ///< callsign mults 
 
 // global variables
 
-map<string /* mult name */, accumulator<string> >     acc_callsigns;                      ///< accumulator for prefixes for auto callsign mults
-accumulator<string>     acc_countries;                      ///< accumulator for canonical prefixes for auto countries
-int                     ACCEPT_COLOUR(COLOUR_GREEN);        ///< colour for calls that have been worked, but are not dupes
-string                  at_call;                            ///< call that should replace comat in "call ok now" message
+map<string /* mult name */, accumulator<string> >     acc_callsigns;                  ///< accumulator for prefixes for auto callsign mults
+accumulator<string>     acc_countries;                          ///< accumulator for canonical prefixes for auto countries
+int                     ACCEPT_COLOUR(COLOUR_GREEN);            ///< colour for calls that have been worked, but are not dupes
+string                  at_call;                                ///< call that should replace comat in "call ok now" message
 
 drlog_context           context;                            ///< context taken from configuration file
 
@@ -239,18 +239,7 @@ bool                    sending_qtc_series = false;         ///< am I senting a 
 unsigned int serno_spaces = 0;
 bool            long_t = false;
 
-#if 0
-unordered_map<string /* callsign */,
-//              pair< unsigned int /* qsls */, unsigned int /* qsos */ >
-                tuple< unsigned int /* qsls */,
-                       unsigned int /* qsos */,
-                       set< pair< BAND, MODE > >,     /* set of band/mode from which QSLs have been received */
-                       multiset< pair< BAND, MODE > > /* QSOs per band/mode */
-                     >
-             > olog;    ///< ADIF log of old QSOs (used for QSLs)
-#endif
-
-old_log     olog;
+old_log     olog;                                           ///< old (ADIF) log containing QSO and QSL information
 
 int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
 bool                    restored_data(false);               ///< did we restore from an archive?
@@ -418,9 +407,6 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
     sort(vec_str.begin(), vec_str.end(), compare_calls);
     match_vector.clear();
 
-// this is experimental, to see if I like it in a contest;
-// I found it hard to see an exact match (for V6A) far down the list;
-// also, putting it first ensures that it can't disappear off the end
 // put an exact match at the front (this will never happen with a fuzzy match)
     vector<string> tmp_matches;                 // variable in which to build interim ordered matches
 
@@ -646,13 +632,12 @@ int main(int argc, char** argv)
     if (!context.old_adif_log_name().empty())
     { alert(string("reading old log file: ") + context.old_adif_log_name(), false);
 
-      //win_message <= ( string("reading old log file: ") + context.old_adif_log_name() );
       const vector<string> records = split_string( read_file(context.path(), context.old_adif_log_name()) , string("<eor>") + EOL);
 
       for (const auto& record : records)
       { const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines( record )));
 
-// extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
+// function to extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
         auto adif_value = [](const string& this_line, const unsigned int offset = 0)
           { const string tag = delimited_substring(this_line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -806,8 +791,21 @@ int main(int argc, char** argv)
 // create and populate windows; do static windows first
   const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows = context.static_windows();;
 
+// static windows may contain either defined information or the contents of a file
   for (const auto& this_static_window : swindows)
-  { const string& contents = this_static_window.second.first;
+  { string contents = this_static_window.second.first;
+//    string file_contents;
+//    bool explicit_contents = false;
+
+//    try
+//    { file_contents = read_file(context.path(), contents);
+//      contents = file_contents;
+//    }
+
+//    catch (...)
+//    { explicit_contents = true;
+//    }
+
     const vector<window_information>& vec_win_info = this_static_window.second.second;
 
     for (const auto& winfo : vec_win_info)
@@ -1912,8 +1910,8 @@ void* process_rbn_info(void* vp)
   const bool is_cluster = !is_rbn;
   const bool rbn_beacons = context.rbn_beacons();
 
-  const size_t QUEUE_SIZE = 100;    // size of queue of recent calls posted to the mult window
-  string unprocessed_input;         // data from the cluster that have not yet been processed by this thread
+  const size_t QUEUE_SIZE = 100;        // size of queue of recent calls posted to the mult window
+  string unprocessed_input;             // data from the cluster that have not yet been processed by this thread
   const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
   deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
 
@@ -6496,7 +6494,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
 // ALT-Q - start process of sending QTC batch
   if (!sending_qtc_series and e.is_alt('q'))
-  { //ost << "processing ALT-Q inside LOG window" << endl;
+  { ost << "processing ALT-Q to send QTC" << endl;
 
 // destination for the QTC is the callsign in the CALL window; or, if the window is empty, the call of the last logged QSO
     const string call_window_contents = remove_peripheral_spaces(win_call.read());
@@ -6540,7 +6538,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     ost << "n to be sent to " << destination_callsign << " = " << qtc_entries_to_send.size() << endl;
 
-
     if (!processed and qtc_entries_to_send.empty())
     { alert(string("No QSOs available to send to ") + destination_callsign);
       win_active_p = &win_call;
@@ -6577,6 +6574,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
           send_msg( (cw_p->empty() ? (string)"QTC " : (string)" QTC ") + qtc_id + " QRV?");
 
         win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sending QTC " < qtc_id < " to " <= destination_callsign;
+        ost << "Sending QTC batch " << qtc_id << " to " << destination_callsign << endl;
 
 // display the QTC entries; we use the "log extract" window
         win <= series;
@@ -6630,6 +6628,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
         msg += serno;
         send_msg(msg);
+
+        ost << "QTC sent: " << msg << endl;
       }
 
 // before marking this as sent, record the last acknowledged QTC
@@ -6648,6 +6648,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
       win_qtc_status < WINDOW_CLEAR < CURSOR_START_OF_LINE < "Sent QTC " < qtc_id < " to " <= series.destination();
+      ost << "Sent QTC batch " << qtc_id << " to " << series.destination() << endl;
 
       series.date(substring(date_time_string(), 0, 10));
       series.utc(hhmmss());

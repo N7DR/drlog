@@ -689,8 +689,8 @@ const QSO logbook::remove_last_qso(void)
 
 // -----------  log_extract  ----------------
 
-/*!     \class log_extract
-        \brief Support for bits of the log
+/*! \class log_extract
+    \brief Support for bits of the log
 */
 
 /*! \brief  constructor
@@ -792,10 +792,10 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
 // -----------  old_log  ----------------
 
-/*!     \class old_log
-        \brief An old ADIF log
+/*! \class old_log
+    \brief An old ADIF log
 
-        Not thread safe, so create once and then never change.
+    Not thread safe, so create once and then never change.
 */
 
 /*! \brief          Return total number of QSLs from a particular callsign
@@ -869,16 +869,15 @@ void old_log::n_qsos(const string& call, const unsigned int n)
   get<1>(it->second) = n;
 }
 
+/*! \brief          increment the number of QSOs associated with a particular callsign
+    \param  call    callsign for which the number of QSOs should be incremented
+    \return         number of QSOs associated with with <i>call</i>
+*/
 const unsigned int old_log::increment_n_qsos(const string& call)
-{ //ost << "incrementing qsos for " << call << endl;
-
-  //SAFELOCK(old_log);
-
-  auto it = _olog.find(call);
+{ const auto it = _olog.find(call);
 
   if (it == _olog.end())
-  { //_olog.insert(  { call } );
-    _olog[call];
+  { _olog[call];
     n_qsos(call, 1);
 
     return 1;

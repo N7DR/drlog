@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file statistics.cpp
+/*! \file statistics.cpp
 
-        Classes and functions related to the statistics of an ongoing contest
+    Classes and functions related to the statistics of an ongoing contest
 */
 
 #include "bands-modes.h"
@@ -186,7 +186,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
       {
         { const unsigned int n_exchange_mults = mult.n_worked(b, m);
 
-            line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
+          line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
 
           if (exchange_mults_per_band)
             total += n_exchange_mults;
@@ -495,8 +495,6 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // try to calculate the points for this QSO; start with a default value
     const unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like :G:3
 
-//    ost << "points_this_qso = " << points_this_qso << endl;
-
     _qso_points[mode_nr][band_nr] += points_this_qso;
 
 // if it's not a dupe, we may need to track whether it's an ON QSO in the UBA contest
@@ -746,11 +744,11 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
     \param  m   target mode
     \return     all the worked country mults on band <i>b</i> and mode <i>m</i>
 */
-const set<string> running_statistics::worked_country_mults(const BAND b, const MODE m)
-{ SAFELOCK(statistics);
-
-  return ( _country_multipliers.worked(b, m) );
-}
+//const set<string> running_statistics::worked_country_mults(const BAND b, const MODE m)
+//{ SAFELOCK(statistics);
+//
+//  return ( _country_multipliers.worked(b, m) );
+//}
 
 /*! \brief      Worked exchange mults for a particular band and mode -- &&& THINK ABOUT THIS
     \param  b   target band
@@ -781,19 +779,9 @@ void running_statistics::clear_info(void)
   _n_qsos = move(decltype(_n_qsos)( { { } } ));
   _qso_points = move(decltype(_qso_points)( { { } } ));
 
-//  for (auto& callsign_m : _callsign_multipliers)
-//    callsign_m.second.clear();
-
+// clear the mults
   FOR_ALL(_callsign_multipliers, [] (pair<const string, multiplier>& callsign_m) { callsign_m.second.clear(); } );
-
   _country_multipliers.clear();
-
-//  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
-//  { pair<string, multiplier>& sm = _exchange_multipliers[n];  //  std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers
-//
-//    sm.second.clear();
-//  }
-
   FOR_ALL(_exchange_multipliers, [] (pair<string, multiplier>& sm) { sm.second.clear(); } );
 }
 

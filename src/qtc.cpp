@@ -6,9 +6,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file qtc.cpp
+/*! \file qtc.cpp
 
-        Classes and functions related to WAE QTCs
+    Classes and functions related to WAE QTCs
 */
 
 #include "diskfile.h"
@@ -83,29 +83,36 @@ const string qtc_entry::to_string(void) const
   return (_utc + SPACE + pad_string(_callsign, CALL_WIDTH, PAD_RIGHT) + SPACE + _serno);
 }
 
+const vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
+{ vector<qtc_entry> rv;
+
+  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv.push_back(pqeb.first); } );
+
+  return rv;
+}
+
+
 // -----------------------------------  qtc_series  ----------------------------
 
 /*! \class  qtc_series
     \brief  A QTC series as defined by the WAE rules
 */
 
-const vector<qtc_entry> qtc_series::sent_qtc_entries(void) const
-{ vector<qtc_entry> rv;
+//const vector<qtc_entry> qtc_series::sent_qtc_entries(void) const
+//{ vector<qtc_entry> rv;
+//
+//  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv.push_back(pqeb.first); } );
+//
+//  return rv;
+//}
 
-//  for_each(_qtc_entries.cbegin(), _qtc_entries.cend(), [&] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv.push_back(pqeb.first); } );
-  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv.push_back(pqeb.first); } );
-
-  return rv;
-}
-
-const vector<qtc_entry> qtc_series::unsent_qtc_entries(void) const
-{ vector<qtc_entry> rv;
-
-//  for_each(_qtc_entries.cbegin(), _qtc_entries.cend(), [&] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv.push_back(pqeb.first); } );
-  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv.push_back(pqeb.first); } );
-
-  return rv;
-}
+//const vector<qtc_entry> qtc_series::unsent_qtc_entries(void) const
+//{ vector<qtc_entry> rv;
+//
+//  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv.push_back(pqeb.first); } );
+//
+//  return rv;
+//}
 
 /*! \brief          Add a qtc_entry
     \param  param   entry to add, and whether the entry has been sent

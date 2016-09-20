@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file qso.cpp
+/*! \file qso.cpp
 
-        Classes and functions related to QSO information
+    Classes and functions related to QSO information
 */
 
 #include "bands-modes.h"
@@ -227,13 +227,11 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = true;
     }
 
-//    if (!processed and (name.substr(0, 5) == "sent-"))
     if (!processed and (starts_with(name, "sent-")))
     { _sent_exchange.push_back( { to_upper(name.substr(5)), value } );
       processed = true;
     }
 
-//    if (!processed and (name.substr(0, 9) == "received-"))
     if (!processed and (starts_with(name, "received-")))
     { const string name_upper = to_upper(name.substr(9));
 
@@ -323,14 +321,12 @@ void QSO::populate_from_log_line(const string& str)
       processed = true;
     }
 
-//    if (!processed and (_log_line_fields[n].substr(0, 5) == "sent-"))
     if (!processed and (starts_with(field, "sent-")))
     { if (sent_index < _sent_exchange.size())
         _sent_exchange[sent_index++].second = vec[n];
       processed = true;
     }
 
-//    if (!processed and (_log_line_fields[n].substr(0, 9) == "received-"))
     if (!processed and (starts_with(field, "received-")))
     { if (received_index < _received_exchange.size())
         _received_exchange[received_index++].value(vec[n]);
@@ -563,7 +559,8 @@ specification tells us otherwise, that's what we do.
       value = _my_call;
       
 // TEXCH-xxx
-    if (name.substr(0, 6) == "TEXCH-")
+//    if (name.substr(0, 6) == "TEXCH-")
+    if (starts_with(name, "TEXCH-"))
     { const string field_name = name.substr(6);
     
       if (contains(field_name, "+"))
@@ -583,7 +580,8 @@ specification tells us otherwise, that's what we do.
     }
 
 // REXCH-xxx
-    if (name.substr(0, 6) == "REXCH-")
+//    if (name.substr(0, 6) == "REXCH-")
+    if (starts_with(name, "REXCH-"))
     { const string field_name = substring(name, 6);
 
       if (contains(field_name, "+"))
@@ -675,8 +673,6 @@ const string QSO::verbose_format(void) const
 */
 const bool QSO::exchange_match(const string& rule_to_match) const
 {
-//  ost << "testing exchange match rule: " << rule_to_match << " on QSO: " << *this << endl;
-
 // remove the [] markers
   const string target = rule_to_match.substr(1, rule_to_match.length() - 2);
   const vector<string> tokens = split_string(target, " ");
@@ -888,7 +884,7 @@ const string QSO::log_line(void)
   for (const auto& field : _received_exchange)
     _log_line_fields.push_back("received-" + field.name());
 
-  ost << "Log line = *" << rv << "*" << endl;
+//  ost << "Log line = *" << rv << "*" << endl;
 
   return rv;
 }

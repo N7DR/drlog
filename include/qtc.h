@@ -98,6 +98,7 @@ public:
   inline const bool valid(void) const
     { return !empty(); }
 
+/// serialize
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _utc
@@ -118,14 +119,16 @@ protected:
 
   std::vector<std::pair<qtc_entry, bool>> _qtc_entries;    ///< the individual QTC entries, and whether each has been sent
 
-  std::string _target;             ///< to whom is the QTC series to be sent?
-  std::string _id;                 ///< QTC ID (e.g., "1/10")
+  std::string _target;              ///< to whom is the QTC series to be sent?
+  std::string _id;                  ///< QTC ID (e.g., "1/10")
 
-  std::string  _date;              ///< yyyy-mm-dd
-  std::string  _utc;               ///< hh:mm:ss
-  std::string  _frequency;         ///< frequency in form xxxxx.y (kHz)
-  std::string  _mode;              ///< CW or PH
-  std::string  _source;            ///< my call
+  std::string _date;                ///< yyyy-mm-dd
+  std::string _utc;                 ///< hh:mm:ss
+  std::string _frequency;           ///< frequency in form xxxxx.y (kHz)
+  std::string _mode;                ///< CW or PH
+  std::string _source;              ///< my call
+
+  const std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const bool sent) const;
 
 public:
 
@@ -133,7 +136,12 @@ public:
   qtc_series(void)
     { }
 
-/// construct from a vector of qtc_entry
+/*! \brief              Construct from a vector of qtc_entry
+    \param  vec_qe      the vector of type <i>/qtc_entry</i>
+    \param  mode_str    mode
+    \param  my_call     my call
+    \param  b           whether the QTC has been sent
+*/
   qtc_series(const std::vector<qtc_entry>& vec_qe, const std::string& mode_str, const std::string& my_call, const bool b = QTC_UNSENT) :
     _mode(mode_str),
     _source(my_call)
@@ -160,10 +168,12 @@ public:
     { *this = qtc_series(); }
 
 /// return all the sent QTCs
-  const std::vector<qtc_entry> sent_qtc_entries(void) const;
+  inline const std::vector<qtc_entry> sent_qtc_entries(void) const
+    { return _sent_or_unsent_qtc_entries(true); }
 
 /// return all the unsent QTCs
-  const std::vector<qtc_entry> unsent_qtc_entries(void) const;
+  inline const std::vector<qtc_entry> unsent_qtc_entries(void) const
+    { return _sent_or_unsent_qtc_entries(false); }
 
 /// return frequency in form xxxxx.y (kHz)
   inline const std::string frequency_str(void) const

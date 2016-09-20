@@ -11,9 +11,9 @@
 #ifndef LOG_H
 #define LOG_H
 
-/*!     \file log.h
+/*! \file log.h
 
-        Classes and functions related to the log
+    Classes and functions related to the log
 */
 
 #include "cty_data.h"
@@ -86,25 +86,11 @@ public:
   void operator-=(const unsigned int n);
 
 /*! \brief      Remove most-recent qso
-
-    Does nothing if there are no QSOs in the log
-*/
-//  inline void remove_last_qso(void)
-//    { SAFELOCK(_log);
-//
-//      *this -= size();    // remember, numbering is wrt 1
-//    }
-
-/*! \brief      Remove most-recent qso
     \return     the removed QSO
 
     Does nothing and returns an empty QSO if there are no QSOs in the log
 */
   const QSO remove_last_qso(void);
-  //    { SAFELOCK(_log);
-  //
-  //      *this -= size();    // remember, numbering is wrt 1
-  //    }
 
 /*! \brief                  Remove several recent QSOs
     \param  n_to_remove     number of QSOs to remove
@@ -128,16 +114,19 @@ public:
 */
   const unsigned int n_worked(const std::string& call) const;
 
-/// has a particular call been worked at all?
+/*! \brief          Has a particular call been worked at all?
+    \param  call    target callsign
+    \return         whether <i>call</i> has been worked
+*/
   inline const bool qso_b4(const std::string& call) const
     { SAFELOCK(_log);
       return (_log.lower_bound(call) != _log.upper_bound(call)); 
     }
     
-/*!     \brief          Has a call been worked on a particular band?
-        \param  call    target callsign
-        \param  b       target band
-        \return         whether <i>call</i> has been worked on <i>b</i>
+/*! \brief          Has a call been worked on a particular band?
+    \param  call    target callsign
+    \param  b       target band
+    \return         whether <i>call</i> has been worked on <i>b</i>
 */
   const bool qso_b4(const std::string& call, const BAND b) const;
 

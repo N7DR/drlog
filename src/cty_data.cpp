@@ -1192,20 +1192,17 @@ ostream& operator<<(ostream& ost, const russian_data_per_substring& rd)
 */
 
 /// construct from a file
+
 russian_data::russian_data(const vector<string>& path, const string& filename)
 { try
   { const vector<string> lines = to_lines(replace_char(read_file(path, filename), '\t', ' '));
 
     for (const auto& line : lines)
-    { //ost << "processing line: " << line << endl;
+    { if (!starts_with(line, "//"))
+      { const vector<string> substrings = remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","));
 
-      const vector<string> substrings = remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","));
-
-      for (const auto& sstring : substrings)
-      { _data.insert( { sstring, russian_data_per_substring(sstring, line) } );
-        //ost << "inserted data for substring: " << sstring << endl;
-        //ost << russian_data_per_substring(sstring, line) << endl;
-        //ost << "attempt to find key 1A: " << (_data.find("1A") == _data.end() ? "failed" : "succeeded") << endl;
+        for (const auto& sstring : substrings)
+          _data.insert( { sstring, russian_data_per_substring(sstring, line) } );
       }
     }
   }
