@@ -83,9 +83,10 @@ const string bearing(const string& callsign);   ///< Return the bearing to a sta
 
 const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules);                  ///< Populate QSO with correct exchange mults
 const string callsign_mult_value(const string& callsign_mult_name, const string& callsign); ///< Obtain value corresponding to a type of callsign mult from a callsign
+const bool change_cw_speed(const keyboard_event& e);                                        ///< change CW speed as function of keyboard event
 void cw_speed(const unsigned int new_speed);                                                ///< Set speed of computer keyer
 
-void debug_dump(void);                                                                          ///< Dump useful information to disk
+const bool debug_dump(void);                                                                          ///< Dump useful information to disk
 const MODE default_mode(const frequency& f);                                                    ///< get the default mode on a frequency
 void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);     ///< Display band and mode
 void display_call_info(const string& callsign, const bool display_extract = DISPLAY_EXTRACT);   ///< Update several call-related windows
@@ -98,7 +99,7 @@ void enter_sap_mode(void);                          ///< Enter SAP mode
 void exit_drlog(void);                              ///< Cleanup and exit
 const string expand_cw_message(const string& msg);  ///< Expand a CW message, replacing special characters
 
-void fast_cw_bandwidth(void);                       ///< set CW bandwidth to appropriate value for CQ/SAP mode
+const bool fast_cw_bandwidth(void);                       ///< set CW bandwidth to appropriate value for CQ/SAP mode
 
 const string hhmmss(void);                          ///< Obtain the current time in HHMMSS format
 
@@ -108,7 +109,7 @@ const string match_callsign(const vector<pair<string /* callsign */,
 void populate_win_info(const string& str);                          ///< Populate the information window
 void process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
 const bool process_keypress_F5(void);                               ///< process key F5
-void p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
+const bool p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
 void p3_span(const unsigned int khz_span);                          ///< set the span of a P3
 
 void rebuild_history(const logbook& logbk,
@@ -119,14 +120,15 @@ void rebuild_history(const logbook& logbk,
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
-void rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
+const bool rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 
 void start_of_thread(void);                                                     ///< Increase the counter for the number of running threads
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
-void swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
+const bool swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
 
 void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
-void toggle_drlog_mode(void);                                                       ///< Toggle between CQ mode and SAP mode
+const bool toggle_drlog_mode(void);                       ///< Toggle between CQ mode and SAP mode
+const bool toggle_cw(void);                         ///< Toggle CW on/off
 
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
@@ -2350,7 +2352,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
   if (!processed and ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
-  { if (cw_p)
+  { processed = change_cw_speed(e);
+/*
+    if (cw_p)
     { int change = (e.is_control() ? 1 : 3);
 
       if (e.symbol() == XK_Prior)
@@ -2360,15 +2364,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     }
 
     processed = true;
+*/
   }
 
 // ALT-K -- toggle CW
-  if (!processed and e.is_alt('k') and cw_p)
-  { cw_p->toggle();
+  if (!processed and e.is_alt('k') /* and cw_p */)
+  { //cw_p->toggle();
 
-    win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );   // update display
+    //win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );   // update display
 
-    processed = true;
+    //processed = true;
+    processed = toggle_cw();
   }
 
 // ESCAPE
@@ -2393,8 +2399,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // TAB -- switch between CQ and SAP mode
   if (!processed and (e.symbol() == XK_Tab))
-  { toggle_drlog_mode();
-    processed = true;
+  { processed = toggle_drlog_mode();
+//    processed = true;
   }
 
 // F10 -- toggle filter_remaining_country_mults
@@ -2460,8 +2466,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ENTER, ALT-ENTER -- a lot of complicated stuff
   if (!processed and (e.is_unmodified() or e.is_alt()) and (e.symbol() == XK_Return))
-  { //const string contents = remove_peripheral_spaces( rig.split_enabled() ? win_bcall.read() : win.read() );
-    const string contents = remove_peripheral_spaces( win.read() );
+  { const string contents = remove_peripheral_spaces( win.read() );
 
 // if empty, send CQ #1, if in CQ mode
     if (contents.empty())
@@ -3205,9 +3210,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are very slow
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
-  { rit_control(e);
+  { processed = rit_control(e);
 
-    processed = true;
+//    processed = true;
   }
 
 // ALT-Y -- delete last QSO
@@ -3339,17 +3344,13 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ALT-KP+ -- increment octothorpe
   if (!processed and e.is_alt() and e.symbol() == XK_KP_Add)
-  { //win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(++octothorpe);
-    win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width());
-
+  { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width());
     processed = true;
   }
 
 // ALT-KP- -- decrement octothorpe
   if (!processed and e.is_alt() and e.symbol() == XK_KP_Subtract)
-  { //win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= serial_number_string(--octothorpe);
-    win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width());
-
+  { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width());
     processed = true;
   }
 
@@ -3380,26 +3381,27 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ` -- SWAP RIT and XIT
   if (!processed and e.is_char('`'))
-  { swap_rit_xit();
-    processed = true;
+  { processed = swap_rit_xit();
+//    processed = true;
   }
 
 // ALT-P -- Dump P3
   if (!processed and e.is_alt('p') and context.p3())
-  { p3_screenshot();
-    processed = true;
+  { processed = p3_screenshot();
+//    processed = true;
   }
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-  { dump_screen();
-    processed = true;
+  { //dump_screen();
+    //processed = true;
+    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
   }
 
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
-  { debug_dump();
-    processed = true;
+  { processed = debug_dump();
+//    processed = true;
   }
 
 // ALT-Q -- send QTC
@@ -3558,8 +3560,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // CTRL-B -- fast CW bandwidth
   if (!processed and (e.is_control('b')))
-  { fast_cw_bandwidth();
-    processed = true;
+  { processed = fast_cw_bandwidth();
+//    processed = true;
   }
 
 // F1 -- first step in SAP QSO during run
@@ -3810,7 +3812,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
   if (!processed and ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
-  { if (cw_p)
+  { processed = change_cw_speed(e);
+/*
+    if (cw_p)
     { int change = (e.is_control() ? 1 : 3);
 
       if (e.symbol() == XK_Prior)
@@ -3820,15 +3824,17 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     }
 
     processed = true;
+*/
   }
 
 // ALT-K -- toggle CW
-  if (!processed and e.is_alt('k') and cw_p)
-  { cw_p->toggle();
+  if (!processed and e.is_alt('k') /* and cw_p */)
+  { //cw_p->toggle();
 
-    win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );
+    //win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );
 
-    processed = true;
+    //processed = true;
+    processed = toggle_cw();
   }
 
 // ESCAPE
@@ -3893,11 +3899,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     string canonical_prefix = location_db.canonical_prefix(call_contents);
     const string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
     const vector<string> exchange_field_values = split_string(exchange_contents, ' ');
+    string from_callsign = call_contents;
 
 // if there's an explicit replacement call, we might need to change the template
     for (const auto& value : exchange_field_values)
       if ( contains(value, ".") and (value.size() != 1) )    // ignore a field that is just "."
-        canonical_prefix = location_db.canonical_prefix(remove_char(value, '.'));
+      { from_callsign = remove_char(value, '.');
+        canonical_prefix = location_db.canonical_prefix(from_callsign);
+      }
 
     const vector<exchange_field> exchange_template = rules.unexpanded_exch(canonical_prefix, cur_mode);
     unsigned int n_optional_fields = 0;
@@ -4230,8 +4239,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // SHIFT -- RIT control
 // RIT changes via hamlib, at least on the K3, are *very* slow
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
-  { rit_control(e);
-    processed = true;
+  { processed = rit_control(e);
+//    processed = true;
   }
 
 // ALT-S -- toggle sub receiver
@@ -4249,14 +4258,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // ` -- SWAP RIT and XIT
   if (!processed and e.is_char('`'))
-  { swap_rit_xit();
-    processed = true;
+  { processed = swap_rit_xit();
+//    processed = true;
   }
 
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
-  { debug_dump();
-    processed = true;
+  { processed = debug_dump();
+//    processed = true;
   }
 
 // CTRL-CURSOR LEFT -- left one word
@@ -4472,8 +4481,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-  { dump_screen();
-    processed = true;
+  { //dump_screen();
+    //processed = true;
+    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
   }
 
 // CTRL-ENTER -- repeat last message if in CQ mode
@@ -4484,8 +4494,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // CTRL-B -- fast CW bandwidth
   if (!processed and (e.is_control('b')))
-  { fast_cw_bandwidth();
-    processed = true;
+  { processed = fast_cw_bandwidth();
+//    processed = true;
   }
 
 // F2 toggle: split and force SAP mode
@@ -4833,14 +4843,15 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
-  { debug_dump();
-    processed = true;
+  { processed = debug_dump();
+//    processed = true;
   }
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-  { dump_screen();
-    processed = true;
+  { //dump_screen();
+    //processed = true;
+    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
   }
 }
 
@@ -4922,11 +4933,13 @@ void enter_sap_mode(void)
 }
 
 /// toggle between CQ mode and SAP mode
-void toggle_drlog_mode(void)
+const bool toggle_drlog_mode(void)
 { if (SAFELOCK_GET(drlog_mode_mutex, drlog_mode) == CQ_MODE)
     enter_sap_mode();
   else
     enter_cq_mode();
+
+  return true;
 }
 
 /*! \brief              Update the REMAINING CALLSIGN MULTS window for a particular mult
@@ -5844,7 +5857,7 @@ void start_of_thread(void)
 void exit_drlog(void)
 { ost << "Inside exit_drlog()" << endl;
 
-  dump_screen("screendump-EXIT");
+  dump_screen("screenshot-EXIT");
 
   archive_data();
 
@@ -5963,7 +5976,7 @@ const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
 
     RIT changes via hamlib, at least on the K3, are *very* slow
 */
-void rit_control(const keyboard_event& e)
+const bool rit_control(const keyboard_event& e)
 { const int change = (e.symbol() == XK_Shift_L ? -context.shift_delta() : context.shift_delta());
   int poll = context.shift_poll();
 
@@ -5989,10 +6002,12 @@ void rit_control(const keyboard_event& e)
   { alert("Error in rig communication while setting RIT offset");
     ok_to_poll_k3 = true;
   }
+
+  return true;
 }
 
 /// switch the states of RIT and XIT
-void swap_rit_xit(void)
+const bool swap_rit_xit(void)
 { if (rig.rit_enabled())
   { rig.xit_enable();
     rig.rit_disable();
@@ -6005,6 +6020,8 @@ void swap_rit_xit(void)
     else
       rig.rit_enable();
   }
+
+  return true;
 }
 
 /*! \brief          Add a QSO into the all the objects that need to know about it
@@ -6143,7 +6160,7 @@ void display_call_info(const string& callsign, const bool display_extract)
 
     The user should check that a P3 is available (context.p3()) before calling this function.
 */
-void p3_screenshot(void)
+const bool p3_screenshot(void)
 { static pthread_t thread_id_p3_screenshot;
 
   try
@@ -6153,6 +6170,8 @@ void p3_screenshot(void)
   catch (const pthread_error& e)
   { ost << e.reason() << endl;
   }
+
+  return true;
 }
 
 /// Thread function to generate a screenshot of a P3 and store it in a BMP file
@@ -6303,7 +6322,7 @@ void* spawn_rbn(void* vp)
     Performs a screenshot dump, and then dumps useful information
     to the debug file.
 */
-void debug_dump(void)
+const bool debug_dump(void)
 { ost << "*** DEBUG DUMP ***" << endl;
 
   ost << "Screenshot dumped to: " << dump_screen() << endl;
@@ -6316,6 +6335,8 @@ void debug_dump(void)
 
     ost << str;
   }
+
+  return true;
 }
 
 /*! \brief                  Dump a screen image to BMP file
@@ -6797,7 +6818,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
 // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
   if (!processed and ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
-  { if (cw)
+  { processed = change_cw_speed(e);
+/*
+    if (cw)
     { int change = (e.is_control() ? 1 : 3);
 
       if (e.symbol() == XK_Prior)
@@ -6807,22 +6830,25 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     }
 
     processed = true;
+*/
   }
 
 // ALT-K -- toggle CW
   if (!processed and cw and e.is_alt('k'))
-  { cw_p->toggle();
+  { //cw_p->toggle();
 
-    win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );
+    //win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );
 
-    processed = true;
+    //processed = true;
+    processed = toggle_cw();
   }
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-  { dump_screen();
+  { //dump_screen();
 
-    processed = true;
+    //processed = true;
+    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
   }
 }
 
@@ -6833,9 +6859,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 */
 void cw_speed(const unsigned int new_speed)
 { if (cw_p)
-  { //ost << "Setting speed to " << new_speed << endl;
-
-    cw_p->speed(new_speed);
+  { cw_p->speed(new_speed);
     win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (to_string(new_speed) + " WPM");
 
     try
@@ -6866,9 +6890,9 @@ const string active_window_name(void)
 }
 
 /*! \brief              Display a callsign in the NEARBY window, in the correct colour
-    \param  callsign    Call to display
+    \param  callsign    call to display
 
-    Optionally displays log extract data
+    Also displays log extract data if context.nearby_extract() is true
 */
 void display_nearby_callsign(const string& callsign)
 { if (callsign.empty())
@@ -7050,16 +7074,20 @@ void p3_span(const unsigned int khz_span)
 }
 
 /// set CW bandwidth to appropriate value for CQ/SAP mode
-void fast_cw_bandwidth(void)                       ///< set CW bandwidth to appropriate value for CQ/SAP mode
+const bool fast_cw_bandwidth(void)
 { if (safe_get_mode() == MODE_CW)
   { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
 
     rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
   }
+
+  return true;
 }
 
 /*! \brief          Process a change in the offset of the bandmaps
     \param  symbol  symbol corresponding to key that was pressed
+
+    Performs an immediate update on the screen
 */
 void process_change_in_bandmap_column_offset(const KeySym symbol)
 { bandmap& bm = bandmaps[safe_get_band()];
@@ -7090,7 +7118,15 @@ const MODE default_mode(const frequency& f)
   }
 }
 
-// QSL information from old QSOs
+/*! \brief          Update the QSLS window
+    \param  str     callsign to use for the update
+
+    Uses the data from the old ADIF log.
+    The contents of the QSLS window are in the form aaa/bbb/ccc:
+      aaa number of QSLs for the call <i>str</i>
+      bbb number of QSOs for the call <i>str</i>
+      ccc number of QSOs on the current band for the call <i>str</i>
+*/
 void update_qsls_window(const string& str)
 { win_qsls < WINDOW_CLEAR <= "QSLs: ";
 
@@ -7126,7 +7162,9 @@ void update_qsls_window(const string& str)
   }
 }
 
-// process an F5 keystroke in the CALL or EXCHANGE windows
+/*! \brief      Process an F5 keystroke in the CALL or EXCHANGE windows
+    \return     always returns <i>true</i>
+*/
 const bool process_keypress_F5(void)
 { if (rig.split_enabled())      // split is enabled; go back to situation before it was enabled
   { rig.split_disable();
@@ -7209,4 +7247,34 @@ void update_qtc_queue_window(void)
   }
 
   win_qtc_queue.refresh();
+}
+
+// ALT-K -- toggle CW
+const bool toggle_cw(void)
+{ if (cw_p)
+  { cw_p->toggle();
+
+    win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );   // update display
+
+    return true;
+  }
+  else
+    return false;
+}
+
+// PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+const bool change_cw_speed(const keyboard_event& e)
+{ bool rv = false;
+
+  if (cw_p)
+  { int change = (e.is_control() ? 1 : 3);
+
+    if (e.symbol() == XK_Prior)
+      change = -change;
+
+    cw_speed(cw_p->speed() - change);  // effective immediately
+    rv = true;
+  }
+
+  return rv;
 }

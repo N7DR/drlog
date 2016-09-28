@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file cty_data.cpp
+/*! \file cty_data.cpp
 
-        Objects and functions related to CTY.DAT files
+    Objects and functions related to CTY.DAT files
 */
 
 #include "cty_data.h"
@@ -217,7 +217,7 @@ alternative_country_info::alternative_country_info(const string& record, const s
   }
 }
 
-// ostream << alternative_country_info
+/// ostream << alternative_country_info
 ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 { ost << "alias: " << aci.identifier() << endl
       << "CQ zone: " << aci.cq_zone() << endl
@@ -256,10 +256,10 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 
 // -----------  location_info  ----------------
 
-/*!     \class location_info
-        \brief Location information associated with a call, prefix or country
+/*! \class location_info
+    \brief Location information associated with a call, prefix or country
         
-        This is basically just a simple tuple
+    This is basically just a simple tuple
 */
 
 /// default constructor

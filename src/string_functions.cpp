@@ -608,7 +608,12 @@ const string create_centred_string(const string& str, const unsigned int width)
   return (l + str + r);
 }
 
-/// get the last character in a string
+/*! \brief      Get the last character in a string
+    \param  cs  source string
+    \return     last character in <i>cs</i>
+
+    Throws exception if <i>cs</i> is empty
+*/
 const char last_char(const string& cs)
 { if (cs.empty())
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character in empty string");
@@ -616,16 +621,26 @@ const char last_char(const string& cs)
   return cs[cs.length() - 1];
 }
 
-/// the penultimate character in a string
-const char penultimate_char(const std::string& cs)
+/*! \brief      Get the penultimate character in a string
+    \param  cs  source string
+    \return     penultimate character in <i>cs</i>
+
+    Throws exception if <i>cs</i> is empty or contains only one character
+*/
+const char penultimate_char(const string& cs)
 { if (cs.length() < 2)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string");
     
   return cs[cs.length() - 2];
 }
 
-/// the antepenultimate character in a string
-const char antepenultimate_char(const std::string& cs)
+/*! \brief      Get the antepenultimate character in a string
+    \param  cs  source string
+    \return     antepenultimate character in <i>cs</i>
+
+    Throws exception if <i>cs</i> contains fewer than two characters
+*/
+const char antepenultimate_char(const string& cs)
 { if (cs.length() < 3)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string");
     
@@ -793,9 +808,9 @@ const size_t n_chars(const string& str)
   return rv;
 }
 
-/*!     \brief  Does a string contain a legal dotted-decimal IPv4 address
-        \param  cs  Original string
-        \return  Whether <i>cs</i> contains a legal dotted decimal IPv4 address
+/*! \brief      Does a string contain a legal dotted-decimal IPv4 address
+    \param  cs  original string
+    \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
 const bool is_legal_ipv4_address(const string& cs)
 { static const string separator(".");
@@ -834,13 +849,13 @@ const bool is_legal_ipv4_address(const string& cs)
   return true;
 }
 
-/*!     \brief  Convert a long to dotted decimal string
-        \param  val     Original value
-        \return Dotted decimal string
+/*! \brief          Convert a long to dotted decimal string
+    \param  val     original value
+    \return         dotted decimal string
         
-        Assumes that a long is four octets
+    Assumes that a long is four octets
 */
-string convert_to_dotted_decimal(const uint32_t val)
+const string convert_to_dotted_decimal(const uint32_t val)
 { static const string separator(".");
 
 // put into network order (so that we can guarantee the order of the octets in the long)
@@ -872,46 +887,6 @@ const bool is_legal_value(const string& value, const string& legal_values, const
 
   return (find(vec.begin(), vec.end(), value) != vec.end());
 }
-
-/*! \brief      Function to compare two characters in callsign order
-    \param  c1  first character
-    \param  c2  second character
-    \return     whether <i>c1</i> comes before <i>c2</i>
-
-    changes to ordinary sort order:
-        '0' is the highest digit
-        numbers sort after letters
-        '/' comes after all digits and letters
-        '-' comes after all digits and letters; here because names of log files, at least as used by CQ, use "-" instead of "/"
-*/
-#if 0
-const bool compchar(const char c1, const char c2)
-{ if (c1 == c2)
-    return false;
-
-  if ( (c1 == '/') or (c1 == '-') )
-    return false;
-
-  if ( (c2 == '/') or (c2 == '-') )
-    return true;
-
-  if (isalpha(c1) and isdigit(c2))
-    return true;
-
-  if (isdigit(c1) and isalpha(c2))
-    return false;
-
-  if (isdigit(c1) and isdigit(c2))
-  { if (c1 == '0')
-      return false;
-
-    if (c2 == '0')
-      return true;
-  }
-
-  return (c1 < c2);
-}
-#endif
 
 /// return true if call1 < call2, according to callsign sort order
 const bool compare_calls(const string& call1, const string& call2)
@@ -970,11 +945,13 @@ const bool compare_calls(const string& call1, const string& call2)
   return false;
 }
 
-/*! \brief does a string contain any letters?
+/*! \brief          Does a string contain any letters?
+    \param  str     string to test
+    \return         whether <i>str</i> contains any letters
 
     This should be faster than the find_next_of() or C++ is_letter or similar generic functions
 */
-const bool contains_letter(const std::string& str)
+const bool contains_letter(const string& str)
 { for (unsigned int n = 0; n < str.size(); ++n)
   { const char& c = str[n];
 
@@ -985,11 +962,13 @@ const bool contains_letter(const std::string& str)
   return false;
 }
 
-/*! \brief does a string contain any digits?
+/*! \brief          Does a string contain any digits?
+    \param  str     string to test
+    \return         whether <i>str</i> contains any digits
 
     This should be faster than the find_next_of() or C++ is_digit or similar generic functions
 */
-const bool contains_digit(const std::string& str)
+const bool contains_digit(const string& str)
 { for (unsigned int n = 0; n < str.size(); ++n)
   { const char& c = str[n];
 

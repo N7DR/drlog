@@ -260,6 +260,12 @@ parsed_exchange::parsed_exchange(const string& canonical_prefix, const contest_r
     first_time = false;
   }
 
+  if (is_ss)                // SS is oh so special
+  { //parsed_ss_exchange exch;
+
+
+  }
+
 // how many fields are optional?
   unsigned int n_optional_fields = 0;
   FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())

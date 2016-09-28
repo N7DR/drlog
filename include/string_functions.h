@@ -413,13 +413,28 @@ inline const std::string create_string(const char c, const int n = 1)
 */
 const std::string create_centred_string(const std::string& str, const unsigned int width);
 
-/// get the last character in a string
+/*! \brief      Get the last character in a string
+    \param  cs  source string
+    \return     last character in <i>cs</i>
+
+    Throws exception if <i>cs</i> is empty
+*/
 const char last_char(const std::string& cs);
 
-/// get the penultimate character in a string
+/*! \brief      Get the penultimate character in a string
+    \param  cs  source string
+    \return     penultimate character in <i>cs</i>
+
+    Throws exception if <i>cs</i> is empty or contains only one character
+*/
 const char penultimate_char(const std::string& cs);
 
-/// get the antepenultimate character in a string
+/*! \brief      Get the antepenultimate character in a string
+    \param  cs  source string
+    \return     antepenultimate character in <i>cs</i>
+
+    Throws exception if <i>cs</i> contains fewer than two characters
+*/
 const char antepenultimate_char(const std::string& cs);
 
 /*! \brief          Get the terminating part of a string
@@ -541,7 +556,7 @@ const bool is_legal_ipv4_address(const std::string& cs);
         
     Assumes that a long is four octets
 */
-std::string convert_to_dotted_decimal(const uint32_t val);
+const std::string convert_to_dotted_decimal(const uint32_t val);
 
 /*! \brief                  Is a string a legal value from a list?
     \param  value           target string
@@ -607,6 +622,5 @@ public:
     x_error(n, s)
   { }
 };
-
 
 #endif    // STRING_FUNCTIONS_H

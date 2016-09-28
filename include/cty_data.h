@@ -11,9 +11,9 @@
 #ifndef CTY_DATA_H
 #define CTY_DATA_H
 
-/*!     \file cty_data.h
+/*! \file cty_data.h
 
-        Objects and functions related to CTY.DAT files
+    Objects and functions related to CTY.DAT files
 */
 
 #include "macros.h"
@@ -51,8 +51,8 @@ const int RUSSIAN_INVALID_SUBSTRING            = -1,    ///< source substring do
 
 // -----------  value ----------------
 
-/*!     \class value
-        \brief A single value that may or may not be valid
+/*! \class value
+    \brief A single value that may or may not be valid
 */
 
 template <typename T>
@@ -130,12 +130,12 @@ protected:
 
 public:
 
-/*!     \brief                      Construct from a string and a country ID
-        \param  record              record from which to construct the alternative information
-        \param  caconical_prefix    canonical country prefix
+/*! \brief                      Construct from a string and a country ID
+    \param  record              record from which to construct the alternative information
+    \param  caconical_prefix    canonical country prefix
 
-        <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
-        is optional
+    <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
+    is optional
 */
   alternative_country_info(const std::string& record, const std::string& id = "");
 
@@ -183,7 +183,7 @@ protected:
 
 public:
   
-/*! \brief  construct from a string
+/*! \brief          Construct from a string
     \param  record  a record from the CTY file
 
     The string is assumed to contain a single record. We don't catch all
@@ -317,9 +317,9 @@ protected:
 
 public:
 
-/*! \brief                  Construct from a prefix and a line
-    \param  sbstring        the prefix for the Russian district
-    \param  line            line from Russian data file
+/*! \brief              Construct from a prefix and a line
+    \param  sbstring    the prefix for the Russian district
+    \param  line        line from Russian data file
 */
   russian_data_per_substring(const std::string& sbstring, const std::string& line);
 

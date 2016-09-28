@@ -1308,21 +1308,19 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       }
     }
 
-    if (starts_with(testline, "MESSAGE CQ 1"))
+    if (LHS == "MESSAGE CQ 1")
     { const vector<string> tokens = split_string(testline, "=");
 
       if (tokens.size() == 2)
         _message_cq_1 = tokens[1];
     }
 
-    if (starts_with(testline, "MESSAGE CQ 2"))
+    if (LHS == "MESSAGE CQ 2")
     { const vector<string> tokens = split_string(testline, "=");
 
       if (tokens.size() == 2)
         _message_cq_2 = tokens[1];
     }
-
-//    ost << "end of processing line: " << testline << endl;
   }
 
 // set some new defaults if we haven't explicitly set them
@@ -1441,8 +1439,6 @@ drlog_context::drlog_context(const std::string& filename) :
   _do_not_show_filename(),                    // no do-not-show file
   _drmaster_filename("drmaster"),             // name of the drmaster file
   _exchange("RST"),                           // exchange is just RST
-//  _exchange_cw(),                             // no default CW exchange
-//  _exchange_ssb(),                            // no default SSB exchange
   _exchange_fields_filename(),                // file that holds regex templates for exchange fields
   _exchange_mults_per_band(false),            // any exchange mults are once-only
   _exchange_mults_per_mode(false),            // any exchange mults are once-only
@@ -1540,9 +1536,9 @@ drlog_context::drlog_context(const std::string& filename) :
   }
 }
 
-/*! \brief              information pertaining to a particular window
-    \param      name    name of window
-    \return             location, size and colour information
+/*! \brief          Information pertaining to a particular window
+    \param  name    name of window
+    \return         location, size and colour information
 */
 const window_information drlog_context::window_info(const string& name) const
 { const auto cit = _windows.find(name);
