@@ -1,4 +1,4 @@
-// $Id: qso.cpp 126 2016-03-18 23:22:48Z  $
+// $Id: qso.cpp 129 2016-09-29 21:13:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -381,7 +381,7 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
 // for now, the last parameter is ignored. Try it this way to see if the results are good;
 // if they aren't, then we need to include a separate branch for "true" in the parsed_exchange
 // constructor
-  const parsed_exchange pexch(canonical_prefix(), rules, mode(), exchange_field_values, true);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
+  const parsed_exchange pexch(callsign(), canonical_prefix(), rules, mode(), exchange_field_values, true);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 
   if (!pexch.valid())
   { alert("Unable to parse exchange in log line");
@@ -769,6 +769,21 @@ const string QSO::log_line(void)
 {
 //  ost << "Inside log_line()" << endl;
 
+  static const map<string, unsigned int> field_widths { { "CHECK",    2 },
+                                                        { "CQZONE",   2 },
+                                                        { "CWPOWER",  3 },
+                                                        { "DOK",      1 },
+                                                        { "ITUZONE",  2 },
+                                                        { "PREC",     1 },
+                                                        { "RDA",      4 },
+                                                        { "RS",       2 },
+                                                        { "RST",      3 },
+                                                        { "RST",      3 },
+                                                        { "SECTION",  3 },
+                                                        { "SSBPOWER", 4 },
+                                                        { "UKEICODE", 2 },
+                                                        { "10MSTATE", 3 }
+                                                      };
   static const size_t CALL_FIELD_LENGTH = 12;
   string rv;
 
@@ -781,11 +796,22 @@ const string QSO::log_line(void)
 
   FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += " " + se.second; });
 
-// print in same order the are present in the config file
+// print in same order they are present in the config file
   for (const auto& field : _received_exchange)
   { unsigned int field_width = QSO_MULT_WIDTH;
     const string& name = field.name();
 
+// skip the CALL field from SS, since it's already on the line
+    if (name != "CALL" and name != "CALLSIGN")
+    { try
+      { field_width = field_widths.at(name);
+      }
+
+      catch (...)
+      {
+      }
+
+#if 0
     if (name == "CQZONE")
       field_width = 2;
 
@@ -797,6 +823,9 @@ const string QSO::log_line(void)
 
     if (name == "ITUZONE")
       field_width = 2;
+
+    if (name == "PREC")
+      field_width = 1;
 
     if (name == "RS")
       field_width = 2;
@@ -818,8 +847,10 @@ const string QSO::log_line(void)
 
     if (name == "10MSTATE")
       field_width = 3;
+#endif
 
-    rv += " " + pad_string(field.value(), field_width);
+      rv += " " + pad_string(field.value(), field_width);
+    }
   }
 
 // mults
@@ -839,6 +870,15 @@ const string QSO::log_line(void)
     unsigned int field_width = QSO_MULT_WIDTH;
     const string& name = field.name();
 
+    try
+    { field_width = field_widths.at(name);
+    }
+
+    catch (...)
+    {
+    }
+
+#if 0
     if (name == "CQZONE" or name == "ITUZONE")
       field_width = 2;
 
@@ -854,6 +894,9 @@ const string QSO::log_line(void)
     if (name == "RDA")
       field_width = 4;
 
+    if (name == "SECTION")
+      field_width = 3;
+
     if (name == "SERNO")
       field_width = 4;
 
@@ -862,6 +905,7 @@ const string QSO::log_line(void)
 
     if (name == "10MSTATE")
       field_width = 3;
+#endif
 
     rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
   }

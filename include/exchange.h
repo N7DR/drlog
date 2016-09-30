@@ -1,4 +1,4 @@
-// $Id: exchange.h 122 2016-02-06 21:00:23Z  $
+// $Id: exchange.h 129 2016-09-29 21:13:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -81,7 +81,7 @@ protected:
   unsigned int _serno;          ///< serial number
   char         _prec;           ///< precedence
   std::string  _callsign;       ///< callsign
-  unsigned int _check;          ///< check
+  std::string  _check;          ///< check (2 digits)
   std::string  _section;        ///< section
 
 /*! \brief          Does a string possibly contain a serial number?
@@ -106,13 +106,15 @@ protected:
 */
   const bool _is_possible_check(const std::string& str) const;
 
+  const bool _is_possible_callsign(const std::string& str) const;
+
 public:
 
 /*! \brief                  Constructor
     \param  call            callsign
     \param  received_str    exchange string
 */
-  parsed_ss_exchange(const std::string& call, const std::string& received_str);
+  parsed_ss_exchange(const std::string& call, const std::vector<std::string>& received_fields);
 
   READ(serno);          ///< serial number
   READ(prec);           ///< precedence
@@ -120,6 +122,9 @@ public:
   READ(check);          ///< check
   READ(section);        ///< section
 };
+
+/// ostream << parsed_exchange_field
+std::ostream& operator<<(std::ostream& ost, const parsed_ss_exchange& pse);
 
 // -------------------------  parsed_exchange  ---------------------------
 
@@ -154,7 +159,7 @@ public:
     \param  received_values     the received values, in the order that they were received
     ***
 */
-  parsed_exchange(const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values, const bool truncate_received_values = false);
+  parsed_exchange(const std::string& from_callsign, const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values, const bool truncate_received_values = false);
 
   READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window

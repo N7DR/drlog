@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 128 2016-04-16 15:47:23Z  $
+// $Id: drlog.cpp 129 2016-09-29 21:13:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -227,6 +227,8 @@ drlog_context           context;                            ///< context taken f
 exchange_field_database exchange_db;                        ///< dynamic database of exchange field values for calls; automatically thread-safe
 
 bool                    filter_remaining_country_mults(false);  ///< whether to apply filter to remaining country mults
+
+bool                    is_ss(false);                       ///< ss is special
 
 logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 
@@ -624,6 +626,18 @@ int main(int argc, char** argv)
     catch (...)
     { cerr << "Error generating rules" << endl;
       exit(-1);
+    }
+
+// is it SS?
+    if (rules.n_modes() == 1)
+    { const vector<exchange_field> exchange_template = rules.unexpanded_exch("K", *(rules.permitted_modes().cbegin()));
+
+      for (const auto& ef : exchange_template)
+      { //ost << "ef.name() = " << ef.name() << endl;
+
+        if (ef.name() == "PREC")
+          is_ss = true;
+      }
     }
 
 // MESSAGE window (do this as early as is reasonable so that it's available for messages)
@@ -1475,6 +1489,70 @@ int main(int argc, char** argv)
 //  sleep(5);
 
 //  keyboard.push_key_press('/');
+
+// test SS echange stuff
+#if 0
+    { string line = "1A NQ0I 71 CO";
+      string callsign = "NQ0I";
+      vector<string> fields = split_string(line, " ");
+
+      ost << line << endl;
+      parsed_ss_exchange pse(callsign, fields);
+
+      ost << pse << endl;
+
+      line = "1A N7DR 71 CO";
+      ost << line << endl;
+      fields = split_string(line, " ");
+      pse = parsed_ss_exchange(callsign, fields);
+      ost << pse << endl;
+
+      line = "10A N7DR 71 CO";
+      ost << line << endl;
+      fields = split_string(line, " ");
+      pse = parsed_ss_exchange(callsign, fields);
+      ost << pse << endl;
+
+      line = "10A N7DR 81 CO 71";
+      ost << line << endl;
+      fields = split_string(line, " ");
+      pse = parsed_ss_exchange(callsign, fields);
+      ost << pse << endl;
+
+      line = "71 CO 10A N7DR";
+      ost << line << endl;
+      fields = split_string(line, " ");
+      pse = parsed_ss_exchange(callsign, fields);
+      ost << pse << endl;
+
+      line = "B 71 CO 10 N7DR";
+      ost << line << endl;
+      fields = split_string(line, " ");
+      pse = parsed_ss_exchange(callsign, fields);
+      ost << pse << endl;
+
+      line = "B 71 CO 10A N7DR";
+      ost << line << endl;
+      fields = split_string(line, " ");
+      pse = parsed_ss_exchange(callsign, fields);
+      ost << pse << endl;
+
+      line = "B 71 CO 10 A N7DR";
+      ost << line << endl;
+      fields = split_string(line, " ");
+      pse = parsed_ss_exchange(callsign, fields);
+      ost << pse << endl;
+
+      line = "B 71 CO 10 N7DR 72";
+      ost << line << endl;
+      fields = split_string(line, " ");
+      pse = parsed_ss_exchange(callsign, fields);
+      ost << pse << endl;
+
+      sleep_for(seconds(1));
+      exit(0);
+    }
+#endif
 
 // possibly set up the simulator
     if (cl.value_present("-sim"))
@@ -3896,7 +3974,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { const BAND cur_band = safe_get_band();
     const MODE cur_mode = safe_get_mode();
     const string call_contents = remove_peripheral_spaces(win_call.read());
-    string canonical_prefix = location_db.canonical_prefix(call_contents);
+//    string canonical_prefix = location_db.canonical_prefix(call_contents);
     const string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
     const vector<string> exchange_field_values = split_string(exchange_contents, ' ');
     string from_callsign = call_contents;
@@ -3905,8 +3983,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     for (const auto& value : exchange_field_values)
       if ( contains(value, ".") and (value.size() != 1) )    // ignore a field that is just "."
       { from_callsign = remove_char(value, '.');
-        canonical_prefix = location_db.canonical_prefix(from_callsign);
+//        canonical_prefix = location_db.canonical_prefix(from_callsign);
       }
+
+    const string canonical_prefix = location_db.canonical_prefix(from_callsign);
 
     const vector<exchange_field> exchange_template = rules.unexpanded_exch(canonical_prefix, cur_mode);
     unsigned int n_optional_fields = 0;
@@ -3924,14 +4004,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         if (!contains(values, "."))
           n_fields_without_new_callsign++;
 
-      if ( (exchange_template.size() - n_optional_fields) > n_fields_without_new_callsign)
+      if ( (!is_ss and (exchange_template.size() - n_optional_fields) > n_fields_without_new_callsign) )
       { ost << "mismatched template and exchange fields: Expected " << exchange_template.size() << " exchange fields; found " << exchange_template.size() << " non-replacement-callsign fields" << endl;
         alert("Expected " + to_string(exchange_template.size()) + " exchange fields; found " + to_string(n_fields_without_new_callsign));
         processed = true;
       }
 
       if (!processed)
-      { const parsed_exchange pexch(canonical_prefix, rules, cur_mode, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
+      { const parsed_exchange pexch(from_callsign, canonical_prefix, rules, cur_mode, exchange_field_values);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 
         if (pexch.valid())
         { if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
@@ -4058,21 +4138,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             { const string& name = exch_field.name();
               const string value = qso.received_exchange(name);
 
-//              ost << "checking field " << name << " = " << value << " as mult" << endl;
-//              ost << "complete field information: " << exch_field << endl;
-
               if (context.auto_remaining_exchange_mults(name))
                 statistics.add_known_exchange_mult(name, MULT_VALUE(name, value));
 
               if (statistics.add_worked_exchange_mult(name, value, qso.band(), qso.mode()))
-              { //ost << "setting exchange mult for " << name << " for QSO: " << qso << endl;
                 qso.set_exchange_mult(name);
-              }
             }
 
             add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
-
-//            ost << "Logged QSO: " << qso << endl;
 
 // write the log line
             win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
@@ -4170,7 +4243,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // add the stn to the bandmap
              bandmap_entry be;
 
-//         be.freq(rig.rig_frequency());
              be.freq( rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency() );
              be.callsign(qso.callsign());
              be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
@@ -4676,15 +4748,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // exchange mults
             if (exchange_mults_used)
-            { //ost << "before calculate_exchange_mults for " << qso.callsign() << endl;
-              //ost << "QSO: " << qso << endl;
-
               calculate_exchange_mults(qso, rules);
-
-              //ost << "after calculate_exchange_mults for " << qso.callsign() << endl;
-              //ost << "QSO: " << qso << endl;
-
-            }
 
 // if callsign mults matter, add more to the qso
             allow_for_callsign_mults(qso);
@@ -4693,14 +4757,10 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             statistics.add_qso(qso, logbk, rules);
             logbk += qso;
 
-            //ost << "    " << qso << endl;
-
 // possibly change values in the exchange database
             const vector<received_field> fields = qso.received_exchange();
 
-            //ost << "exchange fields from revised QSO:" << endl;
-
-            for (auto& field : fields)
+            for (const auto& field : fields)
             { if (!(variable_exchange_fields < field.name()))
                exchange_db.set_value(qso.callsign(), field.name(), rules.canonical_value(field.name(), field.value()));   // add it to the database of exchange fields
             }
@@ -4731,16 +4791,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             alert("Unable to open log file " + context.logfile() + " for writing: ");
         }
 
-//        ost << "Before rebuild_history()" << endl;
-
-//        ost << q_history << endl;
-
         rebuild_history(logbk, rules, statistics, q_history, rate);
-
-//        ost << "After rebuild_history()" << endl;
-
-//        ost << q_history << endl;
-
         rescore(rules);
         update_rate_window();
 

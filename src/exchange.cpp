@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 123 2016-02-14 20:16:23Z  $
+// $Id: exchange.cpp 129 2016-09-29 21:13:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -95,10 +95,15 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
     \param  str     string to check
     \return         whether <i>str</i> contains a possible serial number
 
-    Currently returns true only for strings of the form <n><precedence>
+    Currently returns true only for strings of the form:
+      <n>
+      <n><precedence>
 */
 const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
-{ bool possible = true;
+{ if (!contains_digit(str))
+    return false;
+
+  bool possible = true;
 
   for (size_t n = 0; n < str.length() - 1; ++n)
     if (possible)
@@ -146,22 +151,51 @@ const bool parsed_ss_exchange::_is_possible_check(const string& str) const
     return true;
 }
 
+const bool parsed_ss_exchange::_is_possible_callsign(const string& str) const
+{ if (str.length() < 3)
+    return false;
+
+  return (isalpha(str[0]) and contains_digit(str));
+}
+
+
 /*! \brief                  Constructor
     \param  call            callsign
     \param  received_str    exchange string
 */
-parsed_ss_exchange::parsed_ss_exchange(const string& call, const string& received_str) :
-  _callsign(call)
-{ const vector<string> fields = split_string(squash(to_upper(received_str), ' '), " ");
+parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>& received_fields) :
+  _callsign(call),
+  _prec('Z'),
+  _check("XX"),
+  _serno(0),
+  _section("AAA")
+{ if (received_fields.size() < 3)                    // at least 3 fields are required (<n><prec> <check> <sec>)
+    return;
+
+  vector<string> copy_received_fields = received_fields;
+  bool is_special = false;
+
+// deal with: B 71 CO 10 N7DR
+// which might be a common case
+  bool target_case = false;
+
+  if (received_fields[0].length() == 1 and isalpha(received_fields[0][0]))
+  { if (received_fields[1].length() == 2 and isdigit(received_fields[1][0]) and isdigit(received_fields[1][1]))
+    { _prec = received_fields[0][0];
+      _check = received_fields[1];
+      copy_received_fields = vector<string>(received_fields.begin() + 2, received_fields.end());
+      is_special = true;
+    }
+  }
 
 //  count the number fields that might be, or might contain, a serial number
 // i.e., all digits, or digits followed by a single letter
-  vector<size_t> possible_serial_numbers;
+  vector<size_t> possible_sernos;
   size_t index = 0;
 
-  for (const auto& field : fields)
+  for (const auto& field : copy_received_fields)
   { if (_is_possible_serno(field))
-      possible_serial_numbers.push_back(index);
+      possible_sernos.push_back(index);
 
     index++;
   }
@@ -169,7 +203,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const string& receive
   vector<size_t> possible_prec;
   index = 0;
 
-  for (const auto& field : fields)
+  for (const auto& field : copy_received_fields)
   { if (_is_possible_prec(field))
       possible_prec.push_back(index);
 
@@ -179,13 +213,195 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const string& receive
   vector<size_t> possible_check;
   index = 0;
 
-  for (const auto& field : fields)
+  for (const auto& field : copy_received_fields)
   { if (_is_possible_check(field))
       possible_check.push_back(index);
 
     index++;
   }
 
+  vector<size_t> possible_callsigns;
+  index = 0;
+
+  for (const auto& field : copy_received_fields)
+  { if (_is_possible_callsign(field))
+      possible_callsigns.push_back(index);
+
+    index++;
+  }
+
+// calculate number of entries that might be a check or a serial number
+  vector<size_t> ambiguous_fields;
+
+  for (const auto& possible_check_field : possible_check)
+    if (find(possible_sernos.cbegin(), possible_sernos.cend(), possible_check_field) != possible_sernos.cend())
+      ambiguous_fields.push_back(possible_check_field);
+
+  ost << "number of ambiguous fields = " << ambiguous_fields.size() << endl;
+
+// get the precedence; for this use the last field that is a possible precedence
+  ost << "getting prec" << endl;
+
+  int prec_field_nr = -1;
+
+  if (possible_prec.empty() and (_prec == 'Z') )  // _prec unchanged from default
+  { ost << "ERROR: no possible precedence in exchange received from " << call << endl;
+    for (const auto& field : received_fields)
+      ost << field << " : " << endl;
+//    _prec = 'A';    // default
+  }
+  else
+  { if (!possible_prec.empty())
+    { const unsigned int field_nr = possible_prec[possible_prec.size() - 1];
+
+      _prec = last_char(copy_received_fields[field_nr]);
+      prec_field_nr = static_cast<int>(field_nr);
+    }
+  }
+
+// get the check; for this use the last field that is a possible check
+  ost << "getting check" << endl;
+  int check_field_nr = -1;
+
+  if (possible_check.empty() and (_check == "XX") )  // _check unchanged from default
+  { ost << "ERROR: no possible check in exchange received from " << call << endl;
+    for (const auto& field : received_fields)
+      ost << field << " : " << endl;
+//    _check = 0;    // default
+  }
+  else
+  { if (!possible_check.empty() /* and !is_special */)
+    { if (is_special)
+      {  // deal with B 71 CO 10 N7DR 72
+        switch (ambiguous_fields.size())
+        { case 1 :  // if there's only one, it should be a serial number
+            break;
+          default :
+            ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break
+          case 2 :  // first should be serial number, second should check
+          { const unsigned int field_nr = ambiguous_fields[1];
+
+            _check = copy_received_fields[field_nr];
+            check_field_nr = static_cast<int>(field_nr);
+            break;
+          }
+        }
+      }
+      else
+      { const unsigned int field_nr = possible_check[possible_check.size() - 1];
+
+        _check = copy_received_fields[field_nr];
+        check_field_nr = static_cast<int>(field_nr);
+      }
+    }
+  }
+
+// get the callsign, which may or may not be present
+  ost << "getting callsign" << endl;
+  int callsign_field_nr = -1;
+
+  if (possible_callsigns.empty())
+  { //ost << "ERROR: no possible check in exchange received from " << call << endl;
+    //  for (const auto& field : received_fields)
+     //   ost << field << " : " << endl;
+      _callsign = call;    // default
+  }
+  else
+  { const unsigned int field_nr = possible_callsigns[possible_callsigns.size() - 1];
+
+    _callsign = copy_received_fields[field_nr];
+    callsign_field_nr = static_cast<int>(field_nr);
+  }
+
+// get the serno; for this use the last field that is a possible serno and hasn't been used as a check
+  ost << "getting serno" << endl;
+  int serno_field_nr = -1;
+
+  if (possible_sernos.empty())
+  { ost << "ERROR: no possible serno in exchange received from " << call << endl;
+    for (const auto& field : received_fields)
+      ost << field << " : " << endl;
+//    _serno = 0;    // default
+  }
+  else
+  { unsigned int field_nr = possible_sernos[possible_sernos.size() - 1];
+
+    ost << "serno field number = " << field_nr << endl;
+    ost << "check field number = " << check_field_nr << endl;
+
+    if (field_nr == check_field_nr)    // what abt if check_field_nr == -1?
+    { if (possible_sernos.size() == 1)
+      { ost << "ERROR: insufficient possible sernos in exchange received from " << call << endl;
+        for (const auto& field : received_fields)
+          ost << field << " : " << endl;
+        _serno = 0;    // default
+      }
+      else
+      { field_nr = possible_sernos[possible_sernos.size() - 2];
+
+// if this is also a possible check number, we should go backwards some more if possible
+        if (_is_possible_check(copy_received_fields[field_nr]))
+        { ost << "moving backwards" << endl;
+
+          if (possible_sernos.size() >= 3)
+            field_nr = possible_sernos[possible_sernos.size() - 3];
+          ost << "field number for serno = " << field_nr << endl;
+        }
+
+        _serno = from_string<unsigned int>(copy_received_fields[field_nr]);
+        serno_field_nr = static_cast<int>(field_nr);
+      }
+    }
+    else    // field number is not same as check field number
+    { _serno = from_string<unsigned int>(copy_received_fields[field_nr]);  // stops processing when hits a letter
+       serno_field_nr = static_cast<int>(field_nr);
+    }
+  }
+
+// get the section
+  ost << "getting section" << endl;
+  map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+
+//  vector<size_t> possible_sections;
+  index = 0;
+
+  try
+  { EFT sec_eft = exchange_field_eft.at("SECTION");
+    int section_field_nr = -1;
+
+    for (const auto& field : copy_received_fields)
+    { if (sec_eft.is_legal_value(field))
+        section_field_nr = index;
+
+      index++;
+    }
+
+    if (section_field_nr == -1)
+    { ost << "ERROR: no valid section in exchange received from " << call << endl;
+      for (const auto& field : received_fields)
+        ost << field << " : " << endl;
+//      _section = "AAA";    // default
+    }
+    else
+      _section = copy_received_fields[section_field_nr];
+  }
+
+  catch (...)
+  { ost << "ERROR: no section information in rules " << endl;
+//    _section = "BBB";
+  }
+
+}
+
+/// ostream << parsed_exchange_field
+ostream& operator<<(ostream& ost, const parsed_ss_exchange& pse)
+{ ost << "serno: " << pse.serno()
+      << ", prec: " << pse.prec()
+      << ", callsign: " << pse.callsign()
+      << ", check: " << pse.check()
+      << ", section: " << pse.section();
+
+  return ost;
 }
 
 // -------------------------  parsed_exchange  ---------------------------
@@ -239,31 +455,73 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
     \param  received_values     the received values, in the order that they were received
     ***
 */
-parsed_exchange::parsed_exchange(const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values, const bool truncate_received_values) :
+parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values, const bool truncate_received_values) :
   _replacement_call(),
   _valid(false)
 { static const string EMPTY_STRING("");
-  static bool is_ss = false;                    // Sweepstakes is special
-  static bool first_time = true;
+//  static bool is_ss = false;                    // Sweepstakes is special
+//  static bool first_time = true;
+  extern bool is_ss;
+
+//  ost << "Inside parsed_exchange constructor" << endl;
+
+//  ost << "first_time = " << boolalpha << first_time << endl;
 
   vector<string> copy_received_values(received_values);
 
   const vector<exchange_field> exchange_template = rules.unexpanded_exch(canonical_prefix, m);
 
 // first time through, determine whether this is Sweepstakes
+#if 0
   if (first_time)
-  { for (const auto& ef : exchange_template)
-    { if (ef.name() == "PREC")
+  { ost << "FIRST TIME" << endl;
+
+    for (const auto& ef : exchange_template)
+    { ost << "ef.name() = " << ef.name() << endl;
+
+      if (ef.name() == "PREC")
         is_ss = true;
     }
 
     first_time = false;
   }
 
-  if (is_ss)                // SS is oh so special
-  { //parsed_ss_exchange exch;
+  ost << "Past first-time test" << endl;
+#endif
+
+  if (is_ss)                // SS is oh-so-special
+  { const parsed_ss_exchange exch(from_callsign, received_values);
+
+    if (exch.callsign() != from_callsign)
+      _replacement_call = exch.callsign();
+
+//    std::string    _name;                 ///< field name
+//    std::string    _value;                ///< field value
+//    bool           _is_mult;              ///< is this field a mult?
+//    std::string    _mult_value;           ///< actual value of the mult (if it is a mult)
+//    exchange = SERNO, PREC, CALL, CHECK, SECTION
+    _fields.push_back( { "SERNO", to_string(exch.serno()), false } );
+    _fields.push_back( { "PREC", create_string(exch.prec()), false } );
+    _fields.push_back( { "CALL", exch.callsign(), false } );
+    _fields.push_back( { "CHECK", exch.check(), false } );
+//    _fields.push_back( { "SECTION", exch.section(), true, exch.section() } );
 
 
+    _fields.push_back( parsed_exchange_field("SECTION", exch.section(), true) );
+
+    FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
+    _valid = true;
+
+    if (exch.serno() == 0)
+      _valid = false;
+
+    if (exch.section() == "AAA")
+      _valid = false;
+
+    if (exch.prec() == 'Z')
+      _valid = false;
+
+    return;
   }
 
 // how many fields are optional?
@@ -970,6 +1228,22 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       return rv;
     }
   }
+
+  if (field_name == "SECTION")
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = to_upper(drm_line.section());
+
+      if (!rv.empty())
+      { rv = rules.canonical_value(field_name, rv);
+        _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
 
   if (field_name == "SOCIETY")
   { string rv;
