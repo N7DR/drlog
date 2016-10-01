@@ -69,11 +69,13 @@ protected:
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line
-    \return         The next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
+    \return         the next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
 
     Correctly handles extraneous spaces in <i>str</i>.
     <i>str</i> looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+
+    The value of <i>posn</i> might be changed by this function.
 */
   const std::pair<std::string, std::string> _next_name_value_pair(const std::string& str, size_t& posn);
 

@@ -46,6 +46,8 @@ unsigned int  QSO_MULT_WIDTH = 5;           ///< default width of QSO mult field
     Correctly handles extraneous spaces in <i>str</i>.
     <i>str</i> looks like:
       QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+
+    The value of <i>posn</i> might be changed by this function.
 */
 const pair<string, string> QSO::_next_name_value_pair(const string& str, size_t& posn)
 { static const pair<string, string> empty_pair;
@@ -55,14 +57,14 @@ const pair<string, string> QSO::_next_name_value_pair(const string& str, size_t&
     return empty_pair;
   }
 
-  size_t first_char_posn = str.find_first_not_of(" ", posn);
+  const size_t first_char_posn = str.find_first_not_of(" ", posn);
 
   if (first_char_posn == string::npos)
   { posn = string::npos;
     return empty_pair;
   }
 
-  size_t equals_posn = str.find("=", first_char_posn);
+  const size_t equals_posn = str.find("=", first_char_posn);
 
   if (equals_posn == string::npos)
   { posn = string::npos;
@@ -70,16 +72,14 @@ const pair<string, string> QSO::_next_name_value_pair(const string& str, size_t&
   }
 
   const string name = remove_peripheral_spaces(str.substr(first_char_posn, equals_posn - first_char_posn));
-
-  size_t value_first_char_posn = str.find_first_not_of(" ", equals_posn + 1);
+  const size_t value_first_char_posn = str.find_first_not_of(" ", equals_posn + 1);
 
   if (value_first_char_posn == string::npos)
   { posn = string::npos;
     return empty_pair;
   }
 
-  size_t space_posn = str.find(" ", value_first_char_posn);
-
+  const size_t space_posn = str.find(" ", value_first_char_posn);
   const string value = (space_posn == string::npos) ? str.substr(value_first_char_posn)
                                                     : str.substr(value_first_char_posn, space_posn - value_first_char_posn);
 
@@ -265,6 +265,8 @@ void QSO::populate_from_log_line(const string& str)
 // separate the line into fields
   const vector<string> vec = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
 
+
+
   if (vec.size() != _log_line_fields.size())                        // output debugging info
   { ost << "populate_from_log_line parameter: " << str << endl;
     ost << "squashed: " << squash(str, ' ') << endl;
@@ -285,6 +287,8 @@ void QSO::populate_from_log_line(const string& str)
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { bool processed = false;
     const string& field = _log_line_fields[n];
+
+    ost << "Processing field: " << field << "( n = " << n << ")" << endl;
 
     if (!processed and (field == "NUMBER"))
     { _number = from_string<decltype(_number)>(vec[n]);
@@ -328,8 +332,30 @@ void QSO::populate_from_log_line(const string& str)
     }
 
     if (!processed and (starts_with(field, "received-")))
-    { if (received_index < _received_exchange.size())
-        _received_exchange[received_index++].value(vec[n]);
+    { ost << "detailed processing for: " << field << endl;
+      ost << "index = " << received_index << endl;
+      ost << "vec[n] = " << vec[n] << endl;
+
+//      if (starts_with(field, "received-CALL"))               // SS is, as always, special; received-CALL is not in the line
+//      { ost << "** received-CALL **" << endl;
+//        _received_exchange[received_index++].value(_callsign);
+//        ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
+//      }
+//      else
+      { if (received_index < _received_exchange.size())
+        { _received_exchange[received_index++].value(vec[n]);
+          ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
+
+          if (starts_with(field, "received-PREC"))               // SS is, as always, special; received-CALL is not in the line
+          { ost << "** received-PREC **" << endl;
+            _received_exchange[received_index++].value(_callsign);
+            ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
+          }
+
+
+        }
+      }
+
       processed = true;
     }
   }
@@ -559,7 +585,6 @@ specification tells us otherwise, that's what we do.
       value = _my_call;
       
 // TEXCH-xxx
-//    if (name.substr(0, 6) == "TEXCH-")
     if (starts_with(name, "TEXCH-"))
     { const string field_name = name.substr(6);
     
@@ -580,7 +605,6 @@ specification tells us otherwise, that's what we do.
     }
 
 // REXCH-xxx
-//    if (name.substr(0, 6) == "REXCH-")
     if (starts_with(name, "REXCH-"))
     { const string field_name = substring(name, 6);
 
@@ -766,10 +790,7 @@ const bool QSO::sent_exchange_includes(const string& field_name)
 
 /// convert to a string suitable for display in the log window
 const string QSO::log_line(void)
-{
-//  ost << "Inside log_line()" << endl;
-
-  static const map<string, unsigned int> field_widths { { "CHECK",    2 },
+{ static const map<string, unsigned int> field_widths { { "CHECK",    2 },
                                                         { "CQZONE",   2 },
                                                         { "CWPOWER",  3 },
                                                         { "DOK",      1 },
@@ -785,6 +806,7 @@ const string QSO::log_line(void)
                                                         { "10MSTATE", 3 }
                                                       };
   static const size_t CALL_FIELD_LENGTH = 12;
+
   string rv;
 
   rv  = pad_string(to_string(number()), 5);
@@ -811,44 +833,6 @@ const string QSO::log_line(void)
       {
       }
 
-#if 0
-    if (name == "CQZONE")
-      field_width = 2;
-
-    if (name == "CWPOWER")
-      field_width = 3;
-
-    if (name == "DOK")
-      field_width = 1;
-
-    if (name == "ITUZONE")
-      field_width = 2;
-
-    if (name == "PREC")
-      field_width = 1;
-
-    if (name == "RS")
-      field_width = 2;
-
-    if (name == "RST")
-      field_width = 3;
-
-    if (name == "RDA")
-      field_width = 4;
-
-    if (name == "SERNO")
-      field_width = 4;
-
-    if (name == "SSBPOWER")
-      field_width = 4;
-
-    if (name == "UKEICODE")
-      field_width = 2;
-
-    if (name == "10MSTATE")
-      field_width = 3;
-#endif
-
       rv += " " + pad_string(field.value(), field_width);
     }
   }
@@ -860,14 +844,12 @@ const string QSO::log_line(void)
     rv += pad_string(_prefix, 5);
 
 // country mult
-  if (QSO_DISPLAY_COUNTRY_MULT)                                            // set in drlog_context when parsing the config file
-    rv += (_is_country_mult ? pad_string(_canonical_prefix, 5, PAD_LEFT) : "     "); // sufficient for VP2E
+  if (QSO_DISPLAY_COUNTRY_MULT)                                                         // set in drlog_context when parsing the config file
+    rv += (_is_country_mult ? pad_string(_canonical_prefix, 5, PAD_LEFT) : "     ");    // sufficient for VP2E
 
 // exchange mult
   for (const auto& field : _received_exchange)
-  { //ost << "in qso::log_line(); processing exchange field: " << field << endl;
-
-    unsigned int field_width = QSO_MULT_WIDTH;
+  { unsigned int field_width = QSO_MULT_WIDTH;
     const string& name = field.name();
 
     try
@@ -877,35 +859,6 @@ const string QSO::log_line(void)
     catch (...)
     {
     }
-
-#if 0
-    if (name == "CQZONE" or name == "ITUZONE")
-      field_width = 2;
-
-    if (name == "DOK")
-      field_width = 1;
-
-    if (name == "RS")
-      field_width = 2;
-
-    if (name == "RST")
-      field_width = 3;
-
-    if (name == "RDA")
-      field_width = 4;
-
-    if (name == "SECTION")
-      field_width = 3;
-
-    if (name == "SERNO")
-      field_width = 4;
-
-    if (name == "UKEICODE")
-      field_width = 2;
-
-    if (name == "10MSTATE")
-      field_width = 3;
-#endif
 
     rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
   }
@@ -919,16 +872,17 @@ const string QSO::log_line(void)
   _log_line_fields.push_back("FREQUENCY");
   _log_line_fields.push_back("CALLSIGN");
 
-  for (size_t n = 0; n < _sent_exchange.size(); ++n)
-  { const pair<string, string>& exch_field = _sent_exchange[n];
+//  for (size_t n = 0; n < _sent_exchange.size(); ++n)
+//  { const pair<string, string>& exch_field = _sent_exchange[n];
+  for (const auto& exch_field : _sent_exchange)
 
     _log_line_fields.push_back("sent-" + exch_field.first);
-  }
+//  }
 
   for (const auto& field : _received_exchange)
-    _log_line_fields.push_back("received-" + field.name());
-
-//  ost << "Log line = *" << rv << "*" << endl;
+  { if (field.name() != "CALL")                               // SS is special
+      _log_line_fields.push_back("received-" + field.name());
+  }
 
   return rv;
 }

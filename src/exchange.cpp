@@ -112,17 +112,15 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
   if (possible)
   { const char& lchar = last_char(str);
 
-    possible = isdigit(lchar) or  (legal_prec < lchar);
+    possible = isdigit(lchar) or (legal_prec < lchar);
   }
 
   return possible;
 }
 
-/*! \brief          Does a string possibly contain a precedence?
+/*! \brief          Does a string contain a precedence?
     \param  str     string to check
-    \return         whether <i>str</i> contains a possible serial precedence
-
-    Currently returns true only for strings of the form <n><precedence>
+    \return         whether <i>str</i> contains a precedence
 */
 const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
 { if (str.length() == 1)
@@ -131,15 +129,14 @@ const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
   return _is_possible_serno(str) and (legal_prec < last_char(str));
 }
 
-/*! \brief          Does a string possibly contain a check?
+/*! \brief          Does a string contain a possible check?
     \param  str     string to check
     \return         whether <i>str</i> is a (two-digit) check
 */
 const bool parsed_ss_exchange::_is_possible_check(const string& str) const
-{ if (str.length() == 1 or str.length() == 3)
+{ if (str.length() != 2)
     return false;
 
-  if (str.length() == 2)
   { for (size_t n = 0; n < str.length() - 1; ++n)
       if (!isdigit(str[n]))
         return false;
@@ -151,6 +148,10 @@ const bool parsed_ss_exchange::_is_possible_check(const string& str) const
     return true;
 }
 
+/*! \brief          Does a string contain a possible callsign?
+    \param  str     string to check
+    \return         whether <i>str</i> is a reasonable callsign
+*/
 const bool parsed_ss_exchange::_is_possible_callsign(const string& str) const
 { if (str.length() < 3)
     return false;
@@ -449,11 +450,13 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
   ost << "}" << endl;
 }
 
-/*! \brief                      Constructor
-    \param  callsign            callsign of the station from which the exchange was received
-    \param  rules               rules for the contest
-    \param  received_values     the received values, in the order that they were received
-    ***
+/*! \brief                              Constructor
+    \param  from_callsign               callsign of the station from which the exchange was received
+    \param  canonical_prefix            canonical prefix for <i>callsign</i>
+    \param  rules                       rules for the contest
+    \param  m                           mode
+    \param  received_values             the received values, in the order that they were received
+    \param  truncate_received_values    whether to stop parsing when matches have all been found  *** IS THIS EVER USED? ***
 */
 parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values, const bool truncate_received_values) :
   _replacement_call(),

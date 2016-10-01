@@ -11,9 +11,9 @@
 #ifndef DRLOG_CONTEXT_H
 #define DRLOG_CONTEXT_H
 
-/*!     \file drlog_context.h
+/*! \file drlog_context.h
 
-        The basic context for operation of drlog
+    The basic context for operation of drlog
 */
 
 #include "bands-modes.h"
@@ -26,8 +26,8 @@
 
 // -----------  drlog_context  ----------------
 
-/*! \class drlog_context
-    \brief The variables and constants that comprise the context for operation
+/*! \class  drlog_context
+    \brief  The variables and constants that comprise the context for operation
 */
 
 enum country_multiplier_type { COUNTRY_MULT_NONE,       ///< no country multipliers
@@ -188,7 +188,6 @@ protected:
   unsigned int                                 _p3_span_cq;                       ///< P3 span in CQ mode, in kHz
   unsigned int                                 _p3_span_sap;                      ///< P3 span in SAP mode, in kHz
 
-//  std::string                                  _quick_qsl_message;   ///< hurried confirm at end of QSO
   std::string                                  _qsl_message;         ///< confirm at end of QSO
   bool                                         _qso_multiple_bands;  ///< whether OK to work station on another band
   bool                                         _qso_multiple_modes;  ///< whether OK to work station on another mode
@@ -272,7 +271,7 @@ public:
   CONTEXTREAD(auto_remaining_callsign_mults);            ///< do we auto-generate the remaining callsign mults?
   CONTEXTREAD(auto_remaining_country_mults);             ///< do we auto-generate the remaining country mults?
   CONTEXTREAD(auto_remaining_callsign_mults_threshold);  ///< number of times a callsign mult must be seen before it becomes known
-  SAFEREAD(auto_remaining_country_mults_threshold, _context);   ///< number of times a canonical prefix must be seen before it becomes known
+  CONTEXTREAD(auto_remaining_country_mults_threshold);   ///< number of times a canonical prefix must be seen before it becomes known
 
 /*! \brief              Do we auto-generate remaining mults for a particular exchange mult?
     \param  mult_name   name of the exchange mult
@@ -284,16 +283,16 @@ public:
       return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
     }
 
-  SAFEREAD(auto_screenshot, _context);                  ///< do we create a screenshot every hour?
+  CONTEXTREAD(auto_screenshot);                  ///< do we create a screenshot every hour?
 
-  SAFEREAD(bandmap_decay_time_local, _context);         ///< time (in minutes) for an entry to age off the bandmap (local entries)
-  SAFEREAD(bandmap_decay_time_cluster, _context);       ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
-  SAFEREAD(bandmap_decay_time_rbn, _context);           ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
-  SAFEREAD(bandmap_fade_colours, _context);             ///< the colours calls adopt as they fade
-  SAFEREAD(bandmap_filter, _context);                   ///< the strings in the bandmap filter
-  SAFEREAD(bandmap_filter_disabled_colour, _context);   ///< background colour when bandmap filter is disabled
-  SAFEREAD(bandmap_filter_enabled, _context);           ///< is the bandmap filter enabled?
-  SAFEREAD(bandmap_filter_foreground_colour, _context); ///< colour of foreground in the bandmap filter
+  CONTEXTREAD(bandmap_decay_time_local);         ///< time (in minutes) for an entry to age off the bandmap (local entries)
+  CONTEXTREAD(bandmap_decay_time_cluster);       ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
+  CONTEXTREAD(bandmap_decay_time_rbn);           ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
+  CONTEXTREAD(bandmap_fade_colours);             ///< the colours calls adopt as they fade
+  CONTEXTREAD(bandmap_filter);                   ///< the strings in the bandmap filter
+  CONTEXTREAD(bandmap_filter_disabled_colour);   ///< background colour when bandmap filter is disabled
+  CONTEXTREAD(bandmap_filter_enabled);           ///< is the bandmap filter enabled?
+  CONTEXTREAD(bandmap_filter_foreground_colour); ///< colour of foreground in the bandmap filter
 
 /// is the bandmap filter set to hide? (If not, then it's set to show)
   inline const bool bandmap_filter_hide(void) const

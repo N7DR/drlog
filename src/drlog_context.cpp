@@ -1031,17 +1031,13 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CABRILLO CATEGORY-TIME
     if (LHS == "CABRILLO CATEGORY-TIME")
-    { //const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
-
-      if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS", ","))
+    { if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS", ","))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TRANSMITTER
     if (LHS == "CABRILLO CATEGORY-TRANSMITTER")
-    { //const string value = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));
-
-      if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED", ","))
+    { if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED", ","))
         _cabrillo_category_transmitter = RHS;
     }
 
@@ -1050,16 +1046,16 @@ void drlog_context::_process_configuration_file(const string& filename)
       _cabrillo_club = RHS;
 
 // CABRILLO ADDRESS first line
-    if (starts_with(testline, "CABRILLO ADDRESS 1"))
-      _cabrillo_address_1 = remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (LHS == "CABRILLO ADDRESS 1")
+      _cabrillo_address_1 = rhs;
 
 // CABRILLO ADDRESS second line
-    if (starts_with(testline, "CABRILLO ADDRESS 2"))
-      _cabrillo_address_2 = remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (LHS == "CABRILLO ADDRESS 2")
+      _cabrillo_address_2 = rhs;
 
 // CABRILLO ADDRESS third line
-    if (starts_with(testline, "CABRILLO ADDRESS 3"))
-      _cabrillo_address_3 = remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (LHS == "CABRILLO ADDRESS 3")
+      _cabrillo_address_3 = rhs;
 
 // CABRILLO ADDRESS fourth line
     if (starts_with(testline, "CABRILLO ADDRESS 4"))

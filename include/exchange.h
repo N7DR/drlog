@@ -26,8 +26,8 @@ extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange fiel
 
 // -------------------------  parsed_exchange_field  ---------------------------
 
-/*!     \class parsed_exchange_field
-        \brief Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
+/*! \class  parsed_exchange_field
+    \brief  Encapsulates the name for an exchange field, its value after parsing an exchange, and whether it's a mult
 */
 
 class parsed_exchange_field
@@ -71,8 +71,8 @@ std::ostream& operator<<(std::ostream& ost, const parsed_exchange_field& pef);
 
 // -------------------------  parsed_ss_exchange  ---------------------------
 
-/*!     \class parsed_ss_exchange
-        \brief All the fields in the SS exchange, following parsing
+/*! \class  parsed_ss_exchange
+    \brief  All the fields in the SS exchange, following parsing
 */
 
 class parsed_ss_exchange
@@ -106,6 +106,10 @@ protected:
 */
   const bool _is_possible_check(const std::string& str) const;
 
+/*! \brief          Does a string contain a possible callsign?
+    \param  str     string to check
+    \return         whether <i>str</i> is a reasonable callsign
+*/
   const bool _is_possible_callsign(const std::string& str) const;
 
 public:
@@ -128,8 +132,8 @@ std::ostream& operator<<(std::ostream& ost, const parsed_ss_exchange& pse);
 
 // -------------------------  parsed_exchange  ---------------------------
 
-/*!     \class parsed_exchange
-        \brief All the fields in the exchange, following parsing
+/*! \class  parsed_exchange
+    \brief  All the fields in the exchange, following parsing
 */
 
 class parsed_exchange
@@ -153,13 +157,15 @@ protected:
 
 public:
 
-/*! \brief                      Constructor
-    \param  callsign            callsign of the station from which the exchange was received
-    \param  rules               rules for the contest
-    \param  received_values     the received values, in the order that they were received
-    ***
+/*! \brief                              Constructor
+    \param  from_callsign               callsign of the station from which the exchange was received
+    \param  canonical_prefix            canonical prefix for <i>callsign</i>
+    \param  rules                       rules for the contest
+    \param  m                           mode
+    \param  received_values             the received values, in the order that they were received
+    \param  truncate_received_values    whether to stop parsing when matches have all been found  *** IS THIS EVER USED WITH THE VALUE <i>TRUE</i>? ***
 */
-  parsed_exchange(const std::string& from_callsign, const std::string& callsign, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values, const bool truncate_received_values = false);
+  parsed_exchange(const std::string& from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values, const bool truncate_received_values = false);
 
   READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window

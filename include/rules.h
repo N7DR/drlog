@@ -11,9 +11,9 @@
 #ifndef RULES_H
 #define RULES_H
 
-/*!     \file rules.h
+/*! \file rules.h
 
-        Classes and functions related to the contest rules
+    Classes and functions related to the contest rules
 */
 
 #include "bands-modes.h"
@@ -41,8 +41,8 @@ enum points_type { POINTS_NORMAL,                       ///< points defined in c
 
 // -------------------------  exchange_field_values  ---------------------------
 
-/*! \class exchange_field_values
-    \brief Encapsulates the name and legal values for an exchange field
+/*! \class  exchange_field_values
+    \brief  Encapsulates the name and legal values for an exchange field
 */
 
 class exchange_field_values
@@ -159,8 +159,8 @@ public:
 
 // -------------------------  exchange_field  ---------------------------
 
-/*!     \class exchange_field
-        \brief Encapsulates the name for an exchange field, and whether it's a mult
+/*! \class  exchange_field
+    \brief  Encapsulates the name for an exchange field, and whether it's a mult
 */
 
 class exchange_field
@@ -192,8 +192,8 @@ public:
   inline const bool is_choice(void) const
     { return !_choice.empty(); }
 
-/*! \brief  Follow all trees to their leaves
-    \return the exchange field, expanded recursively into all possible choices
+/*! \brief      Follow all trees to their leaves
+    \return     the exchange field, expanded recursively into all possible choices
 */
   const std::vector<exchange_field> expand(void) const;
 
@@ -216,8 +216,8 @@ std::ostream& operator<<(std::ostream& ost, const exchange_field& exch_f);
 
 // -------------------------  points_structure  ---------------------------
 
-/*! \class points_structure
-    \brief Encapsulate the vagaries of points-per-QSO rules
+/*! \class  points_structure
+    \brief  Encapsulate the vagaries of points-per-QSO rules
 */
 
 class points_structure
@@ -250,8 +250,8 @@ public:
 
 // -------------------------  contest_rules  ---------------------------
 
-/*! \class contest_rules
-    \brief A place to maintain all the rules
+/*! \class  contest_rules
+    \brief  A place to maintain all the rules
         
     This object should be created and initialized early, and from that
     point it should be treated as read-only. Being paranoid, though, there's still lots of

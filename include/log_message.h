@@ -11,9 +11,9 @@
 #ifndef LOG_MESSAGE_H
 #define LOG_MESSAGE_H
 
-/*!     \file log_message.h
+/*! \file log_message.h
 
-        Classes and functions related to log messages
+    Classes and functions related to log messages
 */
 
 #include "pthread_support.h"
@@ -24,8 +24,8 @@
 
 // -----------  message_stream  ----------------
 
-/*!     \class message_stream
-        \brief A message stream to be written to a file
+/*! \class message_stream
+    \brief A message stream to be written to a file
 */
 
 class message_stream
@@ -38,7 +38,7 @@ protected:
 
 public:
 
-/*! \brief  Constructor
+/*! \brief              Constructor
     \param  filename    name of file to which output is to be written
     \param  error_name  name of file to which errors in message_stream operation are to be written
 
@@ -65,9 +65,11 @@ public:
     return *this;
   }
 
-// for manipulator (see "The C++ Standard Library", 13.6.1)
-// I have no idea why this is necessary, since it seems to me that the
-// (identical) generic version should work just fine (since surely manipulators are constant?)
+/*! \brief    message_stream << manipulator (see "The C++ Standard Library", 13.6.1)
+
+    I have no idea why this is necessary, since it seems to me that the
+    (identical) generic version should work just fine (since surely manipulators are constant?)
+*/
   message_stream& operator<<(std::ostream&(*obj)(std::ostream&))
   {
     try
