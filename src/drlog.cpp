@@ -231,6 +231,7 @@ bool                    filter_remaining_country_mults(false);  ///< whether to 
 bool                    is_ss(false);                       ///< ss is special
 
 logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
+bool                    long_t = false;                     ///< whether to send long Ts at beginning of serno
 
 string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
 
@@ -238,17 +239,14 @@ unsigned int            next_qso_number = 1;                ///< actual number o
 unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
 
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
-
-bool                    sending_qtc_series = false;         ///< am I senting a QTC series?
-unsigned int serno_spaces = 0;
-bool            long_t = false;
-
-old_log     olog;                                           ///< old (ADIF) log containing QSO and QSL information
+old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
 
 int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
 bool                    restored_data(false);               ///< did we restore from an archive?
 bool                    rig_is_split = false;               ///< is the rig in split mode?
 
+bool                    sending_qtc_series = false;         ///< am I senting a QTC series?
+unsigned int            serno_spaces = 0;                   ///< number of additional half-spaces in serno
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
 // QTC variables
@@ -6869,38 +6867,15 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
 // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
   if (!processed and ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
-  { processed = change_cw_speed(e);
-/*
-    if (cw)
-    { int change = (e.is_control() ? 1 : 3);
-
-      if (e.symbol() == XK_Prior)
-        change = -change;
-
-      cw_speed(cw_p->speed() - change);  // effective immediately
-    }
-
-    processed = true;
-*/
-  }
+    processed = change_cw_speed(e);
 
 // ALT-K -- toggle CW
   if (!processed and cw and e.is_alt('k'))
-  { //cw_p->toggle();
-
-    //win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );
-
-    //processed = true;
     processed = toggle_cw();
-  }
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-  { //dump_screen();
-
-    //processed = true;
-    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
-  }
+    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is always true after this
 }
 
 /*! \brief              Set speed of computer keyer
@@ -6971,7 +6946,7 @@ void display_nearby_callsign(const string& callsign)
     win_nearby.cpair(colour_pair_number);
     win_nearby < callsign <= COLOURS(foreground, background);
 
-    if (context.nearby_extract())
+    if (context.nearby_extract())               // possibly display the callsign in the LOG EXTRACT window
     { extract = logbk.worked( callsign );
       extract.display();
     }
@@ -7300,7 +7275,11 @@ void update_qtc_queue_window(void)
   win_qtc_queue.refresh();
 }
 
-// ALT-K -- toggle CW
+/*! \brief      Toggle whether CW is sent
+    \return     whether toggle was performed
+
+    Updates WPM window
+*/
 const bool toggle_cw(void)
 { if (cw_p)
   { cw_p->toggle();
@@ -7313,7 +7292,12 @@ const bool toggle_cw(void)
     return false;
 }
 
-// PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+/*! \brief      Change CW speed as a function of a keyboard event
+    \param  e   keyboard event
+    \return     whether speed was changed
+
+    Updates WPM window
+*/
 const bool change_cw_speed(const keyboard_event& e)
 { bool rv = false;
 

@@ -265,13 +265,11 @@ void QSO::populate_from_log_line(const string& str)
 // separate the line into fields
   const vector<string> vec = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
 
-
-
-  if (vec.size() != _log_line_fields.size())                        // output debugging info
+  if (vec.size() > _log_line_fields.size())                        // output debugging info; this can be triggered if there are mults on the log line
   { ost << "populate_from_log_line parameter: " << str << endl;
     ost << "squashed: " << squash(str, ' ') << endl;
 
-    ost << "Problem with number of fields in edited log line" << endl;
+    ost << "Possible problem with number of fields in edited log line" << endl;
     ost << "vec size = " << vec.size() << "; _log_line_fields size = " << _log_line_fields.size() << endl;
 
     for (size_t n = 0; n < vec.size(); ++n)
@@ -336,23 +334,14 @@ void QSO::populate_from_log_line(const string& str)
       ost << "index = " << received_index << endl;
       ost << "vec[n] = " << vec[n] << endl;
 
-//      if (starts_with(field, "received-CALL"))               // SS is, as always, special; received-CALL is not in the line
-//      { ost << "** received-CALL **" << endl;
-//        _received_exchange[received_index++].value(_callsign);
-//        ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
-//      }
-//      else
-      { if (received_index < _received_exchange.size())
-        { _received_exchange[received_index++].value(vec[n]);
+      if (received_index < _received_exchange.size())
+      { _received_exchange[received_index++].value(vec[n]);
+        ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
+
+        if (starts_with(field, "received-PREC"))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
+        { ost << "** received-PREC **" << endl;
+          _received_exchange[received_index++].value(_callsign);
           ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
-
-          if (starts_with(field, "received-PREC"))               // SS is, as always, special; received-CALL is not in the line
-          { ost << "** received-PREC **" << endl;
-            _received_exchange[received_index++].value(_callsign);
-            ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
-          }
-
-
         }
       }
 
@@ -872,12 +861,8 @@ const string QSO::log_line(void)
   _log_line_fields.push_back("FREQUENCY");
   _log_line_fields.push_back("CALLSIGN");
 
-//  for (size_t n = 0; n < _sent_exchange.size(); ++n)
-//  { const pair<string, string>& exch_field = _sent_exchange[n];
   for (const auto& exch_field : _sent_exchange)
-
     _log_line_fields.push_back("sent-" + exch_field.first);
-//  }
 
   for (const auto& field : _received_exchange)
   { if (field.name() != "CALL")                               // SS is special
