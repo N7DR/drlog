@@ -5339,7 +5339,10 @@ const string expand_cw_message(const string& msg)
 { string octothorpe_replaced;
 
   if (contains(msg, "#"))
-  { string octothorpe_str = pad_string(to_string(octothorpe), (octothorpe < 1000 ? 3 : 4), PAD_LEFT, 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
+  { string octothorpe_str = to_string(octothorpe);
+
+    if (!context.short_serno())
+      octothorpe_str = pad_string(octothorpe_str, (octothorpe < 1000 ? 3 : 4), PAD_LEFT, 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
 
     if (serno_spaces)
     { const string spaces = create_string('^', serno_spaces);
@@ -6373,8 +6376,8 @@ void* spawn_rbn(void* vp)
 */
 const bool debug_dump(void)
 { ost << "*** DEBUG DUMP ***" << endl;
-
   ost << "Screenshot dumped to: " << dump_screen() << endl;
+
   int index = 0;
 
   for (auto& bm : bandmaps)
@@ -6393,21 +6396,16 @@ const bool debug_dump(void)
     \return                 name of the file actually written
 
     If <i>dump_filename</i> is empty, then a base name is taken
-    from the context, and a string "-<n>" is appended.
+    from the context and a string "-<n>" is appended.
 */
 const string dump_screen(const string& dump_filename)
-{ //ost << hhmmss() << ": entered dump_screen()" << endl;
-
-  const bool multithreaded = keyboard.x_multithreaded();
+{ const bool multithreaded = keyboard.x_multithreaded();
   Display* display_p = keyboard.display_p();
   const Window window_id = keyboard.window_id();
   XWindowAttributes win_attr;
 
   if (multithreaded)
-  { //ost << hhmmss() << ": about to lock display [1] in dump_screen()" << endl;
     XLockDisplay(display_p);
-    //ost << hhmmss() << ": locked display [1] in dump_screen()" << endl;
-  }
 
   const Status status = XGetWindowAttributes(display_p, window_id, &win_attr);
 
@@ -6415,27 +6413,18 @@ const string dump_screen(const string& dump_filename)
     ost << hhmmss() << ": ERROR returned by XGetWindowAttributes: " << status << endl;
 
   if (multithreaded)
-  { //ost << hhmmss() << ": about to unlock display [1] in dump_screen()" << endl;
     XUnlockDisplay(display_p);
-    //ost << hhmmss() << ": unlocked display [1] in dump_screen()" << endl;
-  }
 
   const int width = win_attr.width;
   const int height = win_attr.height;
 
   if (multithreaded)
-  { //ost << hhmmss() << ": about to lock display [2] in dump_screen()" << endl;
     XLockDisplay(display_p);
-    //ost << hhmmss() << ": locked display [2] in dump_screen()" << endl;
-  }
 
   XImage* xim_p = XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap);
 
   if (multithreaded)
-  { //ost << hhmmss() << ": about to unlock display [2] in dump_screen()" << endl;
     XUnlockDisplay(display_p);
-    //ost << hhmmss() << ": unlocked display [2] in dump_screen()" << endl;
-  }
 
   png::image< png::rgb_pixel > image(width, height);
 
@@ -6505,7 +6494,7 @@ void allow_for_callsign_mults(QSO& qso)
       mult_name = "WPXPX";
     }
 
-// see if it's a mult... requires checking if mults are per-band
+// see if it's a mult... requires checking whether mults are per-band
     if (!qso.prefix().empty() and !mult_name.empty())
     { if (rules.callsign_mults_per_band())
       { if (statistics.is_needed_callsign_mult(mult_name, qso.prefix(), qso.band(), qso.mode()))
@@ -6538,8 +6527,7 @@ void allow_for_callsign_mults(QSO& qso)
    CTRL-P -- dump screen
 */
 void process_QTC_input(window* wp, const keyboard_event& e)
-{ //ost << "Inside process_QTC_input()" << endl;
-
+{
 //  static bool sending_series = false;
   static unsigned int total_qtcs_to_send;
   static unsigned int qtcs_sent;
@@ -6547,9 +6535,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   static qtc_series series;
   static unsigned int original_cw_speed; // = cw_p->speed();
   const unsigned int qtc_qrs = context.qtc_qrs();
-
-//  ost << "original CW speed = " << original_cw_speed << endl;
-
   const bool cw = (safe_get_mode() == MODE_CW);  // just to keep it easy to determine if we are on CW
   bool processed = false;
 
@@ -6557,8 +6542,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     { if (cw)
         (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
     };
-
-//  ost << "processing QTC input; event string: " << e.str() << endl;
 
   window& win = *wp;   // syntactic sugar
 
@@ -6724,7 +6707,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       series.utc(hhmmss());
       series.frequency_str(rig.rig_frequency());
 
-//      sending_series = false;
       qtc_db += series;                  // add to database of sent QTCs
 
       if (cw)
@@ -6759,7 +6741,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       series.utc(hhmmss());
       series.frequency_str(rig.rig_frequency());
 
-//      sending_series = false;
       qtc_db += series;                  // add to database of sent QTCs
 
       (*win_active_p) <= WINDOW_CLEAR;
@@ -6781,10 +6762,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
       win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
       display_statistics(statistics.summary_string(rules));
     }
-
-
-//    if (!cw_p->empty())
-//      cw_p->abort();
 
     if (cw)
     { cw_p->abort();                  // stop sending any CW

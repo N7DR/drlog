@@ -863,6 +863,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "SHIFT POLL")
       _shift_poll = from_string<unsigned int>(rhs);
 
+// SHORT SERIAL NUMBER
+    if (LHS == "SHORT SERIAL NUMBER")
+      _short_serno = is_true;
+
 // SOCIETY LIST FILENAME
     if (LHS == "SOCIETY LIST FILENAME")
       _society_list_filename = rhs;
@@ -1494,6 +1498,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _serno_spaces(0),                           // no additional spaces in serial number
   _shift_delta(10),                           // shift RIT by 10 Hz
   _shift_poll(50),                            // poll every 50 milliseconds
+  _short_serno(false),                        // send leading Ts
   _society_list_filename(""),                 // no default file for IARU society information
   _start_band(BAND_20),                       // start on 20m
   _start_mode(MODE_CW),                       // start on CW

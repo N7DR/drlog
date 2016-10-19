@@ -224,6 +224,7 @@ protected:
   unsigned int                                 _serno_spaces;                   ///< number of half-length spaces
   unsigned int                                 _shift_delta;                    ///< how many Hertz to QSY per poll of the shift key
   unsigned int                                 _shift_poll;                     ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
+  bool                                         _short_serno;                    ///< whether to omit leading Ts
   std::string                                  _society_list_filename;          ///< name of file containing IARU society exchanges
   enum BAND                                    _start_band;                     ///< on what band do we start?
   enum MODE                                    _start_mode;                     ///< on which mode do we start?
@@ -478,6 +479,7 @@ public:
   SAFEREAD(serno_spaces, _context);                     ///< number of half-length spaces
   SAFEREAD(shift_delta, _context);                      ///< how many Hertz to QSY per poll of the shift key
   SAFEREAD(shift_poll, _context);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
+  SAFEREAD(short_serno, _context);                      ///< whether to omit leading Ts
   SAFEREAD(society_list_filename, _context);            ///< name of file containing IARU society exchanges
   SAFEREAD(start_band, _context);                       ///< on what band do we start?
   SAFEREAD(start_mode, _context);                       ///< on which mode do we start?
