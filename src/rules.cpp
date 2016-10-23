@@ -31,6 +31,8 @@ extern const set<string> CONTINENT_SET; ///< the abbreviations for the continent
 extern message_stream ost;              ///< for debugging and logging
 extern location_database location_db;   ///< location information
 
+extern void alert(const string& msg, const bool show_time = true);     ///< Alert the user
+
 typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 
 // -------------------------  exchange_field_values  ---------------------------
@@ -289,15 +291,25 @@ const vector<exchange_field> contest_rules::_exchange_fields(const string& canon
 
   SAFELOCK(rules);
 
-  const map<string, vector<exchange_field>>& exchange = (expand_choices ? _expanded_received_exchange.at(m) : _received_exchange.at(m) );
-  auto cit = exchange.find(canonical_prefix);
+  try
+  { const map<string, vector<exchange_field>>& exchange = (expand_choices ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ); // this can throw exception if rig has been set to a mode that is not supported by the contest
+    auto cit = exchange.find(canonical_prefix);
 
-  if (cit != exchange.cend())
-    return cit->second;
+    if (cit != exchange.cend())
+      return cit->second;
 
-  cit = exchange.find(string());
+    cit = exchange.find(string());
 
-  return ( (cit == exchange.cend()) ? vector<exchange_field>() : cit->second );
+    return ( (cit == exchange.cend()) ? vector<exchange_field>() : cit->second );
+  }
+
+  catch (std::out_of_range& oor)
+  { ost << "Out of Range error in contest_rules::_exchange_fields: " << oor.what() << endl;
+    ost << "canonical prefix = " << canonical_prefix << ", mode = " << MODE_NAME[m] << ", expand_choices = " << boolalpha << expand_choices << endl;
+    alert("Out of Range error in contest_rules::_exchange_fields()", false);
+
+    return vector<exchange_field>();
+  }
 }
 
 /*! \brief                      Parse exchange line from context

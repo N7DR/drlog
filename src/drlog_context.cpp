@@ -1102,7 +1102,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //                                                 { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" }
 //    };
 
-    if (starts_with(testline, "CABRILLO QSO"))
+    if (LHS == "CABRILLO QSO")
     { _cabrillo_qso_template = RHS;
 
       if (contains(RHS, "TEMPLATE"))
@@ -1121,7 +1121,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
-    if (starts_with(testline, "WINDOW"))
+    if (LHS == "WINDOW")
     { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
 
       if (window_info.size() >= 5)
@@ -1596,11 +1596,6 @@ const string drlog_context::points(const BAND b, const MODE m) const
   const auto& pbb = _per_band_points[m];
 
   return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string() );
-
-//  if (pbb.find(b) != pbb.end())
-//    return pbb.at(b);
-//  else
-//    return string();
 }
 
 /*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
@@ -1630,8 +1625,8 @@ const string drlog_context::points(const std::string& exchange_field, const BAND
 }
 #endif
 
-/*! \brief              Get all the names in the sent exchange
-    \return             the names of all the fields in the sent exchange
+/*! \brief      Get all the names in the sent exchange
+    \return     the names of all the fields in the sent exchange
 */
 const vector<string> drlog_context::sent_exchange_names(void) const
 { vector<string> rv;
@@ -1642,8 +1637,8 @@ const vector<string> drlog_context::sent_exchange_names(void) const
   return rv;
 }
 
-/*! \brief              Get all the names in the sent CW exchange
-    \return             the names of all the fields in the sent CW exchange
+/*! \brief      Get all the names in the sent CW exchange
+    \return     the names of all the fields in the sent CW exchange
 */
 const vector<string> drlog_context::sent_exchange_cw_names(void) const
 { vector<string> rv;

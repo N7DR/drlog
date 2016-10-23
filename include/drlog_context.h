@@ -299,11 +299,11 @@ public:
   inline const bool bandmap_filter_hide(void) const
     { return !bandmap_filter_show(); }
 
-  SAFEREAD(bandmap_filter_hide_colour, _context);       ///< background colour when bandmap filter is in hide mode
-  SAFEREAD(bandmap_filter_show, _context);              ///< is the bandmap filter set to show? (If not, then it's set to hide)
-  SAFEREAD(bandmap_filter_show_colour, _context);       ///< background colour when bandmap filter is in show mode
-  SAFEREAD(bandmap_recent_colour, _context);            ///< colour for bandmap entries that are less than two minutes old
-  SAFEREAD(bands, _context);                            ///< comma-delimited bands
+  CONTEXTREAD(bandmap_filter_hide_colour);       ///< background colour when bandmap filter is in hide mode
+  CONTEXTREAD(bandmap_filter_show);              ///< is the bandmap filter set to show? (If not, then it's set to hide)
+  CONTEXTREAD(bandmap_filter_show_colour);       ///< background colour when bandmap filter is in show mode
+  CONTEXTREAD(bandmap_recent_colour);            ///< colour for bandmap entries that are less than two minutes old
+  CONTEXTREAD(bands);                            ///< comma-delimited bands
   SAFEREAD(batch_messages_file, _context);              ///< file that contains per-call batch messages
 
   SAFEREAD(cabrillo_address_1, _context);               ///< first ADDRESS: line

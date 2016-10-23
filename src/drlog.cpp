@@ -3972,7 +3972,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { const BAND cur_band = safe_get_band();
     const MODE cur_mode = safe_get_mode();
     const string call_contents = remove_peripheral_spaces(win_call.read());
-//    string canonical_prefix = location_db.canonical_prefix(call_contents);
     const string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
     const vector<string> exchange_field_values = split_string(exchange_contents, ' ');
     string from_callsign = call_contents;
@@ -3980,9 +3979,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // if there's an explicit replacement call, we might need to change the template
     for (const auto& value : exchange_field_values)
       if ( contains(value, ".") and (value.size() != 1) )    // ignore a field that is just "."
-      { from_callsign = remove_char(value, '.');
-//        canonical_prefix = location_db.canonical_prefix(from_callsign);
-      }
+        from_callsign = remove_char(value, '.');
 
     const string canonical_prefix = location_db.canonical_prefix(from_callsign);
 
@@ -4309,9 +4306,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // SHIFT -- RIT control
 // RIT changes via hamlib, at least on the K3, are *very* slow
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
-  { processed = rit_control(e);
-//    processed = true;
-  }
+    processed = rit_control(e);
 
 // ALT-S -- toggle sub receiver
   if (!processed and e.is_alt('s'))
@@ -4328,15 +4323,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // ` -- SWAP RIT and XIT
   if (!processed and e.is_char('`'))
-  { processed = swap_rit_xit();
-//    processed = true;
-  }
+    processed = swap_rit_xit();
 
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
-  { processed = debug_dump();
-//    processed = true;
-  }
+    processed = debug_dump();
 
 // CTRL-CURSOR LEFT -- left one word
   if (!processed and e.is_ctrl() and e.symbol() == XK_Left)
@@ -4480,81 +4471,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // F5 -- combine F2 and F4
     if (!processed and (e.symbol() == XK_F5))
-    { processed = process_keypress_F5();
-
-#if 0
-      if (rig.split_enabled())
-      { rig.split_disable();
-
-        switch (a_drlog_mode)
-        { case CQ_MODE :
-            enter_cq_mode();
-            break;
-
-           case SAP_MODE :
-             enter_sap_mode();
-             break;
-        }
-      }
-      else
-      { rig.split_enable();
-        a_drlog_mode = drlog_mode;
-        enter_sap_mode();
-      }
-
-    if (win_bcall.defined())
-        { const string tmp = win_call.read();
-          const string tmp_b = win_bcall.read();
-
-          win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
-          win_bcall < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
-
-          const string call_contents = tmp_b;
-          string exchange_contents;
-
-          if (win_bexchange.defined())
-          { const string tmp = win_exchange.read();
-            const string tmp_b = win_bexchange.read();
-
-            win_exchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp_b;
-
-            exchange_contents = tmp_b;
-
-            win_bexchange < WINDOW_CLEAR < CURSOR_START_OF_LINE <= tmp;
-          }
-
-    // put cursor in correct window
-          if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to the CALL window
-          { const size_t posn = call_contents.find(" ");                    // first empty space
-            win_call.move_cursor(posn, 0);
-            win_call.refresh();
-            win_active_p = &win_call;
-            win_exchange.move_cursor(0, 0);
-          }
-          else
-          { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
-
-            if (posn != string::npos)
-            { win_exchange.move_cursor(posn + 1, 0);
-              win_exchange.refresh();
-              win_active_p = &win_exchange;
-            }
-          }
-        }
-
-
-      processed = true;
-#endif
-
-    }
-
+      processed = process_keypress_F5();
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-  { //dump_screen();
-    //processed = true;
     processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
-  }
 
 // CTRL-ENTER -- repeat last message if in CQ mode
   if (!processed and e.is_control() and (e.symbol() == XK_Return) and (drlog_mode == CQ_MODE) )
@@ -4564,9 +4485,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // CTRL-B -- fast CW bandwidth
   if (!processed and (e.is_control('b')))
-  { processed = fast_cw_bandwidth();
-//    processed = true;
-  }
+    processed = fast_cw_bandwidth();
 
 // F2 toggle: split and force SAP mode
   if (!processed and (e.symbol() == XK_F2))
@@ -4892,16 +4811,11 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
-  { processed = debug_dump();
-//    processed = true;
-  }
+    processed = debug_dump();
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-  { //dump_screen();
-    //processed = true;
     processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
-  }
 }
 
 // functions that include thread safety
@@ -5350,22 +5264,13 @@ const string expand_cw_message(const string& msg)
       octothorpe_str.clear();
 
       for (auto n = 0; n < tmp.size() - 1; ++n)
-      { octothorpe_str += (tmp[n] + spaces);
-
-//        for (auto m = 0; m < serno_spaces; ++m)
-//          octothorpe_str += '^';
-      }
+        octothorpe_str += (tmp[n] + spaces);
 
       octothorpe_str += tmp[tmp.size() - 1];
     }
 
     if (long_t and (octothorpe < 100))
-    { //octothorpe_str[0] = static_cast<char>(15);        // 127%
-
-      //if (octothorpe < 10)
-        //octothorpe_str[1] = static_cast<char>(15);        // 127%
-
-      bool found_all = false;
+    { bool found_all = false;
       const int n_to_find = (octothorpe < 10 ? 2 : 1);
       int n_found = 0;
 
@@ -5374,9 +5279,6 @@ const string expand_cw_message(const string& msg)
         { octothorpe_str[n] = static_cast<char>(15);        // 127%
           found_all = (++n_found == n_to_find);
         }
-//        else
-//          if (octothorpe_str[n] != '0')
-//            found_all = true;
       }
     }
 
