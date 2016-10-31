@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file rules.cpp
+/*! \file rules.cpp
 
-        Classes and functions related to the contest rules
+    Classes and functions related to the contest rules
 */
 
 #include "exchange.h"
@@ -37,8 +37,8 @@ typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 
 // -------------------------  exchange_field_values  ---------------------------
 
-/*!     \class exchange_field_values
-        \brief Encapsulates the name and legal values for an exchange field
+/*! \class  exchange_field_values
+    \brief  Encapsulates the name and legal values for an exchange field
 */
 
 /*! \brief      Add a canonical value
@@ -144,8 +144,8 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
 
 // -------------------------  exchange_field  ---------------------------
 
-/*!     \class exchange_field
-        \brief Encapsulates the name for an exchange field, and whether it's a mult
+/*! \class  exchange_field
+    \brief  Encapsulates the name for an exchange field, and whether it's a mult
 */
 
 /*! \brief          Construct from name, multiplier and optional status
@@ -206,8 +206,8 @@ ostream& operator<<(ostream& ost, const exchange_field& exch_f)
 
 // -------------------------  points_structure  ---------------------------
 
-/*!     \class points_structure
-        \brief Encapsulate the vagaries of points-per-QSO rules
+/*! \class  points_structure
+    \brief  Encapsulate the vagaries of points-per-QSO rules
 */
 
 /// constructor
@@ -217,13 +217,13 @@ points_structure::points_structure(void) :
 
 // -------------------------  contest_rules  ---------------------------
 
-/*!     \class contest_rules
-        \brief A place to maintain all the rules
+/*! \class  contest_rules
+    \brief  A place to maintain all the rules
 
-        This object should be created and initialized early, and from that
-        point it should be treated as read-only. Being paranoid, though, there's still lots of
-        internal locking, since there are ongoing debates about the true thread safety of
-        strings in libstdc++.
+    This object should be created and initialized early, and from that
+    point it should be treated as read-only. Being paranoid, though, there's still lots of
+    internal locking, since there are ongoing debates about the true thread safety of
+    strings in libstdc++.
 */
 
 /*! \brief                  Parse and incorporate the "QTHX[xx] = " lines from context
@@ -306,7 +306,7 @@ const vector<exchange_field> contest_rules::_exchange_fields(const string& canon
   catch (std::out_of_range& oor)
   { ost << "Out of Range error in contest_rules::_exchange_fields: " << oor.what() << endl;
     ost << "canonical prefix = " << canonical_prefix << ", mode = " << MODE_NAME[m] << ", expand_choices = " << boolalpha << expand_choices << endl;
-    alert("Out of Range error in contest_rules::_exchange_fields()", false);
+//    alert("Out of Range error in contest_rules::_exchange_fields()", false);
 
     return vector<exchange_field>();
   }

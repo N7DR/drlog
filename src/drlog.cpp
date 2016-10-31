@@ -122,6 +122,7 @@ void restore_data(const string& archive_filename);  ///< Extract the data from t
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
 const bool rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 
+const bool send_to_scratchpad(const string& str);                               ///< Send a string to the SCRATCHPAD window
 void start_of_thread(void);                                                     ///< Increase the counter for the number of running threads
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
 const bool swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
@@ -631,9 +632,7 @@ int main(int argc, char** argv)
     { const vector<exchange_field> exchange_template = rules.unexpanded_exch("K", *(rules.permitted_modes().cbegin()));
 
       for (const auto& ef : exchange_template)
-      { //ost << "ef.name() = " << ef.name() << endl;
-
-        if (ef.name() == "PREC")
+      { if (ef.name() == "PREC")                // if there's a field with this name, it must be SS
           is_ss = true;
       }
     }
@@ -808,18 +807,6 @@ int main(int argc, char** argv)
 // static windows may contain either defined information or the contents of a file
   for (const auto& this_static_window : swindows)
   { string contents = this_static_window.second.first;
-//    string file_contents;
-//    bool explicit_contents = false;
-
-//    try
-//    { file_contents = read_file(context.path(), contents);
-//      contents = file_contents;
-//    }
-
-//    catch (...)
-//    { explicit_contents = true;
-//    }
-
     const vector<window_information>& vec_win_info = this_static_window.second.second;
 
     for (const auto& winfo : vec_win_info)
@@ -1114,6 +1101,12 @@ int main(int argc, char** argv)
   }
 
   display_band_mode(win_band_mode, safe_get_band(), safe_get_mode());
+
+// possibly start audio recording
+  { if (context.record_audio())
+    {
+    }
+  }
 
 // start to display the date and time
   try
@@ -2262,6 +2255,7 @@ void* prune_bandmap(void* vp)
     CTRL-C -- EXIT (same as .QUIT)
     ALT-M -- change mode
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+    CTRL-S -- send to scratchpad
     ALT-K -- toggle CW
     ESCAPE
     TAB -- switch between CQ and SAP mode
@@ -2428,30 +2422,15 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
   if (!processed and ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
-  { processed = change_cw_speed(e);
-/*
-    if (cw_p)
-    { int change = (e.is_control() ? 1 : 3);
+    processed = change_cw_speed(e);
 
-      if (e.symbol() == XK_Prior)
-        change = -change;
-
-      cw_speed(cw_p->speed() - change);  // effective immediately
-    }
-
-    processed = true;
-*/
-  }
+// CTRL-S -- send to scratchpad
+  if (!processed and e.is_control('s'))
+    processed = send_to_scratchpad(prior_contents);
 
 // ALT-K -- toggle CW
   if (!processed and e.is_alt('k') /* and cw_p */)
-  { //cw_p->toggle();
-
-    //win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );   // update display
-
-    //processed = true;
     processed = toggle_cw();
-  }
 
 // ESCAPE
   if (!processed and e.symbol() == XK_Escape)
@@ -2650,8 +2629,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         { const set<BAND> score_bands = rules.score_bands();
           string bands_str;
 
-//          for (const auto& b : score_bands)
-//            bands_str += (BAND_NAME[b] + " ");
           FOR_ALL(score_bands, [&] (const BAND& b) { bands_str += (BAND_NAME[b] + " "); } );
 
           win_score_bands < WINDOW_CLEAR < "Score Bands: " <= bands_str;
@@ -2733,12 +2710,14 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // BACKSLASH -- send to the scratchpad
     if (!processed and contents[0] == '\\')
-    { const string scratchpad_str = substring(hhmmss(), 0, 5) + " " + rig.rig_frequency().display_string() + " " + substring(contents, 1);
+    { //const string scratchpad_str = substring(hhmmss(), 0, 5) + " " + rig.rig_frequency().display_string() + " " + substring(contents, 1);
 
-      win_scratchpad < WINDOW_SCROLL_UP < WINDOW_BOTTOM_LEFT <= scratchpad_str;
+      //win_scratchpad < WINDOW_SCROLL_UP < WINDOW_BOTTOM_LEFT <= scratchpad_str;
+      //win <= WINDOW_CLEAR;
+
+      //processed = true;
+      processed = send_to_scratchpad(substring(contents, 1));
       win <= WINDOW_CLEAR;
-
-      processed = true;
     }
 
 // is it a frequency? Could check exhaustively with a horrible regex, but this is clearer and we would have to parse it anyway
@@ -3286,10 +3265,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are very slow
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
-  { processed = rit_control(e);
-
-//    processed = true;
-  }
+    processed = rit_control(e);
 
 // ALT-Y -- delete last QSO
   if (!processed and e.is_alt('y'))
@@ -3848,6 +3824,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 */
 /*  PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     ALT-K -- toggle CW
+    CTRL-S -- send contents of CALL window to scratchpad
     ESCAPE
     COMMA -- place contents of call window into this window, preceeded by a dot
     FULL STOP
@@ -3888,30 +3865,15 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
   if (!processed and ((e.symbol() == XK_Next) or (e.symbol() == XK_Prior)))
-  { processed = change_cw_speed(e);
-/*
-    if (cw_p)
-    { int change = (e.is_control() ? 1 : 3);
-
-      if (e.symbol() == XK_Prior)
-        change = -change;
-
-      cw_speed(cw_p->speed() - change);  // effective immediately
-    }
-
-    processed = true;
-*/
-  }
+    processed = change_cw_speed(e);
 
 // ALT-K -- toggle CW
   if (!processed and e.is_alt('k') /* and cw_p */)
-  { //cw_p->toggle();
-
-    //win_wpm < WINDOW_CLEAR < CURSOR_START_OF_LINE <= (cw_p->disabled() ? "NO CW" : (to_string(cw_p->speed()) + " WPM") );
-
-    //processed = true;
     processed = toggle_cw();
-  }
+
+// CTRL-S -- send contents of CALL window to scratchpad
+  if (!processed and e.is_control('s'))
+    processed = send_to_scratchpad(remove_peripheral_spaces(win_call.read()));
 
 // ESCAPE
   if (!processed and e.symbol() == XK_Escape)
@@ -7191,4 +7153,16 @@ const bool change_cw_speed(const keyboard_event& e)
   }
 
   return rv;
+}
+
+/*! \brief      Send a string to the SCRATCHPAD window
+    \param  str string to add
+    \return     true
+*/
+const bool send_to_scratchpad(const string& str)
+{ const string scratchpad_str = substring(hhmmss(), 0, 5) + " " + rig.rig_frequency().display_string() + " " + str;
+
+  win_scratchpad < WINDOW_SCROLL_UP < WINDOW_BOTTOM_LEFT <= scratchpad_str;
+
+  return true;
 }

@@ -52,6 +52,8 @@ protected:
   std::string                                  _alternative_exchange_sap;                   ///< alternative exchange in SAP mode
   std::string                                  _alternative_qsl_message;                    ///< alternative confirmation at end of QSO
   std::string                                  _archive_name;                               ///< name of the archive for save/restore information
+  std::string                                  _audio_command;                              ///< base command for frecording audio
+  std::string                                  _audio_file;                                 ///< base name of file for audio recordings
   std::string                                  _auto_backup;                                ///< directory for auto backup files
   bool                                         _auto_remaining_callsign_mults;              ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;               ///< do we auto-generate the remaining country mults?
@@ -203,6 +205,7 @@ protected:
   std::string                                  _rbn_server;                     ///< hostname or IP address of RBN server
   unsigned int                                 _rbn_threshold;                  ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
   std::string                                  _rbn_username;                   ///< username to use on the RBN server
+  bool                                         _record_audio;                   ///< whether to record audio
   int                                          _reject_colour;                  ///< colour for calls that are dupes
   std::set<std::string>                        _remaining_callsign_mults_list;  ///< callsign mults to display
   std::set<std::string>                        _remaining_country_mults_list;   ///< country mults to display
@@ -268,6 +271,8 @@ public:
   CONTEXTREAD(alternative_exchange_sap);                 ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_qsl_message);                  ///< alternative confirmation at end of QSO
   CONTEXTREAD(archive_name);                             ///< name of the archive for save/restore information
+  CONTEXTREAD(audio_command);                               ///< base command for recording audio
+  CONTEXTREAD(audio_file);                               ///< base name of file for audio recordings
   CONTEXTREAD(auto_backup);                              ///< directory for auto backup files
   CONTEXTREAD(auto_remaining_callsign_mults);            ///< do we auto-generate the remaining callsign mults?
   CONTEXTREAD(auto_remaining_country_mults);             ///< do we auto-generate the remaining country mults?
@@ -456,6 +461,7 @@ public:
   SAFEREAD(rbn_server, _context);                       ///< hostname or IP address of RBN server
   SAFEREAD(rbn_threshold, _context);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
   SAFEREAD(rbn_username, _context);                     ///< username to use on the RBN server
+  SAFEREAD(record_audio, _context);                     ///< whether to record audio
   SAFEREAD(reject_colour, _context);                    ///< colour for calls that are dupes
   SAFEREAD(remaining_callsign_mults_list, _context);    ///< callsign mults to display
   SAFEREAD(remaining_country_mults_list, _context);     ///< country mults to display

@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file functions.cpp
+/*! \file functions.cpp
 
-        Functions related to geography
+    Functions related to geography
 */
 
 #include "functions.h"
@@ -147,10 +147,10 @@ const string sunrise_or_sunset(const float& lat, const float& lon, const bool ca
   float cos_h = (cos (90.9 * dtor) - (sindec * sin(lat * dtor))) / (cosdec * cos(lat * dtor));
 
   if (cos_h > 1)
-    return "DARK";    // always dark
+    return "DARK";      // always dark
 
   if (cos_h < -1)
-    return "LIGHT";    // always light
+    return "LIGHT";     // always light
 
   float h = (calc_sunset ? (acos(cos_h) * rtod) : (360 - acos(cos_h) * rtod));
 

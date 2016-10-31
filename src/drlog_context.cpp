@@ -186,6 +186,14 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "ARCHIVE") and !rhs.empty() )
       _archive_name = rhs;
 
+// AUDIO COMMAND
+    if (LHS == "AUDIO COMMAND")
+      _audio_command = rhs;
+
+// AUDIO FILE
+    if (LHS == "AUDIO FILE")
+      _audio_file = rhs;
+
 // AUTO BACKUP
     if ( (LHS =="AUTO BACKUP") and !rhs.empty() )
       _auto_backup = rhs;
@@ -784,6 +792,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "RBN USERNAME")
       _rbn_username = rhs;
 
+// RECORD AUDIO
+    if (LHS == "RECORD AUDIO")
+      _record_audio = is_true;
+
 // REJECT COLOUR
     if ( ( (LHS == "REJECT COLOUR") or (LHS == "REJECT COLOR") ) and !rhs.empty() )
       _reject_colour = string_to_colour(RHS);
@@ -1373,6 +1385,8 @@ drlog_context::drlog_context(const std::string& filename) :
   _accept_colour(COLOUR_GREEN),                                     // green for calls that are OK to work
   _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
   _archive_name("drlog-restart"),                                   // name for the archive written when leaving drlog
+  _audio_command(""),                                               // no default audio command
+  _audio_file("audio"),                                             // audio will be in audio-yymmdd-hhmmss
   _auto_backup(""),                                                 // no auto backup directory
   _auto_remaining_callsign_mults_threshold(1),                      // a callsign mult must be seen only once before it becomes known
   _auto_remaining_country_mults(false),                             // do not add country mults as we detect them
@@ -1482,6 +1496,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _rbn_server("telnet.reversebeacon.net"),    // domain name of the reverse beacon network telnet server
   _rbn_threshold(1),                          // all received spots are posted
   _rbn_username(""),                          // no default name to access the RBN
+  _record_audio(false),                       // do not record audio
   _reject_colour(COLOUR_RED),                 // red for dupes
   _remaining_country_mults_list(),            // no remaining country mults
   _rig1_baud(4800),                           // 4800 baud
