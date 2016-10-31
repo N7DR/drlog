@@ -1,4 +1,4 @@
-// $Id: functions.cpp 93 2015-01-31 14:59:51Z  $
+// $Id: functions.cpp 130 2016-10-31 23:04:05Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
