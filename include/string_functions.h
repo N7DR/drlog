@@ -1,4 +1,4 @@
-// $Id: string_functions.h 129 2016-09-29 21:13:34Z  $
+// $Id: string_functions.h 133 2016-11-15 20:54:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -7,6 +7,11 @@
 
 // Copyright owners:
 //    N7DR
+
+/*! \file string_functions.h
+
+    Functions related to the manipulation of strings
+*/
 
 #ifndef STRING_FUNCTIONS_H
 #define STRING_FUNCTIONS_H
@@ -22,20 +27,22 @@
 
 #include <time.h>
 
-static const std::string EOL      = "\n";      ///< end-of-line marker as string
-static const char        EOL_CHAR = '\n';      ///< end-of-line marker as character
+static const std::string EOL      = "\n";       ///< end-of-line marker as string
+static const char        EOL_CHAR = '\n';       ///< end-of-line marker as character
 
-static const std::string  LF       = "\n";     ///< LF as string
-static const std::string& LF_STR  = LF;        ///< LF as string
-static const char         LF_CHAR  = '\n';     ///< LF as character
+static const std::string  LF       = "\n";      ///< LF as string
+static const std::string& LF_STR  = LF;         ///< LF as string
+static const char         LF_CHAR  = '\n';      ///< LF as character
 
-static const std::string CR       = "\r";      ///< CR as string
-static const char        CR_CHAR  = '\r';      ///< CR as character
-static const std::string CRLF     = "\r\n";    ///< CR followed by LF
+static const std::string CR       = "\r";       ///< CR as string
+static const char        CR_CHAR  = '\r';       ///< CR as character
+static const std::string CRLF     = "\r\n";     ///< CR followed by LF
+
+const bool INCLUDE_SECONDS = true;             ///< whether to include seconds in date_time_string()
   
 /// directions in which a string can be padded
-enum pad_direction { PAD_LEFT,                 ///< pad to the left
-                     PAD_RIGHT                 ///< pad to the right
+enum pad_direction { PAD_LEFT,                  ///< pad to the left
+                     PAD_RIGHT                  ///< pad to the right
                    };
 
 // error numbers
@@ -65,10 +72,11 @@ const std::vector<std::string> from_csv(const std::string& line);
 */
 const std::string duplicate_char(const std::string& s, const char& c = '"');
 
-/*! \brief  Provide a formatted date/time string
-    \return current date and time in the format: YYYY-MM-DDTHH:MM
+/*! \brief                      Provide a formatted date/time string
+    \param  include_seconds     whether to include the portion of the string that designates seconds
+    \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
-const std::string date_time_string(void);
+const std::string date_time_string(const bool include_seconds = !INCLUDE_SECONDS);
 
 /*! \brief          Convert struct tm pointer to formatted string
     \param  format  format to be used
@@ -85,7 +93,7 @@ const std::string format_time(const std::string& format, const tm* tmp);
 */
 template <class T>
 const T from_string(const std::string& s)
-{ std::istringstream stream (s);
+{ std::istringstream stream(s);
   T t;
      
   stream >> t;
@@ -138,6 +146,28 @@ const std::string replace_char(const std::string& s, char old_char, char new_cha
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
 const std::string replace(const std::string& s, const std::string& old_str, const std::string& new_str);
+
+/*! \brief              Replace part of a string with a byte-for-byte copy of an object
+    \param  s           string on which to operate
+    \param  start_posn  position at substitution begins
+    \param  value       bytes that are to be placed into <i>s</i>
+    \return             <i>s</i>, overwriting characters starting at <i>start_posn</i> with the bytes of <i>value</i>
+
+    Will not return a string of length greater than <i>s</i>; will truncate to that length if necessary
+*/
+template <typename T>
+const std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
+{ std::string rv = s;
+  const size_t value_size = sizeof(value);
+  u_char* cp = (u_char*)&value;
+
+  for (size_t n = 0; n < value_size; ++n)
+  { if ( (start_posn + n) < rv.size())
+      rv[start_posn + n] = cp[n];
+  }
+
+  return rv;
+}
 
 /*! \brief      Does a string contain a particular substring?
     \param  s   string to test

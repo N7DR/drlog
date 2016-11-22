@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 119 2016-01-16 18:32:13Z  $
+// $Id: cw_buffer.cpp 133 2016-11-15 20:54:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file cw_buffer.cpp
+/*! \file cw_buffer.cpp
 
-        Classes and functions related to sending CW
+    Classes and functions related to sending CW
 */
 
 #include "cw_buffer.h"
@@ -68,7 +68,6 @@ void* cw_buffer::_static_play(void* arg)              // arg is the "this" point
 
   return nullptr;
 }
-
 
 /*! \brief      Play the buffer
     \param      unused

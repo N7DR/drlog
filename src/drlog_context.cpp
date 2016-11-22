@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 130 2016-10-31 23:04:05Z  $
+// $Id: drlog_context.cpp 134 2016-11-15 23:57:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -187,12 +187,28 @@ void drlog_context::_process_configuration_file(const string& filename)
       _archive_name = rhs;
 
 // AUDIO COMMAND
-    if (LHS == "AUDIO COMMAND")
-      _audio_command = rhs;
+//    if (LHS == "AUDIO COMMAND")
+//      _audio_command = rhs;
+
+// AUDIO CHANNELS
+    if (LHS == "AUDIO CHANNELS")
+      _audio_channels = from_string<unsigned int>(rhs);
+
+// AUDIO DEVICE
+    if ( (LHS == "AUDIO DEVICE") or (LHS == "AUDIO DEVICE NAME") )
+      _audio_device_name = rhs;
+
+// AUDIO DURATION
+    if (LHS == "AUDIO DURATION")
+      _audio_duration = from_string<unsigned int>(rhs);
 
 // AUDIO FILE
     if (LHS == "AUDIO FILE")
       _audio_file = rhs;
+
+// AUDIO RATE
+    if (LHS == "AUDIO RATE")
+      _audio_rate = from_string<unsigned int>(rhs);
 
 // AUTO BACKUP
     if ( (LHS =="AUTO BACKUP") and !rhs.empty() )
@@ -1385,8 +1401,12 @@ drlog_context::drlog_context(const std::string& filename) :
   _accept_colour(COLOUR_GREEN),                                     // green for calls that are OK to work
   _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
   _archive_name("drlog-restart"),                                   // name for the archive written when leaving drlog
-  _audio_command(""),                                               // no default audio command
+//  _audio_command(""),                                               // no default audio command
+  _audio_channels(1),                                               // monophonic
+  _audio_device_name("default"),                                    // default audio device
+  _audio_duration(60),                                              // record 60 minutes per file
   _audio_file("audio"),                                             // audio will be in audio-yymmdd-hhmmss
+  _audio_rate(8000),                                                // 8,000 samples per second
   _auto_backup(""),                                                 // no auto backup directory
   _auto_remaining_callsign_mults_threshold(1),                      // a callsign mult must be seen only once before it becomes known
   _auto_remaining_country_mults(false),                             // do not add country mults as we detect them

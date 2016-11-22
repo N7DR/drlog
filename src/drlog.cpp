@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 130 2016-10-31 23:04:05Z  $
+// $Id: drlog.cpp 135 2016-11-16 23:52:35Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,6 +11,7 @@
         The main program for drlog
  */
 
+#include "audio.h"
 #include "bandmap.h"
 #include "bands-modes.h"
 #include "cluster.h"
@@ -94,6 +95,7 @@ void display_nearby_callsign(const string& callsign);                           
 void display_statistics(const string& summary_str);                                             ///< Display the current statistics
 const string dump_screen(const string& filename = string());                                    ///< Dump a screen image to PNG file
 
+void end_of_thread(const string& name);
 void enter_cq_mode(void);                           ///< Enter CQ mode
 void enter_sap_mode(void);                          ///< Enter SAP mode
 void exit_drlog(void);                              ///< Cleanup and exit
@@ -101,12 +103,13 @@ const string expand_cw_message(const string& msg);  ///< Expand a CW message, re
 
 const bool fast_cw_bandwidth(void);                       ///< set CW bandwidth to appropriate value for CQ/SAP mode
 
-const string hhmmss(void);                          ///< Obtain the current time in HHMMSS format
+const string hhmmss(void);                          ///< Obtain the current time in HH:MM:SS format
 
 const string match_callsign(const vector<pair<string /* callsign */,
                             int /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
 
 void populate_win_info(const string& str);                          ///< Populate the information window
+void print_thread_names(void);
 void process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
 const bool process_keypress_F5(void);                               ///< process key F5
 const bool p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
@@ -123,7 +126,7 @@ void rig_error_alert(const string& msg);            ///< Alert the user to a rig
 const bool rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 
 const bool send_to_scratchpad(const string& str);                               ///< Send a string to the SCRATCHPAD window
-void start_of_thread(void);                                                     ///< Increase the counter for the number of running threads
+void start_of_thread(const string& name);                                                     ///< Increase the counter for the number of running threads
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
 const bool swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
 
@@ -202,6 +205,7 @@ pt_mutex            thread_check_mutex;                     ///< mutex for contr
 int                 n_running_threads = 0;                  ///< how many additional threads are running?
 bool                exiting = false;                        ///< is the program exiting?
 bool                exiting_rig_status = false;             ///< turn off the display-rig_status thread first
+set<string>         thread_names;
 
 pt_mutex            current_band_mutex;                     ///< mutex for setting/getting the current band
 BAND                current_band;                           ///< the current band
@@ -222,6 +226,7 @@ map<string /* mult name */, accumulator<string> >     acc_callsigns;            
 accumulator<string>     acc_countries;                          ///< accumulator for canonical prefixes for auto countries
 int                     ACCEPT_COLOUR(COLOUR_GREEN);            ///< colour for calls that have been worked, but are not dupes
 string                  at_call;                                ///< call that should replace comat in "call ok now" message
+audio_recorder          audio;                                  ///< provide capability to record audio
 
 drlog_context           context;                            ///< context taken from configuration file
 
@@ -538,6 +543,24 @@ int main(int argc, char** argv)
     REJECT_COLOUR = context.reject_colour();    // colour for calls it is not OK to work
     serno_spaces = context.serno_spaces();
     long_t = context.long_t();
+
+// possibly configure audio recording
+    if (!context.audio_file().empty())
+    { audio.base_filename(context.audio_file());
+      audio.maximum_duration(context.audio_duration() * 60);
+      audio.pcm_name(context.audio_device_name());
+      audio.n_channels(context.audio_channels());
+      audio.samples_per_second(context.audio_rate());
+
+//      audio.maximum_duration(300);
+
+      audio.initialise();
+
+//      ost << "audio initialised" << endl;
+
+      audio.capture();      // exits after 60 seconds
+//      exit(0);
+    }
 
 // read the country data
     cty_data* country_data_p = nullptr;
@@ -1607,7 +1630,7 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
 
 /// Thread function to display the date and time
 void* display_date_and_time(void* vp)
-{ start_of_thread();
+{ start_of_thread("display date and time");
 
   int last_second;                             // so that we can tell when the time has changed
   array<char, 26> buf;                         // buffer to hold the ASCII date/time info; see man page for gmtime()
@@ -1628,9 +1651,15 @@ void* display_date_and_time(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { ost << "display_date_and_time() is exiting" << endl;
+        { end_of_thread("display date and time");
 
-          n_running_threads--;
+//          ost << "display_date_and_time() is exiting" << endl;
+
+//          n_running_threads--;
+
+//          auto n_removed = thread_names.erase("display date and time");
+//          ost << "removed display date and time" << endl;
+
           return nullptr;
         }
       }
@@ -1728,7 +1757,7 @@ void* display_date_and_time(void* vp)
     NB It doesn't matter *how* the rig's frequency came to change; it could be manual
 */
 void* display_rig_status(void* vp)
-{ start_of_thread();
+{ start_of_thread("display rig status");
 
   rig_status_info* rig_status_thread_parameters_p = static_cast<rig_status_info*>(vp);
   rig_status_info& rig_status_thread_parameters = *rig_status_thread_parameters_p;
@@ -1948,9 +1977,14 @@ void* display_rig_status(void* vp)
 
       if (exiting_rig_status)
       { ost << "display_rig_status() is exiting" << endl;
+
+        end_of_thread("display rig status");
+
+        ost << "will now exit other threads" << endl;
+
         exiting = true;
 
-        n_running_threads--;
+//        n_running_threads--;
         pthread_exit(nullptr);
       }
     }
@@ -1965,7 +1999,7 @@ void* display_rig_status(void* vp)
     pulls the data from the cluster object [and removes the data from it]
 */
 void* process_rbn_info(void* vp)
-{ start_of_thread();
+{ start_of_thread("process rbn info");
 
 // get access to the information that's been passed to the thread
   cluster_info* cip = static_cast<cluster_info*>(vp);
@@ -2170,9 +2204,11 @@ void* process_rbn_info(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { ost << "process_rbn_info() is exiting" << endl;
+        { // ost << "process_rbn_info() is exiting" << endl;
 
-          n_running_threads--;
+          //n_running_threads--;
+
+          end_of_thread("process rbn info");
           return nullptr;
         }
       }
@@ -2186,7 +2222,7 @@ void* process_rbn_info(void* vp)
 
 /// thread function to obtain data from the cluster
 void* get_cluster_info(void* vp)
-{ start_of_thread();
+{ start_of_thread("get cluster info");
 
   dx_cluster& cluster = *(static_cast<dx_cluster*>(vp));    // make the cluster available
 
@@ -2198,9 +2234,10 @@ void* get_cluster_info(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { ost << "get_cluster_info() is exiting" << endl;
+        { //ost << "get_cluster_info() is exiting" << endl;
 
-          n_running_threads--;
+          //n_running_threads--;
+          end_of_thread("get cluster info");
           return nullptr;
         }
       }
@@ -2214,7 +2251,7 @@ void* get_cluster_info(void* vp)
 
 /// thread function to prune the bandmaps once per minute
 void* prune_bandmap(void* vp)
-{ start_of_thread();
+{ start_of_thread("prune bandmap");
 
 // get access to the information that's been passed to the thread
   bandmap_info* cip = static_cast<bandmap_info*>(vp);
@@ -2231,9 +2268,10 @@ void* prune_bandmap(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { ost << "prune_bandmap() is exiting" << endl;
+        { //ost << "prune_bandmap() is exiting" << endl;
 
-          n_running_threads--;
+          //n_running_threads--;
+          end_of_thread("prune bandmap");
           return nullptr;
         }
       }
@@ -5285,7 +5323,7 @@ void* keyboard_test(void* vp)
 
 /// Thread function to simulate a contest from an extant log
 void* simulator_thread(void* vp)
-{ start_of_thread();
+{ start_of_thread("simulator thread");
 
   tuple<string, int>& params = *(static_cast<tuple<string, int>*>(vp));
   const string& filename = get<0>(params);
@@ -5349,9 +5387,11 @@ void* simulator_thread(void* vp)
     { SAFELOCK(thread_check);
 
       if (exiting)
-      { ost << "simulator_thread() is exiting" << endl;
+      { //ost << "simulator_thread() is exiting" << endl;
 
-        n_running_threads--;
+        //n_running_threads--;
+
+        end_of_thread("simulator thread");
         return nullptr;
       }
     }
@@ -5556,7 +5596,7 @@ void rescore(const contest_rules& rules)
   }
 }
 
-/*! \brief  Obtain the current time in HHMMSS format
+/*! \brief  Obtain the current time in HH:MM:SS format
 */
 const string hhmmss(void)
 { const time_t now = ::time(NULL);           // get the time from the kernel
@@ -5714,7 +5754,7 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
 */
 void* auto_backup(void* vp)
 {
-  { start_of_thread();
+  { start_of_thread("auto backup");
 
     try
     { const tuple<string, string, string>* tsss_p = static_cast<tuple<string, string, string>*>(vp);;
@@ -5739,12 +5779,14 @@ void* auto_backup(void* vp)
     }
 
 // manually mark this thread as complete, since we don't want to interrupt the above copy
-    { SAFELOCK(thread_check);
-
-      n_running_threads--;
-    }
+//    { SAFELOCK(thread_check);
+//
+//      n_running_threads--;
+//    }
   }  // ensure that all objects call destructors, whatever the implementation
 
+
+  end_of_thread("auto backup");
   pthread_exit(nullptr);
 }
 
@@ -5763,10 +5805,17 @@ void update_local_time(void)
 }
 
 /// Increase the counter for the number of running threads
-void start_of_thread(void)
+void start_of_thread(const string& name)
 { SAFELOCK(thread_check);
 
   n_running_threads++;
+  const auto result = thread_names.insert(name);
+
+  if (!result.second)
+    ost << "failed to insert thread name: " << name << endl;
+
+  ost << "n_running_threads = " << n_running_threads << endl;
+  print_thread_names();
 }
 
 /// Cleanup and exit
@@ -5779,34 +5828,43 @@ void exit_drlog(void)
 
   ost << "finished archiving" << endl;
 
-  { ost << "about to lock" << endl;
-
-    SAFELOCK(thread_check);
+  { SAFELOCK(thread_check);
 
     ost << "have the lock" << endl;
+
+    ost << boolalpha << "first value of exiting = " << exiting << endl;
 
     exiting_rig_status = true;
     ost << "exiting_rig_status now true; number of threads = " << n_running_threads << endl;
   }
 
+  ost << boolalpha << "second value of exiting = " << exiting << endl;
+
   ost << "starting exit tests" << endl;
 
   for (unsigned int n = 0; n <10; ++n)
-  { ost << "exit test number " << n << endl;
-
-//    bool ok_to_exit = false;
+  { ost << "running exit test number " << n << endl;
 
     { SAFELOCK(thread_check);
 
-      const int local_copy = n_running_threads;
+      if (exiting)        // will be true when rig display thread ends
+      { ost << "exiting is true" << endl;
 
-      ost << "n_running_threads = " << local_copy << endl;
+        const int local_copy = n_running_threads;
 
-      if (local_copy == 0);
-      { ost << "all threads stopped; exiting" << endl;
-        sleep_for(seconds(1));                     // just alow some extra time
-        exit(0);
+        ost << "n_running_threads = " << local_copy << endl;
+
+        print_thread_names();
+
+        if (local_copy == 0)
+        { ost << "all threads stopped; exiting" << endl;
+          sleep_for(seconds(1));                     // just allow some extra time
+          exit(0);
+        }
+
       }
+      else
+        ost << "exiting is not yet true" << endl;
     }
 
     ost << "after exit test; about to sleep for one second" << endl;
@@ -6874,13 +6932,13 @@ void update_mult_value(void)
 }
 
 /*! \brief  Thread function to write a screenshot to a file
-*
-*   This is intended to be used as a separate thread, so the parameters are passed
-*   in the usual void*
+
+    This is intended to be used as a separate thread, so the parameters are passed
+    in the usual void*
 */
 void* auto_screenshot(void* vp)
 {
-  { start_of_thread();
+  { start_of_thread("auto screenshot");
 
     try
     { const string* filename_p = static_cast<string*>(vp);
@@ -6895,12 +6953,13 @@ void* auto_screenshot(void* vp)
     }
 
 // manually mark this thread as complete, since we don't want to interrupt the above copy
-    { SAFELOCK(thread_check);
-
-      n_running_threads--;
-    }
+//    { SAFELOCK(thread_check);
+//
+//      n_running_threads--;
+//    }
   }  // ensure that all objects call destructors, whatever the implementation
 
+  end_of_thread("auto screenshot");
   pthread_exit(nullptr);
 }
 
@@ -7166,3 +7225,32 @@ const bool send_to_scratchpad(const string& str)
 
   return true;
 }
+
+void print_thread_names(void)
+{ ost << "Running threads:" << endl;
+
+  SAFELOCK(thread_check);
+
+  for (auto& thread_name : thread_names)
+    ost << "  " << thread_name << endl;
+}
+
+/// decrease the counter for the number of running threads
+void end_of_thread(const string& name)
+{ SAFELOCK(thread_check);
+
+  ost << "thread [" << name  << "] is exiting" << endl;
+
+  n_running_threads--;
+  auto n_removed = thread_names.erase(name);
+  if (n_removed)
+    ost << "removed: " << name << endl;
+  else
+    ost << "unable to remove: " << name << endl;
+
+  ost << "n_running_threads = " << n_running_threads << endl;
+  print_thread_names();
+}
+
+
+

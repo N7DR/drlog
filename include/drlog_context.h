@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 129 2016-09-29 21:13:34Z  $
+// $Id: drlog_context.h 134 2016-11-15 23:57:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,8 +52,12 @@ protected:
   std::string                                  _alternative_exchange_sap;                   ///< alternative exchange in SAP mode
   std::string                                  _alternative_qsl_message;                    ///< alternative confirmation at end of QSO
   std::string                                  _archive_name;                               ///< name of the archive for save/restore information
-  std::string                                  _audio_command;                              ///< base command for frecording audio
+//  std::string                                  _audio_command;                              ///< base command for frecording audio
+  unsigned int                                 _audio_channels;                             ///< number of audio channels
+  std::string                                  _audio_device_name;                          ///< name of audio device
+  unsigned int                                 _audio_duration;                             ///< maximum duration in minutes, per file
   std::string                                  _audio_file;                                 ///< base name of file for audio recordings
+  unsigned int                                 _audio_rate;                                 ///< number of samples per second
   std::string                                  _auto_backup;                                ///< directory for auto backup files
   bool                                         _auto_remaining_callsign_mults;              ///< do we auto-generate the remaining callsign mults?
   bool                                         _auto_remaining_country_mults;               ///< do we auto-generate the remaining country mults?
@@ -271,8 +275,12 @@ public:
   CONTEXTREAD(alternative_exchange_sap);                 ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_qsl_message);                  ///< alternative confirmation at end of QSO
   CONTEXTREAD(archive_name);                             ///< name of the archive for save/restore information
-  CONTEXTREAD(audio_command);                               ///< base command for recording audio
+//  CONTEXTREAD(audio_command);                               ///< base command for recording audio
+  CONTEXTREAD(audio_channels);                           ///< number of audio channels
+  CONTEXTREAD(audio_device_name);                        ///< name of audio device
+  CONTEXTREAD(audio_duration);                           ///< maximum duration in minutes, per file
   CONTEXTREAD(audio_file);                               ///< base name of file for audio recordings
+  CONTEXTREAD(audio_rate);                               ///< number of samples per second
   CONTEXTREAD(auto_backup);                              ///< directory for auto backup files
   CONTEXTREAD(auto_remaining_callsign_mults);            ///< do we auto-generate the remaining callsign mults?
   CONTEXTREAD(auto_remaining_country_mults);             ///< do we auto-generate the remaining country mults?
@@ -309,37 +317,37 @@ public:
   CONTEXTREAD(bandmap_filter_show_colour);       ///< background colour when bandmap filter is in show mode
   CONTEXTREAD(bandmap_recent_colour);            ///< colour for bandmap entries that are less than two minutes old
   CONTEXTREAD(bands);                            ///< comma-delimited bands
-  SAFEREAD(batch_messages_file, _context);              ///< file that contains per-call batch messages
+  CONTEXTREAD(batch_messages_file);              ///< file that contains per-call batch messages
 
-  SAFEREAD(cabrillo_address_1, _context);               ///< first ADDRESS: line
-  SAFEREAD(cabrillo_address_2, _context);               ///< second ADDRESS: line
-  SAFEREAD(cabrillo_address_3, _context);               ///< third ADDRESS: line
-  SAFEREAD(cabrillo_address_4, _context);               ///< fourth ADDRESS: line
-  SAFEREAD(cabrillo_address_city, _context);            ///< ADDRESS-CITY:
-  SAFEREAD(cabrillo_address_state_province, _context);  ///< ADDRESS-STATE-PROVINCE:
-  SAFEREAD(cabrillo_address_postalcode, _context);      ///< ADDRESS-POSTALCODE:
-  SAFEREAD(cabrillo_address_country, _context);         ///< ADDRESS-COUNTRY:
-  SAFEREAD(cabrillo_callsign, _context);                ///< CALLSIGN:
-  SAFEREAD(cabrillo_category_assisted, _context);       ///< CATEGORY-ASSISTED:
-  SAFEREAD(cabrillo_category_band, _context);           ///< CATEGORY-BAND:
-  SAFEREAD(cabrillo_category_mode, _context);           ///< CATEGORY-MODE:
-  SAFEREAD(cabrillo_category_operator, _context);       ///< CATEGORY-OPERATOR:
-  SAFEREAD(cabrillo_category_overlay, _context);        ///< CATEGORY-OVERLAY:
-  SAFEREAD(cabrillo_category_power, _context);          ///< CATEGORY-POWER:
-  SAFEREAD(cabrillo_category_station, _context);        ///< CATEGORY-STATION:
-  SAFEREAD(cabrillo_category_time, _context);           ///< CATEGORY-TIME:
-  SAFEREAD(cabrillo_category_transmitter, _context);    ///< CATEGORY-TRANSMITTER:
-  SAFEREAD(cabrillo_certificate, _context);             ///< CERTIFICATE:
-  SAFEREAD(cabrillo_club, _context);                    ///< CLUB:
-  SAFEREAD(cabrillo_contest, _context);                 ///< CONTEST:
-  SAFEREAD(cabrillo_eol, _context);                     ///< EOL used in the cabrillo file; one of: "LF", "CR" or "CRLF"
-  SAFEREAD(cabrillo_e_mail, _context);                  ///< EMAIL: (sic)
-  SAFEREAD(cabrillo_filename, _context);                ///< name of Cabrillo log
-  SAFEREAD(cabrillo_include_score, _context);           ///< is the CLAIMED-SCORE line included in the Cabrillo file?
-  SAFEREAD(cabrillo_location, _context);                ///< LOCATION:
-  SAFEREAD(cabrillo_name, _context);                    ///< NAME:
-  SAFEREAD(cabrillo_operators, _context);               ///< OPERATORS:
-  SAFEREAD(cabrillo_qso_template, _context);            ///< format for Cabrillo QSOs
+  CONTEXTREAD(cabrillo_address_1);               ///< first ADDRESS: line
+  CONTEXTREAD(cabrillo_address_2);               ///< second ADDRESS: line
+  CONTEXTREAD(cabrillo_address_3);               ///< third ADDRESS: line
+  CONTEXTREAD(cabrillo_address_4);               ///< fourth ADDRESS: line
+  CONTEXTREAD(cabrillo_address_city);            ///< ADDRESS-CITY:
+  CONTEXTREAD(cabrillo_address_state_province);  ///< ADDRESS-STATE-PROVINCE:
+  CONTEXTREAD(cabrillo_address_postalcode);      ///< ADDRESS-POSTALCODE:
+  CONTEXTREAD(cabrillo_address_country);         ///< ADDRESS-COUNTRY:
+  CONTEXTREAD(cabrillo_callsign);                ///< CALLSIGN:
+  CONTEXTREAD(cabrillo_category_assisted);       ///< CATEGORY-ASSISTED:
+  CONTEXTREAD(cabrillo_category_band);           ///< CATEGORY-BAND:
+  CONTEXTREAD(cabrillo_category_mode);           ///< CATEGORY-MODE:
+  CONTEXTREAD(cabrillo_category_operator);       ///< CATEGORY-OPERATOR:
+  CONTEXTREAD(cabrillo_category_overlay);        ///< CATEGORY-OVERLAY:
+  CONTEXTREAD(cabrillo_category_power);          ///< CATEGORY-POWER:
+  CONTEXTREAD(cabrillo_category_station);        ///< CATEGORY-STATION:
+  CONTEXTREAD(cabrillo_category_time);           ///< CATEGORY-TIME:
+  CONTEXTREAD(cabrillo_category_transmitter);    ///< CATEGORY-TRANSMITTER:
+  CONTEXTREAD(cabrillo_certificate);             ///< CERTIFICATE:
+  CONTEXTREAD(cabrillo_club);                    ///< CLUB:
+  CONTEXTREAD(cabrillo_contest);                 ///< CONTEST:
+  CONTEXTREAD(cabrillo_eol);                     ///< EOL used in the cabrillo file; one of: "LF", "CR" or "CRLF"
+  CONTEXTREAD(cabrillo_e_mail);                  ///< EMAIL: (sic)
+  CONTEXTREAD(cabrillo_filename);                ///< name of Cabrillo log
+  CONTEXTREAD(cabrillo_include_score);           ///< is the CLAIMED-SCORE line included in the Cabrillo file?
+  CONTEXTREAD(cabrillo_location);                ///< LOCATION:
+  CONTEXTREAD(cabrillo_name);                    ///< NAME:
+  CONTEXTREAD(cabrillo_operators);               ///< OPERATORS:
+  CONTEXTREAD(cabrillo_qso_template);            ///< format for Cabrillo QSOs
 
   SAFEREAD(call_ok_now_message, _context);              ///< message if call was changed
   SAFEREAD(callsign_mults, _context);                   ///< mults derived from callsign; e.g., WPXPX

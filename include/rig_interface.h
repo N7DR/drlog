@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 129 2016-09-29 21:13:34Z  $
+// $Id: rig_interface.h 131 2016-11-07 18:14:28Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,12 +8,12 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file rig_interface.h
+/*! \file rig_interface.h
 
-        Classes and functions related to transferring information
-        between the computer and the rig.
+    Classes and functions related to transferring information
+    between the computer and the rig.
 
-        The more I spend time here, the more I think that it was a mistake to use hamlib :-(
+    The more I spend time here, the more I think that it was a mistake to use hamlib :-(
 */
 
 #ifndef RIG_INTERFACE_H
@@ -53,16 +53,16 @@ extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;    ///< 
 
 // ---------------------------------------- rig_status -------------------------
 
-/*!     \class rig_status
-        \brief The status of a rig .... a trivial wrapper
+/*! \class rig_status
+    \brief The status of a rig .... a trivial wrapper
 */
 
 WRAPPER_2(rig_status, frequency, freq, MODE, mode);
 
 // ---------------------------------------- rig_interface -------------------------
 
-/*!     \class rig_interface
-        \brief The interface to a rig
+/*! \class rig_interface
+    \brief The interface to a rig
 */
 
 class rig_interface
@@ -196,7 +196,9 @@ public:
             that the call contained herein *should* do the "right" thing -- but since there's no precise definition
             of any of this, not all backends are guaranteed to behave the same.
 
-            Hence we use the explicit K3 command, since at least we know what that will do on that rig.
+            Hence we use the explicit K3 command, since at least we know what that is supposed to do on that rig.
+            (With the caveat that since there is no proper transactional processing of K3 commands, any of all of
+            this could fail silently. All we can do is to throw the commands at the rig and hope that they work.)
 */
   void split_enable(void);
 
@@ -439,6 +441,5 @@ public:
     x_error(n, s)
   { }
 };
-
 
 #endif /* RIG_INTERFACE_H */

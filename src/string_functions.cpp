@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 129 2016-09-29 21:13:34Z  $
+// $Id: string_functions.cpp 133 2016-11-15 20:54:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -152,10 +152,11 @@ const string substring(const string& str, const size_t start_posn)
   return string();
 }
 
-/*! \brief      Provide a formatted date/time string
-    \return     current date and time in the format: YYYY-MM-DDTHH:MM
+/*! \brief                      Provide a formatted date/time string
+    \param  include_seconds     whether to include the portion oft he string that designates seconds
+    \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
-const string date_time_string(void)
+const string date_time_string(const bool include_seconds)
 { const time_t now = time(NULL);            // get the time from the kernel
   struct tm    structured_time;
 
@@ -166,7 +167,7 @@ const string date_time_string(void)
   asctime_r(&structured_time, buf.data());                     // convert to ASCII
 
   const string ascii_time(buf.data(), 26);
-  const string _utc  = ascii_time.substr(11, 5);                            // hh:mm
+  const string _utc  = ascii_time.substr(11, (include_seconds ? 8 : 5));                            // hh:mm
   const string _date = to_string(structured_time.tm_year + 1900) + "-" +
                          pad_string(to_string(structured_time.tm_mon + 1), 2, PAD_LEFT, '0') + "-" +
                          pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');              // yyyy-mm-dd

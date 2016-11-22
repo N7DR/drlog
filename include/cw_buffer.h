@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 119 2016-01-16 18:32:13Z  $
+// $Id: cw_buffer.h 133 2016-11-15 20:54:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file cw_buffer.h
+/*! \file cw_buffer.h
 
-        Classes and functions related to sending CW
+    Classes and functions related to sending CW
 */
 
 #ifndef CWBUFFER_H
