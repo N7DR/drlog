@@ -52,7 +52,6 @@ protected:
   std::string                                  _alternative_exchange_sap;                   ///< alternative exchange in SAP mode
   std::string                                  _alternative_qsl_message;                    ///< alternative confirmation at end of QSO
   std::string                                  _archive_name;                               ///< name of the archive for save/restore information
-//  std::string                                  _audio_command;                              ///< base command for frecording audio
   unsigned int                                 _audio_channels;                             ///< number of audio channels
   std::string                                  _audio_device_name;                          ///< name of audio device
   unsigned int                                 _audio_duration;                             ///< maximum duration in minutes, per file
@@ -275,7 +274,6 @@ public:
   CONTEXTREAD(alternative_exchange_sap);                 ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_qsl_message);                  ///< alternative confirmation at end of QSO
   CONTEXTREAD(archive_name);                             ///< name of the archive for save/restore information
-//  CONTEXTREAD(audio_command);                               ///< base command for recording audio
   CONTEXTREAD(audio_channels);                           ///< number of audio channels
   CONTEXTREAD(audio_device_name);                        ///< name of audio device
   CONTEXTREAD(audio_duration);                           ///< maximum duration in minutes, per file
@@ -349,9 +347,9 @@ public:
   CONTEXTREAD(cabrillo_operators);               ///< OPERATORS:
   CONTEXTREAD(cabrillo_qso_template);            ///< format for Cabrillo QSOs
 
-  SAFEREAD(call_ok_now_message, _context);              ///< message if call was changed
-  SAFEREAD(callsign_mults, _context);                   ///< mults derived from callsign; e.g., WPXPX
-  SAFEREAD(callsign_mults_per_band, _context);          ///< are callsign mults per-band?
+  CONTEXTREAD(call_ok_now_message);              ///< message if call was changed
+  CONTEXTREAD(callsign_mults);                   ///< mults derived from callsign; e.g., WPXPX
+  CONTEXTREAD(callsign_mults_per_band);          ///< are callsign mults per-band?
   SAFEREAD(callsign_mults_per_mode, _context);          ///< are callsign mults per-mode?
   SAFEREAD(cluster_port, _context);                     ///< port on the cluster server
   SAFEREAD(cluster_server, _context);                   ///< hostname or IP of cluster server

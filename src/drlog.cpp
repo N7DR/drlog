@@ -5822,7 +5822,10 @@ void start_of_thread(const string& name)
 void exit_drlog(void)
 { ost << "Inside exit_drlog()" << endl;
 
-  dump_screen("screenshot-EXIT");
+  const string dts = date_time_string();
+  const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
+
+  dump_screen("screenshot-EXIT-" + suffix);
 
   archive_data();
 

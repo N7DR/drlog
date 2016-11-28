@@ -82,11 +82,8 @@ void drlog_context::_set_points(const string& command, const MODE m)
       const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
 
       if (valid)
-      { string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
-        vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
-
-//        for (size_t n = 0; n < bands.size(); ++n)
-//          bands[n] = remove_peripheral_spaces(bands[n]);
+      { const string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
+        const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
 
         for (size_t n = 0; n < bands.size(); ++n)
         { const int wavelength = from_string<size_t>(bands[n]);
@@ -185,10 +182,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 // ARCHIVE
     if ( (LHS == "ARCHIVE") and !rhs.empty() )
       _archive_name = rhs;
-
-// AUDIO COMMAND
-//    if (LHS == "AUDIO COMMAND")
-//      _audio_command = rhs;
 
 // AUDIO CHANNELS
     if (LHS == "AUDIO CHANNELS")
@@ -382,11 +375,11 @@ void drlog_context::_process_configuration_file(const string& filename)
         }
         else    // not all bands
         {
-          { string bands_str = delimited_substring(lhs, '[', ']');
-            vector<string> bands = split_string(bands_str, ",");
+          { const string bands_str = delimited_substring(lhs, '[', ']');
+            vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
 
-            for (size_t n = 0; n < bands.size(); ++n)
-              bands[n] = remove_peripheral_spaces(bands[n]);
+//            for (size_t n = 0; n < bands.size(); ++n)
+//              bands[n] = remove_peripheral_spaces(bands[n]);
 
             for (size_t n = 0; n < bands.size(); ++n)
             { int wavelength = from_string<size_t>(bands[n]);
@@ -494,8 +487,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       const vector<string> countries = remove_peripheral_spaces(split_string(country_list, ','));
 
       FOR_ALL(countries, [&] (const string& str) { _exchange_per_country.insert( { str, RHS } ); } );
-
-//      _exchange_per_country.insert( { country, RHS  } );
     }
 
 // EXCHANGE CQ
@@ -557,7 +548,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
       for (size_t n = 0; n < fields.size(); ++n)
-      { vector<string> field = split_string(fields[n], ":");
+      { const vector<string> field = split_string(fields[n], ":");
 
         _sent_exchange_ssb.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
       }
@@ -769,9 +760,10 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (fields.size() == 2)
       { const string canonical_prefix = delimited_substring(fields[0], '[', ']');
         const vector<string> values = remove_peripheral_spaces(split_string(RHS, ","));
-        set<string> ss;
+//        set<string> ss;
 
-        copy(values.cbegin(), values.cend(), inserter(ss, ss.end()));
+//        copy(values.cbegin(), values.cend(), inserter(ss, ss.end()));
+        const set<string> ss(values.cbegin(), values.cend());
 
         _qthx.insert( { canonical_prefix, ss } );
       }
