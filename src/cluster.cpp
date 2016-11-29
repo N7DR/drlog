@@ -34,6 +34,7 @@ extern pt_mutex thread_check_mutex;     ///< mutex for controlling threads
 extern bool exiting;                    ///< is the program exiting?
 
 pt_mutex buffer_mutex;                  ///< mutex for the cluster buffer
+pt_mutex monitored_posts_mutex;         ///< mutex for the monitored posts
 pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
 
 // -----------  dx_cluster  ----------------
@@ -337,4 +338,146 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 // add the band
   if (_valid)
     _band = static_cast<BAND>(_freq);
+}
+
+// -----------  monitored_posts_entry  ----------------
+
+/*! \class  monitored_posts_entry
+    \brief  An entry in the container of monitored posts
+*/
+
+monitored_posts_entry::monitored_posts_entry(const dx_post& post)
+{ _callsign = post.callsign();
+//  _freq = post.freq();
+  _frequency_str = post.frequency_str();
+  _expiration = post.time_processed() + 3600;  // valid for one hour
+  _band = post.band();
+}
+
+const string monitored_posts_entry::to_string(void) const
+{ string rv;
+
+  rv = pad_string(_frequency_str, 7, PAD_LEFT) + " " + _callsign;
+
+  return rv;
+}
+
+// -----------  monitored_posts  ----------------
+
+/*! \class  monitored_posts
+    \brief  Handle the monitoring of certain stations
+*/
+
+monitored_posts::monitored_posts(void) :
+  _is_dirty(false)
+{ }
+
+void monitored_posts::callsigns(const set<string>& calls_to_be_monitored)
+{ SAFELOCK(monitored_posts);
+
+  _callsigns = calls_to_be_monitored;
+}
+
+const bool monitored_posts::is_monitored(const std::string& callsign) const
+{ SAFELOCK(monitored_posts);
+
+  return (_callsigns < callsign);
+}
+
+void monitored_posts::max_entries(const unsigned int n)
+{ SAFELOCK(monitored_posts);
+
+  _max_entries = n;
+}
+
+//void monitored_posts::add(const string& call, const enum BAND b, const time_t& tm)
+//{ SAFELOCK(monitored_posts);
+//
+//}
+
+void monitored_posts::operator+=(const dx_post& post)
+{ monitored_posts_entry mpe(post);
+  bool stop_search = false;
+  bool found_call_and_band = false;
+
+  SAFELOCK(monitored_posts);
+
+  for (deque<monitored_posts_entry>::iterator it = _entries.begin(); (!stop_search and (it != _entries.end())); ++it)
+  { monitored_posts_entry& old_mpe = *it;
+
+    if ( (mpe.callsign() == old_mpe.callsign()) and (mpe.band() == old_mpe.band()) )
+    { if ( mpe.expiration() > old_mpe.expiration() )
+      { _entries.erase(it);
+        stop_search = true;
+      }
+      else
+      { found_call_and_band = true;  // found entry, but it expires after the post we're testing
+        stop_search = true;
+      }
+    }
+  }
+
+  if (stop_search and !found_call_and_band)
+  { _entries.push_back(mpe);
+    _is_dirty = true;
+  }
+
+  if (!stop_search)
+  { _entries.push_back(mpe);
+    _is_dirty = true;
+  }
+
+  while (_entries.size() > _max_entries)  // should happen only once at most
+  { _entries.pop_front();
+    _is_dirty = true;                     // should be unnecessary, since should already be true
+  }
+}
+
+void monitored_posts::operator+=(const string& new_call)
+{ SAFELOCK(monitored_posts);
+
+  _callsigns.insert(new_call);
+}
+
+void monitored_posts::operator-=(const string& call_to_remove)
+{ SAFELOCK(monitored_posts);
+
+  _callsigns.erase(call_to_remove);
+
+// remove any entries that have this call
+
+  const size_t original_size = _entries.size();
+
+  _entries.erase(remove_if(_entries.begin(), _entries.end(),
+                   [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } ),
+                 _entries.end() );
+
+  if (original_size != _entries.size())
+    _is_dirty = true;
+}
+
+void monitored_posts::prune(void)
+{ const time_t now = ::time(NULL);
+
+  SAFELOCK(monitored_posts);
+
+  const size_t original_size = _entries.size();
+
+  _entries.erase(remove_if(_entries.begin(), _entries.end(),
+                   [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } ),
+                 _entries.end() );
+
+  if (original_size != _entries.size())
+    _is_dirty = true;
+}
+
+const vector<string> monitored_posts::to_strings(void)
+{ vector<string> rv;
+
+  SAFELOCK(monitored_posts);
+
+  for (const auto& mpe: _entries)
+    rv.push_back(mpe.to_string());
+
+  return rv;
 }

@@ -135,4 +135,74 @@ public:
   READ(valid);                  ///< is it a valid post?
 };
 
+// -----------  monitored_posts_entry  ----------------
+
+/*! \class  monitored_posts_entry
+    \brief  An entry in the container of monitored posts
+*/
+
+class monitored_posts_entry
+{
+protected:
+  std::string   _callsign;          ///< callsign
+  time_t        _expiration;        ///< time (relative to the UNIX epoch) at which entry will expire
+//  frequency     _freq;              ///< frequency at which <i>_callsign</i> was heard
+  std::string   _frequency_str;     ///< frequency in format xxxxx.y [kHz]
+  enum BAND     _band;              ///< band
+
+public:
+
+  monitored_posts_entry(const dx_post& post);
+
+  READ(band);
+  READ(callsign);
+  READ(expiration);
+
+  const std::string to_string(void) const;
+
+};
+
+// -----------  monitored_posts  ----------------
+
+/*! \class  monitored_posts
+    \brief  Handle the monitoring of certain stations
+*/
+
+class monitored_posts
+{
+protected:
+
+  std::set<std::string> _callsigns;     ///< monitored calls
+  bool                  _is_dirty;      ///< whether info has changed since last output
+  unsigned int          _max_entries;   ///< number of displayable entries
+
+  std::deque<monitored_posts_entry> _entries;
+
+//  std::list<monitored_posts_entry> _entries;
+
+public:
+
+  monitored_posts(void);
+
+  READ(is_dirty);
+
+  void callsigns(const std::set<std::string>& calls_to_be_monitored);
+
+  const bool is_monitored(const std::string& callsign) const;
+
+  void max_entries(const unsigned int n);
+
+//  void add(const std::string& call, const enum BAND b, const time_t& tm);
+  void operator+=(const dx_post& post);
+
+  void operator+=(const std::string& new_call);
+
+  void operator-=(const std::string& call_to_remove);
+
+  void prune(void);
+
+  const std::vector<std::string> to_strings(void);
+
+};
+
 #endif    // CLUSTER_H

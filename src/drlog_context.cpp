@@ -376,10 +376,7 @@ void drlog_context::_process_configuration_file(const string& filename)
         else    // not all bands
         {
           { const string bands_str = delimited_substring(lhs, '[', ']');
-            vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
-
-//            for (size_t n = 0; n < bands.size(); ++n)
-//              bands[n] = remove_peripheral_spaces(bands[n]);
+            const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
 
             for (size_t n = 0; n < bands.size(); ++n)
             { int wavelength = from_string<size_t>(bands[n]);
@@ -704,6 +701,13 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "PTT DELAY")
       _ptt_delay = from_string<unsigned int>(RHS);
 
+// POST MONITOR
+    if (LHS == "POST MONITOR")
+    { const vector<string> calls = remove_peripheral_spaces(split_string(RHS, ','));
+
+      FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls.insert(callsign); } );
+    }
+
 // P3
     if (LHS == "P3")
       _p3 = is_true;
@@ -760,9 +764,6 @@ void drlog_context::_process_configuration_file(const string& filename)
       if (fields.size() == 2)
       { const string canonical_prefix = delimited_substring(fields[0], '[', ']');
         const vector<string> values = remove_peripheral_spaces(split_string(RHS, ","));
-//        set<string> ss;
-
-//        copy(values.cbegin(), values.cend(), inserter(ss, ss.end()));
         const set<string> ss(values.cbegin(), values.cend());
 
         _qthx.insert( { canonical_prefix, ss } );
@@ -1393,7 +1394,6 @@ drlog_context::drlog_context(const std::string& filename) :
   _accept_colour(COLOUR_GREEN),                                     // green for calls that are OK to work
   _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
   _archive_name("drlog-restart"),                                   // name for the archive written when leaving drlog
-//  _audio_command(""),                                               // no default audio command
   _audio_channels(1),                                               // monophonic
   _audio_device_name("default"),                                    // default audio device
   _audio_duration(60),                                              // record 60 minutes per file
@@ -1483,12 +1483,13 @@ drlog_context::drlog_context(const std::string& filename) :
   _my_continent("XX"),                        // set continent to an invalid value
   _my_latitude(0),                            // at the equator
   _my_longitude(0),                           // Greenwich meridian
-  _nearby_extract(false),                       // do not display NEARBY calls in the EXTRACT window
+  _nearby_extract(false),                     // do not display NEARBY calls in the EXTRACT window
   _normalise_rate(false),                     // do not normalise rates to one-hour values
   _not_country_mults(),                       // no countries are explicitly not country mults
   _old_adif_log_name(),                       // no ADIF log of old QSOs
   _path( { "." } ),                           // search only the current directory
   _per_band_points( {} ),                     // no points awarded anywhere
+  _post_monitor_calls( {} ),                  // no calls are monitored
   _ptt_delay(25),                             // PTT delay
   _p3(false),                                 // no P3 is available
   _p3_ignore_checksum_error(false),           // don't ignore checksum errors when acquiring P3 screendumps

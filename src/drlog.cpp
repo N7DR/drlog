@@ -139,6 +139,7 @@ void update_individual_messages_window(const string& callsign = string());  ///<
 void update_known_callsign_mults(const string& callsign, const bool force_known = false);                   ///< Possibly add a new callsign mult
 void update_known_country_mults(const string& callsign, const bool force_known = false);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
+void update_monitored_posts(const dx_post& post);                             ///< Add entry to POST MONITOR window
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_qsls_window(const string& = "");                                ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                         ///< the head of the QTC queue
@@ -239,6 +240,7 @@ bool                    is_ss(false);                       ///< ss is special
 logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 bool                    long_t = false;                     ///< whether to send long Ts at beginning of serno
 
+monitored_posts         mp;                                 ///< the calls being monitored
 string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
 
 unsigned int            next_qso_number = 1;                ///< actual number of next QSO
@@ -293,6 +295,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_message,                     ///< messages from drlog to the user
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
+       win_monitored_posts,             ///< monitored posts
        win_qsls,                        ///< QSLs from old QSOs
        win_qso_number,                  ///< number of the next QSO
        win_qtc_queue,                   ///< the head of the unsent QTC queue
@@ -552,8 +555,6 @@ int main(int argc, char** argv)
       audio.n_channels(context.audio_channels());
       audio.samples_per_second(context.audio_rate());
 
-//      audio.maximum_duration(300);
-
       audio.initialise();
 
 //      ost << "audio initialised" << endl;
@@ -561,6 +562,9 @@ int main(int argc, char** argv)
       audio.capture();      // exits after 60 seconds
 //      exit(0);
     }
+
+// set up the calls to be monitored
+    mp.callsigns(context.post_monitor_calls());
 
 // read the country data
     cty_data* country_data_p = nullptr;
@@ -972,6 +976,10 @@ int main(int argc, char** argv)
 
 // NEARBY window
   win_nearby.init(context.window_info("NEARBY"), WINDOW_NO_CURSOR);
+
+// POST MONITOR window
+  win_monitored_posts.init(context.window_info("POST MONITOR"), WINDOW_NO_CURSOR);
+  mp.max_entries(win_monitored_posts.height());
 
 // QSLs window
   win_qsls.init(context.window_info("QSLS"), WINDOW_NO_CURSOR);
@@ -1628,7 +1636,8 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
   }
 }
 
-/// Thread function to display the date and time
+/*! \brief  Thread function to display the date and time, and perform other periodic functions
+*/
 void* display_date_and_time(void* vp)
 { start_of_thread("display date and time");
 
@@ -1652,13 +1661,6 @@ void* display_date_and_time(void* vp)
 
         if (exiting)
         { end_of_thread("display date and time");
-
-//          ost << "display_date_and_time() is exiting" << endl;
-
-//          n_running_threads--;
-
-//          auto n_removed = thread_names.erase("display date and time");
-//          ost << "removed display date and time" << endl;
 
           return nullptr;
         }
@@ -2042,7 +2044,7 @@ void* process_rbn_info(void* vp)
     { const string no_cr = remove_char(new_input, CR_CHAR);
       const vector<string> lines = to_lines(no_cr);
 
-// I don't understand why the scrolling occurs automatically... in particular
+// I don't understand why the scrolling occurs automatically... in particular,
 // I don't know what causes it to scroll
       for (unsigned int n = 0; n < lines.size(); ++n)
       { win_cluster_screen < lines[n];                       // THIS causes the scroll, but I don't know why
@@ -2096,6 +2098,10 @@ void* process_rbn_info(void* vp)
 //              const bool is_needed = is_needed_qso(dx_callsign, dx_band, be.mode());  // do we still need this guy?
 
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
+
+// is this station being monitored?
+              if (mp.is_monitored(be.callsign()))
+                update_monitored_posts(post);
 
 // update known mults before we test to see if this is a needed mult
 
@@ -2189,6 +2195,23 @@ void* process_rbn_info(void* vp)
     if (cluster_mult_win_was_changed)    // update the window on the screen
       cluster_mult_win.refresh();
 
+// update monitored posts if there was a change
+    if (mp.is_dirty())
+    { const vector<string> lines = mp.to_strings();
+
+      win_monitored_posts < WINDOW_CLEAR;
+
+//      unsigned int y = (win_monitored_posts.height() - 1 - lines.size());
+      unsigned int y = (lines.size() - 1);
+
+      for (size_t n = 0; n < lines.size(); ++n)
+      { win_monitored_posts < cursor(0, y--);
+        win_monitored_posts < lines[n];
+      }
+
+      win_monitored_posts.refresh();
+    }
+
 // remove marker that we are processing a pass
 // we assume that the height of cluster_line_win is one
     if (last_processed_line.empty())
@@ -2204,11 +2227,7 @@ void* process_rbn_info(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { // ost << "process_rbn_info() is exiting" << endl;
-
-          //n_running_threads--;
-
-          end_of_thread("process rbn info");
+        { end_of_thread("process rbn info");
           return nullptr;
         }
       }
@@ -2278,6 +2297,8 @@ void* prune_bandmap(void* vp)
 
       sleep_for(seconds(1));
     }
+
+    mp.prune();    // prune monitored posts
   }
 
   pthread_exit(nullptr);
@@ -2608,6 +2629,19 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       if (command == "CLEAR")
         win_message <= WINDOW_CLEAR;
 
+// .MONITOR <call> -- add <call> to those being monitored
+//      if (substring(command, 0, 7) == "MONITOR")
+      if (starts_with(command, "MON"))
+      { if (contains(command, " "))
+        { const size_t posn = command.find(" ");
+          const string callsign = remove_peripheral_spaces(substring(command, posn));
+
+          mp += callsign;
+
+          alert("MONITORING: " + callsign);
+        }
+      }
+
 // .QTC QRS <n>
       if (substring(command, 0, 8) == "QTC QRS ")
       { const unsigned int new_qrs = from_string<unsigned int>(substring(command, 8));
@@ -2743,18 +2777,25 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         }
       }
 
+// .UNMONITOR <call> -- remove <call> from those being monitored
+//      if (substring(command, 0, 9) == "UNMONITOR")
+      if (starts_with(command, "UNMON"))
+      { if (contains(command, " "))
+        { const size_t posn = command.find(" ");
+          const string callsign = remove_peripheral_spaces(substring(command, posn));
+
+          mp -= callsign;
+
+          alert("UNMONITORING: " + callsign);
+        }
+      }
+
       processed = true;
     }
 
 // BACKSLASH -- send to the scratchpad
     if (!processed and contents[0] == '\\')
-    { //const string scratchpad_str = substring(hhmmss(), 0, 5) + " " + rig.rig_frequency().display_string() + " " + substring(contents, 1);
-
-      //win_scratchpad < WINDOW_SCROLL_UP < WINDOW_BOTTOM_LEFT <= scratchpad_str;
-      //win <= WINDOW_CLEAR;
-
-      //processed = true;
-      processed = send_to_scratchpad(substring(contents, 1));
+    { processed = send_to_scratchpad(substring(contents, 1));
       win <= WINDOW_CLEAR;
     }
 
@@ -7255,5 +7296,10 @@ void end_of_thread(const string& name)
   print_thread_names();
 }
 
+/// Add entry to POST MONITOR window
+void update_monitored_posts(const dx_post& post)
+{ //mp.add(be.callsign(), be.band(), be.time());
+  mp += post;
+}
 
 

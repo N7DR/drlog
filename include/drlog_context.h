@@ -186,6 +186,7 @@ protected:
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points;              ///< points structure for each band and mode
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
+  std::set<std::string>                        _post_monitor_calls;               ///< calls to be monitored
   unsigned int                                 _ptt_delay;                        ///< PTT delay in milliseconds ( 0 => PTT disabled)
   bool                                         _p3;                               ///< is a P3 available?
   bool                                         _p3_ignore_checksum_error;         ///< should checksum errors be ignored when acquiring P3 screendumps?
@@ -350,11 +351,11 @@ public:
   CONTEXTREAD(call_ok_now_message);              ///< message if call was changed
   CONTEXTREAD(callsign_mults);                   ///< mults derived from callsign; e.g., WPXPX
   CONTEXTREAD(callsign_mults_per_band);          ///< are callsign mults per-band?
-  SAFEREAD(callsign_mults_per_mode, _context);          ///< are callsign mults per-mode?
-  SAFEREAD(cluster_port, _context);                     ///< port on the cluster server
-  SAFEREAD(cluster_server, _context);                   ///< hostname or IP of cluster server
-  SAFEREAD(cluster_username, _context);                 ///< username to use on the cluster
-  SAFEREAD(contest_name, _context);                     ///< name of the contest
+  CONTEXTREAD(callsign_mults_per_mode);          ///< are callsign mults per-mode?
+  CONTEXTREAD(cluster_port);                     ///< port on the cluster server
+  CONTEXTREAD(cluster_server);                   ///< hostname or IP of cluster server
+  CONTEXTREAD(cluster_username);                 ///< username to use on the cluster
+  CONTEXTREAD(contest_name);                     ///< name of the contest
   SAFEREAD(country_list, _context);                     ///< DXCC or WAE list?
   SAFEREAD(country_mults_filter, _context);             ///< the command from the configuration file
   SAFEREAD(country_mults_per_band, _context);           ///< are country mults per-band?
@@ -444,6 +445,8 @@ public:
     \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
 */
 //  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
+
+  CONTEXTREAD(post_monitor_calls)                   ///< calls to be monitored
 
   SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
   SAFEREAD(p3, _context);                           ///< is a P3 available?
