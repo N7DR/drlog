@@ -2078,6 +2078,10 @@ void* process_rbn_info(void* vp)
           if (post.valid())
           { const BAND dx_band = post.band();
 
+// is this station being monitored?
+            if (mp.is_monitored(post.callsign()))
+              update_monitored_posts(post);
+
             if (permitted_bands < dx_band)              // process only if is on a band we care about
             { const BAND cur_band = safe_get_band();
               const string& dx_callsign = post.callsign();
@@ -2100,8 +2104,8 @@ void* process_rbn_info(void* vp)
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
 
 // is this station being monitored?
-              if (mp.is_monitored(be.callsign()))
-                update_monitored_posts(post);
+//              if (mp.is_monitored(be.callsign()))
+//                update_monitored_posts(post);
 
 // update known mults before we test to see if this is a needed mult
 
@@ -2197,16 +2201,59 @@ void* process_rbn_info(void* vp)
 
 // update monitored posts if there was a change
     if (mp.is_dirty())
-    { const vector<string> lines = mp.to_strings();
+    { const deque<monitored_posts_entry> entries = mp.entries();
 
       win_monitored_posts < WINDOW_CLEAR;
 
-//      unsigned int y = (win_monitored_posts.height() - 1 - lines.size());
-      unsigned int y = (lines.size() - 1);
+      unsigned int y = (win_monitored_posts.height() - 1) - (entries.size() - 1); // oldest entry
 
-      for (size_t n = 0; n < lines.size(); ++n)
-      { win_monitored_posts < cursor(0, y--);
-        win_monitored_posts < lines[n];
+      const time_t now = ::time(NULL);
+
+      const vector<int> fade_colours = context.bandmap_fade_colours();
+      const int n_colours = fade_colours.size();
+      const float interval = (1.0 / static_cast<float>(n_colours));
+
+      int default_colours = colours.add(win_monitored_posts.fg(), win_monitored_posts.bg());
+
+// oldest to newest
+      for (size_t n = 0; n < entries.size(); ++n)
+      { ost << "n (index in deque) = " << n << endl;
+        ost << "entry: " << entries[n] << endl;
+
+        win_monitored_posts < cursor(0, y++);
+
+// correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
+// minutes to expiration
+        const unsigned int seconds_to_expiration = entries[n].expiration() - now;
+        const float fraction = static_cast<float>(seconds_to_expiration) / (3600);
+        int n_intervals = fraction / interval;
+
+        n_intervals = min(n_intervals, n_colours - 1);
+        n_intervals = (n_colours - 1) - n_intervals;
+
+        const int cpu = colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg());
+
+        ost << "for " << entries[n].callsign() << ", seconds to expiration = " << seconds_to_expiration << endl;
+
+        ost << "fraction = " << fraction << endl;
+        ost << "n_intervals = " << n_intervals << endl;
+        ost << "cpu = 0x" << hex << cpu << dec << endl;
+
+//        int status_colour = fade_colours[0];
+
+//        if (seconds_to_expiration < 2700)
+//          status_colour = fade_colours[1];
+
+//        if (seconds_to_expiration < 1800)
+//          status_colour = fade_colours[2];
+
+//        if (seconds_to_expiration < 900)
+//          status_colour = fade_colours[3];
+
+//        int cp = colours.add(status_colour, win_monitored_posts.bg());
+
+        win_monitored_posts < colour_pair(cpu)
+                            < entries[n].to_string() < colour_pair(default_colours);
       }
 
       win_monitored_posts.refresh();
@@ -2287,10 +2334,7 @@ void* prune_bandmap(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { //ost << "prune_bandmap() is exiting" << endl;
-
-          //n_running_threads--;
-          end_of_thread("prune bandmap");
+        { end_of_thread("prune bandmap");
           return nullptr;
         }
       }
@@ -2346,6 +2390,8 @@ void* prune_bandmap(void* vp)
     CTRL-B -- fast bandwidth
     F1 -- first step in SAP QSO during run
     F4 -- swap contents of CALL and BCALL windows
+    CTRL-M -- Monitor call
+    CTRL-U -- Unmonitor call (i.e., stop monitoring call)
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -3876,6 +3922,25 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 #endif
   }
 
+// CTRL-M -- monitor call
+  if (!processed and (e.is_control('m')))
+  { if (!prior_contents.empty())
+      mp += prior_contents;
+
+    alert("MONITORING: " + prior_contents);
+
+    processed = true;
+  }
+
+// CTRL-U -- unmonitor call
+  if (!processed and (e.is_control('u')))
+  { if (!prior_contents.empty())
+      mp -= prior_contents;
+
+    alert("UNMONITORING: " + prior_contents);
+
+    processed = true;
+  }
 
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)

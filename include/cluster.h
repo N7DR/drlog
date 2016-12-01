@@ -146,7 +146,6 @@ class monitored_posts_entry
 protected:
   std::string   _callsign;          ///< callsign
   time_t        _expiration;        ///< time (relative to the UNIX epoch) at which entry will expire
-//  frequency     _freq;              ///< frequency at which <i>_callsign</i> was heard
   std::string   _frequency_str;     ///< frequency in format xxxxx.y [kHz]
   enum BAND     _band;              ///< band
 
@@ -157,10 +156,14 @@ public:
   READ(band);
   READ(callsign);
   READ(expiration);
+  READ(frequency_str);
 
   const std::string to_string(void) const;
 
 };
+
+/// ostream << monitored_posts_entry
+std::ostream& operator<<(std::ostream& ost, const monitored_posts_entry& mpe);
 
 // -----------  monitored_posts  ----------------
 
@@ -178,11 +181,11 @@ protected:
 
   std::deque<monitored_posts_entry> _entries;
 
-//  std::list<monitored_posts_entry> _entries;
-
 public:
 
   monitored_posts(void);
+
+  const std::deque<monitored_posts_entry> entries(void);
 
   READ(is_dirty);
 

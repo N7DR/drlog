@@ -362,6 +362,16 @@ const string monitored_posts_entry::to_string(void) const
   return rv;
 }
 
+/// ostream << monitored_posts_entry
+ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
+{ ost << "Monitored: " << mpe.callsign()
+      << ", absolute expiration = " << mpe.expiration()
+      << ", relative expiration = " << mpe.expiration() - ::time(NULL)
+      << ", frequency = " << mpe.frequency_str();
+
+  return ost;
+}
+
 // -----------  monitored_posts  ----------------
 
 /*! \class  monitored_posts
@@ -394,6 +404,12 @@ void monitored_posts::max_entries(const unsigned int n)
 //{ SAFELOCK(monitored_posts);
 //
 //}
+
+const deque<monitored_posts_entry> monitored_posts::entries(void)
+{ SAFELOCK(monitored_posts);
+
+  return _entries;
+}
 
 void monitored_posts::operator+=(const dx_post& post)
 { monitored_posts_entry mpe(post);
