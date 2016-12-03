@@ -16,6 +16,7 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include "macros.h"
 #include "x_error.h"
 
 #include <array>
@@ -23,6 +24,7 @@
 
 #include <alsa/asoundlib.h>
 
+#if 0
 #if (!defined(READ_AND_WRITE))
 
 /// Syntactic sugar for read/write access
@@ -42,6 +44,7 @@
   inline const decltype(_##y)& y(void) const { return _##y; }
 
 #endif    // !READ
+# endif // 0
 
 enum AUDIO_FORMAT { AUDIO_FORMAT_DEFAULT = -1,
                     AUDIO_FORMAT_RAW     = 0,
@@ -95,17 +98,17 @@ protected:
 // The question is whether to use a stream or a C-style FILE*. I choose the latter
 // because it is likely to be a bit faster and also because it is easier to write
 // large amounts of data without going through contortions to avoid copies
-  FILE*         _fp;
-  bool          _in_use;
+  FILE*         _fp;            ///< file pointer
+//  bool          _in_use;
 
 public:
 
-  wav_file(void) :
-    _in_use(false)
+  wav_file(void) //:
+//    _in_use(false)
   { }
 
   READ_AND_WRITE(name);
-  READ_AND_WRITE(in_use);
+//  READ_AND_WRITE(in_use);
 
   void open(void);
 
@@ -188,7 +191,7 @@ protected:
 
   const int64_t _total_bytes_to_read(void) /* const */;
   ssize_t _pcm_read(u_char *data);
-  void _set_params(void);
+  void _set_params(void);               ///< set the parameters for the recording
 
   void _begin_wave(int fd, size_t count);
   void _end_wave(int fd);

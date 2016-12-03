@@ -301,6 +301,7 @@ const string read_file(const string& filename)
     fclose(fp);
 
     const string rv((const char*)(buf), file_length);    // convert to a real string
+
     delete [] buf;                                       // delete the buffer that held the file
     return rv;
   }
@@ -438,12 +439,13 @@ const vector<string> remove_empty_lines(const vector<string>& lines)
 const string join(const vector<string>& vec, const string& sep)
 { string rv;
 
-  for (unsigned int n = 0; n < vec.size(); ++n)
-  { rv += vec[n];
+  if (vec.empty())
+    return rv;
 
-    if (n != vec.size() - 1)
-      rv += sep;
-  }
+  for (unsigned int n = 0; n < vec.size() - 1; ++n)
+    rv += (vec[n] + sep);
+
+  rv += vec[vec.size() - 1];
   
   return rv;
 }
@@ -455,6 +457,9 @@ const string join(const vector<string>& vec, const string& sep)
 */
 const string join(const deque<string>& deq, const string& sep)
 { string rv;
+
+  if (deq.empty())
+    return rv;
 
   for (unsigned int n = 0; n < deq.size(); ++n)
   { rv += deq[n];

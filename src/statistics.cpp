@@ -810,14 +810,17 @@ void running_statistics::qtc_qsos_unsent(const unsigned int n)
     \param  b       band
     \param  m       mode
     \return         the ratio of the value of a new mult QSO on band <i>b</i> and mode <i>m</i> to the value of a new non-mult QSO on the same band and mode
-*/
 
-// lots of ways to come up with a plausible definition for the value of a mult
+    There are many ways to come up with a plausible definition for the value of a mult
+*/
 const float running_statistics::mult_to_qso_value(const contest_rules& rules, const BAND b, const MODE m) const
-{ const unsigned int current_mults = n_worked_callsign_mults(rules) + n_worked_country_mults(rules) + n_worked_exchange_mults(rules);
+{ //ost << "inside new mult_to_qso_value()" << endl;
+
+  const unsigned int current_mults = n_worked_callsign_mults(rules) + n_worked_country_mults(rules) + n_worked_exchange_mults(rules);
   const set<BAND> score_bands = rules.score_bands();
   const set<MODE> score_modes = rules.score_modes();
   unsigned int current_qso_points = 0;
+  const unsigned int current_qsos = n_qsos(rules);
 
   SAFELOCK(statistics);
 
@@ -828,10 +831,21 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
     FOR_ALL(score_bands, [&] (const BAND& b) { current_qso_points += qp[static_cast<int>(b)]; } );
   }
 
+  //ost << "current QSOs = " << current_qsos << endl;
+  //ost << "current QSO points = " << current_qso_points << endl;
+  const float current_mean_qso_points = static_cast<float>(current_qso_points) / current_qsos;
+
+  //ost << "current mean QSO points = " << current_mean_qso_points << endl;
+
   const unsigned int current_points = current_qso_points * current_mults;  // should be same as points(rules)
+
+  //ost << "current points = " << current_points << endl;
 
 // add a notional mult
   unsigned int notional_mults = current_mults;
+
+  //ost << "initial notional mults = " << notional_mults << endl;
+
   const map<BAND, int>& per_band_country_mult_factor = rules.per_band_country_mult_factor();
 
 // include the correct factor for a mult on the current band
@@ -841,28 +855,36 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
   else
     notional_mults++;
 
+  //ost << "modified notional mults = " << notional_mults << endl;
+
 // add a notional QSO; first calculate average qso point worth of a qso on the current band and mode
-  const auto& qp = _qso_points[m];
-  const unsigned int& n_qso_points = qp[b];
-  const auto& nq = _n_qsos[m];
-  const unsigned int& n_qsos = nq[b];
+  const unsigned int& n_qso_points = _qso_points[m][b];
+  const unsigned int& n_qsos = _n_qsos[m][b];
 
-  const float mean_qso_points = (n_qsos ? ( static_cast<float>(n_qso_points) / n_qsos ) : 0);
+  const float mean_qso_points_band_mode = (n_qsos ? ( static_cast<float>(n_qso_points) / n_qsos ) : 0);
 
-  const unsigned int new_qso = static_cast<unsigned int>((mean_qso_points * (n_qsos + 1) ) * current_mults);
-  const unsigned int new_mult = static_cast<unsigned int>((mean_qso_points * (n_qsos + 1) ) * notional_mults);
+  //ost << "mean QSO points on this band/mode = " << mean_qso_points_band_mode << endl;
+  //ost << "n QSOs = " << n_qsos << endl;
+  //ost << "current mults = " << current_mults << endl;
 
-//  ost << "current points = " << current_points << endl;
-//  ost << "new qso = " << new_qso << endl;
-//  ost << "new mult = " << new_mult << endl;
+  const float new_point_average = ( (current_qsos * current_mean_qso_points) + mean_qso_points_band_mode ) / (current_qsos + 1);
 
-  const unsigned int new_qso_value = new_qso - current_points;
-  const unsigned int new_mult_value = new_mult - current_points;
+  //ost << "new point average = " << new_point_average << endl;
 
-//  ost << "new qso value = " << new_qso_value << endl;
-//  ost << "new mult value = " << new_mult_value << endl;
+  const unsigned int score_with_new_qso = static_cast<unsigned int>((new_point_average * (current_qsos + 1) ) * current_mults);
+  const unsigned int score_with_new_mult = static_cast<unsigned int>((new_point_average * (current_qsos + 1) ) * notional_mults);
 
-//  ost << "returning: " << static_cast<float>(new_mult_value) / new_qso_value << endl;
+  //ost << "current points = " << current_points << endl;
+  //ost << "score with new qso = " << score_with_new_qso << endl;
+  //ost << "score with new mult = " << score_with_new_mult << endl;
+
+  const unsigned int new_qso_value = score_with_new_qso - current_points;
+  const unsigned int new_mult_value = score_with_new_mult - current_points;
+
+  //ost << "new qso value = " << new_qso_value << endl;
+  //ost << "new mult value = " << new_mult_value << endl;
+
+  //ost << "returning: " << static_cast<float>(new_mult_value) / new_qso_value << endl;
 
   return ( static_cast<float>(new_mult_value) / new_qso_value );
 }

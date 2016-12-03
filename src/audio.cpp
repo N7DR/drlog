@@ -21,22 +21,14 @@
 
 using namespace std;
 
-extern bool exiting;
-extern message_stream ost;              ///< for debugging and logging
-extern const string hhmmss(void);       ///< obtain the current time in HHMMSS format
-extern void start_of_thread(const string& name);      ///< increase the counter for the number of running threads
-extern void end_of_thread(const string& name);      ///< increase the counter for the number of running threads
-extern int n_running_threads;
-extern pt_mutex        thread_check_mutex;                     ///< mutex for controlling threads; both the following variables are under this mutex
+extern bool             exiting;
+extern int              n_running_threads;      ///< the number of running threads
+extern message_stream   ost;                    ///< for debugging and logging
+extern pt_mutex         thread_check_mutex;     ///< mutex for controllinh threads
 
-/*
-void print_pointer(void* ptr)
-{ if (ptr)
-    ost << "pointer value = " << (ptr) << endl;
-  else
-    ost << "pointer is NULL" << endl;
-}
-*/
+extern void         end_of_thread(const string& name);      ///< increase the counter for the number of running threads
+extern const string hhmmss(void);                           ///< obtain the current time in HH:MM:SS format
+extern void         start_of_thread(const string& name);    ///< increase the counter for the number of running threads
 
 // -----------  audio_recorder  ----------------
 
@@ -47,7 +39,7 @@ void print_pointer(void* ptr)
 /*! \brief      Calculate the total number of bytes to be read from the device
     \return     total number of bytes to be read from the sound board
 
-    Returned value is based on the duration and bytes per seconf
+    Returned value is based on the duration and the number of bytes to be read per second
 */
 const int64_t audio_recorder::_total_bytes_to_read(void) /* const */
 { int64_t total_bytes;
@@ -62,16 +54,15 @@ const int64_t audio_recorder::_total_bytes_to_read(void) /* const */
   const uint64_t ss = from_string<uint64_t>(substring(now_str, 6, 2));
 
   const uint64_t now = ss + (mm * 60) + (hh * 3600);
-//  const uint64_t time_reference = static_cast<uint64_t>(_samples_per_second) * now;
 
-  ost << "hh = " << hh << endl;
-  ost << "mm = " << mm << endl;
-  ost << "ss = " << ss << endl;
+//  ost << "hh = " << hh << endl;
+//  ost << "mm = " << mm << endl;
+//  ost << "ss = " << ss << endl;
 
-  ost << "now_str = " << now_str << endl;
-  ost << "max file time = " << _max_file_time << endl;
-  ost << "now= " << now << endl;
-  ost << "now % _max_file_time = " << (now % _max_file_time) << endl;
+//  ost << "now_str = " << now_str << endl;
+//  ost << "max file time = " << _max_file_time << endl;
+//  ost << "now= " << now << endl;
+//  ost << "now % _max_file_time = " << (now % _max_file_time) << endl;
 
 
   int remainder = _max_file_time - (now % _max_file_time);
@@ -81,7 +72,7 @@ const int64_t audio_recorder::_total_bytes_to_read(void) /* const */
 
   _time_limit = remainder;
 
-  ost << "_time_limit = " << _time_limit << " seconds" << endl;
+//  ost << "_time_limit = " << _time_limit << " seconds" << endl;
 
   if (_time_limit == 0)
     total_bytes = _record_count;
@@ -91,11 +82,12 @@ const int64_t audio_recorder::_total_bytes_to_read(void) /* const */
     total_bytes = bytes_per_second * _time_limit;
   }
 
-  ost << "total bytes to read = " << min(total_bytes, _record_count) << endl;
+//  ost << "total bytes to read = " << min(total_bytes, _record_count) << endl;
 
   return min(total_bytes, _record_count);
 }
 
+/// set the parameters for the recording
 void audio_recorder::_set_params(void)
 { snd_pcm_hw_params_t* params;
   snd_pcm_sw_params_t* swparams;
@@ -115,6 +107,7 @@ void audio_recorder::_set_params(void)
 
   if (err < 0)
   { ost << "ERROR: cannot obtain configuration for: " << _pcm_name << endl;
+    ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
     throw audio_error(AUDIO_NO_CONFIGURATION, "Cannot obtain configuration for: " + _pcm_name);
   }
 
@@ -122,6 +115,7 @@ void audio_recorder::_set_params(void)
 
   if (err < 0)
   { ost << "ERROR: access type not available for: " << _pcm_name << endl;
+    ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
     throw audio_error(AUDIO_NO_ACCESS_TYPE, "Access type not available for: " + _pcm_name);
   }
 
@@ -129,6 +123,7 @@ void audio_recorder::_set_params(void)
 
   if (err < 0)
   { ost << "ERROR: sample format " << _hw_params.format << " not available for: " << _pcm_name << endl;
+    ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
     throw audio_error(AUDIO_NO_SAMPLE_FORMAT, "Sample format " + to_string(_hw_params.format) + " not available for: " + _pcm_name);
   }
 
@@ -138,6 +133,7 @@ void audio_recorder::_set_params(void)
 
   if (err < 0)
   { ost << "ERROR: channel count " << _hw_params.channels << " not available for: " << _pcm_name << endl;
+    ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
     throw audio_error(AUDIO_NO_CHANNEL_COUNT, "Channel count " + to_string(_hw_params.channels) + " not available for: " + _pcm_name);
   }
 
@@ -153,6 +149,7 @@ void audio_recorder::_set_params(void)
 
   if (err < 0)
   { ost << "ERROR: unable to set rate: " << _pcm_name << endl;
+    ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
     throw audio_error(AUDIO_RATE_SET_ERROR, "Channel count not available for: " + _pcm_name);
   }
 
@@ -180,6 +177,7 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: buffer time = " << _buffer_time << " for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_INVALID_BUFFER_TIME, "Invalid buffer time = " + to_string(_buffer_time) + " for " + _pcm_name);
     }
 
@@ -201,6 +199,7 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: invalid period for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_INVALID_PERIOD, "Invalid period for " + _pcm_name);
     }
 
@@ -211,6 +210,7 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: invalid buffer for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_INVALID_BUFFER, "Invalid buffer for " + _pcm_name);
     }
 
@@ -220,6 +220,7 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: unable to install params for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_CANNOT_INSTALL_HW_PARAMS, "Unable to install hardware parameters for " + _pcm_name);
     }
 
@@ -230,19 +231,22 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: unable to get period size for " << _pcm_name << endl;
-      throw audio_error(AUDIO_UNABLE_TO_GET_PERIOD_SIZE, "Unable to get period size for " + _pcm_name);
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
+     throw audio_error(AUDIO_UNABLE_TO_GET_PERIOD_SIZE, "Unable to get period size for " + _pcm_name);
     }
 
     err = snd_pcm_hw_params_get_buffer_size(params, &buffer_size);
 
     if (err < 0)
     { ost << "ERROR: unable to get buffer size for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_UNABLE_TO_GET_BUFFER_SIZE, "Unable to get period size for " + _pcm_name);
     }
 
 // buffer must be larger than bytes needed to hold a period
     if (_period_size_in_frames == buffer_size)
     { ost << "ERROR: buffer size = period_size_in_frames = " << _period_size_in_frames << " for " << _pcm_name << endl;
+//      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_EQUAL_PERIOD_AND_BUFFER_SIZE, "Buffer size = period_size_in_frames = " + to_string(_period_size_in_frames) + " for " + _pcm_name);
     }
 
@@ -250,6 +254,7 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: unable to get SW parameters for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_UNABLE_TO_GET_SW_PARAMS, "Unable to get SW parameters for " + _pcm_name);
     }
 
@@ -262,6 +267,7 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: unable to set avail_min for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_UNABLE_TO_SET_AVAIL_MIN, "Unable to set avail_min for " + _pcm_name);
     }
 
@@ -283,6 +289,7 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: unable to set start threshold for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_UNABLE_TO_SET_START_THRESHOLD, "Unable to set start threshold for " + _pcm_name);
     }
 
@@ -295,11 +302,15 @@ void audio_recorder::_set_params(void)
 
     if (err < 0)
     { ost << "ERROR: unable to set stop threshold for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_UNABLE_TO_SET_STOP_THRESHOLD, "Unable to set stop threshold for " + _pcm_name);
     }
 
-    if (snd_pcm_sw_params(_handle, swparams) < 0)
+    err = snd_pcm_sw_params(_handle, swparams);
+
+    if (err < 0)
     { ost << "ERROR: unable to install software params for " << _pcm_name << endl;
+      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_CANNOT_INSTALL_SW_PARAMS, "Unable to install software parameters for " + _pcm_name);
     }
 
@@ -326,8 +337,6 @@ ssize_t audio_recorder::_pcm_read(u_char* data)
 
   bool in_aborting = false;
 
-//  ost << "about to read " << count << " frames" << endl;
-
   while (count > 0 && !in_aborting)
   { r = _readi_func(_handle, data, count);
 
@@ -344,7 +353,8 @@ ssize_t audio_recorder::_pcm_read(u_char* data)
     }
     else if (r < 0)
     { ost << "ERROR: audio device read error for " << _pcm_name << endl;
-      throw audio_error(AUDIO_DEVICE_READ_ERROR, "Error reading audio device for " + _pcm_name);
+      ost << "Error number is: " << -r << " [" << strerror(-r) << "]" << endl;
+     throw audio_error(AUDIO_DEVICE_READ_ERROR, "Error reading audio device for " + _pcm_name);
     }
 
     if (r > 0)
@@ -364,8 +374,6 @@ void* audio_recorder::_static_capture(void* arg)
 
   return nullptr;
 }
-
-//wfp->close();
 
 void* close_it(void* vp)
 { start_of_thread("close_it");

@@ -28,8 +28,8 @@ enum POSTING_SOURCE { POSTING_CLUSTER,
 
 // -----------  dx_cluster  ----------------
 
-/*!     \class dx_cluster
-        \brief A DX cluster or reverse beacon network
+/*! \class  dx_cluster
+    \brief  A DX cluster or reverse beacon network
 */
 
 class dx_cluster
@@ -144,22 +144,26 @@ public:
 class monitored_posts_entry
 {
 protected:
+  enum BAND     _band;              ///< band
   std::string   _callsign;          ///< callsign
   time_t        _expiration;        ///< time (relative to the UNIX epoch) at which entry will expire
   std::string   _frequency_str;     ///< frequency in format xxxxx.y [kHz]
-  enum BAND     _band;              ///< band
 
 public:
 
+/*! \brief          Constructor
+    \param  post    post from cluster or RBN
+*/
   monitored_posts_entry(const dx_post& post);
 
-  READ(band);
-  READ(callsign);
+  READ(band);               ///< band
+  READ(callsign);           ///< callsign
   READ(expiration);
   READ(frequency_str);
 
-  const std::string to_string(void) const;
-
+/// convert to a string suitable for display in a window
+  inline const std::string to_string(void) const
+    { return ( pad_string(_frequency_str, 7, PAD_LEFT) + " " + _callsign ); }
 };
 
 /// ostream << monitored_posts_entry
@@ -170,6 +174,8 @@ std::ostream& operator<<(std::ostream& ost, const monitored_posts_entry& mpe);
 /*! \class  monitored_posts
     \brief  Handle the monitoring of certain stations
 */
+
+extern pt_mutex monitored_posts_mutex;         ///< mutex for the monitored posts
 
 class monitored_posts
 {
@@ -183,9 +189,12 @@ protected:
 
 public:
 
+/// constructor
   monitored_posts(void);
 
-  const std::deque<monitored_posts_entry> entries(void);
+/// return the most recent monitored posts
+//  const std::deque<monitored_posts_entry> entries(void);
+  SAFEREAD(entries, monitored_posts);
 
   READ(is_dirty);
 

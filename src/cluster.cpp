@@ -39,6 +39,10 @@ pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
 
 // -----------  dx_cluster  ----------------
 
+/*! \class  dx_cluster
+    \brief  A DX cluster or reverse beacon network
+*/
+
 /*! \brief              Constructor
     \param  context     the drlog context
     \param  src         whether this is a real DX cluster or the RBN
@@ -300,6 +304,8 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
           _frequency_str = copy.substr(char_posn, space_posn - char_posn);
           _freq = frequency(_frequency_str);
+// normalise the _frequency_str; some posters use two decimal places
+          _frequency_str = _freq.display_string();
 
           if (_valid_frequency())
           { char_posn = copy.find_first_not_of(" ", space_posn);
@@ -346,21 +352,23 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
     \brief  An entry in the container of monitored posts
 */
 
+/*! \brief          Constructor
+    \param  post    post from cluster or RBN
+*/
 monitored_posts_entry::monitored_posts_entry(const dx_post& post)
 { _callsign = post.callsign();
-//  _freq = post.freq();
   _frequency_str = post.frequency_str();
   _expiration = post.time_processed() + 3600;  // valid for one hour
   _band = post.band();
 }
 
-const string monitored_posts_entry::to_string(void) const
-{ string rv;
-
-  rv = pad_string(_frequency_str, 7, PAD_LEFT) + " " + _callsign;
-
-  return rv;
-}
+//const string monitored_posts_entry::to_string(void) const
+//{ string rv;
+//
+//  rv = pad_string(_frequency_str, 7, PAD_LEFT) + " " + _callsign;
+//
+//  return rv;
+//}
 
 /// ostream << monitored_posts_entry
 ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
@@ -378,6 +386,7 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
     \brief  Handle the monitoring of certain stations
 */
 
+/// constructor
 monitored_posts::monitored_posts(void) :
   _is_dirty(false)
 { }
@@ -400,16 +409,12 @@ void monitored_posts::max_entries(const unsigned int n)
   _max_entries = n;
 }
 
-//void monitored_posts::add(const string& call, const enum BAND b, const time_t& tm)
+/// return the most recent monitored posts
+//const deque<monitored_posts_entry> monitored_posts::entries(void)
 //{ SAFELOCK(monitored_posts);
 //
+//  return _entries;
 //}
-
-const deque<monitored_posts_entry> monitored_posts::entries(void)
-{ SAFELOCK(monitored_posts);
-
-  return _entries;
-}
 
 void monitored_posts::operator+=(const dx_post& post)
 { monitored_posts_entry mpe(post);

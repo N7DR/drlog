@@ -139,7 +139,7 @@ void update_individual_messages_window(const string& callsign = string());  ///<
 void update_known_callsign_mults(const string& callsign, const bool force_known = false);                   ///< Possibly add a new callsign mult
 void update_known_country_mults(const string& callsign, const bool force_known = false);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
-void update_monitored_posts(const dx_post& post);                             ///< Add entry to POST MONITOR window
+//void update_monitored_posts(const dx_post& post);                             ///< Add entry to POST MONITOR window
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_qsls_window(const string& = "");                                ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                         ///< the head of the QTC queue
@@ -2080,7 +2080,7 @@ void* process_rbn_info(void* vp)
 
 // is this station being monitored?
             if (mp.is_monitored(post.callsign()))
-              update_monitored_posts(post);
+              mp += post;
 
             if (permitted_bands < dx_band)              // process only if is on a band we care about
             { const BAND cur_band = safe_get_band();
@@ -4400,6 +4400,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
 
           display_call_info(qso.callsign(), DO_NOT_DISPLAY_EXTRACT);
+          update_mult_value();
         }                                                               // end pexch.valid()
         else  // unable to parse exchange
           alert("Unable to parse exchange");
@@ -5789,27 +5790,17 @@ void* reset_connection(void* vp)
     \return         whether any exchange fields are new mults
 */
 const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
-{ //ost << "Inside calculate_exchange_mults()" << endl;
-
-  const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix(), qso.mode());        // exchange_field = name, is_mult
+{ const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix(), qso.mode());        // exchange_field = name, is_mult
   const vector<received_field> received_exchange = qso.received_exchange();
   vector<received_field> new_received_exchange;
   bool rv = false;
 
   for (auto field : received_exchange)
-  { //ost << "received exchange field = " << field << endl;
-
-    if (field.is_possible_mult())                              // see if it's really a mult
-    { //ost << "is in auto list of exchange mults: " << boolalpha << context.auto_remaining_exchange_mults(field.name()) << endl;
-
-      if (context.auto_remaining_exchange_mults(field.name()))
-      { //ost << "HERE2: " << field.name() << ", " << field.value() << endl;
+  { if (field.is_possible_mult())                              // see if it's really a mult
+    { if (context.auto_remaining_exchange_mults(field.name()))
         statistics.add_known_exchange_mult(field.name(), field.value());
-      }
 
       const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), qso.band(), qso.mode());
-
- //ost << qso.callsign() << " is_needed_exchange_mult value = " << is_needed_exchange_mult << " for field name " << field.name() << " and value " << field.value() << endl;
 
       field.is_mult(is_needed_exchange_mult);
       if (is_needed_exchange_mult)
@@ -5883,12 +5874,6 @@ void* auto_backup(void* vp)
     catch (...)
     { ost << "CAUGHT EXCEPTION IN AUTO_BACKUP" << endl;
     }
-
-// manually mark this thread as complete, since we don't want to interrupt the above copy
-//    { SAFELOCK(thread_check);
-//
-//      n_running_threads--;
-//    }
   }  // ensure that all objects call destructors, whatever the implementation
 
 
@@ -7362,9 +7347,9 @@ void end_of_thread(const string& name)
 }
 
 /// Add entry to POST MONITOR window
-void update_monitored_posts(const dx_post& post)
-{ //mp.add(be.callsign(), be.band(), be.time());
-  mp += post;
-}
+//void update_monitored_posts(const dx_post& post)
+//{ //mp.add(be.callsign(), be.band(), be.time());
+//  mp += post;
+//}
 
 
