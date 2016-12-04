@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file fuzzy.cpp
+/*! \file fuzzy.cpp
 
-        Objects and functions related to the fuzzzy function
+    Objects and functions related to the fuzzzy function
 */
 
 #include "fuzzy.h"
@@ -23,12 +23,18 @@
 
 using namespace std;
 
-extern message_stream    ost;
+extern message_stream    ost;       ///< debugging/logging output
+
+// -----------  fuzzy_database  ----------------
+
+/*! \class  fuzzy_database
+    \brief  The database for the fuzzy function
+*/
 
 /// construct from filename
 fuzzy_database::fuzzy_database(const string& filename)
-{ const string file_contents = to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' '));
-  const vector<string> calls = to_lines(file_contents); 
+{ //const string file_contents = to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' '));
+  const vector<string> calls = to_lines(to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')));
 
   FOR_ALL(calls, [&] (const string& x) { this->add_call( x ); } );
 }
@@ -40,12 +46,12 @@ fuzzy_database::fuzzy_database(const drmaster& drm)
   FOR_ALL(calls, [&] (const string& x) { this->add_call( x ); } );
 }
 
-/// is a call in the database?
-//const bool fuzzy_database::contains(const std::string& call)
-//{ return (_db[ _to_valid_size(call.length()) ] < call);
-//}
+/*! \brief          Return matches
+    \param  key     basic call against which to compare
+    \return         fuzzy matches for <i>key</i>
 
-///<return matches -- this would use regex, except that g++ doesn't support that yet :-( :-(
+    This would use regex, except that g++ doesn't support that yet :-( :-(
+*/
 const set<string> fuzzy_database::operator[](const string& key) const
 { if (key.length() < 3)
     return set<string>();
@@ -84,18 +90,25 @@ const set<string> fuzzy_database::operator[](const string& key) const
 
 // -----------  fuzzy_databases  ----------------
 
+/*! \class  fuzzy_databases
+    \brief  Wrapper for multiple fuzzy databases
+*/
+
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
 void fuzzy_databases::remove_call(const string& call)
 { bool removed = false;
 
-  for (size_t n = 0; (n < _vec.size() and !removed); ++n)
-  { const size_t rev = _vec.size() - 1 - n;
+  for (size_t n = 0; (!removed and (n < _vec.size())); ++n)
+  { //const size_t rev = _vec.size() - 1 - n;
 
-    removed = _vec[rev]->remove_call(call);
+    removed = _vec[ (_vec.size() - 1 - n) ]->remove_call(call);
   }
 }
 
-/// return matches
+/*! \brief          Return matches
+    \param  key     basic call against which to compare
+    \return         all fuzzy matches in all databases for <i>key</i>
+*/
 const set<string> fuzzy_databases::operator[](const string& key)
 { if (key.length() < 3)
     return set<string>();
@@ -108,9 +121,6 @@ const set<string> fuzzy_databases::operator[](const string& key)
     const set<string>& calls = db[key];
 
     copy(calls.cbegin(), calls.cend(), inserter(rv, rv.begin()));
-
-//    for (const auto& call : calls)
-//      rv.insert(call);
   }
 
   return rv;

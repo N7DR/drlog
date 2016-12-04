@@ -11,9 +11,9 @@
 #ifndef FUZZY_H
 #define FUZZY_H
 
-/*!     \file fuzzy.h
+/*! \file fuzzy.h
 
-        Objects and functions related to generation of fuzzy matches
+    Objects and functions related to generation of fuzzy matches
 */
 
 #include "drmaster.h"
@@ -24,12 +24,10 @@
 #include <string>
 #include <unordered_set>
 
-// typedef std::unordered_set<std::string> FUZZY_SET; not really necessary, since the big user of time is to iterate through the set
-
 // -----------  fuzzy_database  ----------------
 
-/*!     \class fuzzy_database
-        \brief The database for the fuzzy function
+/*! \class  fuzzy_database
+    \brief  The database for the fuzzy function
 */
 
 const size_t MIN_FUZZY_SIZE = 3;               // any call with fewer than this number of characters is included with size MIN_FUZZY_SIZE
@@ -75,7 +73,12 @@ public:
   inline const bool contains(const std::string& call)
     { return (_db[ _to_valid_size(call.length()) ] < call); }
   
-/// return fuzzy matches
+/*! \brief          Return matches
+    \param  key     basic call against which to compare
+    \return         fuzzy matches for <i>key</i>
+
+    This would use regex, except that g++ doesn't support that yet :-( :-(
+*/
   const std::set<std::string> operator[](const std::string& key) const;
 
 /// empty the database
@@ -85,8 +88,8 @@ public:
 
 // -----------  fuzzy_databases  ----------------
 
-/*!     \class fuzzy_databases
-        \brief Wrapper for multiple fuzzy databases
+/*! \class  fuzzy_databases
+    \brief  Wrapper for multiple fuzzy databases
 */
 
 class fuzzy_databases
@@ -116,7 +119,10 @@ public:
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
   void remove_call(const std::string& call);
 
-/// return matches
+/*! \brief          Return matches
+    \param  key     basic call against which to compare
+    \return         all fuzzy matches in all databases for <i>key</i>
+*/
   const std::set<std::string> operator[](const std::string& key);
 };
 

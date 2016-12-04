@@ -3493,15 +3493,61 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // CURSOR DOWN -- possibly replace call with SCP info
-  if (!processed and e.is_unmodified() and e.symbol() == XK_Down)
-  { string new_callsign = match_callsign(scp_matches);
+// some trickery needed to provide capability to walk through SCP calls after trying to find an obvious match
+  static bool in_scp_matching;          ///< are we walking through the calls?
+  static unsigned int scp_index;        ///< index into matched calls
 
-    if (new_callsign.empty())
-      new_callsign = match_callsign(fuzzy_matches);
+  bool cursor_down = (e.is_unmodified() and e.symbol() == XK_Down); ///< is the event a CURSOR DOWN?
 
-    if (!new_callsign.empty())
-    { win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
-      display_call_info(new_callsign);
+  if (!cursor_down)                 // clear memory of walking through matched calls
+  { in_scp_matching = false;
+    scp_index = 0;
+  }
+
+  if (!processed and cursor_down)
+  { //ost << "cursor down" << endl;
+    //ost << "in_scp_matching = " << boolalpha << in_scp_matching << endl;
+    //ost << "scp_index = " << scp_index << endl;
+    //ost << "size of scp_matches [1] = " << scp_matches.size() << endl;
+
+    bool found_match = false;
+    string new_callsign;
+
+    if (!in_scp_matching)
+    { new_callsign = match_callsign(scp_matches);
+
+//      ost << "size of scp_matches [2] = " << scp_matches.size() << endl;
+
+      if (new_callsign.empty())
+        new_callsign = match_callsign(fuzzy_matches);
+
+      if (!new_callsign.empty())
+      { win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
+        display_call_info(new_callsign);
+        found_match = true;
+      }
+    }
+
+    if (in_scp_matching or !found_match)
+    { //ost << "no obvious match" << endl;
+      in_scp_matching = true;
+
+      static vector<string>  all_matches;
+
+      if (scp_index == 0)
+      { all_matches.clear();
+        FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
+      }
+
+//      ost << "size of all_matches = " << all_matches.size() << endl;
+
+      if (scp_index < all_matches.size())
+      { //ost << "getting new callsign" << endl;
+
+        new_callsign = all_matches[scp_index++];
+        win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
+        display_call_info(new_callsign);
+      }
     }
 
     processed = true;
@@ -3955,8 +4001,12 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
       if (current_contents != prior_contents)
       { display_call_info(current_contents);
-        update_scp_window(current_contents);
-        update_fuzzy_window(current_contents);
+
+        if (!in_scp_matching)
+          update_scp_window(current_contents);
+
+        if (!in_scp_matching)
+          update_fuzzy_window(current_contents);
       }
     }
   }
@@ -5845,9 +5895,9 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
 }
 
 /*! \brief  Copy a file to a backup directory
-*
-*   This is intended to be used as a separate thread, so the parameters are passed
-*   in the usual void*
+
+    This is intended to be used as a separate thread, so the parameters are passed
+    in the usual void*
 */
 void* auto_backup(void* vp)
 {
@@ -6001,7 +6051,15 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
       new_callsign = tmp_callsign;
   }
 
-  return new_callsign;
+//  if (!new_callsign.empty())
+    return new_callsign;
+
+// no obvious choice try something else
+//  static vector<string>  all_matches;
+
+//  FOR_ALL(matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
+
+//  return string();
 }
 
 /*! \brief              Is a callsign needed on a particular band and mode?
@@ -7308,9 +7366,9 @@ const bool change_cw_speed(const keyboard_event& e)
   return rv;
 }
 
-/*! \brief      Send a string to the SCRATCHPAD window
-    \param  str string to add
-    \return     true
+/*! \brief          Send a string to the SCRATCHPAD window
+    \param  str     string to add
+    \return         true
 */
 const bool send_to_scratchpad(const string& str)
 { const string scratchpad_str = substring(hhmmss(), 0, 5) + " " + rig.rig_frequency().display_string() + " " + str;
@@ -7320,13 +7378,16 @@ const bool send_to_scratchpad(const string& str)
   return true;
 }
 
+/// print the names of all the running threads
 void print_thread_names(void)
 { ost << "Running threads:" << endl;
 
   SAFELOCK(thread_check);
 
-  for (auto& thread_name : thread_names)
-    ost << "  " << thread_name << endl;
+  FOR_ALL(thread_names, [] (const string& thread_name) { ost << "  " << thread_name << endl; } );
+
+//  for (auto& thread_name : thread_names)
+//    ost << "  " << thread_name << endl;
 }
 
 /// decrease the counter for the number of running threads
@@ -7337,6 +7398,7 @@ void end_of_thread(const string& name)
 
   n_running_threads--;
   auto n_removed = thread_names.erase(name);
+
   if (n_removed)
     ost << "removed: " << name << endl;
   else
@@ -7346,10 +7408,5 @@ void end_of_thread(const string& name)
   print_thread_names();
 }
 
-/// Add entry to POST MONITOR window
-//void update_monitored_posts(const dx_post& post)
-//{ //mp.add(be.callsign(), be.band(), be.time());
-//  mp += post;
-//}
 
 

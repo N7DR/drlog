@@ -11,7 +11,7 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-/*! \file statistics.h
+/*! \file   statistics.h
 
     Classes and functions related to the statistics of an ongoing contest
 */
@@ -34,8 +34,8 @@ extern pt_mutex statistics_mutex;       ///< mutex for statistics
 
 // -----------  running_statistics  ----------------
 
-/*! \class running_statistics
-    \brief ongoing contest-related statistics
+/*! \class  running_statistics
+    \brief  ongoing contest-related statistics
 */
 
 class running_statistics
@@ -186,6 +186,8 @@ public:
     \param  field_value     value of the field <i>field_name</i>
     \param  band_nr         number of the band on which worked mult is to be added
     \return                 whether the exchange mult was added
+
+    Doesn't add if the value <i>field_value</i> is unknown.
 */
   const bool add_worked_exchange_mult(const std::string& field_name, const std::string& field_value, const int band_nr = ALL_BANDS, const int mode_nr = ALL_MODES);
 
@@ -209,14 +211,6 @@ public:
 */
   const std::set<std::string> worked_callsign_mults(const std::string& mult_name, const BAND b, const MODE m);
 
-/*! \brief              Worked country mults for a particular band and mode
-    \param  mult_name   name of mult
-    \param  b           band
-    \param  m           mode
-    \return             country mults worked on band <i>b</i> and mode <i>m</i>
-*/
-//  const std::set<std::string> worked_country_mults(const BAND b, const MODE m);
-
 /*! \brief      Worked country mults for a particular band and mode
     \param  b   target band
     \param  m   target mode
@@ -229,13 +223,15 @@ public:
 
 /// all the known country mults
   inline const std::set<std::string> known_country_mults(void)
-    { SAFELOCK(statistics);
-      return _country_multipliers.known();
-    }
+  { SAFELOCK(statistics);
+    return _country_multipliers.known();
+  }
 
 /// the number of known country mults
   inline const size_t n_known_country_mults(void) const
-    { return _country_multipliers.n_known(); }
+  { SAFELOCK(statistics);
+    return _country_multipliers.n_known();
+  }
 
 /*! \brief      Worked exchange mults for a particular band and mode
     \param  b   band
@@ -321,8 +317,8 @@ public:
 
 // -----------  call history  ----------------
 
-/*! \class call_history
-    \brief History of each call worked
+/*! \class  call_history
+    \brief  History of each call worked
 
     Instantiations of this class are automatically thread-safe.
 */
@@ -399,6 +395,7 @@ public:
 /// clear the history
   void clear(void);
 
+/// serialise call_history
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(_history);

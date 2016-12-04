@@ -431,10 +431,12 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 const bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 { SAFELOCK(statistics);
 
-  if (rules.country_mults() < str)                  // all the legal country mults
-    return (_country_multipliers.add_known(str));
+  return ( (rules.country_mults() < str) ? _country_multipliers.add_known(str) : false );
 
-  return false;
+//  if (rules.country_mults() < str)                  // all the legal country mults
+//    return (_country_multipliers.add_known(str));
+
+//  return false;
 }
 
 /*! \brief          Add a QSO to the ongoing statistics
@@ -515,9 +517,11 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
 
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == name)
-    { const bool added = psm.second.add_known(MULT_VALUE(name, value));
+    { //const bool added = psm.second.add_known(MULT_VALUE(name, value));
 
-      if (added)
+      //if (added)
+     //   return true;
+      if (psm.second.add_known(MULT_VALUE(name, value)))
         return true;
     }
   }
@@ -546,7 +550,7 @@ const set<string> running_statistics::known_exchange_mult_values(const string& n
     \param  band_nr         number of the band on which worked mult is to be added
     \return                 whether the exchange mult was added
 
-    Doesn't add if the value is unknown.
+    Doesn't add if the value <i>field_value</i> is unknown.
 */
 const bool running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int b, const int m)
 { if (field_value.empty())
@@ -558,10 +562,11 @@ const bool running_statistics::add_worked_exchange_mult(const string& field_name
 
   for (auto& psm : _exchange_multipliers)
     if (psm.first == field_name)
-      { const bool rv = (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
+    { //const bool rv = (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
 
-        return rv;
-      }
+      //return rv;
+      return ( psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)) );
+    }
 
   return false;
 }

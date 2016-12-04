@@ -66,8 +66,8 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 
 // -----------   bandmap_filter_type ----------------
 
-/*! \class bandmap_filter_type
-    \brief Control bandmap filtering
+/*! \class  bandmap_filter_type
+    \brief  Control bandmap filtering
 */
 
 /*! \brief      All the continents and canonical prefixes that are currently being filtered
@@ -145,12 +145,10 @@ void bandmap_entry::freq(const frequency& f)
     \param  rules       the rules for this contest
     \param  statistics  the current statistics
 
-    Adjust the mult status in accordance with the passed parameters
+    Adjust the callsign, country and exchange mult status in accordance with the passed parameters
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
-  //ost << "inside calculate_mult_status()" << endl;
-
 // callsign mult status
   clear_callsign_mult();
 
@@ -168,9 +166,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // country mult status
   clear_country_mult();
 
-  const bool is_needed_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
+//  const bool is_needed_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
 
-  if (is_needed_country_mult)
+//  if (is_needed_country_mult)
+  if (statistics.is_needed_country_mult(_callsign, _band, _mode))
     add_country_mult(_canonical_prefix);
 
 // exchange mult status
@@ -185,19 +184,12 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     if (is_possible_exchange_field)
     { string guess = exchange_db.guess_value(_callsign, exch_mult_name);
 
-      //ost << "guess for " << exch_mult_name << " = " << guess << endl;
-
       guess = rules.canonical_value(exch_mult_name, guess);
-
-      //ost << "revised guess = " << guess << endl;
 
       if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
         add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
     }
   }
-
-  //ost << "leaving calculate_mult_status()" << endl;
-
 }
 
 /*! \brief      Does this object match another bandmap_entry?
@@ -227,8 +219,17 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
 // is needed?
   const bool original_is_needed = _is_needed;
 
-// to do: allow for SS rules and per-mode contests
-  _is_needed = !q_history.worked(_callsign, _band);
+// to do: allow for /* SS rules and */ per-mode contests
+
+// if this contest allows only one QSO with a station (e.g., SS)
+  if (!rules.work_if_different_band())
+  { _is_needed = true;
+
+    for (auto& b : rules.permitted_bands())
+      _is_needed = ( _is_needed and !q_history.worked(_callsign, b) );
+  }
+  else
+   _is_needed = !q_history.worked(_callsign, _band);
 
   const bool original_is_needed_callsign_mult = is_needed_callsign_mult();
   const bool original_is_needed_country_mult = is_needed_country_mult();
@@ -281,7 +282,7 @@ const string bandmap_entry::posters_string(void) const
   FOR_ALL(_posters, [&rv] (const string& p) { rv += (p + " "); } );
 
   if (!rv.empty())
-    rv = substring(rv, 0, rv.length() - 1);  // skip the final space
+    rv = substring(rv, 0, rv.length() - 1);  // remove the final space
 
   return rv;
 }
@@ -366,7 +367,7 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
       }
     }
 
-    if (difference > guard_band_in_khz)
+    if (difference > guard_band_in_khz)  // no need to keep looking we if are past the allowed guard band
       finish_looking = true;
   }
 
@@ -395,7 +396,7 @@ void bandmap::_insert(const bandmap_entry& be)
     _entries.push_back(be);    // this frequency is higher than any currently in the bandmap
 }
 
-/*!  \brief Mark filtered and rbn/filtered entries as dirty
+/*!  \brief     Mark filtered and rbn/filtered entries as dirty
 */
 void bandmap::_dirty_entries(void)
 { SAFELOCK (_bandmap);              // should be unnecessary, since if the entries are dirty we should already have the lock
@@ -507,9 +508,9 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if (n_new_posters != 1)
     ost << "in _mark_as_recent: Error: number of posters = " << n_new_posters << " for post for " << be.callsign() << endl;
   else
-  { const string& poster = *(be.posters().cbegin());
+  { //const string& poster = *(be.posters().cbegin());
 
-    return (old_be.is_poster(poster));
+    return (old_be.is_poster( *(be.posters().cbegin()) ));
   }
 
   return false;    // should never get here

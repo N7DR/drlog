@@ -41,29 +41,16 @@ extern void         start_of_thread(const string& name);    ///< increase the co
 
     Returned value is based on the duration and the number of bytes to be read per second
 */
-const int64_t audio_recorder::_total_bytes_to_read(void) /* const */
+const int64_t audio_recorder::_total_bytes_to_read(void)
 { int64_t total_bytes;
 
-// temporarily set _time_limit to 60 seconds, for debugging purposes
-
 // how many seconds to next time marker?
-// seconds past midnight
-  const string now_str = hhmmss();
+// current seconds past midnight
+  const string now_str = hhmmss();                                      // HH:MM:SS
   const uint64_t hh = from_string<uint64_t>(substring(now_str, 0, 2));
   const uint64_t mm = from_string<uint64_t>(substring(now_str, 3, 2));
   const uint64_t ss = from_string<uint64_t>(substring(now_str, 6, 2));
-
   const uint64_t now = ss + (mm * 60) + (hh * 3600);
-
-//  ost << "hh = " << hh << endl;
-//  ost << "mm = " << mm << endl;
-//  ost << "ss = " << ss << endl;
-
-//  ost << "now_str = " << now_str << endl;
-//  ost << "max file time = " << _max_file_time << endl;
-//  ost << "now= " << now << endl;
-//  ost << "now % _max_file_time = " << (now % _max_file_time) << endl;
-
 
   int remainder = _max_file_time - (now % _max_file_time);
 
@@ -71,8 +58,6 @@ const int64_t audio_recorder::_total_bytes_to_read(void) /* const */
     remainder = _max_file_time;
 
   _time_limit = remainder;
-
-//  ost << "_time_limit = " << _time_limit << " seconds" << endl;
 
   if (_time_limit == 0)
     total_bytes = _record_count;
@@ -82,8 +67,6 @@ const int64_t audio_recorder::_total_bytes_to_read(void) /* const */
     total_bytes = bytes_per_second * _time_limit;
   }
 
-//  ost << "total bytes to read = " << min(total_bytes, _record_count) << endl;
-
   return min(total_bytes, _record_count);
 }
 
@@ -92,7 +75,6 @@ void audio_recorder::_set_params(void)
 { snd_pcm_hw_params_t* params;
   snd_pcm_sw_params_t* swparams;
   snd_pcm_uframes_t buffer_size;
-  int err;
   size_t n;
   unsigned int rate;
   snd_pcm_uframes_t start_threshold, stop_threshold;
@@ -100,10 +82,7 @@ void audio_recorder::_set_params(void)
   snd_pcm_hw_params_alloca(&params);
   snd_pcm_sw_params_alloca(&swparams);
 
-  err = snd_pcm_hw_params_any(_handle, params);
-
-//  ost << "after snd_pcm_hw_params_any(); params: " << params << endl;
-//  ost << "after snd_pcm_hw_params_any(); _hw_params: " << _hw_params << endl;
+  int err = snd_pcm_hw_params_any(_handle, params);
 
   if (err < 0)
   { ost << "ERROR: cannot obtain configuration for: " << _pcm_name << endl;
@@ -127,7 +106,7 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_NO_SAMPLE_FORMAT, "Sample format " + to_string(_hw_params.format) + " not available for: " + _pcm_name);
   }
 
-  ost << "set format: " << _hw_params.format << endl;
+//  ost << "set format: " << _hw_params.format << endl;
 
   err = snd_pcm_hw_params_set_channels(_handle, params, _hw_params.channels);
 
@@ -137,15 +116,11 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_NO_CHANNEL_COUNT, "Channel count " + to_string(_hw_params.channels) + " not available for: " + _pcm_name);
   }
 
-  ost << "set channels: " << _hw_params.channels << endl;
+//  ost << "set channels: " << _hw_params.channels << endl;
 
   rate = _hw_params.rate;
 
-//  ost << "original rate: " << rate << endl;
-
   err = snd_pcm_hw_params_set_rate_near(_handle, params, &_hw_params.rate, 0);
-
-//  ost << "set rate near: " << _hw_params.rate << endl;
 
   if (err < 0)
   { ost << "ERROR: unable to set rate: " << _pcm_name << endl;
@@ -246,7 +221,6 @@ void audio_recorder::_set_params(void)
 // buffer must be larger than bytes needed to hold a period
     if (_period_size_in_frames == buffer_size)
     { ost << "ERROR: buffer size = period_size_in_frames = " << _period_size_in_frames << " for " << _pcm_name << endl;
-//      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
       throw audio_error(AUDIO_EQUAL_PERIOD_AND_BUFFER_SIZE, "Buffer size = period_size_in_frames = " + to_string(_period_size_in_frames) + " for " + _pcm_name);
     }
 
@@ -258,10 +232,12 @@ void audio_recorder::_set_params(void)
       throw audio_error(AUDIO_UNABLE_TO_GET_SW_PARAMS, "Unable to get SW parameters for " + _pcm_name);
     }
 
-    if (_avail_min < 0)
-        n = _period_size_in_frames;
-    else
-        n = (double) rate * _avail_min / 1000000;
+//    if (_avail_min < 0)
+//      n = _period_size_in_frames;
+//    else
+//      n = (double) rate * _avail_min / 1000000;
+
+    n = ( (_avail_min < 0) ? _period_size_in_frames : ( (double) rate * _avail_min / 1000000 ) );
 
     err = snd_pcm_sw_params_set_avail_min(_handle, swparams, n);
 
@@ -274,16 +250,20 @@ void audio_recorder::_set_params(void)
 /* round up to closest transfer boundary */
     n = buffer_size;
 
-    if (_start_delay <= 0)
-      start_threshold = n + (double) rate * _start_delay / 1000000;
-    else
-      start_threshold = (double) rate * _start_delay / 1000000;
+//    if (_start_delay <= 0)
+//      start_threshold = n + (double) rate * _start_delay / 1000000;
+//    else
+//      start_threshold = (double) rate * _start_delay / 1000000;
 
-    if (start_threshold < 1)
-      start_threshold = 1;
+    start_threshold = ( (double)rate * _start_delay / 1000000 ) + ( (_start_delay <= 0) ? n : 0 );
 
-    if (start_threshold > n)
-      start_threshold = n;
+//    if (start_threshold < 1)
+//      start_threshold = 1;
+    start_threshold = max(static_cast<snd_pcm_uframes_t>(1), start_threshold);
+
+//    if (start_threshold > n)
+//      start_threshold = n;
+    start_threshold = min(static_cast<snd_pcm_uframes_t>(n), start_threshold);
 
     err = snd_pcm_sw_params_set_start_threshold(_handle, swparams, start_threshold);
 
@@ -293,10 +273,12 @@ void audio_recorder::_set_params(void)
       throw audio_error(AUDIO_UNABLE_TO_SET_START_THRESHOLD, "Unable to set start threshold for " + _pcm_name);
     }
 
-    if (_stop_delay <= 0)
-      stop_threshold = buffer_size + (double) rate * _stop_delay / 1000000;
-    else
-      stop_threshold = (double) rate * _stop_delay / 1000000;
+//    if (_stop_delay <= 0)
+//      stop_threshold = buffer_size + (double) rate * _stop_delay / 1000000;
+//    else
+//      stop_threshold = (double) rate * _stop_delay / 1000000;
+
+    stop_threshold = ( (double)rate * _stop_delay / 1000000 ) + ( (_stop_delay <= 0) ? buffer_size : 0 );
 
     err = snd_pcm_sw_params_set_stop_threshold(_handle, swparams, stop_threshold);
 
@@ -330,7 +312,11 @@ void audio_recorder::_set_params(void)
     _buffer_frames = buffer_size;    /* for position test */ // ?????
 }
 
-ssize_t audio_recorder::_pcm_read(u_char* data)
+/*! \brief          Read from the PCM device
+    \param  data    buffer in which to store the read data
+    \return         total number of bytes read
+*/
+const ssize_t audio_recorder::_pcm_read(u_char* data)
 { ssize_t r;
   size_t result = 0;
   size_t count = _period_size_in_frames;

@@ -20,31 +20,10 @@
 #include "x_error.h"
 
 #include <array>
+#include <fstream>
 #include <string>
 
 #include <alsa/asoundlib.h>
-
-#if 0
-#if (!defined(READ_AND_WRITE))
-
-/// Syntactic sugar for read/write access
-#define READ_AND_WRITE(y)                                       \
-/*! Read access to _##y */                                      \
-  inline const decltype(_##y)& y(void) const { return _##y; }   \
-/*! Write access to _##y */                                     \
-  inline void y(const decltype(_##y)& n) { _##y = n; }
-
-#endif    // !READ_AND_WRITE
-
-#if (!defined(READ))
-
-/// Syntactic sugar for read-only access
-#define READ(y)                                                 \
-/*! Read-only access to _##y */                                 \
-  inline const decltype(_##y)& y(void) const { return _##y; }
-
-#endif    // !READ
-# endif // 0
 
 enum AUDIO_FORMAT { AUDIO_FORMAT_DEFAULT = -1,
                     AUDIO_FORMAT_RAW     = 0,
@@ -86,8 +65,6 @@ const int AUDIO_UNABLE_TO_OPEN                = -1,      ///< unable to open aud
     \brief  Class to implement functions related to wav files
 */
 
-#include <fstream>
-
 class wav_file
 {
 protected:
@@ -96,19 +73,18 @@ protected:
   uint32_t      _file_size;     ///< total size of file
 
 // The question is whether to use a stream or a C-style FILE*. I choose the latter
-// because it is likely to be a bit faster and also because it is easier to write
-// large amounts of data without going through contortions to avoid copies
+// because:
+//   it is likely to be a bit faster
+//   I am more familiar with it
+//   it seems easier to write large amounts of data without going through contortions to avoid copies
   FILE*         _fp;            ///< file pointer
-//  bool          _in_use;
 
 public:
 
-  wav_file(void) //:
-//    _in_use(false)
-  { }
+//  wav_file(void)
+//  { }
 
-  READ_AND_WRITE(name);
-//  READ_AND_WRITE(in_use);
+  READ_AND_WRITE(name);          ///< name of file
 
   void open(void);
 
@@ -131,10 +107,10 @@ public:
     \brief  Class to implement the needed recording functions
 */
 
-typedef struct { unsigned int channels;
-                 snd_pcm_format_t format;
-                 unsigned int rate;
-               } PARAMS_STRUCTURE ;
+typedef struct { unsigned int channels;     ///< number of channels
+                 snd_pcm_format_t format;   ///< format number; defined in alsa/pcm.h
+                 unsigned int rate;         ///< rate (bytes per second)
+               } PARAMS_STRUCTURE ;         ///< structure to encapsulate parameters
 
 class audio_recorder
 {
@@ -167,17 +143,14 @@ protected:
   snd_pcm_stream_t  _stream;                    ///< type of stream
   unsigned int      _time_limit;                ///< number of seconds to record
 
-//  std::array<wav_file, 2> _wav_files;
-//  wav_file*         _wfp;
-
 // stuff for bext extension
   std::string       _description;           // do not exceed 256 characters /* ASCII : «Description of the sound sequence» */
   std::string       _originator;            // do not exceed 32 characters  /* ASCII : «Name of the originator» */
   std::string       _originator_reference;  // do not exceed 32 characters  /* ASCII : «Name of the originator» */
   std::string       _origination_date;      // 10 characters
   std::string       _origination_time;      // 10 characters
-  uint32_t          _time_reference_low;
-  uint32_t          _time_reference_high;
+  uint32_t          _time_reference_low;    // lowest 32 bits of the time reference
+  uint32_t          _time_reference_high;   // highest 32 bits of the time reference
 
   snd_pcm_sframes_t (*_readi_func)(snd_pcm_t *handle, void *buffer, snd_pcm_uframes_t size);
   snd_pcm_sframes_t (*_writei_func)(snd_pcm_t *handle, const void *buffer, snd_pcm_uframes_t size);
@@ -189,8 +162,20 @@ protected:
 /// Declare but do not define copy constructor
   audio_recorder(const audio_recorder&);
 
-  const int64_t _total_bytes_to_read(void) /* const */;
-  ssize_t _pcm_read(u_char *data);
+/*! \brief          Read from the PCM device
+    \param  data    buffer in which to store the read data
+    \return         total number of bytes read
+*/
+  const ssize_t _pcm_read(u_char* data);
+
+/*! \brief      Calculate the total number of bytes to be read from the device
+    \return     total number of bytes to be read from the sound board
+
+    Returned value is based on the duration and the number of bytes to be read per second
+*/
+  const int64_t _total_bytes_to_read(void);
+
+
   void _set_params(void);               ///< set the parameters for the recording
 
   void _begin_wave(int fd, size_t count);
