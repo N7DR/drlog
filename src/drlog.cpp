@@ -1641,18 +1641,18 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
 void* display_date_and_time(void* vp)
 { start_of_thread("display date and time");
 
-  int last_second;                             // so that we can tell when the time has changed
-  array<char, 26> buf;                         // buffer to hold the ASCII date/time info; see man page for gmtime()
-  string last_date;
+  int last_second;                              ///< so that we can tell when the time has changed
+  array<char, 26> buf;                          ///< buffer to hold the ASCII date/time info; see man page for gmtime()
+  string last_date;                             ///< ASCII version of the last date
 
-  update_local_time();
+  update_local_time();                          // update the LOCAL TIME window
 
-  while (true)                                 // forever
-  { const time_t now = time(NULL);             // get the time from the kernel
-    struct tm    structured_time;
-    bool new_second = false;
+  while (true)                                  // forever
+  { const time_t now = time(NULL);              ///< get the time from the kernel
+    struct tm    structured_time;               ///< for holding the time
+    bool new_second = false;                    ///< is it a new second?
 
-    gmtime_r(&now, &structured_time);          // convert to UTC in a thread-safe manner
+    gmtime_r(&now, &structured_time);           // convert to UTC in a thread-safe manner
 
     if (last_second != structured_time.tm_sec)                // update the time if the second has changed
     {

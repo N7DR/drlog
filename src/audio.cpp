@@ -159,35 +159,34 @@ void audio_recorder::_set_params(void)
     _buffer_time = min(_buffer_time, static_cast<unsigned int>(500000));
   }
 
-    if (_period_time == 0 and _period_frames == 0)
-    {
-        if (_buffer_time > 0)
-            _period_time = _buffer_time / 4;
-        else
-            _period_frames = _buffer_frames / 4;
-    }
-
-    if (_period_time > 0)
-      err = snd_pcm_hw_params_set_period_time_near(_handle, params, &_period_time, 0);
+  if (_period_time == 0 and _period_frames == 0)
+  { if (_buffer_time > 0)
+      _period_time = _buffer_time / 4;
     else
-      err = snd_pcm_hw_params_set_period_size_near(_handle, params, &_period_frames, 0);
+      _period_frames = _buffer_frames / 4;
+  }
 
-    if (err < 0)
-    { ost << "ERROR: invalid period for " << _pcm_name << endl;
-      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
-      throw audio_error(AUDIO_INVALID_PERIOD, "Invalid period for " + _pcm_name);
-    }
+  if (_period_time > 0)
+    err = snd_pcm_hw_params_set_period_time_near(_handle, params, &_period_time, 0);
+  else
+    err = snd_pcm_hw_params_set_period_size_near(_handle, params, &_period_frames, 0);
 
-    if (_buffer_time > 0)
-      err = snd_pcm_hw_params_set_buffer_time_near(_handle, params, &_buffer_time, 0);
-    else
-      err = snd_pcm_hw_params_set_buffer_size_near(_handle, params, &_buffer_frames);
+  if (err < 0)
+  { ost << "ERROR: invalid period for " << _pcm_name << endl;
+    ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
+    throw audio_error(AUDIO_INVALID_PERIOD, "Invalid period for " + _pcm_name);
+  }
 
-    if (err < 0)
-    { ost << "ERROR: invalid buffer for " << _pcm_name << endl;
-      ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
-      throw audio_error(AUDIO_INVALID_BUFFER, "Invalid buffer for " + _pcm_name);
-    }
+  if (_buffer_time > 0)
+    err = snd_pcm_hw_params_set_buffer_time_near(_handle, params, &_buffer_time, 0);
+  else
+    err = snd_pcm_hw_params_set_buffer_size_near(_handle, params, &_buffer_frames);
+
+  if (err < 0)
+  { ost << "ERROR: invalid buffer for " << _pcm_name << endl;
+    ost << "Error number is: " << -err << " [" << strerror(-err) << "]" << endl;
+    throw audio_error(AUDIO_INVALID_BUFFER, "Invalid buffer for " + _pcm_name);
+  }
 
     _monotonic = (snd_pcm_hw_params_is_monotonic(params) == 1);
 
@@ -322,6 +321,7 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
   size_t count = _period_size_in_frames;
 
   bool in_aborting = false;
+//  bool first_time = true;
 
   while (count > 0 && !in_aborting)
   { r = _readi_func(_handle, data, count);
@@ -344,7 +344,19 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
     }
 
     if (r > 0)
-    { result += r;
+    {
+
+      // DEBUG click in audio
+//      if (first_time)
+//      {      ost << "in _pcm_read: values = ";
+//            for (size_t n = 0; n < 20; ++n)
+//              ost << "[" << n << "]: " << hex << "0x" << (unsigned int)(data[n]) << endl;
+//            ost << "read " << r << "bytes" << endl;
+//
+//            first_time = false;
+//      }
+
+      result += r;
       count -= r;
       data += r * _bits_per_frame / 8;
     }
@@ -353,6 +365,10 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
   return result;
 }
 
+/*! \brief          Wrapper function to capture audio
+    \param  arg     "this" pointer
+    \return         nullptr
+*/
 void* audio_recorder::_static_capture(void* arg)
 { audio_recorder* arp = static_cast<audio_recorder*>(arg);
 
@@ -361,6 +377,10 @@ void* audio_recorder::_static_capture(void* arg)
   return nullptr;
 }
 
+/*! \brief          Close the WAV file associated with a wav_file
+    \param  vp      pointer to a wav_file
+    \return         nullptr
+*/
 void* close_it(void* vp)
 { start_of_thread("close_it");
 
@@ -373,6 +393,9 @@ void* close_it(void* vp)
   return nullptr;
 }
 
+/*! \brief          Capture audio
+    \return         nullptr
+*/
 void* audio_recorder::_capture(void*)
 { start_of_thread("_capture");
 
@@ -452,8 +475,17 @@ create_file:
     if (first_time_through_loop)
     { data_chunk dc(_audio_buf, f);
 
+// DEBUG click in audio
+//      ost << "first time through audio loop: values = ";
+//      for (size_t n = 0; n < 20; ++n)
+//        ost << "[" << n << "]: " << hex << "0x" << (unsigned int)(_audio_buf[n]) << endl;
+
       wfp->add_chunk(dc);
       first_time_through_loop = false;
+
+// DEBUG
+//      wfp->close();
+//      exit(0);
     }
     else
       wfp->append_data(_audio_buf, _period_size_in_bytes);
@@ -486,9 +518,8 @@ create_file:
   }
 
 goto create_file;
-//  exit(0);
 
-  return nullptr;
+  return nullptr;       // should never get here
 }
 
 /// constructor
@@ -498,7 +529,7 @@ audio_recorder::audio_recorder(void) :
   _buffer_frames(0),
   _buffer_time(0),
   _period_size_in_frames(0),
-  _base_filename("drlog-audio"),             // default output file
+  _base_filename("drlog-audio"),        // default output file
   _file_type(AUDIO_FORMAT_WAVE),        // WAV format
   _handle(nullptr),
   _info(nullptr),                       // explicitly set to uninitialised
@@ -516,16 +547,13 @@ audio_recorder::audio_recorder(void) :
   _stop_delay(0),
   _stream(SND_PCM_STREAM_CAPTURE),      // we are capturing a stream
   _time_limit(0)                       // no limit
-//  _wfp(nullptr)                         // no wav file
-{ //_file.name(_base_filename + "-" + date_time_string(INCLUDE_SECONDS));
-}
+{ }
 
 /// destructor
 audio_recorder::~audio_recorder(void)
-{ //if (_info)
-  //  snd_pcm_info_free(_info);
-}
+{ }
 
+/// initialise the object
 void audio_recorder::initialise(void)
 { snd_pcm_info_alloca(&_info);          // create an invalid snd_pcm_info_t
 
@@ -554,10 +582,9 @@ void audio_recorder::initialise(void)
   _set_params();
 }
 
+/// public function to capture the audio
 void audio_recorder::capture(void)
-{
-
-  try
+{ try
   { create_thread(&_thread_id, NULL, &_static_capture, this, "audio capture");
   }
 
@@ -565,90 +592,11 @@ void audio_recorder::capture(void)
   { ost << "Error creating thread: audio capture" << e.reason() << endl;
     exit(-1);
   }
-
-#if 0
-  _file.open();
-
-// insert fmt chunk
-  fmt_chunk fmt;
-
-  fmt.num_channels(_n_channels);
-  fmt.sample_rate(_samples_per_second);
-  fmt.bits_per_sample(16);               // to match _sample_format
-//  fmt.audio_format(_sample_format);
-
-  _file.add_chunk(fmt);
-
-//  ost << "fmt chunk written:" << endl;
-
-//  ost << fmt << endl;
-
-  int64_t remaining_bytes_to_read = _total_bytes_to_read();
-
-  if (remaining_bytes_to_read == 0)
-    remaining_bytes_to_read = numeric_limits<decltype(remaining_bytes_to_read)>::max();
-
-//  ost << "remaining_bytes_to_read now = " << remaining_bytes_to_read << endl;
-
-/* WAVE-file should be even (I'm not sure), but wasting one byte
-   isn't a problem (this can only be in 8 bit mono) */
-  if (remaining_bytes_to_read < numeric_limits<decltype(remaining_bytes_to_read)>::max())
-    remaining_bytes_to_read += remaining_bytes_to_read % 2;
-  else
-    remaining_bytes_to_read-= remaining_bytes_to_read % 2;
-
-//  ost << "before loop, remaining_bytes_to_read = " << remaining_bytes_to_read << endl;
-
-  if (remaining_bytes_to_read > numeric_limits<int32_t>::max())
-        remaining_bytes_to_read = numeric_limits<int32_t>::max();
-
-  bool first_time_through_loop = true;
-
-  do
-  { // ost << "inside loop; remaining_bytes_to_read = " << remaining_bytes_to_read << endl;
-
-    const size_t c = (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes;
-    const size_t f = c * 8 / _bits_per_frame;
-
-//    ost << "c = " << c << endl;
-//    ost << "f = " << f << endl;
-
-    int pr = _pcm_read(_audio_buf /*, f */);
-
-//    ost << "after _pcm_read(); returned value = " << pr << endl;
-//    ost << "=> bytes read = " << pr * _bits_per_frame / 8 << endl;
-
-    if (pr != f)
-    { ost << "WARNING: pr != f" << endl;
-        break;
-    }
-
-// read OK from sound card
-    if (first_time_through_loop)
-    { data_chunk dc(_audio_buf, f);
-
-//      ost << "data chunk created" << endl;
-
-      _file.add_chunk(dc);
-
-//      ost << "data chunk added" << endl;
-
-      first_time_through_loop = false;
-    }
-    else
-      _file.append_data(_audio_buf, _period_size_in_bytes);
-
-    remaining_bytes_to_read -= c;
-  } while (remaining_bytes_to_read > 0);
-
-  _file.close();
-#endif
 }
 
-void audio_recorder::base_filename(const string& name)
-{ _base_filename = name;
-//  _file.name(_base_filename + "-" + date_time_string(INCLUDE_SECONDS));
-}
+//void audio_recorder::base_filename(const string& name)
+//{ _base_filename = name;
+//}
 
 // -----------  wav_file  ----------------
 
@@ -686,6 +634,32 @@ void wav_file::close(void)
 // put correct length into RIFF header
 // == file size - 8
 
+  // simply close it and see what the file looks like
+//  fflush(_fp);
+//  fclose(_fp);
+//  return;
+
+// DEBUG
+#if 0
+  { fflush(_fp);
+    rewind(_fp);
+
+    u_char* cp = new u_char [100];
+
+    fread(cp, 1, 100, _fp);
+
+    ost << "in close [before changes]" << endl;
+               for (size_t n = 0; n < 100; ++n)
+               { const u_char c = cp[n];
+                 ost << "[" << dec << n << "]: " << hex << "0x" << (unsigned int)(c) << dec << endl;
+               }
+
+    delete [] cp;
+  }
+#endif
+
+  fseek(_fp, 0, SEEK_END);
+
   uint32_t length = ftell(_fp);
   uint32_t length_for_riff = length - 8;
 
@@ -719,6 +693,26 @@ void wav_file::close(void)
   { ost << "Error writing length in data chunk in file: " << _name << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error closing WAV file: " +_name);
   }
+
+// DEBUG
+#if 0
+  { fflush(_fp);
+    rewind(_fp);
+
+    u_char* cp = new u_char [100];
+
+    fread(cp, 1, 100, _fp);
+
+    ost << "in close [after changes]" << endl;
+               for (size_t n = 0; n < 100; ++n)
+               { const u_char c = cp[n];
+
+                 ost << "[" << dec << n << "]: " << hex << "0x" << (unsigned int)(c) << dec << endl;
+               }
+
+    delete [] cp;
+  }
+#endif
 
   fclose(_fp);
 }
@@ -946,7 +940,13 @@ data_chunk::data_chunk(const uint32_t n_bytes) :
 data_chunk::data_chunk(u_char* d, const uint32_t n_bytes) :
   _subchunk_2_size(n_bytes),
   _data(d)
-{
+{ //ost << "data chunk created with buffer size = " << n_bytes << endl;
+
+//  ost << "First 20 bytes of data:" << endl;
+
+//  for (size_t n = 0; n < 20; ++n)
+//    ost << "[" << dec << n << "]: " << hex << "0x" << (unsigned int)(_data[n]) << dec << endl;
+
 }
 
 void data_chunk::write_to_file(FILE* fp) const
@@ -959,23 +959,47 @@ void data_chunk::write_to_file(FILE* fp) const
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing data chunk ID in WAV file");
   }
 
-  ost << "about to write size" << endl;
+//  ost << "about to write size" << endl;
 
   items = fwrite(&_subchunk_2_size, sizeof(_subchunk_2_size), 1, fp);
+
+//  ost << "sizeof(_subchunk_2_size) = " << sizeof(_subchunk_2_size) << endl;
+//  ost << "value = (dec) " << dec << _subchunk_2_size << " (hex) " << hex << _subchunk_2_size << endl;
 
   if (items != 1)
   { ost << "Error writing data chunk chunk size in WAV file" << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing data chunk chunk size in WAV file");
   }
 
-  ost << "about to write data" << endl;
+// DEBUG
+//  fclose(fp);
+//  exit(0);
 
-  items = fwrite(&_data, _subchunk_2_size, 1, fp);
+//  ost << dec << "about to write data of " << _subchunk_2_size << " bytes" << endl;
+
+  items = fwrite(_data, _subchunk_2_size, 1, fp);
+
+  static bool first_time = true;
+
+// DEBUG
+//  if (first_time)
+//  { ost << "writing data chunk = ";
+//    for (size_t n = 0; n < 20; ++n)
+//      ost << "[" << dec << n << "]: " << hex << "0x" << (unsigned int)(_data[n]) << dec << endl;
+//    first_time = false;
+//  }
+
+
+
 
   if (items != 1)
   { ost << "Error writing data chunk data in WAV file" << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing data chunk data in WAV file");
   }
+
+// DEBUG
+//  fclose(fp);
+//  exit(0);
 }
 
 // -----------  fmt_chunk  ----------------

@@ -8,21 +8,21 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file cabrillo.cpp
+/*! \file   cabrillo.cpp
 
-        Classes and functions related to the Cabrillo format defined at:
-        http://www.kkn.net/~trey/cabrillo/
+    Classes and functions related to the Cabrillo format defined at:
+    http://www.kkn.net/~trey/cabrillo/
 
-        Just for the record, the "specification" at the above URL is grossly incomplete
-        (even though the ARRL at http://www.arrl.org/contests/fileform.html
-        explicitly claims that it is complete). As a result, there are several places
-        where one has to guess what might be intended.
+    Just for the record, the "specification" at the above URL is grossly incomplete
+    (even though the ARRL at http://www.arrl.org/contests/fileform.html
+    explicitly claims that it is complete). As a result, there are several places
+    where one has to guess what might be intended.
 
-        The URL for the "specification" is now:
-          http://wwrof.org/cabrillo/
+    The URL for the "specification" is now:
+      http://wwrof.org/cabrillo/
 
-        The version number at this site claims to be version 3; but it's different (but,
-        in general, no less ambiguous) than the "version 3" that was at the original site.
+    The version number at this site claims to be version 3; but it's different (but,
+    in general, no less ambiguous) than the "version 3" that was at the original site.
 */
 
 #include "cabrillo.h"
@@ -38,22 +38,21 @@ extern ofstream            ost;                   ///< for debugging, info
 
 // -----------  cabrillo_tag_template  ----------------
 
-/*!     \class cabrillo_tag_template
-        \brief template for a cabrillo tag
+/*! \class  cabrillo_tag_template
+    \brief  template for a cabrillo tag
 */
 
-/*!     \brief      Construct from name
-        \param  nm  tag name
+/*! \brief      Construct from name
+    \param  nm  tag name
         
-        Any tag value is legal for this tag
+    Any tag value is legal for this tag
 */
 cabrillo_tag_template::cabrillo_tag_template(const string& nm)
-{ if (nm.find(":") == string::npos)                              // no values included
+{ if (nm.find(":") == string::npos)                             // no values included
     _name = nm;
-  else
+  else                                                          // one or more values are included
   { _name = nm.substr(0, nm.find(":"));
     
-// one or more values are included
     const string values = nm.substr(nm.find(":") + 1);
     const vector<string> vec = remove_peripheral_spaces(split_string(values, ","));
 
@@ -75,8 +74,8 @@ void cabrillo_tag_template::operator=(const string& nm)
 
 // -----------  cabrillo_tag_templatess  ----------------
 
-/*!     \class cabrillo_tag_templates
-        \brief all the cabrillo tag templates
+/*! \class  cabrillo_tag_templates
+    \brief  all the cabrillo tag templates
 */
 
 /// default constructor
@@ -145,7 +144,7 @@ cabrillo_tag_templates::cabrillo_tag_templates(void)
   
 // CONTEST
 // the specification has been changed to say: "Note: Contest sponsors may create their own contest values".
-// This was done WITHOUT CHANGING THE VERSION NUMBER OF THE SPECIFICATION
+// This chage was made WITHOUT CHANGING THE VERSION NUMBER OF THE SPECIFICATION
 // And, of course, it makes a mockery of the values that are in the specification
   _add("CONTEST");
 
@@ -171,11 +170,9 @@ cabrillo_tag_templates::cabrillo_tag_templates(void)
   _add("OPERATORS");
 
 // QSO
-//  tag = "QSO";
   _add("QSO");
   
 // SOAPBOX
-//  tag = "SOAPBOX";
   _add("SOAPBOX");
 }
 

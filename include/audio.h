@@ -175,13 +175,21 @@ protected:
 */
   const int64_t _total_bytes_to_read(void);
 
-
-  void _set_params(void);               ///< set the parameters for the recording
+/// set the parameters for the recording
+  void _set_params(void);
 
   void _begin_wave(int fd, size_t count);
   void _end_wave(int fd);
 
+/*! \brief          Capture audio
+    \return         nullptr
+*/
   void* _capture(void*);
+
+/*! \brief          Wrapper function to capture audio
+    \param  arg     "this" pointer
+    \return         nullptr
+*/
   static void* _static_capture(void*);
 
 public:
@@ -189,7 +197,9 @@ public:
 /// constructor
   audio_recorder(void);
 
-//  READ_AND_WRITE(filename);
+/// destructor
+  virtual ~audio_recorder(void);
+
   READ_AND_WRITE(n_channels);
   READ_AND_WRITE(pcm_name);
   READ_AND_WRITE(samples_per_second);
@@ -204,21 +214,22 @@ public:
   READ_AND_WRITE(time_reference_low);
   READ_AND_WRITE(time_reference_high);
 
-
   inline void maximum_duration(const unsigned int secs)
     { max_file_time(secs); }
 
   READ(base_filename);
 
-  void base_filename(const std::string& name);
+/*! \brief          Set the base filename
+    \param  name    base filename
+*/
+  inline void base_filename(const std::string& name)
+    { _base_filename = name; }
 
+/// initialise the object
   void initialise(void);
 
+/// public function to capture the audio
   void capture();
-
-/// destructor
-  virtual ~audio_recorder(void);
-
 };
 
 std::ostream& operator<<(std::ostream& ost, const PARAMS_STRUCTURE& params);
