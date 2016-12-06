@@ -558,7 +558,7 @@ const std::vector<size_t> starts_of_words(const std::string& s);
 /*! \brief          Get nth word in a string
     \param  s       string to be analysed
     \param  n       word number to be returned
-    \param  wrt     value with respoct to which <i>n</i> is counted
+    \param  wrt     value with respect to which <i>n</i> is counted
     \return         the <i>n</i>th word, counting with respect to <i>wrt</i>
 
     Returns <i>string::npos</i> if there is no <i>n</i>th word

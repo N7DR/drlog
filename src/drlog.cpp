@@ -7204,15 +7204,20 @@ const MODE default_mode(const frequency& f)
       aaa number of QSLs for the call <i>str</i>
       bbb number of QSOs for the call <i>str</i>
       ccc number of QSOs on the current band for the call <i>str</i>
+
+    If <i>str</i> contains more than one word (e.g., "G4AMJ DUPE") only the first word
+    is used.
 */
 void update_qsls_window(const string& str)
-{ win_qsls < WINDOW_CLEAR <= "QSLs: ";
+{ const string callsign = nth_word(str, 1, 1);  // remove "DUPE" if necessary
 
-  if (!str.empty())
-  { const unsigned int n_qsls = olog.n_qsls(str);
-    const unsigned int n_qsos = olog.n_qsos(str);
-    const unsigned int n_qsos_this_band = olog.n_qsos(str, safe_get_band(), safe_get_mode());
-    const bool confirmed_this_band = olog.confirmed(str, safe_get_band(), safe_get_mode());
+  win_qsls < WINDOW_CLEAR <= "QSLs: ";
+
+  if (!callsign.empty())
+  { const unsigned int n_qsls = olog.n_qsls(callsign);
+    const unsigned int n_qsos = olog.n_qsos(callsign);
+    const unsigned int n_qsos_this_band = olog.n_qsos(callsign, safe_get_band(), safe_get_mode());
+    const bool confirmed_this_band = olog.confirmed(callsign, safe_get_band(), safe_get_mode());
 
     int default_colour_pair = colours.add(win_qsls.fg(), win_qsls.bg());
     int new_colour_pair = default_colour_pair;
