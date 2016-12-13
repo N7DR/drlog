@@ -13,9 +13,9 @@
 
 #undef NEW_RAW_COMMAND  // experiment to try to improve the reliability of the awful rig interface
 
-/*!     \file macros.h
+/*! \file macros.h
 
-        Macros and templates for drlog.
+    Macros and templates for drlog.
 */
 
 #include "bands-modes.h"
@@ -23,6 +23,7 @@
 #include "serialization.h"
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <map>
 #include <set>
@@ -674,8 +675,6 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 }
 
 // syntactic suger for time-related use
-#include <chrono>
-
 typedef std::chrono::duration<long, std::centi> centiseconds;           ///< hundredths of a second
 typedef std::chrono::duration<long, std::deci>  deciseconds;            ///< tenths of a second
 
@@ -886,5 +885,20 @@ template <typename Input, typename UnaryPredicate>
   auto FIND_IF(const Input& v, UnaryPredicate pred) -> typename Input::const_iterator
 { return std::find_if(v.cbegin(), v.cend(), pred);
 }
+
+/*! \brief              Bound a value within limits
+    \param  val         value to bound
+    \param  low_val     lower bound
+    \param  high_val    upper bound
+    \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
+*/
+template <typename T>
+inline const T LIMIT(const T val, const T low_val, const T high_val)
+  { return (val < low_val ? low_val : (val > high_val ? high_val : val)); }
+
+template <typename T, typename U, typename V>
+inline const T LIMIT(const T val, const U low_val, const V high_val)
+  { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
+
 
 #endif    // MACROS_H

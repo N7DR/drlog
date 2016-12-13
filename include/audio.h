@@ -70,7 +70,7 @@ class wav_file
 protected:
 
   std::string   _name;          ///< name of file
-  uint32_t      _file_size;     ///< total size of file
+//  uint32_t      _file_size;     ///< total size of file
 
 // The question is whether to use a stream or a C-style FILE*. I choose the latter
 // because:
@@ -81,13 +81,19 @@ protected:
 
 public:
 
-//  wav_file(void)
-//  { }
-
   READ_AND_WRITE(name);          ///< name of file
 
+/// open the file for writing
   void open(void);
 
+/*! \brief  Close the file
+
+    This is complicated because the WAV format requires information related to
+    the total length to be placed into chunks at the start of the file.
+*/
+  void close(void);
+
+/// return a dummy header string
   const std::string header(void) const;
 
   template <typename T>
@@ -96,8 +102,10 @@ public:
     fflush(_fp);
   }
 
-  void close(void);
-
+/*! \brief          Append data to the file
+    \param  vp      pointer to buffer holding the data to be appended
+    \para,  size    number of bytes to be appended
+*/
   void append_data(const void* vp, const size_t size);
 };
 
@@ -144,6 +152,7 @@ protected:
   unsigned int      _time_limit;                ///< number of seconds to record
 
 // stuff for bext extension
+#if 0
   std::string       _description;           // do not exceed 256 characters /* ASCII : «Description of the sound sequence» */
   std::string       _originator;            // do not exceed 32 characters  /* ASCII : «Name of the originator» */
   std::string       _originator_reference;  // do not exceed 32 characters  /* ASCII : «Name of the originator» */
@@ -151,6 +160,7 @@ protected:
   std::string       _origination_time;      // 10 characters
   uint32_t          _time_reference_low;    // lowest 32 bits of the time reference
   uint32_t          _time_reference_high;   // highest 32 bits of the time reference
+#endif
 
   snd_pcm_sframes_t (*_readi_func)(snd_pcm_t *handle, void *buffer, snd_pcm_uframes_t size);
   snd_pcm_sframes_t (*_writei_func)(snd_pcm_t *handle, const void *buffer, snd_pcm_uframes_t size);
@@ -175,11 +185,14 @@ protected:
 */
   const int64_t _total_bytes_to_read(void);
 
-/// set the parameters for the recording
+/*! \brief  Set the parameters for the recording
+
+    Much of this is converted from aplay.c
+*/
   void _set_params(void);
 
-  void _begin_wave(int fd, size_t count);
-  void _end_wave(int fd);
+//  void _begin_wave(int fd, size_t count);
+//  void _end_wave(int fd);
 
 /*! \brief          Capture audio
     \return         nullptr
@@ -200,12 +213,13 @@ public:
 /// destructor
   virtual ~audio_recorder(void);
 
-  READ_AND_WRITE(n_channels);
-  READ_AND_WRITE(pcm_name);
-  READ_AND_WRITE(samples_per_second);
+  READ_AND_WRITE(base_filename);            ///< base name of output file
+  READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds
+  READ_AND_WRITE(n_channels);               ///< number of channels to record
+  READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle
+  READ_AND_WRITE(samples_per_second);       ///< number of samples per second
 
-  READ_AND_WRITE(max_file_time);
-
+#if 0
   READ_AND_WRITE(description);
   READ_AND_WRITE(originator);
   READ_AND_WRITE(originator_reference);
@@ -213,17 +227,17 @@ public:
   READ_AND_WRITE(origination_time);
   READ_AND_WRITE(time_reference_low);
   READ_AND_WRITE(time_reference_high);
+#endif
 
+/// set maximum duration in seconds
   inline void maximum_duration(const unsigned int secs)
     { max_file_time(secs); }
-
-  READ(base_filename);
 
 /*! \brief          Set the base filename
     \param  name    base filename
 */
-  inline void base_filename(const std::string& name)
-    { _base_filename = name; }
+//  inline void base_filename(const std::string& name)
+//    { _base_filename = name; }
 
 /// initialise the object
   void initialise(void);
@@ -297,6 +311,7 @@ CodingHistory[];
 } BROADCAST_EXT;
 #endif
 
+#if 0
 // See https://tech.ebu.ch/docs/tech/tech3285.pdf
 
 class bext_chunk
@@ -347,6 +362,7 @@ public:
 
   void write_to_file(FILE* fp) const;
 };
+#endif
 
 // -----------  data_chunk  ----------------
 
@@ -374,9 +390,15 @@ protected:
 
 public:
 
-  data_chunk(void);
+/// default constructor
+//  data_chunk(void);
+
+/*! \brief              Construct from a buffer
+    \param  d           pointer to buffer
+    \param  n_bytes     size of buffer
+*/
   data_chunk(u_char* d, const uint32_t n_bytes);
-  data_chunk(const uint32_t n_bytes);
+//  data_chunk(const uint32_t n_bytes);
 
   READ_AND_WRITE(subchunk_2_size);
   READ_AND_WRITE(data);

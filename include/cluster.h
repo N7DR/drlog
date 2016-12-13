@@ -26,6 +26,8 @@ enum POSTING_SOURCE { POSTING_CLUSTER,
                       POSTING_RBN
                     };                          ///< the source of a remote posting
 
+const unsigned int MONITORED_POSTS_DURATION = 3600;     ///< monitored posts are valid for one hour
+
 // -----------  dx_cluster  ----------------
 
 /*! \class  dx_cluster
@@ -185,36 +187,45 @@ protected:
   bool                  _is_dirty;      ///< whether info has changed since last output
   unsigned int          _max_entries;   ///< number of displayable entries
 
-  std::deque<monitored_posts_entry> _entries;
+  std::deque<monitored_posts_entry> _entries;          ///< calls monitored within past MONITORED_POSTS_DURATION seconds
 
 public:
 
 /// constructor
   monitored_posts(void);
 
-/// return the most recent monitored posts
-//  const std::deque<monitored_posts_entry> entries(void);
-  SAFEREAD(entries, monitored_posts);
+  SAFEREAD(entries, monitored_posts);           ///< calls monitored within past MONITORED_POSTS_DURATION seconds
+  READ(is_dirty);                               ///< whether info has changed since last output
 
-  READ(is_dirty);
+  SAFE_READ_AND_WRITE(callsigns, monitored_posts);      ///< monitored calls
+  SAFE_READ_AND_WRITE(max_entries, monitored_posts);    ///< number of displayable entries
 
-  void callsigns(const std::set<std::string>& calls_to_be_monitored);
-
+/*! \brief              Is a particular call monitored?
+    \param  callsign    call to be tested
+    \return             whether <i>callsign</i> is being monitored
+*/
   const bool is_monitored(const std::string& callsign) const;
 
-  void max_entries(const unsigned int n);
-
-//  void add(const std::string& call, const enum BAND b, const time_t& tm);
+/*! \brief          Test a post, and possibly add to <i>_entries</i>
+    \param  post    post to be tested
+*/
   void operator+=(const dx_post& post);
 
+/*! \brief              Add a call to the set of those being monitored
+    \param  new_call    call to be added
+*/
   void operator+=(const std::string& new_call);
 
+/*! \brief                  Remove a call from the set of those being monitored
+    \param  call_to_remove  call to be removed
+*/
   void operator-=(const std::string& call_to_remove);
 
+/// prune <i>_entries</i>
   void prune(void);
 
-  const std::vector<std::string> to_strings(void);
-
+/// convert to strings suitable for display in a window
+  const std::vector<std::string> to_strings(void) const;
 };
 
 #endif    // CLUSTER_H

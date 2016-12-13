@@ -251,7 +251,7 @@ window& window::move_cursor(const int new_x, const int new_y)
     
   { SAFELOCK(screen);
 
-    wmove(_wp, _limit(_height - new_y - 1, 0, _height - 1), _limit(new_x, 0, _width - 1));
+    wmove(_wp, LIMIT(_height - new_y - 1, 0, _height - 1), LIMIT(new_x, 0, _width - 1));
   }
   
   return *this;
@@ -704,7 +704,7 @@ const string window::read(int x, int y)
   
 // we need to save the current logical cursor position in the window, because mvwinstr() silently moves it
   const cursor c = cursor_position();
-  const int n_chars = mvwinnstr(_wp,  _limit(_height - y - 1, 0, _height - 1),  _limit(x, 0, _width - 1), tmp, BUF_SIZE - 1);
+  const int n_chars = mvwinnstr(_wp,  LIMIT(_height - y - 1, 0, _height - 1),  LIMIT(x, 0, _width - 1), tmp, BUF_SIZE - 1);
   move_cursor(c.x(), c.y());          // restore the logical cursor position
   
   if (n_chars != ERR)

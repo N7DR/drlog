@@ -912,7 +912,9 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
         }
       }
       else
-      { while (!completed and (counter < max_attempts) )
+      { static int rig_communication_failures = 0;
+
+        while (!completed and (counter < max_attempts) )
         { FD_ZERO(&set);    // clear the set
           FD_SET(fd, &set); // add the file descriptor to the set
 
@@ -930,17 +932,29 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           else
           { if (status == 0)
             { if (counter == max_attempts - 1)
-                ost << "last-attempt timeout (" << timeout_microseconds << "µs) in select() in raw_command: " << cmd << endl;
+              { if (cmd == "TQ;")
+                { rig_communication_failures++;
+
+                  if (rig_communication_failures == 1)
+                    ost << "status communication with rig failed" << endl;
+                }
+                else
+                  ost << "last-attempt timeout (" << timeout_microseconds << "µs) in select() in raw_command: " << cmd << endl;
+              }
             }
             else
-            { n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
+            { if (cmd == "TQ;")
+              { if (rig_communication_failures != 0)
+                { ost << "status communication with rig restored after " << rig_communication_failures << " failure" << (rig_communication_failures == 1 ? "" : "s") << endl;
+                  rig_communication_failures = 0;
+                }
+              }
 
-//              ost << "n_read = " << n_read << " bytes; counter = " << counter << endl;
+              n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
                 c_in[n_read] = static_cast<char>(0);    // append a null byte
-//                ost << "  received: *" << c_in.data() << "*" << endl;
 
                 rcvd += string(c_in.data());
 
@@ -956,7 +970,8 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
   }
 
   if (response_expected and !completed)
-    _error_alert("Incomplete response from rig to cmd: " + cmd + " length = " + to_string(rcvd.length()) + " " + rcvd);
+  { // _error_alert("Incomplete response from rig to cmd: " + cmd + " length = " + to_string(rcvd.length()) + " " + rcvd);
+  }
 
   if (response_expected and completed)
     return rcvd;
@@ -1179,7 +1194,8 @@ const bool rig_interface::is_transmitting(void)
     { const string response = raw_command("TQ;", 4);
 
       if (response.length() < 4)
-        _error_alert("Unable to determine whether rig is transmitting");
+      { // _error_alert("Unable to determine whether rig is transmitting");
+      }
       else
         rv = (response[2] == '1');
     }

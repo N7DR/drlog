@@ -1179,14 +1179,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
         string contents = fields[1];      // might be actual contents, or a fully-qualified filename
         verbatim[name] = contains(fields[1], "\"");     // verbatimn if contains quotation mark
 
-        ost << "name = " << name << endl;
-        ost << "contents = " << contents << endl;
-
         if (file_exists(contents))
-        { ost << "reading contents from file: " << contents << endl;
           contents = read_file(contents);
-          ost << "new contents = " << contents << endl;
-        }
 
         _static_windows[name] = { contents, vector<window_information>() };
       }
@@ -1224,20 +1218,12 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
                   contents = substring(contents, 1, posn - 1);
               }
 
-              ost << "contents of static window: " << contents << endl;
-
               vector<string> lines = to_lines(contents);
-              ost << "number of lines: " << lines.size() << endl;
-
               const string contents_1 = replace(contents, "\\n", EOL);
-              ost << "contents_1: " << contents_1 << endl;
 
               lines = to_lines(contents_1);
-              ost << "number of lines: " << lines.size() << endl;
 
-//            if (!winfo.w())
               winfo.w(longest_line(lines).length());
-//            if (!winfo.h())
               winfo.h(lines.size());
 
               if (window_info.size() >= 4)
@@ -1252,33 +1238,27 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents_1;
             }    // end verbatim
             else    // read from file
-            { ost << "not verbatim" << endl;
-            string contents = _static_windows[name].first;
-            vector<string> lines = to_lines(contents);
-              ost << "number of lines: " << lines.size() << endl;
+            { const string contents = _static_windows[name].first;
+              const vector<string> lines = to_lines(contents);
 
-              //            if (!winfo.w())
-                            winfo.w(longest_line(lines).length());
-              //            if (!winfo.h())
-                            winfo.h(lines.size());
+              winfo.w(longest_line(lines).length());
+              winfo.h(lines.size());
 
-                            if (window_info.size() >= 4)
-                            { winfo.fg_colour(window_info[3]);
+              if (window_info.size() >= 4)
+              { winfo.fg_colour(window_info[3]);
 
-                              if (window_info.size() >= 5)
-                                winfo.bg_colour(window_info[4]);
+                if (window_info.size() >= 5)
+                  winfo.bg_colour(window_info[4]);
 
-                              winfo.colours_set(true);
-                            }
+                winfo.colours_set(true);
+              }
 
-                            final_contents = contents;
-
+              final_contents = contents;
             }
 
             vector<window_information> vec = _static_windows[name].second;
 
             vec.push_back(winfo);
-//            _static_windows[name] = { contents_1, vec };
             _static_windows[name] = { final_contents, vec };
           }
         }
@@ -1365,7 +1345,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // possibly fix Cabrillo template
   if ( (_cabrillo_qso_template == "ARRL DX") or (_cabrillo_qso_template == "CQ WW") )
-  { vector<string> actual_modes = remove_peripheral_spaces(split_string(_modes, ","));
+  { const vector<string> actual_modes = remove_peripheral_spaces(split_string(_modes, ","));
 
     if (actual_modes.size() == 1)
     { try
@@ -1677,8 +1657,8 @@ const vector<string> drlog_context::sent_exchange_cw_names(void) const
   return rv;
 }
 
-/*! \brief              Get all the names in the sent SSB exchange
-    \return             the names of all the fields in the sent SSB exchange
+/*! \brief      Get all the names in the sent SSB exchange
+    \return     the names of all the fields in the sent SSB exchange
 */
 const vector<string> drlog_context::sent_exchange_ssb_names(void) const
 { vector<string> rv;
@@ -1689,6 +1669,7 @@ const vector<string> drlog_context::sent_exchange_ssb_names(void) const
   return rv;
 }
 
+/// names and values of sent exchange fields for mode <i>m</i>
 const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)
 { SAFELOCK(_context);
 

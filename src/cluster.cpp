@@ -304,8 +304,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
           _frequency_str = copy.substr(char_posn, space_posn - char_posn);
           _freq = frequency(_frequency_str);
-// normalise the _frequency_str; some posters use two decimal places
-          _frequency_str = _freq.display_string();
+          _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
 
           if (_valid_frequency())
           { char_posn = copy.find_first_not_of(" ", space_posn);
@@ -358,17 +357,9 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 monitored_posts_entry::monitored_posts_entry(const dx_post& post)
 { _callsign = post.callsign();
   _frequency_str = post.frequency_str();
-  _expiration = post.time_processed() + 3600;  // valid for one hour
+  _expiration = post.time_processed() + MONITORED_POSTS_DURATION;
   _band = post.band();
 }
-
-//const string monitored_posts_entry::to_string(void) const
-//{ string rv;
-//
-//  rv = pad_string(_frequency_str, 7, PAD_LEFT) + " " + _callsign;
-//
-//  return rv;
-//}
 
 /// ostream << monitored_posts_entry
 ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
@@ -391,31 +382,19 @@ monitored_posts::monitored_posts(void) :
   _is_dirty(false)
 { }
 
-void monitored_posts::callsigns(const set<string>& calls_to_be_monitored)
-{ SAFELOCK(monitored_posts);
-
-  _callsigns = calls_to_be_monitored;
-}
-
+/*! \brief              Is a particular call monitored?
+    \param  callsign    call to be tested
+    \return             whether <i>callsign</i> is being monitored
+*/
 const bool monitored_posts::is_monitored(const std::string& callsign) const
 { SAFELOCK(monitored_posts);
 
   return (_callsigns < callsign);
 }
 
-void monitored_posts::max_entries(const unsigned int n)
-{ SAFELOCK(monitored_posts);
-
-  _max_entries = n;
-}
-
-/// return the most recent monitored posts
-//const deque<monitored_posts_entry> monitored_posts::entries(void)
-//{ SAFELOCK(monitored_posts);
-//
-//  return _entries;
-//}
-
+/*! \brief          Test a post, and possibly add to <i>_entries</i>
+    \param  post    post to be tested
+*/
 void monitored_posts::operator+=(const dx_post& post)
 { monitored_posts_entry mpe(post);
   bool stop_search = false;
@@ -454,29 +433,36 @@ void monitored_posts::operator+=(const dx_post& post)
   }
 }
 
+/*! \brief              Add a call to the set of those being monitored
+    \param  new_call    call to be added
+*/
 void monitored_posts::operator+=(const string& new_call)
 { SAFELOCK(monitored_posts);
 
   _callsigns.insert(new_call);
 }
 
+/*! \brief                  Remove a call from the set of those being monitored
+    \param  call_to_remove  call to be removed
+*/
 void monitored_posts::operator-=(const string& call_to_remove)
 { SAFELOCK(monitored_posts);
 
   _callsigns.erase(call_to_remove);
 
 // remove any entries that have this call
-
   const size_t original_size = _entries.size();
 
   _entries.erase(remove_if(_entries.begin(), _entries.end(),
                    [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } ),
                  _entries.end() );
 
-  if (original_size != _entries.size())
-    _is_dirty = true;
+//  if (original_size != _entries.size())
+//    _is_dirty = true;
+  _is_dirty |= (original_size != _entries.size());
 }
 
+/// prune <i>_entries</i>
 void monitored_posts::prune(void)
 { const time_t now = ::time(NULL);
 
@@ -485,20 +471,24 @@ void monitored_posts::prune(void)
   const size_t original_size = _entries.size();
 
   _entries.erase(remove_if(_entries.begin(), _entries.end(),
-                   [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } ),
+                 [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } ),
                  _entries.end() );
 
-  if (original_size != _entries.size())
-    _is_dirty = true;
+//  if (original_size != _entries.size())
+//    _is_dirty = true;
+  _is_dirty |= (original_size != _entries.size());
 }
 
-const vector<string> monitored_posts::to_strings(void)
+/// convert to strings suitable for display in a window
+const vector<string> monitored_posts::to_strings(void) const
 { vector<string> rv;
 
   SAFELOCK(monitored_posts);
 
-  for (const auto& mpe: _entries)
-    rv.push_back(mpe.to_string());
+  FOR_ALL(_entries, [&rv] (const monitored_posts_entry& mpe) { rv.push_back(mpe.to_string()); } );
+
+//  for (const auto& mpe: _entries)
+//    rv.push_back(mpe.to_string());
 
   return rv;
 }

@@ -356,11 +356,11 @@ public:
   CONTEXTREAD(cluster_server);                   ///< hostname or IP of cluster server
   CONTEXTREAD(cluster_username);                 ///< username to use on the cluster
   CONTEXTREAD(contest_name);                     ///< name of the contest
-  SAFEREAD(country_list, _context);                     ///< DXCC or WAE list?
-  SAFEREAD(country_mults_filter, _context);             ///< the command from the configuration file
-  SAFEREAD(country_mults_per_band, _context);           ///< are country mults per-band?
-  SAFEREAD(country_mults_per_mode, _context);           ///< are country mults per-mode?
-  SAFEREAD(cq_auto_lock, _context);                     ///< whether to lock the transmitter in CQ mode
+  CONTEXTREAD(country_list);                     ///< DXCC or WAE list?
+  CONTEXTREAD(country_mults_filter);             ///< the command from the configuration file
+  CONTEXTREAD(country_mults_per_band);           ///< are country mults per-band?
+  CONTEXTREAD(country_mults_per_mode);           ///< are country mults per-mode?
+  CONTEXTREAD(cq_auto_lock);                     ///< whether to lock the transmitter in CQ mode
   SAFEREAD(cq_auto_rit, _context);                      ///< whether to enable RIT in CQ mode
   SAFEREAD(cty_filename, _context);                     ///< filename of country file (default = "cty.dat")
   SAFEREAD(cw_speed, _context);                         ///< speed in WPM

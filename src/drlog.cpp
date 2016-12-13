@@ -3,7 +3,6 @@
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
 
-
 // Principal author: N7DR
 
 /*!     \file drlog.cpp
@@ -2225,7 +2224,7 @@ void* process_rbn_info(void* vp)
 // correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
 // minutes to expiration
         const unsigned int seconds_to_expiration = entries[n].expiration() - now;
-        const float fraction = static_cast<float>(seconds_to_expiration) / (3600);
+        const float fraction = static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION);
         int n_intervals = fraction / interval;
 
         n_intervals = min(n_intervals, n_colours - 1);
@@ -5955,8 +5954,8 @@ void start_of_thread(const string& name)
   if (!result.second)
     ost << "failed to insert thread name: " << name << endl;
 
-  ost << "n_running_threads = " << n_running_threads << endl;
-  print_thread_names();
+//  ost << "n_running_threads = " << n_running_threads << endl;
+//  print_thread_names();
 }
 
 /// Cleanup and exit
@@ -7203,21 +7202,29 @@ const MODE default_mode(const frequency& f)
     The contents of the QSLS window are in the form aaa/bbb/ccc:
       aaa number of QSLs for the call <i>str</i>
       bbb number of QSOs for the call <i>str</i>
-      ccc number of QSOs on the current band for the call <i>str</i>
+      ccc number of QSOs on the current band and mode for the call <i>str</i>
 
     If <i>str</i> contains more than one word (e.g., "G4AMJ DUPE") only the first word
     is used.
 */
 void update_qsls_window(const string& str)
 { const string callsign = nth_word(str, 1, 1);  // remove "DUPE" if necessary
+  const BAND b = safe_get_band();
+  const MODE m = safe_get_mode();
 
   win_qsls < WINDOW_CLEAR <= "QSLs: ";
 
-  if (!callsign.empty())
+//  if (!callsign.empty())
+  if (callsign.length() >= 3)
   { const unsigned int n_qsls = olog.n_qsls(callsign);
     const unsigned int n_qsos = olog.n_qsos(callsign);
-    const unsigned int n_qsos_this_band = olog.n_qsos(callsign, safe_get_band(), safe_get_mode());
-    const bool confirmed_this_band = olog.confirmed(callsign, safe_get_band(), safe_get_mode());
+    const unsigned int n_qsos_this_band_mode = olog.n_qsos(callsign, b, m);
+    const bool confirmed_this_band_mode = olog.confirmed(callsign, b, m);
+
+    ost << "QSLs for " << callsign << ": n_qsls = " << n_qsls
+                                   << ", n_qsos = " << n_qsos
+                                   << ", n_qsos_this_band_mode = " << n_qsos_this_band_mode
+                                   << ", confirmed_this_band_mode = " << boolalpha << confirmed_this_band_mode << endl;
 
     int default_colour_pair = colours.add(win_qsls.fg(), win_qsls.bg());
     int new_colour_pair = default_colour_pair;
@@ -7236,10 +7243,10 @@ void update_qsls_window(const string& str)
              < colour_pair(new_colour_pair) < pad_string(to_string(n_qsos), 3, PAD_LEFT, '0')
              < colour_pair(default_colour_pair) < "/";
 
-    if (n_qsos_this_band != 0)
-      win_qsls < colour_pair(colours.add( (confirmed_this_band ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) );
+    if (n_qsos_this_band_mode != 0)
+      win_qsls < colour_pair(colours.add( (confirmed_this_band_mode ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) );
 
-    win_qsls <= pad_string(to_string(n_qsos_this_band), 3, PAD_LEFT, '0');
+    win_qsls <= pad_string(to_string(n_qsos_this_band_mode), 3, PAD_LEFT, '0');
 
     win_qsls.cpair(default_colour_pair);
   }
@@ -7409,8 +7416,8 @@ void end_of_thread(const string& name)
   else
     ost << "unable to remove: " << name << endl;
 
-  ost << "n_running_threads = " << n_running_threads << endl;
-  print_thread_names();
+//  ost << "n_running_threads = " << n_running_threads << endl;
+//  print_thread_names();
 }
 
 
