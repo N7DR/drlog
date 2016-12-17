@@ -1,4 +1,4 @@
-// $Id: audio.cpp 136 2016-11-23 00:17:05Z  $
+// $Id: audio.cpp 137 2016-12-15 20:07:54Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -71,12 +71,12 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
 
 /*! \brief  Set the parameters for the recording
 
-    Much of this is converted from aplay.c
+    Much of this is converted (more or less slavishly) from aplay.c. Probably much of this
+    function could be elided.
 */
 void audio_recorder::_set_params(void)
-{ snd_pcm_hw_params_t* params;
-  snd_pcm_sw_params_t* swparams;
-//  snd_pcm_uframes_t buffer_size;
+{ snd_pcm_hw_params_t* params = nullptr;
+  snd_pcm_sw_params_t* swparams = nullptr;
 
   snd_pcm_hw_params_alloca(&params);
   snd_pcm_sw_params_alloca(&swparams);
@@ -194,8 +194,6 @@ void audio_recorder::_set_params(void)
 //http://www.alsa-project.org/main/index.php/FramesPeriods
   err = snd_pcm_hw_params_get_period_size(params, &_period_size_in_frames, 0);
 
-//    ost << "period size in frames = " << _period_size_in_frames << endl;
-
   if (err < 0)
   { ost << "ERROR: unable to get period size for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
@@ -212,7 +210,7 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_UNABLE_TO_GET_BUFFER_SIZE, "Unable to get period size for " + _pcm_name);
   }
 
-// buffer must be larger than bytes needed to hold a period
+// buffer must be larger than the number of bytes needed to hold a period
   if (_period_size_in_frames == buffer_size)
   { ost << "ERROR: buffer size = period_size_in_frames = " << _period_size_in_frames << " for " << _pcm_name << endl;
     throw audio_error(AUDIO_EQUAL_PERIOD_AND_BUFFER_SIZE, "Buffer size = period_size_in_frames = " + to_string(_period_size_in_frames) + " for " + _pcm_name);
@@ -226,7 +224,8 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_UNABLE_TO_GET_SW_PARAMS, "Unable to get SW parameters for " + _pcm_name);
   }
 
-  size_t n = ( (_avail_min < 0) ? _period_size_in_frames : ( (double) rate * _avail_min / 1000000 ) );
+//  size_t n = ( (_avail_min < 0) ? _period_size_in_frames : ( (double) rate * _avail_min / 1000000 ) );
+  size_t n = _period_size_in_frames;
   err = snd_pcm_sw_params_set_avail_min(_handle, swparams, n);
 
   if (err < 0)
@@ -410,18 +409,17 @@ create_file:
   if (remaining_bytes_to_read < numeric_limits<decltype(remaining_bytes_to_read)>::max())
     remaining_bytes_to_read += remaining_bytes_to_read % 2;
   else
-    remaining_bytes_to_read-= remaining_bytes_to_read % 2;
+    remaining_bytes_to_read -= remaining_bytes_to_read % 2;
 
   if (remaining_bytes_to_read > numeric_limits<int32_t>::max())
-        remaining_bytes_to_read = numeric_limits<int32_t>::max();
+    remaining_bytes_to_read = numeric_limits<int32_t>::max();
 
   bool first_time_through_loop = true;
 
   do
   { const size_t c = (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes;
     const size_t f = c * 8 / _bits_per_frame;
-
-    int pr = _pcm_read(_audio_buf /*, f */);
+    const int pr = _pcm_read(_audio_buf);
 
     if (pr != f)
     { ost << "WARNING: pr != f" << endl;
@@ -429,13 +427,13 @@ create_file:
     }
 
 // read OK from sound card
-    if (first_time_through_loop)
+    if (first_time_through_loop)            // write data chunk if we've just started
     { const data_chunk dc(_audio_buf, f);
 
       wfp->add_chunk(dc);
       first_time_through_loop = false;
     }
-    else
+    else                                    // otherwise append the data we just read
       wfp->append_data(_audio_buf, _period_size_in_bytes);
 
     remaining_bytes_to_read -= c;
@@ -451,11 +449,11 @@ create_file:
     }
   }
 
-// we get here only if we are NOT exiting
+// we get here only if we are NOT exiting; close the current file, then start a new file
   static pthread_t closing_file_thread_id;
 
   try
-  { create_thread(&closing_file_thread_id, NULL, &close_it, (void*)wfp, "audio capturefile close");
+  { create_thread(&closing_file_thread_id, NULL, &close_it, (void*)wfp, "audio capturefile close");     // close file in separate thread
   }
 
   catch (const pthread_error& e)
@@ -471,7 +469,7 @@ goto create_file;
 /// constructor
 audio_recorder::audio_recorder(void) :
   _audio_buf(nullptr),
-  _avail_min(-1),
+//  _avail_min(-1),
   _buffer_frames(0),
   _buffer_time(0),
   _period_size_in_frames(0),
@@ -506,7 +504,6 @@ void audio_recorder::initialise(void)
   const PARAMS_STRUCTURE rhwparams { _n_channels, _sample_format, _samples_per_second };
   int status = snd_pcm_open(&_handle, _pcm_name.c_str(), _stream, _open_mode);
 
-//  if (snd_pcm_open(&_handle, _pcm_name.c_str(), _stream, _open_mode) < 0)
   if (status < 0)
   { ost << "ERROR: Cannot open audio device: " << _pcm_name << endl;
     ost << "error number " << status << endl;
@@ -514,9 +511,9 @@ void audio_recorder::initialise(void)
     throw audio_error(AUDIO_UNABLE_TO_OPEN, "Cannot open audio device: " + _pcm_name);
   }
 
-//  status = snd_pcm_info(_handle, _info);   // gets info
+  status = snd_pcm_info(_handle, _info);   // gets info
 
-  if (snd_pcm_info(_handle, _info) < 0)   // gets info
+//  if (snd_pcm_info(_handle, _info) < 0)   // gets info
   if (status < 0)
   { ost << "ERROR: cannot obtain info for audio device: " << _pcm_name << endl;
     ost << "error number " << status << endl;
@@ -554,13 +551,13 @@ void audio_recorder::capture(void)
 
 /// return a dummy header string
 const string wav_file::header(void) const
-{ riff_header rh;
+{ //riff_header rh;
 
 // https://blogs.msdn.microsoft.com/dawate/2009/06/23/intro-to-audio-programming-part-2-demystifying-the-wav-format/
-//  rh.chunk_size(_file_size - 8);        // RIFF chunk size is 8 bytes less than the file size
-  rh.chunk_size(0);
+//  rh.chunk_size(0);             // since we don't know the true file size, we might as well set this number to zero
 
-  return rh.to_string();
+  //return rh.to_string();
+  return riff_header().to_string();
 }
 
 /// open the file for writing
@@ -572,8 +569,7 @@ void wav_file::open(void)
     throw audio_error(AUDIO_WAV_OPEN_ERROR, "Error opening WAV file: " +_name);
   }
 
-// write a place holder for the real (final) header
-  const string header_str = header();
+  const string header_str = header();   // write a place holder for the real (final) header
 
   if (fwrite(header_str.c_str(), header_str.size(), 1, _fp) != 1)
   { ost << "Error writing header for WAV file: " << _name << endl;
@@ -593,8 +589,9 @@ void wav_file::close(void)
 
   fseek(_fp, 0, SEEK_END);
 
-  uint32_t length = ftell(_fp);
-  uint32_t length_for_riff = length - 8;
+  const uint32_t length = ftell(_fp);
+//  uint32_t length_for_riff = length - 8;
+  const uint32_t length_for_riff = length - 8;
 
   int status = fseek(_fp, 4, SEEK_SET);      // go to byte #4
 
@@ -611,7 +608,7 @@ void wav_file::close(void)
   }
 
 // put correct length into data chunk... assumes no bext chunk
-  uint32_t length_for_data_chunk = length - 44;
+  const uint32_t length_for_data_chunk = length - 44;
 
   status = fseek(_fp, 40, SEEK_SET);      // go to byte #40
 
@@ -635,9 +632,7 @@ void wav_file::close(void)
     \para,  size    number of bytes to be appended
 */
 void wav_file::append_data(const void* vp, const size_t size)
-{ //size_t items = fwrite(vp, size, 1, _fp);
-
-  if (fwrite(vp, size, 1, _fp) != 1)
+{ if (fwrite(vp, size, 1, _fp) != 1)
   { ost << "Error appending data to WAV file: " << _name << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error appending data to WAV file: " +_name);
   }
@@ -843,18 +838,6 @@ void bext_chunk::write_to_file(FILE* fp) const
 44        *   Data             The actual sound data.
 */
 
-/// default constructor
-//data_chunk::data_chunk(void) :
-//  _subchunk_2_size(0),
-//  _data(nullptr)
-//{ }
-
-//data_chunk::data_chunk(const uint32_t n_bytes) :
-//  _subchunk_2_size(n_bytes),
-//  _data(new u_char [n_bytes])
-//{
-//}
-
 /*! \brief              Construct from a buffer
     \param  d           pointer to buffer
     \param  n_bytes     size of buffer
@@ -867,22 +850,16 @@ data_chunk::data_chunk(u_char* d, const uint32_t n_bytes) :
 void data_chunk::write_to_file(FILE* fp) const
 { const string id("data");
 
-//  size_t items = fwrite(id.data(), id.size(), 1, fp);
-
   if (fwrite(id.data(), id.size(), 1, fp) != 1)
   { ost << "Error writing data chunk ID in WAV file" << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing data chunk ID in WAV file");
   }
-
-//  items = fwrite(&_subchunk_2_size, sizeof(_subchunk_2_size), 1, fp);
 
 // this is all silly, since the size will get overwritten when we close the file
   if (fwrite(&_subchunk_2_size, sizeof(_subchunk_2_size), 1, fp) != 1)
   { ost << "Error writing data chunk chunk size in WAV file" << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing data chunk chunk size in WAV file");
   }
-
-//  items = fwrite(_data, _subchunk_2_size, 1, fp);
 
   if (fwrite(_data, _subchunk_2_size, 1, fp)!= 1)
   { ost << "Error writing data chunk data in WAV file" << endl;
@@ -965,16 +942,17 @@ ostream& operator<<(ostream& ost, const fmt_chunk& chunk)
 */
 
 /// constructor
-riff_header::riff_header(void)
-{
-}
+riff_header::riff_header(void) :
+  _chunk_size(0)
+{ }
 
 const string riff_header::to_string(void) const
-{ string rv = "RIFF    WAVE";
+{ //string rv = "RIFF    WAVE";
 
-  rv = replace_substring(rv, 4, _chunk_size);
+  //rv = replace_substring(rv, 4, _chunk_size);
 
-  return rv;
+  //return rv;
+  return replace_substring(string("RIFF    WAVE"), 4, _chunk_size);
 }
 
 ostream& operator<<(ostream& ost, const PARAMS_STRUCTURE& params)

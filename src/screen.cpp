@@ -1,4 +1,4 @@
-// $Id: screen.cpp 129 2016-09-29 21:13:34Z  $
+// $Id: screen.cpp 137 2016-12-15 20:07:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -760,7 +760,7 @@ window& window::delete_character(const int n)
 }
 
 /*! \brief          Delete a character within a particular line
-    \param  n       number of character to delete (wrt 0)
+    \param n        number of character to delete (wrt 0)
     \param line_nr  number of line (wrt 0)
     \return         the window
 

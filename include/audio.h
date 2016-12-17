@@ -1,4 +1,4 @@
-// $Id: audio.h 134 2016-11-15 23:57:13Z  $
+// $Id: audio.h 137 2016-12-15 20:07:54Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -125,7 +125,7 @@ class audio_recorder
 protected:
 
   u_char*           _audio_buf;                 ///< buffer for audio
-  int               _avail_min;                 ///< ?
+//  int               _avail_min;                 ///< ?
   size_t            _bits_per_frame;            ///< ?
   snd_pcm_uframes_t _buffer_frames;             ///< ?
   unsigned int      _buffer_time;               ///< ?
@@ -390,15 +390,11 @@ protected:
 
 public:
 
-/// default constructor
-//  data_chunk(void);
-
 /*! \brief              Construct from a buffer
     \param  d           pointer to buffer
     \param  n_bytes     size of buffer
 */
   data_chunk(u_char* d, const uint32_t n_bytes);
-//  data_chunk(const uint32_t n_bytes);
 
   READ_AND_WRITE(subchunk_2_size);
   READ_AND_WRITE(data);

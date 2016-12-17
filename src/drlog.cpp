@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 135 2016-11-16 23:52:35Z  $
+// $Id: drlog.cpp 137 2016-12-15 20:07:54Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -133,6 +133,7 @@ void test_exchange_templates(const contest_rules&, const string& test_filename);
 const bool toggle_drlog_mode(void);                       ///< Toggle between CQ mode and SAP mode
 const bool toggle_cw(void);                         ///< Toggle CW on/off
 
+void update_based_on_frequency_change(void);                                ///< update some windows based ona change in frequency
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
 void update_known_callsign_mults(const string& callsign, const bool force_known = false);                   ///< Possibly add a new callsign mult
@@ -1778,7 +1779,7 @@ void* display_rig_status(void* vp)
     try
     { const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
 
-       try
+      try
       { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // don't poll while transmitting; although this check is not foolproof
           sleep_for(microseconds(microsecond_poll_period / 10));
       }
@@ -1842,7 +1843,8 @@ void* display_rig_status(void* vp)
                   }
 
                   if (call_contents != last_call)
-                    win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+                  { win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+                  }
                 }
               }
             }
@@ -3136,6 +3138,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
   if (!processed and e.is_control() and (e.symbol() == XK_Return))
   { string contents = remove_peripheral_spaces(win.read());
+    const string original_contents = contents;
     bool found_call = false;
 
 // assume it's a call -- look for the same call in the current bandmap
@@ -3167,22 +3170,28 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         rig.rig_frequency(be.freq());
         enter_sap_mode();
 
-        // we may require a mode change
-              if (context.multiple_modes())
-              { const MODE m = default_mode(be.freq());
+        ost << "CTRL-ENTER found match for " << original_contents << ": " << contents << " at " << be.freq().display_string() << endl;
 
-                if (m != safe_get_mode())
-                { rig.rig_mode(m);
-                  safe_set_mode(m);
-                  display_band_mode(win_band_mode, safe_get_band(), m);
-                }
-              }
+// we may require a mode change
+        if (context.multiple_modes())
+        { const MODE m = default_mode(be.freq());
+
+          if (m != safe_get_mode())
+          { rig.rig_mode(m);
+            safe_set_mode(m);
+            display_band_mode(win_band_mode, safe_get_band(), m);
+          }
+        }
       }
     }
 
     if (found_call)
-    { contents = remove_peripheral_spaces(win.read());
+    { //contents = remove_peripheral_spaces(win.read());
+//      const string nearby_callsign = bandmaps[safe_get_band()].nearest_rbn_threshold_and_filtered_callsign(be.freq().khz(), context.guard_band(safe_get_mode()));
+
+      display_nearby_callsign(contents);        // assume that the contesnts are indeed the correct call
       display_call_info(contents);
+      win_bandmap <= bandmaps[safe_get_band()];    // update the bm window now, so we don't have to wait for the next poll
 
       SAFELOCK(dupe_check);
       last_call_inserted_with_space = contents;
@@ -3318,6 +3327,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       display_call_info(be.callsign());
       last_call_inserted_with_space = be.callsign();
       enter_sap_mode();
+      win_bandmap <= bm;    // update the bm window now, so we don't have to wait for the next poll
 
 // we may require a mode change
       if (context.multiple_modes())
@@ -3336,9 +3346,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-  { //ost << "Processing new command" << endl;
-
-    bandmap& bm = bandmaps[safe_get_band()];
+  { bandmap& bm = bandmaps[safe_get_band()];
 
     frequency target_frequency = rig.rig_frequency();
 
@@ -3347,8 +3355,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
     while ( (target_frequency.hz() != 0) and !finished)
     { const bandmap_entry be = bm.next_station(target_frequency, dirn);
-
-      //ost << "bandmap entry: " << be << endl;
 
       if (!be.empty())
       { const unsigned int n_qsos_this_band = olog.n_qsos(be.callsign(), safe_get_band(), safe_get_mode());
@@ -3789,7 +3795,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // F1 -- first step in SAP QSO during run
   if (!processed and (e.symbol() == XK_F1))
   { string contents = remove_peripheral_spaces(win.read());
-    bool found_call = false;
+//    bool found_call = false;
 
     if (!contents.empty())
     {
@@ -3797,7 +3803,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       bandmap_entry be = bandmaps[safe_get_band()][contents];
 
       if (!(be.callsign().empty()))
-      { found_call = true;
+      { //found_call = true;
 
         const BAND old_b_band = to_BAND(rig.rig_frequency_b());
 
@@ -3811,7 +3817,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       }
       else    // didn't find an exact match; try a substring search
       { be = bandmaps[safe_get_band()].substr(contents);
-        found_call = true;
+        //found_call = true;
 
         const BAND old_b_band = to_BAND(rig.rig_frequency_b());
 
@@ -4002,10 +4008,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       { display_call_info(current_contents);
 
         if (!in_scp_matching)
-          update_scp_window(current_contents);
-
-        if (!in_scp_matching)
+        { update_scp_window(current_contents);
           update_fuzzy_window(current_contents);
+        }
       }
     }
   }
@@ -6197,7 +6202,8 @@ void update_individual_messages_window(const string& callsign)
 /*! \brief              Update the batch_messages window with the message (if any) associated with a call
     \param  callsign    callsign with which the message is associated
 
-    Clears the window if there is no batch message associated with <i>callsign</i>
+    Clears the window if there is no batch message associated with <i>callsign</i>. Reverses the
+    colours of the window if there is a message, in order to make it stand out.
 */
 void update_batch_messages_window(const string& callsign)
 { bool message_written = false;
@@ -6206,9 +6212,11 @@ void update_batch_messages_window(const string& callsign)
   { SAFELOCK(batch_messages);
 
     const auto posn = batch_messages.find(callsign);
+    const string spaces = create_string(' ', win_batch_messages.width());
 
     if (posn != batch_messages.end())
-    { win_batch_messages < WINDOW_CLEAR < CURSOR_START_OF_LINE <= posn->second;
+    { win_batch_messages < WINDOW_REVERSE < WINDOW_CLEAR < spaces < CURSOR_START_OF_LINE
+                         < posn->second <= WINDOW_NORMAL;               // REVERSE < CLEAR does NOT set the entire window to the original fg colour!
       message_written = true;
     }
   }
@@ -6264,6 +6272,7 @@ void* start_cluster_thread(void* vp)
       batch messages
       individual messages
       extract
+      QSLs
  */
 void display_call_info(const string& callsign, const bool display_extract)
 { populate_win_info( callsign );
@@ -7420,5 +7429,7 @@ void end_of_thread(const string& name)
 //  print_thread_names();
 }
 
-
-
+/// update some windows based on a change in frequency
+void update_based_on_frequency_change(void)
+{
+}
