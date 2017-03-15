@@ -608,11 +608,17 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "MODES")
     { _modes = RHS;
 
-      if (!contains(_modes, ","))
+      if (contains(_modes, ","))        // if more than one mode
+        _mark_mode_break_points = true;
+      else
       { if (_modes == "SSB")
           _start_mode = MODE_SSB;
       }
     }
+
+// MARK MODE BREAK POINTS
+//    if (LHS == "MARK MODE BREAK POINTS")
+//      _mark_mode_break_points = is_true;
 
 // MODE BREAK POINTS
     if (LHS == "MODE BREAK POINTS")
@@ -1454,6 +1460,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _individual_messages_file(),                // no file of individual messages
   _logfile("drlog.dat"),                      // name of log file
   _long_t(false),                             // do not extend initial Ts in serial numbers
+  _mark_mode_break_points(false),             // do not mark the mode break points on the bandmap
   _mark_frequencies(),                        // don't mark any frequencies
   _match_minimum(4),                          // 4 characters required for SCP or fuzzy match
   _message_cq_1(),                            // no short CQ (default is changed once configuration file has been read)

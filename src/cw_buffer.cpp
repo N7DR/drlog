@@ -590,26 +590,26 @@ void cw_buffer::add(const char c, const int character_space)
       DIT; DAH; DAH; DAH; DAH; DIT;
       break;
 
-    case '^' :                               // half-length space
+    case '^' :                              // half-length space
       space = 0;
-      key_up(150);                         // 100 from last character + 50 = 150 = (300 / 2)
+      key_up(150);                          // 100 from last character + 50 = 150 = (300 / 2)
       break;
 
-    case '!' :                               // quarter-length space (not available in TR)
+    case '!' :                              // quarter-length space (not available in TR)
       space = 0;
       key_up(25);
       break;
 
 // prosigns; compatible with TRLOG
-    case '(' :                               // AR  '+' in TRLOG
+    case '(' :                              // AR  '+' in TRLOG
       DIT; DAH; DIT; DAH; DIT;
       break;
 
-    case '<' :                               // SK
+    case '<' :                              // SK
       DIT; DIT; DIT; DAH; DIT; DAH;
       break;
 
-    case '=' :                               // Pause (BT)
+    case '=' :                              // Pause (BT)
       DAH; DIT; DIT; DIT; DAH;
       break;
 
@@ -752,4 +752,3 @@ const string cw_messages::operator[](const int n)
 
   return (cit == _messages.cend() ? string() : cit->second);
 }
-

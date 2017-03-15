@@ -157,6 +157,7 @@ protected:
   bool                                         _long_t;                     ///< whether to extend length of initial Ts in serial number
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;   ///< frequency ranges to be marked on-screen
+  bool                                         _mark_mode_break_points;             ///< whether to mark the mode break points on the bandmap
   unsigned int                                 _match_minimum;                      ///< number of characters before SCP or fuzzy match kicks in
 
 // we use the KeySymbol as the integer, although other I/O implementations could use something else
@@ -361,12 +362,12 @@ public:
   CONTEXTREAD(country_mults_per_band);           ///< are country mults per-band?
   CONTEXTREAD(country_mults_per_mode);           ///< are country mults per-mode?
   CONTEXTREAD(cq_auto_lock);                     ///< whether to lock the transmitter in CQ mode
-  SAFEREAD(cq_auto_rit, _context);                      ///< whether to enable RIT in CQ mode
-  SAFEREAD(cty_filename, _context);                     ///< filename of country file (default = "cty.dat")
-  SAFEREAD(cw_speed, _context);                         ///< speed in WPM
+  CONTEXTREAD(cq_auto_rit);                      ///< whether to enable RIT in CQ mode
+  CONTEXTREAD(cty_filename);                     ///< filename of country file (default = "cty.dat")
+  CONTEXTREAD(cw_speed);                         ///< speed in WPM
 
-  SAFEREAD(decimal_point, _context);                    ///< character to use as decimal point
-  SAFEREAD(display_communication_errors, _context);     ///< whether to display errors communicating with rig
+  CONTEXTREAD(decimal_point);                    ///< character to use as decimal point
+  CONTEXTREAD(display_communication_errors);     ///< whether to display errors communicating with rig
   SAFEREAD(do_not_show, _context);                      ///< do not show these calls when spotted (MY CALL is automatically not shown)
   SAFEREAD(do_not_show_filename, _context);             ///< filename of calls (one per line) not to be shown
   SAFEREAD(drmaster_filename, _context);                ///< filename of drmaster file (default = "drmaster")
@@ -403,6 +404,7 @@ public:
   SAFEREAD(long_t, _context);                       ///< whether to extend length of initial Ts in serial number
 
   SAFEREAD(mark_frequencies, _context);             ///< frequency ranges to be marked on-screen
+  CONTEXTREAD(mark_mode_break_points);              ///< whether to mark the mode break points on the bandmap
   SAFEREAD(match_minimum, _context);                ///< number of characters before SCP or fuzzy match kicks in
   SAFEREAD(messages, _context);                     ///< CW messages
   SAFEREAD(message_cq_1, _context);                 ///< CQ message #1 (generally, a short CQ)

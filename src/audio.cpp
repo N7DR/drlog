@@ -53,10 +53,15 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
   const uint64_t now = ss + (mm * 60) + (hh * 3600);
   int remainder = _max_file_time - (now % _max_file_time);
 
+//  ost << "DEBUG: _max_file_time = " << _max_file_time << endl;
+//  ost << "DEBUG: remainder = " << remainder << endl;
+
   if (remainder == 0)
     remainder = _max_file_time;
 
   _time_limit = remainder;
+
+  ost << "DEBUG: _time_limit = " << _time_limit << endl;
 
   if (_time_limit == 0)
     total_bytes = _record_count;
@@ -65,6 +70,9 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
 
     total_bytes = bytes_per_second * _time_limit;
   }
+
+//  ost << "DEBUG: total_bytes = " << total_bytes << endl;
+//  ost << "DEBUG: _record_count = " << _record_count << endl;
 
   return min(total_bytes, _record_count);
 }
@@ -124,7 +132,7 @@ void audio_recorder::_set_params(void)
 
   if ((float)rate * 1.05 < _hw_params.rate or (float)rate * 0.95 > _hw_params.rate)
   { char plugex[64];
-    const char *pcmname = snd_pcm_name(_handle);
+//    const char *pcmname = snd_pcm_name(_handle);
 
     { ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << "for device: " << _pcm_name << endl;
       throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested " + to_string(rate) + ", received " + to_string(_hw_params.rate) + "for device: " + _pcm_name);
@@ -136,7 +144,6 @@ void audio_recorder::_set_params(void)
     { ost << "ERROR: plugin problem for device: " << _pcm_name << endl;
       throw audio_error(AUDIO_PLUGIN_ERROR, "plugin problem for device: " + _pcm_name);
     }
-
   }
 
   rate = _hw_params.rate;
@@ -468,8 +475,7 @@ goto create_file;
 
 /// constructor
 audio_recorder::audio_recorder(void) :
-  _audio_buf(nullptr),
-//  _avail_min(-1),
+  _audio_buf(nullptr),                     // no buffer by default
   _buffer_frames(0),
   _buffer_time(0),
   _period_size_in_frames(0),

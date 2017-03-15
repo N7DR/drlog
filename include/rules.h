@@ -602,6 +602,14 @@ public:
   inline const unsigned int n_modes(void) const
     { SAFELOCK(rules); return _permitted_modes.size(); }
 
+/// do we allow multiple bands?
+  inline const bool multiple_bands(void) const
+    { return (n_bands() != 1); }
+
+/// do we allow multiple modes?
+  inline const bool multiple_modes(void) const
+    { return (n_modes() != 1); }
+
 /// number of country mults
   inline const unsigned int n_country_mults(void) const
     { SAFELOCK(rules); return _country_mults.size(); }

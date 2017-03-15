@@ -40,6 +40,7 @@ extern const set<string> CONTINENT_SET;             ///< two-letter abbreviation
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
 const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
+const string        MODE_MARKER("********");        ///< string to mark the mode break in the bandmap
 const unsigned int  MAX_FREQUENCY_SKEW = 250;       ///< maximum separation, in hertz, to be treated as same frequency
 
 bandmap_filter_type BMF;                            ///< the global bandmap filter
@@ -166,8 +167,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // country mult status
   clear_country_mult();
 
-//  const bool is_needed_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
-
 //  if (is_needed_country_mult)
   if (statistics.is_needed_country_mult(_callsign, _band, _mode))
     add_country_mult(_canonical_prefix);
@@ -190,6 +189,12 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
         add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
     }
   }
+
+// for debugging HA contest, in which many stns were marked on bm in green, even though already worked
+  if (is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult())
+    ost << "+ve mult status for " << callsign() << ": " << (is_needed_callsign_mult() ? "T" : "F")
+        << (is_needed_country_mult() ? "T" : "F") << (is_needed_exchange_mult() ? "T" : "F")
+        << endl;
 }
 
 /*! \brief      Does this object match another bandmap_entry?
@@ -214,10 +219,7 @@ const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
     <i>statistics</i> must be updated to be current before this is called
 */
 const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, running_statistics& statistics)
-{
-//   ost << "Inside remark for call: " << _callsign << endl;
-// is needed?
-  const bool original_is_needed = _is_needed;
+{ const bool original_is_needed = _is_needed;
 
 // to do: allow for /* SS rules and */ per-mode contests
 
@@ -230,6 +232,10 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
   }
   else
    _is_needed = !q_history.worked(_callsign, _band);
+
+// multi-mode contests ***
+
+
 
   const bool original_is_needed_callsign_mult = is_needed_callsign_mult();
   const bool original_is_needed_country_mult = is_needed_country_mult();
@@ -811,7 +817,7 @@ const BM_ENTRIES bandmap::filtered_entries(void)
   BM_ENTRIES rv;
 
   for (const auto& be : tmp)
-  { if (be.is_my_marker())
+  { if (be.is_my_marker() or be.is_mode_marker())
       rv.push_back(be);
     else                                              // start by assuming that we are in show mode
     { const string& canonical_prefix = be.canonical_prefix();
@@ -1061,6 +1067,8 @@ window& operator<(window& win, bandmap& bm)
 
   size_t index = 0;    // keep track of where we are in the bandmap
   
+//  ost << "number of bm entries = " << entries.size() << endl;
+
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
     { const string entry_str = pad_string(pad_string(be.frequency_str(), 7)  + " " + be.callsign(), COLUMN_WIDTH, PAD_RIGHT);
@@ -1083,10 +1091,10 @@ window& operator<(window& win, bandmap& bm)
       int cpu = colours.add(fade_colours.at(n_intervals), win.bg());
 
 // mark in GREEN if age is less than two minutes
-      if (age < 120 and !be.is_my_marker() and (bm.recent_colour() != string_to_colour("BLACK")))
+      if (age < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != string_to_colour("BLACK")))
         cpu = colours.add(bm.recent_colour(), win.bg());
 
-      if (be.is_my_marker())
+      if (be.is_my_marker() or be.is_mode_marker())
         cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // marker for my current frequency
 
 // work out where to start the display of this call
@@ -1097,14 +1105,11 @@ window& operator<(window& win, bandmap& bm)
         break;
 
       const unsigned int y = (win.height() - 1) - (index - start_entry) % win.height();
-      int status_colour = colours.add(COLOUR_BLACK, COLOUR_BLACK);
+      int status_colour = colours.add(COLOUR_BLACK, COLOUR_BLACK);                      // default
 
-      if (!be.is_my_marker())
+      if (!be.is_my_marker() and !be.is_mode_marker())
       { if (be.is_needed())
-          status_colour = colours.add(COLOUR_BLUE, COLOUR_BLUE);
-
-        if (be.is_needed_mult())
-          status_colour = colours.add(COLOUR_GREEN, COLOUR_GREEN);
+          status_colour = (be.is_needed_mult() ? colours.add(COLOUR_GREEN, COLOUR_GREEN) : colours.add(COLOUR_BLUE, COLOUR_BLUE));
       }
 
 // reverse the colour of the frequency if there are unseen entries lower or higher in frequency

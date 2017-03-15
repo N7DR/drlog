@@ -125,8 +125,7 @@ class audio_recorder
 protected:
 
   u_char*           _audio_buf;                 ///< buffer for audio
-//  int               _avail_min;                 ///< ?
-  size_t            _bits_per_frame;            ///< ?
+  size_t            _bits_per_frame;            ///< bits per sample * number of channels
   snd_pcm_uframes_t _buffer_frames;             ///< ?
   unsigned int      _buffer_time;               ///< ?
   size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
@@ -136,7 +135,7 @@ protected:
   snd_pcm_t*        _handle;                    ///< handle
   PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
   snd_pcm_info_t*   _info;                      ///< pointer to a snd_pcm_info_t
-  long long         _max_file_time;             ///< maximum duration in seconds (?)
+  long long         _max_file_time;             ///< maximum duration in seconds
   bool              _monotonic;                 ///< whether device does monotonic timestamps
   unsigned int      _n_channels;                ///< number of channels to record
   int               _open_mode;                 ///< blocking or non-blocking

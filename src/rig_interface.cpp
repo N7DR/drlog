@@ -8,10 +8,10 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file rig_interface.cpp
+/*! \file   rig_interface.cpp
 
-        Classes and functions related to transferring information
-        between the computer and the rig
+    Classes and functions related to transferring information
+    between the computer and the rig
 */
 
 #include "bands-modes.h"
@@ -62,7 +62,7 @@ void alert(const string& msg, const bool show_time = true);     ///< alert the u
  */
 
 /* But there are many problems with the K3 soi-disant protocol as well. Even after trying to get clear answers from Elecraft, the following
- * issues (at least) remain (after incorporating the Elecraft responses):
+ * issues (at least) remain (after incorporating the Elecraft responses, which mostly did not address the questions I asked):
  *
  *   1. Which commands might cause a "?;" response if the K3 is "busy"?
  *   2. Do these include commands that don't normally return a response?
@@ -333,18 +333,16 @@ const frequency rig_interface::rig_frequency_b(void)
 
 /*! \brief  Enable split operation
 
-            hamlib has no good definition of exactly what split operation really means, and, hence,
-            has no clear description of precisely what the hamlib rig_set_split_vfo() function is supposed
-            to do for various values of the permitted parameters. There is general agreement on the reflector
-            that the call contained herein *should* do the "right" thing -- but since there's no precise definition
-            of any of this, not all backends are guaranteed to behave the same.
+    hamlib has no good definition of exactly what split operation really means, and, hence,
+    has no clear description of precisely what the hamlib rig_set_split_vfo() function is supposed
+    to do for various values of the permitted parameters. There is general agreement on the reflector
+    that the call contained herein *should* do the "right" thing -- but since there's no precise definition
+    of any of this, not all backends are guaranteed to behave the same.
 
-            Hence we use the explicit K3 command, since at least we know what that will do on that rig.
+    Hence we use the explicit K3 command, since at least we know what that will do on that rig.
 */
 void rig_interface::split_enable(void)
-{ //ost << "called split enable()" << endl;
-
-  if (!_rig_connected)
+{ if (!_rig_connected)
     return;
 
   SAFELOCK(_rig);
@@ -507,9 +505,7 @@ const MODE rig_interface::rig_mode(void)
     \param  hz  offset in Hz
 */
 void rig_interface::rit(const int hz)
-{
-// do nothing if no rig is connected
-  if (!_rig_connected)
+{ if (!_rig_connected)                          // do nothing if no rig is connected
     return;
 
 // hamlib's behaviour anent the K3 is not what we want
@@ -629,9 +625,7 @@ const bool rig_interface::xit_enabled(void)
     On the K3 this also sets the RIT
 */
 void rig_interface::xit(const int hz)
-{
-// hamlib's behaviour anent the K3 is not what we want
-  if (_model == RIG_MODEL_K3)
+{ if (_model == RIG_MODEL_K3)                   // hamlib's behaviour anent the K3 is not what we want, have K3-specific code
   { if (hz == 0)                                // just clear the RIT/XIT
       raw_command(string("RC;"), 0);
     else
@@ -1194,7 +1188,8 @@ const bool rig_interface::is_transmitting(void)
     { const string response = raw_command("TQ;", 4);
 
       if (response.length() < 4)
-      { // _error_alert("Unable to determine whether rig is transmitting");
+      { // because this happens so often, don't report it
+        // _error_alert("Unable to determine whether rig is transmitting");
       }
       else
         rv = (response[2] == '1');
@@ -1306,19 +1301,17 @@ void rig_interface::register_error_alert_function(void (*error_alert_function)(c
 void rig_interface::base_state(void)
 { if (rit_enabled())
   { rit_disable();
-    sleep_for(seconds(1));
+    sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 
   if (split_enabled())
   { split_disable();
-    sleep_for(seconds(1));
+    sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
-//  else
-//    ost << "rig split was NOT enabled" << endl;
 
   if (sub_receiver_enabled())
   { sub_receiver_disable();
-    sleep_for(seconds(1));
+    sleep_for(seconds(1));          // the K3 is awfully slow; this should allow plenty of time before the next command
   }
 }
 

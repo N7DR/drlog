@@ -67,9 +67,10 @@ static std::map<std::string, BAND> BAND_FROM_NAME { { "160", BAND_160 },
 
 enum MODE { MODE_CW = 0,
             MODE_SSB,
+            MODE_RTTY,
             ANY_MODE,
             MIN_MODE = MODE_CW,
-            MAX_MODE = MODE_SSB
+            MAX_MODE = ANY_MODE - 1
           };                                        ///< modes that drlog knows about
 
 const unsigned int NUMBER_OF_MODES = MAX_MODE + 1;  ///< how many modes does drlog know about?
@@ -78,12 +79,14 @@ const unsigned int ALL_MODES = N_MODES;             ///< indicator used to mean 
 
 /// mode names
 static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW",
-                                                                "SSB"
+                                                                "SSB",
+                                                                "RTTY"
                                                             } };
 
 /// generate the mode from a name
 static std::map<std::string, MODE> MODE_FROM_NAME { { "CW", MODE_CW },
-                                                    { "SSB",  MODE_SSB }
+                                                    { "SSB",  MODE_SSB },
+                                                    { "RTTY",  MODE_RTTY }
                                                   };
 
 typedef std::pair<BAND, MODE> bandmode;    ///< tuple for encapsulating a band and mode

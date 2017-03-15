@@ -40,10 +40,10 @@ protected:
   bool                  _disabled_cw;       ///< whether actual sending is disabled
 
 /*  positive numbers represent key down
- *  negative numbers represent key up
- *  zero represents the start of an embedded command
- *
- *  the duration of key up/down is in units in which 100 == the standard length of a dot
+    negative numbers represent key up
+    zero represents the start of an embedded command
+
+    the duration of key up/down is in units in which 100 == the standard length of a dot
 */
   std::queue<int>       _key_buffer;        ///< the queue of key up/down motions remaining to be executed
   pt_mutex              _key_buffer_mutex;  ///< mutex to allow thread-safe access to <i>_key_buffer</i>
@@ -62,19 +62,19 @@ protected:
     negative values represent key up;
     zero represents the start of an embedded command
 */
-  void                  _add_action(const int n);
+  void _add_action(const int n);
 
 /*! \brief      Play the buffer
     \param      unused
     \return     nullptr
 */
-  void*                 _play(void*);
+  void* _play(void*);
 
 /*! \brief          Wrapper function to play the buffer
     \param  arg     "this" pointer
     \return         nullptr
 */
-  static void*          _static_play(void* arg);    ///< pointer to static function to play the buffer
+  static void* _static_play(void* arg);    ///< pointer to static function to play the buffer
 
 public:
 

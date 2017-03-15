@@ -41,6 +41,7 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
 class bandmap_filter_type;
 
 extern const std::string MY_MARKER;                             ///< the string that marks my position in the bandmap
+extern const std::string MODE_MARKER;                           ///< the string that marks the mode break in the bandmap
 extern bandmap_filter_type BMF;                                 ///< the bandmap filter
 
 /*! \brief          Printable version of the name of a bandmap_entry source
@@ -243,7 +244,7 @@ protected:
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;   ///< details of needed callsign mults
   needed_mult_details<std::string>                          _is_needed_country_mult;    ///< details of needed country mults
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;   ///< details of needed exchange mults
-  bool                                                      _is_needed_mult;            ///< is this a needed mult?
+//  bool                                                      _is_needed_mult;            ///< is this a needed mult?
   enum MODE                                                 _mode;                      ///< mode
   std::set<std::string>                                     _posters;                   ///< stations that posted this entry
   enum BANDMAP_ENTRY_SOURCE                                 _source;                    ///< the source of this entry
@@ -301,6 +302,10 @@ public:
 /// does this entry correspond to me?
   inline const bool is_my_marker(void) const
     { return call_is(MY_MARKER); }
+
+/// does this entry correspond to the mode marker?
+  inline const bool is_mode_marker(void) const
+    { return call_is(MODE_MARKER); }
 
 /*! \brief              Calculate the mult status of this entry
     \param  rules       the rules for this contest
@@ -515,7 +520,7 @@ public:
          & _is_needed_callsign_mult
          & _is_needed_country_mult
          & _is_needed_exchange_mult
-         & _is_needed_mult
+//         & _is_needed_mult
          & _mode
          & _posters
          & _source

@@ -133,7 +133,7 @@ void test_exchange_templates(const contest_rules&, const string& test_filename);
 const bool toggle_drlog_mode(void);                       ///< Toggle between CQ mode and SAP mode
 const bool toggle_cw(void);                         ///< Toggle CW on/off
 
-void update_based_on_frequency_change(void);                                ///< update some windows based ona change in frequency
+void update_based_on_frequency_change(const frequency& f, const MODE m);    ///< Update some windows based ona change in frequency
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
 void update_known_callsign_mults(const string& callsign, const bool force_known = false);                   ///< Possibly add a new callsign mult
@@ -220,6 +220,12 @@ DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 
 pt_mutex            known_callsign_mults_mutex;             ///< mutex for the callsign mults we know about in AUTO mode
 set<string>         known_callsign_mults;                   ///< callsign mults we know about in AUTO mode
+
+//pt_mutex            my_bandmap_entry_mutex;                 ///< mutex for my_bandmap_entry
+bandmap_entry       my_bandmap_entry;                       ///< last bandmap entry that refers to me (usually from poll)
+
+pt_condition_variable frequency_change_condvar;             ///< condvar associated with updating windows related to a frequency change
+pt_mutex              frequency_change_condvar_mutex;       ///< mutex associated with frequency_change_condvar
 
 // global variables
 
@@ -554,13 +560,8 @@ int main(int argc, char** argv)
       audio.pcm_name(context.audio_device_name());
       audio.n_channels(context.audio_channels());
       audio.samples_per_second(context.audio_rate());
-
       audio.initialise();
-
-//      ost << "audio initialised" << endl;
-
-      audio.capture();      // exits after 60 seconds
-//      exit(0);
+      audio.capture();                          // start capturing audio
     }
 
 // set up the calls to be monitored
@@ -698,17 +699,24 @@ int main(int argc, char** argv)
 
 // place values into the record
         for (const auto& line : lines)
-        { if (starts_with(line, "<band"))                                   // <band:3>20m
-            rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));             // don't include the "m" (and we assume that it *is* "m")
+        { try
+          { if (starts_with(line, "<band"))                                   // <band:3>20m
+              rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));             // don't include the "m" (and we assume that it *is* "m")
 
-          if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
-            rec.callsign( adif_value(line) );
+            if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
+              rec.callsign( adif_value(line) );
 
-          if (starts_with(line, "<mode"))                                   // <mode:2>CW
-            rec.mode(MODE_FROM_NAME.at( adif_value(line) ));
+            if (starts_with(line, "<mode"))                                   // <mode:2>CW
+              rec.mode(MODE_FROM_NAME.at( adif_value(line) ));
 
-          if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
-            rec.qsl_received( adif_value(line) == "Y");
+            if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
+              rec.qsl_received( adif_value(line) == "Y");
+          }
+
+          catch (...)
+          { ost << "Error processing ADIF line: " << line << endl;
+            exit(-1);
+          }
         }
 
         olog.increment_n_qsos(rec.callsign());
@@ -828,21 +836,48 @@ int main(int argc, char** argv)
         FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
     }
 
+// initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
+// this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function
+    my_bandmap_entry.callsign(MY_MARKER);
+    my_bandmap_entry.source(BANDMAP_ENTRY_LOCAL);
+    my_bandmap_entry.expiration_time(my_bandmap_entry.time() + 1000000);    // a million seconds in the future
+
+// possibly add a mode marker bandmap entry to each bandmap
+    if (context.mark_mode_break_points())
+    { //ost << "Adding mode break points" << endl;
+
+      for (const auto& b : rules.permitted_bands())
+      { bandmap& bm = bandmaps[b];
+        bandmap_entry be;
+
+        be.callsign(MODE_MARKER);
+        be.source(BANDMAP_ENTRY_LOCAL);
+        be.expiration_time(be.time() + 1000000);
+        be.freq(MODE_BREAK_POINT[b]);
+
+        //ost << "Adding break point: " << be << " to band map for " << BAND_NAME[b] << endl;
+
+        bm += be;
+
+        //ost << "number of entries in bm = " << bm.size() << endl;
+      }
+    }
+
 // create and populate windows; do static windows first
-  const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows = context.static_windows();;
+    const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows = context.static_windows();;
 
 // static windows may contain either defined information or the contents of a file
-  for (const auto& this_static_window : swindows)
-  { string contents = this_static_window.second.first;
-    const vector<window_information>& vec_win_info = this_static_window.second.second;
+    for (const auto& this_static_window : swindows)
+    { string contents = this_static_window.second.first;
+      const vector<window_information>& vec_win_info = this_static_window.second.second;
 
-    for (const auto& winfo : vec_win_info)
-    { window* window_p = new window();
+      for (const auto& winfo : vec_win_info)
+      { window* window_p = new window();
 
-      window_p -> init(winfo);
-      static_windows_p.push_back( { contents, window_p } );
+        window_p -> init(winfo);
+        static_windows_p.push_back( { contents, window_p } );
+      }
     }
-  }
 
   for (auto& swin : static_windows_p)
     *(swin.second) <= reformat_for_wprintw(swin.first, swin.second->width());       // display contents of the static window, working around wprintw weirdness
@@ -1224,6 +1259,8 @@ int main(int argc, char** argv)
     FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
     win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();       // display filter
+
+//    ost << "bm size for cur_band = " << bm.size() << endl;
   }
 
   // read a Cabrillo log
@@ -1807,6 +1844,10 @@ void* display_rig_status(void* vp)
           MODE m = safe_get_mode();                                                  // mode as determined by drlog, not by rig
           m = rig_status_thread_parameters.rigp() -> rig_mode();                     // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
 
+
+          update_based_on_frequency_change(f, m);
+
+#if 0
 // possibly update bandmap entry and nearby callsign, if any
           if (f.display_string() != be.freq().display_string())  // redraw if moved > 100 Hz
           { be.freq(f);
@@ -1874,6 +1915,7 @@ void* display_rig_status(void* vp)
               }
             }
           }
+#endif
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
@@ -2117,7 +2159,7 @@ void* process_rbn_info(void* vp)
               update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
-              const vector<string> exch_mults = rules.expanded_exchange_mults();                                      ///< the exchange multipliers
+              const vector<string> exch_mults = rules.expanded_exchange_mults();                                      // the exchange multipliers
 
               for (const auto& exch_mult_name : exch_mults)
               { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
@@ -3141,11 +3183,16 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     const string original_contents = contents;
     bool found_call = false;
 
+    frequency new_frequency;
+
 // assume it's a call -- look for the same call in the current bandmap
     bandmap_entry be = bandmaps[safe_get_band()][contents];
 
     if (!(be.callsign().empty()))
     { found_call = true;
+
+      new_frequency = be.freq();
+
       rig.rig_frequency(be.freq());
       enter_sap_mode();
 
@@ -3167,6 +3214,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       { found_call = true;
         win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
         contents = be.callsign();
+
+        new_frequency = be.freq();
+
         rig.rig_frequency(be.freq());
         enter_sap_mode();
 
@@ -3186,12 +3236,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     }
 
     if (found_call)
-    { //contents = remove_peripheral_spaces(win.read());
-//      const string nearby_callsign = bandmaps[safe_get_band()].nearest_rbn_threshold_and_filtered_callsign(be.freq().khz(), context.guard_band(safe_get_mode()));
+    { ost << "found call and writing to CALL window: " << be.callsign() << endl;
+      win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
 
+#if 0
       display_nearby_callsign(contents);        // assume that the contesnts are indeed the correct call
       display_call_info(contents);
       win_bandmap <= bandmaps[safe_get_band()];    // update the bm window now, so we don't have to wait for the next poll
+#endif
+
+      update_based_on_frequency_change(new_frequency, safe_get_mode());
+      display_call_info(contents);
 
       SAFELOCK(dupe_check);
       last_call_inserted_with_space = contents;
@@ -3323,11 +3378,11 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     { rig.rig_frequency(be.freq());
       win_call < WINDOW_CLEAR <= be.callsign();
 
-      display_nearby_callsign(be.callsign());
-      display_call_info(be.callsign());
-      last_call_inserted_with_space = be.callsign();
+//      display_nearby_callsign(be.callsign());
+//      display_call_info(be.callsign());
+//      last_call_inserted_with_space = be.callsign();
       enter_sap_mode();
-      win_bandmap <= bm;    // update the bm window now, so we don't have to wait for the next poll
+//      win_bandmap <= bm;    // update the bm window now, so we don't have to wait for the next poll
 
 // we may require a mode change
       if (context.multiple_modes())
@@ -3339,6 +3394,12 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
           display_band_mode(win_band_mode, safe_get_band(), m);
         }
       }
+
+      update_based_on_frequency_change(be.freq(), safe_get_mode());
+
+      SAFELOCK(dupe_check);
+      last_call_inserted_with_space = be.callsign();
+
     }
 
     processed = true;
@@ -3363,9 +3424,9 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         { rig.rig_frequency(be.freq());
           win_call < WINDOW_CLEAR <= be.callsign();
 
-          display_nearby_callsign(be.callsign());
-          display_call_info(be.callsign());
-          last_call_inserted_with_space = be.callsign();
+//          display_nearby_callsign(be.callsign());
+//          display_call_info(be.callsign());
+//          last_call_inserted_with_space = be.callsign();
           enter_sap_mode();
 
 // we may require a mode change
@@ -3379,7 +3440,11 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
             }
           }
 
+          update_based_on_frequency_change(be.freq(), safe_get_mode());
           finished = true;
+
+          SAFELOCK(dupe_check);
+          last_call_inserted_with_space = be.callsign();
         }
 
 // go to next station
@@ -7217,47 +7282,53 @@ const MODE default_mode(const frequency& f)
     is used.
 */
 void update_qsls_window(const string& str)
-{ const string callsign = nth_word(str, 1, 1);  // remove "DUPE" if necessary
+{ static tuple<string, BAND, MODE> last_target;
+
+  const string callsign = nth_word(str, 1, 1);  // remove "DUPE" if necessary
   const BAND b = safe_get_band();
   const MODE m = safe_get_mode();
+  const tuple<string, BAND, MODE> this_target { callsign, b, m };
 
-  win_qsls < WINDOW_CLEAR <= "QSLs: ";
+  if (this_target != last_target)   // only change contents of win_qsls if the target has changed
+  { last_target = this_target;
 
-//  if (!callsign.empty())
-  if (callsign.length() >= 3)
-  { const unsigned int n_qsls = olog.n_qsls(callsign);
-    const unsigned int n_qsos = olog.n_qsos(callsign);
-    const unsigned int n_qsos_this_band_mode = olog.n_qsos(callsign, b, m);
-    const bool confirmed_this_band_mode = olog.confirmed(callsign, b, m);
+    win_qsls < WINDOW_CLEAR <= "QSLs: ";
 
-    ost << "QSLs for " << callsign << ": n_qsls = " << n_qsls
-                                   << ", n_qsos = " << n_qsos
-                                   << ", n_qsos_this_band_mode = " << n_qsos_this_band_mode
-                                   << ", confirmed_this_band_mode = " << boolalpha << confirmed_this_band_mode << endl;
+    if (callsign.length() >= 3)
+    { const unsigned int n_qsls = olog.n_qsls(callsign);
+      const unsigned int n_qsos = olog.n_qsos(callsign);
+      const unsigned int n_qsos_this_band_mode = olog.n_qsos(callsign, b, m);
+      const bool confirmed_this_band_mode = olog.confirmed(callsign, b, m);
 
-    int default_colour_pair = colours.add(win_qsls.fg(), win_qsls.bg());
-    int new_colour_pair = default_colour_pair;
+//    ost << "QSLs for " << callsign << ": n_qsls = " << n_qsls
+//                                   << ", n_qsos = " << n_qsos
+//                                   << ", n_qsos_this_band_mode = " << n_qsos_this_band_mode
+//                                   << ", confirmed_this_band_mode = " << boolalpha << confirmed_this_band_mode << endl;
 
-    if ( (n_qsls == 0) and (n_qsos != 0) )
-      new_colour_pair = colours.add(COLOUR_RED, win_qsls.bg());
+      int default_colour_pair = colours.add(win_qsls.fg(), win_qsls.bg());
+      int new_colour_pair = default_colour_pair;
 
-    if (n_qsls != 0)
-      new_colour_pair = colours.add(COLOUR_GREEN, win_qsls.bg());
+      if ( (n_qsls == 0) and (n_qsos != 0) )
+        new_colour_pair = colours.add(COLOUR_RED, win_qsls.bg());
 
-    if (new_colour_pair != default_colour_pair)
-      win_qsls.cpair(new_colour_pair);
+      if (n_qsls != 0)
+        new_colour_pair = colours.add(COLOUR_GREEN, win_qsls.bg());
 
-    win_qsls < pad_string(to_string(n_qsls), 3, PAD_LEFT, '0')
-             < colour_pair(default_colour_pair) < "/"
-             < colour_pair(new_colour_pair) < pad_string(to_string(n_qsos), 3, PAD_LEFT, '0')
-             < colour_pair(default_colour_pair) < "/";
+      if (new_colour_pair != default_colour_pair)
+        win_qsls.cpair(new_colour_pair);
 
-    if (n_qsos_this_band_mode != 0)
-      win_qsls < colour_pair(colours.add( (confirmed_this_band_mode ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) );
+      win_qsls < pad_string(to_string(n_qsls), 3, PAD_LEFT, '0')
+               < colour_pair(default_colour_pair) < "/"
+               < colour_pair(new_colour_pair) < pad_string(to_string(n_qsos), 3, PAD_LEFT, '0')
+               < colour_pair(default_colour_pair) < "/";
 
-    win_qsls <= pad_string(to_string(n_qsos_this_band_mode), 3, PAD_LEFT, '0');
+      if (n_qsos_this_band_mode != 0)
+        win_qsls < colour_pair(colours.add( (confirmed_this_band_mode ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) );
 
-    win_qsls.cpair(default_colour_pair);
+      win_qsls <= pad_string(to_string(n_qsos_this_band_mode), 3, PAD_LEFT, '0');
+
+      win_qsls.cpair(default_colour_pair);
+    }
   }
 }
 
@@ -7406,9 +7477,6 @@ void print_thread_names(void)
   SAFELOCK(thread_check);
 
   FOR_ALL(thread_names, [] (const string& thread_name) { ost << "  " << thread_name << endl; } );
-
-//  for (auto& thread_name : thread_names)
-//    ost << "  " << thread_name << endl;
 }
 
 /// decrease the counter for the number of running threads
@@ -7424,12 +7492,101 @@ void end_of_thread(const string& name)
     ost << "removed: " << name << endl;
   else
     ost << "unable to remove: " << name << endl;
-
-//  ost << "n_running_threads = " << n_running_threads << endl;
-//  print_thread_names();
 }
 
 /// update some windows based on a change in frequency
-void update_based_on_frequency_change(void)
-{
+void update_based_on_frequency_change(const frequency& f, const MODE m)
+{ //static bool executing = false;
+  static pt_mutex            my_bandmap_entry_mutex;                 ///< mutex for my_bandmap_entry
+//  static bandmap_entry       my_bandmap_entry;                       ///< last bandmap entry that refers to me (usually from poll)
+
+//  bandmap_entry tmp_bandmap_entry;
+
+// the following ensures that the bandmap entry doesn't change while we're using it.
+// It does not, however, ensure that this routine doesn't execute simultaneously from two
+// threads. To do that would require holding a lock for a very long time, and would nest
+// lock acquisitions dangerously
+  SAFELOCK(my_bandmap_entry);
+
+//    tmp_bandmap_entry = my_bandmap_entry;       // make sure that the bandmap entry doesn't change while we're using it
+
+  const bool changed_frequency = (f.display_string() != my_bandmap_entry.freq().display_string());
+  const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
+
+  if (changed_frequency)
+  { //const bool changed_mode = (m != tmp_bandmap_entry.mode());
+
+    my_bandmap_entry.freq(f);
+//    tmp_bandmap_entry.mode(m);  // do this?
+
+    display_band_mode(win_band_mode, my_bandmap_entry.band(), my_bandmap_entry.mode());
+
+    bandmap& bandmap_this_band = bandmaps[my_bandmap_entry.band()];
+
+    bandmap_this_band += my_bandmap_entry;
+    win_bandmap <= bandmap_this_band;       // move this outside the SAFELOCK?
+
+// is there a station close to our frequency?
+// use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
+// to have invisible calls show up when I went to a frequency
+    const string nearby_callsign = bandmap_this_band.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
+
+    if (!nearby_callsign.empty())
+    { display_nearby_callsign(nearby_callsign);
+
+#if 0
+      if (in_call_window)
+      { string call_contents = remove_peripheral_spaces(win_call.read());
+
+        if (!call_contents.empty())
+        { if (last(call_contents, 5) == " DUPE")
+            call_contents = call_contents.substr(0, call_contents.length() - 5);    // reduce to actual call
+
+          string last_call;
+
+          { SAFELOCK(dupe_check);
+
+            last_call = last_call_inserted_with_space;
+          }
+
+          if (call_contents != last_call)
+          { win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+          }
+        }
+      }
+#endif
+
+    }
+    else    // no nearby callsign
+    { if (in_call_window)
+// see if we are within twice the guard band before we clear the call window
+      { const string call_contents = remove_peripheral_spaces(win_call.read());
+        const bandmap_entry be = bandmap_this_band[call_contents];
+        const unsigned int f_diff = abs(be.freq().hz() - f.hz());
+
+        if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
+        { if (!win_nearby.empty())
+            win_nearby <= WINDOW_CLEAR;
+
+          if (!call_contents.empty())
+          { string last_call;
+
+            { SAFELOCK(dupe_check);
+
+              last_call = last_call_inserted_with_space;
+            }
+
+            if ((call_contents == last_call) or (call_contents == (last_call + " DUPE")) )
+              win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
+          }
+        }
+      }
+    }
+
+//    SAFELOCK(my_bandmap_entry);
+
+//    my_bandmap_entry = tmp_bandmap_entry;
+  }                 // end of changed frequency
+
+  ost << "at end of update, CALL contents = " << remove_peripheral_spaces(win_call.read()) << endl;
 }

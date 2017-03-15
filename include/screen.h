@@ -260,16 +260,7 @@ protected:
 
 /// forbid copying
   window(const window&);  
-  
-/*!     \brief  bound a value within limits
-        \param  val      value to bound
-        \param  low_val  lower bound
-        \param  high_val upper bound
-*/
-//  template <class T>
-//  inline const T _limit(const T val, const T low_val, const T high_val)
-//    { return (val < low_val ? low_val : (val > high_val ? high_val : val)); }
-    
+
 public:
 
 /*! \brief          Default constructor
