@@ -307,6 +307,9 @@ public:
   inline const bool is_mode_marker(void) const
     { return call_is(MODE_MARKER); }
 
+  inline const bool is_marker(void) const
+    { return is_my_marker() or is_mode_marker(); }
+
 /*! \brief              Calculate the mult status of this entry
     \param  rules       the rules for this contest
     \param  statistics  the current statistics

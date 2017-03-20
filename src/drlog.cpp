@@ -844,9 +844,7 @@ int main(int argc, char** argv)
 
 // possibly add a mode marker bandmap entry to each bandmap
     if (context.mark_mode_break_points())
-    { //ost << "Adding mode break points" << endl;
-
-      for (const auto& b : rules.permitted_bands())
+    { for (const auto& b : rules.permitted_bands())
       { bandmap& bm = bandmaps[b];
         bandmap_entry be;
 
@@ -855,11 +853,7 @@ int main(int argc, char** argv)
         be.expiration_time(be.time() + 1000000);
         be.freq(MODE_BREAK_POINT[b]);
 
-        //ost << "Adding break point: " << be << " to band map for " << BAND_NAME[b] << endl;
-
         bm += be;
-
-        //ost << "number of entries in bm = " << bm.size() << endl;
       }
     }
 

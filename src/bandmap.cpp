@@ -583,16 +583,16 @@ void bandmap::operator+=(const bandmap_entry& be)
         }
       }
       else    // this call is not currently present
-      { _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (!bme.is_my_marker())); } );  // remove any real entries at this QRG
+      { _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (!bme.is_marker())); } );  // remove any real entries at this QRG
         _insert(be);
       }
 
 // possibly remove all the other entries at this QRG
-      if (callsign != MY_MARKER)
+      if (callsign != MY_MARKER and callsign != MODE_MARKER)
       { const bandmap_entry current_be = (*this)[callsign];  // the entry in the updated bandmap
 
         if (current_be.n_posters() >= _rbn_threshold)
-        { _entries.remove_if([=] (bandmap_entry& bme) { bool rv = !bme.is_my_marker();
+        { _entries.remove_if([=] (bandmap_entry& bme) { bool rv = !bme.is_marker();
 
                                                         if (rv)
                                                         { rv = (bme.callsign() != current_be.callsign());
@@ -611,7 +611,7 @@ void bandmap::operator+=(const bandmap_entry& be)
       _insert(be);
     }
 
-    if ((callsign != MY_MARKER) and mark_as_recent)
+    if ((callsign != MY_MARKER) and (callsign != MODE_MARKER) and mark_as_recent)
       _recent_calls.insert(callsign);
 
     _dirty_entries();
