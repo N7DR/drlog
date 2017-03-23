@@ -307,6 +307,7 @@ public:
   inline const bool is_mode_marker(void) const
     { return call_is(MODE_MARKER); }
 
+/// does this entry correspond to either kind of marker?
   inline const bool is_marker(void) const
     { return is_my_marker() or is_mode_marker(); }
 
@@ -653,8 +654,8 @@ public:
       _recent_colour = rc;
     }
 
-/*!  \brief                         Add a bandmap_entry
-     \param be                      entry to add
+/*!  \brief     Add a bandmap_entry
+     \param be  entry to add
 */
   void operator+=(const bandmap_entry& be);
 
@@ -741,14 +742,14 @@ public:
   void filter_add_or_subtract(const std::string& str);
 
 /// is the filter in hide mode? (as opposed to show)
-  inline const bool filter_hide(void)
+  inline const bool filter_hide(void) const
     { return _filter_p->hide(); }
 
 /// set or unset the filter to hide mode (as opposed to show)
   void filter_hide(const bool torf);
 
 /// is the filter in show mode? (as opposed to hide)
-  inline const bool filter_show(void)
+  inline const bool filter_show(void) const
     { return !_filter_p->hide(); }
 
 /// set or unset the filter to show mode (as opposed to hide)

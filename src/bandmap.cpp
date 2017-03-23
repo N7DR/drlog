@@ -871,8 +871,7 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
         rv.push_back(be);
     }
     else  // not RBN
-    { rv.push_back(be);
-    }
+      rv.push_back(be);
   }
 
   _rbn_threshold_and_filtered_entries = rv;
@@ -1066,8 +1065,6 @@ window& operator<(window& win, bandmap& bm)
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
 
   size_t index = 0;    // keep track of where we are in the bandmap
-  
-//  ost << "number of bm entries = " << entries.size() << endl;
 
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )

@@ -1838,78 +1838,7 @@ void* display_rig_status(void* vp)
           MODE m = safe_get_mode();                                                  // mode as determined by drlog, not by rig
           m = rig_status_thread_parameters.rigp() -> rig_mode();                     // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
 
-
           update_based_on_frequency_change(f, m);
-
-#if 0
-// possibly update bandmap entry and nearby callsign, if any
-          if (f.display_string() != be.freq().display_string())  // redraw if moved > 100 Hz
-          { be.freq(f);
-            be.mode(m);
-
-            display_band_mode(win_band_mode, be.band(), be.mode());
-
-// update and display the correct bandmap
-            bandmap& bandmap_this_band = bandmaps[be.band()];
-
-            bandmap_this_band += be;
-            win_bandmap <= bandmap_this_band;
-
-// is there a station close to our frequency?
-// use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
-// to have invisible calls show up when I went to a frequency
-            const string nearby_callsign = bandmap_this_band.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
-
-            if (!nearby_callsign.empty())
-            { display_nearby_callsign(nearby_callsign);
-
-              if (in_call_window)
-              { string call_contents = remove_peripheral_spaces(win_call.read());
-
-                if (!call_contents.empty())
-                { if (last(call_contents, 5) == " DUPE")
-                    call_contents = call_contents.substr(0, call_contents.length() - 5);    // reduce to actual call
-
-                  string last_call;
-
-                  { SAFELOCK(dupe_check);
-
-                    last_call = last_call_inserted_with_space;
-                  }
-
-                  if (call_contents != last_call)
-                  { win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
-                  }
-                }
-              }
-            }
-            else    // no nearby callsign
-            { if (in_call_window)
-// see if we are within twice the guard band before we clear the call window
-              { const string call_contents = remove_peripheral_spaces(win_call.read());
-                const bandmap_entry be = bandmap_this_band[call_contents];
-                const unsigned int f_diff = abs(be.freq().hz() - f.hz());
-
-                if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code
-                { if (!win_nearby.empty())
-                    win_nearby <= WINDOW_CLEAR;
-
-                  if (!call_contents.empty())
-                  { string last_call;
-
-                    { SAFELOCK(dupe_check);
-
-                      last_call = last_call_inserted_with_space;
-                    }
-
-                    if ((call_contents == last_call) or (call_contents == (last_call + " DUPE")) )
-                      win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
-                  }
-                }
-              }
-            }
-          }
-#endif
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
@@ -7490,11 +7419,7 @@ void end_of_thread(const string& name)
 
 /// update some windows based on a change in frequency
 void update_based_on_frequency_change(const frequency& f, const MODE m)
-{ //static bool executing = false;
-  static pt_mutex            my_bandmap_entry_mutex;                 ///< mutex for my_bandmap_entry
-//  static bandmap_entry       my_bandmap_entry;                       ///< last bandmap entry that refers to me (usually from poll)
-
-//  bandmap_entry tmp_bandmap_entry;
+{ static pt_mutex            my_bandmap_entry_mutex;                 ///< mutex for my_bandmap_entry
 
 // the following ensures that the bandmap entry doesn't change while we're using it.
 // It does not, however, ensure that this routine doesn't execute simultaneously from two
@@ -7502,17 +7427,11 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // lock acquisitions dangerously
   SAFELOCK(my_bandmap_entry);
 
-//    tmp_bandmap_entry = my_bandmap_entry;       // make sure that the bandmap entry doesn't change while we're using it
-
   const bool changed_frequency = (f.display_string() != my_bandmap_entry.freq().display_string());
   const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
 
   if (changed_frequency)
-  { //const bool changed_mode = (m != tmp_bandmap_entry.mode());
-
-    my_bandmap_entry.freq(f);
-//    tmp_bandmap_entry.mode(m);  // do this?
-
+  { my_bandmap_entry.freq(f);   // also updates the band
     display_band_mode(win_band_mode, my_bandmap_entry.band(), my_bandmap_entry.mode());
 
     bandmap& bandmap_this_band = bandmaps[my_bandmap_entry.band()];
@@ -7576,11 +7495,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
         }
       }
     }
-
-//    SAFELOCK(my_bandmap_entry);
-
-//    my_bandmap_entry = tmp_bandmap_entry;
   }                 // end of changed frequency
 
-  ost << "at end of update, CALL contents = " << remove_peripheral_spaces(win_call.read()) << endl;
+//  ost << "at end of update, CALL contents = " << remove_peripheral_spaces(win_call.read()) << endl;
 }

@@ -1175,15 +1175,20 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  STATIC WINDOWS  ---------------------------------
 
-    map<string /* name */, bool /* whether verbatim */> verbatim;
+    static map<string /* name */, bool /* whether verbatim */> verbatim;
 
     if (LHS == "STATIC WINDOW")
-    { const vector<string> fields = remove_peripheral_spaces(split_string(rhs, ","));
+    { //ost << "Inside static window: " << rhs << endl;
+
+      const vector<string> fields = remove_peripheral_spaces(split_string(rhs, ","));
 
       if (fields.size() == 2)  // name, contents
       { const string name = fields[0];
         string contents = fields[1];      // might be actual contents, or a fully-qualified filename
-        verbatim[name] = contains(fields[1], "\"");     // verbatimn if contains quotation mark
+        verbatim[name] = contains(fields[1], "\"");     // verbatim if contains quotation mark
+
+        //ost << "name is: *" << name << "*" << endl;
+        //ost << "verbatim is: " << verbatim[name] << endl;
 
         if (file_exists(contents))
           contents = read_file(contents);
@@ -1194,7 +1199,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
     if (LHS == "STATIC WINDOW INFO")  // must come after the corresponding STATIC WINDOW command
-    { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
+    { //ost << "Inside static window info: " << rhs << endl;
+
+      const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
 
       if (!window_info.empty())
       { const string name = window_info[0];
@@ -1213,16 +1220,16 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
             string final_contents;
 
+            //ost << "name is: *" << name << "*" << endl;
+            //ost << "verbatim is: " << verbatim[name] << endl;
+
             if (verbatim[name])
             { string contents = _static_windows[name].first;
 
-              if (contents.size() >= 2)
-              { const char delimiter = contents[0];
-                const size_t posn = contents.find_first_of(delimiter, 1);
+              //ost << "contents = " << contents << endl;
 
-                if (posn != 0)
-                  contents = substring(contents, 1, posn - 1);
-              }
+              if (contents.size() >= 2)
+                contents = delimited_substring(contents, '"', '"');
 
               vector<string> lines = to_lines(contents);
               const string contents_1 = replace(contents, "\\n", EOL);
