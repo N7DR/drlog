@@ -1278,6 +1278,23 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
+  if (field_name == "UKEICODE")
+  { //static const set<string> countries { "R1FJ", "UA", "UA2", "UA9" };  shudn't need a set of countries
+
+    string rv;
+
+    if (!drm_line.empty() /* and location_db.canonical_prefix(callsign) == "JA" */)
+    { rv = drm_line.qth();
+
+      if (!rv.empty())
+      { rv = rules.canonical_value(field_name, rv);
+        _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
 // choices
   if (field_name == "ITUZONE+SOCIETY")    // IARU
   { string rv;

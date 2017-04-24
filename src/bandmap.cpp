@@ -1102,6 +1102,8 @@ window& operator<(window& win, bandmap& bm)
         break;
 
       const unsigned int y = (win.height() - 1) - (index - start_entry) % win.height();
+
+// now work out the status colour
       int status_colour = colours.add(COLOUR_BLACK, COLOUR_BLACK);                      // default
 
       if (!be.is_my_marker() and !be.is_mode_marker())

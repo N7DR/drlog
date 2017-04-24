@@ -267,16 +267,16 @@ public:
 inline const BAND to_BAND(const std::string& str)
   { return to_BAND(frequency(str).hz()); }
 
-/*!  \brief         Convert a frequency to a band
-     \param  f      frequency to convert
-     \return        band corresponding to <i>f</i>
+/*!  \brief     Convert a frequency to a band
+     \param  f  frequency to convert
+     \return    band corresponding to <i>f</i>
 */
 inline const BAND to_BAND(const frequency& f)
   { return to_BAND(f.hz()); }
 
-/*!  \brief         Convert a frequency to a printable string
-     \param  f      frequency to convert
-     \return        comma-separated string of the frequency in Hz
+/*!  \brief     Convert a frequency to a printable string
+     \param  f  frequency to convert
+     \return    comma-separated string of the frequency in Hz
 
      Appends " Hz" to the numerical frequency.
 */

@@ -1178,17 +1178,12 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     static map<string /* name */, bool /* whether verbatim */> verbatim;
 
     if (LHS == "STATIC WINDOW")
-    { //ost << "Inside static window: " << rhs << endl;
-
-      const vector<string> fields = remove_peripheral_spaces(split_string(rhs, ","));
+    { const vector<string> fields = remove_peripheral_spaces(split_string(rhs, ","));
 
       if (fields.size() == 2)  // name, contents
       { const string name = fields[0];
         string contents = fields[1];      // might be actual contents, or a fully-qualified filename
         verbatim[name] = contains(fields[1], "\"");     // verbatim if contains quotation mark
-
-        //ost << "name is: *" << name << "*" << endl;
-        //ost << "verbatim is: " << verbatim[name] << endl;
 
         if (file_exists(contents))
           contents = read_file(contents);
@@ -1199,9 +1194,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
     if (LHS == "STATIC WINDOW INFO")  // must come after the corresponding STATIC WINDOW command
-    { //ost << "Inside static window info: " << rhs << endl;
-
-      const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
+    { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
 
       if (!window_info.empty())
       { const string name = window_info[0];
@@ -1220,13 +1213,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
             string final_contents;
 
-            //ost << "name is: *" << name << "*" << endl;
-            //ost << "verbatim is: " << verbatim[name] << endl;
-
             if (verbatim[name])
             { string contents = _static_windows[name].first;
-
-              //ost << "contents = " << contents << endl;
 
               if (contents.size() >= 2)
                 contents = delimited_substring(contents, '"', '"');
@@ -1249,8 +1237,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               }
 
               final_contents = contents_1;
-            }    // end verbatim
-            else    // read from file
+            }                                                       // end verbatim
+            else                                                    // read from file
             { const string contents = _static_windows[name].first;
               const vector<string> lines = to_lines(contents);
 
@@ -1412,11 +1400,11 @@ drlog_context::drlog_context(const std::string& filename) :
   _bandmap_recent_colour(string_to_colour("BLACK")),                // do not indicate recent postings with special colour
   _bands("160, 80, 40, 20, 15, 10"),                                // legal bands for the contest
   _batch_messages_file(),                                           // name for batch messages file
-  _cabrillo_address_1(),
-  _cabrillo_address_2(),
-  _cabrillo_address_3(),
-  _cabrillo_address_4(),
-  _cabrillo_address_city(),
+  _cabrillo_address_1(),                                            // first line of Cabrillo ADDRESS
+  _cabrillo_address_2(),                                            // second line of Cabrillo ADDRESS
+  _cabrillo_address_3(),                                            // third line of Cabrillo ADDRESS
+  _cabrillo_address_4(),                                            // fourth line of Cabrillo ADDRESS
+  _cabrillo_address_city(),                                         // CITY in Cabrillo file
   _cabrillo_address_country(),
   _cabrillo_address_postalcode(),
   _cabrillo_address_state_province(),

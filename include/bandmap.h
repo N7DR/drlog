@@ -60,14 +60,16 @@ template<typename T>
 class needed_mult_details
 {
 protected:
-  bool           _is_needed;     ///< are any mult values needed?
-  std::set<T>    _values;        ///< values that are needed
+  bool           _is_needed;        ///< are any mult values needed?
+  bool           _is_status_known;  ///< is the status known for sure?
+  std::set<T>    _values;           ///< values that are needed
 
 public:
 
 /// default constructor
   needed_mult_details(void) :
-    _is_needed(false)
+    _is_needed(false),
+    _is_status_known(true)          //  for backwards compatibility
   { }
 
 /*! \brief      Constructor from a needed value
@@ -81,6 +83,10 @@ public:
 /// is any value needed?
   inline const bool is_any_value_needed(void) const
     { return _is_needed; }
+
+/// is status known?
+  inline const bool is_status_known(void) const
+    { return _is_status_known; }
 
 /// return all the needed values (as a set)
   inline const std::set<T> values(void) const
@@ -138,6 +144,7 @@ public:
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
   { ar & _is_needed
+       & _is_status_known
        & _values;
   }
 };
@@ -146,6 +153,7 @@ public:
 template<typename S>
 std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<S, S>>& nmd)
 { ost << "is needed: " << nmd.is_any_value_needed() << std::endl
+      << "is status known: " << nmd.is_status_known() << std::endl
       << "values: " << std::endl;
 
   std::set<std::pair<S, S>> s = nmd.values();
@@ -160,6 +168,7 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<
 template<typename T>
 std::ostream& operator<<(std::ostream& ost, const needed_mult_details<T>& nmd)
 { ost << "is needed: " << nmd.is_any_value_needed() << std::endl
+      << "is status known: " << nmd.is_status_known() << std::endl
       << "values: " << std::endl;
 
   std::set<T> s = nmd.values();
@@ -244,6 +253,7 @@ protected:
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;   ///< details of needed callsign mults
   needed_mult_details<std::string>                          _is_needed_country_mult;    ///< details of needed country mults
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;   ///< details of needed exchange mults
+//  bool                                                      _known_mult_status;         ///< is the mult status known?
 //  bool                                                      _is_needed_mult;            ///< is this a needed mult?
   enum MODE                                                 _mode;                      ///< mode
   std::set<std::string>                                     _posters;                   ///< stations that posted this entry

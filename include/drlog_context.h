@@ -368,12 +368,12 @@ public:
 
   CONTEXTREAD(decimal_point);                    ///< character to use as decimal point
   CONTEXTREAD(display_communication_errors);     ///< whether to display errors communicating with rig
-  SAFEREAD(do_not_show, _context);                      ///< do not show these calls when spotted (MY CALL is automatically not shown)
-  SAFEREAD(do_not_show_filename, _context);             ///< filename of calls (one per line) not to be shown
-  SAFEREAD(drmaster_filename, _context);                ///< filename of drmaster file (default = "drmaster")
+  CONTEXTREAD(do_not_show);                      ///< do not show these calls when spotted (MY CALL is automatically not shown)
+  CONTEXTREAD(do_not_show_filename);             ///< filename of calls (one per line) not to be shown
+  CONTEXTREAD(drmaster_filename);                ///< filename of drmaster file (default = "drmaster")
 
-  SAFEREAD(exchange, _context);                         ///< comma-delimited received exchange
-  SAFEREAD(exchange_cq, _context);                      ///< exchange in CQ mode
+  CONTEXTREAD(exchange);                         ///< comma-delimited received exchange
+  CONTEXTREAD(exchange_cq);                      ///< exchange in CQ mode
   SAFEREAD(exchange_fields_filename, _context);         ///< file that holds regex templates of values of exchange fields
   SAFEREAD(exchange_mults, _context);                   ///< comma-delimited exchange fields that are mults
   SAFEREAD(exchange_mults_per_band, _context);          ///< are exchange mults per-band?

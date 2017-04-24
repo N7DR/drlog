@@ -306,7 +306,6 @@ const vector<exchange_field> contest_rules::_exchange_fields(const string& canon
   catch (std::out_of_range& oor)
   { ost << "Out of Range error in contest_rules::_exchange_fields: " << oor.what() << endl;
     ost << "canonical prefix = " << canonical_prefix << ", mode = " << MODE_NAME[m] << ", expand_choices = " << boolalpha << expand_choices << endl;
-//    alert("Out of Range error in contest_rules::_exchange_fields()", false);
 
     return vector<exchange_field>();
   }
@@ -791,7 +790,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // generate the sets of all acceptable values
   const set<string> field_names = all_known_field_names();
 
-  for (auto field_name : field_names)
+  for (const auto& field_name : field_names)
     _permitted_exchange_values.insert( { field_name, _all_exchange_values(field_name) } );
 
 // generate all the mappings from permitted to canonical values
@@ -1055,12 +1054,14 @@ const MODE contest_rules::next_mode(const MODE current_mode) const
   if (cit == _permitted_modes.cend())    // should never happen
     return *(_permitted_modes.cbegin());
 
-  ++cit;
+//  ++cit;
 
-  if (cit == _permitted_modes.cend())
-    return *(_permitted_modes.cbegin());
+  return (++cit == _permitted_modes.cend() ? *(_permitted_modes.cbegin()) : *cit);
 
-  return *cit;
+//  if (cit == _permitted_modes.cend())
+//    return *(_permitted_modes.cbegin());
+
+//  return *cit;
 }
 
 /*! \brief      Add a band to the list of permitted bands
@@ -1084,12 +1085,14 @@ const BAND contest_rules::next_band_up(const BAND current_band) const
   if (cit == _permitted_bands.cend())    // should never happen
     return *(_permitted_bands.cbegin());
 
-  cit++;
+  return (++cit == _permitted_bands.cend() ? *(_permitted_bands.cbegin()) : *cit);
 
-  if (cit == _permitted_bands.cend())
-    return *(_permitted_bands.cbegin());
+//  cit++;
 
-  return *cit;
+//  if (cit == _permitted_bands.cend())
+//    return *(_permitted_bands.cbegin());
+
+//  return *cit;
 }
 
 /// get the next band down
@@ -1104,9 +1107,9 @@ const BAND contest_rules::next_band_down(const BAND current_band) const
   if (cit == _permitted_bands.begin())
     return _permitted_bands[_permitted_bands.size() - 1];
 
-  cit--;
+//  cit--;
 
-  return *cit;
+  return *(--cit);
 }
 
 /*! \brief                  Points for a particular QSO
@@ -1121,6 +1124,7 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
     return 0;
 
   const MODE m = qso.mode();
+
   if (!(_score_modes < m))    // no points if we're not scoring this mode
     return 0;
 
@@ -1188,11 +1192,6 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
 
 // is it an HQ station?
       const string society_value = qso.received_exchange("SOCIETY");
-
-//      ost << "SOCIETY field is " << (society_value.empty() ? "NOT" : "") << " present" << endl;
-
-//      if (!society_value.empty())
-//          ost << "SOCIETY value = " << society_value << endl;
 
       if (!society_value.empty())
         rv = 1;
