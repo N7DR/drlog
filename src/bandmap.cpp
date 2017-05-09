@@ -115,7 +115,8 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
   _time(::time(NULL)),
   _source(s),
   _is_needed(true),
-  _expiration_time(0)
+  _expiration_time(0),
+  _mult_status_is_known(false)
 { }
 
 /*! \brief          Set the callsign
@@ -149,9 +150,14 @@ void bandmap_entry::freq(const frequency& f)
     Adjust the callsign, country and exchange mult status in accordance with the passed parameters
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
-{
+{ //ost << "inside bandmap_entry::calculate_mult_status()" << endl;
+
+//  ost << "value 1: " << *this << endl << endl;
+
 // callsign mult status
   clear_callsign_mult();
+
+//  ost << "after clear_callsign_mult(): " << *this << endl << endl;
 
   const set<string> callsign_mults = rules.callsign_mults();
 
@@ -164,12 +170,22 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     }
   }
 
+//  ost << "after callsign_mults calculated: " << *this << endl << endl;
+
+  _is_needed_callsign_mult.status_is_known(true);
+
 // country mult status
   clear_country_mult();
+
+//  ost << "after clear_country_mult(): " << *this << endl << endl;
 
 //  if (is_needed_country_mult)
   if (statistics.is_needed_country_mult(_callsign, _band, _mode))
     add_country_mult(_canonical_prefix);
+
+  _is_needed_country_mult.status_is_known(true);
+
+//  ost << "after country_mults calculated: " << *this << endl << endl;
 
 // exchange mult status
   clear_exchange_mult();
@@ -185,17 +201,43 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
       guess = rules.canonical_value(exch_mult_name, guess);
 
+      if (!guess.empty())
+        _is_needed_exchange_mult.status_is_known(true);
+
       if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
         add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
     }
   }
+
+//  ost << "after exchange_mults calculated: " << *this << endl << endl;
 
 // for debugging HA contest, in which many stns were marked on bm in green, even though already worked
   if (is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult())
     ost << "+ve mult status for " << callsign() << ": " << (is_needed_callsign_mult() ? "T" : "F")
         << (is_needed_country_mult() ? "T" : "F") << (is_needed_exchange_mult() ? "T" : "F")
         << endl;
+
+// it isn't trivial to know how to set _mult_status_is_known under various possibilities
+// for now... if any mult type is used AND we know the status of that mult, we say that
+// we know the total status
+
+  _mult_status_is_known = false;
+
+  if (rules.callsign_mults_used() and _is_needed_callsign_mult.is_status_known())
+    _mult_status_is_known = true;
+
+  if (!_mult_status_is_known and rules.country_mults_used() and _is_needed_country_mult.is_status_known())
+    _mult_status_is_known = true;
+
+  if (!_mult_status_is_known and rules.exchange_mults_used() and _is_needed_exchange_mult.is_status_known())
+    _mult_status_is_known = true;
+
+//  ost << "at end of calculate_mult_status: " << *this << endl;
 }
+
+//const bool bandmap_entry::mult_status_is_known(void) const
+//{
+//}
 
 /*! \brief      Does this object match another bandmap_entry?
     \param  be  target bandmap entry
@@ -310,12 +352,14 @@ const MODE bandmap_entry::putative_mode(void) const
 
 /// ostream << bandmap_entry
 ostream& operator<<(ostream& ost, const bandmap_entry& be)
-{ ost << "frequency: " << to_string(be.freq()) << endl
-      << "frequency_str: " << be.frequency_str() << endl
+{ ost << "band: " << be.band() << endl
       << "callsign: " << be.callsign() << endl
       << "canonical_prefix: " << be.canonical_prefix() << endl
       << "continent: " << be.continent() << endl
-      << "band: " << be.band() << endl
+      << "mode: " << MODE_NAME[be.mode()] << endl
+      << "mult status is known: " << be.mult_status_is_known() << endl
+      << "frequency: " << to_string(be.freq()) << endl
+      << "frequency_str: " << be.frequency_str() << endl
       << "time: " << be.time() << endl
       << "source: " << to_string(be.source()) << endl
       << "expiration_time: " << be.expiration_time() << endl
@@ -1055,6 +1099,13 @@ const string bandmap::to_str(void)
 /// window < bandmap
 window& operator<(window& win, bandmap& bm)
 { static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
+
+  static int NOT_NEEDED_COLOUR = COLOUR_BLACK;
+  static int DO_NOT_WORK_COLOUR = NOT_NEEDED_COLOUR;
+  static int MULT_COLOUR = COLOUR_GREEN;
+  static int NOT_MULT_COLOUR = COLOUR_BLUE;
+  static int UNKNOWN_MULT_STATUS_COLOUR = COLOUR_YELLOW;
+
   const size_t maximum_number_of_displayable_entries = (win.width() / COLUMN_WIDTH) * win.height();
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
@@ -1104,11 +1155,15 @@ window& operator<(window& win, bandmap& bm)
       const unsigned int y = (win.height() - 1) - (index - start_entry) % win.height();
 
 // now work out the status colour
-      int status_colour = colours.add(COLOUR_BLACK, COLOUR_BLACK);                      // default
+      int status_colour = colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR);                      // default
 
       if (!be.is_my_marker() and !be.is_mode_marker())
       { if (be.is_needed())
-          status_colour = (be.is_needed_mult() ? colours.add(COLOUR_GREEN, COLOUR_GREEN) : colours.add(COLOUR_BLUE, COLOUR_BLUE));
+        { if (be.mult_status_is_known())
+            status_colour = (be.is_needed_mult() ? colours.add(MULT_COLOUR, MULT_COLOUR) : colours.add(NOT_MULT_COLOUR, NOT_MULT_COLOUR));
+          else
+            status_colour = colours.add(UNKNOWN_MULT_STATUS_COLOUR, UNKNOWN_MULT_STATUS_COLOUR);
+        }
       }
 
 // reverse the colour of the frequency if there are unseen entries lower or higher in frequency

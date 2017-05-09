@@ -88,6 +88,10 @@ public:
   inline const bool is_status_known(void) const
     { return _is_status_known; }
 
+/// is status known?
+  inline void status_is_known(const bool torf)
+    { _is_status_known = torf; }
+
 /// return all the needed values (as a set)
   inline const std::set<T> values(void) const
     { return _values; }
@@ -136,7 +140,8 @@ public:
 
 /// remove knowledge of all needed values
   void clear(void)
-  { _is_needed = false;
+  { _is_status_known = false;
+    _is_needed = false;
     _values.clear();
   }
 
@@ -256,6 +261,7 @@ protected:
 //  bool                                                      _known_mult_status;         ///< is the mult status known?
 //  bool                                                      _is_needed_mult;            ///< is this a needed mult?
   enum MODE                                                 _mode;                      ///< mode
+  bool                                                      _mult_status_is_known;      ///< true only after calculate_mult_status() has been called
   std::set<std::string>                                     _posters;                   ///< stations that posted this entry
   enum BANDMAP_ENTRY_SOURCE                                 _source;                    ///< the source of this entry
   time_t                                                    _time;                      ///< time (in seconds since the epoch) at which the object was created
@@ -297,6 +303,7 @@ public:
   READ(frequency_str);                  ///< QRG (kHz, to 1 dp)
   READ_AND_WRITE(is_needed);            ///< do we need this call?
   READ_AND_WRITE(mode);                 ///< mode
+  READ(mult_status_is_known);
   READ_AND_WRITE(posters);              ///< source(s) of posting (if the source is RBN)
   READ_AND_WRITE(source);               ///< the source of this entry
   READ(time);                           ///< time (in seconds since the epoch) at which the object was created

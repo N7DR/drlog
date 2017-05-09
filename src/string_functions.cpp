@@ -820,17 +820,21 @@ const size_t n_chars(const string& str)
 */
 const bool is_legal_ipv4_address(const string& cs)
 { static const string separator(".");
+
   string tmp_str = cs;
 
   for (int field = 0; field < 3; field++)
   { const unsigned long posn = tmp_str.find(separator);
+
     if (posn == string::npos)
       return false;
 
     const string this_field = tmp_str.substr(0, posn);
+
     try
-    { long value = from_string<long>(this_field);
-      if ((value < 0) || (value > 255))
+    { const long value = from_string<long>(this_field);
+
+      if ((value < 0) or (value > 255))
         return false;
     }
 
@@ -843,8 +847,9 @@ const bool is_legal_ipv4_address(const string& cs)
 
 // we still have to do the last field
   try
-  { long value = from_string<long>(tmp_str);
-    if ((value < 0) || (value > 255))
+  { const long value = from_string<long>(tmp_str);
+
+    if ((value < 0) or (value > 255))
       return false;
   }
 
@@ -870,12 +875,12 @@ const string convert_to_dotted_decimal(const uint32_t val)
   string rv;
 
   for (int n = 0; n < 3; n++)
-  { unsigned char c = cp[n];
+  { const unsigned char c = cp[n];
   
     rv += to_string((int)c) + separator;
   }
 
-  unsigned char c = cp[3];
+  const unsigned char c = cp[3];
 
   rv += to_string((int)c);
 

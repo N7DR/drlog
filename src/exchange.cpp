@@ -961,6 +961,20 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 // no prior QSO; is it in the drmaster database?
   const drmaster_line drm_line = (*drm_p)[callsign];
 
+  auto get_qth = [&] (void /* const drmaster_line& drm_line */)
+    { if (drm_line.empty())
+        return string();
+
+      const string rv = drm_line.qth();
+
+      if (rv.empty())
+        return string();
+
+      _db.insert( { { callsign, field_name }, rv } );
+
+      return rv;
+    };
+
   if (field_name == "10MSTATE")
   { string rv;
 
@@ -1100,17 +1114,23 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
   if (field_name == "FDEPT")
-  { string rv;
+  { const string rv = get_qth();
 
-    if (!drm_line.empty())
-    { rv = drm_line.qth();
+    if (!rv.empty())
+      return rv;
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
 
-        return rv;
-      }
-    }
+//string rv;
+
+//    if (!drm_line.empty())
+//    { rv = drm_line.qth();
+//
+//      if (!rv.empty())
+//      { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
+//    }
   }
 
   if (field_name == "HADXC")     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)

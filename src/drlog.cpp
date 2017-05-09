@@ -2101,6 +2101,8 @@ void* process_rbn_info(void* vp)
 
               be.calculate_mult_status(rules, statistics);
 
+//              ost << "be after calculate_mult_status: " << be << endl;
+
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
               const bool is_interesting_mode = (rules.score_modes() < be.mode());
@@ -3268,7 +3270,12 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         }
 
         be.calculate_mult_status(rules, statistics);
+
+//        ost << "be after calculate_mult_status: " << be << endl;
+
         be.is_needed(is_needed);
+
+//        ost << "be after is_needed is set: " << be << endl;
 
         bandmap& bandmap_this_band = bandmaps[cur_band];
 
