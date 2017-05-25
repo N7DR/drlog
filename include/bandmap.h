@@ -18,6 +18,7 @@
 
 #include "cluster.h"
 #include "drlog_context.h"
+#include "log.h"
 #include "pthread_support.h"
 #include "rules.h"
 #include "screen.h"
@@ -40,9 +41,10 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
 
 class bandmap_filter_type;
 
-extern const std::string MY_MARKER;                             ///< the string that marks my position in the bandmap
-extern const std::string MODE_MARKER;                           ///< the string that marks the mode break in the bandmap
+extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
+extern const std::string   MODE_MARKER;                         ///< the string that marks the mode break in the bandmap
 extern bandmap_filter_type BMF;                                 ///< the bandmap filter
+extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -527,6 +529,14 @@ public:
 /// guess the mode
   const MODE putative_mode(void) const;
 
+/// how many QSOs have we had with this callsign, band and mode?
+  inline const unsigned int n_qsos(void) const
+    { return olog.n_qsos(_callsign, _band, _mode); }
+
+/// is this call+band+mode an all-time first?
+  inline const bool is_all_time_first(void) const
+    { return (n_qsos() == 0); }
+
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -826,6 +836,16 @@ public:
 */
   inline const bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_a_needed_mult, dirn); }
+
+/*!  \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
+      param dirn    direction in which to search
+     \return        bandmap entry (if any) corresponding to the next needed all-time call+band+mode in the direction <i>dirn</i>
+
+     The return value can be tested with .empty() to see if a station was found
+*/
+  inline const bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
+    { return needed(&bandmap_entry::is_all_time_first, dirn); }
+
 
 /*! \brief          Find the next station up or down in frequency from a given frequency
     \param  f       starting frequency

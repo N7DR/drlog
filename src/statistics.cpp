@@ -281,7 +281,7 @@ running_statistics::running_statistics(void) :
     \param  context         drlog context
     \param  rules           rules for this contest
 */
-running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules) :
+running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
   _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
   _n_dupes( { {} } ),
   _qso_points( { {} } ),
@@ -307,7 +307,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
   _include_qtcs = rules.send_qtcs();
   _callsign_mults_used = rules.callsign_mults_used();
-  _country_mults_used  = rules.country_mults_used();
+//  _country_mults_used  = rules.country_mults_used();
   _exchange_mults_used = rules.exchange_mults_used();
 
   _location_db.prepare(country_data, context.country_list());
@@ -412,7 +412,9 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
   { SAFELOCK(statistics);
 
     const string canonical_prefix = _location_db.canonical_prefix(callsign);
-    const bool is_needed = ( (_country_multipliers.is_known(canonical_prefix)) and !(_country_multipliers.is_worked(canonical_prefix, b, m)) );
+//    const bool is_needed = ( (_country_multipliers.is_known(canonical_prefix)) and !(_country_multipliers.is_worked(canonical_prefix, b, m)) );
+// we should count the mult even if it hasn't been seen enough times to be known yet
+    const bool is_needed = ( /* (_country_multipliers.is_known(canonical_prefix)) and */ !(_country_multipliers.is_worked(canonical_prefix, b, m)) );
 
     return is_needed;
   }

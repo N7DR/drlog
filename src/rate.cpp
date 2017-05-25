@@ -8,21 +8,20 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file rate.cpp
+/*! \file rate.cpp
 
-        Classes and functions related to the calculation of rates
+    Classes and functions related to the calculation of rates
 */
 
-#include "log_message.h"
 #include "rate.h"
 #include "string_functions.h"
 
 using namespace std;
 
-extern message_stream    ost;
+extern message_stream    ost;                ///< debugging/logging output
 
-/*!     \brief Return the number of QSOs and points at the current epoch
-        \return pair.first is the number of QSOs; pair.second is the number of points
+/*! \brief      Return the number of QSOs and points at the current epoch
+    \return     pair.first is the number of QSOs; pair.second is the number of points
 */
 const pair<unsigned int, unsigned int> rate_meter::current_qsos_and_score(void)
 { SAFELOCK(_rate);
@@ -65,8 +64,8 @@ const unsigned int rate_meter::score(const time_t t)
   return ((_data.lower_bound(query_time)->second).second);
 }
 
-/*!     \brief Return the number of QSOs and points at the epoch <i>t</i>
-        \return pair.first is the number of QSOs; pair.second is the number of points
+/*! \brief      Return the number of QSOs and points at the epoch <i>t</i>
+    \return     pair.first is the number of QSOs; pair.second is the number of points
 */
 const pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t)
 { const time_t now = ::time(NULL);                                     // time in seconds since the epoch
@@ -88,14 +87,14 @@ const pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t
   return (prev(ub))->second;                        // ergo, prev(ub) should be last element with key <= query time
 }
 
-/*!     \brief Return the difference in number of QSOs and points between now and some time in the past
-        \param  seconds_in_past Number of seconds in the past (i.e., from now) for which the result is desired
-        \param  normalisation_period    period in seconds over which the returned values are to be normalised
-        \return pair.first is the number of QSOs; pair.second is the number of points
+/*! \brief                              Return the difference in number of QSOs and points between now and some time in the past
+    \param      seconds_in_past         Number of seconds in the past (i.e., from now) for which the result is desired
+    \param      normalisation_period    period in seconds over which the returned values are to be normalised
+    \return                             pair.first is the number of QSOs; pair.second is the number of points
 
-        If <i>normalisation_period</i> is zero, then performs no normalisation, and returns merely the difference
-        between now and the time represented by <i>seconds_in_past</i>. If <i>normalisation_period</i> is not zero,
-        then normalises the differences to per <i>normalisation_rate</i> seconds.
+    If <i>normalisation_period</i> is zero, then performs no normalisation, and returns merely the difference
+    between now and the time represented by <i>seconds_in_past</i>. If <i>normalisation_period</i> is not zero,
+    then normalises the differences to per <i>normalisation_rate</i> seconds.
 */
 const pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seconds_in_past, const unsigned int normalisation_period)
 { SAFELOCK(_rate);  // don't allow any changes while we're performing this calculation

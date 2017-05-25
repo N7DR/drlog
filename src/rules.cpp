@@ -509,7 +509,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _callsign_mults_per_mode = context.callsign_mults_per_mode();
   _callsign_mults_used = !_callsign_mults.empty();
 
-  _country_mults_used = !_country_mults.empty();
+//  _country_mults_used = !_country_mults.empty();
   _country_mults_per_band = context.country_mults_per_band();
   _country_mults_per_mode = context.country_mults_per_mode();
   _per_band_country_mult_factor = context.per_band_country_mult_factor();
@@ -801,7 +801,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 /// default constructor
 contest_rules::contest_rules(void) :
   _callsign_mults_used(false),
-  _country_mults_used(false),
+//  _country_mults_used(false),
   _exchange_mults_used(false),
   _send_qtcs(false),
   _uba_bonus(false)
@@ -814,7 +814,7 @@ contest_rules::contest_rules(void) :
 contest_rules::contest_rules(const drlog_context& context, location_database& location_db) :
   _callsign_mults_used(false),
   _countries(location_db.countries()),
-  _country_mults_used(false),
+//  _country_mults_used(false),
   _exchange_mults_used(false),
   _uba_bonus(false),
   _work_if_different_band(context.qso_multiple_bands()),
@@ -1225,6 +1225,22 @@ void contest_rules::score_modes(const set<MODE>& new_modes)
 
     _score_modes = new_modes;
   }
+}
+
+/*! \brief      Do the country mults (if any) include a particular country?
+    \param  cp  canonical prefix of country to test
+    \return     whether cp is a country mult
+*/
+const bool contest_rules::country_mults_used(const string& cp)
+{ SAFELOCK(rules);
+
+  if (cp.empty())
+    return !_country_mults.empty();
+
+  if (_country_mults.empty())
+    return false;
+
+  return (_country_mults < cp);
 }
 
 /*! \brief          Is an exchange field a mult?

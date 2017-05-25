@@ -91,7 +91,7 @@ public:
     \param  context         drlog context
     \param  rules           rules for this contest
 */
-  running_statistics(const cty_data& country_data, const drlog_context& context, const contest_rules& rules);
+  running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules);
   
 /*! \brief                  Prepare an object that was created with the default constructor
     \param  country_data    data from cty.dat file

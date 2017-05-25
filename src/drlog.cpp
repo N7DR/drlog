@@ -137,7 +137,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m);    ///<
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
 void update_known_callsign_mults(const string& callsign, const bool force_known = false);                   ///< Possibly add a new callsign mult
-void update_known_country_mults(const string& callsign, const bool force_known = false);                    ///< Possibly add a new country to the known country mults
+const bool update_known_country_mults(const string& callsign, const bool force_known = false);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
 //void update_monitored_posts(const dx_post& post);                             ///< Add entry to POST MONITOR window
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
@@ -2101,7 +2101,7 @@ void* process_rbn_info(void* vp)
 
               be.calculate_mult_status(rules, statistics);
 
-//              ost << "be after calculate_mult_status: " << be << endl;
+              ost << "be after calculate_mult_status: " << be << endl;
 
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
@@ -3308,11 +3308,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     { rig.rig_frequency(be.freq());
       win_call < WINDOW_CLEAR <= be.callsign();
 
-//      display_nearby_callsign(be.callsign());
-//      display_call_info(be.callsign());
-//      last_call_inserted_with_space = be.callsign();
       enter_sap_mode();
-//      win_bandmap <= bm;    // update the bm window now, so we don't have to wait for the next poll
 
 // we may require a mode change
       if (context.multiple_modes())
@@ -3330,6 +3326,41 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       SAFELOCK(dupe_check);
       last_call_inserted_with_space = be.callsign();
 
+    }
+
+    processed = true;
+  }
+
+// CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
+  if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
+  { bandmap& bm = bandmaps[safe_get_band()];
+
+    typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
+    MEM_FUN_P fn_p = &bandmap::needed_all_time_new;
+
+    const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
+
+    if (!be.empty())
+    { rig.rig_frequency(be.freq());
+      win_call < WINDOW_CLEAR <= be.callsign();
+
+      enter_sap_mode();
+
+// we may require a mode change
+      if (context.multiple_modes())
+      { const MODE m = default_mode(be.freq());
+
+        if (m != safe_get_mode())
+        { rig.rig_mode(m);
+          safe_set_mode(m);
+          display_band_mode(win_band_mode, safe_get_band(), m);
+        }
+      }
+
+      update_based_on_frequency_change(be.freq(), safe_get_mode());
+
+      SAFELOCK(dupe_check);
+      last_call_inserted_with_space = be.callsign();
     }
 
     processed = true;
@@ -5611,24 +5642,28 @@ void update_known_callsign_mults(const string& callsign, const bool force_known)
   }
 }
 
-/*! \brief              Possibly add a new country to the known country mults
-    \param  callsign    callsign from the country possibly to be added
+/*! \brief                  Possibly add a new country to the known country mults
+    \param  callsign        callsign from the country possibly to be added
+    \param  force_known     whether to force this mult to be known, regardless of threshold
+    \return                 whether the country was added
 
     Adds only if REMAINING COUNTRY MULTS has been set to AUTO in the configuration file,
     and if the accumulator has reached the threshold
 */
-void update_known_country_mults(const string& callsign, const bool force_known)
+const bool update_known_country_mults(const string& callsign, const bool force_known)
 { if (callsign.empty())
-    return;
+    return false;
+
+  bool rv = false;
 
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix = location_db.canonical_prefix(callsign);
 
     if ( acc_countries.add(canonical_prefix, force_known ? context.auto_remaining_country_mults_threshold() : 1) )
-    { statistics.add_known_country_mult(canonical_prefix, rules);   // don't add if the rules don't recognise it as a country mult
-      // ost << "ADDED" << endl;
-    }
+      rv = statistics.add_known_country_mult(canonical_prefix, rules);   // don't add if the rules don't recognise it as a country mult
   }
+
+  return rv;
 }
 
 /*!     \brief  Send data to the archive file
@@ -7065,7 +7100,7 @@ void update_mult_value(void)
   const unsigned int qs_per_hour = qs.first;
   const float mins_per_q = (qs_per_hour ? 60.0 / static_cast<float>(qs_per_hour) : 3600.0);
   const float mins_per_mult = mins_per_q * mult_value;
-  string mins("∞");
+  string mins("∞");                                     // mins is the number of minutes per QSO
 
   if (mins_per_mult < 60)
   { const unsigned int mins_value_10 = static_cast<unsigned int>( (mins_per_mult * 10) + 0.5);

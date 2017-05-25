@@ -272,7 +272,7 @@ protected:
   std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
-  bool                                _country_mults_used;            ///< are country mults used?
+//  bool                                _country_mults_used;            ///< are country mults used?
   std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
 
   std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
@@ -458,7 +458,7 @@ public:
   SAFEREAD(exchange_mults_per_mode, rules);              ///< are exchange mults counted per-mode?
 
   SAFEREAD(callsign_mults_used, rules);                  ///< are callsign mults used?
-  SAFEREAD(country_mults_used, rules);                   ///< are country mults used?
+//  SAFEREAD(country_mults_used, rules);                   ///< are country mults used?
   SAFEREAD(exchange_mults_used, rules);                  ///< are exchange mults used?
 
   SAFEREAD(score_bands, rules);                 ///< bands currently used to calculate score
@@ -523,6 +523,19 @@ public:
     Does nothing if <i>new_modes</i> is empty
 */
   void score_modes(const std::set<MODE>& new_modes);
+
+/*! \brief      Do the country mults (if any) include a particular country?
+    \param  cp  canonical prefix of country to test
+    \return     whether cp is a country mult
+*/
+  const bool country_mults_used(const std::string& cp = std::string());
+
+/*! \brief      Do the country mults (if any) include a particular country?
+    \param  cp  canonical prefix of country to test
+    \return     whether cp is a country mult
+*/
+  inline const bool is_country_mult(const std::string& cp)
+    { return country_mults_used(cp); }
 
 /*! \brief          Is an exchange field a mult?
     \param  name    name of exchange field
@@ -658,7 +671,7 @@ public:
          & _country_mults
          & _country_mults_per_band
          & _country_mults_per_mode
-         & _country_mults_used
+//         & _country_mults_used
          & _per_band_country_mult_factor
          & _exchange_mults
          & _exchange_mults_per_band

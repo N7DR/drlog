@@ -150,14 +150,14 @@ void bandmap_entry::freq(const frequency& f)
     Adjust the callsign, country and exchange mult status in accordance with the passed parameters
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
-{ //ost << "inside bandmap_entry::calculate_mult_status()" << endl;
+{ //ost << "inside bandmap_entry::calculate_mult_status() for " << callsign() << endl;
 
-//  ost << "value 1: " << *this << endl << endl;
+  //ost << "value 1: " << *this << endl << endl;
 
 // callsign mult status
   clear_callsign_mult();
 
-//  ost << "after clear_callsign_mult(): " << *this << endl << endl;
+  //ost << "after clear_callsign_mult(): " << *this << endl << endl;
 
   const set<string> callsign_mults = rules.callsign_mults();
 
@@ -170,25 +170,26 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     }
   }
 
-//  ost << "after callsign_mults calculated: " << *this << endl << endl;
+ // ost << "after callsign_mults calculated: " << *this << endl << endl;
 
   _is_needed_callsign_mult.status_is_known(true);
 
 // country mult status
   clear_country_mult();
 
-//  ost << "after clear_country_mult(): " << *this << endl << endl;
+  //ost << "after clear_country_mult(): " << *this << endl << endl;
 
-//  if (is_needed_country_mult)
   if (statistics.is_needed_country_mult(_callsign, _band, _mode))
     add_country_mult(_canonical_prefix);
 
   _is_needed_country_mult.status_is_known(true);
 
-//  ost << "after country_mults calculated: " << *this << endl << endl;
+ // ost << "after country_mults calculated: " << *this << endl << endl;
 
 // exchange mult status
   clear_exchange_mult();
+
+ // ost << "after clear_exchange_mult(): " << *this << endl << endl;
 
   const vector<string> exch_mults = rules.expanded_exchange_mults();                                  // the exchange multipliers
 
@@ -209,7 +210,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     }
   }
 
-//  ost << "after exchange_mults calculated: " << *this << endl << endl;
+ // ost << "after exchange_mults calculated: " << *this << endl << endl;
 
 // for debugging HA contest, in which many stns were marked on bm in green, even though already worked
   if (is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult())
@@ -226,7 +227,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   if (rules.callsign_mults_used() and _is_needed_callsign_mult.is_status_known())
     _mult_status_is_known = true;
 
-  if (!_mult_status_is_known and rules.country_mults_used() and _is_needed_country_mult.is_status_known())
+  if (!_mult_status_is_known and rules.country_mults_used(canonical_prefix()) and _is_needed_country_mult.is_status_known())
     _mult_status_is_known = true;
 
   if (!_mult_status_is_known and rules.exchange_mults_used() and _is_needed_exchange_mult.is_status_known())
@@ -1158,8 +1159,14 @@ window& operator<(window& win, bandmap& bm)
       int status_colour = colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR);                      // default
 
       if (!be.is_my_marker() and !be.is_mode_marker())
-      { if (be.is_needed())
-        { if (be.mult_status_is_known())
+      { ost << "writing bandmap entry for " << be.callsign() << endl;
+
+        ost << "be.is_needed()): " << be.is_needed() << endl;
+
+        if (be.is_needed())
+        { ost << "be.mult_status_is_known(): " << be.mult_status_is_known() << endl;
+
+          if (be.mult_status_is_known())
             status_colour = (be.is_needed_mult() ? colours.add(MULT_COLOUR, MULT_COLOUR) : colours.add(NOT_MULT_COLOUR, NOT_MULT_COLOUR));
           else
             status_colour = colours.add(UNKNOWN_MULT_STATUS_COLOUR, UNKNOWN_MULT_STATUS_COLOUR);
