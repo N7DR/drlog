@@ -2101,7 +2101,7 @@ void* process_rbn_info(void* vp)
 
               be.calculate_mult_status(rules, statistics);
 
-              ost << "be after calculate_mult_status: " << be << endl;
+//              ost << "be after calculate_mult_status: " << be << endl;
 
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
@@ -3381,13 +3381,10 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       if (!be.empty())
       { const unsigned int n_qsos_this_band = olog.n_qsos(be.callsign(), safe_get_band(), safe_get_mode());
 
-        if (n_qsos_this_band == 0)
+        if ((n_qsos_this_band == 0) and be.is_needed())
         { rig.rig_frequency(be.freq());
           win_call < WINDOW_CLEAR <= be.callsign();
 
-//          display_nearby_callsign(be.callsign());
-//          display_call_info(be.callsign());
-//          last_call_inserted_with_space = be.callsign();
           enter_sap_mode();
 
 // we may require a mode change
