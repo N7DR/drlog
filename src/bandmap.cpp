@@ -150,14 +150,9 @@ void bandmap_entry::freq(const frequency& f)
     Adjust the callsign, country and exchange mult status in accordance with the passed parameters
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
-{ //ost << "inside bandmap_entry::calculate_mult_status() for " << callsign() << endl;
-
-  //ost << "value 1: " << *this << endl << endl;
-
+{
 // callsign mult status
   clear_callsign_mult();
-
-  //ost << "after clear_callsign_mult(): " << *this << endl << endl;
 
   const set<string> callsign_mults = rules.callsign_mults();
 
@@ -170,26 +165,18 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     }
   }
 
- // ost << "after callsign_mults calculated: " << *this << endl << endl;
-
   _is_needed_callsign_mult.status_is_known(true);
 
 // country mult status
   clear_country_mult();
-
-  //ost << "after clear_country_mult(): " << *this << endl << endl;
 
   if (statistics.is_needed_country_mult(_callsign, _band, _mode))
     add_country_mult(_canonical_prefix);
 
   _is_needed_country_mult.status_is_known(true);
 
- // ost << "after country_mults calculated: " << *this << endl << endl;
-
 // exchange mult status
   clear_exchange_mult();
-
- // ost << "after clear_exchange_mult(): " << *this << endl << endl;
 
   const vector<string> exch_mults = rules.expanded_exchange_mults();                                  // the exchange multipliers
 
@@ -209,8 +196,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
         add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
     }
   }
-
- // ost << "after exchange_mults calculated: " << *this << endl << endl;
 
 // for debugging HA contest, in which many stns were marked on bm in green, even though already worked
   if (is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult())
@@ -232,13 +217,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
   if (!_mult_status_is_known and rules.exchange_mults_used() and _is_needed_exchange_mult.is_status_known())
     _mult_status_is_known = true;
-
-//  ost << "at end of calculate_mult_status: " << *this << endl;
 }
-
-//const bool bandmap_entry::mult_status_is_known(void) const
-//{
-//}
 
 /*! \brief      Does this object match another bandmap_entry?
     \param  be  target bandmap entry
@@ -284,17 +263,7 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
   const bool original_is_needed_country_mult = is_needed_country_mult();
   const bool original_is_needed_exchange_mult = is_needed_exchange_mult();
 
-//  ost << boolalpha << "original_is_needed: " << original_is_needed << endl;
-//  ost << "original_is_needed_callsign_mult: " << original_is_needed_callsign_mult << endl;
-//  ost << "original_is_needed_country_mult: " << original_is_needed_country_mult << endl;
-//  ost << "original_is_needed_exchange_mult: " << original_is_needed_exchange_mult << endl;
-
   calculate_mult_status(rules, statistics);
-
-//  ost << boolalpha << "final _is_needed: " << _is_needed << endl;
-//  ost << "final is_needed_callsign_mult: " << is_needed_callsign_mult() << endl;
-//  ost << "final is_needed_country_mult: " << is_needed_country_mult() << endl;
-//  ost << "final is_needed_exchange_mult: " << is_needed_exchange_mult() << endl;
 
   return ( (original_is_needed != _is_needed) or (original_is_needed_callsign_mult != is_needed_callsign_mult()) or
            (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));

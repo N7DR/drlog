@@ -260,8 +260,6 @@ protected:
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;   ///< details of needed callsign mults
   needed_mult_details<std::string>                          _is_needed_country_mult;    ///< details of needed country mults
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;   ///< details of needed exchange mults
-//  bool                                                      _known_mult_status;         ///< is the mult status known?
-//  bool                                                      _is_needed_mult;            ///< is this a needed mult?
   enum MODE                                                 _mode;                      ///< mode
   bool                                                      _mult_status_is_known;      ///< true only after calculate_mult_status() has been called
   std::set<std::string>                                     _posters;                   ///< stations that posted this entry
@@ -537,6 +535,10 @@ public:
   inline const bool is_all_time_first(void) const
     { return (n_qsos() == 0); }
 
+/// is the call+band+mode an all-time first, or have we received a qsl for this call+band+mode
+  inline const bool is_new_or_previously_qsled(void) const
+    { return (is_all_time_first() or olog.confirmed(_callsign, _band, _mode)); }
+
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -551,7 +553,6 @@ public:
          & _is_needed_callsign_mult
          & _is_needed_country_mult
          & _is_needed_exchange_mult
-//         & _is_needed_mult
          & _mode
          & _posters
          & _source
@@ -846,6 +847,8 @@ public:
   inline const bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_all_time_first, dirn); }
 
+  inline const bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn)
+    { return needed(&bandmap_entry::is_new_or_previously_qsled, dirn); }
 
 /*! \brief          Find the next station up or down in frequency from a given frequency
     \param  f       starting frequency

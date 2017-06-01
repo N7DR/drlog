@@ -2101,8 +2101,6 @@ void* process_rbn_info(void* vp)
 
               be.calculate_mult_status(rules, statistics);
 
-//              ost << "be after calculate_mult_status: " << be << endl;
-
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
               const bool is_interesting_mode = (rules.score_modes() < be.mode());
@@ -2340,6 +2338,7 @@ void* prune_bandmap(void* vp)
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
     SPACE -- generally, dupe check
     ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
+    ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
     CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
     SHIFT (RIT control)
     ALT-Y -- delete last QSO
@@ -3367,6 +3366,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
+/*
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
   { bandmap& bm = bandmaps[safe_get_band()];
 
@@ -3410,6 +3410,43 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       }
       else                          // be is empty
         finished = true;            // unnecessary
+    }
+
+    processed = true;
+  }
+*/
+
+// ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
+  if (!processed and e.is_alt_and_control() and ((e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
+                                                  or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
+  { bandmap& bm = bandmaps[safe_get_band()];
+
+    typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
+    MEM_FUN_P fn_p = &bandmap::needed_all_time_new_or_qsled;
+
+    const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
+
+    if (!be.empty())
+    { rig.rig_frequency(be.freq());
+      win_call < WINDOW_CLEAR <= be.callsign();
+
+      enter_sap_mode();
+
+// we may require a mode change
+      if (context.multiple_modes())
+      { const MODE m = default_mode(be.freq());
+
+        if (m != safe_get_mode())
+        { rig.rig_mode(m);
+          safe_set_mode(m);
+          display_band_mode(win_band_mode, safe_get_band(), m);
+        }
+      }
+
+      update_based_on_frequency_change(be.freq(), safe_get_mode());
+
+      SAFELOCK(dupe_check);
+      last_call_inserted_with_space = be.callsign();
     }
 
     processed = true;
