@@ -126,7 +126,7 @@ const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
 { if (str.length() == 1)
     return (legal_prec < last_char(str));
 
-  return _is_possible_serno(str) and (legal_prec < last_char(str));
+  return ( _is_possible_serno(str) and (legal_prec < last_char(str)) );
 }
 
 /*! \brief          Does a string contain a possible check?
@@ -144,8 +144,7 @@ const bool parsed_ss_exchange::_is_possible_check(const string& str) const
     return true;
   }
 
-  if (isdigit(str[0]) and isdigit(str[1]))
-    return true;
+  return ( isdigit(str[0]) and isdigit(str[1]) );
 }
 
 /*! \brief          Does a string contain a possible callsign?
@@ -178,7 +177,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 // deal with: B 71 CO 10 N7DR
 // which might be a common case
-  bool target_case = false;
+//  bool target_case = false;
 
   if (received_fields[0].length() == 1 and isalpha(received_fields[0][0]))
   { if (received_fields[1].length() == 2 and isdigit(received_fields[1][0]) and isdigit(received_fields[1][1]))
@@ -238,37 +237,35 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     if (find(possible_sernos.cbegin(), possible_sernos.cend(), possible_check_field) != possible_sernos.cend())
       ambiguous_fields.push_back(possible_check_field);
 
-  ost << "number of ambiguous fields = " << ambiguous_fields.size() << endl;
+//  ost << "number of ambiguous fields = " << ambiguous_fields.size() << endl;
 
 // get the precedence; for this use the last field that is a possible precedence
-  ost << "getting prec" << endl;
+//  ost << "getting prec" << endl;
 
-  int prec_field_nr = -1;
+//  int prec_field_nr = -1;
+//  unsigned int prec_field_nr = numeric_limits<unsigned int>::max();
 
   if (possible_prec.empty() and (_prec == 'Z') )  // _prec unchanged from default
   { ost << "ERROR: no possible precedence in exchange received from " << call << endl;
     for (const auto& field : received_fields)
       ost << field << " : " << endl;
-//    _prec = 'A';    // default
   }
   else
   { if (!possible_prec.empty())
     { const unsigned int field_nr = possible_prec[possible_prec.size() - 1];
 
       _prec = last_char(copy_received_fields[field_nr]);
-      prec_field_nr = static_cast<int>(field_nr);
+//      prec_field_nr = field_nr;
     }
   }
 
 // get the check; for this use the last field that is a possible check
-  ost << "getting check" << endl;
-  int check_field_nr = -1;
+  unsigned int check_field_nr = numeric_limits<unsigned int>::max();
 
   if (possible_check.empty() and (_check == "XX") )  // _check unchanged from default
   { ost << "ERROR: no possible check in exchange received from " << call << endl;
     for (const auto& field : received_fields)
       ost << field << " : " << endl;
-//    _check = 0;    // default
   }
   else
   { if (!possible_check.empty() /* and !is_special */)
@@ -299,30 +296,27 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 // get the callsign, which may or may not be present
   ost << "getting callsign" << endl;
-  int callsign_field_nr = -1;
+//  int callsign_field_nr = -1;
+//  unsigned int callsign_field_nr = numeric_limits<unsigned int>::max();
 
   if (possible_callsigns.empty())
-  { //ost << "ERROR: no possible check in exchange received from " << call << endl;
-    //  for (const auto& field : received_fields)
-     //   ost << field << " : " << endl;
-      _callsign = call;    // default
-  }
+    _callsign = call;    // default
   else
   { const unsigned int field_nr = possible_callsigns[possible_callsigns.size() - 1];
 
     _callsign = copy_received_fields[field_nr];
-    callsign_field_nr = static_cast<int>(field_nr);
+//    callsign_field_nr = static_cast<int>(field_nr);
   }
 
 // get the serno; for this use the last field that is a possible serno and hasn't been used as a check
   ost << "getting serno" << endl;
-  int serno_field_nr = -1;
+//  int serno_field_nr = -1;
+//  unsigned int serno_field_nr = numeric_limits<unsigned int>::max();
 
   if (possible_sernos.empty())
   { ost << "ERROR: no possible serno in exchange received from " << call << endl;
     for (const auto& field : received_fields)
       ost << field << " : " << endl;
-//    _serno = 0;    // default
   }
   else
   { unsigned int field_nr = possible_sernos[possible_sernos.size() - 1];
@@ -350,12 +344,12 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
         }
 
         _serno = from_string<unsigned int>(copy_received_fields[field_nr]);
-        serno_field_nr = static_cast<int>(field_nr);
+//        serno_field_nr = static_cast<int>(field_nr);
       }
     }
     else    // field number is not same as check field number
     { _serno = from_string<unsigned int>(copy_received_fields[field_nr]);  // stops processing when hits a letter
-       serno_field_nr = static_cast<int>(field_nr);
+//       serno_field_nr = static_cast<int>(field_nr);
     }
   }
 
@@ -367,7 +361,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   index = 0;
 
   try
-  { EFT sec_eft = exchange_field_eft.at("SECTION");
+  { const EFT sec_eft = exchange_field_eft.at("SECTION");
     int section_field_nr = -1;
 
     for (const auto& field : copy_received_fields)
@@ -605,7 +599,7 @@ if (truncate_received_values)
 
       if (eft.is_legal_value(rv0))
       { result_map[exchange_field_name] = rv0;
-        found_match - true;
+        found_match = true;
       }
     }
   }
@@ -1118,19 +1112,6 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
     if (!rv.empty())
       return rv;
-
-
-//string rv;
-
-//    if (!drm_line.empty())
-//    { rv = drm_line.qth();
-//
-//      if (!rv.empty())
-//      { _db.insert( { { callsign, field_name }, rv } );
-//
-//        return rv;
-//      }
-//    }
   }
 
   if (field_name == "HADXC")     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
@@ -1664,7 +1645,7 @@ const bool EFT::is_legal_value(const string& str) const
     //if (_legal_non_regex_values.empty())
     //  ost << "There are NO legal non-regex values" << endl;
 
-    const bool b = (_legal_non_regex_values < str);
+//    const bool b = (_legal_non_regex_values < str);
 
 //    if (b)
 //      ost << str << " IS a legal value for " << name() << endl;
@@ -1811,13 +1792,10 @@ sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const str
 //  const static regex check_regex("^[[:digit:]][[:digit:]]$");
 //  const static regex serno_regex("^([[:digit:]])+$");
 
-//  auto is_check = [](const string& target) { return regex_match(target, check_regex); };
-//  auto is_serno = [](const string& target) { return regex_match(target, serno_regex); };
-
-  auto is_check = [](const string& target) { return check_eft.is_legal_value(target); };
-  auto is_serno = [](const string& target) { return serno_eft.is_legal_value(target); };
-  auto is_prec = [](const string& target) { return prec_eft.is_legal_value(target); };
-  auto is_section = [](const string& target) { return section_eft.is_legal_value(target); };
+//  auto is_check = [](const string& target) { return check_eft.is_legal_value(target); };
+//  auto is_serno = [](const string& target) { return serno_eft.is_legal_value(target); };
+//  auto is_prec = [](const string& target) { return prec_eft.is_legal_value(target); };
+//  auto is_section = [](const string& target) { return section_eft.is_legal_value(target); };
 
 
 }

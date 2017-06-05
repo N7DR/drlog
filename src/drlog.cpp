@@ -2585,7 +2585,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
-  if (!processed and e.is_alt() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
+  if (!processed and e.is_alt_and_not_control() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                   or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
   { process_change_in_bandmap_column_offset(e.symbol());
     processed = true;
@@ -3424,7 +3424,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
     typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
     MEM_FUN_P fn_p = &bandmap::needed_all_time_new_or_qsled;
 
-    const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
+    const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
 
     if (!be.empty())
     { rig.rig_frequency(be.freq());

@@ -143,8 +143,8 @@ template<class T> const BAND to_BAND(T f)
 
 // ----------------------------------------------------  frequency  -----------------------------------------------
 
-/*! \class frequency
-    \brief A convenient class for handling frequencies
+/*! \class  frequency
+    \brief  A convenient class for handling frequencies
 */
 
 class frequency
