@@ -1,4 +1,4 @@
-// $Id: bandmap.h 129 2016-09-29 21:13:34Z  $
+// $Id: bandmap.h 138 2017-06-20 21:41:26Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -492,6 +492,13 @@ public:
 */
   const frequency frequency_difference(const bandmap_entry& be) const;
 
+/*! \brief      Return the difference in frequency between two bandmap entries, in +ve hertz
+    \param  be  other bandmap entry
+    \return     absolute difference in hertz between frequency of *this and fequency of <i>be</i>
+*/
+  inline const unsigned int absolute_frequency_difference(const bandmap_entry& be) const
+    { return static_cast<unsigned int>(abs(frequency_difference(be).hz())); }
+
 /*! \brief      Is this bandmap entry less than another one, using callsign order
     \param  be  other bandmap entry
     \return     whether *this is less than <i>be</i>, using callsign order
@@ -599,8 +606,6 @@ protected:
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
-
-     Removes any extant entry at the same frequency as <i>be</i>
 */
   void _insert(const bandmap_entry& be);
 
@@ -905,6 +910,9 @@ public:
     { SAFELOCK(_bandmap);
       _do_not_add.erase(callsign);
     }
+
+/// is a particular call present?
+  const bool is_present(const std::string& target_callsign);
 
 /// convert to a printable string
   const std::string to_str(void);

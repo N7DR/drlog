@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 137 2016-12-15 20:07:54Z  $
+// $Id: drlog_context.h 138 2017-06-20 21:41:26Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,7 +11,7 @@
 #ifndef DRLOG_CONTEXT_H
 #define DRLOG_CONTEXT_H
 
-/*! \file drlog_context.h
+/*! \file   drlog_context.h
 
     The basic context for operation of drlog
 */
@@ -374,15 +374,15 @@ public:
 
   CONTEXTREAD(exchange);                         ///< comma-delimited received exchange
   CONTEXTREAD(exchange_cq);                      ///< exchange in CQ mode
-  SAFEREAD(exchange_fields_filename, _context);         ///< file that holds regex templates of values of exchange fields
-  SAFEREAD(exchange_mults, _context);                   ///< comma-delimited exchange fields that are mults
-  SAFEREAD(exchange_mults_per_band, _context);          ///< are exchange mults per-band?
-  SAFEREAD(exchange_mults_per_mode, _context);          ///< are exchange mults per-mode?
-  SAFEREAD(exchange_per_country, _context);             ///< per-country exchanges; key = prefix-or-call; value = exchange
-  SAFEREAD(exchange_sap, _context);                     ///< exchange in SAP mode
+  CONTEXTREAD(exchange_fields_filename);         ///< file that holds regex templates of values of exchange fields
+  CONTEXTREAD(exchange_mults);                   ///< comma-delimited exchange fields that are mults
+  CONTEXTREAD(exchange_mults_per_band);          ///< are exchange mults per-band?
+  CONTEXTREAD(exchange_mults_per_mode);          ///< are exchange mults per-mode?
+  CONTEXTREAD(exchange_per_country);             ///< per-country exchanges; key = prefix-or-call; value = exchange
+  CONTEXTREAD(exchange_sap);                     ///< exchange in SAP mode
 
-  SAFEREAD(fast_cq_bandwidth, _context);                ///< fast CW bandwidth in CQ mode, in Hz
-  SAFEREAD(fast_sap_bandwidth, _context);               ///< fast CW bandwidth in SAP mode, in Hz
+  CONTEXTREAD(fast_cq_bandwidth);                ///< fast CW bandwidth in CQ mode, in Hz
+  CONTEXTREAD(fast_sap_bandwidth);               ///< fast CW bandwidth in SAP mode, in Hz
 
 /*! \brief      Get the guard band for a particular mode
     \param  m   target mode
@@ -396,18 +396,18 @@ public:
     return  ( (cit == _guard_band.end()) ? 1000 : cit->second );
   }
 
-  SAFEREAD(individual_messages_file, _context);     ///< name of file that contains per-call individual messages
+  CONTEXTREAD(individual_messages_file);     ///< name of file that contains per-call individual messages
 
-  SAFEREAD(keyer_port, _context);                   ///< the device that is to be used as a keyer
+  CONTEXTREAD(keyer_port);                   ///< the device that is to be used as a keyer
 
-  SAFEREAD(logfile, _context);                      ///< name of the log file
-  SAFEREAD(long_t, _context);                       ///< whether to extend length of initial Ts in serial number
+  CONTEXTREAD(logfile);                      ///< name of the log file
+  CONTEXTREAD(long_t);                       ///< whether to extend length of initial Ts in serial number
 
-  SAFEREAD(mark_frequencies, _context);             ///< frequency ranges to be marked on-screen
-  CONTEXTREAD(mark_mode_break_points);              ///< whether to mark the mode break points on the bandmap
-  SAFEREAD(match_minimum, _context);                ///< number of characters before SCP or fuzzy match kicks in
-  SAFEREAD(messages, _context);                     ///< CW messages
-  SAFEREAD(message_cq_1, _context);                 ///< CQ message #1 (generally, a short CQ)
+  CONTEXTREAD(mark_frequencies);             ///< frequency ranges to be marked on-screen
+  CONTEXTREAD(mark_mode_break_points);       ///< whether to mark the mode break points on the bandmap
+  CONTEXTREAD(match_minimum);                ///< number of characters before SCP or fuzzy match kicks in
+  CONTEXTREAD(messages);                     ///< CW messages
+  CONTEXTREAD(message_cq_1);                 ///< CQ message #1 (generally, a short CQ)
   SAFEREAD(message_cq_2, _context);                 ///< CQ message #2 (generally, a long CQ)
   SAFEREAD(modes, _context);                        ///< comma-delimited modes CW, SSB
   SAFEREAD(mode_break_points, _context);            ///< override default mode break points

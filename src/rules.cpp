@@ -1,4 +1,4 @@
-// $Id: rules.cpp 130 2016-10-31 23:04:05Z  $
+// $Id: rules.cpp 138 2017-06-20 21:41:26Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -509,7 +509,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _callsign_mults_per_mode = context.callsign_mults_per_mode();
   _callsign_mults_used = !_callsign_mults.empty();
 
-//  _country_mults_used = !_country_mults.empty();
   _country_mults_per_band = context.country_mults_per_band();
   _country_mults_per_mode = context.country_mults_per_mode();
   _per_band_country_mult_factor = context.per_band_country_mult_factor();
@@ -618,13 +617,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { pb.insert( { b, EMPTY_PS } );  // default is no points
 
       points_structure points_this_band;
-      MSI     country_points_this_band;
-      MSI     continent_points_this_band;
+      MSI continent_points_this_band;
+      MSI country_points_this_band;
 
 // parse the config file
       string context_points = context.points(b, m);
-
-//      ost << "band/mode = " << BAND_NAME[b] << "/" << MODE_NAME[m] << "; points string = " << context_points << endl;
 
       if (context_points == "IARU")  // special
       { points_structure ps = pb[b];
@@ -749,7 +746,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // parse file
     if (read_file_ok)
-    { vector<string> lines = split_string(entire_file, EOL_CHAR);
+    { const vector<string> lines = split_string(entire_file, EOL_CHAR);
       map<string /* canonical value */, set<string> > map_canonical_to_all;
 
       for (const auto& line : lines)
@@ -790,8 +787,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // generate the sets of all acceptable values
   const set<string> field_names = all_known_field_names();
 
-  for (const auto& field_name : field_names)
-    _permitted_exchange_values.insert( { field_name, _all_exchange_values(field_name) } );
+//  for (const auto& field_name : field_names)
+//    _permitted_exchange_values.insert( { field_name, _all_exchange_values(field_name) } );
+  FOR_ALL(field_names, [&] (const string& field_name) { _permitted_exchange_values.insert( { field_name, _all_exchange_values(field_name) } ); });
 
 // generate all the mappings from permitted to canonical values
   for (auto cit = _exch_values.cbegin(); cit != _exch_values.cend(); ++cit)

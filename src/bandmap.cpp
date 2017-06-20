@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 137 2016-12-15 20:07:54Z  $
+// $Id: bandmap.cpp 138 2017-06-20 21:41:26Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -229,6 +229,10 @@ const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 { if ((be.is_my_marker()) or is_my_marker())       // mustn't delete a valid call if we're updating my QRG
     return (_callsign == be._callsign);
 
+// do not ever remove a mode marker
+//  if (be.is_mode_marker() or is_mode_marker())
+//    return false;
+
   return ((_callsign == be._callsign) or (_frequency_str == be._frequency_str));  // neither bandmap_entry is at my QRG
 }
 
@@ -396,8 +400,6 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
-
-     Removes any extant entry at the same frequency as <i>be</i>
 */
 void bandmap::_insert(const bandmap_entry& be)
 { SAFELOCK(_bandmap);
@@ -512,6 +514,9 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if ( (be.source() == BANDMAP_ENTRY_LOCAL) or (be.source() == BANDMAP_ENTRY_CLUSTER) )
     return true;
 
+  if (be.is_marker())           // don't mark markers as recent, if somehow we got here with a marker as parameter (which should nevre happen)
+    return false;
+
   SAFELOCK(_bandmap);
 
   bandmap_entry old_be = (*this)[be.callsign()];
@@ -519,7 +524,7 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if (!old_be.valid())    // not already present
     return false;
 
-  if (be.frequency_difference(old_be).hz() > MAX_FREQUENCY_SKEW)       // treat anything within 250 Hz as the same frequency
+  if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)       // treat anything within 250 Hz as the same frequency
     return false;         // we're going to write a new entry
 
 // RBN poster
@@ -528,10 +533,7 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if (n_new_posters != 1)
     ost << "in _mark_as_recent: Error: number of posters = " << n_new_posters << " for post for " << be.callsign() << endl;
   else
-  { //const string& poster = *(be.posters().cbegin());
-
     return (old_be.is_poster( *(be.posters().cbegin()) ));
-  }
 
   return false;    // should never get here
 }
@@ -540,7 +542,8 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
      \param be  entry to add
 */
 void bandmap::operator+=(const bandmap_entry& be)
-{ const string& callsign = be.callsign();
+{ const bool mode_marker_is_present = is_present(MODE_MARKER);
+  const string& callsign = be.callsign();
 
 // do not add if it's already been done recently, or matches several other conditions
   bool add_it = !(_do_not_add < callsign);
@@ -630,6 +633,9 @@ void bandmap::operator+=(const bandmap_entry& be)
 
     _dirty_entries();
   }
+
+  if (mode_marker_is_present and !is_present(MODE_MARKER))
+    ost << "*** ERROR: MODE MARKER HAS BEEN REMOVED BY BANDMAP_ENTRY: " << be << endl;
 }
 
 /// prune the bandmap
@@ -1064,6 +1070,13 @@ const string bandmap::to_str(void)
     rv += to_string(be) + EOL;
 
   return rv;
+}
+
+/// is a particular call present?
+const bool bandmap::is_present(const string& target_callsign)
+{ SAFELOCK(_bandmap);
+
+  return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 }
 
 /// window < bandmap

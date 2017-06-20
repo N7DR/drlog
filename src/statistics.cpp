@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 137 2016-12-15 20:07:54Z  $
+// $Id: statistics.cpp 138 2017-06-20 21:41:26Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -179,7 +179,6 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
       const multiplier& mult = sm.second;
       unsigned int total = 0;
-
       const MODE m = ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE);
 
       for (const auto& b : permitted_bands)
@@ -292,9 +291,10 @@ running_statistics::running_statistics(const cty_data& country_data, const drlog
   _qtc_qsos_sent(0),
   _qtc_qsos_unsent(0),
   _include_qtcs(rules.send_qtcs())
-{ const vector<string>& exchange_mults = rules.exchange_mults();
+{ //const vector<string>& exchange_mults = rules.exchange_mults();
 
-  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
+//  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
+  FOR_ALL(rules.exchange_mults(), [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
 }
 
 /*! \brief                  Prepare an object that was created with the default constructor
@@ -307,7 +307,6 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
   _include_qtcs = rules.send_qtcs();
   _callsign_mults_used = rules.callsign_mults_used();
-//  _country_mults_used  = rules.country_mults_used();
   _exchange_mults_used = rules.exchange_mults_used();
 
   _location_db.prepare(country_data, context.country_list());
@@ -412,9 +411,8 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
   { SAFELOCK(statistics);
 
     const string canonical_prefix = _location_db.canonical_prefix(callsign);
-//    const bool is_needed = ( (_country_multipliers.is_known(canonical_prefix)) and !(_country_multipliers.is_worked(canonical_prefix, b, m)) );
 // we should count the mult even if it hasn't been seen enough times to be known yet
-    const bool is_needed = ( /* (_country_multipliers.is_known(canonical_prefix)) and */ !(_country_multipliers.is_worked(canonical_prefix, b, m)) );
+    const bool is_needed = !(_country_multipliers.is_worked(canonical_prefix, b, m));
 
     return is_needed;
   }
@@ -434,11 +432,6 @@ const bool running_statistics::add_known_country_mult(const string& str, const c
 { SAFELOCK(statistics);
 
   return ( (rules.country_mults() < str) ? _country_multipliers.add_known(str) : false );
-
-//  if (rules.country_mults() < str)                  // all the legal country mults
-//    return (_country_multipliers.add_known(str));
-
-//  return false;
 }
 
 /*! \brief          Add a QSO to the ongoing statistics
@@ -519,11 +512,7 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
 
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == name)
-    { //const bool added = psm.second.add_known(MULT_VALUE(name, value));
-
-      //if (added)
-     //   return true;
-      if (psm.second.add_known(MULT_VALUE(name, value)))
+    { if (psm.second.add_known(MULT_VALUE(name, value)))
         return true;
     }
   }
@@ -563,12 +552,9 @@ const bool running_statistics::add_worked_exchange_mult(const string& field_name
   SAFELOCK(statistics);
 
   for (auto& psm : _exchange_multipliers)
-    if (psm.first == field_name)
-    { //const bool rv = (psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)));
-
-      //return rv;
+  { if (psm.first == field_name)
       return ( psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)) );
-    }
+  }
 
   return false;
 }

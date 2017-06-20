@@ -1,4 +1,4 @@
-// $Id: log.cpp 129 2016-09-29 21:13:34Z  $
+// $Id: log.cpp 138 2017-06-20 21:41:26Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file log.cpp
+/*! \file   log.cpp
 
-        Classes and functions related to the log
+    Classes and functions related to the log
 */
 
 #include "cabrillo.h"
@@ -30,8 +30,8 @@ extern string VERSION;          ///< version string
 
 // -----------  logbook  ----------------
 
-/*! \class logbook
-    \brief The log
+/*! \class  logbook
+    \brief  The log
 */
 
 /*! \brief      Is one QSO earlier than another?
@@ -689,8 +689,8 @@ const QSO logbook::remove_last_qso(void)
 
 // -----------  log_extract  ----------------
 
-/*! \class log_extract
-    \brief Support for bits of the log
+/*! \class  log_extract
+    \brief  Support for bits of the log
 */
 
 /*! \brief  constructor
@@ -792,8 +792,8 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
 // -----------  old_log  ----------------
 
-/*! \class old_log
-    \brief An old ADIF log
+/*! \class  old_log
+    \brief  An old ADIF log
 
     Not thread safe, so create once and then never change.
 */
@@ -890,12 +890,24 @@ const unsigned int old_log::increment_n_qsos(const string& call)
   return rv;
 }
 
+/*! \brief          How many QSOs have taken place with a particular call on a a particular band and mode
+    \param  call    target callsign
+    \param  b       target band
+    \param  m       target mode
+    \return         number of QSOs associated with with <i>call</i> on band <i>b</i> and mode <i>m</i>
+*/
 const unsigned int old_log::n_qsos(const string& call, const BAND b, const MODE m) const
 { const auto cit = _olog.find(call);
 
   return (cit == _olog.cend() ? 0 : get<3>(cit->second).count( { b, m } ));
 }
 
+/*! \brief          Increment the number of QSOs associated with a particular callsign, band and mode
+    \param  call    target callsign
+    \param  b       target band
+    \param  m       target mode
+    \return         number of QSOs associated with with <i>call</i> on band <i>b</i> and mode <i>m</i> (following the increment)
+*/
 const unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const MODE m)
 { auto it = _olog.find(call);
 
@@ -909,6 +921,12 @@ const unsigned int old_log::increment_n_qsos(const string& call, const BAND b, c
   return n_qsos(call, b, m);
 }
 
+/*! \brief          Has a QSL ever been received for a particular call on a a particular band and mode
+    \param  call    target callsign
+    \param  b       target band
+    \param  m       target mode
+    \return         Has a QSL ever been received for a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i>
+*/
 const bool old_log::confirmed(const string& call, const BAND b, const MODE m) const
 { const auto cit = _olog.find(call);
 
@@ -918,6 +936,11 @@ const bool old_log::confirmed(const string& call, const BAND b, const MODE m) co
   return (get<2>(cit->second) < ( pair<BAND, MODE>( { b, m } ) ) );
 }
 
+/*! \brief          Mark a QSL as being received for a particular call on a particular band and mode
+    \param  call    target callsign
+    \param  b       target band
+    \param  m       target mode
+*/
 void old_log::qsl_received(const string& call, const BAND b, const MODE m)
 { auto it = _olog.find(call);
 

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 137 2016-12-15 20:07:54Z  $
+// $Id: drlog_context.cpp 138 2017-06-20 21:41:26Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,11 +8,12 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file drlog_context.cpp
+/*! \file   drlog_context.cpp
 
-        The basic context for operation of drlog
+    The basic context for operation of drlog
 */
 
+//#include "bands-modes.h"
 #include "diskfile.h"
 #include "drlog_context.h"
 #include "exchange.h"
@@ -71,11 +72,11 @@ void drlog_context::_set_points(const string& command, const MODE m)
     const string lhs = str_vec[0];
     auto& pbb = _per_band_points[m];
 
-    if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
+    if (!contains(lhs, "[") or contains(lhs, "[*]"))            // for all bands
     { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
         pbb.insert( { static_cast<BAND>(n), RHS } );
     }
-    else    // not all bands
+    else                                                        // not all bands
     { size_t left_bracket_posn = lhs.find('[');
       size_t right_bracket_posn = lhs.find(']');
 
@@ -85,8 +86,11 @@ void drlog_context::_set_points(const string& command, const MODE m)
       { const string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
         const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
 
-        for (size_t n = 0; n < bands.size(); ++n)
-        { const int wavelength = from_string<size_t>(bands[n]);
+//        for (size_t n = 0; n < bands.size(); ++n)
+        for (const auto b_str : bands)
+        {
+#if 0
+          const int wavelength = from_string<size_t>(bands[n]);
           BAND b;
 
           switch (wavelength)
@@ -123,6 +127,8 @@ void drlog_context::_set_points(const string& command, const MODE m)
             default :
               continue;
           }
+#endif
+          const BAND b = BAND_FROM_NAME[b_str];
 
           pbb.insert( { b, RHS } );
         }
@@ -148,7 +154,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     exit(-1);
   }
 
-  static const string LF_STR   = "\n";      ///< LF as string
+//  static const string LF_STR   = "\n";      ///< LF as string
 
   const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
 
@@ -249,7 +255,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "BAND MAP FILTER COLOURS") or (LHS == "BAND MAP FILTER COLORS") or
          (LHS == "BANDMAP FILTER COLOURS") or (LHS == "BANDMAP FILTER COLORS") )
     { if (!RHS.empty())
-      { vector<string> colours = split_string(RHS, ",");
+      { const vector<string> colours = split_string(RHS, ",");
 
         if (colours.size() >= 1)
           _bandmap_filter_foreground_colour = string_to_colour(colours[0]);
@@ -285,10 +291,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "BAND MAP RECENT COLOUR") or (LHS == "BANDMAP RECENT COLOUR") or
          (LHS == "BANDMAP RECENT COLOR") or (LHS == "BANDMAP RECENT COLOR") )
     { if (!RHS.empty())
-      { string name = remove_peripheral_spaces(RHS);
-
-        _bandmap_recent_colour = string_to_colour(name);
-      }
+        _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces(RHS));
     }
 
 // BANDS
@@ -324,7 +327,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CLUSTER PORT
     if (LHS == "CLUSTER PORT")
-      _cluster_port = from_string<int>(rhs);
+      _cluster_port = from_string<unsigned int>(rhs);
 
 // CLUSTER SERVER
     if (LHS == "CLUSTER SERVER")
@@ -378,8 +381,11 @@ void drlog_context::_process_configuration_file(const string& filename)
           { const string bands_str = delimited_substring(lhs, '[', ']');
             const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
 
-            for (size_t n = 0; n < bands.size(); ++n)
-            { int wavelength = from_string<size_t>(bands[n]);
+//            for (size_t n = 0; n < bands.size(); ++n)
+            for (const auto b_str: bands)
+            {
+#if 0
+              int wavelength = from_string<size_t>(bands[n]);
               BAND b;
 
               switch (wavelength)
@@ -416,7 +422,8 @@ void drlog_context::_process_configuration_file(const string& filename)
                 default :
                   continue;
               }
-
+#endif
+              const BAND b = BAND_FROM_NAME[b_str];
               string new_str;
 
               for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
@@ -939,7 +946,6 @@ void drlog_context::_process_configuration_file(const string& filename)
 // Currently supported: ALL
 //                      NONE
 // any single continent
-//    if (starts_with(testline, "COUNTRY MULTS") and !starts_with(testline, "COUNTRY MULTS PER"))
     if (LHS == "COUNTRY MULTS")
     { _country_mults_filter = RHS;
 
@@ -1405,16 +1411,16 @@ drlog_context::drlog_context(const std::string& filename) :
   _cabrillo_address_3(),                                            // third line of Cabrillo ADDRESS
   _cabrillo_address_4(),                                            // fourth line of Cabrillo ADDRESS
   _cabrillo_address_city(),                                         // CITY in Cabrillo file
-  _cabrillo_address_country(),
-  _cabrillo_address_postalcode(),
-  _cabrillo_address_state_province(),
-  _cabrillo_callsign(),                       // CALLSIGN in Cabrillo file
-  _cabrillo_category_assisted("ASSISTED"),
-  _cabrillo_category_band("ALL"),
-  _cabrillo_category_mode(),
-  _cabrillo_category_operator("SINGLE-OP"),
-  _cabrillo_category_overlay(),
-  _cabrillo_category_power("HIGH"),
+  _cabrillo_address_country(),                                      // COUNTRY in Cabrillo file
+  _cabrillo_address_postalcode(),                                   // POSTALCODE in Cabrillo file
+  _cabrillo_address_state_province(),                               // PROVINCE in Cabrillo file
+  _cabrillo_callsign(),                                             // CALLSIGN in Cabrillo file
+  _cabrillo_category_assisted("ASSISTED"),                          // default is ASSISTED
+  _cabrillo_category_band("ALL"),                                   // default is all bands
+  _cabrillo_category_mode(),                                        // no default, must be filled in by the config file
+  _cabrillo_category_operator("SINGLE-OP"),                         // default is single op
+  _cabrillo_category_overlay(),                                     // no overlay
+  _cabrillo_category_power("HIGH"),                                 // defauklt is high power
   _cabrillo_category_station(),
   _cabrillo_category_time(),
   _cabrillo_category_transmitter("ONE"),
