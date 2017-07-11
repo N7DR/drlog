@@ -28,6 +28,19 @@
 
 using namespace std;
 
+/*! \brief              Does a file exist?
+    \param  filename    name of file
+    \return             whether file <i>filename</i> exists
+
+    Actually checks for existence AND readability, which is much simpler
+    than checking for existence. See:
+      https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
+*/
+const bool file_exists(const string& filename)
+{ struct stat buffer;
+  return (stat (filename.c_str(), &buffer) == 0);
+}
+
 /*! \brief              What is the size of a file?
     \param  filename    name of file
     \return             length of the file <i>filename</i> in bytes

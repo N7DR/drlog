@@ -171,6 +171,8 @@ boost::serialization::split_free(ar, t, file_version);
 // The following allows boost serialization to work transparently with STL arrays, see:
 //   http://stackoverflow.com/questions/11585273/using-boost-serialization-with-stl-containers-as-template-parameters
 
+#if 0
+
 #include <array>
 
 namespace boost
@@ -184,6 +186,8 @@ template<class Archive, class T, size_t N>
 
   } // namespace serialization
 } // namespace boost
+
+#endif
 
 // neither does it work for unordered maps
 

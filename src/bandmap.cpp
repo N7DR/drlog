@@ -551,6 +551,13 @@ void bandmap::operator+=(const bandmap_entry& be)
   if (add_it)
     add_it = !((be.source() != BANDMAP_ENTRY_LOCAL) and is_recent_call(callsign));
 
+// could make this more efficient by having a global container of the mode-marker bandmap entries
+  if (add_it and mode_marker_is_present)
+  { const bandmap_entry mode_marker_be = (*this)[MODE_MARKER];    // assumes only one mode marker
+
+    add_it = (be.frequency_difference(mode_marker_be).hz() > MAX_FREQUENCY_SKEW);
+  }
+
   if (add_it)
   { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going got mark this as a recent call
     bandmap_entry old_be;

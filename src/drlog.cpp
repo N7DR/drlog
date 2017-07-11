@@ -3335,7 +3335,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   { bandmap& bm = bandmaps[safe_get_band()];
 
     typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
-    MEM_FUN_P fn_p = &bandmap::needed_all_time_new;
+    MEM_FUN_P fn_p = &bandmap::needed_all_time_new_and_needed_qso;
 
     const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
 

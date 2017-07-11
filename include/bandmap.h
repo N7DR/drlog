@@ -534,13 +534,17 @@ public:
 /// guess the mode
   const MODE putative_mode(void) const;
 
-/// how many QSOs have we had with this callsign, band and mode?
+/// how many QSOs have we had (before this contest) with this callsign, band and mode?
   inline const unsigned int n_qsos(void) const
     { return olog.n_qsos(_callsign, _band, _mode); }
 
 /// is this call+band+mode an all-time first?
   inline const bool is_all_time_first(void) const
     { return (n_qsos() == 0); }
+
+/// is this call+band+mode an all-time first and also a needed QSO?
+  inline const bool is_all_time_first_and_needed_qso(void) const
+    { return (is_all_time_first() and is_needed()); }
 
 /// is the call+band+mode an all-time first, or have we received a qsl for this call+band+mode
   inline const bool is_new_or_previously_qsled(void) const
@@ -852,6 +856,21 @@ public:
   inline const bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_all_time_first, dirn); }
 
+/*!  \brief         Find the next needed stn that is also an all-time new call+band+mode, up or down in frequency from the current location
+     \param dirn    direction in which to search
+     \return        bandmap entry (if any) corresponding to the next station in the direction <i>dirn</i> that is needed and an all-time new call+band+mode
+
+     The return value can be tested with .empty() to see if a station was found
+*/
+  inline const bandmap_entry needed_all_time_new_and_needed_qso(const enum BANDMAP_DIRECTION dirn)
+    { return needed(&bandmap_entry::is_all_time_first_and_needed_qso, dirn); }
+
+/*!  \brief         Find the next stn that has QSLed and that is also an all-time new call+band+mode, up or down in frequency from the current location
+     \param dirn    direction in which to search
+     \return        bandmap entry (if any) corresponding to the next station in the direction <i>dirn</i> that has QSLed and is an all-time new call+band+mode
+
+     The return value can be tested with .empty() to see if a station was found
+*/
   inline const bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_new_or_previously_qsled, dirn); }
 
