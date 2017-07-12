@@ -854,6 +854,8 @@ int main(int argc, char** argv)
         be.freq(MODE_BREAK_POINT[b]);
 
         bm += be;
+
+        bm.mode_marker_frequency(MODE_BREAK_POINT[b]);
       }
     }
 

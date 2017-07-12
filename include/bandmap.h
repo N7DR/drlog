@@ -583,8 +583,8 @@ typedef const bool (bandmap_entry::* PREDICATE_FUN_P)(void) const;
 
 // -----------  bandmap  ----------------
 
-/*!     \class bandmap
-        \brief A bandmap
+/*! \class  bandmap
+    \brief  A bandmap
 */
 
 class bandmap
@@ -599,6 +599,7 @@ protected:
   decltype(_entries)        _filtered_entries;                          ///< entries, with the filter applied
   bool                      _filtered_entries_dirty;                    ///< is the filtered version dirty?
   bandmap_filter_type*      _filter_p;                                  ///< pointer to a bandmap filter
+  frequency                 _mode_marker_frequency;                     ///< the frequency of the mode marker
   unsigned int              _rbn_threshold;                             ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)        _rbn_threshold_and_filtered_entries;        ///< entries, with the filter and RBN threshold applied
   bool                      _rbn_threshold_and_filtered_entries_dirty;  ///< is the RBN threshold and filtered version dirty?
@@ -639,6 +640,8 @@ public:
 /// default constructor
   bandmap(void);
 
+  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
+
 /// get the current bandmap filter
   inline const bandmap_filter_type bandmap_filter(void)
   { SAFELOCK (_bandmap);
@@ -660,36 +663,40 @@ public:
     }
   
 /// all the entries in the bandmap
-  inline const BM_ENTRIES entries(void)
-    { SAFELOCK(_bandmap);
-      return _entries;
-    }
+//  inline const BM_ENTRIES entries(void)
+//    { SAFELOCK(_bandmap);
+//      return _entries;
+//    }
+  SAFEREAD_WITH_INTERNAL_MUTEX(entries, _bandmap);
     
 /// the colours used as entries age
-  inline const std::vector<int> fade_colours(void)
-    { SAFELOCK(_bandmap);
-      return _fade_colours;
-    }
+//  inline const std::vector<int> fade_colours(void)
+//    { SAFELOCK(_bandmap);
+//      return _fade_colours;
+//    }
+  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(fade_colours, _bandmap);
 
 /*!  \brief     Set the colours to use as entries age
      \param fc  vector of colours to use as entries age; most recent entries first
 */
-  inline void fade_colours(const std::vector<int> fc)
-    { SAFELOCK(_bandmap);
-      _fade_colours = fc;
-    }
+//  inline void fade_colours(const std::vector<int> fc)
+//    { SAFELOCK(_bandmap);
+//      _fade_colours = fc;
+//    }
 
 /// the colour used for recent entries
-  inline const int recent_colour(void)
-    { SAFELOCK(_bandmap);
-      return _recent_colour;
-    }
+  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(recent_colour, _bandmap);
+
+//  inline const int recent_colour(void)
+//    { SAFELOCK(_bandmap);
+//      return _recent_colour;
+//    }
 
 /// set the colour used for recent entries
-  inline void recent_colour(const int rc)
-    { SAFELOCK(_bandmap);
-      _recent_colour = rc;
-    }
+//  inline void recent_colour(const int rc)
+//    { SAFELOCK(_bandmap);
+//      _recent_colour = rc;
+//    }
 
 /*!  \brief     Add a bandmap_entry
      \param be  entry to add

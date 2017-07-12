@@ -52,6 +52,18 @@
 
 #endif    // !SAFE_READ_AND_WRITE
 
+/// Read and write with mutex that is part of the object
+#if (!defined(SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX))
+
+/// Syntactic sugar for read/write access
+#define SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(y, z)                                           \
+/*! Read access to _##y */                                                  \
+  inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }  \
+/*! Write access to _##y */                                                 \
+  inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
+
+#endif    // !SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX
+
 #if (!defined(READ))
 
 /// Syntactic sugar for read-only access
@@ -69,6 +81,16 @@
   inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD
+
+#if (!defined(SAFEREAD_WITH_INTERNAL_MUTEX))
+
+/// Syntactic sugar for read-only access
+#define SAFEREAD_WITH_INTERNAL_MUTEX(y, z)                                                      \
+/*! Read-only access to _##y */                                             \
+  inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
+
+#endif    // !SAFEREAD
+
 
 // classes for tuples... it seems like there should be a way to do this with TMP,
 // but the level-breaking caused by the need to control textual names seems to make

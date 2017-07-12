@@ -429,10 +429,11 @@ void bandmap::_dirty_entries(void)
 
 /// default constructor
 bandmap::bandmap(void) :
-  _filter_p(&BMF),
   _column_offset(0),
-  _rbn_threshold(1),
   _filtered_entries_dirty(false),
+  _filter_p(&BMF),
+  _mode_marker_frequency(frequency(0)),
+  _rbn_threshold(1),
   _rbn_threshold_and_filtered_entries_dirty(false),
   _recent_colour(string_to_colour("BLACK"))
 { }
@@ -542,7 +543,8 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
      \param be  entry to add
 */
 void bandmap::operator+=(const bandmap_entry& be)
-{ const bool mode_marker_is_present = is_present(MODE_MARKER);
+{ //const bool mode_marker_is_present = is_present(MODE_MARKER);
+  const bool mode_marker_is_present = (_mode_marker_frequency.hz() != 0);
   const string& callsign = be.callsign();
 
 // do not add if it's already been done recently, or matches several other conditions
@@ -555,7 +557,8 @@ void bandmap::operator+=(const bandmap_entry& be)
   if (add_it and mode_marker_is_present)
   { const bandmap_entry mode_marker_be = (*this)[MODE_MARKER];    // assumes only one mode marker
 
-    add_it = (be.frequency_difference(mode_marker_be).hz() > MAX_FREQUENCY_SKEW);
+//    add_it = (be.absolute_frequency_difference(mode_marker_be) > MAX_FREQUENCY_SKEW);
+    add_it = (abs(be.freq() - _mode_marker_frequency) > MAX_FREQUENCY_SKEW);
   }
 
   if (add_it)
@@ -568,7 +571,7 @@ void bandmap::operator+=(const bandmap_entry& be)
     { old_be = (*this)[callsign];
 
       if (old_be.valid())
-      { if (be.frequency_difference(old_be).hz() > MAX_FREQUENCY_SKEW)  // if not within 250 Hz
+      { if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // if not within 250 Hz
         { (*this) -= callsign;
           _insert(be);
         }
