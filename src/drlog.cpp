@@ -7043,7 +7043,8 @@ const string active_window_name(void)
 /*! \brief              Display a callsign in the NEARBY window, in the correct colour
     \param  callsign    call to display
 
-    Also displays log extract data if context.nearby_extract() is true
+    Also displays log extract data if context.nearby_extract() is true, and QSL information if
+    the CALL window is empty
 */
 void display_nearby_callsign(const string& callsign)
 { if (callsign.empty())
@@ -7075,6 +7076,10 @@ void display_nearby_callsign(const string& callsign)
     { extract = logbk.worked( callsign );
       extract.display();
     }
+
+// display QSL information if the CALL window is empty
+    if (win_call.empty())
+      update_qsls_window(callsign);
   }
 }
 

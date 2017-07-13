@@ -272,7 +272,6 @@ protected:
   std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
-//  bool                                _country_mults_used;            ///< are country mults used?
   std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
 
   std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
@@ -444,28 +443,27 @@ public:
   inline const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
     { return _exchange_fields(canonical_prefix, m, true); }
 
-  SAFEREAD(country_mults, rules);       ///< collection of canonical prefixes of country multipliers
-  SAFEREAD(callsign_mults, rules);      ///< collection of types of mults based on callsign (e.g., "WPXPX")
+  SAFEREAD(callsign_mults, rules);                      ///< collection of types of mults based on callsign (e.g., "WPXPX")
+  SAFEREAD(callsign_mults_per_band, rules);             ///< are callsign mults counted per-band?
+  SAFEREAD(callsign_mults_per_mode, rules);             ///< are callsign mults counted per-mode?
+  SAFEREAD(callsign_mults_used, rules);                 ///< are callsign mults used?
+
+  SAFEREAD(country_mults, rules);                       ///< collection of canonical prefixes of country multipliers
+  SAFEREAD(country_mults_per_band, rules);              ///< are country mults counted per-band?
+  SAFEREAD(country_mults_per_mode, rules);              ///< are country mults counted per-mode?
+
+  SAFEREAD(exchange_mults, rules);                      ///< the exchange multipliers, in the same order as in the configuration file
+  SAFEREAD(exchange_mults_per_band, rules);             ///< are exchange mults counted per-band?
+  SAFEREAD(exchange_mults_per_mode, rules);             ///< are exchange mults counted per-mode?
+  SAFEREAD(exchange_mults_used, rules);                 ///< are exchange mults used?
 
   SAFEREAD(per_band_country_mult_factor, rules);         ///< factor by which to multiply number of country mults, per band (see WAE rules)
 
-  SAFEREAD(callsign_mults_per_band, rules);              ///< are callsign mults counted per-band?
-  SAFEREAD(country_mults_per_band, rules);               ///< are country mults counted per-band?
-  SAFEREAD(exchange_mults_per_band, rules);              ///< are exchange mults counted per-band?
-
-  SAFEREAD(callsign_mults_per_mode, rules);              ///< are callsign mults counted per-mode?
-  SAFEREAD(country_mults_per_mode, rules);               ///< are country mults counted per-mode?
-  SAFEREAD(exchange_mults_per_mode, rules);              ///< are exchange mults counted per-mode?
-
-  SAFEREAD(callsign_mults_used, rules);                  ///< are callsign mults used?
-//  SAFEREAD(country_mults_used, rules);                   ///< are country mults used?
-  SAFEREAD(exchange_mults_used, rules);                  ///< are exchange mults used?
 
   SAFEREAD(score_bands, rules);                 ///< bands currently used to calculate score
   SAFEREAD(original_score_bands, rules);        ///< bands that were originally used to calculate score (from the configuration file)
   SAFEREAD(score_modes, rules);                 ///< modes currently used to calculate score
   SAFEREAD(original_score_modes, rules);        ///< modes that were originally used to calculate score (from the configuration file)
-  SAFEREAD(exchange_mults, rules);              ///< the exchange multipliers, in the same order as in the configuration file
   SAFEREAD(expanded_exchange_mults, rules);     ///< expanded exchange multipliers
 
   SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?

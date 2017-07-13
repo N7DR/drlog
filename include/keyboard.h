@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file keyboard.h
+/*! \file keyboard.h
 
-        Classes and functions related to obtaining and processing keyboard input
+    Classes and functions related to obtaining and processing keyboard input
 */
 
 #ifndef KEYBOARD_H
@@ -166,11 +166,10 @@ public:
     { return (is_alt() and (_str == create_string(c))); }
 };
 
-
 // -------------------------------------  keyboard_queue  ---------------------------
 
-/*!     \class  keyboard_queue
-        \brief  The basic queue of keyboard events, which is just a wrapper around an STL deque
+/*! \class  keyboard_queue
+    \brief  The basic queue of keyboard events, which is just a wrapper around an STL deque
 */
 
 class keyboard_queue
@@ -213,7 +212,7 @@ public:
 /// move any pending X keyboard events to the queue
   void process_events(void);
 
-/*! \brief  what event is at the front of the queue?
+/*! \brief  What event is at the front of the queue?
 
     Returns the default keyboad_event() if the queue is empty
 */

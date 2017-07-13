@@ -548,7 +548,8 @@ public:
 
 /// is the call+band+mode an all-time first, or have we received a qsl for this call+band+mode
   inline const bool is_new_or_previously_qsled(void) const
-    { return (is_all_time_first() or olog.confirmed(_callsign, _band, _mode)); }
+//    { return (is_all_time_first() or olog.confirmed(_callsign, _band, _mode)); }
+    { return (is_all_time_first_and_needed_qso() or olog.confirmed(_callsign, _band, _mode)); }
 
 /// archive using boost serialization
   template<typename Archive>
