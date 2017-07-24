@@ -54,8 +54,8 @@ const std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 
 // -----------   needed_mult_details ----------------
 
-/*!     \class needed_mult_details
-        \brief Encapsulate the details of a type of mult associated with a bandmap entry
+/*! \class  needed_mult_details
+    \brief  Encapsulate the details of a type of mult associated with a bandmap entry
 */
 
 template<typename T>
@@ -188,17 +188,17 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<T>& nmd)
 
 // -----------   bandmap_filter_type ----------------
 
-/*! \class bandmap_filter_type
-    \brief Control bandmap filtering
+/*! \class  bandmap_filter_type
+    \brief  Control bandmap filtering
 */
 
 class bandmap_filter_type
 {
 protected:
 
+  std::vector<std::string>  _continents;     ///< continents to filter
   bool                      _enabled;        ///< is bandmap filtering enabled?
   bool                      _hide;           ///< are we in hide mode? (as opposed to show)
-  std::vector<std::string>  _continents;     ///< continents to filter
   std::vector<std::string>  _prefixes;       ///< canonical country prefixes to filter
 
 public:
@@ -209,9 +209,9 @@ public:
     _hide(true)
   { }
 
+  READ(continents);                             ///< continents to filter
   READ_AND_WRITE(enabled);                      ///< is bandmap filtering enabled?
   READ_AND_WRITE(hide);                         ///< are we in hide mode? (as opposed to show)
-  READ(continents);                             ///< continents to filter
   READ(prefixes);                               ///< canonical country prefixes to filter
 
 /*! \brief      All the continents and canonical prefixes that are currently being filtered
@@ -476,7 +476,7 @@ public:
     \param  rules       rules for the contest
     \param  q_history   history of all the QSOs
     \param  statistics  statistics for the contest so far
-    \return             whether there are any changes in needed/mult status
+    \return             whether there were any changes in needed/mult status
 
     <i>statistics</i> must be updated to be current before this is called
 */

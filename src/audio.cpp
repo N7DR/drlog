@@ -17,9 +17,13 @@
 #include "log_message.h"
 #include "string_functions.h"
 
+#include <chrono>
 #include <limits>
+#include <thread>
 
 using namespace std;
+using namespace   chrono;        // std::chrono
+using namespace   this_thread;   // std::this_thread
 
 extern bool             exiting;
 extern int              n_running_threads;      ///< the number of running threads
@@ -428,7 +432,7 @@ create_file:
     const size_t f = c * 8 / _bits_per_frame;
     const int pr = _pcm_read(_audio_buf);
 
-    if (pr != f)
+    if (pr != static_cast<int>(f))
     { ost << "WARNING: pr != f" << endl;
         break;
     }
@@ -508,14 +512,24 @@ void audio_recorder::initialise(void)
 { snd_pcm_info_alloca(&_info);          // create an invalid snd_pcm_info_t
 
   const PARAMS_STRUCTURE rhwparams { _n_channels, _sample_format, _samples_per_second };
-  int status = snd_pcm_open(&_handle, _pcm_name.c_str(), _stream, _open_mode);
+  const int MAX_FAILURES = 1;           // maximum number of permitted failures
+  int n_failures = 0;                   // current number of failures
+  int status;
 
-  if (status < 0)
-  { ost << "ERROR: Cannot open audio device: " << _pcm_name << endl;
-    ost << "error number " << status << endl;
-    ost << snd_strerror(status) << endl;
+  do
+  { status = snd_pcm_open(&_handle, _pcm_name.c_str(), _stream, _open_mode);
+
+    if (status < 0)
+    { ost << "ERROR: Cannot open audio device: " << _pcm_name << endl;
+      ost << "error number " << status << endl;
+      ost << snd_strerror(status) << endl;
+      n_failures++;
+      sleep_for(seconds(5));
+    }
+  }  while ((status < 0) and (n_failures <= MAX_FAILURES));
+
+  if (n_failures > MAX_FAILURES)
     throw audio_error(AUDIO_UNABLE_TO_OPEN, "Cannot open audio device: " + _pcm_name);
-  }
 
   status = snd_pcm_info(_handle, _info);   // gets info
 

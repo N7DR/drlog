@@ -151,7 +151,7 @@ void bandmap_entry::freq(const frequency& f)
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
-// callsign mult status
+// callsign mult
   clear_callsign_mult();
 
   const set<string> callsign_mults = rules.callsign_mults();
@@ -167,7 +167,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
   _is_needed_callsign_mult.status_is_known(true);
 
-// country mult status
+// country mult
   clear_country_mult();
 
   if (statistics.is_needed_country_mult(_callsign, _band, _mode))
@@ -206,7 +206,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // it isn't trivial to know how to set _mult_status_is_known under various possibilities
 // for now... if any mult type is used AND we know the status of that mult, we say that
 // we know the total status
-
   _mult_status_is_known = false;
 
   if (rules.callsign_mults_used() and _is_needed_callsign_mult.is_status_known())
@@ -228,10 +227,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 { if ((be.is_my_marker()) or is_my_marker())       // mustn't delete a valid call if we're updating my QRG
     return (_callsign == be._callsign);
-
-// do not ever remove a mode marker
-//  if (be.is_mode_marker() or is_mode_marker())
-//    return false;
 
   return ((_callsign == be._callsign) or (_frequency_str == be._frequency_str));  // neither bandmap_entry is at my QRG
 }
@@ -260,9 +255,6 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
    _is_needed = !q_history.worked(_callsign, _band);
 
 // multi-mode contests ***
-
-
-
   const bool original_is_needed_callsign_mult = is_needed_callsign_mult();
   const bool original_is_needed_country_mult = is_needed_country_mult();
   const bool original_is_needed_exchange_mult = is_needed_exchange_mult();
@@ -278,11 +270,12 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
     \return     difference in frequency between *this and <i>be</i>
 */
 const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
-{ frequency rv;
+{ //frequency rv;
 
-  rv.hz(abs(be._freq.hz() - _freq.hz()));
+  //rv.hz(abs(be._freq.hz() - _freq.hz()));
 
-  return rv;
+  //return rv;
+  return frequency(abs(be._freq.hz() - _freq.hz()));
 }
 
 /*! \brief          Add a call to the associated posters
@@ -330,10 +323,10 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "callsign: " << be.callsign() << endl
       << "canonical_prefix: " << be.canonical_prefix() << endl
       << "continent: " << be.continent() << endl
-      << "mode: " << MODE_NAME[be.mode()] << endl
-      << "mult status is known: " << be.mult_status_is_known() << endl
       << "frequency: " << to_string(be.freq()) << endl
       << "frequency_str: " << be.frequency_str() << endl
+      << "mode: " << MODE_NAME[be.mode()] << endl
+      << "mult status is known: " << be.mult_status_is_known() << endl
       << "time: " << be.time() << endl
       << "source: " << to_string(be.source()) << endl
       << "expiration_time: " << be.expiration_time() << endl
@@ -1024,10 +1017,12 @@ const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP
 const frequency bandmap::lowest_frequency(void)
 { const BM_ENTRIES bme = rbn_threshold_and_filtered_entries();
 
-  if (bme.empty())
-    return frequency();
+  return (bme.empty() ? frequency() : bme.front().freq());
 
-  return bme.front().freq();
+//  if (bme.empty())
+//    return frequency();
+
+//  return bme.front().freq();
 }
 
 /*! \brief      Get highest frequency on the bandmap
@@ -1039,10 +1034,12 @@ const frequency bandmap::lowest_frequency(void)
 const frequency bandmap::highest_frequency(void)
 { const BM_ENTRIES bme = rbn_threshold_and_filtered_entries();
 
-  if (bme.empty())
-    return frequency();
+  return (bme.empty() ? frequency() : bme.back().freq());
 
-  return bme.back().freq();
+//  if (bme.empty())
+//    return frequency();
+
+//  return bme.back().freq();
 }
 
 /// convert to a printable string

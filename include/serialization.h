@@ -278,47 +278,42 @@ inline void serialize(Archive & ar,
 #include <unordered_set>
 #include <vector>
 
-namespace boost {
-namespace serialization{
+namespace boost
+{ namespace serialization
+  { template<class Archive, typename T, typename H, typename P, typename A>
+    void save(Archive &ar, const std::unordered_set<T,H,P,A> &s, const unsigned int)
+    { std::vector<T> vec(s.begin(),s.end());
 
-template<class Archive, typename T, typename H, typename P, typename A>
-void save(Archive &ar,
-          const std::unordered_set<T,H,P,A> &s, const unsigned int) {
-    std::vector<T> vec(s.begin(),s.end());
-    ar<<vec;
-}
+      ar << vec;
+    }
 
-template<class Archive, typename T, typename H, typename P, typename A>
-void load(Archive &ar,
-          std::unordered_set<T,H,P,A> &s, const unsigned int) {
-    std::vector<T> vec;
-    ar>>vec;
-    std::copy(vec.begin(),vec.end(),
-              std::inserter(s,s.begin()));
-}
+    template<class Archive, typename T, typename H, typename P, typename A>
+    void load(Archive &ar, std::unordered_set<T,H,P,A> &s, const unsigned int)
+    { std::vector<T> vec;
 
-template<class Archive, typename T, typename H, typename P, typename A>
-void serialize(Archive &ar,
-               std::unordered_set<T,H,P,A> &s, const unsigned int version) {
-    boost::serialization::split_free(ar,s,version);
-}
+      ar >> vec;
+      std::copy(vec.begin(),vec.end(), std::inserter(s,s.begin()));
+    }
 
+    template<class Archive, typename T, typename H, typename P, typename A>
+    void serialize(Archive &ar, std::unordered_set<T,H,P,A> &s, const unsigned int version)
+    { boost::serialization::split_free(ar,s,version);
+    }
 
-template<class Archive, typename K, typename T, typename H, typename P, typename A>
-void save(Archive &ar,
-          const std::unordered_map<K, T,H,P,A> &s, const unsigned int) {
-    std::vector<T> vec(s.begin(),s.end());
-    ar<<vec;
-}
+    template<class Archive, typename K, typename T, typename H, typename P, typename A>
+    void save(Archive &ar, const std::unordered_map<K, T,H,P,A> &s, const unsigned int)
+    { std::vector<T> vec(s.begin(),s.end());
 
-template<class Archive, typename K, typename T, typename H, typename P, typename A>
-void load(Archive &ar,
-          std::unordered_map<K, T,H,P,A> &s, const unsigned int) {
-    std::vector<T> vec;
-    ar>>vec;
-    std::copy(vec.begin(),vec.end(),
-              std::inserter(s,s.begin()));
-}
+      ar << vec;
+    }
+
+    template<class Archive, typename K, typename T, typename H, typename P, typename A>
+    void load(Archive &ar, std::unordered_map<K, T,H,P,A> &s, const unsigned int)
+    { std::vector<T> vec;
+
+      ar >> vec;
+      std::copy(vec.begin(),vec.end(), std::inserter(s,s.begin()));
+    }
 
 template<class Archive, typename K, typename T, typename H, typename P, typename A>
 void serialize(Archive &ar,

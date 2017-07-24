@@ -4984,11 +4984,11 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
           for (auto& be : bme)
           { if (be.remark(rules, q_history, statistics))
-            { //ost << "remarked: " << be << endl;
+            { ost << "remarked following log edit: " << be << endl;
               bm += be;
             }
             else
-            { //ost << "NOT remarked: " << be << endl;
+            { ost << "NOT remarked following log edit: " << be << endl;
             }
           }
 

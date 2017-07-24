@@ -91,7 +91,6 @@
 
 #endif    // !SAFEREAD
 
-
 // classes for tuples... it seems like there should be a way to do this with TMP,
 // but the level-breaking caused by the need to control textual names seems to make
 // this impossible without resorting to #defines. So since I don't immediately see
@@ -918,9 +917,14 @@ template <typename T>
 inline const T LIMIT(const T val, const T low_val, const T high_val)
   { return (val < low_val ? low_val : (val > high_val ? high_val : val)); }
 
+/*! \brief              Bound a value within limits
+    \param  val         value to bound
+    \param  low_val     lower bound
+    \param  high_val    upper bound
+    \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
+*/
 template <typename T, typename U, typename V>
 inline const T LIMIT(const T val, const U low_val, const V high_val)
   { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
-
 
 #endif    // MACROS_H
