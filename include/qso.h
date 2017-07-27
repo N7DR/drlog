@@ -246,6 +246,9 @@ public:
 // new
   void new_populate_from_log_line(const std::string& str, const std::string& mycall);
 
+// so we can search a deque of QSOs
+  const bool operator==(const QSO& q) const;
+
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _band

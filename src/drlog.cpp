@@ -3260,6 +3260,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         be.freq(rig.rig_frequency());       // also sets band
         be.callsign(contents);
         be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
+        be.mode(cur_mode);
 
 // do we still need this guy?
         const bool is_needed = is_needed_qso(contents, cur_band, safe_get_mode());
@@ -4835,6 +4836,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             number_of_qsos_in_original_window++;
 
         deque<QSO> original_qsos;
+//        set<QSO>   original_qso_set;
 
         unsigned int qso_number = logbk.size();
         unsigned int n_to_remove = 0;
@@ -4847,6 +4849,11 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             n_to_remove++;
           }
         }
+
+//        for (const auto& qso : original_qsos)
+//        { if (!qso.empty())
+//            original_qso_set.insert(qso);
+//        }
 
 // debug: print out the original QSOs
         ost << "Original QSOs:" << endl;
@@ -4903,6 +4910,23 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             for (const auto& field : fields)
             { if (!(variable_exchange_fields < field.name()))
                exchange_db.set_value(qso.callsign(), field.name(), rules.canonical_value(field.name(), field.value()));   // add it to the database of exchange fields
+            }
+
+// pretend that we just entered this station on the bandmap by hand
+// do this just for QSOs that have changed
+            if (find(original_qsos.cbegin(), original_qsos.cend(), qso) == original_qsos.cend())
+            { const BAND qso_band = qso.band();
+              bandmap& bm = bandmaps[qso_band];
+              bandmap_entry be;                       // defaults to manual entry
+
+              be.freq(frequency(qso.freq()));
+              be.mode(qso.mode());
+              be.callsign(qso.callsign());
+              be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
+              be.calculate_mult_status(rules, statistics);
+              be.is_needed(false);                    // assumes that can't work him again on same band/mode
+
+              bm += be;
             }
           }
         }

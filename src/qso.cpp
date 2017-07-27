@@ -872,6 +872,37 @@ const string QSO::log_line(void)
   return rv;
 }
 
+const bool QSO::operator==(const QSO& q) const
+{  if (_callsign != q._callsign)
+    return false;
+
+  if (_date != q._date)
+    return false;
+
+  if (_epoch_time != q._epoch_time)
+    return false;
+
+  if (_frequency_rx != q._frequency_rx)
+      return false;
+
+  if (_mode != q._mode)
+      return false;
+
+  if (_my_call != q._my_call)
+      return false;
+
+  if (_received_exchange != q._received_exchange)
+      return false;
+
+  if (_sent_exchange != q._sent_exchange)
+      return false;
+
+  if (_utc != q._utc)
+      return false;
+
+  return true;
+}
+
 /// ostream << QSO
 std::ostream& operator<<(std::ostream& ost, const QSO& q)
 { ost << "Number: " << q.number()

@@ -198,10 +198,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   }
 
 // for debugging HA contest, in which many stns were marked on bm in green, even though already worked
-  if (is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult())
-    ost << "+ve mult status for " << callsign() << ": " << (is_needed_callsign_mult() ? "T" : "F")
-        << (is_needed_country_mult() ? "T" : "F") << (is_needed_exchange_mult() ? "T" : "F")
-        << endl;
+//  if (is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult())
+//    ost << "+ve mult status for " << callsign() << ": " << (is_needed_callsign_mult() ? "T" : "F")
+//        << (is_needed_country_mult() ? "T" : "F") << (is_needed_exchange_mult() ? "T" : "F")
+//        << endl;
 
 // it isn't trivial to know how to set _mult_status_is_known under various possibilities
 // for now... if any mult type is used AND we know the status of that mult, we say that
