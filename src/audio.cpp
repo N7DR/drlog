@@ -1,4 +1,4 @@
-// $Id: audio.cpp 138 2017-06-20 21:41:26Z  $
+// $Id: audio.cpp 139 2017-07-27 23:18:43Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -32,6 +32,7 @@ extern pt_mutex         thread_check_mutex;     ///< mutex for controllinh threa
 
 extern void         end_of_thread(const string& name);      ///< increase the counter for the number of running threads
 extern const string hhmmss(void);                           ///< obtain the current time in HH:MM:SS format
+extern const bool   sending_cw(void);                       ///< am I sending Cw?
 extern void         start_of_thread(const string& name);    ///< increase the counter for the number of running threads
 
 // -----------  audio_recorder  ----------------
@@ -84,7 +85,8 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
 /*! \brief  Set the parameters for the recording
 
     Much of this is converted (more or less slavishly) from aplay.c. Probably much of this
-    function could be elided.
+    function could be elided, but the lack of explanation of what's going on in aplay.c means
+    that it's safer, for now, to leave it in.
 */
 void audio_recorder::_set_params(void)
 { snd_pcm_hw_params_t* params = nullptr;
@@ -100,6 +102,8 @@ void audio_recorder::_set_params(void)
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
     throw audio_error(AUDIO_NO_CONFIGURATION, "Cannot obtain configuration for: " + _pcm_name);
   }
+  else
+    ost << "ALSA configuration retrieved for " << _pcm_name << endl;
 
   err = snd_pcm_hw_params_set_access(_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 
@@ -210,6 +214,8 @@ void audio_recorder::_set_params(void)
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
    throw audio_error(AUDIO_UNABLE_TO_GET_PERIOD_SIZE, "Unable to get period size for " + _pcm_name);
   }
+  else
+    ost << "ALSA period size in frames = " << _period_size_in_frames << endl;
 
   snd_pcm_uframes_t buffer_size;
 
@@ -365,7 +371,7 @@ void* audio_recorder::_capture(void*)
 { start_of_thread("_capture");
 
 create_file:
-  wav_file* wfp = new wav_file;;
+  wav_file* wfp = new wav_file;
 
   wfp->name(_base_filename + "-" + date_time_string(INCLUDE_SECONDS));
   wfp->open();
@@ -569,6 +575,22 @@ void audio_recorder::capture(void)
     \brief  Class to implement functions related to wav files
 */
 
+/// write or buffer a buffer
+void wav_file::_write_buffer(void* bufp, const size_t buffer_size)
+{ if (_is_buffered)
+  {  //TODO
+  }
+  else    // no buffering
+  { if ( fwrite(bufp, buffer_size, 1, _fp) != 1 )
+      throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing buffer to WAV file; buffer size =  " + to_string(buffer_size));
+  }
+}
+
+/// default constructor
+wav_file::wav_file(void) :
+  _is_buffered(false)
+{ }
+
 /// return a dummy header string
 const string wav_file::header(void) const
 { //riff_header rh;
@@ -656,6 +678,8 @@ void wav_file::append_data(const void* vp, const size_t size)
   { ost << "Error appending data to WAV file: " << _name << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error appending data to WAV file: " +_name);
   }
+
+//  ost << "data appended to WAV file at: " << hhmmss() << endl;
 }
 
 // -----------  bext_chunk  ----------------

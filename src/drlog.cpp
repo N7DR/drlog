@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 138 2017-06-20 21:41:26Z  $
+// $Id: drlog.cpp 139 2017-07-27 23:18:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -492,6 +492,16 @@ inline void update_fuzzy_window(const string& callsign)
 */
 inline void update_scp_window(const string& callsign)
   { update_matches_window(scp_dbs[callsign], scp_matches, win_scp, callsign); }
+
+/*! \brief      Am I sending CW?
+    \return     whether I appear to be sending CW
+
+    This does not need to be, and is not, robust or clever. It's used only to control
+    behaviour when recording audio, as disk writes can cause minor, occasional CW stutter on
+    a slow machine.
+*/
+inline const bool sending_cw(void)
+  { return (cw_p != nullptr) and !(cw_p->empty()); }
 
 int main(int argc, char** argv)
 {
@@ -2361,6 +2371,7 @@ void* prune_bandmap(void* vp)
     F4 -- swap contents of CALL and BCALL windows
     CTRL-M -- Monitor call
     CTRL-U -- Unmonitor call (i.e., stop monitoring call)
+    ' -- Place NEARBY call into CALL window and update QSL window
 */
 void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 {
@@ -3634,25 +3645,25 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   }
 
 // ALT-KP+ -- increment octothorpe
-  if (!processed and e.is_alt() and e.symbol() == XK_KP_Add)
+  if (!processed and e.is_alt_and_not_ctrl() and e.symbol() == XK_KP_Add)
   { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width());
     processed = true;
   }
 
 // ALT-KP- -- decrement octothorpe
-  if (!processed and e.is_alt() and e.symbol() == XK_KP_Subtract)
+  if (!processed and e.is_alt_and_not_ctrl() and e.symbol() == XK_KP_Subtract)
   { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width());
     processed = true;
   }
 
 // CTRL-KP+ -- increment qso number
-  if (!processed and e.is_ctrl() and e.symbol() == XK_KP_Add)
+  if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Add)
   { win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(++next_qso_number), win_qso_number.width());
     processed = true;
   }
 
 // CTRL-KP- -- decrement qso number
-  if (!processed and e.is_ctrl() and e.symbol() == XK_KP_Subtract)
+  if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Subtract)
   { win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(--next_qso_number), win_qso_number.width());
     processed = true;
   }
@@ -3679,21 +3690,16 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // ALT-P -- Dump P3
   if (!processed and e.is_alt('p') and context.p3())
   { processed = p3_screenshot();
-//    processed = true;
   }
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-  { //dump_screen();
-    //processed = true;
-    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
+  { processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
   }
 
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
-  { processed = debug_dump();
-//    processed = true;
-  }
+    processed = debug_dump();
 
 // ALT-Q -- send QTC
   if (!processed and e.is_alt('q') and send_qtcs)
@@ -4052,6 +4058,26 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
       mp -= prior_contents;
 
     alert("UNMONITORING: " + prior_contents);
+
+    processed = true;
+  }
+
+//  ost << (processed ? "PROCESSED" : "NOT PROCESSED") << endl;
+//  ost << (e.is_alt() ? "ALT" : "NOT ALT") << endl;
+//  ost << (e.is_ctrl() ? "CTRL" : "NOT CTRL") << endl;
+//  ost << "symbol = " << e.str() << endl;
+
+// ' -- Place NEARBY call into CALL window and update QSL window
+//  if (!processed and e.is_alt_and_control() and e.symbol() == XK_KP_Add)
+  if (!processed and e.is_unmodified() and e.symbol() == XK_apostrophe)
+  { //ost << "processing ctrl-alt-kp+" << endl;
+
+    if (win_call.empty() and !win_nearby.empty())
+    { const string new_call = remove_peripheral_spaces(win_nearby.read());
+
+      win_call < CURSOR_START_OF_LINE <= new_call;
+      update_qsls_window(new_call);
+    }
 
     processed = true;
   }

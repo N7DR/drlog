@@ -1,4 +1,4 @@
-// $Id: qso.h 131 2016-11-07 18:14:28Z  $
+// $Id: qso.h 139 2017-07-27 23:18:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -246,7 +246,12 @@ public:
 // new
   void new_populate_from_log_line(const std::string& str, const std::string& mycall);
 
-// so we can search a deque of QSOs
+/*! \brief      QSO == QSO
+    \param  q   target QSO
+    \return     whether the two QSOs are equal, for the purpose of comparison within a deque
+
+    Only "important" members are compared.
+*/
   const bool operator==(const QSO& q) const;
 
   template<typename Archive>

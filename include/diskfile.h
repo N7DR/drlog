@@ -1,4 +1,4 @@
-// $Id: diskfile.h 98 2015-03-07 15:30:35Z  $
+// $Id: diskfile.h 139 2017-07-27 23:18:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 138 2017-06-20 21:41:26Z  $
+// $Id: bandmap.cpp 139 2017-07-27 23:18:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -269,14 +269,10 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
     \param  be  other bandmap entry
     \return     difference in frequency between *this and <i>be</i>
 */
-const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
-{ //frequency rv;
-
-  //rv.hz(abs(be._freq.hz() - _freq.hz()));
-
-  //return rv;
-  return frequency(abs(be._freq.hz() - _freq.hz()));
-}
+//const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
+//{
+//  return frequency(abs(be._freq.hz() - _freq.hz()));
+//}
 
 /*! \brief          Add a call to the associated posters
     \param  call    call to add
@@ -323,23 +319,25 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "callsign: " << be.callsign() << endl
       << "canonical_prefix: " << be.canonical_prefix() << endl
       << "continent: " << be.continent() << endl
+      << "expiration_time: " << be.expiration_time() << endl
       << "frequency: " << to_string(be.freq()) << endl
       << "frequency_str: " << be.frequency_str() << endl
-      << "mode: " << MODE_NAME[be.mode()] << endl
-      << "mult status is known: " << be.mult_status_is_known() << endl
-      << "time: " << be.time() << endl
-      << "source: " << to_string(be.source()) << endl
-      << "expiration_time: " << be.expiration_time() << endl
       << "is needed: " << be.is_needed() << endl
       << "is needed mult: " << be.is_needed_mult() << endl
       << "is needed callsign mult: " << be.is_needed_callsign_mult_details() << endl
       << "is needed country mult: " << be.is_needed_country_mult_details() << endl
       << "is needed exchange mult: " << be.is_needed_exchange_mult_details() << endl
-      << "number of posters: " << be.n_posters() << endl
-      << "putative mode: " << MODE_NAME[be.putative_mode()] << endl;
+      << "mode: " << MODE_NAME[be.mode()] << endl
+      << "mult status is known: " << be.mult_status_is_known() << endl
+      << "putative mode: " << MODE_NAME[be.putative_mode()] << endl
+      << "source: " << to_string(be.source()) << endl
+      << "time: " << be.time() << endl
+      << "number of posters: " << be.n_posters() << endl;
 
   if (be.n_posters())
-  { const set<string> posters = be.posters();
+  { ost << "posters:" << endl;
+
+    const set<string> posters = be.posters();
 
     FOR_ALL(posters, [&ost] (const string& poster) { ost << "  " << poster << endl; } );
   }
@@ -537,6 +535,9 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
 */
 void bandmap::operator+=(const bandmap_entry& be)
 { //const bool mode_marker_is_present = is_present(MODE_MARKER);
+//  ost << "Adding bandmap entry: " << be << endl;
+//  ost << "current size = " << this->size() << endl;
+
   const bool mode_marker_is_present = (_mode_marker_frequency.hz() != 0);
   const string& callsign = be.callsign();
 
@@ -550,8 +551,8 @@ void bandmap::operator+=(const bandmap_entry& be)
   if (add_it and mode_marker_is_present)
   { const bandmap_entry mode_marker_be = (*this)[MODE_MARKER];    // assumes only one mode marker
 
-//    add_it = (be.absolute_frequency_difference(mode_marker_be) > MAX_FREQUENCY_SKEW);
-    add_it = (abs(be.freq() - _mode_marker_frequency) > MAX_FREQUENCY_SKEW);
+    add_it = (be.absolute_frequency_difference(mode_marker_be) > MAX_FREQUENCY_SKEW);
+//    add_it = (abs(be.freq() - _mode_marker_frequency) > MAX_FREQUENCY_SKEW);              // WHY DOESN'T THIS WORK???
   }
 
   if (add_it)
@@ -1018,11 +1019,6 @@ const frequency bandmap::lowest_frequency(void)
 { const BM_ENTRIES bme = rbn_threshold_and_filtered_entries();
 
   return (bme.empty() ? frequency() : bme.front().freq());
-
-//  if (bme.empty())
-//    return frequency();
-
-//  return bme.front().freq();
 }
 
 /*! \brief      Get highest frequency on the bandmap
@@ -1035,11 +1031,6 @@ const frequency bandmap::highest_frequency(void)
 { const BM_ENTRIES bme = rbn_threshold_and_filtered_entries();
 
   return (bme.empty() ? frequency() : bme.back().freq());
-
-//  if (bme.empty())
-//    return frequency();
-
-//  return bme.back().freq();
 }
 
 /// convert to a printable string
@@ -1088,7 +1079,9 @@ const bool bandmap::is_present(const string& target_callsign)
 
 /// window < bandmap
 window& operator<(window& win, bandmap& bm)
-{ static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
+{ //ost << "in display, size = " << bm.size() << endl;
+
+  static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
 
   static int NOT_NEEDED_COLOUR = COLOUR_BLACK;
   static int DO_NOT_WORK_COLOUR = NOT_NEEDED_COLOUR;
@@ -1102,6 +1095,8 @@ window& operator<(window& win, bandmap& bm)
 
   const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();    // automatically filter
   const size_t start_entry = (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0;
+
+//  ost << "filtered size = " << entries.size() << endl;
 
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
 
@@ -1148,12 +1143,12 @@ window& operator<(window& win, bandmap& bm)
       int status_colour = colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR);                      // default
 
       if (!be.is_my_marker() and !be.is_mode_marker())
-      { ost << "writing bandmap entry for " << be.callsign() << endl;
+      { //ost << "writing bandmap entry for " << be.callsign() << endl;
 
-        ost << "be.is_needed()): " << be.is_needed() << endl;
+        //ost << "be.is_needed()): " << be.is_needed() << endl;
 
         if (be.is_needed())
-        { ost << "be.mult_status_is_known(): " << be.mult_status_is_known() << endl;
+        { //ost << "be.mult_status_is_known(): " << be.mult_status_is_known() << endl;
 
           if (be.mult_status_is_known())
             status_colour = (be.is_needed_mult() ? colours.add(MULT_COLOUR, MULT_COLOUR) : colours.add(NOT_MULT_COLOUR, NOT_MULT_COLOUR));

@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 137 2016-12-15 20:07:54Z  $
+// $Id: cluster.cpp 139 2017-07-27 23:18:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -457,8 +457,6 @@ void monitored_posts::operator-=(const string& call_to_remove)
                    [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } ),
                  _entries.end() );
 
-//  if (original_size != _entries.size())
-//    _is_dirty = true;
   _is_dirty |= (original_size != _entries.size());
 }
 
@@ -474,8 +472,6 @@ void monitored_posts::prune(void)
                  [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } ),
                  _entries.end() );
 
-//  if (original_size != _entries.size())
-//    _is_dirty = true;
   _is_dirty |= (original_size != _entries.size());
 }
 
@@ -486,9 +482,6 @@ const vector<string> monitored_posts::to_strings(void) const
   SAFELOCK(monitored_posts);
 
   FOR_ALL(_entries, [&rv] (const monitored_posts_entry& mpe) { rv.push_back(mpe.to_string()); } );
-
-//  for (const auto& mpe: _entries)
-//    rv.push_back(mpe.to_string());
 
   return rv;
 }

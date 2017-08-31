@@ -69,6 +69,7 @@ class wav_file
 {
 protected:
 
+  bool _is_buffered;            ///< whether to use buffering to avoid writing when sending CW
   std::string   _name;          ///< name of file
 //  uint32_t      _file_size;     ///< total size of file
 
@@ -79,8 +80,15 @@ protected:
 //   it seems easier to write large amounts of data without going through contortions to avoid copies
   FILE*         _fp;            ///< file pointer
 
+/// write or buffer a buffer
+  void _write_buffer(void* bufp, const size_t buffer_size);
+
 public:
 
+/// default constructor
+  wav_file(void);
+
+  READ_AND_WRITE(is_buffered)    ///< whether to use buffering to avoid writing when sending CW
   READ_AND_WRITE(name);          ///< name of file
 
 /// open the file for writing

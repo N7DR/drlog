@@ -1,4 +1,4 @@
-// $Id: qso.cpp 130 2016-10-31 23:04:05Z  $
+// $Id: qso.cpp 139 2017-07-27 23:18:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -393,9 +393,8 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
   for (size_t index = 6 + n_sent_fields; index < fields.size(); ++index)    // there must be a faster way to do this, via the constructor
     exchange_field_values.push_back(fields[index]);
 
-// for now, the last parameter is ignored. Try it this way to see if the results are good;
-// if they aren't, then we need to include a separate branch for "true" in the parsed_exchange
-// constructor
+// for now, the last parameter is ignored. Try it this way to see if the results are good; if they
+// aren't, then we need to include a separate branch for "true" in the parsed_exchange constructor
   const parsed_exchange pexch(callsign(), canonical_prefix(), rules, mode(), exchange_field_values, true);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 
   if (!pexch.valid())
@@ -872,6 +871,12 @@ const string QSO::log_line(void)
   return rv;
 }
 
+/*! \brief      QSO == QSO
+    \param  q   target QSO
+    \return     whether the two QSOs are equal, for the purpose of comparison within a deque
+
+    Only "important" members are compared.
+*/
 const bool QSO::operator==(const QSO& q) const
 {  if (_callsign != q._callsign)
     return false;

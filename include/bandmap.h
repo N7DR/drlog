@@ -1,4 +1,4 @@
-// $Id: bandmap.h 138 2017-06-20 21:41:26Z  $
+// $Id: bandmap.h 139 2017-07-27 23:18:43Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -486,11 +486,12 @@ public:
   inline const unsigned int n_posters(void) const
     { return _posters.size(); }
 
-/*! \brief      Return the difference in frequency between two bandmap entries
+/*! \brief      Return the (absolute) difference in frequency between two bandmap entries
     \param  be  other bandmap entry
     \return     difference in frequency between *this and <i>be</i>
 */
-  const frequency frequency_difference(const bandmap_entry& be) const;
+  inline const frequency frequency_difference(const bandmap_entry& be) const
+    { return frequency(abs(be._freq.hz() - _freq.hz())); }
 
 /*! \brief      Return the difference in frequency between two bandmap entries, in +ve hertz
     \param  be  other bandmap entry
