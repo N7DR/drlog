@@ -564,7 +564,7 @@ int main(int argc, char** argv)
     long_t = context.long_t();
 
 // possibly configure audio recording
-    if (!context.audio_file().empty())
+    if (!context.record_audio())
     { audio.base_filename(context.audio_file());
       audio.maximum_duration(context.audio_duration() * 60);
       audio.pcm_name(context.audio_device_name());
