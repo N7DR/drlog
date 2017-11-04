@@ -71,13 +71,11 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
 { string rv;
 
-//  const unsigned int FIRST_FIELD_WIDTH = 10;
-//  const unsigned int FIELD_WIDTH       = 6;          // width of other fields
   const set<MODE> permitted_modes = rules.permitted_modes();
   const vector<BAND> permitted_bands = rules.permitted_bands();
 
   unsigned int qsos_all_bands = 0;
-  unsigned int countries_all_bands = 0;
+//  unsigned int countries_all_bands = 0;
   unsigned int dupes_all_bands = 0;
   unsigned int points_all_bands = 0;
 
@@ -116,7 +114,9 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
 // country mults
     if (_country_multipliers.used())                                         // if countries are mults
-    { line = pad_string("Countries", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+    { unsigned int total_countries_all_bands = 0;
+
+      line = pad_string("Countries", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
       for (const auto& b : permitted_bands)
       { unsigned int countries = 0;
@@ -130,13 +130,13 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
           countries += n_countries;
         }
 
-        countries_all_bands += countries;
+        total_countries_all_bands += countries;
 
         if (modes.size() != 1)
           line += pad_string(to_string(countries), FIELD_WIDTH);
       }
 
-      add_all_bands(permitted_bands.size(), countries_all_bands);
+      add_all_bands(permitted_bands.size(), total_countries_all_bands);
       rv += line + LF;
     }
 
@@ -154,13 +154,15 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
         if (cit != _callsign_multipliers.end())    // should always be true
         { const multiplier& mult = cit->second;
 
-          for (const auto& b : permitted_bands)
-          {
-            { const unsigned int n_callsign_mults = mult.n_worked(b, m);
+//          for (const auto& b : permitted_bands)
+//          {
+//            { const unsigned int n_callsign_mults = mult.n_worked(b, m);
+//
+//              line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
+//            }
+//          }
 
-              line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
-            }
-          }
+          FOR_ALL(permitted_bands, [=, &line] (const BAND& b) { line += pad_string(to_string(mult.n_worked(b, m)), FIELD_WIDTH); } );
 
           if (permitted_bands.size() != 1)
             line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
@@ -197,7 +199,6 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
           if (exchange_mults_per_band)
             total += n_exchange_mults;
-
         }
       }
 
@@ -281,8 +282,7 @@ running_statistics::running_statistics(void) :
   _qtc_qsos_sent(0),
   _qtc_qsos_unsent(0),
   _include_qtcs(false)
-{
-}
+{ }
 
 /*! \brief                  Constructor
     \param  country_data    data from cty.dat file

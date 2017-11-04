@@ -109,6 +109,7 @@ const string match_callsign(const vector<pair<string /* callsign */,
 
 void populate_win_info(const string& str);                          ///< Populate the information window
 void print_thread_names(void);
+const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const KeySym symbol);
 void process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
 const bool process_keypress_F5(void);                               ///< process key F5
 const bool p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
@@ -2402,7 +2403,7 @@ void* prune_bandmap(void* vp)
     CTRL-U -- Unmonitor call (i.e., stop monitoring call)
     ' -- Place NEARBY call into CALL window and update QSL window
 */
-void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
+void process_CALL_input(window* wp, const keyboard_event& e)
 {
 // syntactic sugar
   window& win = *wp;
@@ -3381,6 +3382,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
 // CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
   if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
+#if 0
   { bandmap& bm = bandmaps[safe_get_band()];
 
     typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
@@ -3413,65 +3415,17 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
     processed = true;
   }
-
-// ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
-/*
-  if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-  { bandmap& bm = bandmaps[safe_get_band()];
-
-    frequency target_frequency = rig.rig_frequency();
-
-    const BANDMAP_DIRECTION dirn = (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP;
-    bool finished = false;
-
-    while ( (target_frequency.hz() != 0) and !finished)
-    { const bandmap_entry be = bm.next_station(target_frequency, dirn);
-
-      if (!be.empty())
-      { const unsigned int n_qsos_this_band = olog.n_qsos(be.callsign(), safe_get_band(), safe_get_mode());
-
-        if ((n_qsos_this_band == 0) and be.is_needed())
-        { rig.rig_frequency(be.freq());
-          win_call < WINDOW_CLEAR <= be.callsign();
-
-          enter_sap_mode();
-
-// we may require a mode change
-          if (context.multiple_modes())
-          { const MODE m = default_mode(be.freq());
-
-            if (m != safe_get_mode())
-            { rig.rig_mode(m);
-              safe_set_mode(m);
-              display_band_mode(win_band_mode, safe_get_band(), m);
-            }
-          }
-
-          update_based_on_frequency_change(be.freq(), safe_get_mode());
-          finished = true;
-
-          SAFELOCK(dupe_check);
-          last_call_inserted_with_space = be.callsign();
-        }
-
-// go to next station
-        target_frequency = be.freq();
-      }
-      else                          // be is empty
-        finished = true;            // unnecessary
-    }
-
-    processed = true;
-  }
-*/
+#endif
+  processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, e.symbol());
 
 // ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ((e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                                   or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
+#if 0
   { bandmap& bm = bandmaps[safe_get_band()];
 
-    typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
-    MEM_FUN_P fn_p = &bandmap::needed_all_time_new_or_qsled;
+//    typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
+    BANDMAP_MEM_FUN_P fn_p = &bandmap::needed_all_time_new_or_qsled;
 
     const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
 
@@ -3500,9 +3454,11 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
     processed = true;
   }
+#endif
+    processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, e.symbol());
 
 // SHIFT (RIT control)
-// RIT changes via hamlib, at least on the K3, are very slow
+// RIT changes via hamlib, at least on the K3, are testudine
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
     processed = rit_control(e);
 
@@ -7675,4 +7631,38 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   }                 // end of changed frequency
 
 //  ost << "at end of update, CALL contents = " << remove_peripheral_spaces(win_call.read()) << endl;
+}
+
+const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const KeySym symbol)
+{ bandmap& bm = bandmaps[safe_get_band()];
+
+//  typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
+//  MEM_FUN_P fn_p = &bandmap::needed_all_time_new_or_qsled;
+
+  const bandmap_entry be = (bm.*fn_p)( ((symbol == XK_KP_Left) or (symbol == XK_KP_4)) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
+
+  if (!be.empty())
+  { rig.rig_frequency(be.freq());
+    win_call < WINDOW_CLEAR <= be.callsign();
+
+    enter_sap_mode();
+
+// we may require a mode change
+    if (context.multiple_modes())
+    { const MODE m = default_mode(be.freq());
+
+      if (m != safe_get_mode())
+      { rig.rig_mode(m);
+        safe_set_mode(m);
+        display_band_mode(win_band_mode, safe_get_band(), m);
+      }
+    }
+
+    update_based_on_frequency_change(be.freq(), safe_get_mode());
+
+    SAFELOCK(dupe_check);
+    last_call_inserted_with_space = be.callsign();
+  }
+
+  return true;
 }

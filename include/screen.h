@@ -312,11 +312,15 @@ public:
   READ_AND_WRITE(insert);           ///< whether in insert mode
   READ_AND_WRITE(vertical);         ///< whether containers of strings are to be displayed vertically
   
-/// Get a pointer to the underlying WINDOW
+/*! \brief          Get a pointer to the underlying WINDOW
+    \return         a pointer to the WINDOW
+*/
   inline WINDOW* wp(void) const
     { return _wp; }
   
-/// is the window usable?
+/*! \brief      Is the window usable?
+    \return     whether the window is usable
+*/
   inline const bool defined(void) const
     { return (_wp != nullptr); }
 
@@ -341,7 +345,9 @@ public:
 */
   window& move_cursor_relative(const int delta_x, const int delta_y);  
   
-/// get cursor position
+/*! \brief      Get cursor position
+    \return     the current position of the cursor
+*/
   const cursor cursor_position(void);
 
 /*! \brief                      Control scrolling
@@ -350,11 +356,15 @@ public:
 */
   window& scrolling(const bool enable_or_disable);
 
-/// enable scrolling
+/*! \brief      Enable scrolling
+    \return     the window
+*/
   inline window& enable_scrolling(void)
     { return scrolling(true); }
   
-/// disable scrolling
+/*! \brief      Disable scrolling
+    \return     the window
+*/
   inline window& disable_scrolling(void)
     { return scrolling(false); }
 

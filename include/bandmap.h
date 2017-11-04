@@ -39,7 +39,11 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
                          BANDMAP_DIRECTION_UP
                        };                                       ///< search directions for the bandmap
 
+// forward declarations
 class bandmap_filter_type;
+//class bandmap;
+
+//typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // allow other files to access some functions in a useful, simple  manner
 
 extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
 extern const std::string   MODE_MARKER;                         ///< the string that marks the mode break in the bandmap
@@ -606,10 +610,11 @@ public:
   inline const bool is_all_time_first_and_needed_qso(void) const
     { return (is_all_time_first() and is_needed()); }
 
-/// is the call+band+mode an all-time first, or have we received a qsl for this call+band+mode
+/// is this a needed call for which the call+band+mode is an all-time first, or have we received a qsl for this call+band+mode
   inline const bool is_new_or_previously_qsled(void) const
 //    { return (is_all_time_first() or olog.confirmed(_callsign, _band, _mode)); }
-    { return (is_all_time_first_and_needed_qso() or olog.confirmed(_callsign, _band, _mode)); }
+//    { return (is_all_time_first_and_needed_qso() or olog.confirmed(_callsign, _band, _mode)); }
+    { return (is_needed() and (is_all_time_first() or olog.confirmed(_callsign, _band, _mode))); }
 
 // set value from an earlier be
   void time_of_earlier_bandmap_entry(const bandmap_entry& old_be);
@@ -1017,5 +1022,7 @@ window& operator<(window& win, bandmap& bm);
 
 /// ostream << bandmap
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
+
+typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 
 #endif    // BANDMAP_H

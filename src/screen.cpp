@@ -416,7 +416,9 @@ window& window::operator<(const vector<pair<string, int /* colour pair number */
   return *this;
 }
 
-/// get cursor position
+/*! \brief      Get cursor position
+    \return     the current position of the cursor
+*/
 const cursor window::cursor_position(void)
 { if (!_wp)
     return cursor(0, 0);
