@@ -11,9 +11,9 @@
 #ifndef SCP_H
 #define SCP_H
 
-/*!     \file scp.h
+/*! \file   scp.h
 
-        Objects and functions related to Super Check Partial
+    Objects and functions related to Super Check Partial
 */
 
 #include "drmaster.h"
@@ -30,8 +30,8 @@ typedef std::unordered_set<std::string> SCP_SET;
 
 // -----------  scp_database  ----------------
 
-/*! \class scp_database
-    \brief The database for SCP
+/*! \class  scp_database
+    \brief  The database for SCP
 
     We build our own database instead of trying to use the old K1EA
     memory layout
@@ -101,8 +101,8 @@ public:
 
 // -----------  scp_databases  ----------------
 
-/*! \class scp_databases
-    \brief Wrapper for multiple SCP databases
+/*! \class  scp_databases
+    \brief  Wrapper for multiple SCP databases
 
     The idea is to have two databases, the static one that is read from an external file at start time,
     and a dynamic one that is altered as we encounter new calls that are not in the static database

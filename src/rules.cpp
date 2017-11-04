@@ -482,7 +482,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     _bonus_countries.insert("ON");                  // weird UBA scoring adds bonus for QSOs with ON
 
 // generate the country mults; the value from context is either "ALL" or "NONE"
-  if (context.country_mults_filter() != "NONE")
+  if (context.country_mults_filter() == "NONE")
+  { _countries.clear();
+  }
+  else
   { if (context.country_mults_filter() == "ALL")
       copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
     else
@@ -554,6 +557,18 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   _parse_context_exchange(context);                     // define the legal receive exchanges, and which fields are mults
   _exchange_mults = remove_peripheral_spaces( split_string(context.exchange_mults(), ",") );
+
+// DOKs are a single letter; create the complete set if they aren't in auto mode
+  if ( ( find(_exchange_mults.begin(), _exchange_mults.end(), "DOK") != _exchange_mults.end() ) and !context.auto_remaining_exchange_mults("DOK") )
+  { exchange_field_values dok_values;
+
+    dok_values.name("DOK");
+
+    for (size_t index = 0; index < 26; ++index)
+      dok_values.add_canonical_value(create_string(UPPER_CASE_LETTERS[index]));
+
+    _exch_values.push_back(dok_values);
+  }
 
 // create expanded version
   for (const string& unexpanded_exchange_mult_name : _exchange_mults)
@@ -811,7 +826,7 @@ contest_rules::contest_rules(void) :
 */
 contest_rules::contest_rules(const drlog_context& context, location_database& location_db) :
   _callsign_mults_used(false),
-  _countries(location_db.countries()),
+  _countries(location_db.countries()),    // default is ALL countries
 //  _country_mults_used(false),
   _exchange_mults_used(false),
   _uba_bonus(false),
@@ -1014,7 +1029,10 @@ const set<string> contest_rules::exch_permitted_values(const string& field_name)
     Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>
 */
 const string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
-{ set<string> ss = exch_permitted_values(field_name);
+{ if (field_name == "DOK")    // DOK is special because loads of actual_values map to the same value; keep the actual value
+    return actual_value;      // we convert to the single letter version elsewhere
+
+  set<string> ss = exch_permitted_values(field_name);
 
   if (exch_permitted_values(field_name).empty())                         // if no permitted values => anything allowed
     return actual_value;
@@ -1279,34 +1297,39 @@ const bool contest_rules::sent_exchange_includes(const std::string& str, const M
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
 const bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
-{  SAFELOCK(rules);
+{ SAFELOCK(rules);
 
-    if (_exchange_field_eft.find(field_name)  == _exchange_field_eft.cend())
-      return false;    // not a known field name
+  if (_exchange_field_eft.find(field_name)  == _exchange_field_eft.cend())
+    return false;    // not a known field name
 
 // if a field appears in the per-country rules, are we in the right country?
-    bool is_a_per_country_field = false;
+  bool is_a_per_country_field = false;
 
-    for (const auto& ssets : _per_country_exchange_fields)
-    { if (ssets.second < field_name)
-        is_a_per_country_field = true;
+  for (const auto& ssets : _per_country_exchange_fields)
+  { if (ssets.second < field_name)
+      is_a_per_country_field = true;
 
-      if (ssets.first == canonical_prefix)
-        return (ssets.second < field_name);
-    }
+    if (ssets.first == canonical_prefix)
+      return (ssets.second < field_name);
+  }
 
-    if (is_a_per_country_field)
-      return false;
+//    if (is_a_per_country_field)
+//      return false;
 
-    return true;  // a known field, and this is not a special country
+//    return true;  // a known field, and this is not a special country
+  return !is_a_per_country_field;
 }
 
 /// the names of all the possible exchange fields
 const set<string> contest_rules::exchange_field_names(void) const
 { set<string> rv;
 
-  for (const auto& eft : _exchange_field_eft)
-    rv.insert(eft.first);
+//  for (const auto& eft : _exchange_field_eft)
+//    rv.insert(eft.first);
+
+//std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
+
+  FOR_ALL(_exchange_field_eft, [&] (const pair<string, EFT>& pse) { rv.insert(pse.first); } );
 
   return rv;
 }
@@ -1355,7 +1378,7 @@ const string wpx_prefix(const string& call)
   if (call.length() < 3)
     return string();
 
-  static const string digits( { "0123456789" } );
+//  static const string digits( { "0123456789" } );
   string callsign = call;
   char portable_district { 0 } ;   // portable call district
 
@@ -1372,7 +1395,7 @@ const string wpx_prefix(const string& call)
     if (portables.find(last_char(callsign)) != string::npos)
       callsign = substring(callsign, 0, callsign.length() - 2);
     else
-      if (callsign.find_last_of(digits) == callsign.length() - 1)
+      if (callsign.find_last_of(DIGITS) == callsign.length() - 1)
       { portable_district = callsign[callsign.length() - 1];
         callsign = substring(callsign, 0, callsign.length() - 2);
       }
@@ -1387,13 +1410,13 @@ const string wpx_prefix(const string& call)
   }
 
 // trivial -- and almost unknown -- case first: no digits
-  if (callsign.find_first_of(digits) == string::npos)
+  if (callsign.find_first_of(DIGITS) == string::npos)
     return (substring(callsign, 0, 2) + "0");
 
   size_t slash_posn = callsign.find('/');
 
   if ( (slash_posn == string::npos) or (slash_posn == callsign.length() - 1) )
-  { const size_t last_digit_posn = callsign.find_last_of(digits);
+  { const size_t last_digit_posn = callsign.find_last_of(DIGITS);
 
     if (portable_district)
       callsign[last_digit_posn] = portable_district;
@@ -1420,7 +1443,8 @@ const string wpx_prefix(const string& call)
 
   string designator = (left_size < right_size ? left : right);
 
-  if (designator.find_first_of(digits) == string::npos)
+//  if (designator.find_first_of(DIGITS) == string::npos)
+  if (!contains_digit(designator))
     designator += "0";
 
   string rv = designator;
@@ -1455,6 +1479,7 @@ From SAC rules, the relevant countries are:
 */
 const string sac_prefix(const string& call)
 { static const set<string> scandinavian_countries { "JW", "JX", "LA", "OH", "OH0", "OJ0", "OX", "OY", "OZ", "SM", "TF" };
+
   const string canonical_prefix = location_db.canonical_prefix(call);
 
   if ( !(scandinavian_countries < canonical_prefix) )
@@ -1464,19 +1489,20 @@ const string sac_prefix(const string& call)
   const string wpx = wpx_prefix(call);
 
 // working from the end, find the first non-digit
-  size_t last_letter_posn = wpx.find_last_not_of("0123456789");
+  const size_t last_letter_posn = wpx.find_last_not_of(DIGITS);
   const string digits = substring(wpx, last_letter_posn + 1);
 
   if (digits.empty())
     return string();    // to handle case of something like "SM" as the passed call, which happens as a call is being typed
 
-  if (canonical_prefix != "OH0" and canonical_prefix != "OJ0")
-  { const string prefix = canonical_prefix + digits;
-
-    return prefix;
-  }
-  else
-    return canonical_prefix;
+//  if (canonical_prefix != "OH0" and canonical_prefix != "OJ0")
+//  { const string prefix = canonical_prefix + digits;
+//
+//    return prefix;
+//  }
+//  else
+//    return canonical_prefix;
+  return ( (canonical_prefix != "OH0" and canonical_prefix != "OJ0") ? (canonical_prefix + digits) : canonical_prefix );
 }
 
 /*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?
@@ -1490,16 +1516,18 @@ const string sac_prefix(const string& call)
 const string MULT_VALUE(const string& field_name, const string& received_value)
 { if (field_name == "DOK")
   { if (!received_value.empty())
-    { const auto posn = received_value.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    { const auto posn = received_value.find_first_of(UPPER_CASE_LETTERS);
 
-      if (posn == string::npos)
-        return string();
-      else
-        return (create_string(received_value[posn]));
+//      if (posn == string::npos)
+//        return string();
+//      else
+//        return (create_string(received_value[posn]));
+      return ( (posn == string::npos) ? string() : create_string(received_value[posn]) );
     }
-    else        // should never happen: DOK with no value
-    { ost << "Error: DOK with no value" << endl;
-      return string();
+    else        // should never happen: DOK with no value; might be empty if no value to guess
+    { //ost << "Error: DOK with no value" << endl;
+      //return string();
+      return received_value;  // same as string()
     }
   }
   else

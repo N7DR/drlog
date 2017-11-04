@@ -22,6 +22,11 @@
 #include <map>
 #include <string>
 
+enum FREQ_UNIT { FREQ_HZ = 0,
+                 FREQ_KHZ,
+                 FREQ_MHZ
+               };                                   ///< units for measuring frequency
+
 enum BAND { BAND_160 = 0,
             BAND_80,
             BAND_60,
@@ -162,6 +167,12 @@ public:
     \param f    frequency in Hz, kHz or MHz
 */
   explicit frequency(const double f);
+
+/*! \brief          Construct from a double and an explicit unit
+    \param f        frequency in Hz, kHz or MHz
+    \param unit     frequency unit
+*/
+    frequency(const double f, const FREQ_UNIT unit);
 
 /*! \brief      Construct from a string
     \param str  frequency in Hz, kHz or MHz

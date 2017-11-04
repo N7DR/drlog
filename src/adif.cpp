@@ -1,9 +1,12 @@
-/*
- * adif.cpp
- *
- *  Created on: Jan 27, 2011
- *      Author: n7dr
- */
+// $Id$
+
+// Released under the GNU Public License, version 2
+//   see: https://www.gnu.org/licenses/gpl-2.0.html
+
+// Principal author: N7DR
+
+// Copyright owners:
+//    N7DR
 
 #include "adif.h"
 #include "string_functions.h"
@@ -104,7 +107,7 @@ void adif_DATE::value(const std::string& v)
 { if (v.length() != 8)
     throw exception();
 
-  if ((v.find_first_not_of("0123456789")) != string::npos)
+  if ((v.find_first_not_of(DIGITS)) != string::npos)
     throw exception();
 
   const string year_str = v.substr(0, 4);
@@ -239,9 +242,7 @@ adif_TIME::adif_TIME(const string& nm) :
 
 // set value
 void adif_TIME::value(const std::string& v)
-{ //cout << "v = *" << v << "*" << endl;
-
-  if ((v.find_first_not_of("0123456789")) != string::npos)
+{ if ((v.find_first_not_of(DIGITS)) != string::npos)
     throw exception();
 
   if ((v.length() < 4) or (v.length() == 5) or (v.length() > 6))
@@ -249,21 +250,19 @@ void adif_TIME::value(const std::string& v)
 
   const string hour_str = v.substr(0, 2);
   const string minute_str = v.substr(2, 2);
-
-  unsigned int hour = from_string<unsigned int>(hour_str);
+  const unsigned int hour = from_string<unsigned int>(hour_str);
 
   if (hour > 23)
     throw exception();
 
-  unsigned int minute = from_string<unsigned int>(minute_str);
+  const unsigned int minute = from_string<unsigned int>(minute_str);
 
   if (minute > 59)
     throw exception();
 
   if (v.length() == 6)
   { const string second_str = v.substr(4, 2);
-
-    unsigned int second = from_string<unsigned int>(second_str);
+    const unsigned int second = from_string<unsigned int>(second_str);
 
     if (second > 59)
       throw exception();

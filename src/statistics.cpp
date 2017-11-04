@@ -28,7 +28,14 @@ extern message_stream ost;      ///< for debugging and logging
 
 pt_mutex statistics_mutex;      ///< mutex for the (singleton) running_statistics object
 
+static const unsigned int FIRST_FIELD_WIDTH = 10;         ///< width of first field
+static const unsigned int FIELD_WIDTH       = 6;          ///< width of other fields
+
 // -----------  running_statistics  ----------------
+
+/*! \class  running_statistics
+    \brief  ongoing contest-related statistics
+*/
 
 /*! \brief              Add a callsign mult name, value and band to those worked
     \param  mult_name   name of callsign mult
@@ -64,8 +71,8 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
 { string rv;
 
-  const unsigned int FIRST_FIELD_WIDTH = 10;
-  const unsigned int FIELD_WIDTH       = 6;          // width of other fields
+//  const unsigned int FIRST_FIELD_WIDTH = 10;
+//  const unsigned int FIELD_WIDTH       = 6;          // width of other fields
   const set<MODE> permitted_modes = rules.permitted_modes();
   const vector<BAND> permitted_bands = rules.permitted_bands();
 
@@ -76,6 +83,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
   string line;
 
+// add a number to the line if array size is not unity
   auto add_all_bands = [&line] (const unsigned int sz, const unsigned int n) { if (sz != 1)
                                                                                  line += pad_string(to_string(n), FIELD_WIDTH);
                                                                              };
@@ -93,6 +101,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
         if (modes.size() == 1)
           line += pad_string(to_string(nq[b]), FIELD_WIDTH);
+
         qsos += nq[b];
       }
 
@@ -103,7 +112,6 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     }
 
     add_all_bands(permitted_bands.size(), qsos_all_bands);
-
     rv += line + LF;
 
 // country mults
@@ -238,6 +246,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
         if (modes.size() == 1)
           line += pad_string(to_string(qp[b]), FIELD_WIDTH);
+
         points += qp[b];
       }
 
@@ -281,21 +290,18 @@ running_statistics::running_statistics(void) :
     \param  rules           rules for this contest
 */
 running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
-  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-  _n_dupes( { {} } ),
-  _qso_points( { {} } ),
-  _location_db(country_data, context.country_list()),
   _callsign_mults_used(rules.callsign_mults_used()),
   _country_mults_used(rules.country_mults_used()),
   _exchange_mults_used(rules.exchange_mults_used()),
+  _exch_mult_fields(rules.exchange_mults().cbegin(), rules.exchange_mults().cend()),
+  _include_qtcs(rules.send_qtcs()),
+  _location_db(country_data, context.country_list()),
+  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
+  _n_dupes( { {} } ),
+  _qso_points( { {} } ),
   _qtc_qsos_sent(0),
-  _qtc_qsos_unsent(0),
-  _include_qtcs(rules.send_qtcs())
-{ //const vector<string>& exchange_mults = rules.exchange_mults();
-
-//  FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
-  FOR_ALL(rules.exchange_mults(), [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
-}
+  _qtc_qsos_unsent(0)
+{ }
 
 /*! \brief                  Prepare an object that was created with the default constructor
     \param  country_data    data from cty.dat file
@@ -585,12 +591,13 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
 
   SAFELOCK(statistics);
 
-  for (size_t n = 0; n < _exchange_multipliers.size(); ++n)
-  { const pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
+  for (const auto& psm : _exchange_multipliers)
+  { //const pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
 
-    if (sm.first == exchange_field_name and sm.second.is_known(mv) )
-      return !(sm.second.is_worked(mv, b, m));
+    if (psm.first == exchange_field_name and psm.second.is_known(mv) )
+      return !(psm.second.is_worked(mv, b, m));
   }
+
 
   return false;
 }
@@ -601,8 +608,6 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
 */
 const string running_statistics::summary_string(const contest_rules& rules)
 { string rv;
-  const unsigned int FIRST_FIELD_WIDTH = 10;
-  const unsigned int FIELD_WIDTH       = 6;          // width of other fields
 
 // write the bands and underline them
   string line(FIRST_FIELD_WIDTH, ' ');
@@ -731,17 +736,6 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
 
   return set<string>();
 }
-
-/*! \brief      Worked country mults for a particular band and mode
-    \param  b   target band
-    \param  m   target mode
-    \return     all the worked country mults on band <i>b</i> and mode <i>m</i>
-*/
-//const set<string> running_statistics::worked_country_mults(const BAND b, const MODE m)
-//{ SAFELOCK(statistics);
-//
-//  return ( _country_multipliers.worked(b, m) );
-//}
 
 /*! \brief      Worked exchange mults for a particular band and mode -- &&& THINK ABOUT THIS
     \param  b   target band
@@ -1020,8 +1014,8 @@ const unsigned int running_statistics::n_worked_exchange_mults(const BAND b, con
 
 // -----------  call history  ----------------
 
-/*!     \class call_history
-        \brief History of each call worked
+/*! \class  call_history
+    \brief  History of each call worked
 */
 
 void call_history::rebuild(const logbook& logbk)
@@ -1029,8 +1023,9 @@ void call_history::rebuild(const logbook& logbk)
 
   _history.clear();
 
-  for (const auto& qso : logbk.as_vector())
-    (*this) += qso;
+//  for (const auto& qso : logbk.as_vector())
+//    (*this) += qso;
+  FOR_ALL(logbk.as_vector(), [&] (const QSO& qso) { *this += qso; } );
 }
 
 /*! \brief          Add a QSO to the history
@@ -1059,7 +1054,7 @@ const bool call_history::worked(const string& s, const BAND b , const MODE m)
   const set<bandmode>& sbm = cit->second;
   const set<bandmode>::const_iterator scit = sbm.find( { b, m } );
 
-  return (scit != sbm.end());
+  return (scit != sbm.cend());
 }
 
 /*! \brief      Has a call been worked on a particular band?
@@ -1112,6 +1107,7 @@ const bool call_history::worked(const string& s, const MODE m)
 */
 const bool call_history::worked(const string& s)
 { SAFELOCK(_history);
+
   return (_history.find(s) != _history.end());
 }
 

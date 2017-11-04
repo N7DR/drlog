@@ -235,6 +235,8 @@ int                     ACCEPT_COLOUR(COLOUR_GREEN);            ///< colour for 
 string                  at_call;                                ///< call that should replace comat in "call ok now" message
 audio_recorder          audio;                                  ///< provide capability to record audio
 
+bandmap_buffer          bm_buffer;                          ///< global control buffer for all the bandmaps
+
 drlog_context           context;                            ///< context taken from configuration file
 
 exchange_field_database exchange_db;                        ///< dynamic database of exchange field values for calls; automatically thread-safe
@@ -564,7 +566,7 @@ int main(int argc, char** argv)
     long_t = context.long_t();
 
 // possibly configure audio recording
-    if (!context.record_audio())
+    if (context.record_audio())
     { audio.base_filename(context.audio_file());
       audio.maximum_duration(context.audio_duration() * 60);
       audio.pcm_name(context.audio_device_name());
@@ -885,42 +887,42 @@ int main(int argc, char** argv)
       }
     }
 
-  for (auto& swin : static_windows_p)
-    *(swin.second) <= reformat_for_wprintw(swin.first, swin.second->width());       // display contents of the static window, working around wprintw weirdness
+    for (auto& swin : static_windows_p)
+      *(swin.second) <= reformat_for_wprintw(swin.first, swin.second->width());       // display contents of the static window, working around wprintw weirdness
 
 // BAND/MODE window
-  win_band_mode.init(context.window_info("BAND/MODE"), WINDOW_NO_CURSOR);
+    win_band_mode.init(context.window_info("BAND/MODE"), WINDOW_NO_CURSOR);
 
 // BATCH MESSAGES window
-  win_batch_messages.init(context.window_info("BATCH MESSAGES"), WINDOW_NO_CURSOR);
+    win_batch_messages.init(context.window_info("BATCH MESSAGES"), WINDOW_NO_CURSOR);
 
-  if (!context.batch_messages_file().empty())
-  { try
-    { const vector<string> messages = to_lines(read_file(context.path(), context.batch_messages_file()));
-      string current_message;
+    if (!context.batch_messages_file().empty())
+    { try
+      { const vector<string> messages = to_lines(read_file(context.path(), context.batch_messages_file()));
+        string current_message;
 
-      SAFELOCK(batch_messages);
+        SAFELOCK(batch_messages);
 
-      for (const auto& messages_line : messages)
-      { if (!messages_line.empty())
-        { if (contains(messages_line, "["))
-            current_message = delimited_substring(messages_line, '[', ']');
-          else
-          { const string callsign = remove_peripheral_spaces(messages_line);
+        for (const auto& messages_line : messages)
+        { if (!messages_line.empty())
+          { if (contains(messages_line, "["))
+              current_message = delimited_substring(messages_line, '[', ']');
+            else
+            { const string callsign = remove_peripheral_spaces(messages_line);
 
-            batch_messages.insert( { callsign, current_message } );
+              batch_messages.insert( { callsign, current_message } );
+            }
           }
         }
+
+        ost << "read " << batch_messages.size() << " batch messages" << endl;
       }
 
-      ost << "read " << batch_messages.size() << " batch messages" << endl;
+      catch (...)
+      { cerr << "Unable to read batch messages file: " << context.batch_messages_file() << endl;
+        exit(-1);
+      }
     }
-
-    catch (...)
-    { cerr << "Unable to read batch messages file: " << context.batch_messages_file() << endl;
-      exit(-1);
-    }
-  }
 
 // BCALL window
   win_bcall.init(context.window_info("BCALL"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
@@ -1963,8 +1965,6 @@ void* display_rig_status(void* vp)
         ost << "will now exit other threads" << endl;
 
         exiting = true;
-
-//        n_running_threads--;
         pthread_exit(nullptr);
       }
     }
@@ -2074,16 +2074,10 @@ void* process_rbn_info(void* vp)
 
               be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
-              if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
-                be.posters( { poster } );
-
-//              const bool is_needed = is_needed_qso(dx_callsign, dx_band, be.mode());  // do we still need this guy?
+//              if (post.source() == POSTING_RBN)     // so we can test for threshold anent RBN posts
+//                be.posters( { poster } );
 
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
-
-// is this station being monitored?
-//              if (mp.is_monitored(be.callsign()))
-//                update_monitored_posts(post);
 
 // update known mults before we test to see if this is a needed mult
 
@@ -2091,7 +2085,8 @@ void* process_rbn_info(void* vp)
               update_known_callsign_mults(dx_callsign);
 
 // possibly add the call to the known countries
-              update_known_country_mults(dx_callsign);
+              if (rules.n_country_mults())
+                update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
               const vector<string> exch_mults = rules.expanded_exchange_mults();                                      // the exchange multipliers
@@ -2106,7 +2101,9 @@ void* process_rbn_info(void* vp)
                   { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
 
                     if (!guess.empty())
-                      statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+                    { if ( statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess)) )
+                        update_remaining_exch_mults_window(exch_mult_name, rules, statistics, safe_get_band(), safe_get_mode());    // update if we added a new value of the mult
+                    }
                   }
                 }
               }
@@ -2117,44 +2114,76 @@ void* process_rbn_info(void* vp)
               const bool is_me = (be.callsign() == context.my_call());
               const bool is_interesting_mode = (rules.score_modes() < be.mode());
 
-              if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
-              { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
-                { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
-                  recent_mult_calls.push_back(target);
+// CLUSTER MULT window
+              if (cluster_mult_win.defined())
+              { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
+                { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
+                  { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
+                    recent_mult_calls.push_back(target);
 
-                  while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
-                    recent_mult_calls.pop_front();
+                    while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
+                      recent_mult_calls.pop_front();
 
-                  cluster_mult_win < CURSOR_TOP_LEFT < WINDOW_SCROLL_DOWN;
+                    cluster_mult_win < CURSOR_TOP_LEFT < WINDOW_SCROLL_DOWN;
 
 // highlight it if it's on our current band
-                  if ( (dx_band == cur_band) or is_me)
-                    cluster_mult_win < WINDOW_HIGHLIGHT;
+                    if ( (dx_band == cur_band) or is_me)
+                      cluster_mult_win < WINDOW_HIGHLIGHT;
 
-                  const int bg_colour = cluster_mult_win.bg();
+                    const int bg_colour = cluster_mult_win.bg();
 
-                  if (is_me)
-                    cluster_mult_win.bg(COLOUR_YELLOW);
+                    if (is_me)
+                      cluster_mult_win.bg(COLOUR_YELLOW);
 
-                  const string frequency_str = pad_string(be.frequency_str(), 7);
-                  cluster_mult_win < pad_string(frequency_str + " " + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
+                    const string frequency_str = pad_string(be.frequency_str(), 7);
 
-                  if (is_me)
-                    cluster_mult_win.bg(bg_colour);
+                    cluster_mult_win < pad_string(frequency_str + " " + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
 
-                  if ( (dx_band == cur_band) or is_me)
-                    cluster_mult_win < WINDOW_NORMAL;
+                    if (is_me)
+                      cluster_mult_win.bg(bg_colour);
+
+                    if ( (dx_band == cur_band) or is_me)
+                      cluster_mult_win < WINDOW_NORMAL;
+                  }
                 }
               }
 
 // add the post to the correct bandmap
               if (is_interesting_mode)
-              { bandmap& bandmap_this_band = bandmaps[dx_band];
+              { switch (be.source())
+                { case BANDMAP_ENTRY_CLUSTER :
+                  case BANDMAP_ENTRY_RBN :
+                    bm_buffer.add(be.callsign(), post.poster());
 
-                bandmap_this_band += be;
+                    if (bm_buffer.sufficient_posters(be.callsign()))
+                    { bandmap& bandmap_this_band = bandmaps[dx_band];
+
+//                      ost << "Adding bandmap_entry to bandmap: " << be << endl;
+
+                      bandmap_this_band += be;
+
+                      changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
+                    }
+
+                    break;
+
+                  default :
+                    bandmap& bandmap_this_band = bandmaps[dx_band];
+
+                    bandmap_this_band += be;
+
+                    changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
+                }
+
+//                if (be.source() != BANDMAP_ENTRY_LOCAL)
+//                  bm_buffer.add(be.callsign(), post.poster());
+
+//                bandmap& bandmap_this_band = bandmaps[dx_band];
+
+//                bandmap_this_band += be;
 
 // prepare to display the bandmap if we just made a change for this band
-                changed_bands.insert(dx_band);
+//                changed_bands.insert(dx_band);
               }
             }
             else
@@ -2540,7 +2569,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // TAB -- switch between CQ and SAP mode
   if (!processed and (e.symbol() == XK_Tab))
   { processed = toggle_drlog_mode();
-//    processed = true;
   }
 
 // F10 -- toggle filter_remaining_country_mults
@@ -2833,7 +2861,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 // for current status of regex support, see: http://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html#status.iso.tr1
 
     if (!processed)
-    { const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
+    { //const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
+      const bool contains_letter = contains_upper_case_letter(contents);
 
       if (!contains_letter)    // try to parse as frequency
       { const bool contains_plus  = (contents[0] == '+');        // this can be entered from the keypad w/o using shift
@@ -2950,7 +2979,6 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
 
         { bandmap_entry be;
 
-//          be.freq(rig.rig_frequency());
           be.freq(rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency());  // the TX frequency
           be.callsign(contents);
           be.expiration_time(be.time() + context.bandmap_decay_time_local() * 60);
@@ -2993,7 +3021,7 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
         map<string, string> mult_exchange_field_value;                                                     // the values of exchange fields that are mults
 
         for (const auto& exf : expected_exchange)
-        { //ost << "Exchange field: " << exf << endl;
+        { ost << "Exchange field: " << exf << endl;
           bool processed_field = false;
 
 // &&& if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
@@ -3049,12 +3077,19 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
             }
           }
 
+          if (exf.name() == "DOK")
+          { ost << "Got to DOK exchange field" << endl;
+
+            string guess = exchange_db.guess_value(contents, "DOK");
+
+            if (!guess.empty())
+            { exchange_str += guess;
+              processed_field = true;
+            }
+          }
+
           if (exf.name() == "RST")
-          { //if (cur_mode == MODE_CW /* or current_mode == MODE_DIGI */ )
-            //  exchange_str += "599 ";
-            //else
-            //  exchange_str += "59 ";
-            exchange_str += ( (cur_mode == MODE_CW) ? "599 " : "59 " );
+          { exchange_str += ( (cur_mode == MODE_CW) ? "599 " : "59 " );
 
             processed_field = true;
           }
@@ -3748,7 +3783,8 @@ void process_CALL_input(window* wp, const keyboard_event& e /* int c */ )
   { const string contents = remove_peripheral_spaces(win.read());
 
 // try to parse as frequency
-    const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
+//    const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
+    const bool contains_letter = contains_upper_case_letter(contents);
     const frequency f_b = rig.rig_frequency_b();;
 
     if (!contains_letter)    // try to parse as frequency
@@ -5449,8 +5485,14 @@ void populate_win_info(const string& callsign)
       for (const auto& exch_mult_field : exch_mults)
       { const bool output_this_mult = rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix);
 
+        ost << "output_this_mult = " << output_this_mult << endl;
+        ost << "exch_mult_field = " << exch_mult_field << endl;
+        ost << "canonical_prefix = " << canonical_prefix << endl;
+
         if (output_this_mult)
         { const string exch_mult_value = exchange_db.guess_value(callsign, exch_mult_field);    // make best guess as to to value of this field
+
+          ost << "exch_mult_value = *" << exch_mult_value << "*" << endl;
 
           line = pad_string(exch_mult_field + " [" + exch_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
@@ -6391,7 +6433,9 @@ void* start_cluster_thread(void* vp)
       QSLs
  */
 void display_call_info(const string& callsign, const bool display_extract)
-{ populate_win_info( callsign );
+{ ost << "Displaying call info for: " << callsign << endl;
+
+  populate_win_info( callsign );
   update_batch_messages_window( callsign );
   update_individual_messages_window( callsign );
 

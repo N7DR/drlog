@@ -24,10 +24,10 @@ using namespace std;
 /*! \class  master_dta
     \brief  Manipulate a K1EA MASTER.DTA file
 
-The first thing in the file is an array that has the locations of the
-various cells.
+    The first thing in the file is an array that has the locations of the
+    various cells.
 
-SCPIndexArrayType    = ARRAY [0..36, 0..36] OF LONGINT;
+    SCPIndexArrayType    = ARRAY [0..36, 0..36] OF LONGINT;
 
 */
 
@@ -150,17 +150,17 @@ t = temporary
 //   User1 => SS precedence
 //   User2 => ARRL DX power
 
-// Default empty constructor
+/// Default empty constructor
 trmaster_line::trmaster_line(void) :
-    _hit_count(0),
     _cq_zone(0),
     _check(0),
-    _ten_ten(0),
-    _foc(0)
+    _foc(0),
+    _hit_count(0),
+    _ten_ten(0)
 { }
 
-/*!     \brief          construct from a TRMASTER.ASC line
-        \param  line    line from the TRMASTER.ASC file
+/*! \brief          Construct from a TRMASTER.ASC line
+    \param  line    line from the TRMASTER.ASC file
 */
 trmaster_line::trmaster_line(const string& line)
 {
@@ -196,11 +196,11 @@ trmaster_line::trmaster_line(const string& line)
   }
 }
 
-// destructor
+/// destructor
 trmaster_line::~trmaster_line(void)
 { }
 
-// convert to string
+/// convert to string
 const string trmaster_line::to_string(void) const
 { string rv = call();
 
@@ -248,7 +248,12 @@ const string trmaster_line::to_string(void) const
   return rv;
 }
 
-// merge with another trmaster_line.
+/*! \brief          Merge with another trmaster_line
+    \param  trml    line to be merged
+    \return         line merged with <i>ln</i>
+
+    New values (i.e., values in <i>ln</i>) take precedence if there's a conflict
+*/
 const trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
 { trmaster_line rv(*this);                                  // copy the old line
 

@@ -35,8 +35,8 @@ cpair colours;                  ///< global repository for information about col
 
 // -----------  screen  ----------------
 
-/*! \class screen
-    \brief A single terminal (e.g., an xterm)
+/*! \class  screen
+    \brief  A single terminal (e.g., an xterm)
         
     The screen will have the size given by the COLUMNS and LINES environment variables,
     or, in their absence, 80 columns and 25 lines.
@@ -85,8 +85,8 @@ screen::screen(void)
 
 // -----------  window  ----------------
 
-/*! \class window
-    \brief A single ncurses window
+/*! \class  window
+    \brief  A single ncurses window
 */
 
 /*! \brief          Set the default colours
@@ -220,7 +220,7 @@ void window::init(const window_information& wi, const unsigned int flags)
     \param  bg      background colour
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
-    The window is ready for use after this function has been called. <i>fg</i> and <i.bg</i>
+    The window is ready for use after this function has been called. <i>fg</i> and <i>bg</i>
     override <i>wi.fg_colour()</i> and <i>wi.bg_colour()</i> iff wi.colours_set() is false.
 */
 void window::init(const window_information& wi, int fg, int bg, const unsigned int flags)
@@ -642,12 +642,13 @@ window& window::scrolling(const bool enable_or_disable)
   return *this;
 }
 
-/*! \brief          scroll a window
-    \param  n       number of lines to by which to scroll
-    \return         the window
+/*! \brief              scroll a window
+    \param  n_lines     number of lines to by which to scroll
+    \return             the window
 
     Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
 */
+
 window& window::scrollit(const int n_lines)
 { if (!_wp)
     return *this;
@@ -899,13 +900,13 @@ window& operator<(window& win, const colour_pair& cpair)
 
 // -----------  colour_pair  ----------------
 
-/*! \class colour_pair
-    \brief A class to hold information about used colour pairs
+/*! \class  colour_pair
+    \brief  A class to hold information about used colour pairs
 */
 
-/*! \brief          Private function to add a new pair of colours
-    \param  p       foreground colour, background colour
-    \return         the number of the colour pair
+/*! \brief      Private function to add a new pair of colours
+    \param  p   foreground colour, background colour
+    \return     the number of the colour pair
 */
 const unsigned int cpair::_add_to_vector(const pair< int, int>& fgbg)
 { _colours.push_back(fgbg);
@@ -914,10 +915,10 @@ const unsigned int cpair::_add_to_vector(const pair< int, int>& fgbg)
   return _colours.size();
 }
 
-/*! \brief          Add a pair of colours
-    \param  fg      foreground colour
-    \param  bg      background colour
-    \return         the number of the colour pair
+/*! \brief      Add a pair of colours
+    \param  fg  foreground colour
+    \param  bg  background colour
+    \return     the number of the colour pair
 
     If the pair is already known, returns the number of the known pair.
     Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
@@ -990,7 +991,7 @@ const int string_to_colour(const string& str)
   if (begins_with(s, "COLOR_"))
     return (from_string<int>(substring(s, 6)));
 
-  if (s.find_first_not_of("0123456789") == string::npos)  // if all digits
+  if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits
     return from_string<int>(s);
 
   return COLOUR_BLACK;    // default

@@ -229,8 +229,8 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 
 // -----------  cty_data  ----------------
 
-/*! \class cty_data
-    \brief All the data from a CTY.DAT file
+/*! \class  cty_data
+    \brief  All the data from a CTY.DAT file
 */
 
 /*! \brief              Construct from a file
@@ -256,8 +256,8 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 
 // -----------  location_info  ----------------
 
-/*! \class location_info
-    \brief Location information associated with a call, prefix or country
+/*! \class  location_info
+    \brief  Location information associated with a call, prefix or country
         
     This is basically just a simple tuple
 */
@@ -527,23 +527,21 @@ location_database::location_database(void)
 // construct from CTY.DAT filename and the definition of which country list to use
 location_database::location_database(const string& filename, const enum country_list_type country_list)
 { if (!filename.empty())
-  { //const cty_data cty(filename);
-
     _init(cty_data(filename), country_list);
-  }
 }
 
-// construct from CTY.DAT data and the definition of which country list to use
+/// construct from CTY.DAT data and the definition of which country list to use
 location_database::location_database(const cty_data& cty, const enum country_list_type country_list)
 { _init(cty, country_list);
 }
 
-// construct from CTY.DAT data, the definition of which country list to use and a secondary qth database
+/// construct from CTY.DAT data, the definition of which country list to use and a secondary qth database
 location_database::location_database(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary) :
   _qth_db(secondary)
 { _init(cty, country_list);
 }
 
+/// prepare a default-constructed object for use
 void location_database::prepare(const cty_data& cty, const enum country_list_type country_list)
 { _init(cty, country_list);
 }
@@ -961,27 +959,16 @@ const set<string> location_database::countries(const string& cont_target)
   return rv;
 }
 
-/*! \brief              Get the Russian region abbreviation, given a call or partial call
-    \param  callpart    call (or partial call)
-    \return             Russian region corresponding to <i>callpart</i>
-*/
-//const string location_database::region_abbreviation(const string& callpart)
-//{ SAFELOCK(_location_database);
-//
-//  return info(callpart).region_abbreviation();
-//}
-
-
 // -----------  drlog_qth_database_record  ----------------
 
-/*! \class drlog_qth_database_record
-    \brief A record from the drlog-specific QTH-override database
+/*! \class  drlog_qth_database_record
+    \brief  A record from the drlog-specific QTH-override database
 */
 
 // -----------  drlog_qth_database  ----------------
 
-/*! \class drlog_qth_database
-    \brief drlog-specific QTH-override database
+/*! \class  drlog_qth_database
+    \brief  drlog-specific QTH-override database
 */
 
 /// construct from filename
@@ -1006,7 +993,7 @@ drlog_qth_database::drlog_qth_database(const std::string& filename)
       
 // process the possibilities
       if (elements[0] == "id")
-        record.set_id(elements[1]);
+        record.id(elements[1]);
       
       if (elements[0] == "area")
         record.set_area(from_string<unsigned int>(elements[1]));  // problem is that I'm setting a returned object
@@ -1030,7 +1017,7 @@ const vector<drlog_qth_database_record> drlog_qth_database::id(const string& id_
 { vector<drlog_qth_database_record> rv;
 
   for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == id_target)
+    if (_db[n].id() == id_target)
       rv.push_back(_db[n]);
     
   return rv;
@@ -1039,11 +1026,11 @@ const vector<drlog_qth_database_record> drlog_qth_database::id(const string& id_
 /*! \brief                      Get the CQ zone corresponding to a call
     \param  call                callsign
     \param  initial_cq_guess    default value of CQ zone, if none is found
-    \return CQ zone corresponding to <i>call</i>
+    \return                     CQ zone corresponding to <i>call</i>
 */
 const unsigned int drlog_qth_database::cq_zone(const string& call, const unsigned int initial_cq_zone) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == call)
+    if (_db[n].id() == call)
       return _db[n].get_cq_zone(initial_cq_zone);
 
   return 0;
@@ -1053,11 +1040,11 @@ const unsigned int drlog_qth_database::cq_zone(const string& call, const unsigne
     \param  country             country identifier
     \param  call_area           call area (0 - 9)
     \param  initial_cq_zone     default value of CQ zone, if none is found
-    \return CQ zone corresponding to call area <i>call_area</i> in country <i>country</i>
+    \return                     CQ zone corresponding to call area <i>call_area</i> in country <i>country</i>
 */
 const unsigned int drlog_qth_database::cq_zone(const string& country, const unsigned int area, const unsigned int initial_cq_zone) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == country and _db[n].get_area(10) == area)  // 10 is an invalid area
+    if (_db[n].id() == country and _db[n].get_area(10) == area)  // 10 is an invalid area
       return _db[n].get_cq_zone(initial_cq_zone);
 
   return 0;
@@ -1070,7 +1057,7 @@ const unsigned int drlog_qth_database::cq_zone(const string& country, const unsi
 */
 const float drlog_qth_database::latitude(const string& call, const float initial_latitude) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == call)
+    if (_db[n].id() == call)
       return _db[n].get_latitude(initial_latitude);
 
   return 0;
@@ -1084,7 +1071,7 @@ const float drlog_qth_database::latitude(const string& call, const float initial
 */
 const float drlog_qth_database::latitude(const string& country, const unsigned int call_area, const float initial_latitude) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == country and _db[n].get_area(10) == call_area)  // 10 is an invalid area
+    if (_db[n].id() == country and _db[n].get_area(10) == call_area)  // 10 is an invalid area
       return _db[n].get_latitude(initial_latitude);
 
   return 0;
@@ -1097,7 +1084,7 @@ const float drlog_qth_database::latitude(const string& country, const unsigned i
 */
 const float drlog_qth_database::longitude(const string& call, const float initial_longitude) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == call)
+    if (_db[n].id() == call)
       return _db[n].get_longitude(initial_longitude);
 
   return 0;
@@ -1111,7 +1098,7 @@ const float drlog_qth_database::longitude(const string& call, const float initia
 */
 const float drlog_qth_database::longitude(const string& country, const unsigned int call_area, const float initial_longitude) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].get_id() == country and _db[n].get_area(10) == call_area)  // 10 is an invalid area
+    if (_db[n].id() == country and _db[n].get_area(10) == call_area)  // 10 is an invalid area
       return _db[n].get_longitude(initial_longitude);
 
   return 0;
@@ -1119,20 +1106,18 @@ const float drlog_qth_database::longitude(const string& country, const unsigned 
 
 // -----------  russian_data_per_substring  ----------------
 
-/*! \class russian_data_per_substring
-    \brief Encapsulate the data from a Russian data file, for a single substring
+/*! \class  russian_data_per_substring
+    \brief  Encapsulate the data from a Russian data file, for a single substring
 */
 
-/*! \brief  construct from a prefix and a line
-    \param  sbstring        The prefix for the Russian district
-    \param  line            Line from Russian data file
+/*! \brief              Construct from a prefix and a line
+    \param  sbstring    the prefix for the Russian district
+    \param  line        line from Russian data file
 */
 russian_data_per_substring::russian_data_per_substring(const string& ss, const string& line) :
   _sstring(ss)
 {
 // check that the prefix matches the line
-
-//  ost << "processing line: *" << line << "*" << endl;
 
   const vector<string> substrings = remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","));
 
@@ -1149,10 +1134,6 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
 
   const vector<string> fields = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(line.substr(posn_2 + 1), ' ')), " "));
 
-//  ost << "vector:" << endl;
-//  for (int n = 0; n < fields.size(); ++n)
-//    ost << n << ": " << fields[n] << endl;
-
   try
   { _region_abbreviation = fields.at(0);
     _cq_zone = from_string<unsigned int>(fields.at(1));
@@ -1166,8 +1147,6 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   catch (...)
   { throw russian_error(RUSSIAN_INVALID_FORMAT, string("Error parsing fields"));
   }
-
-//  ost << *this << endl;
 }
 
 /// ostream << location_info

@@ -1093,14 +1093,16 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
   if (field_name == "DOK")
-  { string rv;
+  { //ost << "Checking DOK" << endl;
+    string rv;
 
     if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "DL")
     { rv = drm_line.qth();
 
+      //ost << "rv from drm = " << rv << endl;
+
       if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
+      { _db.insert( { { callsign, field_name }, rv } );
 
         return rv;
       }

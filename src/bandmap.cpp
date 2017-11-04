@@ -25,6 +25,7 @@
 using namespace std;
 
 extern pt_mutex                 bandmap_mutex;      ///< used when writing to the bandmap window
+extern bandmap_buffer           bm_buffer;          ///< global control buffer for all the bandmaps
 extern exchange_field_database  exchange_db;        ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database        location_db;        ///< location information
 extern message_stream           ost;                ///< debugging/logging output
@@ -63,6 +64,53 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
     default :
       return "UNKNOWN";
   }
+}
+
+// -----------   bandmap_buffer_entry ----------------
+
+/*! \class  bandmap_buffer_entry
+    \brief  Class for entries in the bandmap_buffer class
+*/
+
+
+const unsigned int bandmap_buffer_entry::add(const std::string& new_poster)
+{ _posters.insert(new_poster);
+
+  return _posters.size();
+}
+
+// -----------   bandmap_buffer ----------------
+
+/*! \class  bandmap_buffer
+    \brief  Class to control which cluster/RBN posts reach the bandmaps
+
+    A single bandmap_buffer is used to control all bandmaps
+*/
+
+/// default constructor
+bandmap_buffer::bandmap_buffer(const unsigned int n_posters) :
+  _min_posters(n_posters)
+{ }
+
+const unsigned int bandmap_buffer::n_posters(const string& callsign)
+{ SAFELOCK(_bandmap_buffer);
+
+  const auto cit = _data.find(callsign);
+
+  return ( ( cit == _data.end() ) ? 0 : cit->second.size() );
+
+//  if (cit == _data.end())
+//    return 0;
+
+//  return (cit->second.size());
+}
+
+const unsigned int bandmap_buffer::add(const std::string& callsign, const std::string& poster)
+{ SAFELOCK(_bandmap_buffer);
+
+  bandmap_buffer_entry& bfe = _data[callsign];
+
+  return bfe.add(poster);
 }
 
 // -----------   bandmap_filter_type ----------------
@@ -112,11 +160,12 @@ void bandmap_filter_type::add_or_subtract(const string& str)
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
 bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
-  _time(::time(NULL)),
-  _source(s),
-  _is_needed(true),
   _expiration_time(0),
-  _mult_status_is_known(false)
+  _is_needed(true),
+  _mult_status_is_known(false),
+  _source(s),
+  _time(::time(NULL)),
+  _time_of_earlier_bandmap_entry(0)
 { }
 
 /*! \brief          Set the callsign
@@ -168,24 +217,33 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   _is_needed_callsign_mult.status_is_known(true);
 
 // country mult
-  clear_country_mult();
+  if (rules.n_country_mults())        // if country mults are used
+  { clear_country_mult();
 
-  if (statistics.is_needed_country_mult(_callsign, _band, _mode))
-    add_country_mult(_canonical_prefix);
+    if (statistics.is_needed_country_mult(_callsign, _band, _mode))
+      add_country_mult(_canonical_prefix);
 
-  _is_needed_country_mult.status_is_known(true);
+    _is_needed_country_mult.status_is_known(true);
+  }
+  else
+  { // default _is_needed_country_mults instantiation of needed_mult_details should be: not needed, is known
+  }
 
 // exchange mult status
   clear_exchange_mult();
 
   const vector<string> exch_mults = rules.expanded_exchange_mults();                                  // the exchange multipliers
 
+// there can only be an exchange mult if one of the exchange field names matches an exchange mult field name
+  bool exchange_mult_is_possible = false;
+
   for (const auto& exch_mult_name : exch_mults)
   { const vector<string> exchange_field_names = rules.expanded_exchange_field_names(_canonical_prefix, _mode);
     const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
 
     if (is_possible_exchange_field)
-    { string guess = exchange_db.guess_value(_callsign, exch_mult_name);
+    { exchange_mult_is_possible = true;
+      string guess = exchange_db.guess_value(_callsign, exch_mult_name);
 
       guess = rules.canonical_value(exch_mult_name, guess);
 
@@ -193,8 +251,15 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
         _is_needed_exchange_mult.status_is_known(true);
 
       if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
-        add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+      { const bool exchange_mult_was_added = add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+
+//        ost << " whether exchange mult was added for " << callsign() << ": " << exchange_mult_was_added << endl;
+      }
     }
+  }
+
+  if (!exchange_mult_is_possible)                      // we now know that no exchange fields are exchange mult fields for this canonical prefix
+  { _is_needed_exchange_mult.status_is_known(true);
   }
 
 // for debugging HA contest, in which many stns were marked on bm in green, even though already worked
@@ -280,23 +345,23 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
 
     Does nothing if <i>call</i> is already a poster
 */
-const unsigned int bandmap_entry::add_poster(const string& call)
-{ _posters.insert(call);
-
-  return n_posters();
-}
+//const unsigned int bandmap_entry::add_poster(const string& call)
+//{ _posters.insert(call);
+//
+//  return n_posters();
+//}
 
 /// return all the posters as a space-separated string
-const string bandmap_entry::posters_string(void) const
-{ string rv;
-
-  FOR_ALL(_posters, [&rv] (const string& p) { rv += (p + " "); } );
-
-  if (!rv.empty())
-    rv = substring(rv, 0, rv.length() - 1);  // remove the final space
-
-  return rv;
-}
+//const string bandmap_entry::posters_string(void) const
+//{ string rv;
+//
+//  FOR_ALL(_posters, [&rv] (const string& p) { rv += (p + " "); } );
+//
+//  if (!rv.empty())
+//    rv = substring(rv, 0, rv.length() - 1);  // remove the final space
+//
+//  return rv;
+//}
 
 /// guess the mode, based on the frequency
 const MODE bandmap_entry::putative_mode(void) const
@@ -310,6 +375,16 @@ const MODE bandmap_entry::putative_mode(void) const
   catch (...)
   { ost << "ERROR in putative_mode(); band = " << band() << endl;
     return MODE_CW;
+  }
+}
+
+// set value from an earlier be
+void bandmap_entry::time_of_earlier_bandmap_entry(const bandmap_entry& old_be)
+{ if (old_be.time_of_earlier_bandmap_entry())
+  { _time_of_earlier_bandmap_entry = old_be._time_of_earlier_bandmap_entry;
+  }
+  else
+  { _time_of_earlier_bandmap_entry = old_be._time;
   }
 }
 
@@ -331,16 +406,16 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "mult status is known: " << be.mult_status_is_known() << endl
       << "putative mode: " << MODE_NAME[be.putative_mode()] << endl
       << "source: " << to_string(be.source()) << endl
-      << "time: " << be.time() << endl
-      << "number of posters: " << be.n_posters() << endl;
+      << "time: " << be.time() << endl;
+//      << "number of posters: " << be.n_posters() << endl;
 
-  if (be.n_posters())
-  { ost << "posters:" << endl;
-
-    const set<string> posters = be.posters();
-
-    FOR_ALL(posters, [&ost] (const string& poster) { ost << "  " << poster << endl; } );
-  }
+//  if (be.n_posters())
+//  { ost << "posters:" << endl;
+//
+//    const set<string> posters = be.posters();
+//
+//    FOR_ALL(posters, [&ost] (const string& poster) { ost << "  " << poster << endl; } );
+//  }
 
   return ost;
 }
@@ -520,23 +595,32 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
     return false;         // we're going to write a new entry
 
 // RBN poster
-  const unsigned int n_new_posters = be.n_posters();
+//  const unsigned int n_new_posters = be.n_posters();
 
-  if (n_new_posters != 1)
-    ost << "in _mark_as_recent: Error: number of posters = " << n_new_posters << " for post for " << be.callsign() << endl;
-  else
-    return (old_be.is_poster( *(be.posters().cbegin()) ));
+//  if (n_new_posters != 1)
+//    ost << "in _mark_as_recent: Error: number of posters = " << n_new_posters << " for post for " << be.callsign() << endl;
+//  else
+//    return (old_be.is_poster( *(be.posters().cbegin()) ));
 
   return false;    // should never get here
 }
 
 /*!  \brief     Add a bandmap_entry
      \param be  entry to add
+
+     <i>_time_of_earlier_bandmap_entry</i> in <i>be</i> might be changed.
+     Could change this by copying the be inside +=.
 */
-void bandmap::operator+=(const bandmap_entry& be)
+void bandmap::operator+=(bandmap_entry& be)
 { //const bool mode_marker_is_present = is_present(MODE_MARKER);
 //  ost << "Adding bandmap entry: " << be << endl;
 //  ost << "current size = " << this->size() << endl;
+
+// possibly add poster to the bandmap buffer
+//  if (be.source() != BANDMAP_ENTRY_LOCAL)
+//    bm_buffer.add(be.callsign(), be.p)
+
+
 
   const bool mode_marker_is_present = (_mode_marker_frequency.hz() != 0);
   const string& callsign = be.callsign();
@@ -556,7 +640,7 @@ void bandmap::operator+=(const bandmap_entry& be)
   }
 
   if (add_it)
-  { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going got mark this as a recent call
+  { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going to mark this as a recent call
     bandmap_entry old_be;
 
     SAFELOCK(_bandmap);
@@ -566,19 +650,24 @@ void bandmap::operator+=(const bandmap_entry& be)
 
       if (old_be.valid())
       { if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // if not within 250 Hz
-        { (*this) -= callsign;
+        { ost << "MAX FREQUENCY SKEW EXCEEDED: " << be.absolute_frequency_difference(old_be) << endl
+              << "be: " << be << endl
+              << "old_be: " << old_be << endl;
+
+          (*this) -= callsign;
+//          be.time_of_earlier_bandmap_entry(old_be);    // could change be
           _insert(be);
         }
-        else    // different frequency
+        else    // ~same frequency
         { if (old_be.expiration_time() >= be.expiration_time())
-          { const unsigned int n_new_posters = be.n_posters();
+          { //const unsigned int n_new_posters = be.n_posters();
 
-            if (n_new_posters != 1)
-              ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
-            else
-            { const string& poster = *(be.posters().cbegin());
+            //if (n_new_posters != 1)
+            //  ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
+            //else
+            { //const string& poster = *(be.posters().cbegin());
 
-              old_be.add_poster(poster);
+              //old_be.add_poster(poster);
 
               (*this) -= callsign;
               _insert(old_be);
@@ -587,17 +676,19 @@ void bandmap::operator+=(const bandmap_entry& be)
           else    // new expiration is later
           { old_be.source(BANDMAP_ENTRY_RBN);
 
-            const unsigned int n_new_posters = be.n_posters();
+            //const unsigned int n_new_posters = be.n_posters();
 
-            if (n_new_posters != 1)
-              ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
-            else
-            { const string& poster = *(be.posters().cbegin());
+            //if (n_new_posters != 1)
+           //   ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
+            //else
+            { //const string& poster = *(be.posters().cbegin());
 
-              old_be.add_poster(poster);
+              //old_be.add_poster(poster);
               old_be.expiration_time(be.expiration_time());
 
               (*this) -= callsign;
+              be.time_of_earlier_bandmap_entry(old_be);    // could change be
+
               _insert(old_be);
             }
           }
@@ -612,7 +703,7 @@ void bandmap::operator+=(const bandmap_entry& be)
       if (callsign != MY_MARKER and callsign != MODE_MARKER)
       { const bandmap_entry current_be = (*this)[callsign];  // the entry in the updated bandmap
 
-        if (current_be.n_posters() >= _rbn_threshold)
+//        if (current_be.n_posters() >= _rbn_threshold)
         { _entries.remove_if([=] (bandmap_entry& bme) { bool rv = !bme.is_marker();
 
                                                         if (rv)
@@ -774,7 +865,11 @@ void bandmap::not_needed_exchange_mult(const string& mult_name, const string& mu
   _dirty_entries();
 }
 
-/// enable or disable the filter
+/*! \brief          Enable or disable the filter
+    \param  torf    whether to enable the filter
+
+    Disables the filter if <i>torf</i> is false.
+*/
 void bandmap::filter_enabled(const bool torf)
 { if (torf != filter_enabled())
   { SAFELOCK(_bandmap);
@@ -891,7 +986,7 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 
   for (const auto& be : filtered)
   { if (be.source() == BANDMAP_ENTRY_RBN)
-    { if (be.n_posters() >= threshold)
+    { //if (be.n_posters() >= threshold)
         rv.push_back(be);
     }
     else  // not RBN
@@ -921,10 +1016,12 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
     { const string target_freq_str = cit->frequency_str();
       auto crit = prev(reverse_iterator<decltype(cit)>(cit));             // Josuttis First ed. p. 66f.
 
-      BM_ENTRIES::const_reverse_iterator crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency
+      //BM_ENTRIES::const_reverse_iterator crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency, in downwards direction
+      const auto crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency, in downwards direction
 
       if (crit2 != fe.crend())
-      { BM_ENTRIES::const_reverse_iterator crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
+      { //BM_ENTRIES::const_reverse_iterator crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
+        const auto crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
 
         if (crit3 != fe.crend())
           return (*crit3);
@@ -933,12 +1030,14 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
   }
 
   if (dirn == BANDMAP_DIRECTION_UP)
-  { if (cit != fe.end())                      // should always be true
+  { if (cit != fe.cend())                      // should always be true
     { const string target_freq_str = cit->frequency_str();
-      BM_ENTRIES::const_iterator cit2 = find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }); // move away from my frequency
+//      BM_ENTRIES::const_iterator cit2 = find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }); // move away from my frequency, in upwards direction
+      const auto cit2 = find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }); // move away from my frequency, in upwards direction
 
-      if (cit2 != fe.end())
-      { BM_ENTRIES::const_iterator cit3 = find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); });
+      if (cit2 != fe.cend())
+      { //BM_ENTRIES::const_iterator cit3 = find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); });
+        const auto cit3 = find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); });
 
         if (cit3 != fe.cend())
           return (*cit3);
@@ -1079,9 +1178,7 @@ const bool bandmap::is_present(const string& target_callsign)
 
 /// window < bandmap
 window& operator<(window& win, bandmap& bm)
-{ //ost << "in display, size = " << bm.size() << endl;
-
-  static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
+{ static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
 
   static int NOT_NEEDED_COLOUR = COLOUR_BLACK;
   static int DO_NOT_WORK_COLOUR = NOT_NEEDED_COLOUR;
@@ -1096,8 +1193,6 @@ window& operator<(window& win, bandmap& bm)
   const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();    // automatically filter
   const size_t start_entry = (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0;
 
-//  ost << "filtered size = " << entries.size() << endl;
-
   win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
 
   size_t index = 0;    // keep track of where we are in the bandmap
@@ -1107,12 +1202,21 @@ window& operator<(window& win, bandmap& bm)
     { const string entry_str = pad_string(pad_string(be.frequency_str(), 7)  + " " + be.callsign(), COLUMN_WIDTH, PAD_RIGHT);
       const string frequency_str = substring(entry_str, 0, 7);
       const string callsign_str = substring(entry_str, 8);
+      const bool is_marker = be.is_marker();
   
 // change to the correct colour
-      const time_t age = be.time_since_inserted();
+//      const time_t age = be.time_since_inserted();
+      const time_t age_since_original_inserted = be.time_since_this_or_earlier_inserted();
+      const time_t age_since_this_inserted = be.time_since_inserted();
+
+//      ost << "age of this or earlier insertion for " << be.callsign() << " = " << age_since_original_inserted << endl;
+//      ost << "time in entry: " << be.time() << endl;
+//      ost << "earlier time in entry: " << be.time_of_earlier_bandmap_entry() << endl;
+//      ost << "be: " << be << endl;
+
       const time_t start_time = be.time();                  // time it was inserted
       const time_t expiration_time = be.expiration_time();
-      const float fraction = static_cast<float>(age) / (expiration_time - start_time);
+      const float fraction = static_cast<float>(age_since_this_inserted) / (expiration_time - start_time);
 
       const vector<int> fade_colours = bm.fade_colours();
       const int n_colours = fade_colours.size();
@@ -1123,12 +1227,13 @@ window& operator<(window& win, bandmap& bm)
 
       int cpu = colours.add(fade_colours.at(n_intervals), win.bg());
 
-// mark in GREEN if age is less than two minutes
-      if (age < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != string_to_colour("BLACK")))
+// mark in GREEN if less than two minutes since the original spot at this freq was inserted
+      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != string_to_colour("BLACK")))
         cpu = colours.add(bm.recent_colour(), win.bg());
 
-      if (be.is_my_marker() or be.is_mode_marker())
-        cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // marker for my current frequency
+//      if (be.is_my_marker() or be.is_mode_marker())
+      if (is_marker)
+        cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
 
 // work out where to start the display of this call
       const unsigned int x = ( (index  - start_entry) / win.height()) * COLUMN_WIDTH;
@@ -1142,15 +1247,9 @@ window& operator<(window& win, bandmap& bm)
 // now work out the status colour
       int status_colour = colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR);                      // default
 
-      if (!be.is_my_marker() and !be.is_mode_marker())
-      { //ost << "writing bandmap entry for " << be.callsign() << endl;
-
-        //ost << "be.is_needed()): " << be.is_needed() << endl;
-
-        if (be.is_needed())
-        { //ost << "be.mult_status_is_known(): " << be.mult_status_is_known() << endl;
-
-          if (be.mult_status_is_known())
+      if (!is_marker)
+      { if (be.is_needed())
+        { if (be.mult_status_is_known())
             status_colour = (be.is_needed_mult() ? colours.add(MULT_COLOUR, MULT_COLOUR) : colours.add(NOT_MULT_COLOUR, NOT_MULT_COLOUR));
           else
             status_colour = colours.add(UNKNOWN_MULT_STATUS_COLOUR, UNKNOWN_MULT_STATUS_COLOUR);

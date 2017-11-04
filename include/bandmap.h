@@ -52,6 +52,59 @@ extern old_log             olog;                                ///< old (ADIF) 
 */
 const std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 
+// -----------   bandmap_buffer_entry ----------------
+
+/*! \class  bandmap_buffer_entry
+    \brief  Class for entries in the bandmap_buffer class
+*/
+
+class bandmap_buffer_entry
+{
+protected:
+  std::set<std::string>  _posters;           // the posters
+
+public:
+
+  inline const unsigned int size(void) const
+    { return _posters.size(); }
+
+  const unsigned int add(const std::string& new_poster);
+};
+
+// -----------   bandmap_buffer ----------------
+
+/*! \class  bandmap_buffer
+    \brief  Class to control which cluster/RBN posts reach the bandmaps
+
+    A single bandmap_buffer is used to control all bandmaps
+*/
+
+class bandmap_buffer
+{
+protected:
+  unsigned int _min_posters;        ///< minumum number of posters needed to appear on bandmap
+
+  std::map<std::string /* call */, bandmap_buffer_entry>  _data;    ///< the database
+
+  pt_mutex _bandmap_buffer_mutex;
+
+public:
+
+/// default constructor
+  bandmap_buffer(const unsigned int n_posters = 1);
+
+  READ_AND_WRITE(min_posters);      ///< minumum number of posters needed to appear on bandmap
+
+  const unsigned int n_posters(const std::string& callsign);
+
+  const unsigned int add(const std::string& callsign, const std::string& poster);
+
+  inline const bool sufficient_posters(const std::string& callsign)
+    { return (n_posters(callsign) >= _min_posters); }
+
+};
+
+
 // -----------   needed_mult_details ----------------
 
 /*! \class  needed_mult_details
@@ -178,7 +231,7 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<T>& nmd)
       << "is status known: " << nmd.is_status_known() << std::endl
       << "values: " << std::endl;
 
-  std::set<T> s = nmd.values();
+  const std::set<T> s = nmd.values();
 
   for (const auto& v : s)
     ost << "  value: " << v << std::endl;
@@ -249,22 +302,23 @@ class bandmap_entry
 {
 protected:
 
-  enum BAND                                                 _band;                      ///< band
-  std::string                                               _callsign;                  ///< call
-  std::string                                               _canonical_prefix;          ///< canonical prefix corresponding to the call
-  std::string                                               _continent;                 ///< continent corresponding to the call
-  time_t                                                    _expiration_time;           ///< time at which this entry expires (in seconds since the epoch)
-  frequency                                                 _freq;                      ///< QRG
-  std::string                                               _frequency_str;             ///< QRG (kHz, to 1 dp)
-  bool                                                      _is_needed;                 ///< do we need this call?
-  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;   ///< details of needed callsign mults
-  needed_mult_details<std::string>                          _is_needed_country_mult;    ///< details of needed country mults
-  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;   ///< details of needed exchange mults
-  enum MODE                                                 _mode;                      ///< mode
-  bool                                                      _mult_status_is_known;      ///< true only after calculate_mult_status() has been called
-  std::set<std::string>                                     _posters;                   ///< stations that posted this entry
-  enum BANDMAP_ENTRY_SOURCE                                 _source;                    ///< the source of this entry
-  time_t                                                    _time;                      ///< time (in seconds since the epoch) at which the object was created
+  enum BAND                                                 _band;                              ///< band
+  std::string                                               _callsign;                          ///< call
+  std::string                                               _canonical_prefix;                  ///< canonical prefix corresponding to the call
+  std::string                                               _continent;                         ///< continent corresponding to the call
+  time_t                                                    _expiration_time;                   ///< time at which this entry expires (in seconds since the epoch)
+  frequency                                                 _freq;                              ///< QRG
+  std::string                                               _frequency_str;                     ///< QRG (kHz, to 1 dp)
+  bool                                                      _is_needed;                         ///< do we need this call?
+  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;           ///< details of needed callsign mults
+  needed_mult_details<std::string>                          _is_needed_country_mult;            ///< details of needed country mults
+  needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;           ///< details of needed exchange mults
+  enum MODE                                                 _mode;                              ///< mode
+  bool                                                      _mult_status_is_known;              ///< true only after calculate_mult_status() has been called
+//  std::set<std::string>                                     _posters;                   ///< stations that posted this entry
+  enum BANDMAP_ENTRY_SOURCE                                 _source;                            ///< the source of this entry
+  time_t                                                    _time;                              ///< time (in seconds since the epoch) at which the object was created
+  time_t                                                    _time_of_earlier_bandmap_entry;     ///< time of bandmap_entry that this bandmap_entry replaced; 0 => not a replacement
 
 public:
 
@@ -304,9 +358,10 @@ public:
   READ_AND_WRITE(is_needed);            ///< do we need this call?
   READ_AND_WRITE(mode);                 ///< mode
   READ(mult_status_is_known);
-  READ_AND_WRITE(posters);              ///< source(s) of posting (if the source is RBN)
+//  READ_AND_WRITE(posters);              ///< callsign(s) that posted the post(s) (if the source is RBN)
   READ_AND_WRITE(source);               ///< the source of this entry
   READ(time);                           ///< time (in seconds since the epoch) at which the object was created
+  READ(time_of_earlier_bandmap_entry);  ///< time (in seconds since the epoch) of object that this object replaced
 
 /// was this bandmap_entry generated from the RBN?
   inline const bool is_rbn(void) const
@@ -465,12 +520,16 @@ public:
   inline const time_t time_since_inserted(void) const
     { return (::time(NULL) - _time); }
 
+/// how long (in seconds) has it been since this entry or its predecessor was inserted into a bandmap?
+  inline const time_t time_since_this_or_earlier_inserted(void) const
+    { return ( ::time(NULL) - (_time_of_earlier_bandmap_entry ? _time_of_earlier_bandmap_entry : _time) ); }
+
 /*! \brief          Should this bandmap_entry be removed?
     \param  now     current time
     \return         whether this bandmap_entry has expired
 */
   inline const bool should_prune(const time_t now = ::time(NULL)) const
-    { return ( (_expiration_time < now) and (_callsign != MY_MARKER)); }
+    { return ( (_expiration_time < now) and !is_marker()); }
 
 /*! \brief              Re-mark the need/mult status
     \param  rules       rules for the contest
@@ -483,15 +542,15 @@ public:
   const bool remark(contest_rules& rules, call_history& q_history, running_statistics& statistics);
 
 /// the number of posters
-  inline const unsigned int n_posters(void) const
-    { return _posters.size(); }
+//  inline const unsigned int n_posters(void) const
+//    { return _posters.size(); }
 
 /*! \brief      Return the (absolute) difference in frequency between two bandmap entries
     \param  be  other bandmap entry
     \return     difference in frequency between *this and <i>be</i>
 */
   inline const frequency frequency_difference(const bandmap_entry& be) const
-    { return frequency(abs(be._freq.hz() - _freq.hz())); }
+    { return frequency(abs(be._freq.hz() - _freq.hz()), FREQ_HZ); }
 
 /*! \brief      Return the difference in frequency between two bandmap entries, in +ve hertz
     \param  be  other bandmap entry
@@ -526,8 +585,8 @@ public:
     \param  call    call to test
     \return         Whether <i>call</i> is a poster
 */
-  inline const bool is_poster(const std::string& call) const
-    { return (_posters < call); }
+//  inline const bool is_poster(const std::string& call) const
+//    { return (_posters < call); }
 
 /// return all the posters as a space-separated string
   const std::string posters_string(void) const;
@@ -552,6 +611,9 @@ public:
 //    { return (is_all_time_first() or olog.confirmed(_callsign, _band, _mode)); }
     { return (is_all_time_first_and_needed_qso() or olog.confirmed(_callsign, _band, _mode)); }
 
+// set value from an earlier be
+  void time_of_earlier_bandmap_entry(const bandmap_entry& old_be);
+
 /// archive using boost serialization
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -567,7 +629,7 @@ public:
          & _is_needed_country_mult
          & _is_needed_exchange_mult
          & _mode
-         & _posters
+//         & _posters
          & _source
          & _time;
     }
@@ -665,34 +727,13 @@ public:
     }
   
 /// all the entries in the bandmap
-//  inline const BM_ENTRIES entries(void)
-//    { SAFELOCK(_bandmap);
-//      return _entries;
-//    }
   SAFEREAD_WITH_INTERNAL_MUTEX(entries, _bandmap);
     
 /// the colours used as entries age
-//  inline const std::vector<int> fade_colours(void)
-//    { SAFELOCK(_bandmap);
-//      return _fade_colours;
-//    }
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(fade_colours, _bandmap);
-
-/*!  \brief     Set the colours to use as entries age
-     \param fc  vector of colours to use as entries age; most recent entries first
-*/
-//  inline void fade_colours(const std::vector<int> fc)
-//    { SAFELOCK(_bandmap);
-//      _fade_colours = fc;
-//    }
 
 /// the colour used for recent entries
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(recent_colour, _bandmap);
-
-//  inline const int recent_colour(void)
-//    { SAFELOCK(_bandmap);
-//      return _recent_colour;
-//    }
 
 /// set the colour used for recent entries
 //  inline void recent_colour(const int rc)
@@ -702,8 +743,11 @@ public:
 
 /*!  \brief     Add a bandmap_entry
      \param be  entry to add
+
+     <i>_time_of_earlier_bandmap_entry</i> in <i>be</i> might be changed.
+     Could change this by copying the be inside +=.
 */
-  void operator+=(const bandmap_entry& be);
+  void operator+=(bandmap_entry& be);
 
 /*! \brief              Return the entry for a particular call
     \param  callsign    call for which the entry should be returned
@@ -771,7 +815,11 @@ public:
   inline const bool filter_enabled(void)
     { return _filter_p->enabled(); }
 
-/// enable or disable the filter
+/*! \brief          Enable or disable the filter
+    \param  torf    whether to enable the filter
+
+    Disables the filter if <i>torf</i> is false.
+*/
   void filter_enabled(const bool torf);
 
 /// return all the countries and continents currently in the filter

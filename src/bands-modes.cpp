@@ -39,6 +39,27 @@ frequency::frequency(const double f)
   }
 }
 
+/*! \brief          Construct from a double and an explicit unit
+    \param f        frequency in Hz, kHz or MHz
+    \param unit     frequency unit
+*/
+frequency::frequency(const double f, const FREQ_UNIT unit)
+
+{ switch (unit)
+  { case FREQ_HZ :
+      _hz = static_cast<unsigned int>(f + 0.5);
+      break;
+
+    case FREQ_KHZ :
+      _hz = static_cast<unsigned int>(f * 1000 + 0.5);
+      break;
+
+    case FREQ_MHZ :
+      _hz = static_cast<unsigned int>(f * 1000000 + 0.5);
+      break;
+  }
+}
+
 /*! \brief      construct from a band
     \param b    band
 

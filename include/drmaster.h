@@ -69,21 +69,20 @@ class trmaster_line
 {
 protected:
 
-  int _hit_count;    ///< nominal number of QSOs with this station
-  int _cq_zone;      ///< CQ zone
-  int _check;        ///< Sweepstakes check
-  int _foc;          ///< FOC membership number
-  int _ten_ten;      ///< 10-X membership number
-
-  std::string _call;                                           ///< callsign
-  std::string _qth;                                            ///< precise meaning depends on location of this station
-  std::array<std::string, TRMASTER_N_USER_PARAMETERS> _user;   ///< user parameters
-  std::string _section;                                        ///< ARRL section
-  std::string _name;                                           ///< operator's name
-  std::string _grid;                                           ///< Maidenhead grid locator
-  std::string _itu_zone;                                       ///< ITU zone (string because of the way TR treats HQ stations)
-  std::string _old_call;                                       ///< operator's old call
-  std::string _speed;                                          ///< CW speed
+  std::string   _call;                                          ///< callsign
+  int           _check;                                         ///< Sweepstakes check
+  int           _cq_zone;                                       ///< CQ zone
+  int           _foc;                                           ///< FOC membership number
+  std::string   _grid;                                          ///< Maidenhead grid locator
+  int           _hit_count;                                     ///< nominal number of QSOs with this station
+  std::string   _itu_zone;                                      ///< ITU zone (string because of the way TR treats HQ stations)
+  std::string   _name;                                          ///< operator's name
+  std::string   _old_call;                                      ///< operator's old call
+  std::string   _qth;                                           ///< precise meaning depends on location of this station
+  std::string   _section;                                       ///< ARRL section
+  std::string   _speed;                                         ///< CW speed
+  int           _ten_ten;                                       ///< 10-X membership number
+  std::array<std::string, TRMASTER_N_USER_PARAMETERS> _user;    ///< user parameters
 
 public:
 
@@ -133,13 +132,13 @@ public:
   inline const std::string user(const int n) const
     { return _user[n - 1]; }
 
-/*!     \brief  merge with another trmaster_line
-        \param  ln  line to be merged
-        \return  line merged with <i>ln</i>
+/*! \brief          Merge with another trmaster_line
+    \param  trml    line to be merged
+    \return         line merged with <i>ln</i>
 
-        New values (i.e., values in <i>ln</i>) take precedence if there's a conflict
+    New values (i.e., values in <i>ln</i>) take precedence if there's a conflict
 */
-  const trmaster_line operator+(const trmaster_line&) const;
+  const trmaster_line operator+(const trmaster_line& trml) const;
 
 /*!     \brief  merge with another trmaster_line
         \param  ln  line to be merged

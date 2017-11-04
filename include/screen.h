@@ -217,17 +217,17 @@ class window
 protected:
   
   unsigned int  _column_width;      ///< width of columns
+  int           _cursor_x;          ///< used to hold x cursor
   bool          _echoing;           ///< whether echoing characters
+  int           _height;            ///< height
   bool          _leaveok;           ///< whether leaveok is set
   bool          _scrolling;         ///< whether scrolling is enabled
   bool          _vertical;          ///< whether containers of strings are to be displayed vertically
+  int           _width;             ///< width
+  int           _x;                 ///< x of origin (in proper coordinates)
+  int           _y;                 ///< y of origin (in proper coordinates)
 
-  int     _x;                  ///< x of origin (in proper coordinates)
-  int     _y;                  ///< y of origin (in proper coordinates)
-  int     _width;              ///< width
-  int     _height;             ///< height
 
-  int    _cursor_x;            ///< used to hold x cursor
   int    _cursor_y;            ///< used to hold y cursor
   
   WINDOW* _wp;                 ///< ncurses handle 
@@ -295,7 +295,7 @@ public:
     \param  bg      background colour
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 
-    The window is ready for use after this function has been called. <i>fg</i> and <i.bg</i>
+    The window is ready for use after this function has been called. <i>fg</i> and <i>bg</i>
     override <i>wi.fg_colour()</i> and <i>wi.bg_colour()</i> iff wi.colours_set() is false.
 */
   void init(const window_information& wi, int fg, int bg, const unsigned int flags = 0);
@@ -362,9 +362,9 @@ public:
   inline const bool scrolling(void) const
     { return _scrolling; }
 
-/*! \brief          scroll a window
-    \param  n       number of lines to by which to scroll
-    \return                     the window
+/*! \brief              scroll a window
+    \param  n_lines     number of lines to by which to scroll
+    \return             the window
 
     Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
 */
@@ -431,11 +431,27 @@ public:
     return rv;
   }
 
-/// write a string to a window
+/*! \brief      Write a string to the window
+    \param  s   the string to write
+    \return     the window
+
+    wprintw has fairly obnoxious behaviour regarding newlines: if a string
+    reaches the end of a window line, then an LF is automatically added. For
+    now we live with this, but we might want at some time to write a more complex
+    function that performs the writes without ever (silently) adding something
+    to the string
+
+    Also see the function reformat_for_wprintw().
+*/
   window& operator<(const std::string& s);
-  
-/// write a vector of strings to a window
-  window& operator<(const std::vector<std::string>& vec);
+
+/*! \brief      Write a vector of strings to a window
+    \param  v   the vector of strings to be written
+    \return     the window
+
+    Wraps words to new lines. Stops writing if there's insufficient room for the next string.
+*/
+  window& operator<(const std::vector<std::string>& v);
 
 /*! \brief          Write a set of strings to a window
     \param  ss      set to write

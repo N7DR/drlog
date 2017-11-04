@@ -527,8 +527,9 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
-      for (size_t n = 0; n < fields.size(); ++n)
-      { vector<string> field = split_string(fields[n], ":");
+//      for (size_t n = 0; n < fields.size(); ++n)
+      for (const auto& this_field : fields)
+      { const vector<string> field = split_string(this_field, ":");
 
         _sent_exchange.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
       }
@@ -539,8 +540,9 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
-      for (size_t n = 0; n < fields.size(); ++n)
-      { vector<string> field = split_string(fields[n], ":");
+//      for (size_t n = 0; n < fields.size(); ++n)
+      for (const auto& this_field : fields)
+      { const vector<string> field = split_string(this_field, ":");
 
         _sent_exchange_cw.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
       }
@@ -551,8 +553,9 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
-      for (size_t n = 0; n < fields.size(); ++n)
-      { const vector<string> field = split_string(fields[n], ":");
+      for (const auto& this_field : fields)
+//      for (size_t n = 0; n < fields.size(); ++n)
+      { const vector<string> field = split_string(this_field, ":");
 
         _sent_exchange_ssb.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
       }
@@ -622,10 +625,6 @@ void drlog_context::_process_configuration_file(const string& filename)
           _start_mode = MODE_SSB;
       }
     }
-
-// MARK MODE BREAK POINTS
-//    if (LHS == "MARK MODE BREAK POINTS")
-//      _mark_mode_break_points = is_true;
 
 // MODE BREAK POINTS
     if (LHS == "MODE BREAK POINTS")
@@ -1420,32 +1419,32 @@ drlog_context::drlog_context(const std::string& filename) :
   _cabrillo_category_mode(),                                        // no default, must be filled in by the config file
   _cabrillo_category_operator("SINGLE-OP"),                         // default is single op
   _cabrillo_category_overlay(),                                     // no overlay
-  _cabrillo_category_power("HIGH"),                                 // defauklt is high power
-  _cabrillo_category_station(),
-  _cabrillo_category_time(),
+  _cabrillo_category_power("HIGH"),                                 // default is high power
+  _cabrillo_category_station(),                                     // no default station category
+  _cabrillo_category_time(),                                        // no default time category
   _cabrillo_category_transmitter("ONE"),
-  _cabrillo_certificate("YES"),               // explicitly request a certificate, because of inanity in the specification
+  _cabrillo_certificate("YES"),                                     // explicitly request a certificate, because of inanity in the specification
   _cabrillo_club(),
-  _cabrillo_contest(),                        // CONTEST in Cabrillo file
-  _cabrillo_eol("LF"),                        // use LF as EOL in the Cabrillo file
+  _cabrillo_contest(),                                              // CONTEST in Cabrillo file
+  _cabrillo_eol("LF"),                                              // use LF as EOL in the Cabrillo file
   _cabrillo_e_mail(),
-  _cabrillo_filename("cabrillo"),             // name of file that will store Cabrillo log
-  _cabrillo_include_score(true),              // include score in the Cabrillo file
-  _cabrillo_location(),
-  _cabrillo_name(),                           // NAME in Cabrillo file
-  _cabrillo_qso_template(),
-  _callsign_mults(),                          // callsign is not the basis for any mults
-  _callsign_mults_per_band(false),            // any callsign mults are once-only
-  _callsign_mults_per_mode(false),            // any callsign mults are once-only
-  _cluster_port(23),                          // standard telnet server port
-  _country_list(COUNTRY_LIST_WAEDC),          // WAE country list
-  _country_mults_filter("ALL"),               // all countries are mults
-  _country_mults_per_band(true),              // any country mults are per-band
-  _country_mults_per_mode(false),             // any country mults are not per-mode
-  _cq_auto_lock(false),                       // don't lock the TX frequency in CQ mode
-  _cq_auto_rit(false),                        // don't enable RIT in CQ mode
-  _cty_filename("cty.dat"),                   // filename for country data
-  _cw_speed(29),                              // 29 WPM
+  _cabrillo_filename("cabrillo"),                                   // name of file that will store Cabrillo log
+  _cabrillo_include_score(true),                                    // include score in the Cabrillo file
+  _cabrillo_location(),                                             // LOCATION in Cabrillo file
+  _cabrillo_name(),                                                 // NAME in Cabrillo file
+  _cabrillo_qso_template(),                                         // empty QSO template; this must be properly defined if Cabrillo is used
+  _callsign_mults(),                                                // callsign is not the basis for any mults
+  _callsign_mults_per_band(false),                                  // any callsign mults are once-only
+  _callsign_mults_per_mode(false),                                  // any callsign mults are once-only
+  _cluster_port(23),                                                // standard telnet server port
+  _country_list(COUNTRY_LIST_WAEDC),                                // WAE country list
+  _country_mults_filter("ALL"),                                     // all countries are mults
+  _country_mults_per_band(true),                                    // any country mults are per-band
+  _country_mults_per_mode(false),                                   // any country mults are not per-mode
+  _cq_auto_lock(false),                                             // don't lock the TX frequency in CQ mode
+  _cq_auto_rit(false),                                              // don't enable RIT in CQ mode
+  _cty_filename("cty.dat"),                                         // filename for country data
+  _cw_speed(29),                                                    // 29 WPM
   _decimal_point("·"),                        // use centred dot as decimal point
   _display_communication_errors(true),        // display errors communicating with rig
   _do_not_show(),                             // all calls (apart from my_call()) should be shown on the bandmap

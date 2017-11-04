@@ -104,6 +104,9 @@ public:
 /// return a dummy header string
   const std::string header(void) const;
 
+/*! \brief      Append a chunk
+    \param  c   chunk to append
+*/
   template <typename T>
   void add_chunk(const T& c) const
   { c.write_to_file(_fp);
@@ -112,7 +115,7 @@ public:
 
 /*! \brief          Append data to the file
     \param  vp      pointer to buffer holding the data to be appended
-    \para,  size    number of bytes to be appended
+    \param  size    number of bytes to be appended
 */
   void append_data(const void* vp, const size_t size);
 };
@@ -154,7 +157,7 @@ protected:
   unsigned int      _samples_per_second;        ///< number of samples per second
   snd_pcm_format_t  _sample_format;             ///< format of a single format (U8, SND_PCM_FORMAT_S16_LE, etc.)
   int               _start_delay;               ///< ?
-  int               _stop_delay;                ///< ?
+//  int               _stop_delay;                ///< ?
   snd_pcm_stream_t  _stream;                    ///< type of stream
   unsigned int      _time_limit;                ///< number of seconds to record
 
@@ -392,8 +395,8 @@ class data_chunk
 {
 protected:
 
-  uint32_t  _subchunk_2_size;
-  u_char*   _data;
+  uint32_t  _subchunk_2_size;   ///< size in bytes of the remainder of the chunk = bits-per-sample / 8 * number-of-channels * number-of-samples
+  u_char*   _data;              ///< pointer to the actual sound data
 
 public:
 
@@ -403,9 +406,12 @@ public:
 */
   data_chunk(u_char* d, const uint32_t n_bytes);
 
-  READ_AND_WRITE(subchunk_2_size);
-  READ_AND_WRITE(data);
+  READ_AND_WRITE(subchunk_2_size);   ///< size in bytes = bits-per-sample / 8 * number-of-channels * number-of-samples
+  READ_AND_WRITE(data);              ///< pointer to the actual sound data
 
+/*! \brief      Write the data chunk to the file
+    \param  fp  file pointer
+*/
   void write_to_file(FILE* fp) const;
 };
 
@@ -436,11 +442,11 @@ protected:
   34        2   BitsPerSample    8 bits = 8, 16 bits = 16, etc.
 */
 
-  uint32_t  _subchunk_1_size;
-  uint16_t  _audio_format;
-  uint16_t  _num_channels;
-  uint32_t  _sample_rate;
-  uint16_t  _bits_per_sample;
+  uint32_t  _subchunk_1_size;   ///< 16, for PCM (size of the remainder of the subchunk)
+  uint16_t  _audio_format;      ///< 1, for PCM
+  uint16_t  _num_channels;      ///< number of channels
+  uint32_t  _sample_rate;       ///< bits per second
+  uint16_t  _bits_per_sample;   ///< number of bits in a single sample
 
 public:
 
@@ -460,6 +466,9 @@ public:
   inline const uint32_t byte_rate(void) const
     { return _sample_rate * block_align(); }
 
+/*! \brief      Convert to a string that holds the fmt chunk in ready-to-use form
+    \return     string containgint the fmt chunk
+*/
   const std::string to_string(void) const;
 
   void write_to_file(FILE* fp) const;

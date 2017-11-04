@@ -1,8 +1,8 @@
 // $Id: keyboard.cpp 129 2016-09-29 21:13:34Z  $
 
-/*!     \file keyboard.cpp
+/*! \file keyboard.cpp
 
-        Classes and functions related to obtaining and processing keyboard input
+    Classes and functions related to obtaining and processing keyboard input
 */
 
 #include "keyboard.h"
@@ -24,9 +24,9 @@ extern message_stream           ost;    ///< for debugging, info
 
 // -------------------------------------  keyboard_queue  ---------------------------
 
-/*!     \class keyboard_queue
-        \brief The basic queue of keyboard events, which is just a wrapper
-        around an STL deque
+/*! \class  keyboard_queue
+    \brief  The basic queue of keyboard events, which is just a wrapper
+            around an STL deque
 */
 
 /*! \brief                  X error handler
@@ -73,19 +73,11 @@ keyboard_queue::keyboard_queue(void) :
 
   if (!_display_p)
     delayed_exit("Fatal error: unable to open display", 2);
-//  { cerr << "Fatal error: unable to open display" << endl;
-//    sleep(2);
-//    exit (-1);
-//  }
 
 // get the window ID
   const char* cp = getenv("WINDOWID");
   if (!cp)
     delayed_exit("Fatal error: unable to obtain window ID", 2);
-//  { cerr << "Fatal error: unable to obtain window ID" << endl;
-//    sleep(2);
-//    exit (-1);
-//  }
 
   _window_id = from_string<Window>(cp);
 
@@ -103,9 +95,6 @@ keyboard_queue::keyboard_queue(void) :
 
   catch (const pthread_error& e)
   { delayed_exit("Error creating thread: KEYBOARD", 2);
-//    cerr << "Error creating thread: KEYBOARD" << endl;
-//    sleep(2);
-//    exit(-1);
   }
 }
 

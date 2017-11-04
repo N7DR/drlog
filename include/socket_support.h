@@ -243,26 +243,25 @@ public:
   inline void close(void)
     { return _close_the_socket(); }
 
-/*!     \brief  New socket
-        Switch to using a different underlying socket
+/*! \brief  Switch to using a different underlying socket
 */
   void new_socket(void);
 
-/*! \brief  Bind the socket
-  \param  local_address Address/port to which the socket is to be bound
+/*! \brief                  Bind the socket
+    \param  local_address   address/port to which the socket is to be bound
 */
   void bind(const sockaddr_storage& local_address);
 
-/*! \brief  Bind the socket
-  \param  dotted_decimal_address  Address to which the socket is to be bound
-  \param  port_nr     Port to which the socket is to be bound
+/*! \brief                          Bind the socket
+    \param  dotted_decimal_address  address to which the socket is to be bound
+    \param  port_nr                 port to which the socket is to be bound
 */
   inline void bind(const std::string& dotted_decimal_address, const short port_nr = 0)
     { bind(socket_address(dotted_decimal_address, port_nr)); }
 
-/*! \brief  Connect to the far-end
-  \param  dotted_ip_address Address of the far end
-  \param  port_nr     Port of the far end
+/*! \brief                      Connect to the far-end
+    \param  dotted_ip_address   address of the far end
+    \param  port_nr             port of the far end
 */
   inline void destination(const std::string& dotted_ip_address, const short port_nr)
     { destination(socket_address(dotted_ip_address, port_nr)); }
@@ -272,17 +271,17 @@ public:
 */
   void destination(const sockaddr_storage& adr);
 
-/*! \brief  Connect to the far-end, with explicit time-out when trying to make connection
-    \param  dotted_ip_address Address of the far end
-    \param  port_nr     Port of the far end
-    \param  timeout timeout in seconds
+/*! \brief                      Connect to the far-end, with explicit time-out when trying to make connection
+    \param  dotted_ip_address   address of the far end
+    \param  port_nr             port of the far end
+    \param  timeout_secs        timeout in seconds
 */
   inline void destination(const std::string& dotted_ip_address, const short port_nr, const unsigned long timeout_secs)
     { destination(socket_address(dotted_ip_address, port_nr), timeout_secs); }
 
-/*! \brief              Connect to the far-end, with explicit time-out when trying to make connection
-    \param  adr         address/port of the far end
-    \param  timeout     timeout in seconds
+/*! \brief                  Connect to the far-end, with explicit time-out when trying to make connection
+    \param  adr             address/port of the far end
+    \param  timeout_secs    timeout in seconds
 
     See https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
 */
@@ -360,14 +359,14 @@ const std::string read(const unsigned long timeout_secs);
   void keep_alive(const unsigned int idle, const unsigned int retry, const unsigned int n);
 };
 
-/*!     \brief              Convert a name to a dotted decimal IP address
-        \param  fqdn        name to be resolved
-        \param  n_tries     maximum number of tries
-        \return Equivalent IP address in dotted decimal format
+/*! \brief              Convert a name to a dotted decimal IP address
+    \param  fqdn        name to be resolved
+    \param  n_tries     maximum number of tries
+    \return             equivalent IP address in dotted decimal format
 
-        Throws exception if the name cannot be resolved. Uses gethostbyname_r() to perform the lookup.
-        <i>n_tries</i> is present because gethostbyname_r() cannot be relied on to complete a remote
-        lookup before deciding to return with an error.
+    Throws exception if the name cannot be resolved. Uses gethostbyname_r() to perform the lookup.
+    <i>n_tries</i> is present because gethostbyname_r() cannot be relied on to complete a remote
+    lookup before deciding to return with an error.
 */   
 std::string name_to_dotted_decimal(const std::string& fqdn, const unsigned int n_tries = 1);
 
@@ -383,9 +382,9 @@ protected:
 
 public:
 
-/*! \brief  Construct from error code and reason
-    \param  n Error code
-    \param  s Reason
+/*! \brief      Construct from error code and reason
+    \param  n   error code
+    \param  s   reason
 */
   socket_support_error(const int n, const std::string& s = (std::string)"") : 
     drlog_error(n, s) 

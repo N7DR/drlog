@@ -38,6 +38,9 @@ static const std::string CR       = "\r";       ///< CR as string
 static const char        CR_CHAR  = '\r';       ///< CR as character
 static const std::string CRLF     = "\r\n";     ///< CR followed by LF
 
+static const std::string DIGITS { "0123456789" };                               ///< convenient way contain all digits
+static const std::string UPPER_CASE_LETTERS { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };   ///< convenient way contain all upper case letters
+
 const bool INCLUDE_SECONDS = true;             ///< whether to include seconds in date_time_string()
   
 /// directions in which a string can be padded
@@ -190,6 +193,13 @@ inline const bool contains(const std::string& s, const char c)
     \return         whether <i>str</i> contains any letters
 */
 const bool contains_letter(const std::string& str);
+
+/*! \brief          Does a string contain any upper case letters?
+    \param  str     string to test
+    \return         whether <i>str</i> contains any upper case letters
+*/
+inline const bool contains_upper_case_letter(const std::string& str)
+  { return (str.find_first_of(UPPER_CASE_LETTERS) != std::string::npos); }
 
 /*! \brief          Does a string contain any digits?
     \param  str     string to test

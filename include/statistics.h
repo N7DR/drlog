@@ -72,7 +72,7 @@ protected:
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
 */
-    void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
+  void _insert_callsign_mult(const std::string& mult_name, const std::string& mult_value, const unsigned int band_nr = ALL_BANDS, const unsigned int mode_nr = ALL_MODES);
 
 /*! \brief          Generate a summary string for display
     \param  rules   rules for this contest

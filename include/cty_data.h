@@ -97,7 +97,7 @@ public:
       _val = v;
     }
     
-/// value = <something>
+/// value = *something*
   void operator=(T v)
   { _is_valid = true;
     _val = v;
@@ -458,8 +458,8 @@ const location_info guess_zones(const std::string& call, const location_info& li
 
 // -----------  drlog_qth_database_record  ----------------
 
-/*!     \class drlog_qth_database_record
-        \brief A record from the drlog-specific QTH-override database
+/*!     \class  drlog_qth_database_record
+        \brief  A record from the drlog-specific QTH-override database
 
         I believe that this is currently unused.
 */
@@ -475,11 +475,12 @@ protected:
   
 public:
   
-  inline const std::string get_id(void) const
-    { return _id; }
+  READ_AND_WRITE(id);
+//  inline const std::string get_id(void) const
+//    { return _id; }
     
-  inline void set_id(const std::string& i)
-    { _id = i; }
+//  inline void set_id(const std::string& i)
+//    { _id = i; }
     
   inline const unsigned int get_area(const unsigned int def) const
     { return _area.get(def); }

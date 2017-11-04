@@ -25,8 +25,8 @@
 
 // ---------------------------------------- cw_buffer -------------------------
 
-/*! \class cw_buffer
-    \brief A buffer for sending CW
+/*! \class  cw_buffer
+    \brief  A buffer for sending CW
 */
 
 class cw_buffer

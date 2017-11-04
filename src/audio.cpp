@@ -25,7 +25,7 @@ using namespace std;
 using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
 
-extern bool             exiting;
+extern bool             exiting;                ///< whether drlog is in the process of exiting
 extern int              n_running_threads;      ///< the number of running threads
 extern message_stream   ost;                    ///< for debugging and logging
 extern pt_mutex         thread_check_mutex;     ///< mutex for controllinh threads
@@ -265,7 +265,9 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_UNABLE_TO_SET_START_THRESHOLD, "Unable to set start threshold for " + _pcm_name);
   }
 
-  const snd_pcm_uframes_t stop_threshold = ( (double)rate * _stop_delay / 1000000 ) + ( (_stop_delay <= 0) ? buffer_size : 0 );
+//  const snd_pcm_uframes_t stop_threshold = ( (double)rate * _stop_delay / 1000000 ) + ( (_stop_delay <= 0) ? buffer_size : 0 );
+
+  const snd_pcm_uframes_t stop_threshold = buffer_size;
 
   err = snd_pcm_sw_params_set_stop_threshold(_handle, swparams, stop_threshold);
 
@@ -445,9 +447,10 @@ create_file:
 
 // read OK from sound card
     if (first_time_through_loop)            // write data chunk if we've just started
-    { const data_chunk dc(_audio_buf, f);
+    { //const data_chunk dc(_audio_buf, f);
 
-      wfp->add_chunk(dc);
+//      wfp->add_chunk(dc);
+      wfp->add_chunk(data_chunk(_audio_buf, f));
       first_time_through_loop = false;
     }
     else                                    // otherwise append the data we just read
@@ -485,7 +488,7 @@ goto create_file;
 
 /// constructor
 audio_recorder::audio_recorder(void) :
-  _audio_buf(nullptr),                     // no buffer by default
+  _audio_buf(nullptr),                      // no buffer by default
   _buffer_frames(0),
   _buffer_time(0),
   _period_size_in_frames(0),
@@ -504,7 +507,7 @@ audio_recorder::audio_recorder(void) :
   _samples_per_second(8000),                // G.711 rate
   _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
   _start_delay(1),
-  _stop_delay(0),
+//  _stop_delay(0),
   _stream(SND_PCM_STREAM_CAPTURE),          // we are capturing a stream
   _time_limit(0)                            // no limit
 { }
@@ -539,7 +542,6 @@ void audio_recorder::initialise(void)
 
   status = snd_pcm_info(_handle, _info);   // gets info
 
-//  if (snd_pcm_info(_handle, _info) < 0)   // gets info
   if (status < 0)
   { ost << "ERROR: cannot obtain info for audio device: " << _pcm_name << endl;
     ost << "error number " << status << endl;
@@ -671,7 +673,7 @@ void wav_file::close(void)
 
 /*! \brief          Append data to the file
     \param  vp      pointer to buffer holding the data to be appended
-    \para,  size    number of bytes to be appended
+    \param  size    number of bytes to be appended
 */
 void wav_file::append_data(const void* vp, const size_t size)
 { if (fwrite(vp, size, 1, _fp) != 1)
@@ -939,11 +941,14 @@ void data_chunk::write_to_file(FILE* fp) const
 fmt_chunk::fmt_chunk(void) :
   _subchunk_1_size(16), // PCM
   _audio_format(1),     // PCM
-  _num_channels(1),
-  _sample_rate(8000),
-  _bits_per_sample(8)
+  _num_channels(1),     // mono
+  _sample_rate(8000),   // 64 kbps
+  _bits_per_sample(8)   // 8-bit samples
 { }
 
+/*! \brief      Convert to a string that holds the fmt chunk in ready-to-use form
+    \return     string containgint the fmt chunk
+*/
 const string fmt_chunk::to_string(void) const
 { string rv = "fmt " + create_string(' ', 20);
 
