@@ -359,7 +359,13 @@ public:
   void freq(const frequency& f);
 
   READ(frequency_str);                  ///< QRG (kHz, to 1 dp)
-  READ_AND_WRITE(is_needed);            ///< do we need this call?
+
+//  READ_AND_WRITE(is_needed);            ///< do we need this call?
+  inline const bool is_needed(void) const
+    { return ( _is_needed and !is_marker() ); }    // we never need a marker, regardless of the value of _is_needed
+
+  WRITE(is_needed);                     ///< do we need this call?
+
   READ_AND_WRITE(mode);                 ///< mode
   READ(mult_status_is_known);
 //  READ_AND_WRITE(posters);              ///< callsign(s) that posted the post(s) (if the source is RBN)

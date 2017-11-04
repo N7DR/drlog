@@ -3739,7 +3739,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   { const string contents = remove_peripheral_spaces(win.read());
 
 // try to parse as frequency
-//    const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
     const bool contains_letter = contains_upper_case_letter(contents);
     const frequency f_b = rig.rig_frequency_b();;
 
@@ -3952,7 +3951,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_exchange.move_cursor(0, 0);
       }
       else
-      { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+      { //const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+        const size_t posn = exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS);                    // first empty space
 
         if (posn != string::npos)
         { win_exchange.move_cursor(posn + 1, 0);
@@ -4019,7 +4019,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           win_exchange.move_cursor(0, 0);
         }
         else
-        { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+        { //const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+          const size_t posn = exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS);                    // first empty space
 
           if (posn != string::npos)
           { win_exchange.move_cursor(posn + 1, 0);
@@ -4785,7 +4786,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         win_exchange.move_cursor(0, 0);
       }
       else
-      { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+      { //const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+        const size_t posn = exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS);                    // first empty space
 
         if (posn != string::npos)
         { win_exchange.move_cursor(posn + 1, 0);
@@ -7441,7 +7443,8 @@ const bool process_keypress_F5(void)
       win_exchange.move_cursor(0, 0);
     }
     else
-    { const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+    { //const size_t posn = exchange_contents.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");                    // first empty space
+      const size_t posn = exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS);                    // first empty space
 
       if (posn != string::npos)
       { win_exchange.move_cursor(posn + 1, 0);

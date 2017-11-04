@@ -30,7 +30,28 @@ multiplier::multiplier(void) :
   _per_band(false),
   _per_mode(false),
   _used(false)
-{
+{ }
+
+/*! \brief          Remove a value from the known values
+    \param  str     value to be removed
+
+    Does nothing if <i>str</i> is not known
+*/
+void multiplier::remove_known(const string& str)
+{ SAFELOCK(multiplier);
+
+  if (_used)
+    _known.erase(str);
+}
+
+/*! \brief          Is a particular value a known multiplier value?
+    \param  str     value to test
+    \return         whether <i>str</i> is a known multiplier value
+*/
+const bool multiplier::is_known(const string& str) const
+{ SAFELOCK(multiplier);
+
+  return (_used ? (_known < str) : false);
 }
 
 /*! \brief          Add a worked multiplier

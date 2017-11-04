@@ -55,9 +55,10 @@ public:
 /// default constructor
   multiplier(void);
 
-  READ_AND_WRITE(per_band);                       ///< is this multiplier accumulated per-band?
-  READ_AND_WRITE(per_mode);                       ///< is this multiplier accumulated per-mode?
-  READ_AND_WRITE(used);                           ///< is this object in use?
+  SAFE_READ(known, multiplier);                                     ///< all the (currently) known possible values
+  SAFE_READ_AND_WRITE(per_band, multiplier);                        ///< is this multiplier accumulated per-band?
+  SAFE_READ_AND_WRITE(per_mode, multiplier);                        ///< is this multiplier accumulated per-mode?
+  SAFE_READ_AND_WRITE(used, multiplier);                            ///< is this object in use?
 
 /*! \brief          Add a value to the set of known values
     \param  str     value to add
@@ -73,7 +74,7 @@ public:
     \return     number of values added
 */
   template<typename T>
-  inline const unsigned int add_known(const T& k)
+  const unsigned int add_known(const T& k)
     { unsigned int rv = 0;
 
       SAFELOCK(multiplier);
@@ -97,12 +98,7 @@ public:
 
     Does nothing if <i>str</i> is not known
 */
-  inline void remove_known(const std::string& str)
-    { SAFELOCK(multiplier);
-
-      if (_used)
-        _known.erase(str);
-    }
+  void remove_known(const std::string& str);
 
 /*! \brief          Remove a value from the known values
     \param  str     value to be removed
@@ -141,12 +137,11 @@ public:
 */
   void remove_worked(const std::string& str, const BAND b, const MODE m);
 
-/// Returns whether the value <i>str</i> is a known multiplier
-  inline const bool is_known(const std::string& str) const
-    { SAFELOCK(multiplier);
-
-      return (_used ? (_known < str) : false);
-    }
+/*! \brief          Is a particular value a known multiplier value?
+    \param  str     value to test
+    \return         whether <i>str</i> is a known multiplier value
+*/
+  const bool is_known(const std::string& str) const;
 
 /*! \brief          Has a station been worked on a particular band and mode?
     \param  str     callsign to test
@@ -183,11 +178,11 @@ public:
   const std::set<std::string> worked(const int b, const int m) const;
 
 /// All the known mults
-  inline const std::set<std::string> known(void) const
-    { SAFELOCK(multiplier);
-
-      return _known;
-    }
+//  inline const std::set<std::string> known(void) const
+//    { SAFELOCK(multiplier);
+//
+//      return _known;
+//    }
 
 /// Set all bands and modes to state in which no mults have been worked
   inline void clear(void)
