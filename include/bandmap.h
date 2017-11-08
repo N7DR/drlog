@@ -1,4 +1,4 @@
-// $Id: bandmap.h 139 2017-07-27 23:18:43Z  $
+// $Id: bandmap.h 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -99,8 +99,19 @@ public:
 
   READ_AND_WRITE(min_posters);      ///< minumum number of posters needed to appear on bandmap
 
+/*! \brief              Get the number of posters associated with a call
+    \param  callsign    the callsign to test
+    \return             The number of posters associated with <i>callsign</i>
+*/
   const unsigned int n_posters(const std::string& callsign);
 
+/*! \brief              Associate a poster with a call
+    \param  callsign    the callsign
+    \param  poster      poster to associate with <i>callsign</i>
+    \return             The number of posters associated with <i>callsign</i>, after this association is added
+
+    Creates an entry in the buffer if no entry for </i>callsign</i> exists
+*/
   const unsigned int add(const std::string& callsign, const std::string& poster);
 
   inline const bool sufficient_posters(const std::string& callsign)

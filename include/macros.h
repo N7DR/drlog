@@ -1,4 +1,4 @@
-// $Id: macros.h 139 2017-07-27 23:18:43Z  $
+// $Id: macros.h 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -99,7 +99,17 @@
 /*! Read-only access to _##y */                                             \
   inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
 
-#endif    // !SAFEREAD
+#endif    // !SAFEREAD_WITH_INTERNAL_MUTEX
+
+#if (!defined(SAFE_READ_WITH_INTERNAL_MUTEX))
+
+/// Syntactic sugar for read-only access
+#define SAFE_READ_WITH_INTERNAL_MUTEX(y, z)                                                      \
+/*! Read-only access to _##y */                                             \
+  inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
+
+#endif    // !SAFE_READ_WITH_INTERNAL_MUTEX
+
 
 #if (!defined(WRITE))
 
@@ -854,9 +864,8 @@ public:
     \return         <i>fn</i>
 */
 template<class Input, class Function>
-  Function FOR_ALL(Input& first, Function fn)
-{ return (std::for_each(first.begin(), first.end(), fn));
-}
+inline Function FOR_ALL(Input& first, Function fn)
+  { return (std::for_each(first.begin(), first.end(), fn)); }
 
 /*! \brief          Copy all in a container to another container
     \param  first   initial container
@@ -864,9 +873,8 @@ template<class Input, class Function>
     \return         <i>oi</i>
 */
 template<class Input, class OutputIterator>
-  OutputIterator COPY_ALL(Input& first, OutputIterator oi)
-{ return (std::copy(first.begin(), first.end(), oi));
-}
+inline OutputIterator COPY_ALL(Input& first, OutputIterator oi)
+  { return (std::copy(first.begin(), first.end(), oi)); }
 
 /*! \brief          Remove values in a container that match a predicate, and resize the container
     \param  first   container
@@ -875,9 +883,8 @@ template<class Input, class OutputIterator>
     Does not work for maps
 */
 template <class Input, class UnaryPredicate>
-  void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
-{ first.erase(std::remove_if(first.begin(), first.end(), pred), first.end());
-}
+inline void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
+  { first.erase(std::remove_if(first.begin(), first.end(), pred), first.end()); }
 
 // https://stackoverflow.com/questions/800955/remove-if-equivalent-for-stdmap
 // there should be some way to choose this function instead of the prior one, based on
@@ -902,9 +909,8 @@ void REMOVE_IF_AND_RESIZE( std::map<K, V>& items, const PredicateT& predicate ) 
     \param  v   container
 */
 template <class Input>
-  void REVERSE(Input& v)
-{ std::reverse(v.begin(), v.end());
-}
+inline void REVERSE(Input& v)
+  { std::reverse(v.begin(), v.end()); }
 
 /*! \brief          Find first value in a container that matches a predicate
     \param  v       container

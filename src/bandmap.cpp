@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 139 2017-07-27 23:18:43Z  $
+// $Id: bandmap.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -72,7 +72,6 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
     \brief  Class for entries in the bandmap_buffer class
 */
 
-
 const unsigned int bandmap_buffer_entry::add(const std::string& new_poster)
 { _posters.insert(new_poster);
 
@@ -92,20 +91,26 @@ bandmap_buffer::bandmap_buffer(const unsigned int n_posters) :
   _min_posters(n_posters)
 { }
 
+/*! \brief              Get the number of posters associated with a call
+    \param  callsign    the callsign to test
+    \return             The number of posters associated with <i>callsign</i>
+*/
 const unsigned int bandmap_buffer::n_posters(const string& callsign)
 { SAFELOCK(_bandmap_buffer);
 
   const auto cit = _data.find(callsign);
 
   return ( ( cit == _data.end() ) ? 0 : cit->second.size() );
-
-//  if (cit == _data.end())
-//    return 0;
-
-//  return (cit->second.size());
 }
 
-const unsigned int bandmap_buffer::add(const std::string& callsign, const std::string& poster)
+/*! \brief              Associate a poster with a call
+    \param  callsign    the callsign
+    \param  poster      poster to associate with <i>callsign</i>
+    \return             The number of posters associated with <i>callsign</i>, after this association is added
+
+    Creates an entry in the buffer if no entry for </i>callsign</i> exists
+*/
+const unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
 { SAFELOCK(_bandmap_buffer);
 
   bandmap_buffer_entry& bfe = _data[callsign];
@@ -174,7 +179,8 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
 void bandmap_entry::callsign(const string& call)
 { _callsign = call;
 
-  if (_callsign != MY_MARKER)
+//  if (_callsign != MY_MARKER)
+  if (!is_marker())
   { const location_info li = location_db.info(_callsign);
 
     _canonical_prefix = li.canonical_prefix();

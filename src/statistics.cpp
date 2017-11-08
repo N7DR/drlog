@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 138 2017-06-20 21:41:26Z  $
+// $Id: statistics.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -313,6 +313,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
   _include_qtcs = rules.send_qtcs();
   _callsign_mults_used = rules.callsign_mults_used();
+  _country_mults_used = rules.country_mults_used();
   _exchange_mults_used = rules.exchange_mults_used();
 
   _location_db.prepare(country_data, context.country_list());
@@ -339,6 +340,9 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
   }
 
 // country mults
+
+//  ost << "in running_statistics::prepare(), _country_mults_used = " << _country_mults_used << endl;
+
   if (_country_mults_used)
   { const set<string> country_mults = rules.country_mults();
 

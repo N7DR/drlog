@@ -1,4 +1,4 @@
-// $Id$
+// $Id: adif.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,8 +17,8 @@ using namespace std;
 
 // ---------------------------------------------------  adif_type  -----------------------------------------
 
-/*! \class adif_type
-    \brief Base class for all the ADIF types
+/*! \class  adif_type
+    \brief  Base class for all the ADIF types
 */
 
 /*! \brief      Constructor
@@ -48,7 +48,7 @@ const string adif_type::to_string(void) const
 
 /// default constructor
 adif_AWARD_LIST::adif_AWARD_LIST(void) :
-    adif_type('A')
+  adif_type('A')
 { }
 
 /*! \brief      Constructor
@@ -56,7 +56,7 @@ adif_AWARD_LIST::adif_AWARD_LIST(void) :
     \param  v   value
 */
 adif_AWARD_LIST::adif_AWARD_LIST(const string& nm, const string& v) :
-    adif_type('A', nm, v)
+  adif_type('A', nm, v)
 { }
 
 /*! \brief      Constructor
@@ -65,14 +65,14 @@ adif_AWARD_LIST::adif_AWARD_LIST(const string& nm, const string& v) :
     Sets <i>_value</i> to the empty string.
 */
 adif_AWARD_LIST::adif_AWARD_LIST(const string& nm) :
-    adif_type('A', nm, string())
+  adif_type('A', nm, string())
 { }
 
 // ---------------------------------------------------  adif_BOOLEAN -----------------------------------------
 
-// default constructor
+/// default constructor
 adif_BOOLEAN::adif_BOOLEAN(void) :
-    adif_type('B')
+  adif_type('B')
 { }
 
 // construct with name and value

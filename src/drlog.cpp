@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 139 2017-07-27 23:18:43Z  $
+// $Id: drlog.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -109,7 +109,7 @@ const string match_callsign(const vector<pair<string /* callsign */,
 
 void populate_win_info(const string& str);                          ///< Populate the information window
 void print_thread_names(void);
-const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const KeySym symbol);
+const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);
 void process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
 const bool process_keypress_F5(void);                               ///< process key F5
 const bool p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
@@ -1136,22 +1136,12 @@ int main(int argc, char** argv)
   win_time.init(context.window_info("TIME"), COLOUR_WHITE, COLOUR_BLACK, WINDOW_NO_CURSOR);  // WHITE / BLACK are default anyway, so don't actually need them
 
 // WPM window
-  win_wpm.init(context.window_info("WPM"), WINDOW_NO_CURSOR);
-  win_wpm <= to_string(context.cw_speed()) + " WPM";
-  if (cw_p)
-    cw_p->speed(context.cw_speed());                    // set computer keyer speed
-
-// &&&
-//  string test = "W4/VP9KF";
-//
-//  ost << "1 " << test << ": " << location_db.canonical_prefix(test) << endl;
-//
-//  test = "K4/RU4W";
-//
-//  ost << "2 " << test << ": " << location_db.canonical_prefix(test) << endl;
-//
-//  exit(0);
-// &&&
+  if (rules.permitted_modes() < MODE_CW)                                    // don't have a WPM window if CW is not permitted, even if the window is defined in the config file
+  { win_wpm.init(context.window_info("WPM"), WINDOW_NO_CURSOR);
+    win_wpm <= to_string(context.cw_speed()) + " WPM";
+    if (cw_p)
+      cw_p->speed(context.cw_speed());                    // set computer keyer speed
+  }
 
 // possibly set the auto country mults and auto callsign mults thresholds
   if (context.auto_remaining_callsign_mults())
@@ -2849,8 +2839,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
 // BACKSLASH -- send to the scratchpad
-    if (!processed and contents[0] == '\\')
-    { processed = send_to_scratchpad(substring(contents, 1));
+//    if (!processed and contents[0] == '\\')
+    if (!processed and contains(contents, '\\'))
+    { //processed = send_to_scratchpad(substring(contents, 1));
+      processed = send_to_scratchpad(remove_char(contents, '\\'));
       win <= WINDOW_CLEAR;
     }
 
@@ -3346,6 +3338,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
   if (!processed and (e.is_control_and_not_alt() or e.is_alt_and_not_control()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
+#if 0
   { bandmap& bm = bandmaps[safe_get_band()];
 
     typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
@@ -3379,6 +3372,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
     processed = true;
   }
+#endif
+  processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
 
 // CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
   if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
@@ -3416,7 +3411,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 #endif
-  processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, e.symbol());
+  processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
 
 // ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ((e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
@@ -3455,7 +3450,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 #endif
-    processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, e.symbol());
+    processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
 
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are testudine
@@ -5416,6 +5411,8 @@ void populate_win_info(const string& callsign)
       const set<string>& country_mults = rules.country_mults();
       const string canonical_prefix = location_db.canonical_prefix(callsign);
 
+//      ost << "number of country mults in populate_win_info() = " << country_mults.size() << endl;
+
       if (!country_mults.empty() or context.auto_remaining_country_mults())
       { if (country_mults < canonical_prefix)                                           // country_mults is from rules, and has all the valid mults for the contest
         { const set<string> known_country_mults = statistics.known_country_mults();
@@ -6391,7 +6388,7 @@ void* start_cluster_thread(void* vp)
       QSLs
  */
 void display_call_info(const string& callsign, const bool display_extract)
-{ ost << "Displaying call info for: " << callsign << endl;
+{ //ost << "Displaying call info for: " << callsign << endl;
 
   populate_win_info( callsign );
   update_batch_messages_window( callsign );
@@ -7636,13 +7633,13 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 //  ost << "at end of update, CALL contents = " << remove_peripheral_spaces(win_call.read()) << endl;
 }
 
-const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const KeySym symbol)
+const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn)
 { bandmap& bm = bandmaps[safe_get_band()];
 
 //  typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
 //  MEM_FUN_P fn_p = &bandmap::needed_all_time_new_or_qsled;
 
-  const bandmap_entry be = (bm.*fn_p)( ((symbol == XK_KP_Left) or (symbol == XK_KP_4)) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
+  const bandmap_entry be = (bm.*fn_p)( dirn );  // get the next stn/mult
 
   if (!be.empty())
   { rig.rig_frequency(be.freq());

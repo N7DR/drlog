@@ -1,4 +1,4 @@
-// $Id: audio.cpp 139 2017-07-27 23:18:43Z  $
+// $Id: audio.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 

@@ -1,4 +1,4 @@
-// $Id: rules.cpp 138 2017-06-20 21:41:26Z  $
+// $Id: rules.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -460,7 +460,9 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     After calling this function, the object is ready for use
 */
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
-{ const vector<string> path = context.path();
+{ //ost << "number of countries = " << _countries.size() << endl;
+
+  const vector<string> path = context.path();
 
 // personal information, taken from context
   _my_continent = context.my_continent();
@@ -494,6 +496,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       FOR_ALL(countries, [this] (const string& str) { _country_mults.insert(str); } );
     }
   }
+
+//  ost << "number of countries now = " << _countries.size() << endl;
+//  ost << "number of country mults = " << _country_mults.size() << endl;
 
   if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
@@ -1246,8 +1251,10 @@ void contest_rules::score_modes(const set<MODE>& new_modes)
 /*! \brief      Do the country mults (if any) include a particular country?
     \param  cp  canonical prefix of country to test
     \return     whether cp is a country mult
+
+    If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-const bool contest_rules::country_mults_used(const string& cp)
+const bool contest_rules::country_mults_used(const string& cp) const
 { SAFELOCK(rules);
 
   if (cp.empty())

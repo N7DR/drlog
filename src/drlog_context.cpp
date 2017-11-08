@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 138 2017-06-20 21:41:26Z  $
+// $Id: drlog_context.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -153,8 +153,6 @@ void drlog_context::_process_configuration_file(const string& filename)
   { ost << "Unable to open configuration file " << filename << endl;
     exit(-1);
   }
-
-//  static const string LF_STR   = "\n";      ///< LF as string
 
   const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
 

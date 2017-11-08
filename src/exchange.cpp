@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 138 2017-06-20 21:41:26Z  $
+// $Id: exchange.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file exchange.cpp
+/*! \file exchange.cpp
 
-        Classes and functions related to processing exchanges
+    Classes and functions related to processing exchanges
 */
 
 #include "cty_data.h"
@@ -35,8 +35,8 @@ static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< leg
 
 // -------------------------  parsed_exchange_field  ---------------------------
 
-/*! \class parsed_exchange_field
-    \brief Encapsulates the name for an exchange field, its value after parsing an exchange, whether it's a mult, and, if so, the value of that mult
+/*! \class  parsed_exchange_field
+    \brief  Encapsulates the name for an exchange field, its value after parsing an exchange, whether it's a mult, and, if so, the value of that mult
 */
 
 /// default constructor
@@ -87,8 +87,8 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
 
 // -------------------------  parsed_ss_exchange  ---------------------------
 
-/*!     \class parsed_ss_exchange
-        \brief All the fields in the SS exchange, following parsing
+/*! \class parsed_ss_exchange
+    \brief All the fields in the SS exchange, following parsing
 */
 
 /*! \brief          Does a string possibly contain a serial number?
@@ -237,14 +237,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     if (find(possible_sernos.cbegin(), possible_sernos.cend(), possible_check_field) != possible_sernos.cend())
       ambiguous_fields.push_back(possible_check_field);
 
-//  ost << "number of ambiguous fields = " << ambiguous_fields.size() << endl;
-
-// get the precedence; for this use the last field that is a possible precedence
-//  ost << "getting prec" << endl;
-
-//  int prec_field_nr = -1;
-//  unsigned int prec_field_nr = numeric_limits<unsigned int>::max();
-
   if (possible_prec.empty() and (_prec == 'Z') )  // _prec unchanged from default
   { ost << "ERROR: no possible precedence in exchange received from " << call << endl;
     for (const auto& field : received_fields)
@@ -255,7 +247,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     { const unsigned int field_nr = possible_prec[possible_prec.size() - 1];
 
       _prec = last_char(copy_received_fields[field_nr]);
-//      prec_field_nr = field_nr;
     }
   }
 
@@ -401,8 +392,8 @@ ostream& operator<<(ostream& ost, const parsed_ss_exchange& pse)
 
 // -------------------------  parsed_exchange  ---------------------------
 
-/*! \class parsed_exchange
-    \brief All the fields in the exchange, following parsing
+/*! \class  parsed_exchange
+    \brief  All the fields in the exchange, following parsing
 */
 
 /*! \brief                      Try to fill exchange fields with received field matches

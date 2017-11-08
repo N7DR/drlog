@@ -471,11 +471,11 @@ public:
 
   SAFEREAD(exchange_field_eft, rules);      ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
-/*!     \brief              The exchange field template corresponding to a particular field
-        \param  field_name  name of the field
-        \return             The exchange field information associated with <i>field_name</i>
+/*! \brief              The exchange field template corresponding to a particular field
+    \param  field_name  name of the field
+    \return             The exchange field information associated with <i>field_name</i>
 
-        Returns EFT("none") if <i>field_name</i> is unknown.
+    Returns EFT("none") if <i>field_name</i> is unknown.
 */
   const EFT exchange_field_eft(const std::string& field_name) const;
 
@@ -525,8 +525,10 @@ public:
 /*! \brief      Do the country mults (if any) include a particular country?
     \param  cp  canonical prefix of country to test
     \return     whether cp is a country mult
+
+    If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-  const bool country_mults_used(const std::string& cp = std::string());
+  const bool country_mults_used(const std::string& cp = std::string()) const;
 
 /*! \brief      Do the country mults (if any) include a particular country?
     \param  cp  canonical prefix of country to test
@@ -669,26 +671,25 @@ public:
          & _country_mults
          & _country_mults_per_band
          & _country_mults_per_mode
-//         & _country_mults_used
          & _per_band_country_mult_factor
          & _exchange_mults
          & _exchange_mults_per_band
          & _exchange_mults_per_mode
          & _exchange_mults_used
          & _exchange_present_points
+         & _exch_values
          & _expanded_received_exchange
          & _permitted_bands
+         & _permitted_exchange_values
          & _permitted_modes
+         & _permitted_to_canonical
+         & _per_country_exchange_fields
          & _points
          & _received_exchange
          & _sent_exchange_names
          & _work_if_different_band
          & _work_if_different_mode
-         & _exch_values
-         & _permitted_exchange_values
-         & _permitted_to_canonical
 //         & _exchange_field_eft        // won't serialize
-         & _per_country_exchange_fields
          & _score_bands
          & _original_score_bands
          & _score_modes

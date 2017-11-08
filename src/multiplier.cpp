@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 115 2015-08-29 15:44:57Z  $
+// $Id: multiplier.cpp 140 2017-11-05 15:16:46Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,9 +8,9 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file multiplier.cpp
+/*! \file   multiplier.cpp
 
-        Classes and functions related to managing multipliers
+    Classes and functions related to managing multipliers
 */
 
 #include "multiplier.h"
@@ -21,8 +21,8 @@ pt_mutex multiplier_mutex;          ///< mutex for all the multiplier objects
 
 // -----------  multiplier  ----------------
 
-/*!     \class multiplier
-        \brief encapsulate all the necessary stuff for a mult
+/*! \class  multiplier
+    \brief  encapsulate all the necessary stuff for a mult
 */
 
 /// default constructor
