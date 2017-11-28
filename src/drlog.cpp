@@ -5,9 +5,9 @@
 
 // Principal author: N7DR
 
-/*!     \file drlog.cpp
+/*! \file drlog.cpp
 
-        The main program for drlog
+    The main program for drlog
  */
 
 #include "audio.h"
@@ -145,6 +145,7 @@ void update_mult_value(void);                                               ///<
 void update_qsls_window(const string& = "");                                ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                         ///< the head of the QTC queue
 void update_rate_window(void);                                              ///< Update the QSO and score values in <i>win_rate</i>
+void update_recording_status_window(void);                                  ///< update the RECORDING STATUS window
 
 // functions for processing input to windows
 void process_CALL_input(window* wp, const keyboard_event& e);               ///< Process an event in CALL window
@@ -311,6 +312,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_qtc_status,                  ///< status of QTCs
        win_rate,                        ///< QSO and point rates
        win_rbn_line,                    ///< last line received from the RBN
+       win_recording_status,            ///< status of audio recording
        win_remaining_callsign_mults,    ///< the remaining callsign mults
        win_remaining_country_mults,     ///< the remaining country mults
        win_rig,                         ///< rig status
@@ -568,13 +570,15 @@ int main(int argc, char** argv)
 
 // possibly configure audio recording
     if (context.record_audio())
-    { audio.base_filename(context.audio_file());
+    { //ost << "Will record audio" << endl;
+      audio.base_filename(context.audio_file());
       audio.maximum_duration(context.audio_duration() * 60);
       audio.pcm_name(context.audio_device_name());
       audio.n_channels(context.audio_channels());
       audio.samples_per_second(context.audio_rate());
       audio.initialise();
       audio.capture();                          // start capturing audio
+      //ost << "audio recording" << endl;
     }
 
 // set up the calls to be monitored
@@ -1043,6 +1047,10 @@ int main(int argc, char** argv)
 // RATE window
   win_rate.init(context.window_info("RATE"), WINDOW_NO_CURSOR);
   update_rate_window();
+
+// RECORDING STATUS window
+  win_recording_status.init(context.window_info("RECORDING STATUS"), WINDOW_NO_CURSOR);
+  update_recording_status_window();
 
 // REMAINING CALLSIGN MULTS window
   win_remaining_callsign_mults.init(context.window_info("REMAINING CALLSIGN MULTS"), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
@@ -3014,7 +3022,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         map<string, string> mult_exchange_field_value;                                                     // the values of exchange fields that are mults
 
         for (const auto& exf : expected_exchange)
-        { ost << "Exchange field: " << exf << endl;
+        { // ost << "Exchange field: " << exf << endl;
           bool processed_field = false;
 
 // &&& if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
@@ -3185,7 +3193,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         rig.rig_frequency(be.freq());
         enter_sap_mode();
 
-        ost << "CTRL-ENTER found match for " << original_contents << ": " << contents << " at " << be.freq().display_string() << endl;
+//        ost << "CTRL-ENTER found match for " << original_contents << ": " << contents << " at " << be.freq().display_string() << endl;
 
 // we may require a mode change
         if (context.multiple_modes())
@@ -3201,7 +3209,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
     if (found_call)
-    { ost << "found call and writing to CALL window: " << be.callsign() << endl;
+    { //ost << "found call and writing to CALL window: " << be.callsign() << endl;
       win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
 
 #if 0
@@ -5440,14 +5448,14 @@ void populate_win_info(const string& callsign)
       for (const auto& exch_mult_field : exch_mults)
       { const bool output_this_mult = rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix);
 
-        ost << "output_this_mult = " << output_this_mult << endl;
-        ost << "exch_mult_field = " << exch_mult_field << endl;
-        ost << "canonical_prefix = " << canonical_prefix << endl;
+//        ost << "output_this_mult = " << output_this_mult << endl;
+//        ost << "exch_mult_field = " << exch_mult_field << endl;
+//        ost << "canonical_prefix = " << canonical_prefix << endl;
 
         if (output_this_mult)
         { const string exch_mult_value = exchange_db.guess_value(callsign, exch_mult_field);    // make best guess as to to value of this field
 
-          ost << "exch_mult_value = *" << exch_mult_value << "*" << endl;
+//          ost << "exch_mult_value = *" << exch_mult_value << "*" << endl;
 
           line = pad_string(exch_mult_field + " [" + exch_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
@@ -7665,4 +7673,11 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
   }
 
   return true;
+}
+
+void update_recording_status_window(void)                                   ///< update the RECORDING STATE window
+{ if (audio.recording())
+    win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "REC";
+  else
+    win_recording_status <= WINDOW_CLEAR;
 }

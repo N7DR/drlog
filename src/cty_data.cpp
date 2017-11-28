@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file cty_data.cpp
+/*! \file   cty_data.cpp
 
     Objects and functions related to CTY.DAT files
 */
@@ -264,40 +264,43 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 
 /// default constructor
 location_info::location_info(void) :
+  _canonical_prefix("NONE"),
+  _continent("XX"),
   _country_name("None"),
   _cq_zone(0),
   _itu_zone(0),
-  _continent("XX"),
   _latitude(0),
   _longitude(0),
-  _utc_offset(0),
-  _canonical_prefix("NONE")
+  _utc_offset(0)
 { }
   
 /// construct from a cty.dat record
 location_info::location_info(const cty_record& rec) :
+  _canonical_prefix(rec.prefix()),
+  _continent(rec.continent()),
   _country_name(rec.country_name()),
   _cq_zone(rec.cq_zone()),
   _itu_zone(rec.itu_zone()),
-  _continent(rec.continent()),
   _latitude(rec.latitude()),
   _longitude(rec.longitude()),
-  _utc_offset(rec.utc_offset()),
-  _canonical_prefix(rec.prefix())
+  _utc_offset(rec.utc_offset())
 { }
 
 /// location_info == location_info
 const bool location_info::operator==(const location_info& li) const
-{ if (_country_name != li._country_name)
+{ if (_canonical_prefix != li._canonical_prefix)
+    return false;
+
+  if (_continent != li._continent)
+    return false;
+
+  if (_country_name != li._country_name)
     return false;
 
   if (_cq_zone != li._cq_zone)
     return false;
 
   if (_itu_zone != li._itu_zone)
-    return false;
-
-  if (_continent != li._continent)
     return false;
 
   if (_latitude != li._latitude)
@@ -307,9 +310,6 @@ const bool location_info::operator==(const location_info& li) const
     return false;
 
   if (_utc_offset != li._utc_offset)
-    return false;
-
-  if (_canonical_prefix != li._canonical_prefix)
     return false;
 
   return true;
@@ -343,7 +343,8 @@ const location_info guess_zones(const string& callsign, const location_info& bi)
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
    if (rv.canonical_prefix() == "VE")
-   { const size_t posn = callsign.find_last_of("0123456789");
+   { //const size_t posn = callsign.find_last_of("0123456789");
+     const size_t posn = callsign.find_last_of(DIGITS);
 
      if (posn != string::npos)
      { rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, callsign[posn]))]);
@@ -353,7 +354,8 @@ const location_info guess_zones(const string& callsign, const location_info& bi)
 
 // if it's a W, then make a guess as to the CQ and ITU zones
    if (rv.canonical_prefix() == "K")
-   { const size_t posn = callsign.find_last_of("0123456789");
+   { //const size_t posn = callsign.find_last_of("0123456789");
+     const size_t posn = callsign.find_last_of(DIGITS);
 
      if (posn != string::npos)
      { rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, callsign[posn]))]);
@@ -513,7 +515,7 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
 void location_database::_insert_alternatives(const location_info& info, const map<string, alternative_country_info>& alternatives)
 { location_info info_copy = info;
 
-  for (map<string, alternative_country_info>::const_iterator cit = alternatives.begin(); cit != alternatives.end(); ++ cit)
+  for (map<string, alternative_country_info>::const_iterator cit = alternatives.begin(); cit != alternatives.end(); ++cit)
   { info_copy.cq_zone(cit->second.cq_zone());
     info_copy.itu_zone(cit->second.itu_zone());
     _db.insert( { cit->first, info_copy } );
@@ -521,8 +523,8 @@ void location_database::_insert_alternatives(const location_info& info, const ma
 }
 
 /// default constructor
-location_database::location_database(void)
-{ }
+//location_database::location_database(void)
+//{ }
 
 // construct from CTY.DAT filename and the definition of which country list to use
 location_database::location_database(const string& filename, const enum country_list_type country_list)

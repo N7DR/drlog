@@ -408,11 +408,11 @@ public:
   CONTEXTREAD(match_minimum);                ///< number of characters before SCP or fuzzy match kicks in
   CONTEXTREAD(messages);                     ///< CW messages
   CONTEXTREAD(message_cq_1);                 ///< CQ message #1 (generally, a short CQ)
-  SAFEREAD(message_cq_2, _context);                 ///< CQ message #2 (generally, a long CQ)
-  SAFEREAD(modes, _context);                        ///< comma-delimited modes CW, SSB
-  SAFEREAD(mode_break_points, _context);            ///< override default mode break points
-  SAFEREAD(my_call, _context);                      ///< my call
-  SAFEREAD(my_continent, _context);                 ///< my continent
+  CONTEXTREAD(message_cq_2);                 ///< CQ message #2 (generally, a long CQ)
+  CONTEXTREAD(modes);                        ///< comma-delimited modes CW, SSB
+  CONTEXTREAD(mode_break_points);            ///< override default mode break points
+  CONTEXTREAD(my_call);                      ///< my call
+  CONTEXTREAD(my_continent);                 ///< my continent
   SAFEREAD(my_cq_zone, _context);                   ///< my CQ zone
   SAFEREAD(my_grid, _context);                      ///< my grid square identifier
   SAFEREAD(my_ip, _context);                        ///< my IP address
@@ -429,7 +429,6 @@ public:
   SAFEREAD(path, _context);                         ///< directories to search, in order
   SAFEREAD(per_band_country_mult_factor, _context); ///< country mult factor structure for each band
   SAFEREAD(per_band_points, _context);              ///< points structure for each band and mode
-
 
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 

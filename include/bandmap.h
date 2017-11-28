@@ -11,7 +11,7 @@
 #ifndef BANDMAP_H
 #define BANDMAP_H
 
-/*! \file bandmap.h
+/*! \file   bandmap.h
 
     Classes and functions related to bandmaps
 */
@@ -41,9 +41,6 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
 
 // forward declarations
 class bandmap_filter_type;
-//class bandmap;
-
-//typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // allow other files to access some functions in a useful, simple  manner
 
 extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
 extern const std::string   MODE_MARKER;                         ///< the string that marks the mode break in the bandmap
@@ -86,11 +83,11 @@ public:
 class bandmap_buffer
 {
 protected:
-  unsigned int _min_posters;        ///< minumum number of posters needed to appear on bandmap
+  unsigned int _min_posters;        ///< minumum number of posters needed to appear on bandmap, default = 1
 
   std::map<std::string /* call */, bandmap_buffer_entry>  _data;    ///< the database
 
-  pt_mutex _bandmap_buffer_mutex;
+  pt_mutex _bandmap_buffer_mutex;                                   ///< mutex for thread-safe access
 
 public:
 
@@ -114,9 +111,12 @@ public:
 */
   const unsigned int add(const std::string& callsign, const std::string& poster);
 
+/*! \brief              Are there sufficient posters of a call to allow it to appear on the bandmap?
+    \param  callsign    the callsign to test
+    \return             Whether the number of posters associated with <i>callsign</i> is equal to or greater than the necessary minimum
+*/
   inline const bool sufficient_posters(const std::string& callsign)
     { return (n_posters(callsign) >= _min_posters); }
-
 };
 
 
@@ -154,11 +154,11 @@ public:
   inline const bool is_any_value_needed(void) const
     { return _is_needed; }
 
-/// is status known?
+/// is the status known?
   inline const bool is_status_known(void) const
     { return _is_status_known; }
 
-/// is status known?
+/// is sthe tatus known?
   inline void status_is_known(const bool torf)
     { _is_status_known = torf; }
 
@@ -282,7 +282,7 @@ public:
   READ_AND_WRITE(hide);                         ///< are we in hide mode? (as opposed to show)
   READ(prefixes);                               ///< canonical country prefixes to filter
 
-/*! \brief      All the continents and canonical prefixes that are currently being filtered
+/*! \brief      Get all the continents and canonical prefixes that are currently being filtered
     \return     all the continents and canonical prefixes that are currently being filtered
 
     The continents precede the canonical prefixes
@@ -309,8 +309,8 @@ public:
 
 // -----------  bandmap_entry  ----------------
 
-/*!     \class bandmap_entry
-        \brief An entry in a bandmap
+/*! \class  bandmap_entry
+    \brief  An entry in a bandmap
 */
 
 class bandmap_entry

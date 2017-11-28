@@ -503,6 +503,7 @@ audio_recorder::audio_recorder(void) :
   _pcm_name("default"),
   _period_frames(0),
   _period_time(0),
+  _recording(false),                        // initially, not recording
   _record_count(9999999999),                // big number
   _samples_per_second(8000),                // G.711 rate
   _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
@@ -563,6 +564,7 @@ void audio_recorder::initialise(void)
 void audio_recorder::capture(void)
 { try
   { create_thread(&_thread_id, NULL, &_static_capture, this, "audio capture");
+    _recording = true;
   }
 
   catch (const pthread_error& e)

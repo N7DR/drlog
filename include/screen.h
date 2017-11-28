@@ -86,8 +86,8 @@ extern pt_mutex screen_mutex;                       ///< mutex for the screen
 
 // -----------  cursor  ----------------
 
-/*! \class cursor
-    \brief Trivial class for moving the cursor
+/*! \class  cursor
+    \brief  Trivial class for moving the cursor
 */
 
 WRAPPER_2(cursor, int, x, int, y);
@@ -153,8 +153,8 @@ public:
   screen(void);
 
 /// destructor
-  virtual ~screen(void)
-  { endwin(); }
+  inline virtual ~screen(void)
+    { endwin(); }
 };
 
 // -----------  window_information ----------------
@@ -203,8 +203,8 @@ public:
 
 // -----------  window  ----------------
 
-/*! \class window
-    \brief A single ncurses window
+/*! \class  window
+    \brief  A single ncurses window
 */
 
 // forward declaration
@@ -218,24 +218,21 @@ protected:
   
   unsigned int  _column_width;      ///< width of columns
   int           _cursor_x;          ///< used to hold x cursor
+  int           _cursor_y;          ///< used to hold y cursor
   bool          _echoing;           ///< whether echoing characters
   int           _height;            ///< height
+  bool          _hidden_cursor;     ///< whether to hide the cursor
+  bool          _insert;            ///< whether in insert mode (default = false)
   bool          _leaveok;           ///< whether leaveok is set
   bool          _scrolling;         ///< whether scrolling is enabled
   bool          _vertical;          ///< whether containers of strings are to be displayed vertically
   int           _width;             ///< width
   int           _x;                 ///< x of origin (in proper coordinates)
   int           _y;                 ///< y of origin (in proper coordinates)
+  
+  WINDOW* _wp;                  ///< ncurses handle
+  PANEL*  _pp;                  ///< panel associated with this window
 
-
-  int    _cursor_y;            ///< used to hold y cursor
-  
-  WINDOW* _wp;                 ///< ncurses handle 
-  PANEL*  _pp;                 ///< panel associated with this window
-  
-  bool   _hidden_cursor;       ///< whether to hide the cursor
-  bool   _insert;              ///< whether in insert mode (default = false)
-  
   int    _sx;                  ///< system cursor x value
   int    _sy;                  ///< system cursor y value
   
@@ -246,13 +243,14 @@ protected:
 
 /*! \brief          Set the default colours
     \param  fgbg    colour pair
+    \return         the window
 
     Does not change _fg/_bg because I can't find a guaranteed way to go from a big integer that
     combines the two colours to the individual colours
 */
     window& _default_colours(const chtype fgbg);
 
-/*! \brief          Perform common portion of initialisation
+/*! \brief          Perform basic initialisation
     \param  wi      window information
     \param  flags   possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 */
@@ -312,8 +310,8 @@ public:
   READ_AND_WRITE(insert);           ///< whether in insert mode
   READ_AND_WRITE(vertical);         ///< whether containers of strings are to be displayed vertically
   
-/*! \brief          Get a pointer to the underlying WINDOW
-    \return         a pointer to the WINDOW
+/*! \brief      Get a pointer to the underlying WINDOW
+    \return     a pointer to the WINDOW
 */
   inline WINDOW* wp(void) const
     { return _wp; }
@@ -331,9 +329,9 @@ public:
 */
   window& move_cursor(const int new_x, const int new_y);
   
-/*! \brief          Move the logical cursor
-    \param  c       new cursor (used to derive the new location)
-    \return         the window
+/*! \brief      Move the logical cursor
+    \param  c   new cursor (used to derive the new location)
+    \return     the window
 */
   inline window& move_cursor(const cursor& c)
     { return move_cursor(c.x(), c.y()); }
@@ -368,7 +366,9 @@ public:
   inline window& disable_scrolling(void)
     { return scrolling(false); }
 
-/// is scolling enabled?
+/*! \brief      Is scrolling enabled?
+    \return     whether scrolling is enabled
+*/
   inline const bool scrolling(void) const
     { return _scrolling; }
 
@@ -386,7 +386,9 @@ public:
 */
   window& leave_cursor(const bool enable_or_disable);  
   
-/// refresh
+/*! \brief      Refresh the window
+    \return     the window
+*/
   window& refresh(void);
   
 /// hide the window

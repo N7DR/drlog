@@ -1443,19 +1443,19 @@ drlog_context::drlog_context(const std::string& filename) :
   _cq_auto_rit(false),                                              // don't enable RIT in CQ mode
   _cty_filename("cty.dat"),                                         // filename for country data
   _cw_speed(29),                                                    // 29 WPM
-  _decimal_point("·"),                        // use centred dot as decimal point
-  _display_communication_errors(true),        // display errors communicating with rig
-  _do_not_show(),                             // all calls (apart from my_call()) should be shown on the bandmap
-  _do_not_show_filename(),                    // no do-not-show file
-  _drmaster_filename("drmaster"),             // name of the drmaster file
-  _exchange("RST"),                           // exchange is just RST
-  _exchange_fields_filename(),                // file that holds regex templates for exchange fields
-  _exchange_mults_per_band(false),            // any exchange mults are once-only
-  _exchange_mults_per_mode(false),            // any exchange mults are once-only
-  _fast_cq_bandwidth(400),                    // fast CW bandwidth in CQ mode, in Hz
-  _fast_sap_bandwidth(400),                   // fast CW bandwidth in SAP mode, in Hz
-  _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),  // 500 Hz guard band on CW, 2 kHz on slopbucket
-  _individual_messages_file(),                // no file of individual messages
+  _decimal_point("·"),                                              // use centred dot as decimal point
+  _display_communication_errors(true),                              // display errors communicating with rig
+  _do_not_show(),                                                   // all calls (apart from my_call()) should be shown on the bandmap
+  _do_not_show_filename(),                                          // no do-not-show file
+  _drmaster_filename("drmaster"),                                   // name of the drmaster file
+  _exchange("RST"),                                                 // exchange is just RST (or RS)
+  _exchange_fields_filename(),                                      // file that holds regex templates for exchange fields
+  _exchange_mults_per_band(false),                                  // any exchange mults are once-only
+  _exchange_mults_per_mode(false),                                  // any exchange mults are once-only
+  _fast_cq_bandwidth(400),                                          // fast CW bandwidth in CQ mode, in Hz
+  _fast_sap_bandwidth(400),                                         // fast CW bandwidth in SAP mode, in Hz
+  _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),          // 500 Hz guard band on CW, 2 kHz on slopbucket
+  _individual_messages_file(),                                      // no file of individual QSL messages
   _logfile("drlog.dat"),                      // name of log file
   _long_t(false),                             // do not extend initial Ts in serial numbers
   _mark_mode_break_points(false),             // do not mark the mode break points on the bandmap

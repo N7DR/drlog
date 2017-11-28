@@ -146,11 +146,14 @@ const string sunrise_or_sunset(const float& lat, const float& lon, const bool ca
 
   float cos_h = (cos (90.9 * dtor) - (sindec * sin(lat * dtor))) / (cosdec * cos(lat * dtor));
 
+//  ost << "cos_h = " << cos_h << endl;
+
+// 171128 swap DARK and LIGHT
   if (cos_h > 1)
-    return "DARK";      // always dark
+    return "LIGHT";      // always dark
 
   if (cos_h < -1)
-    return "LIGHT";     // always light
+    return "DARK";     // always light
 
   float h = (calc_sunset ? (acos(cos_h) * rtod) : (360 - acos(cos_h) * rtod));
 

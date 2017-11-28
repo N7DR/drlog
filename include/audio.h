@@ -153,6 +153,7 @@ protected:
   std::string       _pcm_name;                  ///< name of the PCM handle
   snd_pcm_uframes_t _period_frames;             ///< ?
   unsigned int      _period_time;               ///< ?
+  bool              _recording;                 ///< whether the recorder is currently recording
   int64_t           _record_count;              ///< number of records to capture
   unsigned int      _samples_per_second;        ///< number of samples per second
   snd_pcm_format_t  _sample_format;             ///< format of a single format (U8, SND_PCM_FORMAT_S16_LE, etc.)
@@ -179,7 +180,7 @@ protected:
 
   pthread_t             _thread_id;         ///< ID for the thread that plays the buffer
 
-/// Declare but do not define copy constructor
+/// Declare, but do not define, copy constructor
   audio_recorder(const audio_recorder&);
 
 /*! \brief          Read from the PCM device
@@ -201,11 +202,8 @@ protected:
 */
   void _set_params(void);
 
-//  void _begin_wave(int fd, size_t count);
-//  void _end_wave(int fd);
-
-/*! \brief          Capture audio
-    \return         nullptr
+/*! \brief      Capture audio
+    \return     nullptr
 */
   void* _capture(void*);
 
@@ -227,8 +225,10 @@ public:
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds
   READ_AND_WRITE(n_channels);               ///< number of channels to record
   READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle
+  READ(recording);                          ///< whether the recorder is currently recording
   READ_AND_WRITE(samples_per_second);       ///< number of samples per second
 
+// stuff for bext extension
 #if 0
   READ_AND_WRITE(description);
   READ_AND_WRITE(originator);
@@ -243,17 +243,11 @@ public:
   inline void maximum_duration(const unsigned int secs)
     { max_file_time(secs); }
 
-/*! \brief          Set the base filename
-    \param  name    base filename
-*/
-//  inline void base_filename(const std::string& name)
-//    { _base_filename = name; }
-
 /// initialise the object
   void initialise(void);
 
 /// public function to capture the audio
-  void capture();
+  void capture(void);
 };
 
 std::ostream& operator<<(std::ostream& ost, const PARAMS_STRUCTURE& params);

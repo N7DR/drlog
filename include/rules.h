@@ -61,9 +61,9 @@ public:
   exchange_field_values(void)
   { }
 
-/*! \brief      Construct from useful values
-    \param  nm  name of exchange field
-    \param  mss canonical field value, all equivalent values (including canonical value)
+/*! \brief          Construct from useful values
+    \param  nm      name of exchange field
+    \param  mss     canonical field value, all equivalent values (including canonical value)
 */
   exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
     _name(nm),
@@ -456,18 +456,18 @@ public:
   SAFEREAD(exchange_mults_per_band, rules);             ///< are exchange mults counted per-band?
   SAFEREAD(exchange_mults_per_mode, rules);             ///< are exchange mults counted per-mode?
   SAFEREAD(exchange_mults_used, rules);                 ///< are exchange mults used?
+  SAFEREAD(expanded_exchange_mults, rules);     ///< expanded exchange multipliers
+
+  SAFEREAD(original_score_bands, rules);        ///< bands that were originally used to calculate score (from the configuration file)
+  SAFEREAD(original_score_modes, rules);        ///< modes that were originally used to calculate score (from the configuration file)
 
   SAFEREAD(per_band_country_mult_factor, rules);         ///< factor by which to multiply number of country mults, per band (see WAE rules)
 
-
   SAFEREAD(score_bands, rules);                 ///< bands currently used to calculate score
-  SAFEREAD(original_score_bands, rules);        ///< bands that were originally used to calculate score (from the configuration file)
   SAFEREAD(score_modes, rules);                 ///< modes currently used to calculate score
-  SAFEREAD(original_score_modes, rules);        ///< modes that were originally used to calculate score (from the configuration file)
-  SAFEREAD(expanded_exchange_mults, rules);     ///< expanded exchange multipliers
+  SAFEREAD(send_qtcs, rules);                   ///< Can QTCs be sent?
 
-  SAFEREAD(send_qtcs, rules);               ///< Can QTCs be sent?
-  SAFEREAD(uba_bonus, rules);               ///< Do we have bonus points for ON stations?
+  SAFEREAD(uba_bonus, rules);                   ///< Do we have bonus points for ON stations?
 
   SAFEREAD(exchange_field_eft, rules);      ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
@@ -534,7 +534,7 @@ public:
     \param  cp  canonical prefix of country to test
     \return     whether cp is a country mult
 */
-  inline const bool is_country_mult(const std::string& cp)
+  inline const bool is_country_mult(const std::string& cp) const
     { return country_mults_used(cp); }
 
 /*! \brief          Is an exchange field a mult?

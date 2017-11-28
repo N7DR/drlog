@@ -460,9 +460,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
     After calling this function, the object is ready for use
 */
 void contest_rules::_init(const drlog_context& context, location_database& location_db)
-{ //ost << "number of countries = " << _countries.size() << endl;
-
-  const vector<string> path = context.path();
+{ const vector<string> path = context.path();
 
 // personal information, taken from context
   _my_continent = context.my_continent();
@@ -485,8 +483,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // generate the country mults; the value from context is either "ALL" or "NONE"
   if (context.country_mults_filter() == "NONE")
-  { _countries.clear();
-  }
+    _countries.clear();
   else
   { if (context.country_mults_filter() == "ALL")
       copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
@@ -496,9 +493,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       FOR_ALL(countries, [this] (const string& str) { _country_mults.insert(str); } );
     }
   }
-
-//  ost << "number of countries now = " << _countries.size() << endl;
-//  ost << "number of country mults = " << _country_mults.size() << endl;
 
   if (CONTINENT_SET < context.country_mults_filter())
   { const string target_continent = context.country_mults_filter();
@@ -807,8 +801,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // generate the sets of all acceptable values
   const set<string> field_names = all_known_field_names();
 
-//  for (const auto& field_name : field_names)
-//    _permitted_exchange_values.insert( { field_name, _all_exchange_values(field_name) } );
   FOR_ALL(field_names, [&] (const string& field_name) { _permitted_exchange_values.insert( { field_name, _all_exchange_values(field_name) } ); });
 
 // generate all the mappings from permitted to canonical values
@@ -819,7 +811,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 /// default constructor
 contest_rules::contest_rules(void) :
   _callsign_mults_used(false),
-//  _country_mults_used(false),
   _exchange_mults_used(false),
   _send_qtcs(false),
   _uba_bonus(false)
@@ -832,7 +823,6 @@ contest_rules::contest_rules(void) :
 contest_rules::contest_rules(const drlog_context& context, location_database& location_db) :
   _callsign_mults_used(false),
   _countries(location_db.countries()),    // default is ALL countries
-//  _country_mults_used(false),
   _exchange_mults_used(false),
   _uba_bonus(false),
   _work_if_different_band(context.qso_multiple_bands()),
@@ -897,8 +887,9 @@ const vector<string> contest_rules::expanded_exchange_field_names(const string& 
 { const vector<exchange_field> vef = _exchange_fields(canonical_prefix, m, true);
   vector<string> rv;
 
-  for (const auto& ef : vef)
-    rv.push_back(ef.name());
+//  for (const auto& ef : vef)
+//    rv.push_back(ef.name());
+  FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv.push_back(ef.name()); });
 
   return rv;
 }

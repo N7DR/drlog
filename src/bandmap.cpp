@@ -656,9 +656,9 @@ void bandmap::operator+=(bandmap_entry& be)
 
       if (old_be.valid())
       { if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // if not within 250 Hz
-        { ost << "MAX FREQUENCY SKEW EXCEEDED: " << be.absolute_frequency_difference(old_be) << endl
-              << "be: " << be << endl
-              << "old_be: " << old_be << endl;
+        { //ost << "MAX FREQUENCY SKEW EXCEEDED: " << be.absolute_frequency_difference(old_be) << endl
+          //    << "be: " << be << endl
+          //    << "old_be: " << old_be << endl;
 
           (*this) -= callsign;
 //          be.time_of_earlier_bandmap_entry(old_be);    // could change be

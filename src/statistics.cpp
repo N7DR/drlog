@@ -69,17 +69,11 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
     \return         summary string for modes in <i>modes</i>
 */
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
-{ string rv;
-
-  const set<MODE> permitted_modes = rules.permitted_modes();
+{ const set<MODE> permitted_modes = rules.permitted_modes();
   const vector<BAND> permitted_bands = rules.permitted_bands();
 
-  unsigned int qsos_all_bands = 0;
-//  unsigned int countries_all_bands = 0;
-  unsigned int dupes_all_bands = 0;
-  unsigned int points_all_bands = 0;
-
   string line;
+  string rv;
 
 // add a number to the line if array size is not unity
   auto add_all_bands = [&line] (const unsigned int sz, const unsigned int n) { if (sz != 1)
@@ -89,6 +83,8 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
   { SAFELOCK(statistics);
 
 // QSOs
+    unsigned int qsos_all_bands = 0;
+
     line = pad_string("QSOs", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');                                          // accumulator for total qsos
 
     for (const auto& b : permitted_bands)
@@ -154,21 +150,13 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
         if (cit != _callsign_multipliers.end())    // should always be true
         { const multiplier& mult = cit->second;
 
-//          for (const auto& b : permitted_bands)
-//          {
-//            { const unsigned int n_callsign_mults = mult.n_worked(b, m);
-//
-//              line += pad_string(to_string(n_callsign_mults), FIELD_WIDTH);
-//            }
-//          }
-
           FOR_ALL(permitted_bands, [=, &line] (const BAND& b) { line += pad_string(to_string(mult.n_worked(b, m)), FIELD_WIDTH); } );
 
           if (permitted_bands.size() != 1)
             line += pad_string(to_string(mult.n_worked(ANY_BAND, m)), FIELD_WIDTH);
         }
         else
-        { ost << "Error: did not find mult name: " << mult_name << endl;
+        { ost << "Error: could not find mult name: " << mult_name << endl;
           ost << "Number of callsign multipliers in statistics = " << _callsign_multipliers.size() << endl;
 
           for (const auto& mult : _callsign_multipliers)
@@ -210,33 +198,37 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
       }
 
       rv += line + LF;
-     }
+    }
 
 // dupes
-     line = pad_string("Dupes", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+    unsigned int dupes_all_bands = 0;
 
-     for (const auto& b : permitted_bands)
-     { unsigned int dupes = 0;
+    line = pad_string("Dupes", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
-       for (const auto& m : modes)
-       { const auto& nd = _n_dupes[m];
+    for (const auto& b : permitted_bands)
+    { unsigned int dupes = 0;
 
-         if (modes.size() == 1)
-           line += pad_string(to_string(nd[b]), FIELD_WIDTH);
+      for (const auto& m : modes)
+      { const auto& nd = _n_dupes[m];
 
-         dupes += nd[b];
-       }
+        if (modes.size() == 1)
+          line += pad_string(to_string(nd[b]), FIELD_WIDTH);
 
-       dupes_all_bands += dupes;
+        dupes += nd[b];
+      }
 
-       if (modes.size() != 1)
-         line += pad_string(to_string(dupes), FIELD_WIDTH);
-     }
+      dupes_all_bands += dupes;
+
+      if (modes.size() != 1)
+        line += pad_string(to_string(dupes), FIELD_WIDTH);
+    }
 
     add_all_bands(permitted_bands.size(), dupes_all_bands);
     rv += line + LF;
 
 // QSO points
+    unsigned int points_all_bands = 0;
+
     line = pad_string("Qpoints", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
     for (const auto& b : permitted_bands)
@@ -273,15 +265,16 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
 /// default constructor
 running_statistics::running_statistics(void) :
-  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-  _n_dupes( { {} } ),
-  _qso_points( { {} } ),
   _callsign_mults_used(false),
   _country_mults_used(false),
   _exchange_mults_used(false),
+  _include_qtcs(false),
+  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
+  _n_dupes( { {} } ),
+  _qso_points( { {} } ),
   _qtc_qsos_sent(0),
-  _qtc_qsos_unsent(0),
-  _include_qtcs(false)
+  _qtc_qsos_unsent(0)
+
 { }
 
 /*! \brief                  Constructor
@@ -311,10 +304,10 @@ running_statistics::running_statistics(const cty_data& country_data, const drlog
 void running_statistics::prepare(const cty_data& country_data, const drlog_context& context, const contest_rules& rules)
 { SAFELOCK(statistics);
 
-  _include_qtcs = rules.send_qtcs();
   _callsign_mults_used = rules.callsign_mults_used();
   _country_mults_used = rules.country_mults_used();
   _exchange_mults_used = rules.exchange_mults_used();
+  _include_qtcs = rules.send_qtcs();
 
   _location_db.prepare(country_data, context.country_list());
 
@@ -340,9 +333,6 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
   }
 
 // country mults
-
-//  ost << "in running_statistics::prepare(), _country_mults_used = " << _country_mults_used << endl;
-
   if (_country_mults_used)
   { const set<string> country_mults = rules.country_mults();
 
@@ -421,8 +411,7 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
   { SAFELOCK(statistics);
 
     const string canonical_prefix = _location_db.canonical_prefix(callsign);
-// we should count the mult even if it hasn't been seen enough times to be known yet
-    const bool is_needed = !(_country_multipliers.is_worked(canonical_prefix, b, m));
+    const bool is_needed = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
 
     return is_needed;
   }

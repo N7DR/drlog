@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file screen.cpp
+/*! \file   screen.cpp
 
     Classes and functions related to screen management
 */
@@ -91,14 +91,13 @@ screen::screen(void)
 
 /*! \brief          Set the default colours
     \param  fgbg    colour pair
+    \return         the window
 
     Does NOT change _fg/_bg because I can't find a guaranteed way to go from a big integer that
     combines the two colours to the individual colours.
 */
 window& window::_default_colours(const chtype fgbg)
-{ if (!_wp)
-    return *this;
-
+{ if (_wp)
   { SAFELOCK(screen);
 
     wbkgd(_wp, fgbg);
@@ -107,7 +106,7 @@ window& window::_default_colours(const chtype fgbg)
   return *this;
 }
 
-/*! \brief          Perform common portion of initialisation
+/*! \brief          Perform basic initialisation
     \param  wi      window information
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
 */
@@ -246,9 +245,7 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
     \return         the window
 */
 window& window::move_cursor(const int new_x, const int new_y)
-{ if (!_wp)
-    return *this;
-    
+{ if (_wp)
   { SAFELOCK(screen);
 
     wmove(_wp, LIMIT(_height - new_y - 1, 0, _height - 1), LIMIT(new_x, 0, _width - 1));
@@ -437,11 +434,10 @@ const cursor window::cursor_position(void)
     \return             the window
 */
 window& window::move_cursor_relative(const int delta_x, const int delta_y)
-{ if (!_wp)
-    return *this;
-    
-  cursor_position();
-  move_cursor(_cursor_x + delta_x, _cursor_y + delta_y);
+{ if (_wp)
+  { cursor_position();
+    move_cursor(_cursor_x + delta_x, _cursor_y + delta_y);
+  }
 
   return *this;
 }

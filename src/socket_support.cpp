@@ -737,7 +737,7 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
   while (n_try++ < n_tries and !success)
   { status = gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop);
 
-    ost << "name_to_dotted_decimal status = " << status << endl;
+//    ost << "name_to_dotted_decimal status = " << status << endl;
     success = (status == 0) and (result != nullptr);    // the second test should be redundant
 
     if (!success and n_try != n_tries)

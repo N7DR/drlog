@@ -11,7 +11,7 @@
 #ifndef CTY_DATA_H
 #define CTY_DATA_H
 
-/*! \file cty_data.h
+/*! \file   cty_data.h
 
     Objects and functions related to CTY.DAT files
 */
@@ -51,8 +51,8 @@ const int RUSSIAN_INVALID_SUBSTRING            = -1,    ///< source substring do
 
 // -----------  value ----------------
 
-/*! \class value
-    \brief A single value that may or may not be valid
+/*! \class  value
+    \brief  A single value that may or may not be valid
 */
 
 template <typename T>
@@ -113,8 +113,8 @@ public:
 
 // -----------  alternative_country_info  ----------------
 
-/*! \class alternative_country_info
-    \brief A single alternative prefix or callsign for a country
+/*! \class  alternative_country_info
+    \brief  A single alternative prefix or callsign for a country
 
     CTY files may contain "alias" information. This encapsulates that information.
 */
@@ -154,8 +154,8 @@ std::ostream& operator<<(std::ostream& ost, const alternative_country_info& aci)
 
 // -----------  cty_record  ----------------
 
-/*! \class cty_record
-    \brief A single record in the CTY.DAT file
+/*! \class  cty_record
+    \brief  A single record in the CTY.DAT file
   
   The official page describing the format is:
   http://www.country-files.com/cty/format.htm.
@@ -256,8 +256,8 @@ std::ostream& operator<<(std::ostream& ost, const cty_record& rec);
 
 // -----------  cty_data  ----------------
 
-/*! \class cty_data
-    \brief All the data from a CTY.DAT file
+/*! \class  cty_data
+    \brief  All the data from a CTY.DAT file
 */
 
 class cty_data
@@ -304,16 +304,16 @@ public:
 class russian_data_per_substring
 {
 protected:
-  std::string _sstring;               ///< substring that matches this district
+  std::string   _sstring;               ///< substring that matches this district
 
-  std::string _continent;             ///< two-letter abbreviation for continent
-  unsigned int _cq_zone;              ///< CQ zone
-  unsigned int _itu_zone;             ///< ITU zone
-  float _latitude;                    ///< latitude in degrees (+ve north)
-  float _longitude;                   ///< longitude in degrees (+ve east)
-  std::string _region_abbreviation;   ///< abbreviation of district (2 letters)
-  std::string _region_name;           ///< name of district
-  int _utc_offset;                    ///< offset from UTC
+  std::string   _continent;             ///< two-letter abbreviation for continent
+  unsigned int  _cq_zone;               ///< CQ zone
+  unsigned int  _itu_zone;              ///< ITU zone
+  float         _latitude;              ///< latitude in degrees (+ve north)
+  float         _longitude;             ///< longitude in degrees (+ve east)
+  std::string   _region_abbreviation;   ///< abbreviation of district (2 letters)
+  std::string   _region_name;           ///< name of district
+  int           _utc_offset;            ///< offset from UTC (minutes)
 
 public:
 
@@ -332,7 +332,7 @@ public:
   READ(longitude);             ///< longitude in degrees (+ve east)
   READ(region_abbreviation);   ///< abbreviation of district (2 letters)
   READ(region_name);           ///< name of district
-  READ(utc_offset);            ///< offset from UTC
+  READ(utc_offset);            ///< offset from UTC (minutes)
 
 /// archive using boost
   template<typename Archive>
@@ -378,10 +378,10 @@ public:
 
 // -----------  location_info  ----------------
 
-/*!     \class location_info
-        \brief Location information associated with a call, prefix or country
+/*! \class  location_info
+    \brief  Location information associated with a call, prefix or country
         
-        This is basically just a simple 8-tuple
+    This is basically just a simple 8-tuple
 */
 
 class location_info
@@ -458,10 +458,10 @@ const location_info guess_zones(const std::string& call, const location_info& li
 
 // -----------  drlog_qth_database_record  ----------------
 
-/*!     \class  drlog_qth_database_record
-        \brief  A record from the drlog-specific QTH-override database
+/*! \class  drlog_qth_database_record
+    \brief  A record from the drlog-specific QTH-override database
 
-        I believe that this is currently unused.
+    I believe that this is currently unused.
 */
 
 class drlog_qth_database_record
@@ -476,11 +476,6 @@ protected:
 public:
   
   READ_AND_WRITE(id);
-//  inline const std::string get_id(void) const
-//    { return _id; }
-    
-//  inline void set_id(const std::string& i)
-//    { _id = i; }
     
   inline const unsigned int get_area(const unsigned int def) const
     { return _area.get(def); }
@@ -518,8 +513,8 @@ public:
 
 // -----------  drlog_qth_database  ----------------
 
-/*!     \class drlog_qth_database
-        \brief drlog-specific QTH-override database
+/*! \class  drlog_qth_database
+    \brief  drlog-specific QTH-override database
 */
 
 class drlog_qth_database
@@ -597,13 +592,14 @@ public:
 
 // -----------  location_database  ----------------
 
-/*! \class location_database
-    \brief The country-based location information packaged for use by drlog
+/*! \class  location_database
+    \brief  The country-based location information packaged for use by drlog
 */
 
 class location_database
 {
 protected:
+
   std::map<std::string, location_info> _db;          ///< prefix-associated info -- the original database
   std::map<std::string, location_info> _alt_call_db; ///< database of alternative calls
   std::map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
@@ -634,7 +630,8 @@ protected:
 public:
 
 /// default constructor
-  location_database(void);
+  inline location_database(void)
+    { }
 
 /*! \brief                  Constructor
     \param  filename        name of cty.dat file

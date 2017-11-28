@@ -507,9 +507,10 @@ const string remove_trailing(const string& s, const char c)
 const string remove_char(const string& s, const char c)
 { string rv;
 
-  for (const auto& ch : s)
-    if (ch != c)
-      rv += ch;
+//  for (const auto& ch : s)
+//    if (ch != c)
+//      rv += ch;
+  FOR_ALL(s, [=, &rv] (const char ch) { if (ch != c) rv += ch; } );
 
   return rv; 
 } 
@@ -715,7 +716,7 @@ const vector<size_t> starts_of_words(const string& s)
     return rv;
 
 // start of first word
-  size_t posn = s.find_first_not_of(" ", 0);
+  size_t posn = s.find_first_not_of(SPACE_STR, 0);
 
   if (posn == string::npos)
     return rv;
@@ -724,12 +725,12 @@ const vector<size_t> starts_of_words(const string& s)
 
 // next space
   while (1)
-  { posn = s.find_first_of(" ", posn);
+  { posn = s.find_first_of(SPACE_STR, posn);
 
     if (posn == string::npos)
       return rv;
 
-    posn = s.find_first_not_of(" ", posn);
+    posn = s.find_first_not_of(SPACE_STR, posn);
 
     if (posn == string::npos)
       return rv;
@@ -752,11 +753,11 @@ const size_t next_word_posn(const string& str, const size_t current_posn)
   const bool is_space = (str[current_posn] == ' ');
 
   if (is_space)
-    return ( str.find_first_not_of(" ", current_posn) );
+    return ( str.find_first_not_of(SPACE_STR, current_posn) );
 
 // we are inside a word
-  const size_t space_posn = str.find_first_of(" ", current_posn);
-  const size_t word_posn = str.find_first_not_of(" ", space_posn);
+  const size_t space_posn = str.find_first_of(SPACE_STR, current_posn);
+  const size_t word_posn = str.find_first_not_of(SPACE_STR, space_posn);
 
   return word_posn;
 }
