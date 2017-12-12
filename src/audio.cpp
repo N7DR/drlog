@@ -7,7 +7,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file audio.cpp
+/*! \file   audio.cpp
 
     Classes and functions anent audio recording. The implementation uses ALSA calls.
     A version intended to support OSes in addition to Linux could, for example, use sox instead.
@@ -66,7 +66,7 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
 
   _time_limit = remainder;
 
-  ost << "DEBUG: _time_limit = " << _time_limit << endl;
+//  ost << "DEBUG: _time_limit = " << _time_limit << endl;
 
   if (_time_limit == 0)
     total_bytes = _record_count;
@@ -75,9 +75,6 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
 
     total_bytes = bytes_per_second * _time_limit;
   }
-
-//  ost << "DEBUG: total_bytes = " << total_bytes << endl;
-//  ost << "DEBUG: _record_count = " << _record_count << endl;
 
   return min(total_bytes, _record_count);
 }
@@ -139,19 +136,17 @@ void audio_recorder::_set_params(void)
   }
 
   if ((float)rate * 1.05 < _hw_params.rate or (float)rate * 0.95 > _hw_params.rate)
-  { char plugex[64];
-//    const char *pcmname = snd_pcm_name(_handle);
+  { //char plugex[64];
 
-    { ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << "for device: " << _pcm_name << endl;
-      throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested " + to_string(rate) + ", received " + to_string(_hw_params.rate) + "for device: " + _pcm_name);
-    }
+    ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << "for device: " << _pcm_name << endl;
+    throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested " + to_string(rate) + ", received " + to_string(_hw_params.rate) + "for device: " + _pcm_name);
 
-    if (_pcm_name.empty() or strchr(snd_pcm_name(_handle), ':'))
-      *plugex = 0;
-    else
-    { ost << "ERROR: plugin problem for device: " << _pcm_name << endl;
-      throw audio_error(AUDIO_PLUGIN_ERROR, "plugin problem for device: " + _pcm_name);
-    }
+//    if (_pcm_name.empty() or strchr(snd_pcm_name(_handle), ':'))
+//      *plugex = 0;
+//    else
+//    { ost << "ERROR: plugin problem for device: " << _pcm_name << endl;
+//      throw audio_error(AUDIO_PLUGIN_ERROR, "plugin problem for device: " + _pcm_name);
+//    }
   }
 
   rate = _hw_params.rate;
@@ -264,8 +259,6 @@ void audio_recorder::_set_params(void)
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
     throw audio_error(AUDIO_UNABLE_TO_SET_START_THRESHOLD, "Unable to set start threshold for " + _pcm_name);
   }
-
-//  const snd_pcm_uframes_t stop_threshold = ( (double)rate * _stop_delay / 1000000 ) + ( (_stop_delay <= 0) ? buffer_size : 0 );
 
   const snd_pcm_uframes_t stop_threshold = buffer_size;
 
@@ -447,10 +440,7 @@ create_file:
 
 // read OK from sound card
     if (first_time_through_loop)            // write data chunk if we've just started
-    { //const data_chunk dc(_audio_buf, f);
-
-//      wfp->add_chunk(dc);
-      wfp->add_chunk(data_chunk(_audio_buf, f));
+    { wfp->add_chunk(data_chunk(_audio_buf, f));
       first_time_through_loop = false;
     }
     else                                    // otherwise append the data we just read
@@ -489,14 +479,14 @@ goto create_file;
 /// constructor
 audio_recorder::audio_recorder(void) :
   _audio_buf(nullptr),                      // no buffer by default
-  _buffer_frames(0),
-  _buffer_time(0),
-  _period_size_in_frames(0),
   _base_filename("drlog-audio"),            // default output file
+  _buffer_frames(0),                        // no frames in buffer?
+  _buffer_time(0),                          // no time covered by buffer?
   _file_type(AUDIO_FORMAT_WAVE),            // WAV format
-  _handle(nullptr),
+  _handle(nullptr),                         // no PCM handle
   _info(nullptr),                           // explicitly set to uninitialised
-  _max_file_time(0),
+  _max_file_time(0),                        // no maximum duration (in seconds)
+  _period_size_in_frames(0),
   _monotonic(false),                        // device cannot do monotonic timestamps
   _n_channels(1),                           // monophonic
   _open_mode(0),                            // blocking
@@ -508,7 +498,6 @@ audio_recorder::audio_recorder(void) :
   _samples_per_second(8000),                // G.711 rate
   _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
   _start_delay(1),
-//  _stop_delay(0),
   _stream(SND_PCM_STREAM_CAPTURE),          // we are capturing a stream
   _time_limit(0)                            // no limit
 { }

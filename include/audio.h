@@ -136,16 +136,16 @@ class audio_recorder
 protected:
 
   u_char*           _audio_buf;                 ///< buffer for audio
+  std::string       _base_filename;             ///< base name of output file
   size_t            _bits_per_frame;            ///< bits per sample * number of channels
-  snd_pcm_uframes_t _buffer_frames;             ///< ?
-  unsigned int      _buffer_time;               ///< ?
+  snd_pcm_uframes_t _buffer_frames;             ///< number of frames in buffer?
+  unsigned int      _buffer_time;               ///< amount of time in buffer?
+  int               _file_type;                 ///< format of file
   size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
-  int               _file_type;                 ///< format of file
-  std::string       _base_filename;             ///< base name of output file
-  snd_pcm_t*        _handle;                    ///< handle
+  snd_pcm_t*        _handle;                    ///< PCM handle
   PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
-  snd_pcm_info_t*   _info;                      ///< pointer to a snd_pcm_info_t
+  snd_pcm_info_t*   _info;                      ///< pointer to information structure that corresponds to <i>_handle</i>
   long long         _max_file_time;             ///< maximum duration in seconds
   bool              _monotonic;                 ///< whether device does monotonic timestamps
   unsigned int      _n_channels;                ///< number of channels to record
@@ -158,7 +158,6 @@ protected:
   unsigned int      _samples_per_second;        ///< number of samples per second
   snd_pcm_format_t  _sample_format;             ///< format of a single format (U8, SND_PCM_FORMAT_S16_LE, etc.)
   int               _start_delay;               ///< ?
-//  int               _stop_delay;                ///< ?
   snd_pcm_stream_t  _stream;                    ///< type of stream
   unsigned int      _time_limit;                ///< number of seconds to record
 

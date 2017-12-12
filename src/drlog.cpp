@@ -1942,7 +1942,11 @@ void* display_rig_status(void* vp)
           else
             win_rig < substring(rit_xit_str, 0, x_posn) < WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X" < WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring(rit_xit_str, x_posn + 1);
 
-          win_rig < "   " <= bandwidth_str;
+// don't change the bandwidth if the rig has returned a ridiculous value, which happens occasionally with the K3
+          if (bandwidth_str.size() <= 4)
+            win_rig < "   " < bandwidth_str;
+
+          win_rig.refresh();
         }
       }
     }
