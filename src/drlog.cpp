@@ -1821,7 +1821,7 @@ void* display_rig_status(void* vp)
   while (true)
   {
     try
-    { const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
+    { // const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
 
       try
       { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // don't poll while transmitting; although this check is not foolproof

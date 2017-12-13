@@ -10,7 +10,7 @@
 
 /*! \file socket_support.h
 
-    Objects and functions related to sockets. This code is based on
+    Objects and functions related to sockets. This code is based, with permission,  on
     a much larger codebase from IPfonix, Inc. for socket-related functions.
 */
 
@@ -92,8 +92,8 @@ tcp_socket::tcp_socket(void)  :
 */
 tcp_socket::tcp_socket(SOCKET* sp) :
   _destination_is_set(false),
-  _preexisting_socket(true),
   _force_closure(false),
+  _preexisting_socket(true),
   _timeout_in_tenths(600)                     // 1 minute
 { if (sp)
     _sock = *sp;
@@ -130,9 +130,9 @@ tcp_socket::tcp_socket(SOCKET* sp) :
 */
 tcp_socket::tcp_socket(SOCKET sp) :
   _destination_is_set(false),
+  _force_closure(false),
   _preexisting_socket(true),
   _sock(sp),
-  _force_closure(false),
   _timeout_in_tenths(600)                     // 1 minute
 {  }
 
@@ -145,10 +145,10 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
                        const unsigned int destination_port, 
                        const string& source_address,
                        const unsigned int retry_time_in_seconds) :
-  _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
   _destination_is_set(false),
-  _preexisting_socket(false),
   _force_closure(false),
+  _preexisting_socket(false),
+  _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
   _timeout_in_tenths(600)                    // 1 minute
 { 
   try
@@ -249,6 +249,7 @@ void tcp_socket::new_socket(void)
 
 // enable re-use
     static const int on = 1;
+
     int status = setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) );      // char* cast is needed for Windows
 
     if (status)
@@ -310,9 +311,7 @@ void tcp_socket::destination(const sockaddr_storage& adr)
     See https://www.linuxquestions.org/questions/programming-9/connect-timeout-change-145433/
 */
 void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long timeout_secs)
-{ struct timeval timeout { timeout_secs, 0L };
-//  timeout.tv_sec = timeout_secs;
-//  timeout.tv_usec = 0L;
+{ struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
 
   SAFELOCK(_tcp_socket);
 
@@ -421,11 +420,7 @@ const string tcp_socket::read(void)
 */
 const string tcp_socket::read(const unsigned long timeout_secs)
 { string rv;
-
-  struct timeval timeout { timeout_secs, 0L };
-//  timeout.tv_sec = timeout_secs;
-//  timeout.tv_usec = 0L;
-
+  struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
   fd_set ps_set;
 
   FD_ZERO(&ps_set);
@@ -736,8 +731,6 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
 
   while (n_try++ < n_tries and !success)
   { status = gethostbyname_r(fqdn.c_str(), &ret, &buf[0], buflen, &result, &h_errnop);
-
-//    ost << "name_to_dotted_decimal status = " << status << endl;
     success = (status == 0) and (result != nullptr);    // the second test should be redundant
 
     if (!success and n_try != n_tries)

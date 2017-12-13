@@ -13,7 +13,7 @@
 
 /*! \file socket_support.h
 
-    Objects and functions related to sockets. This code is based on
+    Objects and functions related to sockets. This code is based, with permission, on
     a much larger codebase from IPfonix, Inc. for socket-related functions.
 
     I spent some time trying to use the boost asio library to perform these

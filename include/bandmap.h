@@ -768,6 +768,8 @@ public:
 
      <i>_time_of_earlier_bandmap_entry</i> in <i>be</i> might be changed.
      Could change this by copying the be inside +=.
+
+     Does not add if the frequency is outside the ham bands.
 */
   void operator+=(bandmap_entry& be);
 

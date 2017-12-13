@@ -256,11 +256,11 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
       if (!guess.empty())
         _is_needed_exchange_mult.status_is_known(true);
 
-      if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
-      { const bool exchange_mult_was_added = add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
+//      if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
+//      { const bool exchange_mult_was_added = add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
 
 //        ost << " whether exchange mult was added for " << callsign() << ": " << exchange_mult_was_added << endl;
-      }
+//      }
     }
   }
 
@@ -616,6 +616,8 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
 
      <i>_time_of_earlier_bandmap_entry</i> in <i>be</i> might be changed.
      Could change this by copying the be inside +=.
+
+     Does not add if the frequency is outside the ham bands.
 */
 void bandmap::operator+=(bandmap_entry& be)
 { //const bool mode_marker_is_present = is_present(MODE_MARKER);
@@ -635,6 +637,9 @@ void bandmap::operator+=(bandmap_entry& be)
   bool add_it = !(_do_not_add < callsign);
 
   if (add_it)
+    add_it = be.freq().is_within_ham_band();
+
+  if (add_it)
     add_it = !((be.source() != BANDMAP_ENTRY_LOCAL) and is_recent_call(callsign));
 
 // could make this more efficient by having a global container of the mode-marker bandmap entries
@@ -642,7 +647,6 @@ void bandmap::operator+=(bandmap_entry& be)
   { const bandmap_entry mode_marker_be = (*this)[MODE_MARKER];    // assumes only one mode marker
 
     add_it = (be.absolute_frequency_difference(mode_marker_be) > MAX_FREQUENCY_SKEW);
-//    add_it = (abs(be.freq() - _mode_marker_frequency) > MAX_FREQUENCY_SKEW);              // WHY DOESN'T THIS WORK???
   }
 
   if (add_it)
@@ -656,47 +660,22 @@ void bandmap::operator+=(bandmap_entry& be)
 
       if (old_be.valid())
       { if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)  // if not within 250 Hz
-        { //ost << "MAX FREQUENCY SKEW EXCEEDED: " << be.absolute_frequency_difference(old_be) << endl
-          //    << "be: " << be << endl
-          //    << "old_be: " << old_be << endl;
-
-          (*this) -= callsign;
-//          be.time_of_earlier_bandmap_entry(old_be);    // could change be
+        { (*this) -= callsign;
           _insert(be);
         }
         else    // ~same frequency
         { if (old_be.expiration_time() >= be.expiration_time())
-          { //const unsigned int n_new_posters = be.n_posters();
-
-            //if (n_new_posters != 1)
-            //  ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
-            //else
-            { //const string& poster = *(be.posters().cbegin());
-
-              //old_be.add_poster(poster);
-
-              (*this) -= callsign;
-              _insert(old_be);
-            }
+          { (*this) -= callsign;
+            _insert(old_be);
           }
           else    // new expiration is later
           { old_be.source(BANDMAP_ENTRY_RBN);
+            old_be.expiration_time(be.expiration_time());
 
-            //const unsigned int n_new_posters = be.n_posters();
+            (*this) -= callsign;
+            be.time_of_earlier_bandmap_entry(old_be);    // could change be
 
-            //if (n_new_posters != 1)
-           //   ost << "Error: number of posters = " << n_new_posters << " for post for " << callsign << endl;
-            //else
-            { //const string& poster = *(be.posters().cbegin());
-
-              //old_be.add_poster(poster);
-              old_be.expiration_time(be.expiration_time());
-
-              (*this) -= callsign;
-              be.time_of_earlier_bandmap_entry(old_be);    // could change be
-
-              _insert(old_be);
-            }
+            _insert(old_be);
           }
         }
       }
@@ -986,18 +965,21 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
   const BM_ENTRIES filtered = filtered_entries();
   BM_ENTRIES rv;
 
-  SAFELOCK(_bandmap);
+//  SAFELOCK(_bandmap);
 
-  const unsigned int threshold = _rbn_threshold;
+//  const unsigned int threshold = _rbn_threshold;
 
   for (const auto& be : filtered)
-  { if (be.source() == BANDMAP_ENTRY_RBN)
-    { //if (be.n_posters() >= threshold)
-        rv.push_back(be);
-    }
-    else  // not RBN
-      rv.push_back(be);
+  { //if (be.source() == BANDMAP_ENTRY_RBN)
+    //{ //if (be.n_posters() >= threshold)
+        //rv.push_back(be);
+    //}
+    //else  // not RBN
+      //rv.push_back(be);
+    rv.push_back(be);
   }
+
+  SAFELOCK(_bandmap);
 
   _rbn_threshold_and_filtered_entries = rv;
   _rbn_threshold_and_filtered_entries_dirty = false;
@@ -1187,7 +1169,7 @@ window& operator<(window& win, bandmap& bm)
 { static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
 
   static int NOT_NEEDED_COLOUR = COLOUR_BLACK;
-  static int DO_NOT_WORK_COLOUR = NOT_NEEDED_COLOUR;
+//  static int DO_NOT_WORK_COLOUR = NOT_NEEDED_COLOUR;
   static int MULT_COLOUR = COLOUR_GREEN;
   static int NOT_MULT_COLOUR = COLOUR_BLUE;
   static int UNKNOWN_MULT_STATUS_COLOUR = COLOUR_YELLOW;
