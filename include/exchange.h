@@ -1,4 +1,4 @@
-// $Id: exchange.h 131 2016-11-07 18:14:28Z  $
+// $Id: exchange.h 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -7,6 +7,11 @@
 
 // Copyright owners:
 //    N7DR
+
+/*! \file   exchange.h
+
+    Classes and functions related to processing exchanges
+*/
 
 #ifndef EXCHANGE_H
 #define EXCHANGE_H
@@ -251,10 +256,10 @@ std::ostream& operator<<(std::ostream& ost, const parsed_exchange& pe);
 
 // -------------------------  exchange_field_database  ---------------------------
 
-/*!     \class exchange_field_database
-        \brief used for estimating the exchange field
+/*! \class  exchange_field_database
+    \brief  used for estimating the exchange field
 
-        There can be only one of these, and it is thread safe
+    There can be only one of these, and it is thread safe
 */
 
 class exchange_field_database
@@ -301,10 +306,10 @@ public:
 
 // -------------------------  EFT  ---------------------------
 
-/*!     \class EFT
-        \brief Manage a single exchange field
+/*! \class  EFT
+    \brief  Manage a single exchange field
 
-        <i>EFT</i> stands for "exchange field template"
+    <i>EFT</i> stands for "exchange field template"
 */
 
 class EFT

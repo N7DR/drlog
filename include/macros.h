@@ -1,4 +1,4 @@
-// $Id: macros.h 140 2017-11-05 15:16:46Z  $
+// $Id: macros.h 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -783,6 +783,8 @@ public:
     This does throw a warning, but I can't think of a better way to
     execute a loop a predetermined number of times. C++14 might be going
     to provide a better mechanism.
+
+    See also the UNUSED template below
 */
 template <typename T>
 class RANGE : public std::vector<T>
@@ -809,6 +811,11 @@ public:
     }
   }
 };
+
+/// Syntactic sugar to avoid the "unused variable" warning when using the RANGE template, until C++ provides a proper way to have unused range-based loop variables
+template<typename Unused>
+inline void UNUSED( Unused&& )
+{ }
 
 /*! \class  accumulator
     \brief  accumulate values, and inform when a threshold is reached

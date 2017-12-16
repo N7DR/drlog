@@ -1,11 +1,11 @@
-// $Id: drlog.cpp 140 2017-11-05 15:16:46Z  $
+// $Id: drlog.cpp 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
 
 // Principal author: N7DR
 
-/*! \file drlog.cpp
+/*! \file   drlog.cpp
 
     The main program for drlog
  */
@@ -22,6 +22,7 @@
 #include "exchange.h"
 #include "functions.h"
 #include "fuzzy.h"
+#include "grid.h"
 #include "keyboard.h"
 #include "log.h"
 #include "log_message.h"
@@ -807,8 +808,8 @@ int main(int argc, char** argv)
     }
 
 // set the initial band and mode from the configuration file
-    safe_set_band(context.start_band());
-    safe_set_mode(context.start_mode());
+    safe_set_band( (rules.score_bands().size() == 1) ? *(rules.score_bands().cbegin()) : context.start_band() );
+    safe_set_mode( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
 
 // see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
     if (current_band != static_cast<BAND>(rig.rig_frequency()))
@@ -820,6 +821,7 @@ int main(int argc, char** argv)
     if (current_mode != rig.rig_mode())
       rig.rig_mode(current_mode);
 
+    fast_cw_bandwidth();    // set to default SAP bandwidth if on CW
     rig.base_state();
 
 // configure bandmaps so user's call does not display
@@ -2280,7 +2282,8 @@ void* process_rbn_info(void* vp)
       update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());  // might have added a new one if in auto mode
 
     for (const auto n : RANGE<unsigned int>(1, 10) )    // wait 10 seconds before getting any more unprocessed info
-    {
+    { UNUSED(n);
+
       { SAFELOCK(thread_check);
 
         if (exiting)
@@ -2306,14 +2309,12 @@ void* get_cluster_info(void* vp)
   { cluster.read();                                         // reads the socket and stores the data
 
     for (const auto n : RANGE<unsigned int>(1, 5) )         // check the socket every 5 seconds
-    {
+    { UNUSED(n);
+
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { //ost << "get_cluster_info() is exiting" << endl;
-
-          //n_running_threads--;
-          end_of_thread("get cluster info");
+        { end_of_thread("get cluster info");
           return nullptr;
         }
       }
@@ -2340,7 +2341,8 @@ void* prune_bandmap(void* vp)
     bandmap_win <= bandmaps[safe_get_band()];
 
     for (const auto n : RANGE<unsigned int>(1, 60) )    // check once per second for a minute
-    {
+    { UNUSED(n);
+
       { SAFELOCK(thread_check);
 
         if (exiting)
@@ -4593,7 +4595,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       { size_t index;
 
         for (index = 0; index < word_posn.size(); ++index)
-        { if (word_posn[index] == original_posn.x())
+        { if (static_cast<int>(word_posn[index]) == original_posn.x())
           { if (index == 0)                  // we are at the start of the first word
             { win <= CURSOR_START_OF_LINE;
               break;
@@ -4604,7 +4606,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
           }
 
-          if (word_posn[index] > original_posn.x())
+          if (static_cast<int>(word_posn[index]) > original_posn.x())
           { if (index == 0)                          // should never happen; cursor is to left of first word
             { win <= CURSOR_START_OF_LINE;
               break;
@@ -4639,11 +4641,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       if (word_posn.empty())                // there are no words; should never be true at this point
         win <= CURSOR_START_OF_LINE;
       else
-      { if (original_posn.x() >= word_posn[word_posn.size() - 1])  // at or after start of last word
+      { if (original_posn.x() >= static_cast<int>(word_posn[word_posn.size() - 1]))  // at or after start of last word
           win <= cursor(last_filled_posn + 2, original_posn.y());
         else
         { for (size_t index = 0; index < word_posn.size(); ++index)
-          { if (word_posn[index] == original_posn.x())        // at the start of a word (but not the last word)
+          { if (static_cast<int>(word_posn[index]) == original_posn.x())        // at the start of a word (but not the last word)
             { win <= cursor(word_posn[index + 1], original_posn.y());
               break;
             }

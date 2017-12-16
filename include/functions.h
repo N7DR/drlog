@@ -1,4 +1,4 @@
-// $Id: functions.h 90 2015-01-10 17:10:56Z  $
+// $Id: functions.h 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,9 +11,9 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-/*!     \file functions.h
+/*! \file   functions.h
 
-        Functions related to geography
+    Functions related to geography
 */
 
 #include <string>
@@ -40,16 +40,25 @@ const float bearing(const float& lat1, const float& long1, const float& lat2, co
 */
 const float distance(const float& lat1, const float& long1, const float& lat2, const float& long2);
 
+/*! \brief                  Calculate the time of sunrise or sunset
+    \param  lat             latitude of target, in degrees (+ve north)
+    \param  lon             longitude of target, in degrees (+ve east)
+    \param  calc_sunset     whether to calculate sunset instead of sunrise
+    \return                 sunrise or sunset in the form HH:MM
+
+    See http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
+    If there is no sunset or sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
+    or day at the given location
+*/
 const std::string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset);
 
-/*! \brief              Calculate the time of sunrise or sunset
-    \param  lat         latitude of target, in degrees (+ve north)
-    \param  long        longitude of target, in degrees (+ve east)
-    \param  calc_sunset whether to calculate sunset instead of sunrise
-    \return             sunrise or sunset in the form HH:MM
+/*! \brief          Calculate the time of sunrise
+    \param  lat     latitude of target, in degrees (+ve north)
+    \param  long    longitude of target, in degrees (+ve east)
+    \return         sunrise in the form HH:MM
 
-    Default is to calculate sunrise if <i>calc_sunset</i> is absent.
-    See http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
+    If there is no sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
+    or day at the given location
 */
 inline const std::string sunrise(const float& lat, const float& lon)
   { return sunrise_or_sunset(lat, lon, false); }
@@ -58,9 +67,11 @@ inline const std::string sunrise(const float& lat, const float& lon)
     \param  lat     latitude of target, in degrees (+ve north)
     \param  long    longitude of target, in degrees (+ve east)
     \return         sunset in the form HH:MM
+
+    If there is no sunset today, returns "DARK" or "LIGHT", according to whether is currently night
+    or day at the given location
 */
 inline const std::string sunset(const float& lat, const float& lon)
   { return sunrise_or_sunset(lat, lon, true); }
-
 
 #endif /* FUNCTIONS_H_ */

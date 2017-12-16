@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 140 2017-11-05 15:16:46Z  $
+// $Id: exchange.cpp 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file exchange.cpp
+/*! \file   exchange.cpp
 
     Classes and functions related to processing exchanges
 */
@@ -447,9 +447,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   _replacement_call(),
   _valid(false)
 { static const string EMPTY_STRING("");
-//  static bool is_ss = false;                    // Sweepstakes is special
-//  static bool first_time = true;
-  extern bool is_ss;
+
+  extern bool is_ss;                    // Sweepstakes is special; this is set to the correct value by drlog.cpp
 
 //  ost << "Inside parsed_exchange constructor" << endl;
 
@@ -458,24 +457,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   vector<string> copy_received_values(received_values);
 
   const vector<exchange_field> exchange_template = rules.unexpanded_exch(canonical_prefix, m);
-
-// first time through, determine whether this is Sweepstakes
-#if 0
-  if (first_time)
-  { ost << "FIRST TIME" << endl;
-
-    for (const auto& ef : exchange_template)
-    { ost << "ef.name() = " << ef.name() << endl;
-
-      if (ef.name() == "PREC")
-        is_ss = true;
-    }
-
-    first_time = false;
-  }
-
-  ost << "Past first-time test" << endl;
-#endif
 
   if (is_ss)                // SS is oh-so-special
   { const parsed_ss_exchange exch(from_callsign, received_values);
@@ -492,9 +473,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     _fields.push_back( { "PREC", create_string(exch.prec()), false } );
     _fields.push_back( { "CALL", exch.callsign(), false } );
     _fields.push_back( { "CHECK", exch.check(), false } );
-//    _fields.push_back( { "SECTION", exch.section(), true, exch.section() } );
-
-
     _fields.push_back( parsed_exchange_field("SECTION", exch.section(), true) );
 
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
@@ -532,79 +510,68 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     copy_if(received_values.cbegin(), received_values.cend(), back_inserter(copy_received_values), [] (const string& str) { return !contains(str, "."); } );
   }
 
-if (truncate_received_values)
-{ map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+  if (truncate_received_values)
+  { map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
 
-  ost << "exchange_field_eft map: " << exchange_field_eft << endl;
+    ost << "exchange_field_eft map: " << exchange_field_eft << endl;
 
 // remove any inappropriate RS(T)
-//  static const map<MODE, string> valid_rst_fields { { MODE_CW, "RST" }, { MODE_SSB, "RS" } };
+    auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST" and m != MODE_CW )  or
+                                                                      ( psE.first == "RS" and m != MODE_SSB )
+                                                                    );
+                                                      };
 
-  auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST" and m != MODE_CW )  or
-                                                                    ( psE.first == "RS" and m != MODE_SSB )
-                                                                  );
-  };
+    REMOVE_IF_AND_RESIZE(exchange_field_eft, pred_fn);
 
-//  auto posn = remove_if(exchange_field_eft.begin(), exchange_field_eft.end(), pred_fn);
-  REMOVE_IF_AND_RESIZE(exchange_field_eft, pred_fn);
-//  int test_value = 4;  // or use whatever appropriate type and value
-//  erase_if(container, [&test_value]( item_type& item ) {
-//    return item.property < test_value;
-
-//  MAP_REMOVE_IF(exchange_field_eft, pred_fn);
-
-  ost << "NEW exchange_field_eft map: " << exchange_field_eft << endl;
+    ost << "NEW exchange_field_eft map: " << exchange_field_eft << endl;
 
 //  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
 
-  const vector<string> exchange_field_names = rules.unexpanded_exchange_field_names(canonical_prefix, m);
+    const vector<string> exchange_field_names = rules.unexpanded_exchange_field_names(canonical_prefix, m);
 
-  for (const auto& efn : exchange_field_names)
-    ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
+    for (const auto& efn : exchange_field_names)
+      ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
 
-  map<string /* field name */, string /* value */> result_map;
+    map<string /* field name */, string /* value */> result_map;
 
-  const string rv0 = received_values[0];
-  bool found_match = false;
+    const string rv0 = received_values[0];
+    bool found_match = false;
 
-  for (auto cit = exchange_field_names.cbegin(); !found_match and cit != exchange_field_names.cend(); ++cit)
-  { const string exchange_field_name = *cit;
+    for (auto cit = exchange_field_names.cbegin(); !found_match and cit != exchange_field_names.cend(); ++cit)
+    { const string exchange_field_name = *cit;
 
-    if (contains(exchange_field_name, "+"))    // if a choice
-    { const vector<string> choices_vec = split_string(exchange_field_name, '+');
+      if (contains(exchange_field_name, "+"))    // if a choice
+      { const vector<string> choices_vec = split_string(exchange_field_name, '+');
 
-      for (auto it = choices_vec.begin(); it != choices_vec.end(); )    // see Josuttis 2nd edition, p. 343
-      { const EFT& eft = exchange_field_eft.at(*it);
+        for (auto it = choices_vec.begin(); it != choices_vec.end(); )    // see Josuttis 2nd edition, p. 343
+        { const EFT& eft = exchange_field_eft.at(*it);
+
+          if (eft.is_legal_value(rv0))
+          { result_map[*it] = rv0;
+            found_match = true;
+            it = choices_vec.end();
+          }
+          else
+            it++;
+        }
+      }
+      else        // not a choice
+      { const EFT& eft = exchange_field_eft.at(exchange_field_name);
 
         if (eft.is_legal_value(rv0))
-        { result_map[*it] = rv0;
+        { result_map[exchange_field_name] = rv0;
           found_match = true;
-          it = choices_vec.end();
         }
-        else
-          it++;
       }
     }
-    else        // not a choice
-    { const EFT& eft = exchange_field_eft.at(exchange_field_name);
 
-      if (eft.is_legal_value(rv0))
-      { result_map[exchange_field_name] = rv0;
-        found_match = true;
-      }
-    }
-  }
-
-  if (!found_match)
-  { ost << "Error: cannot find match for exchange field: " << rv0 << endl;
+    if (!found_match)
+    { ost << "Error: cannot find match for exchange field: " << rv0 << endl;
     //alert("No match for exchange field: " + rv0);
+    }
   }
-
-}
-else        // !truncate received values
-{
-
-
+  else        // !truncate received values
+  {
 // for each received field, which output fields does it match?
   map<int /* received field number */, set<string>> matches;
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
@@ -1084,13 +1051,10 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
   if (field_name == "DOK")
-  { //ost << "Checking DOK" << endl;
-    string rv;
+  { string rv;
 
     if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "DL")
     { rv = drm_line.qth();
-
-      //ost << "rv from drm = " << rv << endl;
 
       if (!rv.empty())
       { _db.insert( { { callsign, field_name }, rv } );
@@ -1105,6 +1069,20 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
     if (!rv.empty())
       return rv;
+  }
+
+  if (field_name == "GRID")
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.grid();
+
+      if (!rv.empty())
+      { _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
   }
 
   if (field_name == "HADXC")     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
@@ -1240,7 +1218,6 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       }
     }
   }
-
 
   if (field_name == "SOCIETY")
   { string rv;
@@ -1436,7 +1413,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
 
- // ost << "constructed EFT: " << (*this) << endl;
+  ost << "constructed EFT: " << (*this) << endl;
 }
 
 /*! \brief              Get regex expression from file
@@ -1449,7 +1426,7 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
     return false;
 
   try
-  { //ost << "Trying to read regex file: " << filename << endl;
+  { ost << "Trying to read regex file: " << filename << endl;
 
     const vector<string> lines = to_lines(read_file(path, filename));
     bool found_it = false;

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 140 2017-11-05 15:16:46Z  $
+// $Id: drlog_context.cpp 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -13,7 +13,6 @@
     The basic context for operation of drlog
 */
 
-//#include "bands-modes.h"
 #include "diskfile.h"
 #include "drlog_context.h"
 #include "exchange.h"
@@ -44,8 +43,8 @@ static const map<string, string> cabrillo_qso_templates { { "ARRL DX", "ARRL DX"
 
 // -----------  drlog_context  ----------------
 
-/*! \class drlog_context
-    \brief The variables and constants that comprise the context for drlog
+/*! \class  drlog_context
+    \brief  The variables and constants that comprise the context for drlog
 */
 
 pt_mutex _context_mutex;                    ///< mutex for the context
@@ -86,51 +85,11 @@ void drlog_context::_set_points(const string& command, const MODE m)
       { const string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
         const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
 
-//        for (size_t n = 0; n < bands.size(); ++n)
         for (const auto b_str : bands)
-        {
-#if 0
-          const int wavelength = from_string<size_t>(bands[n]);
-          BAND b;
+        { //const BAND b = BAND_FROM_NAME[b_str];
 
-          switch (wavelength)
-          { case 160 :
-              b = BAND_160;
-              break;
-            case 80 :
-              b = BAND_80;
-              break;
-            case 60 :
-              b = BAND_60;
-              break;
-            case 40 :
-              b = BAND_40;
-              break;
-            case 30 :
-              b = BAND_30;
-              break;
-            case 20 :
-              b = BAND_20;
-              break;
-            case 17 :
-              b = BAND_17;
-              break;
-            case 15 :
-              b = BAND_15;
-              break;
-            case 12 :
-              b = BAND_12;
-              break;
-            case 10 :
-              b = BAND_10;
-              break;
-            default :
-              continue;
-          }
-#endif
-          const BAND b = BAND_FROM_NAME[b_str];
-
-          pbb.insert( { b, RHS } );
+          //pbb.insert( { b, RHS } );
+          pbb.insert( { BAND_FROM_NAME[b_str], RHS } );
         }
       }
     }
@@ -379,49 +338,8 @@ void drlog_context::_process_configuration_file(const string& filename)
           { const string bands_str = delimited_substring(lhs, '[', ']');
             const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
 
-//            for (size_t n = 0; n < bands.size(); ++n)
             for (const auto b_str: bands)
-            {
-#if 0
-              int wavelength = from_string<size_t>(bands[n]);
-              BAND b;
-
-              switch (wavelength)
-              { case 160 :
-                  b = BAND_160;
-                  break;
-                case 80 :
-                  b = BAND_80;
-                  break;
-                case 60 :
-                  b = BAND_60;
-                  break;
-                case 40 :
-                  b = BAND_40;
-                  break;
-                case 30 :
-                  b = BAND_30;
-                  break;
-                case 20 :
-                  b = BAND_20;
-                  break;
-                case 17 :
-                  b = BAND_17;
-                  break;
-                case 15 :
-                  b = BAND_15;
-                  break;
-                case 12 :
-                  b = BAND_12;
-                  break;
-                case 10 :
-                  b = BAND_10;
-                  break;
-                default :
-                  continue;
-              }
-#endif
-              const BAND b = BAND_FROM_NAME[b_str];
+            { const BAND b = BAND_FROM_NAME[b_str];
               string new_str;
 
               for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
@@ -525,7 +443,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
-//      for (size_t n = 0; n < fields.size(); ++n)
       for (const auto& this_field : fields)
       { const vector<string> field = split_string(this_field, ":");
 

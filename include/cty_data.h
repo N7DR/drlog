@@ -1,4 +1,4 @@
-// $Id: cty_data.h 140 2017-11-05 15:16:46Z  $
+// $Id: cty_data.h 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -367,9 +367,9 @@ protected:
 
 public:
 
-/*! \brief  construct from a file
-    \param  path        The directory path to be searched in order
-    \param  filename    The name of the file to be read
+/*! \brief              Construct from a file
+    \param  path        the directory path to be searched in order
+    \param  filename    the name of the file to be read
 */
   russian_data(const std::vector<std::string>& path, const std::string& filename);
 
@@ -768,7 +768,7 @@ std::ostream& operator<<(std::ostream& ost, const location_database& db);
 // -------------------------------------- Errors  -----------------------------------
 
 /*! \class  cty_error
-  \brief  Errors related to CTY processing
+    \brief  Errors related to CTY processing
 */
 
 class cty_error : public x_error
@@ -777,17 +777,17 @@ protected:
 
 public:
 
-/*! \brief  Construct from error code and reason
-  \param  n Error code
-  \param  s Reason
+/*! \brief      Construct from error code and reason
+    \param  n   error code
+    \param  s   reason
 */
   inline cty_error(const int n, const std::string& s) :
     x_error(n, s)
   { }
 };
 
-/*!     \class  location_error
-        \brief  Errors related to location database processing
+/*! \class  location_error
+    \brief  Errors related to location database processing
 */
 
 class location_error : public x_error
@@ -796,9 +796,9 @@ protected:
 
 public:
 
-/*!     \brief  Construct from error code and reason
-        \param  n       Error code
-        \param  s       Reason
+/*! \brief      Construct from error code and reason
+    \param  n   error code
+    \param  s   reason
 */
   inline location_error(const int n, const std::string& s) :
     x_error(n, s)
@@ -815,9 +815,9 @@ protected:
 
 public:
 
-/*! \brief  Construct from error code and reason
-  \param  n Error code
-  \param  s Reason
+/*! \brief      Construct from error code and reason
+    \param  n   error code
+    \param  s   reason
 */
   inline russian_error(const int n, const std::string& s) :
     x_error(n, s)

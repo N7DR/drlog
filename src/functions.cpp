@@ -1,4 +1,4 @@
-// $Id: functions.cpp 130 2016-10-31 23:04:05Z  $
+// $Id: functions.cpp 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file functions.cpp
+/*! \file   functions.cpp
 
     Functions related to geography
 */
@@ -90,14 +90,15 @@ const float bearing(const float& lat1, const float& long1, const float& lat2, co
   return theta;
 }
 
-/*! \brief              Calculate the time of sunrise or sunset
-    \param  lat         latitude of target, in degrees (+ve north)
-    \param  long        longitude of target, in degrees (+ve east)
-    \param  calc_sunset whether to calculate sunset instead of sunrise
-    \return             sunrise or sunset in the form HH:MM
+/*! \brief                  Calculate the time of sunrise or sunset
+    \param  lat             latitude of target, in degrees (+ve north)
+    \param  lon             longitude of target, in degrees (+ve east)
+    \param  calc_sunset     whether to calculate sunset instead of sunrise
+    \return                 sunrise or sunset in the form HH:MM
 
-    Default is to calculate sunrise if <i>calc_sunset</i> is absent.
     See http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
+    If there is no sunset or sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
+    or day at the given location
 */
 const string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset)
 { static const float pi = 3.14159265;
@@ -180,4 +181,3 @@ const string sunrise_or_sunset(const float& lat, const float& lon, const bool ca
 
   return ( pad_string(to_string(hrs), 2, PAD_LEFT, '0') + ":" + pad_string(to_string(mins), 2, PAD_LEFT, '0') );
 }
-

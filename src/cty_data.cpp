@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 140 2017-11-05 15:16:46Z  $
+// $Id: cty_data.cpp 141 2017-12-16 21:19:10Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -667,13 +667,14 @@ const location_info location_database::info(const string& cs)
     if (best_fit == "KG4" and (callsign.length() != 5) )
     { best_fit = "K";
 
-      const map<string, location_info>::iterator db_posn = _db.find("K");
+//      const map<string, location_info>::iterator db_posn = _db.find("K");
 
-      best_info = db_posn->second;
+//      best_info = db_posn->second;
+      best_info = _db.find(best_fit)->second;
     }
 
     if (found_any_hits)                                 // return the best fit
-    { bool found_in_secondary_database = false;
+    { // bool found_in_secondary_database = false;
          
 // look to see if there's an exact match in the secondary database
 #if 0
@@ -762,8 +763,6 @@ const location_info location_database::info(const string& cs)
 
   if (parts.size() == 2)        // one slash
   {
-//     ost << "one slash" << endl;
-
 // see if either part matches anything in the initial database
      map<string, location_info>::iterator db_posn_0 = _db.find(parts[0]);
      map<string, location_info>::iterator db_posn_1 = _db.find(parts[1]);
@@ -772,14 +771,17 @@ const location_info location_database::info(const string& cs)
      const bool found_1 = (db_posn_1 != _db.end());
 
      if (found_0 and !found_1)                        // first part had an exact match
-     { //ost << "first part had exact match" <<endl;
+     { //location_info best_info = db_posn_0->second;
 
-       location_info best_info = db_posn_0->second;
+        //best_info = guess_zones(callsign, best_info);
+        //_db_checked.insert( { callsign, best_info } );
 
-        best_info = guess_zones(callsign, best_info);
+        //return best_info;
+        const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+
         _db_checked.insert( { callsign, best_info } );
         
-        return best_info;     
+        return best_info;
      }
 
 // we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat
@@ -806,9 +808,7 @@ const location_info location_database::info(const string& cs)
      }
 
     if (found_0 and found_1)                      // both parts had an exact match (should never happen: KH6/KP2
-    { //ost << "both parts had exact match (should never happen)" <<endl;
-
-      if (parts[0].length() > parts[1].length())  // choose longest match
+    { if (parts[0].length() > parts[1].length())  // choose longest match
       {  location_info best_info = db_posn_0->second;
 
          best_info = guess_zones(callsign, best_info);
@@ -853,6 +853,7 @@ const location_info location_database::info(const string& cs)
         { len_0 = len;
           db_posn_0 = db_posn;
         }
+
         ++len;
       }
     
@@ -867,6 +868,7 @@ const location_info location_database::info(const string& cs)
         { len_1 = len;
           db_posn_1 = db_posn;
         }
+
         ++len;
       }
 
@@ -981,17 +983,19 @@ drlog_qth_database::drlog_qth_database(const std::string& filename)
   const string contents = read_file(filename);
   const vector<string> lines = to_lines(contents);
   
-  for (unsigned int n = 0; n < lines.size(); ++n)
-  { const string line = remove_peripheral_spaces(lines[n]);
+//  for (unsigned int n = 0; n < lines.size(); ++n)
+  for (const auto& line : lines)
+  { //const string line = remove_peripheral_spaces(lines[n]);
     const vector<string> fields = split_string(line, ',');
     drlog_qth_database_record record;
     
-    for (unsigned int field_nr = 0; field_nr < fields.size(); ++field_nr)
-    { const string& field = fields[field_nr];
+//    for (unsigned int field_nr = 0; field_nr < fields.size(); ++field_nr)
+    for (const auto& field : fields)
+    { //const string& field = fields[field_nr];
     
-      vector<string> elements = split_string(remove_peripheral_spaces(field), '=');
-      for (unsigned int element_nr = 0; element_nr < elements.size(); ++element_nr)
-        elements[element_nr] = remove_peripheral_spaces(elements[element_nr]);
+      const vector<string> elements = remove_peripheral_spaces(split_string(remove_peripheral_spaces(field), '='));
+//      for (unsigned int element_nr = 0; element_nr < elements.size(); ++element_nr)
+//        elements[element_nr] = remove_peripheral_spaces(elements[element_nr]);
       
 // process the possibilities
       if (elements[0] == "id")
@@ -1168,12 +1172,14 @@ ostream& operator<<(ostream& ost, const russian_data_per_substring& rd)
 
 // -----------  russian_data  ----------------
 
-/*! \class russian_data
-    \brief Encapsulate the data from a Russian data file
+/*! \class  russian_data
+    \brief  Encapsulate the data from a Russian data file
 */
 
-/// construct from a file
-
+/*! \brief              Construct from a file
+    \param  path        the directory path to be searched in order
+    \param  filename    the name of the file to be read
+*/
 russian_data::russian_data(const vector<string>& path, const string& filename)
 { try
   { const vector<string> lines = to_lines(replace_char(read_file(path, filename), '\t', ' '));
