@@ -402,11 +402,11 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
     return;
   }
 
-  const vector<parsed_exchange_field> received_fields = pexch.fields();
+//  const vector<parsed_exchange_field> received_fields = pexch.fields();
 
-  for (const auto& received_field : received_fields)
-  {
-  }
+//  for (const auto& received_field : received_fields)
+//  {
+//  }
 
 }
 

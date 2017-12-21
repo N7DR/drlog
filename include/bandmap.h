@@ -119,7 +119,6 @@ public:
     { return (n_posters(callsign) >= _min_posters); }
 };
 
-
 // -----------   needed_mult_details ----------------
 
 /*! \class  needed_mult_details
@@ -513,11 +512,16 @@ public:
   inline const bool is_a_needed_mult(void) const
     { return is_needed_mult(); }
 
-/// does the _frequency_str match a target value?
+/*! \brief          Does <i>_frequency_str</i> match a target value?
+    \param  target  target value of <i>_frequency_str</i>
+    \return         whether <i>_frequency</i> matches <i>target</i>
+*/
   inline const bool is_frequency_str(const std::string& target) const
     { return (_frequency_str == target); }
 
-/// set frequency string to particular number of decimal places (in kHz)
+/*! \brief      Set <i>_frequency string</i> to a particular number of decimal places (in kHz)
+    \param  n   number of decimal places
+*/
   inline void frequency_str_decimal_places(const int n)
     { _frequency_str = decimal_places(_frequency_str, n); }
 
@@ -634,7 +638,8 @@ public:
     { return (is_needed() and (is_all_time_first() or olog.confirmed(_callsign, _band, _mode))); }
 
 // set value from an earlier be
-  void time_of_earlier_bandmap_entry(const bandmap_entry& old_be);
+  inline void time_of_earlier_bandmap_entry(const bandmap_entry& old_be)
+    { _time_of_earlier_bandmap_entry = ( old_be.time_of_earlier_bandmap_entry() ? old_be._time_of_earlier_bandmap_entry : old_be._time ); }
 
 /// archive using boost serialization
   template<typename Archive>

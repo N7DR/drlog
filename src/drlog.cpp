@@ -3028,7 +3028,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         map<string, string> mult_exchange_field_value;                                                     // the values of exchange fields that are mults
 
         for (const auto& exf : expected_exchange)
-        { // ost << "Exchange field: " << exf << endl;
+        { //ost << "Exchange field: " << exf << endl;
           bool processed_field = false;
 
 // &&& if it's a choice, try to figure out which one to display; in IARU, it's the zone unless the society isn't empty;
@@ -3063,16 +3063,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
               if (state_multiplier_countries < canonical_prefix)
                 state_guess = exchange_db.guess_value(contents, "10MSTATE");
 
-//              ost << "state guess for " << contents << " = " << state_guess << endl;
-
               exchange_str += state_guess;
               processed_field = true;
             }
 
             if (exf.name() == "HADXC+QTHX[HA]")
-            {  //ost << "Attempting to handle HADXC+QTHX[HA] exchange field" << endl;
-
-              string guess = exchange_db.guess_value(contents, "HADXC");
+            { string guess = exchange_db.guess_value(contents, "HADXC");
 
               if (guess.empty())
                 guess = exchange_db.guess_value(contents, "QTHX[HA]");
@@ -3085,7 +3081,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           }
 
           if (exf.name() == "DOK")
-          { ost << "Got to DOK exchange field" << endl;
+          { //ost << "Got to DOK exchange field" << endl;
 
             string guess = exchange_db.guess_value(contents, "DOK");
 
@@ -3095,7 +3091,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             }
           }
 
-          if (exf.name() == "RST")
+          if (exf.name() == "RST" and !exf.is_optional())
           { exchange_str += ( (cur_mode == MODE_CW) ? "599 " : "59 " );
 
             processed_field = true;
@@ -3105,6 +3101,17 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           { exchange_str += "59 ";
 
             processed_field = true;
+          }
+
+          if (exf.name() == "GRID")
+          { //ost << "Got to GRID exchange field" << endl;
+
+            string guess = exchange_db.guess_value(contents, "GRID");
+
+            if (!guess.empty())
+            { exchange_str += guess;
+              processed_field = true;
+            }
           }
 
           if (!processed_field)
@@ -4341,6 +4348,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             vector<received_field>  received_exchange;
             vector<parsed_exchange_field> vec_pef = pexch.chosen_fields(rules);
 
+//            for (const auto& pef : vec_pef)
+//              ost << "pef = " << pef << endl;
+
 // keep track of which fields are mults
             for (auto& pef : vec_pef)
               pef.is_mult(rules.is_exchange_mult(pef.name()));
@@ -4361,6 +4371,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
               received_exchange.push_back( { pef.name(), pef.value(), is_mult_field, false } );
             }
+
+//            for (const auto& rex : received_exchange)
+//              ost << "rex = " << rex << endl;
 
             qso.received_exchange(received_exchange);
 
@@ -4650,7 +4663,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               break;
             }
 
-            if (word_posn[index] > original_posn.x())
+            if (static_cast<int>(word_posn[index]) > original_posn.x())
             { win <= cursor(word_posn[index], original_posn.y());
               break;
             }
@@ -4675,7 +4688,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       { size_t start_current_word = 0;
 
         for (size_t n = 0; n < word_posn.size(); ++n)
-          if (word_posn[n] <= original_posn.x())
+          if (static_cast<int>(word_posn[n]) <= original_posn.x())
             start_current_word = word_posn[n];
 
         const size_t end_current_word = contents.find_first_of(" ", original_posn.x());
@@ -4913,7 +4926,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
             ost << "log line from populated QSO: " << qso.log_line() << endl;
 
 // we can't assume anything about the mult status
-            const BAND b = qso.band();
+//            const BAND b = qso.band();
 
             update_known_callsign_mults(qso.callsign());
             update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
@@ -5046,11 +5059,11 @@ void process_LOG_input(window* wp, const keyboard_event& e)
           }
 
 // debugging
-          if (&bm == &(bandmaps[safe_get_band()]))
-          { for (auto& be : bme)
-            { //ost << "bandmap_entry: " << be << endl;
-            }
-          }
+//          if (&bm == &(bandmaps[safe_get_band()]))
+//          { for (auto& be : bme)
+//            { //ost << "bandmap_entry: " << be << endl;
+//            }
+//          }
 
           if (&bm == &(bandmaps[safe_get_band()]))
             win_bandmap <= bm;
@@ -5544,21 +5557,25 @@ const string expand_cw_message(const string& msg)
 
     if (serno_spaces)
     { const string spaces = create_string('^', serno_spaces);
+
       string tmp = octothorpe_str;
+
       octothorpe_str.clear();
 
-      for (auto n = 0; n < tmp.size() - 1; ++n)
-        octothorpe_str += (tmp[n] + spaces);
+//      for (size_t n = 0; n < tmp.size() - 1; ++n)
+//        octothorpe_str += (tmp[n] + spaces);
+      for_each(tmp.cbegin(), prev(tmp.cend()), [=, &octothorpe_str] (const char c) { octothorpe_str += (c + spaces); } );
 
       octothorpe_str += tmp[tmp.size() - 1];
     }
 
     if (long_t and (octothorpe < 100))
-    { bool found_all = false;
-      const int n_to_find = (octothorpe < 10 ? 2 : 1);
+    { const int n_to_find = (octothorpe < 10 ? 2 : 1);
+
+      bool found_all = false;
       int n_found = 0;
 
-      for (auto n = 0; !found_all and (n < octothorpe_str.size() - 1); ++n)
+      for (size_t n = 0; !found_all and (n < octothorpe_str.size() - 1); ++n)
       { if (!found_all and octothorpe_str[n] == '0')
         { octothorpe_str[n] = static_cast<char>(15);        // 127%
           found_all = (++n_found == n_to_find);
@@ -5569,7 +5586,7 @@ const string expand_cw_message(const string& msg)
     octothorpe_replaced = replace(msg, "#", octothorpe_str);
   }
 
-  const string at_replaced = replace( (octothorpe_replaced.empty() ? msg : octothorpe_replaced) , "@", at_call);
+  const string at_replaced = replace( (octothorpe_replaced.empty() ? msg : octothorpe_replaced), "@", at_call);
 
   SAFELOCK(last_exchange);
 
@@ -5696,7 +5713,8 @@ void update_known_callsign_mults(const string& callsign, const bool force_known)
     return;
 
 // local function to perform the update
-  auto perform_update = [=, &known_callsign_mults] (const string& callsign_mult_name, const string& prefix)
+//  auto perform_update = [=, &known_callsign_mults] (const string& callsign_mult_name, const string& prefix)
+  auto perform_update = [=] (const string& callsign_mult_name, const string& prefix)
     { if (!prefix.empty())      // because sac_prefix() can return an empty string
       { bool is_known;          // we use the is_known variable because we don't want to perform a window update while holding a lock
 
@@ -6460,8 +6478,8 @@ void* p3_screenshot_thread(void* vp)
 //  ost << "image length with checksum = " << image.length() << endl;
 //  ost << "image length without checksum = " << image.length() - 2 << endl;
 
-  const unsigned char c0 = static_cast<unsigned char>(checksum_str[0]);
-  const unsigned char c1 = static_cast<unsigned char>(checksum_str[1]);
+//  const unsigned char c0 = static_cast<unsigned char>(checksum_str[0]);
+//  const unsigned char c1 = static_cast<unsigned char>(checksum_str[1]);
 
 //  ost << "chars as numbers: " << dec << static_cast<unsigned int>(static_cast<uint8_t>(c0)) << " " << static_cast<unsigned int>(static_cast<uint8_t>(c1)) << endl;
 
@@ -6559,6 +6577,8 @@ void* spawn_dx_cluster(void* vp)
   { ost << e.reason() << endl;
     exit(-1);
   }
+
+  pthread_exit(nullptr);
 }
 
 /// Thread function to spawn the RBN
@@ -6578,6 +6598,8 @@ void* spawn_rbn(void* vp)
   { ost << e.reason() << endl;
     exit(-1);
   }
+
+  pthread_exit(nullptr);
 }
 
 /*! \brief  Dump useful information to disk

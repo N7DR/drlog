@@ -11,7 +11,7 @@
 #ifndef BANDSMODES_H
 #define BANDSMODES_H
 
-/*! \file bands-modes.h
+/*! \file   bands-modes.h
 
     Classes and functions related to bands, frequencies and modes
 */

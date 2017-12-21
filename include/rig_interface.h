@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file rig_interface.h
+/*! \file   rig_interface.h
 
     Classes and functions related to transferring information
     between the computer and the rig.
@@ -53,21 +53,22 @@ extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;    ///< 
 
 // ---------------------------------------- rig_status -------------------------
 
-/*! \class rig_status
-    \brief The status of a rig .... a trivial wrapper
+/*! \class  rig_status
+    \brief  The status of a rig .... a trivial wrapper
 */
 
 WRAPPER_2(rig_status, frequency, freq, MODE, mode);
 
 // ---------------------------------------- rig_interface -------------------------
 
-/*! \class rig_interface
-    \brief The interface to a rig
+/*! \class  rig_interface
+    \brief  The interface to a rig
 */
 
 class rig_interface
 {
 protected:
+
   frequency                                     _last_commanded_frequency;      ///< last frequency to which the rig was commanded to QSY
   frequency                                     _last_commanded_frequency_b;    ///< last frequency to which the VFO B was commanded to QSY
   MODE                                          _last_commanded_mode;           ///< last mode into which the rig was commanded

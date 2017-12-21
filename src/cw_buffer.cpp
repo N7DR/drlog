@@ -80,7 +80,7 @@ void* cw_buffer::_play(void*)
 //  const char STROBE = C1284_NSTROBE;
   const char PTT      = (_ptt_delay ? C1284_NINIT : 0);
   const char CW_KEY_DOWN = C1284_NSELECTIN | PTT;
-  const char CW_KEY_UP   = PTT;
+//  const char CW_KEY_UP   = PTT;
 
   bool ptt_asserted = false;
 

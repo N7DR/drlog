@@ -343,7 +343,13 @@ control characters are:
  *
 */
 
-// return the call starting at posn; update posn to point at the start of the next call
+/*! \brief              Get a "line" from a TRMASTER binary file
+    \param  contents    string that contains a record (plus, perhaps, much more)
+    \param  posn        position of the call in <i>contents</i> (i.e., the start of the record)
+    \return             The TRMASTER record that begins at <i>posn</i>
+
+    Updates <i>posn</i> to point to the start of the next call
+*/
 const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
 { string callsign;
   string section;

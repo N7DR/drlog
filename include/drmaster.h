@@ -8,11 +8,11 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file drmaster.h
+/*! \file   drmaster.h
 
     Classes associated with MASTER.DTA, TRMASTER.[DTA, ASC] and drmaster files.
 
-    Parts of this file are based on the very old trm.h for TRLOG manipulation
+    Parts of this file are based on the very old trm.h for the manipulation of TRLOG files
 */
 
 #ifndef DRMASTER_H
@@ -49,7 +49,9 @@ protected:
 
 public:
 
-/// constructor
+/*! \brief      Default constructor
+    \filename   name of file from which to donstruct the object
+ */
   master_dta(const std::string& filename = "master.dta");
 
 /// return all the calls
@@ -140,10 +142,10 @@ public:
 */
   const trmaster_line operator+(const trmaster_line& trml) const;
 
-/*!     \brief  merge with another trmaster_line
-        \param  ln  line to be merged
+/*! \brief      Merge with another trmaster_line
+    \param  ln  line to be merged
 
-        New values (i.e., values in <i>ln</i>) take precedence if there's a conflict
+    New values (i.e., values in <i>ln</i>) take precedence if there's a conflict
 */
   inline void operator+=(const trmaster_line& ln)
     { *this = *this + ln; }
@@ -164,7 +166,13 @@ protected:
 
   std::map<std::string /* callsign */, trmaster_line> _records;       ///< the information for each call
 
-/// get a "line" from a TRMASTER binary file
+/*! \brief              Get a "line" from a TRMASTER binary file
+    \param  contents    string that contains a record (plus, perhaps, much more)
+    \param  posn        position of the call in <i>contents</i> (i.e., the start of the record)
+    \return             The TRMASTER record that begins at <i>posn</i>
+
+    Updates <i>posn</i> to point to the start of the next call
+*/
   const trmaster_line _get_binary_record(const std::string& contents, uint32_t& posn);
 
 public:

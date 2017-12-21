@@ -166,15 +166,15 @@ public:
 class window_information
 {
 protected:
-  int    _x;                    ///< x location on the screen
-  int    _y;                    ///< y location on the screen
-  int    _w;                    ///< width
-  int    _h;                    ///< height
+  int   _x;                     ///< x location on the screen
+  int   _y;                     ///< y location on the screen
+  int   _w;                     ///< width
+  int   _h;                     ///< height
 
   std::string _fg_colour;       ///< name of foreground colour
   std::string _bg_colour;       ///< name of background colour
 
-  bool   _colours_set;          ///< have the colours been set explicitly?
+  bool  _colours_set;           ///< have the colours been set explicitly?
 
 public:
 
@@ -189,15 +189,15 @@ public:
     _colours_set(false)
   { }
 
-  READ_AND_WRITE(x);        ///< x location on the screen
-  READ_AND_WRITE(y);        ///< y location on the screen
-  READ_AND_WRITE(w);        ///< width
-  READ_AND_WRITE(h);        ///< height
+  READ_AND_WRITE(x);                ///< x location on the screen
+  READ_AND_WRITE(y);                ///< y location on the screen
+  READ_AND_WRITE(w);                ///< width
+  READ_AND_WRITE(h);                ///< height
 
-  READ_AND_WRITE(fg_colour);       ///< name of foreground colour
-  READ_AND_WRITE(bg_colour);       ///< name of background colour
+  READ_AND_WRITE(fg_colour);        ///< name of foreground colour
+  READ_AND_WRITE(bg_colour);        ///< name of background colour
 
-  READ_AND_WRITE(colours_set);     ///< have the colours been set explicitly?
+  READ_AND_WRITE(colours_set);      ///< have the colours been set explicitly?
 };
 
 
@@ -233,11 +233,11 @@ protected:
   WINDOW* _wp;                  ///< ncurses handle
   PANEL*  _pp;                  ///< panel associated with this window
 
-  int    _sx;                  ///< system cursor x value
-  int    _sy;                  ///< system cursor y value
+  int    _sx;                   ///< system cursor x value
+  int    _sy;                   ///< system cursor y value
   
-  int    _fg;                  ///< foreground colour
-  int    _bg;                  ///< background colour
+  int    _fg;                   ///< foreground colour
+  int    _bg;                   ///< background colour
 
   WINDOW_PROCESS_INPUT_TYPE _process_input;    ///< function to handle input to this window
 
@@ -401,7 +401,9 @@ public:
   inline const bool hidden(void) const
     { return (_pp ? static_cast<bool>(panel_hidden(_pp)) : false); }
 
-/// is the panel hidden?
+/*! \brief      Is the window hidden?
+    \return     whether the window is hidden
+*/
   inline const bool is_hidden(void) const
     { return hidden(); }
 
@@ -465,17 +467,26 @@ public:
 */
   window& operator<(const std::vector<std::string>& v);
 
-/*! \brief          Write a set of strings to a window
-    \param  ss      set to write
+/*! \brief      Write a set of strings to a window
+    \param  ss  set to write
+    \return     the window
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
   window& operator<(const std::set<std::string>& ss);
 
-/// write a vector of strings with possible different colours
+/*! \brief          Write a vector of strings with possible different colours to a window
+    \param  vec     vector of pairs <string, int [colour number]> to write
+    \return         the window
+
+    Wraps words to new lines. Stops writing if there's insufficient room for the next string.
+*/
   window& operator<(const std::vector<std::pair<std::string /* callsign */, int /* colour pair number */ > >& vec);
 
-/// write an integer to a window
+/*! \brief      Write an integer to a window
+    \param  n   integer to write
+    \return     the window
+*/
   inline window& operator<(const unsigned int n)
     { return (*this < to_string(n)); }
 

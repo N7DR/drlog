@@ -19,6 +19,7 @@
 #include "bands-modes.h"
 #include "cty_data.h"
 #include "drlog_context.h"
+#include "grid.h"
 #include "macros.h"
 #include "pthread_support.h"
 #include "serialization.h"
@@ -36,7 +37,8 @@ class QSO;
 
 /// Some contests have very complex point structures
 enum points_type { POINTS_NORMAL,                       ///< points defined in configuration file
-                   POINTS_IARU                          ///< IARU contest
+                   POINTS_IARU,                         ///< IARU contest
+                   POINTS_STEW                          ///< Stew Perry contest
                  };
 
 // -------------------------  exchange_field_values  ---------------------------
@@ -328,7 +330,7 @@ protected:
   std::string                                  _my_continent;        ///< my continent
   std::string                                  _my_country;          ///< canonical prefix for my country
   unsigned int                                 _my_cq_zone;          ///< CQ zone
-  std::string                                  _my_grid;             ///< Maidenhead locator
+  grid_square                                  _my_grid;             ///< Maidenhead locator
   unsigned int                                 _my_itu_zone;         ///< ITU zone
 
   bool                                         _send_qtcs;           ///< whether to send QTCs

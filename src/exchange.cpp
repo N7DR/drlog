@@ -491,10 +491,16 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   }
 
 // how many fields are optional?
-  unsigned int n_optional_fields = 0;
+//  unsigned int n_optional_fields = 0;
+  set<string> optional_field_names;
+
   FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
-                                                                n_optional_fields++;
+                                                              { //n_optional_fields++;
+                                                                optional_field_names.insert(ef.name());
+                                                              }
                                                             } );
+
+//  const unsigned int n_optional_fields = optional_field_names.size();
 
 // prepare output; includes optional fields and all choices
   FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
@@ -734,6 +740,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   for (auto& pef : _fields)
   { const string& name = pef.name();
 
+    ost << "preparing output for field: " << pef << endl;
+
     try
     { const auto& t = tuple_map_assignments.at(name);
 
@@ -761,7 +769,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
         }
       }
 
-      if (!found_map)
+      if (!found_map and !(optional_field_names < name))
         ost << "WARNING: unable to find map assignment for key = " << name << endl;
     }
   }
@@ -1426,7 +1434,7 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
     return false;
 
   try
-  { ost << "Trying to read regex file: " << filename << endl;
+  { // ost << "Trying to read regex file: " << filename << endl;
 
     const vector<string> lines = to_lines(read_file(path, filename));
     bool found_it = false;

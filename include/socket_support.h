@@ -212,25 +212,25 @@ public:
 */
   tcp_socket(void);
 
-/*! \brief  Construct and initialise with useful values
-  \param  destination_ip_address_or_fqdn  Destination dotted decimal address or FQDN
-  \param  destination_port          Destination port
-  \param  source_address                  Address to which the socket is to be bound
+/*! \brief                                  Construct and initialise with useful values
+    \param  destination_ip_address_or_fqdn  destination dotted decimal address or FQDN
+    \param  destination_port                destination port
+    \param  source_address                  address to which the socket is to be bound
 */
   tcp_socket(const std::string& destination_ip_address_or_fqdn, 
              const unsigned int destination_port, 
              const std::string& source_address,
              const unsigned int retry_time_in_seconds = 10);
 
-/*! \brief  Encapsulate a pre-existing socket
-  \param  sp  Pointer to socket
+/*! \brief      Encapsulate a pre-existing socket
+    \param  sp  pointer to socket
   
-  Acts as default constructor if passed pointer is NULL
+    Acts as default constructor if passed pointer is NULL
 */
   explicit tcp_socket(SOCKET* sp);
 
-/*! \brief  Encapsulate a pre-existing socket
-  \param  sock  Socket
+/*! \brief          Encapsulate a pre-existing socket
+    \param  sock    socket
 */
   explicit tcp_socket(SOCKET sock);
 
@@ -238,7 +238,7 @@ public:
 */
   virtual ~tcp_socket(void);
 
-/*!     \brief  Close the socket
+/*! \brief  Close the socket
 */
   inline void close(void)
     { return _close_the_socket(); }
@@ -301,7 +301,9 @@ public:
   inline void connect(const std::string& dotted_ip_address, const short port_nr)
     { destination(dotted_ip_address, port_nr); }
 
-/// return the encapsulated socket
+/*! \brief   Get the encapsulated socket
+    \return  the socket that is encapsulated by the object
+*/
   inline const SOCKET socket(void) const
     { return _sock; }
 

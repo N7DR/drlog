@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file bandmap.cpp
+/*! \file   bandmap.cpp
 
     Classes and functions related to bandmaps
 */
@@ -255,12 +255,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
       if (!guess.empty())
         _is_needed_exchange_mult.status_is_known(true);
-
-//      if ( !guess.empty() and statistics.is_needed_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess), _band, _mode) )
-//      { const bool exchange_mult_was_added = add_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess));
-
-//        ost << " whether exchange mult was added for " << callsign() << ": " << exchange_mult_was_added << endl;
-//      }
     }
   }
 
@@ -313,8 +307,6 @@ const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, running_statistics& statistics)
 { const bool original_is_needed = _is_needed;
 
-// to do: allow for /* SS rules and */ per-mode contests
-
 // if this contest allows only one QSO with a station (e.g., SS)
   if (!rules.work_if_different_band())
   { _is_needed = true;
@@ -335,15 +327,6 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
   return ( (original_is_needed != _is_needed) or (original_is_needed_callsign_mult != is_needed_callsign_mult()) or
            (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));
 }
-
-/*! \brief      Return the difference in frequency between two bandmap entries
-    \param  be  other bandmap entry
-    \return     difference in frequency between *this and <i>be</i>
-*/
-//const frequency bandmap_entry::frequency_difference(const bandmap_entry& be) const
-//{
-//  return frequency(abs(be._freq.hz() - _freq.hz()));
-//}
 
 /*! \brief          Add a call to the associated posters
     \param  call    call to add
@@ -385,14 +368,16 @@ const MODE bandmap_entry::putative_mode(void) const
 }
 
 // set value from an earlier be
-void bandmap_entry::time_of_earlier_bandmap_entry(const bandmap_entry& old_be)
-{ if (old_be.time_of_earlier_bandmap_entry())
-  { _time_of_earlier_bandmap_entry = old_be._time_of_earlier_bandmap_entry;
-  }
-  else
-  { _time_of_earlier_bandmap_entry = old_be._time;
-  }
-}
+//void bandmap_entry::time_of_earlier_bandmap_entry(const bandmap_entry& old_be)
+//{ if (old_be.time_of_earlier_bandmap_entry())
+//  { _time_of_earlier_bandmap_entry = old_be._time_of_earlier_bandmap_entry;
+//  }
+//  else
+//  { _time_of_earlier_bandmap_entry = old_be._time;
+//  }
+
+//  _time_of_earlier_bandmap_entry = ( old_be.time_of_earlier_bandmap_entry() ? old_be._time_of_earlier_bandmap_entry : old_be._time );
+//}
 
 /// ostream << bandmap_entry
 ostream& operator<<(ostream& ost, const bandmap_entry& be)

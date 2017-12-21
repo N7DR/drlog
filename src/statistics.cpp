@@ -19,6 +19,7 @@
 #include "statistics.h"
 #include "string_functions.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -491,6 +492,8 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // try to calculate the points for this QSO; start with a default value
     const unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like :G:3
 
+    ost << "in statistics::add_qso(), points_this_qso = " << points_this_qso << endl;
+
     _qso_points[mode_nr][band_nr] += points_this_qso;
 
 // if it's not a dupe, we may need to track whether it's an ON QSO in the UBA contest
@@ -677,7 +680,7 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
 
 // exchange mults
   const unsigned int exchange_mults = n_worked_exchange_mults(rules);
-  unsigned int rv = q_points * (country_mults + exchange_mults + callsign_mults);
+  unsigned int rv = q_points * (max((country_mults + exchange_mults + callsign_mults), static_cast<unsigned int>(1)));    // force mult to be at least unity
   
 // UBA has weird rules
   if (rules.uba_bonus())

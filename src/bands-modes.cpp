@@ -16,8 +16,8 @@ extern string FREQUENCY_STRING_POINT;
 
 // ----------------------------------------------------  frequency  -----------------------------------------------
 
-/*!     \class frequency
-        \brief A convenient class for handling frequencies
+/*! \class  frequency
+    \brief  A convenient class for handling frequencies
 */
 
 /// default constructor
@@ -106,6 +106,10 @@ frequency::frequency(const enum BAND b)
     case BAND_10 :
       _hz = 28000000;
       break;
+
+    default :           // should never happen
+      _hz = 1800000;
+      break;
   }
 }
 
@@ -127,15 +131,6 @@ const string frequency::display_string(void) const
 
   return (to_string(khz) + POINT + to_string(hhz));
 }
-
-/*! \brief      convert to BAND
-    \return     BAND in which the frequency is located
-
-    Returns BAND_160 if the frequency is outside all bands
-*/
-//frequency::operator BAND(void) const
-//{ return to_BAND(hz());
-//}
 
 /// return lower band edge that corresponds to frequency
 const frequency frequency::lower_band_edge(void) const

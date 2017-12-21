@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file rules.cpp
+/*! \file   rules.cpp
 
     Classes and functions related to the contest rules
 */
@@ -243,6 +243,7 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
   for (const auto this_qthx : context_qthx)
   { const string canonical_prefix = location_db.canonical_prefix(this_qthx.first);
     const set<string> ss = this_qthx.second;
+
     exchange_field_values qthx;
 
     qthx.name(string("QTHX[") + canonical_prefix + "]");
@@ -256,8 +257,9 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
         if (!equivalent_values.empty())
           qthx.add_canonical_value(equivalent_values[0]);
 
-        for (size_t n = 1; n < equivalent_values.size(); ++n)           // n = 0 corresponds to the canonical value
-          qthx.add_value(equivalent_values[0], equivalent_values[n]);
+//        for (size_t n = 1; n < equivalent_values.size(); ++n)           // n = 0 corresponds to the canonical value
+//          qthx.add_value(equivalent_values[0], equivalent_values[n]);
+        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [=, &qthx] (const string& equivalent_value) { qthx.add_value(equivalent_values[0], equivalent_value); } );
       }
     }
 
@@ -637,13 +639,26 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // parse the config file
       string context_points = context.points(b, m);
 
-      if (context_points == "IARU")  // special
-      { points_structure ps = pb[b];
+      static const set<string> special_points_set { "IARU", "STEW" };
+      const bool is_special_points = ( special_points_set < context_points );
 
-        ps.points_type(POINTS_IARU);
-        pb[b] = ps;
+      if (is_special_points)
+      { if (context_points == "IARU")  // special
+        { points_structure ps = pb[b];
+
+          ps.points_type(POINTS_IARU);
+          pb[b] = ps;
+        }
+
+        if (context_points == "STEW")  // special
+        { //points_structure ps = pb[b];
+
+          //ps.points_type(POINTS_STEW);
+          //pb[b] = ps;
+          pb[b].points_type(POINTS_STEW);
+        }
       }
-      else
+      else                              // ordinary points structure
       {
 // remove commas inside the delimiters, because commas separate the point triplets
         context_points = remove_char_from_delimited_substrings(context_points, ',', '[', ']');
@@ -1209,6 +1224,16 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
         rv = 1;
 
       return rv;
+    }
+
+    case POINTS_STEW :
+    { const string grid_value = qso.received_exchange("GRID");
+
+      const unsigned int distance = static_cast<unsigned int>( (grid_square(grid_value) - _my_grid) / 500 ) + 1;
+
+      ost << "returning points = " << distance << endl;
+
+      return distance;
     }
   }
 }

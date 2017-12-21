@@ -771,13 +771,7 @@ const location_info location_database::info(const string& cs)
      const bool found_1 = (db_posn_1 != _db.end());
 
      if (found_0 and !found_1)                        // first part had an exact match
-     { //location_info best_info = db_posn_0->second;
-
-        //best_info = guess_zones(callsign, best_info);
-        //_db_checked.insert( { callsign, best_info } );
-
-        //return best_info;
-        const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+     { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
 
         _db_checked.insert( { callsign, best_info } );
         
@@ -791,9 +785,12 @@ const location_info location_database::info(const string& cs)
 
      if (found_1 and !found_0)                        // second part had an exact match
      { if (!(russian_long_prefixes < parts[1]))         // the normal case
-       { location_info best_info = db_posn_1->second;
+       { //location_info best_info = db_posn_1->second;
 
-          best_info = guess_zones(callsign, best_info);
+          //best_info = guess_zones(callsign, best_info);
+
+          const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+
           _db_checked.insert( { callsign, best_info } );
         
           return best_info;
@@ -809,17 +806,23 @@ const location_info location_database::info(const string& cs)
 
     if (found_0 and found_1)                      // both parts had an exact match (should never happen: KH6/KP2
     { if (parts[0].length() > parts[1].length())  // choose longest match
-      {  location_info best_info = db_posn_0->second;
+      {  //location_info best_info = db_posn_0->second;
 
-         best_info = guess_zones(callsign, best_info);
+         //best_info = guess_zones(callsign, best_info);
+
+         const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+
          _db_checked.insert( { callsign, best_info } );
         
          return best_info;
       }
       else
-      { location_info best_info = db_posn_1->second;
+      { //location_info best_info = db_posn_1->second;
 
-        best_info = guess_zones(callsign, best_info);
+        //best_info = guess_zones(callsign, best_info);
+
+        const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+
         _db_checked.insert( { callsign, best_info } );
         
         return best_info;
@@ -873,21 +876,27 @@ const location_info location_database::info(const string& cs)
       }
 
       if (len_0 > len_1)                // parts[0] was the better match
-      {  location_info best_info = db_posn_0->second;
+      { //location_info best_info = db_posn_0->second;
 
-         best_info = guess_zones(callsign, best_info);
-         _db_checked.insert( { callsign, best_info } );
+        //best_info = guess_zones(callsign, best_info);
+
+        const location_info best_info = guess_zones(callsign, db_posn_0->second);
+
+        _db_checked.insert( { callsign, best_info } );
         
-         return best_info;     
+        return best_info;
       }
 
       if (len_1 > len_0)                // parts[1] was the better match
-      {  location_info best_info = db_posn_1->second;
+      {  //location_info best_info = db_posn_1->second;
 
-         best_info = guess_zones(callsign, best_info);
-         _db_checked.insert( { callsign, best_info } );
+         //best_info = guess_zones(callsign, best_info);
+
+        const location_info best_info = guess_zones(callsign, db_posn_1->second);
+
+        _db_checked.insert( { callsign, best_info } );
         
-         return best_info;     
+        return best_info;
       }
       
 // they both match equally well; choose shortest
