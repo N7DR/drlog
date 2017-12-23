@@ -740,7 +740,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   for (auto& pef : _fields)
   { const string& name = pef.name();
 
-    ost << "preparing output for field: " << pef << endl;
+//    ost << "preparing output for field: " << pef << endl;
 
     try
     { const auto& t = tuple_map_assignments.at(name);
@@ -1420,8 +1420,6 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
   const vector<string> exchange_mults =  remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
-
-  ost << "constructed EFT: " << (*this) << endl;
 }
 
 /*! \brief              Get regex expression from file
@@ -1434,9 +1432,7 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
     return false;
 
   try
-  { // ost << "Trying to read regex file: " << filename << endl;
-
-    const vector<string> lines = to_lines(read_file(path, filename));
+  { const vector<string> lines = to_lines(read_file(path, filename));
     bool found_it = false;
 
     for (const auto& line : lines)
@@ -1452,8 +1448,6 @@ const bool EFT::read_regex_expression_file(const vector<string>& path, const str
           if (field_name == _name)
           { _regex_expression = regex(regex_str);
             found_it = true;
-
-//            ost << "found regex for field: " << field_name << endl;
           }
         }
       }
@@ -1585,55 +1579,18 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
   _value_to_canonical.insert( { new_value, cv } );
 }
 
-/*! \brief              Add legal values that corresponds to a canonical value
-    \param  cv          canonical value
-    \param  new_values  values that correspond to <i>cv</i>
-
-    Adds <i>cv</i> as a canonical value if necessary. Ignores any elements of
-    <i>cv</i> that are already known as being equivalent to <i>cv</i>.
-*/
-//void EFT::add_legal_values(const string& cv, const set<string>& new_values)
-//{ FOR_ALL(new_values, [cv, this] (const string& str) { add_legal_value(cv, str); } );
-//}
-
 /*! \brief          Is a string a legal value?
     \param  str     string to test
     \return         whether <i>str</i> is a legal value
 */
 const bool EFT::is_legal_value(const string& str) const
-{ //ost << "testing whether " << str << " is a legal value for field " << name() << endl;
-  //ost << " ------------ " << endl;
-
-  //ost << "is legal value(): regex expression = " << _regex_expression << endl;
-  //ost << "str = " << str << endl;
-
+{
 // test regex first
   if (!_regex_expression.empty() and regex_match(str, _regex_expression))
-  { //ost << str << " IS a legal value for " << name() << endl;
     return true;
-  }
 
   if (!_values.empty())
-  { //ost << "_values is not empty" << endl;
-    //ost << "  legal values: " << endl;
-
-    //for (const auto& v : _legal_non_regex_values )
-    //  ost << v << " ";
-
-    //if (_legal_non_regex_values.empty())
-    //  ost << "There are NO legal non-regex values" << endl;
-
-//    const bool b = (_legal_non_regex_values < str);
-
-//    if (b)
-//      ost << str << " IS a legal value for " << name() << endl;
-//    else
-//      ost << str << " IS NOT a legal value for " << name() << endl;
-
     return (_legal_non_regex_values < str);
-  }
-
-//  ost << str << " IS NOT a legal value for " << name() << endl;
 
   return false;
 }
@@ -1722,15 +1679,6 @@ ostream& operator<<(ostream& ost, const EFT& eft)
 
   return ost;
 }
-
-//const vector<pair<int /* field number */, string /* value */>> fit_matches(const map<int /* received field number */, set<string>>& matches)
-//{ vector<pair<int /* field number */, string /* value */>> rv;
-//
-//
-//
-//
-//  return rv;
-//}
 
 // -------------------------  sweepstakes_exchange  ---------------------------
 

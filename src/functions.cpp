@@ -56,6 +56,8 @@ const float distance(const float& lat1, const float& long1, const float& lat2, c
   const float c = 2 * atan2(sqrt(a), sqrt(1 - a));
   const float d = r * c;
 
+  ost << "distance in km = " << d << endl;
+
   return d;
 }
 
