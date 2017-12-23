@@ -387,7 +387,7 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
 
   sent_exchange(tmp_sent_exchange);
 
-  size_t index = 6 + n_sent_fields;      // index into received fields
+//  size_t index = 6 + n_sent_fields;      // index into received fields
   vector<string> exchange_field_values;
 
   for (size_t index = 6 + n_sent_fields; index < fields.size(); ++index)    // there must be a faster way to do this, via the constructor

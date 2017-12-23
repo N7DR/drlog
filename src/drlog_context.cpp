@@ -377,6 +377,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "CW SPEED")
       _cw_speed = from_string<unsigned int>(RHS);
 
+// CW SPEED CHANGE
+    if (LHS == "CW SPEED CHANGE")
+      _cw_speed_change = from_string<unsigned int>(RHS);
+
 // DECIMAL POINT
     if (LHS == "DECIMAL POINT")
       _decimal_point = rhs;
@@ -1360,6 +1364,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cq_auto_rit(false),                                              // don't enable RIT in CQ mode
   _cty_filename("cty.dat"),                                         // filename for country data
   _cw_speed(29),                                                    // 29 WPM
+  _cw_speed_change(1),                                              // change speed by 1 WPM
   _decimal_point("·"),                                              // use centred dot as decimal point
   _display_communication_errors(true),                              // display errors communicating with rig
   _do_not_show(),                                                   // all calls (apart from my_call()) should be shown on the bandmap

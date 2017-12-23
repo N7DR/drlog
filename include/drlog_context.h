@@ -128,6 +128,7 @@ protected:
   bool                                         _cq_auto_rit;                ///< whether to enable RIT in CQ mode
   std::string                                  _cty_filename;               ///< filename of country file (default = "cty.dat")
   unsigned int                                 _cw_speed;                   ///< speed in WPM
+  unsigned int                                 _cw_speed_change;            ///< change in CW speed in WPM when pressing PAGE UP or PAGE DOWN
 
   std::string                                  _decimal_point;                  ///< character to use as decimal point
   bool                                         _display_communication_errors;   ///< whether to display errors communicating with rig
@@ -365,6 +366,7 @@ public:
   CONTEXTREAD(cq_auto_rit);                      ///< whether to enable RIT in CQ mode
   CONTEXTREAD(cty_filename);                     ///< filename of country file (default = "cty.dat")
   CONTEXTREAD(cw_speed);                         ///< speed in WPM
+  CONTEXTREAD(cw_speed_change);                  ///< change in CW speed in WPM when pressing PAGE UP or PAGE DOWN
 
   CONTEXTREAD(decimal_point);                    ///< character to use as decimal point
   CONTEXTREAD(display_communication_errors);     ///< whether to display errors communicating with rig

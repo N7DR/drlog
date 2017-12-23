@@ -241,6 +241,7 @@ audio_recorder          audio;                                  ///< provide cap
 bandmap_buffer          bm_buffer;                          ///< global control buffer for all the bandmaps
 
 drlog_context           context;                            ///< context taken from configuration file
+unsigned int            cw_speed_change;                    ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
 exchange_field_database exchange_db;                        ///< dynamic database of exchange field values for calls; automatically thread-safe
 
@@ -568,6 +569,7 @@ int main(int argc, char** argv)
     REJECT_COLOUR = context.reject_colour();    // colour for calls it is not OK to work
     serno_spaces = context.serno_spaces();
     long_t = context.long_t();
+    cw_speed_change = context.cw_speed_change();
 
 // possibly configure audio recording
     if (context.record_audio())
@@ -7538,7 +7540,7 @@ const bool change_cw_speed(const keyboard_event& e)
 { bool rv = false;
 
   if (cw_p)
-  { int change = (e.is_control() ? 1 : 3);
+  { int change = (e.is_control() ? 1 : cw_speed_change);
 
     if (e.symbol() == XK_Prior)
       change = -change;
