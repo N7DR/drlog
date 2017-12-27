@@ -259,6 +259,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "BATCH MESSAGES FILE")
       _batch_messages_file = rhs;
 
+// BEST DX UNIT
+    if (LHS == "BEST DX UNIT")
+      _best_dx_unit = RHS;
+
 // CABRILLO FILENAME
     if (LHS == "CABRILLO FILENAME")
       _cabrillo_filename = rhs;
@@ -1324,6 +1328,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _bandmap_recent_colour(string_to_colour("BLACK")),                // do not indicate recent postings with special colour
   _bands("160, 80, 40, 20, 15, 10"),                                // legal bands for the contest
   _batch_messages_file(),                                           // name for batch messages file
+  _best_dx_unit("MILES"),                                           // DX is measured in miles
   _cabrillo_address_1(),                                            // first line of Cabrillo ADDRESS
   _cabrillo_address_2(),                                            // second line of Cabrillo ADDRESS
   _cabrillo_address_3(),                                            // third line of Cabrillo ADDRESS

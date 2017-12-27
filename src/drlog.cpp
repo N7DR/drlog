@@ -238,6 +238,7 @@ int                     ACCEPT_COLOUR(COLOUR_GREEN);            ///< colour for 
 string                  at_call;                                ///< call that should replace comat in "call ok now" message
 audio_recorder          audio;                                  ///< provide capability to record audio
 
+bool                    best_dx_in_miles;                   ///< whether unit for BEST DX window is miles
 bandmap_buffer          bm_buffer;                          ///< global control buffer for all the bandmaps
 
 drlog_context           context;                            ///< context taken from configuration file
@@ -575,6 +576,7 @@ int main(int argc, char** argv)
     long_t = context.long_t();
     cw_speed_change = context.cw_speed_change();
     my_grid = grid_square(context.my_grid());
+    best_dx_in_miles = (context.best_dx_unit() == "MILES");
 
 // possibly configure audio recording
     if (context.record_audio())
@@ -4576,11 +4578,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           { const grid_square dx_gs = qso.received_exchange("GRID");
 
             if (!dx_gs.designation().empty())
-            { const float distance_km = my_grid - dx_gs.designation();
-              const float distance_miles = kilometres_to_miles(distance_km);
+            { float distance_in_units = my_grid - dx_gs.designation();    // km
 
-              if (distance_miles >= greatest_distance)
-              { string str = pad_string(comma_separated_string(static_cast<int>(distance_miles + 0.5)), 6, PAD_LEFT);
+              if (best_dx_in_miles)
+                distance_in_units = kilometres_to_miles(distance_in_units);
+
+              if (distance_in_units >= greatest_distance)
+              { string str = pad_string(comma_separated_string(static_cast<int>(distance_in_units + 0.5)), 6, PAD_LEFT);
 
                 str += (" " + qso.callsign());
                 str = pad_string(str, win_best_dx.width(), PAD_RIGHT);
@@ -4589,7 +4593,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
                 win_best_dx <= str;
 
-                greatest_distance = distance_miles;
+                greatest_distance = distance_in_units;
               }
             }
           }

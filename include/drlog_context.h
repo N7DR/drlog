@@ -79,6 +79,7 @@ protected:
   int                                          _bandmap_recent_colour;              ///< colour for bandmap entries that are less than two minutes old
   std::string                                  _bands;                              ///< comma-delimited bands
   std::string                                  _batch_messages_file;                ///< file that contains per-call batch messages
+  std::string                                  _best_dx_unit;                       ///< name of unit for the BEST DX window ("MILES" or "KM")
 
   std::string                                  _cabrillo_eol;                       ///< EOL used in the cabrillo file; one of: "LF", "CR" or "CRLF"
   std::string                                  _cabrillo_filename;                  ///< name of Cabrillo log
@@ -319,6 +320,7 @@ public:
   CONTEXTREAD(bandmap_recent_colour);            ///< colour for bandmap entries that are less than two minutes old
   CONTEXTREAD(bands);                            ///< comma-delimited bands
   CONTEXTREAD(batch_messages_file);              ///< file that contains per-call batch messages
+  CONTEXTREAD(best_dx_unit);                     ///< name of unit for the BEST DX window ("MILES" or "KM")
 
   CONTEXTREAD(cabrillo_address_1);               ///< first ADDRESS: line
   CONTEXTREAD(cabrillo_address_2);               ///< second ADDRESS: line
