@@ -151,7 +151,11 @@ public:
     { *this = *this + ln; }
 };
 
-/// ostream << trmaster_line
+/*! \brief          Output a line from a TRMASTER file to a stream
+    \param  ost     output stream
+    \param  trml    the line to be written
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const trmaster_line& trml);
 
 // -----------------------------------------------------  trmaster  ---------------------------------

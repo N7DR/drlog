@@ -322,6 +322,14 @@ public:
   inline const bool defined(void) const
     { return (_wp != nullptr); }
 
+/*! \brief      Is the window usable?
+    \return     whether the window is usable
+
+    Synonym for defined()
+*/
+  inline const bool valid(void) const
+    { return defined(); }
+
 /*! \brief          Move the logical cursor
     \param  new_x   x position
     \param  new_y   y position
@@ -653,12 +661,20 @@ inline window& operator<(window& win, const cursor_relative& cr)
 /// trivial class for centring a string on line y of a window
 WRAPPER_2(centre, std::string, s, int, y);
 
-/// window < centre
+/*! \brief          Write a centred string in a window
+    \param  win     target window
+    \param  c       object containing the string to be written, and the vertical line number on which it is to be written
+    \return         the window
+
+    Correctly accounts for UTF-8 encoding
+*/
 window& operator<(window& win, const centre& c);
 
 /// utterly trivial class for changing colour to a colour pair
 WRAPPER_1(colour_pair, int, pair_nr);
-window& operator<(window& win, const colour_pair& cpair);
+//window& operator<(window& win, const colour_pair& cpair);
+inline window& operator<(window& win, const colour_pair& cpair)
+  { return win.cpair(cpair.pair_nr()); }
 
 // the next two lines allow us to write:
 // win < COLOURS(fgcolour, bgcolour)
@@ -674,7 +690,10 @@ inline window& operator<(window& win, const COLOURS& CP)
 inline const int FGBG(const int fg, const int bg)
   { return COLOUR_PAIR(colours.add(fg, bg)); }
 
-/// convert the name of a colour to a colour
+/*! \brief          Convert the name of a colour to a colour
+    \param  str     name of a colour
+    \return         the colour corresponding to <i>str</i>
+*/
 const int string_to_colour(const std::string& str);
 
 #endif    // SCREEN_H

@@ -11,7 +11,7 @@
 #ifndef RULES_H
 #define RULES_H
 
-/*! \file rules.h
+/*! \file   rules.h
 
     Classes and functions related to the contest rules
 */
@@ -35,7 +35,7 @@ extern pt_mutex  rules_mutex;                           ///< mutex for rules
 class EFT;
 class QSO;
 
-/// Some contests have very complex point structures
+/// Some contests have unusual point structures
 enum points_type { POINTS_NORMAL,                       ///< points defined in configuration file
                    POINTS_IARU,                         ///< IARU contest
                    POINTS_STEW                          ///< Stew Perry contest

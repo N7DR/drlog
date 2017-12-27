@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file cw_buffer.cpp
+/*! \file   cw_buffer.cpp
 
     Classes and functions related to sending CW
 */
@@ -40,8 +40,8 @@ extern message_stream ost;              ///< for debugging, info
 
 // ---------------------------------------- cw_buffer -------------------------
 
-/*!     \class cw_buffer
-        \brief A buffer for sending CW
+/*! \class  cw_buffer
+     brief  A buffer for sending CW
 */
 
 /*! \brief      Add an action to the key buffer
@@ -302,9 +302,9 @@ cw_buffer::~cw_buffer(void)
     \param  wpm     speed in WPM
 */
 void cw_buffer::speed(const unsigned int wpm)
-{ unsigned int new_wpm = min(wpm, MAX_SPEED);
+{ const unsigned int new_wpm = max( min(wpm, MAX_SPEED), MIN_SPEED );
 
-  new_wpm = max(new_wpm, MIN_SPEED);
+//  new_wpm = max(new_wpm, MIN_SPEED);
 
   SAFELOCK(_speed);
 

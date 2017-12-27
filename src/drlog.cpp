@@ -247,6 +247,8 @@ exchange_field_database exchange_db;                        ///< dynamic databas
 
 bool                    filter_remaining_country_mults(false);  ///< whether to apply filter to remaining country mults
 
+float                   greatest_distance= 0;               ///< greatest distance in miles
+
 bool                    is_ss(false);                       ///< ss is special
 
 logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
@@ -254,6 +256,7 @@ bool                    long_t = false;                     ///< whether to send
 
 monitored_posts         mp;                                 ///< the calls being monitored
 string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
+grid_square             my_grid;                            ///< what is my (four-character) grid square?
 
 unsigned int            next_qso_number = 1;                ///< actual number of next QSO
 unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
@@ -289,6 +292,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_bandmap_filter,              ///< bandmap filter information
        win_batch_messages,              ///< messages from the batch messages file
        win_bcall,                       ///< call associated with VFO B
+       win_best_dx,                     ///< best DX QSO
        win_bexchange,                   ///< exchnage associated with VFO B
        win_call,                        ///< callsign of other station, or command
        win_cluster_line,                ///< last line received from cluster
@@ -570,6 +574,7 @@ int main(int argc, char** argv)
     serno_spaces = context.serno_spaces();
     long_t = context.long_t();
     cw_speed_change = context.cw_speed_change();
+    my_grid = grid_square(context.my_grid());
 
 // possibly configure audio recording
     if (context.record_audio())
@@ -937,6 +942,10 @@ int main(int argc, char** argv)
   win_bcall.init(context.window_info("BCALL"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
   win_bcall < WINDOW_BOLD <= "";
 //  win_call.process_input_function(process_CALL_input);
+
+// BEST DX window
+  win_best_dx.init(context.window_info("BEST DX"), WINDOW_NO_CURSOR);
+  win_best_dx.enable_scrolling();
 
 // BEXCHANGE window
   win_bexchange.init(context.window_info("BEXCHANGE"), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
@@ -4561,6 +4570,29 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
           display_call_info(qso.callsign(), DO_NOT_DISPLAY_EXTRACT);
           update_mult_value();
+
+// possibly update BEST DX window
+          if (win_best_dx.valid())
+          { const grid_square dx_gs = qso.received_exchange("GRID");
+
+            if (!dx_gs.designation().empty())
+            { const float distance_km = my_grid - dx_gs.designation();
+              const float distance_miles = kilometres_to_miles(distance_km);
+
+              if (distance_miles >= greatest_distance)
+              { string str = pad_string(comma_separated_string(static_cast<int>(distance_miles + 0.5)), 6, PAD_LEFT);
+
+                str += (" " + qso.callsign());
+                str = pad_string(str, win_best_dx.width(), PAD_RIGHT);
+
+                win_best_dx < CURSOR_TOP_LEFT < WINDOW_SCROLL_DOWN;
+
+                win_best_dx <= str;
+
+                greatest_distance = distance_miles;
+              }
+            }
+          }
         }                                                               // end pexch.valid()
         else  // unable to parse exchange
           alert("Unable to parse exchange");

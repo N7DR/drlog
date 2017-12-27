@@ -85,7 +85,6 @@ public:
   void reset(void);
 };
 
-
 // -----------  dx_post  ----------------
 
 /*! \class  dx_post

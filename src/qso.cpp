@@ -551,6 +551,10 @@ mo is mode:
 //  case MODE_DIGI:
 //    value = "RY";
 //    break;
+
+        default:
+          value = "XX";
+          break;
       }
     }
     

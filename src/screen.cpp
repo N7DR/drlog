@@ -675,7 +675,13 @@ window& window::leave_cursor(const bool enable_or_disable)
   return *this;
 }
 
-/// window << centre
+/*! \brief          Write a centred string in a window
+    \param  win     target window
+    \param  c       object containing the string to be written, and the vertical line number on which it is to be written
+    \return         the window
+
+    Correctly accounts for UTF-8 encoding
+*/
 window& operator<(window& win, const centre& c)
 { win.move_cursor((win.width() - n_chars(c.s())) / 2, c.y());    // correctly accounts for UTF-8 encoding
 
@@ -892,9 +898,9 @@ const bool window::common_processing(const keyboard_event& e)
 }
 
 /// utterly trivial class for changing colour to a colour pair
-window& operator<(window& win, const colour_pair& cpair)
-{ return win.cpair(cpair.pair_nr());
-}
+//window& operator<(window& win, const colour_pair& cpair)
+//{ return win.cpair(cpair.pair_nr());
+//}
 
 // -----------  colour_pair  ----------------
 
@@ -963,7 +969,10 @@ const int cpair::bg(const int pair_nr) const
   return static_cast<int>(b);
 }
 
-// convert the name of a colour to a colour
+/*! \brief          Convert the name of a colour to a colour
+    \param  str     name of a colour
+    \return         the colour corresponding to <i>str</i>
+*/
 const int string_to_colour(const string& str)
 { static const map<string, int> colour_map { { "BLACK",   COLOUR_BLACK },
                                              { "BLUE",    COLOUR_BLUE },
@@ -982,7 +991,6 @@ const int string_to_colour(const string& str)
     return cit->second;
 
 // should change this so it works with a colour name and not just a number
-
   if (begins_with(s, "COLOUR_"))
     return (from_string<int>(substring(s, 7)));
 

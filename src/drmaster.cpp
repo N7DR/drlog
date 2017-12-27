@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file drmaster.cpp
+/*! \file   drmaster.cpp
 
     Classes associated with MASTER.DTA, TRMASTER.[DTA, ASC] and drmaster files.
 
@@ -31,12 +31,12 @@ using namespace std;
 
 */
 
-/*!     \brief              private function to return the call starting at <i>posn</i> in <i>contents</i>
-        \param  contents    contents of a MASTER.DTA file
-        \param  posn        location at which to start returning call
-        \return             call that starts at <i>posn</i> in <i>contents</i>
+/*! \brief              private function to return the call starting at <i>posn</i> in <i>contents</i>
+    \param  contents    contents of a MASTER.DTA file
+    \param  posn        location at which to start returning call
+    \return             call that starts at <i>posn</i> in <i>contents</i>
 
-        <i>posn</i> is updated to point at the start of the next call
+    <i>posn</i> is updated to point at the start of the next call
 */
 const string master_dta::_get_call(const string& contents, size_t& posn) const
 { string rv;
@@ -49,10 +49,10 @@ const string master_dta::_get_call(const string& contents, size_t& posn) const
   return rv;
 }
 
-/*!     \brief              construct from file
-        \param  filename    file name
+/*! \brief              construct from file
+    \param  filename    file name
 
-        Also default constructor, with filename "master.dta"
+    Also default constructor, with filename "master.dta"
 */
 master_dta::master_dta(const string& filename)
 { string contents = read_file(filename);                // throws exception if there's a problem
@@ -82,12 +82,12 @@ master_dta::master_dta(const string& filename)
     \brief  Manipulate a line from an N6TR TRMASTER.ASC file
 */
 
-/*!     \brief          extract the value of a parameter from a TRMASTER.ASC line
-        \param  line    line from the TRMASTER.ASC file
-        \param  param   parameter to extract, e.g., "=H"
-        \return         the value associated with <i>param</i>
+/*! \brief          extract the value of a parameter from a TRMASTER.ASC line
+    \param  line    line from the TRMASTER.ASC file
+    \param  param   parameter to extract, e.g., "=H"
+    \return         the value associated with <i>param</i>
 
-        Returns empty string if there is no value associated with <i>param</i>
+    Returns empty string if there is no value associated with <i>param</i>
 */
 const string __extract_value(const string& line, const string& param)
 { string rv;
@@ -299,7 +299,11 @@ const trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
   return rv;
 }
 
-// output to a stream
+/*! \brief          Output a line from a TRMASTER file to a stream
+    \param  ost     output stream
+    \param  trml    the line to be written
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const trmaster_line& trml)
 { ost << trml.to_string();
   return ost;
