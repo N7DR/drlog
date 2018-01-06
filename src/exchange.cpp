@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 141 2017-12-16 21:19:10Z  $
+// $Id: exchange.cpp 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -75,7 +75,11 @@ void parsed_exchange_field::value(const string& v)
   _mult_value = MULT_VALUE(_name, _value);
 }
 
-/// ostream << parsed_exchange_field
+/*! \brief          Write a <i>parsed_exchange_field</i> object to an output stream
+    \param  ost     output stream
+    \param  pef     object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
 { ost << "  name: " << pef.name() << endl
       << "  value: " << pef.value() << endl
@@ -87,8 +91,8 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
 
 // -------------------------  parsed_ss_exchange  ---------------------------
 
-/*! \class parsed_ss_exchange
-    \brief All the fields in the SS exchange, following parsing
+/*! \class  parsed_ss_exchange
+    \brief  All the fields in the SS exchange, following parsing
 */
 
 /*! \brief          Does a string possibly contain a serial number?
@@ -379,7 +383,11 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 }
 
-/// ostream << parsed_exchange_field
+/*! \brief          Write a <i>parsed_ss_exchange</i> object to an output stream
+    \param  ost     output stream
+    \param  pef     object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const parsed_ss_exchange& pse)
 { ost << "serno: " << pse.serno()
       << ", prec: " << pse.prec()
@@ -450,10 +458,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
   extern bool is_ss;                    // Sweepstakes is special; this is set to the correct value by drlog.cpp
 
-//  ost << "Inside parsed_exchange constructor" << endl;
-
-//  ost << "first_time = " << boolalpha << first_time << endl;
-
   vector<string> copy_received_values(received_values);
 
   const vector<exchange_field> exchange_template = rules.unexpanded_exch(canonical_prefix, m);
@@ -464,16 +468,13 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     if (exch.callsign() != from_callsign)
       _replacement_call = exch.callsign();
 
-//    std::string    _name;                 ///< field name
-//    std::string    _value;                ///< field value
-//    bool           _is_mult;              ///< is this field a mult?
 //    std::string    _mult_value;           ///< actual value of the mult (if it is a mult)
 //    exchange = SERNO, PREC, CALL, CHECK, SECTION
     _fields.push_back( { "SERNO", to_string(exch.serno()), false } );
     _fields.push_back( { "PREC", create_string(exch.prec()), false } );
     _fields.push_back( { "CALL", exch.callsign(), false } );
     _fields.push_back( { "CHECK", exch.check(), false } );
-    _fields.push_back( parsed_exchange_field("SECTION", exch.section(), true) );
+    _fields.push_back( parsed_exchange_field("SECTION", exch.section(), true) );    // convert section to canonical form if necessary
 
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
     _valid = true;

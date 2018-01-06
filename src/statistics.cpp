@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 141 2017-12-16 21:19:10Z  $
+// $Id: statistics.cpp 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file statistics.cpp
+/*! \file   statistics.cpp
 
     Classes and functions related to the statistics of an ongoing contest
 */
@@ -275,7 +275,6 @@ running_statistics::running_statistics(void) :
   _qso_points( { {} } ),
   _qtc_qsos_sent(0),
   _qtc_qsos_unsent(0)
-
 { }
 
 /*! \brief                  Constructor
@@ -588,12 +587,9 @@ const bool running_statistics::is_needed_exchange_mult(const string& exchange_fi
   SAFELOCK(statistics);
 
   for (const auto& psm : _exchange_multipliers)
-  { //const pair<string /* field name */, multiplier>& sm = _exchange_multipliers[n];
-
-    if (psm.first == exchange_field_name and psm.second.is_known(mv) )
+  { if (psm.first == exchange_field_name and psm.second.is_known(mv) )
       return !(psm.second.is_worked(mv, b, m));
   }
-
 
   return false;
 }
@@ -658,7 +654,6 @@ const string running_statistics::summary_string(const contest_rules& rules)
 */
 const unsigned int running_statistics::points(const contest_rules& rules) const
 { unsigned int q_points = 0;
-  const vector<BAND>& permitted_bands = rules.permitted_bands();
   const set<BAND>& score_bands = rules.score_bands();
   const set<MODE> score_modes = rules.score_modes();
   
@@ -744,11 +739,12 @@ const map<string /* field name */, set<string> /* values */ >  running_statistic
   SAFELOCK(statistics);
 
   for (const auto& psm : _exchange_multipliers)
-  { const string& field_name = psm.first;
+  { //const string& field_name = psm.first;
     const multiplier& mult = psm.second;
-    const set<string> mult_values = mult.worked(b, m);
+    //const set<string> mult_values = mult.worked(b, m);
 
-    rv.insert( { field_name, mult_values } );
+//    rv.insert( { field_name, mult_values } );
+    rv.insert( { psm.first, mult.worked(b, m) } );
   }
 
  return rv;
@@ -878,7 +874,7 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
     Counts only those QSOs on bands and modes being used to calculate the score. Includes dupes.
 */
 const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
-{ const vector<BAND>& permitted_bands = rules.permitted_bands();
+{ //const vector<BAND>& permitted_bands = rules.permitted_bands();
   const set<BAND>& score_bands = rules.score_bands();
   const set<MODE> score_modes = rules.score_modes();
   unsigned int rv = 0;

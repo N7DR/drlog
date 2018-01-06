@@ -1,4 +1,4 @@
-// $Id: rules.h 141 2017-12-16 21:19:10Z  $
+// $Id: rules.h 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -213,7 +213,11 @@ public:
     }
 };
 
-/// ostream << exchange_field
+/*! \brief          Write an <i>exchange_field</i> object to an output stream
+    \param  ost     output stream
+    \param  pef     object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const exchange_field& exch_f);
 
 // -------------------------  points_structure  ---------------------------

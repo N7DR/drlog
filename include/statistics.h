@@ -1,4 +1,4 @@
-// $Id: statistics.h 140 2017-11-05 15:16:46Z  $
+// $Id: statistics.h 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -326,9 +326,9 @@ public:
 class call_history
 {
 protected:
-  std::map<std::string, std::set<bandmode> > _history;              ///< container for the history
 
-  pt_mutex _history_mutex;                                          ///< mutex for the container
+  std::map<std::string, std::set<bandmode> > _history;              ///< container for the history
+  pt_mutex                                   _history_mutex;        ///< mutex for the container
 
 public:
 

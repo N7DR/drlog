@@ -1,4 +1,4 @@
-// $Id: screen.h 141 2017-12-16 21:19:10Z  $
+// $Id: screen.h 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,7 +11,7 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-/*! \file screen.h
+/*! \file   screen.h
 
     Classes and functions related to screen management
 */
@@ -139,8 +139,8 @@ public:
 
 // -----------  screen  ----------------
 
-/*! \class screen
-    \brief A dummy class to allow for easy initialisation and termination
+/*! \class  screen
+    \brief  A dummy class to allow for easy initialisation and termination
 */
 
 class screen
@@ -166,6 +166,7 @@ public:
 class window_information
 {
 protected:
+
   int   _x;                     ///< x location on the screen
   int   _y;                     ///< y location on the screen
   int   _w;                     ///< width
@@ -210,6 +211,7 @@ public:
 // forward declaration
 class window;
 
+// define the type used for functions that process events
 typedef void (* WINDOW_PROCESS_INPUT_TYPE) (window*, const keyboard_event&);
 
 class window
@@ -545,7 +547,9 @@ public:
   inline const std::string getline(const int line_nr = 0)
     { return read(0, line_nr); }
 
-/// line by line snapshot of all the contents; lines go from top to bottom
+/*! \brief      Obtain a line-by-line snapshot of all the contents; lines go from top to bottom
+    \return     a line-by-line snapshot of all the contents; element [0] is the top line
+*/
   const std::vector<std::string> snapshot(void);
 
 /*! \brief              Is a line empty?

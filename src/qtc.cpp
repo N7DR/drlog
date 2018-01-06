@@ -136,11 +136,14 @@ const bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-const pair<qtc_entry, bool>& qtc_series::operator[](const unsigned int n) const
-{ if (n < _qtc_entries.size())
-    return _qtc_entries[n];
+//const pair<qtc_entry, bool>& qtc_series::operator[](const unsigned int n) const
+const pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
+{ static const pair<qtc_entry, bool> empty_return_value { };
+  //if (n < _qtc_entries.size())
+  //  return _qtc_entries[n];
 
-  return pair<qtc_entry, bool>{ };
+  //return pair<qtc_entry, bool>{ };
+  return ( (n < _qtc_entries.size()) ? _qtc_entries[n] : empty_return_value );
 }
 
 // set a particular entry to sent

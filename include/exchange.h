@@ -1,4 +1,4 @@
-// $Id: exchange.h 141 2017-12-16 21:19:10Z  $
+// $Id: exchange.h 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,6 +38,7 @@ extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange fiel
 class parsed_exchange_field
 {
 protected:
+
   std::string    _name;                 ///< field name
   std::string    _value;                ///< field value
   bool           _is_mult;              ///< is this field a mult?
@@ -71,7 +72,11 @@ public:
   void value(const std::string& v);
 };
 
-/// ostream << parsed_exchange_field
+/*! \brief          Write a <i>parsed_exchange_field</i> object to an output stream
+    \param  ost     output stream
+    \param  pef     object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const parsed_exchange_field& pef);
 
 // -------------------------  parsed_ss_exchange  ---------------------------
@@ -83,6 +88,7 @@ std::ostream& operator<<(std::ostream& ost, const parsed_exchange_field& pef);
 class parsed_ss_exchange
 {
 protected:
+
   unsigned int _serno;          ///< serial number
   char         _prec;           ///< precedence
   std::string  _callsign;       ///< callsign
@@ -132,7 +138,11 @@ public:
   READ(section);        ///< section
 };
 
-/// ostream << parsed_exchange_field
+/*! \brief          Write a <i>parsed_ss_exchange</i> object to an output stream
+    \param  ost     output stream
+    \param  pse     object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const parsed_ss_exchange& pse);
 
 // -------------------------  parsed_exchange  ---------------------------
@@ -251,7 +261,11 @@ public:
     const std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
 };
 
-/// ostream << parsed_exchange
+/*! \brief          Write a <i>parsed_exchange</i> object to an output stream
+    \param  ost     output stream
+    \param  pe      object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const parsed_exchange& pe);
 
 // -------------------------  exchange_field_database  ---------------------------
@@ -320,18 +334,18 @@ protected:
 //  1. regex
 //  2. .values file
 
-  std::string _name;                    ///< name of exchange field
-  boost::regex _regex_expression;       ///< regex expression to define field
+  std::string   _name;                    ///< name of exchange field
+  boost::regex  _regex_expression;        ///< regex expression to define field
 
   std::map<std::string,                        /* a canonical field value */
           std::set                             /* each equivalent value is a member of the set, including the canonical value */
             <std::string                       /* indistinguishable legal values */
-            >> _values;
+            >>  _values;
 
   std::set<std::string>  _legal_non_regex_values;           ///< all legal values not obtained from a regex
   std::map<std::string, std::string>  _value_to_canonical;  ///< key = value; value = corresponding canonical value
 
-  bool _is_mult;                                            ///< is this field a mult?
+  bool          _is_mult;                                   ///< is this field a mult?
 
 public:
 
@@ -455,7 +469,11 @@ public:
 
 };
 
-/// ostream << EFT
+/*! \brief          Write an <i>EFT</i> object to an output stream
+    \param  ost     output stream
+    \param  eft     object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const EFT& eft);
 
 // -------------------------  sweepstakes_exchange  ---------------------------

@@ -278,7 +278,7 @@ void keyboard_queue::push_key_press(const KeySym ks)
 
 // TRY http://stackoverflow.com/questions/6560553/linux-x11-global-keyboard-hook
 
-   XKeyEvent e;
+//   XKeyEvent e;
 
    event.xkey.display = _display_p;
    event.xkey.window = window_id;

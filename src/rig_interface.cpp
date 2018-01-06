@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 138 2017-06-20 21:41:26Z  $
+// $Id: rig_interface.cpp 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -874,7 +874,6 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           timeout.tv_usec = 0;
 
           int status = select(fd + 1, &set, NULL, NULL, &timeout);
-          int nread = 0;
 
           if (status == -1)
             ost << "Error in select() in raw_command()" << endl;

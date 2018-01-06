@@ -1,4 +1,4 @@
-// $Id: drmaster.h 140 2017-11-05 15:16:46Z  $
+// $Id: drmaster.h 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -198,14 +198,14 @@ class drmaster_line
 {
 protected:
 
-  std::string _hit_count;                                       ///< hit count
-  std::string _cq_zone;                                         ///< CQ zone
+  std::string _call;                                            ///< callsign
   std::string _check;                                           ///< Sweepstakes check
+  std::string _cq_zone;                                         ///< CQ zone
   std::string _foc;                                             ///< FOC number
+  std::string _hit_count;                                       ///< hit count
+  std::string _qth;                                             ///< QTH information (actual information varies as a function of country)
   std::string _ten_ten;                                         ///< 10-10 number
 
-  std::string _call;
-  std::string _qth;
   std::array<std::string, TRMASTER_N_USER_PARAMETERS> _user;
   std::string _section;
   std::string _name;

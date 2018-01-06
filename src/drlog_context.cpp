@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 141 2017-12-16 21:19:10Z  $
+// $Id: drlog_context.cpp 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -260,7 +260,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _batch_messages_file = rhs;
 
 // BEST DX UNIT
-    if (LHS == "BEST DX UNIT")
+    if ( (LHS == "BEST DX UNIT") or (LHS == "BEST DX UNITS") )
       _best_dx_unit = RHS;
 
 // CABRILLO FILENAME
@@ -392,6 +392,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // DISPLAY COMMUNICATION ERRORS
     if (LHS == "DISPLAY COMMUNICATION ERRORS")
       _display_communication_errors = is_true;
+
+// DISPLAY GRID
+    if (LHS == "DISPLAY GRID")
+      _display_grid = is_true;
 
 // DO NOT SHOW
     if (LHS == "DO NOT SHOW")
@@ -1372,6 +1376,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cw_speed_change(1),                                              // change speed by 1 WPM
   _decimal_point("·"),                                              // use centred dot as decimal point
   _display_communication_errors(true),                              // display errors communicating with rig
+  _display_grid(false),                                             // do not display grid info in GRID and INFO windows
   _do_not_show(),                                                   // all calls (apart from my_call()) should be shown on the bandmap
   _do_not_show_filename(),                                          // no do-not-show file
   _drmaster_filename("drmaster"),                                   // name of the drmaster file
@@ -1383,11 +1388,11 @@ drlog_context::drlog_context(const std::string& filename) :
   _fast_sap_bandwidth(400),                                         // fast CW bandwidth in SAP mode, in Hz
   _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),          // 500 Hz guard band on CW, 2 kHz on slopbucket
   _individual_messages_file(),                                      // no file of individual QSL messages
-  _logfile("drlog.dat"),                      // name of log file
-  _long_t(false),                             // do not extend initial Ts in serial numbers
-  _mark_mode_break_points(false),             // do not mark the mode break points on the bandmap
-  _mark_frequencies(),                        // don't mark any frequencies
-  _match_minimum(4),                          // 4 characters required for SCP or fuzzy match
+  _logfile("drlog.dat"),                                            // name of log file
+  _long_t(false),                                                   // do not extend initial Ts in serial numbers
+  _mark_frequencies(),                                              // don't mark any frequencies
+  _mark_mode_break_points(false),                                   // do not mark the mode break points on the bandmap
+  _match_minimum(4),                                                // 4 characters required for SCP or fuzzy match
   _message_cq_1(),                            // no short CQ (default is changed once configuration file has been read)
   _message_cq_2(),                            // no long CQ (default is changed once configuration file has been read)
   _modes("CW"),                               // only valid mode is CW

@@ -1,4 +1,4 @@
-// $Id: qso.cpp 140 2017-11-05 15:16:46Z  $
+// $Id: qso.cpp 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file qso.cpp
+/*! \file   qso.cpp
 
     Classes and functions related to QSO information
 */
@@ -433,6 +433,7 @@ void QSO::set_exchange_mult(const string& field_name)
 
 /*! \brief                          Re-format according to a Cabrillo template
     \param  cabrillo_qso_template   template for the QSO: line in a Cabrillo file, from configuration file
+    \return                         QSO formatted in accordance with <i>cabrillo_qso_template</i>
 
     Example template:
       CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
@@ -627,7 +628,9 @@ specification tells us otherwise, that's what we do.
   return record;
 }
 
-/// format for writing to disk (in the actual drlog log)
+/*! \brief      Obtain QSO in format for writing to disk (in the actual drlog log)
+    \return     QSO formatted for writing to disk
+*/
 const string QSO::verbose_format(void) const
 { static const int NUMBER_WIDTH   = 5;
   static const int CALLSIGN_WIDTH = 12;
@@ -780,7 +783,9 @@ const bool QSO::sent_exchange_includes(const string& field_name)
   return false;
 }
 
-/// convert to a string suitable for display in the log window
+/*! \brief      Obtain string in format suitable for display in the LOG window
+    \return     QSO formatted for writing to in the LOG window
+*/
 const string QSO::log_line(void)
 { static const map<string, unsigned int> field_widths { { "CHECK",    2 },
                                                         { "CQZONE",   2 },

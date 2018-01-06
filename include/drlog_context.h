@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 141 2017-12-16 21:19:10Z  $
+// $Id: drlog_context.h 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -133,6 +133,7 @@ protected:
 
   std::string                                  _decimal_point;                  ///< character to use as decimal point
   bool                                         _display_communication_errors;   ///< whether to display errors communicating with rig
+  bool                                         _display_grid;                   ///< whether grid will be shown in GRID and INFO windows
   std::vector<std::string>                     _do_not_show;                    ///< do not show these calls when spotted (MY CALL is automatically not shown)
   std::string                                  _do_not_show_filename;           ///< filename of calls (one per line) not to be shown
   std::string                                  _drmaster_filename;              ///< filename of drmaster file (default = "drmaster")
@@ -372,6 +373,7 @@ public:
 
   CONTEXTREAD(decimal_point);                    ///< character to use as decimal point
   CONTEXTREAD(display_communication_errors);     ///< whether to display errors communicating with rig
+  CONTEXTREAD(display_grid);                     ///< whether grid will be shown in GRID and INFO windows
   CONTEXTREAD(do_not_show);                      ///< do not show these calls when spotted (MY CALL is automatically not shown)
   CONTEXTREAD(do_not_show_filename);             ///< filename of calls (one per line) not to be shown
   CONTEXTREAD(drmaster_filename);                ///< filename of drmaster file (default = "drmaster")
@@ -417,11 +419,11 @@ public:
   CONTEXTREAD(mode_break_points);            ///< override default mode break points
   CONTEXTREAD(my_call);                      ///< my call
   CONTEXTREAD(my_continent);                 ///< my continent
-  SAFEREAD(my_cq_zone, _context);                   ///< my CQ zone
-  SAFEREAD(my_grid, _context);                      ///< my grid square identifier
-  SAFEREAD(my_ip, _context);                        ///< my IP address
-  SAFEREAD(my_itu_zone, _context);                  ///< my ITU zone
-  SAFEREAD(my_latitude, _context);                  ///< my latitude in degrees (north +ve)
+  CONTEXTREAD(my_cq_zone);                   ///< my CQ zone
+  CONTEXTREAD(my_grid);                      ///< my grid square identifier
+  CONTEXTREAD(my_ip);                        ///< my IP address
+  CONTEXTREAD(my_itu_zone);                  ///< my ITU zone
+  CONTEXTREAD(my_latitude);                  ///< my latitude in degrees (north +ve)
   SAFEREAD(my_longitude, _context);                 ///< my longitude in degrees (east +ve)
 
   SAFEREAD(nearby_extract, _context);               ///< whether to display NEARBY calls in EXTRACT window

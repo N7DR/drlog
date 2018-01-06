@@ -11,7 +11,7 @@
 #ifndef QSO_H
 #define QSO_H
 
-/*! \file qso.h
+/*! \file   qso.h
 
     Classes and functions related to QSO information
 */
@@ -36,8 +36,8 @@ WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool,
 
 // -----------  QSO  ----------------
 
-/*! \class QSO
-    \brief The details of a single QSO
+/*! \class  QSO
+    \brief  The details of a single QSO
 */
 
 class QSO
@@ -254,6 +254,7 @@ public:
 */
   const bool operator==(const QSO& q) const;
 
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _band
@@ -280,7 +281,11 @@ public:
     }
 };
 
-/// ostream << QSO
+/*! \brief          Write a <i>QSO</i> object to an output stream
+    \param  ost     output stream
+    \param  q       object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const QSO& q);
 
 /*! \brief          Is one QSO earlier than another?

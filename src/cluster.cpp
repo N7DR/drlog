@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file cluster.cpp
+/*! \file   cluster.cpp
 
     Classes and functions related to a DX cluster
 */
@@ -361,7 +361,11 @@ monitored_posts_entry::monitored_posts_entry(const dx_post& post)
   _band = post.band();
 }
 
-/// ostream << monitored_posts_entry
+/*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream
+    \param  ost     output stream
+    \param  mpe     object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
 { ost << "Monitored: " << mpe.callsign()
       << ", absolute expiration = " << mpe.expiration()
@@ -475,7 +479,7 @@ void monitored_posts::prune(void)
   _is_dirty |= (original_size != _entries.size());
 }
 
-/// convert to strings suitable for display in a window
+/// convert to a vector of strings suitable for display in a window
 const vector<string> monitored_posts::to_strings(void) const
 { vector<string> rv;
 

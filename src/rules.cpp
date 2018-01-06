@@ -1,4 +1,4 @@
-// $Id: rules.cpp 141 2017-12-16 21:19:10Z  $
+// $Id: rules.cpp 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -182,7 +182,11 @@ const vector<exchange_field> exchange_field::expand(void) const
   return rv;
 }
 
-/// ostream << exchange_field
+/*! \brief          Write an <i>exchange_field</i> object to an output stream
+    \param  ost     output stream
+    \param  pef     object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const exchange_field& exch_f)
 { ost << "exchange_field.name() = " << exch_f.name() << endl
       << boolalpha << "exchange_field.is_mult() = " << exch_f.is_mult() << endl
@@ -257,9 +261,7 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
         if (!equivalent_values.empty())
           qthx.add_canonical_value(equivalent_values[0]);
 
-//        for (size_t n = 1; n < equivalent_values.size(); ++n)           // n = 0 corresponds to the canonical value
-//          qthx.add_value(equivalent_values[0], equivalent_values[n]);
-        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [=, &qthx] (const string& equivalent_value) { qthx.add_value(equivalent_values[0], equivalent_value); } );
+        for_each(next(equivalent_values.cbegin()), equivalent_values.cend(), [=, &qthx] (const string& equivalent_value) { qthx.add_value(equivalent_values[0], equivalent_value); } ); // cbegin() corresponds to the canonical value
       }
     }
 
@@ -857,7 +859,9 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
   _init(context, location_db);
 }
 
-/// Get all the known names of exchange fields (for all modes)
+/*! \brief      Get all the known names of exchange fields (for all modes)
+    \return     all the known names of exchange fields (for all modes)
+*/
 const set<string> contest_rules::all_known_field_names(void) const
 { set<string> rv;
 
@@ -869,8 +873,9 @@ const set<string> contest_rules::all_known_field_names(void) const
     for (const auto& msvef : expanded_exchange)
     { const vector<exchange_field>& vef = msvef.second;
 
-      for (const auto& ef : vef)
-        rv.insert(ef.name());
+//      for (const auto& ef : vef)
+//        rv.insert(ef.name());
+      FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv.insert(ef.name()); } );
     }
   }
 
@@ -888,10 +893,11 @@ const EFT contest_rules::exchange_field_eft(const string& field_name) const
 
   const auto v = _exchange_field_eft.find(field_name);
 
-  if (v == _exchange_field_eft.end())
-    return EFT("none");
+//  if (v == _exchange_field_eft.end())
+//    return EFT("none");
 
-  return (v->second);
+//  return (v->second);
+  return ( (v == _exchange_field_eft.cend()) ? EFT("none") : (v->second) );
 }
 
 /*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix

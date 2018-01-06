@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file string_functions.h
+/*! \file   string_functions.h
 
     Functions related to the manipulation of strings
 */

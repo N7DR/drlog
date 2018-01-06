@@ -1,4 +1,4 @@
-// $Id: cluster.h 137 2016-12-15 20:07:54Z  $
+// $Id: cluster.h 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,7 +11,7 @@
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
-/*! \file cluster.h
+/*! \file   cluster.h
 
     Classes and functions related to a DX cluster and the reverse beacon network
 */
@@ -37,6 +37,7 @@ const unsigned int MONITORED_POSTS_DURATION = 3600;     ///< monitored posts are
 class dx_cluster
 {
 protected:
+
   tcp_socket          _connection;                    ///< TCP socket for communication with the network
   std::string         _login_id;                      ///< my login identifier
   std::string         _my_ip;                         ///< my IP address
@@ -58,7 +59,7 @@ public:
     \param  context     the drlog context
     \param  src         whether this is a real DX cluster or the RBN
 */
-  dx_cluster (const drlog_context& context, const POSTING_SOURCE src);
+  dx_cluster(const drlog_context& context, const POSTING_SOURCE src);
   
 /// destructor
   virtual ~dx_cluster(void);
@@ -74,7 +75,7 @@ public:
   const std::string get_unprocessed_input(void);
   
 /*! \brief          Send a message to the cluster
-    \return msg     the message to be sent
+    \param  msg     the message to be sent
 */
   inline void send(const std::string& msg = "\r\n")
    { _connection.send(msg); }
@@ -94,6 +95,7 @@ public:
 class dx_post
 {
 protected:
+
   enum BAND             _band;              ///< band of post
   std::string           _callsign;          ///< callsign that was heard
   std::string           _canonical_prefix;  ///< canonical prefix corresponding to <i>callsign</i>
@@ -145,6 +147,7 @@ public:
 class monitored_posts_entry
 {
 protected:
+
   enum BAND     _band;              ///< band
   std::string   _callsign;          ///< callsign
   time_t        _expiration;        ///< time (relative to the UNIX epoch) at which entry will expire
@@ -159,15 +162,19 @@ public:
 
   READ(band);               ///< band
   READ(callsign);           ///< callsign
-  READ(expiration);
-  READ(frequency_str);
+  READ(expiration);         ///< time (relative to the UNIX epoch) at which entry will expire
+  READ(frequency_str);      ///< frequency in format xxxxx.y [kHz]
 
 /// convert to a string suitable for display in a window
   inline const std::string to_string(void) const
     { return ( pad_string(_frequency_str, 7, PAD_LEFT) + " " + _callsign ); }
 };
 
-/// ostream << monitored_posts_entry
+/*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream
+    \param  ost     output stream
+    \param  mpe     object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const monitored_posts_entry& mpe);
 
 // -----------  monitored_posts  ----------------

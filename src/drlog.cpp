@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 141 2017-12-16 21:19:10Z  $
+// $Id: drlog.cpp 142 2018-01-01 20:56:52Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -244,6 +244,8 @@ bandmap_buffer          bm_buffer;                          ///< global control 
 drlog_context           context;                            ///< context taken from configuration file
 unsigned int            cw_speed_change;                    ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
+bool                    display_grid;                       ///< whether to display the grid in GRID and INFO windows
+
 exchange_field_database exchange_db;                        ///< dynamic database of exchange field values for calls; automatically thread-safe
 
 bool                    filter_remaining_country_mults(false);  ///< whether to apply filter to remaining country mults
@@ -304,6 +306,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_exchange,                    ///< QSO exchange received from other station
        win_log_extract,                 ///< to show earlier QSOs
        win_fuzzy,                       ///< fuzzy lookups
+       win_grid,                        ///< grid square
        win_individual_messages,         ///< messages from the individual messages file
        win_individual_qtc_count,        ///< number of QTCs sent to an individual
        win_info,                        ///< summary of info about current station being worked
@@ -577,6 +580,7 @@ int main(int argc, char** argv)
     cw_speed_change = context.cw_speed_change();
     my_grid = grid_square(context.my_grid());
     best_dx_in_miles = (context.best_dx_unit() == "MILES");
+    display_grid = context.display_grid();
 
 // possibly configure audio recording
     if (context.record_audio())
@@ -975,6 +979,9 @@ int main(int argc, char** argv)
 
 // FUZZY window
   win_fuzzy.init(context.window_info("FUZZY"), WINDOW_NO_CURSOR);
+
+// GRID window
+  win_grid.init(context.window_info("GRID"), WINDOW_NO_CURSOR);
 
 // INDIVIDUAL MESSAGES window
   win_individual_messages.init(context.window_info("INDIVIDUAL MESSAGES"), WINDOW_NO_CURSOR);
@@ -4111,6 +4118,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       win_batch_messages <= WINDOW_CLEAR;
       win_individual_messages <= WINDOW_CLEAR;
       update_qsls_window();                     // clears the window, except for the preliminary string
+
+      if (display_grid)
+        win_grid <= WINDOW_CLEAR;
     }
     else
     { const string current_contents = remove_peripheral_spaces(win.read());
@@ -5396,7 +5406,7 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
     \param  callsign    full or partial call
 
     Called multiple times as a call is being typed. Also populates INDIVIDUAL QTC COUNT
-    window if appropriate
+    window if appropriate. Also populates GRID window if appropriate.
  */
 void populate_win_info(const string& callsign)
 { if (send_qtcs)
@@ -5407,6 +5417,15 @@ void populate_win_info(const string& callsign)
   }
   else
     win_info < WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
+
+  if (display_grid)
+  { const string grid_name = exchange_db.guess_value(callsign, "GRID");
+
+//    ost << "grid for " << callsign << "guessed to be: " << grid_name << endl;
+
+    if (!grid_name.empty())
+      win_grid < WINDOW_CLEAR <= grid_name;
+  }
 
   const string name_str = location_db.country_name(callsign);            // name of the country
 
