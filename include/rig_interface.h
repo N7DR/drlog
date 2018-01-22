@@ -135,48 +135,68 @@ public:
   inline const bool valid(void) const
     { return (_rigp != nullptr); }
 
-/// set baud rate
+/*! \brief          Set baud rate
+    \param  rate    baud rate to which the rig should be set
+*/
   void baud_rate(const unsigned int rate);
 
-/// get baud rate
+/*! \brief      Get baud rate
+    \return     rig baud rate
+*/
   const unsigned int baud_rate(void);
 
-/// set number of data bits
+/*! \brief          Set the number of data bits (7 or 8)
+    \param  bits    the number of data bits to which the rig should be set
+
+    Throws exception if <i>bits</i> is not 7 or 8
+*/
   void data_bits(const unsigned int bits);
 
-/// get number of data bits
+/*! \brief      Get the number of data bits
+    \return     number of data bits
+*/
   const unsigned int data_bits(void);
 
-/// set number of stop bits
+/*! \brief          Set the number of stop bits (1 or 2)
+    \param  bits    the number of stop bits to which the rig should be set
+
+    Throws exception if <i>bits</i> is not 1 or 2
+*/
   void stop_bits(const unsigned int bits);
 
-/// get number of stop bits
+/*! \brief      Get the number of stop bits
+    \return     number of stop bits
+*/
   const unsigned int stop_bits(void);
 
 /*! \brief      Set frequency of VFO A
-    \param  f   frequency to which to QSY
+    \param  f   new frequency of VFO A
 
     Does nothing if <i>f</i> is not within a ham band
 */
   void rig_frequency(const frequency& f);
 
 /*! \brief      Set frequency of VFO A
-    \param  f   frequency to which to QSY
+    \param  f   new frequency of VFO A
 
     Does nothing if <i>f</i> is not within a ham band
 */
   inline void rig_frequency_a(const frequency& f)
     { rig_frequency(f); }
 
-/// get the frequency of VFO A
+/*! \brief      Get the frequency of VFO A
+    \return     frequency of VFO A
+*/
   const frequency rig_frequency(void);
 
-/// get the frequency of VFO A
+/*! \brief      Get the frequency of VFO A
+    \return     frequency of VFO A
+*/
   inline const frequency rig_frequency_a(void)
     { return rig_frequency(); }
 
 /*! \brief      Set frequency of VFO B
-    \param  f   frequency to which to QSY
+    \param  f   new frequency of VFO B
 
     Does nothing if <i>f</i> is not within a ham band
 */

@@ -192,7 +192,7 @@ void rig_interface::prepare(const drlog_context& context)
 }
 
 /*! \brief      Set frequency of VFO A
-    \param  f   frequency to which to QSY
+    \param  f   new frequency of VFO A
 
     Does nothing if <i>f</i> is not within a ham band
 */
@@ -215,7 +215,7 @@ void rig_interface::rig_frequency(const frequency& f)
 }
 
 /*! \brief      Set frequency of VFO B
-    \param  f   frequency to which to QSY
+    \param  f   new frequency of VFO B
 
     Does nothing if <i>f</i> is not within a ham band
 */
@@ -295,7 +295,9 @@ void rig_interface::rig_mode(const MODE m)
   }
 }
 
-/// get the frequency of VFO A
+/*! \brief      Get the frequency of VFO A
+    \return     frequency of VFO A
+*/
 const frequency rig_interface::rig_frequency(void)
 { if (!_rig_connected)
     return _last_commanded_frequency;
@@ -420,7 +422,9 @@ const bool rig_interface::split_enabled(void)
   return (split_mode == RIG_SPLIT_ON);
 }
 
-/// set baud rate
+/*! \brief          Set baud rate
+    \param  rate    baud rate to which the rig should be set
+*/
 void rig_interface::baud_rate(const unsigned int rate)
 { if (_rigp)
   { SAFELOCK(_rig);
@@ -428,13 +432,19 @@ void rig_interface::baud_rate(const unsigned int rate)
   }
 }
 
-/// get baud rate
+/*! \brief      Get baud rate
+    \return     rig baud rate
+*/
 const unsigned int rig_interface::baud_rate(void)
 { SAFELOCK(_rig);
   return (_rigp ? _rigp->state.rigport.parm.serial.rate : 0);
 }
 
-/// set number of data bits
+/*! \brief          Set the number of data bits (7 or 8)
+    \param  bits    the number of data bits to which the rig should be set
+
+    Throws exception if <i>bits</i> is not 7 or 8
+*/
 void rig_interface::data_bits(const unsigned int bits)
 { if (bits < 7 or bits > 8)
     throw rig_interface_error(RIG_INVALID_DATA_BITS, "Attempt to set invalid number of data bits: " + to_string(bits));
@@ -445,14 +455,20 @@ void rig_interface::data_bits(const unsigned int bits)
     _rigp->state.rigport.parm.serial.data_bits = bits;
 }
 
-/// get number of data bits
+/*! \brief      Get the number of data bits
+    \return     number of data bits
+*/
 const unsigned int rig_interface::data_bits(void)
 { SAFELOCK(_rig);
 
   return (_rigp ? _rigp->state.rigport.parm.serial.data_bits : 0);
 }
 
-/// set number of stop bits
+/*! \brief          Set the number of stop bits (1 or 2)
+    \param  bits    the number of stop bits to which the rig should be set
+
+    Throws exception if <i>bits</i> is not 1 or 2
+*/
 void rig_interface::stop_bits(const unsigned int bits)
 { if (bits < 1 or bits > 2)
     throw rig_interface_error(RIG_INVALID_STOP_BITS, "Attempt to set invalid number of stop bits: " + to_string(bits));
@@ -463,7 +479,9 @@ void rig_interface::stop_bits(const unsigned int bits)
     _rigp->state.rigport.parm.serial.stop_bits = bits;
 }
 
-/// get number of stop bits
+/*! \brief      Get the number of stop bits
+    \return     number of stop bits
+*/
 const unsigned int rig_interface::stop_bits(void)
 { SAFELOCK(_rig);
 
@@ -822,10 +840,10 @@ const bool rig_interface::is_locked(void)
 #if !defined(NEW_RAW_COMMAND)
 const string rig_interface::raw_command(const string& cmd, const bool response_expected)
 { struct rig_state* rs_p = &(_rigp->state);
-  struct rig_state& rs   = *rs_p;
+//  struct rig_state& rs   = *rs_p;
   const int fd           = _file_descriptor();
   static array<char, 1000> c_in;
-  int n_read             = 0;
+//  int n_read             = 0;
   unsigned int total_read         = 0;
   string rcvd;
   const bool is_p3_screenshot = (cmd == "#BMP;");   // this has to be treated differently: the response is long and has no concluding semicolon
@@ -881,7 +899,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           { if (status == 0)
              ost << "timeout in select() in raw_command: " << cmd << endl;
             else
-            { n_read = read(fd, c_in.data(), 131640 - total_read);
+            { const int n_read = read(fd, c_in.data(), 131640 - total_read);
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
@@ -918,7 +936,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
             sleep_for(milliseconds(50));
 
           int status = select(fd + 1, &set, NULL, NULL, &timeout);
-          int nread = 0;
+//          int nread = 0;
 
           if (status == -1)
             ost << "Error in select() in raw_command()" << endl;
@@ -943,7 +961,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
                 }
               }
 
-              n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
+              const int n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;

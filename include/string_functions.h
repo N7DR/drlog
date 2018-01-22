@@ -533,9 +533,20 @@ inline const bool starts_with(const std::string& cs, const std::string& ss)
 inline const bool begins_with(const std::string& cs, const std::string& ss)
   { return (starts_with(cs, ss) ); }
 
-/// is a call a maritime mobile?
+/*! \brief      Does a string end with a particular substring?
+    \param  cs  string to test
+    \param  ss  substring to look for
+    \return     whether <i>cs</i> ends with <i>ss</i>
+*/
+inline const bool ends_with(const std::string& cs, const std::string& ss)
+  { return ( cs.rfind(ss) == (cs.length() - ss.length()) ); }
+
+/*! \brief              Is a call a maritime mobile?
+    \param  callsign    call to test
+    \return             whether <i>callsign</i> appears to be a maritime mobile
+*/
 inline const bool is_maritime_mobile(const std::string& callsign)
-  { return ( to_upper(last(callsign, 3)) == "/MM" ); }
+  { return ( ends_with(to_upper(callsign), "/MM" ) ); }
 
 /*! \brief          Convert an integer to a character-separated string
     \param  n       number to convert
@@ -644,6 +655,8 @@ const std::string reformat_for_wprintw(const std::string& str, const int width);
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
 const std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& vecstr, const int width);
+
+const bool is_legal_rst(const std::string& str);
 
 // -------------------------------------- Errors  -----------------------------------
 

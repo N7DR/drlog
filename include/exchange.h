@@ -125,9 +125,9 @@ protected:
 
 public:
 
-/*! \brief                  Constructor
-    \param  call            callsign
-    \param  received_str    exchange string
+/*! \brief                      Constructor
+    \param  call                callsign
+    \param  received_fields     separated strings from the exchange
 */
   parsed_ss_exchange(const std::string& call, const std::vector<std::string>& received_fields);
 
@@ -280,7 +280,7 @@ class exchange_field_database
 {
 protected:
 
-  std::map< std::pair< std::string /* callsign */, std::string /* field name */>, std::string /* value */> _db;  ///< the actual database
+  std::map< std::pair< std::string /* callsign */, std::string /* field name */>, std::string /* value */>  _db;  ///< the actual database
 //          --------------------------------  key  -----------------------------  --------  value  -------
 
 public:
@@ -334,13 +334,13 @@ protected:
 //  1. regex
 //  2. .values file
 
-  std::string   _name;                    ///< name of exchange field
-  boost::regex  _regex_expression;        ///< regex expression to define field
+  std::string   _name;                      ///< name of exchange field
+  boost::regex  _regex_expression;          ///< regex expression to define field
 
   std::map<std::string,                        /* a canonical field value */
           std::set                             /* each equivalent value is a member of the set, including the canonical value */
             <std::string                       /* indistinguishable legal values */
-            >>  _values;
+            >>  _values;                    ///< the canonical and alternative values for the field
 
   std::set<std::string>  _legal_non_regex_values;           ///< all legal values not obtained from a regex
   std::map<std::string, std::string>  _value_to_canonical;  ///< key = value; value = corresponding canonical value
@@ -466,7 +466,6 @@ public:
        & _value_to_canonical
        & _is_mult;
   }
-
 };
 
 /*! \brief          Write an <i>EFT</i> object to an output stream

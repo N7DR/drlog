@@ -11,7 +11,7 @@
 #ifndef QTC_H
 #define QTC_H
 
-/*! \file qtc.h
+/*! \file   qtc.h
 
     Classes and functions related to WAE QTCs
 */
@@ -42,8 +42,8 @@ const bool QTC_SENT = true,
 
 // -----------------------------------  qtc_entry  ----------------------------
 
-/*! \class qtc_entry
-    \brief An entry in a QTC
+/*! \class  qtc_entry
+    \brief  An entry in a QTC
 */
 
 class qtc_entry
@@ -66,7 +66,9 @@ public:
   READ_AND_WRITE(callsign);     ///< other station
   READ(serno);                  ///< serial number sent by other station; width = 4
 
-/// set the serial number
+/*! \brief          Explicitly set the serial number sent by the other station
+    \param  str     new serial number
+*/
   inline void serno(const std::string& str)
     { _serno = pad_string(str, 4, PAD_RIGHT); }
 
@@ -109,8 +111,8 @@ public:
 
 // -----------------------------------  qtc_series  ----------------------------
 
-/*! \class qtc_series
-    \brief A QTC series as defined by the WAE rules
+/*! \class  qtc_series
+    \brief  A QTC series as defined by the WAE rules
 */
 
 class qtc_series
@@ -207,12 +209,13 @@ public:
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-//  const std::pair<qtc_entry, bool>& operator[](const unsigned int n) const;
   const std::pair<qtc_entry, bool> operator[](const unsigned int n) const;
 
-//  const std::string to_string(const unsigned int n_rows) const;
+/*! \brief      Mark a particular entry as having been sent
+    \param  n   index number to mark (wrt 0)
 
-// set a particular entry to sent
+    Does nothing if entry number <i>n</i> does not exist
+*/
   void mark_as_sent(const unsigned int n);
 
 // set a particular entry to unsent

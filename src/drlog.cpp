@@ -4427,6 +4427,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
                 qso.set_exchange_mult(name);
             }
 
+ost << "Adding QSO to logbook: " << qso << endl;
+
             add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
 
 // write the log line
@@ -4965,6 +4967,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         { if (!remove_peripheral_spaces(new_win_log_snapshot[n]).empty())
           { QSO qso = original_qsos[n];
 
+            ost << "Call from log line = " << call_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n])) << endl;
+
             qso.log_line();                                                                 // fills some fields in the QSO
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 //            qso.new_populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]), context.my_call());  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
@@ -5320,10 +5324,23 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
     \param  statistics      current statistics for the contest
     \param  b               current band
     \param  m               current mode
+
+    Does nothing if there is no window for this exchange mult
 */
 void update_remaining_exch_mults_window(const string& exch_mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m)
-{ const set<string> known_exchange_values_set = statistics.known_exchange_mult_values(exch_mult_name);
+{ //if (!win_remaining_exch_mults_p[exch_mult_name])
+  //if (find(win_remaining_exch_mults_p.cbegin(), win_remaining_exch_mults_p.cend(), exch_mult_name) == win_remaining_exch_mults_p.cend())
+  if (win_remaining_exch_mults_p.find(exch_mult_name) == win_remaining_exch_mults_p.cend())
+  { // ost << "No window for remaining exchange mults for mult name = " << exch_mult_name << ", so cannot update" << endl;
+    return;
+  }
+
+// map<string /* name */, window*>     win_remaining_exch_mults_p; ///< map from name of an exchange mult to a pointer to the corresponding window
+
+
+  const set<string> known_exchange_values_set = statistics.known_exchange_mult_values(exch_mult_name);
   const vector<string> known_exchange_values(known_exchange_values_set.cbegin(), known_exchange_values_set.cend());
+
   window& win = ( *(win_remaining_exch_mults_p[exch_mult_name]) );
 
 // get the colours right
@@ -5331,7 +5348,11 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
 
   for (const auto& known_value : known_exchange_values)
   { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
+//    const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
+
+//    ost << "is_needed = " << is_needed << endl;
     const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
+//    ost << "colour_paur_number = " << colour_pair_number << endl;
 
     vec.push_back( { known_value, colour_pair_number } );
    }

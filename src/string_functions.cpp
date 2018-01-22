@@ -1070,3 +1070,21 @@ const vector<string> reformat_for_wprintw(const vector<string>& vecstr, const in
 
   return rv;
 }
+
+const bool is_legal_rst(const string& str)
+{ if (str.length() != 3)
+    return false;
+
+  if (str[0] < '1' or str[0] > '5')
+    return false;
+
+  if (str[1] < '1' or str[1] > '9')
+    return false;
+
+  if (str[2] < '1' or str[2] > '9')
+    return false;
+
+  return true;
+}
+
+

@@ -229,6 +229,7 @@ std::ostream& operator<<(std::ostream& ost, const exchange_field& exch_f);
 class points_structure
 {
 protected:
+
   std::map<std::string, unsigned int> _continent_points;    ///< per-continent points
   std::map<std::string, unsigned int> _country_points;      ///< per-country points
   unsigned int                        _default_points;      ///< default points
@@ -462,20 +463,20 @@ public:
   SAFEREAD(exchange_mults_per_band, rules);             ///< are exchange mults counted per-band?
   SAFEREAD(exchange_mults_per_mode, rules);             ///< are exchange mults counted per-mode?
   SAFEREAD(exchange_mults_used, rules);                 ///< are exchange mults used?
-  SAFEREAD(expanded_exchange_mults, rules);     ///< expanded exchange multipliers
+  SAFEREAD(expanded_exchange_mults, rules);             ///< expanded exchange multipliers
 
-  SAFEREAD(original_score_bands, rules);        ///< bands that were originally used to calculate score (from the configuration file)
-  SAFEREAD(original_score_modes, rules);        ///< modes that were originally used to calculate score (from the configuration file)
+  SAFEREAD(original_score_bands, rules);                ///< bands that were originally used to calculate score (from the configuration file)
+  SAFEREAD(original_score_modes, rules);                ///< modes that were originally used to calculate score (from the configuration file)
 
-  SAFEREAD(per_band_country_mult_factor, rules);         ///< factor by which to multiply number of country mults, per band (see WAE rules)
+  SAFEREAD(per_band_country_mult_factor, rules);        ///< factor by which to multiply number of country mults, per band (see WAE rules)
 
-  SAFEREAD(score_bands, rules);                 ///< bands currently used to calculate score
-  SAFEREAD(score_modes, rules);                 ///< modes currently used to calculate score
-  SAFEREAD(send_qtcs, rules);                   ///< Can QTCs be sent?
+  SAFEREAD(score_bands, rules);                         ///< bands currently used to calculate score
+  SAFEREAD(score_modes, rules);                         ///< modes currently used to calculate score
+  SAFEREAD(send_qtcs, rules);                           ///< can QTCs be sent?
 
-  SAFEREAD(uba_bonus, rules);                   ///< Do we have bonus points for ON stations?
+  SAFEREAD(uba_bonus, rules);                           ///< do we have bonus points for ON stations?
 
-  SAFEREAD(exchange_field_eft, rules);      ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
+  SAFEREAD(exchange_field_eft, rules);                  ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
 /*! \brief              The exchange field template corresponding to a particular field
     \param  field_name  name of the field
@@ -677,7 +678,6 @@ public:
          & _country_mults
          & _country_mults_per_band
          & _country_mults_per_mode
-         & _per_band_country_mult_factor
          & _exchange_mults
          & _exchange_mults_per_band
          & _exchange_mults_per_mode
@@ -685,6 +685,7 @@ public:
          & _exchange_present_points
          & _exch_values
          & _expanded_received_exchange
+         & _per_band_country_mult_factor
          & _permitted_bands
          & _permitted_exchange_values
          & _permitted_modes
@@ -695,7 +696,7 @@ public:
          & _sent_exchange_names
          & _work_if_different_band
          & _work_if_different_mode
-//         & _exchange_field_eft        // won't serialize
+         & _exchange_field_eft
          & _score_bands
          & _original_score_bands
          & _score_modes

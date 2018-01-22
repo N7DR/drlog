@@ -6,7 +6,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file qtc.cpp
+/*! \file   qtc.cpp
 
     Classes and functions related to WAE QTCs
 */
@@ -20,8 +20,8 @@ using namespace std;
 
 // -----------------------------------  qtc_entry  ----------------------------
 
-/*! \class qtc_entry
-    \brief An entry in a QTC
+/*! \class  qtc_entry
+    \brief  An entry in a QTC
 */
 
 /// default constructor
@@ -29,16 +29,14 @@ qtc_entry::qtc_entry(void) :
   _utc("0000"),
   _callsign(),
   _serno("0000")
-{
-}
+{ }
 
 /// construct from a QSO
 qtc_entry::qtc_entry(const QSO& qso) :
   _utc(substring(qso.utc(), 0, 2) + substring(qso.utc(), 3, 2)),
   _callsign( (qso.continent() == "EU") ? qso.callsign() : string()),
   _serno(pad_string(qso.received_exchange("SERNO"), 4, PAD_RIGHT))    // force width to 4
-{
-}
+{ }
 
 /// qtc_entry == qso
 const bool qtc_entry::operator==(const QSO& qso) const
@@ -146,7 +144,11 @@ const pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
   return ( (n < _qtc_entries.size()) ? _qtc_entries[n] : empty_return_value );
 }
 
-// set a particular entry to sent
+/*! \brief      Mark a particular entry as having been sent
+    \param  n   index number to mark (wrt 0)
+
+    Does nothing if entry number <i>n</i> does not exist
+*/
 void qtc_series::mark_as_sent(const unsigned int n)
 { if (n < _qtc_entries.size())
     _qtc_entries[n].second = true;

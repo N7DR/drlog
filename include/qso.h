@@ -296,4 +296,6 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q);
 inline const bool earlier(const QSO& qso_1, const QSO& qso_2)
   { return (qso_1.earlier_than(qso_2)); }
 
+const std::string call_from_log_line(const std::string& ll);
+
 #endif    // QSO_H

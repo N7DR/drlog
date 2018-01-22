@@ -41,6 +41,14 @@ static const map<string, string> cabrillo_qso_templates { { "ARRL DX", "ARRL DX"
                                                           { "JIDX SSB",  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1" }
                                                         };
 
+/*! \brief          Write an error message to the output file, then exit
+    \param  line    the line that caused the error
+*/
+void print_error_and_exit(const string& line)
+{ ost << "Parse error in line: " << line << endl;
+  exit(-1);
+}
+
 // -----------  drlog_context  ----------------
 
 /*! \class  drlog_context
@@ -467,9 +475,11 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
-//      for (size_t n = 0; n < fields.size(); ++n)
       for (const auto& this_field : fields)
       { const vector<string> field = split_string(this_field, ":");
+
+        if (fields.size() != 2)
+          print_error_and_exit(testline);
 
         _sent_exchange_cw.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
       }
@@ -481,8 +491,10 @@ void drlog_context::_process_configuration_file(const string& filename)
       const vector<string> fields = split_string(comma_delimited_list, ",");
 
       for (const auto& this_field : fields)
-//      for (size_t n = 0; n < fields.size(); ++n)
       { const vector<string> field = split_string(this_field, ":");
+
+        if (fields.size() != 2)
+          print_error_and_exit(testline);
 
         _sent_exchange_ssb.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
       }
@@ -515,6 +527,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // MARK FREQUENCIES [CW|SSB]
     if (starts_with(testline, "MARK FREQUENCIES") and !rhs.empty())
     { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
+
       vector<pair<frequency, frequency>> frequencies;
 
       for (const string& range : ranges)
@@ -525,8 +538,7 @@ void drlog_context::_process_configuration_file(const string& filename)
         }
 
         catch (...)
-        { ost << "Parse error in " << LHS << endl;
-          exit(-1);
+        { print_error_and_exit(testline);
         }
       }
 
@@ -1087,6 +1099,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       { const string name = window_info[0];
 
         window_information winfo;
+
         winfo.x(from_string<int>(window_info[1]));
         winfo.y(from_string<int>(window_info[2]));
         winfo.w(from_string<int>(window_info[3]));
@@ -1245,8 +1258,10 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     if (LHS == "MESSAGE CQ 1")
     { const vector<string> tokens = split_string(testline, "=");
 
-      if (tokens.size() == 2)
-        _message_cq_1 = tokens[1];
+      if (tokens.size() != 2)
+        print_error_and_exit(testline);
+
+      _message_cq_1 = tokens[1];
     }
 
     if (LHS == "MESSAGE CQ 2")
@@ -1373,7 +1388,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cq_auto_rit(false),                                              // don't enable RIT in CQ mode
   _cty_filename("cty.dat"),                                         // filename for country data
   _cw_speed(29),                                                    // 29 WPM
-  _cw_speed_change(1),                                              // change speed by 1 WPM
+  _cw_speed_change(3),                                              // change speed by 3 WPM
   _decimal_point("·"),                                              // use centred dot as decimal point
   _display_communication_errors(true),                              // display errors communicating with rig
   _display_grid(false),                                             // do not display grid info in GRID and INFO windows

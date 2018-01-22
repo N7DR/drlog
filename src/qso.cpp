@@ -334,6 +334,13 @@ void QSO::populate_from_log_line(const string& str)
       ost << "index = " << received_index << endl;
       ost << "vec[n] = " << vec[n] << endl;
 
+// in Stew Perry, we have an optional RST as the first field; this is a horrible kludge
+//      if ( (ends_with(field, "RST") and (is_legal_rst(vec[n]))) or !ends_with(field, "RST") )
+
+
+
+//      { ost << "inside loop for field: " << field << endl;
+
       if (received_index < _received_exchange.size())
       { _received_exchange[received_index++].value(vec[n]);
         ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
@@ -344,6 +351,7 @@ void QSO::populate_from_log_line(const string& str)
           ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
         }
       }
+//      }
 
       processed = true;
     }
@@ -943,5 +951,19 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q)
       << ", Points: " << q.points();
   
   return ost;
+}
+
+const string call_from_log_line(const string& ll)
+{ static const unsigned int CALL_FIELD = 5;
+
+  string rv;
+
+// separate the line into fields
+  const vector<string> vec = remove_peripheral_spaces(split_string(squash(ll, ' '), " "));
+
+  if (vec.size() < 6)
+    return rv;
+
+  return vec[CALL_FIELD];
 }
 

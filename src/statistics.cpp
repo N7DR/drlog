@@ -897,7 +897,7 @@ const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
     Counts only those QSOs on bands being used to calculate the score. Includes dupes.
 */
 const unsigned int running_statistics::n_qsos(const contest_rules& rules, const MODE m) const
-{ const vector<BAND>& permitted_bands = rules.permitted_bands();
+{ //const vector<BAND>& permitted_bands = rules.permitted_bands();
   const set<BAND>& score_bands = rules.score_bands();
   unsigned int rv = 0;
   const auto& nq = _n_qsos[m];

@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file keyboard.h
+/*! \file   keyboard.h
 
     Classes and functions related to obtaining and processing keyboard input
 */
@@ -40,15 +40,24 @@ typedef unsigned int key_code;                                          ///< syn
 
 // helper functions for KeySyms
 
-/// is a KeySym an upper-case letter?
+/*! \brief      Test whether a KeySym is an upper-case letter
+    \param  ks  the KeySym to test
+    \return     whether <i>ks</i> is an upper-case letter
+*/
 inline const bool is_upper_case_letter(const KeySym ks)
   { return ((ks >= XK_A) and (ks <= XK_Z)); }
 
-/// is a KeySym a lower-case letter?
+/*! \brief      Test whether a KeySym is a lower-case letter
+    \param  ks  the KeySym to test
+    \return     whether <i>ks</i> is a lower-case letter
+*/
 inline const bool is_lower_case_letter(const KeySym ks)
   { return ((ks >= XK_a) and (ks <= XK_z)); }
 
-/// is a KeySym a letter?
+/*! \brief      Test whether a KeySym is a letter
+    \param  ks  the KeySym to test
+    \return     whether <i>ks</i> is a letter
+*/
 inline const bool is_letter(const KeySym ks)
   { return (is_upper_case_letter(ks) or is_lower_case_letter(ks)); }
 
@@ -187,6 +196,8 @@ protected:
     \param  display_p       pointer to X display
     \param  error_event_p   pointer to X error event
     \return                 ignored value (see man XSetErrorHandler)
+
+    Although ignored, the return type has to match the type documented for the parameter to XSetErrorHandler()
 */
   static int _x_error_handler(Display* display_p, XErrorEvent* error_event_p);
 
@@ -212,9 +223,11 @@ public:
 /// move any pending X keyboard events to the queue
   void process_events(void);
 
-/*! \brief  What event is at the front of the queue?
+/*! \brief      What event is at the front of the queue?
+    \return     the event at the front of the queue
 
-    Returns the default keyboad_event() if the queue is empty
+    Does not remove the event from the queue.
+    Returns the default keyboad_event() if the queue is empty.
 */
   const keyboard_event peek(void);
 

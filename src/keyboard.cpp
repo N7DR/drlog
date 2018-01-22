@@ -1,6 +1,6 @@
 // $Id: keyboard.cpp 140 2017-11-05 15:16:46Z  $
 
-/*! \file keyboard.cpp
+/*! \file 	keyboard.cpp
 
     Classes and functions related to obtaining and processing keyboard input
 */
@@ -32,6 +32,9 @@ extern message_stream           ost;    ///< for debugging, info
 /*! \brief                  X error handler
     \param  display_p       pointer to X display
     \param  error_event_p   pointer to X error event
+    \return                 ignored value (see man XSetErrorHandler)
+
+    Although ignored, the return type has to match the type documented for the parameter to XSetErrorHandler()
 */
 int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_event_p)
 { cerr << "X Error" << endl;
@@ -106,15 +109,18 @@ void keyboard_queue::process_events(void)
   char buf[BUF_SIZE + 1];
   KeySym ks;
 
+// I leave these comments here, in case I ever need to change this code.
+// The problem outlinesd below appears to have been solved by forcing X to be multithreaded.
+
 // if I take this out, then the events sent by XSendEvent() aren't seen by
 // XWindowEvent() until after a real key has been pressed. I have no real idea why
 // this is so -- nothing seems to suggest that XKeysymToKeycode()
 // does anything other than simply perform the expected mapping.
 
 // My best guess is that it's something to do with threading... indeed, from what I can
-// tell I'm supposed to explicitly lock the display before a call to an X function that
+// tell, I'm supposed to lock the display /explicitly/ before a call to an X function that
 // uses the display pointer... but I can't find any example of how that really works in
-// practice: one can't wrap the call XWindowEvent() in such a lock because it blocks.
+// practice: one can't wrap the call XWindowEvent() in such a lock because then the call blocks.
 
 // Perhaps one is supposed to call XPending() first, and wrap that, and only call XWindowEvent()
 // when we know there's an event waiting. But if there's no such event what does one do? One can hardly
@@ -130,12 +136,10 @@ void keyboard_queue::process_events(void)
 
   /* const KeyCode kc3 = */ //XKeysymToKeycode(_display_p, XK_g);
 
-//  ost << "After XKeysymToKeycode() kc3" << endl;
-
   while (1)
   {
 // get the next event
-    if (_x_multithreaded)
+    if (_x_multithreaded)           // this should always be true in drlog
     { bool got_event = false;
 
       while (!got_event)
@@ -153,7 +157,7 @@ void keyboard_queue::process_events(void)
           sleep_for(milliseconds(10));
       }
     }
-    else
+    else                            // this should never be true in drlog
       XWindowEvent(_display_p, _window_id, KeyPressMask | KeyReleaseMask, &event);
 
     if ((event.type == KeyPress) or (event.type == KeyRelease))    // should always be true
@@ -204,9 +208,11 @@ const bool keyboard_queue::empty(void)
   return _events.empty();
 }
 
-/*! \brief  What event is at the front of the queue?
+/*! \brief      What event is at the front of the queue?
+    \return     the event at the front of the queue
 
-    Returns the default keyboad_event() if the queue is empty
+    Does not remove the event from the queue.
+    Returns the default keyboad_event() if the queue is empty.
 */
 const keyboard_event keyboard_queue::peek(void)
 { SAFELOCK (_keyboard);
@@ -294,7 +300,7 @@ void keyboard_queue::push_key_press(const KeySym ks)
    event.xkey.same_screen = /* (const) */ True;
 
  // TRY   http://www.doctort.org/adam/nerd-notes/x11-fake-keypress-event.html
-   const int status = XSendEvent(display_p, window_id, False, KeyPressMask, &event);
+   /* const int status = */ XSendEvent(display_p, window_id, False, KeyPressMask, &event);
    XFlush(display_p);
 
    if (_x_multithreaded)

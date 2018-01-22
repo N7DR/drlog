@@ -162,10 +162,9 @@ const bool parsed_ss_exchange::_is_possible_callsign(const string& str) const
   return (isalpha(str[0]) and contains_digit(str));
 }
 
-
-/*! \brief                  Constructor
-    \param  call            callsign
-    \param  received_str    exchange string
+/*! \brief                      Constructor
+    \param  call                callsign
+    \param  received_fields     separated strings from the exchange
 */
 parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>& received_fields) :
   _callsign(call),
@@ -291,8 +290,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 // get the callsign, which may or may not be present
   ost << "getting callsign" << endl;
-//  int callsign_field_nr = -1;
-//  unsigned int callsign_field_nr = numeric_limits<unsigned int>::max();
 
   if (possible_callsigns.empty())
     _callsign = call;    // default
@@ -300,7 +297,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   { const unsigned int field_nr = possible_callsigns[possible_callsigns.size() - 1];
 
     _callsign = copy_received_fields[field_nr];
-//    callsign_field_nr = static_cast<int>(field_nr);
   }
 
 // get the serno; for this use the last field that is a possible serno and hasn't been used as a check
@@ -468,8 +464,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     if (exch.callsign() != from_callsign)
       _replacement_call = exch.callsign();
 
-//    std::string    _mult_value;           ///< actual value of the mult (if it is a mult)
-//    exchange = SERNO, PREC, CALL, CHECK, SECTION
     _fields.push_back( { "SERNO", to_string(exch.serno()), false } );
     _fields.push_back( { "PREC", create_string(exch.prec()), false } );
     _fields.push_back( { "CALL", exch.callsign(), false } );
@@ -477,7 +471,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     _fields.push_back( parsed_exchange_field("SECTION", exch.section(), true) );    // convert section to canonical form if necessary
 
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
-    _valid = true;
+    _valid = true;                      // default
 
     if (exch.serno() == 0)
       _valid = false;
@@ -492,7 +486,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   }
 
 // how many fields are optional?
-//  unsigned int n_optional_fields = 0;
   set<string> optional_field_names;
 
   FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
@@ -500,8 +493,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
                                                                 optional_field_names.insert(ef.name());
                                                               }
                                                             } );
-
-//  const unsigned int n_optional_fields = optional_field_names.size();
 
 // prepare output; includes optional fields and all choices
   FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
@@ -777,10 +768,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
 // normalize exchange fields to use canonical value, so that we don't mistakenly count each legitimate value more than once in statistics
 // this means that we can't use a DOK.values file, because the received DOK will get changed here
-  if (_valid)
-    FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
+    if (_valid)
+      FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
 
-}  // end of !truncate received values
+  }  // end of !truncate received values
 }
 
 /*! \brief              Return the value of a particular field
@@ -789,7 +780,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
     Returns empty string if <i>field_name</i> does not exist
 */
-const string parsed_exchange::field_value(const std::string& field_name) const
+const string parsed_exchange::field_value(const string& field_name) const
 { for (const auto& field : _fields)
     if (field.name() == field_name)
       return field.value();
@@ -815,16 +806,16 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
       pef_chosen.name(resolve_choice(pef.name(), pef.value(), rules));
 
       if (pef_chosen.name().empty())
-      { ost << "ERROR in parsed_exchange::chosen_fields(): empty name for field: " << pef.name() << endl;
-      }
+        ost << "ERROR in parsed_exchange::chosen_fields(): empty name for field: " << pef.name() << endl;
       else
         rv.push_back(pef_chosen);
     }
   }
 
 // assign correct mult status
-  for (auto& pef : rv)
-    pef.is_mult(rules.is_exchange_mult(pef.name()));
+//  for (auto& pef : rv)
+//    pef.is_mult(rules.is_exchange_mult(pef.name()));
+  FOR_ALL(rv, [=] (parsed_exchange_field& pef) { pef.is_mult(rules.is_exchange_mult(pef.name())); } );
 
   return rv;
 }
