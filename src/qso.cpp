@@ -1,4 +1,4 @@
-// $Id: qso.cpp 142 2018-01-01 20:56:52Z  $
+// $Id: qso.cpp 143 2018-01-22 22:41:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -795,20 +795,21 @@ const bool QSO::sent_exchange_includes(const string& field_name)
     \return     QSO formatted for writing to in the LOG window
 */
 const string QSO::log_line(void)
-{ static const map<string, unsigned int> field_widths { { "CHECK",    2 },
-                                                        { "CQZONE",   2 },
-                                                        { "CWPOWER",  3 },
-                                                        { "DOK",      1 },
-                                                        { "ITUZONE",  2 },
-                                                        { "PREC",     1 },
-                                                        { "RDA",      4 },
-                                                        { "RS",       2 },
-                                                        { "RST",      3 },
-                                                        { "RST",      3 },
-                                                        { "SECTION",  3 },
-                                                        { "SSBPOWER", 4 },
-                                                        { "UKEICODE", 2 },
-                                                        { "10MSTATE", 3 }
+{ static const map<string, unsigned int> field_widths { { "CHECK",     2 },
+                                                        { "CQZONE",    2 },
+                                                        { "CWPOWER",   3 },
+                                                        { "DOK",       1 },
+                                                        { "ITUZONE",   2 },
+                                                        { "PREC",      1 },
+                                                        { "RDA",       4 },
+                                                        { "RS",        2 },
+                                                        { "RST",       3 },
+                                                        { "RST",       3 },
+                                                        { "SECTION",   3 },
+                                                        { "SSBPOWER",  4 },
+                                                        { "UKEICODE",  2 },
+                                                        { "160MSTATE", 2 },
+                                                        { "10MSTATE",  3 }
                                                       };
   static const size_t CALL_FIELD_LENGTH = 12;
 

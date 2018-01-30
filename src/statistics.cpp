@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 142 2018-01-01 20:56:52Z  $
+// $Id: statistics.cpp 143 2018-01-22 22:41:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -270,8 +270,8 @@ running_statistics::running_statistics(void) :
   _country_mults_used(false),
   _exchange_mults_used(false),
   _include_qtcs(false),
-  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
   _n_dupes( { {} } ),
+  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
   _qso_points( { {} } ),
   _qtc_qsos_sent(0),
   _qtc_qsos_unsent(0)
@@ -289,8 +289,8 @@ running_statistics::running_statistics(const cty_data& country_data, const drlog
   _exch_mult_fields(rules.exchange_mults().cbegin(), rules.exchange_mults().cend()),
   _include_qtcs(rules.send_qtcs()),
   _location_db(country_data, context.country_list()),
-  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
   _n_dupes( { {} } ),
+  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
   _qso_points( { {} } ),
   _qtc_qsos_sent(0),
   _qtc_qsos_unsent(0)
@@ -739,11 +739,8 @@ const map<string /* field name */, set<string> /* values */ >  running_statistic
   SAFELOCK(statistics);
 
   for (const auto& psm : _exchange_multipliers)
-  { //const string& field_name = psm.first;
-    const multiplier& mult = psm.second;
-    //const set<string> mult_values = mult.worked(b, m);
+  { const multiplier& mult = psm.second;
 
-//    rv.insert( { field_name, mult_values } );
     rv.insert( { psm.first, mult.worked(b, m) } );
   }
 
@@ -793,9 +790,7 @@ void running_statistics::qtc_qsos_unsent(const unsigned int n)
     There are many ways to come up with a plausible definition for the value of a mult
 */
 const float running_statistics::mult_to_qso_value(const contest_rules& rules, const BAND b, const MODE m) const
-{ //ost << "inside new mult_to_qso_value()" << endl;
-
-  const unsigned int current_mults = n_worked_callsign_mults(rules) + n_worked_country_mults(rules) + n_worked_exchange_mults(rules);
+{ const unsigned int current_mults = n_worked_callsign_mults(rules) + n_worked_country_mults(rules) + n_worked_exchange_mults(rules);
   const set<BAND> score_bands = rules.score_bands();
   const set<MODE> score_modes = rules.score_modes();
   unsigned int current_qso_points = 0;
@@ -874,9 +869,8 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
     Counts only those QSOs on bands and modes being used to calculate the score. Includes dupes.
 */
 const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
-{ //const vector<BAND>& permitted_bands = rules.permitted_bands();
-  const set<BAND>& score_bands = rules.score_bands();
-  const set<MODE> score_modes = rules.score_modes();
+{ const set<BAND>& score_bands = rules.score_bands();
+  const set<MODE>& score_modes = rules.score_modes();
   unsigned int rv = 0;
 
   SAFELOCK(statistics);

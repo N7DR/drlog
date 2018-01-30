@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 142 2018-01-01 20:56:52Z  $
+// $Id: drlog_context.h 143 2018-01-22 22:41:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -432,9 +432,9 @@ public:
 
   CONTEXTREAD(old_adif_log_name);            ///< name of ADIF file that contains old QSOs
 
-  SAFEREAD(path, _context);                         ///< directories to search, in order
-  SAFEREAD(per_band_country_mult_factor, _context); ///< country mult factor structure for each band
-  SAFEREAD(per_band_points, _context);              ///< points structure for each band and mode
+  CONTEXTREAD(path);                         ///< directories to search, in order
+  CONTEXTREAD(per_band_country_mult_factor); ///< country mult factor structure for each band
+  CONTEXTREAD(per_band_points);              ///< points structure for each band and mode
 
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
@@ -455,8 +455,8 @@ public:
 
   CONTEXTREAD(post_monitor_calls)                   ///< calls to be monitored
 
-  SAFEREAD(ptt_delay, _context);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
-  SAFEREAD(p3, _context);                           ///< is a P3 available?
+  CONTEXTREAD(ptt_delay);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
+  CONTEXTREAD(p3);                           ///< is a P3 available?
   SAFEREAD(p3_ignore_checksum_error, _context);     ///< should checksum errors be ignored when acquiring P3 screendumps?
   SAFEREAD(p3_snapshot_file, _context);             ///< base name of file for P3 snapshot
   SAFEREAD(p3_span_cq, _context);                   ///< P3 span in CQ mode, in kHz

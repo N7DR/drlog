@@ -18,19 +18,21 @@
 
 #include <string>
 
+static const float KM_PER_MILE = 1.609344;                  ///< number of kilometres in a mile
+
 /*! \brief              Convert miles to kilometres
     \param  dx_miles    distance in miles
     \return             <i>dx_miles</i> in kilometres
 */
 inline const float miles_to_kilometres(const float dx_miles)
-  { return (dx_miles * 1.609344); }
+  { return (dx_miles * KM_PER_MILE); }
 
 /*! \brief          Convert kilometres to miles
     \param  dx_km   distance in kilometres
     \return         <i>dx_km</i> in miles
 */
 inline const float kilometres_to_miles(const float dx_km)
-  { return (dx_km / 1.609344); }
+  { return (dx_km / KM_PER_MILE); }
 
 /*! \brief          Obtain bearing of target from source
     \param  lat1    latitude of source, in degrees (+ve north)

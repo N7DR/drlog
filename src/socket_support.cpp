@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file socket_support.h
+/*! \file   socket_support.cpp
 
     Objects and functions related to sockets. This code is based, with permission,  on
     a much larger codebase from IPfonix, Inc. for socket-related functions.
@@ -57,9 +57,10 @@ void tcp_socket::_close_the_socket(void)
 
 /// default constructor
 tcp_socket::tcp_socket(void)  :
-  _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
-  _preexisting_socket(false),
+  _destination_is_set(false),
   _force_closure(false),
+  _preexisting_socket(false),
+  _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
   _timeout_in_tenths(600)                     // 1 minute
 { try
   { 
@@ -103,6 +104,7 @@ tcp_socket::tcp_socket(SOCKET* sp) :
 
 // enable re-use
       static const int on = 1;
+
       int status = setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) );    // char* cast is needed for Windows
 
       if (status)
@@ -237,9 +239,7 @@ tcp_socket::~tcp_socket(void)
     _close_the_socket();
 }
 
-/*! \brief  New socket
-
-    Switch to using a different underlying socket
+/*! \brief  Create and use a different underlying socket
 */
 void tcp_socket::new_socket(void)
 { try
@@ -322,7 +322,7 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   FD_SET(_sock, &r_set);
   w_set = r_set;
 
-//set socket nonblocking flag
+// set socket nonblocking flag
   flags = fcntl(_sock, F_GETFL, 0);
   fcntl(_sock, F_SETFL, flags | O_NONBLOCK);
 

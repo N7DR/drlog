@@ -1,4 +1,4 @@
-// $Id: drmaster.h 142 2018-01-01 20:56:52Z  $
+// $Id: drmaster.h 143 2018-01-22 22:41:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -221,6 +221,7 @@ protected:
   std::string _precedence;
   std::string _society;
   std::string _ssb_power;
+  std::string _state_160;       // for CQ 160m contest: W and VE only
   std::string _state_10;        // for ARRL 10m contest; W, VE and XE only
 
 //  string _temporary;
@@ -272,6 +273,7 @@ public:
   READ_AND_WRITE(precedence);
   READ_AND_WRITE(society);
   READ_AND_WRITE(ssb_power);
+  READ_AND_WRITE(state_160);
   READ_AND_WRITE(state_10);
 
 // merge with another drmaster_line; new values take precedence if there's a conflict

@@ -642,6 +642,7 @@ drmaster_line::drmaster_line(const string& line_or_call)
   _precedence = _extract_field(fields, "=u");
   _society    = _extract_field(fields, "=v");
   _ssb_power  = _extract_field(fields, "=x");
+  _state_160  = _extract_field(fields, "=s");
   _state_10   = _extract_field(fields, "=t");
 }
 
@@ -712,6 +713,9 @@ const string drmaster_line::to_string(void) const
 
   if (!ssb_power().empty())
     rv += string(" =x") + ssb_power();
+
+  if (!state_160().empty())
+    rv += string(" =s") + state_10();
 
   if (!state_10().empty())
     rv += string(" =t") + state_10();
@@ -788,6 +792,9 @@ const drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
   if (rv.society().empty())
     rv.society(society());
+
+  if (rv.state_160().empty())
+    rv.state_160(state_160());
 
   if (rv.state_10().empty())
     rv.state_10(state_10());

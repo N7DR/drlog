@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 142 2018-01-01 20:56:52Z  $
+// $Id: exchange.cpp 143 2018-01-22 22:41:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -927,6 +927,76 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       return rv;
     };
 
+// currently identical to 10MSTATE, except look up different value on the drmaster line
+  if (field_name == "160MSTATE")
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = to_upper(drm_line.state_160());
+
+      if (rv.empty())                       ///< if no explicit 160MSTATE value, try the QTH value
+        rv = to_upper(drm_line.qth());
+    }
+
+    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE") )  // can often guess province for VEs
+    { const string pfx = wpx_prefix(callsign);
+
+      if (pfx == "VY2")
+        rv = "PE";
+
+      if (rv.empty() and (pfx == "VO1"))
+        rv = "NF";
+
+      if (rv.empty())
+      { const char call_area = pfx[pfx.length() - 1];
+
+        switch (call_area)
+        { case '1' :
+            rv = "NS";
+            break;
+
+          case '2' :
+            rv = "PQ";
+            break;
+
+          case '3' :
+            rv = "ON";
+            break;
+
+          case '4' :
+            rv = "MB";
+            break;
+
+          case '5' :
+            rv = "SK";
+            break;
+
+          case '6' :
+            rv = "AB";
+            break;
+
+          case '7' :
+            rv = "BC";
+            break;
+
+          case '9' :
+            rv = "NB";
+            break;
+
+          default :
+            break;
+        }
+      }
+    }
+
+    if (!rv.empty())
+    { rv = rules.canonical_value("160MSTATE", rv);
+      _db.insert( { { callsign, field_name }, rv } );
+
+      return rv;
+    }
+  }
+
   if (field_name == "10MSTATE")
   { string rv;
 
@@ -971,7 +1041,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
             break;
 
           case '6' :
-            rv = "MB";
+            rv = "AB";
             break;
 
           case '7' :
