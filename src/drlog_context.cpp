@@ -1408,11 +1408,11 @@ drlog_context::drlog_context(const std::string& filename) :
   _mark_frequencies(),                                              // don't mark any frequencies
   _mark_mode_break_points(false),                                   // do not mark the mode break points on the bandmap
   _match_minimum(4),                                                // 4 characters required for SCP or fuzzy match
-  _message_cq_1(),                            // no short CQ (default is changed once configuration file has been read)
-  _message_cq_2(),                            // no long CQ (default is changed once configuration file has been read)
-  _modes("CW"),                               // only valid mode is CW
-  _my_call("NONE"),                           // set callsign to an invalid value
-  _my_continent("XX"),                        // set continent to an invalid value
+  _message_cq_1(),                                                  // no short CQ (default is changed once configuration file has been read)
+  _message_cq_2(),                                                  // no long CQ (default is changed once configuration file has been read)
+  _modes("CW"),                                                     // only valid mode is CW
+  _my_call("NONE"),                                                 // set callsign to an invalid value
+  _my_continent("XX"),                                              // set continent to an invalid value
   _my_latitude(0),                            // at the equator
   _my_longitude(0),                           // Greenwich meridian
   _nearby_extract(false),                     // do not display NEARBY calls in the EXTRACT window
@@ -1497,7 +1497,7 @@ drlog_context::drlog_context(const std::string& filename) :
   }
 }
 
-/*! \brief          Information pertaining to a particular window
+/*! \brief          Get the information pertaining to a particular window
     \param  name    name of window
     \return         location, size and colour information
 */
@@ -1507,9 +1507,9 @@ const window_information drlog_context::window_info(const string& name) const
   return (cit == _windows.cend() ? window_information() : cit->second);
 }
 
-/*! \brief              all the windows whose name contains a particular substring
-    \param      subst   substring for which to search
-    \return             all the window names that include <i>substr</i>
+/*! \brief          Get all the windows whose name contains a particular substring
+    \param  subst   substring for which to search
+    \return         all the window names that include <i>substr</i>
 */
 const vector<string> drlog_context::window_name_contains(const string& substr) const
 { vector<string> rv;
@@ -1521,10 +1521,10 @@ const vector<string> drlog_context::window_name_contains(const string& substr) c
   return rv;
 }
 
-/*! \brief              is a particular frequency within any marked range?
-    \param      m       mode
-    \param      f       frequency to test
-    \return             whether <i>f</i> is in any marked range for the mode <i>m</i>
+/*! \brief      Is a particular frequency within any marked range?
+    \param  m   mode
+    \param  f   frequency to test
+    \return     whether <i>f</i> is in any marked range for the mode <i>m</i>
 */
 const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 { SAFELOCK(_context);
@@ -1550,7 +1550,7 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
     \param  m   mode
     \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
 */
-const string drlog_context::points(const BAND b, const MODE m) const
+const string drlog_context::points_string(const BAND b, const MODE m) const
 { SAFELOCK(_context);
 
   const auto& pbb = _per_band_points[m];
@@ -1577,11 +1577,6 @@ const string drlog_context::points(const std::string& exchange_field, const BAND
   const auto& pbb = points_per_band_per_mode[m];
 
   return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string() );
-
-//  if (pbb.find(b) != pbb.end())
-//    return pbb.at(b);
-//  else
-//    return string();
 }
 #endif
 
@@ -1600,26 +1595,38 @@ const vector<string> drlog_context::sent_exchange_names(void) const
 /*! \brief      Get all the names in the sent CW exchange
     \return     the names of all the fields in the sent CW exchange
 */
-const vector<string> drlog_context::sent_exchange_cw_names(void) const
-{ vector<string> rv;
-
-  for (const auto& pss : _sent_exchange_cw)
-    rv.push_back(pss.first);
-
-  return rv;
-}
+//const vector<string> drlog_context::sent_exchange_cw_names(void) const
+//{ vector<string> rv;
+//
+//  for (const auto& pss : _sent_exchange_cw)
+//    rv.push_back(pss.first);
+//
+//  return rv;
+//}
 
 /*! \brief      Get all the names in the sent SSB exchange
     \return     the names of all the fields in the sent SSB exchange
 */
-const vector<string> drlog_context::sent_exchange_ssb_names(void) const
+//const vector<string> drlog_context::sent_exchange_ssb_names(void) const
+//{ vector<string> rv;
+//
+//  for (const auto& pss : _sent_exchange_ssb)
+//    rv.push_back(pss.first);
+//
+//  return rv;
+//}
+
+const vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 
-  for (const auto& pss : _sent_exchange_ssb)
+  const std::vector<std::pair<std::string, std::string> >* ptr_vec_pss = (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb);
+
+  for (const auto& pss : *ptr_vec_pss)
     rv.push_back(pss.first);
 
   return rv;
 }
+
 
 /// names and values of sent exchange fields for mode <i>m</i>
 const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)

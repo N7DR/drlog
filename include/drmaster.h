@@ -36,6 +36,7 @@
 class master_dta
 {
 protected:
+
   std::vector<std::string> _calls;       ///< the calls in the MASTER.DTA file
 
 /*! \brief              Private function to return the call starting at <i>posn</i> in <i>contents</i>
@@ -49,12 +50,14 @@ protected:
 
 public:
 
-/*! \brief      Default constructor
-    \filename   name of file from which to donstruct the object
- */
+/*! \brief              Default constructor
+    \param  filename    name of file from which to donstruct the object
+*/
   master_dta(const std::string& filename = "master.dta");
 
-/// return all the calls
+/*! \brief      Get all the calls
+    \return     all the calls from the file
+*/
   inline const std::vector<std::string> calls(void) const
     { return _calls; }
 };
@@ -99,7 +102,9 @@ public:
 /// destructor
   virtual ~trmaster_line(void);
 
-/// convert to a string.
+/*! \brief      Convert to a string
+    \return     the line as a string suitable for use in a TRMASTER file
+*/
   const std::string to_string(void) const;
 
   READ_AND_WRITE(call);                       ///< callsign
@@ -108,7 +113,7 @@ public:
   READ_AND_WRITE(foc);                        ///< FOC membership number
   READ_AND_WRITE(grid);                       ///< Maidenhead grid locator
   READ_AND_WRITE(hit_count);                  ///< nominal number of QSOs with this station
-  READ_AND_WRITE(itu_zone);                   ///< ITU zone (because TR treats HQ stations differently)
+  READ_AND_WRITE(itu_zone);                   ///< ITU zone
   READ_AND_WRITE(name);                       ///< operator's name
   READ_AND_WRITE(old_call);                   ///< operator's old call
   READ_AND_WRITE(qth);                        ///< precise meaning depends on location of this station
@@ -116,7 +121,9 @@ public:
   READ_AND_WRITE(speed);                      ///< CW speed
   READ_AND_WRITE(ten_ten);                    ///< 10-X membership number
 
-/// use the emptiness of <i>_call</i> as a proxy for emptiness of the object
+/*! \brief      Test for emptiness
+    \return     whether the object is empty
+*/
   inline const bool empty(void) const
     { return _call.empty(); }
 
@@ -136,9 +143,9 @@ public:
 
 /*! \brief          Merge with another trmaster_line
     \param  trml    line to be merged
-    \return         line merged with <i>ln</i>
+    \return         line merged with <i>trml</i>
 
-    New values (i.e., values in <i>ln</i>) take precedence if there's a conflict
+    New values (i.e., values in <i>trml</i>) take precedence if there's a conflict
 */
   const trmaster_line operator+(const trmaster_line& trml) const;
 

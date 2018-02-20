@@ -534,14 +534,14 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // the sent exchange
   if (_permitted_modes < MODE_CW)
   { if (!context.sent_exchange_cw().empty())
-      _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_cw_names() } );
+      _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names(MODE_CW) } );
     else
       _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names() } );
   }
 
   if (_permitted_modes < MODE_SSB)
   { if (!context.sent_exchange_ssb().empty())
-      _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_ssb_names() } );
+      _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names(MODE_SSB) } );
     else
       _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names() } );
   }
@@ -639,7 +639,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       MSI country_points_this_band;
 
 // parse the config file
-      string context_points = context.points(b, m);
+      string context_points = context.points_string(b, m);
 
       static const set<string> special_points_set { "IARU", "STEW" };
       const bool is_special_points = ( special_points_set < context_points );
@@ -653,12 +653,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
         }
 
         if (context_points == "STEW")  // special
-        { //points_structure ps = pb[b];
-
-          //ps.points_type(POINTS_STEW);
-          //pb[b] = ps;
           pb[b].points_type(POINTS_STEW);
-        }
       }
       else                              // ordinary points structure
       {

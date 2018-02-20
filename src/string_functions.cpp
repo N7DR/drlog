@@ -1071,6 +1071,7 @@ const vector<string> reformat_for_wprintw(const vector<string>& vecstr, const in
   return rv;
 }
 
+#if 0
 const bool is_legal_rst(const string& str)
 { if (str.length() != 3)
     return false;
@@ -1086,5 +1087,5 @@ const bool is_legal_rst(const string& str)
 
   return true;
 }
-
+#endif
 

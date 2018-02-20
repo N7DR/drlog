@@ -363,7 +363,14 @@ void* close_it(void* vp)
     \return         nullptr
 */
 void* audio_recorder::_capture(void*)
-{ start_of_thread("_capture");
+{ ost << "starting _capture() thread" << endl;
+
+  const string thread_name = "_capture_" + to_string(_thread_number++);
+
+//  start_of_thread("_capture");
+  start_of_thread(thread_name);
+
+  _aborting = false;
 
 create_file:
   wav_file* wfp = new wav_file;
@@ -428,6 +435,8 @@ create_file:
 
   bool first_time_through_loop = true;
 
+  ost << "about to enter the big loop" << endl;
+
   do
   { const size_t c = (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes;
     const size_t f = c * 8 / _bits_per_frame;
@@ -447,19 +456,33 @@ create_file:
       wfp->append_data(_audio_buf, _period_size_in_bytes);
 
     remaining_bytes_to_read -= c;
-  } while ( (remaining_bytes_to_read > 0) and !exiting);
+  } while ( (remaining_bytes_to_read > 0) and !exiting and !_aborting );
 
   { SAFELOCK(thread_check);
 
-    if (exiting)
-    { wfp->close();
-      end_of_thread("_capture");
+    if (exiting or _aborting)
+    { //_recording = false;
+
+      //ost << "_recording now FALSE" << endl;
+
+      if (exiting)
+        ost << "_capture thread is exiting" << endl;
+
+      if (_aborting)
+        ost << "_capture thread is aborting" << endl;
+
+      wfp->close();
+//      end_of_thread("_capture");
+
+      ost << "closing status = " << snd_pcm_close(_handle) << endl;
+
+      end_of_thread(thread_name);
 
       return nullptr;
     }
   }
 
-// we get here only if we are NOT exiting; close the current file, then start a new file
+// we get here only if we are NOT exiting or aborting; close the current file, then start a new file
   static pthread_t closing_file_thread_id;
 
   try
@@ -478,6 +501,7 @@ goto create_file;
 
 /// constructor
 audio_recorder::audio_recorder(void) :
+  _aborting(false),                         // we are not aborting a capture
   _audio_buf(nullptr),                      // no buffer by default
   _base_filename("drlog-audio"),            // default output file
   _buffer_frames(0),                        // no frames in buffer?
@@ -485,6 +509,7 @@ audio_recorder::audio_recorder(void) :
   _file_type(AUDIO_FORMAT_WAVE),            // WAV format
   _handle(nullptr),                         // no PCM handle
   _info(nullptr),                           // explicitly set to uninitialised
+  _initialised(false),                      // the object is not yet initialised
   _max_file_time(0),                        // no maximum duration (in seconds)
   _period_size_in_frames(0),
   _monotonic(false),                        // device cannot do monotonic timestamps
@@ -499,7 +524,8 @@ audio_recorder::audio_recorder(void) :
   _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
   _start_delay(1),
   _stream(SND_PCM_STREAM_CAPTURE),          // we are capturing a stream
-  _time_limit(0)                            // no limit
+  _time_limit(0),                            // no limit
+  _thread_number(0)
 { }
 
 /// destructor
@@ -547,6 +573,8 @@ void audio_recorder::initialise(void)
   _readn_func = snd_pcm_readn;
 
   _set_params();
+
+  _initialised = true;
 }
 
 /// public function to capture the audio
@@ -554,12 +582,18 @@ void audio_recorder::capture(void)
 { try
   { create_thread(&_thread_id, NULL, &_static_capture, this, "audio capture");
     _recording = true;
+    ost << "started capture thread" << endl;
   }
 
   catch (const pthread_error& e)
   { ost << "Error creating thread: audio capture" << e.reason() << endl;
     exit(-1);
   }
+}
+
+void audio_recorder::abort(void)
+{ _aborting = true;
+  _recording = false;
 }
 
 // -----------  wav_file  ----------------

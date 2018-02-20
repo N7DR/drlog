@@ -134,6 +134,7 @@ const bool swap_rit_xit(void);                                                  
 void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
 const bool toggle_drlog_mode(void);                       ///< Toggle between CQ mode and SAP mode
 const bool toggle_cw(void);                         ///< Toggle CW on/off
+void toggle_recording_status(audio_recorder& audio);        ///< toggle status of audio recording
 
 void update_based_on_frequency_change(const frequency& f, const MODE m);    ///< Update some windows based ona change in frequency
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
@@ -2426,6 +2427,7 @@ void* prune_bandmap(void* vp)
     CTRL-M -- Monitor call
     CTRL-U -- Unmonitor call (i.e., stop monitoring call)
     ' -- Place NEARBY call into CALL window and update QSL window
+    CTRL-R -- toggle audio recording
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
 {
@@ -4107,6 +4109,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       win_call < CURSOR_START_OF_LINE <= new_call;
       update_qsls_window(new_call);
     }
+
+    processed = true;
+  }
+
+// CTRL-R -- toggle audio recording
+  if (!processed and (e.is_control('r')))
+  { toggle_recording_status(audio);
 
     processed = true;
   }
@@ -6182,8 +6191,8 @@ void start_of_thread(const string& name)
   if (!result.second)
     ost << "failed to insert thread name: " << name << endl;
 
-//  ost << "n_running_threads = " << n_running_threads << endl;
-//  print_thread_names();
+  ost << "n_running_threads = " << n_running_threads << endl;
+  print_thread_names();
 }
 
 /// Cleanup and exit
@@ -7662,6 +7671,8 @@ void end_of_thread(const string& name)
     ost << "removed: " << name << endl;
   else
     ost << "unable to remove: " << name << endl;
+
+  ost << "concluding end_of_thread for thread " << name << "; " << n_running_threads << " still running" << endl;
 }
 
 /// update some windows based on a change in frequency
@@ -7782,8 +7793,36 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
 }
 
 void update_recording_status_window(void)                                   ///< update the RECORDING STATE window
-{ if (audio.recording())
+{ ost << "Inside update_recording_status_window()" << endl;
+
+  if (audio.recording())
+  { ost << "recording is TRUE" << endl;
     win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "REC";
+  }
   else
-    win_recording_status <= WINDOW_CLEAR;
+  { ost << "recording is FALSE" << endl;
+    win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "---";
+  }
+}
+
+void toggle_recording_status(audio_recorder& audio)
+{ if (audio.recording())
+  { audio.abort();
+  }
+  else        // not recording
+  { //audio.aborting(false);
+//    if (!audio.initialised())
+    { audio.base_filename(context.audio_file());
+      audio.maximum_duration(context.audio_duration() * 60);
+      audio.pcm_name(context.audio_device_name());
+      audio.n_channels(context.audio_channels());
+      audio.samples_per_second(context.audio_rate());
+      audio.initialise();
+    }
+
+    audio.capture();                          // start capturing audio; sets aborting to false, recording to true
+  }
+
+  if (win_recording_status.defined())
+    update_recording_status_window();
 }

@@ -135,12 +135,14 @@ class audio_recorder
 {
 protected:
 
+  bool              _aborting;                  ///< whether aborting a capture
   u_char*           _audio_buf;                 ///< buffer for audio
   std::string       _base_filename;             ///< base name of output file
   size_t            _bits_per_frame;            ///< bits per sample * number of channels
   snd_pcm_uframes_t _buffer_frames;             ///< number of frames in buffer?
   unsigned int      _buffer_time;               ///< amount of time in buffer?
   int               _file_type;                 ///< format of file
+  bool              _initialised;               ///< is the object initialised?
   size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_t*        _handle;                    ///< PCM handle
@@ -160,6 +162,8 @@ protected:
   int               _start_delay;               ///< ?
   snd_pcm_stream_t  _stream;                    ///< type of stream
   unsigned int      _time_limit;                ///< number of seconds to record
+
+  unsigned int      _thread_number;
 
 // stuff for bext extension
 #if 0
@@ -220,7 +224,9 @@ public:
 /// destructor
   virtual ~audio_recorder(void);
 
+//  READ_AND_WRITE(aborting);                 ///< whether aborting a capture
   READ_AND_WRITE(base_filename);            ///< base name of output file
+  READ(initialised);                        ///< is the object initialised?
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds
   READ_AND_WRITE(n_channels);               ///< number of channels to record
   READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle
@@ -237,6 +243,8 @@ public:
   READ_AND_WRITE(time_reference_low);
   READ_AND_WRITE(time_reference_high);
 #endif
+
+  void abort(void);
 
 /// set maximum duration in seconds
   inline void maximum_duration(const unsigned int secs)

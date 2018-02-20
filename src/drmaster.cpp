@@ -90,26 +90,34 @@ master_dta::master_dta(const string& filename)
     Returns empty string if there is no value associated with <i>param</i>
 */
 const string __extract_value(const string& line, const string& param)
-{ string rv;
+{ //string rv;
 
   if (!contains(line, param))
-    return rv;
+    return string();
 
-  size_t start_position = line.find(param);
-  string short_line = substring(line, start_position + param.length());
+  const size_t start_position = line.find(param);
+  const string short_line = substring(line, start_position + param.length());
 
-  start_position = 0;
+//  start_position = 0;
 
-  size_t end_position = short_line.length();
+//  size_t end_position = short_line.length();
 
-  if (short_line.find(" ") != string::npos)
-    end_position = short_line.find(" ");
+//  if (short_line.find(" ") != string::npos)
+ //    end_position = short_line.find(" ");
 
-  const size_t n_chars = end_position;
+  const size_t space_posn = short_line.find(" ");
 
-  rv = substring(short_line, 0, n_chars);
+//  if (space_posn != string::npos)
+//    end_position = space_posn;
 
-  return rv;
+  const size_t end_position = ( (space_posn == string::npos) ? short_line.length() : space_posn );
+
+//  const size_t n_chars = end_position;
+
+//  rv = substring(short_line, 0, n_chars);
+
+//  return rv;
+  return substring(short_line, 0, end_position);
 }
 
 /* According to Tree, the following are the keys in a TRMASTER file:
@@ -152,8 +160,8 @@ t = temporary
 
 /// Default empty constructor
 trmaster_line::trmaster_line(void) :
-    _cq_zone(0),
     _check(0),
+    _cq_zone(0),
     _foc(0),
     _hit_count(0),
     _ten_ten(0)
@@ -200,7 +208,9 @@ trmaster_line::trmaster_line(const string& line)
 trmaster_line::~trmaster_line(void)
 { }
 
-/// convert to string
+/*! \brief      Convert to a string
+    \return     the line as a string suitable for use in a TRMASTER file
+*/
 const string trmaster_line::to_string(void) const
 { string rv = call();
 
@@ -250,9 +260,9 @@ const string trmaster_line::to_string(void) const
 
 /*! \brief          Merge with another trmaster_line
     \param  trml    line to be merged
-    \return         line merged with <i>ln</i>
+    \return         line merged with <i>trml</i>
 
-    New values (i.e., values in <i>ln</i>) take precedence if there's a conflict
+    New values (i.e., values in <i>trml</i>) take precedence if there's a conflict
 */
 const trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
 { trmaster_line rv(*this);                                  // copy the old line
@@ -261,7 +271,7 @@ const trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
   if (trml.call() != call())
     return rv;
 
-// go through the fields one by one
+// go through the fields seriatim
   rv.hit_count(rv.hit_count() + trml.hit_count() + 1);      // may change this
 
   if ((!trml.qth().empty()))

@@ -77,7 +77,7 @@ protected:
   bool                                         _bandmap_filter_show;                ///< is the bandmap filter set to show? (If not, then it's set to hide)
   int                                          _bandmap_filter_show_colour;         ///< background colour when bandmap filter is in show mode
   int                                          _bandmap_recent_colour;              ///< colour for bandmap entries that are less than two minutes old
-  std::string                                  _bands;                              ///< comma-delimited bands
+  std::string                                  _bands;                              ///< comma-delimited list of bands that are legal for the contest
   std::string                                  _batch_messages_file;                ///< file that contains per-call batch messages
   std::string                                  _best_dx_unit;                       ///< name of unit for the BEST DX window ("MILES" or "KM")
 
@@ -168,7 +168,7 @@ protected:
 
   std::string                                  _message_cq_1;                       ///< CQ message #1 (generally, a short CQ)
   std::string                                  _message_cq_2;                       ///< CQ message #2 (generally, a long CQ)
-  std::string                                  _modes;                              ///< comma-delimited modes CW, SSB
+  std::string                                  _modes;                              ///< comma-delimited list of modes that are legal for the contest
   std::map<BAND, frequency>                    _mode_break_points;                  ///< override default mode break points
   std::string                                  _my_call;                            ///< my call
   std::string                                  _my_continent;                       ///< my continent
@@ -319,7 +319,7 @@ public:
   CONTEXTREAD(bandmap_filter_show);              ///< is the bandmap filter set to show? (If not, then it's set to hide)
   CONTEXTREAD(bandmap_filter_show_colour);       ///< background colour when bandmap filter is in show mode
   CONTEXTREAD(bandmap_recent_colour);            ///< colour for bandmap entries that are less than two minutes old
-  CONTEXTREAD(bands);                            ///< comma-delimited bands
+  CONTEXTREAD(bands);                            ///< comma-delimited list of bands that are legal for the contest
   CONTEXTREAD(batch_messages_file);              ///< file that contains per-call batch messages
   CONTEXTREAD(best_dx_unit);                     ///< name of unit for the BEST DX window ("MILES" or "KM")
 
@@ -438,31 +438,16 @@ public:
 
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 
-/*! \brief      Get the points string for a particular band and mode
-    \param  b   band
-    \param  m   mode
-    \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
-*/
-  const std::string points(const BAND b, const MODE m) const;
-
-/*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
-    \param  exchange_field  exchange field
-    \param  b               band
-    \param  m               mode
-    \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
-*/
-//  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
-
   CONTEXTREAD(post_monitor_calls)                   ///< calls to be monitored
 
   CONTEXTREAD(ptt_delay);                    ///< PTT delay in milliseconds ( 0 => PTT disabled)
   CONTEXTREAD(p3);                           ///< is a P3 available?
-  SAFEREAD(p3_ignore_checksum_error, _context);     ///< should checksum errors be ignored when acquiring P3 screendumps?
-  SAFEREAD(p3_snapshot_file, _context);             ///< base name of file for P3 snapshot
-  SAFEREAD(p3_span_cq, _context);                   ///< P3 span in CQ mode, in kHz
-  SAFEREAD(p3_span_sap, _context);                  ///< P3 span in SAP mode, in kHz
+  CONTEXTREAD(p3_ignore_checksum_error);     ///< should checksum errors be ignored when acquiring P3 screendumps?
+  CONTEXTREAD(p3_snapshot_file);             ///< base name of file for P3 snapshot
+  CONTEXTREAD(p3_span_cq);                   ///< P3 span in CQ mode, in kHz
+  CONTEXTREAD(p3_span_sap);                  ///< P3 span in SAP mode, in kHz
 
-  SAFEREAD(qsl_message, _context);                  ///< confirm at end of QSO
+  CONTEXTREAD(qsl_message);                  ///< confirm at end of QSO
   SAFEREAD(qso_multiple_bands, _context);           ///< whether OK to work station on another band
   SAFEREAD(qso_multiple_modes, _context);           ///< whether OK to work station on another mode
   SAFEREAD(qtcs, _context);                         ///< whether QTCs are enabled
@@ -515,19 +500,38 @@ public:
 
   SAFEREAD(worked_mults_colour, _context);              ///< colour of worked mults in the mult windows
 
-/*! \brief          Information pertaining to a particular window
+/*! \brief      Get the points string for a particular band and mode
+    \param  b   band
+    \param  m   mode
+    \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
+*/
+  const std::string points_string(const BAND b, const MODE m) const;
+
+/*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
+    \param  exchange_field  exchange field
+    \param  b               band
+    \param  m               mode
+    \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
+*/
+//  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
+
+/*! \brief          Get the information pertaining to a particular window
     \param  name    name of window
     \return         location, size and colour information
 */
   const window_information window_info(const std::string& name) const;
 
-/// vector of the names of bands (e.g., "160", "80", etc.)
+/*! \brief          Get a vector of the names of the legal bands for the contest (e.g., "160", "80", etc.)
+    \return         the bands that are legal for the context
+*/
   inline const std::vector<std::string> band_names(void) const
     { SAFELOCK(_context);
       return split_string(_bands, ",");
     }
 
-/// vector of the names of modes (e.g., "CW", "SSB", etc.)
+/*! \brief          Get a vector of the names of the legal modes for the contest (e.g., "CW", "SSB", etc.)
+    \return         the modes that are legal for the context
+*/
   inline const std::vector<std::string> mode_names(void) const
     { SAFELOCK(_context);
       return split_string(_modes, ",");
@@ -566,12 +570,14 @@ public:
 /*! \brief      Get all the field names in the sent CW exchange
     \return     the names of all the fields in the sent CW exchange
 */
-  const std::vector<std::string> sent_exchange_cw_names(void) const;
+//  const std::vector<std::string> sent_exchange_cw_names(void) const;
 
 /*! \brief      Get all the field names in the sent SSB exchange
     \return     the names of all the fields in the sent SSB exchange
 */
-  const std::vector<std::string> sent_exchange_ssb_names(void) const;
+//  const std::vector<std::string> sent_exchange_ssb_names(void) const;
+
+  const std::vector<std::string> sent_exchange_names(const MODE m) const;
 
 /// swap QSL and ALTERNATIVE QSL messages
   inline void swap_qsl_messages(void)
