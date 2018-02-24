@@ -475,6 +475,7 @@ create_file:
 //      end_of_thread("_capture");
 
       ost << "closing status = " << snd_pcm_close(_handle) << endl;
+//      snd_pcm_info_free(_info);   // this crashes for some reason
 
       end_of_thread(thread_name);
 
@@ -509,7 +510,7 @@ audio_recorder::audio_recorder(void) :
   _file_type(AUDIO_FORMAT_WAVE),            // WAV format
   _handle(nullptr),                         // no PCM handle
   _info(nullptr),                           // explicitly set to uninitialised
-  _initialised(false),                      // the object is not yet initialised
+//  _initialised(false),                      // the object is not yet initialised
   _max_file_time(0),                        // no maximum duration (in seconds)
   _period_size_in_frames(0),
   _monotonic(false),                        // device cannot do monotonic timestamps
@@ -518,14 +519,18 @@ audio_recorder::audio_recorder(void) :
   _pcm_name("default"),
   _period_frames(0),
   _period_time(0),
+  _readi_func(snd_pcm_readi),               // function to read interleaved frames (the only one that we actually use)
+  _readn_func(snd_pcm_readn),               // function to read non-interleaved frames
   _recording(false),                        // initially, not recording
   _record_count(9999999999),                // big number
   _samples_per_second(8000),                // G.711 rate
   _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
   _start_delay(1),
   _stream(SND_PCM_STREAM_CAPTURE),          // we are capturing a stream
-  _time_limit(0),                            // no limit
-  _thread_number(0)
+  _time_limit(0),                           // no limit
+  _thread_number(0),
+  _writei_func(snd_pcm_writei),             // function to write interleaved frames
+  _writen_func(snd_pcm_writen)              // function to write non-interleaved frames
 { }
 
 /// destructor
@@ -567,14 +572,7 @@ void audio_recorder::initialise(void)
 
   _hw_params = rhwparams;
 
-  _writei_func = snd_pcm_writei;
-  _readi_func = snd_pcm_readi;
-  _writen_func = snd_pcm_writen;
-  _readn_func = snd_pcm_readn;
-
   _set_params();
-
-  _initialised = true;
 }
 
 /// public function to capture the audio
@@ -582,7 +580,7 @@ void audio_recorder::capture(void)
 { try
   { create_thread(&_thread_id, NULL, &_static_capture, this, "audio capture");
     _recording = true;
-    ost << "started capture thread" << endl;
+//    ost << "started capture thread" << endl;
   }
 
   catch (const pthread_error& e)

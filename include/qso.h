@@ -66,6 +66,8 @@ protected:
   std::vector<std::pair<std::string, std::string> > _sent_exchange;     ///< vector<pair<name, value>>; names do not include the TEXCH-
   std::string                                       _utc;               ///< hh:mm:ss
   
+  const bool _is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules);
+
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line

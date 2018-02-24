@@ -38,6 +38,27 @@ extern void alert(const string& msg, const bool show_time = true);       ///< al
 bool QSO_DISPLAY_COUNTRY_MULT = true;       ///< whether to display country mults in log window (may be changed in config file)
 unsigned int  QSO_MULT_WIDTH = 5;           ///< default width of QSO mult fields in log window
 
+const bool QSO::_is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules)
+{ string name_copy = field_name;
+
+  if (begins_with(name_copy, "received-"))
+    name_copy = substring(name_copy, 9);
+
+  for (size_t n = 0; n < fields_from_rules.size(); ++n)
+  { const exchange_field ef = fields_from_rules[n];
+
+    if (ef.name() == name_copy)
+    { return ef.is_optional();
+    }
+  }
+
+// should never get here
+  ost << "ERROR; unable to find field in _is_received_file_optional" << endl;
+
+  return false;
+}
+
+
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line
@@ -279,8 +300,24 @@ void QSO::populate_from_log_line(const string& str)
       ost << "_log_line_fields[" << n << "] = " << _log_line_fields[n] << endl;
   }
 
+// debug
+  for (size_t n = 0; n < _log_line_fields.size(); ++n)
+    ost << "DEBUG: _log_line_fields[" << n << "] = " << _log_line_fields[n] << endl;
+
+  ost << endl;
+
+  for (size_t n = 0; n < vec.size(); ++n)
+    ost << "vec[" << n << "] = " << vec[n] << endl;
+
+  ost << endl;
+
   size_t sent_index = 0;
   size_t received_index = 0;
+
+  const vector<exchange_field> exchange_fields = rules.expanded_exch(_callsign, _mode);
+
+  for (size_t n = 0; n < exchange_fields.size(); ++n)
+    ost << "from rules: exchange field = " << exchange_fields[n] << endl;
 
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { bool processed = false;
@@ -336,12 +373,29 @@ void QSO::populate_from_log_line(const string& str)
 
 // in Stew Perry, we have an optional RST as the first field; this is a horrible kludge
 //      if ( (ends_with(field, "RST") and (is_legal_rst(vec[n]))) or !ends_with(field, "RST") )
+      if (_is_received_field_optional(field, exchange_fields))
+        ost << "field " << field << " IS optional" << endl;
+      else
+        ost << "field " << field << " IS NOT optional" << endl;
 
+      if (rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))
+        ost << "field " << field << " HAS legal value: " << _received_exchange[received_index].value() << endl;
+      else
+        ost << "field " << field << " DOES NOT HAVE legal value: " << _received_exchange[received_index].value() << endl;
 
+      if (_is_received_field_optional(field, exchange_fields) and !rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))
+      {  // do nothing -- we have an optional field that is not present
+        _received_exchange[received_index++].value("");
+
+        if (received_index < _received_exchange.size())
+          _received_exchange[received_index++].value(vec[n]);  // assume that only one field is optional
+
+      }
+      else
 
 //      { ost << "inside loop for field: " << field << endl;
 
-      if (received_index < _received_exchange.size())
+      { if (received_index < _received_exchange.size())
       { _received_exchange[received_index++].value(vec[n]);
         ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
 
@@ -351,7 +405,7 @@ void QSO::populate_from_log_line(const string& str)
           ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
         }
       }
-//      }
+      }
 
       processed = true;
     }

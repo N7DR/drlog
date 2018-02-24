@@ -127,6 +127,7 @@ void rig_error_alert(const string& msg);            ///< Alert the user to a rig
 const bool rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 
 const bool send_to_scratchpad(const string& str);                               ///< Send a string to the SCRATCHPAD window
+void start_recording(const drlog_context& context);                             ///< start audio recording
 void start_of_thread(const string& name);                                                     ///< Increase the counter for the number of running threads
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
 const bool swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
@@ -586,14 +587,15 @@ int main(int argc, char** argv)
 // possibly configure audio recording
     if (context.record_audio())
     { //ost << "Will record audio" << endl;
-      audio.base_filename(context.audio_file());
-      audio.maximum_duration(context.audio_duration() * 60);
-      audio.pcm_name(context.audio_device_name());
-      audio.n_channels(context.audio_channels());
-      audio.samples_per_second(context.audio_rate());
-      audio.initialise();
-      audio.capture();                          // start capturing audio
+      //audio.base_filename(context.audio_file());
+      //audio.maximum_duration(context.audio_duration() * 60);
+      //audio.pcm_name(context.audio_device_name());
+      //audio.n_channels(context.audio_channels());
+      //audio.samples_per_second(context.audio_rate());
+      //audio.initialise();
+      //audio.capture();                          // start capturing audio
       //ost << "audio recording" << endl;
+      start_recording(context);
     }
 
 // set up the calls to be monitored
@@ -4946,7 +4948,9 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         { if (remove_peripheral_spaces(win_log_snapshot[win_log_snapshot.size() - 1 - n]).empty())
             original_qsos.push_front(QSO());
           else
-          { original_qsos.push_front(logbk[qso_number--]);
+          { ost << "adding original QSO: " << "----------" << endl << logbk[qso_number] << endl;
+            ost << "----------" << endl;
+            original_qsos.push_front(logbk[qso_number--]);
             n_to_remove++;
           }
         }
@@ -4978,7 +4982,13 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
             ost << "Call from log line = " << call_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n])) << endl;
 
-            qso.log_line();                                                                 // fills some fields in the QSO
+            qso.log_line();
+
+            ost << "QSO after log_line(); before populate_from_log_line(): " << qso << endl;
+
+            ost << "About to call populate_from_log_line()" << endl;
+
+// fills some fields in the QSO
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 //            qso.new_populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]), context.my_call());  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 
@@ -6191,8 +6201,8 @@ void start_of_thread(const string& name)
   if (!result.second)
     ost << "failed to insert thread name: " << name << endl;
 
-  ost << "n_running_threads = " << n_running_threads << endl;
-  print_thread_names();
+//  ost << "n_running_threads = " << n_running_threads << endl;
+//  print_thread_names();
 }
 
 /// Cleanup and exit
@@ -7792,37 +7802,45 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
   return true;
 }
 
+/// update <i>win_recording_status</i>
 void update_recording_status_window(void)                                   ///< update the RECORDING STATE window
-{ ost << "Inside update_recording_status_window()" << endl;
+{ //ost << "Inside update_recording_status_window()" << endl;
 
   if (audio.recording())
-  { ost << "recording is TRUE" << endl;
+  { //ost << "recording is TRUE" << endl;
     win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "REC";
   }
   else
-  { ost << "recording is FALSE" << endl;
+  { //ost << "recording is FALSE" << endl;
     win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "---";
   }
 }
 
 void toggle_recording_status(audio_recorder& audio)
 { if (audio.recording())
-  { audio.abort();
-  }
+    audio.abort();
   else        // not recording
-  { //audio.aborting(false);
-//    if (!audio.initialised())
-    { audio.base_filename(context.audio_file());
-      audio.maximum_duration(context.audio_duration() * 60);
-      audio.pcm_name(context.audio_device_name());
-      audio.n_channels(context.audio_channels());
-      audio.samples_per_second(context.audio_rate());
-      audio.initialise();
-    }
-
-    audio.capture();                          // start capturing audio; sets aborting to false, recording to true
+  { //audio.base_filename(context.audio_file());
+    //audio.maximum_duration(context.audio_duration() * 60);
+    //audio.pcm_name(context.audio_device_name());
+    //audio.n_channels(context.audio_channels());
+    //audio.samples_per_second(context.audio_rate());
+    //audio.initialise();
+    //audio.capture();                          // start capturing audio; sets aborting to false, recording to true
+    start_recording(context);
   }
 
   if (win_recording_status.defined())
     update_recording_status_window();
 }
+
+void start_recording(const drlog_context& context)
+{ audio.base_filename(context.audio_file());
+  audio.maximum_duration(context.audio_duration() * 60);
+  audio.pcm_name(context.audio_device_name());
+  audio.n_channels(context.audio_channels());
+  audio.samples_per_second(context.audio_rate());
+  audio.initialise();
+  audio.capture();
+}
+

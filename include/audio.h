@@ -142,7 +142,7 @@ protected:
   snd_pcm_uframes_t _buffer_frames;             ///< number of frames in buffer?
   unsigned int      _buffer_time;               ///< amount of time in buffer?
   int               _file_type;                 ///< format of file
-  bool              _initialised;               ///< is the object initialised?
+//  bool              _initialised;               ///< is the object initialised?
   size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_t*        _handle;                    ///< PCM handle
@@ -176,10 +176,10 @@ protected:
   uint32_t          _time_reference_high;   // highest 32 bits of the time reference
 #endif
 
-  snd_pcm_sframes_t (*_readi_func)(snd_pcm_t *handle, void *buffer, snd_pcm_uframes_t size);
-  snd_pcm_sframes_t (*_writei_func)(snd_pcm_t *handle, const void *buffer, snd_pcm_uframes_t size);
-  snd_pcm_sframes_t (*_readn_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);
-  snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);
+  snd_pcm_sframes_t (*_readi_func)(snd_pcm_t *handle, void *buffer, snd_pcm_uframes_t size);            ///< function to read interleaved frames
+  snd_pcm_sframes_t (*_writei_func)(snd_pcm_t *handle, const void *buffer, snd_pcm_uframes_t size);     ///< function to write interleaved frames
+  snd_pcm_sframes_t (*_readn_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);             ///< function to read non-interleaved frames
+  snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);            ///< function to write non-interleaved frames
 
   pthread_t             _thread_id;         ///< ID for the thread that plays the buffer
 
@@ -226,7 +226,7 @@ public:
 
 //  READ_AND_WRITE(aborting);                 ///< whether aborting a capture
   READ_AND_WRITE(base_filename);            ///< base name of output file
-  READ(initialised);                        ///< is the object initialised?
+//  READ(initialised);                        ///< is the object initialised?
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds
   READ_AND_WRITE(n_channels);               ///< number of channels to record
   READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle
