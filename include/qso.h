@@ -30,6 +30,8 @@ extern unsigned int QSO_MULT_WIDTH;             ///< width of mult fields on log
 // forward declarations
 class running_statistics;
 
+//const std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);   ///< Obtain the next name and value from a drlog-format line
+
 // fundamental types are initialized with zero Josuttis, 2nd ed. p. 69
 // (We need the is_possible mult field so that things align correctly on the log line)
 WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool, is_possible_mult, bool, is_mult);  ///< class to encapsulate received fields
@@ -66,20 +68,14 @@ protected:
   std::vector<std::pair<std::string, std::string> > _sent_exchange;     ///< vector<pair<name, value>>; names do not include the TEXCH-
   std::string                                       _utc;               ///< hh:mm:ss
   
-  const bool _is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules);
+/*! \brief                      Is a particular field that might be received as part of the exchange optional?
+    \param  field_name          the name of the field
+    \param  fields_from_rules   the possible fields, taken from the rules
+    \return                     whether field <i>field_name</i> is optional
 
-/*! \brief          Obtain the next name and value from a drlog-format line
-    \param  str     a drlog-format line
-    \param  posn    character position within line
-    \return         the next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
-
-    Correctly handles extraneous spaces in <i>str</i>.
-    <i>str</i> looks like:
-      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
-
-    The value of <i>posn</i> might be changed by this function.
+    Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
-  const std::pair<std::string, std::string> _next_name_value_pair(const std::string& str, size_t& posn);
+  const bool _is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules) const;
 
 /*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
@@ -235,9 +231,13 @@ public:
     \param  field_name  name of field to test
     \return             whether the sent exchange includes the field <i>field_name</i>
 */
-  const bool sent_exchange_includes(const std::string& field_name);
+  const bool sent_exchange_includes(const std::string& field_name) const;
 
-/// convert to a string suitable for display in the log window
+/*! \brief      Obtain string in format suitable for display in the LOG window
+    \return     QSO formatted for writing to in the LOG window
+
+    Also populates <i>_log_line_fields</i> to match the returned string
+*/
   const std::string log_line(void);
 
 /*! \brief          Populate from a string (as visible in the log window)
@@ -298,6 +298,24 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q);
 inline const bool earlier(const QSO& qso_1, const QSO& qso_2)
   { return (qso_1.earlier_than(qso_2)); }
 
-const std::string call_from_log_line(const std::string& ll);
+/*! \brief          Obtain the callsign from
+    \param  qso_1   first QSO
+    \param  qso_2   second QSO  name of field to test
+    \return         whether <i>qso_1</i> is earlier than <i>qso_2</i>
+*/
+//const std::string call_from_log_line(const std::string& ll);
+
+/*! \brief          Obtain the next name and value from a drlog-format line
+    \param  str     a drlog-format line
+    \param  posn    character position within line
+    \return         the next (<i>i.e.</i>, after <i>posn</i>) name and value separated by an "="
+
+    Correctly handles extraneous spaces in <i>str</i>.
+    <i>str</i> looks like:
+      QSO: number=    1 date=2013-02-18 utc=20:21:14 hiscall=GM100RSGB    mode=CW  band= 20 frequency=14036.0 mycall=N7DR         sent-RST=599 sent-CQZONE= 4 received-RST=599 received-CQZONE=14 points=1 dupe=false comment=
+
+    The value of <i>posn</i> might be changed by this function.
+*/
+  const std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);
 
 #endif    // QSO_H

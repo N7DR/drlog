@@ -1308,6 +1308,33 @@ void rig_interface::bandwidth_b(const unsigned int hz)
   }
 }
 
+/*! \brief      Is an RX antenna in use?
+    \return     whether an RX antenna is in use
+*/
+const bool rig_interface::rx_ant(void)
+{ if (_rig_connected)
+  { if (_model == RIG_MODEL_K3)
+    { const string result = raw_command("AR;", RESPONSE);
+
+      ost << "rx_ant() result = " << result << endl;
+
+      if (result != "AR0;" and result != "AR1;")
+        ost << "ERROR in rx_ant(): result = " << result << endl;
+
+      return (result == "AR1;");
+    }
+  }
+
+  return false;
+}
+
+void rig_interface::rx_ant(const bool torf)
+{ if (_rig_connected)
+  { if (_model == RIG_MODEL_K3)
+      raw_command( torf ? "AR1;" : "AR0;" );
+  }
+}
+
 /// register a function for alerting the user
 void rig_interface::register_error_alert_function(void (*error_alert_function)(const string&) )
 { SAFELOCK(_rig);

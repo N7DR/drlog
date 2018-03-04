@@ -115,7 +115,18 @@ const unsigned int bandmap_buffer::add(const string& callsign, const string& pos
 
   bandmap_buffer_entry& bfe = _data[callsign];
 
-  return bfe.add(poster);
+  const unsigned int rv = bfe.add(poster);
+
+//  ost << "bandmap buffer for " << callsign << " has " << rv << " entries: " << endl;
+
+//  const set<string> posters = bfe.posters();
+
+//  for (const auto& poster : posters)
+//    ost << "  " << poster << endl;
+
+  return rv;
+
+//  return bfe.add(poster);
 }
 
 // -----------   bandmap_filter_type ----------------
@@ -179,7 +190,6 @@ bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
 void bandmap_entry::callsign(const string& call)
 { _callsign = call;
 
-//  if (_callsign != MY_MARKER)
   if (!is_marker())
   { const location_info li = location_db.info(_callsign);
 
@@ -441,7 +451,8 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
   { const float difference = cit->freq().kHz() - target_frequency_in_khz;
     const float abs_difference = fabs(difference);
 
-    if ( (abs_difference <= guard_band_in_khz) and (cit->callsign() != MY_MARKER))
+//    if ( (abs_difference <= guard_band_in_khz) and (cit->callsign() != MY_MARKER))
+    if ( (abs_difference <= guard_band_in_khz) and (!cit->is_my_marker()))
     { if (abs_difference < smallest_difference)
       { smallest_difference = abs_difference;
         rv = cit->callsign();
@@ -605,17 +616,7 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
      Does not add if the frequency is outside the ham bands.
 */
 void bandmap::operator+=(bandmap_entry& be)
-{ //const bool mode_marker_is_present = is_present(MODE_MARKER);
-//  ost << "Adding bandmap entry: " << be << endl;
-//  ost << "current size = " << this->size() << endl;
-
-// possibly add poster to the bandmap buffer
-//  if (be.source() != BANDMAP_ENTRY_LOCAL)
-//    bm_buffer.add(be.callsign(), be.p)
-
-
-
-  const bool mode_marker_is_present = (_mode_marker_frequency.hz() != 0);
+{ const bool mode_marker_is_present = (_mode_marker_frequency.hz() != 0);
   const string& callsign = be.callsign();
 
 // do not add if it's already been done recently, or matches several other conditions
@@ -665,16 +666,17 @@ void bandmap::operator+=(bandmap_entry& be)
         }
       }
       else    // this call is not currently present
-      { _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (!bme.is_marker())); } );  // remove any real entries at this QRG
+      { _entries.remove_if([=] (bandmap_entry& bme) { return ((bme.frequency_str() == be.frequency_str()) and (bme.is_not_marker())); } );  // remove any real entries at this QRG
         _insert(be);
       }
 
 // possibly remove all the other entries at this QRG
-      if (callsign != MY_MARKER and callsign != MODE_MARKER)
+//      if (callsign != MY_MARKER and callsign != MODE_MARKER)
+      if (be.is_not_marker())
       { const bandmap_entry current_be = (*this)[callsign];  // the entry in the updated bandmap
 
 //        if (current_be.n_posters() >= _rbn_threshold)
-        { _entries.remove_if([=] (bandmap_entry& bme) { bool rv = !bme.is_marker();
+        { _entries.remove_if([=] (bandmap_entry& bme) { bool rv = bme.is_not_marker();
 
                                                         if (rv)
                                                         { rv = (bme.callsign() != current_be.callsign());
@@ -693,7 +695,8 @@ void bandmap::operator+=(bandmap_entry& be)
       _insert(be);
     }
 
-    if ((callsign != MY_MARKER) and (callsign != MODE_MARKER) and mark_as_recent)
+//    if ((callsign != MY_MARKER) and (callsign != MODE_MARKER) and mark_as_recent)
+    if (be.is_not_marker() and mark_as_recent)
       _recent_calls.insert(callsign);
 
     _dirty_entries();
@@ -947,22 +950,17 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
       return _rbn_threshold_and_filtered_entries;
   }
 
-  const BM_ENTRIES filtered = filtered_entries();
+//  const BM_ENTRIES filtered = filtered_entries();
+  BM_ENTRIES filtered = filtered_entries();  // splice is going to change this
   BM_ENTRIES rv;
 
-//  SAFELOCK(_bandmap);
+//  for (const auto& be : filtered)
+//  { rv.push_back(be);
+//  }
 
-//  const unsigned int threshold = _rbn_threshold;
+//  FOR_ALL(filtered, [&rv] (const bandmap_entry& be) { rv.push_back(be); } );
 
-  for (const auto& be : filtered)
-  { //if (be.source() == BANDMAP_ENTRY_RBN)
-    //{ //if (be.n_posters() >= threshold)
-        //rv.push_back(be);
-    //}
-    //else  // not RBN
-      //rv.push_back(be);
-    rv.push_back(be);
-  }
+  rv.splice(rv.end(), filtered);
 
   SAFELOCK(_bandmap);
 
@@ -984,17 +982,20 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
 { const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
   auto cit = FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
 
+  if (cit == fe.cend())             // should never be true
+    return bandmap_entry();
+
+  const string target_freq_str = cit->frequency_str();
+
   if (dirn == BANDMAP_DIRECTION_DOWN)
-  { if (cit != fe.cend())                      // should always be true
-    { const string target_freq_str = cit->frequency_str();
+  { //if (cit != fe.cend())                      // should always be true
+    { //const string target_freq_str = cit->frequency_str();
       auto crit = prev(reverse_iterator<decltype(cit)>(cit));             // Josuttis First ed. p. 66f.
 
-      //BM_ENTRIES::const_reverse_iterator crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency, in downwards direction
       const auto crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency, in downwards direction
 
       if (crit2 != fe.crend())
-      { //BM_ENTRIES::const_reverse_iterator crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
-        const auto crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
+      { const auto crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
 
         if (crit3 != fe.crend())
           return (*crit3);
@@ -1003,14 +1004,12 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
   }
 
   if (dirn == BANDMAP_DIRECTION_UP)
-  { if (cit != fe.cend())                      // should always be true
-    { const string target_freq_str = cit->frequency_str();
-//      BM_ENTRIES::const_iterator cit2 = find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }); // move away from my frequency, in upwards direction
+  { //if (cit != fe.cend())                      // should always be true
+    { //const string target_freq_str = cit->frequency_str();
       const auto cit2 = find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }); // move away from my frequency, in upwards direction
 
       if (cit2 != fe.cend())
-      { //BM_ENTRIES::const_iterator cit3 = find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); });
-        const auto cit3 = find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); });
+      { const auto cit3 = find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); });
 
         if (cit3 != fe.cend())
           return (*cit3);
@@ -1142,14 +1141,21 @@ const string bandmap::to_str(void)
   return rv;
 }
 
-/// is a particular call present?
+/*!  \brief                     Is a particular call present?
+     \param target_callsign     callsign to test
+     \return                    whether <i>target_callsign</i> is present on the bandmap
+*/
 const bool bandmap::is_present(const string& target_callsign)
 { SAFELOCK(_bandmap);
 
   return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 }
 
-/// window < bandmap
+/*! \brief          Write a <i>bandmap</i> object to a window
+    \param  win     window
+    \param  bm      object to write
+    \return         the window
+*/
 window& operator<(window& win, bandmap& bm)
 { static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
 
@@ -1253,7 +1259,11 @@ window& operator<(window& win, bandmap& bm)
   return win;
 }
 
-/// ostream << bandmap
+/*! \brief          Write a <i>bandmap</i> object to an output stream
+    \param  ost     output stream
+    \param  bm      object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, bandmap& bm)
 { ost << bm.to_str();
 

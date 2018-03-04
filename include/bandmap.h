@@ -70,6 +70,9 @@ public:
     { return _posters.size(); }
 
   const unsigned int add(const std::string& new_poster);
+
+// temporary, for debugging
+  READ(posters);
 };
 
 // -----------   bandmap_buffer ----------------
@@ -402,6 +405,10 @@ public:
 /// does this entry correspond to either kind of marker?
   inline const bool is_marker(void) const
     { return is_my_marker() or is_mode_marker(); }
+
+/// inverse of is_marker()
+  inline const bool is_not_marker(void) const
+    { return !is_marker(); }
 
 /*! \brief              Calculate the mult status of this entry
     \param  rules       the rules for this contest
@@ -996,7 +1003,7 @@ public:
       return (_recent_calls < callsign);
     }
 
-/*!  \brief Add a call to the do-not-add list
+/*!  \brief             Add a call to the do-not-add list
      \param callsign    callsign to add
 
      Calls in the do-not-add list are never added to the bandmap
@@ -1006,7 +1013,7 @@ public:
       _do_not_add.insert(callsign);
     }
 
-/*!  \brief Remove a call from the do-not-add list
+/*!  \brief             Remove a call from the do-not-add list
      \param callsign    callsign to add
 
      Calls in the do-not-add list are never added to the bandmap
@@ -1016,7 +1023,10 @@ public:
       _do_not_add.erase(callsign);
     }
 
-/// is a particular call present?
+/*!  \brief                     Is a particular call present?
+     \param target_callsign     callsign to test
+     \return                    whether <i>target_callsign</i> is present on the bandmap
+*/
   const bool is_present(const std::string& target_callsign);
 
 /// convert to a printable string
@@ -1041,10 +1051,18 @@ public:
     }
 };
 
-/// window < bandmap
+/*! \brief          Write a <i>bandmap</i> object to a window
+    \param  win     window
+    \param  bm      object to write
+    \return         the window
+*/
 window& operator<(window& win, bandmap& bm);
 
-/// ostream << bandmap
+/*! \brief          Write a <i>bandmap</i> object to an output stream
+    \param  ost     output stream
+    \param  bm      object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
 
 typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined

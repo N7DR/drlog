@@ -20,6 +20,8 @@
 #include "log.h"
 #include "string_functions.h"
 
+#include <array>
+
 using namespace boost;                  // for regex
 using namespace std;
 
@@ -813,8 +815,6 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
   }
 
 // assign correct mult status
-//  for (auto& pef : rv)
-//    pef.is_mult(rules.is_exchange_mult(pef.name()));
   FOR_ALL(rv, [=] (parsed_exchange_field& pef) { pef.is_mult(rules.is_exchange_mult(pef.name())); } );
 
   return rv;
@@ -832,9 +832,11 @@ const string parsed_exchange::resolve_choice(const string& field_name, const str
 { if (field_name.empty())
     return string();
 
-  const bool is_choice = contains(field_name, "+");
+//  const bool is_choice = contains(field_name, "+");
 
-  if (!is_choice)
+//  if (!is_choice)
+//    return field_name;
+  if (!contains(field_name, "+"))   // if not a CHOICE
     return field_name;
 
   const vector<string> choices_vec = split_string(field_name, '+');
@@ -878,8 +880,8 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 
 // -------------------------  exchange_field_database  ---------------------------
 
-/*! \class exchange_field_database
-    \brief used for estimating the exchange field
+/*! \class  exchange_field_database
+    \brief  used for estimating the exchange field
 
     There can be only one of these, and it is thread safe
 */
@@ -1017,8 +1019,15 @@ const string exchange_field_database::guess_value(const string& callsign, const 
         rv = "NF";
 
       if (rv.empty())
-      { const char call_area = pfx[pfx.length() - 1];
+      { const char call_area_c = pfx[pfx.length() - 1];
 
+        if (isdigit(call_area_c))
+        { static const std::array<string, 10> abbreviations { { string(), "NS", "PQ", "ON", "MB", "SK", "AB", "BC", string(), "NB"} };  // std:: qualifier needed because we have boost here as well
+
+          rv = abbreviations[call_area_c - '0'];    // convert to number
+        }
+
+#if 0
         switch (call_area)
         { case '1' :
             rv = "NS";
@@ -1055,6 +1064,8 @@ const string exchange_field_database::guess_value(const string& callsign, const 
           default :
             break;
         }
+#endif
+
       }
     }
 

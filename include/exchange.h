@@ -334,18 +334,20 @@ protected:
 //  1. regex
 //  2. .values file
 
-  std::string   _name;                      ///< name of exchange field
-  boost::regex  _regex_expression;          ///< regex expression to define field
+  bool                                  _is_mult;                   ///< is this field a mult?
 
-  std::map<std::string,                        /* a canonical field value */
-          std::set                             /* each equivalent value is a member of the set, including the canonical value */
-            <std::string                       /* indistinguishable legal values */
-            >>  _values;                    ///< the canonical and alternative values for the field
+  std::set<std::string>                 _legal_non_regex_values;    ///< all legal values not obtained from a regex
 
-  std::set<std::string>  _legal_non_regex_values;           ///< all legal values not obtained from a regex
-  std::map<std::string, std::string>  _value_to_canonical;  ///< key = value; value = corresponding canonical value
+  std::string                           _name;                      ///< name of exchange field
 
-  bool          _is_mult;                                   ///< is this field a mult?
+  boost::regex                          _regex_expression;          ///< regex expression to define field
+
+  std::map<std::string,        /* a canonical field value */
+          std::set             /* each equivalent value is a member of the set, including the canonical value */
+            <std::string       /* indistinguishable legal values */
+            >>                          _values;                    ///< the canonical and alternative values for the field
+
+  std::map<std::string, std::string>    _value_to_canonical;        ///< key = value; value = corresponding canonical value
 
 public:
 
@@ -459,12 +461,12 @@ public:
 /// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-  { ar & _name
+  { ar & _is_mult
+       & _legal_non_regex_values
+       & _name
 //       & _regex_expression  // won't serialize
        & _values
-       & _legal_non_regex_values
-       & _value_to_canonical
-       & _is_mult;
+       & _value_to_canonical;
   }
 };
 

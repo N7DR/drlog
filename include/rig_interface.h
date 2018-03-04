@@ -434,6 +434,19 @@ public:
 
 /// set RIT, split, sub-rx off
   void base_state(void);
+
+/*! \brief      Is an RX antenna in use?
+    \return     whether an RX antenna is in use
+*/
+  const bool rx_ant(void);
+
+  void rx_ant(const bool torf);
+
+  inline void rx_ant_toggle(void)
+    { rx_ant(!rx_ant()); }
+
+  inline void toggle_rx_ant(void)
+    { rx_ant_toggle(); }
 };
 
 /*! \brief      Convert a hamlib error code to a printable string

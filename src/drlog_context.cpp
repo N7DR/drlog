@@ -1078,7 +1078,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
       if (contains(RHS, "TEMPLATE"))
       { try
-        { string key = remove_peripheral_spaces(split_string(RHS, ":"))[1];
+        { const string key = remove_peripheral_spaces(split_string(RHS, ":"))[1];
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
         }
@@ -1365,12 +1365,12 @@ drlog_context::drlog_context(const std::string& filename) :
   _cabrillo_category_power("HIGH"),                                 // default is high power
   _cabrillo_category_station(),                                     // no default station category
   _cabrillo_category_time(),                                        // no default time category
-  _cabrillo_category_transmitter("ONE"),
+  _cabrillo_category_transmitter("ONE"),                            // one transmitter
   _cabrillo_certificate("YES"),                                     // explicitly request a certificate, because of inanity in the specification
-  _cabrillo_club(),
+  _cabrillo_club(),                                                 // no club
   _cabrillo_contest(),                                              // CONTEST in Cabrillo file
   _cabrillo_eol("LF"),                                              // use LF as EOL in the Cabrillo file
-  _cabrillo_e_mail(),
+  _cabrillo_e_mail(),                                               // no e-mail address
   _cabrillo_filename("cabrillo"),                                   // name of file that will store Cabrillo log
   _cabrillo_include_score(true),                                    // include score in the Cabrillo file
   _cabrillo_location(),                                             // LOCATION in Cabrillo file
@@ -1413,8 +1413,8 @@ drlog_context::drlog_context(const std::string& filename) :
   _modes("CW"),                                                     // only valid mode is CW
   _my_call("NONE"),                                                 // set callsign to an invalid value
   _my_continent("XX"),                                              // set continent to an invalid value
-  _my_latitude(0),                            // at the equator
-  _my_longitude(0),                           // Greenwich meridian
+  _my_latitude(0),                                                  // at the equator
+  _my_longitude(0),                                                 // Greenwich meridian
   _nearby_extract(false),                     // do not display NEARBY calls in the EXTRACT window
   _normalise_rate(false),                     // do not normalise rates to one-hour values
   _not_country_mults(),                       // no countries are explicitly not country mults

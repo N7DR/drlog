@@ -149,6 +149,7 @@ void update_qsls_window(const string& = "");                                ///<
 void update_qtc_queue_window(void);                                         ///< the head of the QTC queue
 void update_rate_window(void);                                              ///< Update the QSO and score values in <i>win_rate</i>
 void update_recording_status_window(void);                                  ///< update the RECORDING STATUS window
+void update_rx_ant_window(void);                                            ///< get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
 
 // functions for processing input to windows
 void process_CALL_input(window* wp, const keyboard_event& e);               ///< Process an event in CALL window
@@ -328,6 +329,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_remaining_callsign_mults,    ///< the remaining callsign mults
        win_remaining_country_mults,     ///< the remaining country mults
        win_rig,                         ///< rig status
+       win_rx_ant,                      ///< receive antenna: "RX" or "TX"
        win_score,                       ///< total number of points
        win_score_bands,                 ///< which bands contribute to score
        win_score_modes,                 ///< which modes contribute to score
@@ -1113,6 +1115,9 @@ int main(int argc, char** argv)
 
 // RIG window (rig status)
   win_rig.init(context.window_info("RIG"), WINDOW_NO_CURSOR);
+
+// RX ANT window
+  win_rx_ant.init(context.window_info("RX ANT"), WINDOW_NO_CURSOR);
 
 // SCORE window
   win_score.init(context.window_info("SCORE"), WINDOW_NO_CURSOR);
@@ -1973,6 +1978,9 @@ void* display_rig_status(void* vp)
 
           win_rig.refresh();
         }
+
+// possibly check the RX ANT status
+        update_rx_ant_window();
       }
     }
 
@@ -4980,21 +4988,21 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         { if (!remove_peripheral_spaces(new_win_log_snapshot[n]).empty())
           { QSO qso = original_qsos[n];
 
-            ost << "Call from log line = " << call_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n])) << endl;
+//            ost << "Call from log line = " << call_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n])) << endl;
 
             qso.log_line();
 
-            ost << "QSO after log_line(); before populate_from_log_line(): " << qso << endl;
+//            ost << "QSO after log_line(); before populate_from_log_line(): " << qso << endl;
 
-            ost << "About to call populate_from_log_line()" << endl;
+//            ost << "About to call populate_from_log_line()" << endl;
 
 // fills some fields in the QSO
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 //            qso.new_populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]), context.my_call());  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 
-            ost << "after populate_from_log_line(), QSO = " << qso << endl;
+//            ost << "after populate_from_log_line(), QSO = " << qso << endl;
 
-            ost << "log line from populated QSO: " << qso.log_line() << endl;
+//            ost << "log line from populated QSO: " << qso.log_line() << endl;
 
 // we can't assume anything about the mult status
 //            const BAND b = qso.band();
@@ -7844,3 +7852,17 @@ void start_recording(const drlog_context& context)
   audio.capture();
 }
 
+void update_rx_ant_window(void)                                            ///< get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
+{ if (win_rx_ant.defined())
+  { const bool rx_ant_in_use = rig.rx_ant();
+    const string window_contents = win_rx_ant.read();
+
+//    ost << "win_rx_ant contents = " << window_contents << endl;
+
+    if ( rx_ant_in_use and (window_contents != "RX") )
+      win_rx_ant < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "RX";
+
+    if ( !rx_ant_in_use and (window_contents != "TX") )
+      win_rx_ant < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "TX";
+  }
+}
