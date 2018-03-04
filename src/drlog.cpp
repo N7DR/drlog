@@ -2438,6 +2438,7 @@ void* prune_bandmap(void* vp)
     CTRL-U -- Unmonitor call (i.e., stop monitoring call)
     ' -- Place NEARBY call into CALL window and update QSL window
     CTRL-R -- toggle audio recording
+    ALT-R -- toggle RX antenna
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
 {
@@ -4130,6 +4131,14 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+// ALT-R -- toggle RX antenna
+  if (!processed and (e.is_alt('r')))
+  { rig.toggle_rx_ant();
+    update_rx_ant_window();
+
+    processed = true;
+  }
+
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())
@@ -4172,7 +4181,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     ALT-S -- toggle sub receiver
     CTRL-B -- fast bandwidth
     F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
-
+    ALT-R -- toggle RX antenna
 */
 void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 {
@@ -4887,6 +4896,14 @@ ost << "Adding QSO to logbook: " << qso << endl;
         }
       }
     }
+
+    processed = true;
+  }
+
+// ALT-R -- toggle RX antenna
+  if (!processed and (e.is_alt('r')))
+  { rig.toggle_rx_ant();
+    update_rx_ant_window();
 
     processed = true;
   }
