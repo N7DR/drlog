@@ -68,6 +68,7 @@ protected:
     \param  mult_name   name of callsign mult
     \param  mult_value  value of callsign mult
     \param  band_nr     band on which callsign mult was worked
+    \param  mode_nr     mode on which callsign mult was worked
 
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
@@ -125,7 +126,7 @@ public:
     \param  mult_value  value of mult to test
     \param  b           band to test
     \param  m           mode to test
-    \return             whether the mult <i>mult_name</i> with value <i>mult_value> is a needed callsign mult on band <i>b</i> and mode <i>m</i>
+    \return             whether the mult <i>mult_name</i> with value <i>mult_value</i> is a needed callsign mult on band <i>b</i> and mode <i>m</i>
 */
   const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
 
@@ -185,6 +186,7 @@ public:
     \param  field_name      exchange mult field name
     \param  field_value     value of the field <i>field_name</i>
     \param  band_nr         number of the band on which worked mult is to be added
+    \param  mode_nr         number of the mode on which worked mult is to be added
     \return                 whether the exchange mult was added
 
     Doesn't add if the value <i>field_value</i> is unknown.

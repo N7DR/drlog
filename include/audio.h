@@ -1,4 +1,4 @@
-// $Id: audio.h 141 2017-12-16 21:19:10Z  $
+// $Id: audio.h 144 2018-03-04 22:44:14Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -7,7 +7,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file audio.h
+/*! \file   audio.h
 
     Classes and functions anent audio recording. The implementation uses ALSA calls.
     A version intended to support other OSes in addition to Linux could, for example, use sox instead.
@@ -71,7 +71,6 @@ protected:
 
   bool _is_buffered;            ///< whether to use buffering to avoid writing when sending CW
   std::string   _name;          ///< name of file
-//  uint32_t      _file_size;     ///< total size of file
 
 // The question is whether to use a stream or a C-style FILE*. I choose the latter
 // because:
@@ -126,10 +125,10 @@ public:
     \brief  Class to implement the needed recording functions
 */
 
-typedef struct { unsigned int channels;     ///< number of channels
-                 snd_pcm_format_t format;   ///< format number; defined in alsa/pcm.h
-                 unsigned int rate;         ///< rate (bytes per second)
-               } PARAMS_STRUCTURE ;         ///< structure to encapsulate parameters
+typedef struct { unsigned int     channels;     ///< number of channels
+                 snd_pcm_format_t format;       ///< format number; defined in alsa/pcm.h
+                 unsigned int     rate;         ///< rate (bytes per second)
+               } PARAMS_STRUCTURE ;             ///< structure to encapsulate parameters
 
 class audio_recorder
 {
@@ -142,13 +141,13 @@ protected:
   snd_pcm_uframes_t _buffer_frames;             ///< number of frames in buffer?
   unsigned int      _buffer_time;               ///< amount of time in buffer?
   int               _file_type;                 ///< format of file
-//  bool              _initialised;               ///< is the object initialised?
-  size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
-  snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_t*        _handle;                    ///< PCM handle
   PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
   snd_pcm_info_t*   _info;                      ///< pointer to information structure that corresponds to <i>_handle</i>
-  long long         _max_file_time;             ///< maximum duration in seconds
+//  long long         _max_file_time;             ///< maximum duration in seconds
+  int64_t           _max_file_time;             ///< maximum duration in seconds
+  size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
+  snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   bool              _monotonic;                 ///< whether device does monotonic timestamps
   unsigned int      _n_channels;                ///< number of channels to record
   int               _open_mode;                 ///< blocking or non-blocking

@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 143 2018-01-22 22:41:15Z  $
+// $Id: rig_interface.h 144 2018-03-04 22:44:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,7 +54,7 @@ extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;    ///< 
 // ---------------------------------------- rig_status -------------------------
 
 /*! \class  rig_status
-    \brief  The status of a rig .... a trivial wrapper
+    \brief  The status of a rig -- a trivial wrapper
 */
 
 WRAPPER_2(rig_status, frequency, freq, MODE, mode);
@@ -70,7 +70,7 @@ class rig_interface
 protected:
 
   frequency                                     _last_commanded_frequency;      ///< last frequency to which the rig was commanded to QSY
-  frequency                                     _last_commanded_frequency_b;    ///< last frequency to which the VFO B was commanded to QSY
+  frequency                                     _last_commanded_frequency_b;    ///< last frequency to which VFO B was commanded to QSY
   MODE                                          _last_commanded_mode;           ///< last mode into which the rig was commanded
   std::map< std::pair <BAND, MODE>, frequency > _last_frequency;                ///< last-used frequencies on per-band, per-mode basis
   rig_model_t                                   _model;                         ///< hamlib model
@@ -91,17 +91,16 @@ protected:
 */
   void* _poll_thread_function(void* vp);
 
-/*! \brief      static wrapper for function to poll rig for status
-    \param  vp  the this pointer, in order to allow static member access to a real object
-    \return     nullptr
+/*! \brief          Static wrapper for function to poll rig for status
+    \param  this_p  the this pointer, in order to allow static member access to a real object
+    \return         nullptr
 */
-  static void* _static_poll_thread_function(void* vp);
-
+  static void* _static_poll_thread_function(void* this_p);
 
 /*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
     \return     the file descriptor associated with the rig
 */
-  inline const int  _file_descriptor(void) const
+  inline const int _file_descriptor(void) const
     { return _rigp->state.rigport.fd; }
 
 /*! \brief          Pointer to function used to alert the user to an error
@@ -239,11 +238,13 @@ public:
 /*! \brief      Set mode
     \param  m   new mode
 
-                Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
+    Also sets the bandwidth (because it's easier to follow hamlib's model, even though I regard it as flawed)
 */
   void rig_mode(const MODE m);
 
-/// is the rig in TEST mode?
+/*! \brief      Is the rig in TEST mode?
+    \return     whether the rig is currently in TEST mode
+*/
   const bool test(void);
 
 /*! \brief      Explicitly put the rig into or out of TEST mode
@@ -378,8 +379,15 @@ public:
 
 // explicit K3 commands
 #if !defined(NEW_RAW_COMMAND)
+
+/*! \brief                      Send a raw command to the rig
+    \param  cmd                 the command to send
+    \param  response_expected   whether a response is expected
+    \return                     the response from the rig, or the empty string
+*/
   const std::string raw_command(const std::string& cmd,
-                                const bool expect_response = NO_RESPONSE);
+                                const bool response_expected = NO_RESPONSE);
+
 #endif
 
 #if defined(NEW_RAW_COMMAND)
@@ -413,7 +421,9 @@ public:
 */
   void register_error_alert_function(void (*error_alert_function)(const std::string&) );
 
-/// which VFO is currently used for transmitting?
+/*! \brief      Which VFO is currently used for transmitting?
+    \return     the VFO that is currently set to be used when transmitting
+*/
   const VFO tx_vfo(void);
 
 /*! \brief      Set the bandwidth of VFO A
@@ -437,14 +447,23 @@ public:
 
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
+
+    Works only with K3
 */
   const bool rx_ant(void);
 
+/*! \brief          Control use of the RX antenna
+    \param  torf    whether to use the RX antenna
+
+    Works only with K3
+*/
   void rx_ant(const bool torf);
 
+/// toggle whether the RX antenna is in use
   inline void rx_ant_toggle(void)
     { rx_ant(!rx_ant()); }
 
+/// toggle whether the RX antenna is in use
   inline void toggle_rx_ant(void)
     { rx_ant_toggle(); }
 };

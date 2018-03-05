@@ -1,4 +1,4 @@
-// $Id: rules.cpp 142 2018-01-01 20:56:52Z  $
+// $Id: rules.cpp 144 2018-03-04 22:44:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,7 +44,8 @@ typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 /*! \brief      Add a canonical value
     \param  cv  canonical value to add
 
-    Also adds <i>cv</i> as a possible value
+    Also adds <i>cv</i> as a possible value. Does nothing if <i>cv<\i> is already
+    present as a canonical value.
 */
 void exchange_field_values::add_canonical_value(const string& cv)
 { if (_values.find(cv) == _values.end())
@@ -119,7 +120,7 @@ const set<string> exchange_field_values::all_values(void) const
     \return         whether <i>value</i> is a legal value of any canonical value
 */
 const bool exchange_field_values::is_legal_value(const string& value) const
-{ for (const auto& cv : canonical_values())  // for each canonical value
+{ for (const auto& cv : canonical_values())         // for each canonical value
   { if (is_legal_value(cv, value))
       return true;
   }
@@ -136,7 +137,7 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
 { if (!is_legal_canonical_value(cv))
     return false;
 
-  const auto posn = _values.find(cv);
+  const auto posn = _values.find(cv);               // must be true if we get here
   const set<string>& ss = posn->second;
 
   return ( ss.find(putative_value) != ss.cend() );
@@ -400,6 +401,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
   for (const auto& pce : per_country_exchanges)
   { const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
+
     set<string> ss;
 
     for (auto str : vs)
@@ -416,9 +418,11 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
 // add the ordinary exchange to the permitted exchange fields
   const vector<string> exchange_vec = remove_peripheral_spaces(split_string(context.exchange(), ","));
+
   permitted_exchange_fields.insert( { "", exchange_vec } );
 
   const vector<string> exchange_mults_vec = remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
+
   map<string, vector<exchange_field>> single_mode_rv_rst;
   map<string, vector<exchange_field>> single_mode_rv_rs;
 
@@ -533,17 +537,19 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // the sent exchange
   if (_permitted_modes < MODE_CW)
-  { if (!context.sent_exchange_cw().empty())
-      _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names(MODE_CW) } );
-    else
-      _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names() } );
+  { //if (!context.sent_exchange_cw().empty())
+    //  _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names(MODE_CW) } );
+    //else
+    //  _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names() } );
+    _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_cw().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_CW) } );
   }
 
   if (_permitted_modes < MODE_SSB)
-  { if (!context.sent_exchange_ssb().empty())
-      _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names(MODE_SSB) } );
-    else
-      _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names() } );
+  { //if (!context.sent_exchange_ssb().empty())
+    //  _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names(MODE_SSB) } );
+    //else
+    //  _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names() } );
+    _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) } );
   }
 
 // add the permitted bands
@@ -563,9 +569,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // DOKs are a single letter; create the complete set if they aren't in auto mode
   if ( ( find(_exchange_mults.begin(), _exchange_mults.end(), "DOK") != _exchange_mults.end() ) and !context.auto_remaining_exchange_mults("DOK") )
-  { exchange_field_values dok_values;
+  { exchange_field_values dok_values("DOK");
 
-    dok_values.name("DOK");
+//    dok_values.name("DOK");
 
     for (size_t index = 0; index < 26; ++index)
       dok_values.add_canonical_value(create_string(UPPER_CASE_LETTERS[index]));

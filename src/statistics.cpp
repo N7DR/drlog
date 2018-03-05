@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 143 2018-01-22 22:41:15Z  $
+// $Id: statistics.cpp 144 2018-03-04 22:44:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,6 +42,7 @@ static const unsigned int FIELD_WIDTH       = 6;          ///< width of other fi
     \param  mult_name   name of callsign mult
     \param  mult_value  value of callsign mult
     \param  band_nr     band on which callsign mult was worked
+    \param  mode_nr     mode on which callsign mult was worked
 
     <i>band_nr</i> = ALL_BANDS means add to *only* the global accumulator; otherwise add to a band AND to the global accumulator
     The information is inserted into the <i>_callsign_multipliers</i> object.
@@ -423,9 +424,10 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 
 /*! \brief          Add a known value of country mult
     \param  str     canonical prefix of mult
+    \param  rules   rules for this contest
     \return         whether <i>str</i> was actually added
 
-    Does nothing and returns <i>false<i> if <i>str</i> is already known
+    Does nothing and returns <i>false</i> if <i>str</i> is already known
 */
 const bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 { SAFELOCK(statistics);
@@ -540,11 +542,12 @@ const set<string> running_statistics::known_exchange_mult_values(const string& n
     \param  field_name      exchange mult field name
     \param  field_value     value of the field <i>field_name</i>
     \param  band_nr         number of the band on which worked mult is to be added
+    \param  mode_nr         number of the mode on which worked mult is to be added
     \return                 whether the exchange mult was added
 
     Doesn't add if the value <i>field_value</i> is unknown.
 */
-const bool running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int b, const int m)
+const bool running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int band_nr, const int mode_nr)
 { if (field_value.empty())
     return false;
 
@@ -554,7 +557,7 @@ const bool running_statistics::add_worked_exchange_mult(const string& field_name
 
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == field_name)
-      return ( psm.second.add_worked(mv, static_cast<BAND>(b), static_cast<MODE>(m)) );
+      return ( psm.second.add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr)) );
   }
 
   return false;

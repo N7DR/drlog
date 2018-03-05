@@ -215,7 +215,8 @@ public:
 /*! \brief                                  Construct and initialise with useful values
     \param  destination_ip_address_or_fqdn  destination dotted decimal address or FQDN
     \param  destination_port                destination port
-    \param  source_address                  address to which the socket is to be bound
+    \param  source_address                  IP address to which the socket is to be bound
+    \param  retry_time_in_seconds           time between retries, in seconds
 */
   tcp_socket(const std::string& destination_ip_address_or_fqdn, 
              const unsigned int destination_port, 

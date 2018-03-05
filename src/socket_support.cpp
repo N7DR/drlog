@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 141 2017-12-16 21:19:10Z  $
+// $Id: socket_support.cpp 144 2018-03-04 22:44:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -86,8 +86,8 @@ tcp_socket::tcp_socket(void)  :
   }
 }
 
-/*! \brief          Encapsulate a pre-existing socket
-    \param  sock_p  pointer to socket
+/*! \brief      Encapsulate a pre-existing socket
+    \param  sp  pointer to socket
   
     Acts as default constructor if passed pointer is nullptr
 */
@@ -127,21 +127,22 @@ tcp_socket::tcp_socket(SOCKET* sp) :
   }
 }
 
-/*! \brief      Encapsulate a pre-existing socket
-    \param  sp  socket
+/*! \brief          Encapsulate a pre-existing socket
+    \param  sock    socket
 */
-tcp_socket::tcp_socket(SOCKET sp) :
+tcp_socket::tcp_socket(SOCKET sock) :
   _destination_is_set(false),
   _force_closure(false),
   _preexisting_socket(true),
-  _sock(sp),
+  _sock(sock),
   _timeout_in_tenths(600)                     // 1 minute
 {  }
 
-/*! \brief                          Construct and initialise with useful values
-    \param  destination_ip_address  destination dotted decimal address or FQDN
-    \param  destination_port        destination port
-    \param  source_ip_address       address to which the socket is to be bound
+/*! \brief                                  Construct and initialise with useful values
+    \param  destination_ip_address_or_fqdn  destination dotted decimal address or FQDN
+    \param  destination_port                destination port
+    \param  source_address                  IP address to which the socket is to be bound
+    \param  retry_time_in_seconds           time between retries, in seconds
 */
 tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn, 
                        const unsigned int destination_port, 

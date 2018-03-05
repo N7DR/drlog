@@ -63,6 +63,13 @@ public:
   exchange_field_values(void)
   { }
 
+/*! \brief          Construct from name
+    \param  nm      name of exchange field
+*/
+  explicit exchange_field_values(const std::string& nm) :
+    _name(nm)
+  { }
+
 /*! \brief          Construct from useful values
     \param  nm      name of exchange field
     \param  mss     canonical field value, all equivalent values (including canonical value)
@@ -78,7 +85,8 @@ public:
 /*! \brief      Add a canonical value
     \param  cv  canonical value to add
 
-    Also adds <i>cv</i> as a possible value
+    Also adds <i>cv</i> as a possible value. Does nothing if <i>cv<\i> is already
+    present as a canonical value.
 */
   void add_canonical_value(const std::string& cv);
 

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 143 2018-01-22 22:41:15Z  $
+// $Id: drlog.cpp 144 2018-03-04 22:44:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -110,7 +110,7 @@ const string match_callsign(const vector<pair<string /* callsign */,
 
 void populate_win_info(const string& str);                          ///< Populate the information window
 void print_thread_names(void);
-const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);
+const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);  ///< process a bandmap function, to jump to the next frequency returned by the function
 void process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
 const bool process_keypress_F5(void);                               ///< process key F5
 const bool p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
@@ -7793,13 +7793,15 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 //  ost << "at end of update, CALL contents = " << remove_peripheral_spaces(win_call.read()) << endl;
 }
 
+/*! \brief          Process a bandmap function, to jump to the next frequency returned by the function
+    \param  fn_p    pointer to function
+    \param  dirn    direction in which the function is to be applied
+    \return         always returns true
+*/
 const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn)
 { bandmap& bm = bandmaps[safe_get_band()];
 
-//  typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
-//  MEM_FUN_P fn_p = &bandmap::needed_all_time_new_or_qsled;
-
-  const bandmap_entry be = (bm.*fn_p)( dirn );  // get the next stn/mult
+  const bandmap_entry be = (bm.*fn_p)( dirn );  // get the next stn/mult, according to the function
 
   if (!be.empty())
   { rig.rig_frequency(be.freq());
@@ -7827,38 +7829,31 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
   return true;
 }
 
-/// update <i>win_recording_status</i>
-void update_recording_status_window(void)                                   ///< update the RECORDING STATE window
-{ //ost << "Inside update_recording_status_window()" << endl;
-
-  if (audio.recording())
-  { //ost << "recording is TRUE" << endl;
-    win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "REC";
-  }
-  else
-  { //ost << "recording is FALSE" << endl;
-    win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "---";
-  }
+/*! \brief  Update <i>win_recording_status</i>
+*/
+void update_recording_status_window(void)
+{ //if (audio.recording())
+  //  win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "REC";
+  //else
+  //  win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "---";
+  win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= ( audio.recording() ? "REC" : "---" );
 }
 
+/*! \brief          Toggle the state of audio recording
+    \param  audio   the audio recorder
+*/
 void toggle_recording_status(audio_recorder& audio)
 { if (audio.recording())
     audio.abort();
   else        // not recording
-  { //audio.base_filename(context.audio_file());
-    //audio.maximum_duration(context.audio_duration() * 60);
-    //audio.pcm_name(context.audio_device_name());
-    //audio.n_channels(context.audio_channels());
-    //audio.samples_per_second(context.audio_rate());
-    //audio.initialise();
-    //audio.capture();                          // start capturing audio; sets aborting to false, recording to true
     start_recording(context);
-  }
 
   if (win_recording_status.defined())
     update_recording_status_window();
 }
 
+/*! \brief  Start audio recording
+*/
 void start_recording(const drlog_context& context)
 { audio.base_filename(context.audio_file());
   audio.maximum_duration(context.audio_duration() * 60);
@@ -7869,12 +7864,12 @@ void start_recording(const drlog_context& context)
   audio.capture();
 }
 
-void update_rx_ant_window(void)                                            ///< get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
-{ if (win_rx_ant.defined())
+/*! \brief  Get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
+*/
+void update_rx_ant_window(void)
+{ if (win_rx_ant.defined())                     // don't do anything if the window isn't defined
   { const bool rx_ant_in_use = rig.rx_ant();
     const string window_contents = win_rx_ant.read();
-
-//    ost << "win_rx_ant contents = " << window_contents << endl;
 
     if ( rx_ant_in_use and (window_contents != "RX") )
       win_rx_ant < WINDOW_CLEAR < CURSOR_START_OF_LINE <= "RX";

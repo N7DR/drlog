@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 143 2018-01-22 22:41:15Z  $
+// $Id: rig_interface.cpp 144 2018-03-04 22:44:14Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -111,12 +111,12 @@ void* rig_interface::_poll_thread_function(void* vp)
   return nullptr;
 }
 
-/*! \brief      static wrapper for function to poll rig for status
-    \param  vp  the <i>this</i> pointer, in order to allow static member access to a real object
-    \return     nullptr
+/*! \brief          static wrapper for function to poll rig for status
+    \param  this_p  the <i>this</i> pointer, in order to allow static member access to a real object
+    \return         nullptr
 */
-void* rig_interface::_static_poll_thread_function(void* arg)
-{ rig_interface* bufp = static_cast<rig_interface*>(arg);
+void* rig_interface::_static_poll_thread_function(void* this_p)
+{ rig_interface* bufp = static_cast<rig_interface*>(this_p);
 
   bufp->_poll_thread_function(nullptr);
 
@@ -838,6 +838,12 @@ const bool rig_interface::is_locked(void)
 
 // explicit K3 commands
 #if !defined(NEW_RAW_COMMAND)
+
+/*! \brief                      Send a raw command to the rig
+    \param  cmd                 the command to send
+    \param  response_expected   whether a response is expected
+    \return                     the response from the rig, or the empty string
+*/
 const string rig_interface::raw_command(const string& cmd, const bool response_expected)
 { struct rig_state* rs_p = &(_rigp->state);
 //  struct rig_state& rs   = *rs_p;
@@ -989,6 +995,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 
   return string();
 }
+
 #endif
 
 #if defined(NEW_RAW_COMMAND)
@@ -1155,17 +1162,19 @@ const bool rig_interface::is_locked(void)
   }
 }
 
-/// get the bandwidth in Hz
+/*! \brief      Get the bandwidth in Hz
+    \return     the current audio bandwidth, in hertz
+*/
 const int rig_interface::bandwidth(void)
 { if (!_rig_connected)
     return 0;
 
   const string status_str = raw_command("BW;", 7);
 
-  if (status_str.empty())
-    return 0;
+//  if (status_str.empty())
+//    return 0;
 
-  return from_string<int>(substring(status_str, 2, 4)) * 10;
+  return ( (status_str.size() < 7) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
 
 /*! \brief      Get the most recent frequency for a particular band and mode
@@ -1192,10 +1201,12 @@ void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequen
   _last_frequency[ { b, m } ] = f;
 }
 
-/*! \brief Is the rig transmitting?
+/*! \brief      Is the rig transmitting?
+    \return     whether the rig is currently transmitting
 
     With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
-    (This is, unfortunately, just one example of the unreliability of the K3 in responding to commands.)
+    (This is, unfortunately, just one example of the unreliability of the K3 in responding to commands. I could write a book;
+    or at least a paper.)
 */
 const bool rig_interface::is_transmitting(void)
 { if (_rig_connected)
@@ -1218,7 +1229,9 @@ const bool rig_interface::is_transmitting(void)
     return false;
 }
 
-/// is the rig in TEST mode?
+/*! \brief      Is the rig in TEST mode?
+    \return     whether the rig is currently in TEST mode
+*/
 const bool rig_interface::test(void)
 { if (_model == RIG_MODEL_DUMMY)
     return true;
@@ -1259,7 +1272,9 @@ void rig_interface::test(const bool b)
   }
 }
 
-/// which VFO is currently used for transmitting?
+/*! \brief      Which VFO is currently used for transmitting?
+    \return     the VFO that is currently set to be used when transmitting
+*/
 const VFO rig_interface::tx_vfo(void)
 { if (!_rig_connected)
     return VFO_A;
@@ -1310,13 +1325,13 @@ void rig_interface::bandwidth_b(const unsigned int hz)
 
 /*! \brief      Is an RX antenna in use?
     \return     whether an RX antenna is in use
+
+    Works only with K3
 */
 const bool rig_interface::rx_ant(void)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
     { const string result = raw_command("AR;", RESPONSE);
-
-      ost << "rx_ant() result = " << result << endl;
 
       if (result != "AR0;" and result != "AR1;")
         ost << "ERROR in rx_ant(): result = " << result << endl;
@@ -1328,6 +1343,11 @@ const bool rig_interface::rx_ant(void)
   return false;
 }
 
+/*! \brief          Control use of the RX antenna
+    \param  torf    whether to use the RX antenna
+
+    Works only with K3
+*/
 void rig_interface::rx_ant(const bool torf)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
