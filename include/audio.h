@@ -256,6 +256,11 @@ public:
   void capture(void);
 };
 
+/*! \brief          Write a <i>PARAMS_STUCTURE</i> object to an output stream
+    \param  ost     output stream
+    \param  params  object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const PARAMS_STRUCTURE& params);
 
 // -----------  bext_chunk  ----------------
@@ -409,7 +414,7 @@ public:
   READ_AND_WRITE(subchunk_2_size);   ///< size in bytes = bits-per-sample / 8 * number-of-channels * number-of-samples
   READ_AND_WRITE(data);              ///< pointer to the actual sound data
 
-/*! \brief      Write the data chunk to the file
+/*! \brief      Write to a file
     \param  fp  file pointer
 */
   void write_to_file(FILE* fp) const;
@@ -467,35 +472,51 @@ public:
     { return _sample_rate * block_align(); }
 
 /*! \brief      Convert to a string that holds the fmt chunk in ready-to-use form
-    \return     string containgint the fmt chunk
+    \return     string containing the fmt chunk
 */
   const std::string to_string(void) const;
 
+/*! \brief      Write to a file
+    \param  fp  file pointer
+*/
   void write_to_file(FILE* fp) const;
 };
 
+/*! \brief          Write a <i>fmt_chunk</i> object to an output stream
+    \param  ost     output stream
+    \param  chunk   object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const fmt_chunk& chunk);
 
 // -----------  riff_header  ----------------
 
 /*! \class  riff_header
     \brief  Trivial class to implement the RIFF header
+
+    See: http://soundfile.sapp.org/doc/WaveFormat/
 */
 
 class riff_header
 {
 protected:
 
-  uint32_t  _chunk_size;
+  uint32_t  _chunk_size;                ///< file size - 8 (bytes)
 
 public:
 
 /// constructor
-  riff_header(void);
+  inline riff_header(void) :
+    _chunk_size(0)
+  { }
 
-  READ_AND_WRITE(chunk_size);
+  READ_AND_WRITE(chunk_size);          ///< file size - 8 (bytes)
 
-  const std::string to_string(void) const;
+/*! \brief      Convert to string
+    \return     the RIFF header as a string
+*/
+  inline const std::string to_string(void) const
+    { return replace_substring(std::string("RIFF    WAVE"), 4, _chunk_size); }
 };
 
 // -------------------------------------- Errors  -----------------------------------

@@ -31,7 +31,7 @@ static const std::string EOL      = "\n";       ///< end-of-line marker as strin
 static const char        EOL_CHAR = '\n';       ///< end-of-line marker as character
 
 static const std::string  LF       = "\n";      ///< LF as string
-static const std::string& LF_STR  = LF;         ///< LF as string
+static const std::string& LF_STR   = LF;        ///< LF as string
 static const char         LF_CHAR  = '\n';      ///< LF as character
 
 static const std::string CR       = "\r";       ///< CR as string
@@ -280,8 +280,7 @@ const std::vector<std::string> split_string(const std::string& cs, const std::st
 /*! \brief              Split a string into components
     \param  cs          original string
     \param  separator   separator character
-
-    \return Vector containing the separate components
+    \return             vector containing the separate components
 */
 inline const std::vector<std::string> split_string(const std::string& cs, const char c)
   { return split_string(cs, std::string(1, c)); }
@@ -378,7 +377,7 @@ template <typename T>
 T remove_peripheral_spaces(T& t)
 { typename std::remove_const<T>::type rv;
 
-  for_each(t.begin(), t.end(), [&rv](const std::string& s) { rv.push_back(remove_peripheral_spaces(s)); } );
+  for_each(t.cbegin(), t.cend(), [&rv](const std::string& s) { rv.push_back(remove_peripheral_spaces(s)); } );
 
   return rv;
 }
@@ -604,11 +603,9 @@ const size_t n_chars(const std::string& str);
 */
 const bool is_legal_ipv4_address(const std::string& cs);  
 
-/*! \brief          Convert a long to dotted decimal string
+/*! \brief          Convert a four-byte value to a dotted decimal string
     \param  val     original value
-    \return         dotted decimal string
-        
-    Assumes that a long is four octets
+    \return         dotted decimal string corresponding to <i>val</i>
 */
 const std::string convert_to_dotted_decimal(const uint32_t val);
 
@@ -620,7 +617,11 @@ const std::string convert_to_dotted_decimal(const uint32_t val);
 */
 const bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator);
 
-/// return true if call1 < call2, according to callsign sort order
+/*! \brief          Is one call earlier than another, according to callsign sort order?
+    \param  call1   first call
+    \param  call2   second call
+    \return         whether <i>call1</i> appears before <i>call2</i> in callsign sort order
+*/
 const bool compare_calls(const std::string& call1, const std::string& call2);
 
 /*! \brief          Return a number with a particular number of decimal places
@@ -656,7 +657,7 @@ const std::string reformat_for_wprintw(const std::string& str, const int width);
 */
 const std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& vecstr, const int width);
 
-const bool is_legal_rst(const std::string& str);
+//const bool is_legal_rst(const std::string& str);
 
 // -------------------------------------- Errors  -----------------------------------
 

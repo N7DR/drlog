@@ -368,10 +368,21 @@ void tr_log::sort_by_call(void)
   for (int n = 0; n < _number_of_qsos; ++n)
   { const int original_position = table[n]._qso;
     int status = fseek(_fp, original_position * _record_length, 0);
+
+    if (status != 0)
+      throw exception();
+
     char buffer[1000];
 
     status = fread(buffer, _record_length, 1, _fp);
+
+    if (status != 1)
+      throw exception();
+
     status = fwrite(buffer, _record_length, 1, tmpfp);
+
+    if (status != 1)
+      throw exception();
   }
 
 // Now delete the old file and reference the new one
@@ -400,6 +411,13 @@ const tr_record tr_log::read(const int n)
 */
 void tr_log::write(const tr_record& trr, const int n)
 { int status = fseek(_fp, n * _record_length, 0);
+
+  if (status != 0)
+    throw exception();
+
   status = fwrite(&trr, _record_length, 1, _fp);
+
+  if (status != 1)
+    throw exception();
 }
 

@@ -6,10 +6,11 @@
 // Principal author: N7DR
 
 // Copyright owners:
+//    IPfonix, Inc.
 //    N7DR
 
-#ifndef PTHREADSUPPORTH
-#define PTHREADSUPPORTH
+#ifndef PTHREADSUPPORT_H
+#define PTHREADSUPPORT_H
 
 /*! \file   pthread_support.h
 
@@ -339,4 +340,4 @@ public:
   { }
 };
 
-#endif    // PTHREADSUPPORTH
+#endif    // PTHREADSUPPORT_H

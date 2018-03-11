@@ -464,7 +464,7 @@ const string tcp_socket::read(const unsigned long timeout_secs)
         if (status == -1)
         { const string msg = "errno = " + to_string(errno) + ": " + strerror(errno);
 
-          ost << "Throwing TCP_SOCKET_ERROR_IN_RECV;" << msg << endl;
+          ost << "Throwing TCP_SOCKET_ERROR_IN_RECV; " << msg << endl;
           throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV, msg);
         }
 

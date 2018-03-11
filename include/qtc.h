@@ -130,6 +130,10 @@ protected:
   std::string _mode;                ///< CW or PH
   std::string _source;              ///< my call
 
+/*! \brief          Get all the entries that either have been sent or have not been sent
+    \param  sent    whether to return the sent entries
+    \return         if <i>sent</i> is <i>true</i>, return all the sent entries; otherwise retrun all the unsent entries
+*/
   const std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const bool sent) const;
 
 public:
@@ -218,20 +222,45 @@ public:
 */
   void mark_as_sent(const unsigned int n);
 
-// set a particular entry to unsent
+/*! \brief      Mark a particular entry as having NOT been sent
+    \param  n   index number to mark (wrt 0)
+
+    Does nothing if entry number <i>n</i> does not exist
+*/
   void mark_as_unsent(const unsigned int n);
 
-// get first entry that has not been sent
+/*! \brief          Get first <i>qtc_entry</i> beyond a certain point that has not been sent
+    \param  posn    index number (wrt 0) at which to start searching
+    \return         first <i>qtc_entry</i> at or later than <i>posn</i> that has not been sent
+
+    Returns an empty <i>qtc_entry</i> if no entries meet the criteria
+*/
   const qtc_entry first_not_sent(const unsigned int posn = 0);
 
+/*! \brief      Get a string representing a particular entry
+    \param  n   number of the entry (wrt 0)
+    \return     string describing <i>qtc_entry</i> number <i>n</i>
+
+    Returns the empty string if entry number <i>n</i> does not exist
+*/
   const std::string output_string(const unsigned int n) const;
 
+/*! \brief      Get a string representing all the entries
+    \return     string describing all the <i>qtc_entry</i> elements
+*/
   const std::string complete_output_string(void) const;
 
+/*! \brief      How many entries have been sent?
+    \return     the number of entries that have been sent
+*/
   const unsigned int n_sent(void) const;
 
+/*! \brief      How many entries have not been sent?
+    \return     the number of entries that have not been sent
+*/
   const unsigned int n_unsent(void) const;
 
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _qtc_entries
@@ -255,42 +284,71 @@ class qtc_database
 {
 protected:
 
-  std::vector<qtc_series>    _qtc_db;    ///< the QTCs
+  std::vector<qtc_series>    _qtc_db;       ///< the QTCs
 
 public:
 
+/// default constructor
   qtc_database(void)
     { }
 
-// read from file
+/*! \brief              Read from a file
+    \param  filename    name of file that contains the database
+*/
   qtc_database(const std::string& filename);
 
-  SAFEREAD(qtc_db, qtc_database);
+  SAFEREAD(qtc_db, qtc_database);           ///< the QTCs
 
+/*! \brief      Add a series of QTCs to the database
+    \param  q   the series of QTCs to be added
+*/
   void operator+=(const qtc_series& q);
 
+/*! \brief      Get the number of QTCs in the database
+    \return     the number of QTCs in the database
+*/
   inline const size_t n_qtcs(void) const
     { SAFELOCK(qtc_database);
 
       return _qtc_db.size();
     }
 
+/*! \brief      Get the number of QTCs in the database
+    \return     the number of QTCs in the database
+
+    Synonym for n_qtcs()
+*/
   inline const size_t size(void) const
     { return n_qtcs(); }
 
-  inline const qtc_series operator[](size_t n)
-    { SAFELOCK(qtc_database);
+/*! \brief      Get one of the series in the database
+    \param  n   number of the series to return (wrt 0)
+    \return     series number <i>n</i>
 
-      return _qtc_db.at(n);
-    }
+    Returns an empty series if <i>n</i> is out of bounds
+*/
+const qtc_series operator[](size_t n);
+//  inline const qtc_series operator[](size_t n)
+//    { SAFELOCK(qtc_database);
+//
+//      return _qtc_db.at(n);
+//    }
 
+/*! \brief                          Get the number of QTCs that have been sent to a particular station
+    \param   destination_callsign   the station to which the QTCs have been sent
+    \return                         number of QTCs that have been sent to <i>destination_callsign</i>
+*/
   const unsigned int n_qtcs_sent_to(const std::string& destination_callsign) const;
 
+/*! \brief                          Get the total number of QTC entries that have been sent
+    \return                         the number of QTC entries that have been sent
+*/
   const unsigned int n_qtc_entries_sent(void) const;
 
 // read from file
   void read(const std::string& filename);
 
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _qtc_db;
@@ -313,10 +371,27 @@ protected:
 
 public:
 
+/*! \brief                  Get a batch of QTC entries that may be sent to a particular destination
+    \param  max_entries     maximum number of QTC entries to return
+    \param  target          station to which the QTC entries are to be sent
+    \return                 the sendable QTC entries
+*/
   const std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string());
 
+/*! \brief          Add all unsent QSOs from a logbook to the buffer
+    \param  logbk   logbook
+
+    Does not add QSOs already in the buffer (either as sent or unsent).
+    Does not add non-EU QSOs.
+*/
   void operator+=(const logbook&);
 
+/*! \brief          Add a QSO to the buffer
+    \param  qso     QSO to add
+
+    Does nothing if <i>qso</i> is already in the buffer (either as sent or unsent).
+    Does nothing if the QSO is not with an EU station.
+*/
   void operator+=(const QSO&);
 
 /*! \brief          Remove a QTC if present in the unsent list
@@ -325,19 +400,38 @@ public:
   inline void operator-=(const qtc_entry& entry)
     { _unsent_qtcs.remove(entry); }
 
+/*! \brief          Transfer a <i>qtc_entry</i> from unsent status to sent status
+    \param  entry   <i>qtc_entry</i> to transfer
+*/
   void unsent_to_sent(const qtc_entry& entry);
 
+/*! \brief              Transfer a vector of <i>qtc_entry</i> objects from unsent status to sent status
+    \param  entries     QTC entries to transfer
+*/
   inline void unsent_to_sent(const std::vector<qtc_entry>& entries)
-    { for_each(entries.cbegin(), entries.cend(), [this] (const qtc_entry& entry) { unsent_to_sent(entry); }); }
+//    { for_each(entries.cbegin(), entries.cend(), [this] (const qtc_entry& entry) { unsent_to_sent(entry); }); }
+   { FOR_ALL(entries, [this] (const qtc_entry& entry) { unsent_to_sent(entry); }); }
 
+/*! \brief      Transfer all the entries in a <i>qtc_series</i> from unsent status to sent status
+    \param  qs  QTC entries to transfer
+*/
   void unsent_to_sent(const qtc_series& qs);
 
+/*! \brief      How many QTC QSOs have been sent?
+    \return     the number of QSOs that have been sent in QTCs
+*/
   inline const unsigned int n_sent_qsos(void) const
     { return _sent_qtcs.size(); }
 
+/*! \brief      How many unsent QTC QSOs are there?
+    \return     the number of QSOs that have not yet been sent in QTCs
+*/
   inline const unsigned int n_unsent_qsos(void) const
     { return _unsent_qtcs.size(); }
 
+/*! \brief      How large is the database?
+    \return     the total number of QSOs, both sent and unsent, in the database
+*/
   inline const unsigned int size(void) const
     { return n_sent_qsos() + n_unsent_qsos(); }
 
@@ -346,6 +440,7 @@ public:
 */
   void rebuild(const logbook& logbk);
 
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _unsent_qtcs

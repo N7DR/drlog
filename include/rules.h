@@ -248,9 +248,9 @@ public:
 /// default constructor
   points_structure(void);
 
-  READ_AND_WRITE(default_points);      ///< default points
-  READ_AND_WRITE(country_points);      ///< per-country points
   READ_AND_WRITE(continent_points);    ///< per-continent points
+  READ_AND_WRITE(country_points);      ///< per-country points
+  READ_AND_WRITE(default_points);      ///< default points
   READ_AND_WRITE(points_type);         ///< is the points structure too complex for the configuration notation?
 
 /// serialize with boost
@@ -415,14 +415,28 @@ public:
 */
   void prepare(const drlog_context& context, location_database& location_db);
     
-/// add a mode to the list of permitted modes
+/*! \brief          Add a mode to those permitted in the contest
+    \param  mode    mode to add
+
+    Does nothing if <i>mode</i> is already permitted
+*/
   inline void add_permitted_mode(const MODE mode)
     { SAFELOCK(rules); _permitted_modes.insert(mode); }
     
-/// get the next mode in sequence
+/*! \brief          Get the next mode in sequence
+    \param  current_mode    the current mode
+    \return                 the mode after <i>current_mode</i>
+
+    Cycles through the available modes.
+    Currently supports only MODE_CW and MODE_SSB
+*/
   const MODE next_mode(const MODE current_mode) const;
 
-/// add a band to the list of those permitted
+/*! \brief      Add a band to those permitted in the contest
+    \param  b   band to add
+
+    Does nothing if <i>b</i> is already permitted
+*/
   void add_permitted_band(const BAND b);
 
 /// get the next band that is higher in frequency than a given band

@@ -3364,6 +3364,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           win < WINDOW_CLEAR < CURSOR_START_OF_LINE < (contents + " DUPE") <= posn;
         }
 
+//        ost << "be before calculate_mult_status: " << be << endl;
+
         be.calculate_mult_status(rules, statistics);
 
 //        ost << "be after calculate_mult_status: " << be << endl;

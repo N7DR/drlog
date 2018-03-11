@@ -675,7 +675,7 @@ void wav_file::close(void)
   }
 
 // put correct length into data chunk... assumes no bext chunk
-  const uint32_t length_for_data_chunk = length - 44;
+  const uint32_t length_for_data_chunk = (length - 44);
 
   status = fseek(_fp, 40, SEEK_SET);      // go to byte #40
 
@@ -703,8 +703,6 @@ void wav_file::append_data(const void* vp, const size_t size)
   { ost << "Error appending data to WAV file: " << _name << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error appending data to WAV file: " +_name);
   }
-
-//  ost << "data appended to WAV file at: " << hhmmss() << endl;
 }
 
 // -----------  bext_chunk  ----------------
@@ -916,6 +914,9 @@ data_chunk::data_chunk(u_char* d, const uint32_t n_bytes) :
   _data(d)
 { }
 
+/*! \brief      Write to a file
+    \param  fp  file pointer
+*/
 void data_chunk::write_to_file(FILE* fp) const
 { const string id("data");
 
@@ -970,7 +971,7 @@ fmt_chunk::fmt_chunk(void) :
 { }
 
 /*! \brief      Convert to a string that holds the fmt chunk in ready-to-use form
-    \return     string containgint the fmt chunk
+    \return     string containing the fmt chunk
 */
 const string fmt_chunk::to_string(void) const
 { string rv = "fmt " + create_string(' ', 20);
@@ -986,6 +987,9 @@ const string fmt_chunk::to_string(void) const
   return rv;
 }
 
+/*! \brief      Write to a file
+    \param  fp  file pointer
+*/
 void fmt_chunk::write_to_file(FILE* fp) const
 { const string str = to_string();
 
@@ -995,6 +999,11 @@ void fmt_chunk::write_to_file(FILE* fp) const
   }
 }
 
+/*! \brief          Write a <i>fmt_chunk</i> object to an output stream
+    \param  ost     output stream
+    \param  chunk   object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const fmt_chunk& chunk)
 { ost << "subchunk_1_size = " << chunk.subchunk_1_size() << endl
       << "audio format = " << chunk.audio_format() << endl
@@ -1014,19 +1023,22 @@ ostream& operator<<(ostream& ost, const fmt_chunk& chunk)
 */
 
 /// constructor
-riff_header::riff_header(void) :
-  _chunk_size(0)
-{ }
+//riff_header::riff_header(void) :
+//  _chunk_size(0)
+//{ }
 
-const string riff_header::to_string(void) const
-{ //string rv = "RIFF    WAVE";
+/*! \brief      Convert to string
+    \return     the RIFF header as a string
+*/
+//const string riff_header::to_string(void) const
+//{ return replace_substring(string("RIFF    WAVE"), 4, _chunk_size);
+//}
 
-  //rv = replace_substring(rv, 4, _chunk_size);
-
-  //return rv;
-  return replace_substring(string("RIFF    WAVE"), 4, _chunk_size);
-}
-
+/*! \brief          Write a <i>PARAMS_STUCTURE</i> object to an output stream
+    \param  ost     output stream
+    \param  params  object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const PARAMS_STRUCTURE& params)
 { ost << "channels = " << params.channels << endl
       << "format = " << params.format << endl

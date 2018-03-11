@@ -861,11 +861,9 @@ const bool is_legal_ipv4_address(const string& cs)
   return true;
 }
 
-/*! \brief          Convert a long to dotted decimal string
+/*! \brief          Convert a four-byte value to a dotted decimal string
     \param  val     original value
-    \return         dotted decimal string
-        
-    Assumes that a long is four octets
+    \return         dotted decimal string corresponding to <i>val</i>
 */
 const string convert_to_dotted_decimal(const uint32_t val)
 { static const string separator(".");
@@ -900,7 +898,11 @@ const bool is_legal_value(const string& value, const string& legal_values, const
   return (find(vec.begin(), vec.end(), value) != vec.end());
 }
 
-/// return true if call1 < call2, according to callsign sort order
+/*! \brief          Is one call earlier than another, according to callsign sort order?
+    \param  call1   first call
+    \param  call2   second call
+    \return         whether <i>call1</i> appears before <i>call2</i> in callsign sort order
+*/
 const bool compare_calls(const string& call1, const string& call2)
 {
 /* callsign sort order

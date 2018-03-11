@@ -1,7 +1,13 @@
 // $Id: pthread_support.cpp 128 2016-04-16 15:47:23Z  $
 
-// Source code copyright 2000, 2001, 2002, 2003, 2004, 2005 IPfonix, Inc.
-// Unauthorized copying strictly prohibited
+// Released under the GNU Public License, version 2
+//   see: https://www.gnu.org/licenses/gpl-2.0.html
+
+// Principal author: N7DR
+
+// Copyright owners:
+//    IPfonix, Inc.
+//    N7DR
 
 /*! \file pthread_support.cpp
 

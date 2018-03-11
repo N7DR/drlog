@@ -82,6 +82,15 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
       }
     }
 
+    catch (const tcp_socket_error& e)
+    { if (e.code() == TCP_SOCKET_ERROR_IN_RECV)                                     // for now, treat as a timeout
+        ost << "Error reading from TCP socket in dx_cluster constructor" << endl;
+      else
+      { ost << "TCP socket error while reading cluster connection; error # = " << e.code() << "; reason = " << e.reason() << endl;
+        throw;
+      }
+    }
+
     catch (...)
     { ost << "caught unknown exception in dx_cluster constructor" << endl;
       throw;

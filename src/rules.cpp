@@ -1073,9 +1073,9 @@ const string contest_rules::canonical_value(const string& field_name, const stri
   return (cit == p_to_c.cend() ? actual_value : (cit->second));
 }
 
-/*! \brief                  Get the next mode
-    \param  current_mode    current mode
-    \return                 next mode in sequence
+/*! \brief          Get the next mode in sequence
+    \param  current_mode    the current mode
+    \return                 the mode after <i>current_mode</i>
 
     Cycles through the available modes.
     Currently supports only MODE_CW and MODE_SSB
@@ -1098,7 +1098,7 @@ const MODE contest_rules::next_mode(const MODE current_mode) const
 //  return *cit;
 }
 
-/*! \brief      Add a band to the list of permitted bands
+/*! \brief      Add a band to those permitted in the contest
     \param  b   band to add
 
     Does nothing if <i>b</i> is already permitted

@@ -81,15 +81,6 @@ const string qtc_entry::to_string(void) const
   return (_utc + SPACE + pad_string(_callsign, CALL_WIDTH, PAD_RIGHT) + SPACE + _serno);
 }
 
-const vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
-{ vector<qtc_entry> rv;
-
-  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv.push_back(pqeb.first); } );
-
-  return rv;
-}
-
-
 // -----------------------------------  qtc_series  ----------------------------
 
 /*! \class  qtc_series
@@ -111,6 +102,18 @@ const vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent)
 //
 //  return rv;
 //}
+
+/*! \brief          Get all the entries that either have been sent or have not been sent
+    \param  sent    whether to return the sent entries
+    \return         if <i>sent</i> is <i>true</i>, return all the sent entries; otherwise retrun all the unsent entries
+*/
+const vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
+{ vector<qtc_entry> rv;
+
+  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv.push_back(pqeb.first); } );
+
+  return rv;
+}
 
 /*! \brief          Add a qtc_entry
     \param  param   entry to add, and whether the entry has been sent
@@ -154,13 +157,22 @@ void qtc_series::mark_as_sent(const unsigned int n)
     _qtc_entries[n].second = true;
 }
 
-// set a particular entry to unsent
+/*! \brief      Mark a particular entry as having NOT been sent
+    \param  n   index number to mark (wrt 0)
+
+    Does nothing if entry number <i>n</i> does not exist
+*/
 void qtc_series::mark_as_unsent(const unsigned int n)
 { if (n < _qtc_entries.size())
     _qtc_entries[n].second = false;
 }
 
-// get first entry that has not been sent
+/*! \brief          Get first <i>qtc_entry</i> beyond a certain point that has not been sent
+    \param  posn    index number (wrt 0) at which to start searching
+    \return         first <i>qtc_entry</i> at or later than <i>posn</i> that has not been sent
+
+    Returns an empty <i>qtc_entry</i> if no entries meet the criteria
+*/
 const qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 { unsigned int index = posn;
 
@@ -174,6 +186,9 @@ const qtc_entry qtc_series::first_not_sent(const unsigned int posn)
   return qtc_entry();
 }
 
+/*! \brief      How many entries have been sent?
+    \return     the number of entries that have been sent
+*/
 const unsigned int qtc_series::n_sent(void) const
 { unsigned int rv = 0;
 
@@ -183,6 +198,9 @@ const unsigned int qtc_series::n_sent(void) const
   return rv;
 }
 
+/*! \brief      How many entries have not been sent?
+    \return     the number of entries that have not been sent
+*/
 const unsigned int qtc_series::n_unsent(void) const
 { unsigned int rv = 0;
 
@@ -196,6 +214,12 @@ const unsigned int qtc_series::n_unsent(void) const
   return rv;
 }
 
+/*! \brief      Get a string representing a particular entry
+    \param  n   number of the entry (wrt 0)
+    \return     string describing <i>qtc_entry</i> number <i>n</i>
+
+    Returns the empty string if entry number <i>n</i> does not exist
+*/
 const string qtc_series::output_string(const unsigned int n) const
 { static const string SPACE(" ");
   string rv;
@@ -220,6 +244,9 @@ const string qtc_series::output_string(const unsigned int n) const
   return rv;
 }
 
+/*! \brief      Get a string representing all the entries
+    \return     string describing all the <i>qtc_entry</i> elements
+*/
 const string qtc_series::complete_output_string(void) const
 { string rv;
 
@@ -286,8 +313,11 @@ window& operator<(window& win, const qtc_series& qs)
         \brief All QTCs
 */
 
-pt_mutex qtc_database_mutex;
+pt_mutex qtc_database_mutex;                            ///< mutex to allow correct locking
 
+/*! \brief      Add a series of QTCs to the database
+    \param  q   the series of QTCs to be added
+*/
 void qtc_database::operator+=(const qtc_series& q)
 { qtc_series q_copy = q;
 
@@ -302,6 +332,25 @@ void qtc_database::operator+=(const qtc_series& q)
   _qtc_db.push_back(q_copy);
 }
 
+/*! \brief      Get one of the series in the database
+    \param  n   number of the series to return (wrt 0)
+    \return     series number <i>n</i>
+
+    Returns an empty series if <i>n</i> is out of bounds
+*/
+const qtc_series qtc_database::operator[](size_t n)
+{ if (n >= size())
+    return qtc_series();
+
+  SAFELOCK(qtc_database);
+
+  return _qtc_db.at(n);
+}
+
+/*! \brief                          Get the number of QTCs that have been sent to a particular station
+    \param   destination_callsign   the station to which the QTCs have been sent
+    \return                         number of QTCs that have been sent to <i>destination_callsign</i>
+*/
 const unsigned int qtc_database::n_qtcs_sent_to(const string& destination_callsign) const
 { unsigned int rv = 0;
 
@@ -313,6 +362,9 @@ const unsigned int qtc_database::n_qtcs_sent_to(const string& destination_callsi
   return rv;
 }
 
+/*! \brief                          Get the total number of QTC entries that have been sent
+    \return                         the number of QTC entries that have been sent
+*/
 const unsigned int qtc_database::n_qtc_entries_sent(void) const
 { unsigned int rv = 0;
 
@@ -322,7 +374,9 @@ const unsigned int qtc_database::n_qtc_entries_sent(void) const
   return rv;
 }
 
-// read from file
+/*! \brief              Read from a file
+    \param  filename    name of file that contains the database
+*/
 void qtc_database::read(const string& filename)
 {  //ost << "in qtc_database::read()" << endl;
 
@@ -405,6 +459,12 @@ void qtc_database::read(const string& filename)
         \brief Buffer to handle process of moving QTCs from unsent to sent
 */
 
+/*! \brief          Add all unsent QSOs from a logbook to the buffer
+    \param  logbk   logbook
+
+    Does not add QSOs already in the buffer (either as sent or unsent).
+    Does not add non-EU QSOs.
+*/
 void qtc_buffer::operator+=(const logbook& logbk)
 { const vector<QSO> qsos = logbk.as_vector();
 
@@ -415,6 +475,12 @@ void qtc_buffer::operator+=(const logbook& logbk)
 
 }
 
+/*! \brief          Add a QSO to the buffer
+    \param  qso     QSO to add
+
+    Does nothing if <i>qso</i> is already in the buffer (either as sent or unsent).
+    Does nothing if the QSO is not with an EU station.
+*/
 void qtc_buffer::operator+=(const QSO& qso)
 { if (qso.continent() == "EU")
   { const qtc_entry entry(qso);
@@ -435,6 +501,11 @@ void qtc_buffer::rebuild(const logbook& logbk)
   *this += logbk;
 }
 
+/*! \brief                  Get a batch of QTC entries that may be sent to a particular destination
+    \param  max_entries     maximum number of QTC entries to return
+    \param  target          station to which the QTC entries are to be sent
+    \return                 the sendable QTC entries
+*/
 const vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target)
 { vector<qtc_entry> rv;
 
@@ -449,6 +520,9 @@ const vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_e
   return rv;
 }
 
+/*! \brief          Transfer a <i>qtc_entry</i> from unsent status to sent status
+    \param  entry   <i>qtc_entry</i> to transfer
+*/
 void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
 { //ost << "attempting to transfer: " << entry.to_string() << endl;
 
@@ -464,6 +538,9 @@ void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
   _sent_qtcs.insert(entry);
 }
 
+/*! \brief      Transfer all the entries in a <i>qtc_series</i> from unsent status to sent status
+    \param  qs  QTC entries to transfer
+*/
 void qtc_buffer::unsent_to_sent(const qtc_series& qs)
 { const vector<qtc_entry> sent_qtc_entries = qs.sent_qtc_entries();
 

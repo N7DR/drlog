@@ -216,6 +216,8 @@ void bandmap_entry::freq(const frequency& f)
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
+//  ost << "Inside bandmap_entry::calculate_mult_status()" << endl;
+
 // callsign mult
   clear_callsign_mult();
 
@@ -258,19 +260,40 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
 
     if (is_possible_exchange_field)
-    { exchange_mult_is_possible = true;
+    { //ost << "Found possible exchange field: " << exch_mult_name << endl;
+
+      exchange_mult_is_possible = true;
       string guess = exchange_db.guess_value(_callsign, exch_mult_name);
+
+      //ost << "initial guess = " << guess << endl;
 
       guess = rules.canonical_value(exch_mult_name, guess);
 
+      //ost << "final guess = " << guess << endl;
+
+      //ost << "needed exchange mult internals: " << _is_needed_exchange_mult << endl;
+
       if (!guess.empty())
+      {  const bool em = statistics.is_needed_exchange_mult(exch_mult_name, guess, _band, _mode);
+
+        if (em)
+          add_exchange_mult(exch_mult_name, guess);
+
+          //const set<pair<string, string>> needed_values = _is_needed_exchange_mult.values();
+
+          //for (auto needed_value : needed_values)
+            //if (needed_value.first == exch_mult_name)
+              //ost << "  *** needed value of field " << exch_mult_name << " = " << needed_value.second << endl;
+
         _is_needed_exchange_mult.status_is_known(true);
-    }
+      }
+    }//
   }
 
+//  ost << "exchange_mult_is_possible = " << exchange_mult_is_possible << endl;
+
   if (!exchange_mult_is_possible)                      // we now know that no exchange fields are exchange mult fields for this canonical prefix
-  { _is_needed_exchange_mult.status_is_known(true);
-  }
+    _is_needed_exchange_mult.status_is_known(true);
 
 // for debugging HA contest, in which many stns were marked on bm in green, even though already worked
 //  if (is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult())
