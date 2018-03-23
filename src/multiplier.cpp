@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 141 2017-12-16 21:19:10Z  $
+// $Id: multiplier.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -119,7 +119,6 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     _worked[m_nr][b_nr].erase(str);
 
 // is it still present in any band for this mode?
-    auto& pb = _worked[m_nr];
     bool present = false;
 
     for (int n = MIN_BAND; n < MAX_BAND; ++n)
@@ -213,7 +212,11 @@ const set<string> multiplier::worked(const int b, const int m) const
   return pb[ (_per_band ? b : ANY_BAND) ];
 }
 
-// ostream << multiplier
+/*! \brief          Write a <i>multiplier</i> object to an output stream
+    \param  ost     output stream
+    \param  m       object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const multiplier& m)
 { const auto flags = ost.flags();
 

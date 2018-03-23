@@ -41,8 +41,8 @@ public:
   grid_square(void)
     { }
 
-/*! \brief  Construct from a designation
-    \param  Four-character designation
+/*! \brief      Construct from a designation
+    \param  gs  four-character designation
 */
   grid_square(const std::string& gs);
 

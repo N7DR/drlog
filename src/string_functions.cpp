@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 144 2018-03-04 22:44:14Z  $
+// $Id: string_functions.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -803,6 +803,7 @@ const size_t n_chars(const string& str)
     throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: " + string(nl_langinfo(CODESET)));
 
   const size_t n_bytes = str.size();
+
   char* cp = const_cast<char*>(str.data());
   char* end_cp = cp + n_bytes;  // one past the end of the contents of str
   size_t rv = 0;
@@ -953,10 +954,11 @@ const bool compare_calls(const string& call1, const string& call2)
     index++;
   }
 
-  if (l1 < l2)
-    return true;
+//  if (l1 < l2)
+//    return true;
 
-  return false;
+//  return false;
+  return (l1 < l2);
 }
 
 /*! \brief          Does a string contain any letters?
@@ -966,12 +968,16 @@ const bool compare_calls(const string& call1, const string& call2)
     This should be faster than the find_next_of() or C++ is_letter or similar generic functions
 */
 const bool contains_letter(const string& str)
-{ for (unsigned int n = 0; n < str.size(); ++n)
-  { const char& c = str[n];
+{ //for (unsigned int n = 0; n < str.size(); ++n)
+  //{ const char& c = str[n];
+//
+   // if ( (c >= 'A' and c <='Z') or (c >= 'a' and c <='z') )
+   //   return true;
+ // }
 
+  for (const char& c : str)
     if ( (c >= 'A' and c <='Z') or (c >= 'a' and c <='z') )
       return true;
-  }
 
   return false;
 }
@@ -983,12 +989,16 @@ const bool contains_letter(const string& str)
     This should be faster than the find_next_of() or C++ is_digit or similar generic functions
 */
 const bool contains_digit(const string& str)
-{ for (unsigned int n = 0; n < str.size(); ++n)
-  { const char& c = str[n];
+{ //for (unsigned int n = 0; n < str.size(); ++n)
+  //{ const char& c = str[n];
 
+  //  if (c >= '0' and c <= '9' )
+  //    return true;
+  //}
+
+  for (const char& c : str)
     if (c >= '0' and c <= '9' )
       return true;
-  }
 
   return false;
 }
@@ -1005,6 +1015,7 @@ const string decimal_places(const string& str, const int n)
 // for now, assume that it's a number
   if ( (str.length() >= 2) and (str[str.length() - 2] != '.') )
   { const float fl = from_string<float>(str);
+
     ostringstream stream;
 
     stream << fixed << setprecision(n) << fl;
@@ -1073,21 +1084,4 @@ const vector<string> reformat_for_wprintw(const vector<string>& vecstr, const in
   return rv;
 }
 
-#if 0
-const bool is_legal_rst(const string& str)
-{ if (str.length() != 3)
-    return false;
-
-  if (str[0] < '1' or str[0] > '5')
-    return false;
-
-  if (str[1] < '1' or str[1] > '9')
-    return false;
-
-  if (str[2] < '1' or str[2] > '9')
-    return false;
-
-  return true;
-}
-#endif
 

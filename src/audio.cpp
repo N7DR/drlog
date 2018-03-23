@@ -1,4 +1,4 @@
-// $Id: audio.cpp 144 2018-03-04 22:44:14Z  $
+// $Id: audio.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -956,8 +956,7 @@ void data_chunk::write_to_file(FILE* fp) const
   28        4   ByteRate         == SampleRate * NumChannels * BitsPerSample/8
   32        2   BlockAlign       == NumChannels * BitsPerSample/8
                                  The number of bytes for one sample including
-                                 all channels. I wonder what happens when
-                                 this number isn't an integer?
+                                 all channels.
   34        2   BitsPerSample    8 bits = 8, 16 bits = 16, etc.
 */
 

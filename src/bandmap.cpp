@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 144 2018-03-04 22:44:14Z  $
+// $Id: bandmap.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -115,18 +115,11 @@ const unsigned int bandmap_buffer::add(const string& callsign, const string& pos
 
   bandmap_buffer_entry& bfe = _data[callsign];
 
-  const unsigned int rv = bfe.add(poster);
+  return bfe.add(poster);
 
-//  ost << "bandmap buffer for " << callsign << " has " << rv << " entries: " << endl;
+//  const unsigned int rv = bfe.add(poster);
 
-//  const set<string> posters = bfe.posters();
-
-//  for (const auto& poster : posters)
-//    ost << "  " << poster << endl;
-
-  return rv;
-
-//  return bfe.add(poster);
+//  return rv;
 }
 
 // -----------   bandmap_filter_type ----------------
@@ -176,12 +169,12 @@ void bandmap_filter_type::add_or_subtract(const string& str)
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
 bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
-  _expiration_time(0),
-  _is_needed(true),
-  _mult_status_is_known(false),
-  _source(s),
-  _time(::time(NULL)),
-  _time_of_earlier_bandmap_entry(0)
+  _expiration_time(0),                  // no expiration time
+  _is_needed(true),                     // the entry is needed
+  _mult_status_is_known(false),         // multiplier status is unknown
+  _source(s),                           // source is as given in <i>s</i>
+  _time(::time(NULL)),                  // now
+  _time_of_earlier_bandmap_entry(0)     // no earlier bandmap entry
 { }
 
 /*! \brief          Set the callsign
@@ -216,8 +209,6 @@ void bandmap_entry::freq(const frequency& f)
 */
 void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statistics& statistics)
 {
-//  ost << "Inside bandmap_entry::calculate_mult_status()" << endl;
-
 // callsign mult
   clear_callsign_mult();
 
@@ -260,18 +251,11 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
 
     if (is_possible_exchange_field)
-    { //ost << "Found possible exchange field: " << exch_mult_name << endl;
+    { exchange_mult_is_possible = true;
 
-      exchange_mult_is_possible = true;
       string guess = exchange_db.guess_value(_callsign, exch_mult_name);
 
-      //ost << "initial guess = " << guess << endl;
-
       guess = rules.canonical_value(exch_mult_name, guess);
-
-      //ost << "final guess = " << guess << endl;
-
-      //ost << "needed exchange mult internals: " << _is_needed_exchange_mult << endl;
 
       if (!guess.empty())
       {  const bool em = statistics.is_needed_exchange_mult(exch_mult_name, guess, _band, _mode);
@@ -360,30 +344,6 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
   return ( (original_is_needed != _is_needed) or (original_is_needed_callsign_mult != is_needed_callsign_mult()) or
            (original_is_needed_country_mult != is_needed_country_mult()) or (original_is_needed_exchange_mult != is_needed_exchange_mult()));
 }
-
-/*! \brief          Add a call to the associated posters
-    \param  call    call to add
-    \return         number of posters associated with this call, after adding <i>call</i>
-
-    Does nothing if <i>call</i> is already a poster
-*/
-//const unsigned int bandmap_entry::add_poster(const string& call)
-//{ _posters.insert(call);
-//
-//  return n_posters();
-//}
-
-/// return all the posters as a space-separated string
-//const string bandmap_entry::posters_string(void) const
-//{ string rv;
-//
-//  FOR_ALL(_posters, [&rv] (const string& p) { rv += (p + " "); } );
-//
-//  if (!rv.empty())
-//    rv = substring(rv, 0, rv.length() - 1);  // remove the final space
-//
-//  return rv;
-//}
 
 /// guess the mode, based on the frequency
 const MODE bandmap_entry::putative_mode(void) const

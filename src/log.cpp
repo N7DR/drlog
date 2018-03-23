@@ -703,9 +703,9 @@ log_extract::log_extract(window& w) :
 }
 
 /// prepare for use
-void log_extract::prepare(void)
-{ _win_size = _win.height();
-}
+//void log_extract::prepare(void)
+//{ _win_size = _win.height();
+//}
 
 /*! \brief          Add a QSO to the extract
     \param  qso     QSO to add

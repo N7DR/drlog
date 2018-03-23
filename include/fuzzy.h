@@ -11,7 +11,7 @@
 #ifndef FUZZY_H
 #define FUZZY_H
 
-/*! \file fuzzy.h
+/*! \file   fuzzy.h
 
     Objects and functions related to generation of fuzzy matches
 */
@@ -36,8 +36,16 @@ const size_t MAX_FUZZY_SIZE = 8;               // any call with more than this n
 class fuzzy_database
 {
 protected:
+
   std::array< std::set<std::string>, MAX_FUZZY_SIZE + 1 /* call size */>  _db;    ///< the database;
   
+/*! \brief      Force a value to be within the legal range of sizes
+    \param  sz  size that may need to be forced to change
+    \return     <i>sz</i>, or a value within the legal range
+
+    The purpose of this is to include calls with more or fewer characters than the boundaries
+    into the correct element of the <i>_db</i> array
+*/
   inline const size_t _to_valid_size(const size_t sz) const
     { return std::max(std::min(sz, MAX_FUZZY_SIZE), MIN_FUZZY_SIZE); }
 
@@ -47,7 +55,11 @@ public:
   fuzzy_database(void)
     { }
 
-/// construct from filename; file is assumed to look similar to TRMASTER.ASC
+/*! \brief      Construct from a file
+    \param  filename  name of the file from which to construct the object
+
+    The file <i>filename</i> is assumed to look similar to TRMASTER.ASC
+*/
   explicit fuzzy_database(const std::string& filename);
 
 /// construct from a drmaster object
@@ -96,7 +108,7 @@ class fuzzy_databases
 {
 protected:
 
-  std::vector<fuzzy_database*> _vec;    // in priority order, most important (i.e., the basic, static database) first
+  std::vector<fuzzy_database*> _vec;    ///< vector of pointers to databases in priority order, most important (i.e., the basic, static database) first
 
 public:
 

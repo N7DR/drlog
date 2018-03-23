@@ -1,4 +1,4 @@
-// $Id: pthread_support.cpp 128 2016-04-16 15:47:23Z  $
+// $Id: pthread_support.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -9,7 +9,7 @@
 //    IPfonix, Inc.
 //    N7DR
 
-/*! \file pthread_support.cpp
+/*! \file   pthread_support.cpp
 
     Support for pthreads
 */
@@ -137,7 +137,7 @@ const pthread_error_messages pthread_error_message;     ///< object to hold erro
 
     The first four parameters are passed without change to <i>pthread_create</i>
 */
-void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name)
+void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const string& thread_name)
 { const int status = pthread_create(thread, attr, start_routine, arg);
 
   if (status != 0)
@@ -178,10 +178,10 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     Supports only the PTHREAD_DETACHED attribute
 */
 thread_attribute::thread_attribute(const unsigned int initial_attributes)
-{ const int status = pthread_attr_init(&_attr);
+{ const int status = pthread_attr_init(&_attr);             // man page says that this always succeeds and returns 0
 
   if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init()");
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init(): error number = " + to_string(status));
 
   if (initial_attributes bitand PTHREAD_DETACHED)
     detached(true);
@@ -210,6 +210,7 @@ void thread_attribute::detached(const bool b)
 */
 const bool thread_attribute::detached(void) const
 { int state;
+
   const int status = pthread_attr_getdetachstate(&_attr, &state);
 
   if (status)
@@ -235,7 +236,9 @@ pt_mutex::pt_mutex(void)
 /// destructor
 pt_mutex::~pt_mutex(void)
 { pthread_mutex_destroy(&_mutex);
+
   int* ip;
+
   ip = _tsd_refcount.get();
   delete ip; 
 }
@@ -243,6 +246,7 @@ pt_mutex::~pt_mutex(void)
 /// lock
 void pt_mutex::lock(void)
 { int* ip;
+
   ip = _tsd_refcount.get();        // defined to return 0 if it has not been set in this thread
 
   if (ip == 0)
@@ -252,6 +256,7 @@ void pt_mutex::lock(void)
   
   if (*ip == 0)
   { const int status = pthread_mutex_lock(&_mutex);
+
     if (status != 0)
       throw pthread_error(PTHREAD_LOCK_ERROR, (string)"ERROR LOCKING MUTEX: " + to_string(status));
 
@@ -285,6 +290,7 @@ void pt_mutex::unlock(void)
     _thread_id = 0;
 
     const int status = pthread_mutex_unlock(&_mutex);
+
     if (status != 0)
       throw pthread_error(PTHREAD_UNLOCK_ERROR, (string)"ERROR UNLOCKING MUTEX: " + to_string(status));
   }
@@ -308,25 +314,11 @@ pt_condition_variable::pt_condition_variable(void) :
 /*! \brief          Construct and associate a mutex with the condition variable
     \param  mtx     mutex to be associated with the condition variable
 */
-pt_condition_variable::pt_condition_variable(pt_mutex& mutex) :
-  _mutex_p(&mutex),
+pt_condition_variable::pt_condition_variable(pt_mutex& mtx) :
+  _mutex_p(&mtx),
   _predicate(false)
 { pthread_cond_init(&_cond, NULL);
 }
-
-/// destructor
-//pt_condition_variable::~pt_condition_variable(void)
-//{ pthread_cond_destroy(&_cond);
-//}
-
-/*! \brief          Set the value of the associated mutex
-    \param  mtx     mutex to associate with this condition variable
-
-    Typically used with the default constructor
-*/
-//void pt_condition_variable::set_mutex(pt_mutex& mutex)
-//{ _mutex_p = &mutex;
-//}
 
 /*! \brief  Wait on the condition variable
 
@@ -423,6 +415,7 @@ safelock::~safelock(void)
 #include <sys/types.h>
 #include <unistd.h>
 
+/// How many threads belong to this process?
 const unsigned int n_threads(void)
 { const pid_t pid = getpid();
   const string filename = string("/proc/") + to_string(pid) + "/status";

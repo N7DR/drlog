@@ -1,4 +1,4 @@
-// $Id: log.h 138 2017-06-20 21:41:26Z  $
+// $Id: log.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,8 +39,8 @@ class running_statistics;                   // forward declaration
 
 // -----------  logbook  ----------------
 
-/*! \class logbook
-    \brief The log
+/*! \class  logbook
+    \brief  The log
 */
 
 extern pt_mutex _log_mutex;                 ///< mutex for log; keep this outside the class so that const objects can lock the mutex
@@ -66,7 +66,7 @@ public:
 */
   const QSO operator[](const size_t n) const;
 
-/// return the most recent qso
+/// return the most recent QSO
   inline const QSO last_qso(void) const
     { SAFELOCK(_log);
 
@@ -85,7 +85,7 @@ public:
 */
   void operator-=(const unsigned int n);
 
-/*! \brief      Remove most-recent qso
+/*! \brief      Remove most-recent QSO
     \return     the removed QSO
 
     Does nothing and returns an empty QSO if there are no QSOs in the log
@@ -284,8 +284,9 @@ public:
 */
   explicit log_extract(window& w);
 
-/// prepare for use
-  void prepare(void);
+/// prepare for use; this MUST be called before the object is used
+  inline void prepare(void)
+    { _win_size = _win.height(); }
 
 /// number of QSOs in the extract
   inline const size_t size(void)
@@ -356,7 +357,7 @@ public:
 */
   void match_exchange(const logbook& lgbook, const std::string& target);
 
-/// log_extract = <something>
+/// log_extract = <i>something</i>
 template <typename T>
   void operator=(const T& t)
   { SAFELOCK(_extract);
@@ -384,10 +385,10 @@ protected:
 
 public:
 
-  READ_AND_WRITE(band);
-  READ_AND_WRITE(callsign);
-  READ_AND_WRITE(mode);
-  READ_AND_WRITE(qsl_received);
+  READ_AND_WRITE(band);             ///< band
+  READ_AND_WRITE(callsign);         ///< callsign
+  READ_AND_WRITE(mode);             ///< mode
+  READ_AND_WRITE(qsl_received);     ///< has a QSL been received?
 };
 
 // -----------  old_log  ----------------

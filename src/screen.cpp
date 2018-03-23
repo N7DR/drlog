@@ -585,6 +585,8 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
       break;
     }
 
+    case WINDOW_NOP :       // logically unnecessary, but needed to keep the compiler happy
+      break;
   }
   return *this;
 }

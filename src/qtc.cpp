@@ -59,18 +59,24 @@ const bool qtc_entry::operator==(const qtc_entry& entry) const
   return true;
 }
 
-/// qtc_entry < qtc_entry
+/*! \brief          Sorting function for <i>qtc_entry</i>
+    \param  entry   object against which to sort
+    \return         whether this oject is "less than" <i>entry</i>
+*/
 const bool qtc_entry::operator<(const qtc_entry& entry) const
-{ if (_serno < entry._serno)
-    return true;
+{ //if (_serno < entry._serno)
+  //  return true;
 
-  if (_utc < entry._utc)
-    return true;
+  //if (_utc < entry._utc)
+  //  return true;
 
-  if (_callsign < entry._callsign)
-    return false;
+  //if (_callsign < entry._callsign)
+  //  return false;
 
-  return false;
+  //return false;
+
+  return ( (_serno < entry._serno) or (_utc < entry._utc) or (_callsign < entry._callsign) );
+
 }
 
 /// convert to printable string
@@ -86,22 +92,6 @@ const string qtc_entry::to_string(void) const
 /*! \class  qtc_series
     \brief  A QTC series as defined by the WAE rules
 */
-
-//const vector<qtc_entry> qtc_series::sent_qtc_entries(void) const
-//{ vector<qtc_entry> rv;
-//
-//  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv.push_back(pqeb.first); } );
-//
-//  return rv;
-//}
-
-//const vector<qtc_entry> qtc_series::unsent_qtc_entries(void) const
-//{ vector<qtc_entry> rv;
-//
-//  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv.push_back(pqeb.first); } );
-//
-//  return rv;
-//}
 
 /*! \brief          Get all the entries that either have been sent or have not been sent
     \param  sent    whether to return the sent entries
@@ -137,13 +127,9 @@ const bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-//const pair<qtc_entry, bool>& qtc_series::operator[](const unsigned int n) const
 const pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
 { static const pair<qtc_entry, bool> empty_return_value { };
-  //if (n < _qtc_entries.size())
-  //  return _qtc_entries[n];
 
-  //return pair<qtc_entry, bool>{ };
   return ( (n < _qtc_entries.size()) ? _qtc_entries[n] : empty_return_value );
 }
 

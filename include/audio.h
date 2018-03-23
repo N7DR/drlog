@@ -1,4 +1,4 @@
-// $Id: audio.h 144 2018-03-04 22:44:14Z  $
+// $Id: audio.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -442,8 +442,7 @@ protected:
   28        4   ByteRate         == SampleRate * NumChannels * BitsPerSample/8
   32        2   BlockAlign       == NumChannels * BitsPerSample/8
                                  The number of bytes for one sample including
-                                 all channels. I wonder what happens when
-                                 this number isn't an integer?
+                                 all channels.
   34        2   BitsPerSample    8 bits = 8, 16 bits = 16, etc.
 */
 
@@ -458,16 +457,18 @@ public:
 /// constructor
   fmt_chunk(void);
 
-  READ_AND_WRITE(audio_format);
-  READ_AND_WRITE(num_channels);
-  READ_AND_WRITE(sample_rate);
-  READ_AND_WRITE(bits_per_sample);
+  READ_AND_WRITE(audio_format);         ///< indicates the format, 1 for PCM
+  READ_AND_WRITE(num_channels);         ///< number of channels
+  READ_AND_WRITE(sample_rate);          ///< bits per second
+  READ_AND_WRITE(bits_per_sample);      ///< number of bits in a single sample
 
-  READ(subchunk_1_size);
+  READ(subchunk_1_size);                ///< size of the remainder of the subchunk; 16 for PCM
 
+/// the number of bytes occupied by the blocks of a single sample
   inline const uint16_t block_align(void) const
     { return _num_channels * _bits_per_sample / 8; }
 
+/// the number of bytes occupied per second
   inline const uint32_t byte_rate(void) const
     { return _sample_rate * block_align(); }
 

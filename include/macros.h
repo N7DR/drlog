@@ -120,6 +120,32 @@
 
 #endif    // !READ_AND_WRITE
 
+/// Error classes are all similar, so define a macro for them
+#if (!defined(ERROR_CLASS))
+
+#define ERROR_CLASS(z) \
+\
+/*! \class  z \
+    \brief  The z error class \
+*/ \
+\
+class z : public x_error \
+{ \
+protected: \
+\
+public: \
+\
+/*! \brief      Construct from error code and reason \
+    \param  n   error code \
+    \param  s   reason \
+*/ \
+  inline z(const int n, const std::string& s) : \
+    x_error(n, s) \
+  { } \
+}
+
+#endif      // !ERROR_CLASS
+
 // classes for tuples... it seems like there should be a way to do this with TMP,
 // but the level-breaking caused by the need to control textual names seems to make
 // this impossible without resorting to #defines. So since I don't immediately see

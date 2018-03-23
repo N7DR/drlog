@@ -1,4 +1,4 @@
-// $Id: log_message.h 131 2016-11-07 18:14:28Z  $
+// $Id: log_message.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,7 +11,7 @@
 #ifndef LOG_MESSAGE_H
 #define LOG_MESSAGE_H
 
-/*! \file log_message.h
+/*! \file   log_message.h
 
     Classes and functions related to log messages
 */
@@ -24,13 +24,14 @@
 
 // -----------  message_stream  ----------------
 
-/*! \class message_stream
-    \brief A message stream to be written to a file
+/*! \class  message_stream
+    \brief  A message stream to be written to a file
 */
 
 class message_stream
 {
 protected:
+
   std::ofstream     _ost;                       ///< the output stream
   std::ofstream     _err;                       ///< the error stream
   
@@ -47,7 +48,10 @@ public:
 */
   message_stream(const std::string& filename, const std::string& error_name = "drlog-errors");
 
-/// message_stream << <generic object>
+/*! \brief          Write a generic object to a <i>message_stream</i> object
+    \param  obj     object to write
+    \return         the <i>message_stream</i> object
+*/
   template <typename T>
   message_stream& operator<<(const T obj)
   {
@@ -65,9 +69,11 @@ public:
     return *this;
   }
 
-/*! \brief    message_stream << manipulator (see "The C++ Standard Library", 13.6.1)
+/*! \brief          Write a manipulator to a <i>message_stream</i> object (see "The C++ Standard Library", 13.6.1)
+    \param  obj     manipulator to write
+    \return         the <i>message_stream</i> object
 
-    I have no idea why this is necessary, since it seems to me that the
+     have no idea why this is necessary, since it seems to me that the
     (identical) generic version should work just fine (since surely manipulators are constant?)
 */
   message_stream& operator<<(std::ostream&(*obj)(std::ostream&))

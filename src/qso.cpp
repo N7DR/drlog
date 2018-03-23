@@ -1,4 +1,4 @@
-// $Id: qso.cpp 144 2018-03-04 22:44:14Z  $
+// $Id: qso.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -51,11 +51,8 @@ const bool QSO::_is_received_field_optional(const string& field_name, const vect
   if (begins_with(name_copy, "received-"))
     name_copy = substring(name_copy, 9);
 
-//  for (size_t n = 0; n < fields_from_rules.size(); ++n)
   for (const auto& ef : fields_from_rules)
-  { //const exchange_field ef = fields_from_rules[n];
-
-    if (ef.name() == name_copy)
+  { if (ef.name() == name_copy)
       return ef.is_optional();
   }
 
@@ -266,14 +263,10 @@ void QSO::populate_from_log_line(const string& str)
 
   const vector<exchange_field> exchange_fields = rules.expanded_exch(_callsign, _mode);
 
-//  for (size_t n = 0; n < exchange_fields.size(); ++n)
-//    ost << "from rules: exchange field = " << exchange_fields[n] << endl;
-
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { bool processed = false;
-    const string& field = _log_line_fields[n];
 
-//    ost << "Processing field: " << field << "( n = " << n << ")" << endl;
+    const string& field = _log_line_fields[n];
 
     if (!processed and (field == "NUMBER"))
     { _number = from_string<decltype(_number)>(vec[n]);
@@ -317,22 +310,7 @@ void QSO::populate_from_log_line(const string& str)
     }
 
     if (!processed and (starts_with(field, "received-")))
-    { //ost << "detailed processing for: " << field << endl;
-      //ost << "index = " << received_index << endl;
-      //ost << "vec[n] = " << vec[n] << endl;
-
-// in Stew Perry, we have an optional RST as the first field; this is a fairly horrible kludge
-//      if (_is_received_field_optional(field, exchange_fields))
-//        ost << "field " << field << " IS optional" << endl;
-//      else
-//        ost << "field " << field << " IS NOT optional" << endl;
-
-//      if (rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))
-//        ost << "field " << field << " HAS legal value: " << _received_exchange[received_index].value() << endl;
-//      else
-//        ost << "field " << field << " DOES NOT HAVE legal value: " << _received_exchange[received_index].value() << endl;
-
-      if (_is_received_field_optional(field, exchange_fields) and !rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))  // empty optional field
+    { if (_is_received_field_optional(field, exchange_fields) and !rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))  // empty optional field
       { _received_exchange[received_index++].value("");
 
         if (received_index < _received_exchange.size())
@@ -341,7 +319,6 @@ void QSO::populate_from_log_line(const string& str)
       else
       { if (received_index < _received_exchange.size())
         { _received_exchange[received_index++].value(vec[n]);
-//          ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
 
           if (starts_with(field, "received-PREC"))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
           { //ost << "** received-PREC **" << endl;
@@ -360,6 +337,12 @@ void QSO::populate_from_log_line(const string& str)
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 
+/*! \brief          NEW - Populate from a string (as visible in the log window)
+    \param  str     string from visible log window
+    \param  mycall  my callsign
+
+    Currently unused
+*/
 void QSO::new_populate_from_log_line(const string& str, const string& mycall)
 { if (str.empty())
     return;
@@ -407,13 +390,6 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
   { alert("Unable to parse exchange in log line");
     return;
   }
-
-//  const vector<parsed_exchange_field> received_fields = pexch.fields();
-
-//  for (const auto& received_field : received_fields)
-//  {
-//  }
-
 }
 
 /// is any of the exchange fields a mult?
@@ -472,6 +448,7 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
     const string name = vec[0];
     const unsigned int posn = from_string<unsigned int>(vec[1]) - 1;
     const unsigned int len  = from_string<unsigned int>(vec[2]);
+
     pad_direction pdirn = PAD_LEFT;
     char pad_char = ' ';
       
@@ -693,7 +670,7 @@ const string QSO::verbose_format(void) const
     \param  rule_to_match   boolean rule to attempt to match
     \return                 whether the exchange in the QSO matches <i>rule_to_match</i>
 
-    <i>rule_to_match is from the configuration file, and looks like:
+    <i>rule_to_match is</i> from the configuration file, and looks like:
       [IOTA != -----]
 */
 const bool QSO::exchange_match(const string& rule_to_match) const
@@ -734,7 +711,7 @@ const bool QSO::exchange_match(const string& rule_to_match) const
   return false;
 }
 
-/*! \brief          Do any of the exchange fields the QSO match a target string?
+/*! \brief          Do the values of any of the exchange fields in the QSO match a target string?
     \param  target  target string
     \return         whether any of the exchange fields contain the value <i>target</i>
 */
@@ -825,6 +802,7 @@ const string QSO::log_line(void)
 // print in same order they are present in the config file
   for (const auto& field : _received_exchange)
   { unsigned int field_width = QSO_MULT_WIDTH;
+
     const string& name = field.name();
 
 // skip the CALL field from SS, since it's already on the line
@@ -861,8 +839,7 @@ const string QSO::log_line(void)
     }
 
     catch (...)
-    {
-    }
+    { }
 
     rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
   }
@@ -924,8 +901,12 @@ const bool QSO::operator==(const QSO& q) const
   return true;
 }
 
-/// ostream << QSO
-std::ostream& operator<<(std::ostream& ost, const QSO& q)
+/*! \brief          Write a <i>QSO</i> object to an output stream
+    \param  ost     output stream
+    \param  q       object to write
+    \return         the output stream
+*/
+ostream& operator<<(ostream& ost, const QSO& q)
 { ost << "Number: " << q.number()
       << ", Date: " << q.date()
       << ", UTC: " << q.utc()
@@ -952,22 +933,6 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q)
   return ost;
 }
 
-#if 0
-const string call_from_log_line(const string& ll)
-{ static const unsigned int CALL_FIELD = 5;
-
-  string rv;
-
-// separate the line into fields
-  const vector<string> vec = remove_peripheral_spaces(split_string(squash(ll, ' '), " "));
-
-  if (vec.size() < 6)
-    return rv;
-
-  return vec[CALL_FIELD];
-}
-#endif
-
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
     \param  posn    character position within line
@@ -983,8 +948,9 @@ const pair<string, string> next_name_value_pair(const string& str, size_t& posn)
 { static const pair<string, string> empty_pair;
 
   if (posn >= str.size())
-  { posn = string::npos;
-    return empty_pair;
+  { //posn = string::npos;
+    //return empty_pair;
+    return ( posn = string::npos, empty_pair);
   }
 
   const size_t first_char_posn = str.find_first_not_of(" ", posn);

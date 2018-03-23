@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 128 2016-04-16 15:47:23Z  $
+// $Id: pthread_support.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -64,6 +64,7 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 class thread_attribute
 {
 protected:
+
   pthread_attr_t    _attr;          ///< attributes
 
 public:
@@ -104,6 +105,7 @@ public:
 template<class T> class thread_specific_data
 {
 protected:
+
   pthread_key_t _key;                       ///< key into thread-specific data
 
 public:
@@ -144,6 +146,7 @@ public:
 class pt_mutex
 {
 protected:
+
   pthread_mutex_t           _mutex;             ///< Encapsulated mutex
   pthread_t                 _thread_id;         ///< ID of the thread that owns the locked mutex
   thread_specific_data<int> _tsd_refcount;      ///< reference counter for recursive locking
@@ -186,6 +189,7 @@ public:
 class pt_condition_variable
 {
 protected:
+
   pthread_cond_t _cond;         ///< Encapsulated condition variable
   pt_mutex*      _mutex_p;      ///< Pointer to associated mutex
   bool           _predicate;    ///< predicate used to handle false wake-ups on brain-dead systems
@@ -258,8 +262,8 @@ class safelock
 {
 protected:
 
-  pt_mutex* _ptm_p;         ///< encapsulated mutex
   std::string _name;        ///< name (if any)
+  pt_mutex*   _ptm_p;       ///< encapsulated mutex
 
 /*! \brief  Copy constructor
 
@@ -275,14 +279,14 @@ protected:
 
 public:
 
-/*! \brief  Construct from a mutex
-    \param  mtx Mutex to be locked
+/*! \brief          Construct from a mutex
+    \param  mtx     mutex to be locked
 */
   safelock(pt_mutex& mtx);
 
-/*! \brief  Construct from a named mutex
-    \param  mtx Mutex to be locked
-    \param  name  Name of mutex
+/*! \brief          Construct from a named mutex
+    \param  mtx     mutex to be locked
+    \param  name    name of mutex
 */
   safelock(pt_mutex& mtx, const std::string& name);
 
@@ -307,14 +311,15 @@ public:
 /// Destructor
   virtual ~pthread_error_messages(void) { }
 
-/*!  \brief  Add a reason message to the list of possible error messages
-     \param  code    Reason code
-     \param  reason  Message to add
+/*!  \brief             Add a reason message to the list of possible error messages
+     \param  code       reason code
+     \param  reason     message to add
 */
   inline void add(const int code, const std::string& reason)
     { push_back(reason); }
 };
 
+/// How many threads belong to this process?
 const unsigned int n_threads(void);
 
 extern const pthread_error_messages pthread_error_message;    ///< pthread error messages

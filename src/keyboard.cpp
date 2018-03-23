@@ -1,4 +1,4 @@
-// $Id: keyboard.cpp 143 2018-01-22 22:41:15Z  $
+// $Id: keyboard.cpp 145 2018-03-19 17:28:50Z  $
 
 /*! \file 	keyboard.cpp
 
@@ -106,11 +106,12 @@ void keyboard_queue::process_events(void)
 { XEvent event;                    // the X event
 
   const int BUF_SIZE = 256;
+
   char buf[BUF_SIZE + 1];
   KeySym ks;
 
 // I leave these comments here, in case I ever need to change this code.
-// The problem outlinesd below appears to have been solved by forcing X to be multithreaded.
+// The problem outlined below appears to have been solved by forcing X to be multithreaded.
 
 // if I take this out, then the events sent by XSendEvent() aren't seen by
 // XWindowEvent() until after a real key has been pressed. I have no real idea why
@@ -280,24 +281,23 @@ void keyboard_queue::push_key_press(const KeySym ks)
    event.xkey.state = 0;      // no modifiers
 
    const Window window_id = _window_id;
+
    Display* display_p = _display_p;
 
 // TRY http://stackoverflow.com/questions/6560553/linux-x11-global-keyboard-hook
 
-//   XKeyEvent e;
-
    event.xkey.display = _display_p;
    event.xkey.window = window_id;
-   event.xkey.root = DefaultRootWindow(/* display = */ _display_p);
-   event.xkey.subwindow = /* (const) */ None;
+   event.xkey.root = DefaultRootWindow(_display_p);
+   event.xkey.subwindow = None;
    event.xkey.time = CurrentTime;
    event.xkey.x = 0;
    event.xkey.y = 0;
    event.xkey.x_root = 0;
    event.xkey.y_root = 0;
-   event.xkey.state = /* (const) */ NoEventMask;
-   event.xkey.keycode = XKeysymToKeycode(/* display = */ _display_p, /* keysym = */ ks);
-   event.xkey.same_screen = /* (const) */ True;
+   event.xkey.state = NoEventMask;
+   event.xkey.keycode = XKeysymToKeycode(_display_p, ks);
+   event.xkey.same_screen = True;
 
  // TRY   http://www.doctort.org/adam/nerd-notes/x11-fake-keypress-event.html
    /* const int status = */ XSendEvent(display_p, window_id, False, KeyPressMask, &event);

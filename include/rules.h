@@ -1,4 +1,4 @@
-// $Id: rules.h 143 2018-01-22 22:41:15Z  $
+// $Id: rules.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -85,7 +85,7 @@ public:
 /*! \brief      Add a canonical value
     \param  cv  canonical value to add
 
-    Also adds <i>cv</i> as a possible value. Does nothing if <i>cv<\i> is already
+    Also adds <i>cv</i> as a possible value. Does nothing if <i>cv</i> is already
     present as a canonical value.
 */
   void add_canonical_value(const std::string& cv);

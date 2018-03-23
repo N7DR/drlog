@@ -1,4 +1,4 @@
-// $Id: multiplier.h 140 2017-11-05 15:16:46Z  $
+// $Id: multiplier.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,9 +11,9 @@
 #ifndef MULTIPLIER_H
 #define MULTIPLIER_H
 
-/*!     \file multiplier.h
+/*! \file   multiplier.h
 
-        Classes and functions related to managing multipliers
+    Classes and functions related to managing multipliers
 */
 
 #include "log_message.h"
@@ -30,25 +30,26 @@ extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
 
 // -----------  multiplier  ----------------
 
-/*!     \class multiplier
-        \brief encapsulate necessary stuff for a mult
+/*! \class  multiplier
+    \brief  encapsulate necessary stuff for a mult
 */
 
 class multiplier
 {
 protected:
 
+  std::set<std::string>                                            _known;     ///< all the (currently) known possible values
+
   bool                                                             _per_band;  ///< is this multiplier accumulated per-band?
   bool                                                             _per_mode;  ///< is this multiplier accumulated per-mode?
+
+  bool                                                             _used;      ///< is this object in use?
 
 /* Stored in the _worked array is the precise detail of what has been worked and where.
    However, "worked" as used as an access verb really means "do I need this mult"? Thus,
    writes and reads to/from _worked from outside the object are non-trivial.
 */
   std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
-
-  std::set<std::string>                                            _known;     ///< all the (currently) known possible values
-  bool                                                             _used;      ///< is this object in use?
 
 public:
 
@@ -177,13 +178,6 @@ public:
 */
   const std::set<std::string> worked(const int b, const int m) const;
 
-/// All the known mults
-//  inline const std::set<std::string> known(void) const
-//    { SAFELOCK(multiplier);
-//
-//      return _known;
-//    }
-
 /// Set all bands and modes to state in which no mults have been worked
   inline void clear(void)
   { SAFELOCK(multiplier);
@@ -193,6 +187,7 @@ public:
         ss.clear();
   }
 
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
   { ar & _known
@@ -203,7 +198,11 @@ public:
   }
 };
 
-/// ostream << multiplier
+/*! \brief          Write a <i>multiplier</i> object to an output stream
+    \param  ost     output stream
+    \param  m       object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const multiplier& m);
 
 #endif /* MULTIPLIER_H */

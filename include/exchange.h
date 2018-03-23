@@ -1,4 +1,4 @@
-// $Id: exchange.h 144 2018-03-04 22:44:14Z  $
+// $Id: exchange.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,7 +52,7 @@ public:
 /*! \brief      Constructor
     \param  nm  field name
     \param  v   field value
-    \param  b   is this field a mult?
+    \param  m   is this field a mult?
 */
   parsed_exchange_field(const std::string& nm, const std::string& v, const bool m);
 
@@ -99,7 +99,9 @@ protected:
     \param  str     string to check
     \return         whether <i>str</i> contains a possible serial number
 
-    Currently returns true only for strings of the form <n><precedence>
+    Currently returns true only for strings of the form:
+      <i>n</i>
+      <i>n</i><i>precedence</i>
 */
   const bool _is_possible_serno(const std::string& str) const;
 
@@ -107,7 +109,9 @@ protected:
     \param  str     string to check
     \return         whether <i>str</i> contains a possible serial precedence
 
-    Currently returns true only for strings of the form <n><precedence>
+    Currently returns true only for strings of the form:
+      <i>precedence</i>
+      <i>n</i><i>precedence</i>
 */
   const bool _is_possible_prec(const std::string& str) const;
 
@@ -253,6 +257,7 @@ public:
 /*! \brief                  Given several possible field names, choose one that fits the data
     \param  choice_name     the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
     \param  received_field  the value of the received field
+    \param  rules           rules for this contest
     \return                 the individual name of a field in <i>choice_name</i> that fits the data
 
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.

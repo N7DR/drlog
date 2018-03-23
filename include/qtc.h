@@ -1,4 +1,4 @@
-// $Id: qtc.h 143 2018-01-22 22:41:15Z  $
+// $Id: qtc.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,10 +28,10 @@
 #include <vector>
 
 // error numbers
-const int QTC_INVALID_FORMAT            = -1;    // error reading from file
+const int QTC_INVALID_FORMAT            = -1;   ///< error reading from file
 
-const bool QTC_SENT = true,
-           QTC_UNSENT = false;
+const bool QTC_SENT = true,                     ///< QTC has been sent
+           QTC_UNSENT = false;                  ///< QTC has not been sent
 
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
 //
@@ -100,7 +100,7 @@ public:
   inline const bool valid(void) const
     { return !empty(); }
 
-/// serialize
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _utc
@@ -132,7 +132,7 @@ protected:
 
 /*! \brief          Get all the entries that either have been sent or have not been sent
     \param  sent    whether to return the sent entries
-    \return         if <i>sent</i> is <i>true</i>, return all the sent entries; otherwise retrun all the unsent entries
+    \return         if <i>sent</i> is <i>true</i>, return all the sent entries; otherwise return all the unsent entries
 */
   const std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const bool sent) const;
 
@@ -269,16 +269,20 @@ public:
     }
 };
 
-/// window < qtc
+/*! \brief          Write a <i>qtc_series</i> object to a window
+    \param  win     destination window
+    \param  qs      object to write
+    \return         the window
+*/
 window& operator<(window& win, const qtc_series& qs);
 
 // -----------------------------------  qtc_database  ----------------------------
 
-/*!     \class qtc_database
-        \brief All QTCs
+/*! \class  qtc_database
+    \brief  All QTCs
 */
 
-extern pt_mutex qtc_database_mutex;
+extern pt_mutex qtc_database_mutex;         ///< the mutex to control access to the database
 
 class qtc_database
 {

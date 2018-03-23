@@ -33,12 +33,8 @@ const float SQUARE_HEIGHT = 1.0;            ///< width of a Maidenhead "square",
     \brief  Encapsulates a grid "square"
 */
 
-/*! \brief  Construct from a designation
-    \param  Four-character designation
-*/
-
-/*! \brief  Construct from a designation
-    \param  Four-character designation
+/*! \brief      Construct from a designation
+    \param  gs  four-character designation
 */
 grid_square::grid_square(const string& gs)
 { if ( is_valid_designation(gs) )

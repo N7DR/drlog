@@ -1,4 +1,4 @@
-// $Id: cty_data.h 141 2017-12-16 21:19:10Z  $
+// $Id: cty_data.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -149,7 +149,11 @@ public:
   READ_AND_WRITE(itu_zone);    ///< alternative ITU zone
 };
 
-/// ostream << alternative_country_info
+/*! \brief          Write an <i>alternative_country_info</i> object to an output stream
+    \param  ost     output stream
+    \param  aci     object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const alternative_country_info& aci);
 
 // -----------  cty_record  ----------------
@@ -251,7 +255,11 @@ std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
   return ost;
 }
 
-/// ostream << cty_record
+/*! \brief          Write a <i>cty_record</i> object to an output stream
+    \param  ost     output stream
+    \param  rec     object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const cty_record& rec);
 
 // -----------  cty_data  ----------------
@@ -398,8 +406,8 @@ protected:
   int           _utc_offset;            ///< local-time offset from UTC, in minutes
   
 // used only by Russian stations
-  std::string  _region_name;            ///< name of region in which station resides
-  std::string  _region_abbreviation;    ///< abbreviation for region in which the station resides
+  std::string  _region_name;            ///< name of (Russian) region in which station resides
+  std::string  _region_abbreviation;    ///< abbreviation for (Russian) region in which the station resides
 
 public:
 
@@ -425,7 +433,7 @@ public:
   READ_AND_WRITE(longitude);   ///< longitude in degrees (+ve west)
   READ(utc_offset);            ///< local-time offset from UTC, in minutes
 
-  READ_AND_WRITE(region_abbreviation);   ///< (Russian) abbreviation for region
+  READ_AND_WRITE(region_abbreviation);   ///< (Russian) two-letter abbreviation for region
   READ_AND_WRITE(region_name);           ///< (Russian) name of region
 
 /// archive using boost
@@ -568,7 +576,7 @@ public:
 /*! \brief                      Get the longitude corresponding to a call
     \param  call                callsign
     \param  initial_longitude   default value of longitude, if none is found
-    \return                     longitude corresponding to <i>call</i>
+    \return                     longitude in degrees corresponding to <i>call</i> (+ve west)
 */
   const float longitude(const std::string& call, const float initial_longitude) const;
 
@@ -684,12 +692,13 @@ public:
   inline void add_alt_call(const std::string& call, const location_info& li)
     { _alt_call_db.insert( { call, li } ); }
 
-/*! \brief      Get location information for a particular call or partial call
-    \param  cs  call (or partial call)
-    \return     location information corresponding to <i>call</i>
+/*! \brief              Get location information for a particular call or partial call
+    \param  callpart    call (or partial call)
+    \return             location information corresponding to <i>call</i>
 */
   const location_info info(const std::string& callpart);
   
+/// return the database
   inline const std::map<std::string, location_info> db(void)
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
@@ -729,28 +738,53 @@ public:
   inline const std::string continent(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).continent() )); }
 
+/*! \brief              Get the latitude for a call or partial call
+    \param  callpart    call (or partial call)
+    \return             latitude (in degrees) corresponding to <i>callpart</i> (+ve north)
+*/
   inline const float latitude(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).latitude() )); }
 
+/*! \brief              Get the longitude for a call or partial call
+    \param  callpart    call (or partial call)
+    \return             longitude (in degrees) corresponding to <i>callpart</i> (+ve west)
+*/
   inline const float longitude(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).longitude() )); }
 
+/*! \brief              Get the UTC offset for a call or partial call
+    \param  callpart    call (or partial call)
+    \return             UTC offset (in minutes) corresponding to <i>callpart</i>
+*/
   inline const int utc_offset(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).utc_offset() )); }
 
+/*! \brief              Get the canonical prefix for a call or partial call
+    \param  callpart    call (or partial call)
+    \return             canonical prefix corresponding to <i>callpart</i>
+*/
   inline const std::string canonical_prefix(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).canonical_prefix() )); }
 
+/*! \brief              Get name of the Russian district for a particular call or partial call
+    \param  callpart    call (or partial call)
+    \return             name of the Russian district corresponding to <i>callpart</i>
+
+    Returns the empty string if <i>callpart</i> is not Russian
+*/
   inline const std::string region_name(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
 
-/*! \brief      Get location information for a particular call or partial call
-    \param  cs  call (or partial call)
-    \return     location information corresponding to <i>call</i>
+/*! \brief              Get two-letter abbreviation for the Russian district for a particular call or partial call
+    \param  callpart    call (or partial call)
+    \return             two-letter Russian region code corresponding to <i>callpart</i>
+
+    Returns the empty string if <i>callpart</i> is not Russian
 */
   inline const std::string region_abbreviation(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
+/// archive using boost serialisation
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(_location_database);
@@ -762,11 +796,22 @@ public:
     }
 };
 
-// ostream << location_database
+/*! \brief          Write a <i>location_database</i> object to an output stream
+    \param  ost     output stream
+    \param  db      object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const location_database& db);
 
 // -------------------------------------- Errors  -----------------------------------
 
+ERROR_CLASS(cty_error);
+
+ERROR_CLASS(location_error);
+
+ERROR_CLASS(russian_error);
+
+#if 0
 /*! \class  cty_error
     \brief  Errors related to CTY processing
 */
@@ -785,7 +830,9 @@ public:
     x_error(n, s)
   { }
 };
+#endif
 
+# if 0
 /*! \class  location_error
     \brief  Errors related to location database processing
 */
@@ -804,7 +851,9 @@ public:
     x_error(n, s)
   { }
 };
+#endif
 
+#if 0
 /*! \class  russian_error
     \brief  Errors related to processing Russian data file
 */
@@ -823,5 +872,6 @@ public:
     x_error(n, s)
   { }
 };
+#endif
 
 #endif  // CTY_DATA_H

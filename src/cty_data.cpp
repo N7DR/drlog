@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 142 2018-01-01 20:56:52Z  $
+// $Id: cty_data.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,8 +34,8 @@ const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };              
 
 // -----------  cty_record  ----------------
 
-/*! \class cty_record
-    \brief A single record in the CTY.DAT file
+/*! \class  cty_record
+    \brief  A single record in the CTY.DAT file
   
     The official page describing the format is:
       http://www.country-files.com/cty/format.htm.
@@ -146,7 +146,11 @@ cty_record::cty_record(const string& record)
   }
 }
 
-// ostream << cty_record
+/*! \brief          Write a <i>cty_record</i> object to an output stream
+    \param  ost     output stream
+    \param  rec     object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const cty_record& rec)
 { ost << "Name: " << rec.country_name() << endl
       << "CQ zone: " << rec.cq_zone() << endl
@@ -217,7 +221,11 @@ alternative_country_info::alternative_country_info(const string& record, const s
   }
 }
 
-/// ostream << alternative_country_info
+/*! \brief          Write an <i>alternative_country_info</i> object to an output stream
+    \param  ost     output stream
+    \param  aci     object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 { ost << "alias: " << aci.identifier() << endl
       << "CQ zone: " << aci.cq_zone() << endl
@@ -571,12 +579,13 @@ void location_database::add_russian_database(const vector<string>& path, const s
   }
 }
 
-/*! \brief      Get location information for a particular call or partial call
-    \param  cs  call (or partial call)
-    \return     location information corresponding to <i>call</i>
+/*! \brief              Get location information for a particular call or partial call
+    \param  callpart    call (or partial call)
+    \return             location information corresponding to <i>call</i>
 */
-const location_info location_database::info(const string& cs)
-{ const string original_callsign = remove_peripheral_spaces(cs);
+const location_info location_database::info(const string& callpart)
+{ const string original_callsign = remove_peripheral_spaces(callpart);
+
   string callsign = original_callsign;                  // make callsign mutable, for handling case of /n
   
   SAFELOCK(_location_database);

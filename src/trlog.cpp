@@ -1,4 +1,4 @@
-// $Id: trlog.cpp 28 2013-07-06 13:34:10Z  $
+// $Id: trlog.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -7,6 +7,11 @@
 
 // Copyright owners:
 //    N7DR
+
+/*! \file   trlog.cpp
+
+    Classes and functions related to TRlog log files
+*/
 
 #include "string_functions.h"
 #include "trlog.h"
@@ -22,22 +27,29 @@ using namespace std;
 
 // -----------  tr_record  ----------------
 
-/*! \brief  Convert part of the record to an integer
-    \param  posn  position at which to commence conversion
-    \param  len   number of characters to convert
+/*! \class  tr_record
+    \brief  Encapsulate a single TRLOG QSO
+*/
+
+#if 0
+/*! \brief          Convert part of the record to an integer
+    \param  posn    position at which to commence conversion
+    \param  len     number of characters to convert
 
     \return characters converted to an integer
 */
 const int tr_record::_convert_to_int(const int posn, const int len) const
-{ char tmp[len + 1];
+{ //char tmp[len + 1];
 
-  for (int n = 0; n < len; ++n)
-    tmp[n] = _record[posn + n];
+  //for (int n = 0; n < len; ++n)
+  //  tmp[n] = _record[posn + n];
 
-  tmp[len] = 0;
+  //tmp[len] = 0;
 
-  return atoi(tmp);
+  //return atoi(tmp);
+  return from_string<int>( substring(_record, posn, len) );
 }
+#endif
 
 /// month of the year; 1 - 12
 const int tr_record::month(void) const

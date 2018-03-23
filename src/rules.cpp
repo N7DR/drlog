@@ -1,4 +1,4 @@
-// $Id: rules.cpp 144 2018-03-04 22:44:14Z  $
+// $Id: rules.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,7 +44,7 @@ typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
 /*! \brief      Add a canonical value
     \param  cv  canonical value to add
 
-    Also adds <i>cv</i> as a possible value. Does nothing if <i>cv<\i> is already
+    Also adds <i>cv</i> as a possible value. Does nothing if <i>cv</i> is already
     present as a canonical value.
 */
 void exchange_field_values::add_canonical_value(const string& cv)
@@ -298,6 +298,7 @@ const vector<exchange_field> contest_rules::_exchange_fields(const string& canon
 
   try
   { const map<string, vector<exchange_field>>& exchange = (expand_choices ? _expanded_received_exchange.at(m) : _received_exchange.at(m) ); // this can throw exception if rig has been set to a mode that is not supported by the contest
+
     auto cit = exchange.find(canonical_prefix);
 
     if (cit != exchange.cend())
@@ -537,20 +538,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // the sent exchange
   if (_permitted_modes < MODE_CW)
-  { //if (!context.sent_exchange_cw().empty())
-    //  _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names(MODE_CW) } );
-    //else
-    //  _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_names() } );
     _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_cw().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_CW) } );
-  }
 
   if (_permitted_modes < MODE_SSB)
-  { //if (!context.sent_exchange_ssb().empty())
-    //  _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names(MODE_SSB) } );
-    //else
-    //  _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_names() } );
     _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) } );
-  }
 
 // add the permitted bands
   const vector<string> bands_vec = remove_peripheral_spaces( split_string(context.bands(), ",") );
@@ -571,10 +562,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if ( ( find(_exchange_mults.begin(), _exchange_mults.end(), "DOK") != _exchange_mults.end() ) and !context.auto_remaining_exchange_mults("DOK") )
   { exchange_field_values dok_values("DOK");
 
-//    dok_values.name("DOK");
-
-    for (size_t index = 0; index < 26; ++index)
-      dok_values.add_canonical_value(create_string(UPPER_CASE_LETTERS[index]));
+//    for (size_t index = 0; index < 26; ++index)
+//      dok_values.add_canonical_value(create_string(UPPER_CASE_LETTERS[index]));
+    for (const char c : UPPER_CASE_LETTERS)
+      dok_values.add_canonical_value(create_string(c));
 
     _exch_values.push_back(dok_values);
   }
@@ -762,6 +753,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { static const set<string> no_canonical_values( { "RS", "RST", "SERNO" } );    // some field values don't have canonical values
 
     const string& field_name = ef.name();
+
     string entire_file;
     bool   read_file_ok = false;
 
@@ -874,8 +866,6 @@ const set<string> contest_rules::all_known_field_names(void) const
     for (const auto& msvef : expanded_exchange)
     { const vector<exchange_field>& vef = msvef.second;
 
-//      for (const auto& ef : vef)
-//        rv.insert(ef.name());
       FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv.insert(ef.name()); } );
     }
   }
@@ -894,10 +884,6 @@ const EFT contest_rules::exchange_field_eft(const string& field_name) const
 
   const auto v = _exchange_field_eft.find(field_name);
 
-//  if (v == _exchange_field_eft.end())
-//    return EFT("none");
-
-//  return (v->second);
   return ( (v == _exchange_field_eft.cend()) ? EFT("none") : (v->second) );
 }
 

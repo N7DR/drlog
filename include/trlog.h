@@ -1,4 +1,4 @@
-// $Id: trlog.h 28 2013-07-06 13:34:10Z  $
+// $Id: trlog.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -7,6 +7,11 @@
 
 // Copyright owners:
 //    N7DR
+
+/*! \file   trlog.h
+
+    Classes and functions related to TRlog log files
+*/
 
 #ifndef TRLOGH
 #define TRLOGH
@@ -28,8 +33,8 @@ struct QSO_CALL
 
 // -----------  tr_record  ----------------
 
-/*!     \class tr_record
-        \brief Encapsulate a single TRLOG QSO
+/*! \class  tr_record
+    \brief  Encapsulate a single TRLOG QSO
 */
 
 class tr_record
@@ -38,13 +43,14 @@ protected:
 
   std::string _record;                  ///< the record from a file
 
-/*! \brief  Convert part of the record to an integer
-    \param  posn  position at which to commence conversion
-    \param  len   number of characters to convert
+/*! \brief          Convert part of the record to an integer
+    \param  posn    position at which to commence conversion
+    \param  len     number of characters to convert
 
     \return characters converted to an integer
 */
-  const int _convert_to_int(const int posn, const int len) const;
+  inline const int _convert_to_int(const int posn, const int len) const
+    { return from_string<int>( substring(_record, posn, len) ); }
 
 public:
 

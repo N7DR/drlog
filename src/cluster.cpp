@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 143 2018-01-22 22:41:15Z  $
+// $Id: cluster.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -48,13 +48,13 @@ pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
     \param  src         whether this is a real DX cluster or the RBN
 */
 dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
-  _server(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server()),
-  _port(src == POSTING_CLUSTER ? context.cluster_port() : context.rbn_port()),
-  _my_ip(context.my_ip()),
-  _login_id(src == POSTING_CLUSTER ? context.cluster_username() : context.rbn_username()),
-  _source(src),
-  _timeout(2),
-  _connection(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server(),
+  _server(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server()),        // choose the correct server
+  _port(src == POSTING_CLUSTER ? context.cluster_port() : context.rbn_port()),              // choose the correct port
+  _my_ip(context.my_ip()),                                                                  // set my IP address
+  _login_id(src == POSTING_CLUSTER ? context.cluster_username() : context.rbn_username()),  // choose the correct login name
+  _source(src),                                                                             // set the source
+  _timeout(2),                                                                              // two-second timeout
+  _connection(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server(),     // create the connection
               src == POSTING_CLUSTER ? context.cluster_port() :  context.rbn_port(),
               context.my_ip())
 {
@@ -363,11 +363,15 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 /*! \brief          Constructor
     \param  post    post from cluster or RBN
 */
-monitored_posts_entry::monitored_posts_entry(const dx_post& post)
-{ _callsign = post.callsign();
-  _frequency_str = post.frequency_str();
-  _expiration = post.time_processed() + MONITORED_POSTS_DURATION;
-  _band = post.band();
+monitored_posts_entry::monitored_posts_entry(const dx_post& post) :
+  _callsign(post.callsign()),
+  _frequency_str(post.frequency_str()),
+  _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
+  _band(post.band())
+{ //_callsign = post.callsign();
+  //_frequency_str = post.frequency_str();
+  //_expiration = post.time_processed() + MONITORED_POSTS_DURATION;
+ // _band = post.band();
 }
 
 /*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream

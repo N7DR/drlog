@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 144 2018-03-04 22:44:14Z  $
+// $Id: exchange.cpp 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -102,8 +102,8 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
     \return         whether <i>str</i> contains a possible serial number
 
     Currently returns true only for strings of the form:
-      <n>
-      <n><precedence>
+      <i>n</i>
+      <i>n</i><i>precedence</i>
 */
 const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 { if (!contains_digit(str))
@@ -111,10 +111,12 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 
   bool possible = true;
 
+// check all except the last character
   for (size_t n = 0; n < str.length() - 1; ++n)
     if (possible)
       possible = (isdigit(str[n]));
 
+// now do the last character, which might be a digit or a precedence
   if (possible)
   { const char& lchar = last_char(str);
 
@@ -127,6 +129,10 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 /*! \brief          Does a string contain a precedence?
     \param  str     string to check
     \return         whether <i>str</i> contains a precedence
+
+    Currently returns true only for strings of the form:
+      <i>precedence</i>
+      <i>n</i><i>precedence</i>
 */
 const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
 { if (str.length() == 1)
@@ -182,7 +188,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 // deal with: B 71 CO 10 N7DR
 // which might be a common case
-//  bool target_case = false;
 
   if (received_fields[0].length() == 1 and isalpha(received_fields[0][0]))
   { if (received_fields[1].length() == 2 and isdigit(received_fields[1][0]) and isdigit(received_fields[1][1]))
@@ -303,8 +308,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 // get the serno; for this use the last field that is a possible serno and hasn't been used as a check
   ost << "getting serno" << endl;
-//  int serno_field_nr = -1;
-//  unsigned int serno_field_nr = numeric_limits<unsigned int>::max();
 
   if (possible_sernos.empty())
   { ost << "ERROR: no possible serno in exchange received from " << call << endl;
@@ -337,12 +340,10 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
         }
 
         _serno = from_string<unsigned int>(copy_received_fields[field_nr]);
-//        serno_field_nr = static_cast<int>(field_nr);
       }
     }
     else    // field number is not same as check field number
     { _serno = from_string<unsigned int>(copy_received_fields[field_nr]);  // stops processing when hits a letter
-//       serno_field_nr = static_cast<int>(field_nr);
     }
   }
 
@@ -368,7 +369,6 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     { ost << "ERROR: no valid section in exchange received from " << call << endl;
       for (const auto& field : received_fields)
         ost << field << " : " << endl;
-//      _section = "AAA";    // default
     }
     else
       _section = copy_received_fields[section_field_nr];
@@ -376,9 +376,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
   catch (...)
   { ost << "ERROR: no section information in rules " << endl;
-//    _section = "BBB";
   }
-
 }
 
 /*! \brief          Write a <i>parsed_ss_exchange</i> object to an output stream
@@ -800,9 +798,9 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
 { vector<parsed_exchange_field> rv;
 
   for (const auto& pef : _fields)
-  { if (!contains(pef.name(), "+"))
+  { if (!contains(pef.name(), "+"))             // not a CHOICE
       rv.push_back(pef);
-    else
+    else                                        // is a CHOICE
     { parsed_exchange_field pef_chosen = pef;
 
       pef_chosen.name(resolve_choice(pef.name(), pef.value(), rules));
@@ -823,6 +821,7 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
 /*! \brief                  Given several possible field names, choose one that fits the data
     \param  choice_name     the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
     \param  received_field  the value of the received field
+    \param  rules           rules for this contest
     \return                 the individual name of a field in <i>choice_name</i> that fits the data
 
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
@@ -832,10 +831,6 @@ const string parsed_exchange::resolve_choice(const string& field_name, const str
 { if (field_name.empty())
     return string();
 
-//  const bool is_choice = contains(field_name, "+");
-
-//  if (!is_choice)
-//    return field_name;
   if (!contains(field_name, "+"))   // if not a CHOICE
     return field_name;
 

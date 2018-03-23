@@ -1,4 +1,4 @@
-// $Id: qso.h 144 2018-03-04 22:44:14Z  $
+// $Id: qso.h 145 2018-03-19 17:28:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -184,7 +184,7 @@ public:
     \param  rule_to_match   boolean rule to attempt to match
     \return                 whether the exchange in the QSO matches <i>rule_to_match</i>
 
-    <i>rule_to_match is from the configuration file, and looks like:
+    <i>rule_to_match</i> is from the configuration file, and looks like:
       [IOTA != -----]
 */
   const bool exchange_match(const std::string& rule_to_match) const;
@@ -245,7 +245,12 @@ public:
 */
   void populate_from_log_line(const std::string& str);
 
-// new
+/*! \brief          NEW - Populate from a string (as visible in the log window)
+    \param  str     string from visible log window
+    \param  mycall  my callsign
+
+    Currently unused
+*/
   void new_populate_from_log_line(const std::string& str, const std::string& mycall);
 
 /*! \brief      QSO == QSO
@@ -297,13 +302,6 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q);
 */
 inline const bool earlier(const QSO& qso_1, const QSO& qso_2)
   { return (qso_1.earlier_than(qso_2)); }
-
-/*! \brief          Obtain the callsign from
-    \param  qso_1   first QSO
-    \param  qso_2   second QSO  name of field to test
-    \return         whether <i>qso_1</i> is earlier than <i>qso_2</i>
-*/
-//const std::string call_from_log_line(const std::string& ll);
 
 /*! \brief          Obtain the next name and value from a drlog-format line
     \param  str     a drlog-format line
