@@ -59,7 +59,7 @@ public:
   inline const float operator-(const grid_square& gs) const
     { return distance(_latitude, _longitude, gs._latitude, gs._longitude); }
 
-/// serialize with boost
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _designation

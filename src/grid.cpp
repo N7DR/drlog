@@ -46,20 +46,12 @@ grid_square::grid_square(const string& gs)
 // longitude
     const char c1 = _designation[0];
     const int l1 = round_it(FIELD_WIDTH * (c1 - 'J'));
-
-//    ost << "l1 = " << l1 << endl;
-
     const char c2 = _designation[2];
 
     int l2 = round_it(SQUARE_WIDTH * (c2 - '0'));
 
-//    ost << "l2 = " << l2 << endl;
-
     const float rounding_lon = ( SQUARE_WIDTH / 2 );
-
     const float lon = l1 + l2 + rounding_lon;
-
-//    ost << "lon = " << lon << endl;
 
     _longitude = lon;
 
@@ -67,19 +59,11 @@ grid_square::grid_square(const string& gs)
     const char c3 = _designation[1];
     const int n3 = c3 - 'A';
     const int l3 = -90 + round_it(FIELD_HEIGHT * n3);
-
-//    ost << "l3 = " << l3 << endl;
-
     const char c4 = _designation[3];
     const int n4 = c4 - '0';
-
     const int l4 = round_it(SQUARE_HEIGHT * n4);
-
     const float rounding_lat = ( SQUARE_HEIGHT / 2 );
-
     const float lat = l3 + l4 + rounding_lat;
-
-//    ost << "lat = " << lat << endl;
 
     _latitude = lat;
   }

@@ -1495,12 +1495,12 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
     \param  filename    name of file
     \return             whether a regex expression was read
 */
-const bool EFT::read_regex_expression_file(const vector<string>& path, const string& filename)
+const bool EFT::read_regex_expression_file(const vector<string>& paths, const string& filename)
 { if (filename.empty())
     return false;
 
   try
-  { const vector<string> lines = to_lines(read_file(path, filename));
+  { const vector<string> lines = to_lines(read_file(paths, filename));
     bool found_it = false;
 
     for (const auto& line : lines)
@@ -1691,12 +1691,7 @@ const string EFT::canonical_value(const std::string& str) const
   return string();
 }
 
-/*! \brief          Obtain canonical value corresponding to a given received value?
-    \param  str     received value
-    \return         canonical value equivalent to <i>str</i>
-
-    Returns empty string if no equivalent canonical value can be found
-*/
+/// all the canonical values
 const set<string> EFT::canonical_values(void) const
 { set<string> rv;
 

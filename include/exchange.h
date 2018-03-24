@@ -388,11 +388,11 @@ public:
   READ(value_to_canonical);             ///< map of all value->canonical trsnaforms: key = value; value = corresponding canonical value
 
 /*! \brief              Get regex expression from file
-    \param  path        paths to try
+    \param  paths       paths to try
     \param  filename    name of file
     \return             whether a regex expression was read
 */
-  const bool read_regex_expression_file(const std::vector<std::string>& path, const std::string& filename);
+  const bool read_regex_expression_file(const std::vector<std::string>& paths, const std::string& filename);
 
 /*! \brief              Get info from .values file
     \param  path        paths to try
@@ -409,7 +409,7 @@ public:
 
 /*! \brief          Is a particular string a canonical value?
     \param  str     string to test
-    \return         whether <i>str is a canonical value
+    \return         whether <i>str</i> is a canonical value
 */
   inline const bool is_canonical_value(const std::string& str) const
     { return (_values.find(str)  != _values.end()); }

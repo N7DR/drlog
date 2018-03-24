@@ -609,7 +609,13 @@ t = temporary
 
 */
 
-// field_indicator = "=H", etc.)
+/*! \brief                      Extract a single field from the record
+    \param  fields              all the fields
+    \param  field_indicator     indicator that prefixes the field (for example: "=H")
+    \return                     Value of the field with the indicator <i>field_indicator</i>
+
+    Returns empty string if no field has the indicator <i>field_indicator</i>
+*/
 const string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
 { for (vector<string>::const_iterator cit = fields.begin(); cit != fields.end(); ++cit)
   { if (starts_with(*cit, field_indicator))
@@ -619,7 +625,7 @@ const string drmaster_line::_extract_field(const vector<string>& fields, const s
   return string();
 }
 
-// constructor from a line from a drmaster file
+/// constructor from a line from a drmaster file
 drmaster_line::drmaster_line(const string& line_or_call)
 { const vector<string> fields = split_string(line_or_call, " ");
   const size_t n_fields = fields.size();
@@ -660,7 +666,7 @@ drmaster_line::drmaster_line(const string& line_or_call)
 drmaster_line::~drmaster_line(void)
 { }
 
-// convert to string
+/// convert to string
 const string drmaster_line::to_string(void) const
 { string rv;
 
@@ -873,7 +879,8 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
 const vector<string> drmaster::calls(void) const
 { vector<string> rv;
 
-  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
+//  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
+  for (auto cit = _records.begin(); cit != _records.end(); ++cit)
     rv.push_back(cit->first);
 
   sort(rv.begin(), rv.end());
@@ -885,7 +892,8 @@ const vector<string> drmaster::calls(void) const
 const std::string drmaster::to_string(void)
 { vector<string> lines;
 
-  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
+//  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
+  for (auto cit = _records.begin(); cit != _records.end(); ++cit)
     lines.push_back((cit->second).to_string() + EOL);
 
   sort(lines.begin(), lines.end());
@@ -895,7 +903,7 @@ const std::string drmaster::to_string(void)
 }
 
 // add a call -- does nothing if the call is already present
-void drmaster::operator+=(const std::string& str)
+void drmaster::operator+=(const string& str)
 { if (!::contains(str, " "))  // it's a call
   { if (_records.find(str) == _records.end())
       _records.insert(make_pair(str, static_cast<drmaster_line>(str) ));    // cast needed in order to keep the temporary around long enough to use
@@ -922,18 +930,25 @@ void drmaster::operator+=(const drmaster_line& drml)
 
 }
 
-// return a particular record
-const drmaster_line drmaster::operator[](const string& call)
-{ return (_records.find(call) == _records.end() ? drmaster_line() : _records[call]);
+/*! \brief          Return the record for a particular call
+    \param  call    target callsign
+    \return         the record corresponding to <i>call</i>
+
+    Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
+*/
+const drmaster_line drmaster::operator[](const string& call) const
+{ const auto cit = _records.find(call);
+
+  return (cit == _records.cend() ? drmaster_line() : cit->second);
 }
 
 // remove a call -- does nothing if the call is not present
-void drmaster::operator-=(const string& str)
-{ _records.erase(str);
-}
+//void drmaster::operator-=(const string& str)
+//{ _records.erase(str);
+//}
 
 // is a particular call present?
-const bool drmaster::contains(const string& call)
-{ return ( _records.find(call) != _records.end() );
-}
+//const bool drmaster::contains(const string& call)
+//{ return ( _records.find(call) != _records.end() );
+//}
 

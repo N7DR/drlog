@@ -213,25 +213,31 @@ protected:
   std::string _qth;                                             ///< QTH information (actual information varies as a function of country)
   std::string _ten_ten;                                         ///< 10-10 number
 
-  std::array<std::string, TRMASTER_N_USER_PARAMETERS> _user;
-  std::string _section;
-  std::string _name;
-  std::string _grid;
-  std::string _itu_zone;                // because TR treats HQ stations differently
-  std::string _old_call;
-  std::string _speed;
+  std::array<std::string, TRMASTER_N_USER_PARAMETERS> _user;    ///< user-defined fields
+  std::string _section;                                         ///< ARRL/RAC section
+  std::string _name;                                            ///< name
+  std::string _grid;                                            ///< Maidenhead grid square
+  std::string _itu_zone;                                        ///< ITU zone
+  std::string _old_call;                                        ///< old callsign
+  std::string _speed;                                           ///< CW speed
 
-// extensions
-  std::string _cw_power;
-  std::string _date;
-  std::string _iota;
-  std::string _precedence;
-  std::string _society;
-  std::string _ssb_power;
-  std::string _state_160;       // for CQ 160m contest: W and VE only
-  std::string _state_10;        // for ARRL 10m contest; W, VE and XE only
+// extensions for drlog
+  std::string _cw_power;                                        ///< power received in ARRL DX CW
+  std::string _date;                                            ///< most recent date at which the record was updated
+  std::string _iota;                                            ///< IOTA designation
+  std::string _precedence;                                      ///< Sweepstakes precedence
+  std::string _society;                                         ///< HQ designation from IARU contest
+  std::string _ssb_power;                                       ///< power received in ARRL DX SSB
+  std::string _state_160;                                       ///< for CQ 160m contest: W and VE only
+  std::string _state_10;                                        ///< for ARRL 10m contest; W, VE and XE only
 
-//  string _temporary;
+/*! \brief                      Extract a single field from the record
+    \param  fields              all the fields
+    \param  field_indicator     indicator that prefixes the field (for example: "=H")
+    \return                     Value of the field with the indicator <i>field_indicator</i>
+
+    Returns empty string if no field has the indicator <i>field_indicator</i>
+*/
   const std::string _extract_field(const std::vector<std::string>& fields, const std::string& field_indicator);
 
 public:
@@ -246,53 +252,57 @@ public:
 /// destructor
   virtual ~drmaster_line(void);
 
-// convert to a string
+/// convert to a string
   const std::string to_string(void) const;
 
 // the usual get/set functions
-  READ_AND_WRITE(call);
-  READ_AND_WRITE(check);
-  READ_AND_WRITE(cq_zone);
-  READ_AND_WRITE(foc);
-  READ_AND_WRITE(grid);
-  READ_AND_WRITE(hit_count);
-  READ_AND_WRITE(itu_zone);
-  READ_AND_WRITE(name);
-  READ_AND_WRITE(qth);         // state in US or XE; province in VE
-  READ_AND_WRITE(old_call);
-  READ_AND_WRITE(section);
-  READ_AND_WRITE(speed);
-  READ_AND_WRITE(ten_ten);
+  READ_AND_WRITE(call);                                            ///< callsign
+  READ_AND_WRITE(check);                                           ///< Sweepstakes check
+  READ_AND_WRITE(cq_zone);                                         ///< CQ zone
+  READ_AND_WRITE(foc);                                             ///< FOC number
+  READ_AND_WRITE(grid);                                            ///< Maidenhead grid square
+  READ_AND_WRITE(hit_count);                                       ///< hit count
+  READ_AND_WRITE(itu_zone);                                        ///< ITU zone
+  READ_AND_WRITE(name);                                            ///< name
+  READ_AND_WRITE(qth);                                             ///< QTH information (actual information varies as a function of country)
+  READ_AND_WRITE(old_call);                                        ///< old callsign
+  READ_AND_WRITE(section);                                         ///< ARRL/RAC section
+  READ_AND_WRITE(speed);                                           ///< CW speed
+  READ_AND_WRITE(ten_ten);                                         ///< 10-10 number
 
-// user parameters; wrt 1
+/// set user parameters; wrt 1
   inline void user(const int n, const std::string& v)
     { _user[n - 1] = v; }
 
+/// get user parameters; wrt 1
   inline const std::string user(const int n) const
     { return _user[n - 1]; }
 
+/// set hit count
   inline void hit_count(const int n)
     { hit_count(::to_string(n)); }
 
-  READ_AND_WRITE(cw_power);
-  READ_AND_WRITE(date);
-  READ_AND_WRITE(iota);
-  READ_AND_WRITE(precedence);
-  READ_AND_WRITE(society);
-  READ_AND_WRITE(ssb_power);
-  READ_AND_WRITE(state_160);
-  READ_AND_WRITE(state_10);
+  READ_AND_WRITE(cw_power);                                        ///< power received in ARRL DX CW
+  READ_AND_WRITE(date);                                            ///< most recent date at which the record was updated
+  READ_AND_WRITE(iota);                                            ///< IOTA designation
+  READ_AND_WRITE(precedence);                                      ///< Sweepstakes precedence
+  READ_AND_WRITE(society);                                         ///< HQ designation from IARU contest
+  READ_AND_WRITE(ssb_power);                                       ///< power received in ARRL DX SSB
+  READ_AND_WRITE(state_160);                                       ///< for CQ 160m contest: W and VE only
+  READ_AND_WRITE(state_10);                                        ///< for ARRL 10m contest; W, VE and XE only
 
-// merge with another drmaster_line; new values take precedence if there's a conflict
+/// merge with another drmaster_line; new values take precedence if there's a conflict
   const drmaster_line operator+(const drmaster_line&) const;
 
+/// merge with another drmaster_line; new values take precedence if there's a conflict
   inline void operator+=(const drmaster_line& ln)
     { *this = *this + ln; }
 
-// increment hit count
+/// increment hit count
   inline void operator++(int)
     { hit_count(::to_string(1 + from_string<int>(hit_count()))); }
 
+/// is the line empty?
   inline const bool empty(void) const
     { return _call.empty(); }
 };
@@ -311,7 +321,7 @@ class drmaster
 {
 protected:
 
-  std::map<std::string, drmaster_line> _records;       ///< the information
+  std::unordered_map<std::string, drmaster_line> _records;       ///< the information
 
 public:
 
@@ -337,22 +347,40 @@ public:
 // add a drmaster_line. If there's already an entry for this call, then performs a merge
   void operator+=(const drmaster_line& drml);
 
+/// the number of records
   inline const size_t size(void) const
     { return _records.size(); }
 
-// return a particular record
-  const drmaster_line operator[](const std::string& call);
+/*! \brief          Return the record for a particular call
+    \param  call    target callsign
+    \return         the record corresponding to <i>call</i>
 
-// remove a call -- does nothing if the call is not present
-  void operator-=(const std::string& str);
+    Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
+*/
+  const drmaster_line operator[](const std::string& call) const;
 
-// remove a call -- does nothing if the call is not present
-  inline void remove(const std::string& str)
-    { *this -= str; }
+/*! \brief          Remove a call
+    \param  call    target callsign
 
-// is a particular call present?
-  const bool contains(const std::string& call);
+    Does nothing if <i>call</i> is not present
+*/
+  inline void operator-=(const std::string& call)
+    { _records.erase(call); }
 
+/*! \brief          Remove a call
+    \param  call    target callsign
+
+    Does nothing if <i>call</i> is not present
+*/
+  inline void remove(const std::string& call)
+    { *this -= call; }
+
+/*! \brief          Is a particular call present in the file?
+    \param  call    target callsign
+    \return         whether <i>call</i> is present
+*/
+  inline const bool contains(const std::string& call) const
+    { return ( _records.find(call) != _records.cend() ); }
 };
 
 #endif    // DRMASTER_H
