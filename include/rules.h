@@ -60,13 +60,13 @@ protected:
 public:
 
 /// default constructor
-  exchange_field_values(void)
+  inline exchange_field_values(void)
   { }
 
 /*! \brief          Construct from name
     \param  nm      name of exchange field
 */
-  explicit exchange_field_values(const std::string& nm) :
+  explicit inline exchange_field_values(const std::string& nm) :
     _name(nm)
   { }
 
@@ -74,9 +74,13 @@ public:
     \param  nm      name of exchange field
     \param  mss     canonical field value, all equivalent values (including canonical value)
 */
-  exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
+  inline exchange_field_values(const std::string& nm, const std::map<std::string, std::set< std::string >> mss) :
     _name(nm),
     _values(mss)
+  { }
+
+/// destructor
+  inline virtual ~exchange_field_values(void)
   { }
 
   READ_AND_WRITE(name);             ///< name of the exchange field
@@ -159,7 +163,7 @@ public:
 */
   const bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
 
-/// serialize with boost
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _name

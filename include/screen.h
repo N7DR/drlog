@@ -477,11 +477,13 @@ public:
 */
   window& operator<(const std::vector<std::string>& v);
 
-/*! \brief      Write a set of strings to a window
-    \param  ss  set to write
-    \return     the window
+/*! \brief          Write a set of strings to a window
+    \param  ss      set to write
+    \return         the window
 
-    Wraps words to new lines. Stops writing if there's insufficient room for the next string.
+    The set is written in callsign order.
+    Wraps words to new lines.
+    Stops writing if there's insufficient room for the next string.
 */
   window& operator<(const std::set<std::string>& ss);
 

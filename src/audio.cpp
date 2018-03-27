@@ -56,17 +56,13 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
   const uint64_t mm = from_string<uint64_t>(substring(now_str, 3, 2));
   const uint64_t ss = from_string<uint64_t>(substring(now_str, 6, 2));
   const uint64_t now = ss + (mm * 60) + (hh * 3600);
-  int remainder = _max_file_time - (now % _max_file_time);
 
-//  ost << "DEBUG: _max_file_time = " << _max_file_time << endl;
-//  ost << "DEBUG: remainder = " << remainder << endl;
+  int remainder = _max_file_time - (now % _max_file_time);
 
   if (remainder == 0)
     remainder = _max_file_time;
 
   _time_limit = remainder;
-
-//  ost << "DEBUG: _time_limit = " << _time_limit << endl;
 
   if (_time_limit == 0)
     total_bytes = _record_count;
@@ -136,17 +132,8 @@ void audio_recorder::_set_params(void)
   }
 
   if ((float)rate * 1.05 < _hw_params.rate or (float)rate * 0.95 > _hw_params.rate)
-  { //char plugex[64];
-
-    ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << "for device: " << _pcm_name << endl;
+  { ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << "for device: " << _pcm_name << endl;
     throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested " + to_string(rate) + ", received " + to_string(_hw_params.rate) + "for device: " + _pcm_name);
-
-//    if (_pcm_name.empty() or strchr(snd_pcm_name(_handle), ':'))
-//      *plugex = 0;
-//    else
-//    { ost << "ERROR: plugin problem for device: " << _pcm_name << endl;
-//      throw audio_error(AUDIO_PLUGIN_ERROR, "plugin problem for device: " + _pcm_name);
-//    }
   }
 
   rate = _hw_params.rate;
@@ -236,7 +223,6 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_UNABLE_TO_GET_SW_PARAMS, "Unable to get SW parameters for " + _pcm_name);
   }
 
-//  size_t n = ( (_avail_min < 0) ? _period_size_in_frames : ( (double) rate * _avail_min / 1000000 ) );
   size_t n = _period_size_in_frames;
   err = snd_pcm_sw_params_set_avail_min(_handle, swparams, n);
 
@@ -308,12 +294,10 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
     { snd_pcm_wait(_handle, 100);
     }
     else if (r == -EPIPE)
-    { // xrun();
-      ost << "XRUN()!!" << endl;
+    { ost << "XRUN()!!" << endl;
     }
     else if (r == -ESTRPIPE)
-    { //suspend();
-      ost << "SUSPEND()!!!" << endl;
+    { ost << "SUSPEND()!!!" << endl;
     }
     else if (r < 0)
     { ost << "ERROR: audio device read error for " << _pcm_name << endl;
@@ -510,7 +494,6 @@ audio_recorder::audio_recorder(void) :
   _file_type(AUDIO_FORMAT_WAVE),            // WAV format
   _handle(nullptr),                         // no PCM handle
   _info(nullptr),                           // explicitly set to uninitialised
-//  _initialised(false),                      // the object is not yet initialised
   _max_file_time(0),                        // no maximum duration (in seconds)
   _period_size_in_frames(0),
   _monotonic(false),                        // device cannot do monotonic timestamps
@@ -600,7 +583,10 @@ void audio_recorder::abort(void)
     \brief  Class to implement functions related to wav files
 */
 
-/// write or buffer a buffer
+/*! \brief                  Write buffer to disk
+    \param  bufp            pointer to buffer
+    \param  buffer_size     size of buffer, in bytes
+*/
 void wav_file::_write_buffer(void* bufp, const size_t buffer_size)
 { if (_is_buffered)
   {  //TODO

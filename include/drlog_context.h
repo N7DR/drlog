@@ -507,6 +507,7 @@ public:
 */
   const std::string points_string(const BAND b, const MODE m) const;
 
+#if 0
 /*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
     \param  exchange_field  exchange field
     \param  b               band
@@ -514,6 +515,7 @@ public:
     \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
 */
 //  const std::string points(const std::string& exchange_field, const BAND b, const MODE m) const;
+#endif
 
 /*! \brief          Get the information pertaining to a particular window
     \param  name    name of window

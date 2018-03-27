@@ -69,7 +69,7 @@ class wav_file
 {
 protected:
 
-  bool _is_buffered;            ///< whether to use buffering to avoid writing when sending CW
+  bool _is_buffered;            ///< whether to use buffering to avoid writing when sending CW (not yet supported)
   std::string   _name;          ///< name of file
 
 // The question is whether to use a stream or a C-style FILE*. I choose the latter
@@ -79,7 +79,10 @@ protected:
 //   it seems easier to write large amounts of data without going through contortions to avoid copies
   FILE*         _fp;            ///< file pointer
 
-/// write or buffer a buffer
+/*! \brief                  Write buffer to disk
+    \param  bufp            pointer to buffer
+    \param  buffer_size     size of buffer, in bytes
+*/
   void _write_buffer(void* bufp, const size_t buffer_size);
 
 public:
@@ -87,7 +90,7 @@ public:
 /// default constructor
   wav_file(void);
 
-  READ_AND_WRITE(is_buffered)    ///< whether to use buffering to avoid writing when sending CW
+  READ_AND_WRITE(is_buffered)    ///< whether to use buffering to avoid writing when sending CW (not yet supported)
   READ_AND_WRITE(name);          ///< name of file
 
 /// open the file for writing
@@ -144,7 +147,6 @@ protected:
   snd_pcm_t*        _handle;                    ///< PCM handle
   PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
   snd_pcm_info_t*   _info;                      ///< pointer to information structure that corresponds to <i>_handle</i>
-//  long long         _max_file_time;             ///< maximum duration in seconds
   int64_t           _max_file_time;             ///< maximum duration in seconds
   size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
@@ -160,9 +162,9 @@ protected:
   snd_pcm_format_t  _sample_format;             ///< format of a single format (U8, SND_PCM_FORMAT_S16_LE, etc.)
   int               _start_delay;               ///< ?
   snd_pcm_stream_t  _stream;                    ///< type of stream
+  pthread_t         _thread_id;                 ///< ID for the thread that plays the buffer
+  unsigned int      _thread_number;             ///< number of the thread currently being used
   unsigned int      _time_limit;                ///< number of seconds to record
-
-  unsigned int      _thread_number;
 
 // stuff for bext extension
 #if 0
@@ -179,8 +181,6 @@ protected:
   snd_pcm_sframes_t (*_writei_func)(snd_pcm_t *handle, const void *buffer, snd_pcm_uframes_t size);     ///< function to write interleaved frames
   snd_pcm_sframes_t (*_readn_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);             ///< function to read non-interleaved frames
   snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);            ///< function to write non-interleaved frames
-
-  pthread_t             _thread_id;         ///< ID for the thread that plays the buffer
 
 /// Declare, but do not define, copy constructor
   audio_recorder(const audio_recorder&);
@@ -223,7 +223,6 @@ public:
 /// destructor
   virtual ~audio_recorder(void);
 
-//  READ_AND_WRITE(aborting);                 ///< whether aborting a capture
   READ_AND_WRITE(base_filename);            ///< base name of output file
 //  READ(initialised);                        ///< is the object initialised?
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds

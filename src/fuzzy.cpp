@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file fuzzy.cpp
+/*! \file   fuzzy.cpp
 
     Objects and functions related to the fuzzzy function
 */
@@ -31,15 +31,20 @@ extern message_stream    ost;       ///< debugging/logging output
     \brief  The database for the fuzzy function
 */
 
-/// construct from filename
+/*! \brief              Construct from a file
+    \param  filename    name of the file from which to construct the object
+
+    The file <i>filename</i> is assumed to look similar to TRMASTER.ASC
+*/
 fuzzy_database::fuzzy_database(const string& filename)
-{ //const string file_contents = to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' '));
-  const vector<string> calls = to_lines(to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')));
+{ const vector<string> calls = to_lines(to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')));
 
   FOR_ALL(calls, [&] (const string& x) { this->add_call( x ); } );
 }
 
-/// construct from a drmaster object
+/*! \brief          Construct from a <i>drmaster</i> object
+    \param  drm     <i>drmaster</i> object from which to construct
+*/
 fuzzy_database::fuzzy_database(const drmaster& drm)
 { const vector<string>& calls = drm.calls();
 
@@ -55,8 +60,6 @@ fuzzy_database::fuzzy_database(const drmaster& drm)
 const set<string> fuzzy_database::operator[](const string& key) const
 { if (key.length() < 3)
     return set<string>();
-
-//  unsigned int n_chars = key.length();
   
 /*  vector<regex> expressions;
   for (unsigned int posn = 0; posn < n_chars; ++posn)
@@ -68,6 +71,7 @@ const set<string> fuzzy_database::operator[](const string& key) const
 */
 
   set<string> rv;
+
   const set<string>& ss = _db[ _to_valid_size(key.length()) ];
   
   for (const auto& str : ss)
@@ -99,10 +103,7 @@ void fuzzy_databases::remove_call(const string& call)
 { bool removed = false;
 
   for (size_t n = 0; (!removed and (n < _vec.size())); ++n)
-  { //const size_t rev = _vec.size() - 1 - n;
-
-    removed = _vec[ (_vec.size() - 1 - n) ]->remove_call(call);
-  }
+    removed = _vec[ (_vec.size() - 1 - n) ] -> remove_call(call);
 }
 
 /*! \brief          Return matches

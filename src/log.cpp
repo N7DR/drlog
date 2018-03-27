@@ -59,12 +59,16 @@ void logbook::operator+=(const QSO& q)
     If <i>n</i> is out of range, then returns an empty QSO
 */
 const QSO logbook::operator[](const size_t n) const
-{ SAFELOCK(_log);
+{ const static QSO empty_qso;
 
-  if (_log_vec.empty() or (_log_vec.size() < n))
-    return QSO();
+  SAFELOCK(_log);
 
-  return _log_vec[n - 1];
+  return ( (_log_vec.empty() or (_log_vec.size() < n)) ? empty_qso : _log_vec[n - 1] ) ;
+
+//  if (_log_vec.empty() or (_log_vec.size() < n))
+//    return QSO();
+
+//  return _log_vec[n - 1];
 }
 
 /*! \brief      Remove an individual QSO by number (wrt 1)
@@ -401,7 +405,7 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
     rv += "EMAIL: " + context.cabrillo_e_mail() + EOL_STRING;
 
 // claimed score
-  if (score)
+  if (context.cabrillo_include_score())
     rv += "CLAIMED-SCORE: " + to_string(score) + EOL_STRING;
 
 // certificate
@@ -470,7 +474,6 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
           qso.band(_band);
         }
-      
       
 // mode
         if (name == "MODE")
@@ -699,13 +702,7 @@ const QSO logbook::remove_last_qso(void)
 log_extract::log_extract(window& w) :
   _win(w),
   _win_size(0)                                  // don't set the size yet, since the size of w may not be set
-{
-}
-
-/// prepare for use
-//void log_extract::prepare(void)
-//{ _win_size = _win.height();
-//}
+{ }
 
 /*! \brief          Add a QSO to the extract
     \param  qso     QSO to add

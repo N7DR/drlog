@@ -70,8 +70,9 @@ void* cw_buffer::_static_play(void* arg)              // arg is the "this" point
 }
 
 /*! \brief      Play the buffer
-    \param      unused
     \return     nullptr
+
+    The parameter is unused
 */
 void* cw_buffer::_play(void*)
 {
@@ -266,7 +267,7 @@ void* cw_buffer::_play(void*)
 /*! \brief              Construct on a parallel port
     \param  filename    device file
     \param  delay       PTT delay (in milliseconds)
-    \param  speed       speed in WPM
+    \param  wpm_speed   speed in WPM
 */
 cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed) :
   _port(filename),

@@ -147,8 +147,8 @@ window::window(const unsigned int flags) :
   _column_width(0),
   _wp(nullptr),
   _scrolling(false),
-  _hidden_cursor(flags & WINDOW_NO_CURSOR),
-  _insert(flags & WINDOW_INSERT),
+  _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
+  _insert(flags bitand WINDOW_INSERT),
   _pp(nullptr),
   _process_input(nullptr),
   _fg(COLOUR_WHITE),
@@ -171,8 +171,8 @@ window::window(const window_information& wi, const unsigned int flags) :
   _column_width(0),
   _wp(nullptr),
   _scrolling(false),
-  _hidden_cursor(flags & WINDOW_NO_CURSOR),
-  _insert(flags & WINDOW_INSERT),
+  _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
+  _insert(flags bitand WINDOW_INSERT),
   _pp(nullptr),
   _process_input(nullptr),
   _fg(string_to_colour(wi.fg_colour())),
@@ -290,7 +290,9 @@ window& window::operator<(const string& s)
     \param  ss      set to write
     \return         the window
 
-    Wraps words to new lines. Stops writing if there's insufficient room for the next string.
+    The set is written in callsign order.
+    Wraps words to new lines.
+    Stops writing if there's insufficient room for the next string.
 */
 window& window::operator<(const set<string>& ss)
 { if (!_wp)
@@ -447,9 +449,10 @@ window& window::move_cursor_relative(const int delta_x, const int delta_y)
     \return             the window
 */
 window& window::cpair(const int pair_nr)
-{ if (!_wp)
-    return *this;
-    
+{ //if (!_wp)
+  //  return *this;
+
+  if (_wp)
   { SAFELOCK(screen);  
 
     wcolor_set(_wp, pair_nr, NULL);
@@ -466,6 +469,8 @@ window& window::cpair(const int pair_nr)
 window& window::default_colours(const int foreground_colour, const int background_colour)
 { if (!_wp)
     return *this;
+
+  SAFELOCK(screen);
 
   _fg = foreground_colour;
   _bg = background_colour;
@@ -724,7 +729,7 @@ const string window::read(int x, int y)
 const vector<string> window::snapshot(void)
 { vector<string> rv;
 
-  for (size_t n = height() - 1; n < height(); --n)
+  for (size_t n = static_cast<size_t>(height() - 1); n < static_cast<size_t>(height()); --n)    // stops when n wraps to big number when decremented from zero
     rv.push_back(getline(n));
 
   return rv;
@@ -789,7 +794,7 @@ window& window::delete_character(const int n, const int line_nr)
   if (old_line.empty())
     return *this;
   
-  if (n >= old_line.length())
+  if (n >= static_cast<int>(old_line.length()))
     return *this;
 
   const string new_line = old_line.substr(0, n) + old_line.substr(n + 1);

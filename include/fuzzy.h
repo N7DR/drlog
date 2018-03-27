@@ -52,37 +52,55 @@ protected:
 public:
 
 /// default constructor
-  fuzzy_database(void)
+  inline fuzzy_database(void)
     { }
 
-/*! \brief      Construct from a file
-    \param  filename  name of the file from which to construct the object
+/*! \brief              Construct from a file
+    \param  filename    name of the file from which to construct the object
 
     The file <i>filename</i> is assumed to look similar to TRMASTER.ASC
 */
   explicit fuzzy_database(const std::string& filename);
 
-/// construct from a drmaster object
+/*! \brief          Construct from a <i>drmaster</i> object
+    \param  drm     <i>drmaster</i> object from which to construct
+*/
   explicit fuzzy_database(const drmaster& drm);
   
 /// destructor
-  virtual ~fuzzy_database(void)
+  inline virtual ~fuzzy_database(void)
     { }
 
-/// populate the database from a vector of calls
+/*! \brief          Add the calls in a vector to the database
+    \param  calls   calls to be added
+
+    Does nothing for any calls already in the database
+*/
   inline void init_from_calls(const std::vector<std::string>& calls)
     { FOR_ALL(calls, [&] (const std::string& this_call) { add_call(this_call); } ); }
 
-/// add a call to the database
+/*! \brief          Add a call to the database
+    \param  call    call to be added
+
+    Does nothing if the call is already in the database
+*/
   inline void add_call(const std::string& call)
     { _db[ _to_valid_size(call.length()) ].insert(call); }
 
-/// remove a call from the database; returns whether the removal was successful
+/*! \brief          Remove a call from the database
+    \param  call    call to be removed
+    \return         whether <i>call</i> was actually removed
+
+    Does nothing and returns <i>false</i> if <i>call</i> is not in the database
+*/
   inline const bool remove_call(const std::string& call)
     { return ( (_db[ _to_valid_size(call.length()) ].erase(call)) != 0 ); }
 
-/// is a call in the database?
-  inline const bool contains(const std::string& call)
+/*! \brief          Is a call in the database?
+    \param  call    call to be removed
+    \return         whether <i>call</i> is present in the database
+*/
+  inline const bool contains(const std::string& call) const
     { return (_db[ _to_valid_size(call.length()) ] < call); }
   
 /*! \brief          Return matches

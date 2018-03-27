@@ -68,7 +68,7 @@ public:
     \brief  Manipulate a line from an N6TR TRMASTER.ASC file
 */
 
-const unsigned int TRMASTER_N_USER_PARAMETERS = 5;  ///< The number of user parameters in a TRMASTER file
+const unsigned int TRMASTER_N_USER_PARAMETERS = 5;      ///< The number of user parameters in a TRMASTER file
 
 class trmaster_line
 {
@@ -243,7 +243,7 @@ protected:
 public:
 
 /// default constructor
-  drmaster_line(void)
+  inline drmaster_line(void)
   { }
 
 /// constructor
@@ -307,6 +307,11 @@ public:
     { return _call.empty(); }
 };
 
+/*! \brief          Write a <i>drmaster_line</i> object to an output stream
+    \param  ost     output stream
+    \param  trml    object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const drmaster_line& trml);
 
 // -----------------------------------------------------  drmaster  ---------------------------------
@@ -325,26 +330,56 @@ protected:
 
 public:
 
-// constructor from a file
+/*! \brief              Construct from a file
+    \param  filename    name of file to read
+
+    Throws exception if the file does not exist or is incorrectly formatted
+*/
   drmaster(const std::string& filename = "drmaster");
 
-// constructor from a file
+/*! \brief              Construct from a file
+    \param  path        directories to check
+    \param  filename    name of file to read
+
+    Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
+    Throws exception if the file does not exist or is incorrectly formatted
+*/
   drmaster(const std::vector<std::string>& path, const std::string& filename = "drmaster");
 
+/*! \brief              Prepare the object by reading a file
+    \param  filename    name of file to read
+
+    Throws exception if the file does not exist or is incorrectly formatted
+*/
   void prepare(const std::string& filename = "drmaster");
 
+/*! \brief              Prepare the object by reading a file
+    \param  path        directories to check
+    \param  filename    name of file to read
+
+    Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories.
+    Throws exception if the file does not exist or is incorrectly formatted
+*/
   void prepare(const std::vector<std::string>& path, const std::string& filename = "drmaster");
 
-// all the calls (in alphabetical order)
+/// all the calls (in alphabetical order)
   const std::vector<std::string> calls(void) const;
 
-// format for output
-  const std::string to_string(void);
+/// format for output
+  const std::string to_string(void) const;
 
-// add a call -- does nothing if the call is already present
-  void operator+=(const std::string& str);
+/*! \brief          Add a callsign.
+    \param  call    call to add
 
-// add a drmaster_line. If there's already an entry for this call, then performs a merge
+    If there's already an entry for <i>call</i>, then does nothing
+*/
+  void operator+=(const std::string& call);
+
+/*! \brief          Add a drmaster_line
+    \param  drml    drmaster line to add
+
+    If there's already an entry for the call in <i>drml</i>, then performs a merge
+*/
   void operator+=(const drmaster_line& drml);
 
 /// the number of records

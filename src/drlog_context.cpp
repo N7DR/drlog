@@ -1508,7 +1508,7 @@ const window_information drlog_context::window_info(const string& name) const
 }
 
 /*! \brief          Get all the windows whose name contains a particular substring
-    \param  subst   substring for which to search
+    \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
 */
 const vector<string> drlog_context::window_name_contains(const string& substr) const
@@ -1558,13 +1558,14 @@ const string drlog_context::points_string(const BAND b, const MODE m) const
   return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string() );
 }
 
+#if 0
 /*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
     \param  exchange_field  exchange field
     \param  b               band
     \param  m               mode
     \return                 the points string corresponding to band <i>b</i> and mode <i>m</i> when exchange field <i>exchange_field</i> is present
 */
-#if 0
+
 const string drlog_context::points(const std::string& exchange_field, const BAND b, const MODE m) const
 { SAFELOCK(_context);
 

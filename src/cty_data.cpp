@@ -1049,7 +1049,7 @@ const vector<drlog_qth_database_record> drlog_qth_database::id(const string& id_
 
 /*! \brief                      Get the CQ zone corresponding to a call
     \param  call                callsign
-    \param  initial_cq_guess    default value of CQ zone, if none is found
+    \param  initial_cq_zone     default value of CQ zone, if none is found
     \return                     CQ zone corresponding to <i>call</i>
 */
 const unsigned int drlog_qth_database::cq_zone(const string& call, const unsigned int initial_cq_zone) const
@@ -1066,9 +1066,9 @@ const unsigned int drlog_qth_database::cq_zone(const string& call, const unsigne
     \param  initial_cq_zone     default value of CQ zone, if none is found
     \return                     CQ zone corresponding to call area <i>call_area</i> in country <i>country</i>
 */
-const unsigned int drlog_qth_database::cq_zone(const string& country, const unsigned int area, const unsigned int initial_cq_zone) const
+const unsigned int drlog_qth_database::cq_zone(const string& country, const unsigned int call_area, const unsigned int initial_cq_zone) const
 { for (size_t n = 0; n < _db.size(); ++n)
-    if (_db[n].id() == country and _db[n].get_area(10) == area)  // 10 is an invalid area
+    if (_db[n].id() == country and _db[n].get_area(10) == call_area)  // 10 is an invalid area
       return _db[n].get_cq_zone(initial_cq_zone);
 
   return 0;
@@ -1090,7 +1090,7 @@ const float drlog_qth_database::latitude(const string& call, const float initial
 /*! \brief                      Get the latitude corresponding to a call area in a country
     \param  country             country identifier
     \param  call_area           call area (0 - 9)
-    \param  initial_cq_zone     default value of latitude, if none is found
+    \param  initial_latitude    default value of latitude, if none is found
     \return                     latitude corresponding to call area <i>call_area</i> in country <i>country</i>
 */
 const float drlog_qth_database::latitude(const string& country, const unsigned int call_area, const float initial_latitude) const
@@ -1117,7 +1117,7 @@ const float drlog_qth_database::longitude(const string& call, const float initia
 /*! \brief                      Get the longitude corresponding to a call area in a country
     \param  country             country identifier
     \param  call_area           call area (0 - 9)
-    \param  initial_cq_zone     default value of longitude, if none is found
+    \param  initial_longitude   default value of longitude, if none is found
     \return                     longitude corresponding to call area <i>call_area</i> in country <i>country</i>
 */
 const float drlog_qth_database::longitude(const string& country, const unsigned int call_area, const float initial_longitude) const
@@ -1131,7 +1131,7 @@ const float drlog_qth_database::longitude(const string& country, const unsigned 
 // -----------  russian_data_per_substring  ----------------
 
 /*! \class  russian_data_per_substring
-    \brief  Encapsulate the data from a Russian data file, for a single substring
+    \brief  Encapsulate the data from a Russian data file, for a single district's substring
 */
 
 /*! \brief              Construct from a prefix and a line

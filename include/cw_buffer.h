@@ -65,8 +65,9 @@ protected:
   void _add_action(const int n);
 
 /*! \brief      Play the buffer
-    \param      unused
     \return     nullptr
+
+    The parameter is unused
 */
   void* _play(void*);
 
@@ -81,9 +82,9 @@ public:
 /*! \brief              Construct on a parallel port
     \param  filename    device file
     \param  delay       PTT delay (in milliseconds)
-    \param  speed       speed in WPM
+    \param  wpm_speed   speed in WPM
 */
-  cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int speed);
+  cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int wpm_speed);
 
 /// destructor
   virtual ~cw_buffer(void);

@@ -3613,14 +3613,27 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+// ALT-CURSOR DOWN -- new routine for SCP/fuzzy matching
+//  if (!processed and e.is_alt() and e.symbol() == XK_Down)
+//  { static const MAX_SCP_MATCHES = 5
+
+//    vector<pair<string, int>> combined_matches = scp_matches;
+
+//    copy(matches.cbegin(), matches.cend(), back_inserter(vec_str));
+
+//    processed = true;
+//  }
+
+
 // CURSOR DOWN -- possibly replace call with SCP info
 // some trickery needed to provide capability to walk through SCP calls after trying to find an obvious match
+// includes fuzzy matches after SCP matches
   static bool in_scp_matching;          ///< are we walking through the calls?
   static unsigned int scp_index;        ///< index into matched calls
 
   bool cursor_down = (e.is_unmodified() and e.symbol() == XK_Down); ///< is the event a CURSOR DOWN?
 
-  if (!cursor_down)                 // clear memory of walking through matched calls
+  if (!cursor_down)                 // clear memory of walking through matched calls every time we press a different key
   { in_scp_matching = false;
     scp_index = 0;
   }
@@ -3634,18 +3647,23 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     bool found_match = false;
     string new_callsign;
 
-    if (!in_scp_matching)
+    if (!in_scp_matching)                           // first down arrow
     { new_callsign = match_callsign(scp_matches);
 
-//      ost << "size of scp_matches [2] = " << scp_matches.size() << endl;
+      //ost << "size of scp_matches [2] = " << scp_matches.size() << endl;
+      //ost << "new_callsign = " << new_callsign << endl;
 
       if (new_callsign.empty())
+      { //ost << "size of fuzzy_matches = " << fuzzy_matches.size() << endl;
+
         new_callsign = match_callsign(fuzzy_matches);
+      }
 
       if (!new_callsign.empty())
       { win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
         display_call_info(new_callsign);
         found_match = true;
+        in_scp_matching = true;
       }
     }
 
@@ -3658,14 +3676,20 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       if (scp_index == 0)
       { all_matches.clear();
         FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
+
+// add fuzzy matches
+        FOR_ALL(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
       }
 
-//      ost << "size of all_matches = " << all_matches.size() << endl;
+      //ost << "size of all_matches = " << all_matches.size() << endl;
 
       if (scp_index < all_matches.size())
-      { //ost << "getting new callsign" << endl;
+      { //ost << "getting new callsign from all_matches" << endl;
 
         new_callsign = all_matches[scp_index++];
+
+        //ost << "new callsign from all_matches = " << new_callsign << endl;
+
         win < WINDOW_CLEAR < CURSOR_START_OF_LINE <= new_callsign;
         display_call_info(new_callsign);
       }

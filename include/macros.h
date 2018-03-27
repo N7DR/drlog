@@ -13,7 +13,7 @@
 
 #undef NEW_RAW_COMMAND  // experiment to try to improve the reliability of the awful rig interface
 
-/*! \file macros.h
+/*! \file   macros.h
 
     Macros and templates for drlog.
 */
@@ -30,9 +30,9 @@
 #include <tuple>
 #include <unordered_set>
 
+/// Syntactic sugar for read/write access
 #if (!defined(READ_AND_WRITE))
 
-/// Syntactic sugar for read/write access
 #define READ_AND_WRITE(y)                                       \
 /*! Read access to _##y */                                      \
   inline const decltype(_##y)& y(void) const { return _##y; }   \
@@ -41,9 +41,9 @@
 
 #endif    // !READ_AND_WRITE
 
+/// Syntactic sugar for read/write access with thread locking
 #if (!defined(SAFE_READ_AND_WRITE))
 
-/// Syntactic sugar for read/write access
 #define SAFE_READ_AND_WRITE(y, z)                                           \
 /*! Read access to _##y */                                                  \
   inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }  \
@@ -55,7 +55,6 @@
 /// Read and write with mutex that is part of the object
 #if (!defined(SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX))
 
-/// Syntactic sugar for read/write access
 #define SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(y, z)                                           \
 /*! Read access to _##y */                                                  \
   inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }  \
@@ -64,18 +63,18 @@
 
 #endif    // !SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX
 
+/// Syntactic sugar for read-only access
 #if (!defined(READ))
 
-/// Syntactic sugar for read-only access
 #define READ(y)                                                 \
 /*! Read-only access to _##y */                                 \
   inline const decltype(_##y)& y(void) const { return _##y; }
 
 #endif    // !READ
 
+/// Syntactic sugar for read-only access with thread locking
 #if (!defined(SAFEREAD))
 
-/// Syntactic sugar for read-only access
 #define SAFEREAD(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
   inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
@@ -85,35 +84,33 @@
 // alternative name for SAFEREAD
 #if (!defined(SAFE_READ))
 
-/// Syntactic sugar for read-only access
 #define SAFE_READ(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
   inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ
 
+/// Read with mutex that is part of the object
 #if (!defined(SAFEREAD_WITH_INTERNAL_MUTEX))
 
-/// Syntactic sugar for read-only access
 #define SAFEREAD_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
   inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD_WITH_INTERNAL_MUTEX
 
+// alternative name for SAFEREAD_WITH_INTERNAL_MUTEX
 #if (!defined(SAFE_READ_WITH_INTERNAL_MUTEX))
 
-/// Syntactic sugar for read-only access
 #define SAFE_READ_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
   inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ_WITH_INTERNAL_MUTEX
 
-
+/// Syntactic sugar for write access
 #if (!defined(WRITE))
 
-/// Syntactic sugar for read/write access
 #define WRITE(y)                                       \
 /*! Write access to _##y */                                     \
   inline void y(const decltype(_##y)& n) { _##y = n; }

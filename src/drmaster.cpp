@@ -826,7 +826,11 @@ const drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
     A drmaster file is a superset of a TRMASTER.ASC file
 */
 
-// constructor from a file
+/*! \brief              Construct from a file
+    \param  filename    name of file to read
+
+    Throws exception if the file does not exist or is incorrectly formatted
+*/
 drmaster::drmaster(const string& filename)
 { if (filename.empty())
     return;
@@ -839,6 +843,13 @@ drmaster::drmaster(const string& filename)
                                                                   } );
 }
 
+/*! \brief              Construct from a file
+    \param  path        directories to check
+    \param  filename    name of file to read
+
+    Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
+    Throws exception if the file does not exist or is incorrectly formatted
+*/
 drmaster::drmaster(const vector<string>& path, const string& filename)
 { if (filename.empty())
     return;
@@ -851,6 +862,11 @@ drmaster::drmaster(const vector<string>& path, const string& filename)
                                                                   } );
 }
 
+/*! \brief              Prepare the object by reading a file
+    \param  filename    name of file to read
+
+    Throws exception if the file does not exist or is incorrectly formatted
+*/
 void drmaster::prepare(const string& filename)
 { if (filename.empty())
     return;
@@ -863,6 +879,12 @@ void drmaster::prepare(const string& filename)
                                                                   } );
 }
 
+/*! \brief          Prepare the object by reading a file
+    \param  path    directories to check
+    \param  filename    name of file to read
+
+    Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories
+*/
 void drmaster::prepare(const vector<string>& path, const string& filename)
 { if (filename.empty())
     return;
@@ -875,7 +897,7 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
                                                                   } );
 }
 
-// all the calls (in alphabetical order)
+/// all the calls (in alphabetical order)
 const vector<string> drmaster::calls(void) const
 { vector<string> rv;
 
@@ -888,29 +910,39 @@ const vector<string> drmaster::calls(void) const
   return rv;
 }
 
-// format for output
-const std::string drmaster::to_string(void)
+/// format for output
+const string drmaster::to_string(void) const
 { vector<string> lines;
 
 //  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
-  for (auto cit = _records.begin(); cit != _records.end(); ++cit)
+  for (auto cit = _records.cbegin(); cit != _records.cend(); ++cit)
     lines.push_back((cit->second).to_string() + EOL);
 
   sort(lines.begin(), lines.end());
-  const string rv = join(lines, "");            // don't add the default (space) separator
+//  const string rv = join(lines, "");            // don't add the default (space) separator
 
-  return rv;
+//  return rv;
+  return ( join(lines, "") );            // don't add the default (space) separator
 }
 
-// add a call -- does nothing if the call is already present
-void drmaster::operator+=(const string& str)
-{ if (!::contains(str, " "))  // it's a call
-  { if (_records.find(str) == _records.end())
-      _records.insert(make_pair(str, static_cast<drmaster_line>(str) ));    // cast needed in order to keep the temporary around long enough to use
+/*! \brief          Add a callsign.
+    \param  call    call to add
+
+    If there's already an entry for <i>call</i>, then does nothing
+*/
+void drmaster::operator+=(const string& call)
+{ if (!::contains(call, " "))                                                // basic sanity check for a call
+  { if (_records.find(call) == _records.end())
+//      _records.insert(make_pair(str, static_cast<drmaster_line>(str) ));    // cast needed in order to keep the temporary around long enough to use
+     _records.insert( { call, static_cast<drmaster_line>(call) } );
   }
 }
 
-// add a drmaster_line. If there's already an entry for this call, then performs a merge
+/*! \brief          Add a drmaster_line
+    \param  drml    drmaster line to add
+
+    If there's already an entry for the call in <i>drml</i>, then performs a merge
+*/
 void drmaster::operator+=(const drmaster_line& drml)
 { const string call = drml.call();
 

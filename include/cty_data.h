@@ -103,7 +103,7 @@ public:
     _val = v;
   }
 
-/// serialize and unserialize using boost
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _is_valid
@@ -305,8 +305,8 @@ public:
 
 // -----------  russian_data_per_substring  ----------------
 
-/*! \class russian_data_per_substring
-    \brief Encapsulate the data from a Russian data file, for a single substring
+/*! \class  russian_data_per_substring
+    \brief  Encapsulate the data from a Russian data file, for a single district's substring
 */
 
 class russian_data_per_substring
@@ -342,7 +342,7 @@ public:
   READ(region_name);           ///< name of district
   READ(utc_offset);            ///< offset from UTC (minutes)
 
-/// archive using boost
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _sstring
@@ -357,13 +357,17 @@ public:
     }
 };
 
-/// ostream << location_info
+/*! \brief          Write a <i>russian_data_per_substring</i> object to an output stream
+    \param  ost     output stream
+    \param  info    object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const russian_data_per_substring& info);
 
 // -----------  russian_data  ----------------
 
-/*! \class russian_data
-    \brief Encapsulate the data from a Russian data file
+/*! \class  russian_data
+    \brief  Encapsulate the data from a Russian data file
 
     Russian data file is based on http://www.rdxc.org/asp/pages/regions.asp?ORDER=1
 */
@@ -371,7 +375,8 @@ std::ostream& operator<<(std::ostream& ost, const russian_data_per_substring& in
 class russian_data
 {
 protected:
-  std::map<std::string /* substring */, russian_data_per_substring> _data;  ///< map substring to the matching data
+
+  std::map<std::string /* substring */, russian_data_per_substring> _data;          ///< map substring to the matching data
 
 public:
 
@@ -475,6 +480,7 @@ const location_info guess_zones(const std::string& call, const location_info& li
 class drlog_qth_database_record
 {
 protected:
+
   std::string         _id;          ///< ID for the record (typically, a callsign)
   value<unsigned int> _area;        ///< call area
   value<unsigned int> _cq_zone;     ///< CQ zone
@@ -483,32 +489,57 @@ protected:
   
 public:
   
-  READ_AND_WRITE(id);
+  READ_AND_WRITE(id);               ///< ID for the record (typically, a callsign)
     
+/*! \brief      Get the call area
+    \return     the call area
+*/
   inline const unsigned int get_area(const unsigned int def) const
     { return _area.get(def); }
     
+/*! \brief          Set the call area
+    \param  val     new value of call area
+*/
   inline void set_area(const unsigned int val)
     { _area.set(val); }
-    
+
+/*! \brief      Get the CQ zone
+    \return     the CQ zone
+*/
   inline const unsigned int get_cq_zone(const unsigned int def) const
     { return _cq_zone.get(def); }
     
+/*! \brief          Set the CQ zone
+    \param  val     new value of CQ zone
+*/
   inline void set_cq_zone(const unsigned int val)
     { _cq_zone.set(val); }    
 
+/*! \brief      Get the latitude
+    \return     the latitude
+*/
   inline const float get_latitude(const float def) const
     { return _latitude.get(def); }
     
+/*! \brief          Set the latitude
+    \param  val     new value of latitude
+*/
   inline void set_latitude(const float val)
     { _latitude.set(val); }
-    
+
+/*! \brief      Get the longitude
+    \return     the longitude
+*/
   inline const float get_longitude(const float def) const
     { return _longitude.get(def); }
-    
+
+/*! \brief          Set the longitude
+    \param  val     new value of longitude
+*/
   inline void set_longitude(const float val)
     { _longitude.set(val); }    
 
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _id
@@ -568,7 +599,7 @@ public:
 /*! \brief                      Get the latitude corresponding to a call area in a country
     \param  country             country identifier
     \param  call_area           call area (0 - 9)
-    \param  initial_cq_zone     default value of latitude, if none is found
+    \param  initial_latitude    default value of latitude, if none is found
     \return                     latitude corresponding to call area <i>call_area</i> in country <i>country</i>
 */
   const float latitude(const std::string& country, const unsigned int call_area, const float initial_latitude) const;
@@ -583,7 +614,7 @@ public:
 /*! \brief                      Get the longitude corresponding to a call area in a country
     \param  country             country identifier
     \param  call_area           call area (0 - 9)
-    \param  initial_cq_zone     default value of longitude, if none is found
+    \param  initial_longitude   default value of longitude, if none is found
     \return                     longitude corresponding to call area <i>call_area</i> in country <i>country</i>
 */
   const float longitude(const std::string& country, const unsigned int call_area, const float initial_longitude) const;
@@ -591,7 +622,8 @@ public:
 /// number of records in the database
   inline const size_t size(void) const
     { return _db.size(); }
-  
+
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _db;
