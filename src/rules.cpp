@@ -339,7 +339,7 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
 
         for (auto& choice_field_name : choice_fields)
         { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend();
-          exchange_field this_choice(choice_field_name, is_mult);
+          const exchange_field this_choice(choice_field_name, is_mult);
 
           choices.push_back(this_choice);
         }
@@ -562,8 +562,6 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if ( ( find(_exchange_mults.begin(), _exchange_mults.end(), "DOK") != _exchange_mults.end() ) and !context.auto_remaining_exchange_mults("DOK") )
   { exchange_field_values dok_values("DOK");
 
-//    for (size_t index = 0; index < 26; ++index)
-//      dok_values.add_canonical_value(create_string(UPPER_CASE_LETTERS[index]));
     for (const char c : UPPER_CASE_LETTERS)
       dok_values.add_canonical_value(create_string(c));
 
@@ -887,24 +885,25 @@ const EFT contest_rules::exchange_field_eft(const string& field_name) const
   return ( (v == _exchange_field_eft.cend()) ? EFT("none") : (v->second) );
 }
 
-/*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix
+/*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
-    \return                     the exchange field names associated with <i>canonical_prefix</i>
+    \param  m                   mode
+    \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
 const vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
 { const vector<exchange_field> vef = _exchange_fields(canonical_prefix, m, true);
+
   vector<string> rv;
 
-//  for (const auto& ef : vef)
-//    rv.push_back(ef.name());
   FOR_ALL(vef, [&rv] (const exchange_field& ef) { rv.push_back(ef.name()); });
 
   return rv;
 }
 
-/*! \brief                      Get the unexpanded expanded names of the exchange fields for a particular canonical prefix
+/*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
-    \return                     the exchange field names associated with <i>canonical_prefix</i>
+    \param  m                   mode
+    \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
 const vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
 { const vector<exchange_field> vef = _exchange_fields(canonical_prefix, m, false);

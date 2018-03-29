@@ -40,6 +40,8 @@ extern const set<string> CONTINENT_SET;             ///< two-letter abbreviation
 */
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
+static const unsigned int COLUMN_WIDTH = 19;        ///< width of a column in the bandmap window
+
 const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
 const string        MODE_MARKER("********");        ///< string to mark the mode break in the bandmap
 const unsigned int  MAX_FREQUENCY_SKEW = 250;       ///< maximum separation, in hertz, to be treated as same frequency
@@ -1134,13 +1136,16 @@ const bool bandmap::is_present(const string& target_callsign)
   return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 }
 
+const unsigned int bandmap::n_columns(const window& win)
+{ return ( (win.width() - 1) / COLUMN_WIDTH ); }
+
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window
     \param  bm      object to write
     \return         the window
 */
 window& operator<(window& win, bandmap& bm)
-{ static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
+{ //static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
 
   static int NOT_NEEDED_COLOUR = COLOUR_BLACK;
 //  static int DO_NOT_WORK_COLOUR = NOT_NEEDED_COLOUR;

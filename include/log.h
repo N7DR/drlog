@@ -130,41 +130,41 @@ public:
 */
   const bool qso_b4(const std::string& call, const BAND b) const;
 
-/*!     \brief          Has a call been worked on a particular mode?
-        \param  call    target callsign
-        \param  m       target mode
-        \return         whether <i>call</i> has been worked on <i>m</i>
+/*! \brief          Has a call been worked on a particular mode?
+    \param  call    target callsign
+    \param  m       target mode
+    \return         whether <i>call</i> has been worked on <i>m</i>
 */
   const bool qso_b4(const std::string& call, const MODE m) const;
 
-/*!     \brief          Has a call been worked on a particular band and mode?
-        \param  call    target callsign
-        \param  b       target band
-        \param  m       target mode
-        \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
+/*! \brief          Has a call been worked on a particular band and mode?
+    \param  call    target callsign
+    \param  b       target band
+    \param  m       target mode
+    \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
 */
   const bool qso_b4(const std::string& call, const BAND b, const MODE m) const;
   
-/*!     \brief          Get a string list of bands on which a call is needed
-        \param  call    target callsign
-        \param  rules   rules for the contest
-        \return         string list of bands on which a call is needed (separated by three spaces)
+/*! \brief          Get a string list of bands on which a call is needed
+    \param  call    target callsign
+    \param  rules   rules for the contest
+    \return         string list of bands on which a call is needed (separated by three spaces)
 */
   const std::string call_needed(const std::string& call, const contest_rules& rules) const;
   
-/*!     \brief          Would a QSO be a dupe, according to the rules?
-        \param  qso     target QSO
-        \param  rules   rules for the contest
-        \return         whether <i>qso</i> would be a dupe
+/*! \brief          Would a QSO be a dupe, according to the rules?
+    \param  qso     target QSO
+    \param  rules   rules for the contest
+    \return         whether <i>qso</i> would be a dupe
 */
   const bool is_dupe(const QSO& qso, const contest_rules& rules) const;
 
-/*!     \brief          Would a QSO be a dupe, according to the rules?
-        \param  call    target call
-        \param  b       target band
-        \param  m       target mode
-        \param  rules   rules for the contest
-        \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
+/*! \brief          Would a QSO be a dupe, according to the rules?
+    \param  call    target call
+    \param  b       target band
+    \param  m       target mode
+    \param  rules   rules for the contest
+    \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
 */
   const bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
 

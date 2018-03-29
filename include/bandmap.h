@@ -901,6 +901,9 @@ public:
       _column_offset = n;
     }
 
+/// get the number of columns across a window
+  const unsigned int n_columns(const window& win);
+
 /*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
      \param target_frequency_in_khz     target frequency, in kHz
      \param guard_band_in_hz            guard band, in Hz

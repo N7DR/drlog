@@ -603,15 +603,10 @@ wav_file::wav_file(void) :
 { }
 
 /// return a dummy header string
-const string wav_file::header(void) const
-{ //riff_header rh;
-
-// https://blogs.msdn.microsoft.com/dawate/2009/06/23/intro-to-audio-programming-part-2-demystifying-the-wav-format/
-//  rh.chunk_size(0);             // since we don't know the true file size, we might as well set this number to zero
-
-  //return rh.to_string();
-  return riff_header().to_string();
-}
+//const string wav_file::header(void) const
+//{
+//  return riff_header().to_string();
+//}
 
 /// open the file for writing
 void wav_file::open(void)
@@ -1000,24 +995,6 @@ ostream& operator<<(ostream& ost, const fmt_chunk& chunk)
 
   return ost;
 }
-
-// -----------  riff_header  ----------------
-
-/*! \class  riff_header
-    \brief  Trivial class to implement the RIFF header
-*/
-
-/// constructor
-//riff_header::riff_header(void) :
-//  _chunk_size(0)
-//{ }
-
-/*! \brief      Convert to string
-    \return     the RIFF header as a string
-*/
-//const string riff_header::to_string(void) const
-//{ return replace_substring(string("RIFF    WAVE"), 4, _chunk_size);
-//}
 
 /*! \brief          Write a <i>PARAMS_STUCTURE</i> object to an output stream
     \param  ost     output stream

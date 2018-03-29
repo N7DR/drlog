@@ -59,6 +59,36 @@ const int AUDIO_UNABLE_TO_OPEN                = -1,      ///< unable to open aud
           AUDIO_DEVICE_READ_ERROR             = -24,     ///< error reading audio device
           AUDIO_WAV_OPEN_ERROR                = -25;     ///< error opening file
 
+// -----------  riff_header  ----------------
+
+/*! \class  riff_header
+    \brief  Trivial class to implement the RIFF header
+
+    See: http://soundfile.sapp.org/doc/WaveFormat/
+*/
+
+class riff_header
+{
+protected:
+
+  uint32_t  _chunk_size;                ///< file size - 8 (bytes)
+
+public:
+
+/// constructor
+  inline riff_header(void) :
+    _chunk_size(0)
+  { }
+
+  READ_AND_WRITE(chunk_size);          ///< file size - 8 (bytes)
+
+/*! \brief      Convert to string
+    \return     the RIFF header as a string
+*/
+  inline const std::string to_string(void) const
+    { return replace_substring(std::string("RIFF    WAVE"), 4, _chunk_size); }
+};
+
 // -----------  wav_file  ----------------
 
 /*! \class  wav_file
@@ -104,7 +134,8 @@ public:
   void close(void);
 
 /// return a dummy header string
-  const std::string header(void) const;
+  inline const std::string header(void) const
+    { return riff_header().to_string(); }
 
 /*! \brief      Append a chunk
     \param  c   chunk to append
@@ -488,36 +519,6 @@ public:
     \return         the output stream
 */
 std::ostream& operator<<(std::ostream& ost, const fmt_chunk& chunk);
-
-// -----------  riff_header  ----------------
-
-/*! \class  riff_header
-    \brief  Trivial class to implement the RIFF header
-
-    See: http://soundfile.sapp.org/doc/WaveFormat/
-*/
-
-class riff_header
-{
-protected:
-
-  uint32_t  _chunk_size;                ///< file size - 8 (bytes)
-
-public:
-
-/// constructor
-  inline riff_header(void) :
-    _chunk_size(0)
-  { }
-
-  READ_AND_WRITE(chunk_size);          ///< file size - 8 (bytes)
-
-/*! \brief      Convert to string
-    \return     the RIFF header as a string
-*/
-  inline const std::string to_string(void) const
-    { return replace_substring(std::string("RIFF    WAVE"), 4, _chunk_size); }
-};
 
 // -------------------------------------- Errors  -----------------------------------
 

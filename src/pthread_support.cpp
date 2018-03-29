@@ -21,6 +21,8 @@
 #include <exception>
 
 #include <cstring>
+#include <sys/types.h>
+#include <unistd.h>
 
 extern message_stream ost;                        ///< for debugging, info
 
@@ -360,9 +362,9 @@ const bool pt_condition_variable::wait(const unsigned int n_secs)
 { if (_mutex_p == NULL)
     throw pthread_error(PTHREAD_INVALID_MUTEX, "pointer to mutex is NULL in timed wait() function");
 
-  struct timespec timeout;
-  timeout.tv_sec = time(NULL) + n_secs;
-  timeout.tv_nsec = 0;
+  struct timespec timeout { time(NULL) + n_secs, 0 };
+//  timeout.tv_sec = time(NULL) + n_secs;
+//  timeout.tv_nsec = 0;
 
   int status = pthread_cond_timedwait(&_cond, &(_mutex_p->_mutex), &timeout);
 
@@ -378,11 +380,6 @@ void pt_condition_variable::signal(void)
 { _predicate = true;                          // yes, we really mean it
   pthread_cond_signal(&_cond);
 }
-
-// broadcast; all waiting threads get woken
-//void pt_condition_variable::broadcast(void)
-//{ pthread_cond_broadcast(&_cond);
-//}
 
 // -------------------------------------- safelock ------------------------
 
@@ -412,8 +409,8 @@ safelock::~safelock(void)
   }
 }
 
-#include <sys/types.h>
-#include <unistd.h>
+//#include <sys/types.h>
+//#include <unistd.h>
 
 /// How many threads belong to this process?
 const unsigned int n_threads(void)

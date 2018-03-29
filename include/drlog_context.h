@@ -448,13 +448,13 @@ public:
   CONTEXTREAD(p3_span_sap);                  ///< P3 span in SAP mode, in kHz
 
   CONTEXTREAD(qsl_message);                  ///< confirm at end of QSO
-  SAFEREAD(qso_multiple_bands, _context);           ///< whether OK to work station on another band
-  SAFEREAD(qso_multiple_modes, _context);           ///< whether OK to work station on another mode
-  SAFEREAD(qtcs, _context);                         ///< whether QTCs are enabled
-  SAFEREAD(qtc_double_space, _context);             ///< whether to leave a longer pause between elements of a QTC
-  SAFEREAD(qtc_filename, _context);                 ///< name of file where QTCs are stored
-  SAFEREAD(qtc_qrs, _context);                      ///< WPM decrease when sending QTC
-  SAFEREAD(qthx, _context);                         ///< allowed exchanges values as a function of country
+  CONTEXTREAD(qso_multiple_bands);           ///< whether OK to work station on another band
+  CONTEXTREAD(qso_multiple_modes);           ///< whether OK to work station on another mode
+  CONTEXTREAD(qtcs);                         ///< whether QTCs are enabled
+  CONTEXTREAD(qtc_double_space);             ///< whether to leave a longer pause between elements of a QTC
+  CONTEXTREAD(qtc_filename);                 ///< name of file where QTCs are stored
+  CONTEXTREAD(qtc_qrs);                      ///< WPM decrease when sending QTC
+  CONTEXTREAD(qthx);                         ///< allowed exchanges values as a function of country
 
   SAFEREAD(rate_periods, _context);                     ///< periods (in minutes) over which rates should be calculated
   SAFEREAD(rbn_beacons, _context);                      ///< whether to place RBN posts from beacons on the bandmap

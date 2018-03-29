@@ -42,10 +42,10 @@ public:
 */
   command_line(int argc, char** argv);
 
-/*! \brief  Copy constructor
-    \param  obj   Object to be copied
+/*! \brief      Copy constructor
+    \param  cl  object to be copied
 */
-  command_line(const command_line& obj);
+  command_line(const command_line& cl);
 
 /*! \brief  Destructor
 */

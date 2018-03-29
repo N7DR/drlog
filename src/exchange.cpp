@@ -471,16 +471,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     _fields.push_back( parsed_exchange_field("SECTION", exch.section(), true) );    // convert section to canonical form if necessary
 
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
-    _valid = true;                      // default
 
-    if (exch.serno() == 0)
-      _valid = false;
-
-    if (exch.section() == "AAA")
-      _valid = false;
-
-    if (exch.prec() == 'Z')
-      _valid = false;
+    _valid = ( (exch.serno() != 0) and (exch.section() != "AAA") and (exch.prec() != 'Z') );
 
     return;
   }
@@ -853,7 +845,11 @@ const string parsed_exchange::resolve_choice(const string& field_name, const str
   return string();
 }
 
-/// ostream << parsed_exchange
+/*! \brief          Write a <i>parsed_exchange</i> object to an output stream
+    \param  ost     output stream
+    \param  pe      object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 { ost << "parsed exchange object IS " << (pe.valid() ? "" : "NOT ") << "valid" << endl
       << "replacement call = " << pe.replacement_call() << endl;
@@ -947,6 +943,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       if (rv.empty())
       { const char call_area = pfx[pfx.length() - 1];
 
+        if (isdigit(call_area))
+        { static const std::array<string, 10> abbreviations { { string(), "NS", "PQ", "ON", "MB", "SK", "AB", "BC", string(), "NB"} };  // std:: qualifier needed because we have boost here as well
+
+          rv = abbreviations[call_area - '0'];    // convert to number
+        }
+
+#if 0
         switch (call_area)
         { case '1' :
             rv = "NS";
@@ -983,6 +986,8 @@ const string exchange_field_database::guess_value(const string& callsign, const 
           default :
             break;
         }
+#endif
+
       }
     }
 
@@ -1326,11 +1331,9 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
   if (field_name == "UKEICODE")
-  { //static const set<string> countries { "R1FJ", "UA", "UA2", "UA9" };  shudn't need a set of countries
+  { string rv;
 
-    string rv;
-
-    if (!drm_line.empty() /* and location_db.canonical_prefix(callsign) == "JA" */)
+    if (!drm_line.empty())
     { rv = drm_line.qth();
 
       if (!rv.empty())
@@ -1429,7 +1432,7 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
 
 /*! \brief          Replace cut numbers with real numbers
     \param  input   string possibly containing cut numbers
-    \return         <i.input</i> but with cut numbers replaced by actual digits
+    \return         <i>input</i> but with cut numbers replaced by actual digits
 
     Replaces [aA], [nN], [tT]
 */
@@ -1452,8 +1455,8 @@ const string process_cut_digits(const string& input)
 
 // -------------------------  EFT  ---------------------------
 
-/*!     \class EFT
-        \brief Manage a single exchange field
+/*! \class  EFT
+    \brief  Manage a single exchange field
 
         <i>EFT</i> stands for "exchange field template"
 */

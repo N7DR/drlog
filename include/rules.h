@@ -334,7 +334,7 @@ protected:
 
   std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
-  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
+  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;     ///< exchange fields associated with a country
 
 // copied from context, so that we can score correctly without loading context
   std::set<BAND>                               _score_bands;            ///< bands currently used to calculate score
@@ -512,15 +512,17 @@ public:
 */
   const EFT exchange_field_eft(const std::string& field_name) const;
 
-/*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix
+/*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
-    \return                     the exchange field names associated with <i>canonical_prefix</i>
+    \param  m                   mode
+    \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
   const std::vector<std::string> expanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
 
-/*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix
+/*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
-    \return                     the exchange field names associated with <i>canonical_prefix</i>
+    \param  m                   mode
+    \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
   const std::vector<std::string> unexpanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
 
@@ -638,7 +640,7 @@ public:
 
     Returns false if <i>field_name</i> is unrecognized
 */
-  const bool is_legal_value(const std::string& field_name, const std::string& putative_canonical_value) const;
+  const bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
 
 /// number of permitted bands
   inline const unsigned int n_bands(void) const

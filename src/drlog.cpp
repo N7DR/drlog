@@ -3255,14 +3255,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
     if (found_call)
-    { //ost << "found call and writing to CALL window: " << be.callsign() << endl;
-      win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
-
-#if 0
-      display_nearby_callsign(contents);        // assume that the contesnts are indeed the correct call
-      display_call_info(contents);
-      win_bandmap <= bandmaps[safe_get_band()];    // update the bm window now, so we don't have to wait for the next poll
-#endif
+    { win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
 
       update_based_on_frequency_change(new_frequency, safe_get_mode());
       display_call_info(contents);
@@ -3394,118 +3387,15 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
   if (!processed and (e.is_control_and_not_alt() or e.is_alt_and_not_control()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-#if 0
-  { bandmap& bm = bandmaps[safe_get_band()];
-
-    typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
-    MEM_FUN_P fn_p = e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult;      // which predicate function will we use?
-
-    const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
-
-    if (!be.empty())
-    { rig.rig_frequency(be.freq());
-      win_call < WINDOW_CLEAR <= be.callsign();
-
-      enter_sap_mode();
-
-// we may require a mode change
-      if (context.multiple_modes())
-      { const MODE m = default_mode(be.freq());
-
-        if (m != safe_get_mode())
-        { rig.rig_mode(m);
-          safe_set_mode(m);
-          display_band_mode(win_band_mode, safe_get_band(), m);
-        }
-      }
-
-      update_based_on_frequency_change(be.freq(), safe_get_mode());
-
-      SAFELOCK(dupe_check);
-      last_call_inserted_with_space = be.callsign();
-
-    }
-
-    processed = true;
-  }
-#endif
-  processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
+    processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
 
 // CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
   if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-#if 0
-  { bandmap& bm = bandmaps[safe_get_band()];
-
-    typedef const bandmap_entry (bandmap::* MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
-    MEM_FUN_P fn_p = &bandmap::needed_all_time_new_and_needed_qso;
-
-    const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
-
-    if (!be.empty())
-    { rig.rig_frequency(be.freq());
-      win_call < WINDOW_CLEAR <= be.callsign();
-
-      enter_sap_mode();
-
-// we may require a mode change
-      if (context.multiple_modes())
-      { const MODE m = default_mode(be.freq());
-
-        if (m != safe_get_mode())
-        { rig.rig_mode(m);
-          safe_set_mode(m);
-          display_band_mode(win_band_mode, safe_get_band(), m);
-        }
-      }
-
-      update_based_on_frequency_change(be.freq(), safe_get_mode());
-
-      SAFELOCK(dupe_check);
-      last_call_inserted_with_space = be.callsign();
-    }
-
-    processed = true;
-  }
-#endif
-  processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
+    processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
 
 // ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ((e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                                   or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-#if 0
-  { bandmap& bm = bandmaps[safe_get_band()];
-
-//    typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // syntactic sugar
-    BANDMAP_MEM_FUN_P fn_p = &bandmap::needed_all_time_new_or_qsled;
-
-    const bandmap_entry be = (bm.*fn_p)( (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);  // get the next stn/mult
-
-    if (!be.empty())
-    { rig.rig_frequency(be.freq());
-      win_call < WINDOW_CLEAR <= be.callsign();
-
-      enter_sap_mode();
-
-// we may require a mode change
-      if (context.multiple_modes())
-      { const MODE m = default_mode(be.freq());
-
-        if (m != safe_get_mode())
-        { rig.rig_mode(m);
-          safe_set_mode(m);
-          display_band_mode(win_band_mode, safe_get_band(), m);
-        }
-      }
-
-      update_based_on_frequency_change(be.freq(), safe_get_mode());
-
-      SAFELOCK(dupe_check);
-      last_call_inserted_with_space = be.callsign();
-    }
-
-    processed = true;
-  }
-#endif
     processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
 
 // SHIFT (RIT control)
@@ -7482,9 +7372,24 @@ const bool fast_cw_bandwidth(void)
 void process_change_in_bandmap_column_offset(const KeySym symbol)
 { bandmap& bm = bandmaps[safe_get_band()];
   const bool is_increment = ( (symbol == XK_KP_6) or (symbol == XK_KP_Right) );
+  bool should_increment = false;                                     // value doesn't actually matter
 
-  if ( is_increment or (bm.column_offset() != 0) )
-  { bm.column_offset( bm.column_offset() + ( is_increment ? 1 : -1 ) ) ;
+  if (is_increment)
+  {
+// don't let it increment if there is space in the last column
+    const unsigned int number_of_columns = bm.n_columns(win_bandmap);
+    const unsigned int maximum_number_of_displayable_entries = number_of_columns * win_bandmap.height();
+    const unsigned int n_entries_in_bandmap = bm.rbn_threshold_and_filtered_entries().size();
+    const unsigned int start_entry = ( (n_entries_in_bandmap > maximum_number_of_displayable_entries) ? bm.column_offset() * win_bandmap.height() : 0 );
+    const unsigned int column_of_last_entry = ( ((n_entries_in_bandmap - start_entry) - 1) / win_bandmap.height() ) + 1;    // wrt 1
+
+    should_increment = !(column_of_last_entry < number_of_columns);
+  }
+
+//  if ( is_increment or (bm.column_offset() != 0) )
+  if ( should_increment or (bm.column_offset() != 0) )
+  { //bm.column_offset( bm.column_offset() + ( is_increment ? 1 : -1 ) ) ;
+    bm.column_offset( bm.column_offset() + ( should_increment ? 1 : -1 ) ) ;
 
     alert(string("Bandmap column offset set to: ") + to_string(bm.column_offset()));
 

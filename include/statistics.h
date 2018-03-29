@@ -390,7 +390,7 @@ public:
   const bool worked_on_another_band_and_mode(const std::string& s, const BAND b, const MODE m);
 
 /*! \brief          Perform a complete rebuild
-    \param  log     logbook
+    \param  logbk   logbook
 */
   void rebuild(const logbook& logbk);
 

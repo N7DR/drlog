@@ -38,8 +38,8 @@ command_line::command_line(int argc, char** argv) :
     _arg[n] = (string)(_argv[n]);
 }
 
-/*! \brief  Copy constructor
-    \param  obj   Object to be copied
+/*! \brief      Copy constructor
+    \param  cl  object to be copied
 */
 command_line::command_line(const command_line& cl) : 
   _argc(cl._argc), 
