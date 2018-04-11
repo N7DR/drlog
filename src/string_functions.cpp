@@ -101,12 +101,12 @@ const vector<string> from_csv(const string& line)
   return rv;
 }
 
-/*  \brief      Duplicate a particular character within a string
+/*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-const string duplicate_char(const string& s, const char& c)
+const string duplicate_char(const string& s, const char c)
 { string rv;
 
   for (size_t n = 0; n < s.length(); ++n)
@@ -227,12 +227,12 @@ const string replace(const string& s, const string& old_str, const string& new_s
   return rv;
 }
 
-/*! \brief                  Pad a string to a particular size
-    \param  s               original string
-    \param  len             length of returned string
-    \param  pad_direction   side on which to pad
-    \param  pad_char        character with which to pad
-    \return                 padded version of <i>s</i>
+/*! \brief              Pad a string to a particular size
+    \param  s           original string
+    \param  len         length of returned string
+    \param  pad_side    side on which to pad
+    \param  pad_char    character with which to pad
+    \return             padded version of <i>s</i>
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
@@ -334,23 +334,23 @@ const string read_file(const vector<string>& path, const string& filename)
 }
 
 /*! \brief              Write a string to a (binary) file
-    \param  s           string to write
+    \param  cs          string to write
     \param  filename    name of file to be written
 
     Throws exception if the file cannot be written
 */
-void write_file(const string& s, const string& filename)
+void write_file(const string& cs, const string& filename)
 { FILE* fp = fopen(filename.c_str(), "wb");
   if (fp == 0)
     throw string_function_error(STRING_UNWRITEABLE_FILE, "Cannot write to file: " + filename);
 
-  if (s.length())
-  { char* cp = new char [s.length()];
+  if (cs.length())
+  { char* cp = new char [cs.length()];
 
-    for (unsigned int n = 0; n < s.length(); ++n)
-      cp[n] = s[n];
+    for (unsigned int n = 0; n < cs.length(); ++n)
+      cp[n] = cs[n];
 
-    fwrite(cp, s.length(), 1, fp);
+    fwrite(cp, cs.length(), 1, fp);
     delete [] cp;
   }
 
@@ -476,8 +476,8 @@ const string join(const deque<string>& deq, const string& sep)
     \param  c   leading character to remove (if present)
     \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
-const string remove_leading(const string& str, const char c)
-{ string rv = str;
+const string remove_leading(const string& cs, const char c)
+{ string rv = cs;
 
   while (rv.length() && (rv[0] == c))
     rv = rv.substr(1);
@@ -490,8 +490,8 @@ const string remove_leading(const string& str, const char c)
     \param  c   trailing character to remove (if present)
     \return     <i>cs</i> with any trailing octets with the value <i>c</i> removed
 */
-const string remove_trailing(const string& s, const char c)
-{ string rv = s;
+const string remove_trailing(const string& cs, const char c)
+{ string rv = cs;
 
   while (rv.length() && (rv[rv.length() - 1] == c))
     rv = rv.substr(0, rv.length() - 1);
@@ -504,13 +504,10 @@ const string remove_trailing(const string& s, const char c)
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
-const string remove_char(const string& s, const char c)
+const string remove_char(const string& cs, const char char_to_remove)
 { string rv;
 
-//  for (const auto& ch : s)
-//    if (ch != c)
-//      rv += ch;
-  FOR_ALL(s, [=, &rv] (const char ch) { if (ch != c) rv += ch; } );
+  FOR_ALL(cs, [=, &rv] (const char ch) { if (ch != char_to_remove) rv += ch; } );
 
   return rv; 
 } 

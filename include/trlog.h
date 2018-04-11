@@ -1,4 +1,4 @@
-// $Id: trlog.h 145 2018-03-19 17:28:50Z  $
+// $Id: trlog.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -22,8 +22,8 @@
 
 #include <cstdio>
 
-/*!     \class QSO_CALL
-        \brief Encapsulates a QSO number and a callsign
+/*! \class  QSO_CALL
+    \brief  Encapsulates a QSO number and a callsign
 */
 
 struct QSO_CALL
@@ -55,23 +55,24 @@ protected:
 public:
 
 /// default constructor
-  tr_record(void) { }
+  inline tr_record(void)
+    { }
 
-/*! \brief  Construct from a line of a TRLOG file
-    \param  s  a single line from a TRLOG file
+/*! \brief      Construct from a line of a TRLOG file
+    \param  s   a single line from a TRLOG file
 */
-  explicit tr_record(const std::string& s) :
+  inline explicit tr_record(const std::string& s) :
     _record(s)
     { }
 
 /// copy constructor
-  tr_record(const tr_record& rec)
+  inline tr_record(const tr_record& rec)
     { _record = rec._record; }
 
-/*! \brief  Construct from a line of a TRLOG file
+/*! \brief      Construct from a line of a TRLOG file
     \param  cp  a single line from a TRLOG file
 */
-  explicit tr_record(const char* cp)
+  inline explicit tr_record(const char* cp)
     { _record = cp; }
 
 /// tr_record = tr_record

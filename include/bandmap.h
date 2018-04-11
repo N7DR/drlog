@@ -1,4 +1,4 @@
-// $Id: bandmap.h 144 2018-03-04 22:44:14Z  $
+// $Id: bandmap.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,6 +47,8 @@ extern const std::string   MODE_MARKER;                         ///< the string 
 extern bandmap_filter_type BMF;                                 ///< the bandmap filter
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
+const unsigned int COLUMN_WIDTH = 19;        ///< width of a column in the bandmap window
+
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
     \return         printable version of <i>bes</i>
@@ -62,17 +64,22 @@ const std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 class bandmap_buffer_entry
 {
 protected:
-  std::set<std::string>  _posters;           // the posters
+
+  std::set<std::string>  _posters;           ///< the posters
 
 public:
 
+/// return the nuber of posters
   inline const unsigned int size(void) const
     { return _posters.size(); }
 
-  const unsigned int add(const std::string& new_poster);
+/*! \brief              Add a new poster
+    \param  new_poster  poster to add
+    \return             total number of posters following the addition
 
-// temporary, for debugging
-  READ(posters);
+    Does nothing if <i>new_poster</i> is already present
+*/
+  const unsigned int add(const std::string& new_poster);
 };
 
 // -----------   bandmap_buffer ----------------
@@ -86,7 +93,8 @@ public:
 class bandmap_buffer
 {
 protected:
-  unsigned int _min_posters;        ///< minumum number of posters needed to appear on bandmap, default = 1
+
+  unsigned int _min_posters;                                        ///< minumum number of posters needed to appear on bandmap, default = 1
 
   std::map<std::string /* call */, bandmap_buffer_entry>  _data;    ///< the database
 
@@ -110,7 +118,7 @@ public:
     \param  poster      poster to associate with <i>callsign</i>
     \return             The number of posters associated with <i>callsign</i>, after this association is added
 
-    Creates an entry in the buffer if no entry for </i>callsign</i> exists
+    Creates an entry in the buffer if no entry for <i>callsign</i> exists
 */
   const unsigned int add(const std::string& callsign, const std::string& poster);
 
@@ -147,10 +155,9 @@ public:
 /*! \brief      Constructor from a needed value
     \param  v   needed value
 */
-  needed_mult_details(const T& v) :
+  inline explicit needed_mult_details(const T& v) :
     _is_needed(true)
-  { _values.insert(v);
-  }
+  { _values.insert(v); }
 
 /// is any value needed?
   inline const bool is_any_value_needed(void) const
@@ -217,7 +224,7 @@ public:
     _values.clear();
   }
 
-/// archive using boost serialization
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
   { ar & _is_needed
@@ -226,7 +233,11 @@ public:
   }
 };
 
-/// ostream << needed_mult_details<pair<>>
+/*! \brief          Write a <i>needed_mult_details<pair<>></i> object to an output stream
+    \param  ost     output stream
+    \param  nmd     object to write
+    \return         the output stream
+*/
 template<typename S>
 std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<S, S>>& nmd)
 { ost << "is needed: " << nmd.is_any_value_needed() << std::endl
@@ -331,7 +342,7 @@ protected:
   needed_mult_details<std::string>                          _is_needed_country_mult;            ///< details of needed country mults
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;           ///< details of needed exchange mults
   enum MODE                                                 _mode;                              ///< mode
-  bool                                                      _mult_status_is_known;              ///< true only after calculate_mult_status() has been called
+  bool                                                      _mult_status_is_known;              ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
 //  std::set<std::string>                                     _posters;                   ///< stations that posted this entry
   enum BANDMAP_ENTRY_SOURCE                                 _source;                            ///< the source of this entry
   time_t                                                    _time;                              ///< time (in seconds since the epoch) at which the object was created
@@ -373,14 +384,14 @@ public:
 
   READ(frequency_str);                  ///< QRG (kHz, to 1 dp)
 
-//  READ_AND_WRITE(is_needed);            ///< do we need this call?
+/// do we need this call?
   inline const bool is_needed(void) const
     { return ( _is_needed and !is_marker() ); }    // we never need a marker, regardless of the value of _is_needed
 
   WRITE(is_needed);                     ///< do we need this call?
 
   READ_AND_WRITE(mode);                 ///< mode
-  READ(mult_status_is_known);
+  READ(mult_status_is_known);           ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
 //  READ_AND_WRITE(posters);              ///< callsign(s) that posted the post(s) (if the source is RBN)
   READ_AND_WRITE(source);               ///< the source of this entry
   READ(time);                           ///< time (in seconds since the epoch) at which the object was created
@@ -613,13 +624,6 @@ public:
 */
   const unsigned int add_poster(const std::string& call);
 
-/*! \brief          Is a particular call one of the posters?
-    \param  call    call to test
-    \return         Whether <i>call</i> is a poster
-*/
-//  inline const bool is_poster(const std::string& call) const
-//    { return (_posters < call); }
-
 /// return all the posters as a space-separated string
   const std::string posters_string(void) const;
 
@@ -644,7 +648,9 @@ public:
 //    { return (is_all_time_first_and_needed_qso() or olog.confirmed(_callsign, _band, _mode)); }
     { return (is_needed() and (is_all_time_first() or olog.confirmed(_callsign, _band, _mode))); }
 
-// set value from an earlier be
+/*! \brief          set the value of <i>_time_of_earlier_bandmap_entry</i> from an earlier <i>bandmap_entry</i>
+    \param  old_be  earlier <i>bandmap_entry</i>
+*/
   inline void time_of_earlier_bandmap_entry(const bandmap_entry& old_be)
     { _time_of_earlier_bandmap_entry = ( old_be.time_of_earlier_bandmap_entry() ? old_be._time_of_earlier_bandmap_entry : old_be._time ); }
 
@@ -902,7 +908,8 @@ public:
     }
 
 /// get the number of columns across a window
-  const unsigned int n_columns(const window& win);
+  inline const unsigned int n_columns(const window& win)
+    { return ( (win.width() - 1) / COLUMN_WIDTH ); }
 
 /*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
      \param target_frequency_in_khz     target frequency, in kHz

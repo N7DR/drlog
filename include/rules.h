@@ -1,4 +1,4 @@
-// $Id: rules.h 145 2018-03-19 17:28:50Z  $
+// $Id: rules.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -282,6 +282,8 @@ class contest_rules
 {
 protected:
     
+  std::set<std::string>               _bonus_countries;         ///< countries that are eligible for bonus points
+
   std::set<std::string>               _callsign_mults;           ///< collection of types of mults based on callsign (e.g., "WPXPX")
   bool                                _callsign_mults_per_band;  ///< are callsign mults counted per-band?
   bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
@@ -352,8 +354,6 @@ protected:
 
   bool                                         _send_qtcs;           ///< whether to send QTCs
   bool                                         _uba_bonus;           ///< the UBA contests have weird bonus points
-
-  std::set<std::string>                        _bonus_countries;     ///< countries that are eligible for bonus points
 
 /*! \brief              Private function used to obtain all the understood values for a particular exchange field
     \param  field_name  name of the field for which the understood values are required
@@ -698,7 +698,8 @@ public:
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(rules);
 
-      ar & _callsign_mults
+      ar & _bonus_countries
+         & _callsign_mults
          & _callsign_mults_per_band
          & _callsign_mults_per_mode
          & _callsign_mults_used
@@ -706,6 +707,7 @@ public:
          & _country_mults
          & _country_mults_per_band
          & _country_mults_per_mode
+         & _exchange_field_eft
          & _exchange_mults
          & _exchange_mults_per_band
          & _exchange_mults_per_mode
@@ -713,6 +715,7 @@ public:
          & _exchange_present_points
          & _exch_values
          & _expanded_received_exchange
+         & _original_score_bands
          & _per_band_country_mult_factor
          & _permitted_bands
          & _permitted_exchange_values
@@ -721,13 +724,11 @@ public:
          & _per_country_exchange_fields
          & _points
          & _received_exchange
+         & _score_bands
+         & _score_modes
          & _sent_exchange_names
          & _work_if_different_band
          & _work_if_different_mode
-         & _exchange_field_eft
-         & _score_bands
-         & _original_score_bands
-         & _score_modes
          & _original_score_modes
          & _my_continent
          & _my_country
@@ -735,8 +736,7 @@ public:
          & _my_grid
          & _my_itu_zone
          & _send_qtcs
-         & _uba_bonus
-         & _bonus_countries;
+         & _uba_bonus;
     }
 };
 

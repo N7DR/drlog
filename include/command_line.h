@@ -1,4 +1,4 @@
-// $Id: command_line.h 137 2016-12-15 20:07:54Z  $
+// $Id: command_line.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,14 +20,15 @@
 
 // -----------  command_line  ----------------
 
-/*! \class command_line
-    \brief Class that implements management of the command line
+/*! \class  command_line
+    \brief  Class that implements management of the command line
 */
 
 class command_line
 {
 protected:
-  unsigned int _argc;                    ///< Number of arguments
+
+  unsigned int _argc;                ///< Number of arguments
 
 // these can't be const because of the = operator
   char** _argv;                      ///< Pointers to arguments
@@ -36,9 +37,9 @@ protected:
 
 public:
 
-/*!     \brief  Constructor
-        \param  argc    Number of arguments
-        \param  argv    Pointer to array of individual arguments
+/*! \brief          Constructor
+    \param  argc    number of arguments
+    \param  argv    pointer to array of individual arguments
 */
   command_line(int argc, char** argv);
 
@@ -78,9 +79,19 @@ public:
 */
   void tolower(void);
 
+/*! \brief  Convert the entire command line to lower case
+*/
+  inline void to_lower(void)
+    { tolower(); }
+
 /*! \brief  Convert the entire command so that the case matches exactly what was originally passed to the program
 */
   void tooriginal(void);
+
+/*! \brief  Convert the entire command so that the case matches exactly what was originally passed to the program
+*/
+  inline void to_original(void)
+    { tooriginal(); }
 
 /*! \brief  Convert the entire command line to upper case
 */

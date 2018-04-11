@@ -1,4 +1,4 @@
-// $Id: trlog.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: trlog.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -31,36 +31,17 @@ using namespace std;
     \brief  Encapsulate a single TRLOG QSO
 */
 
-#if 0
-/*! \brief          Convert part of the record to an integer
-    \param  posn    position at which to commence conversion
-    \param  len     number of characters to convert
-
-    \return characters converted to an integer
-*/
-const int tr_record::_convert_to_int(const int posn, const int len) const
-{ //char tmp[len + 1];
-
-  //for (int n = 0; n < len; ++n)
-  //  tmp[n] = _record[posn + n];
-
-  //tmp[len] = 0;
-
-  //return atoi(tmp);
-  return from_string<int>( substring(_record, posn, len) );
-}
-#endif
-
 /// month of the year; 1 - 12
 const int tr_record::month(void) const
-{ char tmp[4];
+{ //char tmp[4];
 
-  tmp[0] = _record[10];
-  tmp[1] = _record[11];
-  tmp[2] = _record[12];
-  tmp[3] = 0;
+  //tmp[0] = _record[10];
+  //tmp[1] = _record[11];
+  //tmp[2] = _record[12];
+  //tmp[3] = 0;
 
-  string tmps = to_upper(tmp);
+  //const string tmps = to_upper(tmp);
+  const string tmps = substring(_record, 10, 3);
 
   if (tmps == "JAN")
     return 1;
@@ -110,32 +91,39 @@ const int tr_record::year(void) const
 
 /// sent RST
 const int tr_record::rst(void) const
-{ char tmp[4];
+{ //char tmp[4];
 
-  tmp[0] = _record[44];
-  tmp[1] = _record[45];
-  tmp[2] = _record[46];
-  tmp[3] = 0;
+  //tmp[0] = _record[44];
+  //tmp[1] = _record[45];
+  //tmp[2] = _record[46];
+  //tmp[3] = 0;
 
-  if (tmp[2] == ' ')
-    tmp[2] = 0;
+  //if (tmp[2] == ' ')
+  //  tmp[2] = 0;
 
-  return atoi(tmp);
+  //return atoi(tmp);
+
+  const string tmp = substring(_record, 44, _record[46] == ' ' ? 2 : 3);
+
+  return from_string<int>(tmp);
 }
 
 /// received RST
 const int tr_record::rst_received(void) const
-{ char tmp[4];
+{ //char tmp[4];
 
-  tmp[0] = _record[49];
-  tmp[1] = _record[50];
-  tmp[2] = _record[51];
-  tmp[3] = 0;
+//  tmp[0] = _record[49];
+//  tmp[1] = _record[50];
+//  tmp[2] = _record[51];
+//  tmp[3] = 0;
 
-  if (tmp[2] == ' ')
-    tmp[2] = 0;
+//  if (tmp[2] == ' ')
+//    tmp[2] = 0;
 
-  return atoi(tmp);
+//  return atoi(tmp);
+  const string tmp = substring(_record, 49, _record[51] == ' ' ? 2 : 3);
+
+  return from_string<int>(tmp);
 }
 
 /// band

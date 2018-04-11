@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 144 2018-03-04 22:44:14Z  $
+// $Id: drmaster.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -90,33 +90,14 @@ master_dta::master_dta(const string& filename)
     Returns empty string if there is no value associated with <i>param</i>
 */
 const string __extract_value(const string& line, const string& param)
-{ //string rv;
-
-  if (!contains(line, param))
+{ if (!contains(line, param))
     return string();
 
   const size_t start_position = line.find(param);
   const string short_line = substring(line, start_position + param.length());
-
-//  start_position = 0;
-
-//  size_t end_position = short_line.length();
-
-//  if (short_line.find(" ") != string::npos)
- //    end_position = short_line.find(" ");
-
   const size_t space_posn = short_line.find(" ");
-
-//  if (space_posn != string::npos)
-//    end_position = space_posn;
-
   const size_t end_position = ( (space_posn == string::npos) ? short_line.length() : space_posn );
 
-//  const size_t n_chars = end_position;
-
-//  rv = substring(short_line, 0, n_chars);
-
-//  return rv;
   return substring(short_line, 0, end_position);
 }
 
@@ -205,8 +186,8 @@ trmaster_line::trmaster_line(const string& line)
 }
 
 /// destructor
-trmaster_line::~trmaster_line(void)
-{ }
+//trmaster_line::~trmaster_line(void)
+//{ }
 
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
@@ -505,10 +486,9 @@ const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_
           }
           break;
 
-      default:
-        ++posn;
-        break;
-
+       default:
+         ++posn;
+         break;
     }
   }
 
@@ -539,7 +519,11 @@ const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_
   return rv;
 }
 
-// constructor -- can take either an ASCII or binary file
+/*! \brief              Constructor
+    \param  filename    name of file from which data are to be read
+
+    The file <i>filename</i> may be either an ASCII or a binary file
+*/
 trmaster::trmaster(const string& filename)
 { const string contents = read_file(filename);      // throws exception if fails
   const bool is_binary = contains(contents, create_string(static_cast<char>(0)));
@@ -625,7 +609,11 @@ const string drmaster_line::_extract_field(const vector<string>& fields, const s
   return string();
 }
 
-/// constructor from a line from a drmaster file
+/*! \brief                  Construct fronm a call or from a line from a drmaster file
+    \param  line_or_call    line from file, or a call
+
+    Constructs an object that contains only the call if <i>line_or_call</i> contains a call
+*/
 drmaster_line::drmaster_line(const string& line_or_call)
 { const vector<string> fields = split_string(line_or_call, " ");
   const size_t n_fields = fields.size();
@@ -663,8 +651,8 @@ drmaster_line::drmaster_line(const string& line_or_call)
 }
 
 // destructor
-drmaster_line::~drmaster_line(void)
-{ }
+//drmaster_line::~drmaster_line(void)
+//{ }
 
 /// convert to string
 const string drmaster_line::to_string(void) const

@@ -107,9 +107,9 @@ void directory_create(const string& dirname)
     \param  dirname     name of the directory to test for existence
     \return             whether <i>dirname</i> exists
 */
-const bool directory_exists(const string& filename)
+const bool directory_exists(const string& dirname)
 { struct stat stat_buffer;
-  int status = stat(filename.c_str(), &stat_buffer);
+  int status = stat(dirname.c_str(), &stat_buffer);
 
   if (status)
     return false;

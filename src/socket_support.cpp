@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: socket_support.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -207,8 +207,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
 
   catch (const socket_support_error& e)
   { if (e.code() == SOCKET_SUPPORT_CONNECT_ERROR)
-    { ost << "SOCKET_SUPPORT_CONNECT_ERROR" << e.reason() << endl;
-    }
+      ost << "SOCKET_SUPPORT_CONNECT_ERROR" << e.reason() << endl;
     else
     { ost << "socket_support_error: " << e.code() << ": " << e.reason() << endl;
       _close_the_socket();
@@ -337,7 +336,7 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   { _destination_is_set = false;
 
     const string address = dotted_decimal_address(*(sockaddr*)(&adr));
-          const unsigned int p = port(*(sockaddr*)(&adr));
+    const unsigned int p = port(*(sockaddr*)(&adr));
 
     if (errno != EINPROGRESS)
       throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status " + to_string(errno) + " received from ::connect; " + strerror(errno) + " while trying to connect to address " + address + "; port " + to_string(p));
@@ -563,9 +562,7 @@ void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, c
 const string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply)
 {
 // wait for response
-  struct timeval timeout;
-  timeout.tv_sec = timeout_in_tenths / 10;
-  timeout.tv_usec = (timeout_in_tenths - timeout.tv_sec * 10) * 100000L;
+  struct timeval timeout { /* sec */ timeout_in_tenths / 10, /* usec */ (timeout_in_tenths - timeout.tv_sec * 10) * 100000L };
 
   fd_set ps_set;
 
@@ -632,8 +629,6 @@ void flush_read_socket(SOCKET& sock)
   { recvfrom(sock, socket_buffer, 1024, 0, (sockaddr*)&ps_sockaddr, &from_length); 
 
 // reset the timeout
-//    timeout.tv_sec = 0;
-//    timeout.tv_usec = 0;
     timeout =  { 0, 0 };
 
 // and the set
@@ -644,47 +639,22 @@ void flush_read_socket(SOCKET& sock)
 
 // ---------------------------  socket_address  ------------------------------
 
-/*! \brief  Obtain sockaddr_storage corresponding to an address and port
-    \param  ip_address_as_long  IP address, in network order
-    \param  port_nr             port number, in host order
-    \return                     Address and port as sockaddr_storage
+/*! \brief              Generate a sockaddr_storage from an address and port
+    \param  ip_address  IP address in network order
+    \param  port_nr     port number in host order
+    \return             equivalent sockaddr_storage
 
-    IPv4 only
+    The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-const sockaddr_storage socket_address(const unsigned long ip_address_as_long, const short port_nr)
+const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr)
 { sockaddr_storage rv;
   sockaddr_in* sinp = (sockaddr_in*)(&rv);
   
   sinp->sin_family = AF_INET;
   sinp->sin_port = htons(port_nr);
-  sinp->sin_addr.s_addr = ip_address_as_long;
+  sinp->sin_addr.s_addr = ip_address;
 
   return rv;
-}
-
-// ---------------------------  process_socket_error  ------------------------------
-
-// this encapsulates OS differences in a single place
-void process_socket_error(const int original_socket_status)
-{
-
-#if 0
-  if (original_socket_status == 0)                           // no error
-    return;
-
-  int socket_status = original_socket_status;
-
-  if (socket_status == SOCKET_ERROR)
-  { socket_status = errno;
-    switch (socket_status)
-    { case EAGAIN:                     // should only be used when in non-blocking mode
-        break;
-      default:
-        break;
-    }
-  }
-#endif
-
 }
 
 /*! \brief      Convert a sockaddr_storage to a sockaddr_in
@@ -720,12 +690,12 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
     throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to lookup empty name");
   
   const int BUF_LEN = 2048;
+  const size_t buflen(BUF_LEN);
+
   struct hostent ret;
   char buf[BUF_LEN];
-  const size_t buflen(BUF_LEN);
   struct hostent* result;
   int h_errnop;
-
   remove_const_t<decltype(n_tries)> n_try = 0;
   bool success = false;
   int status;

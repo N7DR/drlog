@@ -1,4 +1,4 @@
-// $Id: command_line.cpp 137 2016-12-15 20:07:54Z  $
+// $Id: command_line.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -14,6 +14,7 @@
 */
 
 #include "command_line.h"
+#include "string_functions.h"
 
 #include <ctype.h>
 
@@ -21,13 +22,13 @@ using namespace std;
 
 // -----------  command_line  ----------------
 
-/*! \class command_line
-    \brief Class that implements management of the command line
+/*! \class  command_line
+    \brief  Class that implements management of the command line
 */
 
-/*!     \brief  Constructor
-        \param  argc    Number of arguments
-        \param  argv    Pointer to array of individual arguments
+/*! \brief          Constructor
+    \param  argc    number of arguments
+    \param  argv    pointer to array of individual arguments
 */
 command_line::command_line(int argc, char** argv) : 
   _argc(argc), 
@@ -60,6 +61,9 @@ command_line::~command_line(void)
 void command_line::operator=(const command_line& cl)
 { _argc = cl._argc;
   _argv = cl._argv;
+
+  if (_arg)
+    delete [] _arg;
 
   _arg = new string [_argc];
 
@@ -96,8 +100,9 @@ void command_line::tolower(const unsigned int n)
 
   string& s = _arg[n];
     
-  for (unsigned int i = 0; i < s.length(); i++)
-    s[i] = _tolower(s[i]);
+  s = ::to_lower(s);
+//  for (unsigned int i = 0; i < s.length(); i++)
+//    s[i] = _tolower(s[i]);
 }
 
 /*! \brief  Convert the entire command so that the case matches exactly what was originally passed to the program
@@ -132,9 +137,11 @@ void command_line::toupper(const unsigned int n)
     throw x_command_line_invalid_parameter();
     
   string& s = _arg[n];
-    
-  for (unsigned int i = 0; i < s.length(); i++)
-    s[i] = _toupper(s[i]);
+
+  s = ::to_upper(s);
+
+//  for (unsigned int i = 0; i < s.length(); i++)
+//    s[i] = _toupper(s[i]);
 }
 
 /*! \brief      Is a particular value present?

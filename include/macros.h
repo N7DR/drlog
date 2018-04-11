@@ -1,4 +1,4 @@
-// $Id: macros.h 141 2017-12-16 21:19:10Z  $
+// $Id: macros.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -122,10 +122,6 @@
 
 #define ERROR_CLASS(z) \
 \
-/*! \class  z \
-    \brief  The z error class \
-*/ \
-\
 class z : public x_error \
 { \
 protected: \
@@ -136,7 +132,7 @@ public: \
     \param  n   error code \
     \param  s   reason \
 */ \
-  inline z(const int n, const std::string& s) : \
+  inline z(const int n, const std::string& s = (std::string)"") : \
     x_error(n, s) \
   { } \
 }

@@ -1,4 +1,4 @@
-// $Id: adif.h 123 2016-02-14 20:16:23Z  $
+// $Id: adif.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -4864,38 +4864,49 @@ static PRIMARY_SLOVAKIA_ENUMERATION_TYPE PRIMARY_SLOVAKIA_ENUMERATION = { { "BAA
 class adif_country
 {
 protected:
-  unsigned int  _code;
-  std::string   _name;
-  bool          _deleted;
 
-  std::string   _canonical_prefix;              // taked from cty.dat
+  unsigned int  _code;                  ///< ID code for the country
+  std::string   _name;                  ///< country name
+  bool          _deleted;               ///< whether the country is deleted
 
-  static unsigned int next_code;
+  std::string   _canonical_prefix;      ///< canonical prefix; taked from cty.dat
+
+  static unsigned int next_code;        ///< next free code
 
 public:
 
-// constructor
-  explicit adif_country(const std::string& nm, const std::string& pfx = "", bool del = false);
+/*! \brief          Constructor
+    \param  nm      country name
+    \param  pfx     canonical prefix
+    \param  del     whether country has been deleted
+*/
+  adif_country(const std::string& nm, const std::string& pfx = "", bool del = false);
 };
 
 // ---------------------------------------------------  adif_countries  -----------------------------------------
 
-/*! \class adif_countries
-    \brief All ADIF countries
+/*! \class  adif_countries
+    \brief  All ADIF countries
 */
 
 class adif_countries
 {
 protected:
-  std::vector<adif_country> _countries;
 
+  std::vector<adif_country> _countries;     ///< container of countries
+
+/*! \brief              Add a country at a particular index number
+    \param  nm          country name
+    \param  index       index at which the country is to be added
+    \param  pfx         canonical prefix
+    \param  deleted     whether country has been deleted
+*/
   void _add_country(const std::string& nm, const unsigned int index, const std::string& pfx = "", const bool deleted = false);
 
 public:
 
-// default constructor
+/// default constructor
   adif_countries(void);
-
 };
 
 // ---------------------------------------------------  adif_type  -----------------------------------------
@@ -4907,9 +4918,10 @@ public:
 class adif_type
 {
 protected:
-  std::string _name;
-  char        _type_indicator;
-  std::string _value;
+
+  std::string _name;                        ///< name of the type
+  char        _type_indicator;              ///< letter that identifies the types
+  std::string _value;                       ///< value of the type
 
 public:
 
@@ -4920,13 +4932,39 @@ public:
 */
   adif_type(const char ty, const std::string& nm = "", const std::string& v = "");
 
-  RW(std::string, name);
-  RW(char,        type_indicator);
-  RW(std::string, value);
+  RW(std::string, name);                        ///< name of the type
+  RW(char,        type_indicator);              ///< letter that identifies the types
+  RW(std::string, value);                       ///< value of the type
 
 /// convert to printable string
   const std::string to_string(void) const;
 };
+
+// many ADIF types have the same interface
+#define ADIF_CLASS(x) \
+class x : public adif_type \
+{ \
+protected: \
+\
+public: \
+\
+/*! \brief default constructor \
+*/ \
+  x(void); \
+\
+/*! \brief      Constructor \
+    \param  nm  name \
+    \param  v   value \
+*/ \
+  x(const std::string& nm, const std::string& val); \
+\
+/*! \brief      Constructor \
+    \param  nm  name \
+\
+    Sets <i>_value</i> to the empty string. \
+*/\
+  explicit x(const std::string& nm); \
+}
 
 // ---------------------------------------------------  adif_AWARD_LIST -----------------------------------------
 
@@ -4934,28 +4972,7 @@ public:
     \brief  Encapsulate ADIF AwardList
 */
 
-class adif_AWARD_LIST : public adif_type
-{
-protected:
-
-public:
-
-/// default constructor
-  adif_AWARD_LIST(void);
-
-/*! \brief      Constructor
-    \param  nm  name
-    \param  v   value
-*/
-  adif_AWARD_LIST(const std::string& nm, const std::string& val);
-
-/*! \brief      Constructor
-    \param  nm  name
-
-    Sets <i>_value</i> to the empty string.
-*/
-  explicit adif_AWARD_LIST(const std::string& nm);
-};
+ADIF_CLASS(adif_AWARD_LIST);
 
 // ---------------------------------------------------  adif_BOOLEAN -----------------------------------------
 
@@ -4963,28 +4980,7 @@ public:
     \brief  Encapsulate ADIF Boolean
 */
 
-class adif_BOOLEAN : public adif_type
-{
-protected:
-
-public:
-
-/// default constructor
-  adif_BOOLEAN(void);
-
-/*! \brief      Constructor
-    \param  nm  name
-    \param  v   value
-*/
-  adif_BOOLEAN(const std::string& nm, const std::string& val);
-
-/*! \brief      Constructor
-    \param  nm  name
-
-    Sets <i>_value</i> to the empty string.
-*/
-  explicit adif_BOOLEAN(const std::string& nm);
-};
+ADIF_CLASS(adif_BOOLEAN);
 
 // ---------------------------------------------------  adif_DATE -----------------------------------------
 
@@ -5005,15 +5001,15 @@ public:
     \param  nm  name
     \param  v   value
 */
-  adif_DATE(const std::string& nm, const std::string& val);
+  adif_DATE(const std::string& nm, const std::string& v);
 
-// construct with name
+/// construct with name
   explicit adif_DATE(const std::string& nm);
 
-// set value
+/// set value
   void value(const std::string& v);
 
-// get value
+/// get value
   inline const std::string value(void) const
     { return adif_type::value(); }
 };
@@ -5024,21 +5020,7 @@ public:
     \brief  Encapsulate ADIF Enumeration
 */
 
-class adif_ENUMERATION : public adif_type
-{
-protected:
-
-public:
-
-// default constructor
-  adif_ENUMERATION(void);
-
-// construct with name value
-  adif_ENUMERATION(const std::string& nm, const std::string& val);
-
-// construct with name
-  explicit adif_ENUMERATION(const std::string& nm);
-};
+ADIF_CLASS(adif_ENUMERATION);
 
 // ---------------------------------------------------  adif_ENUM -----------------------------------------
 
@@ -5051,56 +5033,46 @@ class adif_ENUM : public adif_type
 {
 protected:
 
-  T _legal_values;
+  T _legal_values;          ///< legal values for the type
 
 public:
 
-// default constructor
+/// construct from legal values
   adif_ENUM(const T& vals)  :
     adif_type(' '),
     _legal_values(vals)
-{ }
+    { }
 
-// construct with name and value
+/// construct with name, legal values and initial value
   adif_ENUM(const std::string& nm, const T& vals, const std::string& v) :
     adif_type(' ', nm, v),
     _legal_values(vals)
-{ }
+    { }
 
-// construct with name
-  explicit adif_ENUM(const std::string& nm, const T& vals)  :
+/// construct with name and values
+  adif_ENUM(const std::string& nm, const T& vals)  :
         adif_type(' ', nm, std::string()),
         _legal_values(vals)
     { }
 
-//  set a value
+/*! \brief      Set the value
+    \param  N   index into the legal values
+*/
   inline void value(const unsigned int N)
     { _value = _legal_values[N]; }
 
+/// get the value
   inline const std::string value(void) const
     { return adif_type::value(); }
 };
+
 // ---------------------------------------------------  adif_LOCATION -----------------------------------------
 
 /*! \class  adif_LOCATION
     \brief  Encapsulate ADIF Location
 */
 
-class adif_LOCATION : public adif_type
-{
-protected:
-
-public:
-
-// default constructor
-  adif_LOCATION(void);
-
-// construct with name and value
-  adif_LOCATION(const std::string& nm, const std::string& val);
-
-// construct with name
-  explicit adif_LOCATION(const std::string& nm);
-};
+ADIF_CLASS(adif_LOCATION);
 
 // ---------------------------------------------------  adif_MULTILINE_STRING -----------------------------------------
 
@@ -5110,21 +5082,7 @@ public:
     defined as: "a sequence of Characters and line-breaks, where a line break is an ASCII CR (code 13) followed immediately by an ASCII LF (code 10)"
 */
 
-class adif_MULTILINE_STRING : public adif_type
-{
-protected:
-
-public:
-
-// default constructor
-  adif_MULTILINE_STRING(void);
-
-// construct with name and value
-  adif_MULTILINE_STRING(const std::string& nm, const std::string& val);
-
-// construct with name
-  explicit adif_MULTILINE_STRING(const std::string& nm);
-};
+ADIF_CLASS(adif_MULTILINE_STRING);
 
 // ---------------------------------------------------  adif_NUMBER -----------------------------------------
 
@@ -5134,21 +5092,7 @@ public:
     defined as: "a sequence of Digits optionally preceded by a minus sign (ASCII code 45) and optionally including a single decimal point (ASCII code 46)"
 */
 
-class adif_NUMBER : public adif_type
-{
-protected:
-
-public:
-
-// default constructor
-  adif_NUMBER(void);
-
-// construct with name and value
-  adif_NUMBER(const std::string& nm, const std::string& val);
-
-// construct with name
-  explicit adif_NUMBER(const std::string& nm);
-};
+ADIF_CLASS(adif_NUMBER);
 
 // ---------------------------------------------------  adif_STRING -----------------------------------------
 
@@ -5164,19 +5108,19 @@ protected:
 
 public:
 
-// default constructor
+/// default constructor
   adif_STRING(void);
 
-// construct with name and value
+/// construct with name and value
   adif_STRING(const std::string& nm, const std::string& val);
 
-// construct with name
+/// construct with name
   explicit adif_STRING(const std::string& nm);
 
-// set value
+/// set value
   void value(const std::string& v);
 
-// get value
+/// get value
   inline const std::string value(void) const
     { return adif_type::value(); }
 };
@@ -5193,19 +5137,19 @@ protected:
 
 public:
 
-// default constructor
+/// default constructor
   adif_TIME(void);
 
-// construct with name and value
+/// construct with name and value
   adif_TIME(const std::string& nm, const std::string& val);
 
-// construct with name
+/// construct with name
   explicit adif_TIME(const std::string& nm);
 
-// set value
+/// set value
   void value(const std::string& v);
 
-// get value
+/// get value
   inline const std::string value(void) const
       { return adif_type::value(); }
 };
@@ -5372,15 +5316,13 @@ protected:
   adif_NUMBER           _ant_az;                ///< the logging station's antenna azimuth, in degrees
   adif_NUMBER           _ant_el;                ///< the logging station's antenna elevation, in degrees
   adif_ENUMERATION      _ant_path;              ///< the signal path
-//  adif_ENUMERATION      _arrl_sect;             ///< the contacted station's ARRL section
-  adif_ENUM<SECTION_ENUMERATION_TYPE> _arrl_sect;
+  adif_ENUM<SECTION_ENUMERATION_TYPE> _arrl_sect;   ///< the contacted station's ARRL section
 
 //  static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION = { { "G" , "O", "S", "L" } };
 
-  adif_ENUM<ANT_PATH_ENUMERATION_TYPE> _test;
+//  adif_ENUM<ANT_PATH_ENUMERATION_TYPE> _test;
 
-//  adif_ENUMERATION      _band;                  ///< QSO Band
-  adif_ENUM<BAND_ENUMERATION_TYPE> _band;
+  adif_ENUM<BAND_ENUMERATION_TYPE> _band;       ///< QSO Band
   adif_ENUMERATION      _band_rx;               ///< in a split frequency QSO, the logging station's receiving band
 
   adif_STRING           _call;                  ///< the contacted station's Callsign
@@ -5426,8 +5368,7 @@ protected:
   adif_ENUMERATION      _lotw_qsl_sent;         ///< ARRL soi-disant Logbook of the World QSL sent status
 
   adif_NUMBER           _max_bursts;            ///< maximum length of meteor scatter bursts heard by the logging station, in seconds
-//  adif_ENUMERATION      _mode;                  ///< QSO Mode
-  adif_ENUM<MODE_ENUMERATION_TYPE> _mode;
+  adif_ENUM<MODE_ENUMERATION_TYPE> _mode;       ///< QSO Mode
   adif_STRING           _ms_shower;             ///< For meteor scatter QSOs, the name of the meteor shower in progress
   adif_STRING           _my_city;               ///< the logging station's city/town/village/hamlet
   adif_ENUMERATION      _my_cnty;               ///< the logging station's Secondary Administrative Subdivision
@@ -5459,8 +5400,7 @@ protected:
   adif_STRING           _precedence;            ///< contest precedence (e.g. for ARRL Sweepstakes)
   adif_STRING           _programid;             ///< identifies the name of the logger, converter, or utility that created or processed this ADIF file
   adif_STRING           _programversion;        ///< identifies the version of the logger, converter, or utility that created or processed this ADIF file
-//  adif_ENUMERATION      _prop_mode;             ///< QSO propagation mode
-  adif_ENUM<PROPAGATION_MODE_ENUMERATION_TYPE> _prop_mode;
+  adif_ENUM<PROPAGATION_MODE_ENUMERATION_TYPE> _prop_mode;  ///< QSO propagation mode
   adif_STRING           _public_key;            ///< public encryption key
 
   adif_MULTILINE_STRING _qslmsg;                ///< QSL card message
@@ -5524,10 +5464,10 @@ public:
   RW(adif_ENUM<SECTION_ENUMERATION_TYPE>,      arrl_sect);             ///< the contacted station's ARRL section
 
 //  RW(adif_ENUMERATION,      band);                  ///< QSO Band
-  RW(adif_ENUM<BAND_ENUMERATION_TYPE>, band);
+  RW(adif_ENUM<BAND_ENUMERATION_TYPE>, band);       ///< QSO band
   RW(adif_ENUMERATION,      band_rx);               ///< in a split frequency QSO, the logging station's receiving band
 
-  RW(adif_STRING,           call);                  ///< the contacted station's Callsign
+  RW(adif_STRING,           call);                  ///< the contacted station's callsign
   RW(adif_STRING,           check);                 ///< contest check (e.g., for ARRL Sweepstakes)
 //  RW(adif_STRING,           class);                 ///< contest class (e.g., for ARRL Field Day)  -- see below
   RW(adif_ENUMERATION,      cnty);                  ///< the contacted station's Secondary Administrative Subdivision of contacted station
@@ -5553,6 +5493,9 @@ public:
   RW(adif_BOOLEAN,          force_init);            ///< new EME initial
   RW(adif_NUMBER,           freq);                  ///< QSO frequency in megahertz
 
+/*! \brief      Set the frequency (in MHz) from a string
+    \param  v   string representing teh frequency in MHz
+*/
   inline void freq(const std::string& v)
     { _freq.value(v); }
 
@@ -5575,7 +5518,7 @@ public:
 
   RW(adif_NUMBER,           max_bursts);            ///< maximum length of meteor scatter bursts heard by the logging station, in seconds
 //  RW(adif_ENUMERATION,      mode);                  ///< QSO Mode
-  RW(adif_ENUM<MODE_ENUMERATION_TYPE>, mode);
+  RW(adif_ENUM<MODE_ENUMERATION_TYPE>, mode);       ///< QSO mode
   RW(adif_STRING,           ms_shower);             ///< For meteor scatter QSOs, the name of the meteor shower in progress
   RW(adif_STRING,           my_city);               ///< the logging station's city/town/village/hamlet
   RW(adif_ENUMERATION,      my_cnty);               ///< the logging station's Secondary Administrative Subdivision
@@ -5608,7 +5551,7 @@ public:
   RW(adif_STRING,           programid);             ///< identifies the name of the logger, converter, or utility that created or processed this ADIF file
   RW(adif_STRING,           programversion);        ///< identifies the version of the logger, converter, or utility that created or processed this ADIF file
 //  RW(adif_ENUMERATION,      prop_mode);             ///< QSO propagation mode
-  RW(adif_ENUM<PROPAGATION_MODE_ENUMERATION_TYPE>, prop_mode);
+  RW(adif_ENUM<PROPAGATION_MODE_ENUMERATION_TYPE>, prop_mode);  ///< QSO propagation mode
   RW(adif_STRING,           public_key);            ///< public encryption key
 
   RW(adif_MULTILINE_STRING, qslmsg);                ///< QSL card message
@@ -5655,19 +5598,25 @@ public:
   RW(unsigned int,          linefeeds_after_field); ///< number of linefeeds to insert after each field (typically 0 or 1)
   RW(unsigned int,          linefeeds_after_record);///< number of *additional* linefeeds to insert after the record (typically 0, 1 or 2)
 
-// access to _class is different because "class" is a reserved word in C++
+/// access to _class is different because "class" is a reserved word in C++
   inline const adif_STRING clss(void) const
     { return _class; }
 
+/*! \brief      Define the class
+    \param  n   the class
+*/
   inline void clss(const adif_STRING& n)
     { _class = n; }
 
-  // access to _operator is different because "operator" is a reserved word in C++
-    inline const adif_STRING op(void) const
-      { return _operator; }
+/// access to _operator is different because "operator" is a reserved word in C++
+  inline const adif_STRING op(void) const
+    { return _operator; }
 
-    inline void op(const adif_STRING& n)
-      { _operator = n; }
+/*! \brief      Define the operator
+    \param  n   the operator
+*/
+  inline void op(const adif_STRING& n)
+    { _operator = n; }
 
 /// direct write access to member values using ordinary non-ADIF types
 #define DIRECT_WRITE(x) \
@@ -5684,23 +5633,23 @@ public:
 //  inline void station_callsign(const T& v)
 //    { _station_callsign.value(v); }
 
-  DIRECT_WRITE(address);
-  DIRECT_WRITE(arrl_sect);
-  DIRECT_WRITE(band);
-  DIRECT_WRITE(call);
-  DIRECT_WRITE(comment);
-  DIRECT_WRITE(mode);
-  DIRECT_WRITE(notes);
-  DIRECT_WRITE(qsl_rcvd);
-  DIRECT_WRITE(qsl_via);
-  DIRECT_WRITE(qso_date);
-  DIRECT_WRITE(rst_sent);
-  DIRECT_WRITE(rst_rcvd);
-  DIRECT_WRITE(station_callsign);
-  DIRECT_WRITE(time_on);
+  DIRECT_WRITE(address);            ///< the contacted station's mailing address
+  DIRECT_WRITE(arrl_sect);          ///< the contacted station's ARRL section
+  DIRECT_WRITE(band);               ///< QSO band
+  DIRECT_WRITE(call);               ///< the contacted station's callsign
+  DIRECT_WRITE(comment);            ///< comment field for QSO
+  DIRECT_WRITE(mode);               ///< QSO mode
+  DIRECT_WRITE(notes);              ///< QSO notes
+  DIRECT_WRITE(qsl_rcvd);           ///< QSL received status
+  DIRECT_WRITE(qsl_via);            ///< the contacted station's QSL route
+  DIRECT_WRITE(qso_date);           ///< date on which the QSO started
+  DIRECT_WRITE(rst_sent);           ///< signal report sent to the contacted station
+  DIRECT_WRITE(rst_rcvd);           ///< signal report from the contacted station
+  DIRECT_WRITE(station_callsign);   ///< the logging station's callsign
+  DIRECT_WRITE(time_on);            ///< HHMM or HHMMSS in UTC
 
+/// convert record to the printable string format
   const std::string to_string(void) const;
-
 };
 
 #endif /* ADIF_H_ */

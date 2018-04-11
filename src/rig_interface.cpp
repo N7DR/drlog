@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: rig_interface.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -133,19 +133,19 @@ void* rig_interface::_static_poll_thread_function(void* this_p)
 rig_interface::rig_interface (void) :
   _error_alert_function(nullptr),       // no default error handler
   _last_commanded_frequency(),          // no last-commanded frequency
-  _last_commanded_frequency_b(),         // no last-commanded frequency for VFO B
+  _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
   _last_commanded_mode(MODE_CW),        // last commanded mode was CW
   _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
   _port_name(),                         // no default port
   _rigp(nullptr),                       // no rig connected
   _rig_connected(false),                // no rig connected
   _rig_poll_interval(1000),             // poll once per second
-  _status(frequency(14000), MODE_CW)   // 14MHz, CW
+  _status(frequency(14000), MODE_CW)    // 14MHz, CW
 { }
 
 /// destructor
-rig_interface::~rig_interface(void)
-{ }
+//rig_interface::~rig_interface(void)
+//{ }
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
@@ -303,7 +303,9 @@ const frequency rig_interface::rig_frequency(void)
     return _last_commanded_frequency;
   else
   { freq_t hz;
+
     SAFELOCK(_rig);
+
     const int status = rig_get_freq(_rigp, RIG_VFO_CURR, &hz);
 
     if (status != RIG_OK)
@@ -321,7 +323,9 @@ const frequency rig_interface::rig_frequency_b(void)
     return _last_commanded_frequency_b;
   else
   { freq_t hz;
+
     SAFELOCK(_rig);
+
     const int status = rig_get_freq(_rigp, RIG_VFO_B, &hz);
 
     if (status != RIG_OK)
@@ -390,7 +394,7 @@ void rig_interface::split_disable(void)
 /*! \brief      Is split enabled?
     \return     whether split is enabled on the rig
 
-                This interrogates the rig; it neither reads not writes the variable rig_is_split
+    This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
 const bool rig_interface::split_enabled(void)
 { if (!_rig_connected)
@@ -398,6 +402,7 @@ const bool rig_interface::split_enabled(void)
 
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
+
     const string transmit_vfo = raw_command("FT;", true);
 
     if (transmit_vfo.length() >= 4)
@@ -412,6 +417,7 @@ const bool rig_interface::split_enabled(void)
   vfo_t  tx_vfo;
 
   SAFELOCK(_rig);
+
   const int status = rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo);
 
   if (status != RIG_OK)

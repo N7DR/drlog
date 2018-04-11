@@ -1,4 +1,4 @@
-// $Id: screen.h 143 2018-01-22 22:41:15Z  $
+// $Id: screen.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -67,22 +67,22 @@ enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
                        };                       ///< attributes and pre-defined cursor movement
 
 // window creation flags
-const unsigned int WINDOW_NO_CURSOR = 1,            ///< do not display the cursor
-                   WINDOW_INSERT    = 2;            ///< INSERT mode
+const unsigned int WINDOW_NO_CURSOR = 1,        ///< do not display the cursor
+                   WINDOW_INSERT    = 2;        ///< INSERT mode
                     
-/// allow English spelling for colour names
-const int COLOUR_BLACK   = COLOR_BLACK,
-          COLOUR_RED     = COLOR_RED,
-          COLOUR_GREEN   = COLOR_GREEN,
-          COLOUR_YELLOW  = COLOR_YELLOW,
-          COLOUR_BLUE    = COLOR_BLUE,
-          COLOUR_MAGENTA = COLOR_MAGENTA,
-          COLOUR_CYAN    = COLOR_CYAN,
-          COLOUR_WHITE   = COLOR_WHITE;
+/// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
+const int COLOUR_BLACK   = COLOR_BLACK,         ///< black
+          COLOUR_RED     = COLOR_RED,           ///< red
+          COLOUR_GREEN   = COLOR_GREEN,         ///< green
+          COLOUR_YELLOW  = COLOR_YELLOW,        ///< yellow
+          COLOUR_BLUE    = COLOR_BLUE,          ///< blue
+          COLOUR_MAGENTA = COLOR_MAGENTA,       ///< magenta
+          COLOUR_CYAN    = COLOR_CYAN,          ///< cyan
+          COLOUR_WHITE   = COLOR_WHITE;         ///< white
 
-#define COLOUR_PAIR(n)  COLOR_PAIR(n)
+#define COLOUR_PAIR(n)  COLOR_PAIR(n)           ///< English spelling allowed
                        
-extern pt_mutex screen_mutex;                       ///< mutex for the screen
+extern pt_mutex screen_mutex;                   ///< mutex for the screen
 
 // -----------  cursor  ----------------
 
@@ -495,14 +495,17 @@ public:
 */
   window& operator<(const std::vector<std::pair<std::string /* callsign */, int /* colour pair number */ > >& vec);
 
-/*! \brief      Write an integer to a window
-    \param  n   integer to write
+/*! \brief      Write an unsigned integer to a window
+    \param  n   unsigned integer to write
     \return     the window
 */
   inline window& operator<(const unsigned int n)
     { return (*this < to_string(n)); }
 
-/// write an integer to a window
+/*! \brief      Write an integer to a window
+    \param  n   integer to write
+    \return     the window
+*/
   inline window& operator<(const int n)
     { return (*this < to_string(n)); }
   
@@ -653,14 +656,22 @@ template
 
 };
 
-/// window < cursor
+/*! \brief          Move the cursor in a window
+    \param  win     the window to be affected
+    \param  c       cursor coordinates to which to move
+    \return         the window
+*/
 inline window& operator<(window& win, const cursor& c)
   { return win.move_cursor(c.x(), c.y()); }
 
 /// trivial class for moving the cursor (relative)
 WRAPPER_2(cursor_relative, int, x, int, y);
 
-/// window < cursor_relative
+/*! \brief          Move the cursor in a window, using relative movement
+    \param  win     the window to be affected
+    \param  cr      (relative) cursor coordinates to which to move
+    \return         the window
+*/
 inline window& operator<(window& win, const cursor_relative& cr)
   { return win.move_cursor_relative(cr.x(), cr.y()); }
 
@@ -678,7 +689,12 @@ window& operator<(window& win, const centre& c);
 
 /// utterly trivial class for changing colour to a colour pair
 WRAPPER_1(colour_pair, int, pair_nr);
-//window& operator<(window& win, const colour_pair& cpair);
+
+/*! \brief          Change the colours of a window
+    \param  win     target window
+    \param  cpair   the new colours
+    \return         the window
+*/
 inline window& operator<(window& win, const colour_pair& cpair)
   { return win.cpair(cpair.pair_nr()); }
 

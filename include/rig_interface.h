@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 145 2018-03-19 17:28:50Z  $
+// $Id: rig_interface.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -121,7 +121,8 @@ public:
   rig_interface (void);
 
 /// destructor
-  virtual ~rig_interface(void);
+  inline virtual ~rig_interface(void)
+    { }
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
@@ -476,6 +477,10 @@ const std::string hamlib_error_code_to_string(const int e);
 
 // -------------------------------------- Errors  -----------------------------------
 
+ERROR_CLASS(rig_interface_error);
+
+#if 0
+
 /*! \class  rig_interface_error
     \brief  Errors related to accessing the rig
 */
@@ -494,5 +499,6 @@ public:
     x_error(n, s)
   { }
 };
+#endif
 
 #endif /* RIG_INTERFACE_H */

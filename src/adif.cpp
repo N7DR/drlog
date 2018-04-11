@@ -1,4 +1,4 @@
-// $Id: adif.cpp 141 2017-12-16 21:19:10Z  $
+// $Id: adif.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -92,7 +92,10 @@ adif_DATE::adif_DATE(void) :
     adif_type('D')
 { }
 
-// construct with name and value
+/*! \brief      Constructor
+    \param  nm  name
+    \param  v   value
+*/
 adif_DATE::adif_DATE(const string& nm, const string& v) :
     adif_type('D', nm, v)
 { }
@@ -390,17 +393,16 @@ adif_record::adif_record(void) :
     _time_off("time_off"),
     _time_on("time_on"),
     _tx_pwr("tx_pwr"),
-    _web("web"),
-    _test("burble", ANT_PATH_ENUMERATION)
-{
-
-}
+    _web("web")
+//    _test("burble", ANT_PATH_ENUMERATION)
+{ }
 
 template <class T>
 inline const string field_string(const T& mbr, const string& post)
 { return mbr.to_string() + (mbr.value().empty() ? string() : post);
 }
 
+/// convert record to the printable string format
 const string adif_record::to_string(void) const
 { const string post_field_string(_linefeeds_after_record, '\n');
   const string post_record_string('\n', _linefeeds_after_record);

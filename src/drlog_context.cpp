@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 144 2018-03-04 22:44:14Z  $
+// $Id: drlog_context.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1415,9 +1415,9 @@ drlog_context::drlog_context(const std::string& filename) :
   _my_continent("XX"),                                              // set continent to an invalid value
   _my_latitude(0),                                                  // at the equator
   _my_longitude(0),                                                 // Greenwich meridian
-  _nearby_extract(false),                     // do not display NEARBY calls in the EXTRACT window
-  _normalise_rate(false),                     // do not normalise rates to one-hour values
-  _not_country_mults(),                       // no countries are explicitly not country mults
+  _nearby_extract(false),                                           // do not display NEARBY calls in the EXTRACT window
+  _normalise_rate(false),                                           // do not normalise rates to one-hour values
+  _not_country_mults(),                                             // no countries are explicitly not country mults
   _old_adif_log_name(),                       // no ADIF log of old QSOs
   _path( { "." } ),                           // search only the current directory
   _per_band_points( {} ),                     // no points awarded anywhere
@@ -1593,30 +1593,6 @@ const vector<string> drlog_context::sent_exchange_names(void) const
   return rv;
 }
 
-/*! \brief      Get all the names in the sent CW exchange
-    \return     the names of all the fields in the sent CW exchange
-*/
-//const vector<string> drlog_context::sent_exchange_cw_names(void) const
-//{ vector<string> rv;
-//
-//  for (const auto& pss : _sent_exchange_cw)
-//    rv.push_back(pss.first);
-//
-//  return rv;
-//}
-
-/*! \brief      Get all the names in the sent SSB exchange
-    \return     the names of all the fields in the sent SSB exchange
-*/
-//const vector<string> drlog_context::sent_exchange_ssb_names(void) const
-//{ vector<string> rv;
-//
-//  for (const auto& pss : _sent_exchange_ssb)
-//    rv.push_back(pss.first);
-//
-//  return rv;
-//}
-
 const vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 
@@ -1657,15 +1633,3 @@ const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const
   return rv;
 }
 
-/*
-const set<string> drlog_context::points_depend_on_which_exchange_fields(void) const
-{ SAFELOCK(_context);
-
-  set<string> rv;
-
-  for (const auto& entry : _per_band_points_with_exchange_field)
-    rv.insert(entry.first);
-
-  return rv;
-}
-*/

@@ -1,4 +1,4 @@
-// $Id: rules.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: rules.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -31,9 +31,9 @@ extern const set<string> CONTINENT_SET; ///< the abbreviations for the continent
 extern message_stream ost;              ///< for debugging and logging
 extern location_database location_db;   ///< location information
 
-extern void alert(const string& msg, const bool show_time = true);     ///< Alert the user
+extern void alert(const string& msg, const bool show_time = true);  ///< Alert the user
 
-typedef std::map<std::string, unsigned int> MSI;        // syntactic sugar
+typedef std::map<std::string, unsigned int> MSI;                    ///< syntactic sugar
 
 // -------------------------  exchange_field_values  ---------------------------
 
@@ -185,7 +185,7 @@ const vector<exchange_field> exchange_field::expand(void) const
 
 /*! \brief          Write an <i>exchange_field</i> object to an output stream
     \param  ost     output stream
-    \param  pef     object to write
+    \param  exch_f  object to write
     \return         the output stream
 */
 ostream& operator<<(ostream& ost, const exchange_field& exch_f)

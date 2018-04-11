@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: exchange.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -381,7 +381,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 /*! \brief          Write a <i>parsed_ss_exchange</i> object to an output stream
     \param  ost     output stream
-    \param  pef     object to write
+    \param  pse     object to write
     \return         the output stream
 */
 ostream& operator<<(ostream& ost, const parsed_ss_exchange& pse)

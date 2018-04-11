@@ -1,4 +1,4 @@
-// $Id: audio.h 145 2018-03-19 17:28:50Z  $
+// $Id: audio.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -255,7 +255,6 @@ public:
   virtual ~audio_recorder(void);
 
   READ_AND_WRITE(base_filename);            ///< base name of output file
-//  READ(initialised);                        ///< is the object initialised?
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds
   READ_AND_WRITE(n_channels);               ///< number of channels to record
   READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle
@@ -273,9 +272,12 @@ public:
   READ_AND_WRITE(time_reference_high);
 #endif
 
+/// abort recording
   void abort(void);
 
-/// set maximum duration in seconds
+/*! \brief          Set maximum duration
+    \param  secs    maximum duration, in seconds
+*/
   inline void maximum_duration(const unsigned int secs)
     { max_file_time(secs); }
 
@@ -522,23 +524,6 @@ std::ostream& operator<<(std::ostream& ost, const fmt_chunk& chunk);
 
 // -------------------------------------- Errors  -----------------------------------
 
-/*! \class  audio_error
-    \brief  Errors related to audio recording
-*/
-
-class audio_error : public x_error
-{
-protected:
-
-public:
-
-/*! \brief      Construct from error code and reason
-    \param  n   error code
-    \param  s   reason
-*/
-  inline audio_error(const int n, const std::string& s) :
-    x_error(n, s)
-  { }
-};
+ERROR_CLASS(audio_error);
 
 #endif /* AUDIO_H */

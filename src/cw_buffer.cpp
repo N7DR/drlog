@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 142 2018-01-01 20:56:52Z  $
+// $Id: cw_buffer.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -88,7 +88,6 @@ void* cw_buffer::_play(void*)
   while (true)
   { int next_action   = 0;                // next key up/down/command
     bool buffer_was_empty;
-
 
     { SAFELOCK(_key_buffer);
 
@@ -257,7 +256,6 @@ void* cw_buffer::_play(void*)
       { cout << "condvar wait error code = " << e.code() << "; reason = " << e.reason() << endl;
         exit(-1);
       }
-
     }
   }
 
@@ -270,11 +268,11 @@ void* cw_buffer::_play(void*)
     \param  wpm_speed   speed in WPM
 */
 cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed) :
+  _aborted(false),
+  _disabled_cw(false),
   _port(filename),
   _ptt_delay(delay),
-  _aborted(false),
-  _rigp(nullptr),
-  _disabled_cw(false)
+  _rigp(nullptr)
 { speed(wpm_speed);
   _condvar.set_mutex(_condvar_mutex);
   _port.control(0);                            // explicitly turn off PTT
@@ -304,8 +302,6 @@ cw_buffer::~cw_buffer(void)
 */
 void cw_buffer::speed(const unsigned int wpm)
 { const unsigned int new_wpm = max( min(wpm, MAX_SPEED), MIN_SPEED );
-
-//  new_wpm = max(new_wpm, MIN_SPEED);
 
   SAFELOCK(_speed);
 
@@ -377,7 +373,11 @@ void cw_buffer::key_up(const int n)
 
 // there *is* a use for #define in C++
 // each of these is automatically followed by a 100-unit key up
+
+/// dit
 #define DIT key_down(100)
+
+/// dah
 #define DAH key_down(300)
 
 /*! \brief                      Send a single character (followed by a character_space)
@@ -707,8 +707,10 @@ void cw_buffer::add(const char c, const int character_space)
     prior to transmission
 */
 void cw_buffer::operator<<(const string& str)
-{ for (size_t n = 0; n < str.length(); ++n)
-    add(str[n]);
+{ //for (size_t n = 0; n < str.length(); ++n)
+  //  add(str[n]);
+  for (const auto& c : str)
+    add(c);
 }
 
 /// clear the buffer

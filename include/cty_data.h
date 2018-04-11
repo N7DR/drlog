@@ -1,4 +1,4 @@
-// $Id: cty_data.h 145 2018-03-19 17:28:50Z  $
+// $Id: cty_data.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -132,12 +132,12 @@ public:
 
 /*! \brief                      Construct from a string and a country ID
     \param  record              record from which to construct the alternative information
-    \param  caconical_prefix    canonical country prefix
+    \param  canonical_prefix    canonical country prefix
 
     <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
     is optional
 */
-  alternative_country_info(const std::string& record, const std::string& id = "");
+  alternative_country_info(const std::string& record, const std::string& canonical_prefix = "");
 
 /// destructor
   inline virtual ~alternative_country_info(void)

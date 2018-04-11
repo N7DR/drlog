@@ -71,12 +71,12 @@ const int STRING_UNDERFLOW            = -1,    ///< Underflow
 */
 const std::vector<std::string> from_csv(const std::string& line);
 
-/*  \brief      Duplicate a particular character within a string
+/*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-const std::string duplicate_char(const std::string& s, const char& c = '"');
+const std::string duplicate_char(const std::string& s, const char c = '"');
 
 /*! \brief                      Provide a formatted date/time string
     \param  include_seconds     whether to include the portion of the string that designates seconds
@@ -282,8 +282,8 @@ const std::vector<std::string> split_string(const std::string& cs, const std::st
     \param  separator   separator character
     \return             vector containing the separate components
 */
-inline const std::vector<std::string> split_string(const std::string& cs, const char c)
-  { return split_string(cs, std::string(1, c)); }
+inline const std::vector<std::string> split_string(const std::string& cs, const char separator)
+  { return split_string(cs, std::string(1, separator)); }
 
 /*! \brief                  Split a string into equal-length records
     \param  cs              original string

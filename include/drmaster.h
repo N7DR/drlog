@@ -1,4 +1,4 @@
-// $Id: drmaster.h 144 2018-03-04 22:44:14Z  $
+// $Id: drmaster.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -68,7 +68,7 @@ public:
     \brief  Manipulate a line from an N6TR TRMASTER.ASC file
 */
 
-const unsigned int TRMASTER_N_USER_PARAMETERS = 5;      ///< The number of user parameters in a TRMASTER file
+const unsigned int TRMASTER_N_USER_PARAMETERS = 5;      ///< the number of user parameters in a TRMASTER file
 
 class trmaster_line
 {
@@ -100,7 +100,8 @@ public:
   explicit trmaster_line(const std::string& line);
 
 /// destructor
-  virtual ~trmaster_line(void);
+  inline virtual ~trmaster_line(void)
+    { }
 
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
@@ -188,7 +189,11 @@ protected:
 
 public:
 
-/// constructor -- can take either an ASCII or binary file
+/*! \brief              Constructor
+    \param  filename    name of file from which data are to be read
+
+    The file <i>filename</i> may be either an ASCII or a binary file
+*/
   trmaster(const std::string& filename = "trmaster.asc");
 
 /// all the calls (in alphabetical order)
@@ -244,13 +249,18 @@ public:
 
 /// default constructor
   inline drmaster_line(void)
-  { }
+    { }
 
-/// constructor
+/*! \brief                  Construct fronm a call or from a line from a drmaster file
+    \param  line_or_call    line from file, or a call
+
+    Constructs an object that contains only the call if <i>line_or_call</i> contains a call
+*/
   explicit drmaster_line(const std::string& line_or_call);
 
 /// destructor
-  virtual ~drmaster_line(void);
+  inline virtual ~drmaster_line(void)
+    { }
 
 /// convert to a string
   const std::string to_string(void) const;

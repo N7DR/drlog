@@ -1,4 +1,4 @@
-// $Id: socket_support.h 145 2018-03-19 17:28:50Z  $
+// $Id: socket_support.h 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -158,13 +158,6 @@ inline const int bind(SOCKET& sock, const sockaddr_in& local_address)
 inline const uint32_t host_order_inet_addr(const std::string& s)
   { return ntohl(inet_addr(s.c_str())); }             // inet_addr returns network order
 
-/*! \brief                  Process a socket error
-    \param  socket_status   value returned by a system call to a socket function
-  
-    This routine encapsulates OS differences in a single place
-*/
-void process_socket_error(const int socket_status);
-
 /*! \brief      Convert a sockaddr_storage to a sockaddr_in
     \param  ss  value to be converted
     \return     <i>ss</i> as a sockaddr_in
@@ -173,7 +166,11 @@ void process_socket_error(const int socket_status);
 */
 const sockaddr_in to_sockaddr_in(const sockaddr_storage& ss);
 
-/// ostream << sockaddr_in
+/*! \brief          Write a <i>sockaddr_in</i> object to an output stream
+    \param  ost     output stream
+    \param  pa      object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const struct sockaddr_in& pa);
 
 // ------------------------------------  tcp_socket  ----------------------------------
@@ -239,12 +236,14 @@ public:
 */
   virtual ~tcp_socket(void);
 
+  READ_AND_WRITE(timeout_in_tenths);                       ///< RW access to timeout_in_tenths
+
 /*! \brief  Close the socket
 */
   inline void close(void)
     { return _close_the_socket(); }
 
-/*! \brief  Switch to using a different underlying socket
+/*! \brief  Create and use a different underlying socket
 */
   void new_socket(void);
 
@@ -331,8 +330,6 @@ public:
     Throws an exception if the read times out
 */
 const std::string read(const unsigned long timeout_secs);
-
-  READ_AND_WRITE(timeout_in_tenths);                       ///< RW access to timeout_in_tenths
   
 /*! \brief              Set the idle time before a keep-alive is sent
     \param  seconds     time to wait idly before a keep-alive is sent
@@ -375,6 +372,12 @@ std::string name_to_dotted_decimal(const std::string& fqdn, const unsigned int n
 
 // ---------------------------------------  Errors  ------------------------------------
 
+ERROR_CLASS(socket_support_error);  ///< general socket-related errors
+
+ERROR_CLASS(tcp_socket_error);      ///< errors related to TCP sockets
+
+#if 0
+
 /*! \class  socket_support_error
     \brief  Socket-related errors
 */
@@ -412,5 +415,6 @@ public:
     drlog_error(n, s) 
   { }
 };
+#endif
 
 #endif    // !SOCKET_SUPPORT_H

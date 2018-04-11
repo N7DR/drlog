@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: bandmap.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -40,7 +40,7 @@ extern const set<string> CONTINENT_SET;             ///< two-letter abbreviation
 */
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
-static const unsigned int COLUMN_WIDTH = 19;        ///< width of a column in the bandmap window
+//static const unsigned int COLUMN_WIDTH = 19;        ///< width of a column in the bandmap window
 
 const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
 const string        MODE_MARKER("********");        ///< string to mark the mode break in the bandmap
@@ -74,7 +74,13 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
     \brief  Class for entries in the bandmap_buffer class
 */
 
-const unsigned int bandmap_buffer_entry::add(const std::string& new_poster)
+/*! \brief              Add a new poster
+    \param  new_poster  poster to add
+    \return             total number of posters following the addition
+
+    Does nothing if <i>new_poster</i> is already present
+*/
+const unsigned int bandmap_buffer_entry::add(const string& new_poster)
 { _posters.insert(new_poster);
 
   return _posters.size();
@@ -110,7 +116,7 @@ const unsigned int bandmap_buffer::n_posters(const string& callsign)
     \param  poster      poster to associate with <i>callsign</i>
     \return             The number of posters associated with <i>callsign</i>, after this association is added
 
-    Creates an entry in the buffer if no entry for </i>callsign</i> exists
+    Creates an entry in the buffer if no entry for <i>callsign</i> exists
 */
 const unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
 { SAFELOCK(_bandmap_buffer);
@@ -965,6 +971,7 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 */
 const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
 { const BM_ENTRIES fe = rbn_threshold_and_filtered_entries();
+
   auto cit = FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } );  // find myself
 
   if (cit == fe.cend())             // should never be true
@@ -973,32 +980,26 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
   const string target_freq_str = cit->frequency_str();
 
   if (dirn == BANDMAP_DIRECTION_DOWN)
-  { //if (cit != fe.cend())                      // should always be true
-    { //const string target_freq_str = cit->frequency_str();
-      auto crit = prev(reverse_iterator<decltype(cit)>(cit));             // Josuttis First ed. p. 66f.
+  { auto crit = prev(reverse_iterator<decltype(cit)>(cit));             // Josuttis First ed. p. 66f.
 
-      const auto crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency, in downwards direction
+    const auto crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency, in downwards direction
 
-      if (crit2 != fe.crend())
-      { const auto crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
+    if (crit2 != fe.crend())
+    { const auto crit3 = find_if(crit2, fe.crend(), [=] (const bandmap_entry& be) { return (be.*fp)(); } );
 
-        if (crit3 != fe.crend())
-          return (*crit3);
-      }
+      if (crit3 != fe.crend())
+        return (*crit3);
     }
   }
 
   if (dirn == BANDMAP_DIRECTION_UP)
-  { //if (cit != fe.cend())                      // should always be true
-    { //const string target_freq_str = cit->frequency_str();
-      const auto cit2 = find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }); // move away from my frequency, in upwards direction
+  { const auto cit2 = find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }); // move away from my frequency, in upwards direction
 
-      if (cit2 != fe.cend())
-      { const auto cit3 = find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); });
+    if (cit2 != fe.cend())
+    { const auto cit3 = find_if(cit2, fe.cend(), [=] (const bandmap_entry& be) { return (be.*fp)(); });
 
-        if (cit3 != fe.cend())
-          return (*cit3);
-      }
+      if (cit3 != fe.cend())
+        return (*cit3);
     }
   }
 
@@ -1136,8 +1137,8 @@ const bool bandmap::is_present(const string& target_callsign)
   return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 }
 
-const unsigned int bandmap::n_columns(const window& win)
-{ return ( (win.width() - 1) / COLUMN_WIDTH ); }
+//const unsigned int bandmap::n_columns(const window& win)
+//{ return ( (win.width() - 1) / COLUMN_WIDTH ); }
 
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window
@@ -1145,10 +1146,7 @@ const unsigned int bandmap::n_columns(const window& win)
     \return         the window
 */
 window& operator<(window& win, bandmap& bm)
-{ //static const unsigned int COLUMN_WIDTH = 19;                                // width of a column in the bandmap window
-
-  static int NOT_NEEDED_COLOUR = COLOUR_BLACK;
-//  static int DO_NOT_WORK_COLOUR = NOT_NEEDED_COLOUR;
+{ static int NOT_NEEDED_COLOUR = COLOUR_BLACK;
   static int MULT_COLOUR = COLOUR_GREEN;
   static int NOT_MULT_COLOUR = COLOUR_BLUE;
   static int UNKNOWN_MULT_STATUS_COLOUR = COLOUR_YELLOW;
@@ -1172,15 +1170,8 @@ window& operator<(window& win, bandmap& bm)
       const bool is_marker = be.is_marker();
   
 // change to the correct colour
-//      const time_t age = be.time_since_inserted();
       const time_t age_since_original_inserted = be.time_since_this_or_earlier_inserted();
       const time_t age_since_this_inserted = be.time_since_inserted();
-
-//      ost << "age of this or earlier insertion for " << be.callsign() << " = " << age_since_original_inserted << endl;
-//      ost << "time in entry: " << be.time() << endl;
-//      ost << "earlier time in entry: " << be.time_of_earlier_bandmap_entry() << endl;
-//      ost << "be: " << be << endl;
-
       const time_t start_time = be.time();                  // time it was inserted
       const time_t expiration_time = be.expiration_time();
       const float fraction = static_cast<float>(age_since_this_inserted) / (expiration_time - start_time);
@@ -1198,7 +1189,6 @@ window& operator<(window& win, bandmap& bm)
       if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != string_to_colour("BLACK")))
         cpu = colours.add(bm.recent_colour(), win.bg());
 
-//      if (be.is_my_marker() or be.is_mode_marker())
       if (is_marker)
         cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
 

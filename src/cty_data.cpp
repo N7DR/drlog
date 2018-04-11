@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: cty_data.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,7 @@
 
 using namespace std;
 
-extern const set<string> CONTINENT_SET { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };  // see https://stackoverflow.com/questions/177437/const-static
+extern const set<string> CONTINENT_SET { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
 
 const unsigned int CTY_FIELDS_PER_RECORD = 9;                                                   ///< Number of fields in a single CTY record
 const array<int, 10> VE_CQ = { { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 }  };  ///< default CQ zones for VE call areas; 0 to 9
@@ -346,28 +346,28 @@ ostream& operator<<(ostream& ost, const location_info& info)
 
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
-const location_info guess_zones(const string& callsign, const location_info& bi)
-{ location_info rv = bi;
+const location_info guess_zones(const string& call, const location_info& li)
+{ location_info rv = li;
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
    if (rv.canonical_prefix() == "VE")
    { //const size_t posn = callsign.find_last_of("0123456789");
-     const size_t posn = callsign.find_last_of(DIGITS);
+     const size_t posn = call.find_last_of(DIGITS);
 
      if (posn != string::npos)
-     { rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, callsign[posn]))]);
-       rv.itu_zone(VE_ITU[from_string<unsigned int>(string(1, callsign[posn]))]);
+     { rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, call[posn]))]);
+       rv.itu_zone(VE_ITU[from_string<unsigned int>(string(1, call[posn]))]);
      }
    }
 
 // if it's a W, then make a guess as to the CQ and ITU zones
    if (rv.canonical_prefix() == "K")
    { //const size_t posn = callsign.find_last_of("0123456789");
-     const size_t posn = callsign.find_last_of(DIGITS);
+     const size_t posn = call.find_last_of(DIGITS);
 
      if (posn != string::npos)
-     { rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, callsign[posn]))]);
-       rv.itu_zone(W_ITU[from_string<unsigned int>(string(1, callsign[posn]))]);
+     { rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, call[posn]))]);
+       rv.itu_zone(W_ITU[from_string<unsigned int>(string(1, call[posn]))]);
 
 // lat/long for W zones
        switch (rv.cq_zone())
@@ -826,11 +826,7 @@ const location_info location_database::info(const string& callpart)
          return best_info;
       }
       else
-      { //location_info best_info = db_posn_1->second;
-
-        //best_info = guess_zones(callsign, best_info);
-
-        const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+      { const location_info best_info { guess_zones(callsign, db_posn_1->second) };
 
         _db_checked.insert( { callsign, best_info } );
         
@@ -974,18 +970,13 @@ const set<string> location_database::countries(void)
 /// create a set of all the canonical prefixes for a particular continent
 const set<string> location_database::countries(const string& cont_target)
 { const set<string> all_countries = countries();
+
   set <string> rv;
 
   copy_if(all_countries.cbegin(), all_countries.cend(), inserter(rv, rv.begin()), [=, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
 
   return rv;
 }
-
-// -----------  drlog_qth_database_record  ----------------
-
-/*! \class  drlog_qth_database_record
-    \brief  A record from the drlog-specific QTH-override database
-*/
 
 // -----------  drlog_qth_database  ----------------
 
@@ -1001,19 +992,13 @@ drlog_qth_database::drlog_qth_database(const std::string& filename)
   const string contents = read_file(filename);
   const vector<string> lines = to_lines(contents);
   
-//  for (unsigned int n = 0; n < lines.size(); ++n)
   for (const auto& line : lines)
-  { //const string line = remove_peripheral_spaces(lines[n]);
-    const vector<string> fields = split_string(line, ',');
+  { const vector<string> fields = split_string(line, ',');
+
     drlog_qth_database_record record;
     
-//    for (unsigned int field_nr = 0; field_nr < fields.size(); ++field_nr)
     for (const auto& field : fields)
-    { //const string& field = fields[field_nr];
-    
-      const vector<string> elements = remove_peripheral_spaces(split_string(remove_peripheral_spaces(field), '='));
-//      for (unsigned int element_nr = 0; element_nr < elements.size(); ++element_nr)
-//        elements[element_nr] = remove_peripheral_spaces(elements[element_nr]);
+    { const vector<string> elements = remove_peripheral_spaces(split_string(remove_peripheral_spaces(field), '='));
       
 // process the possibilities
       if (elements[0] == "id")
@@ -1142,7 +1127,6 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   _sstring(ss)
 {
 // check that the prefix matches the line
-
   const vector<string> substrings = remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","));
 
   if (find(substrings.cbegin(), substrings.cend(), ss) == substrings.cend())

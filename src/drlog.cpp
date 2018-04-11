@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: drlog.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -58,6 +58,7 @@ using namespace   this_thread;   // std::this_thread
 extern cpair colours;                       ///< program-wide definitions of colour pairs in use
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
+/// drlog mode
 enum DRLOG_MODE { CQ_MODE = 0,              ///< I'm calling the other station
                   SAP_MODE                  ///< the other station is calling me
                 };
@@ -68,8 +69,8 @@ string TS(",");         ///< character for thousands separator
 
 static const set<string> variable_exchange_fields { "SERNO" };  ///< mutable exchange fields
 
-const bool DISPLAY_EXTRACT = true,
-           DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;           ///< whether to display extracts
+const bool DISPLAY_EXTRACT = true,                              ///< display log extracts
+           DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;           ///< do not display log extracts
 
 const bool FORCE_THRESHOLD = true;                              ///< for forcing accumulator to threshold
 
@@ -212,7 +213,7 @@ pt_mutex            thread_check_mutex;                     ///< mutex for contr
 int                 n_running_threads = 0;                  ///< how many additional threads are running?
 bool                exiting = false;                        ///< is the program exiting?
 bool                exiting_rig_status = false;             ///< turn off the display-rig_status thread first
-set<string>         thread_names;
+set<string>         thread_names;                           ///< the names of the threads
 
 pt_mutex            current_band_mutex;                     ///< mutex for setting/getting the current band
 BAND                current_band;                           ///< the current band
@@ -405,15 +406,15 @@ WRAPPER_7_NC(cluster_info,
     running_statistics*, statistics_p,
     location_database*, location_database_p,
     window*, win_bandmap_p,
-    decltype(bandmaps)*, bandmaps_p);
+    decltype(bandmaps)*, bandmaps_p);   ///< parameters for cluster
 
 WRAPPER_2_NC(bandmap_info,
     window*, win_bandmap_p,
-    decltype(bandmaps)*, bandmaps_p);
+    decltype(bandmaps)*, bandmaps_p);   ///< parameters for bandmap
 
 WRAPPER_2_NC(rig_status_info,
     unsigned int, poll_time,
-    rig_interface*, rigp);
+    rig_interface*, rigp);              ///< parameters for rig status
 
 // prepare for terminal I/O
 screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed
@@ -5578,12 +5579,12 @@ void populate_win_info(const string& callsign)
     \param  msg     the original message
     \return         <i>msg</i> with special characters replaced by their intended values
 
-    Expands <i>#</i> and <i>@</i> characters.
     As written, this function is simple but inefficient.
-    # -> octothorpe_str
-    @ -> at_call
-    * -> last_exchange
- */
+
+    # maps to octothorpe_str
+    @ maps to at_call
+    * maps to last_exchange
+*/
 const string expand_cw_message(const string& msg)
 { string octothorpe_replaced;
 
@@ -5600,8 +5601,6 @@ const string expand_cw_message(const string& msg)
 
       octothorpe_str.clear();
 
-//      for (size_t n = 0; n < tmp.size() - 1; ++n)
-//        octothorpe_str += (tmp[n] + spaces);
       for_each(tmp.cbegin(), prev(tmp.cend()), [=, &octothorpe_str] (const char c) { octothorpe_str += (c + spaces); } );
 
       octothorpe_str += tmp[tmp.size() - 1];
@@ -5739,12 +5738,15 @@ void* simulator_thread(void* vp)
   pthread_exit(nullptr);
 }
 
-/*! \brief          Possibly add a new callsign mult
-    \param  msg     callsign
+/*! \brief                  Possibly add a new callsign mult
+    \param  callsign        callsign
+    \param  force_known     whether to force the mult as being known
 
     Supports: AA, OC, SAC, UBA. Updates as necessary the container of
     known callsign mults. Also updates the window that displays the
     known callsign mults.
+
+    Does not add the mult if the mult is unknown, unless <i>force_known</i> is known
 */
 void update_known_callsign_mults(const string& callsign, const bool force_known)
 { if (callsign.empty())

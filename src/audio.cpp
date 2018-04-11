@@ -1,4 +1,4 @@
-// $Id: audio.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: audio.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -572,6 +572,7 @@ void audio_recorder::capture(void)
   }
 }
 
+/// abort recording
 void audio_recorder::abort(void)
 { _aborting = true;
   _recording = false;
@@ -601,12 +602,6 @@ void wav_file::_write_buffer(void* bufp, const size_t buffer_size)
 wav_file::wav_file(void) :
   _is_buffered(false)
 { }
-
-/// return a dummy header string
-//const string wav_file::header(void) const
-//{
-//  return riff_header().to_string();
-//}
 
 /// open the file for writing
 void wav_file::open(void)
@@ -638,8 +633,7 @@ void wav_file::close(void)
   fseek(_fp, 0, SEEK_END);
 
   const uint32_t length = ftell(_fp);
-//  uint32_t length_for_riff = length - 8;
-  const uint32_t length_for_riff = length - 8;
+  const uint32_t length_for_riff = (length - 8);
 
   int status = fseek(_fp, 4, SEEK_SET);      // go to byte #4
 

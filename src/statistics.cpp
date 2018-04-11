@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: statistics.cpp 146 2018-04-09 19:19:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -474,18 +474,23 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // exchange mults
   for (auto& exchange_multiplier : _exchange_multipliers)
   { const string& field_name = exchange_multiplier.first;
-    multiplier& mult = exchange_multiplier.second;
     const string value = qso.received_exchange(field_name);
     const string mv = MULT_VALUE(field_name, value);            // the mult value of the received field
 
+//    multiplier& mult = exchange_multiplier.second;
+
     if (!value.empty())
+    { multiplier& mult = exchange_multiplier.second;
+
       mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
+    }
   }
   
   const bool is_dupe = log.is_dupe(qso, rules);
 
   if (is_dupe)
   { auto& pb = _n_dupes[mode_nr];
+
     pb[band_nr]++;
   }
   else    // not a dupe; add qso points; this may not be a very clean algorithm; I should be able to do better
@@ -725,10 +730,12 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
 
   const auto& cit = _callsign_multipliers.find(mult_name);
 
-  if (cit != _callsign_multipliers.cend())
-    return cit->second.worked(b, m);
+//  if (cit != _callsign_multipliers.cend())
+//    return cit->second.worked(b, m);
 
-  return set<string>();
+//  return set<string>();
+
+  return ( (cit == _callsign_multipliers.cend()) ? set<string>() : cit->second.worked(b, m) );
 }
 
 /*! \brief      Worked exchange mults for a particular band and mode -- &&& THINK ABOUT THIS
@@ -796,8 +803,9 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
 { const unsigned int current_mults = n_worked_callsign_mults(rules) + n_worked_country_mults(rules) + n_worked_exchange_mults(rules);
   const set<BAND> score_bands = rules.score_bands();
   const set<MODE> score_modes = rules.score_modes();
-  unsigned int current_qso_points = 0;
   const unsigned int current_qsos = n_qsos(rules);
+
+  unsigned int current_qso_points = 0;
 
   SAFELOCK(statistics);
 
@@ -808,27 +816,17 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
     FOR_ALL(score_bands, [&] (const BAND& b) { current_qso_points += qp[static_cast<int>(b)]; } );
   }
 
-  //ost << "current QSOs = " << current_qsos << endl;
-  //ost << "current QSO points = " << current_qso_points << endl;
   const float current_mean_qso_points = static_cast<float>(current_qso_points) / current_qsos;
-
-  //ost << "current mean QSO points = " << current_mean_qso_points << endl;
-
   const unsigned int current_points = current_qso_points * current_mults;  // should be same as points(rules)
-
-  //ost << "current points = " << current_points << endl;
 
 // add a notional mult
   unsigned int notional_mults = current_mults;
-
-  //ost << "initial notional mults = " << notional_mults << endl;
 
   const map<BAND, int>& per_band_country_mult_factor = rules.per_band_country_mult_factor();
 
 // include the correct factor for a mult on the current band
   if (_country_multipliers.used())
-  { notional_mults += per_band_country_mult_factor.at(b);
-  }
+    notional_mults += per_band_country_mult_factor.at(b);
   else
     notional_mults++;
 
