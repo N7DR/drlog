@@ -30,8 +30,8 @@
     \brief  The database for the fuzzy function
 */
 
-const size_t MIN_FUZZY_SIZE = 3;               // any call with fewer than this number of characters is included with size MIN_FUZZY_SIZE
-const size_t MAX_FUZZY_SIZE = 8;               // any call with more than this number of characters is included with size MAX_FUZZY_SIZE
+const size_t MIN_FUZZY_SIZE = 3;               ///< any call with fewer than this number of characters is included with size MIN_FUZZY_SIZE
+const size_t MAX_FUZZY_SIZE = 8;               ///< any call with more than this number of characters is included with size MAX_FUZZY_SIZE
 
 class fuzzy_database
 {

@@ -481,8 +481,10 @@ const string tcp_socket::read(const unsigned long timeout_secs)
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::idle_time(const unsigned int seconds)
-{ const int optval = seconds;
-  const int optlen = sizeof(optval);
+{ static const int optlen = sizeof(int);
+
+  const int optval = seconds;
+//  const int optlen = sizeof(optval);
   
   SAFELOCK(_tcp_socket);
 
@@ -496,8 +498,10 @@ void tcp_socket::idle_time(const unsigned int seconds)
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::retry_time(const unsigned int seconds)
-{ const int optval = seconds;
-  const int optlen = sizeof(optval);
+{ static const int optlen = sizeof(int);
+
+  const int optval = seconds;
+//  const int optlen = sizeof(optval);
   
   SAFELOCK(_tcp_socket);
 
@@ -511,8 +515,10 @@ void tcp_socket::retry_time(const unsigned int seconds)
     \param  n   maximum number of retries
 */
 void tcp_socket::max_retries(const unsigned int n)
-{ const int optval = n;
-  const int optlen = sizeof(optval);
+{ static const int optlen = sizeof(int);
+
+  const int optval = n;
+//  const int optlen = sizeof(optval);
   
   SAFELOCK(_tcp_socket);
 
@@ -526,8 +532,10 @@ void tcp_socket::max_retries(const unsigned int n)
     \param  torf    whether to use keep-alives
 */
 void tcp_socket::keep_alive(const bool torf)
-{ const int optval = torf ? 1 : 0;
-  const int optlen = sizeof(optval);
+{ static const int optlen = sizeof(int);
+
+  const int optval = torf ? 1 : 0;
+//  const int optlen = sizeof(optval);
   
   SAFELOCK(_tcp_socket);
 
@@ -646,7 +654,8 @@ void flush_read_socket(SOCKET& sock)
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr)
+//const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr)
+const sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr)
 { sockaddr_storage rv;
   sockaddr_in* sinp = (sockaddr_in*)(&rv);
   

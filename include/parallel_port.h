@@ -26,10 +26,10 @@
 #include <ieee1284.h>
 
 // error numbers
-const int PARALLEL_PORT_NO_SUCH_PORT            = -1,    // port does not exist
-          PARALLEL_PORT_MISC_ERROR              = -2,    // misc. error
-          PARALLEL_PORT_UNABLE_TO_CLAIM         = -3,    // can't claim the port
-          PARALLEL_PORT_UNABLE_TO_LIST          = -4;    // can't list the ports
+const int PARALLEL_PORT_NO_SUCH_PORT            = -1,    ///< port does not exist
+          PARALLEL_PORT_MISC_ERROR              = -2,    ///< misc. error
+          PARALLEL_PORT_UNABLE_TO_CLAIM         = -3,    ///< can't claim the port
+          PARALLEL_PORT_UNABLE_TO_LIST          = -4;    ///< can't list the ports
 
 /* From https://secure.wikimedia.org/wikipedia/en/wiki/Parallel_port:
 

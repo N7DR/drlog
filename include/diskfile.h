@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file diskfile.h
+/*! \file   diskfile.h
 
     Useful file-related functions. This file is derived, with permission, from proprietary code
     owned by IPfonix, Inc.
@@ -38,8 +38,6 @@ inline void append_to_file(const std::string& filename, const std::string& str)
     than checking for existence. See:
       https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
 */
-//inline const bool file_exists(const std::string& filename)
-//  { return std::ifstream(filename); }
 const bool file_exists(const std::string& filename);
 
 /*! \brief              What is the size of a file?

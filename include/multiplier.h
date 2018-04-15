@@ -16,6 +16,7 @@
     Classes and functions related to managing multipliers
 */
 
+#include "bands-modes.h"
 #include "log_message.h"
 #include "macros.h"
 #include "pthread_support.h"

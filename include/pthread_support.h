@@ -160,7 +160,8 @@ protected:
 public:
 
 /// constructor
-  pt_mutex(void);
+  inline pt_mutex(void)
+    { pthread_mutex_init(&_mutex, NULL); }
 
 /// destructor
   virtual ~pt_mutex(void);
@@ -280,15 +281,15 @@ protected:
 public:
 
 /*! \brief          Construct from a mutex
-    \param  mtx     mutex to be locked
+    \param  ptm     mutex to be locked
 */
-  safelock(pt_mutex& mtx);
+//  safelock(pt_mutex& ptm);
 
 /*! \brief          Construct from a named mutex
-    \param  mtx     mutex to be locked
+    \param  ptm     mutex to be locked
     \param  name    name of mutex
 */
-  safelock(pt_mutex& mtx, const std::string& name);
+  safelock(pt_mutex& ptm, const std::string& name);
 
 /*! \brief  Destructor
 */

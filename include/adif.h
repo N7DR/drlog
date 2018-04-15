@@ -7,17 +7,20 @@
 #ifndef ADIF_H
 #define ADIF_H
 
-/*! \file adif.h
+/*! \file   adif.h
 
     Objects and functions related to ADIF version 2.2.7 at http://www.adif.org/adif227.htm
 
 */
+
+#include "macros.h"
 
 #include <array>
 #include <iostream>
 #include <string>
 #include <vector>
 
+// this should go away once it has been completely replaced by READ_AND_WRITE
 /// Syntactic sugar for declaration and read/write access
 #if !defined(RW)
 
@@ -29,16 +32,18 @@
 
 #endif      // !defined(RW)
 
+
 // enumerations
 
 // ant path  -------------------------------------------------------
 
+/// antenna path
 enum  ANT_PATH_ENUM { ANT_PATH_GREYLINE,
                       ANT_PATH_OTHER,
                       ANT_PATH_SHORT_PATH,
                       ANT_PATH_LONG_PATH,
                       N_ANT_PATHS
-                    };                                                      ///< enum for antenna path
+                    };
 
 typedef std::array<std::string, N_ANT_PATHS> ANT_PATH_ENUMERATION_TYPE;     ///< type for antenna path enumeration
 
@@ -51,6 +56,7 @@ static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION = { { "G",
 
 // mode  -------------------------------------------------------
 
+/// modes
 enum MODE_ENUM { ADIF_MODE_AM,              // 0
                  ADIF_MODE_AMTORFEC,
                  ADIF_MODE_ASCI,
@@ -198,10 +204,11 @@ static MODE_ENUMERATION_TYPE MODE_ENUMERATION = { { "AM",               // 0
                                                     "VOI",
                                                     "WINMOR",
                                                     "WSPR"              // 70
-                                                } };                            ///< values for mode
+                                                } };
 
 // ARRL section  -------------------------------------------------------
 
+/// sections
 enum SECTION_ENUM { SECTION_AL,
                     SECTION_AK,
                     SECTION_AB,
@@ -367,10 +374,11 @@ static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION = { { "AL",
                                                           "WWA",
                                                           "WI",
                                                           "WY"
-                                                      } };                  ///< values for section
+                                                      } };
 
 // awards  -------------------------------------------------------
 
+/// awards
 enum AWARD_ENUM { AWARD_AJA,
                   AWARD_CQDX,
                   AWARD_CQDXFIELD,
@@ -434,10 +442,11 @@ static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION = { { "AJA",
                                                       "WAZ",
                                                       "USACA",
                                                       "VUCC"
-                                                  } } ;                 ///< values for awards
+                                                  } } ;
 
 // band  -------------------------------------------------------
 
+/// bands
 enum BAND_ENUM { ADIF_BAND_2190m,
                  ADIF_BAND_560m,
                  ADIF_BAND_160m,
@@ -501,10 +510,11 @@ static BAND_ENUMERATION_TYPE BAND_ENUMERATION = { { "2190m",
                                                     "2.5mm",
                                                     "2mm",
                                                     "1mm"
-                                                } };                    ///< values for bands
+                                                } };
 
 // contest  -------------------------------------------------------
 
+/// contests
 enum CONTEST_ENUM { CONTEST_7QP,                //      7th-Area QSO Party
                     CONTEST_ANARTS_RTTY,        //      ANARTS WW RTTY
                     CONTEST_ANATOLIAN_RTTY,     //      Anatolian WW RTTY
@@ -619,7 +629,7 @@ enum CONTEST_ENUM { CONTEST_7QP,                //      7th-Area QSO Party
                     CONTEST_WINTER_SPRINT,      //      FISTS Winter Sprint
                     CONTEST_YUDXC,              //      YU DX Contest
                     N_CONTESTS
-                  };                                                                            ///< enum for contests
+                  };
 
 typedef std::array<std::string, N_CONTESTS> CONTEST_ENUMERATION_TYPE;                           ///< type for contest enumeration
 
@@ -740,6 +750,7 @@ static CONTEST_ENUMERATION_TYPE CONTEST_ENUMERATION = { { "7QP",                
 
 // propagation mode  -------------------------------------------------------
 
+/// propagation modes
 enum PROPAGATION_MODE_ENUM { PROP_MODE_AUR,         //      Aurora
                              PROP_MODE_AUE,         //      Aurora-E
                              PROP_MODE_BS,          //      Back scatter
@@ -758,7 +769,7 @@ enum PROPAGATION_MODE_ENUM { PROP_MODE_AUR,         //      Aurora
                              PROP_MODE_TEP,         //      Trans-equatorial
                              PROP_MODE_TR,          //      Tropospheric ducting
                              N_PROP_MODES
-};                                                      ///< enum for propagation mode
+};
 
 typedef std::array<std::string, N_PROP_MODES> PROPAGATION_MODE_ENUMERATION_TYPE;    ///< type for propagation mode enumeration
 
@@ -783,8 +794,7 @@ static PROPAGATION_MODE_ENUMERATION_TYPE PROPAGATION_MODE_ENUMERATION = { { "AUR
 
 // primary administrative subdivisions  -------------------------------------------------------
 
-// Canada
-
+/// Canada
 enum PRIMARY_ENUM_CANADA { CANADA_NS,                   // Nova Scotia
                            CANADA_QC,                   // Québec
                            CANADA_ON,                   // Ontario
@@ -817,8 +827,7 @@ static PRIMARY_CANADA_ENUMERATION_TYPE PRIMARY_CANADA_ENUMERATION = { { "NS",
                                                                         "NU"
                                                                     } };            ///< values for Canada
 
-// Aland Is.
-
+/// Aland Is.
 enum PRIMARY_ENUM_ALAND { ALAND_001,    //     Brändö
                           ALAND_002,    //     Eckerö
                           ALAND_003,    //     Finström
@@ -838,7 +847,7 @@ enum PRIMARY_ENUM_ALAND { ALAND_001,    //     Brändö
                           N_ALAND_PRIMARIES
                         };
 
-typedef std::array<std::string, N_ALAND_PRIMARIES> PRIMARY_ALAND_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ALAND_PRIMARIES> PRIMARY_ALAND_ENUMERATION_TYPE;    ///< primaries for Aland Is.
 
 static PRIMARY_ALAND_ENUMERATION_TYPE PRIMARY_ALAND_ENUMERATION = { { "001",    //     Brändö
                                                                       "002",    //     Eckerö
@@ -858,19 +867,17 @@ static PRIMARY_ALAND_ENUMERATION_TYPE PRIMARY_ALAND_ENUMERATION = { { "001",    
                                                                       "016"     //     Vårdö
                                                                     } };
 
-// Alaska.
-
+/// Alaska
 enum PRIMARY_ENUM_ALASKA { ALASKA_AK,    //     ALASKA
                            N_ALASKA_PRIMARIES
                          };
 
-typedef std::array<std::string, N_ALASKA_PRIMARIES> PRIMARY_ALASKA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ALASKA_PRIMARIES> PRIMARY_ALASKA_ENUMERATION_TYPE;    ///< primaries for Alaska
 
 static PRIMARY_ALASKA_ENUMERATION_TYPE PRIMARY_ALASKA_ENUMERATION = { { "AK"    //     Alaska
                                                                     } };
 
-// Asiatic Russia
-
+/// Asiatic Russia
 enum PRIMARY_ENUM_ASIATIC_RUSSIA { ASIATIC_RUSSIA_UO,      // 174  Ust\u2019-Ordynsky Autonomous Okrug - for contacts made before 2008-01-01
                                    ASIATIC_RUSSIA_AB,      // 175  Aginsky Buryatsky Autonomous Okrug - for contacts made before 2008-03-01
                                    ASIATIC_RUSSIA_CB,      // 165  Chelyabinsk (Chelyabinskaya oblast)
@@ -914,7 +921,7 @@ enum PRIMARY_ENUM_ASIATIC_RUSSIA { ASIATIC_RUSSIA_UO,      // 174  Ust\u2019-Ord
                                    N_ASIATIC_RUSSIA_PRIMARIES
                                  };
 
-typedef std::array<std::string, N_ASIATIC_RUSSIA_PRIMARIES> PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ASIATIC_RUSSIA_PRIMARIES> PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE;    ///< primaries for Asiatic Russia
 
 static PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE PRIMARY_ASIATIC_RUSSIA_ENUMERATION = { { "UO",      // 174  Ust\u2019-Ordynsky Autonomous Okrug - for contacts made before 2008-01-01
                                                                                         "AB",      // 175  Aginsky Buryatsky Autonomous Okrug - for contacts made before 2008-03-01
@@ -958,19 +965,16 @@ static PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE PRIMARY_ASIATIC_RUSSIA_ENUMERATIO
 //                                   ASIATIC_RUSSIA_KT,      // 128  Kamchatka (Kamchatskaya oblast)
                                                                     } };
 
-// Balearic Is. (the spec for some reason calls them "Baleric")
-
+/// Balearic Is. (the spec for some reason calls them "Baleric")
 enum PRIMARY_ENUM_BALEARICS { BALEARICS_IB,
                               N_BALEARICS_PRIMARIES
                             };
 
-typedef std::array<std::string, N_BALEARICS_PRIMARIES> PRIMARY_BALEARICS_ENUMERATION_TYPE;
+typedef std::array<std::string, N_BALEARICS_PRIMARIES> PRIMARY_BALEARICS_ENUMERATION_TYPE;    ///< primaries for Balearics
 
 static PRIMARY_BALEARICS_ENUMERATION_TYPE PRIMARY_BALEARICS_ENUMERATION = { { "IB"
                                                                           } };
-
-// Belarus
-
+/// Belarus
 enum PRIMARY_ENUM_BELARUS { BELARUS_MI,      // Minsk (Minskaya voblasts')
                             BELARUS_BR,      // Brest (Brestskaya voblasts')
                             BELARUS_HR,      // Grodno (Hrodzenskaya voblasts')
@@ -981,7 +985,7 @@ enum PRIMARY_ENUM_BELARUS { BELARUS_MI,      // Minsk (Minskaya voblasts')
                             N_BELARUS_PRIMARIES
                           };
 
-typedef std::array<std::string, N_BELARUS_PRIMARIES> PRIMARY_BELARUS_ENUMERATION_TYPE;
+typedef std::array<std::string, N_BELARUS_PRIMARIES> PRIMARY_BELARUS_ENUMERATION_TYPE;    ///< primaries for Belarus
 
 static PRIMARY_BELARUS_ENUMERATION_TYPE PRIMARY_BELARUS_ENUMERATION = { { "MI",      // Minsk (Minskaya voblasts')
                                                                           "BR",      // Brest (Brestskaya voblasts')
@@ -992,36 +996,33 @@ static PRIMARY_BELARUS_ENUMERATION_TYPE PRIMARY_BELARUS_ENUMERATION = { { "MI", 
                                                                           "HM"       // Horad Minsk
                                                                       } };
 
-// Canary Is.
-
+/// Canary Is.
 enum PRIMARY_ENUM_CANARIES { CANARIES_GC,    // Las Palmas
                              CANARIES_TF,    // Tenerife
                              N_CANARIES_PRIMARIES
                            };
 
-typedef std::array<std::string, N_CANARIES_PRIMARIES> PRIMARY_CANARIES_ENUMERATION_TYPE;
+typedef std::array<std::string, N_CANARIES_PRIMARIES> PRIMARY_CANARIES_ENUMERATION_TYPE;    ///< primaries for Canaries
 
 
 static PRIMARY_CANARIES_ENUMERATION_TYPE PRIMARY_CANARIES_ENUMERATION = { { "GC",    // Las Palmas
                                                                             "TF"     // Tenerife
                                                                         } };
 
-// Ceuta y Melilla. (which the standard calls "Cetua & Melilla". Sigh.
-
+/// Ceuta y Melilla. (which the standard calls "Cetua & Melilla". Sigh.)
 enum PRIMARY_ENUM_CEUTA { CEUTA_CU,    // Ceuta
                           CEUTA_ML,    // Melilla
                           N_CEUTA_PRIMARIES
                         };
 
-typedef std::array<std::string, N_CEUTA_PRIMARIES> PRIMARY_CEUTA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_CEUTA_PRIMARIES> PRIMARY_CEUTA_ENUMERATION_TYPE;    ///< primaries for Ceuta
 
 
 static PRIMARY_CEUTA_ENUMERATION_TYPE PRIMARY_CEUTA_ENUMERATION = { { "CE",    // Ceuta
                                                                       "ML"     // Melilla
                                                                   } };
 
-// Mexico
-
+/// Mexico
 enum PRIMARY_ENUM_MEXICO { MEXICO_COL,      // Colima
                            MEXICO_DF,       //   Distrito Federal
                            MEXICO_EMX,      //  Estado de México
@@ -1057,7 +1058,7 @@ enum PRIMARY_ENUM_MEXICO { MEXICO_COL,      // Colima
                            N_MEXICO_PRIMARIES
                          };
 
-typedef std::array<std::string, N_MEXICO_PRIMARIES> PRIMARY_MEXICO_ENUMERATION_TYPE;
+typedef std::array<std::string, N_MEXICO_PRIMARIES> PRIMARY_MEXICO_ENUMERATION_TYPE;    ///< primaries for Mexico
 
 static PRIMARY_MEXICO_ENUMERATION_TYPE PRIMARY_MEXICO_ENUMERATION = { { "COL",      // Colima
                                                                         "DF",       //   Distrito Federal
@@ -1093,8 +1094,7 @@ static PRIMARY_MEXICO_ENUMERATION_TYPE PRIMARY_MEXICO_ENUMERATION = { { "COL",  
                                                                         "YUC"       //  Yucatán
                                                                     } };
 
-// European Russia
-
+/// European Russia
 enum PRIMARY_ENUM_EU_RUSSIA { EU_RUSSIA_SP,      // 169  City of St. Petersburg
                               EU_RUSSIA_LO,      // 136  Leningradskaya oblast
                               EU_RUSSIA_KL,      // 88   Republic of Karelia
@@ -1149,7 +1149,7 @@ enum PRIMARY_ENUM_EU_RUSSIA { EU_RUSSIA_SP,      // 169  City of St. Petersburg
                               N_EU_RUSSIA_PRIMARIES
                             };
 
-typedef std::array<std::string, N_EU_RUSSIA_PRIMARIES> PRIMARY_EU_RUSSIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_EU_RUSSIA_PRIMARIES> PRIMARY_EU_RUSSIA_ENUMERATION_TYPE;    ///< primaries for European Russia
 
 static PRIMARY_EU_RUSSIA_ENUMERATION_TYPE PRIMARY_EU_RUSSIA_ENUMERATION = { { "SP",      // 169  City of St. Petersburg
                                                                               "LO",      // 136  Leningradskaya oblast
@@ -1204,19 +1204,17 @@ static PRIMARY_EU_RUSSIA_ENUMERATION_TYPE PRIMARY_EU_RUSSIA_ENUMERATION = { { "S
                                                                               "AD"      // 102  Republic of Adygeya
                                                                           } };
 
-// Franz Josef Land
-
+/// Franz Josef Land
 enum PRIMARY_ENUM_FJL { FJL_FJL,
                         N_FJL_PRIMARIES
                       };
 
-typedef std::array<std::string, N_FJL_PRIMARIES> PRIMARY_FJL_ENUMERATION_TYPE;
+typedef std::array<std::string, N_FJL_PRIMARIES> PRIMARY_FJL_ENUMERATION_TYPE;    ///< primaries for Franz Josef Land
 
 static PRIMARY_FJL_ENUMERATION_TYPE PRIMARY_FJL_ENUMERATION = { { "FJL"
                                                               } };
 
-// Argentina
-
+/// Argentina
 enum PRIMARY_ENUM_ARGENTINA { ARGENTINA_C,  // Capital federal (Buenos Aires City)
                               ARGENTINA_B,  // Buenos Aires Province
                               ARGENTINA_S,  // Santa Fe
@@ -1244,7 +1242,7 @@ enum PRIMARY_ENUM_ARGENTINA { ARGENTINA_C,  // Capital federal (Buenos Aires Cit
                               N_ARGENTINA_PRIMARIES
                       };
 
-typedef std::array<std::string, N_ARGENTINA_PRIMARIES> PRIMARY_ARGENTINA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ARGENTINA_PRIMARIES> PRIMARY_ARGENTINA_ENUMERATION_TYPE;    ///< primaries for Argentina
 
 static PRIMARY_ARGENTINA_ENUMERATION_TYPE PRIMARY_ARGENTINA_ENUMERATION = { { "C",  // Capital federal (Buenos Aires City)
                                                                               "B",  // Buenos Aires Province
@@ -1272,8 +1270,7 @@ static PRIMARY_ARGENTINA_ENUMERATION_TYPE PRIMARY_ARGENTINA_ENUMERATION = { { "C
                                                                               "Q"  // Neuquén
                                                                           } };
 
-// Brazil
-
+/// Brazil
 enum PRIMARY_ENUM_BRAZIL { BRAZIL_ES,      // Espírito Santo
                            BRAZIL_GO,      // Goiás
                            BRAZIL_SC,      // Santa Catarina
@@ -1304,7 +1301,7 @@ enum PRIMARY_ENUM_BRAZIL { BRAZIL_ES,      // Espírito Santo
                            N_BRAZIL_PRIMARIES
                          };
 
-typedef std::array<std::string, N_BRAZIL_PRIMARIES> PRIMARY_BRAZIL_ENUMERATION_TYPE;
+typedef std::array<std::string, N_BRAZIL_PRIMARIES> PRIMARY_BRAZIL_ENUMERATION_TYPE;    ///< primaries for Brazil
 
 static PRIMARY_BRAZIL_ENUMERATION_TYPE PRIMARY_BRAZIL_ENUMERATION = { { "ES",      // Espírito Santo
                                                                         "GO",      // Goiás
@@ -1335,19 +1332,17 @@ static PRIMARY_BRAZIL_ENUMERATION_TYPE PRIMARY_BRAZIL_ENUMERATION = { { "ES",   
                                                                         "MT"      // Mato Grosso
                                                                     } };
 
-// Hawaii
-
+/// Hawaii
 enum PRIMARY_ENUM_HAWAII { HAWAII_HI,
                            N_HAWAII_PRIMARIES
                          };
 
-typedef std::array<std::string, N_HAWAII_PRIMARIES> PRIMARY_HAWAII_ENUMERATION_TYPE;
+typedef std::array<std::string, N_HAWAII_PRIMARIES> PRIMARY_HAWAII_ENUMERATION_TYPE;    ///< primaries for Hawaii
 
 static PRIMARY_HAWAII_ENUMERATION_TYPE PRIMARY_HAWAII_ENUMERATION = { { "HI"
                                                                     } };
 
-// Chile
-
+/// Chile
 enum PRIMARY_ENUM_CHILE { CHILE_II,  // Antofagasta
                           CHILE_III,  // Atacama
                           CHILE_I,    // Tarapacá
@@ -1364,7 +1359,7 @@ enum PRIMARY_ENUM_CHILE { CHILE_II,  // Antofagasta
                           N_CHILE_PRIMARIES
                         };
 
-typedef std::array<std::string, N_CHILE_PRIMARIES> PRIMARY_CHILE_ENUMERATION_TYPE;
+typedef std::array<std::string, N_CHILE_PRIMARIES> PRIMARY_CHILE_ENUMERATION_TYPE;    ///< primaries for Chile
 
 static PRIMARY_CHILE_ENUMERATION_TYPE PRIMARY_CHILE_ENUMERATION = { { "II",   // Antofagasta
                                                                       "III",  // Atacama
@@ -1381,19 +1376,17 @@ static PRIMARY_CHILE_ENUMERATION_TYPE PRIMARY_CHILE_ENUMERATION = { { "II",   //
                                                                       "XII"   // Magallanes
                                                                   } };
 
-// Kaliningrad
-
+/// Kaliningrad
 enum PRIMARY_ENUM_KALININGRAD { KALININGRAD_KA, // obl. 125 Kalingrad (Kaliningradskaya oblast)
                                 N_KALININGRAD_PRIMARIES
                               };
 
-typedef std::array<std::string, N_KALININGRAD_PRIMARIES> PRIMARY_KALININGRAD_ENUMERATION_TYPE;
+typedef std::array<std::string, N_KALININGRAD_PRIMARIES> PRIMARY_KALININGRAD_ENUMERATION_TYPE;    ///< primaries for Kaliningrad
 
 static PRIMARY_KALININGRAD_ENUMERATION_TYPE PRIMARY_KALININGRAD_ENUMERATION = { { "KA"
                                                                               } };
 
-// Paraguay
-
+/// Paraguay
 enum PRIMARY_ENUM_PARAGUAY { PARAGUAY_16,   // Alto Paraguay
                              PARAGUAY_19,   // Boquerón
                              PARAGUAY_15,   // Presidente Hayes
@@ -1415,7 +1408,7 @@ enum PRIMARY_ENUM_PARAGUAY { PARAGUAY_16,   // Alto Paraguay
                              N_PARAGUAY_PRIMARIES
                            };
 
-typedef std::array<std::string, N_PARAGUAY_PRIMARIES> PRIMARY_PARAGUAY_ENUMERATION_TYPE;
+typedef std::array<std::string, N_PARAGUAY_PRIMARIES> PRIMARY_PARAGUAY_ENUMERATION_TYPE;    ///< primaries for Paraguay
 
 static PRIMARY_PARAGUAY_ENUMERATION_TYPE PRIMARY_PARAGUAY_ENUMERATION = { { "16",   // Alto Paraguay
                                                                             "19",   // Boquerón
@@ -1437,8 +1430,7 @@ static PRIMARY_PARAGUAY_ENUMERATION_TYPE PRIMARY_PARAGUAY_ENUMERATION = { { "16"
                                                                             "07"    // Itapua
                                                                         } };
 
-// ROK
-
+/// ROK
 enum PRIMARY_ENUM_SOUTH_KOREA { SOUTH_KOREA_A,  // Seoul (Seoul Teugbyeolsi)
                                 SOUTH_KOREA_N,  // Inchon (Incheon Gwang'yeogsi)
                                 SOUTH_KOREA_D,  // Kangwon-do (Gang 'weondo)
@@ -1458,7 +1450,7 @@ enum PRIMARY_ENUM_SOUTH_KOREA { SOUTH_KOREA_A,  // Seoul (Seoul Teugbyeolsi)
                                 N_SOUTH_KOREA_PRIMARIES
                               };
 
-typedef std::array<std::string, N_SOUTH_KOREA_PRIMARIES> PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_SOUTH_KOREA_PRIMARIES> PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE;    ///< primaries for South Korea
 
 static PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE PRIMARY_SOUTH_KOREA_ENUMERATION = { { "A",  // Seoul (Seoul Teugbyeolsi)
                                                                                   "N",  // Inchon (Incheon Gwang'yeogsi)
@@ -1478,19 +1470,17 @@ static PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE PRIMARY_SOUTH_KOREA_ENUMERATION = { 
                                                                                   "S"   // Ulsan (Ulsan Gwanq'yeogsi)
                                                                               } };
 
-// Kure
-
+/// Kure
 enum PRIMARY_ENUM_KURE { KURE_KI,
                          N_KURE_PRIMARIES
                        };
 
-typedef std::array<std::string, N_KURE_PRIMARIES> PRIMARY_KURE_ENUMERATION_TYPE;
+typedef std::array<std::string, N_KURE_PRIMARIES> PRIMARY_KURE_ENUMERATION_TYPE;    ///< primaries for Kure
 
 static PRIMARY_KURE_ENUMERATION_TYPE PRIMARY_KURE_ENUMERATION = { { "KI"
                                                                 } };
 
-// Uruguay
-
+/// Uruguay
 enum PRIMARY_ENUM_URUGUAY { URUGUAY_MO, // Montevideo
                             URUGUAY_CA, // Canelones
                             URUGUAY_SJ, // San José
@@ -1513,7 +1503,7 @@ enum PRIMARY_ENUM_URUGUAY { URUGUAY_MO, // Montevideo
                             N_URUGUAY_PRIMARIES
                           };
 
-typedef std::array<std::string, N_URUGUAY_PRIMARIES> PRIMARY_URUGUAY_ENUMERATION_TYPE;
+typedef std::array<std::string, N_URUGUAY_PRIMARIES> PRIMARY_URUGUAY_ENUMERATION_TYPE;    ///< primaries for Uruguay
 
 static PRIMARY_URUGUAY_ENUMERATION_TYPE PRIMARY_URUGUAY_ENUMERATION = { { "MO", // Montevideo
                                                                           "CA", // Canelones
@@ -1536,19 +1526,17 @@ static PRIMARY_URUGUAY_ENUMERATION_TYPE PRIMARY_URUGUAY_ENUMERATION = { { "MO", 
                                                                           "CL" // Cerro Largo
                                                                       } };
 
-// Lord Howe Is.
-
+/// Lord Howe Is.
 enum PRIMARY_ENUM_LORD_HOWE { LORD_HOWE_LH,
                               N_LORD_HOWE_PRIMARIES
                             };
 
-typedef std::array<std::string, N_LORD_HOWE_PRIMARIES> PRIMARY_LORD_HOWE_ENUMERATION_TYPE;
+typedef std::array<std::string, N_LORD_HOWE_PRIMARIES> PRIMARY_LORD_HOWE_ENUMERATION_TYPE;    ///< primaries for Lord Howe Is.
 
 static PRIMARY_LORD_HOWE_ENUMERATION_TYPE PRIMARY_LORD_HOWE_ENUMERATION = { { "LH"
                                                                           } };
 
-// Venezuela
-
+/// Venezuela
 enum PRIMARY_ENUM_VENEZUELA { VENEZUELA_AM,     // Amazonas
                               VENEZUELA_AN,     // Anzoátegui
                               VENEZUELA_AP,     // Apure
@@ -1576,7 +1564,7 @@ enum PRIMARY_ENUM_VENEZUELA { VENEZUELA_AM,     // Amazonas
                               N_VENEZUELA_PRIMARIES
                             };
 
-typedef std::array<std::string, N_VENEZUELA_PRIMARIES> PRIMARY_VENEZUELA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_VENEZUELA_PRIMARIES> PRIMARY_VENEZUELA_ENUMERATION_TYPE;    ///< primaries for Venezuela
 
 static PRIMARY_VENEZUELA_ENUMERATION_TYPE PRIMARY_VENEZUELA_ENUMERATION = { { "AM",     // Amazonas
                                                                               "AN",     // Anzoátegui
@@ -1604,19 +1592,17 @@ static PRIMARY_VENEZUELA_ENUMERATION_TYPE PRIMARY_VENEZUELA_ENUMERATION = { { "A
                                                                               "ZU"      // Zulia
                                                                           } };
 
-// Azores
-
+/// Azores
 enum PRIMARY_ENUM_AZORES { AZORES_AC,
                            N_AZORES_PRIMARIES
                          };
 
-typedef std::array<std::string, N_AZORES_PRIMARIES> PRIMARY_AZORES_ENUMERATION_TYPE;
+typedef std::array<std::string, N_AZORES_PRIMARIES> PRIMARY_AZORES_ENUMERATION_TYPE;    ///< primaries for Azores
 
 static PRIMARY_AZORES_ENUMERATION_TYPE PRIMARY_AZORES_ENUMERATION = { { "AC"
                                                                     } };
 
-// Australia
-
+/// Australia
 enum PRIMARY_ENUM_AUSTRALIA { AUSTRALIA_ACT,    // Australian Capital Territory
                               AUSTRALIA_NSW,    // New South Wales
                               AUSTRALIA_VIC,    // Victoria
@@ -1628,7 +1614,7 @@ enum PRIMARY_ENUM_AUSTRALIA { AUSTRALIA_ACT,    // Australian Capital Territory
                               N_AUSTRALIA_PRIMARIES
                            };
 
-typedef std::array<std::string, N_AUSTRALIA_PRIMARIES> PRIMARY_AUSTRALIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_AUSTRALIA_PRIMARIES> PRIMARY_AUSTRALIA_ENUMERATION_TYPE;    ///< primaries for Australia
 
 static PRIMARY_AUSTRALIA_ENUMERATION_TYPE PRIMARY_AUSTRALIA_ENUMERATION = { { "ACT",    // Australian Capital Territory
                                                                               "NSW",    // New South Wales
@@ -1640,30 +1626,27 @@ static PRIMARY_AUSTRALIA_ENUMERATION_TYPE PRIMARY_AUSTRALIA_ENUMERATION = { { "A
                                                                               "NT",     // Northern Territory
                                                                           } };
 
-// Malyj Vysotskij
-
+/// Malyj Vysotskij
 enum PRIMARY_ENUM_MV { MV_MV,
                        N_MV_PRIMARIES
                      };
 
-typedef std::array<std::string, N_MV_PRIMARIES> PRIMARY_MV_ENUMERATION_TYPE;
+typedef std::array<std::string, N_MV_PRIMARIES> PRIMARY_MV_ENUMERATION_TYPE;    ///< primaries for Malyj Vysotskij
 
 static PRIMARY_MV_ENUMERATION_TYPE PRIMARY_MV_ENUMERATION = { { "MV"
                                                             } };
 
-// Macquerie Is.
-
+/// Macquerie Is.
 enum PRIMARY_ENUM_MACQUERIE { MACQUERIE_MA,
                               N_MACQUERIE_PRIMARIES
                             };
 
-typedef std::array<std::string, N_MACQUERIE_PRIMARIES> PRIMARY_MACQUERIE_ENUMERATION_TYPE;
+typedef std::array<std::string, N_MACQUERIE_PRIMARIES> PRIMARY_MACQUERIE_ENUMERATION_TYPE;    ///< primaries for Macquerie
 
 static PRIMARY_MACQUERIE_ENUMERATION_TYPE PRIMARY_MACQUERIE_ENUMERATION = { { "MA"
                                                                         } };
 
-// Papua New Guinea
-
+/// Papua New Guinea
 enum PRIMARY_ENUM_PAPUA_NEW_GUINEA { PAPUA_NEW_GUINEA_NCD,     // National Capital District (Port Moresby)
                                      PAPUA_NEW_GUINEA_CPM,     // Central
                                      PAPUA_NEW_GUINEA_CPK,     // Chimbu
@@ -1687,7 +1670,7 @@ enum PRIMARY_ENUM_PAPUA_NEW_GUINEA { PAPUA_NEW_GUINEA_NCD,     // National Capit
                                      N_PAPUA_NEW_GUINEA_PRIMARIES
                                    };
 
-typedef std::array<std::string, N_PAPUA_NEW_GUINEA_PRIMARIES> PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_PAPUA_NEW_GUINEA_PRIMARIES> PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE;    ///< primaries for Papua New Guinea
 
 static PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION = { { "NCD",     // National Capital District (Port Moresby)
                                                                                             "CPM",     // Central
@@ -1711,8 +1694,7 @@ static PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE PRIMARY_PAPUA_NEW_GUINEA_ENUMER
                                                                                             "WBR"      // West New Britain,
                                                                                         } };
 
-// New Zealand
-
+/// New Zealand
 enum PRIMARY_ENUM_NEW_ZEALAND { NEW_ZEALAND_NCD,    // National Capital District
                                 NEW_ZEALAND_AUK,    // Auckland
                                 NEW_ZEALAND_BOP,    // Bay of Plenty
@@ -1733,9 +1715,9 @@ enum PRIMARY_ENUM_NEW_ZEALAND { NEW_ZEALAND_NCD,    // National Capital District
                                 N_NEW_ZEALAND_PRIMARIES
                               };
 
-typedef std::array<std::string, N_NEW_ZEALAND_PRIMARIES> PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE;
+typedef std::array<std::string, N_NEW_ZEALAND_PRIMARIES> PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE;    ///< primaries for New  Zealand
 
-static PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE PRIMARY_NEW_ZEALAND_ENUMERATION = { { "NCD",    // National Capital District (Port Moresb
+static PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE PRIMARY_NEW_ZEALAND_ENUMERATION = { { "NCD",    // National Capital District
                                                                                   "AUK",    // Auckland
                                                                                   "BOP",    // Bay of Plenty
                                                                                   "NTL",    // Northland
@@ -1754,8 +1736,7 @@ static PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE PRIMARY_NEW_ZEALAND_ENUMERATION = { 
                                                                                   "STL"     // Southland
                                                                               } };
 
-// Austria
-
+/// Austria
 enum PRIMARY_ENUM_AUSTRIA { AUSTRIA_WC,   // Wien
                             AUSTRIA_HA,   // Hallein
                             AUSTRIA_JO,   // St. Johann
@@ -1861,7 +1842,7 @@ enum PRIMARY_ENUM_AUSTRIA { AUSTRIA_WC,   // Wien
                             N_AUSTRIA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_AUSTRIA_PRIMARIES> PRIMARY_AUSTRIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_AUSTRIA_PRIMARIES> PRIMARY_AUSTRIA_ENUMERATION_TYPE;    ///< primaries for Austria
 
 static PRIMARY_AUSTRIA_ENUMERATION_TYPE PRIMARY_AUSTRIA_ENUMERATION = { { "WC",   // Wien
                                                                           "HA",   // Hallein
@@ -1967,8 +1948,7 @@ static PRIMARY_AUSTRIA_ENUMERATION_TYPE PRIMARY_AUSTRIA_ENUMERATION = { { "WC", 
                                                                           "FK"    //Feldkirch
                                                                       } };
 
-// Belgium
-
+/// Belgium
 enum PRIMARY_ENUM_BELGIUM { BELGIUM_AN,     // Antwerpen
                             BELGIUM_BR,     // Brussels
                             BELGIUM_BW,     // Brabant Wallon
@@ -1983,7 +1963,7 @@ enum PRIMARY_ENUM_BELGIUM { BELGIUM_AN,     // Antwerpen
                             N_BELGIUM_PRIMARIES
                          };
 
-typedef std::array<std::string, N_BELGIUM_PRIMARIES> PRIMARY_BELGIUM_ENUMERATION_TYPE;
+typedef std::array<std::string, N_BELGIUM_PRIMARIES> PRIMARY_BELGIUM_ENUMERATION_TYPE;    ///< primaries for Belgium
 
 static PRIMARY_BELGIUM_ENUMERATION_TYPE PRIMARY_BELGIUM_ENUMERATION = { { "AN",     // Antwerpen
                                                                           "BR",     // Brussels
@@ -1998,8 +1978,7 @@ static PRIMARY_BELGIUM_ENUMERATION_TYPE PRIMARY_BELGIUM_ENUMERATION = { { "AN", 
                                                                           "WZ"     // West-Vlaanderen
                                                                       } };
 
-// Bulgaria
-
+/// Bulgaria
 enum PRIMARY_ENUM_BULGARIA { BULGARIA_BU,   // Burgas
                              BULGARIA_SL,   // Sliven
                              BULGARIA_YA,   // Yambol (Jambol)
@@ -2031,7 +2010,7 @@ enum PRIMARY_ENUM_BULGARIA { BULGARIA_BU,   // Burgas
                              N_BULGARIA_PRIMARIES
                            };
 
-typedef std::array<std::string, N_BULGARIA_PRIMARIES> PRIMARY_BULGARIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_BULGARIA_PRIMARIES> PRIMARY_BULGARIA_ENUMERATION_TYPE;    ///< primaries for Bulgaria
 
 static PRIMARY_BULGARIA_ENUMERATION_TYPE PRIMARY_BULGARIA_ENUMERATION = { { "BU",   // Burgas
                                                                             "SL",   // Sliven
@@ -2063,21 +2042,19 @@ static PRIMARY_BULGARIA_ENUMERATION_TYPE PRIMARY_BULGARIA_ENUMERATION = { { "BU"
                                                                             "VN"    //Varna
                                                                         } };
 
-// Corsica
-
+/// Corsica
 enum PRIMARY_ENUM_CORSICA { CORSICA_2A, // Corse-du-Sud
                             CORSICA_2B, // Haute-Corse
                             N_CORSICA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_CORSICA_PRIMARIES> PRIMARY_CORSICA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_CORSICA_PRIMARIES> PRIMARY_CORSICA_ENUMERATION_TYPE;    ///< primaries for Corsica
 
 static PRIMARY_CORSICA_ENUMERATION_TYPE PRIMARY_CORSICA_ENUMERATION = { { "2A", // Corse-du-Sud
                                                                           "2B"  // Haute-Corse
                                                                       } };
 
-// Denmark
-
+/// Denmark
 enum PRIMARY_ENUM_DENMARK { DENMARK_015,  // Koebenhavns amt
                             DENMARK_020,  // Frederiksborg amt
                             DENMARK_025,  // Roskilde amt
@@ -2097,7 +2074,7 @@ enum PRIMARY_ENUM_DENMARK { DENMARK_015,  // Koebenhavns amt
                             N_DENMARK_PRIMARIES
                          };
 
-typedef std::array<std::string, N_DENMARK_PRIMARIES> PRIMARY_DENMARK_ENUMERATION_TYPE;
+typedef std::array<std::string, N_DENMARK_PRIMARIES> PRIMARY_DENMARK_ENUMERATION_TYPE;    ///< primaries for Denmark
 
 static PRIMARY_DENMARK_ENUMERATION_TYPE PRIMARY_DENMARK_ENUMERATION = { { "015",  // Koebenhavns amt
                                                                           "020",  // Frederiksborg amt
@@ -2117,8 +2094,7 @@ static PRIMARY_DENMARK_ENUMERATION_TYPE PRIMARY_DENMARK_ENUMERATION = { { "015",
                                                                           "147"   // Frederiksberg
                                                                       } };
 
-// Finland
-
+/// Finland
 enum PRIMARY_ENUM_FINLAND { FINLAND_100,    // Somero
                             FINLAND_102,    // Alastaro
                             FINLAND_103,    // Askainen
@@ -2552,7 +2528,7 @@ enum PRIMARY_ENUM_FINLAND { FINLAND_100,    // Somero
                             N_FINLAND_PRIMARIES
                          };
 
-typedef std::array<std::string, N_FINLAND_PRIMARIES> PRIMARY_FINLAND_ENUMERATION_TYPE;
+typedef std::array<std::string, N_FINLAND_PRIMARIES> PRIMARY_FINLAND_ENUMERATION_TYPE;    ///< primaries for Finland
 
 static PRIMARY_FINLAND_ENUMERATION_TYPE PRIMARY_FINLAND_ENUMERATION = { { "100",    // Somero
                                                                           "102",    // Alastaro
@@ -2986,8 +2962,7 @@ static PRIMARY_FINLAND_ENUMERATION_TYPE PRIMARY_FINLAND_ENUMERATION = { { "100",
                                                                           "923"     // Ylitornio
                                                                       } };
 
-// Sardinia
-
+/// Sardinia
 enum PRIMARY_ENUM_SARDINIA { SARDINIA_CA,   // Cagliari
                              SARDINIA_CI,   //  Carbonia Iglesias
                              SARDINIA_MD,   //  Medio Campidano (deprecated)
@@ -3000,7 +2975,7 @@ enum PRIMARY_ENUM_SARDINIA { SARDINIA_CA,   // Cagliari
                              N_SARDINIA_PRIMARIES
                            };
 
-typedef std::array<std::string, N_SARDINIA_PRIMARIES> PRIMARY_SARDINIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_SARDINIA_PRIMARIES> PRIMARY_SARDINIA_ENUMERATION_TYPE;    ///< primaries for Sardinia
 
 static PRIMARY_SARDINIA_ENUMERATION_TYPE PRIMARY_SARDINIA_ENUMERATION = { { "CA",   // Cagliari
                                                                             "CI",   //  Carbonia Iglesias
@@ -3013,8 +2988,7 @@ static PRIMARY_SARDINIA_ENUMERATION_TYPE PRIMARY_SARDINIA_ENUMERATION = { { "CA"
                                                                             "VS",   // Medio Campidano
                                                                         } };
 
-// France
-
+/// France
 enum PRIMARY_ENUM_FRANCE { FRANCE_01, // Ain
                            FRANCE_02, // Aisne
                            FRANCE_03, // Allier
@@ -3112,7 +3086,7 @@ enum PRIMARY_ENUM_FRANCE { FRANCE_01, // Ain
                            N_FRANCE_PRIMARIES
                          };
 
-typedef std::array<std::string, N_FRANCE_PRIMARIES> PRIMARY_FRANCE_ENUMERATION_TYPE;
+typedef std::array<std::string, N_FRANCE_PRIMARIES> PRIMARY_FRANCE_ENUMERATION_TYPE;    ///< primaries for France
 
 static PRIMARY_FRANCE_ENUMERATION_TYPE PRIMARY_FRANCE_ENUMERATION = { { "01", // Ain
                                                                         "02", // Aisne
@@ -3210,8 +3184,7 @@ static PRIMARY_FRANCE_ENUMERATION_TYPE PRIMARY_FRANCE_ENUMERATION = { { "01", //
                                                                         "95"  // Val-d'Oise
                                                                     } };
 
-// Germany
-
+/// Germany
 enum PRIMARY_ENUM_GERMANY { GERMANY_BB,   // Brandenburg
                             GERMANY_BE,   // Berlin
                             GERMANY_BW,   // Baden-Württemberg
@@ -3231,7 +3204,7 @@ enum PRIMARY_ENUM_GERMANY { GERMANY_BB,   // Brandenburg
                             N_GERMANY_PRIMARIES
                           };
 
-typedef std::array<std::string, N_GERMANY_PRIMARIES> PRIMARY_GERMANY_ENUMERATION_TYPE;
+typedef std::array<std::string, N_GERMANY_PRIMARIES> PRIMARY_GERMANY_ENUMERATION_TYPE;    ///< primaries for Germany
 
 static PRIMARY_GERMANY_ENUMERATION_TYPE PRIMARY_GERMANY_ENUMERATION = { { "BB",   // Brandenburg
                                                                           "BE",   // Berlin
@@ -3251,8 +3224,7 @@ static PRIMARY_GERMANY_ENUMERATION_TYPE PRIMARY_GERMANY_ENUMERATION = { { "BB", 
                                                                           "TH"   // Freistaat Thüringen
                                                                       } };
 
-// Hungary
-
+/// Hungary
 enum PRIMARY_ENUM_HUNGARY { HUNGARY_GY,   // Gyõr (Gyõr-Moson-Sopron)
                             HUNGARY_VA,   // Vas
                             HUNGARY_ZA,   // Zala
@@ -3276,7 +3248,7 @@ enum PRIMARY_ENUM_HUNGARY { HUNGARY_GY,   // Gyõr (Gyõr-Moson-Sopron)
                             N_HUNGARY_PRIMARIES
                           };
 
-typedef std::array<std::string, N_HUNGARY_PRIMARIES> PRIMARY_HUNGARY_ENUMERATION_TYPE;
+typedef std::array<std::string, N_HUNGARY_PRIMARIES> PRIMARY_HUNGARY_ENUMERATION_TYPE;    ///< primaries for Hungary
 
 static PRIMARY_HUNGARY_ENUMERATION_TYPE PRIMARY_HUNGARY_ENUMERATION = { { "GY",   // Gyõr (Gyõr-Moson-Sopron)
                                                                           "VA",   // Vas
@@ -3300,8 +3272,7 @@ static PRIMARY_HUNGARY_ENUMERATION_TYPE PRIMARY_HUNGARY_ENUMERATION = { { "GY", 
                                                                           "SA"   // Szabolcs (Szabolcs-Szatmár-Bereg)
                                                                       } };
 
-// Ireland
-
+/// Ireland
 enum PRIMARY_ENUM_IRELAND { IRELAND_CW,  // Carlow (Ceatharlach)
                             IRELAND_CN,  // Cavan (An Cabhán)
                             IRELAND_CE,  // Clare (An Clár)
@@ -3331,7 +3302,7 @@ enum PRIMARY_ENUM_IRELAND { IRELAND_CW,  // Carlow (Ceatharlach)
                             N_IRELAND_PRIMARIES
                           };
 
-typedef std::array<std::string, N_IRELAND_PRIMARIES> PRIMARY_IRELAND_ENUMERATION_TYPE;
+typedef std::array<std::string, N_IRELAND_PRIMARIES> PRIMARY_IRELAND_ENUMERATION_TYPE;    ///< primaries for Ireland
 
 static PRIMARY_IRELAND_ENUMERATION_TYPE PRIMARY_IRELAND_ENUMERATION = { { "CW",  // Carlow (Ceatharlach)
                                                                           "CN",  // Cavan (An Cabhán)
@@ -3361,8 +3332,7 @@ static PRIMARY_IRELAND_ENUMERATION_TYPE PRIMARY_IRELAND_ENUMERATION = { { "CW", 
                                                                           "WW"   // Wicklow (Cill Mhantáin)
                                                                       } };
 
-// Italy
-
+/// Italy
 enum PRIMARY_ENUM_ITALY { ITALY_GE,   // Genova
                           ITALY_IM,   // Imperia
                           ITALY_SP,   // La Spezia
@@ -3470,7 +3440,7 @@ enum PRIMARY_ENUM_ITALY { ITALY_GE,   // Genova
                           N_ITALY_PRIMARIES
                         };
 
-typedef std::array<std::string, N_ITALY_PRIMARIES> PRIMARY_ITALY_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ITALY_PRIMARIES> PRIMARY_ITALY_ENUMERATION_TYPE;    ///< primaries for Italy
 
 static PRIMARY_ITALY_ENUMERATION_TYPE PRIMARY_ITALY_ENUMERATION = { { "GE",   // Genova
                                                                       "IM",   // Imperia
@@ -3578,19 +3548,17 @@ static PRIMARY_ITALY_ENUMERATION_TYPE PRIMARY_ITALY_ENUMERATION = { { "GE",   //
                                                                       "TP"   // Trapani
                                                                   } };
 
-// Madeira
-
+/// Madeira
 enum PRIMARY_ENUM_MADEIRA { MADEIRA_MD, // Madeira
                             N_MADEIRA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_MADEIRA_PRIMARIES> PRIMARY_MADEIRA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_MADEIRA_PRIMARIES> PRIMARY_MADEIRA_ENUMERATION_TYPE;    ///< primaries for Madeira
 
 static PRIMARY_MADEIRA_ENUMERATION_TYPE PRIMARY_MADEIRA_ENUMERATION = { { "MD" // Madeira
                                                                       } };
 
-// The Netherlands
-
+/// The Netherlands
 enum PRIMARY_ENUM_NETHERLANDS { NETHERLANDS_DR,   // Drenthe
                                 NETHERLANDS_FR,   // Friesland
                                 NETHERLANDS_GR,   // Groningen
@@ -3606,7 +3574,7 @@ enum PRIMARY_ENUM_NETHERLANDS { NETHERLANDS_DR,   // Drenthe
                                 N_NETHERLANDS_PRIMARIES
                               };
 
-typedef std::array<std::string, N_NETHERLANDS_PRIMARIES> PRIMARY_NETHERLANDS_ENUMERATION_TYPE;
+typedef std::array<std::string, N_NETHERLANDS_PRIMARIES> PRIMARY_NETHERLANDS_ENUMERATION_TYPE;    ///< primaries for Netherlands
 
 static PRIMARY_NETHERLANDS_ENUMERATION_TYPE PRIMARY_NETHERLANDS_ENUMERATION = { { "DR",   // Drenthe
                                                                                   "FR",   // Friesland
@@ -3622,8 +3590,7 @@ static PRIMARY_NETHERLANDS_ENUMERATION_TYPE PRIMARY_NETHERLANDS_ENUMERATION = { 
                                                                                   "ZL"   // Zeeland
                                                                               } };
 
-// Poland
-
+/// Poland
 enum PRIMARY_ENUM_POLAND { POLAND_Z,    // Zachodnio-Pomorskie
                            POLAND_F,    // Pomorskie
                            POLAND_P,    // Kujawsko-Pomorskie
@@ -3643,7 +3610,7 @@ enum PRIMARY_ENUM_POLAND { POLAND_Z,    // Zachodnio-Pomorskie
                            N_POLAND_PRIMARIES
                          };
 
-typedef std::array<std::string, N_POLAND_PRIMARIES> PRIMARY_POLAND_ENUMERATION_TYPE;
+typedef std::array<std::string, N_POLAND_PRIMARIES> PRIMARY_POLAND_ENUMERATION_TYPE;    ///< primaries for Poland
 
 static PRIMARY_POLAND_ENUMERATION_TYPE PRIMARY_POLAND_ENUMERATION = { { "Z",    // Zachodnio-Pomorskie
                                                                         "F",    // Pomorskie
@@ -3663,8 +3630,7 @@ static PRIMARY_POLAND_ENUMERATION_TYPE PRIMARY_POLAND_ENUMERATION = { { "Z",    
                                                                         "M",    // Malopolskie
                                                                     } };
 
-// Portugal
-
+/// Portugal
 enum PRIMARY_ENUM_PORTUGAL { PORTUGAL_AV,   // Aveiro
                              PORTUGAL_BJ,   // Beja
                              PORTUGAL_BR,   // Braga
@@ -3686,7 +3652,7 @@ enum PRIMARY_ENUM_PORTUGAL { PORTUGAL_AV,   // Aveiro
                              N_PORTUGAL_PRIMARIES
                            };
 
-typedef std::array<std::string, N_PORTUGAL_PRIMARIES> PRIMARY_PORTUGAL_ENUMERATION_TYPE;
+typedef std::array<std::string, N_PORTUGAL_PRIMARIES> PRIMARY_PORTUGAL_ENUMERATION_TYPE;    ///< primaries for Portugal
 
 static PRIMARY_PORTUGAL_ENUMERATION_TYPE PRIMARY_PORTUGAL_ENUMERATION = { { "AV",   // Aveiro
                                                                             "BJ",   // Beja
@@ -3708,8 +3674,7 @@ static PRIMARY_PORTUGAL_ENUMERATION_TYPE PRIMARY_PORTUGAL_ENUMERATION = { { "AV"
                                                                             "VS",   // Viseu
                                                                         } };
 
-// Romania
-
+/// Romania
 enum PRIMARY_ENUM_ROMANIA { ROMANIA_AR,   //  Arad
                             ROMANIA_CS,   // Cara'-Severin
                             ROMANIA_HD,   // Hunedoara
@@ -3755,7 +3720,7 @@ enum PRIMARY_ENUM_ROMANIA { ROMANIA_AR,   //  Arad
                             N_ROMANIA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_ROMANIA_PRIMARIES> PRIMARY_ROMANIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_ROMANIA_PRIMARIES> PRIMARY_ROMANIA_ENUMERATION_TYPE;    ///< primaries for Romania
 
 static PRIMARY_ROMANIA_ENUMERATION_TYPE PRIMARY_ROMANIA_ENUMERATION = { { "AR", //  Arad
                                                                           "CS",   // Cara'-Severin
@@ -3801,8 +3766,7 @@ static PRIMARY_ROMANIA_ENUMERATION_TYPE PRIMARY_ROMANIA_ENUMERATION = { { "AR", 
                                                                           "TR"    // Teleorman
                                                                       } };
 
-// Spain
-
+/// Spain
 enum PRIMARY_ENUM_SPAIN { SPAIN_AV,   //  Avila
                           SPAIN_BU,   //  Burgos
                           SPAIN_C,    //  A Coruña
@@ -3853,7 +3817,7 @@ enum PRIMARY_ENUM_SPAIN { SPAIN_AV,   //  Avila
                           N_SPAIN_PRIMARIES
                        };
 
-typedef std::array<std::string, N_SPAIN_PRIMARIES> PRIMARY_SPAIN_ENUMERATION_TYPE;
+typedef std::array<std::string, N_SPAIN_PRIMARIES> PRIMARY_SPAIN_ENUMERATION_TYPE;    ///< primaries for Spain
 
 static PRIMARY_SPAIN_ENUMERATION_TYPE PRIMARY_SPAIN_ENUMERATION = { { "AV",   //  Avila
                                                                       "BU",   //  Burgos
@@ -3904,8 +3868,7 @@ static PRIMARY_SPAIN_ENUMERATION_TYPE PRIMARY_SPAIN_ENUMERATION = { { "AV",   //
                                                                       "SE"   //  Sevilla
                                                                   } };
 
-// Sweden
-
+/// Sweden
 enum PRIMARY_ENUM_SWEDEN { SWEDEN_AB,   //  Stockholm län
                            SWEDEN_I,    //  Gotlands län
                            SWEDEN_BD,   //  Norrbottens län
@@ -3930,7 +3893,7 @@ enum PRIMARY_ENUM_SWEDEN { SWEDEN_AB,   //  Stockholm län
                            N_SWEDEN_PRIMARIES
                          };
 
-typedef std::array<std::string, N_SWEDEN_PRIMARIES> PRIMARY_SWEDEN_ENUMERATION_TYPE;
+typedef std::array<std::string, N_SWEDEN_PRIMARIES> PRIMARY_SWEDEN_ENUMERATION_TYPE;    ///< primaries for Sweden
 
 static PRIMARY_SWEDEN_ENUMERATION_TYPE PRIMARY_SWEDEN_ENUMERATION = { { "AB",   //  Stockholm län
                                                                         "I",    //  Gotlands län
@@ -3955,8 +3918,7 @@ static PRIMARY_SWEDEN_ENUMERATION_TYPE PRIMARY_SWEDEN_ENUMERATION = { { "AB",   
                                                                         "L"     //   Skåne län
                                                                     } };
 
-// Switzerland
-
+/// Switzerland
 enum PRIMARY_ENUM_SWITZERLAND { SWITZERLAND_AG,   //  Aargau
                                 SWITZERLAND_AR,   //  Appenzell Ausserrhoden
                                 SWITZERLAND_AI,   //  Appenzell Innerrhoden
@@ -3986,7 +3948,7 @@ enum PRIMARY_ENUM_SWITZERLAND { SWITZERLAND_AG,   //  Aargau
                                 N_SWITZERLAND_PRIMARIES
                               };
 
-typedef std::array<std::string, N_SWITZERLAND_PRIMARIES> PRIMARY_SWITZERLAND_ENUMERATION_TYPE;
+typedef std::array<std::string, N_SWITZERLAND_PRIMARIES> PRIMARY_SWITZERLAND_ENUMERATION_TYPE;    ///< primaries for Switzerland
 
 static PRIMARY_SWITZERLAND_ENUMERATION_TYPE PRIMARY_SWITZERLAND_ENUMERATION = { { "AG",   //  Aargau
                                                                                   "AR",   //  Appenzell Ausserrhoden
@@ -4016,8 +3978,7 @@ static PRIMARY_SWITZERLAND_ENUMERATION_TYPE PRIMARY_SWITZERLAND_ENUMERATION = { 
                                                                                   "ZG"    //  Zug
                                                                               } };
 
-// Ukraine
-
+/// Ukraine
 enum PRIMARY_ENUM_UKRAINE { UKRAINE_SU, //  Sums'ka Oblast'
                             UKRAINE_TE,   //  Ternopil's'ka Oblast'
                             UKRAINE_CH,   //  Cherkas'ka Oblast'
@@ -4048,7 +4009,7 @@ enum PRIMARY_ENUM_UKRAINE { UKRAINE_SU, //  Sums'ka Oblast'
                             N_UKRAINE_PRIMARIES
                           };
 
-typedef std::array<std::string, N_UKRAINE_PRIMARIES> PRIMARY_UKRAINE_ENUMERATION_TYPE;
+typedef std::array<std::string, N_UKRAINE_PRIMARIES> PRIMARY_UKRAINE_ENUMERATION_TYPE;    ///< primaries for Ukraine
 
 static PRIMARY_UKRAINE_ENUMERATION_TYPE PRIMARY_UKRAINE_ENUMERATION = { { "SU", //  Sums'ka Oblast'
                                                                           "TE",   //  Ternopil's'ka Oblast'
@@ -4079,8 +4040,7 @@ static PRIMARY_UKRAINE_ENUMERATION_TYPE PRIMARY_UKRAINE_ENUMERATION = { { "SU", 
                                                                           "SL"    //  Sevastopol'
                                                                       } };
 
-// United States
-
+/// United States
 enum PRIMARY_ENUM_UNITED_STATES { UNITED_STATES_CT,   //  Connecticut
                                   UNITED_STATES_ME,   //  Maine
                                   UNITED_STATES_MA,   //  Massachusetts
@@ -4133,7 +4093,7 @@ enum PRIMARY_ENUM_UNITED_STATES { UNITED_STATES_CT,   //  Connecticut
                                   N_UNITED_STATES_PRIMARIES
                                 };
 
-typedef std::array<std::string, N_UNITED_STATES_PRIMARIES> PRIMARY_UNITED_STATES_ENUMERATION_TYPE;
+typedef std::array<std::string, N_UNITED_STATES_PRIMARIES> PRIMARY_UNITED_STATES_ENUMERATION_TYPE;    ///< primaries for United States
 
 static PRIMARY_UNITED_STATES_ENUMERATION_TYPE PRIMARY_UNITED_STATES_ENUMERATION = { { "CT",   //  Connecticut
                                                                                       "ME",   //  Maine
@@ -4186,8 +4146,7 @@ static PRIMARY_UNITED_STATES_ENUMERATION_TYPE PRIMARY_UNITED_STATES_ENUMERATION 
                                                                                       "SD"    //  South Dakota
                                                                                   } };
 
-// Japan
-
+/// Japan
 enum PRIMARY_ENUM_JAPAN { JAPAN_12,   //  Chiba
                           JAPAN_16,   //  Gunma
                           JAPAN_14,   //  Ibaraki
@@ -4238,7 +4197,7 @@ enum PRIMARY_ENUM_JAPAN { JAPAN_12,   //  Chiba
                           N_JAPAN_PRIMARIES
                         };
 
-typedef std::array<std::string, N_JAPAN_PRIMARIES> PRIMARY_JAPAN_ENUMERATION_TYPE;
+typedef std::array<std::string, N_JAPAN_PRIMARIES> PRIMARY_JAPAN_ENUMERATION_TYPE;    ///< primaries for Japan
 
 static PRIMARY_JAPAN_ENUMERATION_TYPE PRIMARY_JAPAN_ENUMERATION = { { "12",   //  Chiba
                                                                       "16",   //  Gunma
@@ -4289,8 +4248,7 @@ static PRIMARY_JAPAN_ENUMERATION_TYPE PRIMARY_JAPAN_ENUMERATION = { { "12",   //
                                                                       "08"    //  Niigata
                                                                   } };
 
-// Philippines
-
+/// Philippines
 enum PRIMARY_ENUM_PHILIPPINES { PHILIPPINES_AUR,  //  Aurora
                                 PHILIPPINES_BTG,  //  Batangas
                                 PHILIPPINES_CAV,  //  Cavite
@@ -4373,7 +4331,7 @@ enum PRIMARY_ENUM_PHILIPPINES { PHILIPPINES_AUR,  //  Aurora
                                 N_PHILIPPINES_PRIMARIES
                               };
 
-typedef std::array<std::string, N_PHILIPPINES_PRIMARIES> PRIMARY_PHILIPPINES_ENUMERATION_TYPE;
+typedef std::array<std::string, N_PHILIPPINES_PRIMARIES> PRIMARY_PHILIPPINES_ENUMERATION_TYPE;    ///< primaries for Philippines
 
 static PRIMARY_PHILIPPINES_ENUMERATION_TYPE PRIMARY_PHILIPPINES_ENUMERATION = { { "AUR",  //  Aurora
                                                                                   "BTG",  //  Batangas
@@ -4456,8 +4414,7 @@ static PRIMARY_PHILIPPINES_ENUMERATION_TYPE PRIMARY_PHILIPPINES_ENUMERATION = { 
                                                                                   "SUR"   //  Surigao del Sur
                                                                               } };
 
-// Croatia
-
+/// Croatia
 enum PRIMARY_ENUM_CROATIA { CROATIA_01,  //  Zagrebačka županija
                             CROATIA_02,  //  Krapinsko-Zagorska županija
                             CROATIA_03,  //  Sisačko-Moslavačka županija
@@ -4482,7 +4439,7 @@ enum PRIMARY_ENUM_CROATIA { CROATIA_01,  //  Zagrebačka županija
                             N_CROATIA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_CROATIA_PRIMARIES> PRIMARY_CROATIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_CROATIA_PRIMARIES> PRIMARY_CROATIA_ENUMERATION_TYPE;    ///< primaries for Croatia
 
 static PRIMARY_CROATIA_ENUMERATION_TYPE PRIMARY_CROATIA_ENUMERATION = { { "01",  //  Zagrebačka županija
                                                                           "02",  //  Krapinsko-Zagorska županija
@@ -4507,8 +4464,7 @@ static PRIMARY_CROATIA_ENUMERATION_TYPE PRIMARY_CROATIA_ENUMERATION = { { "01", 
                                                                           "21"   //  Grad Zagreb
                                                                       } };
 
-// Czech Republic
-
+/// Czech Republic
 enum PRIMARY_ENUM_CZECH { CZECH_APA,  //  Praha 1
                           CZECH_APB,  //  Praha 2
                           CZECH_APC,  //  Praha 3
@@ -4598,7 +4554,7 @@ enum PRIMARY_ENUM_CZECH { CZECH_APA,  //  Praha 1
                           N_CZECH_PRIMARIES
                         };
 
-typedef std::array<std::string, N_CZECH_PRIMARIES> PRIMARY_CZECH_ENUMERATION_TYPE;
+typedef std::array<std::string, N_CZECH_PRIMARIES> PRIMARY_CZECH_ENUMERATION_TYPE;    ///< primaries for Czech Republic
 
 static PRIMARY_CZECH_ENUMERATION_TYPE PRIMARY_CZECH_ENUMERATION = { { "APA",  //  Praha 1
                                                                       "APB",  //  Praha 2
@@ -4688,8 +4644,7 @@ static PRIMARY_CZECH_ENUMERATION_TYPE PRIMARY_CZECH_ENUMERATION = { { "APA",  //
                                                                       "HVS"   //  Vsetin
                                                                   } };
 
-// Slovakia
-
+/// Slovakia
 enum PRIMARY_ENUM_SLOVAKIA { SLOVAKIA_BAA,  //  Bratislava 1
                              SLOVAKIA_BAB,  //  Bratislava 2
                              SLOVAKIA_BAC,  //  Bratislava 3
@@ -4772,7 +4727,7 @@ enum PRIMARY_ENUM_SLOVAKIA { SLOVAKIA_BAA,  //  Bratislava 1
                              N_SLOVAKIA_PRIMARIES
                            };
 
-typedef std::array<std::string, N_SLOVAKIA_PRIMARIES> PRIMARY_SLOVAKIA_ENUMERATION_TYPE;
+typedef std::array<std::string, N_SLOVAKIA_PRIMARIES> PRIMARY_SLOVAKIA_ENUMERATION_TYPE;    ///< primaries for Slovakia
 
 static PRIMARY_SLOVAKIA_ENUMERATION_TYPE PRIMARY_SLOVAKIA_ENUMERATION = { { "BAA",  //  Bratislava 1
                                                                             "BAB",  //  Bratislava 2
@@ -4932,15 +4887,16 @@ public:
 */
   adif_type(const char ty, const std::string& nm = "", const std::string& v = "");
 
-  RW(std::string, name);                        ///< name of the type
-  RW(char,        type_indicator);              ///< letter that identifies the types
-  RW(std::string, value);                       ///< value of the type
+  READ_AND_WRITE(name);                        ///< name of the type
+  READ_AND_WRITE(type_indicator);              ///< letter that identifies the types
+  READ_AND_WRITE(value);                       ///< value of the type
 
 /// convert to printable string
   const std::string to_string(void) const;
 };
 
-// many ADIF types have the same interface
+#if 0
+/// macro to create some ADIF types
 #define ADIF_CLASS(x) \
 class x : public adif_type \
 { \
@@ -4965,22 +4921,49 @@ public: \
 */\
   explicit x(const std::string& nm); \
 }
+#endif
+
+// it's a pity that there is no way I can think of to create classes like this using templates instead of macros
+
+/// macro to create some simple ADIF types; x = class name; y = 'char'
+#define ADIF_CLASS(x, y) \
+class x : public adif_type \
+{ \
+protected: \
+\
+public: \
+\
+/*! \brief default constructor \
+*/ \
+  inline x(void): \
+    adif_type(y) \
+    { } \
+\
+/*! \brief      Constructor \
+    \param  nm  name \
+    \param  v   value \
+*/ \
+  inline x(const std::string& nm, const std::string& val): \
+            adif_type(y, nm, val) \
+    { } \
+\
+/*! \brief      Constructor \
+    \param  nm  name \
+\
+    Sets <i>_value</i> to the empty string. \
+*/\
+  explicit x(const std::string& nm) : \
+  adif_type(y, nm, std::string()) \
+  { }\
+}
 
 // ---------------------------------------------------  adif_AWARD_LIST -----------------------------------------
 
-/*! \class  adif_AWARD_LIST
-    \brief  Encapsulate ADIF AwardList
-*/
-
-ADIF_CLASS(adif_AWARD_LIST);
+ADIF_CLASS(adif_AWARD_LIST, 'A');    ///< Encapsulate ADIF AwardList
 
 // ---------------------------------------------------  adif_BOOLEAN -----------------------------------------
 
-/*! \class  adif_BOOLEAN
-    \brief  Encapsulate ADIF Boolean
-*/
-
-ADIF_CLASS(adif_BOOLEAN);
+ADIF_CLASS(adif_BOOLEAN, 'B');   ///< Encapsulate ADIF Boolean
 
 // ---------------------------------------------------  adif_DATE -----------------------------------------
 
@@ -5016,11 +4999,7 @@ public:
 
 // ---------------------------------------------------  adif_ENUMERATION -----------------------------------------
 
-/*! \class  adif_ENUMERATION
-    \brief  Encapsulate ADIF Enumeration
-*/
-
-ADIF_CLASS(adif_ENUMERATION);
+ADIF_CLASS(adif_ENUMERATION, ' ');   ///< Encapsulate ADIF Enumeration
 
 // ---------------------------------------------------  adif_ENUM -----------------------------------------
 
@@ -5068,31 +5047,15 @@ public:
 
 // ---------------------------------------------------  adif_LOCATION -----------------------------------------
 
-/*! \class  adif_LOCATION
-    \brief  Encapsulate ADIF Location
-*/
-
-ADIF_CLASS(adif_LOCATION);
+ADIF_CLASS(adif_LOCATION, 'L');  ///< Encapsulate ADIF Location
 
 // ---------------------------------------------------  adif_MULTILINE_STRING -----------------------------------------
 
-/*! \class  adif_MULTILINE_STRING
-    \brief  Encapsulate ADIF MultilineString
-
-    defined as: "a sequence of Characters and line-breaks, where a line break is an ASCII CR (code 13) followed immediately by an ASCII LF (code 10)"
-*/
-
-ADIF_CLASS(adif_MULTILINE_STRING);
+ADIF_CLASS(adif_MULTILINE_STRING, 'M');  ///< Encapsulate ADIF MultilineString; defined as: "a sequence of Characters and line-breaks, where a line break is an ASCII CR (code 13) followed immediately by an ASCII LF (code 10)"
 
 // ---------------------------------------------------  adif_NUMBER -----------------------------------------
 
-/*! \class  adif_NUMBER
-    \brief  Encapsulate ADIF Number
-
-    defined as: "a sequence of Digits optionally preceded by a minus sign (ASCII code 45) and optionally including a single decimal point (ASCII code 46)"
-*/
-
-ADIF_CLASS(adif_NUMBER);
+ADIF_CLASS(adif_NUMBER, 'N');    ///< Encapsulate ADIF Number; defined as: "a sequence of Digits optionally preceded by a minus sign (ASCII code 45) and optionally including a single decimal point (ASCII code 46)"
 
 // ---------------------------------------------------  adif_STRING -----------------------------------------
 
@@ -5453,28 +5416,28 @@ public:
   adif_record(void);
 
 // Read/Write access to the members
-  RW(adif_MULTILINE_STRING, address);               ///< the contacted station's mailing address
-  RW(adif_STRING,           adif_ver);              ///< identifies the version of the ADIF used in this file
-  RW(adif_NUMBER,           age);                   ///< the contacted station's operator's age in years
-  RW(adif_NUMBER,           a_index);               ///< the geomagnetic A index at the time of the QSO
-  RW(adif_NUMBER,           ant_az);                ///< the logging station's antenna azimuth, in degrees
-  RW(adif_NUMBER,           ant_el);                ///< the logging station's antenna elevation, in degrees
-  RW(adif_ENUMERATION,      ant_path);              ///< the signal path
+  READ_AND_WRITE(address);               ///< the contacted station's mailing address
+  READ_AND_WRITE(adif_ver);              ///< identifies the version of the ADIF used in this file
+  READ_AND_WRITE(age);                   ///< the contacted station's operator's age in years
+  READ_AND_WRITE(a_index);               ///< the geomagnetic A index at the time of the QSO
+  READ_AND_WRITE(ant_az);                ///< the logging station's antenna azimuth, in degrees
+  READ_AND_WRITE(ant_el);                ///< the logging station's antenna elevation, in degrees
+  READ_AND_WRITE(ant_path);              ///< the signal path
 //  RW(adif_ENUMERATION,      arrl_sect);             ///< the contacted station's ARRL section
-  RW(adif_ENUM<SECTION_ENUMERATION_TYPE>,      arrl_sect);             ///< the contacted station's ARRL section
+  READ_AND_WRITE(arrl_sect);             ///< the contacted station's ARRL section
 
 //  RW(adif_ENUMERATION,      band);                  ///< QSO Band
-  RW(adif_ENUM<BAND_ENUMERATION_TYPE>, band);       ///< QSO band
-  RW(adif_ENUMERATION,      band_rx);               ///< in a split frequency QSO, the logging station's receiving band
+  READ_AND_WRITE(band);       ///< QSO band
+  READ_AND_WRITE(band_rx);               ///< in a split frequency QSO, the logging station's receiving band
 
-  RW(adif_STRING,           call);                  ///< the contacted station's callsign
-  RW(adif_STRING,           check);                 ///< contest check (e.g., for ARRL Sweepstakes)
+  READ_AND_WRITE(call);                  ///< the contacted station's callsign
+  READ_AND_WRITE(check);                 ///< contest check (e.g., for ARRL Sweepstakes)
 //  RW(adif_STRING,           class);                 ///< contest class (e.g., for ARRL Field Day)  -- see below
-  RW(adif_ENUMERATION,      cnty);                  ///< the contacted station's Secondary Administrative Subdivision of contacted station
-  RW(adif_STRING,           comment);               ///< comment field for QSO
-  RW(adif_ENUMERATION,      cont);                  ///< the contacted station's Continent
-  RW(adif_STRING,           contacted_op);          ///< the callsign of the individual operating the contacted station
-  RW(adif_STRING,           contest_id);            ///< QSO Contest Identifier
+  READ_AND_WRITE(cnty);                  ///< the contacted station's Secondary Administrative Subdivision of contacted station
+  READ_AND_WRITE(comment);               ///< comment field for QSO
+  READ_AND_WRITE(cont);                  ///< the contacted station's Continent
+  READ_AND_WRITE(contacted_op);          ///< the callsign of the individual operating the contacted station
+  READ_AND_WRITE(contest_id);            ///< QSO Contest Identifier
   RW(adif_STRING,           country);               ///< the contacted station's DXCC entity name
   RW(adif_NUMBER,           cqz);                   ///< the contacted station's CQ Zone
   RW(adif_AWARD_LIST,       credit_submitted);      ///< the list of awards for which credit has been submitted
@@ -5623,15 +5586,6 @@ public:
   template <class T> \
   inline void x(const T& v) \
     { _##x.value(v); }
-
-// direct write access to member values using ordinary non-ADIF types
-//  inline void address(const std::string& v)
-//    { _address.value(v); }
-
-// direct write access to member values using ordinary non-ADIF types
-//template <class T>
-//  inline void station_callsign(const T& v)
-//    { _station_callsign.value(v); }
 
   DIRECT_WRITE(address);            ///< the contacted station's mailing address
   DIRECT_WRITE(arrl_sect);          ///< the contacted station's ARRL section

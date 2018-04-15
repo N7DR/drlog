@@ -227,7 +227,7 @@ public:
 
 /*! \brief          Write an <i>exchange_field</i> object to an output stream
     \param  ost     output stream
-    \param  pef     object to write
+    \param  exch_f  object to write
     \return         the output stream
 */
 std::ostream& operator<<(std::ostream& ost, const exchange_field& exch_f);

@@ -378,7 +378,7 @@ window& window::operator<(const vector<string>& v)
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
-window& window::operator<(const vector<pair<string, int /* colour pair number */ > >& vec)
+window& window::operator<(const vector<std::pair<string, int /* colour pair number */ > >& vec)     // bizarrely, doxygen complains if I remove the std:: qualifier
 { if (!_wp)
     return *this;
 

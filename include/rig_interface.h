@@ -45,6 +45,7 @@ const int RIG_UNABLE_TO_OPEN       = -1,    ///< unable to access rig
 const bool RESPONSE = true,                 ///< raw K3 command expects a response
            NO_RESPONSE = false;             ///< raw K3 command does not expect a response
 
+/// the two VFOs
 enum VFO { VFO_A = 0,                       ///< VFO A
            VFO_B                            ///< VFO B
          };
@@ -53,11 +54,7 @@ extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;    ///< 
 
 // ---------------------------------------- rig_status -------------------------
 
-/*! \class  rig_status
-    \brief  The status of a rig -- a trivial wrapper
-*/
-
-WRAPPER_2(rig_status, frequency, freq, MODE, mode);
+WRAPPER_2(rig_status, frequency, freq, MODE, mode);     ///< the status of a rig
 
 // ---------------------------------------- rig_interface -------------------------
 
@@ -477,7 +474,7 @@ const std::string hamlib_error_code_to_string(const int e);
 
 // -------------------------------------- Errors  -----------------------------------
 
-ERROR_CLASS(rig_interface_error);
+ERROR_CLASS(rig_interface_error);   ///< errors related to accessing the rig
 
 #if 0
 

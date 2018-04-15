@@ -30,14 +30,16 @@
 #include <string>
 #include <utility>
 
+/// possible sources for bandmap entries
 enum BANDMAP_ENTRY_SOURCE { BANDMAP_ENTRY_LOCAL,
                             BANDMAP_ENTRY_CLUSTER,
                             BANDMAP_ENTRY_RBN
-                          };                                    ///< possible sources for bandmap entries
+                          };
 
+/// search directions for the bandmap
 enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
                          BANDMAP_DIRECTION_UP
-                       };                                       ///< search directions for the bandmap
+                       };
 
 // forward declarations
 class bandmap_filter_type;
@@ -47,7 +49,7 @@ extern const std::string   MODE_MARKER;                         ///< the string 
 extern bandmap_filter_type BMF;                                 ///< the bandmap filter
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
-const unsigned int COLUMN_WIDTH = 19;        ///< width of a column in the bandmap window
+const unsigned int COLUMN_WIDTH = 19;           ///< width of a column in the bandmap window
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -285,10 +287,10 @@ protected:
 public:
 
 /// default constructor
-  bandmap_filter_type(void) :
+  inline bandmap_filter_type(void) :
     _enabled(false),
     _hide(true)
-  { }
+    { }
 
   READ(continents);                             ///< continents to filter
   READ_AND_WRITE(enabled);                      ///< is bandmap filtering enabled?
@@ -310,13 +312,13 @@ public:
 */
   void add_or_subtract(const std::string& str);
 
-/// archive using boost serialization
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
-  { ar & _enabled
+  { ar & _continents
+       & _enabled
        & _hide
-       & _prefixes
-       & _continents;
+       & _prefixes;
   }
 };
 
@@ -343,7 +345,6 @@ protected:
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;           ///< details of needed exchange mults
   enum MODE                                                 _mode;                              ///< mode
   bool                                                      _mult_status_is_known;              ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
-//  std::set<std::string>                                     _posters;                   ///< stations that posted this entry
   enum BANDMAP_ENTRY_SOURCE                                 _source;                            ///< the source of this entry
   time_t                                                    _time;                              ///< time (in seconds since the epoch) at which the object was created
   time_t                                                    _time_of_earlier_bandmap_entry;     ///< time of bandmap_entry that this bandmap_entry replaced; 0 => not a replacement
@@ -682,8 +683,8 @@ std::ostream& operator<<(std::ostream& ost, const bandmap_entry& be);
 // remove_if internally calls the assignment operator, which is illegal... so basically means that in g++ set/multiset can't use remove_if
 // one can use complex workarounds (remove_copy_if and then re-assign back to the original container), but that's ugly and in any case
 // std::list seems to be fast enough
-typedef std::list<bandmap_entry> BM_ENTRIES;
-typedef const bool (bandmap_entry::* PREDICATE_FUN_P)(void) const;
+typedef std::list<bandmap_entry> BM_ENTRIES;                        ///< syntactic sugar for the type used to store the bandmap entries
+typedef const bool (bandmap_entry::* PREDICATE_FUN_P)(void) const;  ///< used in directional searches
 
 // -----------  bandmap  ----------------
 
@@ -1075,6 +1076,6 @@ window& operator<(window& win, bandmap& bm);
 */
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
 
-typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    // allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
+typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 
 #endif    // BANDMAP_H

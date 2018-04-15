@@ -707,9 +707,7 @@ void cw_buffer::add(const char c, const int character_space)
     prior to transmission
 */
 void cw_buffer::operator<<(const string& str)
-{ //for (size_t n = 0; n < str.length(); ++n)
-  //  add(str[n]);
-  for (const auto& c : str)
+{ for (const auto& c : str)
     add(c);
 }
 

@@ -30,6 +30,7 @@
     \brief  The variables and constants that comprise the context for operation
 */
 
+/// lists of country multipliers
 enum country_multiplier_type { COUNTRY_MULT_NONE,       ///< no country multipliers
                                COUNTRY_MULT_DXCC,       ///< use DXCC list
                                COUNTRY_MULT_WAEDC       ///< use DARC WAEDC list
@@ -39,7 +40,7 @@ extern pt_mutex _context_mutex;             ///< mutex for the drlog context
 
 /// Syntactic sugar for read-only access
 #define CONTEXTREAD(y)          \
-  inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }  ///< Read-only access to _##y
+  inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }
 
 // -----------  drlog_context  ----------------
 
@@ -456,11 +457,11 @@ public:
   CONTEXTREAD(qtc_qrs);                      ///< WPM decrease when sending QTC
   CONTEXTREAD(qthx);                         ///< allowed exchanges values as a function of country
 
-  SAFEREAD(rate_periods, _context);                     ///< periods (in minutes) over which rates should be calculated
-  SAFEREAD(rbn_beacons, _context);                      ///< whether to place RBN posts from beacons on the bandmap
-  SAFEREAD(rbn_port, _context);                         ///< port number on the RBN server
-  SAFEREAD(rbn_server, _context);                       ///< hostname or IP address of RBN server
-  SAFEREAD(rbn_threshold, _context);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
+  CONTEXTREAD(rate_periods);                     ///< periods (in minutes) over which rates should be calculated
+  CONTEXTREAD(rbn_beacons);                      ///< whether to place RBN posts from beacons on the bandmap
+  CONTEXTREAD(rbn_port);                         ///< port number on the RBN server
+  CONTEXTREAD(rbn_server);                       ///< hostname or IP address of RBN server
+  CONTEXTREAD(rbn_threshold);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
   SAFEREAD(rbn_username, _context);                     ///< username to use on the RBN server
   SAFEREAD(record_audio, _context);                     ///< whether to record audio
   SAFEREAD(reject_colour, _context);                    ///< colour for calls that are dupes
@@ -479,7 +480,11 @@ public:
   SAFEREAD(screen_snapshot_file, _context);             ///< base name of file for screenshot
   SAFEREAD(screen_snapshot_on_exit, _context);           ///< whether to take a screenshot on exit
 
-  const decltype(_sent_exchange) sent_exchange(const MODE m);   ///< names and values of sent exchange fields for mode <i>m</i>
+/*! \brief      Get names and values of sent exchange fields for a particular mode
+    \param  m   target mode
+    \return     the names and values of all the fields in the sent exchange when the mode is <i>m</i>
+*/
+  const decltype(_sent_exchange) sent_exchange(const MODE m);        // doxygen complains about the decltype; I have no idea why
 
   SAFEREAD(sent_exchange_cw, _context);                 ///< names and values of sent exchange fields, CW
   SAFEREAD(sent_exchange_ssb, _context);                ///< names and values of sent exchange fields, SSB

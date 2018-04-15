@@ -22,9 +22,10 @@
 
 #include <string>
 
-enum POSTING_SOURCE { POSTING_CLUSTER,
-                      POSTING_RBN
-                    };                          ///< the source of a remote posting
+/// the source of a remote post
+enum POSTING_SOURCE { POSTING_CLUSTER,                  ///< traditional cluster
+                      POSTING_RBN                       ///< Reverse Beacon Network
+                    };
 
 const unsigned int MONITORED_POSTS_DURATION = 3600;     ///< monitored posts are valid for one hour
 

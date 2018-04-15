@@ -1604,9 +1604,11 @@ const vector<string> drlog_context::sent_exchange_names(const MODE m) const
   return rv;
 }
 
-
-/// names and values of sent exchange fields for mode <i>m</i>
-const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)
+/*! \brief      Get names and values of sent exchange fields for a particular mode
+    \param  m   target mode
+    \return     the names and values of all the fields in the sent exchange when the mode is <i>m</i>
+*/
+const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)        // doxygen complains about the decltype; I have no idea why
 { SAFELOCK(_context);
 
   decltype(_sent_exchange) rv = ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb);

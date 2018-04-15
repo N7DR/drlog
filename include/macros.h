@@ -18,7 +18,6 @@
     Macros and templates for drlog.
 */
 
-#include "bands-modes.h"
 #include "pthread_support.h"
 #include "serialization.h"
 
@@ -84,13 +83,14 @@
 // alternative name for SAFEREAD
 #if (!defined(SAFE_READ))
 
+/// read with a mutex
 #define SAFE_READ(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
   inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ
 
-/// Read with mutex that is part of the object
+/// read with mutex that is part of the object
 #if (!defined(SAFEREAD_WITH_INTERNAL_MUTEX))
 
 #define SAFEREAD_WITH_INTERNAL_MUTEX(y, z)                                                      \
@@ -102,6 +102,7 @@
 // alternative name for SAFEREAD_WITH_INTERNAL_MUTEX
 #if (!defined(SAFE_READ_WITH_INTERNAL_MUTEX))
 
+/// read with an internal mutex
 #define SAFE_READ_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
   inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
@@ -302,7 +303,7 @@ public:                                                 \
     { std::get<2>(*this) = var; }                       \
 }
 
-// tuple class (3)
+/// tuple class (3)
 #define WRAPPER_3_SERIALIZE(nm, a0, a1, b0, b1, c0, c1)                     \
                                                                             \
 class nm : public std::tuple < a0, b0, c0 >                                 \
@@ -388,7 +389,7 @@ public:                                                                     \
     { std::get<3>(*this) = var; }                                           \
 }
 
-// tuple class (4)
+/// tuple class (4)
 #define WRAPPER_4_SERIALIZE(nm, a0, a1, b0, b1, c0, c1, d0, d1)             \
                                                                             \
 class nm : public std::tuple < a0, b0, c0, d0  >                            \
@@ -923,11 +924,19 @@ inline void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
 //  }
 //};
 
+/*! \brief          Remove map values that match a predicate, and resize the map
+    \param  items   map
+    \param  pred    predicate to apply
+
+    Does not work for maps
+*/
 template< typename K, typename V, typename PredicateT >
-void REMOVE_IF_AND_RESIZE( std::map<K, V>& items, const PredicateT& predicate ) {
-  for( auto it = items.begin(); it != items.end(); ) {
-    if( predicate(*it) ) it = items.erase(it);
-    else ++it;
+void REMOVE_IF_AND_RESIZE( std::map<K, V>& items, const PredicateT& pred )
+{ for( auto it = items.begin(); it != items.end(); )
+  { if( pred(*it) )
+      it = items.erase(it);
+    else
+      ++it;
   }
 };
 

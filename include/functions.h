@@ -70,7 +70,7 @@ const std::string sunrise_or_sunset(const float& lat, const float& lon, const bo
 
 /*! \brief          Calculate the time of sunrise
     \param  lat     latitude of target, in degrees (+ve north)
-    \param  long    longitude of target, in degrees (+ve east)
+    \param  lon     longitude of target, in degrees (+ve east)
     \return         sunrise in the form HH:MM
 
     If there is no sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
@@ -81,7 +81,7 @@ inline const std::string sunrise(const float& lat, const float& lon)
 
 /*! \brief          Calculate the time of sunset
     \param  lat     latitude of target, in degrees (+ve north)
-    \param  long    longitude of target, in degrees (+ve east)
+    \param  lon     longitude of target, in degrees (+ve east)
     \return         sunset in the form HH:MM
 
     If there is no sunset today, returns "DARK" or "LIGHT", according to whether is currently night

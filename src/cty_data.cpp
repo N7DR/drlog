@@ -1157,17 +1157,21 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   }
 }
 
-/// ostream << location_info
-ostream& operator<<(ostream& ost, const russian_data_per_substring& rd)
-{ ost << "substring: " << rd.sstring() << endl
-      << "region name: " << rd.region_name() << endl
-      << "region abbreviation: " << rd.region_abbreviation() << endl
-      << "cq zone: " << rd.cq_zone() << endl
-      << "itu zone: " << rd.itu_zone() << endl
-      << "continent: " << rd.continent() << endl
-      << "utc offset: " << rd.utc_offset() << endl
-      << "latitude: " << rd.latitude() << endl
-      << "longitude: " << rd.longitude();
+/*! \brief          Write a <i>russian_data_per_substring</i> object to an output stream
+    \param  ost     output stream
+    \param  info    object to write
+    \return         the output stream
+*/
+ostream& operator<<(ostream& ost, const russian_data_per_substring& info)
+{ ost << "substring: " << info.sstring() << endl
+      << "region name: " << info.region_name() << endl
+      << "region abbreviation: " << info.region_abbreviation() << endl
+      << "cq zone: " << info.cq_zone() << endl
+      << "itu zone: " << info.itu_zone() << endl
+      << "continent: " << info.continent() << endl
+      << "utc offset: " << info.utc_offset() << endl
+      << "latitude: " << info.latitude() << endl
+      << "longitude: " << info.longitude();
 
   return ost;
 }

@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <vector>
 
+/// country lists
 enum country_list_type { COUNTRY_LIST_DXCC,     ///< DXCC list
                          COUNTRY_LIST_WAEDC     ///< DARC WAEDC list
                        };
@@ -837,11 +838,11 @@ std::ostream& operator<<(std::ostream& ost, const location_database& db);
 
 // -------------------------------------- Errors  -----------------------------------
 
-ERROR_CLASS(cty_error);
+ERROR_CLASS(cty_error);         ///< Errors related to CTY processing
 
-ERROR_CLASS(location_error);
+ERROR_CLASS(location_error);    ///< Errors related to location database processing
 
-ERROR_CLASS(russian_error);
+ERROR_CLASS(russian_error);     ///< Errors related to processing Russian data file
 
 #if 0
 /*! \class  cty_error

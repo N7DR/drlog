@@ -99,7 +99,8 @@ void flush_read_socket(SOCKET& sock);
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr = 0);
+//const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr = 0);
+const sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr = 0);
 
 /*! \brief                          Generate a sockaddr_storage from an address and port
     \param  dotted_decimal_address  IP address as a dotted decimal

@@ -231,9 +231,9 @@ const bool thread_attribute::detached(void) const
 */
 
 /// default constructor
-pt_mutex::pt_mutex(void)
-{ pthread_mutex_init(&_mutex, NULL);
-}
+//pt_mutex::pt_mutex(void)
+//{ pthread_mutex_init(&_mutex, NULL);
+//}
 
 /// destructor
 pt_mutex::~pt_mutex(void)
@@ -362,7 +362,7 @@ const bool pt_condition_variable::wait(const unsigned int n_secs)
 { if (_mutex_p == NULL)
     throw pthread_error(PTHREAD_INVALID_MUTEX, "pointer to mutex is NULL in timed wait() function");
 
-  struct timespec timeout { time(NULL) + n_secs, 0 };
+  struct timespec timeout { static_cast<__time_t>(time(NULL) + n_secs), 0 };
 //  timeout.tv_sec = time(NULL) + n_secs;
 //  timeout.tv_nsec = 0;
 
@@ -383,7 +383,10 @@ void pt_condition_variable::signal(void)
 
 // -------------------------------------- safelock ------------------------
 
-// constructor
+/*! \brief          Construct from a named mutex
+    \param  ptm     mutex to be locked
+    \param  name    name of mutex
+*/
 safelock::safelock(pt_mutex& ptm, const string& name) :
  _name(name)
 { try
@@ -397,7 +400,8 @@ safelock::safelock(pt_mutex& ptm, const string& name) :
   }
 }
 
-// destructor
+/*! \brief  Destructor
+*/
 safelock::~safelock(void)
 { try
   { _ptm_p->unlock();
@@ -408,9 +412,6 @@ safelock::~safelock(void)
     throw;
   }
 }
-
-//#include <sys/types.h>
-//#include <unistd.h>
 
 /// How many threads belong to this process?
 const unsigned int n_threads(void)
@@ -432,6 +433,7 @@ const unsigned int n_threads(void)
 }
 
 // -----------------------------------------  Errors  -----------------------------------
+
 pthread_error_messages::pthread_error_messages(void)
 { add(0,                         "No error");
   add(PTHREAD_LOCK_ERROR,        "Lock error");
@@ -440,5 +442,3 @@ pthread_error_messages::pthread_error_messages(void)
   add(PTHREAD_ATTR_ERROR,        "Error managing thread attribute");
   add(PTHREAD_CREATION_ERROR,    "Error creating thread");
 }
-
-

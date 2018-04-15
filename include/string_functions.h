@@ -16,6 +16,7 @@
 #ifndef STRING_FUNCTIONS_H
 #define STRING_FUNCTIONS_H
 
+#include "macros.h"
 #include "x_error.h"
 
 #include <algorithm>
@@ -661,10 +662,9 @@ const std::vector<std::string> reformat_for_wprintw(const std::vector<std::strin
 
 // -------------------------------------- Errors  -----------------------------------
 
-/*! \class  string_function_error
-    \brief  Errors related to string processing
-*/
+ERROR_CLASS(string_function_error);     ///< string_function error
 
+#if 0
 class string_function_error : public x_error
 { 
 protected:
@@ -679,5 +679,6 @@ public:
     x_error(n, s)
   { }
 };
+#endif
 
 #endif    // STRING_FUNCTIONS_H

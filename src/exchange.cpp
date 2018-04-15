@@ -135,10 +135,11 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
       <i>n</i><i>precedence</i>
 */
 const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
-{ if (str.length() == 1)
-    return (legal_prec < last_char(str));
+{ //if (str.length() == 1)
+  //  return (legal_prec < last_char(str));
 
-  return ( _is_possible_serno(str) and (legal_prec < last_char(str)) );
+  //return ( _is_possible_serno(str) and (legal_prec < last_char(str)) );
+  return ( (str.length() == 1) ? (legal_prec < last_char(str)) : (_is_possible_serno(str) and (legal_prec < last_char(str))) );
 }
 
 /*! \brief          Does a string contain a possible check?
@@ -164,10 +165,12 @@ const bool parsed_ss_exchange::_is_possible_check(const string& str) const
     \return         whether <i>str</i> is a reasonable callsign
 */
 const bool parsed_ss_exchange::_is_possible_callsign(const string& str) const
-{ if (str.length() < 3)
-    return false;
+{ //if (str.length() < 3)
+  //  return false;
 
-  return (isalpha(str[0]) and contains_digit(str));
+  //return (isalpha(str[0]) and contains_digit(str));
+
+  return ( (str.length() < 3) ? false : ( isalpha(str[0]) and contains_digit(str) ) );
 }
 
 /*! \brief                      Constructor
@@ -948,46 +951,6 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
           rv = abbreviations[call_area - '0'];    // convert to number
         }
-
-#if 0
-        switch (call_area)
-        { case '1' :
-            rv = "NS";
-            break;
-
-          case '2' :
-            rv = "PQ";
-            break;
-
-          case '3' :
-            rv = "ON";
-            break;
-
-          case '4' :
-            rv = "MB";
-            break;
-
-          case '5' :
-            rv = "SK";
-            break;
-
-          case '6' :
-            rv = "AB";
-            break;
-
-          case '7' :
-            rv = "BC";
-            break;
-
-          case '9' :
-            rv = "NB";
-            break;
-
-          default :
-            break;
-        }
-#endif
-
       }
     }
 
@@ -1026,46 +989,6 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
           rv = abbreviations[call_area_c - '0'];    // convert to number
         }
-
-#if 0
-        switch (call_area)
-        { case '1' :
-            rv = "NS";
-            break;
-
-          case '2' :
-            rv = "PQ";
-            break;
-
-          case '3' :
-            rv = "ON";
-            break;
-
-          case '4' :
-            rv = "MB";
-            break;
-
-          case '5' :
-            rv = "SK";
-            break;
-
-          case '6' :
-            rv = "AB";
-            break;
-
-          case '7' :
-            rv = "BC";
-            break;
-
-          case '9' :
-            rv = "NB";
-            break;
-
-          default :
-            break;
-        }
-#endif
-
       }
     }
 

@@ -26,7 +26,7 @@
 // forward declaration
 class scp_databases;
 
-typedef std::unordered_set<std::string> SCP_SET;
+typedef std::unordered_set<std::string> SCP_SET;    ///< define the type of set used in SCP functions
 
 // -----------  scp_database  ----------------
 
@@ -53,11 +53,11 @@ protected:
 public:
 
 /// default constructor
-  scp_database(void)
+  inline scp_database(void)
     { }
 
 /// construct from filename; file is assumed to look similar to TRMASTER.ASC
-  scp_database(const std::string& filename);
+  explicit scp_database(const std::string& filename);
   
 /// construct from vector of calls
   explicit scp_database(const std::vector<std::string>& calls);
@@ -69,7 +69,7 @@ public:
   explicit scp_database(const drmaster& drm);
 
 /// destructor
-  virtual ~scp_database(void)
+  inline virtual ~scp_database(void)
     { }
 
 /// populate the database from a vector of calls
@@ -120,11 +120,11 @@ protected:
 public:
 
 /// default constructor
-  scp_databases(void)
+  inline scp_databases(void)
     { }
 
 /// destructor
-  virtual ~scp_databases(void)
+  inline virtual ~scp_databases(void)
     { }
 
 /// add a database to those that are consulted

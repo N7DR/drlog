@@ -46,6 +46,7 @@ const string adif_type::to_string(void) const
     \brief  Encapsulate ADIF AwardList
 */
 
+#if 0
 /// default constructor
 adif_AWARD_LIST::adif_AWARD_LIST(void) :
   adif_type('A')
@@ -67,9 +68,11 @@ adif_AWARD_LIST::adif_AWARD_LIST(const string& nm, const string& v) :
 adif_AWARD_LIST::adif_AWARD_LIST(const string& nm) :
   adif_type('A', nm, string())
 { }
+#endif
 
 // ---------------------------------------------------  adif_BOOLEAN -----------------------------------------
 
+#if 0
 /// default constructor
 adif_BOOLEAN::adif_BOOLEAN(void) :
   adif_type('B')
@@ -84,6 +87,7 @@ adif_BOOLEAN::adif_BOOLEAN(const string& nm, const string& v) :
 adif_BOOLEAN::adif_BOOLEAN(const string& nm) :
     adif_type('B', nm, string())
 { }
+#endif
 
 // ---------------------------------------------------  adif_DATE -----------------------------------------
 
@@ -132,6 +136,7 @@ void adif_DATE::value(const std::string& v)
 
 // ---------------------------------------------------  adif_ENUMERATION -----------------------------------------
 
+#if 0
 // default constructor
 adif_ENUMERATION::adif_ENUMERATION(void) :
     adif_type(' ')
@@ -146,9 +151,11 @@ adif_ENUMERATION::adif_ENUMERATION(const string& nm, const string& v) :
 adif_ENUMERATION::adif_ENUMERATION(const string& nm) :
     adif_type(' ', nm, string())
 { }
+#endif
 
 // ---------------------------------------------------  adif_LOCATION -----------------------------------------
 
+#if 0
 // default constructor
 adif_LOCATION::adif_LOCATION(void) :
     adif_type('L')
@@ -163,9 +170,11 @@ adif_LOCATION::adif_LOCATION(const string& nm, const string& v) :
 adif_LOCATION::adif_LOCATION(const string& nm) :
     adif_type('L', nm, string())
 { }
+#endif
 
 // ---------------------------------------------------  adif_MULTILINE_STRING -----------------------------------------
 
+#if 0
 // default constructor
 adif_MULTILINE_STRING::adif_MULTILINE_STRING(void) :
     adif_type('M')
@@ -180,9 +189,11 @@ adif_MULTILINE_STRING::adif_MULTILINE_STRING(const string& nm, const string& v) 
 adif_MULTILINE_STRING::adif_MULTILINE_STRING(const string& nm) :
     adif_type('M', nm, string())
 { }
+#endif
 
 // ---------------------------------------------------  adif_NUMBER -----------------------------------------
 
+#if 0
 // default constructor
 adif_NUMBER::adif_NUMBER(void) :
     adif_type('N')
@@ -197,6 +208,7 @@ adif_NUMBER::adif_NUMBER(const string& nm, const string& v) :
 adif_NUMBER::adif_NUMBER(const string& nm) :
     adif_type('N', nm, string())
 { }
+#endif
 
 // ---------------------------------------------------  adif_STRING -----------------------------------------
 

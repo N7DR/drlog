@@ -8,6 +8,11 @@
 // Copyright owners:
 //    N7DR
 
+/*! \file   string_functions.cpp
+
+    Functions related to the manipulation of strings
+*/
+
 #include "macros.h"
 #include "string_functions.h"
 
@@ -820,6 +825,32 @@ const size_t n_chars(const string& str)
 const bool is_legal_ipv4_address(const string& cs)
 { static const string separator(".");
 
+  const vector<string> fields = split_string(cs, separator);
+
+  if (fields.size() != 4)
+    return false;
+
+  for (const auto& field : fields)
+  { try
+    { const int value = from_string<int>(field);
+
+      if ((value < 0) or (value > 255))
+        return false;
+    }
+
+    catch (...)
+    { return false;
+    }
+  }
+
+  return true;
+}
+
+
+#if 0
+const bool is_legal_ipv4_address(const string& cs)
+{ static const string separator(".");
+
   string tmp_str = cs;
 
   for (int field = 0; field < 3; field++)
@@ -858,6 +889,7 @@ const bool is_legal_ipv4_address(const string& cs)
 
   return true;
 }
+#endif
 
 /*! \brief          Convert a four-byte value to a dotted decimal string
     \param  val     original value
@@ -951,10 +983,6 @@ const bool compare_calls(const string& call1, const string& call2)
     index++;
   }
 
-//  if (l1 < l2)
-//    return true;
-
-//  return false;
   return (l1 < l2);
 }
 
@@ -965,14 +993,7 @@ const bool compare_calls(const string& call1, const string& call2)
     This should be faster than the find_next_of() or C++ is_letter or similar generic functions
 */
 const bool contains_letter(const string& str)
-{ //for (unsigned int n = 0; n < str.size(); ++n)
-  //{ const char& c = str[n];
-//
-   // if ( (c >= 'A' and c <='Z') or (c >= 'a' and c <='z') )
-   //   return true;
- // }
-
-  for (const char& c : str)
+{ for (const char& c : str)
     if ( (c >= 'A' and c <='Z') or (c >= 'a' and c <='z') )
       return true;
 
@@ -986,14 +1007,7 @@ const bool contains_letter(const string& str)
     This should be faster than the find_next_of() or C++ is_digit or similar generic functions
 */
 const bool contains_digit(const string& str)
-{ //for (unsigned int n = 0; n < str.size(); ++n)
-  //{ const char& c = str[n];
-
-  //  if (c >= '0' and c <= '9' )
-  //    return true;
-  //}
-
-  for (const char& c : str)
+{ for (const char& c : str)
     if (c >= '0' and c <= '9' )
       return true;
 

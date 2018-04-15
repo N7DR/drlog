@@ -17,6 +17,7 @@
 #define AUDIO_H
 
 #include "macros.h"
+#include "string_functions.h"
 #include "x_error.h"
 
 #include <array>
@@ -25,6 +26,7 @@
 
 #include <alsa/asoundlib.h>
 
+/// audio formats
 enum AUDIO_FORMAT { AUDIO_FORMAT_DEFAULT = -1,
                     AUDIO_FORMAT_RAW     = 0,
                     AUDIO_FORMAT_VOC     = 1,
@@ -159,10 +161,11 @@ public:
     \brief  Class to implement the needed recording functions
 */
 
+/// structure to encapsulate parameters
 typedef struct { unsigned int     channels;     ///< number of channels
                  snd_pcm_format_t format;       ///< format number; defined in alsa/pcm.h
                  unsigned int     rate;         ///< rate (bytes per second)
-               } PARAMS_STRUCTURE ;             ///< structure to encapsulate parameters
+               } PARAMS_STRUCTURE ;
 
 class audio_recorder
 {
@@ -524,6 +527,6 @@ std::ostream& operator<<(std::ostream& ost, const fmt_chunk& chunk);
 
 // -------------------------------------- Errors  -----------------------------------
 
-ERROR_CLASS(audio_error);
+ERROR_CLASS(audio_error);   ///< errors related to audio processing
 
 #endif /* AUDIO_H */

@@ -185,10 +185,6 @@ trmaster_line::trmaster_line(const string& line)
   }
 }
 
-/// destructor
-//trmaster_line::~trmaster_line(void)
-//{ }
-
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
 */
@@ -554,11 +550,16 @@ trmaster::trmaster(const string& filename)
   else              // not binary
   { const vector<string> lines = to_lines(contents);
 
-    for (size_t n_line = 0; n_line < lines.size(); ++n_line)
-    { const trmaster_line record(lines[n_line]);
+//    for (size_t n_line = 0; n_line < lines.size(); ++n_line)
+//    { const trmaster_line record(lines[n_line]);
+//
+//      _records.insert(make_pair(record.call(), record));
+//    }
 
-      _records.insert(make_pair(record.call(), record));
-    }
+    FOR_ALL(lines, [&] (const string& line) { const trmaster_line record(line);
+
+                                             _records.insert( { record.call(), record } );
+                                            } );
   }
 }
 

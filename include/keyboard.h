@@ -32,9 +32,10 @@ extern const std::map<std::string, int>         key_names;              ///< The
 extern const std::map<std::string, std::string> equivalent_key_names;   ///< names that are equivalent
 extern const std::unordered_set<KeySym>         keypad_numbers;         ///< the keypad numbers and their equivalents
 
+/// key events
 enum key_event_type { KEY_PRESS,
                       KEY_RELEASE
-                    };                                                  ///< key events
+                    };
 
 typedef unsigned int key_code;                                          ///< syntactic sugar
 

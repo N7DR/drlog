@@ -38,6 +38,7 @@ extern message_stream ost;                  ///< for debugging, info
 class cpair;                                ///< forward declaration for a pair of colours
 extern cpair colours;                       ///< singleton used to hold  a pair of colours
 
+/// attributes and pre-defined cursor movement
 enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
                          WINDOW_BOLD,
                          WINDOW_HIGHLIGHT,
@@ -64,7 +65,7 @@ enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
                          CURSOR_HIDE,
                          CURSOR_END_OF_LINE,
                          WINDOW_NOP
-                       };                       ///< attributes and pre-defined cursor movement
+                       };
 
 // window creation flags
 const unsigned int WINDOW_NO_CURSOR = 1,        ///< do not display the cursor
@@ -86,10 +87,7 @@ extern pt_mutex screen_mutex;                   ///< mutex for the screen
 
 // -----------  cursor  ----------------
 
-/*! \class  cursor
-    \brief  Trivial class for moving the cursor
-*/
-
+/// class used for moving the cursor; encapsulates x,y coordinates
 WRAPPER_2(cursor, int, x, int, y);
 
 // -----------  cpair  ----------------
@@ -211,7 +209,7 @@ public:
 // forward declaration
 class window;
 
-// define the type used for functions that process events
+/// define the type used for functions that process events
 typedef void (* WINDOW_PROCESS_INPUT_TYPE) (window*, const keyboard_event&);
 
 class window
@@ -702,6 +700,7 @@ inline window& operator<(window& win, const colour_pair& cpair)
 // win < COLOURS(fgcolour, bgcolour)
 // in order to change the colours
 
+/// encapsulate foreground and background colours
 WRAPPER_2(COLOURS, int, fg, int, bg);
 
 /// window < COLOURS
