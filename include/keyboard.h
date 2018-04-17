@@ -134,8 +134,7 @@ public:
   inline const bool is_alt_and_ctrl(void) const
     { return is_alt_and_control(); }
 
-/// is the key unmodified?
-// NB: Numlock is Mod2Mask (see xmodmap command), so we can't merely test _xkey_state against zero
+/// is the key unmodified? NB: Numlock is Mod2Mask (see xmodmap command), so we can't merely test _xkey_state against zero
   inline const bool is_unmodified(void) const
     { return ( (_xkey_state bitand (ShiftMask bitor ControlMask bitor Mod1Mask) ) == 0  ); }
 
@@ -185,6 +184,7 @@ public:
 class keyboard_queue
 {
 protected:
+
   Display*                    _display_p;           ///< the X display pointer
   std::deque<keyboard_event>  _events;              ///< the actual queue
   keyboard_event              _last_event;          ///< the event most recently removed from the queue

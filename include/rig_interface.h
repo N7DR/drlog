@@ -476,26 +476,4 @@ const std::string hamlib_error_code_to_string(const int e);
 
 ERROR_CLASS(rig_interface_error);   ///< errors related to accessing the rig
 
-#if 0
-
-/*! \class  rig_interface_error
-    \brief  Errors related to accessing the rig
-*/
-
-class rig_interface_error : public x_error
-{
-protected:
-
-public:
-
-/*! \brief      Construct from error code and reason
-    \param  n   error code
-    \param  s   reason
-*/
-  inline rig_interface_error(const int n, const std::string& s) :
-    x_error(n, s)
-  { }
-};
-#endif
-
 #endif /* RIG_INTERFACE_H */

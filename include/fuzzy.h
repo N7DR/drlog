@@ -131,11 +131,11 @@ protected:
 public:
 
 /// default constructor
-  fuzzy_databases(void)
+  inline fuzzy_databases(void)
     { }
 
 /// destructor
-  virtual ~fuzzy_databases(void)
+  inline virtual ~fuzzy_databases(void)
     { }
 
 /// add a database to those that are consulted

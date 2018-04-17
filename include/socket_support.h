@@ -377,45 +377,4 @@ ERROR_CLASS(socket_support_error);  ///< general socket-related errors
 
 ERROR_CLASS(tcp_socket_error);      ///< errors related to TCP sockets
 
-#if 0
-
-/*! \class  socket_support_error
-    \brief  Socket-related errors
-*/
-
-class socket_support_error : public drlog_error
-{
-protected:
-
-public:
-
-/*! \brief      Construct from error code and reason
-    \param  n   error code
-    \param  s   reason
-*/
-  socket_support_error(const int n, const std::string& s = (std::string)"") : 
-    drlog_error(n, s) 
-  { }
-};
-
-/*! \class  tcp_socket_error
-    \brief  TCP socket-related errors
-*/
-
-class tcp_socket_error : public drlog_error
-{
-protected:
-
-public:
-
-/*! \brief  Construct from error code and reason
-    \param  n Error code
-    \param  s Reason
-*/
-  tcp_socket_error(const int n, const std::string& s = (std::string)"") : 
-    drlog_error(n, s) 
-  { }
-};
-#endif
-
 #endif    // !SOCKET_SUPPORT_H

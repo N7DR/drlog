@@ -20,19 +20,6 @@
 #include <string>
 #include <vector>
 
-// this should go away once it has been completely replaced by READ_AND_WRITE
-/// Syntactic sugar for declaration and read/write access
-#if !defined(RW)
-
-#define RW(x, y) \
-/*! Read access to _##y */ \
-  inline const x& y(void) const { return _##y; } \
-/*! Write access to _##y */ \
-  inline void y(const x& n) { _##y = n; }
-
-#endif      // !defined(RW)
-
-
 // enumerations
 
 // ant path  -------------------------------------------------------
@@ -48,11 +35,11 @@ enum  ANT_PATH_ENUM { ANT_PATH_GREYLINE,
 typedef std::array<std::string, N_ANT_PATHS> ANT_PATH_ENUMERATION_TYPE;     ///< type for antenna path enumeration
 
 /// legal values of ANT_PATH_ENUMERATION
-static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION = { { "G",
-                                                            "O",
-                                                            "S",
-                                                            "L"
-                                                        } };                ///< values for antenna path
+static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION = { "G",    ///< greyline
+                                                          "O",    ///< other
+                                                          "S",    ///< short path
+                                                          "L"     ///< long path
+                                                        };
 
 // mode  -------------------------------------------------------
 
@@ -133,78 +120,78 @@ enum MODE_ENUM { ADIF_MODE_AM,              // 0
 
 typedef std::array<std::string, N_ADIF_MODES> MODE_ENUMERATION_TYPE;    ///< type for mode enumeration
 
-static MODE_ENUMERATION_TYPE MODE_ENUMERATION = { { "AM",               // 0
-                                                    "AMTORFEC",
-                                                    "ASCI",
-                                                    "ATV",
-                                                    "CHIP64",
-                                                    "CHIP128",
-                                                    "CLO",
-                                                    "CONTESTI",
-                                                    "CW",
-                                                    "DSTAR",
-                                                    "DOMINO",            // 10
-                                                    "DOMINOF",
-                                                    "FAX",
-                                                    "FM",
-                                                    "FMHELL",
-                                                    "FSK31",
-                                                    "FSK441",
-                                                    "GTOR",
-                                                    "HELL",
-                                                    "HELL80",
-                                                    "HFSK",             // 20
-                                                    "JT44",
-                                                    "JT4A",
-                                                    "JT4B",
-                                                    "JT4C",
-                                                    "JT4D",
-                                                    "JT4E",
-                                                    "JT4F",
-                                                    "JT4G",
-                                                    "JT65",
-                                                    "JT65A",            // 30
-                                                    "JT65B",
-                                                    "JT65C",
-                                                    "JT6M",
-                                                    "MFSK8",
-                                                    "MFSK16",
-                                                    "MT63",
-                                                    "OLIVIA",
-                                                    "PAC",
-                                                    "PAC2",
-                                                    "PAC3",             // 40
-                                                    "PAX",
-                                                    "PAX2",
-                                                    "PCW",
-                                                    "PKT",
-                                                    "PSK10",
-                                                    "PSK31",
-                                                    "PSK63",
-                                                    "PSK63F",
-                                                    "PSK125",
-                                                    "PSKAM10",          // 50
-                                                    "PSKAM31",
-                                                    "PSKAM50",
-                                                    "PSKFEC31",
-                                                    "PSKHELL",
-                                                    "Q15",
-                                                    "QPSK31",
-                                                    "QPSK63",
-                                                    "QPSK125",
-                                                    "ROS",
-                                                    "RTTY",             // 60
-                                                    "RTTYM",
-                                                    "SSB",
-                                                    "SSTV",
-                                                    "THRB",
-                                                    "THOR",
-                                                    "THRBX",
-                                                    "TOR",
-                                                    "VOI",
-                                                    "WINMOR",
-                                                    "WSPR"              // 70
-                                                } };
+static MODE_ENUMERATION_TYPE MODE_ENUMERATION = { "AM",               // 0
+                                                  "AMTORFEC",
+                                                  "ASCI",
+                                                  "ATV",
+                                                  "CHIP64",
+                                                  "CHIP128",
+                                                  "CLO",
+                                                  "CONTESTI",
+                                                  "CW",
+                                                  "DSTAR",
+                                                  "DOMINO",            // 10
+                                                  "DOMINOF",
+                                                  "FAX",
+                                                  "FM",
+                                                  "FMHELL",
+                                                  "FSK31",
+                                                  "FSK441",
+                                                  "GTOR",
+                                                  "HELL",
+                                                  "HELL80",
+                                                  "HFSK",             // 20
+                                                  "JT44",
+                                                  "JT4A",
+                                                  "JT4B",
+                                                  "JT4C",
+                                                  "JT4D",
+                                                  "JT4E",
+                                                  "JT4F",
+                                                  "JT4G",
+                                                  "JT65",
+                                                  "JT65A",            // 30
+                                                  "JT65B",
+                                                  "JT65C",
+                                                  "JT6M",
+                                                  "MFSK8",
+                                                  "MFSK16",
+                                                  "MT63",
+                                                  "OLIVIA",
+                                                  "PAC",
+                                                  "PAC2",
+                                                  "PAC3",             // 40
+                                                  "PAX",
+                                                  "PAX2",
+                                                  "PCW",
+                                                  "PKT",
+                                                  "PSK10",
+                                                  "PSK31",
+                                                  "PSK63",
+                                                  "PSK63F",
+                                                  "PSK125",
+                                                  "PSKAM10",          // 50
+                                                  "PSKAM31",
+                                                  "PSKAM50",
+                                                  "PSKFEC31",
+                                                  "PSKHELL",
+                                                  "Q15",
+                                                  "QPSK31",
+                                                  "QPSK63",
+                                                  "QPSK125",
+                                                  "ROS",
+                                                  "RTTY",             // 60
+                                                  "RTTYM",
+                                                  "SSB",
+                                                  "SSTV",
+                                                  "THRB",
+                                                  "THOR",
+                                                  "THRBX",
+                                                  "TOR",
+                                                  "VOI",
+                                                  "WINMOR",
+                                                  "WSPR"              // 70
+                                                };
 
 // ARRL section  -------------------------------------------------------
 
@@ -294,87 +281,87 @@ enum SECTION_ENUM { SECTION_AL,
 
 typedef std::array<std::string, N_SECTIONS> SECTION_ENUMERATION_TYPE;       ///< type for section enumeration
 
-static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION = { { "AL",
-                                                          "AK",
-                                                          "AB",
-                                                          "AR",
-                                                          "AZ",
-                                                          "BC",
-                                                          "CO",
-                                                          "CT",
-                                                          "DE",
-                                                          "EB",
-                                                          "EMA",
-                                                          "ENY",
-                                                          "EPA",
-                                                          "EWA",
-                                                          "GA",
-                                                          "ID",
-                                                          "IL",
-                                                          "IN",
-                                                          "IA",
-                                                          "KS",
-                                                          "KY",
-                                                          "LAX",
-                                                          "LA",
-                                                          "ME",
-                                                          "MB",
-                                                          "MAR",
-                                                          "MDC",
-                                                          "MI",
-                                                          "MN",
-                                                          "MS",
-                                                          "MO",
-                                                          "MT",
-                                                          "NE",
-                                                          "NV",
-                                                          "NH",
-                                                          "NM",
-                                                          "NLI",
-                                                          "NL",
-                                                          "NC",
-                                                          "ND",
-                                                          "NTX",
-                                                          "NFL",
-                                                          "NNJ",
-                                                          "NNY",
-                                                          "NT",
-                                                          "OH",
-                                                          "OK",
-                                                          "ON",
-                                                          "ORG",
-                                                          "OR",
-                                                          "PAC",
-                                                          "PR",
-                                                          "QC",
-                                                          "RI",
-                                                          "SV",
-                                                          "SDG",
-                                                          "SF",
-                                                          "SJV",
-                                                          "SB",
-                                                          "SCV",
-                                                          "SK",
-                                                          "SC",
-                                                          "SD",
-                                                          "STX",
-                                                          "SFL",
-                                                          "SNJ",
-                                                          "TN",
-                                                          "VI",
-                                                          "UT",
-                                                          "VT",
-                                                          "VA",
-                                                          "WCF",
-                                                          "WTX",
-                                                          "WV",
-                                                          "WMA",
-                                                          "WNY",
-                                                          "WPA",
-                                                          "WWA",
-                                                          "WI",
-                                                          "WY"
-                                                      } };
+static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION = { "AL",
+                                                        "AK",
+                                                        "AB",
+                                                        "AR",
+                                                        "AZ",
+                                                        "BC",
+                                                        "CO",
+                                                        "CT",
+                                                        "DE",
+                                                        "EB",
+                                                        "EMA",
+                                                        "ENY",
+                                                        "EPA",
+                                                        "EWA",
+                                                        "GA",
+                                                        "ID",
+                                                        "IL",
+                                                        "IN",
+                                                        "IA",
+                                                        "KS",
+                                                        "KY",
+                                                        "LAX",
+                                                        "LA",
+                                                        "ME",
+                                                        "MB",
+                                                        "MAR",
+                                                        "MDC",
+                                                        "MI",
+                                                        "MN",
+                                                        "MS",
+                                                        "MO",
+                                                        "MT",
+                                                        "NE",
+                                                        "NV",
+                                                        "NH",
+                                                        "NM",
+                                                        "NLI",
+                                                        "NL",
+                                                        "NC",
+                                                        "ND",
+                                                        "NTX",
+                                                        "NFL",
+                                                        "NNJ",
+                                                        "NNY",
+                                                        "NT",
+                                                        "OH",
+                                                        "OK",
+                                                        "ON",
+                                                        "ORG",
+                                                        "OR",
+                                                        "PAC",
+                                                        "PR",
+                                                        "QC",
+                                                        "RI",
+                                                        "SV",
+                                                        "SDG",
+                                                        "SF",
+                                                        "SJV",
+                                                        "SB",
+                                                        "SCV",
+                                                        "SK",
+                                                        "SC",
+                                                        "SD",
+                                                        "STX",
+                                                        "SFL",
+                                                        "SNJ",
+                                                        "TN",
+                                                        "VI",
+                                                        "UT",
+                                                        "VT",
+                                                        "VA",
+                                                        "WCF",
+                                                        "WTX",
+                                                        "WV",
+                                                        "WMA",
+                                                        "WNY",
+                                                        "WPA",
+                                                        "WWA",
+                                                        "WI",
+                                                        "WY"
+                                                      };
 
 // awards  -------------------------------------------------------
 
@@ -413,36 +400,36 @@ enum AWARD_ENUM { AWARD_AJA,
 
 typedef std::array<std::string, N_AWARDS> AWARD_ENUMERATION_TYPE;       ///< type for award enumeration
 
-static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION = { { "AJA",
-                                                      "CQDX",
-                                                      "CQDXFIELD",
-                                                      "CQWAZ_MIXED",
-                                                      "CQWAZ_CW",
-                                                      "CQWAZ_PHONE",
-                                                      "CQWAZ_RTTY",
-                                                      "CQWAZ_160m",
-                                                      "CQWPX",
-                                                      "DARC_DOK",
-                                                      "DXCC",
-                                                      "DXCC_MIXED",
-                                                      "DXCC_CW",
-                                                      "DXCC_PHONE",
-                                                      "DXCC_RTTY",
-                                                      "IOTA",
-                                                      "JCC",
-                                                      "JCG",
-                                                      "MARATHON",
-                                                      "RDA",
-                                                      "WAB",
-                                                      "WAC",
-                                                      "WAE",
-                                                      "WAIP",
-                                                      "WAJA",
-                                                      "WAS",
-                                                      "WAZ",
-                                                      "USACA",
-                                                      "VUCC"
-                                                  } } ;
+static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION = { "AJA",
+                                                    "CQDX",
+                                                    "CQDXFIELD",
+                                                    "CQWAZ_MIXED",
+                                                    "CQWAZ_CW",
+                                                    "CQWAZ_PHONE",
+                                                    "CQWAZ_RTTY",
+                                                    "CQWAZ_160m",
+                                                    "CQWPX",
+                                                    "DARC_DOK",
+                                                    "DXCC",
+                                                    "DXCC_MIXED",
+                                                    "DXCC_CW",
+                                                    "DXCC_PHONE",
+                                                    "DXCC_RTTY",
+                                                    "IOTA",
+                                                    "JCC",
+                                                    "JCG",
+                                                    "MARATHON",
+                                                    "RDA",
+                                                    "WAB",
+                                                    "WAC",
+                                                    "WAE",
+                                                    "WAIP",
+                                                    "WAJA",
+                                                    "WAS",
+                                                    "WAZ",
+                                                    "USACA",
+                                                    "VUCC"
+                                                  } ;
 
 // band  -------------------------------------------------------
 
@@ -4895,34 +4882,6 @@ public:
   const std::string to_string(void) const;
 };
 
-#if 0
-/// macro to create some ADIF types
-#define ADIF_CLASS(x) \
-class x : public adif_type \
-{ \
-protected: \
-\
-public: \
-\
-/*! \brief default constructor \
-*/ \
-  x(void); \
-\
-/*! \brief      Constructor \
-    \param  nm  name \
-    \param  v   value \
-*/ \
-  x(const std::string& nm, const std::string& val); \
-\
-/*! \brief      Constructor \
-    \param  nm  name \
-\
-    Sets <i>_value</i> to the empty string. \
-*/\
-  explicit x(const std::string& nm); \
-}
-#endif
-
 // it's a pity that there is no way I can think of to create classes like this using templates instead of macros
 
 /// macro to create some simple ADIF types; x = class name; y = 'char'
@@ -5438,23 +5397,23 @@ public:
   READ_AND_WRITE(cont);                  ///< the contacted station's Continent
   READ_AND_WRITE(contacted_op);          ///< the callsign of the individual operating the contacted station
   READ_AND_WRITE(contest_id);            ///< QSO Contest Identifier
-  RW(adif_STRING,           country);               ///< the contacted station's DXCC entity name
-  RW(adif_NUMBER,           cqz);                   ///< the contacted station's CQ Zone
-  RW(adif_AWARD_LIST,       credit_submitted);      ///< the list of awards for which credit has been submitted
-  RW(adif_AWARD_LIST,       credit_granted);        ///< the list of awards for which credit has been granted
+  READ_AND_WRITE(country);               ///< the contacted station's DXCC entity name
+  READ_AND_WRITE(cqz);                   ///< the contacted station's CQ Zone
+  READ_AND_WRITE(credit_submitted);      ///< the list of awards for which credit has been submitted
+  READ_AND_WRITE(credit_granted);        ///< the list of awards for which credit has been granted
 
-  RW(adif_NUMBER,           distance);              ///< the distance between the logging station and the contacted station in kilometers
-  RW(adif_ENUMERATION,      dxcc);                  ///< the contacted station's Country Code
+  READ_AND_WRITE(distance);              ///< the distance between the logging station and the contacted station in kilometers
+  READ_AND_WRITE(dxcc);                  ///< the contacted station's Country Code
 
-  RW(adif_STRING,           email);                 ///< the contacted station's e-mail address
-  RW(adif_STRING,           eq_call);               ///< the contacted station's owner's callsign
-  RW(adif_DATE,             eqsl_qslrdate);         ///< date QSL received from eQSL.cc
-  RW(adif_DATE,             eqsl_qslsdate);         ///< date QSL sent to eQSL.cc
-  RW(adif_ENUMERATION,      eqsl_qsl_rcvd);         ///< eQSL.cc QSL received status
-  RW(adif_ENUMERATION,      eqsl_qsl_sent);         ///< eQSL.cc QSL sent status
+  READ_AND_WRITE(email);                 ///< the contacted station's e-mail address
+  READ_AND_WRITE(eq_call);               ///< the contacted station's owner's callsign
+  READ_AND_WRITE(eqsl_qslrdate);         ///< date QSL received from eQSL.cc
+  READ_AND_WRITE(eqsl_qslsdate);         ///< date QSL sent to eQSL.cc
+  READ_AND_WRITE(eqsl_qsl_rcvd);         ///< eQSL.cc QSL received status
+  READ_AND_WRITE(eqsl_qsl_sent);         ///< eQSL.cc QSL sent status
 
-  RW(adif_BOOLEAN,          force_init);            ///< new EME initial
-  RW(adif_NUMBER,           freq);                  ///< QSO frequency in megahertz
+  READ_AND_WRITE(force_init);            ///< new EME initial
+  READ_AND_WRITE(freq);                  ///< QSO frequency in megahertz
 
 /*! \brief      Set the frequency (in MHz) from a string
     \param  v   string representing teh frequency in MHz
@@ -5462,104 +5421,104 @@ public:
   inline void freq(const std::string& v)
     { _freq.value(v); }
 
-  RW(adif_NUMBER,           freq_rx);               ///< in a split frequency QSO, the logging station's receiving frequency in megahertz
+  READ_AND_WRITE(freq_rx);               ///< in a split frequency QSO, the logging station's receiving frequency in megahertz
 
-  RW(adif_STRING,           gridsquare);            ///< the contacted station's Maidenhead grid square
+  READ_AND_WRITE(gridsquare);            ///< the contacted station's Maidenhead grid square
 
-  RW(adif_STRING,           iota);                  ///< the contacted station's IOTA designator, in format CC-XXX
-  RW(adif_STRING,           iota_island_id);        ///< the contacted station's IOTA Island Identifier
-  RW(adif_NUMBER,           ituz);                  ///< the contacted station's ITU zone
+  READ_AND_WRITE(iota);                  ///< the contacted station's IOTA designator, in format CC-XXX
+  READ_AND_WRITE(iota_island_id);        ///< the contacted station's IOTA Island Identifier
+  READ_AND_WRITE(ituz);                  ///< the contacted station's ITU zone
 
-  RW(adif_NUMBER,           k_index);               ///< the geomagnetic K index at the time of the QSO
+  READ_AND_WRITE(k_index);               ///< the geomagnetic K index at the time of the QSO
 
-  RW(adif_LOCATION,         lat);                   ///< the contacted station's latitude
-  RW(adif_LOCATION,         lon);                   ///< the contacted station's longitude
-  RW(adif_DATE,             lotw_qslrdate);         ///< date QSL received from ARRL soi-disant Logbook of the World
-  RW(adif_DATE,             lotw_qslsdate);         ///< date QSL sent to ARRL soi-disant Logbook of the World
-  RW(adif_ENUMERATION,      lotw_qsl_rcvd);         ///< ARRL soi-disant Logbook of the World QSL received status
-  RW(adif_ENUMERATION,      lotw_qsl_sent);         ///< ARRL soi-disant Logbook of the World QSL sent status
+  READ_AND_WRITE(lat);                   ///< the contacted station's latitude
+  READ_AND_WRITE(lon);                   ///< the contacted station's longitude
+  READ_AND_WRITE(lotw_qslrdate);         ///< date QSL received from ARRL soi-disant Logbook of the World
+  READ_AND_WRITE(lotw_qslsdate);         ///< date QSL sent to ARRL soi-disant Logbook of the World
+  READ_AND_WRITE(lotw_qsl_rcvd);         ///< ARRL soi-disant Logbook of the World QSL received status
+  READ_AND_WRITE(lotw_qsl_sent);         ///< ARRL soi-disant Logbook of the World QSL sent status
 
-  RW(adif_NUMBER,           max_bursts);            ///< maximum length of meteor scatter bursts heard by the logging station, in seconds
+  READ_AND_WRITE(max_bursts);            ///< maximum length of meteor scatter bursts heard by the logging station, in seconds
 //  RW(adif_ENUMERATION,      mode);                  ///< QSO Mode
-  RW(adif_ENUM<MODE_ENUMERATION_TYPE>, mode);       ///< QSO mode
-  RW(adif_STRING,           ms_shower);             ///< For meteor scatter QSOs, the name of the meteor shower in progress
-  RW(adif_STRING,           my_city);               ///< the logging station's city/town/village/hamlet
-  RW(adif_ENUMERATION,      my_cnty);               ///< the logging station's Secondary Administrative Subdivision
-  RW(adif_ENUMERATION,      my_country);            ///< the logging station's DXCC entity name
-  RW(adif_NUMBER,           my_cq_zone);            ///< the logging station's CQ zone
-  RW(adif_STRING,           my_gridsquare);         ///< the logging station's Maidenhead grid qquare
-  RW(adif_STRING,           my_iota);               ///< the logging station's IOTA designator
-  RW(adif_STRING,           my_iota_island_id);     ///< the logging station's IOTA Island Identifier
-  RW(adif_NUMBER,           my_itu_zone);           ///< the logging station's ITU zone
-  RW(adif_LOCATION,         my_lat);                ///< the logging station's latitude
-  RW(adif_LOCATION,         my_lon);                ///< the logging station's longitude
-  RW(adif_STRING,           my_name);               ///< the logging operator's name
-  RW(adif_STRING,           my_postal_code);        ///< the logging station's postal code
-  RW(adif_STRING,           my_rig);                ///< description of the logging station's equipment
-  RW(adif_STRING,           my_sig);                ///< special interest activity or event
-  RW(adif_STRING,           my_sig_info);           ///< special interest activity or event information
-  RW(adif_ENUMERATION,      my_state);              ///< the code for the logging station's Primary Administrative Subdivision
-  RW(adif_STRING,           my_street);             ///< the logging station's street
+  READ_AND_WRITE(mode);       ///< QSO mode
+  READ_AND_WRITE(ms_shower);             ///< For meteor scatter QSOs, the name of the meteor shower in progress
+  READ_AND_WRITE(my_city);               ///< the logging station's city/town/village/hamlet
+  READ_AND_WRITE(my_cnty);               ///< the logging station's Secondary Administrative Subdivision
+  READ_AND_WRITE(my_country);            ///< the logging station's DXCC entity name
+  READ_AND_WRITE(my_cq_zone);            ///< the logging station's CQ zone
+  READ_AND_WRITE(my_gridsquare);         ///< the logging station's Maidenhead grid qquare
+  READ_AND_WRITE(my_iota);               ///< the logging station's IOTA designator
+  READ_AND_WRITE(my_iota_island_id);     ///< the logging station's IOTA Island Identifier
+  READ_AND_WRITE(my_itu_zone);           ///< the logging station's ITU zone
+  READ_AND_WRITE(my_lat);                ///< the logging station's latitude
+  READ_AND_WRITE(my_lon);                ///< the logging station's longitude
+  READ_AND_WRITE(my_name);               ///< the logging operator's name
+  READ_AND_WRITE(my_postal_code);        ///< the logging station's postal code
+  READ_AND_WRITE(my_rig);                ///< description of the logging station's equipment
+  READ_AND_WRITE(my_sig);                ///< special interest activity or event
+  READ_AND_WRITE(my_sig_info);           ///< special interest activity or event information
+  READ_AND_WRITE(my_state);              ///< the code for the logging station's Primary Administrative Subdivision
+  READ_AND_WRITE(my_street);             ///< the logging station's street
 
-  RW(adif_STRING,           name);                  ///< the contacted station's operator's name
-  RW(adif_MULTILINE_STRING, notes);                 ///< QSO notes
-  RW(adif_NUMBER,           nr_bursts);             ///< the number of meteor scatter bursts heard by the logging station
-  RW(adif_NUMBER,           nr_pings);              ///< the number of meteor scatter pings heard by the logging station
+  READ_AND_WRITE(name);                  ///< the contacted station's operator's name
+  READ_AND_WRITE(notes);                 ///< QSO notes
+  READ_AND_WRITE(nr_bursts);             ///< the number of meteor scatter bursts heard by the logging station
+  READ_AND_WRITE(nr_pings);              ///< the number of meteor scatter pings heard by the logging station
 
 //  RW(adif_STRING,           operator);              ///< the logging operator's callsign
-  RW(adif_STRING,           owner_callsign);        ///< the callsign of the owner of the station used to log the contact
+  READ_AND_WRITE(owner_callsign);        ///< the callsign of the owner of the station used to log the contact
 
-  RW(adif_STRING,           pfx);                   ///< the contacted station's WPX prefix
-  RW(adif_STRING,           precedence);            ///< contest precedence (e.g. for ARRL Sweepstakes)
-  RW(adif_STRING,           programid);             ///< identifies the name of the logger, converter, or utility that created or processed this ADIF file
-  RW(adif_STRING,           programversion);        ///< identifies the version of the logger, converter, or utility that created or processed this ADIF file
+  READ_AND_WRITE(pfx);                   ///< the contacted station's WPX prefix
+  READ_AND_WRITE(precedence);            ///< contest precedence (e.g. for ARRL Sweepstakes)
+  READ_AND_WRITE(programid);             ///< identifies the name of the logger, converter, or utility that created or processed this ADIF file
+  READ_AND_WRITE(programversion);        ///< identifies the version of the logger, converter, or utility that created or processed this ADIF file
 //  RW(adif_ENUMERATION,      prop_mode);             ///< QSO propagation mode
-  RW(adif_ENUM<PROPAGATION_MODE_ENUMERATION_TYPE>, prop_mode);  ///< QSO propagation mode
-  RW(adif_STRING,           public_key);            ///< public encryption key
+  READ_AND_WRITE(prop_mode);  ///< QSO propagation mode
+  READ_AND_WRITE(public_key);            ///< public encryption key
 
-  RW(adif_MULTILINE_STRING, qslmsg);                ///< QSL card message
-  RW(adif_DATE,             qslrdate);              ///< QSL received date
-  RW(adif_DATE,             qslsdate);              ///< QSL sent date
-  RW(adif_ENUMERATION,      qsl_rcvd);              ///< QSL received status
-  RW(adif_ENUMERATION,      qsl_rcvd_via);          ///< means by which the QSL was received by the logging station
-  RW(adif_ENUMERATION,      qsl_sent);              ///< QSL sent status
-  RW(adif_ENUMERATION,      qsl_sent_via);          ///< means by which the QSL was sent by the logging station
-  RW(adif_STRING,           qsl_via);               ///< the contacted station's QSL route
-  RW(adif_ENUMERATION,      qso_complete);          ///< indicates whether the QSO was complete from the perspective of the logging station
-  RW(adif_DATE,             qso_date);              ///< date on which the QSO started
-  RW(adif_DATE,             qso_date_off);          ///< date on which the QSO ended
-  RW(adif_BOOLEAN,          qso_random);            ///< indicates whether the QSO was random or scheduled
-  RW(adif_STRING,           qth);                   ///< the contacted station's conurbation
+  READ_AND_WRITE(qslmsg);                ///< QSL card message
+  READ_AND_WRITE(qslrdate);              ///< QSL received date
+  READ_AND_WRITE(qslsdate);              ///< QSL sent date
+  READ_AND_WRITE(qsl_rcvd);              ///< QSL received status
+  READ_AND_WRITE(qsl_rcvd_via);          ///< means by which the QSL was received by the logging station
+  READ_AND_WRITE(qsl_sent);              ///< QSL sent status
+  READ_AND_WRITE(qsl_sent_via);          ///< means by which the QSL was sent by the logging station
+  READ_AND_WRITE(qsl_via);               ///< the contacted station's QSL route
+  READ_AND_WRITE(qso_complete);          ///< indicates whether the QSO was complete from the perspective of the logging station
+  READ_AND_WRITE(qso_date);              ///< date on which the QSO started
+  READ_AND_WRITE(qso_date_off);          ///< date on which the QSO ended
+  READ_AND_WRITE(qso_random);            ///< indicates whether the QSO was random or scheduled
+  READ_AND_WRITE(qth);                   ///< the contacted station's conurbation
 
-  RW(adif_MULTILINE_STRING, rig);                   ///< description of the contacted station's equipment
-  RW(adif_STRING,           rst_rcvd);              ///< signal report from the contacted station
-  RW(adif_STRING,           rst_sent);              ///< signal report sent to the contacted station
-  RW(adif_NUMBER,           rx_pwr);                ///< the contacted station's transmitter power in watts (bizarre! since "rx" means "receiver")
+  READ_AND_WRITE(rig);                   ///< description of the contacted station's equipment
+  READ_AND_WRITE(rst_rcvd);              ///< signal report from the contacted station
+  READ_AND_WRITE(rst_sent);              ///< signal report sent to the contacted station
+  READ_AND_WRITE(rx_pwr);                ///< the contacted station's transmitter power in watts (bizarre! since "rx" means "receiver")
 
-  RW(adif_STRING,           sat_mode);              ///< satellite mode
-  RW(adif_STRING,           sat_name);              ///< name of satellite
-  RW(adif_NUMBER,           sfi);                   ///< the solar flux at the time of the QSO [sic]
-  RW(adif_STRING,           sig);                   ///< the name of the contacted station's special activity or interest group
-  RW(adif_STRING,           sig_info);              ///< information associated with the contacted station's activity or interest group
-  RW(adif_NUMBER,           srx);                   ///< contest QSO received serial number
-  RW(adif_STRING,           srx_string);            ///< contest QSO received information
-  RW(adif_ENUMERATION,      state);                 ///< the code for the contacted station's Primary Administrative Subdivision
-  RW(adif_STRING,           station_callsign);      ///< the logging station's callsign
-  RW(adif_NUMBER,           stx);                   ///< contest QSO transmitted serial number
-  RW(adif_STRING,           stx_string);            ///< contest QSO transmitted information
-  RW(adif_BOOLEAN,          swl);                   ///< indicates whether the QSO information pertains to an SWL report
+  READ_AND_WRITE(sat_mode);              ///< satellite mode
+  READ_AND_WRITE(sat_name);              ///< name of satellite
+  READ_AND_WRITE(sfi);                   ///< the solar flux at the time of the QSO [sic]
+  READ_AND_WRITE(sig);                   ///< the name of the contacted station's special activity or interest group
+  READ_AND_WRITE(sig_info);              ///< information associated with the contacted station's activity or interest group
+  READ_AND_WRITE(srx);                   ///< contest QSO received serial number
+  READ_AND_WRITE(srx_string);            ///< contest QSO received information
+  READ_AND_WRITE(state);                 ///< the code for the contacted station's Primary Administrative Subdivision
+  READ_AND_WRITE(station_callsign);      ///< the logging station's callsign
+  READ_AND_WRITE(stx);                   ///< contest QSO transmitted serial number
+  READ_AND_WRITE(stx_string);            ///< contest QSO transmitted information
+  READ_AND_WRITE(swl);                   ///< indicates whether the QSO information pertains to an SWL report
 
-  RW(adif_NUMBER,           ten_ten);               ///< Ten-Ten number
-  RW(adif_TIME,             time_off);              ///< HHMM or HHMMSS in UTC
-  RW(adif_TIME,             time_on);               ///< HHMM or HHMMSS in UTC
-  RW(adif_NUMBER,           tx_pwr);                ///< the logging station's power in watts
+  READ_AND_WRITE(ten_ten);               ///< Ten-Ten number
+  READ_AND_WRITE(time_off);              ///< HHMM or HHMMSS in UTC
+  READ_AND_WRITE(time_on);               ///< HHMM or HHMMSS in UTC
+  READ_AND_WRITE(tx_pwr);                ///< the logging station's power in watts
 
 //  std::vector<adif_STRING>  _USERDEF;           ///< the names of user-defined fields
 
-  RW(adif_STRING,           web);                   ///< the contacted station's URL [sic]
+  READ_AND_WRITE(web);                   ///< the contacted station's URL [sic]
 
-  RW(unsigned int,          linefeeds_after_field); ///< number of linefeeds to insert after each field (typically 0 or 1)
-  RW(unsigned int,          linefeeds_after_record);///< number of *additional* linefeeds to insert after the record (typically 0, 1 or 2)
+  READ_AND_WRITE(linefeeds_after_field); ///< number of linefeeds to insert after each field (typically 0 or 1)
+  READ_AND_WRITE(linefeeds_after_record);///< number of *additional* linefeeds to insert after the record (typically 0, 1 or 2)
 
 /// access to _class is different because "class" is a reserved word in C++
   inline const adif_STRING clss(void) const

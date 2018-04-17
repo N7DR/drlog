@@ -216,9 +216,9 @@ ostream& operator<<(ostream& ost, const exchange_field& exch_f)
 */
 
 /// constructor
-points_structure::points_structure(void) :
-  _points_type(POINTS_NORMAL)
-{ }
+//points_structure::points_structure(void) :
+//  _points_type(POINTS_NORMAL)
+//{ }
 
 // -------------------------  contest_rules  ---------------------------
 
@@ -981,9 +981,14 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
 const bool contest_rules::is_canonical_value(const string& field_name, const string& putative_canonical_value) const
 { SAFELOCK(rules);
 
-  for (unsigned int n = 0; n < _exch_values.size(); ++n)
-  { if (_exch_values[n].name() == field_name)
-      return _exch_values[n].is_legal_canonical_value(putative_canonical_value);
+//  for (unsigned int n = 0; n < _exch_values.size(); ++n)
+//  { if (_exch_values[n].name() == field_name)
+//      return _exch_values[n].is_legal_canonical_value(putative_canonical_value);
+//  }
+
+  for (const auto& exch_value : _exch_values)
+  { if (exch_value.name() == field_name)
+      return exch_value.is_legal_canonical_value(putative_canonical_value);
   }
 
   return false;
@@ -1073,14 +1078,7 @@ const MODE contest_rules::next_mode(const MODE current_mode) const
   if (cit == _permitted_modes.cend())    // should never happen
     return *(_permitted_modes.cbegin());
 
-//  ++cit;
-
   return (++cit == _permitted_modes.cend() ? *(_permitted_modes.cbegin()) : *cit);
-
-//  if (cit == _permitted_modes.cend())
-//    return *(_permitted_modes.cbegin());
-
-//  return *cit;
 }
 
 /*! \brief      Add a band to those permitted in the contest
@@ -1101,32 +1099,71 @@ const BAND contest_rules::next_band_up(const BAND current_band) const
 
   auto cit = find(_permitted_bands.begin(), _permitted_bands.end(), current_band);
 
-  if (cit == _permitted_bands.cend())    // should never happen
+  if (cit == _permitted_bands.cend())    // might happen if rig has been manually QSYed to a non-contest band
+  {    //return *(_permitted_bands.cbegin());
+    int band_nr = static_cast<int>(current_band);
+
+// find first permitted band higher than the current one
+//    size_t index = 0;
+
+    const set<BAND> pbs = permitted_bands_set();
+
+    for (int counter = static_cast<int>(MIN_BAND); counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
+    { band_nr++;
+
+      if (band_nr > MAX_BAND)
+        band_nr = MIN_BAND;
+
+      bool is_permitted = (pbs < static_cast<BAND>(band_nr));
+
+      if (is_permitted)
+        return (static_cast<BAND>(band_nr));
+    }
+
+// should never get here
     return *(_permitted_bands.cbegin());
+  }
 
   return (++cit == _permitted_bands.cend() ? *(_permitted_bands.cbegin()) : *cit);
-
-//  cit++;
-
-//  if (cit == _permitted_bands.cend())
-//    return *(_permitted_bands.cbegin());
-
-//  return *cit;
 }
 
 /// get the next band down
 const BAND contest_rules::next_band_down(const BAND current_band) const
-{ SAFELOCK(rules);
+{ //ost << "next band down from " << BAND_NAME[current_band] << endl;
+
+  SAFELOCK(rules);
 
   auto cit = find(_permitted_bands.begin(), _permitted_bands.end(), current_band);
 
-  if (cit == _permitted_bands.end())
-    return *(_permitted_bands.begin());
+  if (cit == _permitted_bands.end())    // might happen if rig has been manually QSYed to a non-contest band
+  { //return *(_permitted_bands.begin());
+    //ost << "On a non-contest band" << endl;
+
+    int band_nr = static_cast<int>(current_band);
+
+// find first permitted band higher than the current one
+//    size_t index = 0;
+
+    const set<BAND> pbs = permitted_bands_set();
+
+    for (int counter = static_cast<int>(MIN_BAND); counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used
+    { band_nr--;
+
+      if (band_nr < MIN_BAND)
+        band_nr = MAX_BAND;
+
+      bool is_permitted = (pbs < static_cast<BAND>(band_nr));
+
+      if (is_permitted)
+        return (static_cast<BAND>(band_nr));
+    }
+
+// should never get here
+    return *(_permitted_bands.cend());
+  }
 
   if (cit == _permitted_bands.begin())
     return _permitted_bands[_permitted_bands.size() - 1];
-
-//  cit--;
 
   return *(--cit);
 }
@@ -1328,11 +1365,7 @@ const bool contest_rules::is_exchange_field_used_for_country(const string& field
       return (ssets.second < field_name);
   }
 
-//    if (is_a_per_country_field)
-//      return false;
-
-//    return true;  // a known field, and this is not a special country
-  return !is_a_per_country_field;
+  return !is_a_per_country_field;       // a known field, and this is not a special country
 }
 
 /// the names of all the possible exchange fields

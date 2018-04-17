@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file parallel_port.h
+/*!     \file   parallel_port.h
 
         Classes and functions related to controlling a parallel port
         Uses the libieee1284 library
@@ -111,6 +111,7 @@ Pin No (DB25)   Pin No (36 pin)     Signal name     Direction   Register - bit  
 class parallel_port
 {
 protected:
+
   struct parport_list   _list_from_library;     ///< list of parallel ports, from ieee1284 library
   int                   _port_nr;               ///< number of this port
 
@@ -119,7 +120,7 @@ public:
 /*! \brief  Open a port
     \param  filename    name of the port to open
 */
-  parallel_port(const std::string& filename);
+  explicit parallel_port(const std::string& filename);
 
 /// destructor -- closes the port
   virtual ~parallel_port(void);
@@ -133,6 +134,9 @@ public:
 
 // -------------------------------------- Errors  -----------------------------------
 
+ERROR_CLASS(parallel_port_error);   ///< errors related to parallel port processing
+
+#if 0
 /*! \class  parallel_port_error
     \brief  Errors related to parallel port processing
 */
@@ -151,5 +155,6 @@ public:
     x_error(n, s)
   { }
 };
+#endif
 
 #endif    // PARALLEL_PORT_H

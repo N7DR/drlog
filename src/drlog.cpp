@@ -1882,7 +1882,17 @@ void* display_rig_status(void* vp)
           MODE m = safe_get_mode();                                                  // mode as determined by drlog, not by rig
           m = rig_status_thread_parameters.rigp() -> rig_mode();                     // actual mode of rig (in case there's been a manual mode change); note that this might fail, which is why we set the mode in the prior line
 
-          update_based_on_frequency_change(f, m);
+// have we changed band (perhaps manually)?
+          if (safe_get_band() != to_BAND(f))
+          { safe_set_band(to_BAND(f));
+
+            update_remaining_callsign_mults_window(statistics, string(), safe_get_band(), m);
+            update_remaining_country_mults_window(statistics, safe_get_band(), m);
+            update_remaining_exchange_mults_windows(rules, statistics, safe_get_band(), m);
+          }
+
+
+          update_based_on_frequency_change(f, m);   // changes windows
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
@@ -2902,8 +2912,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // for current status of regex support, see: http://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html#status.iso.tr1
 
     if (!processed)
-    { //const bool contains_letter = (contents.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ") != string::npos);
-      const bool contains_letter = contains_upper_case_letter(contents);
+    { const bool contains_letter = contains_upper_case_letter(contents);
 
       if (!contains_letter)    // try to parse as frequency
       { const bool contains_plus  = (contents[0] == '+');        // this can be entered from the keypad w/o using shift
@@ -2944,22 +2953,24 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             }
           }
 
-          const frequency new_frequency( (contains_plus or contains_minus) ? rig.rig_frequency().hz() + (value * 1000) : value);
+          const frequency cur_rig_frequency = rig.rig_frequency();
+          const frequency new_frequency( (contains_plus or contains_minus) ? cur_rig_frequency.hz() + (value * 1000) : value);
           const BAND new_band = to_BAND(new_frequency);
-          const BAND old_band = to_BAND(rig.rig_frequency());
+ //         const BAND cur_band = to_BAND(cur_rig_frequency);
           bool valid = ( rules.permitted_bands_set() < new_band );
 
           if ( (valid) and (new_band == BAND_160))
             valid = ( (new_frequency.hz() >= 1800000) and (new_frequency.hz() <= 2000000) );
 
           if (valid)
-          { BAND cur_band = safe_get_band();
+          { //BAND cur_band = safe_get_band();
+            const BAND cur_band = to_BAND(cur_rig_frequency);
             MODE cur_mode = safe_get_mode();
 
-            rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
+            rig.set_last_frequency(cur_band, cur_mode, cur_rig_frequency);             // save current frequency
             rig.rig_frequency(new_frequency);
 
-            if (new_band != old_band)
+            if (new_band != cur_band)
               rig.base_state();
 
             { const MODE m = default_mode(new_frequency);
@@ -2972,13 +2983,21 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             display_band_mode(win_band_mode, new_band, cur_mode);
 
             if (new_band != cur_band)
-            { cur_band = new_band;
+            { //cur_band = new_band;
               safe_set_band(new_band);
 
-              bandmap& bm = bandmaps[cur_band];
-              win_bandmap <= bm;
+              update_based_on_frequency_change(new_frequency, cur_mode);
 
-              win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
+//              bandmap& bm = bandmaps[cur_band];
+//              win_bandmap <= bm;
+
+//              win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
+//
+// is there a station close to our frequency?
+//              const string nearby_callsign = bm.nearest_rbn_threshold_and_filtered_callsign(new_frequency.khz(), context.guard_band(cur_mode));
+
+//              display_nearby_callsign(nearby_callsign);  // clears nearby window if call is empty
+
 
 // update displays of needed mults
               update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
@@ -7660,47 +7679,26 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   { my_bandmap_entry.freq(f);   // also updates the band
     display_band_mode(win_band_mode, my_bandmap_entry.band(), my_bandmap_entry.mode());
 
-    bandmap& bandmap_this_band = bandmaps[my_bandmap_entry.band()];
+    bandmap& bm = bandmaps[my_bandmap_entry.band()];
 
-    bandmap_this_band += my_bandmap_entry;
-    win_bandmap <= bandmap_this_band;       // move this outside the SAFELOCK?
+    bm += my_bandmap_entry;
+    win_bandmap <= bm;       // move this outside the SAFELOCK?
+
+    win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
 
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
 // to have invisible calls show up when I went to a frequency
-    const string nearby_callsign = bandmap_this_band.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
+    const string nearby_callsign = bm.nearest_rbn_threshold_and_filtered_callsign(f.khz(), context.guard_band(m));
 
     if (!nearby_callsign.empty())
     { display_nearby_callsign(nearby_callsign);
-
-#if 0
-      if (in_call_window)
-      { string call_contents = remove_peripheral_spaces(win_call.read());
-
-        if (!call_contents.empty())
-        { if (last(call_contents, 5) == " DUPE")
-            call_contents = call_contents.substr(0, call_contents.length() - 5);    // reduce to actual call
-
-          string last_call;
-
-          { SAFELOCK(dupe_check);
-
-            last_call = last_call_inserted_with_space;
-          }
-
-          if (call_contents != last_call)
-          { win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
-          }
-        }
-      }
-#endif
-
     }
     else    // no nearby callsign
     { if (in_call_window)
 // see if we are within twice the guard band before we clear the call window
       { const string call_contents = remove_peripheral_spaces(win_call.read());
-        const bandmap_entry be = bandmap_this_band[call_contents];
+        const bandmap_entry be = bm[call_contents];
         const unsigned int f_diff = abs(be.freq().hz() - f.hz());
 
         if (f_diff > 2 * context.guard_band(m))    // delete this and prior three lines to return to old code

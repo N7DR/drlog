@@ -462,23 +462,23 @@ public:
   CONTEXTREAD(rbn_port);                         ///< port number on the RBN server
   CONTEXTREAD(rbn_server);                       ///< hostname or IP address of RBN server
   CONTEXTREAD(rbn_threshold);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
-  SAFEREAD(rbn_username, _context);                     ///< username to use on the RBN server
-  SAFEREAD(record_audio, _context);                     ///< whether to record audio
-  SAFEREAD(reject_colour, _context);                    ///< colour for calls that are dupes
-  SAFEREAD(remaining_callsign_mults_list, _context);    ///< callsign mults to display
-  SAFEREAD(remaining_country_mults_list, _context);     ///< country mults to display
-  SAFEREAD(rig1_baud, _context);                        ///< baud rate for rig
-  SAFEREAD(rig1_data_bits, _context);                   ///< number of data bits for rig
-  SAFEREAD(rig1_name, _context);                        ///< name of rig
-  SAFEREAD(rig1_port, _context);                        ///< port over which to communicate with rig
-  SAFEREAD(rig1_stop_bits, _context);                   ///< number of stop bits for rig
-  SAFEREAD(rig1_type, _context);                        ///< model name of rig
-  SAFEREAD(russian_filename, _context);                 ///< filename of russian location file (default = "russian-data")
+  CONTEXTREAD(rbn_username);                     ///< username to use on the RBN server
+  CONTEXTREAD(record_audio);                     ///< whether to record audio
+  CONTEXTREAD(reject_colour);                    ///< colour for calls that are dupes
+  CONTEXTREAD(remaining_callsign_mults_list);    ///< callsign mults to display
+  CONTEXTREAD(remaining_country_mults_list);     ///< country mults to display
+  CONTEXTREAD(rig1_baud);                        ///< baud rate for rig
+  CONTEXTREAD(rig1_data_bits);                   ///< number of data bits for rig
+  CONTEXTREAD(rig1_name);                        ///< name of rig
+  CONTEXTREAD(rig1_port);                        ///< port over which to communicate with rig
+  CONTEXTREAD(rig1_stop_bits);                   ///< number of stop bits for rig
+  CONTEXTREAD(rig1_type);                        ///< model name of rig
+  CONTEXTREAD(russian_filename);                 ///< filename of russian location file (default = "russian-data")
 
-  SAFEREAD(score_bands, _context);                      ///< which bands are going to be scored?
-  SAFEREAD(score_modes, _context);                      ///< which modes are going to be scored?
-  SAFEREAD(screen_snapshot_file, _context);             ///< base name of file for screenshot
-  SAFEREAD(screen_snapshot_on_exit, _context);           ///< whether to take a screenshot on exit
+  CONTEXTREAD(score_bands);                      ///< which bands are going to be scored?
+  CONTEXTREAD(score_modes);                      ///< which modes are going to be scored?
+  CONTEXTREAD(screen_snapshot_file);             ///< base name of file for screenshot
+  CONTEXTREAD(screen_snapshot_on_exit);           ///< whether to take a screenshot on exit
 
 /*! \brief      Get names and values of sent exchange fields for a particular mode
     \param  m   target mode
@@ -486,24 +486,24 @@ public:
 */
   const decltype(_sent_exchange) sent_exchange(const MODE m);        // doxygen complains about the decltype; I have no idea why
 
-  SAFEREAD(sent_exchange_cw, _context);                 ///< names and values of sent exchange fields, CW
-  SAFEREAD(sent_exchange_ssb, _context);                ///< names and values of sent exchange fields, SSB
-  SAFEREAD(serno_spaces, _context);                     ///< number of half-length spaces
-  SAFEREAD(shift_delta, _context);                      ///< how many Hertz to QSY per poll of the shift key
-  SAFEREAD(shift_poll, _context);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
-  SAFEREAD(short_serno, _context);                      ///< whether to omit leading Ts
-  SAFEREAD(society_list_filename, _context);            ///< name of file containing IARU society exchanges
-  SAFEREAD(start_band, _context);                       ///< on what band do we start?
-  SAFEREAD(start_mode, _context);                       ///< on which mode do we start?
-  SAFEREAD(static_windows, _context);                   ///< size, position and content information for each static window
-  SAFEREAD(sync_keyer, _context);                       ///< whether to synchronise the rig keyer speed with the computer
+  CONTEXTREAD(sent_exchange_cw);                 ///< names and values of sent exchange fields, CW
+  CONTEXTREAD(sent_exchange_ssb);                ///< names and values of sent exchange fields, SSB
+  CONTEXTREAD(serno_spaces);                     ///< number of half-length spaces
+  CONTEXTREAD(shift_delta);                      ///< how many Hertz to QSY per poll of the shift key
+  CONTEXTREAD(shift_poll);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
+  CONTEXTREAD(short_serno);                      ///< whether to omit leading Ts
+  CONTEXTREAD(society_list_filename);            ///< name of file containing IARU society exchanges
+  CONTEXTREAD(start_band);                       ///< on what band do we start?
+  CONTEXTREAD(start_mode);                       ///< on which mode do we start?
+  CONTEXTREAD(static_windows);                   ///< size, position and content information for each static window
+  CONTEXTREAD(sync_keyer);                       ///< whether to synchronise the rig keyer speed with the computer
 
-  SAFEREAD(test, _context);                             ///< whether to put rig in TEST mode
-  SAFEREAD(thousands_separator, _context);              ///< character used as thousands separator in numbers
+  CONTEXTREAD(test);                             ///< whether to put rig in TEST mode
+  CONTEXTREAD(thousands_separator);              ///< character used as thousands separator in numbers
 
-  SAFEREAD(uba_bonus, _context);                        ///< whether to add UBA bonus QSO points
+  CONTEXTREAD(uba_bonus);                        ///< whether to add UBA bonus QSO points
 
-  SAFEREAD(worked_mults_colour, _context);              ///< colour of worked mults in the mult windows
+  CONTEXTREAD(worked_mults_colour);              ///< colour of worked mults in the mult windows
 
 /*! \brief      Get the points string for a particular band and mode
     \param  b   band

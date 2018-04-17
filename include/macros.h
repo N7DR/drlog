@@ -885,6 +885,19 @@ public:
 
 // convenient syntactic sugar for some STL functions
 
+/*! \brief          Write a <i>map<key, value></i> object to an output stream
+    \param  ost     output stream
+    \param  mp      object to write
+    \return         the output stream
+*/
+template <class T1, class T2>
+std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
+{ for (typename std::map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
+    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
+
+  return ost;
+}
+
 /*! \brief          Apply a function to all in a container
     \param  first   container
     \param  fn      function

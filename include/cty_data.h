@@ -247,14 +247,18 @@ public:
     { return (_alt_prefixes.find(pfx) != _alt_prefixes.end()); }
 };
 
-/// ostream << map<key, value>
-template <class T1, class T2>
-std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
-{ for (typename std::map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
-    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
-  
-  return ost;
-}
+/*! \brief          Write a <i>map<key, value></i> object to an output stream
+    \param  ost     output stream
+    \param  mp      object to write
+    \return         the output stream
+*/
+//template <class T1, class T2>
+//std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
+//{ for (typename std::map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
+//    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
+//
+//  return ost;
+//}
 
 /*! \brief          Write a <i>cty_record</i> object to an output stream
     \param  ost     output stream
@@ -458,7 +462,11 @@ public:
      }
 };
 
-/// ostream << location_info
+/*! \brief          Write a <i>location_info</i> object to an output stream
+    \param  ost     output stream
+    \param  info    object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const location_info& info);
 
 /*! \brief          Guess the CQ and ITU zones if the canonical prefix indicates a country with multiple zones
@@ -817,7 +825,7 @@ public:
   inline const std::string region_abbreviation(const std::string& callpart)
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
-/// archive using boost serialisation
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { SAFELOCK(_location_database);
@@ -843,68 +851,5 @@ ERROR_CLASS(cty_error);         ///< Errors related to CTY processing
 ERROR_CLASS(location_error);    ///< Errors related to location database processing
 
 ERROR_CLASS(russian_error);     ///< Errors related to processing Russian data file
-
-#if 0
-/*! \class  cty_error
-    \brief  Errors related to CTY processing
-*/
-
-class cty_error : public x_error
-{ 
-protected:
-
-public:
-
-/*! \brief      Construct from error code and reason
-    \param  n   error code
-    \param  s   reason
-*/
-  inline cty_error(const int n, const std::string& s) :
-    x_error(n, s)
-  { }
-};
-#endif
-
-# if 0
-/*! \class  location_error
-    \brief  Errors related to location database processing
-*/
-
-class location_error : public x_error
-{ 
-protected:
-
-public:
-
-/*! \brief      Construct from error code and reason
-    \param  n   error code
-    \param  s   reason
-*/
-  inline location_error(const int n, const std::string& s) :
-    x_error(n, s)
-  { }
-};
-#endif
-
-#if 0
-/*! \class  russian_error
-    \brief  Errors related to processing Russian data file
-*/
-
-class russian_error : public x_error
-{
-protected:
-
-public:
-
-/*! \brief      Construct from error code and reason
-    \param  n   error code
-    \param  s   reason
-*/
-  inline russian_error(const int n, const std::string& s) :
-    x_error(n, s)
-  { }
-};
-#endif
 
 #endif  // CTY_DATA_H

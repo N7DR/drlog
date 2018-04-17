@@ -351,8 +351,7 @@ const location_info guess_zones(const string& call, const location_info& li)
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
    if (rv.canonical_prefix() == "VE")
-   { //const size_t posn = callsign.find_last_of("0123456789");
-     const size_t posn = call.find_last_of(DIGITS);
+   { const size_t posn = call.find_last_of(DIGITS);
 
      if (posn != string::npos)
      { rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, call[posn]))]);
@@ -362,8 +361,7 @@ const location_info guess_zones(const string& call, const location_info& li)
 
 // if it's a W, then make a guess as to the CQ and ITU zones
    if (rv.canonical_prefix() == "K")
-   { //const size_t posn = callsign.find_last_of("0123456789");
-     const size_t posn = call.find_last_of(DIGITS);
+   { const size_t posn = call.find_last_of(DIGITS);
 
      if (posn != string::npos)
      { rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, call[posn]))]);
@@ -408,6 +406,7 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
   switch (country_list)
   { case COUNTRY_LIST_DXCC:                                                       // use DXCC countries only
     { for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
+      //for (const auto& cty_rec : cty)
       { const cty_record& rec = cty[n_country];
     
         if (!rec.waedc_country_only())    // ignore WAEDC-only entries
@@ -428,6 +427,7 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
     {
 // start by copying all the useful information for all records      
       for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
+//      for (const auto& cty_rec : cty)
       { const cty_record& rec = cty[n_country];
         const location_info info(rec);
 

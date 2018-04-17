@@ -215,7 +215,7 @@ public:
   inline const bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to work
     { return (_name < ef.name()); }
 
-/// serialize with boost
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _name
@@ -250,14 +250,16 @@ protected:
 public:
 
 /// default constructor
-  points_structure(void);
+  inline points_structure(void) :
+    _points_type(POINTS_NORMAL)
+  { }
 
   READ_AND_WRITE(continent_points);    ///< per-continent points
   READ_AND_WRITE(country_points);      ///< per-country points
   READ_AND_WRITE(default_points);      ///< default points
   READ_AND_WRITE(points_type);         ///< is the points structure too complex for the configuration notation?
 
-/// serialize with boost
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
   { ar & _continent_points

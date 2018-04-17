@@ -78,8 +78,8 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
 /*! \brief  Set the parameters for the recording
 
     Much of this is converted (more or less slavishly) from aplay.c. Probably much of this
-    function could be elided, but the lack of explanation of what's going on in aplay.c means
-    that it's safer, for now, to leave it in.
+    function could be elided, but the lack of explanation of what's going on in aplay.c [i.e., it's
+    undocumented magic] means that it's safer, at least for now, to leave it in.
 */
 void audio_recorder::_set_params(void)
 { snd_pcm_hw_params_t* params = nullptr;

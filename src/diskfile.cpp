@@ -8,7 +8,7 @@
 // Copyright owners:
 //    N7DR
 
-/*! \file diskfile.cpp
+/*! \file   diskfile.cpp
 
     Useful file-related functions. This file is derived from proprietary code
     owned by IPfonix, Inc.
@@ -38,6 +38,7 @@ using namespace std;
 */
 const bool file_exists(const string& filename)
 { struct stat buffer;
+
   return (stat (filename.c_str(), &buffer) == 0);
 }
 
@@ -52,6 +53,7 @@ const unsigned long file_size(const string& filename)
 
   if (in)
   { in.seekg(0, ifstream::end);
+
     return in.tellg();
   }
   else
@@ -74,8 +76,7 @@ void file_delete(const string& filename)
 */
 void file_copy(const string& source_filename, const string& destination_filename)
 { if (file_exists(source_filename))
-  { ofstream(destination_filename) << ifstream(source_filename).rdbuf();          // perform the copy
-  }
+    ofstream(destination_filename) << ifstream(source_filename).rdbuf();          // perform the copy
 }
 
 /*! \brief                          Rename a file
@@ -115,7 +116,8 @@ const bool directory_exists(const string& dirname)
     return false;
 
   const bool rv = ((stat_buffer.st_mode & S_IFDIR) != 0);
-    return rv;
+
+  return rv;
 }
 
 /*! \brief              What files does a directory contain?
@@ -132,7 +134,9 @@ const vector<string> directory_contents(const string& dirname)
     return rv;
 
   const string dirname_slash = dirname + "/";
+
   struct dirent** namelist;
+
   const int status = scandir((dirname_slash).c_str(), &namelist, 0, alphasort);
 
   if (status == -1)
@@ -147,4 +151,3 @@ const vector<string> directory_contents(const string& dirname)
 
   return rv;
 }
-

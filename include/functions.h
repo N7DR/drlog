@@ -8,13 +8,13 @@
 // Copyright owners:
 //    N7DR
 
-#ifndef FUNCTIONS_H
-#define FUNCTIONS_H
-
 /*! \file   functions.h
 
     Functions related to geography
 */
+
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
 #include <string>
 

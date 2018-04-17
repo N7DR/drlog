@@ -8,6 +8,12 @@
 // Copyright owners:
 //    N7DR
 
+/*! \file   adif.cpp
+
+    Objects and functions related to ADIF version 2.2.7 at http://www.adif.org/adif227.htm
+
+*/
+
 #include "adif.h"
 #include "string_functions.h"
 
@@ -34,60 +40,13 @@ adif_type::adif_type(const char ty, const string& nm, const string& v) :
 
 /// convert to printable string
 const string adif_type::to_string(void) const
-{ if (_name.empty() or _value.empty())
-    return string();
+{ //if (_name.empty() or _value.empty())
+  //  return string();
 
-  return (string)"<" + _name + ":" + ::to_string(_value.length()) +">" + _value;
+  //return (string)"<" + _name + ":" + ::to_string(_value.length()) +">" + _value;
+
+  return ( (_name.empty() or _value.empty()) ? string() : ( (string)"<" + _name + ":" + ::to_string(_value.length()) +">" + _value ) );
 }
-
-// ---------------------------------------------------  adif_ AWARD_LIST -----------------------------------------
-
-/*! \class  adif_AWARD_LIST
-    \brief  Encapsulate ADIF AwardList
-*/
-
-#if 0
-/// default constructor
-adif_AWARD_LIST::adif_AWARD_LIST(void) :
-  adif_type('A')
-{ }
-
-/*! \brief      Constructor
-    \param  nm  name
-    \param  v   value
-*/
-adif_AWARD_LIST::adif_AWARD_LIST(const string& nm, const string& v) :
-  adif_type('A', nm, v)
-{ }
-
-/*! \brief      Constructor
-    \param  nm  name
-
-    Sets <i>_value</i> to the empty string.
-*/
-adif_AWARD_LIST::adif_AWARD_LIST(const string& nm) :
-  adif_type('A', nm, string())
-{ }
-#endif
-
-// ---------------------------------------------------  adif_BOOLEAN -----------------------------------------
-
-#if 0
-/// default constructor
-adif_BOOLEAN::adif_BOOLEAN(void) :
-  adif_type('B')
-{ }
-
-// construct with name and value
-adif_BOOLEAN::adif_BOOLEAN(const string& nm, const string& v) :
-    adif_type('B', nm, v)
-{ }
-
-// construct with name
-adif_BOOLEAN::adif_BOOLEAN(const string& nm) :
-    adif_type('B', nm, string())
-{ }
-#endif
 
 // ---------------------------------------------------  adif_DATE -----------------------------------------
 
@@ -134,82 +93,6 @@ void adif_DATE::value(const std::string& v)
   _value = v;
 }
 
-// ---------------------------------------------------  adif_ENUMERATION -----------------------------------------
-
-#if 0
-// default constructor
-adif_ENUMERATION::adif_ENUMERATION(void) :
-    adif_type(' ')
-{ }
-
-// construct with value
-adif_ENUMERATION::adif_ENUMERATION(const string& nm, const string& v) :
-    adif_type(' ', nm, v)
-{ }
-
-// construct with name
-adif_ENUMERATION::adif_ENUMERATION(const string& nm) :
-    adif_type(' ', nm, string())
-{ }
-#endif
-
-// ---------------------------------------------------  adif_LOCATION -----------------------------------------
-
-#if 0
-// default constructor
-adif_LOCATION::adif_LOCATION(void) :
-    adif_type('L')
-{ }
-
-// construct with name and value
-adif_LOCATION::adif_LOCATION(const string& nm, const string& v) :
-    adif_type('L', nm, v)
-{ }
-
-// construct with name
-adif_LOCATION::adif_LOCATION(const string& nm) :
-    adif_type('L', nm, string())
-{ }
-#endif
-
-// ---------------------------------------------------  adif_MULTILINE_STRING -----------------------------------------
-
-#if 0
-// default constructor
-adif_MULTILINE_STRING::adif_MULTILINE_STRING(void) :
-    adif_type('M')
-{ }
-
-// construct with name and value
-adif_MULTILINE_STRING::adif_MULTILINE_STRING(const string& nm, const string& v) :
-    adif_type('M', nm, v)
-{ }
-
-// construct with name
-adif_MULTILINE_STRING::adif_MULTILINE_STRING(const string& nm) :
-    adif_type('M', nm, string())
-{ }
-#endif
-
-// ---------------------------------------------------  adif_NUMBER -----------------------------------------
-
-#if 0
-// default constructor
-adif_NUMBER::adif_NUMBER(void) :
-    adif_type('N')
-{ }
-
-// construct with name and value
-adif_NUMBER::adif_NUMBER(const string& nm, const string& v) :
-    adif_type('N', nm, v)
-{ }
-
-// construct with name
-adif_NUMBER::adif_NUMBER(const string& nm) :
-    adif_type('N', nm, string())
-{ }
-#endif
-
 // ---------------------------------------------------  adif_STRING -----------------------------------------
 
 // default constructor
@@ -231,9 +114,10 @@ adif_STRING::adif_STRING(const string& nm) :
 // a sequence of Characters
 // an ASCII character whose code lies in the range of 32 through 126, inclusive
 void adif_STRING::value(const std::string& v)
-{ for (size_t n = 0; n < v.length(); ++n)
-    if ((v[n] < 32) or (v[n]  > 126))
-      throw exception();
+{ //for (size_t n = 0; n < v.length(); ++n)
+  //  if ((v[n] < 32) or (v[n]  > 126))
+  //    throw exception();
+  FOR_ALL(v, [] (const char c) { if ( (c < 32) or (c > 126) ) throw exception(); } );
 
   _value = v;
 }
