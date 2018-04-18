@@ -104,6 +104,7 @@ protected:
   std::string           _continent;         ///< continent of <i>_callsign</i>
   frequency             _freq;              ///< frequency at which <i>_callsign</i> was heard
   std::string           _frequency_str;     ///< frequency in format xxxxx.y [kHz]
+  std::string           _mode_str;          ///< mode string from RBN post (empty if none)
   std::string           _poster;            ///< call of poster
   enum POSTING_SOURCE   _source;            ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
@@ -133,11 +134,19 @@ public:
   READ(continent);              ///< continent of <i>_callsign</i>
   READ(freq);                   ///< frequency at which <i>_callsign</i> was heard
   READ(frequency_str);          ///< frequency in format xxxxx.y [kHz]
+  READ(mode_str);               ///< mode string from RBN post (empty if none)
   READ(poster);                 ///< call of poster
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
   READ(valid);                  ///< is it a valid post?
 };
+
+/*! \brief          Write a <i>dx_post</i> object to an output stream
+    \param  ost     output stream
+    \param  dxp     object to write
+    \return         the output stream
+*/
+std::ostream& operator<<(std::ostream& ost, const dx_post& dxp);
 
 // -----------  monitored_posts_entry  ----------------
 
@@ -159,7 +168,7 @@ public:
 /*! \brief          Constructor
     \param  post    post from cluster or RBN
 */
-  monitored_posts_entry(const dx_post& post);
+  explicit monitored_posts_entry(const dx_post& post);
 
   READ(band);               ///< band
   READ(callsign);           ///< callsign

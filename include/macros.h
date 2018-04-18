@@ -18,7 +18,7 @@
     Macros and templates for drlog.
 */
 
-#include "pthread_support.h"
+//#include "pthread_support.h"
 #include "serialization.h"
 
 #include <algorithm>
@@ -704,6 +704,7 @@ template <class T>
 const bool operator<(const std::unordered_set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
+#if 0
 /*! \brief      Make an explicit safelock from a mutex
     \param  m   the mutex to be locked
     \param  v   object to be returned after the call to the lock (and implied unlock, in the destructor)
@@ -727,6 +728,7 @@ void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
 
   var = val;
 }
+#endif
 
 /*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
     \param  original_mapping    original mapping

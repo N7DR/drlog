@@ -17,6 +17,7 @@
     Support for pthreads
 */
 
+#include "macros.h"
 #include "x_error.h"
 
 #include <string>
@@ -201,7 +202,6 @@ protected:
 */
   pt_condition_variable(const pt_condition_variable&);
 
-
 public:
 
 /*! \brief  Default Constructor
@@ -211,7 +211,7 @@ public:
 /*! \brief          Construct and associate a mutex with the condition variable
     \param  mtx     mutex to be associated with the condition variable
 */
-  pt_condition_variable(pt_mutex& mtx);
+  explicit pt_condition_variable(pt_mutex& mtx);
    
 /// destructor
   inline virtual ~pt_condition_variable(void)
@@ -280,11 +280,6 @@ protected:
 
 public:
 
-/*! \brief          Construct from a mutex
-    \param  ptm     mutex to be locked
-*/
-//  safelock(pt_mutex& ptm);
-
 /*! \brief          Construct from a named mutex
     \param  ptm     mutex to be locked
     \param  name    name of mutex
@@ -325,8 +320,35 @@ const unsigned int n_threads(void);
 
 extern const pthread_error_messages pthread_error_message;    ///< pthread error messages
 
+/*! \brief      Make an explicit safelock from a mutex
+    \param  m   the mutex to be locked
+    \param  v   object to be returned after the call to the lock (and implied unlock, in the destructor)
+    \return     <i>v</i>, following a lock and unlock
+*/
+template <class T>
+const T SAFELOCK_GET(pt_mutex& m, const T& v)
+{ safelock safelock_z(m, "SAFELOCK_GET");
+
+  return v;
+}
+
+/*! \brief          Make an explicit safelock from a mutex, then set a value
+    \param  m       the mutex to be locked
+    \param  var     variable to be set
+    \param  val     value to which <i>var</i> is to be set following the lock
+*/
+template <class T>
+void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
+{ safelock safelock_z(m, "SAFELOCK_SET");
+
+  var = val;
+}
+
 // -------------------------------------- Errors  -----------------------------------
 
+ERROR_CLASS(pthread_error);     ///< errors related to pthread processing
+
+#if 0
 /*! \class  pthread_error
     \brief  Errors related to string processing
 */
@@ -345,5 +367,6 @@ public:
     x_error(n, s)
   { }
 };
+#endif
 
 #endif    // PTHREADSUPPORT_H

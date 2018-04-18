@@ -1593,6 +1593,10 @@ const vector<string> drlog_context::sent_exchange_names(void) const
   return rv;
 }
 
+/*! \brief      Get all the field names in the exchange sent for a particular mode
+    \param  m   target mode
+    \return     the names of all the fields in the sent exchange for mode <i>m</i>
+*/
 const vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 

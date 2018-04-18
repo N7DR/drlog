@@ -574,16 +574,10 @@ public:
 */
   const std::vector<std::string> sent_exchange_names(void) const;
 
-/*! \brief      Get all the field names in the sent CW exchange
-    \return     the names of all the fields in the sent CW exchange
+/*! \brief      Get all the field names in the exchange sent for a particular mode
+    \param  m   target mode
+    \return     the names of all the fields in the sent exchange for mode <i>m</i>
 */
-//  const std::vector<std::string> sent_exchange_cw_names(void) const;
-
-/*! \brief      Get all the field names in the sent SSB exchange
-    \return     the names of all the fields in the sent SSB exchange
-*/
-//  const std::vector<std::string> sent_exchange_ssb_names(void) const;
-
   const std::vector<std::string> sent_exchange_names(const MODE m) const;
 
 /// swap QSL and ALTERNATIVE QSL messages

@@ -1899,6 +1899,10 @@ void* display_rig_status(void* vp)
 // it seems like the effort of trying to work around the bug is not worth it
           static const unsigned int MODE_ENTRY = 29;      // position of the mode byte in the K3 status string
           const char mode_char = status_str[MODE_ENTRY];
+
+          const string mode_str = ( (mode_char == '1') ? "LSB " : ( (mode_char == '2') ? "USB " : ( (mode_char == '3') ? " CW " : "UNK " ) ) );
+
+#if 0
           string mode_str;
 
           switch (mode_char)
@@ -1918,6 +1922,7 @@ void* display_rig_status(void* vp)
               mode_str = "UNK ";
               break;
           }
+#endif
 
           static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
           static const unsigned int XIT_ENTRY = 24;      // position of the XIT status byte in the K3 status string
@@ -2099,8 +2104,11 @@ void* process_rbn_info(void* vp)
 
 // display if this is a new mult on any band, and if the poster is on our own continent
           const dx_post post(line, location_db, rbn.source());
+          const bool wrong_mode = is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW");      // don't process if RBN and not CW
 
-          if (post.valid())
+//          ost << "Line: " << line << "; post = " << post << ", wrong_mode = " << wrong_mode << endl;
+
+          if (post.valid() and !wrong_mode)
           { const BAND dx_band = post.band();
 
 // is this station being monitored?

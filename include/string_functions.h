@@ -41,6 +41,7 @@ static const std::string CRLF     = "\r\n";     ///< CR followed by LF
 
 static const std::string SPACE_STR = " ";       ///< space as string
 
+static const std::string CALLSIGN_CHARS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/" };                ///< convenient place to hold all characters that are legal in callsigns
 static const std::string DIGITS { "0123456789" };                                                   ///< convenient place to hold all digits
 static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" };  ///< convenient place to hold all digits and upper case letters
 static const std::string UPPER_CASE_LETTERS { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };                       ///< convenient place to hold all upper case letters

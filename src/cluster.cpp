@@ -295,6 +295,9 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 // RBN posting
 // DX de DK9IP-#:      7006.0  LA3MHA       CQ    21 dB 24 WPM             2257Z JN48
 
+// new RBN posting:
+// DX de DL8TG-#:    3517.9  UT7LW          CW    30 dB  27 WPM  CQ      0047Z
+
 // ordinary posting
 // DX de RX9WN:      3512.0  UE9WFJ       see UE9WURC  QRZ.COM           1932Z
 
@@ -302,37 +305,64 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
   if (!_valid)
   { if (substring(received_info, 0, 6) == "DX de " and received_info.length() > 70)
     { try
-      { const string copy = remove_leading_spaces(substring(received_info, 6));
-        const size_t colon_posn = copy.find(":");
+      { if (post_source == POSTING_RBN)
+        { const vector<string> fields = split_string(squash(received_info), ' ');
 
-        if (colon_posn != string::npos)
-        { _poster = copy.substr(0, colon_posn);
+          if (fields.size() >= 6)
+          { _poster = substring(fields[2], 0, fields[2].length() - 1);      // remove colon
+            _frequency_str = fields[3];
+            _freq = frequency(_frequency_str);
+            _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
 
-          size_t char_posn = copy.find_first_not_of(" ", colon_posn + 1);
-          size_t space_posn = copy.find_first_of(" ", char_posn);
+            if (_valid_frequency())
+            { _callsign = fields[4];
 
-          _frequency_str = copy.substr(char_posn, space_posn - char_posn);
-          _freq = frequency(_frequency_str);
-          _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
+              const location_info li = db.info(_callsign);
 
-          if (_valid_frequency())
-          { char_posn = copy.find_first_not_of(" ", space_posn);
-            space_posn = copy.find_first_of(" ", char_posn);
+              _canonical_prefix = li.canonical_prefix();
+              _continent = li.continent();
 
-            _callsign = copy.substr(char_posn, space_posn - char_posn);
+              _mode_str = fields[5];
 
-            const location_info li = db.info(_callsign);
-            _canonical_prefix = li.canonical_prefix();
-            _continent = li.continent();
-
-            char_posn = copy.find_first_not_of(" ", space_posn);
-            space_posn = copy.find_last_of(" ");
-
-            _comment = copy.substr(char_posn);
-            _valid = true;
-            _time_processed = ::time(NULL);
+              _valid = true;
+              _time_processed = ::time(NULL);
+            }
           }
-        }        
+        }
+
+        if (!_valid)
+        { const string copy = remove_leading_spaces(substring(received_info, 6));
+          const size_t colon_posn = copy.find(":");
+
+          if (colon_posn != string::npos)
+          { _poster = copy.substr(0, colon_posn);
+
+            size_t char_posn = copy.find_first_not_of(" ", colon_posn + 1);
+            size_t space_posn = copy.find_first_of(" ", char_posn);
+
+            _frequency_str = copy.substr(char_posn, space_posn - char_posn);
+            _freq = frequency(_frequency_str);
+            _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
+
+            if (_valid_frequency())
+            { char_posn = copy.find_first_not_of(" ", space_posn);
+              space_posn = copy.find_first_of(" ", char_posn);
+
+              _callsign = copy.substr(char_posn, space_posn - char_posn);
+
+              const location_info li = db.info(_callsign);
+              _canonical_prefix = li.canonical_prefix();
+              _continent = li.continent();
+
+              char_posn = copy.find_first_not_of(" ", space_posn);
+              space_posn = copy.find_last_of(" ");
+
+              _comment = copy.substr(char_posn);
+              _valid = true;
+              _time_processed = ::time(NULL);
+            }
+          }
+        }
       }
 
       catch (...)
@@ -347,12 +377,50 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
 // sanity check for the callsign
   if (_valid)
-    _valid = (_callsign.find_first_not_of("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/") == string::npos);
+    _valid = (_callsign.find_first_not_of(CALLSIGN_CHARS) == string::npos);
 
 // add the band
   if (_valid)
     _band = static_cast<BAND>(_freq);
 }
+
+/*! \brief          Write a <i>dx_post</i> object to an output stream
+    \param  ost     output stream
+    \param  dxp     object to write
+    \return         the output stream
+*/
+ostream& operator<<(ostream& ost, const dx_post& dxp)
+{ ost << "Post: " << endl
+      << "  band: " << BAND_NAME[dxp.band()] << endl
+      << "  callsign: " << dxp.callsign() << endl
+      << "  canonical prefix: " << dxp.canonical_prefix() << endl
+      << "  comment: " << dxp.comment() << endl
+      << "  continent: " << dxp.continent() << endl
+      << "  frequency: " << dxp.freq() << endl
+      << "  frequency str: " << dxp.frequency_str() << endl
+      << "  mode_str: " << dxp.mode_str() << endl
+      << "  poster: " << dxp.poster() << endl
+      << "  source: " << ( (dxp.source() == POSTING_RBN) ? "RBN" : "Cluster") << endl
+      << "  time processed: " << dxp.time_processed() << endl
+      << "  valid: " << dxp.valid();
+
+  return ost;
+}
+
+
+enum BAND             _band;              ///< band of post
+std::string           _callsign;          ///< callsign that was heard
+std::string           _canonical_prefix;  ///< canonical prefix corresponding to <i>callsign</i>
+std::string           _comment;           ///< comment supplied by poster
+std::string           _continent;         ///< continent of <i>_callsign</i>
+frequency             _freq;              ///< frequency at which <i>_callsign</i> was heard
+std::string           _frequency_str;     ///< frequency in format xxxxx.y [kHz]
+std::string           _mode_str;          ///< mode string from RBN post (empty if none)
+std::string           _poster;            ///< call of poster
+enum POSTING_SOURCE   _source;            ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
+time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
+bool                  _valid;             ///< is it a valid post?
+
 
 // -----------  monitored_posts_entry  ----------------
 
