@@ -419,7 +419,7 @@ create_file:
 
   bool first_time_through_loop = true;
 
-  ost << "about to enter the big loop" << endl;
+//  ost << "about to enter the big loop" << endl;
 
   do
   { const size_t c = (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes;
@@ -445,21 +445,15 @@ create_file:
   { SAFELOCK(thread_check);
 
     if (exiting or _aborting)
-    { //_recording = false;
-
-      //ost << "_recording now FALSE" << endl;
-
-      if (exiting)
+    { if (exiting)
         ost << "_capture thread is exiting" << endl;
 
       if (_aborting)
         ost << "_capture thread is aborting" << endl;
 
       wfp->close();
-//      end_of_thread("_capture");
 
       ost << "closing status = " << snd_pcm_close(_handle) << endl;
-//      snd_pcm_info_free(_info);   // this crashes for some reason
 
       end_of_thread(thread_name);
 
@@ -517,8 +511,8 @@ audio_recorder::audio_recorder(void) :
 { }
 
 /// destructor
-audio_recorder::~audio_recorder(void)
-{ }
+//audio_recorder::~audio_recorder(void)
+//{ }
 
 /// initialise the object
 void audio_recorder::initialise(void)
@@ -526,6 +520,7 @@ void audio_recorder::initialise(void)
 
   const PARAMS_STRUCTURE rhwparams { _n_channels, _sample_format, _samples_per_second };
   const int MAX_FAILURES = 1;           // maximum number of permitted failures
+
   int n_failures = 0;                   // current number of failures
   int status;
 
@@ -563,7 +558,6 @@ void audio_recorder::capture(void)
 { try
   { create_thread(&_thread_id, NULL, &_static_capture, this, "audio capture");
     _recording = true;
-//    ost << "started capture thread" << endl;
   }
 
   catch (const pthread_error& e)

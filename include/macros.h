@@ -704,32 +704,6 @@ template <class T>
 const bool operator<(const std::unordered_set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
-#if 0
-/*! \brief      Make an explicit safelock from a mutex
-    \param  m   the mutex to be locked
-    \param  v   object to be returned after the call to the lock (and implied unlock, in the destructor)
-    \return     <i>v</i>, following a lock and unlock
-*/
-template <class T>
-const T SAFELOCK_GET(pt_mutex& m, const T& v)
-{ safelock safelock_z(m, "SAFELOCK_GET");
-
-  return v;
-}
-
-/*! \brief          Make an explicit safelock from a mutex, then set a value
-    \param  m       the mutex to be locked
-    \param  var     variable to be set
-    \param  val     value to which <i>var</i> is to be set following the lock
-*/
-template <class T>
-void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
-{ safelock safelock_z(m, "SAFELOCK_SET");
-
-  var = val;
-}
-#endif
-
 /*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
     \param  original_mapping    original mapping
     \return                     inverted mapping

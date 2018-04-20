@@ -449,10 +449,7 @@ window& window::move_cursor_relative(const int delta_x, const int delta_y)
     \return             the window
 */
 window& window::cpair(const int pair_nr)
-{ //if (!_wp)
-  //  return *this;
-
-  if (_wp)
+{ if (_wp)
   { SAFELOCK(screen);  
 
     wcolor_set(_wp, pair_nr, NULL);
@@ -598,9 +595,10 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
 
 /// clear the window
 window& window::clear(void)
-{ if (!_wp)
-    return *this;
-    
+{ //if (!_wp)
+ //   return *this;
+
+  if (_wp)
   { SAFELOCK(screen);
 
     werase(_wp);
@@ -611,9 +609,9 @@ window& window::clear(void)
 
 /// refresh
 window& window::refresh(void)
-{ if (!_wp)
-    return *this;
-    
+{ //if (!_wp)
+  //  return *this;
+  if (_wp)
   { SAFELOCK(screen);
 
     if (_hidden_cursor)
@@ -635,14 +633,15 @@ window& window::refresh(void)
     \return                     the window
 */
 window& window::scrolling(const bool enable_or_disable)
-{ if (!_wp)
-    return *this;
-    
-  _scrolling = enable_or_disable;
+{ //if (!_wp)
+  //  return *this;
+  if (_wp)
+  { _scrolling = enable_or_disable;
   
-  SAFELOCK(screen);
+    SAFELOCK(screen);
 
-  scrollok(_wp, enable_or_disable);
+    scrollok(_wp, enable_or_disable);
+  }
   
   return *this;
 }
@@ -655,12 +654,13 @@ window& window::scrolling(const bool enable_or_disable)
 */
 
 window& window::scrollit(const int n_lines)
-{ if (!_wp)
-    return *this;
-    
-  SAFELOCK(screen);
+{ //if (!_wp)
+  //  return *this;
+  if (_wp)
+  { SAFELOCK(screen);
 
-  wscrl(_wp, n_lines);
+    wscrl(_wp, n_lines);
+  }
   
   return *this;
 }

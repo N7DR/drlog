@@ -255,7 +255,8 @@ public:
   audio_recorder(void);
 
 /// destructor
-  virtual ~audio_recorder(void);
+  inline virtual ~audio_recorder(void)
+    { }
 
   READ_AND_WRITE(base_filename);            ///< base name of output file
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds

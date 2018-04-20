@@ -209,17 +209,6 @@ ostream& operator<<(ostream& ost, const exchange_field& exch_f)
   return ost;
 }
 
-// -------------------------  points_structure  ---------------------------
-
-/*! \class  points_structure
-    \brief  Encapsulate the vagaries of points-per-QSO rules
-*/
-
-/// constructor
-//points_structure::points_structure(void) :
-//  _points_type(POINTS_NORMAL)
-//{ }
-
 // -------------------------  contest_rules  ---------------------------
 
 /*! \class  contest_rules
@@ -339,9 +328,10 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
 
         for (auto& choice_field_name : choice_fields)
         { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend();
-          const exchange_field this_choice(choice_field_name, is_mult);
+          //const exchange_field this_choice(choice_field_name, is_mult);
 
-          choices.push_back(this_choice);
+          //choices.push_back(this_choice);
+          choices.push_back(exchange_field(choice_field_name, is_mult));
         }
 
 // put into alphabetical order
@@ -395,9 +385,10 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   const auto& per_country_exchanges = context.exchange_per_country();
 
   for (const auto& pce : per_country_exchanges)
-  { const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
+  { //const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
 
-    permitted_exchange_fields.insert( { pce.first, vs } );   // unexpanded choice
+//    permitted_exchange_fields.insert( { pce.first, vs } );   // unexpanded choice
+    permitted_exchange_fields.insert( { pce.first,  remove_peripheral_spaces(split_string(pce.second, ",")) } );   // unexpanded choice
   }
 
   for (const auto& pce : per_country_exchanges)
@@ -981,11 +972,6 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
 const bool contest_rules::is_canonical_value(const string& field_name, const string& putative_canonical_value) const
 { SAFELOCK(rules);
 
-//  for (unsigned int n = 0; n < _exch_values.size(); ++n)
-//  { if (_exch_values[n].name() == field_name)
-//      return _exch_values[n].is_legal_canonical_value(putative_canonical_value);
-//  }
-
   for (const auto& exch_value : _exch_values)
   { if (exch_value.name() == field_name)
       return exch_value.is_legal_canonical_value(putative_canonical_value);
@@ -1100,12 +1086,9 @@ const BAND contest_rules::next_band_up(const BAND current_band) const
   auto cit = find(_permitted_bands.begin(), _permitted_bands.end(), current_band);
 
   if (cit == _permitted_bands.cend())    // might happen if rig has been manually QSYed to a non-contest band
-  {    //return *(_permitted_bands.cbegin());
-    int band_nr = static_cast<int>(current_band);
+  { int band_nr = static_cast<int>(current_band);
 
-// find first permitted band higher than the current one
-//    size_t index = 0;
-
+// find first permitted band higher than the current band
     const set<BAND> pbs = permitted_bands_set();
 
     for (int counter = static_cast<int>(MIN_BAND); counter <= static_cast<int>(MAX_BAND); ++counter)    // the counter is not actually used

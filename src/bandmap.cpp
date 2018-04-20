@@ -380,7 +380,11 @@ const MODE bandmap_entry::putative_mode(void) const
 //  _time_of_earlier_bandmap_entry = ( old_be.time_of_earlier_bandmap_entry() ? old_be._time_of_earlier_bandmap_entry : old_be._time );
 //}
 
-/// ostream << bandmap_entry
+/*! \brief          Write a <i>bandmap_entry</i> object to an output stream
+    \param  ost     output stream
+    \param  be      object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const bandmap_entry& be)
 { ost << "band: " << be.band() << endl
       << "callsign: " << be.callsign() << endl

@@ -75,8 +75,9 @@ void drlog_context::_set_points(const string& command, const MODE m)
   const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
 
   if (!str_vec.empty())
-  { string tmp_points_str;
-    const string lhs = str_vec[0];
+  { const string lhs = str_vec[0];
+
+    string tmp_points_str;
     auto& pbb = _per_band_points[m];
 
     if (!contains(lhs, "[") or contains(lhs, "[*]"))            // for all bands
@@ -84,8 +85,8 @@ void drlog_context::_set_points(const string& command, const MODE m)
         pbb.insert( { static_cast<BAND>(n), RHS } );
     }
     else                                                        // not all bands
-    { size_t left_bracket_posn = lhs.find('[');
-      size_t right_bracket_posn = lhs.find(']');
+    { const size_t left_bracket_posn = lhs.find('[');
+      const size_t right_bracket_posn = lhs.find(']');
 
       const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
 
@@ -94,11 +95,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
         const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
 
         for (const auto b_str : bands)
-        { //const BAND b = BAND_FROM_NAME[b_str];
-
-          //pbb.insert( { b, RHS } );
           pbb.insert( { BAND_FROM_NAME[b_str], RHS } );
-        }
       }
     }
   }
@@ -1313,7 +1310,6 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     { ost << "Error in CABRILLO QSO TEMPLATE: ARRL DX" << endl;
       exit(-1);
     }
-
   }
 }
 

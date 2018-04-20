@@ -254,7 +254,11 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<
   return ost;
 }
 
-/// ostream << needed_mult_details<>
+/*! \brief          Write a <i>needed_mult_details<></i> object to an output stream
+    \param  ost     output stream
+    \param  nmd     object to write
+    \return         the output stream
+*/
 template<typename T>
 std::ostream& operator<<(std::ostream& ost, const needed_mult_details<T>& nmd)
 { ost << "is needed: " << nmd.is_any_value_needed() << std::endl
@@ -354,7 +358,7 @@ public:
 /*! \brief      Default constructor
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
-  bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
+  explicit bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
 
 /*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
     \param  be  comparison bandmap_entry
@@ -645,8 +649,6 @@ public:
 
 /// is this a needed call for which the call+band+mode is an all-time first, or have we received a qsl for this call+band+mode
   inline const bool is_new_or_previously_qsled(void) const
-//    { return (is_all_time_first() or olog.confirmed(_callsign, _band, _mode)); }
-//    { return (is_all_time_first_and_needed_qso() or olog.confirmed(_callsign, _band, _mode)); }
     { return (is_needed() and (is_all_time_first() or olog.confirmed(_callsign, _band, _mode))); }
 
 /*! \brief          set the value of <i>_time_of_earlier_bandmap_entry</i> from an earlier <i>bandmap_entry</i>
@@ -655,7 +657,7 @@ public:
   inline void time_of_earlier_bandmap_entry(const bandmap_entry& old_be)
     { _time_of_earlier_bandmap_entry = ( old_be.time_of_earlier_bandmap_entry() ? old_be._time_of_earlier_bandmap_entry : old_be._time ); }
 
-/// archive using boost serialization
+/// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
     { ar & _band
@@ -676,7 +678,11 @@ public:
     }
 };
 
-/// ostream << bandmap_entry
+/*! \brief          Write a <i>bandmap_entry</i> object to an output stream
+    \param  ost     output stream
+    \param  be      object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const bandmap_entry& be);
 
 // you'd think that BM_ENTRIES should be std::multiset<bandmap_entry>, but that's a royal pain with g++...
@@ -775,12 +781,6 @@ public:
 
 /// the colour used for recent entries
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(recent_colour, _bandmap);
-
-/// set the colour used for recent entries
-//  inline void recent_colour(const int rc)
-//    { SAFELOCK(_bandmap);
-//      _recent_colour = rc;
-//    }
 
 /*!  \brief     Add a bandmap_entry
      \param be  entry to add
@@ -920,8 +920,8 @@ public:
      Applies filtering and the RBN threshold before searching for the station. Returns the
      empty string if no station was found within the guard band.
 */
-    inline const std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
-      { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
+  inline const std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
+    { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
