@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 145 2018-03-19 17:28:50Z  $
+// $Id: cluster.cpp 147 2018-04-20 21:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -48,15 +48,15 @@ pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
     \param  src         whether this is a real DX cluster or the RBN
 */
 dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
-  _server(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server()),        // choose the correct server
-  _port(src == POSTING_CLUSTER ? context.cluster_port() : context.rbn_port()),              // choose the correct port
-  _my_ip(context.my_ip()),                                                                  // set my IP address
-  _login_id(src == POSTING_CLUSTER ? context.cluster_username() : context.rbn_username()),  // choose the correct login name
-  _source(src),                                                                             // set the source
-  _timeout(2),                                                                              // two-second timeout
   _connection(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server(),     // create the connection
               src == POSTING_CLUSTER ? context.cluster_port() :  context.rbn_port(),
-              context.my_ip())
+              context.my_ip()),
+  _login_id(src == POSTING_CLUSTER ? context.cluster_username() : context.rbn_username()),  // choose the correct login name
+  _my_ip(context.my_ip()),                                                                  // set my IP address
+  _port(src == POSTING_CLUSTER ? context.cluster_port() : context.rbn_port()),              // choose the correct port
+  _server(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server()),        // choose the correct server
+  _source(src),                                                                             // set the source
+  _timeout(2)                                                                              // two-second timeout
 {
 // set the keepalive option
   _connection.keep_alive(300, 60, 2);
@@ -407,21 +407,6 @@ ostream& operator<<(ostream& ost, const dx_post& dxp)
   return ost;
 }
 
-
-enum BAND             _band;              ///< band of post
-std::string           _callsign;          ///< callsign that was heard
-std::string           _canonical_prefix;  ///< canonical prefix corresponding to <i>callsign</i>
-std::string           _comment;           ///< comment supplied by poster
-std::string           _continent;         ///< continent of <i>_callsign</i>
-frequency             _freq;              ///< frequency at which <i>_callsign</i> was heard
-std::string           _frequency_str;     ///< frequency in format xxxxx.y [kHz]
-std::string           _mode_str;          ///< mode string from RBN post (empty if none)
-std::string           _poster;            ///< call of poster
-enum POSTING_SOURCE   _source;            ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
-time_t                _time_processed;    ///< time (relative to the UNIX epoch) at which we processed the post
-bool                  _valid;             ///< is it a valid post?
-
-
 // -----------  monitored_posts_entry  ----------------
 
 /*! \class  monitored_posts_entry
@@ -436,11 +421,7 @@ monitored_posts_entry::monitored_posts_entry(const dx_post& post) :
   _frequency_str(post.frequency_str()),
   _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
   _band(post.band())
-{ //_callsign = post.callsign();
-  //_frequency_str = post.frequency_str();
-  //_expiration = post.time_processed() + MONITORED_POSTS_DURATION;
- // _band = post.band();
-}
+{ }
 
 /*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream
     \param  ost     output stream

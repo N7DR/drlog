@@ -1,4 +1,4 @@
-// $Id: pthread_support.cpp 146 2018-04-09 19:19:15Z  $
+// $Id: pthread_support.cpp 147 2018-04-20 21:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -230,11 +230,6 @@ const bool thread_attribute::detached(void) const
     This class implements a recursive mutex
 */
 
-/// default constructor
-//pt_mutex::pt_mutex(void)
-//{ pthread_mutex_init(&_mutex, NULL);
-//}
-
 /// destructor
 pt_mutex::~pt_mutex(void)
 { pthread_mutex_destroy(&_mutex);
@@ -363,8 +358,6 @@ const bool pt_condition_variable::wait(const unsigned int n_secs)
     throw pthread_error(PTHREAD_INVALID_MUTEX, "pointer to mutex is NULL in timed wait() function");
 
   struct timespec timeout { static_cast<__time_t>(time(NULL) + n_secs), 0 };
-//  timeout.tv_sec = time(NULL) + n_secs;
-//  timeout.tv_nsec = 0;
 
   int status = pthread_cond_timedwait(&_cond, &(_mutex_p->_mutex), &timeout);
 

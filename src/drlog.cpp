@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 146 2018-04-09 19:19:15Z  $
+// $Id: drlog.cpp 147 2018-04-20 21:32:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -432,6 +432,14 @@ bool exchange_mults_used(false);            ///< do the rules call for exchange 
     \param  callsign        (partial) callsign to be matched
 
     Clears <i>win</i> if the length of <i>callsign</i> is less than the minimum specified by the MATCH MINIMUM command
+
+  Display order (each in callsign order):
+    exact match (regardless of colour)
+    green matches
+    ordinary matches
+    red matches
+
+    Might want to put red matches after green matches
 */
 template <typename T>
 void update_matches_window(const T& matches, vector<pair<string, int>>& match_vector, window& win, const string& callsign)
@@ -447,6 +455,12 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 // put an exact match at the front (this will never happen with a fuzzy match)
     vector<string> tmp_matches;                 // variable in which to build interim ordered matches
 
+    vector<string> tmp_exact_matches;                 // variable in which to build interim ordered matches
+    vector<string> tmp_green_matches;                 // variable in which to build interim ordered matches
+    vector<string> tmp_red_matches;                 // variable in which to build interim ordered matches
+    vector<string> tmp_ordinary_matches;                 // variable in which to build interim ordered matches
+
+#if 0
     if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
       tmp_matches.push_back(callsign);
 
@@ -467,6 +481,54 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 
       match_vector.push_back( { cs, colour_pair_number } );
     }
+#endif
+
+#if 1
+    if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
+      tmp_exact_matches.push_back(callsign);
+
+    for (const auto& cs : vec_str)
+    { if (cs != callsign)
+      { const bool qso_b4 = logbk.qso_b4(cs);
+        const bool dupe = logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules);
+
+        if (dupe)
+          tmp_red_matches.push_back(cs);
+        else
+        { if (qso_b4)
+            tmp_green_matches.push_back(cs);
+          else
+          { tmp_ordinary_matches.push_back(cs);
+          }
+        }
+      }
+    }
+
+    for (const auto& cs : tmp_exact_matches)
+    { const bool qso_b4 = logbk.qso_b4(cs);
+      const bool dupe = logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules);
+
+      if (dupe)
+        match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
+      else
+      { if (qso_b4)
+          match_vector.push_back( { cs, colours.add(ACCEPT_COLOUR, win.bg()) } );
+        else
+        { match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
+        }
+      }
+//      match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
+    }
+
+    for (const auto& cs : tmp_green_matches)
+      match_vector.push_back( { cs, colours.add(ACCEPT_COLOUR, win.bg()) } );
+
+    for (const auto& cs : tmp_ordinary_matches)
+      match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
+
+    for (const auto& cs : tmp_red_matches)
+      match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
+#endif
 
     win < WINDOW_CLEAR <= match_vector;
   }
@@ -2213,8 +2275,6 @@ void* process_rbn_info(void* vp)
                     if (bm_buffer.sufficient_posters(be.callsign()))
                     { bandmap& bandmap_this_band = bandmaps[dx_band];
 
-//                      ost << "Adding bandmap_entry to bandmap: " << be << endl;
-
                       bandmap_this_band += be;
 
                       changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
@@ -2229,16 +2289,6 @@ void* process_rbn_info(void* vp)
 
                     changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
                 }
-
-//                if (be.source() != BANDMAP_ENTRY_LOCAL)
-//                  bm_buffer.add(be.callsign(), post.poster());
-
-//                bandmap& bandmap_this_band = bandmaps[dx_band];
-
-//                bandmap_this_band += be;
-
-// prepare to display the bandmap if we just made a change for this band
-//                changed_bands.insert(dx_band);
               }
             }
             else
