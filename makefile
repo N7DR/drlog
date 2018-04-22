@@ -164,7 +164,7 @@ src/command_line.cpp : include/command_line.h include/string_functions.h
 src/cty_data.cpp : include/cty_data.h include/drlog_context.h include/string_functions.h
 	touch src/cty_data.cpp
 	
-src/cw_buffer.cpp : include/cw_buffer.h include/log_message.h
+src/cw_buffer.cpp : include/cw_buffer.h include/drlog_context.h include/log_message.h
 	touch src/cw_buffer.cpp
 	
 src/diskfile.cpp : include/diskfile.h

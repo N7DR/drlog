@@ -14,6 +14,7 @@
 */
 
 #include "cw_buffer.h"
+#include "drlog_context.h"
 #include "log_message.h"
 
 #include <chrono>
@@ -32,6 +33,7 @@ const int CMD_CLEAR_RIT = 0,            ///< clear the RIT
           CMD_SLOWER    = 1,            ///< decrease speed by 1 wpm
           CMD_FASTER    = 2;            ///< increase speed by 1 wpm
 
+extern drlog_context  context;          /// < context for the contest
 extern message_stream ost;              ///< for debugging, info
 
 // just to be sure; we do not want these to be defined in this file
@@ -285,28 +287,48 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
   _condvar.set_mutex(_condvar_mutex);
   _port.control(0);                            // explicitly turn off PTT
 
-  try
-  { thread_attribute cw_attr;   ///< attributes for the CW thread
+  const int cw_priority = context.cw_priority();
 
-    cw_attr.inheritance_policy(PTHREAD_EXPLICIT_SCHED);     // required for explicit policy
-    cw_attr.policy(SCHED_FIFO);                             // soft realtime
-    cw_attr.priority( (cw_attr.max_priority() + cw_attr.min_priority()) / 2);
-
-    create_thread(&_thread_id, cw_attr, &_static_play, this, "CW BUFFER");
-  }
-
-  catch (const pthread_error& e)
-  { ost << "Error creating realtime-scheduled thread: CW BUFFER" << endl;
-
-// try to create an ordinatry (non-realtime) thread
-    try
+  if (cw_priority == -1)
+  { try
     { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
-
-      ost << "Created ordinary thread: CW BUFFER" << endl;
     }
 
     catch (const pthread_error& e)
-    { throw;
+    { ost << "Error creating non-realtime-scheduled thread: CW BUFFER" << endl;
+
+      throw;
+    }
+  }
+  else    // RT scheduled thread
+  { try
+    { thread_attribute cw_attr;   ///< attributes for the CW thread
+
+      cw_attr.inheritance_policy(PTHREAD_EXPLICIT_SCHED);     // required for explicit policy
+      cw_attr.policy(SCHED_FIFO);                             // soft realtime
+
+      if (cw_priority == 0)
+        cw_attr.priority( (cw_attr.max_priority() + cw_attr.min_priority()) / 2);
+      else
+        cw_attr.priority(cw_priority);
+
+      create_thread(&_thread_id, cw_attr, &_static_play, this, "CW RT BUFFER");
+    }
+
+    catch (const pthread_error& e)
+    { ost << "Error creating realtime-scheduled thread: CW RT BUFFER" << endl;
+
+// try to create an ordinary (non-realtime) thread
+      try
+      { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
+
+        ost << "Created ordinary thread: CW BUFFER" << endl;
+      }
+
+      catch (const pthread_error& e)
+      { ost << "Also unable to create ordinary thread: CW BUFFER" << endl;
+        throw;
+      }
     }
   }
 }

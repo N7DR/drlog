@@ -129,6 +129,7 @@ protected:
   bool                                         _cq_auto_lock;               ///< whether to lock the transmitter in CQ mode
   bool                                         _cq_auto_rit;                ///< whether to enable RIT in CQ mode
   std::string                                  _cty_filename;               ///< filename of country file (default = "cty.dat")
+  int                                          _cw_priority;                ///< priority of CW thread (-1 = non-RT; 0 = middle RT; otherwise priority number)
   unsigned int                                 _cw_speed;                   ///< speed in WPM
   unsigned int                                 _cw_speed_change;            ///< change in CW speed in WPM when pressing PAGE UP or PAGE DOWN
 
@@ -369,6 +370,7 @@ public:
   CONTEXTREAD(cq_auto_lock);                     ///< whether to lock the transmitter in CQ mode
   CONTEXTREAD(cq_auto_rit);                      ///< whether to enable RIT in CQ mode
   CONTEXTREAD(cty_filename);                     ///< filename of country file (default = "cty.dat")
+  CONTEXTREAD(cw_priority);                      ///< priority of CW thread (-1 = non-RT; 0 = middle RT; otherwise priority number)
   CONTEXTREAD(cw_speed);                         ///< speed in WPM
   CONTEXTREAD(cw_speed_change);                  ///< change in CW speed in WPM when pressing PAGE UP or PAGE DOWN
 

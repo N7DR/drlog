@@ -382,6 +382,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "CQ AUTO RIT")
       _cq_auto_rit = is_true;
 
+// CW PRIORITY
+    if (LHS == "CW PRIORITY")
+      _cw_priority = from_string<int>(RHS);
+
 // CW SPEED
     if (LHS == "CW SPEED")
       _cw_speed = from_string<unsigned int>(RHS);
@@ -1383,6 +1387,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _cq_auto_lock(false),                                             // don't lock the TX frequency in CQ mode
   _cq_auto_rit(false),                                              // don't enable RIT in CQ mode
   _cty_filename("cty.dat"),                                         // filename for country data
+  _cw_priority(-1),                                                 // non-RT scheduling
   _cw_speed(29),                                                    // 29 WPM
   _cw_speed_change(3),                                              // change speed by 3 WPM
   _decimal_point("·"),                                              // use centred dot as decimal point
