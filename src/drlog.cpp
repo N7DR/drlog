@@ -453,7 +453,7 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
     match_vector.clear();
 
 // put an exact match at the front (this will never happen with a fuzzy match)
-    vector<string> tmp_matches;                 // variable in which to build interim ordered matches
+//    vector<string> tmp_matches;                 // variable in which to build interim ordered matches
 
     vector<string> tmp_exact_matches;                 // variable in which to build interim ordered matches
     vector<string> tmp_green_matches;                 // variable in which to build interim ordered matches
@@ -489,35 +489,34 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 
     for (const auto& cs : vec_str)
     { if (cs != callsign)
-      { const bool qso_b4 = logbk.qso_b4(cs);
-        const bool dupe = logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules);
+      { const bool dupe = logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules);
 
         if (dupe)
           tmp_red_matches.push_back(cs);
         else
-        { if (qso_b4)
+        { const bool qso_b4 = logbk.qso_b4(cs);
+
+          if (qso_b4)
             tmp_green_matches.push_back(cs);
           else
-          { tmp_ordinary_matches.push_back(cs);
-          }
+            tmp_ordinary_matches.push_back(cs);
         }
       }
     }
 
     for (const auto& cs : tmp_exact_matches)
-    { const bool qso_b4 = logbk.qso_b4(cs);
-      const bool dupe = logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules);
+    { const bool dupe = logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules);
 
       if (dupe)
         match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
       else
-      { if (qso_b4)
+      { const bool qso_b4 = logbk.qso_b4(cs);
+
+        if (qso_b4)
           match_vector.push_back( { cs, colours.add(ACCEPT_COLOUR, win.bg()) } );
         else
-        { match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
-        }
+          match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
       }
-//      match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
     }
 
     for (const auto& cs : tmp_green_matches)
@@ -651,17 +650,7 @@ int main(int argc, char** argv)
 
 // possibly configure audio recording
     if (context.record_audio())
-    { //ost << "Will record audio" << endl;
-      //audio.base_filename(context.audio_file());
-      //audio.maximum_duration(context.audio_duration() * 60);
-      //audio.pcm_name(context.audio_device_name());
-      //audio.n_channels(context.audio_channels());
-      //audio.samples_per_second(context.audio_rate());
-      //audio.initialise();
-      //audio.capture();                          // start capturing audio
-      //ost << "audio recording" << endl;
       start_recording(context);
-    }
 
 // set up the calls to be monitored
     mp.callsigns(context.post_monitor_calls());
@@ -1269,10 +1258,10 @@ int main(int argc, char** argv)
   display_band_mode(win_band_mode, safe_get_band(), safe_get_mode());
 
 // possibly start audio recording
-  { if (context.record_audio())
-    {
-    }
-  }
+//  { if (context.record_audio())
+//    {
+//    }
+//  }
 
 // start to display the date and time
   try
@@ -1914,10 +1903,8 @@ void* display_rig_status(void* vp)
   while (true)
   {
     try
-    { // const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
-
-      try
-      { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // don't poll while transmitting; although this check is not foolproof
+    { try
+      { while ( rig_status_thread_parameters.rigp() -> is_transmitting() )  // K3 idiocy: don't poll while transmitting; although this check is not foolproof
           sleep_for(microseconds(microsecond_poll_period / 10));
       }
 
@@ -1953,42 +1940,17 @@ void* display_rig_status(void* vp)
             update_remaining_exchange_mults_windows(rules, statistics, safe_get_band(), m);
           }
 
-
           update_based_on_frequency_change(f, m);   // changes windows
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
 // it seems like the effort of trying to work around the bug is not worth it
-          static const unsigned int MODE_ENTRY = 29;      // position of the mode byte in the K3 status string
-          const char mode_char = status_str[MODE_ENTRY];
-
-          const string mode_str = ( (mode_char == '1') ? "LSB " : ( (mode_char == '2') ? "USB " : ( (mode_char == '3') ? " CW " : "UNK " ) ) );
-
-#if 0
-          string mode_str;
-
-          switch (mode_char)
-          { case '1' :
-              mode_str = "LSB ";
-              break;
-
-            case '2' :
-              mode_str = "USB ";
-              break;
-
-            case '3' :
-              mode_str = " CW ";
-              break;
-
-            default :
-              mode_str = "UNK ";
-              break;
-          }
-#endif
-
           static const unsigned int RIT_ENTRY = 23;      // position of the RIT status byte in the K3 status string
           static const unsigned int XIT_ENTRY = 24;      // position of the XIT status byte in the K3 status string
+          static const unsigned int MODE_ENTRY = 29;      // position of the mode byte in the K3 status string
 
+          const char mode_char = status_str[MODE_ENTRY];
+          const string mode_str = ( (mode_char == '1') ? "LSB " : ( (mode_char == '2') ? "USB " : ( (mode_char == '3') ? " CW " : "UNK " ) ) );
           const bool rit_is_on = (status_str[RIT_ENTRY] == '1');
           const bool xit_is_on = (status_str[XIT_ENTRY] == '1');
 
@@ -2345,24 +2307,11 @@ void* process_rbn_info(void* vp)
 
         const int cpu = colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg());
 
-        ost << "for " << entries[n].callsign() << ", seconds to expiration = " << seconds_to_expiration << endl;
+//        ost << "for " << entries[n].callsign() << ", seconds to expiration = " << seconds_to_expiration << endl;
 
-        ost << "fraction = " << fraction << endl;
-        ost << "n_intervals = " << n_intervals << endl;
-        ost << "cpu = 0x" << hex << cpu << dec << endl;
-
-//        int status_colour = fade_colours[0];
-
-//        if (seconds_to_expiration < 2700)
-//          status_colour = fade_colours[1];
-
-//        if (seconds_to_expiration < 1800)
-//          status_colour = fade_colours[2];
-
-//        if (seconds_to_expiration < 900)
-//          status_colour = fade_colours[3];
-
-//        int cp = colours.add(status_colour, win_monitored_posts.bg());
+//        ost << "fraction = " << fraction << endl;
+//        ost << "n_intervals = " << n_intervals << endl;
+//        ost << "cpu = 0x" << hex << cpu << dec << endl;
 
         win_monitored_posts < colour_pair(cpu)
                             < entries[n].to_string() < colour_pair(default_colours);

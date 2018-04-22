@@ -85,6 +85,14 @@ void* cw_buffer::_play(void*)
 
   bool ptt_asserted = false;
 
+//  ost << "Inside _play()" << endl;
+
+//  const pthread_t tid = pthread_self();
+
+//  thread_attribute attr(tid);
+
+  ost << "Attributes of the CW BUFFER _play() thread: " << thread_attribute(pthread_self()) << endl;
+
   while (true)
   { int next_action   = 0;                // next key up/down/command
     bool buffer_was_empty;
@@ -278,12 +286,28 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
   _port.control(0);                            // explicitly turn off PTT
 
   try
-  { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
+  { thread_attribute cw_attr;   ///< attributes for the CW thread
+
+    cw_attr.inheritance_policy(PTHREAD_EXPLICIT_SCHED);     // required for explicit policy
+    cw_attr.policy(SCHED_FIFO);                             // soft realtime
+    cw_attr.priority( (cw_attr.max_priority() + cw_attr.min_priority()) / 2);
+
+    create_thread(&_thread_id, cw_attr, &_static_play, this, "CW BUFFER");
   }
 
   catch (const pthread_error& e)
-  { ost << "Error creating thread: CW BUFFER" << endl;
-    throw;
+  { ost << "Error creating realtime-scheduled thread: CW BUFFER" << endl;
+
+// try to create an ordinatry (non-realtime) thread
+    try
+    { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
+
+      ost << "Created ordinary thread: CW BUFFER" << endl;
+    }
+
+    catch (const pthread_error& e)
+    { throw;
+    }
   }
 }
 

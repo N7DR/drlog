@@ -665,21 +665,4 @@ const std::vector<std::string> reformat_for_wprintw(const std::vector<std::strin
 
 ERROR_CLASS(string_function_error);     ///< string_function error
 
-#if 0
-class string_function_error : public x_error
-{ 
-protected:
-
-public:
-
-/*! \brief      Construct from error code and reason
-    \param  n   error code
-    \param  s   reason
-*/
-  inline string_function_error(const int n, const std::string& s) :
-    x_error(n, s)
-  { }
-};
-#endif
-
 #endif    // STRING_FUNCTIONS_H

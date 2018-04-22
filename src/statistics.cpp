@@ -498,7 +498,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // try to calculate the points for this QSO; start with a default value
     const unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like :G:3
 
-    ost << "in statistics::add_qso(), points_this_qso = " << points_this_qso << endl;
+//    ost << "in statistics::add_qso(), points_this_qso = " << points_this_qso << endl;
 
     _qso_points[mode_nr][band_nr] += points_this_qso;
 

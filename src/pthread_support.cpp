@@ -164,6 +164,8 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 
     const string message = errname + ": " + strerror(status);
 
+    ost << "Thread creation error for thread " << thread_name << ": " << message << endl;
+
     throw pthread_error(PTHREAD_CREATION_ERROR, thread_name + " error: " + message);
   }
 }
@@ -187,6 +189,18 @@ thread_attribute::thread_attribute(const unsigned int initial_attributes)
 
   if (initial_attributes bitand PTHREAD_DETACHED)
     detached(true);
+}
+
+thread_attribute::thread_attribute(const pthread_t tid)
+{ int status = pthread_attr_init(&_attr);             // man page says that this always succeeds and returns 0
+
+  if (status)
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init() for thread id " + to_string(tid) + ": error number = " + to_string(status));
+
+  status = pthread_getattr_np(tid, &_attr);
+
+  if (status)
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_getattr_np() for thread id " + to_string(tid) + ": error number = " + to_string(status));
 }
 
 /// destructor
@@ -219,6 +233,433 @@ const bool thread_attribute::detached(void) const
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute");
 
   return (state == PTHREAD_CREATE_DETACHED);
+}
+
+/*! \brief          Set the scheduling policy
+    \param  policy  the requested policy
+
+    <i>policy</i> MUST be one of:
+        SCHED_FIFO
+        SCHED_RR
+    otherwise an exception is thrown
+
+    See also: http://jackaudio.org/faq/linux_rt_config.html
+*/
+void thread_attribute::policy(const int policy)
+{ if ( (policy != SCHED_FIFO) and (policy != SCHED_RR) )
+    throw pthread_error(PTHREAD_UNRECOGNISED_POLICY, "Unrecognised thread policy: " + to_string(policy));
+
+  const int status = pthread_attr_setschedpolicy(&_attr, policy);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_POLICY_ERROR, "Error setting policy: " + to_string(policy) + "status = " + to_string(status));
+}
+
+/// get the scheduling policy
+const int thread_attribute::policy(void) const
+{ int policy;
+
+  const int status = pthread_attr_getschedpolicy(&_attr, &policy);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: " + to_string(policy) + "status = " + to_string(status));
+
+  return policy;
+}
+
+/*! \brief          Set the scope
+    \param  scope   the requested scope
+
+    <i>scope</i> MUST be one of:
+        PTHREAD_SCOPE_SYSTEM
+        PTHREAD_SCOPE_PROCESS
+    otherwise an exception is thrown
+*/
+void thread_attribute::scope(const int scope)
+{ if ( (scope != SCHED_FIFO) and (scope != SCHED_RR) )
+    throw pthread_error(PTHREAD_UNRECOGNISED_SCOPE, "Unrecognised thread scope: " + to_string(scope));
+
+  const int status = pthread_attr_setscope(&_attr, scope);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error setting scope: " + to_string(scope) + "status = " + to_string(status));
+}
+
+/// get the scope
+const int thread_attribute::scope(void) const
+{ int scope;
+
+  const int status = pthread_attr_getscope(&_attr, &scope);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: " + to_string(scope) + "status = " + to_string(status));
+
+  return scope;
+}
+
+/*! \brief              Set the scheduling inheritance policy
+    \param  ipolicy     the requested inheritance policy
+
+    <i>ipolicy</i> MUST be one of:
+        PTHREAD_EXPLICIT_SCHED
+        PTHREAD_INHERIT_SCHED
+    otherwise an exception is thrown
+
+    See also: http://jackaudio.org/faq/linux_rt_config.html
+*/
+void thread_attribute::inheritance_policy(const int ipolicy)
+{ if ( (ipolicy != PTHREAD_EXPLICIT_SCHED) and (ipolicy != PTHREAD_INHERIT_SCHED) )
+    throw pthread_error(PTHREAD_UNRECOGNISED_INHERITANCE_POLICY, "Unrecognised thread inheritance policy: " + to_string(ipolicy));
+
+  const int status = pthread_attr_setinheritsched(&_attr, ipolicy);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error setting inheritance policy: " + to_string(ipolicy) + "status = " + to_string(status));
+}
+
+/// get the inheritance policy
+const int thread_attribute::inheritance_policy(void) const
+{ int ipolicy;
+
+  const int status = pthread_attr_getinheritsched(&_attr, &ipolicy);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: " + to_string(ipolicy) + "status = " + to_string(status));
+
+  return ipolicy;
+}
+
+/*! \brief          Set the stack size
+    \param  size    the requested stack size, in bytes
+
+    See also: https://users.cs.cf.ac.uk/Dave.Marshall/C/node30.html; in particular,
+    "[w]hen a stack is specified, the thread should also be created PTHREAD_CREATE_JOINABLE"
+*/
+void thread_attribute::stack_size(const size_t size)
+{ const int status = pthread_attr_setstacksize(&_attr, size);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error setting stack size: " + to_string(size) + "status = " + to_string(status));
+}
+
+/// get the stack size (in bytes)
+const size_t thread_attribute::stack_size(void) const
+{ size_t size;
+
+  const int status = pthread_attr_getstacksize(&_attr, &size);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: " + to_string(size) + "status = " + to_string(status));
+
+  return size;
+}
+
+/// maximum allowed priority for the scheduling policy
+const int thread_attribute::max_priority(void) const
+{ const int sched_policy = policy();
+
+  const int status = sched_get_priority_max(sched_policy);
+
+  if (status == -1)
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting maximum priority for policy: " + to_string(sched_policy));
+
+  return status;
+}
+
+/// minimum allowed priority for the scheduling policy
+const int thread_attribute::min_priority(void) const
+{ const int sched_policy = policy();
+
+  const int status = sched_get_priority_min(sched_policy);
+
+  if (status == -1)
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting minimum priority for policy: " + to_string(sched_policy));
+
+  return status;
+}
+
+/*! \brief              Set the scheduling priority for the scheduling policy
+    \param  priority    the requested scheduling priority
+
+    Adjusts <i>priority</i> if it is less than minimum permitted or
+    more than maximum permitted.
+
+    The scheduling policy has to be set before this is called.
+*/
+void thread_attribute::priority(const int priority)
+{ int p = max(min_priority(), priority);
+
+  p = min(max_priority(), p);
+
+  struct sched_param param;
+
+  param.sched_priority = p;
+
+  const int status = pthread_attr_setschedparam(&_attr, &param);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error setting priority: " + to_string(priority) + "status = " + to_string(status));
+}
+
+/// get the priority
+const int thread_attribute::priority(void) const
+{ struct sched_param param;
+
+  const int status = pthread_attr_getschedparam(&_attr, &param);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = " + to_string(status));
+
+  return param.sched_priority;
+}
+
+/*! \brief          Write a <i>thread_attribute</i> object to an output stream
+    \param  ost     output stream
+    \param  ta      object to write
+    \return         the output stream
+*/
+ostream& operator<<(ostream& ost, const thread_attribute& ta)
+{ ost << "Thread attributes:" << endl
+      << "  detached/joinable: " << (ta.detached() ? "PTHREAD_CREATE_DETACHED" : "PTHREAD_CREATE_JOINABLE") << endl
+      << "  policy: ";
+
+  const int policy = ta.policy();
+  string policy_str;
+
+  switch (policy)
+  { case SCHED_FIFO :
+      policy_str = "SCHED_FIFO";
+      break;
+
+    case SCHED_OTHER :
+      policy_str = "SCHED_OTHER";
+      break;
+
+    case SCHED_RR :
+      policy_str = "SCHED_RR";
+      break;
+
+    default :
+      policy_str = "UNKNOWN";
+  }
+
+  ost << policy_str << endl
+      << "  scope: ";
+
+  const int scope = ta.scope();
+  string scope_str;
+
+  switch (scope)
+  { case PTHREAD_SCOPE_PROCESS :
+      scope_str = "PTHREAD_SCOPE_PROCESS";
+      break;
+
+    case PTHREAD_SCOPE_SYSTEM :
+      scope_str = "PTHREAD_SCOPE_SYSTEM";
+      break;
+
+    default :
+      scope_str = "UNKNOWN";
+  }
+
+  ost << scope_str << endl
+      << "  inheritance policy: ";
+
+  const int ipolicy = ta.inheritance_policy();
+  string ipolicy_str;
+
+  switch (ipolicy)
+  { case PTHREAD_EXPLICIT_SCHED :
+      ipolicy_str = "PTHREAD_EXPLICIT_SCHED";
+      break;
+
+    case PTHREAD_INHERIT_SCHED :
+      ipolicy_str = "PTHREAD_INHERIT_SCHED";
+      break;
+
+    default :
+      ipolicy_str = "UNKNOWN";
+  }
+
+  ost << ipolicy_str << endl
+      << "  stack size: " << ta.stack_size() << endl
+      << "  min allowed priority: " << ta.min_priority() << endl
+      << "  max allowed priority: " << ta.max_priority() << endl
+      << "  actual priority: " << ta.priority();
+
+  return ost;
+}
+
+/*! \brief          Write a <i>pthread_attr_t</i> object to an output stream
+    \param  ost     output stream
+    \param  pa      object to write
+    \return         the output stream
+*/
+ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
+{ ost << "Thread attributes:" << endl
+      << "  detached/joinable: " << (attribute_detached(pa) ? "PTHREAD_CREATE_DETACHED" : "PTHREAD_CREATE_JOINABLE") << endl
+      << "  policy: ";
+
+  const int tpolicy = attribute_policy(pa);
+  string policy_str;
+
+  switch (tpolicy)
+  { case SCHED_FIFO :
+    policy_str = "SCHED_FIFO";
+    break;
+
+    case SCHED_OTHER :
+      policy_str = "SCHED_OTHER";
+      break;
+
+    case SCHED_RR :
+      policy_str = "SCHED_RR";
+      break;
+
+    default :
+      policy_str = "UNKNOWN";
+  }
+
+  ost << policy_str << endl
+      << "  scope: ";
+
+  const int tscope = attribute_scope(pa);
+  string scope_str;
+
+  switch (tscope)
+  { case PTHREAD_SCOPE_PROCESS :
+      scope_str = "PTHREAD_SCOPE_PROCESS";
+      break;
+
+    case PTHREAD_SCOPE_SYSTEM :
+      scope_str = "PTHREAD_SCOPE_SYSTEM";
+      break;
+
+    default :
+      scope_str = "UNKNOWN";
+  }
+
+  ost << scope_str << endl
+      << "  inheritance policy: ";
+
+  const int ipolicy = attribute_inheritance_policy(pa);
+  string ipolicy_str;
+
+  switch (ipolicy)
+  { case PTHREAD_EXPLICIT_SCHED :
+      ipolicy_str = "PTHREAD_EXPLICIT_SCHED";
+      break;
+
+    case PTHREAD_INHERIT_SCHED :
+      ipolicy_str = "PTHREAD_INHERIT_SCHED";
+      break;
+
+    default :
+      ipolicy_str = "UNKNOWN";
+  }
+
+  ost << ipolicy_str << endl
+      << "  stack size: " << attribute_stack_size(pa) << endl
+      << "  min allowed priority: " << attribute_min_priority(pa) << endl
+      << "  max allowed priority: " << attribute_max_priority(pa) << endl
+      << "  actual priority: " << attribute_priority(pa);
+
+  return ost;
+}
+
+const bool attribute_detached(const pthread_attr_t& pa)
+{ int state;
+
+  const int status = pthread_attr_getdetachstate(&pa, &state);
+
+  if (status)
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute");
+
+  return (state == PTHREAD_CREATE_DETACHED);
+}
+
+/// get the scheduling policy
+const int attribute_policy(const pthread_attr_t& pa)
+{ int policy;
+
+  const int status = pthread_attr_getschedpolicy(&pa, &policy);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: " + to_string(policy) + "status = " + to_string(status));
+
+  return policy;
+}
+
+/// get the scope
+const int attribute_scope(const pthread_attr_t& pa)
+{ int scope;
+
+  const int status = pthread_attr_getscope(&pa, &scope);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: " + to_string(scope) + "status = " + to_string(status));
+
+  return scope;
+}
+
+/// get the inheritance policy
+const int attribute_inheritance_policy(const pthread_attr_t& pa)
+{ int ipolicy;
+
+  const int status = pthread_attr_getinheritsched(&pa, &ipolicy);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: " + to_string(ipolicy) + "status = " + to_string(status));
+
+  return ipolicy;
+}
+
+/// get the stack size (in bytes)
+const size_t attribute_stack_size(const pthread_attr_t& pa)
+{ size_t size;
+
+  const int status = pthread_attr_getstacksize(&pa, &size);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: " + to_string(size) + "status = " + to_string(status));
+
+  return size;
+}
+
+/// maximum allowed priority for the scheduling policy
+const int attribute_max_priority(const pthread_attr_t& pa)
+{ const int sched_policy = attribute_policy(pa);
+
+  const int status = sched_get_priority_max(sched_policy);
+
+  if (status == -1)
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting maximum priority for policy: " + to_string(sched_policy));
+
+  return status;
+}
+
+/// minimum allowed priority for the scheduling policy
+const int attribute_min_priority(const pthread_attr_t& pa)
+{ const int sched_policy = attribute_policy(pa);
+
+  const int status = sched_get_priority_min(sched_policy);
+
+  if (status == -1)
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting minimum priority for policy: " + to_string(sched_policy));
+
+  return status;
+}
+
+/// get the priority
+const int attribute_priority(const pthread_attr_t& pa)
+{ struct sched_param param;
+
+  const int status = pthread_attr_getschedparam(&pa, &param);
+
+  if (status != 0)
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = " + to_string(status));
+
+  return param.sched_priority;
 }
 
 // -------------------------------------- pt_mutex ------------------------

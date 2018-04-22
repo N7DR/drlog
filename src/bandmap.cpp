@@ -40,8 +40,6 @@ extern const set<string> CONTINENT_SET;             ///< two-letter abbreviation
 */
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
-//static const unsigned int COLUMN_WIDTH = 19;        ///< width of a column in the bandmap window
-
 const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
 const string        MODE_MARKER("********");        ///< string to mark the mode break in the bandmap
 const unsigned int  MAX_FREQUENCY_SKEW = 250;       ///< maximum separation, in hertz, to be treated as same frequency
@@ -124,10 +122,6 @@ const unsigned int bandmap_buffer::add(const string& callsign, const string& pos
   bandmap_buffer_entry& bfe = _data[callsign];
 
   return bfe.add(poster);
-
-//  const unsigned int rv = bfe.add(poster);
-
-//  return rv;
 }
 
 // -----------   bandmap_filter_type ----------------
@@ -271,27 +265,13 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
         if (em)
           add_exchange_mult(exch_mult_name, guess);
 
-          //const set<pair<string, string>> needed_values = _is_needed_exchange_mult.values();
-
-          //for (auto needed_value : needed_values)
-            //if (needed_value.first == exch_mult_name)
-              //ost << "  *** needed value of field " << exch_mult_name << " = " << needed_value.second << endl;
-
         _is_needed_exchange_mult.status_is_known(true);
       }
-    }//
+    }
   }
-
-//  ost << "exchange_mult_is_possible = " << exchange_mult_is_possible << endl;
 
   if (!exchange_mult_is_possible)                      // we now know that no exchange fields are exchange mult fields for this canonical prefix
     _is_needed_exchange_mult.status_is_known(true);
-
-// for debugging HA contest, in which many stns were marked on bm in green, even though already worked
-//  if (is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult())
-//    ost << "+ve mult status for " << callsign() << ": " << (is_needed_callsign_mult() ? "T" : "F")
-//        << (is_needed_country_mult() ? "T" : "F") << (is_needed_exchange_mult() ? "T" : "F")
-//        << endl;
 
 // it isn't trivial to know how to set _mult_status_is_known under various possibilities
 // for now... if any mult type is used AND we know the status of that mult, we say that
@@ -368,18 +348,6 @@ const MODE bandmap_entry::putative_mode(void) const
   }
 }
 
-// set value from an earlier be
-//void bandmap_entry::time_of_earlier_bandmap_entry(const bandmap_entry& old_be)
-//{ if (old_be.time_of_earlier_bandmap_entry())
-//  { _time_of_earlier_bandmap_entry = old_be._time_of_earlier_bandmap_entry;
-//  }
-//  else
-//  { _time_of_earlier_bandmap_entry = old_be._time;
-//  }
-
-//  _time_of_earlier_bandmap_entry = ( old_be.time_of_earlier_bandmap_entry() ? old_be._time_of_earlier_bandmap_entry : old_be._time );
-//}
-
 /*! \brief          Write a <i>bandmap_entry</i> object to an output stream
     \param  ost     output stream
     \param  be      object to write
@@ -403,15 +371,6 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
       << "putative mode: " << MODE_NAME[be.putative_mode()] << endl
       << "source: " << to_string(be.source()) << endl
       << "time: " << be.time() << endl;
-//      << "number of posters: " << be.n_posters() << endl;
-
-//  if (be.n_posters())
-//  { ost << "posters:" << endl;
-//
-//    const set<string> posters = be.posters();
-//
-//    FOR_ALL(posters, [&ost] (const string& poster) { ost << "  " << poster << endl; } );
-//  }
 
   return ost;
 }

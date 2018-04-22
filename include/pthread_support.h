@@ -20,6 +20,7 @@
 #include "macros.h"
 #include "x_error.h"
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -35,26 +36,23 @@
 #define SAFELOCK(z) safelock safelock_z(z##_mutex, (std::string)(#z))
 
 // errors
-const int PTHREAD_LOCK_ERROR            = -1,       ///< Error locking mutex
-          PTHREAD_UNLOCK_ERROR          = -2,       ///< Error unlocking mutex
-          PTHREAD_INVALID_MUTEX         = -3,       ///< Attempt to operate on an invalid mutex
-          PTHREAD_ATTR_ERROR            = -4,       ///< Error when managing a thread_attribute
-          PTHREAD_CREATION_ERROR        = -5,       ///< Error attempting to create a pthread
-          PTHREAD_CONDVAR_WAIT_ERROR    = -6;       ///< Error while waiting on a condvar
+const int PTHREAD_LOCK_ERROR                      = -1,       ///< Error locking mutex
+          PTHREAD_UNLOCK_ERROR                    = -2,       ///< Error unlocking mutex
+          PTHREAD_INVALID_MUTEX                   = -3,       ///< Attempt to operate on an invalid mutex
+          PTHREAD_ATTR_ERROR                      = -4,       ///< Error when managing a thread_attribute
+          PTHREAD_CREATION_ERROR                  = -5,       ///< Error attempting to create a pthread
+          PTHREAD_CONDVAR_WAIT_ERROR              = -6,       ///< Error while waiting on a condvar
+          PTHREAD_UNRECOGNISED_POLICY             = -7,       ///< Policy is unknown
+          PTHREAD_POLICY_ERROR                    = -8,       ///< Error setting policy
+          PTHREAD_UNRECOGNISED_SCOPE              = -9,       ///< Scope is unknown
+          PTHREAD_SCOPE_ERROR                     = -10,      ///< Error setting scope
+          PTHREAD_UNRECOGNISED_INHERITANCE_POLICY = -11,      ///< Inheritance policy is unknown
+          PTHREAD_INHERITANCE_POLICY_ERROR        = -12,      ///< Error setting inheritance policy
+          PTHREAD_STACK_SIZE_ERROR                = -13,      ///< Error setting stack size
+          PTHREAD_PRIORITY_ERROR                  = -14;      ///< Error related to priority
 
 // attributes that can be set at the time that a thread_attribute object is created
 const unsigned int PTHREAD_DETACHED     = 1;        ///< detached pthread
-
-/*! \brief                  Wrapper for pthread_create()
-    \param  thread          pointer to thread ID
-    \param  attr            pointer to pthread attributes
-    \param  start_routine   name of function to run in the new thread
-    \param  arg             arguments to be passed to <i>start_function</i>
-    \param  thread_name     name of the thread
-
-    The first four parameters are passed without change to <i>pthread_create</i>
-*/
-void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = "");
 
 // -------------------------------------------  thread_attribute  -----------------------
 
@@ -77,6 +75,12 @@ public:
 */
   explicit thread_attribute(const unsigned int initial_attributes = 0);
 
+  explicit thread_attribute(const pthread_t tid);
+
+  explicit thread_attribute(const pthread_attr_t& ori_attr) :
+    _attr(ori_attr)
+    { }
+
 /// destructor
   virtual ~thread_attribute(void);
 
@@ -90,10 +94,120 @@ public:
 */
   const bool detached(void) const;
 
+/*! \brief          Set the scheduling policy
+    \param  policy  the requested policy
+
+    <i>policy</i> MUST be one of:
+        SCHED_FIFO
+        SCHED_RR
+    otherwise an exception is thrown
+
+    See also: http://jackaudio.org/faq/linux_rt_config.html
+*/
+  void policy(const int policy);
+
+/// get the scheduling policy
+  const int policy(void) const;
+
+/*! \brief          Set the scope
+    \param  scope   the requested scope
+
+    <i>scope</i> MUST be one of:
+        PTHREAD_SCOPE_SYSTEM
+        PTHREAD_SCOPE_PROCESS
+    otherwise an exception is thrown
+*/
+  void scope(const int scope);
+
+/// get the scope
+  const int scope(void) const;
+
+/*! \brief              Set the scheduling inheritance policy
+    \param  ipolicy     the requested inheritance policy
+
+    <i>ipolicy</i> MUST be one of:
+        PTHREAD_EXPLICIT_SCHED
+        PTHREAD_INHERIT_SCHED
+    otherwise an exception is thrown
+
+    See also: http://jackaudio.org/faq/linux_rt_config.html
+*/
+  void inheritance_policy(const int ipolicy);
+
+/// get the inheritance policy
+  const int inheritance_policy(void) const;
+
+/*! \brief          Set the stack size
+    \param  size    the requested stack size, in bytes
+
+    See also: https://users.cs.cf.ac.uk/Dave.Marshall/C/node30.html; in particular,
+    "[w]hen a stack is specified, the thread should also be created PTHREAD_CREATE_JOINABLE"
+*/
+  void stack_size(const size_t size);
+
+/// get the stack size (in bytes)
+  const size_t stack_size(void) const;
+
+/// maximum allowed priority for the scheduling policy
+  const int max_priority(void) const;
+
+/// minimum allowed priority for the scheduling policy
+  const int min_priority(void) const;
+
+/*! \brief              Set the scheduling priority for the scheduling policy
+    \param  priority    the requested scheduling priority
+
+    Adjusts <i>priority</i> if it is less than minimum permitted or
+    more than maximum permitted.
+
+    The scheduling policy has to be set before this is called.
+*/
+  void priority(const int priority);
+
+/// get the priority
+  const int priority(void) const;
+
 /// get attributes
   inline const pthread_attr_t& attr(void) const  // note the reference
     { return _attr; }
 };
+
+/*! \brief          Write a <i>thread_attribute</i> object to an output stream
+    \param  ost     output stream
+    \param  ta      object to write
+    \return         the output stream
+*/
+std::ostream& operator<<(std::ostream& ost, const thread_attribute& ta);
+
+/*! \brief          Write a <i>pthread_attr_t</i> object to an output stream
+    \param  ost     output stream
+    \param  pa      object to write
+    \return         the output stream
+*/
+std::ostream& operator<<(std::ostream& ost, const pthread_attr_t& pa);
+
+const bool attribute_detached(const pthread_attr_t& pa);
+
+/// get the scheduling policy
+const int attribute_policy(const pthread_attr_t& pa);
+
+/// get the scope
+const int attribute_scope(const pthread_attr_t& pa);
+
+/// get the inheritance policy
+const int attribute_inheritance_policy(const pthread_attr_t& pa);
+
+/// get the stack size (in bytes)
+const size_t attribute_stack_size(const pthread_attr_t& pa);
+
+/// maximum allowed priority for the scheduling policy
+const int attribute_max_priority(const pthread_attr_t& pa);
+
+/// minimum allowed priority for the scheduling policy
+const int attribute_min_priority(const pthread_attr_t& pa);
+
+/// get the priority
+const int attribute_priority(const pthread_attr_t& pa);
 
 // -------------------------------------------  thread_specific_data  -----------------------
 
@@ -344,29 +458,31 @@ void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
   var = val;
 }
 
+/*! \brief                  Wrapper for pthread_create()
+    \param  thread          pointer to thread ID
+    \param  attr            pointer to pthread attributes
+    \param  start_routine   name of function to run in the new thread
+    \param  arg             arguments to be passed to <i>start_function</i>
+    \param  thread_name     name of the thread
+
+    The first four parameters are passed without change to <i>pthread_create</i>
+*/
+void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = "");
+
+/*! \brief                  Wrapper for pthread_create()
+    \param  thread          pointer to thread ID
+    \param  t_attr          thread attributes
+    \param  start_routine   name of function to run in the new thread
+    \param  arg             arguments to be passed to <i>start_function</i>
+    \param  thread_name     name of the thread
+
+    The first four parameters are passed without change to <i>pthread_create</i>
+*/
+inline void create_thread(pthread_t *thread, const thread_attribute& t_attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = "")
+  { create_thread(thread, &(t_attr.attr()), start_routine, arg, thread_name); }
+
 // -------------------------------------- Errors  -----------------------------------
 
 ERROR_CLASS(pthread_error);     ///< errors related to pthread processing
-
-#if 0
-/*! \class  pthread_error
-    \brief  Errors related to string processing
-*/
-
-class pthread_error : public x_error
-{ 
-protected:
-
-public:
-
-/*! \brief  Construct from error code and reason
-    \param  n Error code
-    \param  s Reason
-*/
-  pthread_error(const int n, const std::string& s) :
-    x_error(n, s)
-  { }
-};
-#endif
 
 #endif    // PTHREADSUPPORT_H
