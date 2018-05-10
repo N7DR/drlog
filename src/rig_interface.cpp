@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 146 2018-04-09 19:19:15Z  $
+// $Id: rig_interface.cpp 148 2018-05-05 20:29:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -209,7 +209,7 @@ void rig_interface::rig_frequency(const frequency& f)
       }
 
       if (status != RIG_OK)
-        _error_alert("Error setting frequency");
+        _error_alert("Error setting A frequency");
     }
   }
 }
@@ -220,7 +220,7 @@ void rig_interface::rig_frequency(const frequency& f)
     Does nothing if <i>f</i> is not within a ham band
 */
 void rig_interface::rig_frequency_b(const frequency& f)
-{ if (f.hz())
+{ if (f.is_within_ham_band())
   { _last_commanded_frequency_b = f;
 
     if (_rig_connected)
@@ -232,7 +232,7 @@ void rig_interface::rig_frequency_b(const frequency& f)
       }
 
       if (status != RIG_OK)
-        _error_alert("Error setting frequency");
+        _error_alert("Error setting B frequency");
     }
   }
 }

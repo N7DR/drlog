@@ -1,4 +1,4 @@
-// $Id: pthread_support.h 147 2018-04-20 21:32:50Z  $
+// $Id: pthread_support.h 148 2018-05-05 20:29:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -75,9 +75,16 @@ public:
 */
   explicit thread_attribute(const unsigned int initial_attributes = 0);
 
+/*! \brief          Construct using data from a thread
+    \param  tid     thread_id
+*/
   explicit thread_attribute(const pthread_t tid);
 
-  explicit thread_attribute(const pthread_attr_t& ori_attr) :
+
+/*! \brief              Construct using data from a C-style attribute "object"
+    \param  ori_attr    C-style attributes
+*/
+  inline explicit thread_attribute(const pthread_attr_t& ori_attr) :
     _attr(ori_attr)
     { }
 
@@ -186,27 +193,52 @@ std::ostream& operator<<(std::ostream& ost, const thread_attribute& ta);
 */
 std::ostream& operator<<(std::ostream& ost, const pthread_attr_t& pa);
 
+/*! \brief      Get the detached state of C-style attributes
+    \param  pa  C-style attributes
+    \return     whether <i>pa</i> is DETACHED
+*/
 const bool attribute_detached(const pthread_attr_t& pa);
 
-/// get the scheduling policy
+/*! \brief      Get the scheduling policy of C-style attributes
+    \param  pa  C-style attributes
+    \return     the scheduling policy associated with <i>pa</i>
+*/
 const int attribute_policy(const pthread_attr_t& pa);
 
-/// get the scope
+/*! \brief      Get the scope of C-style attributes
+    \param  pa  C-style attributes
+    \return     the scope associated with <i>pa</i>
+*/
 const int attribute_scope(const pthread_attr_t& pa);
 
-/// get the inheritance policy
+/*! \brief      Get the inheritance policy of C-style attributes
+    \param  pa  C-style attributes
+    \return     the inheritance policy associated with <i>pa</i>
+*/
 const int attribute_inheritance_policy(const pthread_attr_t& pa);
 
-/// get the stack size (in bytes)
+/*! \brief      Get the stack size of C-style attributes
+    \param  pa  C-style attributes
+    \return     the stack size associated with <i>pa</i>, in bytes
+*/
 const size_t attribute_stack_size(const pthread_attr_t& pa);
 
-/// maximum allowed priority for the scheduling policy
+/*! \brief      Get the maximum allowed priority for the scheduling policy of C-style attributes
+    \param  pa  C-style attributes
+    \return     maximum allowed priority for the scheduling policy of <i>pa</i>
+*/
 const int attribute_max_priority(const pthread_attr_t& pa);
 
-/// minimum allowed priority for the scheduling policy
+/*! \brief      Get the minimum allowed priority for the scheduling policy of C-style attributes
+    \param  pa  C-style attributes
+    \return     minimum allowed priority for the scheduling policy of <i>pa</i>
+*/
 const int attribute_min_priority(const pthread_attr_t& pa);
 
-/// get the priority
+/*! \brief      Get the priority of C-style attributes
+    \param  pa  C-style attributes
+    \return     the priority associated with <i>pa</i>
+*/
 const int attribute_priority(const pthread_attr_t& pa);
 
 // -------------------------------------------  thread_specific_data  -----------------------

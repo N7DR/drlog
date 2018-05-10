@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 147 2018-04-20 21:32:50Z  $
+// $Id: bandmap.cpp 148 2018-05-05 20:29:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -346,6 +346,32 @@ const MODE bandmap_entry::putative_mode(void) const
   { ost << "ERROR in putative_mode(); band = " << band() << endl;
     return MODE_CW;
   }
+}
+
+/*! \brief          Does this call match the N7DR custom driteria?
+    \return         whether the call matches the N7DR custom criteria
+
+    Matches criteria:
+      0. is a needed QSO; AND one of:
+
+      1. not worked on this band/mode; OR
+      2. worked and QSLed on this band/mode;
+      3. worked and QSLed on another band/mode AND worked no more than 4 times in this band/mode
+*/
+const bool bandmap_entry::matches_criteria(void) const
+{ if (!is_needed())
+    return false;
+
+  if (is_all_time_first())
+    return true;
+
+  if (olog.confirmed(_callsign, _band, _mode))
+    return true;
+
+  if (olog.n_qsls(_callsign) and olog.n_qsos(_callsign, _band, _mode) <= 4)
+    return true;
+
+  return false;
 }
 
 /*! \brief          Write a <i>bandmap_entry</i> object to an output stream

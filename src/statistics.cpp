@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 146 2018-04-09 19:19:15Z  $
+// $Id: statistics.cpp 148 2018-05-05 20:29:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -477,8 +477,6 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
     const string value = qso.received_exchange(field_name);
     const string mv = MULT_VALUE(field_name, value);            // the mult value of the received field
 
-//    multiplier& mult = exchange_multiplier.second;
-
     if (!value.empty())
     { multiplier& mult = exchange_multiplier.second;
 
@@ -497,8 +495,6 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   {
 // try to calculate the points for this QSO; start with a default value
     const unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like :G:3
-
-//    ost << "in statistics::add_qso(), points_this_qso = " << points_this_qso << endl;
 
     _qso_points[mode_nr][band_nr] += points_this_qso;
 
@@ -553,16 +549,18 @@ const set<string> running_statistics::known_exchange_mult_values(const string& n
     Doesn't add if the value <i>field_value</i> is unknown.
 */
 const bool running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int band_nr, const int mode_nr)
-{ if (field_value.empty())
-    return false;
+{ //if (field_value.empty())
+  //  return false;
 
-  const string mv = MULT_VALUE(field_name, field_value);  // the mult value of the received field
+  if (!field_value.empty())
+  {  const string mv = MULT_VALUE(field_name, field_value);  // the mult value of the received field
 
-  SAFELOCK(statistics);
+    SAFELOCK(statistics);
 
-  for (auto& psm : _exchange_multipliers)
-  { if (psm.first == field_name)
-      return ( psm.second.add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr)) );
+    for (auto& psm : _exchange_multipliers)
+    { if (psm.first == field_name)
+        return ( psm.second.add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr)) );
+    }
   }
 
   return false;
@@ -730,11 +728,6 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
 
   const auto& cit = _callsign_multipliers.find(mult_name);
 
-//  if (cit != _callsign_multipliers.cend())
-//    return cit->second.worked(b, m);
-
-//  return set<string>();
-
   return ( (cit == _callsign_multipliers.cend()) ? set<string>() : cit->second.worked(b, m) );
 }
 
@@ -825,23 +818,18 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
   const map<BAND, int>& per_band_country_mult_factor = rules.per_band_country_mult_factor();
 
 // include the correct factor for a mult on the current band
-  if (_country_multipliers.used())
-    notional_mults += per_band_country_mult_factor.at(b);
-  else
-    notional_mults++;
+  //if (_country_multipliers.used())
+  //  notional_mults += per_band_country_mult_factor.at(b);
+  //else
+  //  notional_mults++;
 
-  //ost << "modified notional mults = " << notional_mults << endl;
+  notional_mults += ( _country_multipliers.used() ? per_band_country_mult_factor.at(b) : 1 );
 
 // add a notional QSO; first calculate average qso point worth of a qso on the current band and mode
   const unsigned int& n_qso_points = _qso_points[m][b];
   const unsigned int& n_qsos = _n_qsos[m][b];
 
   const float mean_qso_points_band_mode = (n_qsos ? ( static_cast<float>(n_qso_points) / n_qsos ) : 0);
-
-  //ost << "mean QSO points on this band/mode = " << mean_qso_points_band_mode << endl;
-  //ost << "n QSOs = " << n_qsos << endl;
-  //ost << "current mults = " << current_mults << endl;
-
   const float new_point_average = ( (current_qsos * current_mean_qso_points) + mean_qso_points_band_mode ) / (current_qsos + 1);
 
   //ost << "new point average = " << new_point_average << endl;
@@ -872,6 +860,7 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
 const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
 { const set<BAND>& score_bands = rules.score_bands();
   const set<MODE>& score_modes = rules.score_modes();
+
   unsigned int rv = 0;
 
   SAFELOCK(statistics);
@@ -892,10 +881,10 @@ const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
     Counts only those QSOs on bands being used to calculate the score. Includes dupes.
 */
 const unsigned int running_statistics::n_qsos(const contest_rules& rules, const MODE m) const
-{ //const vector<BAND>& permitted_bands = rules.permitted_bands();
-  const set<BAND>& score_bands = rules.score_bands();
-  unsigned int rv = 0;
+{ const set<BAND>& score_bands = rules.score_bands();
   const auto& nq = _n_qsos[m];
+
+  unsigned int rv = 0;
 
   SAFELOCK(statistics);
 

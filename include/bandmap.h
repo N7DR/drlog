@@ -651,6 +651,18 @@ public:
   inline const bool is_new_or_previously_qsled(void) const
     { return (is_needed() and (is_all_time_first() or olog.confirmed(_callsign, _band, _mode))); }
 
+/*! \brief          Does this call match the N7DR custom driteria?
+    \return         whether the call matches the N7DR custom criteria
+
+    Matches criteria:
+      0. is a needed QSO; AND one of:
+
+      1. not worked on this band/mode; OR
+      2. worked and QSLed on this band/mode;
+      3. worked and QSLed on another band/mode AND worked no more than 4 times in this band/mode
+*/
+  const bool matches_criteria(void) const;
+
 /*! \brief          set the value of <i>_time_of_earlier_bandmap_entry</i> from an earlier <i>bandmap_entry</i>
     \param  old_be  earlier <i>bandmap_entry</i>
 */
@@ -951,14 +963,23 @@ public:
   inline const bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_a_needed_mult, dirn); }
 
-/*!  \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
-      param dirn    direction in which to search
-     \return        bandmap entry (if any) corresponding to the next needed all-time call+band+mode in the direction <i>dirn</i>
+/*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
+    \param dirn    direction in which to search
+    \return        bandmap entry (if any) corresponding to the next needed all-time call+band+mode in the direction <i>dirn</i>
 
-     The return value can be tested with .empty() to see if a station was found
+    The return value can be tested with .empty() to see if a station was found
 */
   inline const bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_all_time_first, dirn); }
+
+/*! \brief         Find the next needed that mateches the N7DR criteria up or down in frequency from the current location
+    \param dirn    direction in which to search
+    \return        bandmap entry (if any) corresponding to the next entry that matches the N7DR criteria
+
+    The return value can be tested with .empty() to see if a station was found
+*/
+  inline const bandmap_entry matches_criteria(const enum BANDMAP_DIRECTION dirn)
+    { return needed(&bandmap_entry::matches_criteria, dirn); }
 
 /*!  \brief         Find the next needed stn that is also an all-time new call+band+mode, up or down in frequency from the current location
      \param dirn    direction in which to search

@@ -918,7 +918,7 @@ const unsigned int old_log::increment_n_qsos(const string& call, const BAND b, c
   return n_qsos(call, b, m);
 }
 
-/*! \brief          Has a QSL ever been received for a particular call on a a particular band and mode
+/*! \brief          Has a QSL ever been received for a particular call on a particular band and mode
     \param  call    target callsign
     \param  b       target band
     \param  m       target mode

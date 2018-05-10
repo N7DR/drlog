@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 147 2018-04-20 21:32:50Z  $
+// $Id: cw_buffer.cpp 148 2018-05-05 20:29:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -14,7 +14,7 @@
 */
 
 #include "cw_buffer.h"
-#include "drlog_context.h"
+//#include "drlog_context.h"
 #include "log_message.h"
 
 #include <chrono>
@@ -87,13 +87,7 @@ void* cw_buffer::_play(void*)
 
   bool ptt_asserted = false;
 
-//  ost << "Inside _play()" << endl;
-
-//  const pthread_t tid = pthread_self();
-
-//  thread_attribute attr(tid);
-
-  ost << "Attributes of the CW BUFFER _play() thread: " << thread_attribute(pthread_self()) << endl;
+  ost << "Attributes of the _play() thread: " << thread_attribute(pthread_self()) << endl;
 
   while (true)
   { int next_action   = 0;                // next key up/down/command
@@ -272,12 +266,13 @@ void* cw_buffer::_play(void*)
   return nullptr;
 }
 
-/*! \brief              Construct on a parallel port
-    \param  filename    device file
-    \param  delay       PTT delay (in milliseconds)
-    \param  wpm_speed   speed in WPM
+/*! \brief                  Construct on a parallel port
+    \param  filename        device file
+    \param  delay           PTT delay (in milliseconds)
+    \param  wpm_speed       speed in WPM
+    \param  cw_priority     priority of the thread that sends CW
 */
-cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed) :
+cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority) :
   _aborted(false),
   _disabled_cw(false),
   _port(filename),
@@ -287,11 +282,13 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
   _condvar.set_mutex(_condvar_mutex);
   _port.control(0);                            // explicitly turn off PTT
 
-  const int cw_priority = context.cw_priority();
+//  const int cw_priority = context.cw_priority();
 
-  if (cw_priority == -1)
+  if (cw_priority == -1)                        // default; no RT scheduling
   { try
     { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
+
+      ost << "Created non-RT thread: CW BUFFER" << endl;
     }
 
     catch (const pthread_error& e)
@@ -307,12 +304,14 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
       cw_attr.inheritance_policy(PTHREAD_EXPLICIT_SCHED);     // required for explicit policy
       cw_attr.policy(SCHED_FIFO);                             // soft realtime
 
-      if (cw_priority == 0)
+      if (cw_priority == 0)                                                         // middling priority
         cw_attr.priority( (cw_attr.max_priority() + cw_attr.min_priority()) / 2);
-      else
+      else                                                                          // explicit priority
         cw_attr.priority(cw_priority);
 
       create_thread(&_thread_id, cw_attr, &_static_play, this, "CW RT BUFFER");
+
+      ost << "Created RT thread: CW RT BUFFER" << endl;
     }
 
     catch (const pthread_error& e)
@@ -322,11 +321,11 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
       try
       { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
 
-        ost << "Created ordinary thread: CW BUFFER" << endl;
+        ost << "Created non-RT thread: CW BUFFER" << endl;
       }
 
       catch (const pthread_error& e)
-      { ost << "Also unable to create ordinary thread: CW BUFFER" << endl;
+      { ost << "Also unable to create non-RT thread: CW BUFFER" << endl;
         throw;
       }
     }

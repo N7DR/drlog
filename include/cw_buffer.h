@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 146 2018-04-09 19:19:15Z  $
+// $Id: cw_buffer.h 148 2018-05-05 20:29:09Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -79,12 +79,13 @@ protected:
 
 public:
 
-/*! \brief              Construct on a parallel port
-    \param  filename    device file
-    \param  delay       PTT delay (in milliseconds)
-    \param  wpm_speed   speed in WPM
+/*! \brief                  Construct on a parallel port
+    \param  filename        device file
+    \param  delay           PTT delay (in milliseconds)
+    \param  wpm_speed       speed in WPM
+    \param  cw_priority     priority of the thread that sends CW
 */
-  cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int wpm_speed);
+  cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority);
 
 /// destructor
   virtual ~cw_buffer(void);
