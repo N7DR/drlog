@@ -262,6 +262,7 @@ bool                    is_ss(false);                       ///< ss is special
 logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 bool                    long_t = false;                     ///< whether to send long Ts at beginning of serno
 
+unsigned int            max_qsos_without_qsl;               ///< limit for the N7DR matches_criteria() algorithm
 monitored_posts         mp;                                 ///< the calls being monitored
 string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
 grid_square             my_grid;                            ///< what is my (four-character) grid square?
@@ -653,6 +654,7 @@ int main(int argc, char** argv)
     my_grid = grid_square(context.my_grid());
     best_dx_in_miles = (context.best_dx_unit() == "MILES");
     display_grid = context.display_grid();
+    max_qsos_without_qsl = context.max_qsos_without_qsl();
 
 // possibly configure audio recording
     if (context.record_audio())

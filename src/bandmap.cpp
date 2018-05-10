@@ -24,13 +24,14 @@
 
 using namespace std;
 
-extern pt_mutex                 bandmap_mutex;      ///< used when writing to the bandmap window
-extern bandmap_buffer           bm_buffer;          ///< global control buffer for all the bandmaps
-extern exchange_field_database  exchange_db;        ///< dynamic database of exchange field values for calls; automatically thread-safe
-extern location_database        location_db;        ///< location information
-extern message_stream           ost;                ///< debugging/logging output
+extern pt_mutex                 bandmap_mutex;          ///< used when writing to the bandmap window
+extern bandmap_buffer           bm_buffer;              ///< global control buffer for all the bandmaps
+extern exchange_field_database  exchange_db;            ///< dynamic database of exchange field values for calls; automatically thread-safe
+extern location_database        location_db;            ///< location information
+extern unsigned int             max_qsos_without_qsl;   ///< limit for the N7DR matches_criteria() algorithm
+extern message_stream           ost;                    ///< debugging/logging output
 
-extern const set<string> CONTINENT_SET;             ///< two-letter abbreviations for all the continents
+extern const set<string> CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
 
 /*! \brief                      Obtain value corresponding to a type of callsign mult from a callsign
     \param  callsign_mult_name  the type of the callsign mult
@@ -368,7 +369,7 @@ const bool bandmap_entry::matches_criteria(void) const
   if (olog.confirmed(_callsign, _band, _mode))
     return true;
 
-  if (olog.n_qsls(_callsign) and olog.n_qsos(_callsign, _band, _mode) <= 4)
+  if (olog.n_qsls(_callsign) and olog.n_qsos(_callsign, _band, _mode) <= max_qsos_without_qsl)
     return true;
 
   return false;

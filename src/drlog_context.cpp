@@ -554,6 +554,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "MATCH MINIMUM")
       _match_minimum = from_string<int>(RHS);
 
+// MATCH MINIMUM
+    if (LHS == "MAX QSOS WITHOUT QSL")
+      _max_qsos_without_qsl = from_string<int>(RHS);
+
 // MODES
     if (LHS == "MODES")
     { _modes = RHS;
@@ -1409,6 +1413,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _mark_frequencies(),                                              // don't mark any frequencies
   _mark_mode_break_points(false),                                   // do not mark the mode break points on the bandmap
   _match_minimum(4),                                                // 4 characters required for SCP or fuzzy match
+  _max_qsos_without_qsl(4),                                         // for the N7DR matches_criteria algorithm
   _message_cq_1(),                                                  // no short CQ (default is changed once configuration file has been read)
   _message_cq_2(),                                                  // no long CQ (default is changed once configuration file has been read)
   _modes("CW"),                                                     // only valid mode is CW

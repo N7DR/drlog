@@ -164,6 +164,7 @@ protected:
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies;   ///< frequency ranges to be marked on-screen
   bool                                         _mark_mode_break_points;             ///< whether to mark the mode break points on the bandmap
   unsigned int                                 _match_minimum;                      ///< number of characters before SCP or fuzzy match kicks in
+  unsigned int                                 _max_qsos_without_qsl;               ///< cutoff for the N7DR matches_criteria() algorithm
 
 // we use the KeySymbol as the integer, although other I/O implementations could use something else
   std::map<int, std::string >                  _messages;                           ///< CW messages
@@ -415,6 +416,7 @@ public:
   CONTEXTREAD(mark_frequencies);             ///< frequency ranges to be marked on-screen
   CONTEXTREAD(mark_mode_break_points);       ///< whether to mark the mode break points on the bandmap
   CONTEXTREAD(match_minimum);                ///< number of characters before SCP or fuzzy match kicks in
+  CONTEXTREAD(max_qsos_without_qsl);         ///< cutoff for the N7DR matches_criteria() algorithm
   CONTEXTREAD(messages);                     ///< CW messages
   CONTEXTREAD(message_cq_1);                 ///< CQ message #1 (generally, a short CQ)
   CONTEXTREAD(message_cq_2);                 ///< CQ message #2 (generally, a long CQ)
