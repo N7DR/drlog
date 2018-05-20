@@ -112,7 +112,7 @@ const string match_callsign(const vector<pair<string /* callsign */,
 void populate_win_info(const string& str);                          ///< Populate the information window
 void print_thread_names(void);
 const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);  ///< process a bandmap function, to jump to the next frequency returned by the function
-void process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
+const bool process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
 const bool process_backspace(window& win);                          ///< process backspace
 const bool process_keypress_F5(void);                               ///< process key F5
 const bool p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
@@ -457,35 +457,11 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 // put an exact match at the front (this will never happen with a fuzzy match)
 //    vector<string> tmp_matches;                 // variable in which to build interim ordered matches
 
-    vector<string> tmp_exact_matches;                 // variable in which to build interim ordered matches
-    vector<string> tmp_green_matches;                 // variable in which to build interim ordered matches
-    vector<string> tmp_red_matches;                 // variable in which to build interim ordered matches
-    vector<string> tmp_ordinary_matches;                 // variable in which to build interim ordered matches
+    vector<string> tmp_exact_matches;                   // variable in which to build interim ordered matches
+    vector<string> tmp_green_matches;                   // variable in which to build interim ordered matches
+    vector<string> tmp_red_matches;                     // variable in which to build interim ordered matches
+    vector<string> tmp_ordinary_matches;                // variable in which to build interim ordered matches
 
-#if 0
-    if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
-      tmp_matches.push_back(callsign);
-
-    for (const auto& cs : vec_str)
-      if (cs != callsign)
-        tmp_matches.push_back(cs);
-
-    for (const auto& cs : tmp_matches)
-    { const bool qso_b4 = logbk.qso_b4(cs);
-      const bool dupe = logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules);
-      int colour_pair_number = colours.add(win.fg(), win.bg());
-
-      if (qso_b4)
-        colour_pair_number = colours.add(ACCEPT_COLOUR, win.bg());
-
-      if (dupe)
-        colour_pair_number = colours.add(REJECT_COLOUR, win.bg());
-
-      match_vector.push_back( { cs, colour_pair_number } );
-    }
-#endif
-
-#if 1
     if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
       tmp_exact_matches.push_back(callsign);
 
@@ -529,7 +505,6 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 
     for (const auto& cs : tmp_red_matches)
       match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
-#endif
 
     win < WINDOW_CLEAR <= match_vector;
   }
@@ -2687,8 +2662,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
   if (!processed and e.is_alt_and_not_control() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                   or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-  { process_change_in_bandmap_column_offset(e.symbol());
-    processed = true;
+  { processed = process_change_in_bandmap_column_offset(e.symbol());
+//    processed = true;
   }
 
 // ENTER, ALT-ENTER -- a lot of complicated stuff
@@ -3638,11 +3613,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_control('s'))
   { try
     { rig.split_enabled() ? rig.split_disable() : rig.split_enable();
-
-      //if (rig.split_enabled())
-      //  rig.split_disable();
-      //else
-      //  rig.split_enable();
     }
 
     catch (const rig_interface_error& e)
@@ -4065,8 +4035,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
   if (!processed and e.is_alt() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                      or(e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-  { process_change_in_bandmap_column_offset(e.symbol());
-    processed = true;
+  { processed = process_change_in_bandmap_column_offset(e.symbol());
+//    processed = true;
   }
 
 // ENTER, KP_ENTER, ALT-Q -- thanks and log the contact; also perhaps start QTC process
@@ -4074,7 +4044,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   bool send_qtc = false;
 
   if (!log_the_qso)
-  { log_the_qso = !processed and e.is_alt('q') and rules.send_qtcs();
+  { log_the_qso = ( !processed and e.is_alt('q') and rules.send_qtcs() );
     send_qtc = log_the_qso;
   }
 
@@ -4210,7 +4180,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             for (auto& pef : vec_pef)
             { const bool is_mult_field = pef.is_mult();
 
-               if (!(variable_exchange_fields < pef.name()))
+              if (!(variable_exchange_fields < pef.name()))
                 exchange_db.set_value(callsign, pef.name(), rules.canonical_value(pef.name(), pef.value()));   // add it to the database of exchange fields
 
 // possibly add it to the canonical list, if it's a mult and the value is otherwise unknown
@@ -4228,8 +4198,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // is this a country mult?
             if (country_mults_used)
-            { update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);  // does nothing if not auto remaining country mults
-              qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );  // set whether it's a country mult
+            { update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);                                      // does nothing if not auto remaining country mults
+              qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );     // set whether it's a country mult
             }
 
 // if callsign mults matter, add more to the qso
@@ -4435,8 +4405,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               }
             }
           }
-        }                                                               // end pexch.valid()
-        else  // unable to parse exchange
+        }                                                     // end pexch.valid()
+        else        // unable to parse exchange
           alert("Unable to parse exchange");
 
         processed = true;
@@ -4571,6 +4541,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         if (end_current_word != string::npos)  // word is followed by space
         { string new_contents;
+
           if (start_current_word != 0)
             new_contents = substring(contents, 0, start_current_word);
 
@@ -4633,15 +4604,18 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { if (rig.split_enabled())
     { rig.split_disable();
 
-      switch (a_drlog_mode)
-      { case CQ_MODE :
-          enter_cq_mode();
-          break;
+      (a_drlog_mode == CQ_MODE) ? enter_cq_mode() : enter_sap_mode();
+//      break;
 
-        case SAP_MODE :
-          enter_sap_mode();
-          break;
-      }
+//      switch (a_drlog_mode)
+//      { case CQ_MODE :
+//          enter_cq_mode();
+//          break;
+//
+//        case SAP_MODE :
+//          enter_sap_mode();
+//          break;
+//      }
     }
     else
     { rig.split_enable();
@@ -5572,11 +5546,7 @@ void* simulator_thread(void* vp)
     { SAFELOCK(thread_check);
 
       if (exiting)
-      { //ost << "simulator_thread() is exiting" << endl;
-
-        //n_running_threads--;
-
-        end_of_thread("simulator thread");
+      { end_of_thread("simulator thread");
         return nullptr;
       }
     }
@@ -5775,7 +5745,9 @@ void restore_data(const string& archive_filename)
 */
 void rescore(const contest_rules& rules)
 { statistics.clear_info();
+
   logbook new_logbk;
+
   const list<QSO> qsos = logbk.as_list();
 
   rate.clear();
@@ -5793,6 +5765,7 @@ void rescore(const contest_rules& rules)
 */
 const string hhmmss(void)
 { const time_t now = ::time(NULL);           // get the time from the kernel
+
   struct tm    structured_time;
   array<char, 26> buf;                       // buffer to hold the ASCII date/time info; see man page for gmtime()
 
@@ -5840,6 +5813,7 @@ void rig_error_alert(const string& msg)
 /// update the QSO and score values in <i>win_rate</i>
 void update_rate_window(void)
 { const vector<unsigned int> rate_periods = context.rate_periods();    // in minutes
+
   string rate_str = pad_string("", 3) + pad_string("Qs", 3) + pad_string("Score", 10);
 
   if (rate_str.length() != static_cast<unsigned int>(win_rate.width()))    // LF is added automatically if a string fills a line
@@ -5847,6 +5821,7 @@ void update_rate_window(void)
 
   for (const auto& rate_period : rate_periods)
   { string str = pad_string(to_string(rate_period), 3, PAD_RIGHT);
+
     const pair<unsigned int, unsigned int> qs = rate.calculate_rate(rate_period * 60, context.normalise_rate() ? 3600 : 0);
 
     str += pad_string(to_string(qs.first), 3);
@@ -5878,6 +5853,7 @@ void* reset_connection(void* vp)
 const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
 { const vector<exchange_field> exchange_template = rules.expanded_exch(qso.canonical_prefix(), qso.mode());        // exchange_field = name, is_mult
   const vector<received_field> received_exchange = qso.received_exchange();
+
   vector<received_field> new_received_exchange;
   bool rv = false;
 
@@ -5889,6 +5865,7 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
       const bool is_needed_exchange_mult = statistics.is_needed_exchange_mult(field.name(), field.value(), qso.band(), qso.mode());
 
       field.is_mult(is_needed_exchange_mult);
+
       if (is_needed_exchange_mult)
         rv = true;
     }
@@ -5919,6 +5896,7 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
   rate.clear();
 
   logbook l;
+
   const vector<QSO> q_vec = logbk.as_vector();
   int n_qsos = 0;
 
@@ -5972,6 +5950,7 @@ void update_local_time(void)
 { if (win_local_time.wp())                                         // don't do it if we haven't defined this window
   { struct tm       structured_local_time;
     array<char, 26> buf_local_time;
+
     const time_t    now = ::time(NULL);                            // get the time from the kernel
 
     localtime_r(&now, &structured_local_time);                     // convert to local time
@@ -5986,13 +5965,11 @@ void start_of_thread(const string& name)
 { SAFELOCK(thread_check);
 
   n_running_threads++;
+
   const auto result = thread_names.insert(name);
 
   if (!result.second)
     ost << "failed to insert thread name: " << name << endl;
-
-//  ost << "n_running_threads = " << n_running_threads << endl;
-//  print_thread_names();
 }
 
 /// Cleanup and exit
@@ -6076,10 +6053,11 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
   { int n_green = 0;
     string tmp_callsign;
 
-    for (size_t n = 0; n < matches.size(); ++n)
-    { if (colours.fg(matches[n].second) == ACCEPT_COLOUR)
+//    for (size_t n = 0; n < matches.size(); ++n)
+    for (const auto& match : matches)
+    { if (colours.fg(match.second) == ACCEPT_COLOUR)
       { n_green++;
-        tmp_callsign = matches[n].first;
+        tmp_callsign = match.first;
       }
     }
 
@@ -6087,15 +6065,7 @@ const string match_callsign(const vector<pair<string /* callsign */, int /* colo
       new_callsign = tmp_callsign;
   }
 
-//  if (!new_callsign.empty())
-    return new_callsign;
-
-// no obvious choice try something else
-//  static vector<string>  all_matches;
-
-//  FOR_ALL(matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
-
-//  return string();
+  return new_callsign;
 }
 
 /*! \brief              Is a callsign needed on a particular band and mode?
@@ -6140,6 +6110,7 @@ const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
 */
 const bool rit_control(const keyboard_event& e)
 { const int change = (e.symbol() == XK_Shift_L ? -context.shift_delta() : context.shift_delta());
+
   int poll = context.shift_poll();
 
   try
@@ -6283,18 +6254,6 @@ const string callsign_mult_value(const string& callsign_mult_name, const string&
   return string();
 }
 
-#if 0
-void* start_cluster_thread(void* vp)
-{ big_cluster_info& bci = *(static_cast<big_cluster_info*>(vp)); // make the cluster available
-  drlog_context& context = *(bci.context_p());
-  POSTING_SOURCE& posting_source = *(bci.source_p());
-
-  cluster_p = new dx_cluster(context, POSTING_CLUSTER);
-
-  return nullptr;
-}
-#endif    // 0
-
 /*! \brief                      Update several call-related windows
     \param  callsign            call to use as a basis for the updated windows
     \param  display_extract     whether to update the LOG EXTRACT window
@@ -6307,9 +6266,7 @@ void* start_cluster_thread(void* vp)
       QSLs
  */
 void display_call_info(const string& callsign, const bool display_extract)
-{ //ost << "Displaying call info for: " << callsign << endl;
-
-  populate_win_info( callsign );
+{ populate_win_info( callsign );
   update_batch_messages_window( callsign );
   update_individual_messages_window( callsign );
 
@@ -7215,10 +7172,11 @@ const bool fast_cw_bandwidth(void)
 
 /*! \brief          Process a change in the offset of the bandmaps
     \param  symbol  symbol corresponding to key that was pressed
+    \return         <i>true</i>
 
     Performs an immediate update on the screen
 */
-void process_change_in_bandmap_column_offset(const KeySym symbol)
+const bool process_change_in_bandmap_column_offset(const KeySym symbol)
 { bandmap& bm = bandmaps[safe_get_band()];
   const bool is_increment = ( (symbol == XK_KP_6) or (symbol == XK_KP_Right) );
   bool should_increment = false;                                     // value doesn't actually matter
@@ -7235,16 +7193,16 @@ void process_change_in_bandmap_column_offset(const KeySym symbol)
     should_increment = !(column_of_last_entry < number_of_columns);
   }
 
-//  if ( is_increment or (bm.column_offset() != 0) )
   if ( should_increment or (bm.column_offset() != 0) )
-  { //bm.column_offset( bm.column_offset() + ( is_increment ? 1 : -1 ) ) ;
-    bm.column_offset( bm.column_offset() + ( should_increment ? 1 : -1 ) ) ;
+  { bm.column_offset( bm.column_offset() + ( should_increment ? 1 : -1 ) ) ;
 
     alert(string("Bandmap column offset set to: ") + to_string(bm.column_offset()));
 
     win_bandmap <= bm;
     win_bandmap_filter < WINDOW_CLEAR < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
   }
+
+  return true;
 }
 
 /// get the default mode on a frequency

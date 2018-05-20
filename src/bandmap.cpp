@@ -41,9 +41,10 @@ extern const set<string> CONTINENT_SET;                 ///< two-letter abbrevia
 */
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
-const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
-const string        MODE_MARKER("********");        ///< string to mark the mode break in the bandmap
+const unsigned int  MAX_CALLSIGN_WIDTH = 11;        ///< maximum width of a callsign in the bandmap window
 const unsigned int  MAX_FREQUENCY_SKEW = 250;       ///< maximum separation, in hertz, to be treated as same frequency
+const string        MODE_MARKER("********");        ///< string to mark the mode break in the bandmap
+const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
 
 bandmap_filter_type BMF;                            ///< the global bandmap filter
 
@@ -1154,7 +1155,7 @@ window& operator<(window& win, bandmap& bm)
 
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-    { const string entry_str = pad_string(pad_string(be.frequency_str(), 7)  + " " + be.callsign(), COLUMN_WIDTH, PAD_RIGHT);
+    { const string entry_str = pad_string(pad_string(be.frequency_str(), 7)  + " " + substring(be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH, PAD_RIGHT);
       const string frequency_str = substring(entry_str, 0, 7);
       const string callsign_str = substring(entry_str, 8);
       const bool is_marker = be.is_marker();

@@ -44,9 +44,9 @@ enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
 // forward declarations
 class bandmap_filter_type;
 
-extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
-extern const std::string   MODE_MARKER;                         ///< the string that marks the mode break in the bandmap
 extern bandmap_filter_type BMF;                                 ///< the bandmap filter
+extern const std::string   MODE_MARKER;                         ///< the string that marks the mode break in the bandmap
+extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
 const unsigned int COLUMN_WIDTH = 19;           ///< width of a column in the bandmap window
