@@ -584,7 +584,7 @@ specification tells us otherwise, that's what we do.
     if (starts_with(name, "REXCH-"))
     { const string field_name = substring(name, 6);
 
-      if (contains(field_name, "+"))
+      if (contains(field_name, "+"))                        // "+" indicates a CHOICE
       { const vector<string> vec = remove_peripheral_spaces(split_string(field_name, "+"));
 
         for (const auto& name : vec)

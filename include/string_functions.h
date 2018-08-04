@@ -425,6 +425,8 @@ const std::string delimited_substring(const std::string& cs, const char delim_1,
     \param  delim_1     opening delimiter
     \param  delim_2     closing delimiter
     \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
+
+    Returned strings do not include the delimiters.
 */
 const std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2);
 
@@ -660,6 +662,22 @@ const std::string reformat_for_wprintw(const std::string& str, const int width);
 const std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& vecstr, const int width);
 
 //const bool is_legal_rst(const std::string& str);
+
+/*! \brief      Remove all instances of a particular substring from a string
+    \param  cs  original string
+    \param  ss  substring to be removed
+    \return     <i>cs</i>, with all instances of <i>ss</i> removed
+*/
+inline const std::string remove_substring(const std::string& cs, const std::string& ss)
+  { return ( contains(cs, ss) ? replace(cs, ss, std::string()) : cs ); }
+
+/*! \brief  Create a string of spaces
+    \param  n   Length of string to be created
+    \return String of <i>n</i> space characters
+*/
+inline const std::string space_string(const int n)
+  { return (n > 0 ? create_string((char)32, n) : std::string()); }
+
 
 // -------------------------------------- Errors  -----------------------------------
 

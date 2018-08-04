@@ -948,6 +948,3 @@ void old_log::qsl_received(const string& call, const BAND b, const MODE m)
 
   get<2>(it->second).insert( { b, m } );
 }
-
-
-

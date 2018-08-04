@@ -481,5 +481,4 @@ public:
   void qsl_received(const std::string& call, const BAND b, const MODE m);
 };
 
-
 #endif    // LOG_H

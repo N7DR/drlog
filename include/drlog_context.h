@@ -147,6 +147,7 @@ protected:
   bool                                         _exchange_mults_per_band;    ///< are exchange mults per-band?
   bool                                         _exchange_mults_per_mode;    ///< are exchange mults per-mode?
   std::map<std::string, std::string>           _exchange_per_country;       ///< per-country exchanges; key = prefix-or-call; value = exchange
+  std::map<std::string, std::string>           _exchange_prefill_files;     ///< external prefill files for exchange fields
   std::string                                  _exchange_sap;               ///< exchange in SAP mode
 
   unsigned int                                 _fast_cq_bandwidth;          ///< fast CW bandwidth in CQ mode, in Hz
@@ -389,6 +390,8 @@ public:
   CONTEXTREAD(exchange_mults_per_band);          ///< are exchange mults per-band?
   CONTEXTREAD(exchange_mults_per_mode);          ///< are exchange mults per-mode?
   CONTEXTREAD(exchange_per_country);             ///< per-country exchanges; key = prefix-or-call; value = exchange
+  CONTEXTREAD(exchange_prefill_files);           ///< external prefill files for exchange fields
+
   CONTEXTREAD(exchange_sap);                     ///< exchange in SAP mode
 
   CONTEXTREAD(fast_cq_bandwidth);                ///< fast CW bandwidth in CQ mode, in Hz

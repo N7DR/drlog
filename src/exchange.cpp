@@ -30,10 +30,125 @@ extern drmaster* drm_p;                 ///< pointer to drmaster database
 extern EFT CALLSIGN_EFT;                ///< exchange field template for a callsign
 extern location_database location_db;   ///< the (global) location database
 extern logbook logbk;                   ///< the (global) logbook
+extern exchange_field_prefill  prefill_data;   ///< exchange prefill data from external files
 
 pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
 
 static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
+
+// -------------------------  exchange_field_prefill  ---------------------------
+
+/*! \class  exchange_field_prefill
+    \brief  Encapsulates external prefills for exchange fields
+*/
+
+/// constructor
+exchange_field_prefill::exchange_field_prefill(const map<string, string>& prefill_map)
+{ insert_prefill_map(prefill_map);
+
+#if 0
+  for (const auto& this_pair : prefill_map)
+  { const string& field_name = this_pair.first;
+    const string& filename = this_pair.second;
+
+    try
+    { string contents = read_file(filename);
+
+// convert tabs to spaces
+      contents = replace_char(contents, '\t', ' ');
+
+// squash spaces
+      contents = squash(contents);
+
+      const vector<string> lines = to_lines(to_upper(contents));
+
+      unordered_map<string /* call */, string /* prefill value */> call_value_map;
+
+      for (const auto& line : lines)  // each line should now be: callsign value
+      { const vector<string> this_pair = split_string(line, ' ');
+
+        if (this_pair.size() == 2)
+          call_value_map.insert( { this_pair[0], this_pair[1] } );
+      }
+
+      _db.insert( { to_upper(field_name), call_value_map } );
+
+//      std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
+    }
+
+    catch (...)
+    { ost << "ERROR CREATING PREFILL INFORMATION FROM FILE: " << filename << endl;
+    }
+
+
+  }
+#endif
+
+}
+
+void exchange_field_prefill::insert_prefill_map(const std::map<std::string, std::string>& prefill_map)
+{ for (const auto& this_pair : prefill_map)
+  { const string& field_name = this_pair.first;
+    const string& filename = this_pair.second;
+
+    try
+    { string contents = read_file(filename);
+
+// remove any CRs
+      contents = remove_char(contents, CR_CHAR);
+
+// convert tabs to spaces
+      contents = replace_char(contents, '\t', ' ');
+
+// squash spaces
+      contents = squash(contents);
+
+      const vector<string> lines = to_lines(to_upper(contents));
+
+      unordered_map<string /* call */, string /* prefill value */> call_value_map;
+
+      for (const auto& line : lines)  // each line should now be: callsign value
+      { const vector<string> this_pair = split_string(line, ' ');
+
+        if (this_pair.size() == 2)
+          call_value_map.insert( { this_pair[0], this_pair[1] } );
+      }
+
+      _db.insert( { to_upper(field_name), call_value_map } );
+
+      ost << "Loaded prefill file " << filename << " for field: " << field_name << endl;
+    }
+
+    catch (...)
+    { ost << "ERROR CREATING PREFILL INFORMATION FROM FILE: " << filename << endl;
+    }
+  }
+}
+
+//const bool exchange_field_prefill::prefill_data_exists(const std::string& field_name)
+//{ if (_db.empty())
+//    return false;
+//
+//  return (_db.count(field_name) == 1);
+//}
+
+const string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign)
+{ string rv;
+
+  const auto it = _db.find(field_name);
+
+  if (it == _db.cend())
+    return rv;
+
+  const unordered_map<string /* callsign */, string /* value */>& field_map = it->second;
+
+  const auto callsign_it = field_map.find(callsign);
+
+  if (callsign_it == field_map.cend())
+    return rv;
+
+  return callsign_it->second;
+}
 
 // -------------------------  parsed_exchange_field  ---------------------------
 
@@ -896,6 +1011,15 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   if (it != _db.end())
     return it->second;
 
+// see if there's a pre-fill entry
+  const string prefill_datum = prefill_data.prefill_data(field_name, callsign);
+
+  if (!prefill_datum.empty())
+  { _db.insert( { { callsign, field_name }, prefill_datum } );
+
+    return prefill_datum;
+  }
+
 // if it's a QTHX, then don't go any further if the country doesn't match
   if (starts_with(field_name, "QTHX["))
   { const string canonical_prefix = delimited_substring(field_name, '[', ']');
@@ -909,7 +1033,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 // no prior QSO; is it in the drmaster database?
   const drmaster_line drm_line = (*drm_p)[callsign];
 
-  auto get_qth = [&] (void /* const drmaster_line& drm_line */)
+  auto get_qth = [&] (void)
     { if (drm_line.empty())
         return string();
 

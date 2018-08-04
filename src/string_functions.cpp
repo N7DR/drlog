@@ -573,6 +573,8 @@ const string delimited_substring(const string& cs, const char delim_1, const cha
     \param  delim_1     opening delimiter
     \param  delim_2     closing delimiter
     \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
+
+    Returned strings do not include the delimiters.
 */
 const vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2)
 { vector<string> rv;
@@ -1095,4 +1097,14 @@ const vector<string> reformat_for_wprintw(const vector<string>& vecstr, const in
   return rv;
 }
 
-
+/*! \brief      Remove all instances of a particular substring from a string
+    \param  cs  original string
+    \param  ss  substring to be removed
+    \return     <i>cs</i>, with all instances of <i>ss</i> removed
+*/
+//const string remove_substring(const string& cs, const string& ss)
+//{ if (!contains(cs, ss))
+//    return cs;
+//
+//  return replace(cs, ss, string());
+//}

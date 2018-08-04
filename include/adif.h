@@ -4975,19 +4975,28 @@ protected:
 
 public:
 
-/// construct from legal values
+/*! \brief          Construct from legal values
+    \param  vals    container of legal values
+*/
   adif_ENUM(const T& vals)  :
     adif_type(' '),
     _legal_values(vals)
     { }
 
-/// construct with name, legal values and initial value
+/*! \brief          Construct with name, legal values and initial value
+    \param  nm      name
+    \param  vals    container of legal values
+    \param  v       initial value
+*/
   adif_ENUM(const std::string& nm, const T& vals, const std::string& v) :
     adif_type(' ', nm, v),
     _legal_values(vals)
     { }
 
-/// construct with name and values
+/*! \brief          Construct with name and legal values
+    \param  nm      name
+    \param  vals    container of legal values
+*/
   adif_ENUM(const std::string& nm, const T& vals)  :
         adif_type(' ', nm, std::string()),
         _legal_values(vals)

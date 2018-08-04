@@ -252,6 +252,7 @@ unsigned int            cw_speed_change;                    ///< amount to chang
 bool                    display_grid;                       ///< whether to display the grid in GRID and INFO windows
 
 exchange_field_database exchange_db;                        ///< dynamic database of exchange field values for calls; automatically thread-safe
+exchange_field_prefill  prefill_data;                       ///< exchange prefill data from external files
 
 bool                    filter_remaining_country_mults(false);  ///< whether to apply filter to remaining country mults
 
@@ -630,6 +631,7 @@ int main(int argc, char** argv)
     best_dx_in_miles = (context.best_dx_unit() == "MILES");
     display_grid = context.display_grid();
     max_qsos_without_qsl = context.max_qsos_without_qsl();
+    prefill_data.insert_prefill_map(context.exchange_prefill_files());
 
 // possibly configure audio recording
     if (context.record_audio())

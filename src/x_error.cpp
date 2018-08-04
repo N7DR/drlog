@@ -9,5 +9,4 @@ using namespace std;
 x_error::x_error(const int n, const string& s) :
   _code(n),
   _reason(s)
-{
-}
+{ }

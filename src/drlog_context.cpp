@@ -454,6 +454,25 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "EXCHANGE MULTS PER MODE")
       _exchange_mults_per_mode = is_true;
 
+// EXCHANGE PREFILL FILE
+//   exchange prefill file = [ exchange-field-name, filename ]
+    if ( (LHS == "EXCHANGE PREFILL FILE") or (LHS == "EXCHANGE PREFILL FILES") )
+    {
+
+//    const std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2);
+      const vector<string> files = remove_peripheral_spaces(delimited_substrings(rhs, '[', ']'));
+
+      for (const auto& file : files)
+      { const vector<string> fields = remove_peripheral_spaces(split_string(file, ","));
+
+        if (fields.size() == 2)
+        { // std::map<std::string, std::string>           _exchange_prefill_file;      ///< external prefill files for exchange fields
+
+          _exchange_prefill_files[to_upper(fields[0])] = fields[1];
+        }
+      }
+    }
+
 // EXCHANGE SAP
     if (LHS == "EXCHANGE SAP")
       _exchange_sap = RHS;

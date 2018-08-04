@@ -29,6 +29,37 @@ class exchange_field_template;                  ///< forward declaration
 
 extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
 
+// -------------------------  exchange_field_prefill  ---------------------------
+
+/*! \class  exchange_field_prefill
+    \brief  Encapsulates external prefills for exchange fields
+*/
+
+class exchange_field_prefill
+{
+protected:
+
+  std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
+
+public:
+
+//  std::map<std::string, std::string>           _exchange_prefill_file;      ///< external prefill files for exchange fields
+
+/// default constructor
+  inline exchange_field_prefill(void)
+    { }
+
+/// constructor
+  exchange_field_prefill(const std::map<std::string, std::string>& prefill_map);
+
+  void insert_prefill_map(const std::map<std::string, std::string>& prefill_map);
+
+  inline const bool prefill_data_exists(const std::string& field_name)
+    { return ( _db.empty() ? false : (_db.count(field_name) == 1) ); }
+
+  const std::string prefill_data(const std::string& field_name, const std::string& callsign);
+};
+
 // -------------------------  parsed_exchange_field  ---------------------------
 
 /*! \class  parsed_exchange_field
