@@ -678,6 +678,18 @@ inline const std::string remove_substring(const std::string& cs, const std::stri
 inline const std::string space_string(const int n)
   { return (n > 0 ? create_string((char)32, n) : std::string()); }
 
+std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec);
+//{ unsigned int idx = 0;
+//
+//  for (const auto str : vec)
+//  { ost << "[" << idx++ << "]: " << str;
+//
+//    if (idx != vec.size())
+//      ost << std::endl;
+//  }
+//
+//  return ost;
+//}
 
 // -------------------------------------- Errors  -----------------------------------
 

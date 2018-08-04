@@ -976,4 +976,25 @@ template <typename T, typename U, typename V>
 inline const T LIMIT(const T val, const U low_val, const V high_val)
   { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
 
+//template <typename T>
+//std::ostream& operator<<(std::ostream& ost, const std::<T1, T2>& mp)
+//{ for (typename std::map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
+//    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
+//
+//  return ost;
+//}
+
+//std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec)
+//{ unsigned int idx = 0;
+//
+//  for (const auto str : vec)
+//  { ost << "[" << idx++ << "]: " << str;
+//
+//    if (idx != vec.size())
+//      ost << std::endl;
+//  }
+//
+//  return ost;
+//}
+
 #endif    // MACROS_H

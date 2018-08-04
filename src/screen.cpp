@@ -346,6 +346,8 @@ window& window::operator<(const vector<string>& v)
 
   for (const auto& str : v)
   {
+//    ost << "writing string: ***" <<  str << "***" << endl;
+
 // see if there's enough room on this line
     cursor_position();
     const int remaining_space = width() - _cursor_x;
@@ -385,7 +387,7 @@ window& window::operator<(const vector<std::pair<string, int /* colour pair numb
   unsigned int idx = 0;
 
   for (const auto& psi : vec)
-  { const string& callsign = psi.first;
+  { const string& str = psi.first;
     const int& cp = psi.second;
 
 // see if there's enough room on this line
@@ -393,18 +395,21 @@ window& window::operator<(const vector<std::pair<string, int /* colour pair numb
     const int remaining_space = width() - _cursor_x;
 
 // stop writing if there's insufficient room for the next string
-    if (remaining_space < static_cast<int>(callsign.length()))
+    if (remaining_space < static_cast<int>(str.length()))
       if (!scrolling() and (_cursor_y == 0))
         break;
 
-    if (remaining_space < static_cast<int>(callsign.length()))
+    if (remaining_space < static_cast<int>(str.length()))
       *this < "\n";
 
     this->cpair(cp);
-    *this < callsign < COLOURS(_fg, _bg);    // back to default colours
+
+//    ost << "writing string # " << idx << ": ***" <<  str << "***" << endl;
+
+    *this < str < COLOURS(_fg, _bg);    // back to default colours
 
 // add space unless we're at the end of a line or this is the last string
-    const bool end_of_line = (remaining_space == static_cast<int>(callsign.length()));
+    const bool end_of_line = (remaining_space == static_cast<int>(str.length()));
 
     if ((idx != vec.size() - 1) and !end_of_line)
       *this < " ";

@@ -4218,11 +4218,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             { const string& name = exch_field.name();
               const string value = qso.received_exchange(name);
 
-              if (context.auto_remaining_exchange_mults(name))
-                statistics.add_known_exchange_mult(name, MULT_VALUE(name, value));
+              if (!value.empty())                       // don't add if a field was not received; e.g., if a CHOICE, don't add the unreceived field
+              { if (context.auto_remaining_exchange_mults(name))
+                  statistics.add_known_exchange_mult(name, MULT_VALUE(name, value));
 
-              if (statistics.add_worked_exchange_mult(name, value, qso.band(), qso.mode()))
-                qso.set_exchange_mult(name);
+                if (statistics.add_worked_exchange_mult(name, value, qso.band(), qso.mode()))
+                  qso.set_exchange_mult(name);
+              }
             }
 
             add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
@@ -5142,13 +5144,15 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
   vector<pair<string /* exch value */, int /* colour pair number */ > > vec;
 
   for (const auto& known_value : known_exchange_values)
-  { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
+  { //ost << "Checking known exchange value: ***" << known_value << "***" << endl;
+
+    const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
     const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
 
     vec.push_back( { known_value, colour_pair_number } );
    }
 
-   win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
+  win < WINDOW_CLEAR < WINDOW_TOP_LEFT <= vec;
 }
 
 /*! \brief              Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows

@@ -1097,6 +1097,19 @@ const vector<string> reformat_for_wprintw(const vector<string>& vecstr, const in
   return rv;
 }
 
+ostream& operator<<(ostream& ost, const vector<string>& vec)
+{ unsigned int idx = 0;
+
+  for (const auto str : vec)
+  { ost << "[" << idx++ << "]: " << str;
+
+    if (idx != vec.size())
+      ost << std::endl;
+  }
+
+  return ost;
+}
+
 /*! \brief      Remove all instances of a particular substring from a string
     \param  cs  original string
     \param  ss  substring to be removed

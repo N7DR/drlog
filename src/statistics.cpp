@@ -516,7 +516,9 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
 
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == name)
-    { if (psm.second.add_known(MULT_VALUE(name, value)))
+    { // ost << "Adding known exchange mult value for name ***" << name << "*** : ***" << MULT_VALUE(name, value) << "***" << endl;
+
+      if (psm.second.add_known(MULT_VALUE(name, value)))
         return true;
     }
   }
