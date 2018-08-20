@@ -267,6 +267,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
 /// default constructor
 running_statistics::running_statistics(void) :
+  _auto_country_mults(false),
   _callsign_mults_used(false),
   _country_mults_used(false),
   _exchange_mults_used(false),
@@ -284,6 +285,7 @@ running_statistics::running_statistics(void) :
     \param  rules           rules for this contest
 */
 running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
+  _auto_country_mults(false),
   _callsign_mults_used(rules.callsign_mults_used()),
   _country_mults_used(rules.country_mults_used()),
   _exchange_mults_used(rules.exchange_mults_used()),
@@ -307,6 +309,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
   _callsign_mults_used = rules.callsign_mults_used();
   _country_mults_used = rules.country_mults_used();
+  _auto_country_mults = context.auto_remaining_country_mults();
   _exchange_mults_used = rules.exchange_mults_used();
   _include_qtcs = rules.send_qtcs();
 
@@ -412,9 +415,27 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
   { SAFELOCK(statistics);
 
     const string canonical_prefix = _location_db.canonical_prefix(callsign);
-    const bool is_needed = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
 
-    return is_needed;
+//    const bool prefix_is_a_mult = _country_multipliers.is_known(canonical_prefix);
+
+//    const bool is_needed = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
+
+    bool is_needed_mult;
+
+    if (_auto_country_mults)
+      is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
+    else
+    { const bool prefix_is_a_mult = _country_multipliers.is_known(canonical_prefix);
+
+      if (prefix_is_a_mult)
+        is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));
+      else                                                                              // not a mult
+        is_needed_mult = false;
+    }
+
+//    ost << "running_statistics::is_needed_country_mult
+
+    return is_needed_mult;
   }
   
   catch (const location_error& e)
@@ -431,6 +452,8 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 */
 const bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 { SAFELOCK(statistics);
+
+ost << "in running_statistics::add_known_country_mult() for " << str << " boolean = " << (rules.country_mults() < str) << endl;
 
   return ( (rules.country_mults() < str) ? _country_multipliers.add_known(str) : false );
 }

@@ -105,7 +105,9 @@ protected:
 public:
 
 /// default constructor
-  bandmap_buffer(const unsigned int n_posters = 1);
+  inline bandmap_buffer(const unsigned int n_posters = 1) :
+    _min_posters(n_posters)
+  { }
 
   READ_AND_WRITE(min_posters);      ///< minumum number of posters needed to appear on bandmap
 
@@ -358,7 +360,14 @@ public:
 /*! \brief      Default constructor
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
-  explicit bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL);
+  explicit inline bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL) :
+    _expiration_time(0),                  // no expiration time
+    _is_needed(true),                     // the entry is needed
+    _mult_status_is_known(false),         // multiplier status is unknown
+    _source(s),                           // source is as given in <i>s</i>
+    _time(::time(NULL)),                  // now
+    _time_of_earlier_bandmap_entry(0)     // no earlier bandmap entry
+  { }
 
 /*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
     \param  be  comparison bandmap_entry
@@ -397,7 +406,6 @@ public:
 
   READ_AND_WRITE(mode);                 ///< mode
   READ(mult_status_is_known);           ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
-//  READ_AND_WRITE(posters);              ///< callsign(s) that posted the post(s) (if the source is RBN)
   READ_AND_WRITE(source);               ///< the source of this entry
   READ(time);                           ///< time (in seconds since the epoch) at which the object was created
   READ(time_of_earlier_bandmap_entry);  ///< time (in seconds since the epoch) of object that this object replaced
@@ -589,10 +597,6 @@ public:
 */
   const bool remark(contest_rules& rules, call_history& q_history, running_statistics& statistics);
 
-/// the number of posters
-//  inline const unsigned int n_posters(void) const
-//    { return _posters.size(); }
-
 /*! \brief      Return the (absolute) difference in frequency between two bandmap entries
     \param  be  other bandmap entry
     \return     difference in frequency between *this and <i>be</i>
@@ -684,7 +688,6 @@ public:
          & _is_needed_country_mult
          & _is_needed_exchange_mult
          & _mode
-//         & _posters
          & _source
          & _time;
     }
@@ -761,7 +764,15 @@ protected:
 public:
 
 /// default constructor
-  bandmap(void);
+  inline bandmap(void) :
+    _column_offset(0),
+    _filtered_entries_dirty(false),
+    _filter_p(&BMF),
+    _mode_marker_frequency(frequency(0)),
+    _rbn_threshold(1),
+    _rbn_threshold_and_filtered_entries_dirty(false),
+    _recent_colour(string_to_colour("BLACK"))
+  { }
 
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
 

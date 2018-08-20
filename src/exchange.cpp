@@ -43,8 +43,8 @@ static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< leg
 */
 
 /// constructor
-exchange_field_prefill::exchange_field_prefill(const map<string, string>& prefill_map)
-{ insert_prefill_map(prefill_map);
+//exchange_field_prefill::exchange_field_prefill(const map<string, string>& prefill_map)
+//{ insert_prefill_map(prefill_map);
 
 #if 0
   for (const auto& this_pair : prefill_map)
@@ -84,10 +84,13 @@ exchange_field_prefill::exchange_field_prefill(const map<string, string>& prefil
   }
 #endif
 
-}
+//}
 
-void exchange_field_prefill::insert_prefill_map(const std::map<std::string, std::string>& prefill_map)
-{ for (const auto& this_pair : prefill_map)
+/*! \brief                          Populate with data taken from a prefill filename map
+    \param  prefill_filename_map    map of fields and filenames
+*/
+void exchange_field_prefill::insert_prefill_filename_map(const std::map<std::string, std::string>& prefill_filename_map)
+{ for (const auto& this_pair : prefill_filename_map)
   { const string& field_name = this_pair.first;
     const string& filename = this_pair.second;
 
@@ -125,13 +128,14 @@ void exchange_field_prefill::insert_prefill_map(const std::map<std::string, std:
   }
 }
 
-//const bool exchange_field_prefill::prefill_data_exists(const std::string& field_name)
-//{ if (_db.empty())
-//    return false;
-//
-//  return (_db.count(field_name) == 1);
-//}
+/*! \brief              Get the prefill data for a particular field name and callsign
+    \param  field_name  field name to test
+    \param  callsign    callsign to test
+    \return             the prefill data for the field <i>field_name</i> and callsign <i>callsign</i>
 
+    Returns the empty string if there are no prefill data for the field <i>field_name</i> and
+    callsign <i>callsign</i>
+*/
 const string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign)
 { string rv;
 
@@ -157,24 +161,24 @@ const string exchange_field_prefill::prefill_data(const string& field_name, cons
 */
 
 /// default constructor
-parsed_exchange_field::parsed_exchange_field(void) :
-  _name(),
-  _value(),
-  _is_mult(false),
-  _mult_value()
-{ }
+//parsed_exchange_field::parsed_exchange_field(void) :
+//  _name(),
+//  _value(),
+//  _is_mult(false),
+//  _mult_value()
+//{ }
 
 /*! \brief      Constructor
     \param  nm  field name
     \param  v   field value
     \param  m   is this field a mult?
 */
-parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, const bool m) :
-    _name(nm),
-    _value(v),
-    _is_mult(m),
-    _mult_value(MULT_VALUE(nm, v))
-{ }
+//parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, const bool m) :
+//    _name(nm),
+//    _value(v),
+//    _is_mult(m),
+//    _mult_value(MULT_VALUE(nm, v))
+//{ }
 
 /*! \brief      Set the name and corresponding mult value
     \param  nm  field name

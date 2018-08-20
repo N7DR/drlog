@@ -631,7 +631,7 @@ int main(int argc, char** argv)
     best_dx_in_miles = (context.best_dx_unit() == "MILES");
     display_grid = context.display_grid();
     max_qsos_without_qsl = context.max_qsos_without_qsl();
-    prefill_data.insert_prefill_map(context.exchange_prefill_files());
+    prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
 
 // possibly configure audio recording
     if (context.record_audio())
@@ -727,6 +727,17 @@ int main(int argc, char** argv)
     { cerr << "Error generating rules" << endl;
       exit(-1);
     }
+
+// debug: print all country mults
+//    { const set<string> cm = rules.country_mults();                 ///< collection of canonical prefixes of all the valid country multipliers
+//
+//      ost << "COUNTRY MULTS : ";
+//
+//      for (const string& str : cm)
+//      { ost << "  " << str << endl;
+//      }
+//
+//    }
 
 // is it SS?
     if (rules.n_modes() == 1)
@@ -2143,7 +2154,8 @@ void* process_rbn_info(void* vp)
               update_known_callsign_mults(dx_callsign);
 
 // possibly add the call to the known countries
-              if (rules.n_country_mults())
+//              if (rules.n_country_mults())
+              if (context.auto_remaining_country_mults())
                 update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
@@ -2166,7 +2178,17 @@ void* process_rbn_info(void* vp)
                 }
               }
 
+//ost << "be before calculating mult status: " << be << endl;
+
+//ost << "COUNTRY MULTIPLIERS before calculating mult status: " << statistics.country_multipliers() << endl;
+
               be.calculate_mult_status(rules, statistics);
+
+//ost << "COUNTRY MULTIPLIERS after calculating mult status: " << statistics.country_multipliers() << endl;
+
+
+
+//ost << "be after calculating mult status: " << be << endl;
 
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
@@ -2176,7 +2198,11 @@ void* process_rbn_info(void* vp)
               if (cluster_mult_win.defined())
               { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
                 { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
-                  { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
+                  {
+
+//ost << "About to write to CLUSTER MULT WIN: " << be << endl;
+
+                    cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
                     recent_mult_calls.push_back(target);
 
                     while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
@@ -6693,9 +6719,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
         win_active_p = &win_call;
         processed = true;
       }
-      else
-
-// OK; we're going to send at least one QTC
+      else                                      // OK; we're going to send at least one QTC
       { sending_qtc_series = true;
 
         if (cw)

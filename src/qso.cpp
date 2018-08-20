@@ -28,10 +28,10 @@
 
 using namespace std;
 
+extern contest_rules rules;                 ///< rules for this contest
 extern drlog_context context;               ///< configuration context
 extern location_database location_db;       ///< location database
 extern message_stream ost;                  ///< for debugging, info
-extern contest_rules rules;                 ///< rules for this contest
 
 extern void alert(const string& msg, const bool show_time = true);       ///< alert the user
 
@@ -246,17 +246,6 @@ void QSO::populate_from_log_line(const string& str)
     for (size_t n = 0; n < _log_line_fields.size(); ++n)
       ost << "_log_line_fields[" << n << "] = " << _log_line_fields[n] << endl;
   }
-
-// debug
-//  for (size_t n = 0; n < _log_line_fields.size(); ++n)
-//    ost << "DEBUG: _log_line_fields[" << n << "] = " << _log_line_fields[n] << endl;
-
-//  ost << endl;
-
-//  for (size_t n = 0; n < vec.size(); ++n)
-//    ost << "vec[" << n << "] = " << vec[n] << endl;
-
-//  ost << endl;
 
   size_t sent_index = 0;
   size_t received_index = 0;
@@ -956,23 +945,26 @@ const pair<string, string> next_name_value_pair(const string& str, size_t& posn)
   const size_t first_char_posn = str.find_first_not_of(" ", posn);
 
   if (first_char_posn == string::npos)
-  { posn = string::npos;
-    return empty_pair;
+  { //posn = string::npos;
+    //return empty_pair;
+    return ( posn = string::npos, empty_pair);
   }
 
   const size_t equals_posn = str.find("=", first_char_posn);
 
   if (equals_posn == string::npos)
-  { posn = string::npos;
-    return empty_pair;
+  { //posn = string::npos;
+    //return empty_pair;
+    return ( posn = string::npos, empty_pair);
   }
 
   const string name = remove_peripheral_spaces(str.substr(first_char_posn, equals_posn - first_char_posn));
   const size_t value_first_char_posn = str.find_first_not_of(" ", equals_posn + 1);
 
   if (value_first_char_posn == string::npos)
-  { posn = string::npos;
-    return empty_pair;
+  { //posn = string::npos;
+    //return empty_pair;
+    return ( posn = string::npos, empty_pair);
   }
 
   const size_t space_posn = str.find(" ", value_first_char_posn);

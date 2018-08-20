@@ -188,8 +188,10 @@ const string date_time_string(const bool include_seconds)
     Uses strftime() to perform the formatting
 */
 const string format_time(const string& format, const tm* tmp)
-{ const unsigned int BUFLEN = 60;
+{ static const unsigned int BUFLEN = 60;
+
   char buf[BUFLEN];
+
   const size_t nchars = strftime(buf, BUFLEN, format.c_str(), tmp);
 
   if (!nchars)
@@ -346,6 +348,7 @@ const string read_file(const vector<string>& path, const string& filename)
 */
 void write_file(const string& cs, const string& filename)
 { FILE* fp = fopen(filename.c_str(), "wb");
+
   if (fp == 0)
     throw string_function_error(STRING_UNWRITEABLE_FILE, "Cannot write to file: " + filename);
 
@@ -413,7 +416,9 @@ const vector<string> split_string(const string& cs, const unsigned int record_le
 */
 const string squash(const string& cs, const char c)
 { string rv = cs;
+
   const string separator(1, c);
+
   size_t posn;
 
   while ((posn = rv.find(separator + separator), posn) != string::npos)
@@ -848,51 +853,6 @@ const bool is_legal_ipv4_address(const string& cs)
   return true;
 }
 
-
-#if 0
-const bool is_legal_ipv4_address(const string& cs)
-{ static const string separator(".");
-
-  string tmp_str = cs;
-
-  for (int field = 0; field < 3; field++)
-  { const unsigned long posn = tmp_str.find(separator);
-
-    if (posn == string::npos)
-      return false;
-
-    const string this_field = tmp_str.substr(0, posn);
-
-    try
-    { const long value = from_string<long>(this_field);
-
-      if ((value < 0) or (value > 255))
-        return false;
-    }
-
-    catch (...)                 // caught exception(); string could not be converted
-    { return false;
-    }
-
-    tmp_str = tmp_str.substr(posn + 1);
-  }
-
-// we still have to do the last field
-  try
-  { const long value = from_string<long>(tmp_str);
-
-    if ((value < 0) or (value > 255))
-      return false;
-  }
-
-  catch (...)                 // caught exception(); string could not be converted
-  { return false;
-  }  
-
-  return true;
-}
-#endif
-
 /*! \brief          Convert a four-byte value to a dotted decimal string
     \param  val     original value
     \return         dotted decimal string corresponding to <i>val</i>
@@ -1097,6 +1057,11 @@ const vector<string> reformat_for_wprintw(const vector<string>& vecstr, const in
   return rv;
 }
 
+/*! \brief          Write a <i>vector<string></i> object to an output stream
+    \param  ost     output stream
+    \param  vec     object to write
+    \return         the output stream
+*/
 ostream& operator<<(ostream& ost, const vector<string>& vec)
 { unsigned int idx = 0;
 
@@ -1104,20 +1069,8 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
   { ost << "[" << idx++ << "]: " << str;
 
     if (idx != vec.size())
-      ost << std::endl;
+      ost << endl;
   }
 
   return ost;
 }
-
-/*! \brief      Remove all instances of a particular substring from a string
-    \param  cs  original string
-    \param  ss  substring to be removed
-    \return     <i>cs</i>, with all instances of <i>ss</i> removed
-*/
-//const string remove_substring(const string& cs, const string& ss)
-//{ if (!contains(cs, ss))
-//    return cs;
-//
-//  return replace(cs, ss, string());
-//}

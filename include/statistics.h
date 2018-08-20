@@ -47,6 +47,7 @@ protected:
 
   multiplier                                                        _country_multipliers;   ///< country multipliers
   bool                                                              _country_mults_used;    ///< are country mults used? Copied from rules
+  bool                                                              _auto_country_mults;    ///< can the list of country multipliers change?
 
   std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
   bool                                                              _exchange_mults_used;   ///< are country mults used? Copied from rules
@@ -101,9 +102,12 @@ public:
 */
   void prepare(const cty_data& country_data, const drlog_context& context, const contest_rules& rules);
 
-  SAFEREAD(callsign_mults_used, statistics);                  ///< are callsign mults used?
-  SAFEREAD(country_mults_used, statistics);                   ///< are country mults used?
-  SAFEREAD(exchange_mults_used, statistics);                  ///< are exchange mults used?
+  SAFEREAD(callsign_mults_used, statistics);                ///< are callsign mults used?
+
+  SAFEREAD(country_multipliers, statistics);                ///< country multipliers
+  SAFEREAD(country_mults_used, statistics);                 ///< are country mults used?
+
+  SAFEREAD(exchange_mults_used, statistics);                ///< are exchange mults used?
 
 /*! \brief          How many QSOs have been made?
     \param  rules   rules for this contest

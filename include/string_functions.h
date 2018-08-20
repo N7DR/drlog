@@ -661,8 +661,6 @@ const std::string reformat_for_wprintw(const std::string& str, const int width);
 */
 const std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& vecstr, const int width);
 
-//const bool is_legal_rst(const std::string& str);
-
 /*! \brief      Remove all instances of a particular substring from a string
     \param  cs  original string
     \param  ss  substring to be removed
@@ -671,25 +669,19 @@ const std::vector<std::string> reformat_for_wprintw(const std::vector<std::strin
 inline const std::string remove_substring(const std::string& cs, const std::string& ss)
   { return ( contains(cs, ss) ? replace(cs, ss, std::string()) : cs ); }
 
-/*! \brief  Create a string of spaces
-    \param  n   Length of string to be created
-    \return String of <i>n</i> space characters
+/*! \brief      Create a string of spaces
+    \param  n   length of string to be created
+    \return     string of <i>n</i> space characters
 */
 inline const std::string space_string(const int n)
   { return (n > 0 ? create_string((char)32, n) : std::string()); }
 
+/*! \brief          Write a <i>vector<string></i> object to an output stream
+    \param  ost     output stream
+    \param  vec     object to write
+    \return         the output stream
+*/
 std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec);
-//{ unsigned int idx = 0;
-//
-//  for (const auto str : vec)
-//  { ost << "[" << idx++ << "]: " << str;
-//
-//    if (idx != vec.size())
-//      ost << std::endl;
-//  }
-//
-//  return ost;
-//}
 
 // -------------------------------------- Errors  -----------------------------------
 

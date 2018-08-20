@@ -95,9 +95,9 @@ const unsigned int bandmap_buffer_entry::add(const string& new_poster)
 */
 
 /// default constructor
-bandmap_buffer::bandmap_buffer(const unsigned int n_posters) :
-  _min_posters(n_posters)
-{ }
+//bandmap_buffer::bandmap_buffer(const unsigned int n_posters) :
+//  _min_posters(n_posters)
+//{ }
 
 /*! \brief              Get the number of posters associated with a call
     \param  callsign    the callsign to test
@@ -172,14 +172,14 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 /*! \brief      Default constructor
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
-bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
-  _expiration_time(0),                  // no expiration time
-  _is_needed(true),                     // the entry is needed
-  _mult_status_is_known(false),         // multiplier status is unknown
-  _source(s),                           // source is as given in <i>s</i>
-  _time(::time(NULL)),                  // now
-  _time_of_earlier_bandmap_entry(0)     // no earlier bandmap entry
-{ }
+//bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
+//  _expiration_time(0),                  // no expiration time
+//  _is_needed(true),                     // the entry is needed
+//  _mult_status_is_known(false),         // multiplier status is unknown
+//  _source(s),                           // source is as given in <i>s</i>
+//  _time(::time(NULL)),                  // now
+//  _time_of_earlier_bandmap_entry(0)     // no earlier bandmap entry
+//{ }
 
 /*! \brief          Set the callsign
     \param  call    the callsign to set
@@ -233,6 +233,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   if (rules.n_country_mults())        // if country mults are used
   { clear_country_mult();
 
+//    const bool tmp = statistics.is_needed_country_mult(_callsign, _band, _mode);
+
+//    ost << "is needed country mult status for " << _callsign << ": " << boolalpha << tmp << endl;
+
     if (statistics.is_needed_country_mult(_callsign, _band, _mode))
       add_country_mult(_canonical_prefix);
 
@@ -257,14 +261,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
     if (is_possible_exchange_field)
     { exchange_mult_is_possible = true;
 
-      string guess = exchange_db.guess_value(_callsign, exch_mult_name);
-
-      guess = rules.canonical_value(exch_mult_name, guess);
+      const string guess = rules.canonical_value(exch_mult_name, exchange_db.guess_value(_callsign, exch_mult_name));
 
       if (!guess.empty())
-      {  const bool em = statistics.is_needed_exchange_mult(exch_mult_name, guess, _band, _mode);
-
-        if (em)
+      { if ( statistics.is_needed_exchange_mult(exch_mult_name, guess, _band, _mode) )
           add_exchange_mult(exch_mult_name, guess);
 
         _is_needed_exchange_mult.status_is_known(true);
@@ -433,7 +433,6 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
   { const float difference = cit->freq().kHz() - target_frequency_in_khz;
     const float abs_difference = fabs(difference);
 
-//    if ( (abs_difference <= guard_band_in_khz) and (cit->callsign() != MY_MARKER))
     if ( (abs_difference <= guard_band_in_khz) and (!cit->is_my_marker()))
     { if (abs_difference < smallest_difference)
       { smallest_difference = abs_difference;
@@ -478,15 +477,15 @@ void bandmap::_dirty_entries(void)
 }
 
 /// default constructor
-bandmap::bandmap(void) :
-  _column_offset(0),
-  _filtered_entries_dirty(false),
-  _filter_p(&BMF),
-  _mode_marker_frequency(frequency(0)),
-  _rbn_threshold(1),
-  _rbn_threshold_and_filtered_entries_dirty(false),
-  _recent_colour(string_to_colour("BLACK"))
-{ }
+//bandmap::bandmap(void) :
+//  _column_offset(0),
+//  _filtered_entries_dirty(false),
+//  _filter_p(&BMF),
+//  _mode_marker_frequency(frequency(0)),
+//  _rbn_threshold(1),
+//  _rbn_threshold_and_filtered_entries_dirty(false),
+//  _recent_colour(string_to_colour("BLACK"))
+//{ }
 
 // a call will be marked as recent if:
 // its source is LOCAL or CLUSTER
@@ -578,14 +577,6 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
   if (be.absolute_frequency_difference(old_be) > MAX_FREQUENCY_SKEW)       // treat anything within 250 Hz as the same frequency
     return false;         // we're going to write a new entry
 
-// RBN poster
-//  const unsigned int n_new_posters = be.n_posters();
-
-//  if (n_new_posters != 1)
-//    ost << "in _mark_as_recent: Error: number of posters = " << n_new_posters << " for post for " << be.callsign() << endl;
-//  else
-//    return (old_be.is_poster( *(be.posters().cbegin()) ));
-
   return false;    // should never get here
 }
 
@@ -653,11 +644,9 @@ void bandmap::operator+=(bandmap_entry& be)
       }
 
 // possibly remove all the other entries at this QRG
-//      if (callsign != MY_MARKER and callsign != MODE_MARKER)
       if (be.is_not_marker())
       { const bandmap_entry current_be = (*this)[callsign];  // the entry in the updated bandmap
 
-//        if (current_be.n_posters() >= _rbn_threshold)
         { _entries.remove_if([=] (bandmap_entry& bme) { bool rv = bme.is_not_marker();
 
                                                         if (rv)
@@ -677,7 +666,6 @@ void bandmap::operator+=(bandmap_entry& be)
       _insert(be);
     }
 
-//    if ((callsign != MY_MARKER) and (callsign != MODE_MARKER) and mark_as_recent)
     if (be.is_not_marker() and mark_as_recent)
       _recent_calls.insert(callsign);
 
@@ -932,15 +920,8 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
       return _rbn_threshold_and_filtered_entries;
   }
 
-//  const BM_ENTRIES filtered = filtered_entries();
   BM_ENTRIES filtered = filtered_entries();  // splice is going to change this
   BM_ENTRIES rv;
-
-//  for (const auto& be : filtered)
-//  { rv.push_back(be);
-//  }
-
-//  FOR_ALL(filtered, [&rv] (const bandmap_entry& be) { rv.push_back(be); } );
 
   rv.splice(rv.end(), filtered);
 
@@ -1127,9 +1108,6 @@ const bool bandmap::is_present(const string& target_callsign)
 
   return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 }
-
-//const unsigned int bandmap::n_columns(const window& win)
-//{ return ( (win.width() - 1) / COLUMN_WIDTH ); }
 
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window

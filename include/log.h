@@ -282,7 +282,10 @@ public:
 /*! \brief  constructor
     \param  w               window to be used by this extract
 */
-  explicit log_extract(window& w);
+  explicit inline log_extract(window& w) :
+    _win(w),
+    _win_size(0)                                  // don't set the size yet, since the size of w may not be set
+  { }
 
 /// prepare for use; this MUST be called before the object is used
   inline void prepare(void)

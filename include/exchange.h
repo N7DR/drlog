@@ -49,14 +49,32 @@ public:
   inline exchange_field_prefill(void)
     { }
 
-/// constructor
-  exchange_field_prefill(const std::map<std::string, std::string>& prefill_map);
+/*! \brief                          Constructor
+    \param  prefill_filename_map    map of fields and filenames
+*/
+  inline exchange_field_prefill(const std::map<std::string /* field name */, std::string /* filename */>& prefill_filename_map)
+    { insert_prefill_filename_map(prefill_filename_map); }
 
-  void insert_prefill_map(const std::map<std::string, std::string>& prefill_map);
+/*! \brief                          Populate with data taken from a prefill filename map
+    \param  prefill_filename_map    map of fields and filenames
+*/
+  void insert_prefill_filename_map(const std::map<std::string, std::string>& prefill_filename_map);
 
+/*! \brief              Do prefill data exist for a particular field name?
+    \param  field_name  field name to test
+    \return             whether prefill data exist for the field <i>field_name</i>
+*/
   inline const bool prefill_data_exists(const std::string& field_name)
     { return ( _db.empty() ? false : (_db.count(field_name) == 1) ); }
 
+/*! \brief              Get the prefill data for a particular field name and callsign
+    \param  field_name  field name to test
+    \param  callsign    callsign to test
+    \return             the prefill data for the field <i>field_name</i> and callsign <i>callsign</i>
+
+    Returns the empty string if there are no prefill data for the field <i>field_name</i> and
+    callsign <i>callsign</i>
+*/
   const std::string prefill_data(const std::string& field_name, const std::string& callsign);
 };
 
@@ -78,14 +96,24 @@ protected:
 public:
 
 /// default constructor
-  parsed_exchange_field(void);
+  inline parsed_exchange_field(void) :
+    _name(),
+    _value(),
+    _is_mult(false),
+    _mult_value()
+  { }
 
 /*! \brief      Constructor
     \param  nm  field name
     \param  v   field value
     \param  m   is this field a mult?
 */
-  parsed_exchange_field(const std::string& nm, const std::string& v, const bool m);
+  inline parsed_exchange_field(const std::string& nm, const std::string& v, const bool m) :
+    _name(nm),
+    _value(v),
+    _is_mult(m),
+    _mult_value(MULT_VALUE(nm, v))
+  { }
 
   READ(name);                   ///< field name
   READ(value);                  ///< field value
@@ -294,7 +322,7 @@ public:
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-    const std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
+  const std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
 };
 
 /*! \brief          Write a <i>parsed_exchange</i> object to an output stream

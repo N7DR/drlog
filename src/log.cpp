@@ -64,11 +64,6 @@ const QSO logbook::operator[](const size_t n) const
   SAFELOCK(_log);
 
   return ( (_log_vec.empty() or (_log_vec.size() < n)) ? empty_qso : _log_vec[n - 1] ) ;
-
-//  if (_log_vec.empty() or (_log_vec.size() < n))
-//    return QSO();
-
-//  return _log_vec[n - 1];
 }
 
 /*! \brief      Remove an individual QSO by number (wrt 1)
@@ -538,8 +533,10 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     \param  cabrillo_fields     names of Cabrillo fields
 */
 void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
-{ string file_contents = remove_char(read_file(filename), '\r');
-  const vector<string> lines = to_lines(file_contents);
+{ //string file_contents = remove_char(read_file(filename), '\r');
+
+  const vector<string> lines = to_lines(remove_char(read_file(filename), CR_CHAR));
+
   unsigned int last_qso_number = 0; 
 
   for (const auto& line : lines)
@@ -699,10 +696,10 @@ const QSO logbook::remove_last_qso(void)
 /*! \brief  constructor
     \param  w               window to be used by this extract
 */
-log_extract::log_extract(window& w) :
-  _win(w),
-  _win_size(0)                                  // don't set the size yet, since the size of w may not be set
-{ }
+//log_extract::log_extract(window& w) :
+//  _win(w),
+//  _win_size(0)                                  // don't set the size yet, since the size of w may not be set
+//{ }
 
 /*! \brief          Add a QSO to the extract
     \param  qso     QSO to add

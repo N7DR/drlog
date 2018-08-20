@@ -138,23 +138,23 @@ void window::_init(const window_information& wi, const unsigned int flags)
 
     The window is not ready for use after this constructor. It still needs to be initialised.
 */
-window::window(const unsigned int flags) :
-  _x(0),
-  _y(0),
-  _width(0),
-  _height(0),
-  _vertical(false),
-  _column_width(0),
-  _wp(nullptr),
-  _scrolling(false),
-  _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
-  _insert(flags bitand WINDOW_INSERT),
-  _pp(nullptr),
-  _process_input(nullptr),
-  _fg(COLOUR_WHITE),
-  _bg(COLOUR_BLACK)
-{ _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
-}
+//window::window(const unsigned int flags) :
+//  _x(0),
+//  _y(0),
+//  _width(0),
+//  _height(0),
+//  _vertical(false),
+//  _column_width(0),
+//  _wp(nullptr),
+//  _scrolling(false),
+//  _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
+//  _insert(flags bitand WINDOW_INSERT),
+//  _pp(nullptr),
+//  _process_input(nullptr),
+//  _fg(COLOUR_WHITE),
+//  _bg(COLOUR_BLACK)
+//{ _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
+//}
 
 /*! \brief          Create using position and size information from the configuration file
     \param  wi      window position and size
@@ -403,8 +403,6 @@ window& window::operator<(const vector<std::pair<string, int /* colour pair numb
       *this < "\n";
 
     this->cpair(cp);
-
-//    ost << "writing string # " << idx << ": ***" <<  str << "***" << endl;
 
     *this < str < COLOURS(_fg, _bg);    // back to default colours
 
