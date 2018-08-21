@@ -1455,7 +1455,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _qtcs(false),                               // QTCs are disabled
   _qtc_double_space(false),                   // QTC elements are single-spaced
   _qtc_filename("QTCs"),                      // QTC filename
-  _qtc_qrs(3),                                // WPM decrease when sending QTC
+  _qtc_qrs(0),                                // no speed decrease when sending QTCs
   _rate_periods( { 15, 30, 60 } ),            // 15-, 30-, 60-minute periods for rates
   _rbn_beacons(false),                        // do not place RBN posts from beacons on bandmap
   _rbn_port(7000),                            // telnet port for the reverse beacon network

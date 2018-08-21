@@ -133,29 +133,6 @@ void window::_init(const window_information& wi, const unsigned int flags)
   }
 }
 
-/*! \brief          Default constructor
-    \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
-
-    The window is not ready for use after this constructor. It still needs to be initialised.
-*/
-//window::window(const unsigned int flags) :
-//  _x(0),
-//  _y(0),
-//  _width(0),
-//  _height(0),
-//  _vertical(false),
-//  _column_width(0),
-//  _wp(nullptr),
-//  _scrolling(false),
-//  _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
-//  _insert(flags bitand WINDOW_INSERT),
-//  _pp(nullptr),
-//  _process_input(nullptr),
-//  _fg(COLOUR_WHITE),
-//  _bg(COLOUR_BLACK)
-//{ _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
-//}
-
 /*! \brief          Create using position and size information from the configuration file
     \param  wi      window position and size
     \param  flags   see screen.h; possible flags are WINDOW_INSERT, WINDOW_NO_CURSOR
@@ -346,8 +323,6 @@ window& window::operator<(const vector<string>& v)
 
   for (const auto& str : v)
   {
-//    ost << "writing string: ***" <<  str << "***" << endl;
-
 // see if there's enough room on this line
     cursor_position();
     const int remaining_space = width() - _cursor_x;
@@ -392,6 +367,7 @@ window& window::operator<(const vector<std::pair<string, int /* colour pair numb
 
 // see if there's enough room on this line
     cursor_position();
+
     const int remaining_space = width() - _cursor_x;
 
 // stop writing if there's insufficient room for the next string
@@ -598,10 +574,7 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
 
 /// clear the window
 window& window::clear(void)
-{ //if (!_wp)
- //   return *this;
-
-  if (_wp)
+{ if (_wp)
   { SAFELOCK(screen);
 
     werase(_wp);
@@ -612,9 +585,7 @@ window& window::clear(void)
 
 /// refresh
 window& window::refresh(void)
-{ //if (!_wp)
-  //  return *this;
-  if (_wp)
+{ if (_wp)
   { SAFELOCK(screen);
 
     if (_hidden_cursor)
@@ -636,9 +607,7 @@ window& window::refresh(void)
     \return                     the window
 */
 window& window::scrolling(const bool enable_or_disable)
-{ //if (!_wp)
-  //  return *this;
-  if (_wp)
+{ if (_wp)
   { _scrolling = enable_or_disable;
   
     SAFELOCK(screen);
@@ -657,9 +626,7 @@ window& window::scrolling(const bool enable_or_disable)
 */
 
 window& window::scrollit(const int n_lines)
-{ //if (!_wp)
-  //  return *this;
-  if (_wp)
+{ if (_wp)
   { SAFELOCK(screen);
 
     wscrl(_wp, n_lines);
@@ -673,14 +640,16 @@ window& window::scrollit(const int n_lines)
     \return                     the window
 */
 window& window::leave_cursor(const bool enable_or_disable)
-{ if (!_wp)
-    return *this;
+{ //if (!_wp)
+  //  return *this;
     
-  _leaveok = enable_or_disable;
+  if (_wp)
+  { _leaveok = enable_or_disable;
   
-  SAFELOCK(screen);
+    SAFELOCK(screen);
 
-  leaveok(_wp, enable_or_disable);
+    leaveok(_wp, enable_or_disable);
+  }
   
   return *this;
 }

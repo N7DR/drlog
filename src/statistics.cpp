@@ -266,38 +266,38 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 }
 
 /// default constructor
-running_statistics::running_statistics(void) :
-  _auto_country_mults(false),
-  _callsign_mults_used(false),
-  _country_mults_used(false),
-  _exchange_mults_used(false),
-  _include_qtcs(false),
-  _n_dupes( { {} } ),
-  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-  _qso_points( { {} } ),
-  _qtc_qsos_sent(0),
-  _qtc_qsos_unsent(0)
-{ }
+//running_statistics::running_statistics(void) :
+//  _auto_country_mults(false),
+//  _callsign_mults_used(false),
+//  _country_mults_used(false),
+//  _exchange_mults_used(false),
+//  _include_qtcs(false),
+//  _n_dupes( { {} } ),
+//  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
+//  _qso_points( { {} } ),
+//  _qtc_qsos_sent(0),
+//  _qtc_qsos_unsent(0)
+//{ }
 
 /*! \brief                  Constructor
     \param  country_data    data from cty.dat file
     \param  context         drlog context
     \param  rules           rules for this contest
 */
-running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
-  _auto_country_mults(false),
-  _callsign_mults_used(rules.callsign_mults_used()),
-  _country_mults_used(rules.country_mults_used()),
-  _exchange_mults_used(rules.exchange_mults_used()),
-  _exch_mult_fields(rules.exchange_mults().cbegin(), rules.exchange_mults().cend()),
-  _include_qtcs(rules.send_qtcs()),
-  _location_db(country_data, context.country_list()),
-  _n_dupes( { {} } ),
-  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-  _qso_points( { {} } ),
-  _qtc_qsos_sent(0),
-  _qtc_qsos_unsent(0)
-{ }
+//running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
+//  _auto_country_mults(false),
+//  _callsign_mults_used(rules.callsign_mults_used()),
+//  _country_mults_used(rules.country_mults_used()),
+//  _exchange_mults_used(rules.exchange_mults_used()),
+//  _exch_mult_fields(rules.exchange_mults().cbegin(), rules.exchange_mults().cend()),
+//  _include_qtcs(rules.send_qtcs()),
+//  _location_db(country_data, context.country_list()),
+//  _n_dupes( { {} } ),
+//  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
+//  _qso_points( { {} } ),
+//  _qtc_qsos_sent(0),
+//  _qtc_qsos_unsent(0)
+//{ }
 
 /*! \brief                  Prepare an object that was created with the default constructor
     \param  country_data    data from cty.dat file
@@ -539,9 +539,7 @@ const bool running_statistics::add_known_exchange_mult(const string& name, const
 
   for (auto& psm : _exchange_multipliers)
   { if (psm.first == name)
-    { // ost << "Adding known exchange mult value for name ***" << name << "*** : ***" << MULT_VALUE(name, value) << "***" << endl;
-
-      if (psm.second.add_known(MULT_VALUE(name, value)))
+    { if (psm.second.add_known(MULT_VALUE(name, value)))
         return true;
     }
   }
@@ -574,10 +572,7 @@ const set<string> running_statistics::known_exchange_mult_values(const string& n
     Doesn't add if the value <i>field_value</i> is unknown.
 */
 const bool running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int band_nr, const int mode_nr)
-{ //if (field_value.empty())
-  //  return false;
-
-  if (!field_value.empty())
+{ if (!field_value.empty())
   {  const string mv = MULT_VALUE(field_name, field_value);  // the mult value of the received field
 
     SAFELOCK(statistics);
@@ -664,10 +659,11 @@ const string running_statistics::summary_string(const contest_rules& rules)
 
   for (const auto& mode_set : vsm)
   { if (vsm.size()  != 1)
-    { if (mode_set.size() == 1)
-        rv += MODE_NAME[*(mode_set.cbegin())] + LF;
-      else
-        rv += "All" + LF;
+    { //if (mode_set.size() == 1)
+      //  rv += MODE_NAME[*(mode_set.cbegin())] + LF;
+     // else
+      //  rv += "All" + LF;
+      rv += ( ( (mode_set.size() == 1) ? MODE_NAME[*(mode_set.cbegin())] : "All" ) + LF );
     }
   
     rv += _summary_string(rules, mode_set);
