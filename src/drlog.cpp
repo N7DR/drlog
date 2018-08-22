@@ -4064,7 +4064,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_alt() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                      or(e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
   { processed = process_change_in_bandmap_column_offset(e.symbol());
-//    processed = true;
   }
 
 // ENTER, KP_ENTER, ALT-Q -- thanks and log the contact; also perhaps start QTC process
@@ -6642,7 +6641,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   static unsigned int qtcs_sent;
   static string qtc_id;
   static qtc_series series;
-  static unsigned int original_cw_speed; // = cw_p->speed();
+  static unsigned int original_cw_speed;
   const unsigned int qtc_qrs = context.qtc_qrs();
   const bool cw = (safe_get_mode() == MODE_CW);  // just to keep it easy to determine if we are on CW
   bool processed = false;
@@ -6758,8 +6757,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     { if (!cw_p->empty())
         cw_p->abort();
 
-      if (qtc_qrs)
-        cw_speed(original_cw_speed);
+//      if (qtc_qrs)
+      cw_speed(original_cw_speed);
     }
 
     processed = true;
@@ -6803,7 +6802,11 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     }
     else    // we have sent the last QTC; cleanup
     { if (cw)
-        cw_speed(original_cw_speed);    // always set the speed, just to be safe
+      { cw_speed(original_cw_speed);    // always set the speed, just to be safe
+
+        if (drlog_mode == CQ_MODE)                                   // send QSL immediately
+          (*cw_p) << expand_cw_message( context.qsl_message() );
+      }
 
       qtc_buf.unsent_to_sent(series[series.size() - 1].first);
 
@@ -6816,10 +6819,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       qtc_db += series;                  // add to database of sent QTCs
 
-      if (cw)
-      { if (drlog_mode == CQ_MODE)                                   // send QSL
-          (*cw_p) << expand_cw_message( context.qsl_message() );
-      }
+//      if (cw)
+//      { if (drlog_mode == CQ_MODE)                                   // send QSL
+//          (*cw_p) << expand_cw_message( context.qsl_message() );
+//      }
 
       (*win_active_p) <= WINDOW_CLEAR;
 

@@ -416,7 +416,7 @@ protected:
 public:
 
 /// default constructor
-  EFT(void)
+  inline EFT(void)
     { }
 
 /*! \brief      construct from name
@@ -424,7 +424,7 @@ public:
 
     Assumes not a mult. Object is not ready for use, except to test the name, after this constructor.
 */
-  EFT(const std::string& nm);
+  explicit EFT(const std::string& nm);
 
 /*! \brief                  construct from several parameters
     \param  nm              name

@@ -717,7 +717,12 @@ public:
          & _exchange_present_points
          & _exch_values
          & _expanded_received_exchange
+         & _my_continent
+         & _my_country
+         & _my_cq_zone
+         & _my_grid
          & _original_score_bands
+         & _original_score_modes
          & _per_band_country_mult_factor
          & _permitted_bands
          & _permitted_exchange_values
@@ -731,11 +736,6 @@ public:
          & _sent_exchange_names
          & _work_if_different_band
          & _work_if_different_mode
-         & _original_score_modes
-         & _my_continent
-         & _my_country
-         & _my_cq_zone
-         & _my_grid
          & _my_itu_zone
          & _send_qtcs
          & _uba_bonus;
