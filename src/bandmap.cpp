@@ -94,11 +94,6 @@ const unsigned int bandmap_buffer_entry::add(const string& new_poster)
     A single bandmap_buffer is used to control all bandmaps
 */
 
-/// default constructor
-//bandmap_buffer::bandmap_buffer(const unsigned int n_posters) :
-//  _min_posters(n_posters)
-//{ }
-
 /*! \brief              Get the number of posters associated with a call
     \param  callsign    the callsign to test
     \return             The number of posters associated with <i>callsign</i>
@@ -169,18 +164,6 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 
 // -----------  bandmap_entry  ----------------
 
-/*! \brief      Default constructor
-    \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
-*/
-//bandmap_entry::bandmap_entry(const BANDMAP_ENTRY_SOURCE s) :
-//  _expiration_time(0),                  // no expiration time
-//  _is_needed(true),                     // the entry is needed
-//  _mult_status_is_known(false),         // multiplier status is unknown
-//  _source(s),                           // source is as given in <i>s</i>
-//  _time(::time(NULL)),                  // now
-//  _time_of_earlier_bandmap_entry(0)     // no earlier bandmap entry
-//{ }
-
 /*! \brief          Set the callsign
     \param  call    the callsign to set
 */
@@ -232,10 +215,6 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // country mult
   if (rules.n_country_mults())        // if country mults are used
   { clear_country_mult();
-
-//    const bool tmp = statistics.is_needed_country_mult(_callsign, _band, _mode);
-
-//    ost << "is needed country mult status for " << _callsign << ": " << boolalpha << tmp << endl;
 
     if (statistics.is_needed_country_mult(_callsign, _band, _mode))
       add_country_mult(_canonical_prefix);
@@ -425,6 +404,7 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
   }
 
   const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
+
   bool finish_looking = false;
   float smallest_difference = 1000000;              // start with a big number
   string rv;
@@ -475,17 +455,6 @@ void bandmap::_dirty_entries(void)
   _filtered_entries_dirty = true;
   _rbn_threshold_and_filtered_entries_dirty = true;
 }
-
-/// default constructor
-//bandmap::bandmap(void) :
-//  _column_offset(0),
-//  _filtered_entries_dirty(false),
-//  _filter_p(&BMF),
-//  _mode_marker_frequency(frequency(0)),
-//  _rbn_threshold(1),
-//  _rbn_threshold_and_filtered_entries_dirty(false),
-//  _recent_colour(string_to_colour("BLACK"))
-//{ }
 
 // a call will be marked as recent if:
 // its source is LOCAL or CLUSTER
@@ -569,7 +538,7 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
 
   SAFELOCK(_bandmap);
 
-  bandmap_entry old_be = (*this)[be.callsign()];
+  const bandmap_entry old_be = (*this)[be.callsign()];
 
   if (!old_be.valid())    // not already present
     return false;

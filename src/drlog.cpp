@@ -6831,10 +6831,11 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
 
-// update statistics and summary window
+// update statistics, summary and QTC queue window
       statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
       statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
       display_statistics(statistics.summary_string(rules));
+      update_qtc_queue_window();
 
       processed = true;
     }
