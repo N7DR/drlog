@@ -49,6 +49,7 @@ class drlog_context
 protected:
 
   int                                          _accept_colour;                              ///< colour for calls that have been worked, but are not dupes
+  bool                                         _allow_audio_recording;                      ///< whether to allow recording of audio
   std::string                                  _alternative_exchange_cq;                    ///< alternative exchange in CQ mode
   std::string                                  _alternative_exchange_sap;                   ///< alternative exchange in SAP mode
   std::string                                  _alternative_qsl_message;                    ///< alternative confirmation at end of QSO
@@ -217,7 +218,7 @@ protected:
   std::string                                  _rbn_server;                     ///< hostname or IP address of RBN server
   unsigned int                                 _rbn_threshold;                  ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
   std::string                                  _rbn_username;                   ///< username to use on the RBN server
-  bool                                         _record_audio;                   ///< whether to record audio
+//  bool                                         _record_audio;                   ///< whether to record audio
   int                                          _reject_colour;                  ///< colour for calls that are dupes
   std::set<std::string>                        _remaining_callsign_mults_list;  ///< callsign mults to display
   std::set<std::string>                        _remaining_country_mults_list;   ///< country mults to display
@@ -241,6 +242,7 @@ protected:
   unsigned int                                 _shift_poll;                     ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   bool                                         _short_serno;                    ///< whether to omit leading Ts
   std::string                                  _society_list_filename;          ///< name of file containing IARU society exchanges
+  bool                                         _start_audio_recording;          ///< whether to start recording of audio (if _allow_audio_recording is true)
   enum BAND                                    _start_band;                     ///< on what band do we start?
   enum MODE                                    _start_mode;                     ///< on which mode do we start?
   std::map<std::string /* name */,
@@ -279,6 +281,7 @@ public:
   drlog_context( const std::string& filename );
 
   CONTEXTREAD(accept_colour);                            ///< colour for calls that have been worked, but are not dupes
+  CONTEXTREAD(allow_audio_recording);                    ///< whether to allow recording of audio
   CONTEXTREAD(alternative_exchange_cq);                  ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_exchange_sap);                 ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_qsl_message);                  ///< alternative confirmation at end of QSO
@@ -470,7 +473,7 @@ public:
   CONTEXTREAD(rbn_server);                       ///< hostname or IP address of RBN server
   CONTEXTREAD(rbn_threshold);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
   CONTEXTREAD(rbn_username);                     ///< username to use on the RBN server
-  CONTEXTREAD(record_audio);                     ///< whether to record audio
+//  CONTEXTREAD(record_audio);                     ///< whether to record audio
   CONTEXTREAD(reject_colour);                    ///< colour for calls that are dupes
   CONTEXTREAD(remaining_callsign_mults_list);    ///< callsign mults to display
   CONTEXTREAD(remaining_country_mults_list);     ///< country mults to display
@@ -500,6 +503,7 @@ public:
   CONTEXTREAD(shift_poll);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   CONTEXTREAD(short_serno);                      ///< whether to omit leading Ts
   CONTEXTREAD(society_list_filename);            ///< name of file containing IARU society exchanges
+  CONTEXTREAD(start_audio_recording);            ///< whether to start recording of audio (if _allow_audio_recording is true)
   CONTEXTREAD(start_band);                       ///< on what band do we start?
   CONTEXTREAD(start_mode);                       ///< on which mode do we start?
   CONTEXTREAD(static_windows);                   ///< size, position and content information for each static window

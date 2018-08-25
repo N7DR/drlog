@@ -135,6 +135,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( ( (LHS == "ACCEPT COLOUR") or (LHS == "ACCEPT COLOR") ) and !rhs.empty() )
       _accept_colour = string_to_colour(RHS);
 
+// ALLOW AUDIO RECORDING
+    if (LHS == "ALLOW AUDIO RECORDING")
+      _allow_audio_recording = is_true;
+
 // ALTERNATIVE EXCHANGE CQ
     if (LHS == "ALTERNATIVE EXCHANGE CQ")
       _alternative_exchange_cq = RHS;
@@ -772,10 +776,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "RBN USERNAME")
       _rbn_username = rhs;
 
-// RECORD AUDIO
-    if (LHS == "RECORD AUDIO")
-      _record_audio = is_true;
-
 // REJECT COLOUR
     if ( ( (LHS == "REJECT COLOUR") or (LHS == "REJECT COLOR") ) and !rhs.empty() )
       _reject_colour = string_to_colour(RHS);
@@ -862,6 +862,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // SOCIETY LIST FILENAME
     if (LHS == "SOCIETY LIST FILENAME")
       _society_list_filename = rhs;
+
+// START AUDIO RECORDING
+    if (LHS == "START AUDIO RECORDING")
+      _start_audio_recording = is_true;
 
 // START BAND
     if (LHS == "START BAND")
@@ -1339,6 +1343,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 /// construct from file
 drlog_context::drlog_context(const std::string& filename) :
   _accept_colour(COLOUR_GREEN),                                     // green for calls that are OK to work
+  _allow_audio_recording(false),                                    // do not allow audio recording
   _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
   _archive_name("drlog-restart"),                                   // name for the archive written when leaving drlog
   _audio_channels(1),                                               // monophonic
@@ -1462,7 +1467,6 @@ drlog_context::drlog_context(const std::string& filename) :
   _rbn_server("telnet.reversebeacon.net"),    // domain name of the reverse beacon network telnet server
   _rbn_threshold(1),                          // all received spots are posted
   _rbn_username(""),                          // no default name to access the RBN
-  _record_audio(false),                       // do not record audio
   _reject_colour(COLOUR_RED),                 // red for dupes
   _remaining_country_mults_list(),            // no remaining country mults
   _rig1_baud(4800),                           // 4800 baud
@@ -1481,6 +1485,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _shift_poll(50),                            // poll every 50 milliseconds
   _short_serno(false),                        // send leading Ts
   _society_list_filename(""),                 // no default file for IARU society information
+  _start_audio_recording(false),              // do not start audio recording
   _start_band(BAND_20),                       // start on 20m
   _start_mode(MODE_CW),                       // start on CW
   _sync_keyer(false),                         // do not synchronise rig keyer with computer

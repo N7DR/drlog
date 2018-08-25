@@ -634,7 +634,7 @@ int main(int argc, char** argv)
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
 
 // possibly configure audio recording
-    if (context.record_audio())
+    if (context.allow_audio_recording() and context.start_audio_recording())
       start_recording(context);
 
 // set up the calls to be monitored
@@ -7580,29 +7580,28 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
   return true;
 }
 
-/*! \brief  Update <i>win_recording_status</i>
-*/
-//void update_recording_status_window(void)
-//{ win_recording_status < WINDOW_CLEAR < CURSOR_START_OF_LINE <= ( audio.recording() ? "REC" : "---" );
-//}
-
 /*! \brief          Toggle the state of audio recording
     \param  audio   the audio recorder
     \return         <i>true</i>
 */
 const bool toggle_recording_status(audio_recorder& audio)
-{ if (audio.recording())
-    audio.abort();
-  else                                  // not recording
-    start_recording(context);
+{ if (context.allow_audio_recording())      // toggle only if recording is allowed
+  { if (audio.recording())
+      audio.abort();
+    else                                  // not recording
+      start_recording(context);
 
-  if (win_recording_status.defined())
-    update_recording_status_window();
+    if (win_recording_status.defined())
+      update_recording_status_window();
+  }
+  else
+    alert("toggling audio not permitted");
 
   return true;
 }
 
-/*! \brief  Start audio recording
+/*! \brief              Start audio recording
+    \param  context     context for the contest
 */
 void start_recording(const drlog_context& context)
 { audio.base_filename(context.audio_file());
