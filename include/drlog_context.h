@@ -50,6 +50,7 @@ protected:
 
   int                                          _accept_colour;                              ///< colour for calls that have been worked, but are not dupes
   bool                                         _allow_audio_recording;                      ///< whether to allow recording of audio
+//  bool                                         _allow_variable_sent_rst;                    ///< whether to permit the sent RST to vary
   std::string                                  _alternative_exchange_cq;                    ///< alternative exchange in CQ mode
   std::string                                  _alternative_exchange_sap;                   ///< alternative exchange in SAP mode
   std::string                                  _alternative_qsl_message;                    ///< alternative confirmation at end of QSO
@@ -282,6 +283,7 @@ public:
 
   CONTEXTREAD(accept_colour);                            ///< colour for calls that have been worked, but are not dupes
   CONTEXTREAD(allow_audio_recording);                    ///< whether to allow recording of audio
+//  CONTEXTREAD(allow_variable_sent_rst);                  ///< whether to permit the sent RST to vary
   CONTEXTREAD(alternative_exchange_cq);                  ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_exchange_sap);                 ///< alternative exchange in SAP mode
   CONTEXTREAD(alternative_qsl_message);                  ///< alternative confirmation at end of QSO

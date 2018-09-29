@@ -833,6 +833,12 @@ const bool window::common_processing(const keyboard_event& e)
     return true;
   }
 
+// '
+  if (e.is_unmodified() and e.is_char('\''))
+  { win <= e.str();
+    return true;
+  }
+
 // DELETE
   if (e.is_unmodified() and e.symbol() == XK_Delete)
   { win.delete_character(win.cursor_position().x());

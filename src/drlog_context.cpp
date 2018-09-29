@@ -1344,6 +1344,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 drlog_context::drlog_context(const std::string& filename) :
   _accept_colour(COLOUR_GREEN),                                     // green for calls that are OK to work
   _allow_audio_recording(false),                                    // do not allow audio recording
+//  _allow_variable_sent_rst(false),                                  // do not allow the sent RST to vary
   _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
   _archive_name("drlog-restart"),                                   // name for the archive written when leaving drlog
   _audio_channels(1),                                               // monophonic
@@ -1444,55 +1445,55 @@ drlog_context::drlog_context(const std::string& filename) :
   _nearby_extract(false),                                           // do not display NEARBY calls in the EXTRACT window
   _normalise_rate(false),                                           // do not normalise rates to one-hour values
   _not_country_mults(),                                             // no countries are explicitly not country mults
-  _old_adif_log_name(),                       // no ADIF log of old QSOs
-  _path( { "." } ),                           // search only the current directory
-  _per_band_points( {} ),                     // no points awarded anywhere
-  _post_monitor_calls( {} ),                  // no calls are monitored
-  _ptt_delay(25),                             // PTT delay
-  _p3(false),                                 // no P3 is available
-  _p3_ignore_checksum_error(false),           // don't ignore checksum errors when acquiring P3 screendumps
-  _p3_snapshot_file("P3"),                    // P3 snapshots will be in P3-<n>
-  _p3_span_cq(0),                             // no default span in CQ mode
-  _p3_span_sap(0),                            // no default span in SAP mode
-  _qsl_message(),                             // no QSL message (default is changed once configuration file has been read)
-  _qso_multiple_bands(false),                 // each station may be worked on only one band
-  _qso_multiple_modes(false),                 // each station may be worked on only one mode
-  _qtcs(false),                               // QTCs are disabled
-  _qtc_double_space(false),                   // QTC elements are single-spaced
-  _qtc_filename("QTCs"),                      // QTC filename
-  _qtc_qrs(0),                                // no speed decrease when sending QTCs
-  _rate_periods( { 15, 30, 60 } ),            // 15-, 30-, 60-minute periods for rates
-  _rbn_beacons(false),                        // do not place RBN posts from beacons on bandmap
-  _rbn_port(7000),                            // telnet port for the reverse beacon network
-  _rbn_server("telnet.reversebeacon.net"),    // domain name of the reverse beacon network telnet server
-  _rbn_threshold(1),                          // all received spots are posted
-  _rbn_username(""),                          // no default name to access the RBN
-  _reject_colour(COLOUR_RED),                 // red for dupes
-  _remaining_country_mults_list(),            // no remaining country mults
-  _rig1_baud(4800),                           // 4800 baud
-  _rig1_data_bits(8),                         // 8-bit data
-  _rig1_port("/dev/ttyS0"),                   // first serial port
-  _rig1_stop_bits(1),                         // one stop bit
-  _rig1_type(""),                             // no default rig type
-  _russian_filename("russian-data"),          // default file for Russian location information
-  _screen_snapshot_file("screen"),            // screen snapshots will be in screen-<n>
-  _screen_snapshot_on_exit(false),            // do not take a screenshot on exit
-  _sent_exchange(),                           // no default sent exchange
-  _sent_exchange_cw(),                        // no default sent CW exchange
-  _sent_exchange_ssb(),                       // no default sent SSB exchange
-  _serno_spaces(0),                           // no additional spaces in serial number
-  _shift_delta(10),                           // shift RIT by 10 Hz
-  _shift_poll(50),                            // poll every 50 milliseconds
-  _short_serno(false),                        // send leading Ts
-  _society_list_filename(""),                 // no default file for IARU society information
-  _start_audio_recording(false),              // do not start audio recording
-  _start_band(BAND_20),                       // start on 20m
-  _start_mode(MODE_CW),                       // start on CW
-  _sync_keyer(false),                         // do not synchronise rig keyer with computer
-  _test(false),                               // transmit is not disabled
-  _thousands_separator(","),                  // numbers are written with ","
-  _uba_bonus(false),                          // do not add UBA bonus points
-  _worked_mults_colour("RED")                 // worked mults are in red
+  _old_adif_log_name(),                                             // no ADIF log of old QSOs
+  _path( { "." } ),                                                 // search only the current directory
+  _per_band_points( {} ),                                           // no points awarded anywhere
+  _post_monitor_calls( {} ),                                        // no calls are monitored
+  _ptt_delay(25),                                                   // 25ms PTT delay
+  _p3(false),                                                       // no P3 is available
+  _p3_ignore_checksum_error(false),                                 // don't ignore checksum errors when acquiring P3 screendumps
+  _p3_snapshot_file("P3"),                                          // P3 snapshots will be in P3-<n>
+  _p3_span_cq(0),                                                   // no default span in CQ mode
+  _p3_span_sap(0),                                                  // no default span in SAP mode
+  _qsl_message(),                                                   // no QSL message (default is changed once configuration file has been read)
+  _qso_multiple_bands(false),                                       // each station may be worked on only one band
+  _qso_multiple_modes(false),                                       // each station may be worked on only one mode
+  _qtcs(false),                                                     // QTCs are disabled
+  _qtc_double_space(false),                                         // QTC elements are single-spaced
+  _qtc_filename("QTCs"),                                            // QTC filename
+  _qtc_qrs(0),                                                      // no speed decrease when sending QTCs
+  _rate_periods( { 15, 30, 60 } ),                                  // 15-, 30-, 60-minute periods for rates
+  _rbn_beacons(false),                                              // do not place RBN posts from beacons on bandmap
+  _rbn_port(7000),                                                  // telnet port for the reverse beacon network
+  _rbn_server("telnet.reversebeacon.net"),                          // domain name of the reverse beacon network telnet server
+  _rbn_threshold(1),                                                // all received spots are posted
+  _rbn_username(""),                                                // no default name to access the RBN
+  _reject_colour(COLOUR_RED),                                       // red for dupes
+  _remaining_country_mults_list(),                                  // no remaining country mults
+  _rig1_baud(4800),                                                 // 4800 baud
+  _rig1_data_bits(8),                                               // 8-bit data
+  _rig1_port("/dev/ttyS0"),                                         // first serial port
+  _rig1_stop_bits(1),                                               // one stop bit
+  _rig1_type(""),                                                   // no default rig type
+  _russian_filename("russian-data"),                                // default file for Russian location information
+  _screen_snapshot_file("screen"),                                  // screen snapshots will be in screen-<n>
+  _screen_snapshot_on_exit(false),                                  // do not take a screenshot on exit
+  _sent_exchange(),                                                 // no default sent exchange
+  _sent_exchange_cw(),                                              // no default sent CW exchange
+  _sent_exchange_ssb(),                                             // no default sent SSB exchange
+  _serno_spaces(0),                                                 // no additional spaces in serial number
+  _shift_delta(10),                                                 // shift RIT by 10 Hz
+  _shift_poll(50),                                                  // poll every 50 milliseconds
+  _short_serno(false),                                              // send leading Ts
+  _society_list_filename(""),                                       // no default file for IARU society information
+  _start_audio_recording(false),                                    // do not start audio recording
+  _start_band(BAND_20),                                             // start on 20m
+  _start_mode(MODE_CW),                                             // start on CW
+  _sync_keyer(false),                                               // do not synchronise rig keyer with computer
+  _test(false),                                                     // transmit is not disabled
+  _thousands_separator(","),                                        // numbers are written with ","
+  _uba_bonus(false),                                                // do not add UBA bonus points
+  _worked_mults_colour("RED")                                       // worked mults are in red
 { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
     _per_band_country_mult_factor.insert( { static_cast<BAND>(n), 1 } );
 

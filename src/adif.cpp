@@ -886,3 +886,23 @@ adif_countries::adif_countries(void)
   _add_country("BONAIRE", 520, "PJ4");
 }
 
+/*! \brief              Extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
+    \param  this_line   line from an ADIF file
+    \param  offset      number of characters to ignore at the end of the line
+    \return             value extracted from <i>this_line</i>
+*/
+const string adif_value(const string& this_line, const unsigned int offset)
+{ const string tag = delimited_substring(this_line, '<', '>');
+  const vector<string> vs = split_string(tag, ":");
+
+  if (vs.size() != 2)
+  { cerr << "ERROR parsing old log line: " << this_line << endl;
+    return string();
+  }
+  else
+  { const size_t n_chars = from_string<size_t>(vs[1]);
+    const size_t posn = this_line.find('>');
+
+    return substring(this_line, posn + 1, n_chars - offset);
+  }
+};

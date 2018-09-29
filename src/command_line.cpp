@@ -71,6 +71,20 @@ void command_line::operator=(const command_line& cl)
     _arg[n] = (string)(_argv[n]);
 }
 
+/*! \brief  Obtain the base name of the program
+    \return The base name of the program (i.e., with no "/" characters)
+*/
+const string command_line::base_program_name(void) const
+{ string rv = program_name();
+
+  const size_t posn = rv.find_last_of("/");
+
+  if (posn != string::npos)
+    rv = rv.substr(posn + 1);
+
+  return rv;
+}
+
 /*! \brief          Obtain a particular parameter from the command line
     \param  n       the number of the parameter to return (wrt 0)
     \return         the parameter corresponding to <i>n</i>

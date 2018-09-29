@@ -69,6 +69,11 @@ public:
   inline const std::string program_name(void) const
     { return _arg[0]; }
 
+/*! \brief  Obtain the base name of the program
+    \return The base name of the program (i.e., with no "/" characters)
+*/
+  const std::string base_program_name(void) const;
+
 /*! \brief      Obtain the number of parameters passed to the program
     \return     the number of parameters
 */

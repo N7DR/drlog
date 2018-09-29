@@ -110,6 +110,7 @@ const string match_callsign(const vector<pair<string /* callsign */,
                             int /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
 
 void populate_win_info(const string& str);                          ///< Populate the information window
+void possible_mode_change(const frequency& f);                      ///< possibly change mode in accordance with frequency
 void print_thread_names(void);
 const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);  ///< process a bandmap function, to jump to the next frequency returned by the function
 const bool process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
@@ -174,11 +175,11 @@ void* simulator_thread(void* vp);                                           ///<
 void* spawn_dx_cluster(void*);                                              ///< Thread function to spawn the cluster
 void* spawn_rbn(void*);                                                     ///< Thread function to spawn the RBN
 
-// functions that include thread safety
+// necessary forward declaration of functions that include thread safety
 const BAND safe_get_band(void);                             ///< get value of <i>current_band</i>
-void safe_set_band(const BAND b);                           ///< set value of <i>current_band</i>
+//void safe_set_band(const BAND b);                           ///< set value of <i>current_band</i>
 const MODE safe_get_mode(void);                             ///< get value of <i>current_mode</i>
-void safe_set_mode(const MODE m);                           ///< set value of <i>current_mode</i>
+//void safe_set_mode(const MODE m);                           ///< set value of <i>current_mode</i>
 
 // more forward declarations (dependent on earlier ones)
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                   ///<   Is a callsign needed on a particular band and mode?
@@ -265,6 +266,7 @@ bool                    long_t = false;                     ///< whether to send
 
 unsigned int            max_qsos_without_qsl;               ///< limit for the N7DR matches_criteria() algorithm
 monitored_posts         mp;                                 ///< the calls being monitored
+bool                    multiple_modes(false);              ///< are multiple modes permitted in the contest?
 string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
 grid_square             my_grid;                            ///< what is my (four-character) grid square?
 
@@ -280,6 +282,8 @@ bool                    rig_is_split = false;               ///< is the rig in s
 
 bool                    sending_qtc_series = false;         ///< am I senting a QTC series?
 unsigned int            serno_spaces = 0;                   ///< number of additional half-spaces in serno
+int                     shift_delta;                        ///< step size for changing RIT (forced positive)
+unsigned int            shift_poll = 0;                     ///< polling interval for SHIFT keys
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
 // QTC variables
@@ -339,6 +343,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_score_modes,                 ///< which modes contribute to score
        win_scp,                         ///< SCP lookups
        win_scratchpad,                  ///< scratchpad
+//       win_sent_rst,                    ///< the sent values of RST if not the default
        win_serial_number,               ///< next serial number (octothorpe)
        win_srss,                        ///< my sunrise/sunset
        win_summary,                     ///< overview of score
@@ -515,6 +520,22 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 
 // simple inline functions
 
+/// get value of <i>current_band</i> in thread-safe manner
+inline const BAND safe_get_band(void)
+  { return (SAFELOCK_GET(current_band_mutex, current_band)); }
+
+/// get value of <i>current_mode</i> in thread-safe manner
+inline const MODE safe_get_mode(void)
+  { return (SAFELOCK_GET(current_mode_mutex, current_mode)); }
+
+/// set value of <i>current_band</i> in thread-safe manner
+inline void safe_set_band(const BAND b)
+  { SAFELOCK_SET(current_band_mutex, current_band, b); }
+
+/// set value of <i>current_mode</i> in thread-safe manner
+inline void safe_set_mode(const MODE m)
+  { SAFELOCK_SET(current_mode_mutex, current_mode, m); }
+
 /*! \brief      Convert a serial number to a string
     \param  n   serial number
     \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
@@ -627,11 +648,14 @@ int main(int argc, char** argv)
     serno_spaces = context.serno_spaces();
     long_t = context.long_t();
     cw_speed_change = context.cw_speed_change();
+    multiple_modes = context.multiple_modes();
     my_grid = grid_square(context.my_grid());
     best_dx_in_miles = (context.best_dx_unit() == "MILES");
     display_grid = context.display_grid();
     max_qsos_without_qsl = context.max_qsos_without_qsl();
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
+    shift_delta = static_cast<int>(context.shift_delta());  // forced positive int
+    shift_poll = context.shift_poll();
 
 // possibly configure audio recording
     if (context.allow_audio_recording() and context.start_audio_recording())
@@ -1200,6 +1224,9 @@ int main(int argc, char** argv)
 // SCRATCHPAD window
   win_scratchpad.init(context.window_info("SCRATCHPAD"), WINDOW_NO_CURSOR);
   win_scratchpad.enable_scrolling();
+
+// SENT RST window
+//  win_sent_rst.init(context.window_info("SENT RST"), WINDOW_NO_CURSOR);
 
 // SERIAL NUMBER window
   win_serial_number.init(context.window_info("SERIAL NUMBER"), WINDOW_NO_CURSOR);
@@ -3217,12 +3244,35 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
     const string original_contents = contents;
 
+    auto ctrl_enter_activity = [&] (bandmap_entry& be)
+      { new_frequency = be.freq();
+
+        rig.rig_frequency(be.freq());
+        enter_sap_mode();
+
+// we may require a mode change
+        possible_mode_change(be.freq());
+
+//        if (multiple_modes)
+//        { const MODE m = default_mode(be.freq());
+//
+//          if (m != safe_get_mode())
+//          { rig.rig_mode(m);
+//            safe_set_mode(m);
+//            display_band_mode(win_band_mode, safe_get_band(), m);
+//          }
+//        }
+      };
+
 // assume it's a call -- look for the same call in the current bandmap
     bandmap_entry be = bandmaps[safe_get_band()][contents];
 
     if (!(be.callsign().empty()))
     { found_call = true;
 
+      ctrl_enter_activity(be);
+
+#if 0
       new_frequency = be.freq();
 
       rig.rig_frequency(be.freq());
@@ -3238,6 +3288,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           display_band_mode(win_band_mode, safe_get_band(), m);
         }
       }
+#endif
     }
     else    // didn't find an exact match; try a substring search
     { be = bandmaps[safe_get_band()].substr(contents);
@@ -3247,6 +3298,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
         contents = be.callsign();
 
+        ctrl_enter_activity(be);
+
+#if 0
         new_frequency = be.freq();
 
         rig.rig_frequency(be.freq());
@@ -3262,6 +3316,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             display_band_mode(win_band_mode, safe_get_band(), m);
           }
         }
+#endif
       }
     }
 
@@ -3322,8 +3377,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and (e.is_char(' ')))
   {
 // if we're inside a command, just insert a space in the window; also if we are writing a comment
-//    string contents = remove_peripheral_spaces(win.read());
-
     if ( (original_contents.size() > 1 and original_contents[0] == '.') or contains(original_contents, "\\"))
       win <= " ";
     else        // not inside a command
@@ -3503,9 +3556,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     win_log_snapshot = win_log.snapshot();
     win_log.toggle_hidden();
 
-    win_log <= cursor(0, 0);
+    processed = ( win_log <= cursor(0, 0), true );
 
-    processed = true;
+//    processed = true;
   }
 
 // CURSOR DOWN -- possibly replace call with SCP info
@@ -3576,26 +3629,26 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-KP+ -- increment octothorpe
   if (!processed and e.is_alt_and_not_ctrl() and e.symbol() == XK_KP_Add)
-  { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width());
-    processed = true;
+  { processed = ( win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width()), true );
+//    processed = true;
   }
 
 // ALT-KP- -- decrement octothorpe
   if (!processed and e.is_alt_and_not_ctrl() and e.symbol() == XK_KP_Subtract)
-  { win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width());
-    processed = true;
+  { processed = ( win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width()), true );
+//    processed = true;
   }
 
 // CTRL-KP+ -- increment qso number
   if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Add)
-  { win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(++next_qso_number), win_qso_number.width());
-    processed = true;
+  { processed = ( win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(++next_qso_number), win_qso_number.width()), true );
+//    processed = true;
   }
 
 // CTRL-KP- -- decrement qso number
   if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Subtract)
-  { win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(--next_qso_number), win_qso_number.width());
-    processed = true;
+  { processed = ( win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(--next_qso_number), win_qso_number.width()), true );
+//    processed = true;
   }
 
 // KP Del -- remove from bandmap and add to do-not-add list (like .REMOVE)
@@ -3606,9 +3659,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                                           bm.do_not_add(callsign);
                                         } );
 
-    win_bandmap <= (bandmaps[safe_get_band()]);
+    processed = ( win_bandmap <= (bandmaps[safe_get_band()]), true );
 
-    processed = true;
+//    processed = true;
   }
 
 // ` -- SWAP RIT and XIT
@@ -3674,6 +3727,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     if (!contains_letter)    // try to parse as frequency
     { const bool contains_plus  = (original_contents[0] == '+');        // this can be entered from the keypad w/o using shift
       const bool contains_minus = (original_contents[0] == '-');
+
       double value = from_string<double>(original_contents);      // what happens when contents can't be parsed as a number?
 
 // if there's a plus or minus we interpret the value as kHz and move up or down from the current QRG
@@ -3718,8 +3772,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         rig.rig_frequency_b(new_frequency_b); // don't call set_last_frequency for VFO B
       }
 
-      win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE;
-      processed = true;
+      processed = ( win_call < WINDOW_CLEAR <= CURSOR_START_OF_LINE, true );
+//      processed = true;
     }
 
 // don't treat as a call if it contains weird characters
@@ -3751,14 +3805,14 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT--> -- VFO A -> VFO B
   if (!processed and (e.is_alt('>') or e.is_alt('.')))
-  { rig.rig_frequency_b(rig.rig_frequency());
-    processed = true;
+  { processed = ( rig.rig_frequency_b(rig.rig_frequency()), true );
+//    processed = true;
   }
 
 // ALT-<- -- VFO B -> VFO A
   if (!processed and (e.is_alt('<') or e.is_alt(',')))
-  { rig.rig_frequency(rig.rig_frequency_b());
-    processed = true;
+  { processed = ( rig.rig_frequency(rig.rig_frequency_b()), true );
+//    processed = true;
   }
 
 // CTRL-Q -- swap QSL and QUICK QSL messages
@@ -3782,8 +3836,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // F1 -- first step in SAP QSO during run
   if (!processed and (e.symbol() == XK_F1))
-  { string contents = remove_peripheral_spaces(win.read());
-//    bool found_call = false;
+  { const string contents = remove_peripheral_spaces(win.read());
 
     if (!contents.empty())
     {
@@ -3791,9 +3844,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       bandmap_entry be = bandmaps[safe_get_band()][contents];
 
       if (!(be.callsign().empty()))
-      { //found_call = true;
-
-        const BAND old_b_band = to_BAND(rig.rig_frequency_b());
+      { const BAND old_b_band = to_BAND(rig.rig_frequency_b());
 
         rig.rig_frequency_b(be.freq());
         win_bcall < WINDOW_CLEAR <= be.callsign();
@@ -3805,7 +3856,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
       else    // didn't find an exact match; try a substring search
       { be = bandmaps[safe_get_band()].substr(contents);
-        //found_call = true;
 
         const BAND old_b_band = to_BAND(rig.rig_frequency_b());
 
@@ -3997,14 +4047,16 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // SPACE
   if (!processed and e.is_char(' '))
-  { win <= e.str();
-    processed = true;
+  { processed = (win <= e.str(), true);
+//    processed = true;
   }
 
 // CW messages
   if (!processed and cw_p and (safe_get_mode() == MODE_CW))
   { if (e.is_unmodified() and (keypad_numbers < e.symbol()) )
-    { (*cw_p) << expand_cw_message(cwm[e.symbol()]);
+    { if (cw_p)
+        (*cw_p) << expand_cw_message(cwm[e.symbol()]);
+
       processed = true;
     }
   }
@@ -4032,39 +4084,27 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
  // clear the exchange window if there's something in it
     if (!processed and (!remove_peripheral_spaces(win.read()).empty()))
-    { win <= WINDOW_CLEAR;
-      processed = true;
-    }
+      processed = (win <= WINDOW_CLEAR, true);
 
 // go back to the call window
     if (!processed)
     { win_active_p = &win_call;
-      win_call <= CURSOR_END_OF_LINE;
-      processed = true;
+      processed = (win_call <= CURSOR_END_OF_LINE, true);
     }
   }
 
 // COMMA -- place contents of call window into this window, preceded by a dot
   if (!processed and (e.is_char(',')))
-  { static const string full_stop(".");
-
-    win <= (full_stop + remove_peripheral_spaces(win_call.read()));
-    processed = true;
-  }
+    processed = (win <= (FULL_STOP + remove_peripheral_spaces(win_call.read())), true);
 
 // FULL STOP
   if (!processed and (e.is_char('.')))
-  { static const string full_stop(".");
-
-    win <= full_stop;
-    processed = true;
-  }
+    processed = (win <= FULL_STOP, true);
 
 // ALT-KP_4: decrement bandmap column offset; ALT-KP_6: increment bandmap column offset
   if (!processed and e.is_alt() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
-                                     or(e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-  { processed = process_change_in_bandmap_column_offset(e.symbol());
-  }
+                                     or (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
+    processed = process_change_in_bandmap_column_offset(e.symbol());
 
 // ENTER, KP_ENTER, ALT-Q -- thanks and log the contact; also perhaps start QTC process
   bool log_the_qso = !processed and ( e.is_unmodified() or e.is_alt() ) and ( (e.symbol() == XK_Return) or (e.symbol() == XK_KP_Enter) );
@@ -4079,8 +4119,40 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { const BAND cur_band = safe_get_band();
     const MODE cur_mode = safe_get_mode();
     const string call_contents = remove_peripheral_spaces(win_call.read());
-    const string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
-    const vector<string> exchange_field_values = split_string(exchange_contents, ' ');
+    string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
+    vector<string> exchange_field_values = split_string(exchange_contents, ' ');
+
+    string new_rst;
+
+// figure out whether we have sent a different RST (in SKCC)
+    if (contains(exchange_contents, "'"))
+    { const size_t last_apostrophe = exchange_contents.find_last_of("'");
+      const size_t next_space = exchange_contents.find_first_of(" ", last_apostrophe + 1);
+
+      size_t word_length;
+
+      if (next_space == string::npos)
+        word_length = exchange_contents.length() - last_apostrophe;
+      else
+        word_length = next_space - last_apostrophe - 1;
+
+//      const size_t word_length = ( ( (end_word == string::npos) ? exchange_contents.length() : end_word ) - last_apostrophe );
+
+      new_rst = substring(exchange_contents, last_apostrophe + 1, word_length);
+
+//      ost << "exchange contents = " << exchange_contents << "; new_rst = *" << new_rst << "*" << endl;
+
+// remove all fields containing an apostrophe
+      const vector<string> fields = split_string(exchange_contents, ' ');
+      vector<string> new_fields;
+
+      for (const string& str : exchange_field_values)
+        if (!contains(str, '\''))
+          new_fields.push_back(str);
+
+      exchange_field_values = new_fields;
+      exchange_contents = join(new_fields, " ");
+    }
 
     string from_callsign = call_contents;
 
@@ -4193,6 +4265,36 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             { if (sent_exchange_field.second == "#")
                 sent_exchange_field.second = serial_number_string(octothorpe);
             }
+
+// in SKCC, we aren't using the computer to send CW, so we can determine the sent RST now, long after the fact
+            switch (new_rst.length())
+            { case 1 :                  // S
+//                ost << "case 1 before: " << new_rst << endl;
+                new_rst = "5" + new_rst + "9";
+//                ost << "case 1 after: " << new_rst << endl;
+                break;
+
+              case 2 :                  // RS
+                new_rst += "9";
+                break;
+
+              case 3 :
+              default :
+                break;
+            }
+
+//            ost << "new_rst now = " << new_rst << endl;
+
+            if (!new_rst.empty())
+            { for (auto& sent_exchange_field : sent_exchange)
+              { if (sent_exchange_field.first == "RST")
+                  sent_exchange_field.second = new_rst;
+              }
+            }
+
+//            for (auto& sent_exchange_field : sent_exchange)
+//            { ost << "  first: " << sent_exchange_field.first << ", second: " << sent_exchange_field.second << endl;
+//            }
 
             qso.sent_exchange(sent_exchange);
 
@@ -4619,8 +4721,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
 
 // CTRL-ENTER -- repeat last message if in CQ mode
-  if (!processed and e.is_control() and (e.symbol() == XK_Return) and (drlog_mode == CQ_MODE) )
-  { (*cw_p) << expand_cw_message("*");
+  if (!processed and e.is_control() and (e.symbol() == XK_Return) and (drlog_mode == CQ_MODE))
+  { if (cw_p)
+      (*cw_p) << expand_cw_message("*");
+
     processed = true;
   }
 
@@ -4722,20 +4826,20 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // BACKSPACE -- just move cursor to left
   if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
-  { win <= cursor_relative(-1, 0);
-    processed = true;
+  { processed = (win <= cursor_relative(-1, 0), true);
+//    processed = true;
   }
 
 // SPACE
   if (!processed and e.is_char(' '))
-  { win <= e.str();
-    processed = true;
+  { processed = (win <= e.str(), true);
+//    processed = true;
   }
 
 // CURSOR UP
   if (!processed and e.is_unmodified() and e.symbol() == XK_Up)
-  { win <= CURSOR_UP;
-    processed = true;
+  { processed = (win <= CURSOR_UP, true);
+//    processed = true;
   }
 
 // CURSOR DOWN
@@ -4957,8 +5061,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_alt('y'))
   { const cursor posn = win.cursor_position();
 
-    win < CURSOR_START_OF_LINE < WINDOW_CLEAR_TO_EOL <= posn;
-    processed = true;
+    processed = (win < CURSOR_START_OF_LINE < WINDOW_CLEAR_TO_EOL <= posn, true);
+//    processed = true;
   }
 
 // ESCAPE
@@ -4970,8 +5074,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
     win_log.hide_cursor();
     editable_log.recent_qsos(logbk, true);
 
-    win_call < WINDOW_REFRESH;
-    processed = true;
+    processed = (win_call < WINDOW_REFRESH, true);
+//    processed = true;
   }
 
 // ALT-D -- debug dump
@@ -4985,32 +5089,36 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // functions that include thread safety
 /// get value of <i>current_band</i>
-const BAND safe_get_band(void)
-{ SAFELOCK(current_band);
+//const BAND safe_get_band(void)
+//{ //SAFELOCK(current_band);
 
-  return current_band;
-}
+  //return current_band;
+//  return (SAFELOCK_GET(current_band_mutex, current_band));
+//}
 
 /// set value of <i>current_band</i>
-void safe_set_band(const BAND b)
-{ SAFELOCK(current_band);
+//void safe_set_band(const BAND b)
+//{ //SAFELOCK(current_band);
 
-  current_band = b;
-}
+  //current_band = b;
+//  SAFELOCK_SET(current_band_mutex, current_band, b);
+//}
 
 /// get value of <i>current_mode</i>
-const MODE safe_get_mode(void)
-{ SAFELOCK(current_mode);
+//const MODE safe_get_mode(void)
+//{ //SAFELOCK(current_mode);
 
-  return current_mode;
-}
+  //return current_mode;
+//  return (SAFELOCK_GET(current_mode_mutex, current_mode));
+//}
 
 /// set value of <i>current_mode</i>
-void safe_set_mode(const MODE m)
-{ SAFELOCK(current_mode);
+//void safe_set_mode(const MODE m)
+//{ //SAFELOCK(current_mode);
 
-  current_mode = m;
-}
+  //current_mode = m;
+//  SAFELOCK_SET(current_mode_mutex, current_mode, m);
+//}
 
 /// enter CQ mode
 void enter_cq_mode(void)
@@ -5062,12 +5170,7 @@ void enter_sap_mode(void)
 
 /// toggle between CQ mode and SAP mode
 const bool toggle_drlog_mode(void)
-{ //if (SAFELOCK_GET(drlog_mode_mutex, drlog_mode) == CQ_MODE)
-  //  enter_sap_mode();
-  //else
-  //  enter_cq_mode();
-
-  (SAFELOCK_GET(drlog_mode_mutex, drlog_mode) == CQ_MODE) ? enter_sap_mode() : enter_cq_mode();
+{ (SAFELOCK_GET(drlog_mode_mutex, drlog_mode) == CQ_MODE) ? enter_sap_mode() : enter_cq_mode();
 
   return true;
 }
@@ -5085,11 +5188,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   set<string> original;
 
   if (context.auto_remaining_callsign_mults())
-  { //SAFELOCK(known_callsign_mults);
-
-    //original = known_callsign_mults;
     SAFELOCK_SET(known_callsign_mults_mutex, original, known_callsign_mults);
-  }
   else
     original = context.remaining_callsign_mults_list();
 
@@ -5169,9 +5268,7 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
   vector<pair<string /* exch value */, int /* colour pair number */ > > vec;
 
   for (const auto& known_value : known_exchange_values)
-  { //ost << "Checking known exchange value: ***" << known_value << "***" << endl;
-
-    const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
+  { const bool is_needed = statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m);
     const int colour_pair_number = ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg()) );
 
     vec.push_back( { known_value, colour_pair_number } );
@@ -6140,31 +6237,30 @@ const bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
     RIT changes via hamlib, at least on the K3, are *very* slow
 */
 const bool rit_control(const keyboard_event& e)
-{ const int change = (e.symbol() == XK_Shift_L ? -context.shift_delta() : context.shift_delta());
-
-  int poll = context.shift_poll();
+{ const int change = (e.symbol() == XK_Shift_L ? -shift_delta : shift_delta);
+//  const unsigned int poll = context.shift_poll();
 
   try
   { int last_rit = rig.rit();
 
     if (rig.rit_enabled())
-    { ok_to_poll_k3 = false;
+    { ok_to_poll_k3 = false;                // stop polling a K3
 
       do
       { rig.rit(last_rit + change);                 // this takes forever through hamlib
         last_rit += change;
 
-        if (poll)
-          sleep_for(milliseconds(poll));
+        if (shift_poll)
+          sleep_for(milliseconds(shift_poll));
       } while (keyboard.empty());                      // the next event should be a key-release, but anything will do
 
-      ok_to_poll_k3 = true;
+      ok_to_poll_k3 = true;             // restart polling a K3
     }
   }
 
   catch (const rig_interface_error& e)
   { alert("Error in rig communication while setting RIT offset");
-    ok_to_poll_k3 = true;
+    ok_to_poll_k3 = true;             // restart polling a K3
   }
 
   return true;
@@ -6246,10 +6342,12 @@ void update_batch_messages_window(const string& callsign)
   { SAFELOCK(batch_messages);
 
     const auto posn = batch_messages.find(callsign);
-    const string spaces = create_string(' ', win_batch_messages.width());
+//    const string spaces = create_string(' ', win_batch_messages.width());
 
     if (posn != batch_messages.end())
-    { win_batch_messages < WINDOW_REVERSE < WINDOW_CLEAR < spaces < CURSOR_START_OF_LINE
+    { const string spaces = create_string(' ', win_batch_messages.width());
+
+      win_batch_messages < WINDOW_REVERSE < WINDOW_CLEAR < spaces < CURSOR_START_OF_LINE
                          < posn->second <= WINDOW_NORMAL;               // REVERSE < CLEAR does NOT set the entire window to the original fg colour!
       message_written = true;
     }
@@ -6642,8 +6740,10 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   static string qtc_id;
   static qtc_series series;
   static unsigned int original_cw_speed;
+
   const unsigned int qtc_qrs = context.qtc_qrs();
   const bool cw = (safe_get_mode() == MODE_CW);  // just to keep it easy to determine if we are on CW
+
   bool processed = false;
 
   auto send_msg = [=](const string& msg)
@@ -7561,7 +7661,9 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
     enter_sap_mode();
 
 // we may require a mode change
-    if (context.multiple_modes())
+    possible_mode_change(be.freq());
+#if 0
+    if (multiple_modes)
     { const MODE m = default_mode(be.freq());
 
       if (m != safe_get_mode())
@@ -7570,6 +7672,7 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
         display_band_mode(win_band_mode, safe_get_band(), m);
       }
     }
+#endif
 
     update_based_on_frequency_change(be.freq(), safe_get_mode());
 
@@ -7578,6 +7681,24 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
   }
 
   return true;
+}
+
+/*! \brief      Possibly change mode in accordance with a frequency
+    \param  f   frequency
+
+    Changes to the default mode associated with <i>f</i>, if multiple
+    modes are supported in this contest
+*/
+void possible_mode_change(const frequency& f)
+{ if (multiple_modes)
+  { const MODE m = default_mode(f);
+
+    if (m != safe_get_mode())
+    { rig.rig_mode(m);
+      safe_set_mode(m);
+      display_band_mode(win_band_mode, safe_get_band(), m);
+    }
+  }
 }
 
 /*! \brief          Toggle the state of audio recording

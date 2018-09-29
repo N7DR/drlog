@@ -39,6 +39,8 @@ static const std::string CR       = "\r";       ///< CR as string
 static const char        CR_CHAR  = '\r';       ///< CR as character
 static const std::string CRLF     = "\r\n";     ///< CR followed by LF
 
+static const std::string FULL_STOP = ".";       ///< full stop as string
+
 static const std::string SPACE_STR = " ";       ///< space as string
 
 static const std::string CALLSIGN_CHARS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/" };                ///< convenient place to hold all characters that are legal in callsigns
@@ -398,6 +400,28 @@ inline const std::string remove_peripheral_character(const std::string& cs, cons
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
 const std::string remove_char(const std::string& cs, const char char_to_remove);
+
+/*! \brief                  Remove all instances of a particular char from a string
+    \param  s               original string
+    \param  char_to_remove  character to be removed from <i>cs</i>
+    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
+*/
+inline const std::string remove_char(std::string& s, const char char_to_remove)
+  { return remove_char(static_cast<const std::string>(s), char_to_remove); }
+
+/*! \brief                  Remove all instances of a particular char from a container of strings
+    \param  t               container of strings
+    \param  char_to_remove  character to be removed from <i>cs</i>
+    \return                 <i>t</i> with all instances of <i>char_to_remove</i> removed
+*/
+template <typename T>
+T remove_char(T& t, const char char_to_remove)
+{ typename std::remove_const<T>::type rv;
+
+  for_each(t.cbegin(), t.cend(), [=, &rv](const std::string& cs) { rv.push_back(remove_char(cs, char_to_remove)); } );
+
+  return rv;
+}
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string

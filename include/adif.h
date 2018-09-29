@@ -35,11 +35,11 @@ enum  ANT_PATH_ENUM { ANT_PATH_GREYLINE,
 typedef std::array<std::string, N_ANT_PATHS> ANT_PATH_ENUMERATION_TYPE;     ///< type for antenna path enumeration
 
 /// legal values of ANT_PATH_ENUMERATION
-static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION = { "G",    ///< greyline
-                                                          "O",    ///< other
-                                                          "S",    ///< short path
-                                                          "L"     ///< long path
-                                                        };
+static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION { "G",    ///< greyline
+                                                        "O",    ///< other
+                                                        "S",    ///< short path
+                                                        "L"     ///< long path
+                                                      };
 
 // mode  -------------------------------------------------------
 
@@ -120,78 +120,78 @@ enum MODE_ENUM { ADIF_MODE_AM,              // 0
 
 typedef std::array<std::string, N_ADIF_MODES> MODE_ENUMERATION_TYPE;    ///< type for mode enumeration
 
-static MODE_ENUMERATION_TYPE MODE_ENUMERATION = { "AM",               // 0
-                                                  "AMTORFEC",
-                                                  "ASCI",
-                                                  "ATV",
-                                                  "CHIP64",
-                                                  "CHIP128",
-                                                  "CLO",
-                                                  "CONTESTI",
-                                                  "CW",
-                                                  "DSTAR",
-                                                  "DOMINO",            // 10
-                                                  "DOMINOF",
-                                                  "FAX",
-                                                  "FM",
-                                                  "FMHELL",
-                                                  "FSK31",
-                                                  "FSK441",
-                                                  "GTOR",
-                                                  "HELL",
-                                                  "HELL80",
-                                                  "HFSK",             // 20
-                                                  "JT44",
-                                                  "JT4A",
-                                                  "JT4B",
-                                                  "JT4C",
-                                                  "JT4D",
-                                                  "JT4E",
-                                                  "JT4F",
-                                                  "JT4G",
-                                                  "JT65",
-                                                  "JT65A",            // 30
-                                                  "JT65B",
-                                                  "JT65C",
-                                                  "JT6M",
-                                                  "MFSK8",
-                                                  "MFSK16",
-                                                  "MT63",
-                                                  "OLIVIA",
-                                                  "PAC",
-                                                  "PAC2",
-                                                  "PAC3",             // 40
-                                                  "PAX",
-                                                  "PAX2",
-                                                  "PCW",
-                                                  "PKT",
-                                                  "PSK10",
-                                                  "PSK31",
-                                                  "PSK63",
-                                                  "PSK63F",
-                                                  "PSK125",
-                                                  "PSKAM10",          // 50
-                                                  "PSKAM31",
-                                                  "PSKAM50",
-                                                  "PSKFEC31",
-                                                  "PSKHELL",
-                                                  "Q15",
-                                                  "QPSK31",
-                                                  "QPSK63",
-                                                  "QPSK125",
-                                                  "ROS",
-                                                  "RTTY",             // 60
-                                                  "RTTYM",
-                                                  "SSB",
-                                                  "SSTV",
-                                                  "THRB",
-                                                  "THOR",
-                                                  "THRBX",
-                                                  "TOR",
-                                                  "VOI",
-                                                  "WINMOR",
-                                                  "WSPR"              // 70
-                                                };
+static MODE_ENUMERATION_TYPE MODE_ENUMERATION { "AM",               // 0
+                                                "AMTORFEC",
+                                                "ASCI",
+                                                "ATV",
+                                                "CHIP64",
+                                                "CHIP128",
+                                                "CLO",
+                                                "CONTESTI",
+                                                "CW",
+                                                "DSTAR",
+                                                "DOMINO",            // 10
+                                                "DOMINOF",
+                                                "FAX",
+                                                "FM",
+                                                "FMHELL",
+                                                "FSK31",
+                                                "FSK441",
+                                                "GTOR",
+                                                "HELL",
+                                                "HELL80",
+                                                "HFSK",             // 20
+                                                "JT44",
+                                                "JT4A",
+                                                "JT4B",
+                                                "JT4C",
+                                                "JT4D",
+                                                "JT4E",
+                                                "JT4F",
+                                                "JT4G",
+                                                "JT65",
+                                                "JT65A",            // 30
+                                                "JT65B",
+                                                "JT65C",
+                                                "JT6M",
+                                                "MFSK8",
+                                                "MFSK16",
+                                                "MT63",
+                                                "OLIVIA",
+                                                "PAC",
+                                                "PAC2",
+                                                "PAC3",             // 40
+                                                "PAX",
+                                                "PAX2",
+                                                "PCW",
+                                                "PKT",
+                                                "PSK10",
+                                                "PSK31",
+                                                "PSK63",
+                                                "PSK63F",
+                                                "PSK125",
+                                                "PSKAM10",          // 50
+                                                "PSKAM31",
+                                                "PSKAM50",
+                                                "PSKFEC31",
+                                                "PSKHELL",
+                                                "Q15",
+                                                "QPSK31",
+                                                "QPSK63",
+                                                "QPSK125",
+                                                "ROS",
+                                                "RTTY",             // 60
+                                                "RTTYM",
+                                                "SSB",
+                                                "SSTV",
+                                                "THRB",
+                                                "THOR",
+                                                "THRBX",
+                                                "TOR",
+                                                "VOI",
+                                                "WINMOR",
+                                                "WSPR"              // 70
+                                              };
 
 // ARRL section  -------------------------------------------------------
 
@@ -281,87 +281,87 @@ enum SECTION_ENUM { SECTION_AL,
 
 typedef std::array<std::string, N_SECTIONS> SECTION_ENUMERATION_TYPE;       ///< type for section enumeration
 
-static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION = { "AL",
-                                                        "AK",
-                                                        "AB",
-                                                        "AR",
-                                                        "AZ",
-                                                        "BC",
-                                                        "CO",
-                                                        "CT",
-                                                        "DE",
-                                                        "EB",
-                                                        "EMA",
-                                                        "ENY",
-                                                        "EPA",
-                                                        "EWA",
-                                                        "GA",
-                                                        "ID",
-                                                        "IL",
-                                                        "IN",
-                                                        "IA",
-                                                        "KS",
-                                                        "KY",
-                                                        "LAX",
-                                                        "LA",
-                                                        "ME",
-                                                        "MB",
-                                                        "MAR",
-                                                        "MDC",
-                                                        "MI",
-                                                        "MN",
-                                                        "MS",
-                                                        "MO",
-                                                        "MT",
-                                                        "NE",
-                                                        "NV",
-                                                        "NH",
-                                                        "NM",
-                                                        "NLI",
-                                                        "NL",
-                                                        "NC",
-                                                        "ND",
-                                                        "NTX",
-                                                        "NFL",
-                                                        "NNJ",
-                                                        "NNY",
-                                                        "NT",
-                                                        "OH",
-                                                        "OK",
-                                                        "ON",
-                                                        "ORG",
-                                                        "OR",
-                                                        "PAC",
-                                                        "PR",
-                                                        "QC",
-                                                        "RI",
-                                                        "SV",
-                                                        "SDG",
-                                                        "SF",
-                                                        "SJV",
-                                                        "SB",
-                                                        "SCV",
-                                                        "SK",
-                                                        "SC",
-                                                        "SD",
-                                                        "STX",
-                                                        "SFL",
-                                                        "SNJ",
-                                                        "TN",
-                                                        "VI",
-                                                        "UT",
-                                                        "VT",
-                                                        "VA",
-                                                        "WCF",
-                                                        "WTX",
-                                                        "WV",
-                                                        "WMA",
-                                                        "WNY",
-                                                        "WPA",
-                                                        "WWA",
-                                                        "WI",
-                                                        "WY"
-                                                      };
+static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION { "AL",
+                                                      "AK",
+                                                      "AB",
+                                                      "AR",
+                                                      "AZ",
+                                                      "BC",
+                                                      "CO",
+                                                      "CT",
+                                                      "DE",
+                                                      "EB",
+                                                      "EMA",
+                                                      "ENY",
+                                                      "EPA",
+                                                      "EWA",
+                                                      "GA",
+                                                      "ID",
+                                                      "IL",
+                                                      "IN",
+                                                      "IA",
+                                                      "KS",
+                                                      "KY",
+                                                      "LAX",
+                                                      "LA",
+                                                      "ME",
+                                                      "MB",
+                                                      "MAR",
+                                                      "MDC",
+                                                      "MI",
+                                                      "MN",
+                                                      "MS",
+                                                      "MO",
+                                                      "MT",
+                                                      "NE",
+                                                      "NV",
+                                                      "NH",
+                                                      "NM",
+                                                      "NLI",
+                                                      "NL",
+                                                      "NC",
+                                                      "ND",
+                                                      "NTX",
+                                                      "NFL",
+                                                      "NNJ",
+                                                      "NNY",
+                                                      "NT",
+                                                      "OH",
+                                                      "OK",
+                                                      "ON",
+                                                      "ORG",
+                                                      "OR",
+                                                      "PAC",
+                                                      "PR",
+                                                      "QC",
+                                                      "RI",
+                                                      "SV",
+                                                      "SDG",
+                                                      "SF",
+                                                      "SJV",
+                                                      "SB",
+                                                      "SCV",
+                                                      "SK",
+                                                      "SC",
+                                                      "SD",
+                                                      "STX",
+                                                      "SFL",
+                                                      "SNJ",
+                                                      "TN",
+                                                      "VI",
+                                                      "UT",
+                                                      "VT",
+                                                      "VA",
+                                                      "WCF",
+                                                      "WTX",
+                                                      "WV",
+                                                      "WMA",
+                                                      "WNY",
+                                                      "WPA",
+                                                      "WWA",
+                                                      "WI",
+                                                      "WY"
+                                                    };
 
 // awards  -------------------------------------------------------
 
@@ -400,36 +400,36 @@ enum AWARD_ENUM { AWARD_AJA,
 
 typedef std::array<std::string, N_AWARDS> AWARD_ENUMERATION_TYPE;       ///< type for award enumeration
 
-static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION = { "AJA",
-                                                    "CQDX",
-                                                    "CQDXFIELD",
-                                                    "CQWAZ_MIXED",
-                                                    "CQWAZ_CW",
-                                                    "CQWAZ_PHONE",
-                                                    "CQWAZ_RTTY",
-                                                    "CQWAZ_160m",
-                                                    "CQWPX",
-                                                    "DARC_DOK",
-                                                    "DXCC",
-                                                    "DXCC_MIXED",
-                                                    "DXCC_CW",
-                                                    "DXCC_PHONE",
-                                                    "DXCC_RTTY",
-                                                    "IOTA",
-                                                    "JCC",
-                                                    "JCG",
-                                                    "MARATHON",
-                                                    "RDA",
-                                                    "WAB",
-                                                    "WAC",
-                                                    "WAE",
-                                                    "WAIP",
-                                                    "WAJA",
-                                                    "WAS",
-                                                    "WAZ",
-                                                    "USACA",
-                                                    "VUCC"
-                                                  } ;
+static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION { "AJA",
+                                                  "CQDX",
+                                                  "CQDXFIELD",
+                                                  "CQWAZ_MIXED",
+                                                  "CQWAZ_CW",
+                                                  "CQWAZ_PHONE",
+                                                  "CQWAZ_RTTY",
+                                                  "CQWAZ_160m",
+                                                  "CQWPX",
+                                                  "DARC_DOK",
+                                                  "DXCC",
+                                                  "DXCC_MIXED",
+                                                  "DXCC_CW",
+                                                  "DXCC_PHONE",
+                                                  "DXCC_RTTY",
+                                                  "IOTA",
+                                                  "JCC",
+                                                  "JCG",
+                                                  "MARATHON",
+                                                  "RDA",
+                                                  "WAB",
+                                                  "WAC",
+                                                  "WAE",
+                                                  "WAIP",
+                                                  "WAJA",
+                                                  "WAS",
+                                                  "WAZ",
+                                                  "USACA",
+                                                  "VUCC"
+                                                } ;
 
 // band  -------------------------------------------------------
 
@@ -468,36 +468,36 @@ enum BAND_ENUM { ADIF_BAND_2190m,
 
 typedef std::array<std::string, N_ADIF_BANDS> BAND_ENUMERATION_TYPE;    ///< type for band enumeration
 
-static BAND_ENUMERATION_TYPE BAND_ENUMERATION = { { "2190m",
-                                                    "560m",
-                                                    "160m",
-                                                    "80m",
-                                                    "60m",
-                                                    "40m",
-                                                    "30m",
-                                                    "20m",
-                                                    "17m",
-                                                    "15m",
-                                                    "12m",
-                                                    "10m",
-                                                    "6m",
-                                                    "4m",
-                                                    "2m",
-                                                    "1.25m",
-                                                    "70cm",
-                                                    "33cm",
-                                                    "23cm",
-                                                    "13cm",
-                                                    "9cm",
-                                                    "6cm",
-                                                    "3cm",
-                                                    "1.25cm",
-                                                    "6mm",
-                                                    "4mm",
-                                                    "2.5mm",
-                                                    "2mm",
-                                                    "1mm"
-                                                } };
+static BAND_ENUMERATION_TYPE BAND_ENUMERATION { "2190m",
+                                                "560m",
+                                                "160m",
+                                                "80m",
+                                                "60m",
+                                                "40m",
+                                                "30m",
+                                                "20m",
+                                                "17m",
+                                                "15m",
+                                                "12m",
+                                                "10m",
+                                                "6m",
+                                                "4m",
+                                                "2m",
+                                                "1.25m",
+                                                "70cm",
+                                                "33cm",
+                                                "23cm",
+                                                "13cm",
+                                                "9cm",
+                                                "6cm",
+                                                "3cm",
+                                                "1.25cm",
+                                                "6mm",
+                                                "4mm",
+                                                "2.5mm",
+                                                "2mm",
+                                                "1mm"
+                                              };
 
 // contest  -------------------------------------------------------
 
@@ -4799,8 +4799,8 @@ static PRIMARY_SLOVAKIA_ENUMERATION_TYPE PRIMARY_SLOVAKIA_ENUMERATION = { { "BAA
 
 // ---------------------------------------------------  adif_country  -----------------------------------------
 
-/*! \class adif_country
-    \brief Encapsulate ADIF country
+/*! \class  adif_country
+    \brief  Encapsulate ADIF country
 */
 
 class adif_country
@@ -4918,11 +4918,11 @@ public: \
 
 // ---------------------------------------------------  adif_AWARD_LIST -----------------------------------------
 
-ADIF_CLASS(adif_AWARD_LIST, 'A');    ///< Encapsulate ADIF AwardList
+ADIF_CLASS(adif_AWARD_LIST, 'A');   ///< Encapsulate ADIF AwardList
 
 // ---------------------------------------------------  adif_BOOLEAN -----------------------------------------
 
-ADIF_CLASS(adif_BOOLEAN, 'B');   ///< Encapsulate ADIF Boolean
+ADIF_CLASS(adif_BOOLEAN, 'B');      ///< Encapsulate ADIF Boolean
 
 // ---------------------------------------------------  adif_DATE -----------------------------------------
 
@@ -5573,5 +5573,12 @@ public:
 /// convert record to the printable string format
   const std::string to_string(void) const;
 };
+
+/*! \brief              Extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
+    \param  this_line   line from an ADIF file
+    \param  offset      number of characters to ignore at the end of the line
+    \return             value extracted from <i>this_line</i>
+*/
+const std::string adif_value(const std::string& this_line, const unsigned int offset = 0);
 
 #endif /* ADIF_H_ */
