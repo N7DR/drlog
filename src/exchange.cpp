@@ -687,6 +687,12 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 // for each received field, which output fields does it match?
   map<int /* received field number */, set<string>> matches;
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+
+//  ost << "The EFT for each field name: " << endl;
+
+//  for (const auto& psE : exchange_field_eft)
+//    ost << "field name = " << psE.first << "; EFT = " << psE.second << endl;
+
   int field_nr = 0;
 
   for (const string& received_value : copy_received_values)
@@ -1366,6 +1372,21 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
+  if (field_name == "SPC")
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.spc();
+
+      if (!rv.empty())
+      { // rv = rules.canonical_value(field_name, rv);
+        _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
   if (field_name == "SSBPOWER")
   { string rv;
 
@@ -1535,13 +1556,17 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
     const drlog_context& context, location_database& location_db) :
   _is_mult(false),
   _name(nm)
-{ read_regex_expression_file(path, regex_filename);
+{ ost << "Creating EFT for exchange field: " << nm << endl;
+
+  read_regex_expression_file(path, regex_filename);
   read_values_file(path, nm);
   parse_context_qthx(context, location_db);
 
   const vector<string> exchange_mults =  remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
+
+  ost << "EFT for " << nm << ": " << (*this) << endl;
 }
 
 /*! \brief              Get regex expression from file

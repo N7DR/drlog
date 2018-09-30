@@ -588,9 +588,10 @@ y = CW power
 x = SSB power
 w = IOTA island number
 v = IARU society
-u = state for ARRL 10m contest (W, VE, XE only)
-
-t = temporary
+u = Sweepstakes precedence
+t = state for ARRL 10m contest (W, VE, XE only)
+s = state for ARRL 160m contest (W, VE, only)
+r = SKCC state/province/country
 
 */
 
@@ -646,6 +647,7 @@ drmaster_line::drmaster_line(const string& line_or_call)
   _iota       = _extract_field(fields, "=w");
   _precedence = _extract_field(fields, "=u");
   _society    = _extract_field(fields, "=v");
+  _spc        = _extract_field(fields, "=r");
   _ssb_power  = _extract_field(fields, "=x");
   _state_160  = _extract_field(fields, "=s");
   _state_10   = _extract_field(fields, "=t");
@@ -715,6 +717,9 @@ const string drmaster_line::to_string(void) const
 
   if (!society().empty())
     rv += string(" =v") + society();
+
+  if (!spc().empty())
+    rv += string(" =r") + spc();
 
   if (!ssb_power().empty())
     rv += string(" =x") + ssb_power();
@@ -791,6 +796,12 @@ const drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
   if (rv.precedence().empty())
     rv.precedence(precedence());
+
+  if (rv.society().empty())
+    rv.society(society());
+
+  if (rv.spc().empty())
+    rv.spc(spc());
 
   if (rv.ssb_power().empty())
     rv.ssb_power(ssb_power());

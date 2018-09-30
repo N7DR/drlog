@@ -232,6 +232,7 @@ protected:
   std::string _iota;                                            ///< IOTA designation
   std::string _precedence;                                      ///< Sweepstakes precedence
   std::string _society;                                         ///< HQ designation from IARU contest
+  std::string _spc;                                             ///< SKCC state/province/country
   std::string _ssb_power;                                       ///< power received in ARRL DX SSB
   std::string _state_160;                                       ///< for CQ 160m contest: W and VE only
   std::string _state_10;                                        ///< for ARRL 10m contest; W, VE and XE only
@@ -297,6 +298,7 @@ public:
   READ_AND_WRITE(iota);                                            ///< IOTA designation
   READ_AND_WRITE(precedence);                                      ///< Sweepstakes precedence
   READ_AND_WRITE(society);                                         ///< HQ designation from IARU contest
+  READ_AND_WRITE(spc);                                             ///< SKCC state/province/country
   READ_AND_WRITE(ssb_power);                                       ///< power received in ARRL DX SSB
   READ_AND_WRITE(state_160);                                       ///< for CQ 160m contest: W and VE only
   READ_AND_WRITE(state_10);                                        ///< for ARRL 10m contest; W, VE and XE only

@@ -438,7 +438,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "EXCHANGE CQ")
       _exchange_cq = RHS;
 
-// EXCHANGE FIELDS FILENAME
+// EXCHANGE FIELDS FILENAME (for all the regex-based exchange fields)
     if (LHS == "EXCHANGE FIELDS FILENAME")
       _exchange_fields_filename = rhs;
 
