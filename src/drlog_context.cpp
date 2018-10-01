@@ -637,6 +637,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "NEARBY EXTRACT")
       _nearby_extract = is_true;
 
+// NO DEFAULT RST
+    if (LHS == "NO DEFAULT RST")
+      _no_default_rst = is_true;
+
 // NORMALISE RATE(S)
     if ( (LHS == "NORMALISE RATE") or (LHS == "NORMALIZE RATE") or (LHS == "NORMALISE RATES") or (LHS == "NORMALIZE RATES") )
       _normalise_rate = is_true;
@@ -1445,6 +1449,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _nearby_extract(false),                                           // do not display NEARBY calls in the EXTRACT window
   _normalise_rate(false),                                           // do not normalise rates to one-hour values
   _not_country_mults(),                                             // no countries are explicitly not country mults
+  _no_default_rst(false),                                           // we do assign a default RST
   _old_adif_log_name(),                                             // no ADIF log of old QSOs
   _path( { "." } ),                                                 // search only the current directory
   _per_band_points( {} ),                                           // no points awarded anywhere

@@ -271,6 +271,7 @@ string                  my_continent;                       ///< what continent 
 grid_square             my_grid;                            ///< what is my (four-character) grid square?
 
 unsigned int            next_qso_number = 1;                ///< actual number of next QSO
+bool                    no_default_rst(false);              ///< do we not assign a default received RST?
 unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
 
 unsigned int            octothorpe = 1;                     ///< serial number of next QSO
@@ -650,6 +651,7 @@ int main(int argc, char** argv)
     cw_speed_change = context.cw_speed_change();
     multiple_modes = context.multiple_modes();
     my_grid = grid_square(context.my_grid());
+    no_default_rst = context.no_default_rst();
     best_dx_in_miles = (context.best_dx_unit() == "MILES");
     display_grid = context.display_grid();
     max_qsos_without_qsl = context.max_qsos_without_qsl();
@@ -2502,10 +2504,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // BACKSPACE
   if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
     processed = process_backspace(win);
-//  { win.delete_character(win.cursor_position().x() - 1);
-//    win.refresh();
-//    processed = true;
-//  }
 
 // . + -
   if (!processed and ( (e.is_char('.') or e.is_char('-')) or (e.is_unmodified() and ( (e.symbol() == XK_KP_Add) or (e.symbol() == XK_KP_Subtract)) )))
@@ -3165,7 +3163,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             }
           }
 
-          if (exf.name() == "RST" and !exf.is_optional())
+          if (!no_default_rst and exf.name() == "RST" and !exf.is_optional())
           { exchange_str += ( (cur_mode == MODE_CW) ? "599 " : "59 " );
 
             processed_field = true;

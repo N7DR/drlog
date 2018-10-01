@@ -188,6 +188,7 @@ protected:
   bool                                         _nearby_extract;      ///< whether to display NEARBY calls in EXTRACT window
   bool                                         _normalise_rate;      ///< whether to display rates as per-hour
   std::string                                  _not_country_mults;   ///< comma-separated list of countries that are explicitly NOT country mults
+  bool                                         _no_default_rst;      ///< is there no default assignment for received RST ?
 
   std::string                                  _old_adif_log_name;  ///< name of ADIF file that contains old QSOs
 
@@ -442,6 +443,7 @@ public:
   CONTEXTREAD(nearby_extract);               ///< whether to display NEARBY calls in EXTRACT window
   CONTEXTREAD(normalise_rate);               ///< whether to display rates as per-hour
   CONTEXTREAD(not_country_mults);            ///< comma-separated list of countries that are explicitly NOT country mults
+  CONTEXTREAD(no_default_rst);               ///< is there no default assignment for received RST ?
 
   CONTEXTREAD(old_adif_log_name);            ///< name of ADIF file that contains old QSOs
 

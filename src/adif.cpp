@@ -773,25 +773,15 @@ adif_countries::adif_countries(void)
   _countries.push_back(adif_country("MYANMAR", "XZ"));
   _countries.push_back(adif_country(""));                                           // 310
   _countries.push_back(adif_country(""));                                           // 311
-  _countries.push_back(adif_country("CAMBODIA", "XU"));     // Presumably this is suppsed to be Kampuchea
+  _countries.push_back(adif_country("CAMBODIA", "XU"));     // Presumably this is supposed to be Kampuchea
   _countries.push_back(adif_country(""));                                           // 313
   _countries.push_back(adif_country(""));                                           // 314
   _countries.push_back(adif_country("SRI LANKA", "4S"));
-  _countries.push_back(adif_country(""));                                           // 316
-  _countries.push_back(adif_country(""));                                           // 317
-  _countries.push_back(adif_country("CHINA", "BY"));
-  _countries.push_back(adif_country(""));                                           // 319
-  _countries.push_back(adif_country(""));                                           // 320
-  _countries.push_back(adif_country("HONG KONG", "VR"));
-  _countries.push_back(adif_country(""));                                           // 322
-  _countries.push_back(adif_country(""));                                           // 323
-  _countries.push_back(adif_country("INDIA", "VU"));
-  _countries.push_back(adif_country(""));                                           // 325
-  _countries.push_back(adif_country(""));                                           // 326
-  _countries.push_back(adif_country("INDONESIA", "YB"));
-  _countries.push_back(adif_country(""));                                           // 328
-  _countries.push_back(adif_country(""));                                           // 329
-  _countries.push_back(adif_country("IRAN", "EP"));
+  _add_country("CHINA", 318, "BY");
+  _add_country("HONG KONG", 321, "VR");
+  _add_country("INDIA", 324, "VU");
+  _add_country("INDONESIA", 327, "YB");
+  _add_country("IRAN", 330, "EP");
   _add_country("IRAQ", 333, "YI");
   _add_country("ISRAEL", 336, "4X");
   _add_country("JAPAN", 339, "JA");

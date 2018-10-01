@@ -35,6 +35,9 @@ protected:
 
   std::string* _arg;                 ///< Pointers to arguments
 
+/// internal initialisation function
+  void _init(void);
+
 public:
 
 /*! \brief          Constructor
@@ -50,7 +53,8 @@ public:
 
 /*! \brief  Destructor
 */
-  virtual ~command_line(void);
+  inline virtual ~command_line(void)
+    { delete [] _arg; }
 
 /// command_line = command_line
   void operator=(const command_line&);

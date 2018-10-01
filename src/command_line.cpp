@@ -26,6 +26,14 @@ using namespace std;
     \brief  Class that implements management of the command line
 */
 
+/// internal initialisation function
+void command_line::_init(void)
+{ _arg = new string [_argc];
+
+  for (unsigned int n = 0; n < _argc; n++)
+    _arg[n] = (string)(_argv[n]);
+}
+
 /*! \brief          Constructor
     \param  argc    number of arguments
     \param  argv    pointer to array of individual arguments
@@ -33,10 +41,11 @@ using namespace std;
 command_line::command_line(int argc, char** argv) : 
   _argc(argc), 
   _argv((char**)argv)
-{ _arg = new string [_argc];
+{ _init();
+//  _arg = new string [_argc];
 
-  for (unsigned int n = 0; n < _argc; n++)
-    _arg[n] = (string)(_argv[n]);
+//  for (unsigned int n = 0; n < _argc; n++)
+//    _arg[n] = (string)(_argv[n]);
 }
 
 /*! \brief      Copy constructor
@@ -45,17 +54,18 @@ command_line::command_line(int argc, char** argv) :
 command_line::command_line(const command_line& cl) : 
   _argc(cl._argc), 
   _argv(cl._argv)
-{ _arg = new string [_argc];
+{ _init();
+//  _arg = new string [_argc];
 
-  for (unsigned int n = 0; n < _argc; n++)
-    _arg[n] = (string)(_argv[n]);
+//  for (unsigned int n = 0; n < _argc; n++)
+//    _arg[n] = (string)(_argv[n]);
 }
 
 /*! \brief  Destructor
 */
-command_line::~command_line(void)
-{ delete [] _arg;
-}
+//command_line::~command_line(void)
+//{ delete [] _arg;
+//}
 
 /// command_line = command_line
 void command_line::operator=(const command_line& cl)
@@ -65,10 +75,11 @@ void command_line::operator=(const command_line& cl)
   if (_arg)
     delete [] _arg;
 
-  _arg = new string [_argc];
+  _init();
+//  _arg = new string [_argc];
 
-  for (unsigned int n = 0; n < _argc; n++)
-    _arg[n] = (string)(_argv[n]);
+//  for (unsigned int n = 0; n < _argc; n++)
+//    _arg[n] = (string)(_argv[n]);
 }
 
 /*! \brief  Obtain the base name of the program
@@ -115,8 +126,6 @@ void command_line::tolower(const unsigned int n)
   string& s = _arg[n];
     
   s = ::to_lower(s);
-//  for (unsigned int i = 0; i < s.length(); i++)
-//    s[i] = _tolower(s[i]);
 }
 
 /*! \brief  Convert the entire command so that the case matches exactly what was originally passed to the program
@@ -153,9 +162,6 @@ void command_line::toupper(const unsigned int n)
   string& s = _arg[n];
 
   s = ::to_upper(s);
-
-//  for (unsigned int i = 0; i < s.length(); i++)
-//    s[i] = _toupper(s[i]);
 }
 
 /*! \brief      Is a particular value present?
