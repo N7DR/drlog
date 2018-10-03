@@ -31,6 +31,7 @@ extern EFT CALLSIGN_EFT;                ///< exchange field template for a calls
 extern location_database location_db;   ///< the (global) location database
 extern logbook logbk;                   ///< the (global) logbook
 extern exchange_field_prefill  prefill_data;   ///< exchange prefill data from external files
+extern bool require_dot_in_replacement_call;
 
 pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
 
@@ -89,7 +90,7 @@ static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< leg
 /*! \brief                          Populate with data taken from a prefill filename map
     \param  prefill_filename_map    map of fields and filenames
 */
-void exchange_field_prefill::insert_prefill_filename_map(const std::map<std::string, std::string>& prefill_filename_map)
+void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
 { for (const auto& this_pair : prefill_filename_map)
   { const string& field_name = this_pair.first;
     const string& filename = this_pair.second;
@@ -113,8 +114,8 @@ void exchange_field_prefill::insert_prefill_filename_map(const std::map<std::str
       for (const auto& line : lines)  // each line should now be: callsign value
       { const vector<string> this_pair = split_string(line, ' ');
 
-        if (this_pair.size() == 2)
-          call_value_map.insert( { this_pair[0], this_pair[1] } );
+        if (this_pair.size() >= 2)
+          call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
       }
 
       _db.insert( { to_upper(field_name), call_value_map } );
@@ -625,7 +626,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   if (truncate_received_values)
   { map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
 
-    ost << "exchange_field_eft map: " << exchange_field_eft << endl;
+//    ost << "exchange_field_eft map: " << exchange_field_eft << endl;
 
 // remove any inappropriate RS(T)
     auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST" and m != MODE_CW )  or
@@ -635,14 +636,14 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
     REMOVE_IF_AND_RESIZE(exchange_field_eft, pred_fn);
 
-    ost << "NEW exchange_field_eft map: " << exchange_field_eft << endl;
+//    ost << "NEW exchange_field_eft map: " << exchange_field_eft << endl;
 
 //  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
 
     const vector<string> exchange_field_names = rules.unexpanded_exchange_field_names(canonical_prefix, m);
 
-    for (const auto& efn : exchange_field_names)
-      ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
+//    for (const auto& efn : exchange_field_names)
+//      ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
 
     map<string /* field name */, string /* value */> result_map;
 
@@ -831,7 +832,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
 
       if (cit == exchange_template.cend())
-      { if (_replacement_call.empty())  // maybe test for replacement call
+      { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )  // maybe test for replacement call
         { const bool replace_callsign = CALLSIGN_EFT.is_legal_value(get<1>(t));
 
           if (replace_callsign)

@@ -461,9 +461,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
     if ( (LHS == "EXCHANGE PREFILL FILE") or (LHS == "EXCHANGE PREFILL FILES") )
-    {
-
-      const vector<string> files = remove_peripheral_spaces(delimited_substrings(rhs, '[', ']'));
+    { const vector<string> files = remove_peripheral_spaces(delimited_substrings(rhs, '[', ']'));
 
       for (const auto& file : files)
       { const vector<string> fields = remove_peripheral_spaces(split_string(file, ","));
@@ -783,6 +781,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // REJECT COLOUR
     if ( ( (LHS == "REJECT COLOUR") or (LHS == "REJECT COLOR") ) and !rhs.empty() )
       _reject_colour = string_to_colour(RHS);
+
+// REQUIRE DOT IN REPLACEMENT CALL
+    if (LHS == "REQUIRE DOT IN REPLACEMENT CALL")
+      _require_dot_in_replacement_call = is_true;
 
 // RIG 1 BAUD
     if ( (LHS == "RIG 1 BAUD") or (LHS == "RIG BAUD") )
@@ -1475,6 +1477,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _rbn_username(""),                                                // no default name to access the RBN
   _reject_colour(COLOUR_RED),                                       // red for dupes
   _remaining_country_mults_list(),                                  // no remaining country mults
+  _require_dot_in_replacement_call(false),                          // try to parse additional (non-dotted) string as call
   _rig1_baud(4800),                                                 // 4800 baud
   _rig1_data_bits(8),                                               // 8-bit data
   _rig1_port("/dev/ttyS0"),                                         // first serial port

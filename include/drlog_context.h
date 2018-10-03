@@ -224,6 +224,7 @@ protected:
   int                                          _reject_colour;                  ///< colour for calls that are dupes
   std::set<std::string>                        _remaining_callsign_mults_list;  ///< callsign mults to display
   std::set<std::string>                        _remaining_country_mults_list;   ///< country mults to display
+  bool                                         _require_dot_in_replacement_call;    ///< whether to require a dot in a replacement call in the EXCHANGE window
   unsigned int                                 _rig1_baud;                      ///< baud rate for rig
   unsigned int                                 _rig1_data_bits;                 ///< number of data bits for rig
   std::string                                  _rig1_name;                      ///< name of rig
@@ -481,6 +482,7 @@ public:
   CONTEXTREAD(reject_colour);                    ///< colour for calls that are dupes
   CONTEXTREAD(remaining_callsign_mults_list);    ///< callsign mults to display
   CONTEXTREAD(remaining_country_mults_list);     ///< country mults to display
+  CONTEXTREAD(require_dot_in_replacement_call);  ///< whether to require a dot in a replacement call in the EXCHANGE window
   CONTEXTREAD(rig1_baud);                        ///< baud rate for rig
   CONTEXTREAD(rig1_data_bits);                   ///< number of data bits for rig
   CONTEXTREAD(rig1_name);                        ///< name of rig

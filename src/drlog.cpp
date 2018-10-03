@@ -278,6 +278,7 @@ unsigned int            octothorpe = 1;                     ///< serial number o
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
 
 int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
+bool                    require_dot_in_replacement_call;    ///< whether a dot is required when reading replacement call from EXCHANGE window (used in exchange.cpp)
 bool                    restored_data(false);               ///< did we restore from an archive?
 bool                    rig_is_split = false;               ///< is the rig in split mode?
 
@@ -658,6 +659,7 @@ int main(int argc, char** argv)
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
     shift_delta = static_cast<int>(context.shift_delta());  // forced positive int
     shift_poll = context.shift_poll();
+    require_dot_in_replacement_call = context.require_dot_in_replacement_call();
 
 // possibly configure audio recording
     if (context.allow_audio_recording() and context.start_audio_recording())
