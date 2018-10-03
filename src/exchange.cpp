@@ -852,9 +852,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   for (auto& pef : _fields)
   { const string& name = pef.name();
 
-//    ost << "preparing output for field: " << pef << endl;
-
-    try
+     try
     { const auto& t = tuple_map_assignments.at(name);
 
       pef.value(get<1>(t));
@@ -1277,6 +1275,20 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
+  if (field_name == "NAME")
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.name();
+
+      if (!rv.empty())
+      { _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
   if (field_name == "PREC")
   { string rv;
 
@@ -1379,8 +1391,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     { rv = drm_line.spc();
 
       if (!rv.empty())
-      { // rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
+      { _db.insert( { { callsign, field_name }, rv } );
 
         return rv;
       }
@@ -1556,7 +1567,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
     const drlog_context& context, location_database& location_db) :
   _is_mult(false),
   _name(nm)
-{ ost << "Creating EFT for exchange field: " << nm << endl;
+{ //ost << "Creating EFT for exchange field: " << nm << endl;
 
   read_regex_expression_file(path, regex_filename);
   read_values_file(path, nm);
@@ -1566,7 +1577,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
 
-  ost << "EFT for " << nm << ": " << (*this) << endl;
+ // ost << "EFT for " << nm << ": " << (*this) << endl;
 }
 
 /*! \brief              Get regex expression from file
@@ -1634,7 +1645,7 @@ const bool EFT::read_values_file(const vector<string>& path, const string& filen
 
             COPY_ALL(remaining_equivalent_values, inserter(equivalent_values, equivalent_values.begin()));
 
-            _values.insert( { lhs, equivalent_values });
+            _values.insert( { lhs, equivalent_values } );
             add_legal_values(lhs, equivalent_values);
           }
         }

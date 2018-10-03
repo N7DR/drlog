@@ -487,10 +487,13 @@ const string join(const deque<string>& deq, const string& sep)
     \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
 const string remove_leading(const string& cs, const char c)
-{ string rv = cs;
+{ const size_t posn = cs.find_first_not_of(create_string(c));
+  const string rv = substring(cs, posn);
 
-  while (rv.length() && (rv[0] == c))
-    rv = rv.substr(1);
+//  string rv = cs;
+
+//  while (rv.length() && (rv[0] == c))
+//    rv = rv.substr(1);
   
   return rv;
 }
