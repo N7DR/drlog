@@ -461,10 +461,22 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
     if ( (LHS == "EXCHANGE PREFILL FILE") or (LHS == "EXCHANGE PREFILL FILES") )
-    { const vector<string> files = remove_peripheral_spaces(delimited_substrings(rhs, '[', ']'));
+    { //ost << "Before remove_peripheral_spaces in drlog_conext.cpp" << endl;
+
+      //const vector<string> ds = delimited_substrings(rhs, '[', ']');
+
+      //ost << "After delimited substrings" << endl;
+
+      //const vector<string> files = remove_peripheral_spaces(ds);
+
+      const vector<string> files = remove_peripheral_spaces(delimited_substrings(rhs, '[', ']'));
+
+      //ost << "After remove_peripheral_spaces HERE 1" << endl;
 
       for (const auto& file : files)
       { const vector<string> fields = remove_peripheral_spaces(split_string(file, ","));
+
+        //ost << "After remove_peripheral_spaces HERE 2" << endl;
 
         if (fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
@@ -525,6 +537,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // FAST SAP BANDWIDTH; used only in CW mode
     if (LHS == "FAST SAP BANDWIDTH")
       _fast_sap_bandwidth = from_string<decltype(_fast_sap_bandwidth)>(RHS);
+
+// HOME EXCHANGE WINDOW
+    if (LHS == "HOME EXCHANGE WINDOW")
+      _home_exchange_window = is_true;
 
 // INDIVIDUAL MESSAGES FILE
     if (LHS == "INDIVIDUAL MESSAGES FILE")
@@ -1434,6 +1450,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _fast_cq_bandwidth(400),                                          // fast CW bandwidth in CQ mode, in Hz
   _fast_sap_bandwidth(400),                                         // fast CW bandwidth in SAP mode, in Hz
   _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),          // 500 Hz guard band on CW, 2 kHz on slopbucket
+  _home_exchange_window(false),                                     // do not move cursor to left of window (and insert space if necessary)
   _individual_messages_file(),                                      // no file of individual QSL messages
   _logfile("drlog.dat"),                                            // name of log file
   _long_t(false),                                                   // do not extend initial Ts in serial numbers

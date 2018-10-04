@@ -157,6 +157,8 @@ protected:
 
   std::map<MODE, unsigned int>                 _guard_band;                 ///< guard band, in Hz
 
+  bool                                         _home_exchange_window;       ///< whether to move cursor to left of exchange window (and insert space if necessary)
+
   std::string                                  _individual_messages_file;   ///< name of file that contains per-call individual messages
 
   std::string                                  _keyer_port;                 ///< the device that is to be used as a keyer
@@ -415,6 +417,8 @@ public:
 
     return  ( (cit == _guard_band.end()) ? 1000 : cit->second );
   }
+
+  CONTEXTREAD(home_exchange_window);         ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
   CONTEXTREAD(individual_messages_file);     ///< name of file that contains per-call individual messages
 

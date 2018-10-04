@@ -409,6 +409,7 @@ const vector<string> split_string(const string& cs, const unsigned int record_le
   return rv;
 }
 
+#if 0
 /*! \brief      Squash repeated occurrences of a character
     \param  cs  original string
     \param  c   character to squash
@@ -424,6 +425,22 @@ const string squash(const string& cs, const char c)
   while ((posn = rv.find(separator + separator), posn) != string::npos)
     rv = rv.substr(0, posn) + rv.substr(posn + separator.length()); 
   
+  return rv;
+}
+#endif
+
+/*! \brief      Squash repeated occurrences of a character
+    \param  cs  original string
+    \param  c   character to squash
+    \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
+*/
+const string squash(const string& cs, const char c)
+{ auto both_match = [=](const char lhs, const char rhs) { return ( (lhs == rhs) and (lhs == c) ); }; ///< do both match the target character?
+
+  string rv = cs;
+
+  rv.erase(std::unique(rv.begin(), rv.end(), both_match), rv.end());
+
   return rv;
 }
 
@@ -487,7 +504,15 @@ const string join(const deque<string>& deq, const string& sep)
     \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
 const string remove_leading(const string& cs, const char c)
-{ const size_t posn = cs.find_first_not_of(create_string(c));
+{ // ost << "remove_leading called for *" << cs << "* ,  *" << c << "*" << endl;
+  if (cs.empty())
+    return cs;
+
+  const size_t posn = cs.find_first_not_of(create_string(c));
+
+  if (posn == string::npos)
+    return cs;
+
   const string rv = substring(cs, posn);
 
 //  string rv = cs;
@@ -588,8 +613,10 @@ const vector<string> delimited_substrings(const string& cs, const char delim_1, 
 { vector<string> rv;
   size_t start_posn = 0;
 
-  while (!substring(cs, start_posn).empty())
-  { const string& sstring = substring(cs, start_posn);
+  while ( (start_posn < cs.length() and !substring(cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
+  { // ost << "string = *" << cs << "*, posn = " << start_posn << endl;
+
+    const string& sstring = substring(cs, start_posn);
     const size_t posn_1 = sstring.find(delim_1);
 
     if (posn_1 == string::npos)             // no more starting delimiters

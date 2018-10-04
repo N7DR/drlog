@@ -55,6 +55,8 @@ public:
   inline exchange_field_prefill(const std::map<std::string /* field name */, std::string /* filename */>& prefill_filename_map)
     { insert_prefill_filename_map(prefill_filename_map); }
 
+  READ(db);                                 ///< all the data
+
 /*! \brief                          Populate with data taken from a prefill filename map
     \param  prefill_filename_map    map of fields and filenames
 */
@@ -77,6 +79,8 @@ public:
 */
   const std::string prefill_data(const std::string& field_name, const std::string& callsign);
 };
+
+std::ostream& operator<<(std::ostream& ost, const exchange_field_prefill& epf);
 
 // -------------------------  parsed_exchange_field  ---------------------------
 

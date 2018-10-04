@@ -91,42 +91,61 @@ static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< leg
     \param  prefill_filename_map    map of fields and filenames
 */
 void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
-{ for (const auto& this_pair : prefill_filename_map)
+{ //ost << "Inside exchange_field_prefill::insert_prefill_filename_map()" << endl;
+
+  for (const auto& this_pair : prefill_filename_map)
   { const string& field_name = this_pair.first;
     const string& filename = this_pair.second;
+
+    //ost << "field name = " << field_name << endl;
+    //ost << "filename = " << filename << endl;
 
     try
     { string contents = read_file(filename);
 
+      //ost << "CONTENTS: " << contents << endl;
+
 // remove any CRs
       contents = remove_char(contents, CR_CHAR);
+
+      //ost << "CR REMOVED" << endl;
 
 // convert tabs to spaces
       contents = replace_char(contents, '\t', ' ');
 
+     // ost << "TABS CONVERTED TO SPACES" << endl;
+
 // squash spaces
       contents = squash(contents);
+
+     // ost << "SQUASHED" << endl;
 
       const vector<string> lines = to_lines(to_upper(contents));
 
       unordered_map<string /* call */, string /* prefill value */> call_value_map;
 
+     // ost << "ABOUT TO PROCESS LINES" << endl;
+
       for (const auto& line : lines)  // each line should now be: callsign value
       { const vector<string> this_pair = split_string(line, ' ');
 
         if (this_pair.size() >= 2)
-          call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
+        { call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
+         // ost << "INSERTED: " << this_pair[0] << ", " << this_pair[1] << endl;
+        }
       }
 
       _db.insert( { to_upper(field_name), call_value_map } );
 
-      ost << "Loaded prefill file " << filename << " for field: " << field_name << endl;
+     // ost << "Loaded prefill file " << filename << " for field: " << field_name << endl;
     }
 
     catch (...)
     { ost << "ERROR CREATING PREFILL INFORMATION FROM FILE: " << filename << endl;
     }
   }
+
+ // ost << "Leaving exchange_field_prefill::insert_prefill_filename_map()" << endl;
 }
 
 /*! \brief              Get the prefill data for a particular field name and callsign
@@ -153,6 +172,29 @@ const string exchange_field_prefill::prefill_data(const string& field_name, cons
     return rv;
 
   return callsign_it->second;
+}
+
+ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
+{
+//  std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
+
+  const auto& db = epf.db();
+
+  ost << "Number of field names = " << db.size() << endl;
+
+  for (const auto& element : db)
+  { ost << "Field name = " << element.first << endl;
+
+    const auto& um = element.second;
+
+    ost << "  Number of callsigns = " << um.size() << endl;
+
+    for (const auto& ss : um)
+    {  ost << "    Callsign: " << ss.first << "; Value: " << ss.second << endl;
+    }
+  }
+
+  return ost;
 }
 
 // -------------------------  parsed_exchange_field  ---------------------------
@@ -562,6 +604,18 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
   ost << "}" << endl;
 }
 
+// I spent a lot of time trying to create a class that was a drop-in replacement for the
+// tuple<int, string, set<string>> that is used when parsing the exchange, and eventually
+// decided to cut my losses and give up.
+
+// the following hack provides a little syntactic sugar
+#define FIELD_NUMBER get<0>
+#define RECEIVED_VALUE get<1>
+#define FIELD_NAMES get<2>
+
+//  typedef tuple<int /* field number wrt 0 */, string /* received value */, set<string> /* unassigned field names */> TRIPLET;
+
+
 /*! \brief                              Constructor
     \param  from_callsign               callsign of the station from which the exchange was received
     \param  canonical_prefix            canonical prefix for <i>callsign</i>
@@ -608,6 +662,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
                                                                 optional_field_names.insert(ef.name());
                                                               }
                                                             } );
+
+  ost << "OPTIONAL FIELDS = " << endl;
+    for (const auto& ofn : optional_field_names)
+      ost << ofn << endl;
 
 // prepare output; includes optional fields and all choices
   FOR_ALL(exchange_template, [=] (const exchange_field& ef) { _fields.push_back(parsed_exchange_field(ef.name(), EMPTY_STRING, ef.is_mult())); } );
@@ -689,10 +747,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   map<int /* received field number */, set<string>> matches;
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
 
-//  ost << "The EFT for each field name: " << endl;
+  ost << "The EFT for each field name: " << endl;
 
-//  for (const auto& psE : exchange_field_eft)
-//    ost << "field name = " << psE.first << "; EFT = " << psE.second << endl;
+  for (const auto& psE : exchange_field_eft)
+    ost << "field name = " << psE.first << "; EFT = " << psE.second << endl;
 
   int field_nr = 0;
 
@@ -736,36 +794,39 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     matches.insert( { field_nr++, match } );
   }
 
-  deque<tuple<int, string, set<string>>> tuple_deque;
+  typedef tuple<int /* field number wrt 0 */, string /* received value */, set<string> /* unassigned field names */> TRIPLET;
+
+//  deque<tuple<int, string, set<string>>> tuple_deque;
+  deque<TRIPLET> tuple_deque;
 
   for (const auto& m : matches)
-    tuple_deque.push_back(tuple<int, string, set<string>> { m.first, copy_received_values[m.first], m.second } );
+    tuple_deque.push_back(TRIPLET { m.first, copy_received_values[m.first], m.second } );
 
-  vector<tuple<int, string, set<string>>> tuple_vector_assignments;
-  map<string, tuple<int, string, set<string>>> tuple_map_assignments;
-  size_t old_size_of_tuple_deque;
+  vector<TRIPLET>      tuple_vector_assignments;
+  map<string, TRIPLET> tuple_map_assignments;
+  size_t               old_size_of_tuple_deque;
 
 // find entries with only one entry in set
   do
   { old_size_of_tuple_deque = tuple_deque.size();
 
     for (const auto& t : tuple_deque)
-    { if (get<2>(t).size() == 1)
-      { const auto it = tuple_map_assignments.find( *(get<2>(t).cbegin()) );
+    { if (FIELD_NAMES(t).size() == 1)
+      { const auto it = tuple_map_assignments.find( *(FIELD_NAMES(t).cbegin()) );
 
         if (it != tuple_map_assignments.end())
           tuple_map_assignments.erase(it);        // erase any previous entry with this key
 
-        tuple_map_assignments.insert( { *(get<2>(t).cbegin()) /* field name */, t } );
+        tuple_map_assignments.insert( { *(FIELD_NAMES(t).cbegin()) /* field name */, t } );
       }
     }
 
 // eliminate matched fields from sets of possible matches
 // remove assigned tuples (changes tuple_deque)
-    REMOVE_IF_AND_RESIZE(tuple_deque,  [] (tuple<int, string, set<string>>& t) { return (get<2>(t).size() == 1); } );
+    REMOVE_IF_AND_RESIZE(tuple_deque,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
 
     for (auto& t : tuple_deque)
-    { set<string>& ss = get<2>(t);
+    { set<string>& ss = FIELD_NAMES(t);
 
       for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
         ss.erase(tm.first);
@@ -776,13 +837,22 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     _valid = true;
 
   if (!_valid) // we aren't finished
-  { const tuple<int, string, set<string>>& t = tuple_deque[0];    // first received field we haven't been able to use, even tentatively
+  { const TRIPLET& t = tuple_deque[0];    // first received field we haven't been able to use, even tentatively
 
 // find first received field that's a match for any exchange field and that we haven't used
-    const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
+    const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } );
 
     if (cit != exchange_template.cend())
     { const string& field_name = cit->name();    // syntactic sugar
+
+
+//    map<string, tuple<int, string, set<string>>> tuple_map_assignments;
+
+ost << "About to try to insert assignment:" << endl;
+ost << "  Field name: " << field_name << endl;
+ost << "  Corresponding tuple: " << endl;
+_print_tuple(t);
+
       const bool inserted = (tuple_map_assignments.insert( { field_name, t } )).second;
 
       if (!inserted)
@@ -792,14 +862,14 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       tuple_deque.pop_front();
 
 // remove this possible match name from all remaining elements in tuple vector
-      FOR_ALL(tuple_deque, [=] (tuple<int, string, set<string>>& t) { get<2>(t).erase(field_name); } );
+      FOR_ALL(tuple_deque, [=] (TRIPLET& t) { FIELD_NAMES(t).erase(field_name); } );
 
       do
       { old_size_of_tuple_deque = tuple_deque.size();
 
         for (const auto& t : tuple_deque)
-        { if (get<2>(t).size() == 1)                             // if one element in set
-          { const string& field_name = *(get<2>(t).cbegin());    // syntactic sugar
+        { if (FIELD_NAMES(t).size() == 1)                             // if one element in set
+          { const string& field_name = *(FIELD_NAMES(t).cbegin());    // syntactic sugar
             const auto it = tuple_map_assignments.find( field_name );
 
             if (it != tuple_map_assignments.end())
@@ -807,13 +877,22 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
             tuple_map_assignments.insert( { field_name, t } );    // overwrite any previous entry with this key
           }
+          else
+          { // we have more than one (ambiguous) element left
+            ost << "non-unit number of elements in set; set size = " << get<2>(t).size() << endl;
+
+            for (const auto& element : get<2>(t))
+              ost << "  " << element << endl;
+          }
+
+// assign them in the prescribed order
         }
 
 // remove assigned tuples from tuple_vector
-        REMOVE_IF_AND_RESIZE(tuple_deque,  [] (tuple<int, string, set<string>>& t) { return (get<2>(t).size() == 1); } );
+        REMOVE_IF_AND_RESIZE(tuple_deque,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
 
         for (auto& t : tuple_deque)
-        { set<string>& ss = get<2>(t);
+        { set<string>& ss = FIELD_NAMES(t);
 
           for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
             ss.erase(tm.first);
@@ -826,17 +905,19 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     }
 
     if (!_valid) // we aren't finished -- tuple_vector is not empty
-    { FOR_ALL(tuple_deque, [this] (tuple<int, string, set<string>>& t) { _print_tuple(t); } );
+    { ost << "Not finished; tuple vector is not empty" << endl;
 
-      const tuple<int, string, set<string>>& t = tuple_deque[0];
-      const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( get<2>(t) < ef.name()); } );
+      FOR_ALL(tuple_deque, [this] (TRIPLET& t) { _print_tuple(t); } );
+
+      const TRIPLET& t = tuple_deque[0];
+      const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } );
 
       if (cit == exchange_template.cend())
-      { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )  // maybe test for replacement call
-        { const bool replace_callsign = CALLSIGN_EFT.is_legal_value(get<1>(t));
+      { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )             // maybe test for replacement call
+        { const bool replace_callsign = CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t));
 
           if (replace_callsign)
-          { _replacement_call = get<1>(t);
+          { _replacement_call = RECEIVED_VALUE(t);
 
             if (tuple_deque.size() == 1)
               _valid = true;
@@ -856,7 +937,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
      try
     { const auto& t = tuple_map_assignments.at(name);
 
-      pef.value(get<1>(t));
+      pef.value(RECEIVED_VALUE(t));
     }
 
     catch (...)
@@ -870,7 +951,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
         { try
           { const auto& t = tuple_map_assignments.at(choices_vec[n]);
 
-            pef.value(get<1>(t));
+            pef.value(RECEIVED_VALUE(t));
             found_map = true;
           }
 
@@ -892,6 +973,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
   }  // end of !truncate received values
 }
+
+#undef FIELD_NUMBER
+#undef RECEIVED_VALUE
+#undef FIELD_NAMES
 
 /*! \brief              Return the value of a particular field
     \param  field_name  field for which the value is requested
@@ -1022,6 +1107,8 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
 // see if there's a pre-fill entry
   const string prefill_datum = prefill_data.prefill_data(field_name, callsign);
+
+  ost << "Prefill " << field_name << " data for " << callsign << ": " << prefill_datum << endl;
 
   if (!prefill_datum.empty())
   { _db.insert( { { callsign, field_name }, prefill_datum } );

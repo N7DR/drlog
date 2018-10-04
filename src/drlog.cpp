@@ -259,6 +259,8 @@ bool                    filter_remaining_country_mults(false);  ///< whether to 
 
 float                   greatest_distance= 0;               ///< greatest distance in miles
 
+bool                    home_exchange_window(false);        ///< whether to move cursor to left of exchange window (and insert space if necessary)
+
 bool                    is_ss(false);                       ///< ss is special
 
 logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
@@ -629,6 +631,8 @@ int main(int argc, char** argv)
 // read configuration data (typically from logcfg.dat)
     drlog_context* context_p = nullptr;
 
+//    ost << "About to read configuration data" << endl;
+
     try
     { context_p = new drlog_context(config_filename);
     }
@@ -637,6 +641,8 @@ int main(int argc, char** argv)
     { ost << "Error reading configuration data from " << config_filename << endl;
       exit(-1);
     }
+
+//    ost << "Finished reading configuration data" << endl;
 
 // make the context available globally and cleanup the context pointer
     context = *context_p;
@@ -656,10 +662,19 @@ int main(int argc, char** argv)
     best_dx_in_miles = (context.best_dx_unit() == "MILES");
     display_grid = context.display_grid();
     max_qsos_without_qsl = context.max_qsos_without_qsl();
+
+//    ost << "About to prefill data" << endl;
+
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
+
+//    ost << "PREFILL_DATA: " << prefill_data << endl;
+
+//    ost << "Finished prefilling data" << endl;
+
     shift_delta = static_cast<int>(context.shift_delta());  // forced positive int
     shift_poll = context.shift_poll();
     require_dot_in_replacement_call = context.require_dot_in_replacement_call();
+    home_exchange_window = context.home_exchange_window();
 
 // possibly configure audio recording
     if (context.allow_audio_recording() and context.start_audio_recording())
@@ -3188,7 +3203,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           if (!processed_field)
           { if (!(variable_exchange_fields < exf.name()))    // if not a variable field
-            { const string guess = rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name()));
+            { ost << "About to generate guess" << endl;
+
+              ost << "Guessed value from exchange db = " << exchange_db.guess_value(contents, exf.name()) << endl;
+
+              const string guess = rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name()));
+
+              ost << "Generated guess = *" << guess << "*" << endl;
 
               if (!guess.empty())
               { if ((exf.name() == "RDA") and (guess.length() == 2))  // RDA guess might just have first two characters
@@ -3210,6 +3231,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         update_known_country_mults(callsign, FORCE_THRESHOLD);
 
         win_exchange <= exchange_str;
+
+        if (home_exchange_window and !exchange_str.empty())
+          win_exchange < CURSOR_START_OF_LINE < " " <= CURSOR_START_OF_LINE;
+
         win_active_p = &win_exchange;
       }
 
