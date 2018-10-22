@@ -140,6 +140,7 @@ t = temporary
 //   User2 => ARRL DX power
 
 /// Default empty constructor
+/*
 trmaster_line::trmaster_line(void) :
     _check(0),
     _cq_zone(0),
@@ -147,6 +148,7 @@ trmaster_line::trmaster_line(void) :
     _hit_count(0),
     _ten_ten(0)
 { }
+*/
 
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file
@@ -342,7 +344,9 @@ control characters are:
     Updates <i>posn</i> to point to the start of the next call
 */
 const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
-{ string callsign;
+{ const int CTRL_Y { 25 };
+
+  string callsign;
   string section;
   string cqzone;
   string foc;
@@ -358,126 +362,126 @@ const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_
   string user_1, user_2, user_3, user_4, user_5;
 
   while (static_cast<int>(contents[posn]) != 0)                                           // marks end of record
-  { while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)          // 25 == ctrl-Y
+  { while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
     { callsign += contents[posn++];
     }
 
     switch (static_cast<int>(contents[posn]))
     { case 1 :              // ctrl-A
         ++posn;
-        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)        // 25 == ctrl-Y
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
         { section += contents[posn++];
         }
         break;
 
        case 3 :              // ctrl-C
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { cqzone += contents[posn++];
           }
           break;
 
        case 6 :              // ctrl-F
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { foc += contents[posn++];
           }
           break;
 
        case 7 :              // ctrl-G
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { grid += contents[posn++];
           }
           break;
 
        case 8 :              // ctrl-H
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { hits += contents[posn++];
           }
           break;
 
        case 9 :              // ctrl-I
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { ituzone += contents[posn++];
           }
           break;
 
        case 11 :             // ctrl-K
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { check += contents[posn++];
           }
           break;
 
        case 14 :             // ctrl-N
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { name += contents[posn++];
           }
           break;
 
        case 15 :             // ctrl-O
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { oldcall += contents[posn++];
           }
           break;
 
        case 17 :             // ctrl-Q
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { qth += contents[posn++];
           }
           break;
 
        case 19 :             // ctrl-S
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { speed += contents[posn++];
           }
           break;
 
        case 20 :             // ctrl-T
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { ten_ten += contents[posn++];
           }
           break;
 
        case 21 :             // ctrl-U
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { user_1 += contents[posn++];
           }
           break;
 
        case 22 :             // ctrl-V
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { user_2 += contents[posn++];
           }
           break;
 
        case 23 :             // ctrl-W
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { user_3 += contents[posn++];
           }
           break;
 
        case 24 :             // ctrl-X
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { user_4 += contents[posn++];
           }
           break;
 
        case 25 :             // ctrl-Y
           ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > 25)      // 25 == ctrl-Y
+          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { user_5 += contents[posn++];
           }
           break;
@@ -539,9 +543,10 @@ trmaster::trmaster(const string& filename)
       const string call = record.call();
 
       if (_records.find(call) != _records.end())
-      { const trmaster_line old_record = _records[call];
+      { //const trmaster_line old_record = _records[call];
 
-        record += old_record;
+        //record += old_record;
+        record += _records[call];
       }
 
       _records.insert(make_pair(call, record));
@@ -549,12 +554,6 @@ trmaster::trmaster(const string& filename)
   }
   else              // not binary
   { const vector<string> lines = to_lines(contents);
-
-//    for (size_t n_line = 0; n_line < lines.size(); ++n_line)
-//    { const trmaster_line record(lines[n_line]);
-//
-//      _records.insert(make_pair(record.call(), record));
-//    }
 
     FOR_ALL(lines, [&] (const string& line) { const trmaster_line record(line);
 
@@ -646,16 +645,13 @@ drmaster_line::drmaster_line(const string& line_or_call)
   _date       = _extract_field(fields, "=z");
   _iota       = _extract_field(fields, "=w");
   _precedence = _extract_field(fields, "=u");
+  _skcc       = _extract_field(fields, "=q");
   _society    = _extract_field(fields, "=v");
   _spc        = _extract_field(fields, "=r");
   _ssb_power  = _extract_field(fields, "=x");
   _state_160  = _extract_field(fields, "=s");
   _state_10   = _extract_field(fields, "=t");
 }
-
-// destructor
-//drmaster_line::~drmaster_line(void)
-//{ }
 
 /// convert to string
 const string drmaster_line::to_string(void) const
@@ -714,6 +710,9 @@ const string drmaster_line::to_string(void) const
 
   if (!precedence().empty())
     rv += string(" =u") + precedence();
+
+  if (!skcc().empty())
+    rv += string(" =q") + skcc();
 
   if (!society().empty())
     rv += string(" =v") + society();
@@ -796,6 +795,9 @@ const drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 
   if (rv.precedence().empty())
     rv.precedence(precedence());
+
+  if (rv.skcc().empty())
+    rv.skcc(skcc());
 
   if (rv.society().empty())
     rv.society(society());

@@ -29,9 +29,8 @@
 
 using namespace std;
 
+cpair    colours;               ///< global repository for information about colour pairs
 pt_mutex screen_mutex;          ///< mutex for access to screen
-
-cpair colours;                  ///< global repository for information about colour pairs
 
 // -----------  screen  ----------------
 
@@ -119,8 +118,8 @@ void window::_init(const window_information& wi, const unsigned int flags)
   _column_width = 0;
   _wp = nullptr;
   _scrolling = false;
-  _hidden_cursor = (flags & WINDOW_NO_CURSOR);
-  _insert = (flags & WINDOW_INSERT);
+  _hidden_cursor = (flags bitand WINDOW_NO_CURSOR);
+  _insert = (flags bitand WINDOW_INSERT);
   _pp = nullptr;
 
   if (_width and _height)
@@ -640,10 +639,7 @@ window& window::scrollit(const int n_lines)
     \return                     the window
 */
 window& window::leave_cursor(const bool enable_or_disable)
-{ //if (!_wp)
-  //  return *this;
-    
-  if (_wp)
+{ if (_wp)
   { _leaveok = enable_or_disable;
   
     SAFELOCK(screen);
@@ -714,16 +710,18 @@ const vector<string> window::snapshot(void)
     Limits <i>line_nr</i> to a valid value for the window before clearing the line.
 */
 window& window::clear_line(const int line_nr)
-{ if (!_wp)
-    return *this;
+{ //if (!_wp)
+  //  return *this;
 
-  SAFELOCK(screen);
+  if (_wp)
+  { SAFELOCK(screen);
 
-  const cursor c = cursor_position();
+    const cursor c = cursor_position();
 
-  move_cursor(0, line_nr);
-  (*this) <= WINDOW_CLEAR_TO_EOL;
-  move_cursor(c.x(), c.y());          // restore the logical cursor position
+    move_cursor(0, line_nr);
+    (*this) <= WINDOW_CLEAR_TO_EOL;
+    move_cursor(c.x(), c.y());          // restore the logical cursor position
+  }
 
   return *this;
 }

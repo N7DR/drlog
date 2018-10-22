@@ -229,7 +229,9 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     \param  str     string from visible log window
 */
 void QSO::populate_from_log_line(const string& str)
-{
+{ ost << "Inside populate_from_log_line(); initial QSO is:" << *this << endl;
+  ost << "string = *" << str << "*" << endl;
+
 // separate the line into fields
   const vector<string> vec = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
 
@@ -253,9 +255,13 @@ void QSO::populate_from_log_line(const string& str)
   const vector<exchange_field> exchange_fields = rules.expanded_exch(_callsign, _mode);
 
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
-  { bool processed = false;
+  { ost << "Processing log_line field number " << n << endl;
+
+    bool processed = false;
 
     const string& field = _log_line_fields[n];
+
+    ost << "log_line field field name " << field << endl;
 
     if (!processed and (field == "NUMBER"))
     { _number = from_string<decltype(_number)>(vec[n]);
@@ -300,14 +306,25 @@ void QSO::populate_from_log_line(const string& str)
 
     if (!processed and (starts_with(field, "received-")))
     { if (_is_received_field_optional(field, exchange_fields) and !rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))  // empty optional field
-      { _received_exchange[received_index++].value("");
+      { ost << "field = " << field << endl;
+        ost << "OPTIONAL AND NOT LEGAL VALUE" << endl;
+        ost << "Field to be tested = *" << substring(field, 9) << "*" << endl;
+        ost << "Value to be tested = *" << _received_exchange[received_index].value()<< "*" << endl;
+        ost << "Is legal value = " << boolalpha << rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()) << endl;
+
+        _received_exchange[received_index++].value("");
 
         if (received_index < _received_exchange.size())
           _received_exchange[received_index++].value(vec[n]);  // assume that only one field is optional
       }
       else
       { if (received_index < _received_exchange.size())
-        { _received_exchange[received_index++].value(vec[n]);
+        { ost << "NOT OPTIONAL" << endl;
+          ost << "About to assign: received_index = " << received_index << "; value = " << vec[n] << endl;
+
+          _received_exchange[received_index++].value(vec[n]);
+
+          ost << "Assigned: " << _received_exchange[received_index - 1] << endl;
 
           if (starts_with(field, "received-PREC"))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
           { //ost << "** received-PREC **" << endl;
@@ -324,6 +341,9 @@ void QSO::populate_from_log_line(const string& str)
   _canonical_prefix = location_db.canonical_prefix(_callsign);
   _continent = location_db.continent(_callsign);
   _epoch_time = _to_epoch_time(_date, _utc);
+
+  ost << "Ending populate_from_log_line(); QSO is now: " << *this << endl;
+
 }
 
 /*! \brief          NEW - Populate from a string (as visible in the log window)
@@ -756,7 +776,7 @@ const bool QSO::sent_exchange_includes(const string& field_name) const
 }
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
-    \return     QSO formatted for writing to in the LOG window
+    \return     QSO formatted for writing in the LOG window
 
     Also populates <i>_log_line_fields</i> to match the returned string
 */
@@ -765,12 +785,16 @@ const string QSO::log_line(void)
                                                         { "CQZONE",    2 },
                                                         { "CWPOWER",   3 },
                                                         { "DOK",       1 },
+                                                        { "GRID",      4 },
                                                         { "ITUZONE",   2 },
+                                                        { "NAME",      6 },
                                                         { "PREC",      1 },
                                                         { "RDA",       4 },
                                                         { "RS",        2 },
                                                         { "RST",       3 },
                                                         { "SECTION",   3 },
+                                                        { "SKCCNO",    6 },
+                                                        { "SPC",       3 },
                                                         { "SSBPOWER",  4 },
                                                         { "UKEICODE",  2 },
                                                         { "160MSTATE", 2 },
@@ -830,7 +854,7 @@ const string QSO::log_line(void)
     catch (...)
     { }
 
-    rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");
+    rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");  // TODO: think about a way to make this in a different colour
   }
 
   _log_line_fields.clear();    // make sure it's empty before we fill it

@@ -53,7 +53,7 @@ public:
 /*! \brief              Default constructor
     \param  filename    name of file from which to donstruct the object
 */
-  master_dta(const std::string& filename = "master.dta");
+  explicit master_dta(const std::string& filename = "master.dta");
 
 /*! \brief      Get all the calls
     \return     all the calls from the file
@@ -91,8 +91,14 @@ protected:
 
 public:
 
-/// default constructor
-  trmaster_line(void);
+/// default (empty) constructor
+  inline trmaster_line(void)  :
+    _check(0),
+    _cq_zone(0),
+    _foc(0),
+    _hit_count(0),
+    _ten_ten(0)
+    { }
 
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file
@@ -194,7 +200,7 @@ public:
 
     The file <i>filename</i> may be either an ASCII or a binary file
 */
-  trmaster(const std::string& filename = "trmaster.asc");
+  explicit trmaster(const std::string& filename = "trmaster.asc");
 
 /// all the calls (in alphabetical order)
   const std::vector<std::string> calls(void) const;
@@ -231,6 +237,7 @@ protected:
   std::string _date;                                            ///< most recent date at which the record was updated
   std::string _iota;                                            ///< IOTA designation
   std::string _precedence;                                      ///< Sweepstakes precedence
+  std::string _skcc;                                            ///< SKCC number
   std::string _society;                                         ///< HQ designation from IARU contest
   std::string _spc;                                             ///< SKCC state/province/country
   std::string _ssb_power;                                       ///< power received in ARRL DX SSB
@@ -297,6 +304,7 @@ public:
   READ_AND_WRITE(date);                                            ///< most recent date at which the record was updated
   READ_AND_WRITE(iota);                                            ///< IOTA designation
   READ_AND_WRITE(precedence);                                      ///< Sweepstakes precedence
+  READ_AND_WRITE(skcc);                                            ///< SKCC number
   READ_AND_WRITE(society);                                         ///< HQ designation from IARU contest
   READ_AND_WRITE(spc);                                             ///< SKCC state/province/country
   READ_AND_WRITE(ssb_power);                                       ///< power received in ARRL DX SSB
@@ -347,7 +355,7 @@ public:
 
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  drmaster(const std::string& filename = "drmaster");
+  explicit drmaster(const std::string& filename = "drmaster");
 
 /*! \brief              Construct from a file
     \param  path        directories to check

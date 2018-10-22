@@ -222,7 +222,6 @@ protected:
   std::string                                  _rbn_server;                     ///< hostname or IP address of RBN server
   unsigned int                                 _rbn_threshold;                  ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
   std::string                                  _rbn_username;                   ///< username to use on the RBN server
-//  bool                                         _record_audio;                   ///< whether to record audio
   int                                          _reject_colour;                  ///< colour for calls that are dupes
   std::set<std::string>                        _remaining_callsign_mults_list;  ///< callsign mults to display
   std::set<std::string>                        _remaining_country_mults_list;   ///< country mults to display
@@ -482,7 +481,6 @@ public:
   CONTEXTREAD(rbn_server);                       ///< hostname or IP address of RBN server
   CONTEXTREAD(rbn_threshold);                    ///< number of different stations that have to post a station to the RBN before it shows on the bandmap
   CONTEXTREAD(rbn_username);                     ///< username to use on the RBN server
-//  CONTEXTREAD(record_audio);                     ///< whether to record audio
   CONTEXTREAD(reject_colour);                    ///< colour for calls that are dupes
   CONTEXTREAD(remaining_callsign_mults_list);    ///< callsign mults to display
   CONTEXTREAD(remaining_country_mults_list);     ///< country mults to display

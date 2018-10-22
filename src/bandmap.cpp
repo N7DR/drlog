@@ -24,12 +24,14 @@
 
 using namespace std;
 
-extern pt_mutex                 bandmap_mutex;          ///< used when writing to the bandmap window
-extern bandmap_buffer           bm_buffer;              ///< global control buffer for all the bandmaps
-extern exchange_field_database  exchange_db;            ///< dynamic database of exchange field values for calls; automatically thread-safe
-extern location_database        location_db;            ///< location information
-extern unsigned int             max_qsos_without_qsl;   ///< limit for the N7DR matches_criteria() algorithm
-extern message_stream           ost;                    ///< debugging/logging output
+extern pt_mutex                      bandmap_mutex;          ///< used when writing to the bandmap window
+extern pt_mutex                      batch_messages_mutex;   ///< mutex for batch messages
+extern unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
+extern bandmap_buffer                bm_buffer;              ///< global control buffer for all the bandmaps
+extern exchange_field_database       exchange_db;            ///< dynamic database of exchange field values for calls; automatically thread-safe
+extern location_database             location_db;            ///< location information
+extern unsigned int                  max_qsos_without_qsl;   ///< limit for the N7DR matches_criteria() algorithm
+extern message_stream                ost;                    ///< debugging/logging output
 
 extern const set<string> CONTINENT_SET;                 ///< two-letter abbreviations for all the continents
 
@@ -329,11 +331,11 @@ const MODE bandmap_entry::putative_mode(void) const
   }
 }
 
-/*! \brief          Does this call match the N7DR custom driteria?
+/*! \brief          Does this call match the N7DR custom criteria?
     \return         whether the call matches the N7DR custom criteria
 
     Matches criteria:
-      0. is a needed QSO; AND one of:
+      0. is a needed QSO AND does not have an associated batch message; AND one of:
 
       1. not worked on this band/mode; OR
       2. worked and QSLed on this band/mode;
@@ -341,7 +343,13 @@ const MODE bandmap_entry::putative_mode(void) const
 */
 const bool bandmap_entry::matches_criteria(void) const
 { if (!is_needed())
-    return false;
+    return false;               // skip any call that isn't needed
+
+  { SAFELOCK(batch_messages);
+
+    if (batch_messages.find(_callsign) != batch_messages.cend())
+      return false;             // skip any call with a batch message
+  }
 
   if (is_all_time_first())
     return true;

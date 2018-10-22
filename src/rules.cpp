@@ -546,7 +546,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { }
   }
 
-  _parse_context_exchange(context);                     // define the legal receive exchanges, and which fields are mults
+  _parse_context_exchange(context);                                                              // define the legal receive exchanges, and which fields are mults
   _exchange_mults = remove_peripheral_spaces( split_string(context.exchange_mults(), ",") );
 
 // DOKs are a single letter; create the complete set if they aren't in auto mode
@@ -984,25 +984,62 @@ const bool contest_rules::is_canonical_value(const string& field_name, const str
     \param  field_name      name of an exchange field (received)
     \param  putative_value  the value to check
 
-    Returns false if <i>field_name</i> is unrecognized
+    Returns false if <i>field_name</i> is unrecognized. Supports regex exchanges.
 */
 const bool contest_rules::is_legal_value(const string& field_name, const string& putative_value) const
 { SAFELOCK(rules);
 
-  for (const auto& pev : _permitted_exchange_values)
-  { const string& this_field_name = pev.first;
+  try
+  { const EFT& eft = _exchange_field_eft.at(field_name);
 
-    if (this_field_name == field_name)
-      return (pev.second < putative_value);
+    return eft.is_legal_value(putative_value);
   }
 
-  return false;
+  catch (...)
+  { ost << "ERROR: unknown field name in contest_rules::is_legal_value( " << field_name << ", " << putative_value << ")" << endl;
+
+    return false;
+  }
+
+//  for (const auto& pev : _permitted_exchange_values)
+//  { const string& this_field_name = pev.first;
+//
+//    if (this_field_name == field_name)
+//      return (pev.second < putative_value);
+//  }
+//
+//  return false;
 }
+
+/*! \brief              Is a particular exchange field a regex?
+    \param  field_name  name of an exchange field (received)
+    \return             whether field <i>field_name</i> is a regex field
+
+    Returns <i>false</i> if <i>field_name</i> is unknown.
+*/
+const bool contest_rules::exchange_field_is_regex(const string& field_name) const
+{ SAFELOCK(rules);
+
+  try
+  { const EFT& eft = _exchange_field_eft.at(field_name);
+
+    return eft.regex_expression().empty();
+  }
+
+  catch (...)
+  { ost << "ERROR: unknown field name in contest_rules::exchange_field_is_regex( " << field_name << ")" << endl;
+
+    return false;
+  }
+}
+
+// std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< exchange field information
+
 
 /*! \brief              The permitted values for a field
     \param  field_name  name of an exchange field (received)
 
-    Returns the empty set if the field <i>field_name</i> can take any value
+    Returns the empty set if the field <i>field_name</i> can take any value, or if it's a regex.
 */
 const set<string> contest_rules::exch_permitted_values(const string& field_name) const
 { static const set<string> empty_set( { } );

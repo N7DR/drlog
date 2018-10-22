@@ -461,22 +461,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
     if ( (LHS == "EXCHANGE PREFILL FILE") or (LHS == "EXCHANGE PREFILL FILES") )
-    { //ost << "Before remove_peripheral_spaces in drlog_conext.cpp" << endl;
-
-      //const vector<string> ds = delimited_substrings(rhs, '[', ']');
-
-      //ost << "After delimited substrings" << endl;
-
-      //const vector<string> files = remove_peripheral_spaces(ds);
-
-      const vector<string> files = remove_peripheral_spaces(delimited_substrings(rhs, '[', ']'));
-
-      //ost << "After remove_peripheral_spaces HERE 1" << endl;
+    { const vector<string> files = remove_peripheral_spaces(delimited_substrings(rhs, '[', ']'));
 
       for (const auto& file : files)
       { const vector<string> fields = remove_peripheral_spaces(split_string(file, ","));
-
-        //ost << "After remove_peripheral_spaces HERE 2" << endl;
 
         if (fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
@@ -1677,13 +1665,15 @@ const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const
     { pair<string, string>& pss = rv[n];
 
       if ( (m == MODE_SSB) and (pss.first == "RST") )
-      { pss.first = "RS";
-        pss.second = "59";  // hardwire!
+      { //pss.first = "RS";
+        //pss.second = "59";  // hardwire!
+        pss = { "RS", "59" };       // hardwire report
       }
 
       if ( (m == MODE_CW) and (pss.first == "RS") )
-      { pss.first = "RST";
-        pss.second = "599";  // hardwire!
+      { //pss.first = "RST";
+        //pss.second = "599";  // hardwire!
+        pss = { "RST", "599" };     // hardwire report
       }
     }
   }

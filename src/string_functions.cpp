@@ -268,7 +268,17 @@ const string pad_string(const string& s, const unsigned int len, const enum pad_
     of several bad things happen. Assumes that the file is a reasonable length.
 */
 const string read_file(const string& filename)
-{ FILE* fp = fopen(filename.c_str(), "rb");
+{  //std::ifstream file("file.ignore");
+   //std::string str{std::istreambuf_iterator<char>(file), {}};
+
+
+//  std::ifstream file("file.ignore", std::ios::ate);
+//  auto sz = file.tellg();
+//  file.seekg(0);
+//  std::string str(sz, '\0');
+//  file.read(&str[0], sz);
+
+  FILE* fp = fopen(filename.c_str(), "rb");
 
   if (!fp)
     throw string_function_error(STRING_INVALID_FILE, "Cannot open file: " + filename);
@@ -280,7 +290,7 @@ const string read_file(const string& filename)
   if (status)
     throw string_function_error(STRING_UNABLE_TO_STAT_FILE, "Unable to stat file: " + filename);
 
-  const bool is_directory = ((stat_buffer.st_mode & S_IFDIR) != 0);
+  const bool is_directory = ((stat_buffer.st_mode bitand S_IFDIR) != 0);
 
   if (is_directory)
     throw string_function_error(STRING_FILE_IS_DIRECTORY, filename + (string)" is a directory");
@@ -316,6 +326,7 @@ const string read_file(const string& filename)
     fclose(fp);
 
   return string();
+
 }
 
 /*! \brief              Read the contents of a file into a single string
@@ -347,7 +358,12 @@ const string read_file(const vector<string>& path, const string& filename)
     Throws exception if the file cannot be written
 */
 void write_file(const string& cs, const string& filename)
-{ FILE* fp = fopen(filename.c_str(), "wb");
+{ ofstream outfile(filename.c_str(), ofstream::binary);
+
+  outfile << cs;
+
+#if 0
+  FILE* fp = fopen(filename.c_str(), "wb");
 
   if (fp == 0)
     throw string_function_error(STRING_UNWRITEABLE_FILE, "Cannot write to file: " + filename);
@@ -363,6 +379,7 @@ void write_file(const string& cs, const string& filename)
   }
 
   fclose(fp);
+#endif
 }
 
 /*! \brief              Split a string into components
@@ -408,26 +425,6 @@ const vector<string> split_string(const string& cs, const unsigned int record_le
 
   return rv;
 }
-
-#if 0
-/*! \brief      Squash repeated occurrences of a character
-    \param  cs  original string
-    \param  c   character to squash
-    \return     <i>cs</i>, but with all consective instances of <i>c</i> converted to a single instance
-*/
-const string squash(const string& cs, const char c)
-{ string rv = cs;
-
-  const string separator(1, c);
-
-  size_t posn;
-
-  while ((posn = rv.find(separator + separator), posn) != string::npos)
-    rv = rv.substr(0, posn) + rv.substr(posn + separator.length()); 
-  
-  return rv;
-}
-#endif
 
 /*! \brief      Squash repeated occurrences of a character
     \param  cs  original string
@@ -485,14 +482,15 @@ const string join(const vector<string>& vec, const string& sep)
 const string join(const deque<string>& deq, const string& sep)
 { string rv;
 
-  if (deq.empty())
-    return rv;
+//  if (deq.empty())
+//    return rv;
+  if (!deq.empty())
+  { for (unsigned int n = 0; n < deq.size(); ++n)
+    { rv += deq[n];
 
-  for (unsigned int n = 0; n < deq.size(); ++n)
-  { rv += deq[n];
-
-    if (n != deq.size() - 1)
-      rv += sep;
+      if (n != deq.size() - 1)
+        rv += sep;
+    }
   }
   
   return rv;
@@ -504,23 +502,19 @@ const string join(const deque<string>& deq, const string& sep)
     \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
 const string remove_leading(const string& cs, const char c)
-{ // ost << "remove_leading called for *" << cs << "* ,  *" << c << "*" << endl;
-  if (cs.empty())
+{ if (cs.empty())
     return cs;
 
   const size_t posn = cs.find_first_not_of(create_string(c));
 
-  if (posn == string::npos)
-    return cs;
+  return ( (posn == string::npos) ? cs : substring(cs, posn) );
 
-  const string rv = substring(cs, posn);
+  //if (posn == string::npos)
+  //  return cs;
 
-//  string rv = cs;
-
-//  while (rv.length() && (rv[0] == c))
-//    rv = rv.substr(1);
+  //const string rv = substring(cs, posn);
   
-  return rv;
+  //return rv;
 }
 
 /*! \brief      Remove all instances of a specific trailing character

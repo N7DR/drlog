@@ -197,7 +197,7 @@ pt_mutex alert_mutex;                       ///< mutex for the user alert
 time_t   alert_time = 0;                    ///< time of last alert
 
 pt_mutex            batch_messages_mutex;   ///< mutex for batch messages
-map<string, string> batch_messages;         ///< batch messages associated with calls
+unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
 
 pt_mutex  cq_mode_frequency_mutex;          ///< mutex for the frequency in CQ mode
 frequency cq_mode_frequency;                ///< frequency in CQ mode
@@ -3175,7 +3175,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           { const string guess = exchange_db.guess_value(contents, "DOK");
 
             if (!guess.empty())
-            { exchange_str += guess;
+            { exchange_str += (guess + " ");
               processed_field = true;
             }
           }
@@ -3196,7 +3196,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           { const string guess = exchange_db.guess_value(contents, "GRID");
 
             if (!guess.empty())
-            { exchange_str += guess;
+            { exchange_str += (guess + " ");
               processed_field = true;
             }
           }
@@ -4144,6 +4144,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { const BAND cur_band = safe_get_band();
     const MODE cur_mode = safe_get_mode();
     const string call_contents = remove_peripheral_spaces(win_call.read());
+
     string exchange_contents = squash(remove_peripheral_spaces(win_exchange.read()));
     vector<string> exchange_field_values = split_string(exchange_contents, ' ');
 
@@ -4380,6 +4381,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
 
             add_qso(qso);  // should also update the rates (but we don't display them yet; we do that after writing the QSO to disk)
+
+//            ost << endl << "----" << endl;
+//            ost << "About to write log_line" << endl;
+//            ost << "QSO: " << qso << endl;
+//            ost << "log_line: " << qso.log_line() << endl;
+//            ost << endl << "----" << endl;
 
 // write the log line
             win_log < CURSOR_BOTTOM_LEFT < WINDOW_SCROLL_UP <= qso.log_line();
@@ -4851,21 +4858,15 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // BACKSPACE -- just move cursor to left
   if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
-  { processed = (win <= cursor_relative(-1, 0), true);
-//    processed = true;
-  }
+    processed = (win <= cursor_relative(-1, 0), true);
 
 // SPACE
   if (!processed and e.is_char(' '))
-  { processed = (win <= e.str(), true);
-//    processed = true;
-  }
+    processed = (win <= e.str(), true);
 
 // CURSOR UP
   if (!processed and e.is_unmodified() and e.symbol() == XK_Up)
-  { processed = (win <= CURSOR_UP, true);
-//    processed = true;
-  }
+    processed = (win <= CURSOR_UP, true);
 
 // CURSOR DOWN
   if (!processed and e.is_unmodified() and e.symbol() == XK_Down)
@@ -5087,7 +5088,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
   { const cursor posn = win.cursor_position();
 
     processed = (win < CURSOR_START_OF_LINE < WINDOW_CLEAR_TO_EOL <= posn, true);
-//    processed = true;
   }
 
 // ESCAPE
@@ -5100,7 +5100,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
     editable_log.recent_qsos(logbk, true);
 
     processed = (win_call < WINDOW_REFRESH, true);
-//    processed = true;
   }
 
 // ALT-D -- debug dump
@@ -5113,29 +5112,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 }
 
 // functions that include thread safety
-/// get value of <i>current_band</i>
-//const BAND safe_get_band(void)
-//{ //SAFELOCK(current_band);
-
-  //return current_band;
-//  return (SAFELOCK_GET(current_band_mutex, current_band));
-//}
-
-/// set value of <i>current_band</i>
-//void safe_set_band(const BAND b)
-//{ //SAFELOCK(current_band);
-
-  //current_band = b;
-//  SAFELOCK_SET(current_band_mutex, current_band, b);
-//}
-
-/// get value of <i>current_mode</i>
-//const MODE safe_get_mode(void)
-//{ //SAFELOCK(current_mode);
-
-  //return current_mode;
-//  return (SAFELOCK_GET(current_mode_mutex, current_mode));
-//}
 
 /// set value of <i>current_mode</i>
 //void safe_set_mode(const MODE m)
@@ -6364,7 +6340,7 @@ void update_batch_messages_window(const string& callsign)
 { bool message_written = false;
 
   if (!callsign.empty())
-  { SAFELOCK(batch_messages);
+  { SAFELOCK(batch_messages);       // this is really overkill, as it should be immutable once we're up and running
 
     const auto posn = batch_messages.find(callsign);
 //    const string spaces = create_string(' ', win_batch_messages.width());

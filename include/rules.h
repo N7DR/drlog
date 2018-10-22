@@ -326,7 +326,7 @@ protected:
 /// all the legal values for each exchange field that has defined legal values
   std::map
     <std::string,                                          /* exch field name */
-      std::set<std::string> >                   _permitted_exchange_values;  ///< all the legal values for each exchange field that has defined legal values
+      std::set<std::string> >                   _permitted_exchange_values;  ///< all the legal values for each exchange field that has defined legal values; does not include regex
 
 /// mapping from permitted values to canonical values
   std::map
@@ -336,7 +336,7 @@ protected:
           std::string                                      /* canonical value */
            > >                                  _permitted_to_canonical;    ///< mapping from a permitted value to the corresponding canonical value
 
-  std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
+  std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< exchange field information THIS SHOULD POSSIBLY REPLACE _permitted_exchange_values everywhere, as this supports regex
 
   std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;     ///< exchange fields associated with a country
 
@@ -504,7 +504,7 @@ public:
 
   SAFEREAD(uba_bonus, rules);                           ///< do we have bonus points for ON stations?
 
-  SAFEREAD(exchange_field_eft, rules);                  ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
+  SAFEREAD(exchange_field_eft, rules);                  ///< exchange field information
 
 /*! \brief              The exchange field template corresponding to a particular field
     \param  field_name  name of the field
@@ -594,19 +594,29 @@ public:
     \param  field_name  name of an exchange field (received)
     \return             all the permitted values for the exchange field <i>field_name</i>
 
-    Returns empty set if the field can take any value
+    Returns empty set if the field can take any value, or if it's a regex.
 */
   const std::set<std::string> exch_permitted_values(const std::string& field_name) const;
 
 /*! \brief              Is a particular exchange field limited to only permitted values?
     \param  field_name  name of an exchange field (received)
-    \return             whether field <i>field_name</i> has permitted values
+    \return             whether field <i>field_name</i> has permitted values.
+
+    Generally (perhaps always) this should be the opposite of <i>exchange_field_is_regex(field_name)</i>
 */
   inline const bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
 
       return (_permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend());
     }
+
+/*! \brief              Is a particular exchange field a regex?
+    \param  field_name  name of an exchange field (received)
+    \return             whether field <i>field_name</i> is a regex field
+
+    Returns <i>false</i> if <i>field_name</i> is unknown.
+*/
+  const bool exchange_field_is_regex(const std::string& field_name) const;
 
 /*! \brief                  A canonical value
     \param  field_name      name of an exchange field (received)
@@ -640,7 +650,7 @@ public:
     \param  putative_value  the value to check
     \return                 whether <i>putative_value</i> is a legal value for the field <i>field_name</i>
 
-    Returns false if <i>field_name</i> is unrecognized
+    Returns false if <i>field_name</i> is unrecognized. Supports regex exchanges.
 */
   const bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
 

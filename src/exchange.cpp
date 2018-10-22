@@ -559,6 +559,15 @@ ostream& operator<<(ostream& ost, const parsed_ss_exchange& pse)
   return ost;
 }
 
+// I spent a lot of time trying to create a class that was a drop-in replacement for the
+// tuple<int, string, set<string>> that is used when parsing the exchange, and eventually
+// decided to cut my losses and give up.
+
+// the following hack provides a little syntactic sugar
+#define FIELD_NUMBER get<0>
+#define RECEIVED_VALUE get<1>
+#define FIELD_NAMES get<2>
+
 // -------------------------  parsed_exchange  ---------------------------
 
 /*! \class  parsed_exchange
@@ -568,6 +577,8 @@ ostream& operator<<(ostream& ost, const parsed_ss_exchange& pse)
 /*! \brief                      Try to fill exchange fields with received field matches
     \param  matches             the names of the matching fields, for each received field number
     \param  received_values     the received values
+
+    THIS IS CURRENTLY UNUSED
 */
 void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const vector<string>& received_values)
 { set<int> matched_field_numbers;
@@ -604,14 +615,40 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
   ost << "}" << endl;
 }
 
-// I spent a lot of time trying to create a class that was a drop-in replacement for the
-// tuple<int, string, set<string>> that is used when parsing the exchange, and eventually
-// decided to cut my losses and give up.
+/*! \brief                          Assign received fields that match a single exchange field
+    \param  unassigned_tuples       all the unassigned fields
+    \param  tuple_map_assignmens    the assignments
+*/
+void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tuples, std::map<std::string, TRIPLET>& tuple_map_assignments)
+{ size_t               old_size_of_tuple_deque;
 
-// the following hack provides a little syntactic sugar
-#define FIELD_NUMBER get<0>
-#define RECEIVED_VALUE get<1>
-#define FIELD_NAMES get<2>
+  do
+  { old_size_of_tuple_deque = unassigned_tuples.size();  // this is changed if an assignment is made
+
+    for (const auto& t : unassigned_tuples)
+    { if (FIELD_NAMES(t).size() == 1)
+      { const string& field_name = *(FIELD_NAMES(t).cbegin());    // syntactic sugar
+        const auto it = tuple_map_assignments.find( field_name );
+
+        if (it != tuple_map_assignments.end())
+         tuple_map_assignments.erase(it);        // erase any previous entry with this key
+
+        tuple_map_assignments.insert( { field_name, t } );
+      }
+    }
+
+// eliminate matched fields from sets of possible matches
+// remove assigned tuples (changes tuple_deque)
+    REMOVE_IF_AND_RESIZE(unassigned_tuples,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
+
+    for (auto& t : unassigned_tuples)
+    { set<string>& ss = FIELD_NAMES(t);
+
+      for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
+        ss.erase(tm.first);
+    }
+  } while (old_size_of_tuple_deque != unassigned_tuples.size());
+}
 
 //  typedef tuple<int /* field number wrt 0 */, string /* received value */, set<string> /* unassigned field names */> TRIPLET;
 
@@ -684,7 +721,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   if (truncate_received_values)
   { map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
 
-//    ost << "exchange_field_eft map: " << exchange_field_eft << endl;
+    ost << "exchange_field_eft map: " << exchange_field_eft << endl;
 
 // remove any inappropriate RS(T)
     auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST" and m != MODE_CW )  or
@@ -694,14 +731,14 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
     REMOVE_IF_AND_RESIZE(exchange_field_eft, pred_fn);
 
-//    ost << "NEW exchange_field_eft map: " << exchange_field_eft << endl;
+    ost << "NEW exchange_field_eft map: " << exchange_field_eft << endl;
 
 //  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
 
     const vector<string> exchange_field_names = rules.unexpanded_exchange_field_names(canonical_prefix, m);
 
-//    for (const auto& efn : exchange_field_names)
-//      ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
+    for (const auto& efn : exchange_field_names)
+      ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
 
     map<string /* field name */, string /* value */> result_map;
 
@@ -794,19 +831,55 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     matches.insert( { field_nr++, match } );
   }
 
-  typedef tuple<int /* field number wrt 0 */, string /* received value */, set<string> /* unassigned field names */> TRIPLET;
+  ost << "Finished matching" << endl;
 
-//  deque<tuple<int, string, set<string>>> tuple_deque;
+// DEBUG
+  { for (const auto& m : matches)
+    { ost << "Field number: " << m.first << endl;
+
+      const auto& ss = m.second;
+
+      for (const auto& s : ss)
+        ost << "  " << s << endl;
+    }
+  }
+
+//  typedef tuple<int /* field number wrt 0 */, string /* received value */, set<string> /* unassigned field names */> TRIPLET;
+
+  auto print_tuple_deque = [this](const deque<TRIPLET>& dt)
+    { ost << "START OF DEQUE" << endl;
+
+      ost << "Size of deque = " << dt.size() << endl;
+
+      size_t index = 0;
+
+      for (const auto& t : dt)
+      { ost << "triplet number: " << index++ << endl;
+
+        _print_tuple(t);
+      }
+
+      ost << "END OF DEQUE" << endl;
+    };
+
   deque<TRIPLET> tuple_deque;
 
   for (const auto& m : matches)
-    tuple_deque.push_back(TRIPLET { m.first, copy_received_values[m.first], m.second } );
+    tuple_deque.push_back(TRIPLET { m.first, copy_received_values[m.first], m.second } );  // field number, value, matching field names
+
+// DEBUG
+  ost << "Initial deque" << endl;
+  print_tuple_deque(tuple_deque);
 
   vector<TRIPLET>      tuple_vector_assignments;
   map<string, TRIPLET> tuple_map_assignments;
-  size_t               old_size_of_tuple_deque;
+//  size_t               old_size_of_tuple_deque;
 
 // find entries with only one entry in set
+
+  _assign_unambiguous_fields(tuple_deque, tuple_map_assignments);
+
+#if 0
   do
   { old_size_of_tuple_deque = tuple_deque.size();
 
@@ -832,6 +905,11 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
         ss.erase(tm.first);
     }
   } while (old_size_of_tuple_deque != tuple_deque.size());
+#endif
+
+// DEBUG
+  ost << "Deque after PASS #1" << endl;  // at this point, GRID has been assigned
+  print_tuple_deque(tuple_deque);
 
   if (tuple_deque.empty())
     _valid = true;
@@ -864,6 +942,9 @@ _print_tuple(t);
 // remove this possible match name from all remaining elements in tuple vector
       FOR_ALL(tuple_deque, [=] (TRIPLET& t) { FIELD_NAMES(t).erase(field_name); } );
 
+      size_t old_size_of_tuple_deque;
+
+// THIS IS ALMOST IDENTICAL TO _assign_unambiguous_entries... TODO: try to rationalise them
       do
       { old_size_of_tuple_deque = tuple_deque.size();
 
@@ -900,8 +981,15 @@ _print_tuple(t);
 
       } while (old_size_of_tuple_deque != tuple_deque.size());
 
+// if tuple_deque is empty, it doesn't guarantee that we're OK:
+// suppose that there's an optional field, and we include it BUT miss a mandatory field,
+// then the deque will be empty, but the mapping will still be incomplete.
+// So we provisionally set _valid here, but might revoke it when preparing the output
       if (tuple_deque.empty())
-        _valid = true;
+      { _valid = true;
+
+//        ost << "tuple_deque is empty, mapping is valid" << endl;
+      }
     }
 
     if (!_valid) // we aren't finished -- tuple_vector is not empty
@@ -961,8 +1049,11 @@ _print_tuple(t);
         }
       }
 
+// we might revoke the validity flag here, if we spot a problem
       if (!found_map and !(optional_field_names < name))
-        ost << "WARNING: unable to find map assignment for key = " << name << endl;
+      { ost << "WARNING: unable to find map assignment for key = " << name << endl;
+        _valid = false;
+      }
     }
   }
 
@@ -1143,6 +1234,8 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       return rv;
     };
 
+  string rv;
+
 // currently identical to 10MSTATE, except look up different value on the drmaster line
   if (field_name == "160MSTATE")
   { string rv;
@@ -1174,12 +1267,19 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       }
     }
 
-    if (!rv.empty())
-    { rv = rules.canonical_value("160MSTATE", rv);
-      _db.insert( { { callsign, field_name }, rv } );
+//    if (!rv.empty())
+//    { rv = rules.canonical_value("160MSTATE", rv);
+//      _db.insert( { { callsign, field_name }, rv } );
+//
+//      return rv;
+//    }
 
-      return rv;
-    }
+    if (!rv.empty())
+      rv = rules.canonical_value("160MSTATE", rv);
+
+    _db.insert( { { callsign, field_name }, rv } );
+
+    return rv;
   }
 
   if (field_name == "10MSTATE")
@@ -1451,6 +1551,20 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       if (!rv.empty())
       { rv = rules.canonical_value(field_name, rv);
         _db.insert( { { callsign, field_name }, rv } );
+
+        return rv;
+      }
+    }
+  }
+
+  if (field_name == "SKCCNO")               // shouldn't really get here, because there should be a pre-fill file
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.skcc();
+
+      if (!rv.empty())
+      { _db.insert( { { callsign, field_name }, rv } );
 
         return rv;
       }

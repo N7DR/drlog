@@ -266,7 +266,7 @@ public:
 
     The window is not ready for use after this constructor: it still needs to be initialised.
 */
-  inline window(const unsigned int flags = 0) :
+  inline explicit window(const unsigned int flags = 0) :
     _x(0),
     _y(0),
     _width(0),
@@ -620,27 +620,31 @@ public:
     { return remove_peripheral_spaces(read()).empty(); }
 
 /// toggle the hide/show status of the cursor
-    inline window& toggle_hidden(void)
-    { _hidden_cursor = !_hidden_cursor;
-      return *this;
+  inline window& toggle_hidden(void)
+    { //_hidden_cursor = !_hidden_cursor;
+      //return *this;
+      return (_hidden_cursor = !_hidden_cursor, *this);
     }
 
 /// hide the cursor
   inline window& hide_cursor(void)
-    { _hidden_cursor = true;
-      return *this;
+    { //_hidden_cursor = true;
+      //return *this;
+      return (_hidden_cursor = true, *this);
     }
 
 /// show the cursor
   inline window& show_cursor(void)
-    { _hidden_cursor = false;
-      return *this;
+    { //_hidden_cursor = false;
+      //return *this;
+      return (_hidden_cursor = false, *this);
     }
 
 /// toggle the insert mode
   inline window& toggle_insert(void)
-    { _insert = !_insert;
-      return *this;
+    { //_insert = !_insert;
+      //return *this;
+      return (_insert = !_insert, *this);
     }
 
 // http://stackoverflow.com/questions/1154212/how-could-i-print-the-contents-of-any-container-in-a-generic-way 

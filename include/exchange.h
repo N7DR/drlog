@@ -29,6 +29,10 @@ class exchange_field_template;                  ///< forward declaration
 
 extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
 
+typedef std::tuple<int        /* field number wrt 0 */,
+        std::string           /* received value */,
+        std::set<std::string> /* unassigned field names */> TRIPLET;   ///< used in parsed_exchange
+
 // -------------------------  exchange_field_prefill  ---------------------------
 
 /*! \class  exchange_field_prefill
@@ -229,6 +233,8 @@ protected:
 /*! \brief                      Try to fill exchange fields with received field matches
     \param  matches             the names of the matching fields, for each received field number
     \param  received_values     the received values
+
+    THIS IS CURRENTLY UNUSED
 */
   void _fill_fields(const std::map<int, std::set<std::string>>& matches, const std::vector<std::string>& received_values);
 
@@ -236,6 +242,12 @@ protected:
     \param  t   the tuple to print
 */
   void _print_tuple(const std::tuple<int, std::string, std::set<std::string>>& t) const;
+
+/*! \brief                          Assign received fields that match a single exchange field
+    \param  unassigned_tuplest      all the unassigned fields
+    \param  tuple_map_assignmens    the assignments
+*/
+  void _assign_unambiguous_fields(std::deque<TRIPLET>& unassigned_tuples, std::map<std::string, TRIPLET>& tuple_map_assignments);
 
 public:
 
