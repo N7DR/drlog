@@ -120,8 +120,14 @@ void drlog_context::_process_configuration_file(const string& filename)
 
   const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
 
-  for (const auto& line : lines)                                    // process each line
-  {
+  for (const auto& tmpline : lines)                                    // process each line
+  { const string line = remove_trailing_comment(tmpline);           // remove any comment
+
+//    const size_t posn = line.find_first_of("//");
+
+//    if (posn != string::npos)
+//      line = substring(line, 0, posn);
+
 // generate a number of useful variables
     const string testline = remove_leading_spaces(to_upper(line));
     const vector<string> fields = split_string(line, "=");

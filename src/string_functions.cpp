@@ -1098,3 +1098,16 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
 
   return ost;
 }
+
+/*! \brief                  Remove a trailing inline comment
+    \param  str             string
+    \param  comment_str     string that introduces the comment
+    \return                 <i>str</i> with the trailing comment and any additional trailing spaces removed
+
+    Generally it is expected that <i>str</i> is a single line (without the EOL marker)
+*/
+const string remove_trailing_comment(const string& str, const string& comment_str)
+{ const size_t posn = str.find_first_of(comment_str);
+
+  return ( (posn == string::npos) ? str : remove_trailing_spaces(substring(str, 0, posn)) );
+}

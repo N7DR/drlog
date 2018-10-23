@@ -707,6 +707,15 @@ inline const std::string space_string(const int n)
 */
 std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec);
 
+/*! \brief                  Remove a trailing inline comment
+    \param  str             string
+    \param  comment_str     string that introduces the comment
+    \return                 <i>str</i> with the trailing comment and any additional trailing spaces removed
+
+    Generally it is expected that <i>str</i> is a single line (without the EOL marker)
+*/
+const std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//");
+
 // -------------------------------------- Errors  -----------------------------------
 
 ERROR_CLASS(string_function_error);     ///< string_function error
