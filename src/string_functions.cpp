@@ -1107,7 +1107,11 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
 const string remove_trailing_comment(const string& str, const string& comment_str)
-{ const size_t posn = str.find_first_of(comment_str);
+{ //ost << "remove_trailing_comment(); parameters = *" << str << "*, *" << comment_str << "*" << endl;
+
+  const size_t posn = str.find(comment_str);
+
+  //ost << "posn = "  << posn << endl;
 
   return ( (posn == string::npos) ? str : remove_trailing_spaces(substring(str, 0, posn)) );
 }

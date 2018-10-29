@@ -121,7 +121,11 @@ void drlog_context::_process_configuration_file(const string& filename)
   const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
 
   for (const auto& tmpline : lines)                                    // process each line
-  { const string line = remove_trailing_comment(tmpline);           // remove any comment
+  { //ost << "Original line: *" << tmpline << "*" << endl;
+
+    const string line = remove_trailing_comment(tmpline);           // remove any comment
+
+    //ost << "Processed line: *" << line << "*" << endl;
 
 //    const size_t posn = line.find_first_of("//");
 

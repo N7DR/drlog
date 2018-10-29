@@ -78,7 +78,9 @@ void logbook::operator-=(const unsigned int n)
     return;
 
   const size_t index = n - 1;    // because the interface is wrt 1
+
   auto it = _log_vec.begin();
+
   advance(it, index);            // move to the correct QSO
 
   _log_vec.erase(it);
@@ -185,6 +187,7 @@ const string logbook::call_needed(const string& call, const contest_rules& rules
 */
 const bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
 { bool rv = false;
+
   const string& call = qso.call();
 
   if (qso_b4(call))            // only check if we've worked this call before
@@ -533,9 +536,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     \param  cabrillo_fields     names of Cabrillo fields
 */
 void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
-{ //string file_contents = remove_char(read_file(filename), '\r');
-
-  const vector<string> lines = to_lines(remove_char(read_file(filename), CR_CHAR));
+{ const vector<string> lines = to_lines(remove_char(read_file(filename), CR_CHAR));
 
   unsigned int last_qso_number = 0; 
 

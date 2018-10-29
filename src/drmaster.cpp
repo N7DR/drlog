@@ -55,18 +55,19 @@ const string master_dta::_get_call(const string& contents, size_t& posn) const
     Also default constructor, with filename "master.dta"
 */
 master_dta::master_dta(const string& filename)
-{ string contents = read_file(filename);                // throws exception if there's a problem
+{ const string contents = read_file(filename);                // throws exception if there's a problem
 
   if (contents.length() < sizeof(uint32_t))
     return;
 
 // point to the start of the calls
   uint32_t pointer = (contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8));
+
   vector<string> tmp_calls;
 
 // extract all the calls
   while (pointer < contents.length())
-    tmp_calls.push_back(_get_call(contents, pointer));
+    tmp_calls.push_back(_get_call(contents, pointer));      // modified pointer
 
 // remove duplicates
   sort(tmp_calls.begin(), tmp_calls.end());
@@ -363,46 +364,40 @@ const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_
 
   while (static_cast<int>(contents[posn]) != 0)                                           // marks end of record
   { while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-    { callsign += contents[posn++];
-    }
+      { callsign += contents[posn++]; }
 
     switch (static_cast<int>(contents[posn]))
     { case 1 :              // ctrl-A
         ++posn;
         while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-        { section += contents[posn++];
-        }
+          { section += contents[posn++]; }
         break;
 
-       case 3 :              // ctrl-C
+       case 3 :             // ctrl-C
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { cqzone += contents[posn++];
-          }
+            { cqzone += contents[posn++]; }
           break;
 
-       case 6 :              // ctrl-F
+       case 6 :             // ctrl-F
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { foc += contents[posn++];
-          }
+            { foc += contents[posn++]; }
           break;
 
-       case 7 :              // ctrl-G
+       case 7 :             // ctrl-G
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { grid += contents[posn++];
-          }
+            { grid += contents[posn++]; }
           break;
 
-       case 8 :              // ctrl-H
+       case 8 :             // ctrl-H
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { hits += contents[posn++];
-          }
+            { hits += contents[posn++]; }
           break;
 
-       case 9 :              // ctrl-I
+       case 9 :             // ctrl-I
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
           { ituzone += contents[posn++];
@@ -543,11 +538,7 @@ trmaster::trmaster(const string& filename)
       const string call = record.call();
 
       if (_records.find(call) != _records.end())
-      { //const trmaster_line old_record = _records[call];
-
-        //record += old_record;
         record += _records[call];
-      }
 
       _records.insert(make_pair(call, record));
     }
@@ -724,7 +715,7 @@ const string drmaster_line::to_string(void) const
     rv += string(" =x") + ssb_power();
 
   if (!state_160().empty())
-    rv += string(" =s") + state_10();
+    rv += string(" =s") + state_160();
 
   if (!state_10().empty())
     rv += string(" =t") + state_10();
@@ -903,8 +894,7 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
 const vector<string> drmaster::calls(void) const
 { vector<string> rv;
 
-//  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
-  for (auto cit = _records.begin(); cit != _records.end(); ++cit)
+  for (auto cit = _records.cbegin(); cit != _records.cend(); ++cit)
     rv.push_back(cit->first);
 
   sort(rv.begin(), rv.end());

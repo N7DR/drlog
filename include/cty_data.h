@@ -293,7 +293,7 @@ public:
     \param  path        directories in which to search for <i>filename</i>, in order
     \param  filename    name of file
 */
-  cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat");   // somewhere along the way the default name changed from CTY.DA
+  cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat");   // somewhere along the way the default name changed from CTY.DAT
 
 /// destructor
   inline virtual ~cty_data(void)
