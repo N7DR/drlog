@@ -35,8 +35,10 @@ static const std::string  LF       = "\n";      ///< LF as string
 static const std::string& LF_STR   = LF;        ///< LF as string
 static const char         LF_CHAR  = '\n';      ///< LF as character
 
-static const std::string CR       = "\r";       ///< CR as string
-static const char        CR_CHAR  = '\r';       ///< CR as character
+static const std::string  CR       = "\r";       ///< CR as string
+static const std::string& CR_STR   = CR;         ///< CR as string
+static const char         CR_CHAR  = '\r';       ///< CR as character
+
 static const std::string CRLF     = "\r\n";     ///< CR followed by LF
 
 static const std::string FULL_STOP = ".";       ///< full stop as string
@@ -100,6 +102,8 @@ const std::string format_time(const std::string& format, const tm* tmp);
 /*! \brief      Generic conversion from string
     \param  s   string
     \return     <i>s</i> converted to type <i>T</i>
+
+    This is a complex no-op if type <i>T</i> is a string
 */
 template <class T>
 const T from_string(const std::string& s)
@@ -423,6 +427,8 @@ T remove_char(T& t, const char char_to_remove)
   return rv;
 }
 
+const std::string remove_chars(const std::string& s, const std::string& chars_to_remove);
+
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string
     \param  char_to_remove  character to be removed from delimited substrings in <i>cs</i>
@@ -715,6 +721,15 @@ std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec)
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
 const std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//");
+
+/*! \brief              Add delimiters to a string
+    \param  str         string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             <i>str</i> preceded by <i>delim_1</i> and followed by <i>delim_2</i>
+*/
+inline const std::string delimit(const std::string& str, const std::string& delim_1, const std::string& delim_2)
+  { return (delim_1 + str + delim_2); }
 
 // -------------------------------------- Errors  -----------------------------------
 

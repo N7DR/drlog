@@ -127,29 +127,42 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
   _sent_exchange.clear();
   _received_exchange.clear();
 
+  //auto glambda = [] (auto a) { return a; };
+
+//  auto set_value = [] (auto variable, const string& value)
+//    { variable = from_string<decltype(variable)>(value);
+//      return true;
+//    };
+
   for (const auto& nv : name_value)
   { bool processed = false;
     const string& name = nv.first;
     const string& value = nv.second;
 
     if (!processed and (name == "number"))
-    { _number = from_string<decltype(_number)>(value);
-      processed = true;
+    { //_number = from_string<decltype(_number)>(value);
+      //processed = true;
+       processed = ( _number = from_string<decltype(_number)>(value), true );
+      //processed = set_value(_number, value);
     }
 
     if (!processed and (name == "date"))
-    { _date = value;
-      processed = true;
+    { //_date = value;
+      //processed = true;
+      processed = ( _date = value, true );
+      //processed = set_value(_date, value);
     }
 
     if (!processed and (name == "utc"))
-    { _utc = value;
-      processed = true;
+    { //_utc = value;
+      //processed = true;
+      processed = ( _utc = value, true );
     }
 
     if (!processed and (name == "mode"))
-    { _mode = ( ( value == "CW") ? MODE_CW : MODE_SSB);
-      processed = true;
+    { //_mode = ( ( value == "CW") ? MODE_CW : MODE_SSB);
+      //processed = true;
+      processed = ( _mode = ( ( value == "CW") ? MODE_CW : MODE_SSB), true );
     }
 
     if (!processed and (name == "frequency"))               // old version
@@ -158,8 +171,9 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       const double f = from_string<double>(_frequency_tx);
       const frequency freq(f);
 
-      _band = static_cast<BAND>(freq);
-      processed = true;
+//      _band = static_cast<BAND>(freq);
+//      processed = true;
+      processed = ( _band = static_cast<BAND>(freq), true );
     }
 
     if (!processed and (name == "frequency-tx"))

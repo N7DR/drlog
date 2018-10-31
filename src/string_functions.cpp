@@ -358,9 +358,11 @@ const string read_file(const vector<string>& path, const string& filename)
     Throws exception if the file cannot be written
 */
 void write_file(const string& cs, const string& filename)
-{ ofstream outfile(filename.c_str(), ofstream::binary);
+{ //ofstream outfile(filename.c_str(), ofstream::binary);
 
-  outfile << cs;
+  //outfile << cs;
+
+  ofstream(filename.c_str(), ofstream::binary) << cs;
 
 #if 0
   FILE* fp = fopen(filename.c_str(), "wb");
@@ -537,11 +539,17 @@ const string remove_trailing(const string& cs, const char c)
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
 const string remove_char(const string& cs, const char char_to_remove)
-{ string rv;
+{ //string rv;
 
-  FOR_ALL(cs, [=, &rv] (const char ch) { if (ch != char_to_remove) rv += ch; } );
+  //FOR_ALL(cs, [=, &rv] (const char ch) { if (ch != char_to_remove) rv += ch; } );
 
-  return rv; 
+  //return rv;
+
+  string rv = cs;
+
+  rv.erase( remove(rv.begin(), rv.end(), char_to_remove), rv.end() );
+
+  return rv;
 } 
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
@@ -570,6 +578,21 @@ const string remove_char_from_delimited_substrings(const string& cs, const char 
 
   return rv;
 }
+
+const string remove_chars(const string& s, const string& chars_to_remove)
+{ string rv = s;
+
+  rv.erase( remove_if(rv.begin(), rv.end(), [=](const char& c) { return chars_to_remove.find(c) != string::npos; } ), rv.end() );
+
+  return rv;
+}
+
+//string& remove_chars(string& s, const string& chars) {
+//    s.erase(remove_if(s.begin(), s.end(), [&chars](const char& c) {
+//        return chars.find(c) != string::npos;
+//    }), s.end());
+//    return s;
+//}
 
 /*! \brief              Obtain a delimited substring
     \param  cs          original string
@@ -1107,11 +1130,7 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
 const string remove_trailing_comment(const string& str, const string& comment_str)
-{ //ost << "remove_trailing_comment(); parameters = *" << str << "*, *" << comment_str << "*" << endl;
-
-  const size_t posn = str.find(comment_str);
-
-  //ost << "posn = "  << posn << endl;
+{ const size_t posn = str.find(comment_str);
 
   return ( (posn == string::npos) ? str : remove_trailing_spaces(substring(str, 0, posn)) );
 }

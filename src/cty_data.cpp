@@ -51,8 +51,9 @@ const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };              
             possible errors, but we do test for the most obvious ones.
 */
 cty_record::cty_record(const string& record)
-{ const string record_copy = remove_char(remove_char(record, LF_CHAR), CR_CHAR);            // make it all one line
-  const vector<string> fields = remove_peripheral_spaces(split_string(record_copy, ":"));   // split the record into fields
+{ //const string record_copy = remove_char(remove_char(record, LF_CHAR), CR_CHAR);            // make it all one line
+  //const string record_copy = remove_chars(record, CRLF);
+  const vector<string> fields = remove_peripheral_spaces(split_string( remove_chars(record, CRLF), ":" ));   // split the record into fields instead of lines
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
     throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found " + to_string(fields.size()) + " fields in record for " + fields[0]); 

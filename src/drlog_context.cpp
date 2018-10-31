@@ -121,16 +121,7 @@ void drlog_context::_process_configuration_file(const string& filename)
   const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
 
   for (const auto& tmpline : lines)                                    // process each line
-  { //ost << "Original line: *" << tmpline << "*" << endl;
-
-    const string line = remove_trailing_comment(tmpline);           // remove any comment
-
-    //ost << "Processed line: *" << line << "*" << endl;
-
-//    const size_t posn = line.find_first_of("//");
-
-//    if (posn != string::npos)
-//      line = substring(line, 0, posn);
+  { const string line = remove_trailing_comment(tmpline);           // remove any comment
 
 // generate a number of useful variables
     const string testline = remove_leading_spaces(to_upper(line));
@@ -340,6 +331,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
       if (!str_vec.empty())
       { string tmp_str;
+
         const string lhs = str_vec[0];
 
         if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
@@ -363,6 +355,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
             for (const auto b_str: bands)
             { const BAND b = BAND_FROM_NAME[b_str];
+
               string new_str;
 
               for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
@@ -674,7 +667,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // POINTS
-// don't use LHS here because the command might be somthing like "POINTS[80] ="
+// don't use LHS here because the command might be something like "POINTS[80] ="
     if (starts_with(testline, "POINTS") and !starts_with(testline, "POINTS CW") and !starts_with(testline, "POINTS SSB"))  // there may be an "=" in the points definitions
     { _set_points(testline, MODE_CW);
       _set_points(testline, MODE_SSB);
@@ -1316,7 +1309,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     }
   }
 
-// set some new defaults if we haven't explicitly set them
+// now that we've processed the file, set some new defaults if we haven't explicitly set them
   if (_cabrillo_contest == string())
     _cabrillo_contest = _contest_name;
 
@@ -1675,19 +1668,12 @@ const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const
     { pair<string, string>& pss = rv[n];
 
       if ( (m == MODE_SSB) and (pss.first == "RST") )
-      { //pss.first = "RS";
-        //pss.second = "59";  // hardwire!
         pss = { "RS", "59" };       // hardwire report
-      }
 
       if ( (m == MODE_CW) and (pss.first == "RS") )
-      { //pss.first = "RST";
-        //pss.second = "599";  // hardwire!
         pss = { "RST", "599" };     // hardwire report
-      }
     }
   }
 
   return rv;
 }
-

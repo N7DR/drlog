@@ -243,7 +243,7 @@ protected:
 */
   void _print_tuple(const std::tuple<int, std::string, std::set<std::string>>& t) const;
 
-/*! \brief                          Assign received fields that match a single exchange field
+/*! \brief                          Assign all the received fields that match a single exchange field
     \param  unassigned_tuplest      all the unassigned fields
     \param  tuple_map_assignmens    the assignments
 */

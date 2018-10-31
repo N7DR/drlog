@@ -615,7 +615,7 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
   ost << "}" << endl;
 }
 
-/*! \brief                          Assign received fields that match a single exchange field
+/*! \brief                          Assign all the received fields that match a single exchange field
     \param  unassigned_tuples       all the unassigned fields
     \param  tuple_map_assignmens    the assignments
 */
@@ -774,9 +774,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     }
 
     if (!found_match)
-    { ost << "Error: cannot find match for exchange field: " << rv0 << endl;
-    //alert("No match for exchange field: " + rv0);
-    }
+      ost << "Error: cannot find match for exchange field: " << rv0 << endl;
   }
   else        // !truncate received values
   {
@@ -784,10 +782,10 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   map<int /* received field number */, set<string>> matches;
   const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
 
-  ost << "The EFT for each field name: " << endl;
+//  ost << "The EFT for each field name: " << endl;
 
-  for (const auto& psE : exchange_field_eft)
-    ost << "field name = " << psE.first << "; EFT = " << psE.second << endl;
+//  for (const auto& psE : exchange_field_eft)
+//    ost << "field name = " << psE.first << "; EFT = " << psE.second << endl;
 
   int field_nr = 0;
 
@@ -831,21 +829,21 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     matches.insert( { field_nr++, match } );
   }
 
-  ost << "Finished matching" << endl;
+//  ost << "Finished matching" << endl;
 
 // DEBUG
-  { for (const auto& m : matches)
-    { ost << "Field number: " << m.first << endl;
-
-      const auto& ss = m.second;
-
-      for (const auto& s : ss)
-        ost << "  " << s << endl;
-    }
-  }
+//  { for (const auto& m : matches)
+//    { ost << "Field number: " << m.first << endl;
+//
+//      const auto& ss = m.second;
+//
+//      for (const auto& s : ss)
+//        ost << "  " << s << endl;
+//    }
+//  }
 
 //  typedef tuple<int /* field number wrt 0 */, string /* received value */, set<string> /* unassigned field names */> TRIPLET;
-
+// function to output the details of a deque of TRIPLETs; used for debugging only
   auto print_tuple_deque = [this](const deque<TRIPLET>& dt)
     { ost << "START OF DEQUE" << endl;
 
@@ -868,68 +866,45 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     tuple_deque.push_back(TRIPLET { m.first, copy_received_values[m.first], m.second } );  // field number, value, matching field names
 
 // DEBUG
-  ost << "Initial deque" << endl;
-  print_tuple_deque(tuple_deque);
+//  ost << "Initial deque" << endl;
+//  print_tuple_deque(tuple_deque);
 
   vector<TRIPLET>      tuple_vector_assignments;
   map<string, TRIPLET> tuple_map_assignments;
 //  size_t               old_size_of_tuple_deque;
 
 // find entries with only one entry in set
-
   _assign_unambiguous_fields(tuple_deque, tuple_map_assignments);
 
-#if 0
-  do
-  { old_size_of_tuple_deque = tuple_deque.size();
-
-    for (const auto& t : tuple_deque)
-    { if (FIELD_NAMES(t).size() == 1)
-      { const auto it = tuple_map_assignments.find( *(FIELD_NAMES(t).cbegin()) );
-
-        if (it != tuple_map_assignments.end())
-          tuple_map_assignments.erase(it);        // erase any previous entry with this key
-
-        tuple_map_assignments.insert( { *(FIELD_NAMES(t).cbegin()) /* field name */, t } );
-      }
-    }
-
-// eliminate matched fields from sets of possible matches
-// remove assigned tuples (changes tuple_deque)
-    REMOVE_IF_AND_RESIZE(tuple_deque,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
-
-    for (auto& t : tuple_deque)
-    { set<string>& ss = FIELD_NAMES(t);
-
-      for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
-        ss.erase(tm.first);
-    }
-  } while (old_size_of_tuple_deque != tuple_deque.size());
-#endif
-
 // DEBUG
-  ost << "Deque after PASS #1" << endl;  // at this point, GRID has been assigned
-  print_tuple_deque(tuple_deque);
+//  ost << "Deque after PASS #1" << endl;  // at this point, GRID has been assigned
+//  print_tuple_deque(tuple_deque);
 
   if (tuple_deque.empty())
     _valid = true;
 
-  if (!_valid) // we aren't finished
-  { const TRIPLET& t = tuple_deque[0];    // first received field we haven't been able to use, even tentatively
+  bool processed_field_on_last_pass = true;     // whether we processed any fields on the last pass through the loop that we are baout to execute
+
+//  if (!_valid) // we aren't finished
+  while (processed_field_on_last_pass and !_valid) // we aren't finished; if we processed a field last time, we should try again with the new head of the deque
+  { processed_field_on_last_pass = false;
+
+    const TRIPLET& t = tuple_deque[0];    // first received field we haven't been able to use, even tentatively
 
 // find first received field that's a match for any exchange field and that we haven't used
     const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } );
 
     if (cit != exchange_template.cend())
-    { const string& field_name = cit->name();    // syntactic sugar
+    { processed_field_on_last_pass = true;
 
+      const string& field_name = cit->name();    // syntactic sugar
 
 //    map<string, tuple<int, string, set<string>>> tuple_map_assignments;
 
-ost << "About to try to insert assignment:" << endl;
-ost << "  Field name: " << field_name << endl;
-ost << "  Corresponding tuple: " << endl;
-_print_tuple(t);
+//ost << "About to try to insert assignment:" << endl;
+//ost << "  Field name: " << field_name << endl;
+//ost << "  Corresponding tuple: " << endl;
+//_print_tuple(t);
 
       const bool inserted = (tuple_map_assignments.insert( { field_name, t } )).second;
 
@@ -942,44 +917,7 @@ _print_tuple(t);
 // remove this possible match name from all remaining elements in tuple vector
       FOR_ALL(tuple_deque, [=] (TRIPLET& t) { FIELD_NAMES(t).erase(field_name); } );
 
-      size_t old_size_of_tuple_deque;
-
-// THIS IS ALMOST IDENTICAL TO _assign_unambiguous_entries... TODO: try to rationalise them
-      do
-      { old_size_of_tuple_deque = tuple_deque.size();
-
-        for (const auto& t : tuple_deque)
-        { if (FIELD_NAMES(t).size() == 1)                             // if one element in set
-          { const string& field_name = *(FIELD_NAMES(t).cbegin());    // syntactic sugar
-            const auto it = tuple_map_assignments.find( field_name );
-
-            if (it != tuple_map_assignments.end())
-              tuple_map_assignments.erase(it);
-
-            tuple_map_assignments.insert( { field_name, t } );    // overwrite any previous entry with this key
-          }
-          else
-          { // we have more than one (ambiguous) element left
-            ost << "non-unit number of elements in set; set size = " << get<2>(t).size() << endl;
-
-            for (const auto& element : get<2>(t))
-              ost << "  " << element << endl;
-          }
-
-// assign them in the prescribed order
-        }
-
-// remove assigned tuples from tuple_vector
-        REMOVE_IF_AND_RESIZE(tuple_deque,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
-
-        for (auto& t : tuple_deque)
-        { set<string>& ss = FIELD_NAMES(t);
-
-          for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
-            ss.erase(tm.first);
-        }
-
-      } while (old_size_of_tuple_deque != tuple_deque.size());
+      _assign_unambiguous_fields(tuple_deque, tuple_map_assignments);
 
 // if tuple_deque is empty, it doesn't guarantee that we're OK:
 // suppose that there's an optional field, and we include it BUT miss a mandatory field,
