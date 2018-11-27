@@ -246,6 +246,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "BAND MAP FILTER MODE") or (LHS == "BANDMAP FILTER MODE") )
       _bandmap_filter_show = (RHS == "SHOW");
 
+// BAND MAP FREQUENCY UP
+    if ( (LHS == "BAND MAP FREQUENCY UP") or (LHS == "BANDMAP FREQUENCY UP") )
+      _bandmap_frequency_up = is_true;
+
 // BAND MAP GUARD BAND CW
     if ( (LHS == "BAND MAP GUARD BAND CW") or (LHS == "BANDMAP GUARD BAND CW") )
       _guard_band[MODE_CW] = from_string<int>(rhs);
@@ -1382,6 +1386,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _bandmap_filter_hide_colour(string_to_colour("RED")),             // background colour when bandmap filter is in HIDE mode
   _bandmap_filter_show(false),                                      // filter is used to hide entrie
   _bandmap_filter_show_colour(string_to_colour("GREEN")),           // background colour when bandmap filter is in SHOW mode
+  _bandmap_frequency_up(false),                                     // increasing frequency goes downward on the bandmap
   _bandmap_recent_colour(string_to_colour("BLACK")),                // do not indicate recent postings with special colour
   _bands("160, 80, 40, 20, 15, 10"),                                // legal bands for the contest
   _batch_messages_file(),                                           // name for batch messages file

@@ -79,6 +79,7 @@ protected:
   int                                          _bandmap_filter_hide_colour;         ///< background colour when bandmap filter is in hide mode
   bool                                         _bandmap_filter_show;                ///< is the bandmap filter set to show? (If not, then it's set to hide)
   int                                          _bandmap_filter_show_colour;         ///< background colour when bandmap filter is in show mode
+  bool                                         _bandmap_frequency_up;               ///< should increasing frequency go upwards in the bandmap?
   int                                          _bandmap_recent_colour;              ///< colour for bandmap entries that are less than two minutes old
   std::string                                  _bands;                              ///< comma-delimited list of bands that are legal for the contest
   std::string                                  _batch_messages_file;                ///< file that contains per-call batch messages
@@ -330,6 +331,7 @@ public:
   CONTEXTREAD(bandmap_filter_hide_colour);       ///< background colour when bandmap filter is in hide mode
   CONTEXTREAD(bandmap_filter_show);              ///< is the bandmap filter set to show? (If not, then it's set to hide)
   CONTEXTREAD(bandmap_filter_show_colour);       ///< background colour when bandmap filter is in show mode
+  CONTEXTREAD(bandmap_frequency_up);             ///< should increasing frequency go upwards in the bandmap?
   CONTEXTREAD(bandmap_recent_colour);            ///< colour for bandmap entries that are less than two minutes old
   CONTEXTREAD(bands);                            ///< comma-delimited list of bands that are legal for the contest
   CONTEXTREAD(batch_messages_file);              ///< file that contains per-call batch messages

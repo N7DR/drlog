@@ -16,8 +16,8 @@
 #include "macros.h"
 #include "string_functions.h"
 
-#include <fstream>
-#include <iostream>
+//#include <fstream>
+//#include <iostream>
 
 #include <cctype>
 #include <cstdio>
@@ -285,16 +285,25 @@ const string read_file(const string& filename)
 
 // check that the file is not a directory  
   struct stat stat_buffer;
-  int status = ::stat(filename.c_str(), &stat_buffer);
+
+  const int status = ::stat(filename.c_str(), &stat_buffer);
 
   if (status)
     throw string_function_error(STRING_UNABLE_TO_STAT_FILE, "Unable to stat file: " + filename);
 
-  const bool is_directory = ((stat_buffer.st_mode bitand S_IFDIR) != 0);
+  const bool is_directory = ( (stat_buffer.st_mode bitand S_IFDIR) != 0 );
 
   if (is_directory)
     throw string_function_error(STRING_FILE_IS_DIRECTORY, filename + (string)" is a directory");
 
+//  return string { std::istreambuf_iterator<char>( ifstream (filename)), {} };
+
+  std::ifstream file(filename);
+  std::string str{std::istreambuf_iterator<char>(file), {}};
+
+  return str;
+
+#if 0
 // get the length of the file
   fseek(fp, 0, SEEK_END);
   unsigned long file_length = ftell(fp);
@@ -326,7 +335,7 @@ const string read_file(const string& filename)
     fclose(fp);
 
   return string();
-
+#endif
 }
 
 /*! \brief              Read the contents of a file into a single string
@@ -357,12 +366,13 @@ const string read_file(const vector<string>& path, const string& filename)
 
     Throws exception if the file cannot be written
 */
-void write_file(const string& cs, const string& filename)
-{ //ofstream outfile(filename.c_str(), ofstream::binary);
+
+//void write_file(const string& cs, const string& filename)
+//{ //ofstream outfile(filename.c_str(), ofstream::binary);
 
   //outfile << cs;
 
-  ofstream(filename.c_str(), ofstream::binary) << cs;
+//  ofstream(filename.c_str(), ofstream::binary) << cs;
 
 #if 0
   FILE* fp = fopen(filename.c_str(), "wb");
@@ -382,7 +392,7 @@ void write_file(const string& cs, const string& filename)
 
   fclose(fp);
 #endif
-}
+//}
 
 /*! \brief              Split a string into components
     \param  cs          original string
@@ -579,6 +589,11 @@ const string remove_char_from_delimited_substrings(const string& cs, const char 
   return rv;
 }
 
+/*! \brief                      Remove all instances of particular characters from a string
+    \param  s                   original string
+    \param  chars_to_remove     string whose characters are to be removed from <i>s</i>
+    \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
+*/
 const string remove_chars(const string& s, const string& chars_to_remove)
 { string rv = s;
 
@@ -631,9 +646,7 @@ const vector<string> delimited_substrings(const string& cs, const char delim_1, 
   size_t start_posn = 0;
 
   while ( (start_posn < cs.length() and !substring(cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
-  { // ost << "string = *" << cs << "*, posn = " << start_posn << endl;
-
-    const string& sstring = substring(cs, start_posn);
+  { const string& sstring = substring(cs, start_posn);
     const size_t posn_1 = sstring.find(delim_1);
 
     if (posn_1 == string::npos)             // no more starting delimiters
@@ -909,6 +922,7 @@ const string convert_to_dotted_decimal(const uint32_t val)
 
 // put into network order (so that we can guarantee the order of the octets in the long)
   const uint32_t network_val = htonl(val);
+
   unsigned char* cp = (unsigned char*)(&network_val);
   string rv;
 

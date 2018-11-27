@@ -25,17 +25,17 @@
 using namespace boost;                  // for regex
 using namespace std;
 
-extern contest_rules     rules;         ///< the rules for this contest
-extern drmaster* drm_p;                 ///< pointer to drmaster database
-extern EFT CALLSIGN_EFT;                ///< exchange field template for a callsign
-extern location_database location_db;   ///< the (global) location database
-extern logbook logbk;                   ///< the (global) logbook
-extern exchange_field_prefill  prefill_data;   ///< exchange prefill data from external files
-extern bool require_dot_in_replacement_call;
+extern contest_rules     rules;                 ///< the rules for this contest
+extern drmaster*         drm_p;                 ///< pointer to drmaster database
+extern EFT               CALLSIGN_EFT;          ///< exchange field template for a callsign
+extern location_database location_db;           ///< the (global) location database
+extern logbook logbk;                           ///< the (global) logbook
+extern exchange_field_prefill  prefill_data;    ///< exchange prefill data from external files
+extern bool require_dot_in_replacement_call;    ///< whether a dot is required to mark a replacement callsign
 
 pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
 
-static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
+//static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
 
 // -------------------------  exchange_field_prefill  ---------------------------
 
@@ -43,109 +43,53 @@ static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< leg
     \brief  Encapsulates external prefills for exchange fields
 */
 
-/// constructor
-//exchange_field_prefill::exchange_field_prefill(const map<string, string>& prefill_map)
-//{ insert_prefill_map(prefill_map);
-
-#if 0
-  for (const auto& this_pair : prefill_map)
-  { const string& field_name = this_pair.first;
-    const string& filename = this_pair.second;
-
-    try
-    { string contents = read_file(filename);
-
-// convert tabs to spaces
-      contents = replace_char(contents, '\t', ' ');
-
-// squash spaces
-      contents = squash(contents);
-
-      const vector<string> lines = to_lines(to_upper(contents));
-
-      unordered_map<string /* call */, string /* prefill value */> call_value_map;
-
-      for (const auto& line : lines)  // each line should now be: callsign value
-      { const vector<string> this_pair = split_string(line, ' ');
-
-        if (this_pair.size() == 2)
-          call_value_map.insert( { this_pair[0], this_pair[1] } );
-      }
-
-      _db.insert( { to_upper(field_name), call_value_map } );
-
-//      std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
-    }
-
-    catch (...)
-    { ost << "ERROR CREATING PREFILL INFORMATION FROM FILE: " << filename << endl;
-    }
-
-
-  }
-#endif
-
-//}
-
 /*! \brief                          Populate with data taken from a prefill filename map
     \param  prefill_filename_map    map of fields and filenames
 */
 void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
-{ //ost << "Inside exchange_field_prefill::insert_prefill_filename_map()" << endl;
-
-  for (const auto& this_pair : prefill_filename_map)
+{ for (const auto& this_pair : prefill_filename_map)
   { const string& field_name = this_pair.first;
     const string& filename = this_pair.second;
 
-    //ost << "field name = " << field_name << endl;
-    //ost << "filename = " << filename << endl;
-
     try
-    { string contents = read_file(filename);
+    { //string contents = read_file(filename);
 
       //ost << "CONTENTS: " << contents << endl;
 
 // remove any CRs
-      contents = remove_char(contents, CR_CHAR);
+//      contents = remove_char(contents, CR_CHAR);
 
       //ost << "CR REMOVED" << endl;
 
 // convert tabs to spaces
-      contents = replace_char(contents, '\t', ' ');
+//      contents = replace_char(contents, '\t', ' ');
 
      // ost << "TABS CONVERTED TO SPACES" << endl;
 
 // squash spaces
-      contents = squash(contents);
+//      contents = squash(contents);
 
      // ost << "SQUASHED" << endl;
 
-      const vector<string> lines = to_lines(to_upper(contents));
+//      const vector<string> lines = to_lines(to_upper(contents));
+      const vector<string> lines = to_lines( to_upper( squash( replace_char( remove_char(read_file(filename), CR_CHAR ), '\t', ' ') ) ) ); // read, remove CRs, tabs to spaces, squash, to lines
 
       unordered_map<string /* call */, string /* prefill value */> call_value_map;
 
-     // ost << "ABOUT TO PROCESS LINES" << endl;
-
-      for (const auto& line : lines)  // each line should now be: callsign value
+      for (const auto& line : lines)                                // each line should now be: callsign value (+ ignored later stuff)
       { const vector<string> this_pair = split_string(line, ' ');
 
         if (this_pair.size() >= 2)
-        { call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
-         // ost << "INSERTED: " << this_pair[0] << ", " << this_pair[1] << endl;
-        }
+          call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
       }
 
       _db.insert( { to_upper(field_name), call_value_map } );
-
-     // ost << "Loaded prefill file " << filename << " for field: " << field_name << endl;
     }
 
     catch (...)
     { ost << "ERROR CREATING PREFILL INFORMATION FROM FILE: " << filename << endl;
     }
   }
-
- // ost << "Leaving exchange_field_prefill::insert_prefill_filename_map()" << endl;
 }
 
 /*! \brief              Get the prefill data for a particular field name and callsign
@@ -190,8 +134,7 @@ ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
     ost << "  Number of callsigns = " << um.size() << endl;
 
     for (const auto& ss : um)
-    {  ost << "    Callsign: " << ss.first << "; Value: " << ss.second << endl;
-    }
+      ost << "    Callsign: " << ss.first << "; Value: " << ss.second << endl;
   }
 
   return ost;
@@ -202,26 +145,6 @@ ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
 /*! \class  parsed_exchange_field
     \brief  Encapsulates the name for an exchange field, its value after parsing an exchange, whether it's a mult, and, if so, the value of that mult
 */
-
-/// default constructor
-//parsed_exchange_field::parsed_exchange_field(void) :
-//  _name(),
-//  _value(),
-//  _is_mult(false),
-//  _mult_value()
-//{ }
-
-/*! \brief      Constructor
-    \param  nm  field name
-    \param  v   field value
-    \param  m   is this field a mult?
-*/
-//parsed_exchange_field::parsed_exchange_field(const string& nm, const string& v, const bool m) :
-//    _name(nm),
-//    _value(v),
-//    _is_mult(m),
-//    _mult_value(MULT_VALUE(nm, v))
-//{ }
 
 /*! \brief      Set the name and corresponding mult value
     \param  nm  field name
@@ -296,13 +219,9 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
       <i>precedence</i>
       <i>n</i><i>precedence</i>
 */
-const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
-{ //if (str.length() == 1)
-  //  return (legal_prec < last_char(str));
-
-  //return ( _is_possible_serno(str) and (legal_prec < last_char(str)) );
-  return ( (str.length() == 1) ? (legal_prec < last_char(str)) : (_is_possible_serno(str) and (legal_prec < last_char(str))) );
-}
+//const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
+//{ return ( (str.length() == 1) ? (legal_prec < last_char(str)) : (_is_possible_serno(str) and (legal_prec < last_char(str))) );
+//}
 
 /*! \brief          Does a string contain a possible check?
     \param  str     string to check

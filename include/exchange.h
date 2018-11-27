@@ -33,6 +33,8 @@ typedef std::tuple<int        /* field number wrt 0 */,
         std::string           /* received value */,
         std::set<std::string> /* unassigned field names */> TRIPLET;   ///< used in parsed_exchange
 
+const std::set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
+
 // -------------------------  exchange_field_prefill  ---------------------------
 
 /*! \class  exchange_field_prefill
@@ -180,7 +182,8 @@ protected:
       <i>precedence</i>
       <i>n</i><i>precedence</i>
 */
-  const bool _is_possible_prec(const std::string& str) const;
+  inline const bool _is_possible_prec(const std::string& str) const
+    { return ( (str.length() == 1) ? (legal_prec < last_char(str)) : (_is_possible_serno(str) and (legal_prec < last_char(str))) ); }
 
 /*! \brief          Does a string possibly contain a check?
     \param  str     string to check

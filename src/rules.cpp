@@ -156,11 +156,11 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
 
     Also the default constructor
 */
-exchange_field::exchange_field(const string& nm, const bool mult, const bool opt) :
-  _name(nm),
-  _is_mult(mult),
-  _is_optional(opt)
-{ }
+//exchange_field::exchange_field(const string& nm, const bool mult, const bool opt) :
+//  _name(nm),
+//  _is_mult(mult),
+//  _is_optional(opt)
+//{ }
 
 /*! \brief      Follow all trees to their leaves
     \return     the exchange field, expanded recursively into all possible choices
@@ -320,17 +320,16 @@ const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& e
 
     if (is_choice)
     { const vector<string> choice_vec = split_string(field_name, ":");
-      string full_name;  // pseudo name of the choice
 
-      if (choice_vec.size() == 2)    // true if legal
+      string full_name;                 // pseudo name of the choice
+
+      if (choice_vec.size() == 2)       // true if legal
       { vector<string> choice_fields = remove_peripheral_spaces(split_string(choice_vec[1], "/"));
         vector<exchange_field> choices;
 
         for (auto& choice_field_name : choice_fields)
         { const bool is_mult = find(exchange_mults_vec.cbegin(), exchange_mults_vec.cend(), choice_field_name) != exchange_mults_vec.cend();
-          //const exchange_field this_choice(choice_field_name, is_mult);
 
-          //choices.push_back(this_choice);
           choices.push_back(exchange_field(choice_field_name, is_mult));
         }
 
@@ -385,11 +384,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   const auto& per_country_exchanges = context.exchange_per_country();
 
   for (const auto& pce : per_country_exchanges)
-  { //const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
-
-//    permitted_exchange_fields.insert( { pce.first, vs } );   // unexpanded choice
     permitted_exchange_fields.insert( { pce.first,  remove_peripheral_spaces(split_string(pce.second, ",")) } );   // unexpanded choice
-  }
 
   for (const auto& pce : per_country_exchanges)
   { const vector<string> vs = remove_peripheral_spaces(split_string(pce.second, ","));
@@ -585,6 +580,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     for (const auto& qth_vec_field : unexpanded_exch)
     { const string& prefix = qth_vec_field.first;
       const vector<exchange_field>& vef = qth_vec_field.second;
+
       vector<exchange_field> expanded_vef;
 
       for (const auto& field : vef)
@@ -632,10 +628,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
       if (is_special_points)
       { if (context_points == "IARU")  // special
-        { points_structure ps = pb[b];
+        { //points_structure ps = pb[b];
 
-          ps.points_type(POINTS_IARU);
-          pb[b] = ps;
+          //ps.points_type(POINTS_IARU);
+          //pb[b] = ps;
+          pb[b].points_type(POINTS_IARU);
         }
 
         if (context_points == "STEW")  // special

@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <deque>
+#include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -265,7 +267,8 @@ inline const std::string read_file(const std::string& filename, const std::vecto
 
     Throws exception if the file cannot be written
 */
-void write_file(const std::string& cs, const std::string& filename);
+inline void write_file(const std::string& cs, const std::string& filename)
+  { std::ofstream(filename.c_str(), std::ofstream::binary) << cs; }
 
 /*! \brief      Remove characters from the end of a string
     \param  s   original string
@@ -427,6 +430,11 @@ T remove_char(T& t, const char char_to_remove)
   return rv;
 }
 
+/*! \brief                      Remove all instances of particular characters from a string
+    \param  s                   original string
+    \param  chars_to_remove     string whose characters are to be removed from <i>s</i>
+    \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
+*/
 const std::string remove_chars(const std::string& s, const std::string& chars_to_remove);
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
@@ -572,7 +580,8 @@ inline const bool begins_with(const std::string& cs, const std::string& ss)
     \return     whether <i>cs</i> ends with <i>ss</i>
 */
 inline const bool ends_with(const std::string& cs, const std::string& ss)
-  { return ( cs.rfind(ss) == (cs.length() - ss.length()) ); }
+//  { return ( cs.rfind(ss) == (cs.length() - ss.length()) ); }
+  { return ( (cs.length() < ss.length()) ? false : ( cs.rfind(ss) == (cs.length() - ss.length()) ) ); }
 
 /*! \brief              Is a call a maritime mobile?
     \param  callsign    call to test

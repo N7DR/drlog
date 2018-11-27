@@ -195,7 +195,11 @@ public:
 
     Also the default constructor
 */
-  exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false);
+  inline exchange_field(const std::string& nm = std::string(), const bool mult = false, const bool opt = false) :
+    _name(nm),
+    _is_mult(mult),
+    _is_optional(opt)
+  { }
 
   READ_AND_WRITE(name);                ///< name of field
   READ(is_mult);                       ///< is this field a multiplier?

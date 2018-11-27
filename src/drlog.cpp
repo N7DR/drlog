@@ -238,56 +238,57 @@ pt_mutex              frequency_change_condvar_mutex;       ///< mutex associate
 
 // global variables
 
-map<string /* mult name */, accumulator<string> >     acc_callsigns;                  ///< accumulator for prefixes for auto callsign mults
-accumulator<string>     acc_countries;                          ///< accumulator for canonical prefixes for auto countries
-int                     ACCEPT_COLOUR(COLOUR_GREEN);            ///< colour for calls that have been worked, but are not dupes
-string                  at_call;                                ///< call that should replace comat in "call ok now" message
-audio_recorder          audio;                                  ///< provide capability to record audio
+map<string /* mult name */, accumulator<string> > acc_callsigns;    ///< accumulator for prefixes for auto callsign mults
+accumulator<string>     acc_countries;                              ///< accumulator for canonical prefixes for auto countries
+int                     ACCEPT_COLOUR { COLOUR_GREEN };             ///< colour for calls that have been worked, but are not dupes
+string                  at_call;                                    ///< call that should replace comat in "call ok now" message
+audio_recorder          audio;                                      ///< provide capability to record audio
 
-bool                    best_dx_in_miles;                   ///< whether unit for BEST DX window is miles
-bandmap_buffer          bm_buffer;                          ///< global control buffer for all the bandmaps
+bool                    bandmap_frequency_up { false };             ///< whether increasing frequency goes upwards in the bandmap
+bool                    best_dx_in_miles;                           ///< whether unit for BEST DX window is miles
+bandmap_buffer          bm_buffer;                                  ///< global control buffer for all the bandmaps
 
-drlog_context           context;                            ///< context taken from configuration file
-unsigned int            cw_speed_change;                    ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
+drlog_context           context;                                    ///< context taken from configuration file
+unsigned int            cw_speed_change;                            ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
-bool                    display_grid;                       ///< whether to display the grid in GRID and INFO windows
+bool                    display_grid;                               ///< whether to display the grid in GRID and INFO windows
 
-exchange_field_database exchange_db;                        ///< dynamic database of exchange field values for calls; automatically thread-safe
-exchange_field_prefill  prefill_data;                       ///< exchange prefill data from external files
+exchange_field_database exchange_db;                                ///< dynamic database of exchange field values for calls; automatically thread-safe
+exchange_field_prefill  prefill_data;                               ///< exchange prefill data from external files
 
-bool                    filter_remaining_country_mults(false);  ///< whether to apply filter to remaining country mults
+bool                    filter_remaining_country_mults { false };   ///< whether to apply filter to remaining country mults
 
-float                   greatest_distance= 0;               ///< greatest distance in miles
+float                   greatest_distance { 0 };                    ///< greatest distance in miles
 
-bool                    home_exchange_window(false);        ///< whether to move cursor to left of exchange window (and insert space if necessary)
+bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
-bool                    is_ss(false);                       ///< ss is special
+bool                    is_ss { false };                            ///< ss is special
 
-logbook                 logbk;                              ///< the log; can't be called "log" if mathcalls.h is in the compilation path
-bool                    long_t = false;                     ///< whether to send long Ts at beginning of serno
+logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
+bool                    long_t { false };                           ///< whether to send long Ts at beginning of serno
 
-unsigned int            max_qsos_without_qsl;               ///< limit for the N7DR matches_criteria() algorithm
+unsigned int            max_qsos_without_qsl;                       ///< limit for the N7DR matches_criteria() algorithm
 monitored_posts         mp;                                 ///< the calls being monitored
-bool                    multiple_modes(false);              ///< are multiple modes permitted in the contest?
+bool                    multiple_modes { false };              ///< are multiple modes permitted in the contest?
 string                  my_continent;                       ///< what continent am I on? (two-letter abbreviation)
 grid_square             my_grid;                            ///< what is my (four-character) grid square?
 
-unsigned int            next_qso_number = 1;                ///< actual number of next QSO
-bool                    no_default_rst(false);              ///< do we not assign a default received RST?
-unsigned int            n_modes = 0;                        ///< number of modes allowed in the contest
+unsigned int            next_qso_number { 1 };                ///< actual number of next QSO
+bool                    no_default_rst { false };              ///< do we not assign a default received RST?
+unsigned int            n_modes { 0 };                        ///< number of modes allowed in the contest
 
-unsigned int            octothorpe = 1;                     ///< serial number of next QSO
+unsigned int            octothorpe { 1 };                     ///< serial number of next QSO
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
 
-int                     REJECT_COLOUR(COLOUR_RED);          ///< colour for calls that are dupes
+int                     REJECT_COLOUR { COLOUR_RED };          ///< colour for calls that are dupes
 bool                    require_dot_in_replacement_call;    ///< whether a dot is required when reading replacement call from EXCHANGE window (used in exchange.cpp)
-bool                    restored_data(false);               ///< did we restore from an archive?
-bool                    rig_is_split = false;               ///< is the rig in split mode?
+bool                    restored_data { false };               ///< did we restore from an archive?
+bool                    rig_is_split { false };               ///< is the rig in split mode?
 
-bool                    sending_qtc_series = false;         ///< am I senting a QTC series?
-unsigned int            serno_spaces = 0;                   ///< number of additional half-spaces in serno
+bool                    sending_qtc_series { false };         ///< am I senting a QTC series?
+unsigned int            serno_spaces { 0 };                   ///< number of additional half-spaces in serno
 int                     shift_delta;                        ///< step size for changing RIT (forced positive)
-unsigned int            shift_poll = 0;                     ///< polling interval for SHIFT keys
+unsigned int            shift_poll  { 0 };                     ///< polling interval for SHIFT keys
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
 // QTC variables
@@ -302,7 +303,7 @@ EFT CALLSIGN_EFT("CALLSIGN");           ///< EFT used in constructor for parsed_
    there's a perceptible pause in the RIT adjustment if we happen to poll the
    rig while adjusting RIT
 */
-bool ok_to_poll_k3 = true;                  ///< is it safe to poll the K3?
+bool ok_to_poll_k3 { true };                  ///< is it safe to poll the K3?
 
 // windows -- these should automatically be thread_safe
 window win_band_mode,                   ///< the band and mode indicator
@@ -369,11 +370,11 @@ pt_mutex bandmap_mutex;                     ///< mutex for win_bandmap
 
 cw_messages cwm;                            ///< pre-defined CW messages
 
-contest_rules rules;                        ///< the rules for this contest
-cw_buffer*       cw_p  = nullptr;           ///< pointer to buffer that holds outbound CW message
-drmaster*       drm_p  = nullptr;           ///< pointer to drmaster information
-dx_cluster* cluster_p = nullptr;            ///< pointer to cluster information
-dx_cluster*     rbn_p = nullptr;            ///< pointer to RBN information
+contest_rules rules;                    ///< the rules for this contest
+cw_buffer*       cw_p { nullptr };      ///< pointer to buffer that holds outbound CW message
+drmaster*       drm_p { nullptr };      ///< pointer to drmaster information
+dx_cluster* cluster_p { nullptr };      ///< pointer to cluster information
+dx_cluster*     rbn_p { nullptr };      ///< pointer to RBN information
 
 location_database location_db;              ///< global location database
 rig_interface rig;                          ///< rig control
@@ -465,8 +466,6 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
     match_vector.clear();
 
 // put an exact match at the front (this will never happen with a fuzzy match)
-//    vector<string> tmp_matches;                 // variable in which to build interim ordered matches
-
     vector<string> tmp_exact_matches;                   // variable in which to build interim ordered matches
     vector<string> tmp_green_matches;                   // variable in which to build interim ordered matches
     vector<string> tmp_red_matches;                     // variable in which to build interim ordered matches
@@ -631,8 +630,6 @@ int main(int argc, char** argv)
 // read configuration data (typically from logcfg.dat)
     drlog_context* context_p = nullptr;
 
-//    ost << "About to read configuration data" << endl;
-
     try
     { context_p = new drlog_context(config_filename);
     }
@@ -641,8 +638,6 @@ int main(int argc, char** argv)
     { ost << "Error reading configuration data from " << config_filename << endl;
       exit(-1);
     }
-
-//    ost << "Finished reading configuration data" << endl;
 
 // make the context available globally and cleanup the context pointer
     context = *context_p;
@@ -653,23 +648,19 @@ int main(int argc, char** argv)
     TS = context.thousands_separator();         // correct thousands separator
     ACCEPT_COLOUR = context.accept_colour();    // colour for calls it is OK to work
     REJECT_COLOUR = context.reject_colour();    // colour for calls it is not OK to work
-    serno_spaces = context.serno_spaces();
-    long_t = context.long_t();
+
+    bandmap_frequency_up = context.bandmap_frequency_up();
+    best_dx_in_miles = (context.best_dx_unit() == "MILES");
     cw_speed_change = context.cw_speed_change();
+    display_grid = context.display_grid();
+    long_t = context.long_t();
+    max_qsos_without_qsl = context.max_qsos_without_qsl();
     multiple_modes = context.multiple_modes();
     my_grid = grid_square(context.my_grid());
     no_default_rst = context.no_default_rst();
-    best_dx_in_miles = (context.best_dx_unit() == "MILES");
-    display_grid = context.display_grid();
-    max_qsos_without_qsl = context.max_qsos_without_qsl();
-
-//    ost << "About to prefill data" << endl;
+    serno_spaces = context.serno_spaces();
 
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
-
-//    ost << "PREFILL_DATA: " << prefill_data << endl;
-
-//    ost << "Finished prefilling data" << endl;
 
     shift_delta = static_cast<int>(context.shift_delta());  // forced positive int
     shift_poll = context.shift_poll();
@@ -771,17 +762,6 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-// debug: print all country mults
-//    { const set<string> cm = rules.country_mults();                 ///< collection of canonical prefixes of all the valid country multipliers
-//
-//      ost << "COUNTRY MULTS : ";
-//
-//      for (const string& str : cm)
-//      { ost << "  " << str << endl;
-//      }
-//
-//    }
-
 // is it SS?
     if (rules.n_modes() == 1)
     { const vector<exchange_field> exchange_template = rules.unexpanded_exch("K", *(rules.permitted_modes().cbegin()));
@@ -805,7 +785,7 @@ int main(int argc, char** argv)
       for (const auto& record : records)
       { const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines( record )));
 
-// function to extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
+// function to extract the value from an ADIF line, ignoring the last <i>offset</i> characters
         auto adif_value = [](const string& this_line, const unsigned int offset = 0)
           { const string tag = delimited_substring(this_line, '<', '>');
             const vector<string> vs = split_string(tag, ":");
@@ -977,7 +957,7 @@ int main(int argc, char** argv)
 
         be.callsign(MODE_MARKER);
         be.source(BANDMAP_ENTRY_LOCAL);
-        be.expiration_time(be.time() + 1000000);
+        be.expiration_time(be.time() + 1000000);        // expiration is a long time in the future
         be.freq(MODE_BREAK_POINT[b]);
 
         bm += be;
@@ -1194,8 +1174,9 @@ int main(int argc, char** argv)
   const vector<string> exchange_mult_window_names = context.window_name_contains("REMAINING EXCHANGE MULTS");
 
   for (auto& window_name : exchange_mult_window_names)
-  { window* wp = new window();
-    const string exchange_mult_name = substring(window_name, 25);
+  { const string exchange_mult_name = substring(window_name, 25);
+
+    window* wp = new window();
 
     wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
     win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
@@ -1211,7 +1192,7 @@ int main(int argc, char** argv)
 
 // SCORE window
   win_score.init(context.window_info("SCORE"), WINDOW_NO_CURSOR);
-  { static const string RUBRIC("Score: ");
+  { const string RUBRIC("Score: ");
     const string score_str = pad_string(separated_string(statistics.points(rules), TS), win_score.width() - RUBRIC.length());
 
     win_score < CURSOR_START_OF_LINE < RUBRIC <= score_str;
@@ -1220,6 +1201,7 @@ int main(int argc, char** argv)
 // SCORE BANDS window
   win_score_bands.init(context.window_info("SCORE BANDS"), WINDOW_NO_CURSOR);
   { const set<BAND> score_bands = rules.score_bands();
+
     string bands_str;
 
     FOR_ALL(score_bands, [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + " "); } );
@@ -1297,12 +1279,6 @@ int main(int argc, char** argv)
   }
 
   display_band_mode(win_band_mode, safe_get_band(), safe_get_mode());
-
-// possibly start audio recording
-//  { if (context.record_audio())
-//    {
-//    }
-//  }
 
 // start to display the date and time
   try
@@ -1389,8 +1365,6 @@ int main(int argc, char** argv)
     FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
     win_bandmap_filter < WINDOW_CLEAR < CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();       // display filter
-
-//    ost << "bm size for cur_band = " << bm.size() << endl;
   }
 
   // read a Cabrillo log
@@ -1543,11 +1517,13 @@ int main(int argc, char** argv)
         const vector<QSO> qso_vec = logbk.as_vector();
 
         for (const auto& qso : qso_vec)
-        { if (!scp_db.contains(qso.callsign()) and !scp_dynamic_db.contains(qso.callsign()))
-            scp_dynamic_db.add_call(qso.callsign());
+        { const string& callsign = qso.callsign();
 
-          if (!fuzzy_db.contains(qso.callsign()) and !fuzzy_dynamic_db.contains(qso.callsign()))
-            fuzzy_dynamic_db.add_call(qso.callsign());
+          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+            scp_dynamic_db.add_call(callsign);
+
+          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+            fuzzy_dynamic_db.add_call(callsign);
         }
 
         if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
@@ -1556,7 +1532,7 @@ int main(int argc, char** argv)
 
 // octothorpe
       if (logbk.size() >= 1)
-      { const QSO last_qso = logbk[logbk.size()];    // wrt 1
+      { const QSO& last_qso = logbk[logbk.size()];    // wrt 1
 
         if (rules.sent_exchange_includes("SERNO", last_qso.mode()))
           octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO")) + 1;
@@ -2113,8 +2089,11 @@ void* process_rbn_info(void* vp)
   const bool rbn_beacons = context.rbn_beacons();
 
   const size_t QUEUE_SIZE = 100;        // size of queue of recent calls posted to the mult window
+
   string unprocessed_input;             // data from the cluster that have not yet been processed by this thread
+
   const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
+
   deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
 
   const int highlight_colour = colours.add(COLOUR_WHITE, COLOUR_RED);             // colour that will mark that we are processing a ten-second pass
@@ -2144,7 +2123,7 @@ void* process_rbn_info(void* vp)
       for (unsigned int n = 0; n < lines.size(); ++n)
       { win_cluster_screen < lines[n];                       // THIS causes the scroll, but I don't know why
 
-        if ( (n != lines.size() - 1) or no_cr[no_cr.length() - 1] == LF_CHAR)
+        if ( (n != lines.size() - 1) or (no_cr[no_cr.length() - 1] == LF_CHAR) )
           win_cluster_screen < CURSOR_START_OF_LINE;
         else
           win_cluster_screen < WINDOW_SCROLL_DOWN;
@@ -2200,7 +2179,6 @@ void* process_rbn_info(void* vp)
               update_known_callsign_mults(dx_callsign);
 
 // possibly add the call to the known countries
-//              if (rules.n_country_mults())
               if (context.auto_remaining_country_mults())
                 update_known_country_mults(dx_callsign);
 
@@ -2224,17 +2202,7 @@ void* process_rbn_info(void* vp)
                 }
               }
 
-//ost << "be before calculating mult status: " << be << endl;
-
-//ost << "COUNTRY MULTIPLIERS before calculating mult status: " << statistics.country_multipliers() << endl;
-
               be.calculate_mult_status(rules, statistics);
-
-//ost << "COUNTRY MULTIPLIERS after calculating mult status: " << statistics.country_multipliers() << endl;
-
-
-
-//ost << "be after calculating mult status: " << be << endl;
 
               const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
               const bool is_me = (be.callsign() == context.my_call());
@@ -2244,11 +2212,7 @@ void* process_rbn_info(void* vp)
               if (cluster_mult_win.defined())
               { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
                 { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
-                  {
-
-//ost << "About to write to CLUSTER MULT WIN: " << be << endl;
-
-                    cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
+                  { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
                     recent_mult_calls.push_back(target);
 
                     while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size

@@ -28,6 +28,7 @@ extern pt_mutex                      bandmap_mutex;          ///< used when writ
 extern pt_mutex                      batch_messages_mutex;   ///< mutex for batch messages
 extern unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
 extern bandmap_buffer                bm_buffer;              ///< global control buffer for all the bandmaps
+extern bool                          bandmap_frequency_up;   ///< whether increasing frequency goes upwards in the bandmap
 extern exchange_field_database       exchange_db;            ///< dynamic database of exchange field values for calls; automatically thread-safe
 extern location_database             location_db;            ///< location information
 extern unsigned int                  max_qsos_without_qsl;   ///< limit for the N7DR matches_criteria() algorithm
@@ -137,7 +138,7 @@ const unsigned int bandmap_buffer::add(const string& callsign, const string& pos
 const vector<string> bandmap_filter_type::filter(void) const
 { vector<string> rv = _continents;
 
-  rv.insert(rv.end(), _prefixes.begin(), _prefixes.end());
+  rv.insert(rv.end(), _prefixes.cbegin(), _prefixes.cend());
 
   return rv;
 }
@@ -445,10 +446,11 @@ void bandmap::_insert(const bandmap_entry& be)
 
   for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
   { if (it->freq().hz() > be.freq().hz())
-    { _entries.insert(it, be);                  // inserts before
-
-       inserted = true;
-    }
+      inserted = ( _entries.insert(it, be), true );
+//    { _entries.insert(it, be);                  // inserts before
+//
+//       inserted = true;
+//    }
   }
 
   if (!inserted)
@@ -1104,7 +1106,7 @@ window& operator<(window& win, bandmap& bm)
   const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();    // automatically filter
   const size_t start_entry = (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0;
 
-  win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
+  win < WINDOW_CLEAR < (bandmap_frequency_up ? CURSOR_BOTTOM_LEFT : CURSOR_TOP_LEFT);
 
   size_t index = 0;    // keep track of where we are in the bandmap
 
@@ -1145,7 +1147,10 @@ window& operator<(window& win, bandmap& bm)
       if ((win.width() - x) < COLUMN_WIDTH)
         break;
 
-      const unsigned int y = (win.height() - 1) - (index - start_entry) % win.height();
+// get the right y ordinate
+      const unsigned int y = (bandmap_frequency_up ? 0 + (index - start_entry) % win.height()
+                                                   : (win.height() - 1) - (index - start_entry) % win.height()
+                             );
 
 // now work out the status colour
       int status_colour = colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR);                      // default
