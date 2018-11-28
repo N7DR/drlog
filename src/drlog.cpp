@@ -104,6 +104,8 @@ const string expand_cw_message(const string& msg);  ///< Expand a CW message, re
 
 const bool fast_cw_bandwidth(void);                       ///< set CW bandwidth to appropriate value for CQ/SAP mode
 
+void* get_indices(void* vp);                                           ///< Get SFI, A, K
+
 const string hhmmss(void);                          ///< Obtain the current time in HH:MM:SS format
 
 const string match_callsign(const vector<pair<string /* callsign */,
@@ -166,6 +168,7 @@ void* auto_screenshot(void* vp);                                            ///<
 void* display_rig_status(void* vp);                                         ///< Thread function to display status of the rig
 void* display_date_and_time(void* vp);                                      ///< Thread function to display the date and time
 void* get_cluster_info(void* vp);                                           ///< Thread function to obtain data from the cluster
+void* get_indices(void* vp);                                                ///< Get SFI, A, K
 void* keyboard_test(void* vp);                                              ///< Thread function to simulate keystrokes
 void* process_rbn_info(void* vp);                                           ///< Thread function to process data from the cluster or the RBN
 void* prune_bandmap(void* vp);                                              ///< Thread function to prune the bandmaps once per minute
@@ -323,6 +326,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_log_extract,                 ///< to show earlier QSOs
        win_fuzzy,                       ///< fuzzy lookups
        win_grid,                        ///< grid square
+       win_indices,                     ///< geomagnetic indices
        win_individual_messages,         ///< messages from the individual messages file
        win_individual_qtc_count,        ///< number of QTCs sent to an individual
        win_info,                        ///< summary of info about current station being worked
@@ -1057,6 +1061,24 @@ int main(int argc, char** argv)
 
 // GRID window
   win_grid.init(context.window_info("GRID"), WINDOW_NO_CURSOR);
+
+// INDICES window
+  win_indices.init(context.window_info("INDICES"), WINDOW_NO_CURSOR);
+
+// possibly get the indices data
+  if (!context.geomagnetic_indices_command().empty())
+  { static pthread_t get_indices_thread_id;
+
+    string cmd = context.geomagnetic_indices_command();
+
+    try
+    { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices");
+    }
+
+    catch (const pthread_error& e)
+    { ost << e.reason() << endl;
+    }
+  }
 
 // INDIVIDUAL MESSAGES window
   win_individual_messages.init(context.window_info("INDIVIDUAL MESSAGES"), WINDOW_NO_CURSOR);
@@ -1845,6 +1867,21 @@ void* display_date_and_time(void* vp)
           { ost << e.reason() << endl;
           }
         }
+#if 0
+        if (!context.geomagnetic_indices_command().empty())
+        { static pthread_t get_indices_thread_id;
+
+          string cmd = context.geomagnetic_indices_command();
+
+          try
+          { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices");
+          }
+
+          catch (const pthread_error& e)
+          { ost << e.reason() << endl;
+          }
+        }
+#endif
 
 // possibly clear alert window
         { SAFELOCK(alert);
@@ -1878,6 +1915,23 @@ void* display_date_and_time(void* vp)
           { ost << e.reason() << endl;
           }
         }
+
+// possibly run thread to get geomagnetic indices
+#if 1
+        if (!context.geomagnetic_indices_command().empty())
+        { static pthread_t get_indices_thread_id;
+
+          string cmd = context.geomagnetic_indices_command();  // can't cast const string* to void*
+
+          try
+          { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices");
+          }
+
+          catch (const pthread_error& e)
+          { ost << e.reason() << endl;
+          }
+        }
+#endif
       }
 
 // if a new day, then update date window
@@ -3618,27 +3672,19 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-KP+ -- increment octothorpe
   if (!processed and e.is_alt_and_not_ctrl() and e.symbol() == XK_KP_Add)
-  { processed = ( win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width()), true );
-//    processed = true;
-  }
+    processed = ( win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width()), true );
 
 // ALT-KP- -- decrement octothorpe
   if (!processed and e.is_alt_and_not_ctrl() and e.symbol() == XK_KP_Subtract)
-  { processed = ( win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width()), true );
-//    processed = true;
-  }
+    processed = ( win_serial_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width()), true );
 
 // CTRL-KP+ -- increment qso number
   if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Add)
-  { processed = ( win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(++next_qso_number), win_qso_number.width()), true );
-//    processed = true;
-  }
+    processed = ( win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(++next_qso_number), win_qso_number.width()), true );
 
 // CTRL-KP- -- decrement qso number
   if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Subtract)
-  { processed = ( win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(--next_qso_number), win_qso_number.width()), true );
-//    processed = true;
-  }
+    processed = ( win_qso_number < WINDOW_CLEAR < CURSOR_START_OF_LINE <= pad_string(to_string(--next_qso_number), win_qso_number.width()), true );
 
 // KP Del -- remove from bandmap and add to do-not-add list (like .REMOVE)
   if (!processed and e.symbol() == XK_KP_Delete)
@@ -3649,8 +3695,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                                         } );
 
     processed = ( win_bandmap <= (bandmaps[safe_get_band()]), true );
-
-//    processed = true;
   }
 
 // ` -- SWAP RIT and XIT
@@ -7727,3 +7771,41 @@ const bool process_backspace(window& win)
 
   return true;
 }
+
+// https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
+// note that the code there contains an extra right curly bracket
+const string run_external_command(const string& cmd)
+{
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+    if (!pipe) throw std::runtime_error("popen() failed!");
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
+        result += buffer.data();
+
+    return result;
+}
+
+void* get_indices(void* vp)    ///< Get SFI, A, K
+{
+  { start_of_thread("get indices");
+
+      try
+      { const string* cmd_p = (string*)vp;
+        const string& cmd = *cmd_p;
+
+        const string indices = run_external_command(cmd);
+
+        win_indices < WINDOW_CLEAR < CURSOR_TOP_LEFT <= indices;
+      }
+
+      catch (...)
+      { ost << "CAUGHT EXCEPTION IN GET_INDICES" << endl;
+      }
+    }  // ensure that all objects call destructors, whatever the implementation
+
+
+    end_of_thread("get indices");
+    pthread_exit(nullptr);
+}
+

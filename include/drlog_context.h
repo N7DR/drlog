@@ -156,6 +156,7 @@ protected:
   unsigned int                                 _fast_cq_bandwidth;          ///< fast CW bandwidth in CQ mode, in Hz
   unsigned int                                 _fast_sap_bandwidth;         ///< fast CW bandwidth in SAP mode, in Hz
 
+  std::string                                  _geomagnetic_indices_command;///< command to get geomagnetic indices
   std::map<MODE, unsigned int>                 _guard_band;                 ///< guard band, in Hz
 
   bool                                         _home_exchange_window;       ///< whether to move cursor to left of exchange window (and insert space if necessary)
@@ -406,6 +407,9 @@ public:
 
   CONTEXTREAD(fast_cq_bandwidth);                ///< fast CW bandwidth in CQ mode, in Hz
   CONTEXTREAD(fast_sap_bandwidth);               ///< fast CW bandwidth in SAP mode, in Hz
+
+  CONTEXTREAD(geomagnetic_indices_command);     ///< command to get geomagnetic indices
+
 
 /*! \brief      Get the guard band for a particular mode
     \param  m   target mode

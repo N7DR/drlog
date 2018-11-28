@@ -533,6 +533,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "FAST SAP BANDWIDTH")
       _fast_sap_bandwidth = from_string<decltype(_fast_sap_bandwidth)>(RHS);
 
+// GEOMAGNETIC INDICES COMMAND
+    if (LHS == "GEOMAGNETIC INDICES COMMAND")
+      _geomagnetic_indices_command = rhs;
+
 // HOME EXCHANGE WINDOW
     if (LHS == "HOME EXCHANGE WINDOW")
       _home_exchange_window = is_true;
@@ -1445,6 +1449,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _exchange_mults_per_mode(false),                                  // any exchange mults are once-only
   _fast_cq_bandwidth(400),                                          // fast CW bandwidth in CQ mode, in Hz
   _fast_sap_bandwidth(400),                                         // fast CW bandwidth in SAP mode, in Hz
+  _geomagnetic_indices_command(""),                                 // do not get geomagnetic indices
   _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),          // 500 Hz guard band on CW, 2 kHz on slopbucket
   _home_exchange_window(false),                                     // do not move cursor to left of window (and insert space if necessary)
   _individual_messages_file(),                                      // no file of individual QSL messages
