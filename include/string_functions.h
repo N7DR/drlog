@@ -1,4 +1,4 @@
-// $Id: string_functions.h 148 2018-05-05 20:29:09Z  $
+// $Id: string_functions.h 149 2019-01-03 19:24:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,8 +30,13 @@
 
 #include <time.h>
 
+#if 0
 static const std::string EOL      = "\n";       ///< end-of-line marker as string
 static const char        EOL_CHAR = '\n';       ///< end-of-line marker as character
+#endif
+
+extern const std::string EOL;
+extern const char        EOL_CHAR;
 
 static const std::string  LF       = "\n";      ///< LF as string
 static const std::string& LF_STR   = LF;        ///< LF as string
@@ -174,7 +179,9 @@ const std::string replace(const std::string& s, const std::string& old_str, cons
 template <typename T>
 const std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
 { std::string rv = s;
+
   const size_t value_size = sizeof(value);
+
   u_char* cp = (u_char*)&value;
 
   for (size_t n = 0; n < value_size; ++n)
@@ -580,7 +587,6 @@ inline const bool begins_with(const std::string& cs, const std::string& ss)
     \return     whether <i>cs</i> ends with <i>ss</i>
 */
 inline const bool ends_with(const std::string& cs, const std::string& ss)
-//  { return ( cs.rfind(ss) == (cs.length() - ss.length()) ); }
   { return ( (cs.length() < ss.length()) ? false : ( cs.rfind(ss) == (cs.length() - ss.length()) ) ); }
 
 /*! \brief              Is a call a maritime mobile?

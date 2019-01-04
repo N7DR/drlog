@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 148 2018-05-05 20:29:09Z  $
+// $Id: bandmap.cpp 149 2019-01-03 19:24:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -332,8 +332,8 @@ const MODE bandmap_entry::putative_mode(void) const
   }
 }
 
-/*! \brief          Does this call match the N7DR custom criteria?
-    \return         whether the call matches the N7DR custom criteria
+/*! \brief      Does this call match the N7DR custom criteria?
+    \return     whether the call matches the N7DR custom criteria
 
     Matches criteria:
       0. is a needed QSO AND does not have an associated batch message; AND one of:
@@ -447,10 +447,6 @@ void bandmap::_insert(const bandmap_entry& be)
   for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
   { if (it->freq().hz() > be.freq().hz())
       inserted = ( _entries.insert(it, be), true );
-//    { _entries.insert(it, be);                  // inserts before
-//
-//       inserted = true;
-//    }
   }
 
   if (!inserted)
@@ -589,6 +585,7 @@ void bandmap::operator+=(bandmap_entry& be)
 
   if (add_it)
   { const bool mark_as_recent = _mark_as_recent(be);  // keep track of whether we're going to mark this as a recent call
+
     bandmap_entry old_be;
 
     SAFELOCK(_bandmap);
@@ -855,6 +852,7 @@ const BM_ENTRIES bandmap::filtered_entries(void)
   SAFELOCK(_bandmap);
 
   const BM_ENTRIES tmp = entries();
+
   BM_ENTRIES rv;
 
   for (const auto& be : tmp)
@@ -863,7 +861,9 @@ const BM_ENTRIES bandmap::filtered_entries(void)
     else                                              // start by assuming that we are in show mode
     { const string& canonical_prefix = be.canonical_prefix();
       const string& continent = be.continent();
+
       bool display_this_entry = false;
+
       const vector<string>& fil_continent = _filter_p->continents();
 
       for (size_t n = 0; n < fil_continent.size() and !display_this_entry; ++n)

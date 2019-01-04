@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 148 2018-05-05 20:29:09Z  $
+// $Id: drlog.cpp 149 2019-01-03 19:24:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -138,6 +138,8 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); 
 const bool swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
 
 void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
+const int time_since_last_qso(const logbook& logbk);
+const int time_since_last_qsy(void);
 const bool toggle_drlog_mode(void);                       ///< Toggle between CQ mode and SAP mode
 const bool toggle_cw(void);                         ///< Toggle CW on/off
 const bool toggle_recording_status(audio_recorder& audio);        ///< toggle status of audio recording
@@ -213,6 +215,9 @@ map<string, string> individual_messages;        ///< individual messages associa
 
 pt_mutex  last_exchange_mutex;              ///< mutex for getting and setting the last sent exchange
 string    last_exchange;                    ///< the last sent exchange
+
+pt_mutex  my_bandmap_entry_mutex;          ///< mutex for changing frequency or bandmap info
+time_t    time_last_qsy = time_t(NULL);    ///< time of last QSY
 
 pt_mutex            thread_check_mutex;                     ///< mutex for controlling threads; both the following variables are under this mutex
 int                 n_running_threads = 0;                  ///< how many additional threads are running?
@@ -672,8 +677,10 @@ int main(int argc, char** argv)
     home_exchange_window = context.home_exchange_window();
 
 // possibly configure audio recording
-    if (context.allow_audio_recording() and context.start_audio_recording())
-      start_recording(context);
+    if (context.allow_audio_recording() and (context.start_audio_recording() != AUDIO_RECORDING::DO_NOT_START))
+    { start_recording(context);
+      alert("audio recording started due to activity");
+    }
 
 // set up the calls to be monitored
     mp.callsigns(context.post_monitor_calls());
@@ -1891,6 +1898,16 @@ void* display_date_and_time(void* vp)
             alert_time = 0;
           }
         }
+
+// possibly turn off audio recording
+        if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and audio.recording())
+        { if ( (time_since_last_qso(logbk) > 1800) and (time_since_last_qsy() > 1800) )
+          { audio.abort();
+            alert("audio recording halted due to inactivity");
+            update_recording_status_window();
+          }
+        }
+
       }
 
 // if a new hour, then possibly create screenshot
@@ -4583,7 +4600,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         processed = true;
       }
     }
-  }        // end ENTER
+
+// possibly start audio recording; perhaps this should go elsewhere?
+    if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
+    { start_recording(context);
+      alert("audio recording started due to activity");
+    }
+  }        // end ENTER [log_the_qso]
 
 // SHIFT -- RIT control
 // RIT changes via hamlib, at least on the K3, are *very* slow
@@ -7593,7 +7616,7 @@ void end_of_thread(const string& name)
 
 /// update some windows based on a change in frequency
 void update_based_on_frequency_change(const frequency& f, const MODE m)
-{ static pt_mutex            my_bandmap_entry_mutex;                 ///< mutex for my_bandmap_entry
+{ //static pt_mutex            my_bandmap_entry_mutex;                 ///< mutex for my_bandmap_entry
 
 // the following ensures that the bandmap entry doesn't change while we're using it.
 // It does not, however, ensure that this routine doesn't execute simultaneously from two
@@ -7605,7 +7628,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   const bool in_call_window = (win_active_p == &win_call);  // never update call window if we aren't in it
 
   if (changed_frequency)
-  { my_bandmap_entry.freq(f);   // also updates the band
+  { time_last_qsy = time(NULL); // record the time for possible change in state of audio recording
+    my_bandmap_entry.freq(f);   // also updates the band
     display_band_mode(win_band_mode, my_bandmap_entry.band(), my_bandmap_entry.mode());
 
     bandmap& bm = bandmaps[my_bandmap_entry.band()];
@@ -7647,6 +7671,12 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
           }
         }
       }
+    }
+
+// possibly start audio recording
+    if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
+    { start_recording(context);
+      alert("audio recording started due to activity");
     }
   }                 // end of changed frequency
 
@@ -7713,6 +7743,8 @@ void possible_mode_change(const frequency& f)
 /*! \brief          Toggle the state of audio recording
     \param  audio   the audio recorder
     \return         <i>true</i>
+
+    Does nothing if recording is not permitted.
 */
 const bool toggle_recording_status(audio_recorder& audio)
 { if (context.allow_audio_recording())      // toggle only if recording is allowed
@@ -7775,15 +7807,21 @@ const bool process_backspace(window& win)
 // https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
 // note that the code there contains an extra right curly bracket
 const string run_external_command(const string& cmd)
-{
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-    if (!pipe) throw std::runtime_error("popen() failed!");
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-        result += buffer.data();
+{ array<char, 128> buffer;
+  string result;
+  unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
-    return result;
+  if (!pipe)
+  { alert("WARNING: Error executing command: " + cmd);
+
+    return string();
+    // throw runtime_error("popen() failed!");
+  }
+
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
+    result += buffer.data();
+
+  return result;
 }
 
 void* get_indices(void* vp)    ///< Get SFI, A, K
@@ -7809,3 +7847,18 @@ void* get_indices(void* vp)    ///< Get SFI, A, K
     pthread_exit(nullptr);
 }
 
+// return zero if no QSOs
+const int time_since_last_qso(const logbook& logbk)
+{ const QSO last_qso = logbk.last_qso();
+
+  if (last_qso.empty())
+    return 0;
+
+  const time_t now = time(NULL);              ///< get the time from the kernel
+
+  return (now - last_qso.epoch_time());
+}
+
+const int time_since_last_qsy(void)
+{ return (time(NULL) - time_last_qsy);
+}

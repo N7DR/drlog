@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 148 2018-05-05 20:29:09Z  $
+// $Id: drlog_context.h 149 2019-01-03 19:24:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,11 +24,11 @@
 #include <set>
 #include <string>
 
-// -----------  drlog_context  ----------------
-
-/*! \class  drlog_context
-    \brief  The variables and constants that comprise the context for operation
-*/
+/// start-up control of audio recording
+enum class AUDIO_RECORDING { AUTO,              ///< auto control
+                             DO_NOT_START,      ///< do not start at start-up
+                             START              ///< start at start-up
+                           };
 
 /// lists of country multipliers
 enum country_multiplier_type { COUNTRY_MULT_NONE,       ///< no country multipliers
@@ -43,6 +43,10 @@ extern pt_mutex _context_mutex;             ///< mutex for the drlog context
   inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }
 
 // -----------  drlog_context  ----------------
+
+/*! \class  drlog_context
+    \brief  The variables and constants that comprise the context for operation
+*/
 
 class drlog_context
 {
@@ -248,7 +252,7 @@ protected:
   unsigned int                                 _shift_poll;                     ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   bool                                         _short_serno;                    ///< whether to omit leading Ts
   std::string                                  _society_list_filename;          ///< name of file containing IARU society exchanges
-  bool                                         _start_audio_recording;          ///< whether to start recording of audio (if _allow_audio_recording is true)
+  enum AUDIO_RECORDING                         _start_audio_recording;          ///< whether and how to start recording of audio (if _allow_audio_recording is true)
   enum BAND                                    _start_band;                     ///< on what band do we start?
   enum MODE                                    _start_mode;                     ///< on which mode do we start?
   std::map<std::string /* name */,

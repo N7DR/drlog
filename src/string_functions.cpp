@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 147 2018-04-20 21:32:50Z  $
+// $Id: string_functions.cpp 149 2019-01-03 19:24:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,6 +30,9 @@
 using namespace std;
 
 extern ofstream ost;                   ///< for debugging, info
+
+const string EOL      = "\n";       ///< end-of-line marker as string
+const char   EOL_CHAR = '\n';       ///< end-of-line marker as character
 
 /*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line

@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 148 2018-05-05 20:29:09Z  $
+// $Id: drlog_context.cpp 149 2019-01-03 19:24:01Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -886,7 +886,15 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // START AUDIO RECORDING
     if (LHS == "START AUDIO RECORDING")
-      _start_audio_recording = is_true;
+    { if (rhs == "auto")
+        _start_audio_recording = AUDIO_RECORDING::AUTO;
+
+      if (rhs == "false")
+        _start_audio_recording = AUDIO_RECORDING::DO_NOT_START;
+
+      if (rhs == "true")
+        _start_audio_recording = AUDIO_RECORDING::START;
+    }
 
 // START BAND
     if (LHS == "START BAND")
@@ -1512,7 +1520,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _shift_poll(50),                                                  // poll every 50 milliseconds
   _short_serno(false),                                              // send leading Ts
   _society_list_filename(""),                                       // no default file for IARU society information
-  _start_audio_recording(false),                                    // do not start audio recording
+  _start_audio_recording(AUDIO_RECORDING::DO_NOT_START),            // do not start audio recording
   _start_band(BAND_20),                                             // start on 20m
   _start_mode(MODE_CW),                                             // start on CW
   _sync_keyer(false),                                               // do not synchronise rig keyer with computer
