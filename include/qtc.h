@@ -27,11 +27,13 @@
 #include <string>
 #include <vector>
 
-// error numbers
-const int QTC_INVALID_FORMAT            = -1;   ///< error reading from file
+using namespace std::literals::string_literals;
 
-const bool QTC_SENT = true,                     ///< QTC has been sent
-           QTC_UNSENT = false;                  ///< QTC has not been sent
+// error numbers
+constexpr int QTC_INVALID_FORMAT            { -1 };   ///< error reading from file
+
+constexpr bool QTC_SENT   { true };                     ///< QTC has been sent
+constexpr bool QTC_UNSENT { false };                  ///< QTC has not been sent
 
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
 //
@@ -57,7 +59,11 @@ protected:
 public:
 
 /// default constructor
-  qtc_entry(void);
+  inline qtc_entry(void) :
+    _utc("0000"s),
+    _callsign(),
+    _serno("0000"s)
+  { }
 
 /// construct from a QSO
   explicit qtc_entry(const QSO& qso);

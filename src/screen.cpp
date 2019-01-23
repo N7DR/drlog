@@ -186,7 +186,7 @@ void window::init(const window_information& wi, const unsigned int flags)
   _bg = string_to_colour(wi.bg_colour());
   _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
 
-  (*this) <= WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
+  (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
 /*! \brief          Initialise using position and size information from the configuration file, and possibly set colours explicitly
@@ -212,7 +212,7 @@ void window::init(const window_information& wi, int fg, int bg, const unsigned i
 
   _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
 
-  (*this) <= WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
+  (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
 
 /*! \brief          Move the logical cursor
@@ -458,114 +458,114 @@ window& window::default_colours(const int foreground_colour, const int backgroun
     \return     the window
 */
 window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
-{ if (!_wp or (wa == WINDOW_NOP) )
+{ if (!_wp or (wa == WINDOW_ATTRIBUTES::WINDOW_NOP) )
     return *this;
     
   switch (wa)
-  { case WINDOW_NORMAL :
+  { case WINDOW_ATTRIBUTES::WINDOW_NORMAL :
       { SAFELOCK(screen);
         wstandend(_wp);
       }
       break;
 
-    case WINDOW_BOLD :
+    case WINDOW_ATTRIBUTES::WINDOW_BOLD :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_BOLD, NULL);
       }
       break;
 
-    case WINDOW_HIGHLIGHT :
+    case WINDOW_ATTRIBUTES::WINDOW_HIGHLIGHT :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_STANDOUT, NULL);
       }
       break;
 
-    case WINDOW_DIM :
+    case WINDOW_ATTRIBUTES::WINDOW_DIM :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_DIM, NULL);
       }
       break;
-    case WINDOW_REVERSE :
+    case WINDOW_ATTRIBUTES::WINDOW_REVERSE :
       { SAFELOCK(screen);
         wattr_on(_wp, WA_REVERSE, NULL);
       }
       break;
 
-    case WINDOW_REFRESH :
-    case WINDOW_UPDATE :
+    case WINDOW_ATTRIBUTES::WINDOW_REFRESH :
+    case WINDOW_ATTRIBUTES::WINDOW_UPDATE :
       { SAFELOCK(screen);
         refresh();
       }
       break;
 
-    case CURSOR_TOP_LEFT :
-    case WINDOW_TOP_LEFT :    
+    case WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT :
+    case WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT :
       move_cursor(0, height() - 1);
       break;
 
-    case CURSOR_TOP_RIGHT :
-    case WINDOW_TOP_RIGHT :
+    case WINDOW_ATTRIBUTES::CURSOR_TOP_RIGHT :
+    case WINDOW_ATTRIBUTES::WINDOW_TOP_RIGHT :
       move_cursor(width() - 1, height() - 1);
       break;
 
-    case CURSOR_BOTTOM_LEFT :
-    case WINDOW_BOTTOM_LEFT :
+    case WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT :
+    case WINDOW_ATTRIBUTES::WINDOW_BOTTOM_LEFT :
       move_cursor(0, 0);
       break;
 
-    case CURSOR_BOTTOM_RIGHT :
-    case WINDOW_BOTTOM_RIGHT :
+    case WINDOW_ATTRIBUTES::CURSOR_BOTTOM_RIGHT :
+    case WINDOW_ATTRIBUTES::WINDOW_BOTTOM_RIGHT :
       move_cursor(width() - 1, 0);
       break;
 
-    case WINDOW_CLEAR :
+    case WINDOW_ATTRIBUTES::WINDOW_CLEAR :
       clear();
       break;
 
-    case WINDOW_CLEAR_TO_EOL :
+    case WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL :
       { SAFELOCK(screen);
         wclrtoeol(_wp);
       }
       break;
 
-    case WINDOW_CLEAR_TO_END :
+    case WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_END :
       { SAFELOCK(screen);
         wclrtobot(_wp);
       }
       break;  
 
-    case CURSOR_START_OF_LINE :
+    case WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE :
       move_cursor(0, cursor_position().y());
       break;
 
-    case CURSOR_UP :
+    case WINDOW_ATTRIBUTES::CURSOR_UP :
       move_cursor_relative(0, 1);
       break;
 
-    case CURSOR_DOWN :
+    case WINDOW_ATTRIBUTES::CURSOR_DOWN :
       move_cursor_relative(0, -1);
       break;  
 
-    case WINDOW_SCROLL_UP :
+    case WINDOW_ATTRIBUTES::WINDOW_SCROLL_UP :
       scrollit(1);
       break; 
 
-    case WINDOW_SCROLL_DOWN :
+    case WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN :
       scrollit(-1);
       break;
 
-    case CURSOR_HIDE :
+    case WINDOW_ATTRIBUTES::CURSOR_HIDE :
       _hidden_cursor = true;
       break;
 
-    case CURSOR_END_OF_LINE :
+    case WINDOW_ATTRIBUTES::CURSOR_END_OF_LINE :
     { const size_t posn = read().find_last_not_of(" ");
 
       move_cursor(posn + 1, cursor_position().y());
       break;
     }
 
-    case WINDOW_NOP :       // logically unnecessary, but needed to keep the compiler happy
+    case WINDOW_ATTRIBUTES::WINDOW_NOP :       // logically unnecessary, but needed to keep the compiler happy
       break;
   }
   return *this;
@@ -719,7 +719,7 @@ window& window::clear_line(const int line_nr)
     const cursor c = cursor_position();
 
     move_cursor(0, line_nr);
-    (*this) <= WINDOW_CLEAR_TO_EOL;
+    (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL;
     move_cursor(c.x(), c.y());          // restore the logical cursor position
   }
 
@@ -778,7 +778,7 @@ window& window::delete_character(const int n, const int line_nr)
     const bool insert_enabled = _insert;
 
     _insert = false;
-    (*this) < WINDOW_CLEAR_TO_EOL < new_line;
+    (*this) < WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL < new_line;
     _insert = insert_enabled;         // restore old insert mode
   }
 
@@ -855,7 +855,7 @@ const bool window::common_processing(const keyboard_event& e)
 
 // HOME
   if (e.is_unmodified() and e.symbol() == XK_Home)
-  { win <= CURSOR_START_OF_LINE;
+  { win <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
     return true;
   }
 

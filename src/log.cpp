@@ -39,7 +39,7 @@ extern string VERSION;          ///< version string
     \param  q2  second QSO
     \return     whether <i>q1</i> is earlier than <i>q2</i>
 */
-const bool qso_sort_by_time(const QSO& q1, const QSO& q2)
+inline const bool qso_sort_by_time(const QSO& q1, const QSO& q2)
   { return q1.earlier_than(q2); }
 
 /*! \brief      Add a QSO to the logbook
@@ -730,7 +730,7 @@ void log_extract::display(void)
   }
 
   if (vec.size() < _win_size)
-    _win < WINDOW_CLEAR;
+    _win < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
   if (!vec.empty())
   { const size_t n_to_display = min(vec.size(), _win_size);
@@ -742,7 +742,7 @@ void log_extract::display(void)
     }
   }
 
-  _win < WINDOW_REFRESH;
+  _win < WINDOW_ATTRIBUTES::WINDOW_REFRESH;
 }
 
 /*! \brief              Get recent QSOs from a log, and possibly display them

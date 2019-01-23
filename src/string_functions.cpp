@@ -16,9 +16,6 @@
 #include "macros.h"
 #include "string_functions.h"
 
-//#include <fstream>
-//#include <iostream>
-
 #include <cctype>
 #include <cstdio>
 
@@ -31,8 +28,12 @@ using namespace std;
 
 extern ofstream ost;                   ///< for debugging, info
 
-const string EOL      = "\n";       ///< end-of-line marker as string
-const char   EOL_CHAR = '\n';       ///< end-of-line marker as character
+const string     EOL      { "\n" };       ///< end-of-line marker as string
+constexpr char   EOL_CHAR { '\n' };       ///< end-of-line marker as character
+
+const string  LF       { "\n" };      ///< LF as string
+const string& LF_STR   { LF };        ///< LF as string
+constexpr char    LF_CHAR  { '\n' };      ///< LF as character
 
 /*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
@@ -40,18 +41,18 @@ const char   EOL_CHAR = '\n';       ///< end-of-line marker as character
 
     This is actually quite difficult to do properly
 */
-const vector<string> from_csv(const string& line)
-{ static const char quote = '"';
-  static const char comma = ',';
+const vector<string> from_csv(experimental::string_view line)
+{ constexpr char quote { '"' };
+  constexpr char comma { ',' };
 
   vector<string> rv;
-  size_t posn = 0;
+  size_t posn { 0 };
 
   string this_value;
-  bool inside_value = false;;
+  bool inside_value { false };
 
   while (posn < line.size())
-  { const char& this_char = line[posn];
+  { const char this_char { line[posn] };
 
     if (this_char == quote)
     { if (inside_value)               // we're inside a field
@@ -114,8 +115,26 @@ const vector<string> from_csv(const string& line)
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-const string duplicate_char(const string& s, const char c)
-{ string rv;
+const string duplicate_char(experimental::string_view s, const char c)
+{
+// should try .find() followed by += repeatedly
+
+#if 0
+  const string dupe_str { create_string(c, 2) };
+
+  string rv;
+
+  for (size_t n = 0; n < s.length(); ++n)
+  { if (s[n] == c)
+      rv += c;
+    else
+      rv += dupe_str;
+  }
+#endif
+
+//  FOR_ALL(s, [=, &rv] (const char cc) { rv += ( (cc == c) ? dupe_str : cc ); } );
+
+  string rv;
 
   for (size_t n = 0; n < s.length(); ++n)
   { if (s[n] == c)
@@ -191,7 +210,8 @@ const string date_time_string(const bool include_seconds)
     Uses strftime() to perform the formatting
 */
 const string format_time(const string& format, const tm* tmp)
-{ static const unsigned int BUFLEN = 60;
+{ //static const unsigned int BUFLEN = 60;
+  constexpr size_t BUFLEN { 60 };
 
   char buf[BUFLEN];
 
@@ -225,7 +245,8 @@ const string replace_char(const string& s, char old_char, char new_char)
 */
 const string replace(const string& s, const string& old_str, const string& new_str)
 { string rv;
-  size_t posn = 0, last_posn = 0;
+  size_t posn { 0 };
+  size_t last_posn { 0 };
 
   while ((posn = s.find(old_str, last_posn)) != string::npos)
   { rv += s.substr(last_posn, posn - last_posn) + new_str;

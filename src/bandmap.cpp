@@ -44,8 +44,8 @@ extern const set<string> CONTINENT_SET;                 ///< two-letter abbrevia
 */
 extern const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);
 
-const unsigned int  MAX_CALLSIGN_WIDTH = 11;        ///< maximum width of a callsign in the bandmap window
-const unsigned int  MAX_FREQUENCY_SKEW = 250;       ///< maximum separation, in hertz, to be treated as same frequency
+constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
+constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separation, in hertz, to be treated as same frequency
 const string        MODE_MARKER("********");        ///< string to mark the mode break in the bandmap
 const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
 
@@ -1106,7 +1106,7 @@ window& operator<(window& win, bandmap& bm)
   const BM_ENTRIES entries = bm.rbn_threshold_and_filtered_entries();    // automatically filter
   const size_t start_entry = (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0;
 
-  win < WINDOW_CLEAR < (bandmap_frequency_up ? CURSOR_BOTTOM_LEFT : CURSOR_TOP_LEFT);
+  win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
 
   size_t index = 0;    // keep track of where we are in the bandmap
 
@@ -1171,12 +1171,12 @@ window& operator<(window& win, bandmap& bm)
       win < cursor(x, y) < colour_pair(cpu);
 
       if (reverse)
-        win < WINDOW_REVERSE;
+        win < WINDOW_ATTRIBUTES::WINDOW_REVERSE;
 
       win < frequency_str;
 
       if (reverse)
-        win < WINDOW_NORMAL;
+        win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
 
       win < colour_pair(status_colour) < " "
           < colour_pair(cpu) < callsign_str;

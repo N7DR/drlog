@@ -541,6 +541,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "HOME EXCHANGE WINDOW")
       _home_exchange_window = is_true;
 
+// INACTIVTY TIMER
+    if (LHS == "INACTIVITY TIMER")
+      _inactivity_timer = from_string<int>(rhs);
+
 // INDIVIDUAL MESSAGES FILE
     if (LHS == "INDIVIDUAL MESSAGES FILE")
       _individual_messages_file = rhs;
@@ -1460,6 +1464,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _geomagnetic_indices_command(""),                                 // do not get geomagnetic indices
   _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),          // 500 Hz guard band on CW, 2 kHz on slopbucket
   _home_exchange_window(false),                                     // do not move cursor to left of window (and insert space if necessary)
+  _inactivity_timer(0),                                             // no inactivity timer
   _individual_messages_file(),                                      // no file of individual QSL messages
   _logfile("drlog.dat"),                                            // name of log file
   _long_t(false),                                                   // do not extend initial Ts in serial numbers

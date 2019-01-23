@@ -30,8 +30,6 @@ extern unsigned int QSO_MULT_WIDTH;             ///< width of mult fields on log
 // forward declarations
 class running_statistics;
 
-//const std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);   ///< Obtain the next name and value from a drlog-format line
-
 // fundamental types are initialized with zero Josuttis, 2nd ed. p. 69
 // (We need the is_possible mult field so that things align correctly on the log line)
 WRAPPER_4_SERIALIZE(received_field, std::string, name, std::string, value, bool, is_possible_mult, bool, is_mult);  ///< class to encapsulate received fields
@@ -90,8 +88,7 @@ public:
   QSO(void);
 
 /// destructor
-  virtual ~QSO(void)
-    { }
+  inline ~QSO(void) = default;
 
   READ_AND_WRITE(band);                 ///< band
   READ_AND_WRITE(callsign);             ///< call

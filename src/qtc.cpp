@@ -25,11 +25,11 @@ using namespace std;
 */
 
 /// default constructor
-qtc_entry::qtc_entry(void) :
-  _utc("0000"),
-  _callsign(),
-  _serno("0000")
-{ }
+//qtc_entry::qtc_entry(void) :
+//  _utc("0000"),
+//  _callsign(),
+//  _serno("0000")
+//{ }
 
 /// construct from a QSO
 qtc_entry::qtc_entry(const QSO& qso) :
@@ -267,7 +267,7 @@ window& operator<(window& win, const qtc_series& qs)
   static const unsigned int COLUMN_GAP = 2;                                              // gap between columns
   static const int GAP_COLOUR = COLOUR_YELLOW;
 
-  win < WINDOW_CLEAR < CURSOR_TOP_LEFT;
+  win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT;
 
 // write the column separators
   for (int y = 0; y < win.height(); ++y)
@@ -285,7 +285,6 @@ window& operator<(window& win, const qtc_series& qs)
     const unsigned int y = (win.height() - 1) - (index % win.height());
 
     win < cursor(x, y) < colour_pair(cpu) < entry_str;
-//    win < entry_str;
 
     index++;
   }

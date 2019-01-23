@@ -39,37 +39,37 @@ class cpair;                                ///< forward declaration for a pair 
 extern cpair colours;                       ///< singleton used to hold  a pair of colours
 
 /// attributes and pre-defined cursor movement
-enum WINDOW_ATTRIBUTES { WINDOW_NORMAL,
-                         WINDOW_BOLD,
-                         WINDOW_HIGHLIGHT,
-                         WINDOW_DIM,
-                         WINDOW_REVERSE,
-                         WINDOW_REFRESH,
-                         WINDOW_UPDATE,
-                         WINDOW_TOP_LEFT,
-                         CURSOR_TOP_LEFT,
-                         WINDOW_TOP_RIGHT,
-                         CURSOR_TOP_RIGHT,
-                         WINDOW_BOTTOM_LEFT,
-                         CURSOR_BOTTOM_LEFT,
-                         WINDOW_BOTTOM_RIGHT,
-                         CURSOR_BOTTOM_RIGHT,
-                         WINDOW_CLEAR,
-                         WINDOW_CLEAR_TO_EOL,
-                         WINDOW_CLEAR_TO_END,
-                         CURSOR_START_OF_LINE,
-                         CURSOR_UP,
-                         CURSOR_DOWN,
-                         WINDOW_SCROLL_UP,
-                         WINDOW_SCROLL_DOWN,
-                         CURSOR_HIDE,
-                         CURSOR_END_OF_LINE,
-                         WINDOW_NOP
-                       };
+enum class WINDOW_ATTRIBUTES { WINDOW_NORMAL,
+                               WINDOW_BOLD,
+                               WINDOW_HIGHLIGHT,
+                               WINDOW_DIM,
+                               WINDOW_REVERSE,
+                               WINDOW_REFRESH,
+                               WINDOW_UPDATE,
+                               WINDOW_TOP_LEFT,
+                               CURSOR_TOP_LEFT,
+                               WINDOW_TOP_RIGHT,
+                               CURSOR_TOP_RIGHT,
+                               WINDOW_BOTTOM_LEFT,
+                               CURSOR_BOTTOM_LEFT,
+                               WINDOW_BOTTOM_RIGHT,
+                               CURSOR_BOTTOM_RIGHT,
+                               WINDOW_CLEAR,
+                               WINDOW_CLEAR_TO_EOL,
+                               WINDOW_CLEAR_TO_END,
+                               CURSOR_START_OF_LINE,
+                               CURSOR_UP,
+                               CURSOR_DOWN,
+                               WINDOW_SCROLL_UP,
+                               WINDOW_SCROLL_DOWN,
+                               CURSOR_HIDE,
+                               CURSOR_END_OF_LINE,
+                               WINDOW_NOP
+                             };
 
 // window creation flags
-const unsigned int WINDOW_NO_CURSOR = 1,        ///< do not display the cursor
-                   WINDOW_INSERT    = 2;        ///< INSERT mode
+constexpr unsigned int WINDOW_NO_CURSOR { 1 };        ///< do not display the cursor
+constexpr unsigned int WINDOW_INSERT    { 2 };        ///< INSERT mode
                     
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
 const int COLOUR_BLACK   = COLOR_BLACK,         ///< black
@@ -210,7 +210,8 @@ public:
 class window;
 
 /// define the type used for functions that process events
-typedef void (* WINDOW_PROCESS_INPUT_TYPE) (window*, const keyboard_event&);
+//typedef void (* WINDOW_PROCESS_INPUT_TYPE) (window*, const keyboard_event&);
+using WINDOW_PROCESS_INPUT_TYPE = void (*) (window*, const keyboard_event&);
 
 class window
 {
@@ -256,9 +257,6 @@ protected:
 */
   void _init(const window_information& wi, const unsigned int flags);
 
-/// forbid copying
-  window(const window&);  
-
 public:
 
 /*! \brief          Default constructor
@@ -290,6 +288,9 @@ public:
     The window is ready for use after this constructor.
 */
   window(const window_information& wi, const unsigned int flags = 0);
+
+/// forbid copying
+  window(const window&) = delete;
 
 /// destructor
   virtual ~window(void);
@@ -611,7 +612,7 @@ public:
 
 /// process a keyboard event
   inline void process_input(const keyboard_event& e)
-    { if (_process_input)
+    { if (_process_input != nullptr)
         _process_input(this, e);
     }
 
@@ -621,31 +622,19 @@ public:
 
 /// toggle the hide/show status of the cursor
   inline window& toggle_hidden(void)
-    { //_hidden_cursor = !_hidden_cursor;
-      //return *this;
-      return (_hidden_cursor = !_hidden_cursor, *this);
-    }
+    { return (_hidden_cursor = !_hidden_cursor, *this); }
 
 /// hide the cursor
   inline window& hide_cursor(void)
-    { //_hidden_cursor = true;
-      //return *this;
-      return (_hidden_cursor = true, *this);
-    }
+    { return (_hidden_cursor = true, *this); }
 
 /// show the cursor
   inline window& show_cursor(void)
-    { //_hidden_cursor = false;
-      //return *this;
-      return (_hidden_cursor = false, *this);
-    }
+    { return (_hidden_cursor = false, *this); }
 
 /// toggle the insert mode
   inline window& toggle_insert(void)
-    { //_insert = !_insert;
-      //return *this;
-      return (_insert = !_insert, *this);
-    }
+    { return (_insert = !_insert, *this); }
 
 // http://stackoverflow.com/questions/1154212/how-could-i-print-the-contents-of-any-container-in-a-generic-way 
 /* I do not understand why this template is not used in:   win_remaining_mults < (context.remaining_country_mults_list());

@@ -31,10 +31,10 @@ enum class AUDIO_RECORDING { AUTO,              ///< auto control
                            };
 
 /// lists of country multipliers
-enum country_multiplier_type { COUNTRY_MULT_NONE,       ///< no country multipliers
-                               COUNTRY_MULT_DXCC,       ///< use DXCC list
-                               COUNTRY_MULT_WAEDC       ///< use DARC WAEDC list
-                             };
+//enum class COUNTRY_MULTIPLIER { DXCC,       ///< use DXCC list
+//                                NONE,       ///< no country multipliers
+//                                WAEDC       ///< use DARC WAEDC list
+//                              };
 
 extern pt_mutex _context_mutex;             ///< mutex for the drlog context
 
@@ -165,6 +165,7 @@ protected:
 
   bool                                         _home_exchange_window;       ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
+  int                                          _inactivity_timer;           ///< duration in seconds before audio recording ceases in auto mode
   std::string                                  _individual_messages_file;   ///< name of file that contains per-call individual messages
 
   std::string                                  _keyer_port;                 ///< the device that is to be used as a keyer
@@ -284,8 +285,7 @@ protected:
 public:
 
 /// default constructor
-  drlog_context(void)
-    { }
+  inline drlog_context(void) = default;
 
 /// construct from file
   drlog_context( const std::string& filename );
@@ -429,6 +429,7 @@ public:
 
   CONTEXTREAD(home_exchange_window);         ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
+  CONTEXTREAD(inactivity_timer);             ///< duration in seconds before audio recording ceases in auto mode
   CONTEXTREAD(individual_messages_file);     ///< name of file that contains per-call individual messages
 
   CONTEXTREAD(keyer_port);                   ///< the device that is to be used as a keyer
@@ -631,5 +632,3 @@ public:
 };
 
 #endif    // DRLOG_CONTEXT_H
-
-

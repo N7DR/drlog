@@ -26,21 +26,31 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <experimental/string_view>
 #include <vector>
 
 #include <time.h>
+
+using namespace std::literals::string_literals;
+using namespace std::experimental::literals::string_view_literals;
 
 #if 0
 static const std::string EOL      = "\n";       ///< end-of-line marker as string
 static const char        EOL_CHAR = '\n';       ///< end-of-line marker as character
 #endif
 
-extern const std::string EOL;
-extern const char        EOL_CHAR;
+extern const std::string EOL;           ///< end-of-line marker as string
+extern const char        EOL_CHAR;      ///< end-of-line marker as character
 
+extern const std::string  LF;           ///< LF as string
+extern const std::string& LF_STR;       ///< LF as string
+extern const char         LF_CHAR;      ///< LF as character
+
+#if 0
 static const std::string  LF       = "\n";      ///< LF as string
 static const std::string& LF_STR   = LF;        ///< LF as string
 static const char         LF_CHAR  = '\n';      ///< LF as character
+#endif
 
 static const std::string  CR       = "\r";       ///< CR as string
 static const std::string& CR_STR   = CR;         ///< CR as string
@@ -57,7 +67,7 @@ static const std::string DIGITS { "0123456789" };                               
 static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" };  ///< convenient place to hold all digits and upper case letters
 static const std::string UPPER_CASE_LETTERS { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };                       ///< convenient place to hold all upper case letters
 
-const bool INCLUDE_SECONDS = true;             ///< whether to include seconds in date_time_string()
+constexpr bool INCLUDE_SECONDS = true;             ///< whether to include seconds in date_time_string()
   
 /// directions in which a string can be padded
 enum pad_direction { PAD_LEFT,                  ///< pad to the left
@@ -82,14 +92,14 @@ const int STRING_UNDERFLOW            = -1,    ///< Underflow
 
     This is actually quite difficult to do properly
 */
-const std::vector<std::string> from_csv(const std::string& line);
+const std::vector<std::string> from_csv(std::experimental::string_view line);
 
 /*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-const std::string duplicate_char(const std::string& s, const char c = '"');
+const std::string duplicate_char(std::experimental::string_view s, const char c = '"');
 
 /*! \brief                      Provide a formatted date/time string
     \param  include_seconds     whether to include the portion of the string that designates seconds
