@@ -453,7 +453,7 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 const bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 { SAFELOCK(statistics);
 
-ost << "in running_statistics::add_known_country_mult() for " << str << " boolean = " << (rules.country_mults() < str) << endl;
+//ost << "in running_statistics::add_known_country_mult() for " << str << " boolean = " << (rules.country_mults() < str) << endl;
 
   return ( (rules.country_mults() < str) ? _country_multipliers.add_known(str) : false );
 }

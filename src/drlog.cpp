@@ -134,6 +134,7 @@ const bool rit_control(const keyboard_event& e);          ///< Control RIT using
 const bool send_to_scratchpad(const string& str);                               ///< Send a string to the SCRATCHPAD window
 void start_recording(const drlog_context& context);                             ///< start audio recording
 void start_of_thread(const string& name);                                                     ///< Increase the counter for the number of running threads
+void stop_recording(audio_recorder& audio);                                     ///< stop audio recording
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
 const bool swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
 
@@ -144,7 +145,7 @@ const bool toggle_drlog_mode(void);                       ///< Toggle between CQ
 const bool toggle_cw(void);                         ///< Toggle CW on/off
 const bool toggle_recording_status(audio_recorder& audio);        ///< toggle status of audio recording
 
-void update_based_on_frequency_change(const frequency& f, const MODE m);    ///< Update some windows based ona change in frequency
+void update_based_on_frequency_change(const frequency& f, const MODE m);    ///< Update some windows based on a change in frequency
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);      ///< Update bext DX window, if it exists
 void update_individual_messages_window(const string& callsign = string());  ///< Update the individual_messages window with the message (if any) associated with a call
@@ -271,7 +272,7 @@ float                   greatest_distance { 0 };                    ///< greates
 
 bool                    home_exchange_window { false };             ///< whether to move cursor to left of exchange window (and insert space if necessary)
 
-unsigned int            inactivity_timer;                           ///< how long to record with no activity
+int                     inactivity_timer;                           ///< how long to record with no activity
 bool                    is_ss { false };                            ///< ss is special
 
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
@@ -664,7 +665,7 @@ int main(int argc, char** argv)
     best_dx_in_miles = (context.best_dx_unit() == "MILES");
     cw_speed_change = context.cw_speed_change();
     display_grid = context.display_grid();
-    inactivity_timer = context.inactivity_timer();
+    inactivity_timer = static_cast<int>(context.inactivity_timer());  // forced positive int
     long_t = context.long_t();
     max_qsos_without_qsl = context.max_qsos_without_qsl();
     multiple_modes = context.multiple_modes();
@@ -1922,9 +1923,8 @@ void* display_date_and_time(void* vp)
           if (inactivity_timer > 0)
           { if ( (qso != 0) or (qsy != 0) )
             { if ( ( (qso == 0) or (qso > inactivity_timer) ) and ( (qsy == 0) or (qsy > inactivity_timer) ) )
-              { audio.abort();
+              { stop_recording(audio);
                 alert("audio recording halted due to inactivity");
-                update_recording_status_window();
               }
             }
           }
@@ -1937,9 +1937,9 @@ void* display_date_and_time(void* vp)
         { static pthread_t auto_screenshot_thread_id;
           static string filename;
 
-          const string dts = date_time_string();
-          const string suffix = dts.substr(0, 13) + '-' + dts.substr(14); // replace : with -
-          const string complete_name = string("auto-screenshot-") + suffix;
+          const string dts           { date_time_string() };
+          const string suffix        { dts.substr(0, 13) + '-' + dts.substr(14) };   // replace : with -
+          const string complete_name { "auto-screenshot-"s + suffix};
 
           filename = complete_name;
 
@@ -7713,17 +7713,6 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
 
 // we may require a mode change
     possible_mode_change(be.freq());
-#if 0
-    if (multiple_modes)
-    { const MODE m = default_mode(be.freq());
-
-      if (m != safe_get_mode())
-      { rig.rig_mode(m);
-        safe_set_mode(m);
-        display_band_mode(win_band_mode, safe_get_band(), m);
-      }
-    }
-#endif
 
     update_based_on_frequency_change(be.freq(), safe_get_mode());
 
@@ -7761,7 +7750,7 @@ void possible_mode_change(const frequency& f)
 const bool toggle_recording_status(audio_recorder& audio)
 { if (context.allow_audio_recording())      // toggle only if recording is allowed
   { if (audio.recording())
-      audio.abort();
+      stop_recording(audio);
     else                                  // not recording
       start_recording(context);
 
@@ -7776,6 +7765,8 @@ const bool toggle_recording_status(audio_recorder& audio)
 
 /*! \brief              Start audio recording
     \param  context     context for the contest
+
+    Updates recording status window
 */
 void start_recording(const drlog_context& context)
 { audio.base_filename(context.audio_file());
@@ -7785,6 +7776,21 @@ void start_recording(const drlog_context& context)
   audio.samples_per_second(context.audio_rate());
   audio.initialise();
   audio.capture();
+
+  if (win_recording_status.defined())
+    update_recording_status_window();
+}
+
+/*! \brief              Stop audio recording
+    \param  context     context for the contest
+
+    Updates recording status window
+*/
+void stop_recording(audio_recorder& audio)
+{ audio.abort();
+
+  if (win_recording_status.defined())
+    update_recording_status_window();
 }
 
 /*! \brief      Get the status of the RX ant, and update <i>win_rx_ant</i> appropriately

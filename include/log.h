@@ -120,6 +120,7 @@ public:
 */
   inline const bool qso_b4(const std::string& call) const
     { SAFELOCK(_log);
+
       return (_log.lower_bound(call) != _log.upper_bound(call)); 
     }
     
@@ -184,6 +185,8 @@ public:
   const std::vector<QSO> filter(UnaryPredicate pred) const
   { std::vector<QSO> rv;
 
+    SAFELOCK(_log);
+
     copy_if(_log_vec.cbegin(), _log_vec.cend(), back_inserter(rv), pred);
 
     return rv;
@@ -221,11 +224,17 @@ public:
   
 /// clear the logbook
   inline void clear(void)
-    { _log.clear(); }
+    { SAFELOCK(_log);
+
+      _log.clear();
+    }
 
 /// how many QSOs are in the log?
   inline const size_t size(void) const
-    { return _log.size(); }
+    { SAFELOCK(_log);
+
+      return _log.size();
+    }
 
 /// how many QSOs are in the log?
   inline const size_t n_qsos(void) const
@@ -233,7 +242,10 @@ public:
 
 /// is the log empty?
   inline const bool empty(void) const
-    { return _log.empty(); }
+    { SAFELOCK(_log);
+
+      return _log.empty();
+    }
 
 /*! \brief                          Get the value of an exchange field from the most recent QSO with a station
     \param  callsign                call for which the information is required

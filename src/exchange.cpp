@@ -1056,7 +1056,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 // see if there's a pre-fill entry
   const string prefill_datum = prefill_data.prefill_data(field_name, callsign);
 
-  ost << "Prefill " << field_name << " data for " << callsign << ": " << prefill_datum << endl;
+//  ost << "Prefill " << field_name << " data for " << callsign << ": " << prefill_datum << endl;
 
   if (!prefill_datum.empty())
   { _db.insert( { { callsign, field_name }, prefill_datum } );
