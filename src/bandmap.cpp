@@ -46,8 +46,8 @@ extern const string callsign_mult_value(const string& callsign_mult_name, const 
 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
 constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separation, in hertz, to be treated as same frequency
-const string        MODE_MARKER("********");        ///< string to mark the mode break in the bandmap
-const string        MY_MARKER("--------");          ///< the string that marks my position in the bandmap
+const string        MODE_MARKER { "********"s };        ///< string to mark the mode break in the bandmap
+const string        MY_MARKER { "--------"s };          ///< the string that marks my position in the bandmap
 
 bandmap_filter_type BMF;                            ///< the global bandmap filter
 
@@ -104,7 +104,7 @@ const unsigned int bandmap_buffer_entry::add(const string& new_poster)
 const unsigned int bandmap_buffer::n_posters(const string& callsign)
 { SAFELOCK(_bandmap_buffer);
 
-  const auto cit = _data.find(callsign);
+  const auto cit { _data.find(callsign) };
 
   return ( ( cit == _data.end() ) ? 0 : cit->second.size() );
 }
@@ -119,9 +119,11 @@ const unsigned int bandmap_buffer::n_posters(const string& callsign)
 const unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
 { SAFELOCK(_bandmap_buffer);
 
-  bandmap_buffer_entry& bfe = _data[callsign];
+  return _data[callsign].add(poster);
 
-  return bfe.add(poster);
+//  bandmap_buffer_entry& bfe = _data[callsign];
+
+//  return bfe.add(poster);
 }
 
 // -----------   bandmap_filter_type ----------------
@@ -136,7 +138,7 @@ const unsigned int bandmap_buffer::add(const string& callsign, const string& pos
     The continents precede the canonical prefixes
 */
 const vector<string> bandmap_filter_type::filter(void) const
-{ vector<string> rv = _continents;
+{ vector<string> rv { _continents };
 
   rv.insert(rv.end(), _prefixes.cbegin(), _prefixes.cend());
 

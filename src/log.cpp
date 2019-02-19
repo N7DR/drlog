@@ -77,9 +77,9 @@ void logbook::operator-=(const unsigned int n)
   if (_log.empty() or (_log.size() < n))
     return;
 
-  const size_t index = n - 1;    // because the interface is wrt 1
+  const size_t index { n - 1 };    // because the interface is wrt 1
 
-  auto it = _log_vec.begin();
+  auto it { _log_vec.begin() };
 
   advance(it, index);            // move to the correct QSO
 
@@ -115,7 +115,7 @@ const vector<QSO> logbook::worked(const string& call) const
 const unsigned int logbook::n_worked(const string& call) const
 { SAFELOCK(_log);
 
-  const auto range = _log.equal_range(call);
+  const auto range { _log.equal_range(call) };
 
   return distance(range.first, range.second);
 }
@@ -175,7 +175,7 @@ const string logbook::call_needed(const string& call, const contest_rules& rules
 { string rv;
 
   for (const auto& b : rules.permitted_bands())
-    rv += ((qso_b4(call, b)) ? "   " :  BAND_NAME[static_cast<int>(b)]);
+    rv += ((qso_b4(call, b)) ? "   "s :  BAND_NAME[static_cast<int>(b)]);
   
   return rv;
 }

@@ -57,7 +57,7 @@ const vector<string> from_csv(experimental::string_view line)
     if (this_char == quote)
     { if (inside_value)               // we're inside a field
       { if (posn < line.size() - 1)   // make sure there's at least one unread character
-        { const char next_char = line[posn + 1];
+        { const char next_char { line[posn + 1] };
 
           if (next_char == quote)     // it's a doubled quote
           { posn += 2;                // skip the next character
@@ -89,7 +89,7 @@ const vector<string> from_csv(experimental::string_view line)
       else
       { if (this_char == comma)
         { if (posn < line.size() - 1)   // make sure there's at least one unread character
-          { const char next_char = line[posn + 1];
+          { const char next_char { line[posn + 1] };
 
             if (next_char == comma)
             { rv.push_back(string());   // empty value
@@ -134,6 +134,7 @@ const string duplicate_char(experimental::string_view s, const char c)
 
 //  FOR_ALL(s, [=, &rv] (const char cc) { rv += ( (cc == c) ? dupe_str : cc ); } );
 
+#if 0
   string rv;
 
   for (size_t n = 0; n < s.length(); ++n)
@@ -142,6 +143,15 @@ const string duplicate_char(experimental::string_view s, const char c)
 
     rv += s[n];
   }
+
+  return rv;
+#endif
+
+  const string dupe_str { create_string(c, 2) };
+
+  string rv;
+
+  FOR_ALL(s, [=, &rv] (const char cc) { ( (cc == c) ? rv += dupe_str : rv += cc ); } );
 
   return rv;
 }
@@ -184,7 +194,7 @@ const string substring(const string& str, const size_t start_posn)
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
 const string date_time_string(const bool include_seconds)
-{ const time_t now = time(NULL);            // get the time from the kernel
+{ const time_t now { time(NULL) };            // get the time from the kernel
   struct tm    structured_time;
 
   gmtime_r(&now, &structured_time);         // convert to UTC
@@ -193,8 +203,8 @@ const string date_time_string(const bool include_seconds)
 
   asctime_r(&structured_time, buf.data());                     // convert to ASCII
 
-  const string ascii_time(buf.data(), 26);
-  const string _utc  = ascii_time.substr(11, (include_seconds ? 8 : 5));                            // hh:mm
+  const string ascii_time { buf.data(), 26 };
+  const string _utc       { ascii_time.substr(11, (include_seconds ? 8 : 5)) };                            // hh:mm[:ss]
   const string _date = to_string(structured_time.tm_year + 1900) + "-" +
                          pad_string(to_string(structured_time.tm_mon + 1), 2, PAD_LEFT, '0') + "-" +
                          pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');              // yyyy-mm-dd

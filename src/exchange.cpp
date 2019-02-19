@@ -1113,6 +1113,9 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       if (rv.empty() and (pfx == "VO1"))
         rv = "NF";
 
+      if (rv.empty() and (pfx == "VO2"))
+        rv = "LB";
+
       if (rv.empty())
       { const char call_area = pfx[pfx.length() - 1];
 
@@ -1123,13 +1126,6 @@ const string exchange_field_database::guess_value(const string& callsign, const 
         }
       }
     }
-
-//    if (!rv.empty())
-//    { rv = rules.canonical_value("160MSTATE", rv);
-//      _db.insert( { { callsign, field_name }, rv } );
-//
-//      return rv;
-//    }
 
     if (!rv.empty())
       rv = rules.canonical_value("160MSTATE", rv);
