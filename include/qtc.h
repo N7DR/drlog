@@ -66,7 +66,11 @@ public:
   { }
 
 /// construct from a QSO
-  explicit qtc_entry(const QSO& qso);
+  inline explicit qtc_entry(const QSO& qso) :
+    _utc(substring(qso.utc(), 0, 2) + substring(qso.utc(), 3, 2)),
+    _callsign( (qso.continent() == "EU"s) ? qso.callsign() : std::string()),
+    _serno(pad_string(qso.received_exchange("SERNO"s), 4, PAD_RIGHT))    // force width to 4
+  { }
 
   READ_AND_WRITE(utc);          ///< time of QSO: HHMM
   READ_AND_WRITE(callsign);     ///< other station
@@ -145,8 +149,7 @@ protected:
 public:
 
 /// default constructor
-  qtc_series(void)
-    { }
+  qtc_series(void) = default;
 
 /*! \brief              Construct from a vector of qtc_entry
     \param  vec_qe      the vector of type <i>/qtc_entry</i>
@@ -299,13 +302,12 @@ protected:
 public:
 
 /// default constructor
-  qtc_database(void)
-    { }
+  qtc_database(void) = default;
 
 /*! \brief              Read from a file
     \param  filename    name of file that contains the database
 */
-  qtc_database(const std::string& filename);
+  explicit qtc_database(const std::string& filename);
 
   SAFEREAD(qtc_db, qtc_database);           ///< the QTCs
 
@@ -338,11 +340,6 @@ public:
     Returns an empty series if <i>n</i> is out of bounds
 */
 const qtc_series operator[](size_t n);
-//  inline const qtc_series operator[](size_t n)
-//    { SAFELOCK(qtc_database);
-//
-//      return _qtc_db.at(n);
-//    }
 
 /*! \brief                          Get the number of QTCs that have been sent to a particular station
     \param   destination_callsign   the station to which the QTCs have been sent
@@ -419,8 +416,7 @@ public:
     \param  entries     QTC entries to transfer
 */
   inline void unsent_to_sent(const std::vector<qtc_entry>& entries)
-//    { for_each(entries.cbegin(), entries.cend(), [this] (const qtc_entry& entry) { unsent_to_sent(entry); }); }
-   { FOR_ALL(entries, [this] (const qtc_entry& entry) { unsent_to_sent(entry); }); }
+    { FOR_ALL(entries, [this] (const qtc_entry& entry) { unsent_to_sent(entry); }); }
 
 /*! \brief      Transfer all the entries in a <i>qtc_series</i> from unsent status to sent status
     \param  qs  QTC entries to transfer

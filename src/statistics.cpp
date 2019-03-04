@@ -29,8 +29,8 @@ extern message_stream ost;      ///< for debugging and logging
 
 pt_mutex statistics_mutex;      ///< mutex for the (singleton) running_statistics object
 
-static const unsigned int FIRST_FIELD_WIDTH = 10;         ///< width of first field
-static const unsigned int FIELD_WIDTH       = 6;          ///< width of other fields
+constexpr unsigned int FIRST_FIELD_WIDTH { 10 };         ///< width of first field
+constexpr unsigned int FIELD_WIDTH       { 6 };          ///< width of other fields
 
 // -----------  running_statistics  ----------------
 
@@ -52,7 +52,7 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
   { SAFELOCK(statistics);
 
     if (known_callsign_mult_name(mult_name))            // do we already know about this mult name?
-    { multiplier& mult = (_callsign_multipliers.find(mult_name))->second;
+    { multiplier& mult { (_callsign_multipliers.find(mult_name))->second };
 
       mult.add_worked(mult_value, static_cast<BAND>(band_nr), static_cast<MODE>(mode_nr));                // add value and band for this mult name
     }
@@ -71,8 +71,8 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
     \return         summary string for modes in <i>modes</i>
 */
 const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
-{ const set<MODE> permitted_modes = rules.permitted_modes();
-  const vector<BAND> permitted_bands = rules.permitted_bands();
+{ const set<MODE>    permitted_modes { rules.permitted_modes() };
+  const vector<BAND> permitted_bands { rules.permitted_bands() };
 
   string line;
   string rv;

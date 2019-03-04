@@ -14,11 +14,14 @@
 */
 
 #include "macros.h"
+#include "string_functions.h"
 
 #include <array>
 #include <iostream>
 #include <string>
 #include <vector>
+
+using namespace std::literals::string_literals;
 
 // enumerations
 
@@ -4872,14 +4875,19 @@ public:
     \param  nm  name of the instance of the type
     \param  v   value of the instance of the type
 */
-  adif_type(const char ty, const std::string& nm = "", const std::string& v = "");
+  inline adif_type(const char ty, const std::string& nm = ""s, const std::string& v = ""s) :
+    _name(nm),
+    _type_indicator(ty),
+    _value(v)
+    { }
 
   READ_AND_WRITE(name);                        ///< name of the type
   READ_AND_WRITE(type_indicator);              ///< letter that identifies the types
   READ_AND_WRITE(value);                       ///< value of the type
 
 /// convert to printable string
-  const std::string to_string(void) const;
+  inline const std::string to_string(void) const
+    { return ( (_name.empty() or _value.empty()) ? std::string() : ( "<"s + _name + ":"s + ::to_string(_value.length()) + ">"s + _value ) ); }
 };
 
 // it's a pity that there is no way I can think of to create classes like this using templates instead of macros
@@ -4937,16 +4945,22 @@ protected:
 public:
 
 /// default constructor
-  adif_DATE(void);
+  inline adif_DATE(void) :
+    adif_type('D')
+    { }
 
 /*! \brief      Constructor
     \param  nm  name
     \param  v   value
 */
-  adif_DATE(const std::string& nm, const std::string& v);
+  inline adif_DATE(const std::string& nm, const std::string& v) :
+    adif_type('D', nm, v)
+    { }
 
 /// construct with name
-  explicit adif_DATE(const std::string& nm);
+  explicit inline adif_DATE(const std::string& nm) :
+    adif_type('D', nm, std::string())
+    { }
 
 /// set value
   void value(const std::string& v);

@@ -251,8 +251,8 @@ window& window::operator<(const string& s)
   if (!_insert)
     wprintw(_wp, s.c_str());
   else                                           // insert mode
-  { const cursor c = cursor_position();
-    const string remainder = read(c.x(), c.y());
+  { const cursor c         { cursor_position() };
+    const string remainder { read(c.x(), c.y()) };
 
     wprintw(_wp, (s + remainder).c_str());
     
@@ -274,17 +274,18 @@ window& window::operator<(const set<string>& ss)
 { if (!_wp)
     return *this;
 
-  vector<string> v(ss.cbegin(), ss.cend());
+  vector<string> v { ss.cbegin(), ss.cend() };
 
   sort(v.begin(), v.end(), compare_calls);
 
-  unsigned int idx = 0;
+  unsigned int idx { 0 };
   
   for (const auto& str : v)
   { 
 // see if there's enough room on this line    
     cursor_position();
-    const int remaining_space = width() - _cursor_x;
+
+    const int remaining_space { width() - _cursor_x };
 
 // stop writing if there's insufficient room for the next string
     if (remaining_space < static_cast<int>(str.length()))
@@ -297,7 +298,7 @@ window& window::operator<(const set<string>& ss)
     *this < str;
   
 // add space unless we're at the end of a line or this is the last string
-    const bool end_of_line = (remaining_space == static_cast<int>(str.length()));
+    const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
     
     if ((idx != v.size() - 1) and !end_of_line)
       *this < " ";

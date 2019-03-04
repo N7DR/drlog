@@ -32,41 +32,36 @@ using namespace std;
     \param  nm  name of the instance of the type
     \param  v   value of the instance of the type
 */
-adif_type::adif_type(const char ty, const string& nm, const string& v) :
-    _name(nm),
-    _type_indicator(ty),
-    _value(v)
-{ }
+//adif_type::adif_type(const char ty, const string& nm, const string& v) :
+//    _name(nm),
+//    _type_indicator(ty),
+//    _value(v)
+//{ }
 
 /// convert to printable string
-const string adif_type::to_string(void) const
-{ //if (_name.empty() or _value.empty())
-  //  return string();
-
-  //return (string)"<" + _name + ":" + ::to_string(_value.length()) +">" + _value;
-
-  return ( (_name.empty() or _value.empty()) ? string() : ( (string)"<" + _name + ":" + ::to_string(_value.length()) +">" + _value ) );
-}
+//const string adif_type::to_string(void) const
+//{ return ( (_name.empty() or _value.empty()) ? string() : ( (string)"<" + _name + ":" + ::to_string(_value.length()) +">" + _value ) );
+//}
 
 // ---------------------------------------------------  adif_DATE -----------------------------------------
 
 // default constructor
-adif_DATE::adif_DATE(void) :
-    adif_type('D')
-{ }
+//adif_DATE::adif_DATE(void) :
+//    adif_type('D')
+//{ }
 
 /*! \brief      Constructor
     \param  nm  name
     \param  v   value
 */
-adif_DATE::adif_DATE(const string& nm, const string& v) :
-    adif_type('D', nm, v)
-{ }
+//adif_DATE::adif_DATE(const string& nm, const string& v) :
+//    adif_type('D', nm, v)
+//{ }
 
 // construct with name
-adif_DATE::adif_DATE(const string& nm) :
-    adif_type('D', nm, string())
-{ }
+//adif_DATE::adif_DATE(const string& nm) :
+//    adif_type('D', nm, string())
+//{ }
 
 // set value
 void adif_DATE::value(const std::string& v)

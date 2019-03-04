@@ -336,6 +336,8 @@ void QSO::populate_from_log_line(const string& str)
         { ost << "NOT OPTIONAL" << endl;
           ost << "About to assign: received_index = " << received_index << "; value = " << vec[n] << endl;
 
+          ost << "Original received exchange[received_index]: " << _received_exchange[received_index] << endl << endl;
+
           _received_exchange[received_index++].value(vec[n]);
 
           ost << "Assigned: " << _received_exchange[received_index - 1] << endl;

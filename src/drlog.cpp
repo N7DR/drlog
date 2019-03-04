@@ -219,7 +219,7 @@ pt_mutex  last_exchange_mutex;              ///< mutex for getting and setting t
 string    last_exchange;                    ///< the last sent exchange
 
 pt_mutex  my_bandmap_entry_mutex;          ///< mutex for changing frequency or bandmap info
-time_t    time_last_qsy = time_t(NULL);    ///< time of last QSY
+time_t    time_last_qsy { time_t(NULL) };  ///< time of last QSY
 
 pt_mutex            thread_check_mutex;                     ///< mutex for controlling threads; both the following variables are under this mutex
 int                 n_running_threads = 0;                  ///< how many additional threads are running?
@@ -2720,6 +2720,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // clear the call window if there's something in it
     if (!processed and (!remove_peripheral_spaces(win.read()).empty()))
     { win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      win.insert(true);                         // force into INSERT mode
       processed = true;
     }
 
@@ -3289,6 +3290,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         if (home_exchange_window and !exchange_str.empty())
           win_exchange < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < " " <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
+        win_exchange.insert(true);          // force EXCHANGE window into INSERT mode
         win_active_p = &win_exchange;
       }
 
@@ -4058,7 +4060,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())
-    { win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+    { win_call.insert(true);                     // force INSERT mode
+      win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win_batch_messages <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win_individual_messages <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       update_qsls_window();                     // clears the window, except for the preliminary string
@@ -4588,30 +4591,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // possibly update BEST DX window
           if (win_best_dx.valid())
             update_best_dx(qso.received_exchange("GRID"), qso.callsign());
-#if 0
-          if (win_best_dx.valid())
-          { const grid_square dx_gs = qso.received_exchange("GRID");
-
-            if (!dx_gs.designation().empty())
-            { float distance_in_units = ( my_grid - dx_gs.designation() );    // km
-
-              if (best_dx_in_miles)
-                distance_in_units = kilometres_to_miles(distance_in_units);
-
-              if (distance_in_units >= greatest_distance)
-              { string str = pad_string(comma_separated_string(static_cast<int>(distance_in_units + 0.5)), 6, PAD_LEFT);
-
-                str += (" " + qso.callsign());
-                str = pad_string(str, win_best_dx.width(), PAD_RIGHT);
-
-                win_best_dx < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
-                win_best_dx <= str;
-
-                greatest_distance = distance_in_units;
-              }
-            }
-          }
-#endif
         }                                                     // end pexch.valid()
         else        // unable to parse exchange
           alert("Unable to parse exchange");
@@ -4619,6 +4598,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         processed = true;
       }
     }
+
+// ensure that CALL and EXCHANGE windows are in INSERT mode
+    win_call.insert(true);
+    win_exchange.insert(true);
 
 // possibly start audio recording; perhaps this should go elsewhere?
     if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
@@ -7822,18 +7805,24 @@ const bool process_backspace(window& win)
   return true;
 }
 
-// https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
-// note that the code there contains an extra right curly bracket
+/*! \brief          Run an external command
+    \param  cmd     command to run
+    \return         output of command <i>cmd</i?
+
+    https://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
+    note that the code there contains an extra right curly bracket
+ */
 const string run_external_command(const string& cmd)
 { array<char, 128> buffer;
   string result;
   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
   if (!pipe)
-  { alert("WARNING: Error executing command: " + cmd);
-
-    return string();
-  }
+//  { alert("WARNING: Error executing command: " + cmd);
+//
+//    return string();
+//  }
+    return ( alert("WARNING: Error executing command: "s + cmd), string() );
 
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
     result += buffer.data();
@@ -7841,62 +7830,79 @@ const string run_external_command(const string& cmd)
   return result;
 }
 
+/*! \brief      Thread function to get SFI, A, K indices
+    \param  vp  pointer to command to run
+    \return     nullptr
+*/
 void* get_indices(void* vp)    ///< Get SFI, A, K
 {
-  { start_of_thread("get indices");
+  { start_of_thread("get indices"s);
 
-      try
-      { const string* cmd_p = (string*)vp;
-        const string& cmd = *cmd_p;
+    try
+    { const string* cmd_p { (string*)vp };
+      const string& cmd   { *cmd_p };
+      const string indices { run_external_command(cmd) };
 
-        const string indices = run_external_command(cmd);
+      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT <= indices;
+    }
 
-        win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT <= indices;
-      }
+    catch (...)
+    { ost << "CAUGHT EXCEPTION IN GET_INDICES" << endl;
+    }
+  }  // ensure that all objects call destructors, whatever the implementation
 
-      catch (...)
-      { ost << "CAUGHT EXCEPTION IN GET_INDICES" << endl;
-      }
-    }  // ensure that all objects call destructors, whatever the implementation
-
-    end_of_thread("get indices");
-    pthread_exit(nullptr);
+  end_of_thread("get indices"s);
+  pthread_exit(nullptr);
 }
 
-// return zero if no QSOs
+/*! \brief          Time in seconds since the last QSO
+    \param  logbk   the current log
+    \return         the time, in seconds, since the most recent QSO in <i>logbk</i>
+
+    Returns zero if <i>logbk</i> is empty.
+*/
 const int time_since_last_qso(const logbook& logbk)
-{ const QSO last_qso = logbk.last_qso();
+{ const QSO last_qso { logbk.last_qso() };
 
-  if (last_qso.empty())
-    return 0;
+//  if (last_qso.empty())
+//    return 0;
 
-  const time_t now = time(NULL);              ///< get the time from the kernel
-
-  return (now - last_qso.epoch_time());
+  return ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
 }
 
+/*! \brief      Time in seconds since the last QSY
+    \return     the time, in seconds, since the most recent QSY
+
+    Returns time since program start if there has been no QSY
+*/
 const int time_since_last_qsy(void)
 { SAFELOCK(my_bandmap_entry);
 
   return (time(NULL) - time_last_qsy);
 }
 
+/*! \brief              Possibly update the variable that holds the greatest distance
+    \param  dx_gs       DX grid square
+    \param  callsign    DX callsign
+
+    Also updates <i>win_best_dx</i> if necessary
+*/
 void update_best_dx(const grid_square& dx_gs, const string& callsign)
 { if (win_best_dx.valid())              // check even though it should have been checked before being called
   { if (!dx_gs.designation().empty())
-    { float distance_in_units = ( my_grid - dx_gs.designation() );    // km
+    { float distance_in_units { ( my_grid - dx_gs.designation() ) };    // km
 
       if (best_dx_in_miles)
         distance_in_units = kilometres_to_miles(distance_in_units);
 
       if (distance_in_units >= greatest_distance)
-      { string str = pad_string(comma_separated_string(static_cast<int>(distance_in_units + 0.5)), 6, PAD_LEFT);
+      { string str { pad_string(comma_separated_string(static_cast<int>(distance_in_units + 0.5)), 6, PAD_LEFT) };
 
-        str += (" " + callsign);
-        str = pad_string(str, win_best_dx.width(), PAD_RIGHT);
+//        str += (" "s + callsign);
+        str = pad_string( (str + " "s + callsign), win_best_dx.width(), PAD_RIGHT);
 
-        win_best_dx < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
-        win_best_dx <= str;
+        win_best_dx < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN <= str;
+//        win_best_dx <= str;
 
         greatest_distance = distance_in_units;
       }

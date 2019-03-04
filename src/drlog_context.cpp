@@ -65,22 +65,22 @@ void drlog_context::_set_points(const string& command, const MODE m)
 { if (command.empty())
     return;
 
-  const vector<string> str_vec = split_string(command, "=");
+  const vector<string> str_vec { split_string(command, "=") };
 
   if (str_vec.size() != 2)
   { ost << "Invalid command: " << command << endl;
     exit(0);
   }
 
-  const string RHS = to_upper(remove_peripheral_spaces(str_vec[1]));
+  const string RHS { to_upper(remove_peripheral_spaces(str_vec[1])) };
 
   if (!str_vec.empty())
-  { const string lhs = str_vec[0];
+  { const string lhs { str_vec[0] };
 
     string tmp_points_str;
-    auto& pbb = _per_band_points[m];
+    auto& pbb { _per_band_points[m] };
 
-    if (!contains(lhs, "[") or contains(lhs, "[*]"))            // for all bands
+    if (!contains(lhs, "["s) or contains(lhs, "[*]"s))            // for all bands
     { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
         pbb.insert( { static_cast<BAND>(n), RHS } );
     }
