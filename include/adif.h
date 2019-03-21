@@ -35,13 +35,15 @@ enum  ANT_PATH_ENUM { ANT_PATH_GREYLINE,
                       N_ANT_PATHS
                     };
 
-typedef std::array<std::string, N_ANT_PATHS> ANT_PATH_ENUMERATION_TYPE;     ///< type for antenna path enumeration
+//typedef std::array<std::string, N_ANT_PATHS> ANT_PATH_ENUMERATION_TYPE;     ///< type for antenna path enumeration
+
+using ANT_PATH_ENUMERATION_TYPE = std::array<std::string, N_ANT_PATHS>;
 
 /// legal values of ANT_PATH_ENUMERATION
-static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION { "G",    ///< greyline
-                                                        "O",    ///< other
-                                                        "S",    ///< short path
-                                                        "L"     ///< long path
+static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION { "G"s,    ///< greyline
+                                                        "O"s,    ///< other
+                                                        "S"s,    ///< short path
+                                                        "L"s     ///< long path
                                                       };
 
 // mode  -------------------------------------------------------
@@ -121,79 +123,81 @@ enum MODE_ENUM { ADIF_MODE_AM,              // 0
                  N_ADIF_MODES
                };                                                       ///< enum for modes
 
-typedef std::array<std::string, N_ADIF_MODES> MODE_ENUMERATION_TYPE;    ///< type for mode enumeration
+//typedef std::array<std::string, N_ADIF_MODES> MODE_ENUMERATION_TYPE;    ///< type for mode enumeration
 
-static MODE_ENUMERATION_TYPE MODE_ENUMERATION { "AM",               // 0
-                                                "AMTORFEC",
-                                                "ASCI",
-                                                "ATV",
-                                                "CHIP64",
-                                                "CHIP128",
-                                                "CLO",
-                                                "CONTESTI",
-                                                "CW",
-                                                "DSTAR",
-                                                "DOMINO",            // 10
-                                                "DOMINOF",
-                                                "FAX",
-                                                "FM",
-                                                "FMHELL",
-                                                "FSK31",
-                                                "FSK441",
-                                                "GTOR",
-                                                "HELL",
-                                                "HELL80",
-                                                "HFSK",             // 20
-                                                "JT44",
-                                                "JT4A",
-                                                "JT4B",
-                                                "JT4C",
-                                                "JT4D",
-                                                "JT4E",
-                                                "JT4F",
-                                                "JT4G",
-                                                "JT65",
-                                                "JT65A",            // 30
-                                                "JT65B",
-                                                "JT65C",
-                                                "JT6M",
-                                                "MFSK8",
-                                                "MFSK16",
-                                                "MT63",
-                                                "OLIVIA",
-                                                "PAC",
-                                                "PAC2",
-                                                "PAC3",             // 40
-                                                "PAX",
-                                                "PAX2",
-                                                "PCW",
-                                                "PKT",
-                                                "PSK10",
-                                                "PSK31",
-                                                "PSK63",
-                                                "PSK63F",
-                                                "PSK125",
-                                                "PSKAM10",          // 50
-                                                "PSKAM31",
-                                                "PSKAM50",
-                                                "PSKFEC31",
-                                                "PSKHELL",
-                                                "Q15",
-                                                "QPSK31",
-                                                "QPSK63",
-                                                "QPSK125",
-                                                "ROS",
-                                                "RTTY",             // 60
-                                                "RTTYM",
-                                                "SSB",
-                                                "SSTV",
-                                                "THRB",
-                                                "THOR",
-                                                "THRBX",
-                                                "TOR",
-                                                "VOI",
-                                                "WINMOR",
-                                                "WSPR"              // 70
+using MODE_ENUMERATION_TYPE = std::array<std::string, N_ADIF_MODES>;
+
+static MODE_ENUMERATION_TYPE MODE_ENUMERATION { "AM"s,               // 0
+                                                "AMTORFEC"s,
+                                                "ASCI"s,
+                                                "ATV"s,
+                                                "CHIP64"s,
+                                                "CHIP128"s,
+                                                "CLO"s,
+                                                "CONTESTI"s,
+                                                "CW"s,
+                                                "DSTAR"s,
+                                                "DOMINO"s,            // 10
+                                                "DOMINOF"s,
+                                                "FAX"s,
+                                                "FM"s,
+                                                "FMHELL"s,
+                                                "FSK31"s,
+                                                "FSK441"s,
+                                                "GTOR"s,
+                                                "HELL"s,
+                                                "HELL80"s,
+                                                "HFSK"s,             // 20
+                                                "JT44"s,
+                                                "JT4A"s,
+                                                "JT4B"s,
+                                                "JT4C"s,
+                                                "JT4D"s,
+                                                "JT4E"s,
+                                                "JT4F"s,
+                                                "JT4G"s,
+                                                "JT65"s,
+                                                "JT65A"s,            // 30
+                                                "JT65B"s,
+                                                "JT65C"s,
+                                                "JT6M"s,
+                                                "MFSK8"s,
+                                                "MFSK16"s,
+                                                "MT63"s,
+                                                "OLIVIA"s,
+                                                "PAC"s,
+                                                "PAC2"s,
+                                                "PAC3"s,             // 40
+                                                "PAX"s,
+                                                "PAX2"s,
+                                                "PCW"s,
+                                                "PKT"s,
+                                                "PSK10"s,
+                                                "PSK31"s,
+                                                "PSK63"s,
+                                                "PSK63F"s,
+                                                "PSK125"s,
+                                                "PSKAM10"s,          // 50
+                                                "PSKAM31"s,
+                                                "PSKAM50"s,
+                                                "PSKFEC31"s,
+                                                "PSKHELL"s,
+                                                "Q15"s,
+                                                "QPSK31"s,
+                                                "QPSK63"s,
+                                                "QPSK125"s,
+                                                "ROS"s,
+                                                "RTTY"s,             // 60
+                                                "RTTYM"s,
+                                                "SSB"s,
+                                                "SSTV"s,
+                                                "THRB"s,
+                                                "THOR"s,
+                                                "THRBX"s,
+                                                "TOR"s,
+                                                "VOI"s,
+                                                "WINMOR"s,
+                                                "WSPR"s              // 70
                                               };
 
 // ARRL section  -------------------------------------------------------
@@ -282,7 +286,9 @@ enum SECTION_ENUM { SECTION_AL,
                     N_SECTIONS
                   };                                                        ///< enum for sections
 
-typedef std::array<std::string, N_SECTIONS> SECTION_ENUMERATION_TYPE;       ///< type for section enumeration
+//typedef std::array<std::string, N_SECTIONS> SECTION_ENUMERATION_TYPE;       ///< type for section enumeration
+
+using SECTION_ENUMERATION_TYPE = std::array<std::string, N_SECTIONS>;
 
 static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION { "AL",
                                                       "AK",

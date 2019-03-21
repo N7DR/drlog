@@ -516,7 +516,7 @@ public:                                                                     \
       std::get<3>(*this) = A;                                               \
       std::get<4>(*this) = B;                                               \
       std::get<5>(*this) = C;                                               \
-}                                                                           \
+    }                                                                       \
                                                                             \
   inline a0 a1(void) const                                                  \
     { return std::get<0>(*this); }                                          \
@@ -572,7 +572,7 @@ public:                                                                         
       std::get<4>(*this) = B;                                                       \
       std::get<5>(*this) = C;                                                       \
       std::get<6>(*this) = D;                                                       \
-}                                                                                   \
+    }                                                                               \
                                                                                     \
   inline a0 a1(void) const                                                          \
     { return std::get<0>(*this); }                                                  \
@@ -635,7 +635,7 @@ public:                                                                         
       std::get<5>(*this) = C;                                                               \
       std::get<6>(*this) = D;                                                               \
       std::get<7>(*this) = E;                                                               \
-}                                                                                           \
+    }                                                                                       \
                                                                                             \
   inline a0 a1(void) const                                                                  \
     { return std::get<0>(*this); }                                                          \
@@ -793,7 +793,7 @@ public:
 */
   RANGE(const T& v1, const T& v2)
   { if (v1 > v2)
-    { T value = v1;
+    { T value { v1 };
 
       while (value != v2)
       { this->push_back(value--);
@@ -852,10 +852,11 @@ public:
     \return         total number of times <i>value</i> has been added
 */
   const unsigned int value(const T& val) const
-  { if (_values.find(val) == _values.cend())
-      return 0;
+  { //if (_values.find(val) == _values.cend())
+    //  return 0;
 
-    return _values.at(val);
+    //return _values.at(val);
+    return ( ( _values.find(val) == _values.cend() ) ? 0 : _values.at(val) );
   }
 };
 

@@ -738,7 +738,12 @@ void log_extract::display(void)
     for (size_t n = 0; n < n_to_display; ++n)
     { const size_t index = vec.size() - 1 - n;              // write so that most recent is at the bottom
 
-      _win < cursor(0, n) < vec[index].log_line();
+//      _win < cursor(0, n) < vec[index].log_line();
+      _win < cursor(0, n) < WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL < cursor(0, n) < vec[index].log_line();
+
+//      ost << "In log_extract::display(); displayed QSO: " << vec[index] << endl;
+//      ost << "  log_line = " << vec[index].log_line() << endl;
+
     }
   }
 

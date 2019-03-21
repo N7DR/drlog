@@ -25,13 +25,13 @@
 using namespace boost;                  // for regex
 using namespace std;
 
-extern contest_rules     rules;                 ///< the rules for this contest
-extern drmaster*         drm_p;                 ///< pointer to drmaster database
-extern EFT               CALLSIGN_EFT;          ///< exchange field template for a callsign
-extern location_database location_db;           ///< the (global) location database
-extern logbook logbk;                           ///< the (global) logbook
-extern exchange_field_prefill  prefill_data;    ///< exchange prefill data from external files
-extern bool require_dot_in_replacement_call;    ///< whether a dot is required to mark a replacement callsign
+extern contest_rules           rules;                               ///< the rules for this contest
+extern drmaster*               drm_p;                               ///< pointer to drmaster database
+extern EFT                     CALLSIGN_EFT;                        ///< exchange field template for a callsign
+extern location_database       location_db;                         ///< the (global) location database
+extern logbook                 logbk;                               ///< the (global) logbook
+extern exchange_field_prefill  prefill_data;                        ///< exchange prefill data from external files
+extern bool                    require_dot_in_replacement_call;     ///< whether a dot is required to mark a replacement callsign
 
 pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
 
@@ -48,36 +48,16 @@ pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange fi
 */
 void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
 { for (const auto& this_pair : prefill_filename_map)
-  { const string& field_name = this_pair.first;
-    const string& filename = this_pair.second;
+  { const string& field_name { this_pair.first };
+    const string& filename   { this_pair.second };
 
     try
-    { //string contents = read_file(filename);
-
-      //ost << "CONTENTS: " << contents << endl;
-
-// remove any CRs
-//      contents = remove_char(contents, CR_CHAR);
-
-      //ost << "CR REMOVED" << endl;
-
-// convert tabs to spaces
-//      contents = replace_char(contents, '\t', ' ');
-
-     // ost << "TABS CONVERTED TO SPACES" << endl;
-
-// squash spaces
-//      contents = squash(contents);
-
-     // ost << "SQUASHED" << endl;
-
-//      const vector<string> lines = to_lines(to_upper(contents));
-      const vector<string> lines = to_lines( to_upper( squash( replace_char( remove_char(read_file(filename), CR_CHAR ), '\t', ' ') ) ) ); // read, remove CRs, tabs to spaces, squash, to lines
+    { const vector<string> lines { to_lines( to_upper( squash( replace_char( remove_char(read_file(filename), CR_CHAR ), '\t', ' ') ) ) ) }; // read, remove CRs, tabs to spaces, squash, to lines
 
       unordered_map<string /* call */, string /* prefill value */> call_value_map;
 
       for (const auto& line : lines)                                // each line should now be: callsign value (+ ignored later stuff)
-      { const vector<string> this_pair = split_string(line, ' ');
+      { const vector<string> this_pair { split_string(line, ' ') };
 
         if (this_pair.size() >= 2)
           call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
@@ -101,21 +81,18 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
     callsign <i>callsign</i>
 */
 const string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign)
-{ string rv;
-
-  const auto it = _db.find(field_name);
+{ const auto it { _db.find(field_name) };
 
   if (it == _db.cend())
-    return rv;
+    return string();
 
-  const unordered_map<string /* callsign */, string /* value */>& field_map = it->second;
+  const unordered_map<string /* callsign */, string /* value */>& field_map   { it->second };
+  const auto                                                      callsign_it { field_map.find(callsign) };
 
-  const auto callsign_it = field_map.find(callsign);
+//  if (callsign_it == field_map.cend())
+//    return string();
 
-  if (callsign_it == field_map.cend())
-    return rv;
-
-  return callsign_it->second;
+  return ( (callsign_it == field_map.cend()) ? string() : callsign_it->second );
 }
 
 ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)

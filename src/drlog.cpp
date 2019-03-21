@@ -4954,10 +4954,13 @@ void process_LOG_input(window* wp, const keyboard_event& e)
           else
             ost << "Blank QSO" << endl;
         }
-        ost << "New QSOs: " << endl;
+        ost << "New QSOs: " << endl << endl;
 
         logbk.remove_last_qsos(n_to_remove);                        // remove that number of QSOs from the log
         rebuild_history(logbk, rules, statistics, q_history, rate);
+
+// we will work out the replacement QSOs, sort out all the statistics, then put them in the
+// log window at:  editable_log.recent_qsos(logbk, true); about 100 lines below
 
 // add the new QSOs
         for (size_t n = 0; n < new_win_log_snapshot.size(); ++n)
@@ -4969,6 +4972,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // fills some fields in the QSO
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
 //            qso.new_populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]), context.my_call());  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
+
+            ost << "QSO after populate_from_log_line: " << qso << endl;
 
 // we can't assume anything about the mult status
             update_known_callsign_mults(qso.callsign());
@@ -4985,6 +4990,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // if callsign mults matter, add more to the qso
             allow_for_callsign_mults(qso);
+
+            ost << "QSO to be added back into log: " << qso << endl;
 
 // add it to the running statistics; do this before we add it to the log so we can check for dupes against the current log
             statistics.add_qso(qso, logbk, rules);

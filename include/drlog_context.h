@@ -30,12 +30,6 @@ enum class AUDIO_RECORDING { AUTO,              ///< auto control
                              START              ///< start at start-up
                            };
 
-/// lists of country multipliers
-//enum class COUNTRY_MULTIPLIER { DXCC,       ///< use DXCC list
-//                                NONE,       ///< no country multipliers
-//                                WAEDC       ///< use DARC WAEDC list
-//                              };
-
 extern pt_mutex _context_mutex;             ///< mutex for the drlog context
 
 /// Syntactic sugar for read-only access
@@ -422,7 +416,7 @@ public:
   const unsigned int guard_band(const MODE m)
   { SAFELOCK(_context);
 
-    const auto cit = _guard_band.find(m);
+    const auto cit { _guard_band.find(m) };
 
     return  ( (cit == _guard_band.end()) ? 1000 : cit->second );
   }
@@ -562,29 +556,29 @@ public:
     \return         the bands that are legal for the context
 */
   inline const std::vector<std::string> band_names(void) const
-    { SAFELOCK(_context);
-      return split_string(_bands, ",");
-    }
+  { SAFELOCK(_context);
+    return split_string(_bands, ","s);
+  }
 
 /*! \brief          Get a vector of the names of the legal modes for the contest (e.g., "CW", "SSB", etc.)
     \return         the modes that are legal for the context
 */
   inline const std::vector<std::string> mode_names(void) const
-    { SAFELOCK(_context);
-      return split_string(_modes, ",");
-    }
+  { SAFELOCK(_context);
+    return split_string(_modes, ","s);
+  }
 
 /// how many bands are used in this contest?
   inline const unsigned int n_bands(void) const
-    { SAFELOCK(_context);
-      return band_names().size();
-    }
+  { SAFELOCK(_context);
+    return band_names().size();
+  }
 
 /// how many modes are used in this contest?
   inline const unsigned int n_modes(void) const
-    { SAFELOCK(_context);
-      return mode_names().size();
-    }
+  { SAFELOCK(_context);
+    return mode_names().size();
+  }
 
 /*! \brief          All the windows whose name contains a particular substring
     \param  substr  substring for which to search
@@ -612,9 +606,9 @@ public:
 
 /// swap QSL and ALTERNATIVE QSL messages
   inline void swap_qsl_messages(void)
-    { SAFELOCK(_context);
-      swap(_qsl_message, _alternative_qsl_message);
-    }
+  { SAFELOCK(_context);
+    swap(_qsl_message, _alternative_qsl_message);
+  }
 
 /// are multiple modes permitted?
   inline const bool multiple_modes(void) const

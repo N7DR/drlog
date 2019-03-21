@@ -24,41 +24,21 @@ using namespace std;
     \brief  An entry in a QTC
 */
 
-/// construct from a QSO
-//qtc_entry::qtc_entry(const QSO& qso) :
-//  _utc(substring(qso.utc(), 0, 2) + substring(qso.utc(), 3, 2)),
-//  _callsign( (qso.continent() == "EU") ? qso.callsign() : string()),
-//  _serno(pad_string(qso.received_exchange("SERNO"), 4, PAD_RIGHT))    // force width to 4
-//{ }
-
 /// qtc_entry == qso
-const bool qtc_entry::operator==(const QSO& qso) const
-{ //const qtc_entry target(qso);
-
-  //return (*this == target);
-  return ( *this == qtc_entry { qso } );
-}
+//const bool qtc_entry::operator==(const QSO& qso) const
+//{ return ( *this == qtc_entry { qso } );
+//}
 
 /// qtc_entry == qtc_entry
-const bool qtc_entry::operator==(const qtc_entry& entry) const
-{ //if (_serno != entry._serno)
-  //  return false;
-
-  //if (_utc != entry._utc)
-  //  return false;
-
-  //if (_callsign != entry._callsign)
-  //  return false;
-
-  //return true;
-
-  return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) );
-}
+//const bool qtc_entry::operator==(const qtc_entry& entry) const
+//{ return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) );
+//}
 
 /*! \brief          Sorting function for <i>qtc_entry</i>
     \param  entry   object against which to sort
-    \return         whether this oject is "less than" <i>entry</i>
+    \return         whether this object is "less than" <i>entry</i>
 */
+#if 0
 const bool qtc_entry::operator<(const qtc_entry& entry) const
 { //if (_serno < entry._serno)
   //  return true;
@@ -69,14 +49,16 @@ const bool qtc_entry::operator<(const qtc_entry& entry) const
   //if (_callsign < entry._callsign)
   //  return false;
 
-  //return false;
+  //return false;  // this seems to be an error
 
   return ( (_serno < entry._serno) or (_utc < entry._utc) or (_callsign < entry._callsign) );
 }
+#endif
 
 /// convert to printable string
 const string qtc_entry::to_string(void) const
-{ static const unsigned int CALL_WIDTH = 12;
+{ constexpr unsigned int CALL_WIDTH { 12 };
+
   static const string SPACE(" ");
 
   return (_utc + SPACE + pad_string(_callsign, CALL_WIDTH, PAD_RIGHT) + SPACE + _serno);

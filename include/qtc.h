@@ -83,17 +83,20 @@ public:
     { _serno = pad_string(str, 4, PAD_RIGHT); }
 
 /// qtc_entry == qso
-  const bool operator==(const QSO& qso) const;
+  inline const bool operator==(const QSO& qso) const
+    { return ( *this == qtc_entry { qso } ); }
 
 /// qtc_entry != qso
   inline const bool operator!=(const QSO& qso) const
     { return !(*this == qso); }
 
 /// qtc_entry == qtc_entry
-  const bool operator==(const qtc_entry& entry) const;
+  inline const bool operator==(const qtc_entry& entry) const
+    { return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
 
 /// qtc_entry < qtc_entry
-  const bool operator<(const qtc_entry&) const;
+  inline const bool operator<(const qtc_entry& entry) const
+    { return ( (_serno < entry._serno) or (_utc < entry._utc) or (_callsign < entry._callsign) ); }
 
 /// convert to printable string
   const std::string to_string(void) const;
