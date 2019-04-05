@@ -14,7 +14,6 @@
 */
 
 #include "cw_buffer.h"
-//#include "drlog_context.h"
 #include "log_message.h"
 
 #include <chrono>
@@ -25,13 +24,13 @@ using namespace std;
 using namespace   chrono;               // std::chrono
 using namespace   this_thread;          // std::this_thread
 
-const unsigned int MIN_SPEED = 12;      ///< minimum CW speed, in wpm
-const unsigned int MAX_SPEED = 50;      ///< maximum CW speed, in wpm
+constexpr unsigned int MIN_SPEED { 12 };      ///< minimum CW speed, in wpm
+constexpr unsigned int MAX_SPEED { 50 };      ///< maximum CW speed, in wpm
 
 // special commands that may be embedded in the CW stream
-const int CMD_CLEAR_RIT = 0,            ///< clear the RIT
-          CMD_SLOWER    = 1,            ///< decrease speed by 1 wpm
-          CMD_FASTER    = 2;            ///< increase speed by 1 wpm
+constexpr int CMD_CLEAR_RIT { 0 },            ///< clear the RIT
+              CMD_SLOWER    { 1 },            ///< decrease speed by 1 wpm
+              CMD_FASTER    { 2 };            ///< increase speed by 1 wpm
 
 extern drlog_context  context;          /// < context for the contest
 extern message_stream ost;              ///< for debugging, info
@@ -64,7 +63,7 @@ void cw_buffer::_add_action(const int n)
     \return         nullptr
 */
 void* cw_buffer::_static_play(void* arg)              // arg is the "this" pointer, in order to allow static member access to a real object
-{ cw_buffer* bufp = static_cast<cw_buffer*>(arg);
+{ cw_buffer* bufp { static_cast<cw_buffer*>(arg) };
 
   bufp->_play(nullptr);
 
@@ -81,16 +80,16 @@ void* cw_buffer::_play(void*)
 // we have to use CW_ prefix in order to avoid clashes with ncurses -- yes, it's ridiculous that this file knows about ncurses
 
 //  const char STROBE = C1284_NSTROBE;
-  const char PTT      = (_ptt_delay ? C1284_NINIT : 0);
-  const char CW_KEY_DOWN = C1284_NSELECTIN | PTT;
+  const char PTT         { static_cast<char>((_ptt_delay ? C1284_NINIT : 0)) }; // explicitly narrow it
+  const char CW_KEY_DOWN { static_cast<char>(C1284_NSELECTIN | PTT) };          // explicitly narrow it
 //  const char CW_KEY_UP   = PTT;
 
-  bool ptt_asserted = false;
+  bool ptt_asserted { false };
 
   ost << "Attributes of the _play() thread: " << thread_attribute(pthread_self()) << endl;
 
   while (true)
-  { int next_action   = 0;                // next key up/down/command
+  { int next_action { 0 };                // next key up/down/command
     bool buffer_was_empty;
 
     { SAFELOCK(_key_buffer);
@@ -115,7 +114,7 @@ void* cw_buffer::_play(void*)
           sleep_for(microseconds(_ptt_delay * 1000));
         }
 
-        const unsigned int duration = _usec * next_action / 100;    // key-down duration in microseconds
+        const unsigned int duration { _usec * next_action / 100 };    // key-down duration in microseconds
 
         _port.control(CW_KEY_DOWN);
         sleep_for(microseconds(duration));
@@ -144,7 +143,7 @@ void* cw_buffer::_play(void*)
       if (next_action < 0)
       { next_action = -next_action;
 
-        const unsigned int duration = _usec * next_action / 100;    // key-up duration in microseconds
+        const unsigned int duration { _usec * next_action / 100 };    // key-up duration in microseconds
 
         _port.control(PTT);                // key up; PTT asserted
         sleep_for(microseconds(duration));
@@ -168,9 +167,9 @@ void* cw_buffer::_play(void*)
 
 // execute special command
       if (next_action == 0)
-      { bool got_command = false;
+      { bool got_command      { false };
         int  command;
-        int time_out_counter = 0;
+        int  time_out_counter { 0 };
 
         while (!got_command and (time_out_counter < 5))      // 5 millisecond time-out
         { bool buffer_is_empty = false;
@@ -181,7 +180,7 @@ void* cw_buffer::_play(void*)
           }
 
           if (buffer_is_empty)
-          { sleep_for(microseconds(1000));  // wait for one millisecond this should never happen: it means that we got an command indicator without a command
+          { sleep_for(microseconds(1000));  // wait for one millisecond; this should never happen: it means that we got a command indicator without a command
 
             time_out_counter++;
           }
@@ -238,7 +237,7 @@ void* cw_buffer::_play(void*)
       }
     }                    // end of !(buffer_was_empty)
 
-    bool buffer_is_empty = false;
+    bool buffer_is_empty { false };
 
     { SAFELOCK(_key_buffer);
 

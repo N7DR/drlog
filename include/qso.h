@@ -27,6 +27,9 @@
 extern bool QSO_DISPLAY_COUNTRY_MULT;           ///< whether country mults are written on the log line
 extern unsigned int QSO_MULT_WIDTH;             ///< width of mult fields on log line
 
+//constexpr bool         QSO_DISPLAY_COUNTRY_MULT { true };   ///< whether to display country mults in log window (may be changed in config file)
+//constexpr unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult fields in log window
+
 // forward declarations
 class running_statistics;
 

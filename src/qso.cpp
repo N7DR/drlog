@@ -28,15 +28,15 @@
 
 using namespace std;
 
-extern contest_rules rules;                 ///< rules for this contest
-extern drlog_context context;               ///< configuration context
-extern location_database location_db;       ///< location database
-extern message_stream ost;                  ///< for debugging, info
+extern contest_rules        rules;          ///< rules for this contest
+extern drlog_context        context;        ///< configuration context
+extern location_database    location_db;    ///< location database
+extern message_stream       ost;            ///< for debugging, info
 
 extern void alert(const string& msg, const bool show_time = true);       ///< alert the user
 
-bool QSO_DISPLAY_COUNTRY_MULT = true;       ///< whether to display country mults in log window (may be changed in config file)
-unsigned int  QSO_MULT_WIDTH = 5;           ///< default width of QSO mult fields in log window
+bool         QSO_DISPLAY_COUNTRY_MULT { true };   ///< whether to display country mults in log window (may be changed in config file)
+unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult fields in log window
 
 /*! \brief                      Is a particular field that might be received as part of the exchange optional?
     \param  field_name          the name of the field
@@ -46,9 +46,9 @@ unsigned int  QSO_MULT_WIDTH = 5;           ///< default width of QSO mult field
     Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
 const bool QSO::_is_received_field_optional(const string& field_name, const vector<exchange_field>& fields_from_rules) const
-{ string name_copy = field_name;
+{ string name_copy { field_name };
 
-  if (begins_with(name_copy, "received-"))
+  if (begins_with(name_copy, "received-"s))
     name_copy = substring(name_copy, 9);
 
   for (const auto& ef : fields_from_rules)
@@ -71,11 +71,11 @@ const time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) 
 {
   struct tm time_struct;
 
-  time_struct.tm_sec = from_string<int>(utc_str.substr(6, 2));
-  time_struct.tm_min = from_string<int>(utc_str.substr(3, 2));
+  time_struct.tm_sec  = from_string<int>(utc_str.substr(6, 2));
+  time_struct.tm_min  = from_string<int>(utc_str.substr(3, 2));
   time_struct.tm_hour = from_string<int>(utc_str.substr(0, 2));
   time_struct.tm_mday = from_string<int>(date_str.substr(8, 2));
-  time_struct.tm_mon = from_string<int>(date_str.substr(5, 2)) - 1;
+  time_struct.tm_mon  = from_string<int>(date_str.substr(5, 2)) - 1;
   time_struct.tm_year = from_string<int>(date_str.substr(0, 4)) - 1900;
 
   return timegm(&time_struct);    // GNU function; see time_gm man page for portable alternative.
@@ -118,7 +118,7 @@ QSO::QSO(void) :
 void QSO::populate_from_verbose_format(const drlog_context& context, const string& str, const contest_rules& rules, running_statistics& statistics)
 {
 // build a vector of name/value pairs
-  size_t cur_posn = min(static_cast<size_t>(5), str.size());  // skip the "QSO: "
+  size_t cur_posn { min(static_cast<size_t>(5), str.size()) };  // skip the "QSO: "
   vector<pair<string, string> > name_value;
 
   while (cur_posn != string::npos)
@@ -168,7 +168,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     if (!processed and (name == "frequency"))               // old version
     { _frequency_tx = value;
 
-      const double f = from_string<double>(_frequency_tx);
+      const double f { from_string<double>(_frequency_tx) };
       const frequency freq(f);
 
 //      _band = static_cast<BAND>(freq);
@@ -205,8 +205,9 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     }
 
     if (!processed and (name == "mycall"))
-    { _my_call = value;
-      processed = true;
+    { //_my_call = value;
+      //processed = true;
+      processed = ( _my_call = value, true );
     }
 
     if (!processed and (starts_with(name, "sent-")))
@@ -359,7 +360,6 @@ void QSO::populate_from_log_line(const string& str)
   _epoch_time = _to_epoch_time(_date, _utc);
 
   ost << "Ending populate_from_log_line(); QSO is now: " << *this << endl;
-
 }
 
 /*! \brief          NEW - Populate from a string (as visible in the log window)
@@ -433,7 +433,7 @@ const bool QSO::is_exchange_mult(void) const
 */
 void QSO::set_exchange_mult(const string& field_name)
 { for (auto& field : _received_exchange)
-  { if (field.is_possible_mult() and field.name() == field_name)
+  { if (field.is_possible_mult() and (field.name() == field_name))
       field.is_mult(true);
   }
 }
@@ -446,17 +446,17 @@ void QSO::set_exchange_mult(const string& field_name)
       CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
 */
 const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
-{ static unsigned int record_length = 0;
+{ static unsigned int              record_length { 0 };
   static vector< vector< string> > individual_values;
   
   if (!record_length)                                         // if we don't yet know the record length
-  { const vector<string> template_fields = split_string(cabrillo_qso_template, ",");         // colon-delimited values
+  { const vector<string> template_fields { split_string(cabrillo_qso_template, ","s) };         // colon-delimited values
   
     for (const auto& template_field : template_fields)
-      individual_values.push_back(split_string(remove_peripheral_spaces(template_field), ":"));
+      individual_values.push_back(split_string(remove_peripheral_spaces(template_field), ":"s));
   
     for (const auto& value : individual_values)
-    { const unsigned int last_char_posn = from_string<unsigned int>(value[1]) + from_string<unsigned int>(value[2]) - 1;
+    { const unsigned int last_char_posn { from_string<unsigned int>(value[1]) + from_string<unsigned int>(value[2]) - 1 };
 
       record_length = max(last_char_posn, record_length);    
     }
@@ -465,17 +465,17 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
 // create a record full of spaces
   string record(record_length, ' ');
   
-  record.replace(0, 4, "QSO:");             // put into record
+  record.replace(0, 4, "QSO:"s);             // put into record
   
 // go through every possibility for every field
   for (unsigned int n = 0; n < individual_values.size(); ++n)
-  { const vector<string>& vec = individual_values[n];
-    const string name = vec[0];
-    const unsigned int posn = from_string<unsigned int>(vec[1]) - 1;
-    const unsigned int len  = from_string<unsigned int>(vec[2]);
+  { const vector<string>& vec  { individual_values[n] };
+    const string          name { vec[0] };
+    const unsigned int posn { from_string<unsigned int>(vec[1]) - 1 };
+    const unsigned int len  { from_string<unsigned int>(vec[2]) };
 
-    pad_direction pdirn = PAD_LEFT;
-    char pad_char = ' ';
+    pad_direction pdirn    { PAD_LEFT };
+    char          pad_char { ' ' };
       
     if (vec.size() == 4)
     { if (vec[3][0] == 'R')
@@ -517,24 +517,24 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
    Astonishingly, nowhere does it say *whose* "frequency or band" it is; we are left to guess.
    I plump for my TX frequency.
 */    
-    if (name == "FREQ")
+    if (name == "FREQ"s)
     { if (!_frequency_tx.empty())                                      // frequency is available
         value = to_string(from_string<unsigned int>(_frequency_tx));
       else                                                          // we have only the band; this should never be true
-      { static const std::map<BAND, string> BOTTOM_OF_BAND { { BAND_160, "1800" },
-                                                             { BAND_80,  "3500" },
-                                                             { BAND_40,  "7100" },
-                                                             { BAND_20,  "14000" },
-                                                             { BAND_15,  "21000" },
-                                                             { BAND_10,  "28000" }
-                                                           };
+      { //static const std::map<BAND, string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
+        //                                                     { BAND_80,  "3500"s },
+        //                                                     { BAND_40,  "7100"s },
+        //                                                     { BAND_20,  "14000"s },
+        //                                                     { BAND_15,  "21000"s },
+        //                                                     { BAND_10,  "28000"s }
+        //                                                   };
 
         try
         { value = BOTTOM_OF_BAND.at(_band);
         }
 
         catch (...)
-        { value = "1800";    // default
+        { value = "1800"s;    // default
         }
       }
     }

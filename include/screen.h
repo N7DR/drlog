@@ -72,14 +72,14 @@ constexpr unsigned int WINDOW_NO_CURSOR { 1 };        ///< do not display the cu
 constexpr unsigned int WINDOW_INSERT    { 2 };        ///< INSERT mode
                     
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
-const int COLOUR_BLACK   = COLOR_BLACK,         ///< black
-          COLOUR_RED     = COLOR_RED,           ///< red
-          COLOUR_GREEN   = COLOR_GREEN,         ///< green
-          COLOUR_YELLOW  = COLOR_YELLOW,        ///< yellow
-          COLOUR_BLUE    = COLOR_BLUE,          ///< blue
-          COLOUR_MAGENTA = COLOR_MAGENTA,       ///< magenta
-          COLOUR_CYAN    = COLOR_CYAN,          ///< cyan
-          COLOUR_WHITE   = COLOR_WHITE;         ///< white
+constexpr int COLOUR_BLACK   { COLOR_BLACK },         ///< black
+              COLOUR_RED     { COLOR_RED },           ///< red
+              COLOUR_GREEN   { COLOR_GREEN },         ///< green
+              COLOUR_YELLOW  { COLOR_YELLOW },        ///< yellow
+              COLOUR_BLUE    { COLOR_BLUE },          ///< blue
+              COLOUR_MAGENTA { COLOR_MAGENTA },       ///< magenta
+              COLOUR_CYAN    { COLOR_CYAN },          ///< cyan
+              COLOUR_WHITE   { COLOR_WHITE };         ///< white
 
 #define COLOUR_PAIR(n)  COLOR_PAIR(n)           ///< English spelling allowed
                        
@@ -108,7 +108,7 @@ protected:
     \param  p       foreground colour, background colour
     \return         the number of the colour pair
 */
-  const unsigned int _add_to_vector(const std::pair< int, int>& p);
+  const unsigned int _add_to_vector(const std::pair<int, int>& p);
 
 public:
 
@@ -165,19 +165,20 @@ class window_information
 {
 protected:
 
-  int   _x;                     ///< x location on the screen
-  int   _y;                     ///< y location on the screen
-  int   _w;                     ///< width
-  int   _h;                     ///< height
+  int   _x { 0 };                     ///< x location on the screen
+  int   _y { 0 };                     ///< y location on the screen
+  int   _w { 0 };                     ///< width
+  int   _h { 0 };                     ///< height
 
-  std::string _fg_colour;       ///< name of foreground colour
-  std::string _bg_colour;       ///< name of background colour
+  std::string _fg_colour { "white"s };       ///< name of foreground colour
+  std::string _bg_colour { "black"s };       ///< name of background colour
 
-  bool  _colours_set;           ///< have the colours been set explicitly?
+  bool  _colours_set { false };           ///< have the colours been set explicitly?
 
 public:
 
 /// default constructor
+#if 0
   window_information(void) :
     _x(0),
     _y(0),
@@ -187,6 +188,9 @@ public:
     _bg_colour("black"),
     _colours_set(false)
   { }
+#endif
+
+  window_information(void) = default;
 
   READ_AND_WRITE(x);                ///< x location on the screen
   READ_AND_WRITE(y);                ///< y location on the screen
@@ -210,7 +214,6 @@ public:
 class window;
 
 /// define the type used for functions that process events
-//typedef void (* WINDOW_PROCESS_INPUT_TYPE) (window*, const keyboard_event&);
 using WINDOW_PROCESS_INPUT_TYPE = void (*) (window*, const keyboard_event&);
 
 class window
@@ -438,28 +441,13 @@ public:
   const bool common_processing(const keyboard_event& e);    // processing that is the same in multiple windows
 
 /// define the <= operator to be the same as <, except that it causes a refresh at the end of the operation
+// the universal reference is needed to handle the case where t is an rvalue
   template <class T>
-  window& operator<=(const T& t)
+  window& operator<=(T&& t)
   { if (!_wp)
       return *this;
     
-    window& rv = (*this < t);
-    
-    { SAFELOCK(screen);
-
-      refresh();
-    }
-    
-    return rv;
-  }
-
-/// define the <= operator to be the same as <, except that it causes a refresh at the end of the operation
-  template <class T>
-  window& operator<=(T& t)
-  { if (!_wp)
-      return *this;
-    
-    window& rv = (*this < t);
+    window& rv { (*this < t) };
     
     { SAFELOCK(screen);
 

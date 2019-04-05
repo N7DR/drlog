@@ -52,9 +52,9 @@ static const std::string& LF_STR   = LF;        ///< LF as string
 static const char         LF_CHAR  = '\n';      ///< LF as character
 #endif
 
-static const std::string  CR       = "\r";       ///< CR as string
-static const std::string& CR_STR   = CR;         ///< CR as string
-static const char         CR_CHAR  = '\r';       ///< CR as character
+static const std::string  CR       { "\r"s };       ///< CR as string
+static const std::string& CR_STR   { CR };         ///< CR as string
+static const char         CR_CHAR  { '\r' };       ///< CR as character
 
 static const std::string CRLF     = "\r\n";     ///< CR followed by LF
 
@@ -67,7 +67,7 @@ static const std::string DIGITS { "0123456789" };                               
 static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" };  ///< convenient place to hold all digits and upper case letters
 static const std::string UPPER_CASE_LETTERS { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };                       ///< convenient place to hold all upper case letters
 
-constexpr bool INCLUDE_SECONDS = true;             ///< whether to include seconds in date_time_string()
+constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
   
 /// directions in which a string can be padded
 enum pad_direction { PAD_LEFT,                  ///< pad to the left
@@ -75,16 +75,16 @@ enum pad_direction { PAD_LEFT,                  ///< pad to the left
                    };
 
 // error numbers
-const int STRING_UNDERFLOW            = -1,    ///< Underflow
-          STRING_UNEXPECTED_CHARACTER = -2,    ///< Unexpected character found in string
-          STRING_INVALID_FILE         = -3,    ///< Invalid file
-          STRING_INVALID_LENGTH       = -4,    ///< Length is invalid
-          STRING_FILE_IS_DIRECTORY    = -5,    ///< File is a directory
-          STRING_UNABLE_TO_STAT_FILE  = -6,    ///< Unable to stat a file
-          STRING_BOUNDS_ERROR         = -7,    ///< Attempt to access range outside string
-          STRING_CONVERSION_FAILURE   = -8,    ///< Attempt to convert the format of a string failed
-          STRING_UNKNOWN_ENCODING     = -9,    ///< Unknown character encoding
-          STRING_UNWRITEABLE_FILE     = -10;   ///< File cannot be written
+constexpr int STRING_UNDERFLOW            { -1 },    ///< Underflow
+              STRING_UNEXPECTED_CHARACTER { -2 },    ///< Unexpected character found in string
+              STRING_INVALID_FILE         { -3 },    ///< Invalid file
+              STRING_INVALID_LENGTH       { -4 },    ///< Length is invalid
+              STRING_FILE_IS_DIRECTORY    { -5 },    ///< File is a directory
+              STRING_UNABLE_TO_STAT_FILE  { -6 },    ///< Unable to stat a file
+              STRING_BOUNDS_ERROR         { -7 },    ///< Attempt to access range outside string
+              STRING_CONVERSION_FAILURE   { -8 },    ///< Attempt to convert the format of a string failed
+              STRING_UNKNOWN_ENCODING     { -9 },    ///< Unknown character encoding
+              STRING_UNWRITEABLE_FILE     { -10 };   ///< File cannot be written
 
 /*! \brief          Convert from a CSV line to a vector of strings, each containing one field
     \param  line    CSV line
@@ -124,7 +124,7 @@ const std::string format_time(const std::string& format, const tm* tmp);
 */
 template <class T>
 const T from_string(const std::string& s)
-{ std::istringstream stream(s);
+{ std::istringstream stream { s };
   T t;
      
   stream >> t;
@@ -188,11 +188,11 @@ const std::string replace(const std::string& s, const std::string& old_str, cons
 */
 template <typename T>
 const std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
-{ std::string rv = s;
+{ std::string rv { s };
 
-  const size_t value_size = sizeof(value);
+  constexpr size_t value_size { sizeof(value) };
 
-  u_char* cp = (u_char*)&value;
+  u_char* cp { (u_char*)(&value) };
 
   for (size_t n = 0; n < value_size; ++n)
   { if ( (start_posn + n) < rv.size())

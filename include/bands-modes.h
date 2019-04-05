@@ -97,6 +97,18 @@ static std::map<std::string, MODE> MODE_FROM_NAME { { "CW", MODE_CW },
                                                     { "RTTY",  MODE_RTTY }
                                                   };
 
+static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
+                                                          { BAND_80,  "3500"s },
+                                                          { BAND_60,  "5330.5"s },
+                                                          { BAND_40,  "7100"s },
+                                                          { BAND_30,  "10100"s },
+                                                          { BAND_20,  "14000"s },
+                                                          { BAND_17,  "18068"s },
+                                                          { BAND_15,  "21000"s },
+                                                          { BAND_12,  "24890"s },
+                                                          { BAND_10,  "28000"s }
+                                                        };
+
 typedef std::pair<BAND, MODE> bandmode;    ///< tuple for encapsulating a band and mode
 
 /*!  \brief     Convert a frequency to a band

@@ -64,22 +64,22 @@ enum DRLOG_MODE { CQ_MODE = 0,              ///< I'm calling the other station
                 };
 
 string VERSION;         ///< version string
-string DP("·");         ///< character for decimal point
-string TS(",");         ///< character for thousands separator
+string DP("·"s);        ///< character for decimal point
+string TS(","s);        ///< character for thousands separator
 
-static const set<string> variable_exchange_fields { "SERNO" };  ///< mutable exchange fields
+static const set<string> variable_exchange_fields { "SERNO"s };  ///< mutable exchange fields
 
-const bool DISPLAY_EXTRACT = true,                              ///< display log extracts
-           DO_NOT_DISPLAY_EXTRACT = !DISPLAY_EXTRACT;           ///< do not display log extracts
+constexpr bool DISPLAY_EXTRACT        { true },                       ///< display log extracts
+               DO_NOT_DISPLAY_EXTRACT { !DISPLAY_EXTRACT };           ///< do not display log extracts
 
-const bool FORCE_THRESHOLD = true;                              ///< for forcing accumulator to threshold
+constexpr bool FORCE_THRESHOLD { true };                              ///< for forcing accumulator to threshold
 
 // some forward declarations; others, that depend on these, occur later
-const string active_window_name(void);                          ///< Return the name of the active window in printable form
-void add_qso(const QSO& qso);                                   ///< Add a QSO into the all the objects that need to know about it
-void alert(const string& msg, const bool show_time = true);     ///< Alert the user
-void allow_for_callsign_mults(QSO& qso);                        ///< Add info to QSO if callsign mults are in use; may change qso
-void archive_data(void);                                        ///< Send data to the archive file
+const string active_window_name(void);                                  ///< Return the name of the active window in printable form
+void         add_qso(const QSO& qso);                                   ///< Add a QSO into the all the objects that need to know about it
+void         alert(const string& msg, const bool show_time = true);     ///< Alert the user
+void         allow_for_callsign_mults(QSO& qso);                        ///< Add info to QSO if callsign mults are in use; may change qso
+void         archive_data(void);                                        ///< Send data to the archive file
 
 const string bearing(const string& callsign);   ///< Return the bearing to a station
 
@@ -152,7 +152,6 @@ void update_individual_messages_window(const string& callsign = string());  ///<
 void update_known_callsign_mults(const string& callsign, const bool force_known = false);                   ///< Possibly add a new callsign mult
 const bool update_known_country_mults(const string& callsign, const bool force_known = false);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
-//void update_monitored_posts(const dx_post& post);                             ///< Add entry to POST MONITOR window
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_qsls_window(const string& = "");                                ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                         ///< the head of the QTC queue
@@ -184,9 +183,7 @@ void* spawn_rbn(void*);                                                     ///<
 
 // necessary forward declaration of functions that include thread safety
 const BAND safe_get_band(void);                             ///< get value of <i>current_band</i>
-//void safe_set_band(const BAND b);                           ///< set value of <i>current_band</i>
 const MODE safe_get_mode(void);                             ///< get value of <i>current_mode</i>
-//void safe_set_mode(const MODE m);                           ///< set value of <i>current_mode</i>
 
 // more forward declarations (dependent on earlier ones)
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                   ///<   Is a callsign needed on a particular band and mode?
@@ -201,7 +198,7 @@ void update_remaining_exchange_mults_windows(const contest_rules&, running_stati
 // otherwise Murphy dictates that we'll hit a race condition at the worst possible time
 
 pt_mutex alert_mutex;                       ///< mutex for the user alert
-time_t   alert_time = 0;                    ///< time of last alert
+time_t   alert_time { 0 };                    ///< time of last alert
 
 pt_mutex            batch_messages_mutex;   ///< mutex for batch messages
 unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
@@ -222,9 +219,9 @@ pt_mutex  my_bandmap_entry_mutex;          ///< mutex for changing frequency or 
 time_t    time_last_qsy { time_t(NULL) };  ///< time of last QSY
 
 pt_mutex            thread_check_mutex;                     ///< mutex for controlling threads; both the following variables are under this mutex
-int                 n_running_threads = 0;                  ///< how many additional threads are running?
-bool                exiting = false;                        ///< is the program exiting?
-bool                exiting_rig_status = false;             ///< turn off the display-rig_status thread first
+int                 n_running_threads { 0 };                  ///< how many additional threads are running?
+bool                exiting { false };                        ///< is the program exiting?
+bool                exiting_rig_status { false };             ///< turn off the display-rig_status thread first
 set<string>         thread_names;                           ///< the names of the threads
 
 pt_mutex            current_band_mutex;                     ///< mutex for setting/getting the current band
@@ -234,13 +231,12 @@ pt_mutex            current_mode_mutex;                     ///< mutex for setti
 MODE                current_mode;                           ///< the current mode
 
 pt_mutex            drlog_mode_mutex;                       ///< mutex for accessing <i>drlog_mode</i>
-DRLOG_MODE          drlog_mode = SAP_MODE;                  ///< CQ_MODE or SAP_MODE
+DRLOG_MODE          drlog_mode { SAP_MODE };                  ///< CQ_MODE or SAP_MODE
 DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 
 pt_mutex            known_callsign_mults_mutex;             ///< mutex for the callsign mults we know about in AUTO mode
 set<string>         known_callsign_mults;                   ///< callsign mults we know about in AUTO mode
 
-//pt_mutex            my_bandmap_entry_mutex;                 ///< mutex for my_bandmap_entry
 bandmap_entry       my_bandmap_entry;                       ///< last bandmap entry that refers to me (usually from poll)
 
 pt_condition_variable frequency_change_condvar;             ///< condvar associated with updating windows related to a frequency change
@@ -305,9 +301,9 @@ running_statistics      statistics;                         ///< all the QSO sta
 // QTC variables
 qtc_database    qtc_db;                 ///< sent QTCs
 qtc_buffer      qtc_buf;                ///< all sent and unsent QTCs
-bool            send_qtcs(false);       ///< whether QTCs are used; set from rules later
+bool            send_qtcs { false };       ///< whether QTCs are used; set from rules later
 
-EFT CALLSIGN_EFT("CALLSIGN");           ///< EFT used in constructor for parsed_exchange (initialised from context during start-up, below)
+EFT CALLSIGN_EFT("CALLSIGN"s);           ///< EFT used in constructor for parsed_exchange (initialised from context during start-up, below)
 
 /* The K3's handling of commands from the computer is rubbish. This variable
    is a simple way to cease polling when we are moving RIT with the shift keys:

@@ -275,7 +275,7 @@ public:
 // -----------  log_extract  ----------------
 
 /*! \class  log_extract
-    \brief  Support for bits of the log
+    \brief  Support for parts of the log
 */
 
 class log_extract

@@ -29,6 +29,7 @@
 
 using namespace std;
 
+// globals
 cpair    colours;               ///< global repository for information about colour pairs
 pt_mutex screen_mutex;          ///< mutex for access to screen
 
@@ -319,13 +320,13 @@ window& window::operator<(const vector<string>& v)
 { if (!_wp)
     return *this;
 
-  unsigned int idx = 0;
+  unsigned int idx { 0 };
 
   for (const auto& str : v)
   {
 // see if there's enough room on this line
     cursor_position();
-    const int remaining_space = width() - _cursor_x;
+    const int remaining_space { width() - _cursor_x };
 
  // stop writing if there's insufficient room for the next string
     if (remaining_space < static_cast<int>(str.length()))
@@ -338,9 +339,9 @@ window& window::operator<(const vector<string>& v)
     *this < str;
 
 // add space unless we're at the end of a line or this is the last string
-    const bool end_of_line = (remaining_space == static_cast<int>(str.length()));
+    const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
 
-    if ((idx != v.size() - 1) and !end_of_line)
+    if ( (idx != (v.size() - 1)) and !end_of_line )
       *this < " ";
 
     idx++;
@@ -359,16 +360,16 @@ window& window::operator<(const vector<std::pair<string, int /* colour pair numb
 { if (!_wp)
     return *this;
 
-  unsigned int idx = 0;
+  unsigned int idx { 0 };
 
   for (const auto& psi : vec)
-  { const string& str = psi.first;
-    const int& cp = psi.second;
+  { const string& str { psi.first };
+    const int&    cp  { psi.second };
 
 // see if there's enough room on this line
     cursor_position();
 
-    const int remaining_space = width() - _cursor_x;
+    const int remaining_space { width() - _cursor_x };
 
 // stop writing if there's insufficient room for the next string
     if (remaining_space < static_cast<int>(str.length()))
@@ -383,9 +384,9 @@ window& window::operator<(const vector<std::pair<string, int /* colour pair numb
     *this < str < COLOURS(_fg, _bg);    // back to default colours
 
 // add space unless we're at the end of a line or this is the last string
-    const bool end_of_line = (remaining_space == static_cast<int>(str.length()));
+    const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
 
-    if ((idx != vec.size() - 1) and !end_of_line)
+    if ( (idx != (vec.size() - 1)) and !end_of_line )
       *this < " ";
 
     idx++;
@@ -560,7 +561,7 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
       break;
 
     case WINDOW_ATTRIBUTES::CURSOR_END_OF_LINE :
-    { const size_t posn = read().find_last_not_of(" ");
+    { const size_t posn { read().find_last_not_of(" "s) };
 
       move_cursor(posn + 1, cursor_position().y());
       break;
