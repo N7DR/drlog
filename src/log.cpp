@@ -1,4 +1,4 @@
-// $Id: log.cpp 149 2019-01-03 19:24:01Z  $
+// $Id: log.cpp 150 2019-04-05 16:09:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -186,15 +186,15 @@ const string logbook::call_needed(const string& call, const contest_rules& rules
     \return         whether <i>qso</i> would be a dupe
 */
 const bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
-{ bool rv = false;
+{ bool rv { false };
 
-  const string& call = qso.call();
+  const string& call { qso.call() };
 
   if (qso_b4(call))            // only check if we've worked this call before
   { 
 // if we've worked on this band and mode, it is definitely a dupe
-    const enum MODE& m = qso.mode();
-    const BAND& b = qso.band();
+    const MODE& m { qso.mode() };
+    const BAND& b { qso.band() };
   
     if (qso_b4(call, b, m))
       rv = true;
@@ -299,115 +299,115 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
 // specification is silent as to what constitutes an EOL marker. The FAQ (why would a specification need
 // an FAQ if it were properly specified?) implies that the EOL of the underlying OS on the system that creates
 // the Cabrillo file should be accepted by the contest sponsor.
-  string EOL_STRING = LF;
+  string EOL_STRING { LF };
 
-  if (context.cabrillo_eol() == "CR")
+  if (context.cabrillo_eol() == "CR"s)
     EOL_STRING = CR;
 
-  if (context.cabrillo_eol() == "CRLF")
+  if (context.cabrillo_eol() == "CRLF"s)
     EOL_STRING = CRLF;
 
 // this goes first
-  rv += "START-OF-LOG: 3.0" + EOL_STRING;
+  rv += "START-OF-LOG: 3.0"s + EOL_STRING;
   
 // call
-  rv += "CALLSIGN: " + context.cabrillo_callsign() + EOL_STRING;
+  rv += "CALLSIGN: "s + context.cabrillo_callsign() + EOL_STRING;
   
 // contest
-  rv += "CONTEST: " + context.cabrillo_contest() + EOL_STRING;
+  rv += "CONTEST: "s + context.cabrillo_contest() + EOL_STRING;
   
 // drlog name / version
-  rv += "CREATED-BY: drlog version " + VERSION + EOL_STRING;
+  rv += "CREATED-BY: drlog version "s + VERSION + EOL_STRING;
   
 // name of operator
   if (context.cabrillo_name() != string())
-    rv += "NAME: " + context.cabrillo_name() + EOL_STRING;
+    rv += "NAME: "s + context.cabrillo_name() + EOL_STRING;
 
 // address lines http://www.kkn.net/~trey/cabrillo/tags.html: "A maximum of four ADDRESS: lines is permitted."
   if (context.cabrillo_address_1() != string())
-  { rv += "ADDRESS: " + context.cabrillo_address_1() + EOL_STRING;
+  { rv += "ADDRESS: "s + context.cabrillo_address_1() + EOL_STRING;
 
     if (context.cabrillo_address_2() != string())
-    { rv += "ADDRESS: " + context.cabrillo_address_2() + EOL_STRING;
+    { rv += "ADDRESS: "s + context.cabrillo_address_2() + EOL_STRING;
 
       if (context.cabrillo_address_3() != string())
-      { rv += "ADDRESS: " + context.cabrillo_address_3() + EOL_STRING;
+      { rv += "ADDRESS: "s + context.cabrillo_address_3() + EOL_STRING;
 
         if (context.cabrillo_address_4() != string())
-          rv += "ADDRESS: " + context.cabrillo_address_4() + EOL_STRING;
+          rv += "ADDRESS: "s + context.cabrillo_address_4() + EOL_STRING;
       }
     }
   }
  
 // address city
   if (context.cabrillo_address_city() != string())
-    rv += "ADDRESS-CITY: " + context.cabrillo_address_city() + EOL_STRING;
+    rv += "ADDRESS-CITY: "s + context.cabrillo_address_city() + EOL_STRING;
   
 // address state/province
   if (context.cabrillo_address_state_province() != string())
-    rv += "ADDRESS-STATE-PROVINCE: " + context.cabrillo_address_state_province() + EOL_STRING;
+    rv += "ADDRESS-STATE-PROVINCE: "s + context.cabrillo_address_state_province() + EOL_STRING;
   
 // address postcode
   if (context.cabrillo_address_postalcode() != string())
-    rv += "ADDRESS-POSTALCODE: " + context.cabrillo_address_postalcode() + EOL_STRING;
+    rv += "ADDRESS-POSTALCODE: "s + context.cabrillo_address_postalcode() + EOL_STRING;
   
 // address country
   if (context.cabrillo_address_country() != string())
-    rv += "ADDRESS-COUNTRY: " + context.cabrillo_address_country() + EOL_STRING;
+    rv += "ADDRESS-COUNTRY: "s + context.cabrillo_address_country() + EOL_STRING;
   
 // list of operators
   if (context.cabrillo_operators() != string())
-    rv += "OPERATORS: " + context.cabrillo_operators() + EOL_STRING;
+    rv += "OPERATORS: "s + context.cabrillo_operators() + EOL_STRING;
   
 // Categories
 // assisted
-  rv += "CATEGORY-ASSISTED: " + context.cabrillo_category_assisted() + EOL_STRING;
+  rv += "CATEGORY-ASSISTED: "s + context.cabrillo_category_assisted() + EOL_STRING;
  
 // band
-  rv += "CATEGORY-BAND: " + context.cabrillo_category_band() + EOL_STRING;
+  rv += "CATEGORY-BAND: "s + context.cabrillo_category_band() + EOL_STRING;
 
 // mode
-  rv += "CATEGORY-MODE: " + context.cabrillo_category_mode() + EOL_STRING;
+  rv += "CATEGORY-MODE: "s + context.cabrillo_category_mode() + EOL_STRING;
 
 // operator
-  rv += "CATEGORY-OPERATOR: " + context.cabrillo_category_operator() + EOL_STRING;
+  rv += "CATEGORY-OPERATOR: "s + context.cabrillo_category_operator() + EOL_STRING;
 
 // overlay
   if (context.cabrillo_category_overlay() != string())
-    rv += "CATEGORY-OVERLAY: " + context.cabrillo_category_overlay() + EOL_STRING;
+    rv += "CATEGORY-OVERLAY: "s + context.cabrillo_category_overlay() + EOL_STRING;
 
 // power
-  rv += "CATEGORY-POWER: " + context.cabrillo_category_power() + EOL_STRING;
+  rv += "CATEGORY-POWER: "s + context.cabrillo_category_power() + EOL_STRING;
 
 // station
   if (context.cabrillo_category_station() != string())
-    rv += "CATEGORY-STATION: " + context.cabrillo_category_station() + EOL_STRING;
+    rv += "CATEGORY-STATION: "s + context.cabrillo_category_station() + EOL_STRING;
 
 // time
   if (context.cabrillo_category_time() != string())
-    rv += "CATEGORY-TIME: " + context.cabrillo_category_time() + EOL_STRING;
+    rv += "CATEGORY-TIME: "s + context.cabrillo_category_time() + EOL_STRING;
 
 // transmitter
-  rv += "CATEGORY-TRANSMITTER: " + context.cabrillo_category_transmitter() + EOL_STRING;
+  rv += "CATEGORY-TRANSMITTER: "s + context.cabrillo_category_transmitter() + EOL_STRING;
 
 // club
   if (context.cabrillo_club() != string())
-    rv += "CLUB: " + context.cabrillo_club() + EOL_STRING;
+    rv += "CLUB: "s + context.cabrillo_club() + EOL_STRING;
 
 // location
   if (context.cabrillo_location() != string())
-    rv += "LOCATION: " + context.cabrillo_location() + EOL_STRING;
+    rv += "LOCATION: "s + context.cabrillo_location() + EOL_STRING;
     
 // e-mail
   if (context.cabrillo_e_mail() != string())
-    rv += "EMAIL: " + context.cabrillo_e_mail() + EOL_STRING;
+    rv += "EMAIL: "s + context.cabrillo_e_mail() + EOL_STRING;
 
 // claimed score
   if (context.cabrillo_include_score())
-    rv += "CLAIMED-SCORE: " + to_string(score) + EOL_STRING;
+    rv += "CLAIMED-SCORE: "s + to_string(score) + EOL_STRING;
 
 // certificate
-    rv += "CERTIFICATE: " + context.cabrillo_certificate() + EOL_STRING;
+    rv += "CERTIFICATE: "s + context.cabrillo_certificate() + EOL_STRING;
 
 /* the QSOs. The Cabrillo "specification" provides not even a semblance of a computer-parsable
    grammar for QSOs, so a lot of this is guesswork.
@@ -416,16 +416,16 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
 */
   
 // generate time-ordered container
-  const list<QSO> qsos = as_list();
-  const string cabrillo_qso_template = context.cabrillo_qso_template();
+  const list<QSO> qsos                  { as_list() };
+  const string    cabrillo_qso_template { context.cabrillo_qso_template() };
   
   FOR_ALL(qsos, [&] (const QSO& q) { rv += q.cabrillo_format(cabrillo_qso_template) + EOL_STRING; } );
   
 // soapbox
-  rv += "SOAPBOX: " + EOL_STRING;
+  rv += "SOAPBOX: "s + EOL_STRING;
  
 // this goes at the end
-  rv += "END-OF-LOG:" + EOL_STRING;
+  rv += "END-OF-LOG:"s + EOL_STRING;
   
   return rv;
 }
@@ -435,61 +435,62 @@ const string logbook::cabrillo_log(const drlog_context& context, const unsigned 
     \param  cabrillo_qso_template   template for the Cabrillo QSOs
 */
 void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_template)
-{ string file_contents = remove_char(read_file(filename), '\r');
-  const vector<string> lines = to_lines(file_contents);
+{ string file_contents { remove_char(read_file(filename), '\r') };
+
+  const vector<string> lines { to_lines(file_contents) };
   
 /*
   CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1 
 */
   
   vector< vector< string> > individual_values;
-  const vector<string> template_fields = split_string(cabrillo_qso_template, ",");         // colon-delimited values
+  const vector<string> template_fields { split_string(cabrillo_qso_template, ","s) };         // colon-delimited values
   
   for (unsigned int n = 0; n < template_fields.size(); ++n)
-    individual_values.push_back(split_string(remove_peripheral_spaces(template_fields[n]), ":"));
+    individual_values.push_back(split_string(remove_peripheral_spaces(template_fields[n]), ":"s));
 
-  unsigned int last_qso_number = 0; 
+  unsigned int last_qso_number { 0 };
    
 // for each QSO line
   for (const auto& line : lines)
-  { if (line.substr(0, 3) == "QSO" or line.substr(0, 3) == "   ")
+  { if (line.substr(0, 3) == "QSO"s or line.substr(0, 3) == "   "s)
     { QSO qso;
   
 // go through the fields
       for (unsigned int n = 0; n < individual_values.size(); ++n)
-      { const vector<string>& vec = individual_values[n];
-        const string name = vec[0];
-        const unsigned int posn = from_string<unsigned int>(vec[1]) - 1;
-        const unsigned int len  = from_string<unsigned int>(vec[2]);
-        const string value = (line.length() >= posn + 1 ? remove_peripheral_spaces(line.substr(posn, len)) : "");
+      { const vector<string>& vec  { individual_values[n] };
+        const string          name { vec[0] };
+        const unsigned int    posn { from_string<unsigned int>(vec[1]) - 1 };
+        const unsigned int    len  { from_string<unsigned int>(vec[2]) };
+        const string          value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces(line.substr(posn, len)) : string()) };
       
 // frequency
-        if (name == "FREQ")
+        if (name == "FREQ"s)
         { qso.freq(value);
     
-          const unsigned int _frequency = from_string<unsigned int>(value);
-          const BAND _band = static_cast<BAND>(frequency(_frequency));
+          const unsigned int _frequency { from_string<unsigned int>(value) };
+          const BAND         _band      { static_cast<BAND>(frequency(_frequency)) };
 
           qso.band(_band);
         }
       
 // mode
-        if (name == "MODE")
-        { if (value == "CW")
+        if (name == "MODE"s)
+        { if (value == "CW"s)
             qso.mode(MODE_CW);
 
-          if (value == "SSB")
+          if (value == "SSB"s)
             qso.mode(MODE_SSB);
 //    if (value == "RTTY")
 //      qso.mode(MODE_DIGI);
         }
 
 // date
-        if (name == "DATE")
+        if (name == "DATE"s)
           qso.date(value);
 
 // time
-        if (name == "TIME")
+        if (name == "TIME"s)
         { if (value.length() == 5)
             qso.utc(value.substr(0, 2) + value.substr(3, 2));    // handle hh:mm format
           else
@@ -497,25 +498,27 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
         }
 
 // tcall
-        if (name == "TCALL")
+        if (name == "TCALL"s)
           qso.my_call(value);
     
 // transmitted exchange
-        if (name.substr(0, 5) == "TEXCH")
-        { const string field_name = name.substr(6);
-          vector<pair<string, string> > current_sent_exchange = qso.sent_exchange(); // do in two steps in order to remove constness of returned value
+        if (name.substr(0, 5) == "TEXCH"s)
+        { const string                  field_name            { name.substr(6) };
+
+          vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
   
           qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
         }
 
 // rcall
-        if (name == "RCALL")
+        if (name == "RCALL"s)
           qso.callsign(value);
 
 // received exchange
-        if (name.substr(0, 5) == "REXCH")
-        { const string field_name = name.substr(6);
-          vector<received_field> current_received_exchange = qso.received_exchange(); // do in two steps in order to remove constness of returned value
+        if (name.substr(0, 5) == "REXCH"s)
+        { const string           field_name                { name.substr(6) };
+
+          vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
 
 // should have a function in the QSO class to add a field to the exchange
           current_received_exchange.push_back( { field_name, value, false, false });
@@ -788,7 +791,6 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 
   display();
 }
-
 
 // -----------  old_log  ----------------
 

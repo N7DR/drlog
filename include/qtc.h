@@ -1,4 +1,4 @@
-// $Id: qtc.h 145 2018-03-19 17:28:50Z  $
+// $Id: qtc.h 150 2019-04-05 16:09:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -442,7 +442,7 @@ public:
     \return     the total number of QSOs, both sent and unsent, in the database
 */
   inline const unsigned int size(void) const
-    { return n_sent_qsos() + n_unsent_qsos(); }
+    { return ( n_sent_qsos() + n_unsent_qsos() ); }
 
 /*! \brief          Recreate the unsent list
     \param  logbk   logbook

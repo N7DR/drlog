@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 149 2019-01-03 19:24:01Z  $
+// $Id: drlog.cpp 150 2019-04-05 16:09:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -5403,14 +5403,15 @@ void populate_win_info(const string& callsign)
   const string name_str = location_db.country_name(callsign);            // name of the country
 
   if (to_upper(name_str) != "NONE")
-  { const string sunrise_time = sunrise(callsign);
-    const string sunset_time = sunset(callsign);
-    const string current_time = substring(hhmmss(), 0, 2) + ":" + substring(hhmmss(), 2, 2);
+  { const string sunrise_time { sunrise(callsign) };
+    const string sunset_time  { sunset(callsign) };
+//    const string current_time = substring(hhmmss(), 0, 2) + ":" + substring(hhmmss(), 2, 2);
+    const string current_time { substring(hhmmss(), 0, 5) };
 
     bool is_daylight;
-    bool processed = false;
+    bool processed { false };
 
-    if (sunrise_time == "DARK")
+    if (sunrise_time == "DARK"s)
     { is_daylight = false;
       processed = true;
     }

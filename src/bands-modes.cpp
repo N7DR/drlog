@@ -43,18 +43,18 @@ frequency::frequency(const double f)
     \param f        frequency in Hz, kHz or MHz
     \param unit     frequency unit
 */
-frequency::frequency(const double f, const FREQ_UNIT unit)
+frequency::frequency(const double f, const FREQUENCY_UNIT unit)
 
 { switch (unit)
-  { case FREQ_HZ :
+  { case FREQUENCY_UNIT::HZ :
       _hz = static_cast<unsigned int>(f + 0.5);
       break;
 
-    case FREQ_KHZ :
+    case FREQUENCY_UNIT::KHZ :
       _hz = static_cast<unsigned int>(f * 1000 + 0.5);
       break;
 
-    case FREQ_MHZ :
+    case FREQUENCY_UNIT::MHZ :
       _hz = static_cast<unsigned int>(f * 1000000 + 0.5);
       break;
   }

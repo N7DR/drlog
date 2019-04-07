@@ -602,7 +602,7 @@ public:
     \return     difference in frequency between *this and <i>be</i>
 */
   inline const frequency frequency_difference(const bandmap_entry& be) const
-    { return frequency(abs(be._freq.hz() - _freq.hz()), FREQ_HZ); }
+    { return frequency(abs(be._freq.hz() - _freq.hz()), FREQUENCY_UNIT::HZ); }
 
 /*! \brief      Return the difference in frequency between two bandmap entries, in +ve hertz
     \param  be  other bandmap entry

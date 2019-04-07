@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 147 2018-04-20 21:32:50Z  $
+// $Id: bands-modes.h 150 2019-04-05 16:09:55Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,10 +23,10 @@
 #include <string>
 
 /// units for measuring frequency
-enum FREQ_UNIT { FREQ_HZ = 0,
-                 FREQ_KHZ,
-                 FREQ_MHZ
-               };
+enum class FREQUENCY_UNIT { HZ,
+                            KHZ,
+                            MHZ
+                          };
 
 /// bands that drlog knows about
 enum BAND { BAND_160 = 0,
@@ -45,31 +45,31 @@ enum BAND { BAND_160 = 0,
             MAX_BAND = BAND_10
           };
 
-const unsigned int NUMBER_OF_BANDS = MAX_BAND + 1;                          ///< how many bands does drlog know about?
-const unsigned int N_BANDS = NUMBER_OF_BANDS;                               ///< how many bands does drlog know about?
+constexpr unsigned int NUMBER_OF_BANDS { MAX_BAND + 1 };                          ///< how many bands does drlog know about?
+constexpr unsigned int N_BANDS         { NUMBER_OF_BANDS };                               ///< how many bands does drlog know about?
 
-static std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160",
-                                                              "80",
-                                                              "60",
-                                                              "40",
-                                                              "30",
-                                                              "20",
-                                                              "17",
-                                                              "15",
-                                                              "12",
-                                                              "10"
+static std::array<std::string, NUMBER_OF_BANDS> BAND_NAME { { "160"s,
+                                                              "80"s,
+                                                              "60"s,
+                                                              "40"s,
+                                                              "30"s,
+                                                              "20"s,
+                                                              "17"s,
+                                                              "15"s,
+                                                              "12"s,
+                                                              "10"s
                                                            } };         ///< names of bands
 
-static std::map<std::string, BAND> BAND_FROM_NAME { { "160", BAND_160 },
-                                                    { "80",  BAND_80 },
-                                                    { "60",  BAND_60 },
-                                                    { "40",  BAND_40 },
-                                                    { "30",  BAND_30 },
-                                                    { "20",  BAND_20 },
-                                                    { "17",  BAND_17 },
-                                                    { "15",  BAND_15 },
-                                                    { "12",  BAND_12 },
-                                                    { "10",  BAND_10 }
+static std::map<std::string, BAND> BAND_FROM_NAME { { "160"s, BAND_160 },
+                                                    { "80"s,  BAND_80 },
+                                                    { "60"s,  BAND_60 },
+                                                    { "40"s,  BAND_40 },
+                                                    { "30"s,  BAND_30 },
+                                                    { "20"s,  BAND_20 },
+                                                    { "17"s,  BAND_17 },
+                                                    { "15"s,  BAND_15 },
+                                                    { "12"s,  BAND_12 },
+                                                    { "10"s,  BAND_10 }
                                                   };                    ///< map a band name to a band
 
 /// modes that drlog knows about
@@ -187,7 +187,7 @@ public:
     \param f        frequency in Hz, kHz or MHz
     \param unit     frequency unit
 */
-  frequency(const double f, const FREQ_UNIT unit);
+  frequency(const double f, const FREQUENCY_UNIT unit);
 
 /*! \brief      Construct from a string
     \param str  frequency in Hz, kHz or MHz
