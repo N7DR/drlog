@@ -57,13 +57,13 @@ bandmap_filter_type BMF;                            ///< the global bandmap filt
 */
 const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
-  { case BANDMAP_ENTRY_LOCAL :
+  { case BANDMAP_ENTRY_SOURCE::LOCAL :
       return "BANDMAP_ENTRY_LOCAL";
 
-    case BANDMAP_ENTRY_CLUSTER :
+    case BANDMAP_ENTRY_SOURCE::CLUSTER :
       return "BANDMAP_ENTRY_CLUSTER";
 
-    case BANDMAP_ENTRY_RBN :
+    case BANDMAP_ENTRY_SOURCE::RBN :
       return "BANDMAP_ENTRY_RBN";
 
     default :
@@ -84,9 +84,10 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
     Does nothing if <i>new_poster</i> is already present
 */
 const unsigned int bandmap_buffer_entry::add(const string& new_poster)
-{ _posters.insert(new_poster);
+{ //_posters.insert(new_poster);
 
-  return _posters.size();
+  //return _posters.size();
+  return ( _posters.insert(new_poster), _posters.size() );
 }
 
 // -----------   bandmap_buffer ----------------
@@ -120,10 +121,6 @@ const unsigned int bandmap_buffer::add(const string& callsign, const string& pos
 { SAFELOCK(_bandmap_buffer);
 
   return _data[callsign].add(poster);
-
-//  bandmap_buffer_entry& bfe = _data[callsign];
-
-//  return bfe.add(poster);
 }
 
 // -----------   bandmap_filter_type ----------------
@@ -152,7 +149,7 @@ const vector<string> bandmap_filter_type::filter(void) const
      if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
-{ vector<string>* vs_p = ( (CONTINENT_SET < str) ? &_continents : &_prefixes );          // create pointer to correct vector
+{ vector<string>* vs_p { ( (CONTINENT_SET < str) ? &_continents : &_prefixes ) };          // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss.insert(continent_or_prefix); } );  // create a copy of current values
@@ -176,7 +173,7 @@ void bandmap_entry::callsign(const string& call)
 { _callsign = call;
 
   if (!is_marker())
-  { const location_info li = location_db.info(_callsign);
+  { const location_info li { location_db.info(_callsign)};
 
     _canonical_prefix = li.canonical_prefix();
     _continent = li.continent();
@@ -204,10 +201,10 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // callsign mult
   clear_callsign_mult();
 
-  const set<string> callsign_mults = rules.callsign_mults();
+  const set<string> callsign_mults { rules.callsign_mults() };
 
   for (const auto& callsign_mult_name : callsign_mults)
-  { const string callsign_mult_val = callsign_mult_value(callsign_mult_name, _callsign);
+  { const string callsign_mult_val { callsign_mult_value(callsign_mult_name, _callsign) };
 
     if (!callsign_mult_val.empty())
     { if (statistics.is_needed_callsign_mult(callsign_mult_name, callsign_mult_val, _band, _mode))
@@ -233,19 +230,19 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 // exchange mult status
   clear_exchange_mult();
 
-  const vector<string> exch_mults = rules.expanded_exchange_mults();                                  // the exchange multipliers
+  const vector<string> exch_mults { rules.expanded_exchange_mults() };                                  // the exchange multipliers
 
 // there can only be an exchange mult if one of the exchange field names matches an exchange mult field name
-  bool exchange_mult_is_possible = false;
+  bool exchange_mult_is_possible { false };
 
   for (const auto& exch_mult_name : exch_mults)
-  { const vector<string> exchange_field_names = rules.expanded_exchange_field_names(_canonical_prefix, _mode);
-    const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
+  { const vector<string> exchange_field_names       { rules.expanded_exchange_field_names(_canonical_prefix, _mode) };
+    const bool           is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
 
     if (is_possible_exchange_field)
     { exchange_mult_is_possible = true;
 
-      const string guess = rules.canonical_value(exch_mult_name, exchange_db.guess_value(_callsign, exch_mult_name));
+      const string guess { rules.canonical_value(exch_mult_name, exchange_db.guess_value(_callsign, exch_mult_name)) };
 
       if (!guess.empty())
       { if ( statistics.is_needed_exchange_mult(exch_mult_name, guess, _band, _mode) )
@@ -296,7 +293,7 @@ const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
     <i>statistics</i> must be updated to be current before this is called
 */
 const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, running_statistics& statistics)
-{ const bool original_is_needed = _is_needed;
+{ const bool original_is_needed { _is_needed };
 
 // if this contest allows only one QSO with a station (e.g., SS)
   if (!rules.work_if_different_band())
@@ -309,9 +306,9 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
    _is_needed = !q_history.worked(_callsign, _band);
 
 // multi-mode contests ***
-  const bool original_is_needed_callsign_mult = is_needed_callsign_mult();
-  const bool original_is_needed_country_mult = is_needed_country_mult();
-  const bool original_is_needed_exchange_mult = is_needed_exchange_mult();
+  const bool original_is_needed_callsign_mult { is_needed_callsign_mult() };
+  const bool original_is_needed_country_mult  { is_needed_country_mult() };
+  const bool original_is_needed_exchange_mult { is_needed_exchange_mult() };
 
   calculate_mult_status(rules, statistics);
 
@@ -321,7 +318,7 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
 
 /// guess the mode, based on the frequency
 const MODE bandmap_entry::putative_mode(void) const
-{ if (source() == BANDMAP_ENTRY_RBN)
+{ if (source() == BANDMAP_ENTRY_SOURCE::RBN)
     return MODE_CW;
 
   try
@@ -538,7 +535,7 @@ const bool bandmap::_mark_as_recent(const bandmap_entry& be)
 { if (_rbn_threshold == 1)
     return true;
 
-  if ( (be.source() == BANDMAP_ENTRY_LOCAL) or (be.source() == BANDMAP_ENTRY_CLUSTER) )
+  if ( (be.source() == BANDMAP_ENTRY_SOURCE::LOCAL) or (be.source() == BANDMAP_ENTRY_SOURCE::CLUSTER) )
     return true;
 
   if (be.is_marker())           // don't mark markers as recent, if somehow we got here with a marker as parameter (which should nevre happen)
@@ -576,7 +573,7 @@ void bandmap::operator+=(bandmap_entry& be)
     add_it = be.freq().is_within_ham_band();
 
   if (add_it)
-    add_it = !((be.source() != BANDMAP_ENTRY_LOCAL) and is_recent_call(callsign));
+    add_it = !((be.source() != BANDMAP_ENTRY_SOURCE::LOCAL) and is_recent_call(callsign));
 
 // could make this more efficient by having a global container of the mode-marker bandmap entries
   if (add_it and mode_marker_is_present)
@@ -592,7 +589,7 @@ void bandmap::operator+=(bandmap_entry& be)
 
     SAFELOCK(_bandmap);
 
-    if (be.source() == BANDMAP_ENTRY_RBN)
+    if (be.source() == BANDMAP_ENTRY_SOURCE::RBN)
     { old_be = (*this)[callsign];
 
       if (old_be.valid())
@@ -606,7 +603,7 @@ void bandmap::operator+=(bandmap_entry& be)
             _insert(old_be);
           }
           else    // new expiration is later
-          { old_be.source(BANDMAP_ENTRY_RBN);
+          { old_be.source(BANDMAP_ENTRY_SOURCE::RBN);
             old_be.expiration_time(be.expiration_time());
 
             (*this) -= callsign;

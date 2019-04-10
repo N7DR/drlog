@@ -178,18 +178,6 @@ protected:
 public:
 
 /// default constructor
-#if 0
-  window_information(void) :
-    _x(0),
-    _y(0),
-    _w(0),
-    _h(0),
-    _fg_colour("white"),
-    _bg_colour("black"),
-    _colours_set(false)
-  { }
-#endif
-
   window_information(void) = default;
 
   READ_AND_WRITE(x);                ///< x location on the screen

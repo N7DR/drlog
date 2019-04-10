@@ -31,10 +31,10 @@
 #include <utility>
 
 /// possible sources for bandmap entries
-enum BANDMAP_ENTRY_SOURCE { BANDMAP_ENTRY_LOCAL,
-                            BANDMAP_ENTRY_CLUSTER,
-                            BANDMAP_ENTRY_RBN
-                          };
+enum class BANDMAP_ENTRY_SOURCE { LOCAL,
+                                  CLUSTER,
+                                  RBN
+                                };
 
 /// search directions for the bandmap
 enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
@@ -360,7 +360,7 @@ public:
 /*! \brief      Default constructor
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
-  explicit inline bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_LOCAL) :
+  explicit inline bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_SOURCE::LOCAL) :
     _expiration_time(0),                  // no expiration time
     _is_needed(true),                     // the entry is needed
     _mult_status_is_known(false),         // multiplier status is unknown
@@ -372,8 +372,7 @@ public:
 /*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
     \param  be  comparison bandmap_entry
     \return     whether <i>this</i> should be sorted earlier than <i>be</i>
- *
- */
+*/
   inline const bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
@@ -412,7 +411,7 @@ public:
 
 /// was this bandmap_entry generated from the RBN?
   inline const bool is_rbn(void) const
-    { return (_source == BANDMAP_ENTRY_RBN); }
+    { return (_source == BANDMAP_ENTRY_SOURCE::RBN); }
 
 /// does the call in this bandmap_entry match the value <i>str</i>?
   inline const bool call_is(const std::string& str) const

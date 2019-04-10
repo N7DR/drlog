@@ -28,17 +28,17 @@ extern bool             QSO_DISPLAY_COUNTRY_MULT;   ///< controls whether countr
 extern int              QSO_MULT_WIDTH;             ///< controls width of zone mults field in log line
 
 /// example: cabrillo qso = template: CQ WW
-static const map<string, string> cabrillo_qso_templates { { "ARRL DX", "ARRL DX" }, // placeholder; mode chosen before we exit this function
-                                                          { "ARRL DX CW", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1" },
-                                                          { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" },
+static const map<string, string> cabrillo_qso_templates { { "ARRL DX"s, "ARRL DX"s }, // placeholder; mode chosen before we exit this function
+                                                          { "ARRL DX CW"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CWPOWER:74:6:R, TXID:81:1"s },
+                                                          { "ARRL DX SSB"s, "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1"s },
 
-                                                          { "CQ WW",      "CQ WW" }, // placeholder; mode chosen before we exit this function
-                                                          { "CQ WW CW",   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" },
-                                                          { "CQ WW SSB",  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1" },
+                                                          { "CQ WW"s,      "CQ WW"s }, // placeholder; mode chosen before we exit this function
+                                                          { "CQ WW CW"s,   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1"s },
+                                                          { "CQ WW SSB"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1"s },
 
-                                                          { "JIDX",      "JIDX" }, // placeholder; mode chosen before we exit this function
-                                                          { "JIDX CW",   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1" },
-                                                          { "JIDX SSB",  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1" }
+                                                          { "JIDX"s,      "JIDX"s }, // placeholder; mode chosen before we exit this function
+                                                          { "JIDX CW"s,   "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1"s },
+                                                          { "JIDX SSB"s,  "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RS:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RS:70:3:R, REXCH-JAPREF:74:6:R, TXID:81:1"s }
                                                         };
 
 /*! \brief          Write an error message to the output file, then exit
@@ -65,7 +65,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
 { if (command.empty())
     return;
 
-  const vector<string> str_vec { split_string(command, "=") };
+  const vector<string> str_vec { split_string(command, "="s) };
 
   if (str_vec.size() != 2)
   { ost << "Invalid command: " << command << endl;
@@ -85,17 +85,18 @@ void drlog_context::_set_points(const string& command, const MODE m)
         pbb.insert( { static_cast<BAND>(n), RHS } );
     }
     else                                                        // not all bands
-    { const size_t left_bracket_posn = lhs.find('[');
-      const size_t right_bracket_posn = lhs.find(']');
+    { const size_t left_bracket_posn  { lhs.find('[') };
+      const size_t right_bracket_posn { lhs.find(']') };
 
-      const bool valid = (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn);
+      const bool valid { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
 
       if (valid)
-      { const string bands_str = lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1));
-        const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
+      { const string bands_str     { lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1)) };
+        const vector<string> bands { remove_peripheral_spaces(split_string(bands_str, ","s)) };
 
-        for (const auto b_str : bands)
-          pbb.insert( { BAND_FROM_NAME[b_str], RHS } );
+//        for (const auto b_str : bands)
+//          pbb.insert( { BAND_FROM_NAME[b_str], RHS } );
+        FOR_ALL(bands, [=, &pbb] (const string& b_str) { pbb.insert( { BAND_FROM_NAME[b_str], RHS } ); } );
       }
     }
   }
@@ -118,14 +119,14 @@ void drlog_context::_process_configuration_file(const string& filename)
     exit(-1);
   }
 
-  const vector<string> lines = split_string(entire_file, LF_STR);   // split into lines
+  const vector<string> lines { split_string(entire_file, LF_STR) };   // split into lines
 
   for (const auto& tmpline : lines)                                    // process each line
-  { const string line = remove_trailing_comment(tmpline);           // remove any comment
+  { const string line { remove_trailing_comment(tmpline) };           // remove any comment
 
 // generate a number of useful variables
-    const string testline = remove_leading_spaces(to_upper(line));
-    const vector<string> fields = split_string(line, "=");
+    const string testline       { remove_leading_spaces(to_upper(line)) };
+    const vector<string> fields { split_string(line, "="s) };
     const string rhs = ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : "");      // the stuff to the right of the "="
     const string RHS = to_upper(rhs);                                                         // converted to upper case
     const bool is_true = (RHS == "TRUE");                                                     // is right hand side == "TRUE"?

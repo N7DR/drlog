@@ -56,16 +56,16 @@ static const std::string  CR       { "\r"s };       ///< CR as string
 static const std::string& CR_STR   { CR };         ///< CR as string
 static const char         CR_CHAR  { '\r' };       ///< CR as character
 
-static const std::string CRLF     = "\r\n";     ///< CR followed by LF
+static const std::string CRLF     = "\r\n"s;     ///< CR followed by LF
 
-static const std::string FULL_STOP = ".";       ///< full stop as string
+static const std::string FULL_STOP = "."s;       ///< full stop as string
 
-static const std::string SPACE_STR = " ";       ///< space as string
+static const std::string SPACE_STR = " "s;       ///< space as string
 
-static const std::string CALLSIGN_CHARS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/" };                ///< convenient place to hold all characters that are legal in callsigns
-static const std::string DIGITS { "0123456789" };                                                   ///< convenient place to hold all digits
-static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" };  ///< convenient place to hold all digits and upper case letters
-static const std::string UPPER_CASE_LETTERS { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };                       ///< convenient place to hold all upper case letters
+static const std::string CALLSIGN_CHARS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"s };                ///< convenient place to hold all characters that are legal in callsigns
+static const std::string DIGITS { "0123456789"s };                                                   ///< convenient place to hold all digits
+static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };  ///< convenient place to hold all digits and upper case letters
+static const std::string UPPER_CASE_LETTERS { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };                       ///< convenient place to hold all upper case letters
 
 constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
   
@@ -604,7 +604,7 @@ inline const bool ends_with(const std::string& cs, const std::string& ss)
     \return             whether <i>callsign</i> appears to be a maritime mobile
 */
 inline const bool is_maritime_mobile(const std::string& callsign)
-  { return ( ends_with(to_upper(callsign), "/MM" ) ); }
+  { return ( ends_with(to_upper(callsign), "/MM"s ) ); }
 
 /*! \brief          Convert an integer to a character-separated string
     \param  n       number to convert

@@ -24,11 +24,8 @@
 #include <string>
 #include <utility>
 
-extern bool QSO_DISPLAY_COUNTRY_MULT;           ///< whether country mults are written on the log line
+extern bool         QSO_DISPLAY_COUNTRY_MULT;   ///< whether country mults are written on the log line
 extern unsigned int QSO_MULT_WIDTH;             ///< width of mult fields on log line
-
-//constexpr bool         QSO_DISPLAY_COUNTRY_MULT { true };   ///< whether to display country mults in log window (may be changed in config file)
-//constexpr unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult fields in log window
 
 // forward declarations
 class running_statistics;
@@ -152,7 +149,7 @@ public:
     
 /// return a single date-and-time string
   inline const std::string date_and_time(void) const
-    { return _date + "T" + _utc; }
+    { return _date + "T"s + _utc; }
     
 /// is this QSO earlier than another one? 
   inline const bool earlier_than(const QSO& qso) const

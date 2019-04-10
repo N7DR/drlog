@@ -21,19 +21,19 @@ extern string FREQUENCY_STRING_POINT;
 */
 
 /// default constructor
-frequency::frequency(void) :
-  _hz(0)
-{ }
+//frequency::frequency(void) :
+//  _hz(0)
+//{ }
 
 /*! \brief      construct from a double
     \param f    frequency in Hz, kHz or MHz
 */
 frequency::frequency(const double f)
 { if (f < 100)                  // MHz
-    _hz = static_cast<unsigned int>(f * 1000000 + 0.5);
+    _hz = static_cast<unsigned int>(f * 1'000'000 + 0.5);
   else
-  { if (f < 100000)             // kHz
-      _hz = static_cast<unsigned int>(f * 1000 + 0.5);
+  { if (f < 100'000)             // kHz
+      _hz = static_cast<unsigned int>(f * 1'000 + 0.5);
     else
       _hz = static_cast<unsigned int>(f + 0.5);
   }
@@ -68,47 +68,47 @@ frequency::frequency(const double f, const FREQUENCY_UNIT unit)
 frequency::frequency(const enum BAND b)
 { switch (b)
   { case BAND_160 :
-      _hz = 1800000;
+      _hz = 1'800'000;
       break;
 
     case BAND_80 :
-      _hz = 3500000;
+      _hz = 3'500'000;
       break;
 
     case BAND_60 :
-      _hz = 5000000;
+      _hz = 5'000'000;
       break;
 
     case BAND_40 :
-      _hz = 7000000;
+      _hz = 7'000'000;
       break;
 
     case BAND_30 :
-      _hz = 10100000;
+      _hz = 10'100'000;
       break;
 
     case BAND_20 :
-      _hz = 14000000;
+      _hz = 14'000'000;
       break;
 
     case BAND_17 :
-      _hz = 18068000;
+      _hz = 18'068'000;
       break;
 
     case BAND_15 :
-      _hz = 21000000;
+      _hz = 21'000'000;
       break;
 
     case BAND_12 :
-      _hz = 24890000;
+      _hz = 24'890'000;
       break;
 
     case BAND_10 :
-      _hz = 28000000;
+      _hz = 28'000'000;
       break;
 
     default :           // should never happen
-      _hz = 1800000;
+      _hz = 1'800'000;
       break;
   }
 }
@@ -119,22 +119,22 @@ frequency::frequency(const enum BAND b)
     Sets the frequency to the low edge of the band <i>b</i>
 */
 const string frequency::display_string(void) const
-{ const string POINT(".");                                      // during termination, static can cause a core dump; https://stackoverflow.com/questions/246564/what-is-the-lifetime-of-a-static-variable-in-a-c-function
+{ //const string POINT(".");                                      // during termination, static can cause a core dump; https://stackoverflow.com/questions/246564/what-is-the-lifetime-of-a-static-variable-in-a-c-function
 
-  unsigned int khz = _hz / 1000;
-  unsigned int hhz = ( ( _hz - (khz * 1000) ) / 10 + 5 ) / 10;  // first decimal place in kHz frequency
+  unsigned int khz { _hz / 1000 };
+  unsigned int hhz { ( ( _hz - (khz * 1000) ) / 10 + 5 ) / 10 };  // first decimal place in kHz frequency
 
   if (hhz == 10)
   { khz++;
     hhz = 0;
   }
 
-  return (to_string(khz) + POINT + to_string(hhz));
+  return (to_string(khz) + "."s + to_string(hhz));
 }
 
 /// return lower band edge that corresponds to frequency
 const frequency frequency::lower_band_edge(void) const
-{ const BAND b = BAND(*this);
+{ const BAND b { BAND(*this) };
 
   switch (b)
   { case BAND_160 :
@@ -165,7 +165,7 @@ const frequency frequency::lower_band_edge(void) const
       return frequency(24.89);
 
     case BAND_10 :
-      return frequency (28.0);
+      return frequency(28.0);
 
     default :
       return frequency(0.0);
@@ -174,11 +174,11 @@ const frequency frequency::lower_band_edge(void) const
 
 /// is the frequency within a band?
 const bool frequency::is_within_ham_band(void) const
-{ const BAND b = BAND(*this);
+{ const BAND b { BAND(*this) };
 
   if (b != BAND_160)
     return true;
 
- return ( (_hz >= 1800000) and (_hz <= 2000000) );    // check if BAND_160, because that's the returned band if frequency is outside a band
+ return ( (_hz >= 1'800'000) and (_hz <= 2'000'000) );    // check if BAND_160, because that's the returned band if frequency is outside a band
 }
 

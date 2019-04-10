@@ -603,40 +603,40 @@ int main(int argc, char** argv)
 {
 // generate version information
   try
-  { const map<string, string> MONTH_NAME_TO_NUMBER( { { "Jan", "01" },
-                                                      { "Feb", "02" },
-                                                      { "Mar", "03" },
-                                                      { "Apr", "04" },
-                                                      { "May", "05" },
-                                                      { "Jun", "06" },
-                                                      { "Jul", "07" },
-                                                      { "Aug", "08" },
-                                                      { "Sep", "09" },
-                                                      { "Oct", "10" },
-                                                      { "Nov", "11" },
-                                                      { "Dec", "12" }
+  { const map<string, string> MONTH_NAME_TO_NUMBER( { { "Jan"s, "01"s },
+                                                      { "Feb"s, "02"s },
+                                                      { "Mar"s, "03"s },
+                                                      { "Apr"s, "04"s },
+                                                      { "May"s, "05"s },
+                                                      { "Jun"s, "06"s },
+                                                      { "Jul"s, "07"s },
+                                                      { "Aug"s, "08"s },
+                                                      { "Sep"s, "09"s },
+                                                      { "Oct"s, "10"s },
+                                                      { "Nov"s, "11"s },
+                                                      { "Dec"s, "12"s }
                                                     } );
 
-    const string date_str = DATE_STR.substr(DATE_STR.length() - 4) + "-" + MONTH_NAME_TO_NUMBER.at(DATE_STR.substr(0, 3)) + "-" +
-                            (DATE_STR[4] == ' ' ? string("0") + DATE_STR.substr(5, 1) : DATE_STR.substr(4, 2));
+    const string date_str = DATE_STR.substr(DATE_STR.length() - 4) + "-" + MONTH_NAME_TO_NUMBER.at(DATE_STR.substr(0, 3)) + "-"s +
+                            (DATE_STR[4] == ' ' ? "0"s + DATE_STR.substr(5, 1) : DATE_STR.substr(4, 2));
 
-    VERSION = VERSION_TYPE + string(" ") + date_str + " " + TIME_STR.substr(0, 5);
+    VERSION = VERSION_TYPE + " "s + date_str + " "s + TIME_STR.substr(0, 5);
 
     ost << "Running drlog version " << VERSION << endl;
   }
 
   catch (...)
   { ost << "Error: Unable to generate drlog version information" << endl;
-    VERSION = string("Unknown version ") + VERSION;  // because VERSION may be used elsewhere
+    VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
 
-  command_line cl(argc, argv);                                                              ///< for parsing the ocmmand line
-  const string config_filename = (cl.value_present("-c") ? cl.value("-c") : "logcfg.dat");
+  command_line cl              { argc, argv };                                                              ///< for parsing the ocmmand line
+  const string config_filename { (cl.value_present("-c"s) ? cl.value("-c"s) : "logcfg.dat"s) };
 
   try    // put it all in one big try block (one of the few things in C++ I have hated ever since we introduced it)
   {
 // read configuration data (typically from logcfg.dat)
-    drlog_context* context_p = nullptr;
+    drlog_context* context_p { nullptr };
 
     try
     { context_p = new drlog_context(config_filename);
@@ -658,7 +658,7 @@ int main(int argc, char** argv)
     REJECT_COLOUR = context.reject_colour();    // colour for calls it is not OK to work
 
     bandmap_frequency_up = context.bandmap_frequency_up();
-    best_dx_in_miles = (context.best_dx_unit() == "MILES");
+    best_dx_in_miles = (context.best_dx_unit() == "MILES"s);
     cw_speed_change = context.cw_speed_change();
     display_grid = context.display_grid();
     inactivity_timer = static_cast<int>(context.inactivity_timer());  // forced positive int
@@ -679,7 +679,7 @@ int main(int argc, char** argv)
 // possibly configure audio recording
     if (context.allow_audio_recording() and (context.start_audio_recording() != AUDIO_RECORDING::DO_NOT_START))
     { start_recording(context);
-      alert("audio recording started due to activity");
+      alert("audio recording started due to activity"s);
     }
 
     { SAFELOCK(my_bandmap_entry);
@@ -691,7 +691,7 @@ int main(int argc, char** argv)
     mp.callsigns(context.post_monitor_calls());
 
 // read the country data
-    cty_data* country_data_p = nullptr;
+    cty_data* country_data_p { nullptr };
 
     try
     { country_data_p = new cty_data(context.path(), context.cty_filename());
@@ -702,7 +702,7 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-    const cty_data& country_data = *country_data_p;
+    const cty_data& country_data { *country_data_p };
 
 // read drmaster database
     try
@@ -714,10 +714,10 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-    const drmaster& drm = *drm_p;
+    const drmaster& drm { *drm_p };
 
 // read (optional) secondary QTH database
-    drlog_qth_database* qth_db_p = nullptr;
+    drlog_qth_database* qth_db_p { nullptr };
 
     try
     { qth_db_p = new drlog_qth_database();
@@ -728,7 +728,7 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-    const drlog_qth_database& qth_db = *qth_db_p;
+    const drlog_qth_database& qth_db { *qth_db_p };
 
 // location database
     try
@@ -780,60 +780,61 @@ int main(int argc, char** argv)
 
 // is it SS?
     if (rules.n_modes() == 1)
-    { const vector<exchange_field> exchange_template = rules.unexpanded_exch("K", *(rules.permitted_modes().cbegin()));
+    { const vector<exchange_field> exchange_template { rules.unexpanded_exch("K"s, *(rules.permitted_modes().cbegin())) };
 
       for (const auto& ef : exchange_template)
-      { if (ef.name() == "PREC")                // if there's a field with this name, it must be SS
+      { if (ef.name() == "PREC"s)                // if there's a field with this name, it must be SS
           is_ss = true;
       }
     }
 
 // MESSAGE window (do this as early as is reasonable so that it's available for messages)
-    win_message.init(context.window_info("MESSAGE"), WINDOW_NO_CURSOR);
+    win_message.init(context.window_info("MESSAGE"s), WINDOW_NO_CURSOR);
     win_message < WINDOW_ATTRIBUTES::WINDOW_BOLD <= "";                                       // use bold in this window
 
 // is there a log of old QSOs?
     if (!context.old_adif_log_name().empty())
-    { alert(string("reading old log file: ") + context.old_adif_log_name(), false);
+    { alert("reading old log file: "s + context.old_adif_log_name(), false);
 
-      const vector<string> records = split_string( read_file(context.path(), context.old_adif_log_name()) , string("<eor>") + EOL);
-
-      for (const auto& record : records)
-      { const vector<string> lines = remove_empty_lines(remove_peripheral_spaces(to_lines( record )));
+      const vector<string> records { split_string( read_file(context.path(), context.old_adif_log_name()) , "<eor>"s + EOL) };
 
 // function to extract the value from an ADIF line, ignoring the last <i>offset</i> characters
-        auto adif_value = [](const string& this_line, const unsigned int offset = 0)
-          { const string tag = delimited_substring(this_line, '<', '>');
-            const vector<string> vs = split_string(tag, ":");
+      auto adif_value = [](const string& this_line, const unsigned int offset = 0)
+        { //const string         tag    { delimited_substring(this_line, '<', '>') };
+          //const vector<string> tokens { split_string(tag, ":"s) };
+          const vector<string> tokens { split_string(delimited_substring(this_line, '<', '>'), ":"s) };
 
-            if (vs.size() != 2)
-            { ost << "ERROR parsing old log line: " << this_line << endl;
-              return string();
-            }
-            else
-            { const size_t n_chars = from_string<size_t>(vs[1]);
-              const size_t posn = this_line.find('>');
+          if (tokens.size() != 2)
+          { ost << "ERROR parsing old log line: " << this_line << endl;
+            return string();
+          }
+          else
+          { const size_t n_chars { from_string<size_t>(tokens[1]) };
+            const size_t posn    { this_line.find('>') };
 
-              return substring(this_line, posn + 1, n_chars - offset);
-            }
-          };
+            return substring(this_line, posn + 1, n_chars - offset);
+          }
+        };
+
+      for (const auto& record : records)
+      { const vector<string> lines { remove_empty_lines(remove_peripheral_spaces(to_lines( record ))) };
 
         old_log_record rec;
 
 // place values into the record
         for (const auto& line : lines)
         { try
-          { if (starts_with(line, "<band"))                                   // <band:3>20m
-              rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));             // don't include the "m" (and we assume that it *is* "m")
+          { if (starts_with(line, "<band"s))                                   // <band:3>20m
+              rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));              // don't include the "m" (and we assume that it *is* "m")
 
-            if (starts_with(line, "<call"))                                   // <call:5>RZ3FW
+            if (starts_with(line, "<call"s))                                   // <call:5>RZ3FW
               rec.callsign( adif_value(line) );
 
-            if (starts_with(line, "<mode"))                                   // <mode:2>CW
+            if (starts_with(line, "<mode"s))                                   // <mode:2>CW
               rec.mode(MODE_FROM_NAME.at( adif_value(line) ));
 
-            if (starts_with(line, "<qsl_rcvd"))                               // <qsl_rcvd:1>Y
-              rec.qsl_received( adif_value(line) == "Y");
+            if (starts_with(line, "<qsl_rcvd"s))                               // <qsl_rcvd:1>Y
+              rec.qsl_received( adif_value(line) == "Y"s);
           }
 
           catch (...)
@@ -870,11 +871,11 @@ int main(int argc, char** argv)
 
 // possibly get a list of IARU society exchanges
     if (!context.society_list_filename().empty())
-      exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY");
+      exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY"s);
 
 // possibly test regex exchanges; this will exit if it executes
-    if (cl.value_present("-test-exchanges"))
-      test_exchange_templates(rules, cl.value("-test-exchanges"));
+    if (cl.value_present("-test-exchanges"s))
+      test_exchange_templates(rules, cl.value("-test-exchanges"s));
 
 // real-time statistics
     try
@@ -888,6 +889,7 @@ int main(int argc, char** argv)
 
 // possibly open communication with the rig
     rig.register_error_alert_function(rig_error_alert);
+
     if (!context.rig1_port().empty() and !context.rig1_type().empty())
       rig.prepare(context);
 
@@ -896,7 +898,7 @@ int main(int argc, char** argv)
       rig.test(true);
 
 // possibly set up CW buffer
-    if (contains(to_upper(context.modes()), "CW") and !context.keyer_port().empty())
+    if (contains(to_upper(context.modes()), "CW"s) and !context.keyer_port().empty())
     { try
       { cw_p = new cw_buffer(context.keyer_port(), context.ptt_delay(), context.cw_speed(), context.cw_priority());
       }
@@ -908,6 +910,7 @@ int main(int argc, char** argv)
 
       if (rig.valid())
         cw_p->associate_rig(&rig);
+
       cwm = cw_messages(context.messages());
     }
 
@@ -918,7 +921,7 @@ int main(int argc, char** argv)
 // see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
     if (current_band != static_cast<BAND>(rig.rig_frequency()))
     { rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
-      sleep_for(seconds(2));                                                       // give time for things to settle
+      sleep_for(seconds(2));                                                       // give time for things to settle on the rig
     }
 
 // the rig might have changed mode if we just changed bands
@@ -962,7 +965,7 @@ int main(int argc, char** argv)
 // initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function
     my_bandmap_entry.callsign(MY_MARKER);
-    my_bandmap_entry.source(BANDMAP_ENTRY_LOCAL);
+    my_bandmap_entry.source(BANDMAP_ENTRY_SOURCE::LOCAL);
     my_bandmap_entry.expiration_time(my_bandmap_entry.time() + 1000000);    // a million seconds in the future
 
 // possibly add a mode marker bandmap entry to each bandmap
@@ -972,7 +975,7 @@ int main(int argc, char** argv)
         bandmap_entry be;
 
         be.callsign(MODE_MARKER);
-        be.source(BANDMAP_ENTRY_LOCAL);
+        be.source(BANDMAP_ENTRY_SOURCE::LOCAL);
         be.expiration_time(be.time() + 1000000);        // expiration is a long time in the future
         be.freq(MODE_BREAK_POINT[b]);
 
@@ -2002,7 +2005,7 @@ void* display_rig_status(void* vp)
 
 // populate the bandmap entry stuff that won't change
   be.callsign(MY_MARKER);
-  be.source(BANDMAP_ENTRY_LOCAL);
+  be.source(BANDMAP_ENTRY_SOURCE::LOCAL);
   be.expiration_time(be.time() + 1000000);    // a million seconds in the future
 
   while (true)
@@ -2251,7 +2254,7 @@ void* process_rbn_info(void* vp)
               const string& poster = post.poster();
               const pair<string, BAND> target { dx_callsign, dx_band };
 
-              bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_CLUSTER : BANDMAP_ENTRY_RBN );
+              bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN );
 
               be.callsign(dx_callsign);
               be.freq(post.freq());        // also sets band and mode
@@ -2333,8 +2336,8 @@ void* process_rbn_info(void* vp)
 // add the post to the correct bandmap
               if (is_interesting_mode)
               { switch (be.source())
-                { case BANDMAP_ENTRY_CLUSTER :
-                  case BANDMAP_ENTRY_RBN :
+                { case BANDMAP_ENTRY_SOURCE::CLUSTER :
+                  case BANDMAP_ENTRY_SOURCE::RBN :
                     bm_buffer.add(be.callsign(), post.poster());
 
                     if (bm_buffer.sufficient_posters(be.callsign()))
@@ -5385,7 +5388,7 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
  */
 void populate_win_info(const string& callsign)
 { if (send_qtcs)
-  { const string qtc_str = string("[") + to_string(qtc_db.n_qtcs_sent_to(callsign)) + string("]");
+  { const string qtc_str = "["s + to_string(qtc_db.n_qtcs_sent_to(callsign)) + "]"s;
 
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR < qtc_str <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
     win_individual_qtc_count < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= qtc_str;
@@ -5394,7 +5397,7 @@ void populate_win_info(const string& callsign)
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
 
   if (display_grid)
-  { const string grid_name = exchange_db.guess_value(callsign, "GRID");
+  { const string grid_name = exchange_db.guess_value(callsign, "GRID"s);
 
     if (!grid_name.empty())
       win_grid < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= grid_name;
@@ -5402,7 +5405,7 @@ void populate_win_info(const string& callsign)
 
   const string name_str = location_db.country_name(callsign);            // name of the country
 
-  if (to_upper(name_str) != "NONE")
+  if (to_upper(name_str) != "NONE"s)
   { const string sunrise_time { sunrise(callsign) };
     const string sunset_time  { sunset(callsign) };
 //    const string current_time = substring(hhmmss(), 0, 2) + ":" + substring(hhmmss(), 2, 2);
@@ -5416,7 +5419,7 @@ void populate_win_info(const string& callsign)
       processed = true;
     }
 
-    if (!processed and (sunrise_time == "LIGHT"))
+    if (!processed and (sunrise_time == "LIGHT"s))
     { is_daylight = true;
       processed = true;
     }
@@ -5444,17 +5447,17 @@ void populate_win_info(const string& callsign)
                                                 < sunrise_time                           < "/"      < sunset_time
                                                 < (is_daylight ? "(D)" : "(N)");
 
-    const size_t len = name_str.size();
+    const size_t len { name_str.size() };
 
     win_info < cursor(win_info.width() - len, win_info.height() - 2) <= name_str;
 
-    static const unsigned int FIRST_FIELD_WIDTH = 14;         // "Country [VP2M]"
-    static const unsigned int FIELD_WIDTH       = 5;          // width of other fields
+    /* static */ constexpr unsigned int FIRST_FIELD_WIDTH { 14 };         // "Country [VP2M]"
+    /* static */ constexpr unsigned int FIELD_WIDTH       { 5 };          // width of other fields
 
-    int next_y_value = win_info.height() - 3;                 // keep track of where we are vertically in the window
+    int next_y_value { win_info.height() - 3 };                 // keep track of where we are vertically in the window
 
-    const vector<BAND>& permitted_bands = rules.permitted_bands();
-    const set<MODE>& permitted_modes = rules.permitted_modes();
+    const vector<BAND>& permitted_bands { rules.permitted_bands() };
+    const set<MODE>& permitted_modes    { rules.permitted_modes() };
 
     for (const auto& this_mode : permitted_modes)
     { if (n_modes > 1)

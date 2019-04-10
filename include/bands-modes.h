@@ -81,20 +81,20 @@ enum MODE { MODE_CW = 0,
             MAX_MODE = ANY_MODE - 1
           };
 
-const unsigned int NUMBER_OF_MODES = MAX_MODE + 1;  ///< how many modes does drlog know about?
-const unsigned int N_MODES = NUMBER_OF_MODES;       ///< how many modes does drlog know about?
-const unsigned int ALL_MODES = N_MODES;             ///< indicator used to mean "all modes"
+constexpr unsigned int NUMBER_OF_MODES { MAX_MODE + 1 };        ///< how many modes does drlog know about?
+constexpr unsigned int N_MODES         { NUMBER_OF_MODES };     ///< how many modes does drlog know about?
+constexpr unsigned int ALL_MODES       { N_MODES };             ///< indicator used to mean "all modes"
 
 /// mode names
-static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW",
-                                                                "SSB",
-                                                                "RTTY"
+static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW"s,
+                                                                "SSB"s,
+                                                                "RTTY"s
                                                             } };
 
 /// generate the mode from a name
-static std::map<std::string, MODE> MODE_FROM_NAME { { "CW", MODE_CW },
-                                                    { "SSB",  MODE_SSB },
-                                                    { "RTTY",  MODE_RTTY }
+static std::map<std::string, MODE> MODE_FROM_NAME { { "CW"s, MODE_CW },
+                                                    { "SSB"s,  MODE_SSB },
+                                                    { "RTTY"s,  MODE_RTTY }
                                                   };
 
 static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
@@ -109,7 +109,8 @@ static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
                                                           { BAND_10,  "28000"s }
                                                         };
 
-typedef std::pair<BAND, MODE> bandmode;    ///< tuple for encapsulating a band and mode
+//typedef std::pair<BAND, MODE> bandmode;    ///< tuple for encapsulating a band and mode
+using bandmode = std::pair<BAND, MODE>;
 
 /*!  \brief     Convert a frequency to a band
      \param  f  frequency
@@ -122,40 +123,40 @@ template<class T> const BAND to_BAND(T f)
     return MIN_BAND;
 
   if (f < 1000)       // MHz
-    return to_BAND(static_cast<long>(f) * 1000000);
+    return to_BAND(static_cast<long>(f) * 1'000'000);
 
-  if (f < 1000000)    // kHz
+  if (f < 1'000'000)    // kHz
     return to_BAND(static_cast<long>(f) * 1000);
 
 // Hz
-  if ( (f >= 1800000) and (f <= 2000000) )
+  if ( (f >= 1'800'000) and (f <= 2'000'000) )
     return BAND_160;
 
-  if ( (f >= 3500000) and (f <= 4000000) )
+  if ( (f >= 3'500'000) and (f <= 4'000'000) )
     return BAND_80;
 
-  if ( (f >= 5000000) and (f <= 6000000) )
+  if ( (f >= 5'000'000) and (f <= 6'000'000) )
     return BAND_60;
 
-  if ( (f >= 7000000) and (f <= 7300000) )
+  if ( (f >= 7'000'000) and (f <= 7'300'000) )
     return BAND_40;
 
-  if ( (f >= 1010000) and (f <= 10150000) )
+  if ( (f >= 1'010'000) and (f <= 10'150'000) )
     return BAND_30;
 
-  if ( (f >= 14000000) and (f <= 14350000) )
+  if ( (f >= 14'000'000) and (f <= 14'350'000) )
     return BAND_20;
 
-  if ( (f >= 18068000) and (f <= 18168000) )
+  if ( (f >= 18'068'000) and (f <= 18'168'000) )
     return BAND_17;
 
-  if ( (f >= 21000000) and (f <= 21450000) )
+  if ( (f >= 21'000'000) and (f <= 21'450'000) )
     return BAND_15;
 
-  if ( (f >= 24890000) and (f <= 24990000) )
+  if ( (f >= 24'890'000) and (f <= 24'990'000) )
     return BAND_12;
 
-  if ( (f >= 28000000) and (f <= 29700000) )
+  if ( (f >= 28'000'000) and (f <= 29'700'000) )
     return BAND_10;
 
   return MIN_BAND;
@@ -171,12 +172,12 @@ class frequency
 {
 protected:
 
-  unsigned int _hz;      ///< the actual frequency, in Hz
+  unsigned int _hz { 0 };      ///< the actual frequency, in Hz
 
 public:
 
 /// default constructor
-  frequency(void);
+  frequency(void) = default;
 
 /*! \brief      Construct from a double
     \param f    frequency in Hz, kHz or MHz
@@ -228,7 +229,7 @@ public:
 
 /// get frequency in MHz (even though I shudder at the use of "m" to mean "mega")
   inline const float mhz(void) const
-    { return static_cast<float>(_hz) / 1000000; }
+    { return static_cast<float>(_hz) / 1'000'000; }
 
 /// get frequency in kHz, rounded to the nearest kHz
   inline const int rounded_kHz(void) const
@@ -307,7 +308,7 @@ inline const BAND to_BAND(const frequency& f)
      Appends " Hz" to the numerical frequency.
 */
 inline const std::string to_string(const frequency& f)
-  { return (comma_separated_string(f.hz()) + " Hz"); }
+  { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it
 static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency(1900) },
@@ -321,5 +322,4 @@ static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency(1900) 
                                                     { BAND_12,  frequency(24910) },
                                                     { BAND_10,  frequency(28300) }
                                                   };
-
 #endif /* BANDSMODES_H */
