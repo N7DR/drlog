@@ -852,6 +852,23 @@ void pt_condition_variable::signal(void)
     \param  ptm     mutex to be locked
     \param  name    name of mutex
 */
+
+/*
+(gdb) bt
+#0  0xb7726cf9 in __kernel_vsyscall ()
+#1  0xb6ee5dd0 in __libc_signal_restore_set (set=0xbf8fa340) at ../sysdeps/unix/sysv/linux/nptl-signals.h:79
+#2  __GI_raise (sig=6) at ../sysdeps/unix/sysv/linux/raise.c:48
+#3  0xb6ee7297 in __GI_abort () at abort.c:89
+#4  0xb71592ff in __gnu_cxx::__verbose_terminate_handler() () from /usr/lib/i386-linux-gnu/libstdc++.so.6
+#5  0xb7156ea4 in ?? () from /usr/lib/i386-linux-gnu/libstdc++.so.6
+#6  0xb7156f1d in std::terminate() () from /usr/lib/i386-linux-gnu/libstdc++.so.6
+#7  0xb715722e in __cxa_rethrow () from /usr/lib/i386-linux-gnu/libstdc++.so.6
+#8  0x007588b9 in safelock::safelock (this=0xbf8fa688, ptm=..., name="_keyboard") at ../src/pthread_support.cpp:864
+#9  0x0073aaf6 in keyboard_queue::empty (this=0x939340 <keyboard>) at ../src/keyboard.cpp:207
+#10 0x005c4506 in main (argc=4, argv=0xbf8fd9e4) at ../src/drlog.cpp:1786
+(gdb)
+*/
+
 safelock::safelock(pt_mutex& ptm, const string& name) :
  _name(name)
 { try
