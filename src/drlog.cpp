@@ -111,6 +111,7 @@ const string hhmmss(void);                          ///< Obtain the current time
 const string match_callsign(const vector<pair<string /* callsign */,
                             int /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
 
+void populate_win_call_history(const string& str);                  ///< Populate the QSO/QSL call history window
 void populate_win_info(const string& str);                          ///< Populate the information window
 void possible_mode_change(const frequency& f);                      ///< possibly change mode in accordance with frequency
 void print_thread_names(void);
@@ -325,6 +326,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_best_dx,                     ///< best DX QSO
        win_bexchange,                   ///< exchnage associated with VFO B
        win_call,                        ///< callsign of other station, or command
+       win_call_history,                ///< historical QSO and QSL information
        win_cluster_line,                ///< last line received from cluster
        win_cluster_mult,                ///< mults received from cluster
        win_cluster_screen,              ///< interactive screen on to the cluster
@@ -335,7 +337,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_fuzzy,                       ///< fuzzy lookups
        win_grid,                        ///< grid square
        win_indices,                     ///< geomagnetic indices
-       win_indices_lookup_time,         ///< HH:MM of last geomagnetic indices lookup
+//       win_indices_lookup_time,         ///< HH:MM of last geomagnetic indices lookup
        win_individual_messages,         ///< messages from the individual messages file
        win_individual_qtc_count,        ///< number of QTCs sent to an individual
        win_info,                        ///< summary of info about current station being worked
@@ -426,21 +428,21 @@ pthread_t thread_id_display_date_and_time,      ///< thread ID for the thread th
 /// define wrappers to pass parameters to threads
 
 WRAPPER_7_NC(cluster_info, 
-    window*, wclp,
-    window*, wcmp,
-    dx_cluster*, dcp,
-    running_statistics*, statistics_p,
-    location_database*, location_database_p,
-    window*, win_bandmap_p,
-    decltype(bandmaps)*, bandmaps_p);   ///< parameters for cluster
+               window*, wclp,
+               window*, wcmp,
+               dx_cluster*, dcp,
+               running_statistics*, statistics_p,
+               location_database*, location_database_p,
+               window*, win_bandmap_p,
+               decltype(bandmaps)*, bandmaps_p);   ///< parameters for cluster
 
 WRAPPER_2_NC(bandmap_info,
-    window*, win_bandmap_p,
-    decltype(bandmaps)*, bandmaps_p);   ///< parameters for bandmap
+               window*, win_bandmap_p,
+               decltype(bandmaps)*, bandmaps_p);   ///< parameters for bandmap
 
 WRAPPER_2_NC(rig_status_info,
-    unsigned int, poll_time,
-    rig_interface*, rigp);              ///< parameters for rig status
+               unsigned int, poll_time,
+               rig_interface*, rigp);              ///< parameters for rig status
 
 // prepare for terminal I/O
 screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed
@@ -965,7 +967,7 @@ int main(int argc, char** argv)
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function
     my_bandmap_entry.callsign(MY_MARKER);
     my_bandmap_entry.source(BANDMAP_ENTRY_SOURCE::LOCAL);
-    my_bandmap_entry.expiration_time(my_bandmap_entry.time() + 1000000);    // a million seconds in the future
+    my_bandmap_entry.expiration_time(my_bandmap_entry.time() + 1'000'000);    // a million seconds in the future
 
 // possibly add a mode marker bandmap entry to each bandmap
     if (context.mark_mode_break_points())
@@ -975,7 +977,7 @@ int main(int argc, char** argv)
 
         be.callsign(MODE_MARKER);
         be.source(BANDMAP_ENTRY_SOURCE::LOCAL);
-        be.expiration_time(be.time() + 1000000);        // expiration is a long time in the future
+        be.expiration_time(be.time() + 1'000'000);        // expiration is a long time in the future
         be.freq(MODE_BREAK_POINT[b]);
 
         bm += be;
@@ -1057,6 +1059,10 @@ int main(int argc, char** argv)
   win_call < WINDOW_ATTRIBUTES::WINDOW_BOLD <= "";
   win_call.process_input_function(process_CALL_input);
 
+// CALL HISTORY window
+  win_call_history.init(context.window_info("CALL HISTORY"s), WINDOW_NO_CURSOR);
+  win_call_history <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                        // make it visible
+
 // CLUSTER LINE window
   win_cluster_line.init(context.window_info("CLUSTER LINE"s), WINDOW_NO_CURSOR);
 
@@ -1081,13 +1087,13 @@ int main(int argc, char** argv)
   win_indices.init(context.window_info("INDICES"s), WINDOW_NO_CURSOR);
 
 // INDICES LOOKUP TIME window
-  win_indices_lookup_time.init(context.window_info("INDICES LOOKUP TIME"s), WINDOW_NO_CURSOR);
+//  win_indices_lookup_time.init(context.window_info("INDICES LOOKUP TIME"s), WINDOW_NO_CURSOR);
 
 // possibly get the indices data
   if (!context.geomagnetic_indices_command().empty())
   { static pthread_t get_indices_thread_id;
 
-    string cmd = context.geomagnetic_indices_command();
+    static string cmd { context.geomagnetic_indices_command() };
 
     try
     { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices"s);
@@ -1989,7 +1995,7 @@ void* display_rig_status(void* vp)
   rig_status_info* rig_status_thread_parameters_p = static_cast<rig_status_info*>(vp);
   rig_status_info& rig_status_thread_parameters = *rig_status_thread_parameters_p;
 
-  static long microsecond_poll_period { rig_status_thread_parameters.poll_time() * 1000 };
+  static long microsecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time() * 1000) };
 
   DRLOG_MODE last_drlog_mode { SAP_MODE };
   bandmap_entry be;
@@ -2017,7 +2023,7 @@ void* display_rig_status(void* vp)
       { const string status_str { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, 38) };          // K3 returns 38 characters
 
         if (status_str.length() == 38)                                                          // do something only if it's the correct length
-        { const frequency f                   { from_string<unsigned int>(substring(status_str, 2, 11)) };           // frequency of VFO A
+        { const frequency f                   { from_string<double>(substring(status_str, 2, 11)) };           // frequency of VFO A
           const frequency target              { SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency) };    // frequency in CQ mode
           const frequency f_b                 { rig.rig_frequency_b() };                                          // frequency of VFO B
           const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };     // explicitly set to SAP mode if we have QSYed
@@ -4053,6 +4059,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     { win_call.insert(true);                     // force INSERT mode
       win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win_batch_messages <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      win_call_history <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win_individual_messages <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       update_qsls_window();                     // clears the window, except for the preliminary string
 
@@ -5376,11 +5383,16 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
 /*! \brief              Populate the information window
     \param  callsign    full or partial call
 
-    Called multiple times as a call is being typed. Also populates INDIVIDUAL QTC COUNT
-    window if appropriate. Also populates GRID window if appropriate.
+    Called multiple times as a call is being typed. Also populates the following windows as appropriate:
+      CALL HISTORY
+      GRID
+      INDIVIDUAL QTC COUNT
  */
 void populate_win_info(const string& callsign)
-{ if (send_qtcs)
+{ if (win_call_history.valid())
+    populate_win_call_history(callsign);
+
+  if (send_qtcs)
   { const string qtc_str = "["s + to_string(qtc_db.n_qtcs_sent_to(callsign)) + "]"s;
 
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR < qtc_str <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
@@ -5457,28 +5469,28 @@ void populate_win_info(const string& callsign)
         win_info < cursor(0, next_y_value--) < WINDOW_ATTRIBUTES::WINDOW_REVERSE < create_centred_string(MODE_NAME[this_mode], win_info.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
 
 // QSOs
-      string line = pad_string("QSO", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+      string line = pad_string("QSO"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
       for (const auto& b : permitted_bands)
-        line += pad_string( ( q_history.worked(callsign, b, this_mode) ? "-" : BAND_NAME[b] ), FIELD_WIDTH);
+        line += pad_string( ( q_history.worked(callsign, b, this_mode) ? "-"s : BAND_NAME[b] ), FIELD_WIDTH);
 
       win_info < cursor(0, next_y_value--) < line;
 
 // country mults
-      const set<string>& country_mults = rules.country_mults();
-      const string canonical_prefix = location_db.canonical_prefix(callsign);
+      const set<string>& country_mults { rules.country_mults() };
+      const string canonical_prefix    { location_db.canonical_prefix(callsign) };
 
       if (!country_mults.empty() or context.auto_remaining_country_mults())
       { if (country_mults < canonical_prefix)                                           // country_mults is from rules, and has all the valid mults for the contest
-        { const set<string> known_country_mults = statistics.known_country_mults();
+        { const set<string> known_country_mults { statistics.known_country_mults() };
 
-          line = pad_string(string("Country [") + canonical_prefix +"]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+          line = pad_string("Country ["s + canonical_prefix + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
           for (const auto& b : permitted_bands)
           { string per_band_indicator;
 
             if (known_country_mults < canonical_prefix)
-              per_band_indicator = ( statistics.is_needed_country_mult(callsign, b, this_mode) ? BAND_NAME[b] : "-" );
+              per_band_indicator = ( statistics.is_needed_country_mult(callsign, b, this_mode) ? BAND_NAME[b] : "-"s );
             else
               per_band_indicator = BAND_NAME.at(b);
 
@@ -5490,42 +5502,45 @@ void populate_win_info(const string& callsign)
       }
 
 // exch mults
-      const vector<string>& exch_mults = rules.exchange_mults();
+      const vector<string>& exch_mults { rules.exchange_mults() };
 
       for (const auto& exch_mult_field : exch_mults)
-      { const bool output_this_mult = rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix);
+      { const bool output_this_mult { rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix) };
 
         if (output_this_mult)
-        { const string exch_mult_value = exchange_db.guess_value(callsign, exch_mult_field);    // make best guess as to to value of this field
+        { const string exch_mult_value { exchange_db.guess_value(callsign, exch_mult_field) };    // make best guess as to to value of this field
 
-          line = pad_string(exch_mult_field + " [" + exch_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+          line = pad_string(exch_mult_field + " ["s + exch_mult_value + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
           for (const auto& b : permitted_bands)
-            line += pad_string( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? BAND_NAME.at(b) : "-" ), FIELD_WIDTH);
+            line += pad_string( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? BAND_NAME.at(b) : "-"s ), FIELD_WIDTH);
 
           win_info < cursor(0, next_y_value-- ) < line;
         }
       }
 
+// mults based on the callsign (typically a prefix mult)
       auto SET_CALLSIGN_MULT_VALUE = [] (string& val, const bool b, const string (*pf)(const string&), const string& callsign)
                                          {  if (val.empty() and b)
                                               val = pf(callsign);
                                          };
-      const set<string> callsign_mults = rules.callsign_mults();
+
+      const set<string> callsign_mults { rules.callsign_mults() };
 
 // callsign mults
+#if 0
       if (rules.callsign_mults_per_band())
       { for (const auto& callsign_mult : callsign_mults)
         { string callsign_mult_value;
 
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "AAPX") and (location_db.continent(callsign) == "AS"), wpx_prefix, callsign);
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "OCPX") and (location_db.continent(callsign) == "OC"), wpx_prefix, callsign);
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "SACPX"), sac_prefix, callsign);
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "UBAPX") and (location_db.canonical_prefix(callsign) == "ON"), wpx_prefix, callsign);
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "WPXPX"), wpx_prefix, callsign);
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "AAPX"s) and (location_db.continent(callsign) == "AS"s), wpx_prefix, callsign);            // All Asian
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "OCPX"s) and (location_db.continent(callsign) == "OC"s), wpx_prefix, callsign);            // Oceania
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "SACPX"s), sac_prefix, callsign);                                                          // SAC
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "UBAPX"s) and (location_db.canonical_prefix(callsign) == "ON"s), wpx_prefix, callsign);    // UBA
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "WPXPX"s), wpx_prefix, callsign);                                                          // WPX
 
           if (!callsign_mult_value.empty())
-          { line = pad_string(callsign_mult + " [" + callsign_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+          { line = pad_string(callsign_mult + " ["s + callsign_mult_value + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
             for (const auto& b : permitted_bands)
               line += pad_string( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? BAND_NAME[b] : "-" ), FIELD_WIDTH);
@@ -5538,15 +5553,39 @@ void populate_win_info(const string& callsign)
       { for (const auto& callsign_mult : callsign_mults)
         { string callsign_mult_value;
 
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "AAPX") and (location_db.continent(callsign) == "AS"), wpx_prefix, callsign);
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "OCPX") and (location_db.continent(callsign) == "OC"), wpx_prefix, callsign);
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "SACPX"), sac_prefix, callsign);
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "UBAPX") and (location_db.canonical_prefix(callsign) == "ON"), wpx_prefix, callsign);
-          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "WPXPX"), wpx_prefix, callsign);
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "AAPX"s) and (location_db.continent(callsign) == "AS"s), wpx_prefix, callsign);            // All Asian
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "OCPX"s) and (location_db.continent(callsign) == "OC"s), wpx_prefix, callsign);            // Oceania
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "SACPX"s), sac_prefix, callsign);                                                          // SAC
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "UBAPX"s) and (location_db.canonical_prefix(callsign) == "ON"s), wpx_prefix, callsign);    // UBA
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "WPXPX"s), wpx_prefix, callsign);                                                          // WPX
 
           if (!callsign_mult_value.empty())
-          { line = pad_string(callsign_mult + " [" + callsign_mult_value + "]", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+          { line = pad_string(callsign_mult + " ["s + callsign_mult_value + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+
             line += pad_string( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, safe_get_band(), this_mode) ? BAND_NAME[safe_get_band()] : "-" ), FIELD_WIDTH);
+
+            win_info < cursor(0, next_y_value-- ) < line;
+          }
+        }
+      }
+#endif
+
+      { const vector<BAND> bands { ( rules.callsign_mults_per_band() ? permitted_bands : vector<BAND> { safe_get_band() } ) };
+
+        for (const auto& callsign_mult : callsign_mults)
+        { string callsign_mult_value;
+
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "AAPX"s) and (location_db.continent(callsign) == "AS"s), wpx_prefix, callsign);            // All Asian
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "OCPX"s) and (location_db.continent(callsign) == "OC"s), wpx_prefix, callsign);            // Oceania
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "SACPX"s), sac_prefix, callsign);                                                          // SAC
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "UBAPX"s) and (location_db.canonical_prefix(callsign) == "ON"s), wpx_prefix, callsign);    // UBA
+          SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "WPXPX"s), wpx_prefix, callsign);                                                          // WPX
+
+          if (!callsign_mult_value.empty())
+          { line = pad_string(callsign_mult + " ["s + callsign_mult_value + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+
+            for (const auto& b : bands)
+              line += pad_string( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? BAND_NAME[b] : "-"s ), FIELD_WIDTH);
 
             win_info < cursor(0, next_y_value-- ) < line;
           }
@@ -5571,16 +5610,16 @@ void populate_win_info(const string& callsign)
 const string expand_cw_message(const string& msg)
 { string octothorpe_replaced;
 
-  if (contains(msg, "#"))
-  { string octothorpe_str = to_string(octothorpe);
+  if (contains(msg, "#"s))
+  { string octothorpe_str { to_string(octothorpe) };
 
     if (!context.short_serno())
       octothorpe_str = pad_string(octothorpe_str, (octothorpe < 1000 ? 3 : 4), PAD_LEFT, 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
 
     if (serno_spaces)
-    { const string spaces = create_string('^', serno_spaces);
+    { const string spaces { create_string('^', serno_spaces) };
 
-      string tmp = octothorpe_str;
+      string tmp { octothorpe_str };
 
       octothorpe_str.clear();
 
@@ -5590,27 +5629,29 @@ const string expand_cw_message(const string& msg)
     }
 
     if (long_t and (octothorpe < 100))
-    { const int n_to_find = (octothorpe < 10 ? 2 : 1);
+    { constexpr char LONG_T_CHAR { 15 };                         // character number that represents a long T (127%)
 
-      bool found_all = false;
-      int n_found = 0;
+      const int n_to_find { (octothorpe < 10 ? 2 : 1) };
+
+      bool found_all { false };
+      int  n_found   { 0 };
 
       for (size_t n = 0; !found_all and (n < octothorpe_str.size() - 1); ++n)
       { if (!found_all and octothorpe_str[n] == '0')
-        { octothorpe_str[n] = static_cast<char>(15);        // 127%
+        { octothorpe_str[n] = LONG_T_CHAR;
           found_all = (++n_found == n_to_find);
         }
       }
     }
 
-    octothorpe_replaced = replace(msg, "#", octothorpe_str);
+    octothorpe_replaced = replace(msg, "#"s, octothorpe_str);
   }
 
-  const string at_replaced = replace( (octothorpe_replaced.empty() ? msg : octothorpe_replaced), "@", at_call);
+  const string at_replaced { replace( (octothorpe_replaced.empty() ? msg : octothorpe_replaced), "@"s, at_call) };
 
   SAFELOCK(last_exchange);
 
-  const string asterisk_replaced = replace(at_replaced, "*", last_exchange);
+  const string asterisk_replaced { replace(at_replaced, "*"s, last_exchange) };
 
   return asterisk_replaced;
 }
@@ -7781,14 +7822,14 @@ void stop_recording(audio_recorder& audio)
 */
 const bool update_rx_ant_window(void)
 { if (win_rx_ant.defined())                     // don't do anything if the window isn't defined
-  { const bool rx_ant_in_use = rig.rx_ant();
-    const string window_contents = win_rx_ant.read();
+  { const bool   rx_ant_in_use   { rig.rx_ant() };
+    const string window_contents { win_rx_ant.read() };
 
-    if ( rx_ant_in_use and (window_contents != "RX") )
-      win_rx_ant < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "RX";
+    if ( rx_ant_in_use and (window_contents != "RX"s) )
+      win_rx_ant < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "RX"s;
 
-    if ( !rx_ant_in_use and (window_contents != "TX") )
-      win_rx_ant < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "TX";
+    if ( !rx_ant_in_use and (window_contents != "TX"s) )
+      win_rx_ant < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "TX"s;
   }
 
   return true;
@@ -7843,9 +7884,12 @@ void* get_indices(void* vp)    ///< Get SFI, A, K
       const string& cmd   { *cmd_p };
       const string indices { run_external_command(cmd) };
 
-      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT <= indices;
+      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring(hhmmss(), 0, 5) < EOL
+                  <= indices;
 
-      win_indices_lookup_time <= substring(hhmmss(), 0, 5);
+//      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT <= indices;
+
+//      win_indices_lookup_time <= substring(hhmmss(), 0, 5);
     }
 
     catch (...)
@@ -7910,3 +7954,30 @@ void update_best_dx(const grid_square& dx_gs, const string& callsign)
   }
 }
 
+/*! \brief              Populate the call history window
+    \param  callsign    full or partial call
+*/
+void populate_win_call_history(const string& callsign)
+{ if (win_call_history.valid())              // check even though it should have been checked before being called
+  { win_call_history < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_call_history.height() - 1);    // write the (partial) callsign
+
+    const MODE m                   { safe_get_mode() };
+    const int  bg                  { win_call_history.bg() };
+    const auto default_colour_pair { colours.add(win_call_history.fg(), bg) };
+
+    int line_nr { 0 };
+
+    for (const auto b : rules.permitted_bands())
+    { const unsigned int n_qsos           { olog.n_qsos(callsign, b, m) };
+      const int          fg               { ( (n_qsos == 0) ?  COLOUR_WHITE : ( olog.confirmed(callsign, b, m) ? COLOUR_GREEN : COLOUR_RED ) ) };
+      const auto         this_colour_pair { colours.add(fg, bg) };
+      const cursor       c_posn           { 0, line_nr++ };
+
+      win_call_history < c_posn < pad_string(BAND_NAME[b], 3)            // low band is on bottom
+                       < colour_pair(this_colour_pair) < pad_string(to_string(n_qsos), 4)
+                       < colour_pair(default_colour_pair);
+    }
+
+    win_call_history.refresh();
+  }
+}

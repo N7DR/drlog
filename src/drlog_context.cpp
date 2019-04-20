@@ -127,11 +127,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 // generate a number of useful variables
     const string testline       { remove_leading_spaces(to_upper(line)) };
     const vector<string> fields { split_string(line, "="s) };
-    const string rhs = ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : "");      // the stuff to the right of the "="
-    const string RHS = to_upper(rhs);                                                         // converted to upper case
-    const bool is_true = (RHS == "TRUE");                                                     // is right hand side == "TRUE"?
-    const string lhs = squash( (fields.empty()) ? "" : remove_peripheral_spaces(fields[0]) ); // the stuff to the left of the "="
-    const string LHS = to_upper(lhs);                                                         // converted to upper case
+    const string rhs            { ((fields.size() > 1) ? remove_peripheral_spaces(fields[1]) : ""s) };      // the stuff to the right of the "="
+    const string RHS            { to_upper(rhs) };                                                          // converted to upper case
+    const bool is_true          { (RHS == "TRUE"s) };                                                       // is right hand side == "TRUE"?
+    const string lhs            { squash( (fields.empty()) ? ""s : remove_peripheral_spaces(fields[0]) ) }; // the stuff to the left of the "="
+    const string LHS            { to_upper(lhs) };                                                          // converted to upper case
 
 // ACCEPT COLOUR
     if ( ( (LHS == "ACCEPT COLOUR") or (LHS == "ACCEPT COLOR") ) and !rhs.empty() )
@@ -1380,13 +1380,13 @@ drlog_context::drlog_context(const std::string& filename) :
   _allow_audio_recording(false),                                    // do not allow audio recording
 //  _allow_variable_sent_rst(false),                                  // do not allow the sent RST to vary
   _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
-  _archive_name("drlog-restart"),                                   // name for the archive written when leaving drlog
+  _archive_name("drlog-restart"s),                                   // name for the archive written when leaving drlog
   _audio_channels(1),                                               // monophonic
-  _audio_device_name("default"),                                    // default audio device
+  _audio_device_name("default"s),                                    // default audio device
   _audio_duration(60),                                              // record 60 minutes per file
-  _audio_file("audio"),                                             // audio will be in audio-yymmdd-hhmmss
+  _audio_file("audio"s),                                             // audio will be in audio-yymmdd-hhmmss
   _audio_rate(8000),                                                // 8,000 samples per second
-  _auto_backup(""),                                                 // no auto backup directory
+  _auto_backup(""s),                                                 // no auto backup directory
   _auto_remaining_callsign_mults_threshold(1),                      // a callsign mult must be seen only once before it becomes known
   _auto_remaining_country_mults(false),                             // do not add country mults as we detect them
   _auto_remaining_country_mults_threshold(1),                       // a canonical prefix must be seen only once before it becomes known
@@ -1397,7 +1397,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _bandmap_decay_time_rbn(60),                                      // stay on bandmap for one hour
   _bandmap_fade_colours( { 255, 200, 150, 100 } ),                  // four colour steps
   _bandmap_filter(),                                                // empty bandmap filter
-  _bandmap_filter_disabled_colour(string_to_colour("BLACK")),       // background colour when bandmap filter is disabled
+  _bandmap_filter_disabled_colour(string_to_colour("BLACK"s)),       // background colour when bandmap filter is disabled
   _bandmap_filter_enabled(false),                                   // do not filter bandmap
   _bandmap_filter_foreground_colour(string_to_colour("WHITE")),     // letters are white
   _bandmap_filter_hide_colour(string_to_colour("RED")),             // background colour when bandmap filter is in HIDE mode

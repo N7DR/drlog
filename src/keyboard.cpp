@@ -47,7 +47,7 @@ int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_even
     \return     nullptr
 */
 void* runit(void* vp)
-{ keyboard_queue* kqp = static_cast<keyboard_queue*>(vp);
+{ keyboard_queue* kqp { static_cast<keyboard_queue*>(vp) };
 
   kqp->process_events();
 
@@ -75,12 +75,12 @@ keyboard_queue::keyboard_queue(void) :
   _display_p = XOpenDisplay(NULL);
 
   if (!_display_p)
-    delayed_exit("Fatal error: unable to open display", 2);
+    delayed_exit("Fatal error: unable to open display"s, 2);
 
 // get the window ID
-  const char* cp = getenv("WINDOWID");
+  const char* cp { getenv("WINDOWID") };
   if (!cp)
-    delayed_exit("Fatal error: unable to obtain window ID", 2);
+    delayed_exit("Fatal error: unable to obtain window ID"s, 2);
 
   _window_id = from_string<Window>(cp);
 
@@ -90,14 +90,14 @@ keyboard_queue::keyboard_queue(void) :
 // we are interested only in key events
   XSelectInput(_display_p, _window_id, KeyPressMask | KeyReleaseMask);
 
-  static pthread_t   thread_id_1;
+  static pthread_t thread_id_1;
 
   try
-  { create_thread(&thread_id_1, NULL, runit, this, "KEYBOARD");
+  { create_thread(&thread_id_1, NULL, runit, this, "KEYBOARD"s);
   }
 
   catch (const pthread_error& e)
-  { delayed_exit("Error creating thread: KEYBOARD", 2);
+  { delayed_exit("Error creating thread: KEYBOARD"s, 2);
   }
 }
 

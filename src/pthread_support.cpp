@@ -869,6 +869,21 @@ void pt_condition_variable::signal(void)
 (gdb)
 */
 
+/*
+(gdb) bt
+#0  0xb7752cf9 in __kernel_vsyscall ()
+#1  0xb6f11dd0 in __libc_signal_restore_set (set=0xbfdde7c0) at ../sysdeps/unix/sysv/linux/nptl-signals.h:79
+#2  __GI_raise (sig=6) at ../sysdeps/unix/sysv/linux/raise.c:48
+#3  0xb6f13297 in __GI_abort () at abort.c:89
+#4  0xb71852ff in __gnu_cxx::__verbose_terminate_handler() () from /usr/lib/i386-linux-gnu/libstdc++.so.6
+#5  0xb7182ea4 in ?? () from /usr/lib/i386-linux-gnu/libstdc++.so.6
+#6  0xb7182f1d in std::terminate() () from /usr/lib/i386-linux-gnu/libstdc++.so.6
+#7  0xb718322e in __cxa_rethrow () from /usr/lib/i386-linux-gnu/libstdc++.so.6
+#8  0x00741e5f in safelock::safelock (this=0xbfddeb08, ptm=..., name="_keyboard") at ../src/pthread_support.cpp:881
+#9  0x007240ae in keyboard_queue::empty (this=0x9233a0 <keyboard>) at ../src/keyboard.cpp:207
+#10 0x005ad51f in main (argc=4, argv=0xbfde1e94) at ../src/drlog.cpp:1796
+*/
+
 safelock::safelock(pt_mutex& ptm, const string& name) :
  _name(name)
 { try
