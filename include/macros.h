@@ -318,7 +318,6 @@ public:                                                                     \
       std::get<2>(*this) = Z;                                               \
     }                                                                       \
                                                                             \
-                                                                            \
   nm( void ) { }                                                            \
                                                                             \
   inline const a0 a1(void) const                                            \

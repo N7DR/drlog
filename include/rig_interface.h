@@ -472,6 +472,29 @@ public:
 */
 const std::string hamlib_error_code_to_string(const int e);
 
+#if 0
+// ---------------------------------------- rig_configuration -------------------------
+
+/*! \class  rig_configuration
+    \brief  A place to hold the state of a rig
+
+    Can't use the obvious "rig_state" because hamlib brilliantly usurps it
+*/
+
+class rig_configuration
+{
+protected:
+
+  frequency _freq;       // can't use "frequency" as that is a class
+  MODE      _mode;
+
+public:
+
+  READ_AND_WRITE(freq);
+  READ_AND_WRITE(mode);
+};
+#endif
+
 // -------------------------------------- Errors  -----------------------------------
 
 ERROR_CLASS(rig_interface_error);   ///< errors related to accessing the rig

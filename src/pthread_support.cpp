@@ -140,33 +140,33 @@ const pthread_error_messages pthread_error_message;     ///< object to hold erro
     The first four parameters are passed without change to <i>pthread_create</i>
 */
 void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const string& thread_name)
-{ const int status = pthread_create(thread, attr, start_routine, arg);
+{ const int status { pthread_create(thread, attr, start_routine, arg) };
 
   if (status != 0)
   { string errname;
 
     switch (status)
     { case EAGAIN :
-        errname = "EAGAIN";
+        errname = "EAGAIN"s;
         break;
 
       case EINVAL :
-        errname = "EINVAL";
+        errname = "EINVAL"s;
         break;
 
       case EPERM :
-        errname = "EPERM";
+        errname = "EPERM"s;
         break;
 
       default :
-        errname = "UNKNOWN [" + to_string(status) + "]";
+        errname = "UNKNOWN ["s + to_string(status) + "]"s;
     }
 
-    const string message = errname + ": " + strerror(status);
+    const string message { errname + ": "s + strerror(status) };
 
     ost << "Thread creation error for thread " << thread_name << ": " << message << endl;
 
-    throw pthread_error(PTHREAD_CREATION_ERROR, thread_name + " error: " + message);
+    throw pthread_error(PTHREAD_CREATION_ERROR, thread_name + " error: "s + message);
   }
 }
 
@@ -182,10 +182,10 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     Supports only the PTHREAD_DETACHED attribute
 */
 thread_attribute::thread_attribute(const unsigned int initial_attributes)
-{ const int status = pthread_attr_init(&_attr);             // man page says that this always succeeds and returns 0
+{ const int status { pthread_attr_init(&_attr) };             // man page says that this always succeeds and returns 0
 
   if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init(): error number = " + to_string(status));
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init(): error number = "s + to_string(status));
 
   if (initial_attributes bitand PTHREAD_DETACHED)
     detached(true);
@@ -195,15 +195,15 @@ thread_attribute::thread_attribute(const unsigned int initial_attributes)
     \param  tid     thread_id
 */
 thread_attribute::thread_attribute(const pthread_t tid)
-{ int status = pthread_attr_init(&_attr);             // man page says that this always succeeds and returns 0
+{ int status { pthread_attr_init(&_attr) };             // man page says that this always succeeds and returns 0
 
   if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init() for thread id " + to_string(tid) + ": error number = " + to_string(status));
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init() for thread id "s + to_string(tid) + ": error number = "s + to_string(status));
 
   status = pthread_getattr_np(tid, &_attr);
 
   if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_getattr_np() for thread id " + to_string(tid) + ": error number = " + to_string(status));
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_getattr_np() for thread id "s + to_string(tid) + ": error number = "s + to_string(status));
 }
 
 /// destructor

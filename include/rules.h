@@ -36,10 +36,14 @@ class EFT;
 class QSO;
 
 /// Some contests have unusual point structures
-enum points_type { POINTS_NORMAL,                       ///< points defined in configuration file
-                   POINTS_IARU,                         ///< IARU contest
-                   POINTS_STEW                          ///< Stew Perry contest
-                 };
+enum class POINTS { NORMAL,                       ///< points defined in configuration file
+                    IARU,                         ///< IARU contest
+                    STEW                          ///< Stew Perry contest
+                  };
+
+/// Syntactic sugar for read-only access
+#define RULESREAD(y)          \
+  inline const decltype(_##y)& y(void) const { SAFELOCK(rules); return _##y; }
 
 // -------------------------  exchange_field_values  ---------------------------
 
@@ -246,17 +250,17 @@ class points_structure
 {
 protected:
 
-  std::map<std::string, unsigned int> _continent_points;    ///< per-continent points
-  std::map<std::string, unsigned int> _country_points;      ///< per-country points
-  unsigned int                        _default_points;      ///< default points
-  enum points_type                    _points_type;         ///< is the points structure too complex for the configuration notation?
+  std::map<std::string, unsigned int> _continent_points;                    ///< per-continent points
+  std::map<std::string, unsigned int> _country_points;                      ///< per-country points
+  unsigned int                        _default_points;                      ///< default points
+  enum POINTS                         _points_type { POINTS::NORMAL };      ///< is the points structure too complex for the configuration notation?
 
 public:
 
 /// default constructor
-  inline points_structure(void) :
-    _points_type(POINTS_NORMAL)
-  { }
+  inline points_structure(void) = default; //:
+//    _points_type(POINTS_NORMAL)
+//  { }
 
   READ_AND_WRITE(continent_points);    ///< per-continent points
   READ_AND_WRITE(country_points);      ///< per-country points
@@ -455,7 +459,7 @@ public:
 /// get the next band that is lower in frequency than a given band
   const BAND next_band_down(const BAND current_band) const;
   
-  SAFEREAD(bonus_countries, rules);                     ///< countries that are eligible for bonus points
+  RULESREAD(bonus_countries);                     ///< countries that are eligible for bonus points
   SAFEREAD(permitted_bands, rules);                     ///< bands allowed in this contest
   SAFEREAD(permitted_modes, rules);                     ///< modes allowed in this contest
 
@@ -611,7 +615,7 @@ public:
   inline const bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
 
-      return (_permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend());
+      return ( _permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend() );
     }
 
 /*! \brief              Is a particular exchange field a regex?

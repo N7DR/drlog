@@ -59,9 +59,16 @@ extern cpair colours;                       ///< program-wide definitions of col
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
 /// drlog mode
-enum DRLOG_MODE { CQ_MODE = 0,              ///< I'm calling the other station
-                  SAP_MODE                  ///< the other station is calling me
-                };
+enum class DRLOG_MODE { CQ,         ///< I'm calling the other station
+                        SAP         ///< the other station is calling me
+                      };
+
+// needed for WRAPPER_3 definition of memory_entry
+ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
+{ ost << ( dm == DRLOG_MODE::CQ ? 'C' : 'S');
+
+  return ost;
+}
 
 string VERSION;         ///< version string
 string DP("·"s);        ///< character for decimal point
@@ -73,6 +80,14 @@ constexpr bool DISPLAY_EXTRACT        { true },                       ///< displ
                DO_NOT_DISPLAY_EXTRACT { !DISPLAY_EXTRACT };           ///< do not display log extracts
 
 constexpr bool FORCE_THRESHOLD { true };                              ///< for forcing accumulator to threshold
+
+// define class for memory entries
+WRAPPER_3(memory_entry,
+            frequency, freq,
+            MODE, mode,
+            DRLOG_MODE, drlog_mode);   ///< parameters for bandmap
+
+deque<memory_entry> memories;
 
 // some forward declarations; others, that depend on these, occur later
 const string active_window_name(void);                                  ///< Return the name of the active window in printable form
@@ -92,6 +107,7 @@ const bool debug_dump(void);                                                    
 const MODE default_mode(const frequency& f);                                                    ///< get the default mode on a frequency
 void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);     ///< Display band and mode
 void display_call_info(const string& callsign, const bool display_extract = DISPLAY_EXTRACT);   ///< Update several call-related windows
+void display_memories(void);                                                                    ///< Update MEMORIES window
 void display_nearby_callsign(const string& callsign);                                           ///< Display a callsign in the NEARBY window, in the correct colour
 void display_statistics(const string& summary_str);                                             ///< Display the current statistics
 const string dump_screen(const string& filename = string());                                    ///< Dump a screen image to PNG file
@@ -107,6 +123,8 @@ const bool fast_cw_bandwidth(void);                       ///< set CW bandwidth 
 void* get_indices(void* vp);                                           ///< Get SFI, A, K
 
 const string hhmmss(void);                          ///< Obtain the current time in HH:MM:SS format
+
+void insert_memory(void);                           ///< insert an entry into the memories
 
 const string match_callsign(const vector<pair<string /* callsign */,
                             int /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
@@ -127,6 +145,7 @@ void rebuild_history(const logbook& logbk,
                      running_statistics& statistics,
                      call_history& q_history,
                      rate_meter& rate);             ///< Rebuild the history (and statistics and rate), using the logbook
+const memory_entry recall_memory(const unsigned int n);     ///< recall a memory
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
@@ -232,7 +251,7 @@ pt_mutex            current_mode_mutex;                     ///< mutex for setti
 MODE                current_mode;                           ///< the current mode
 
 pt_mutex            drlog_mode_mutex;                       ///< mutex for accessing <i>drlog_mode</i>
-DRLOG_MODE          drlog_mode { SAP_MODE };                  ///< CQ_MODE or SAP_MODE
+DRLOG_MODE          drlog_mode { DRLOG_MODE::SAP };         ///< CQ or SAP
 DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 
 pt_mutex            known_callsign_mults_mutex;             ///< mutex for the callsign mults we know about in AUTO mode
@@ -272,6 +291,8 @@ bool                    home_exchange_window { false };             ///< whether
 int                     inactivity_timer;                           ///< how long to record with no activity
 bool                    is_ss { false };                            ///< ss is special
 
+//rig_configuration       last_cqmode_configuration;                  ///< most recent CQMODE configuration
+//rig_configuration       last_sapmode_configuration;                 ///< most recent SAPMODE configuration
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
 bool                    long_t { false };                           ///< whether to send long Ts at beginning of serno
 
@@ -287,6 +308,7 @@ float                   my_longitude;                               ///< my long
 unsigned int            next_qso_number { 1 };                ///< actual number of next QSO
 bool                    no_default_rst { false };             ///< do we not assign a default received RST?
 unsigned int            n_modes { 0 };                        ///< number of modes allowed in the contest
+unsigned int            n_memories { 0 };                     ///< number of memeories on the rig
 
 unsigned int            octothorpe { 1 };                     ///< serial number of next QSO
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
@@ -343,6 +365,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_info,                        ///< summary of info about current station being worked
        win_local_time,                  ///< window for local time
        win_log,                         ///< main visible log
+       win_memories,                    ///< the memory contents
        win_message,                     ///< messages from drlog to the user
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
@@ -679,6 +702,7 @@ int main(int argc, char** argv)
     my_latitude                     = context.my_latitude();
     my_longitude                    = context.my_longitude();
     no_default_rst                  = context.no_default_rst();
+    n_memories                      = context.n_memories();
     rbn_threshold                   = context.rbn_threshold();
     require_dot_in_replacement_call = context.require_dot_in_replacement_call();
     serno_spaces                    = context.serno_spaces();
@@ -1160,6 +1184,9 @@ int main(int argc, char** argv)
 
   if (send_qtcs)
     win_log_extract.process_input_function(process_QTC_input);
+
+// MEMORIES window
+  win_memories.init(context.window_info("MEMORIES"s), WINDOW_NO_CURSOR);
 
 // MULT VALUE window
   win_mult_value.init(context.window_info("MULT VALUE"s), WINDOW_NO_CURSOR);
@@ -1997,7 +2024,7 @@ void* display_rig_status(void* vp)
 
   static long microsecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time() * 1000) };
 
-  DRLOG_MODE last_drlog_mode { SAP_MODE };
+  DRLOG_MODE last_drlog_mode { DRLOG_MODE::SAP };
   bandmap_entry be;
 
 // populate the bandmap entry stuff that won't change
@@ -2028,7 +2055,7 @@ void* display_rig_status(void* vp)
           const frequency f_b                 { rig.rig_frequency_b() };                                          // frequency of VFO B
           const DRLOG_MODE current_drlog_mode { SAFELOCK_GET(drlog_mode_mutex, drlog_mode) };     // explicitly set to SAP mode if we have QSYed
 
-          if ( (current_drlog_mode == CQ_MODE) and (last_drlog_mode == CQ_MODE) and (target != f) )
+          if ( (current_drlog_mode == DRLOG_MODE::CQ) and (last_drlog_mode == DRLOG_MODE::CQ) and (target != f) )
             enter_sap_mode();                                                                   // switch to SAP if we've moved
 
           last_drlog_mode = current_drlog_mode;                                                 // keep track of drlog mode
@@ -2793,12 +2820,43 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // if empty, send CQ #1, if in CQ mode
     if (contents.empty())
-    { if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))
+    { if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ))
       { const string msg = context.message_cq_1();
 
         if (!msg.empty())
           (*cw_p) << msg;
       }
+
+      processed = true;
+    }
+
+// M : insert memory
+    if (!processed and (e.is_unmodified()) and (contents == "M"))
+    { insert_memory();
+      win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+      processed = true;
+    }
+
+// R[n] : recall memory and go there
+    if (!processed and (e.is_unmodified()) and !contents.empty() and (contents.size() < 3) and (contents[0] == 'R'))
+    { unsigned int number = (contents.size() == 2 ? from_string<unsigned int>(create_string(contents[1])) : 0);
+
+      const memory_entry me = recall_memory(number);
+
+//      ost << "Recalled memory number " << number << ": " << me << endl;
+
+      if (me.freq().hz())    // if valid
+      { rig.rig_frequency(me.freq());
+        rig.rig_mode(me.mode());
+
+        if (me.drlog_mode() == DRLOG_MODE::CQ)
+          enter_cq_mode();
+        else
+          enter_sap_mode();
+      }
+
+      win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
       processed = true;
     }
@@ -3122,7 +3180,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       const bool is_dupe = logbk.is_dupe(callsign, cur_band, cur_mode, rules);
 
 // if we're in SAP mode, don't call him if he's a dupe
-      if (drlog_mode == SAP_MODE and is_dupe)
+      if (drlog_mode == DRLOG_MODE::SAP and is_dupe)
       { const cursor posn = win.cursor_position();
 
         win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < (contents + " DUPE") <= posn;
@@ -3154,7 +3212,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       {
 // send the call
         if ( (cur_mode == MODE_CW) and (cw_p) )
-        { if (drlog_mode == CQ_MODE)
+        { if (drlog_mode == DRLOG_MODE::CQ)
           { (*cw_p) << callsign;
 
             SAFELOCK(last_exchange);  // we need to keep track of the last message, so it can be re-sent using the special character "*"
@@ -3291,7 +3349,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
 // add to bandmap if we're in SAP mode
-      if (drlog_mode == SAP_MODE)
+      if (drlog_mode == DRLOG_MODE::SAP)
       { bandmap_entry be;
 
         be.freq(rig_is_split ? rig.rig_frequency_b() : rig.rig_frequency());  // also sets band; TX frequency
@@ -3415,7 +3473,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   { const string contents = remove_peripheral_spaces(win.read());
 
 // if empty, send CQ #2
-    if (contents.empty() and (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE) )
+    if (contents.empty() and (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ) )
     { const string msg = context.message_cq_2();
 
       if (!msg.empty())
@@ -3459,7 +3517,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     else        // not inside a command
     {
 // possibly put a bandmap call into the call window
-      if (original_contents.empty() and drlog_mode == SAP_MODE)
+      if (original_contents.empty() and drlog_mode == DRLOG_MODE::SAP)
       { const string dupe_contents = remove_peripheral_spaces(win_nearby.read());
 
         if (!dupe_contents.empty())
@@ -3471,7 +3529,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       const string current_contents = remove_peripheral_spaces(win.read());    // contents of CALL window may have changed, so we may need to re-insert/refresh call in bandmap
 
 // dupe check; put call into bandmap
-      if (!current_contents.empty() and drlog_mode == SAP_MODE and !contains(current_contents, " DUPE"))
+      if (!current_contents.empty() and drlog_mode == DRLOG_MODE::SAP and !contains(current_contents, " DUPE"))
       {
 // possibly add the call to known mults
         update_known_callsign_mults(current_contents);
@@ -3941,11 +3999,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     { rig.split_disable();
 
       switch (a_drlog_mode)
-      { case CQ_MODE :
+      { case DRLOG_MODE::CQ :
           enter_cq_mode();
           break;
 
-        case SAP_MODE :
+        case DRLOG_MODE::SAP :
           enter_sap_mode();
           break;
       }
@@ -4257,7 +4315,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         if (pexch.valid())
         { if ( (cur_mode == MODE_CW) and (cw_p) )  // don't acknowledge yet if we're about to send a QTC
           { if (exchange_field_values.size() == exchange_template.size())    // 1:1 correspondence between expected and received fields
-            { if (drlog_mode == CQ_MODE)                                   // send QSL
+            { if (drlog_mode == DRLOG_MODE::CQ)                                   // send QSL
               { const bool quick_qsl = (e.symbol() == XK_KP_Enter);
 
                 if (!send_qtc)
@@ -4272,12 +4330,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           }
 
           if (!sent_acknowledgement)
-          { if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == SAP_MODE))    // in SAP mode, he doesn't care that we might have changed his call
+          { if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::SAP))    // in SAP mode, he doesn't care that we might have changed his call
             { if (!send_qtc)
                 (*cw_p) << expand_cw_message(context.exchange_sap());
             }
 
-            if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == CQ_MODE))    // in CQ mode, he does
+            if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ))    // in CQ mode, he does
             { const vector<string> call_contents_fields = split_string(call_contents, " ");
               const string original_callsign = call_contents_fields[call_contents_fields.size() - 1];
 
@@ -4515,7 +4573,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // if we are in CQ mode, then remove this call if it's present elsewhere in the bandmap ... we assume he isn't CQing and SAPing simultaneously on the same band
           bandmap& bandmap_this_band = bandmaps[cur_band];
 
-          if (drlog_mode == CQ_MODE)
+          if (drlog_mode == DRLOG_MODE::CQ)
           { bandmap_this_band -= qso.callsign();
 
 // possibly change needed status of this call on other bandmaps
@@ -4783,7 +4841,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
 
 // CTRL-ENTER -- repeat last message if in CQ mode
-  if (!processed and e.is_control() and (e.symbol() == XK_Return) and (drlog_mode == CQ_MODE))
+  if (!processed and e.is_control() and (e.symbol() == XK_Return) and (drlog_mode == DRLOG_MODE::CQ))
   { if (cw_p)
       (*cw_p) << expand_cw_message("*");
 
@@ -4799,7 +4857,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { if (rig.split_enabled())
     { rig.split_disable();
 
-      (a_drlog_mode == CQ_MODE) ? enter_cq_mode() : enter_sap_mode();
+      (a_drlog_mode == DRLOG_MODE::CQ) ? enter_cq_mode() : enter_sap_mode();
 //      break;
 
 //      switch (a_drlog_mode)
@@ -5164,7 +5222,7 @@ void enter_cq_mode(void)
   { SAFELOCK(drlog_mode);  // don't use SAFELOCK_SET because we want to set the frequency and the mode as an atomic operation
 
     SAFELOCK_SET(cq_mode_frequency_mutex, cq_mode_frequency, rig.rig_frequency());  // nested inside other lock
-    drlog_mode = CQ_MODE;
+    drlog_mode = DRLOG_MODE::CQ;
   }
 
   win_drlog_mode < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "CQ";
@@ -5190,7 +5248,7 @@ void enter_cq_mode(void)
 
 /// enter SAP mode
 void enter_sap_mode(void)
-{ SAFELOCK_SET(drlog_mode_mutex, drlog_mode, SAP_MODE);
+{ SAFELOCK_SET(drlog_mode_mutex, drlog_mode, DRLOG_MODE::SAP);
   win_drlog_mode < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "SAP";
 
   try
@@ -5208,7 +5266,7 @@ void enter_sap_mode(void)
 
 /// toggle between CQ mode and SAP mode
 const bool toggle_drlog_mode(void)
-{ (SAFELOCK_GET(drlog_mode_mutex, drlog_mode) == CQ_MODE) ? enter_sap_mode() : enter_cq_mode();
+{ (SAFELOCK_GET(drlog_mode_mutex, drlog_mode) == DRLOG_MODE::CQ) ? enter_sap_mode() : enter_cq_mode();
 
   return true;
 }
@@ -6977,7 +7035,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
     { if (cw)
       { cw_speed(original_cw_speed);    // always set the speed, just to be safe
 
-        if (drlog_mode == CQ_MODE)                                   // send QSL immediately
+        if (drlog_mode == DRLOG_MODE::CQ)                                   // send QSL immediately
           (*cw_p) << expand_cw_message( context.qsl_message() );
       }
 
@@ -7366,7 +7424,7 @@ const bool fast_cw_bandwidth(void)
 { if (safe_get_mode() == MODE_CW)
   { const DRLOG_MODE current_drlog_mode = SAFELOCK_GET(drlog_mode_mutex, drlog_mode);
 
-    rig.bandwidth( (current_drlog_mode == CQ_MODE) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
+    rig.bandwidth( (current_drlog_mode == DRLOG_MODE::CQ) ? context.fast_cq_bandwidth() : context.fast_sap_bandwidth() );
   }
 
   return true;
@@ -7493,11 +7551,11 @@ const bool process_keypress_F5(void)
   { rig.split_disable();
 
     switch (a_drlog_mode)
-    { case CQ_MODE :
+    { case DRLOG_MODE::CQ :
         enter_cq_mode();
         break;
 
-      case SAP_MODE :
+      case DRLOG_MODE::SAP :
         enter_sap_mode();
         break;
     }
@@ -7755,7 +7813,7 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
 */
 void possible_mode_change(const frequency& f)
 { if (multiple_modes)
-  { const MODE m = default_mode(f);
+  { const MODE m { default_mode(f) };
 
     if (m != safe_get_mode())
     { rig.rig_mode(m);
@@ -7782,7 +7840,7 @@ const bool toggle_recording_status(audio_recorder& audio)
       update_recording_status_window();
   }
   else
-    alert("toggling audio not permitted");
+    alert("toggling audio not permitted"s);
 
   return true;
 }
@@ -7822,8 +7880,8 @@ void stop_recording(audio_recorder& audio)
 */
 const bool update_rx_ant_window(void)
 { if (win_rx_ant.defined())                     // don't do anything if the window isn't defined
-  { const bool   rx_ant_in_use   { rig.rx_ant() };
-    const string window_contents { win_rx_ant.read() };
+  { const bool   rx_ant_in_use          { rig.rx_ant() };
+    const        string window_contents { win_rx_ant.read() };
 
     if ( rx_ant_in_use and (window_contents != "RX"s) )
       win_rx_ant < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= "RX"s;
@@ -7886,10 +7944,6 @@ void* get_indices(void* vp)    ///< Get SFI, A, K
 
       win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring(hhmmss(), 0, 5) < EOL
                   <= indices;
-
-//      win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT <= indices;
-
-//      win_indices_lookup_time <= substring(hhmmss(), 0, 5);
     }
 
     catch (...)
@@ -7909,9 +7963,6 @@ void* get_indices(void* vp)    ///< Get SFI, A, K
 */
 const int time_since_last_qso(const logbook& logbk)
 { const QSO last_qso { logbk.last_qso() };
-
-//  if (last_qso.empty())
-//    return 0;
 
   return ( last_qso.empty() ? 0 : (time(NULL) - last_qso.epoch_time()) );      // get the time from the kernel
 }
@@ -7980,4 +8031,43 @@ void populate_win_call_history(const string& callsign)
 
     win_call_history.refresh();
   }
+}
+
+void insert_memory(void)
+{ if (n_memories)
+  { memory_entry me;
+
+    me.freq(rig.rig_frequency());
+    me.mode(safe_get_mode());
+    me.drlog_mode(drlog_mode);
+
+    memories.push_front(me);
+
+    while (memories.size() > n_memories)
+      memories.pop_back();
+
+    display_memories();
+  }
+}
+
+void display_memories(void)
+{ win_memories < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+  int line_nr { win_memories.height() - 1 };
+  int number  { 0 };
+
+  for (const auto& me : memories)
+  { const cursor c_posn { 0, line_nr-- };
+
+    win_memories < c_posn < to_string(number++) < " "s < (me.freq()).display_string()
+                          < pad_string(MODE_NAME[me.mode()], 5)
+                          < (me.drlog_mode() == DRLOG_MODE::CQ ? "  CQ"s : "  SAP"s);
+  }
+
+  win_memories.refresh();
+
+}
+
+inline const memory_entry recall_memory(const unsigned int n)
+{ return (n < memories.size() ? memories[n] : memory_entry());
 }

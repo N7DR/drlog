@@ -426,10 +426,14 @@ public:
     \param  e   keyboard event to be processed
     \return     whether the event was processed
 */
-  const bool common_processing(const keyboard_event& e);    // processing that is the same in multiple windows
+  const bool common_processing(const keyboard_event& e);
 
-/// define the <= operator to be the same as <, except that it causes a refresh at the end of the operation
-// the universal reference is needed to handle the case where t is an rvalue
+/*! \brief      define the <= operator to be the same as <, except that it causes a refresh at the end of the operation
+    \param  t   the object to be output
+    \return     the window
+
+    The universal reference is needed in order to handle the case where t is an rvalue
+*/
   template <class T>
   window& operator<=(T&& t)
   { if (!_wp)

@@ -134,23 +134,23 @@ void drlog_context::_process_configuration_file(const string& filename)
     const string LHS            { to_upper(lhs) };                                                          // converted to upper case
 
 // ACCEPT COLOUR
-    if ( ( (LHS == "ACCEPT COLOUR") or (LHS == "ACCEPT COLOR") ) and !rhs.empty() )
+    if ( ( (LHS == "ACCEPT COLOUR"s) or (LHS == "ACCEPT COLOR"s) ) and !rhs.empty() )
       _accept_colour = string_to_colour(RHS);
 
 // ALLOW AUDIO RECORDING
-    if (LHS == "ALLOW AUDIO RECORDING")
+    if (LHS == "ALLOW AUDIO RECORDING"s)
       _allow_audio_recording = is_true;
 
 // ALTERNATIVE EXCHANGE CQ
-    if (LHS == "ALTERNATIVE EXCHANGE CQ")
+    if (LHS == "ALTERNATIVE EXCHANGE CQ"s)
       _alternative_exchange_cq = RHS;
 
 // ALTERNATIVE EXCHANGE SAP
-    if (LHS == "ALTERNATIVE EXCHANGE SAP")
+    if (LHS == "ALTERNATIVE EXCHANGE SAP"s)
       _alternative_exchange_sap = RHS;
 
 // ALTERNATIVE QSL MESSAGE
-    if ( (LHS == "ALTERNATIVE QSL MESSAGE") or (LHS == "QUICK QSL MESSAGE") )
+    if ( (LHS == "ALTERNATIVE QSL MESSAGE"s) or (LHS == "QUICK QSL MESSAGE"s) )
       _alternative_qsl_message = RHS;
 
 // ARCHIVE
@@ -650,6 +650,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // MY ITU ZONE
     if (LHS == "MY ITU ZONE")
       _my_itu_zone = from_string<int>(RHS);
+
+// N MEMORIES
+    if (LHS == "N MEMORIES")
+      _n_memories = min(from_string<unsigned int>(rhs), 10u);  // maximum number of memories is 10
 
 // NEARBY EXTRACT
     if (LHS == "NEARBY EXTRACT")
@@ -1484,6 +1488,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _normalise_rate(false),                                           // do not normalise rates to one-hour values
   _not_country_mults(),                                             // no countries are explicitly not country mults
   _no_default_rst(false),                                           // we do assign a default RST
+  _n_memories(0),                                                   // no memories
   _old_adif_log_name(),                                             // no ADIF log of old QSOs
   _path( { "." } ),                                                 // search only the current directory
   _per_band_points( {} ),                                           // no points awarded anywhere

@@ -623,20 +623,20 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // parse the config file
       string context_points = context.points_string(b, m);
 
-      static const set<string> special_points_set { "IARU", "STEW" };
+      static const set<string> special_points_set { "IARU"s, "STEW"s };
       const bool is_special_points = ( special_points_set < context_points );
 
       if (is_special_points)
-      { if (context_points == "IARU")  // special
+      { if (context_points == "IARU"s)  // special
         { //points_structure ps = pb[b];
 
           //ps.points_type(POINTS_IARU);
           //pb[b] = ps;
-          pb[b].points_type(POINTS_IARU);
+          pb[b].points_type(POINTS::IARU);
         }
 
-        if (context_points == "STEW")  // special
-          pb[b].points_type(POINTS_STEW);
+        if (context_points == "STEW"s)  // special
+          pb[b].points_type(POINTS::STEW);
       }
       else                              // ordinary points structure
       {
@@ -1228,7 +1228,7 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
 
   switch (points_this_band.points_type())
   { default :
-    case POINTS_NORMAL :
+    case POINTS::NORMAL :
     { const map<string, unsigned int>& country_points = points_this_band.country_points();
       auto cit = country_points.find(canonical_prefix);
 
@@ -1249,7 +1249,7 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
 //1 point per QSO with same zone or with HQ stations
 //3 points per QSO with different zone on same continent
 //5 points per QSO with different zone on different continent
-    case POINTS_IARU :
+    case POINTS::IARU :
     { unsigned int rv = 0;
       const bool same_zone = (_my_itu_zone == location_db.itu_zone(call));
       const string his_continent = location_db.continent(call);
@@ -1272,7 +1272,7 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
       return rv;
     }
 
-    case POINTS_STEW :
+    case POINTS::STEW :
     { const string grid_value = qso.received_exchange("GRID");
 
       const unsigned int distance = static_cast<unsigned int>( (grid_square(grid_value) - _my_grid) / 500 ) + 1;
