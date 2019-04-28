@@ -313,6 +313,9 @@ unsigned int            n_memories { 0 };                     ///< number of mem
 unsigned int            octothorpe { 1 };                     ///< serial number of next QSO
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
 
+vector<BAND>            permitted_bands;                    ///< permitted bands, in frequency order
+set<MODE>               permitted_modes;                    ///< the permitted modes
+
 unsigned int            rbn_threshold;                      ///< how many times must a call be posted before appearig on a bandmap?
 int                     REJECT_COLOUR { COLOUR_RED };       ///< colour for calls that are dupes
 bool                    require_dot_in_replacement_call;    ///< whether a dot is required when reading replacement call from EXCHANGE window (used in exchange.cpp)
@@ -561,6 +564,10 @@ void update_matches_window(const T& matches, vector<pair<string, int>>& match_ve
 
 // simple inline functions
 
+/// recall a memory
+inline const memory_entry recall_memory(const unsigned int n)
+  { return ( (n < memories.size()) ? memories[n] : memory_entry() ); }
+
 /// get value of <i>current_band</i> in thread-safe manner
 inline const BAND safe_get_band(void)
   { return (SAFELOCK_GET(current_band_mutex, current_band)); }
@@ -681,11 +688,11 @@ int main(int argc, char** argv)
     context = *context_p;
     delete context_p;
 
-// set some variables that will not be written again
-    DP = context.decimal_point();               // correct decimal point indicator
-    TS = context.thousands_separator();         // correct thousands separator
-    ACCEPT_COLOUR = context.accept_colour();    // colour for calls it is OK to work
-    REJECT_COLOUR = context.reject_colour();    // colour for calls it is not OK to work
+// set some immutable variables from the context
+    DP           = context.decimal_point();             // correct decimal point indicator
+    TS            = context.thousands_separator();      // correct thousands separator
+    ACCEPT_COLOUR = context.accept_colour();            // colour for calls it is OK to work
+    REJECT_COLOUR = context.reject_colour();            // colour for calls it is not OK to work
 
     bandmap_frequency_up            = context.bandmap_frequency_up();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"s);
@@ -812,6 +819,10 @@ int main(int argc, char** argv)
     { cerr << "Error generating rules" << endl;
       exit(-1);
     }
+
+// set some immutable variables from the rules
+    permitted_bands = rules.permitted_bands();
+    permitted_modes = rules.permitted_modes();
 
 // is it SS?
     if (rules.n_modes() == 1)
@@ -1308,7 +1319,6 @@ int main(int argc, char** argv)
 
 // SRSS window
   win_srss.init(context.window_info("SRSS"s), WINDOW_NO_CURSOR);
-//  win_srss <= ( "SR/SS: "s + sunrise(context.my_latitude(), context.my_longitude()) + "/"s + sunset(context.my_latitude(), context.my_longitude()) );
   win_srss <= ( "SR/SS: "s + sunrise(my_latitude, my_longitude) + "/"s + sunset(my_latitude, my_longitude) );
 
 // SUMMARY window
@@ -1401,9 +1411,10 @@ int main(int argc, char** argv)
   }
 
 // create thread to prune the bandmaps every minute
-  static bandmap_info bandmap_info_for_thread(&win_bandmap, &bandmaps); // doesn't really need to be static
+//  static bandmap_info bandmap_info_for_thread(&win_bandmap, &bandmaps); // doesn't really need to be static
 
   { static pthread_t thread_id_4;
+    static bandmap_info bandmap_info_for_thread { &win_bandmap, &bandmaps };
 
     try
     { create_thread(&thread_id_4, &(attr_detached.attr()), prune_bandmap, (void*)(&bandmap_info_for_thread), "prune bandmap"s);
@@ -1651,41 +1662,41 @@ int main(int argc, char** argv)
     update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
 
 // QTCs
-      if (send_qtcs)
-      {
+    if (send_qtcs)
+    {
 // number of EU QSOs from logbook
-        const unsigned int n_eu_qsos { logbk.filter([] (const QSO& q) { return (q.continent() == string("EU"s)); } ).size() };
+      const unsigned int n_eu_qsos { logbk.filter([] (const QSO& q) { return (q.continent() == string("EU"s)); } ).size() };
 
-        try
-        { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
-        }
+      try
+      { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
+      }
 
-        catch (const qtc_error& e)
-        { ost << "Error reading QTC file: " << e.reason() << endl;
-          exit(-1);
-        }
+      catch (const qtc_error& e)
+      { ost << "Error reading QTC file: " << e.reason() << endl;
+        exit(-1);
+      }
 
-        qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
+      qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
 
-        if (n_eu_qsos != qtc_buf.size())
-          alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS"s);
+      if (n_eu_qsos != qtc_buf.size())
+        alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS"s);
 
 // move the sent ones to the sent buffer
-        const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
+      const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
 
-        FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+      FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
 
-        statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
-        statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+      statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
+      statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
 
-        if (!vec_qs.empty())
-        { const qtc_series& last_qs { vec_qs[vec_qs.size() - 1] };
+      if (!vec_qs.empty())
+      { const qtc_series& last_qs { vec_qs[vec_qs.size() - 1] };
 
-          win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Last QTC: "s < last_qs.id() < " to "s <= last_qs.target();
-        }
-
-        update_qtc_queue_window();
+        win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Last QTC: "s < last_qs.id() < " to "s <= last_qs.target();
       }
+
+      update_qtc_queue_window();
+    }
 
 // display the current statistics
       display_statistics(statistics.summary_string(rules));
@@ -1982,8 +1993,7 @@ void* display_date_and_time(void* vp)
 // possibly run thread to get geomagnetic indices
         if (!context.geomagnetic_indices_command().empty())
         { static pthread_t get_indices_thread_id;
-
-          string cmd { context.geomagnetic_indices_command() };  // can't cast const string* to void*
+          static string cmd { context.geomagnetic_indices_command() };  // can't cast const string* to void*
 
           try
           { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices"s);
@@ -2019,8 +2029,8 @@ void* display_date_and_time(void* vp)
 void* display_rig_status(void* vp)
 { start_of_thread("display rig status"s);
 
-  rig_status_info* rig_status_thread_parameters_p = static_cast<rig_status_info*>(vp);
-  rig_status_info& rig_status_thread_parameters = *rig_status_thread_parameters_p;
+  rig_status_info* rig_status_thread_parameters_p { static_cast<rig_status_info*>(vp) };
+  rig_status_info& rig_status_thread_parameters   { *rig_status_thread_parameters_p };
 
   static long microsecond_poll_period { static_cast<long>(rig_status_thread_parameters.poll_time() * 1000) };
 
@@ -2077,51 +2087,58 @@ void* display_rig_status(void* vp)
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
 // it seems like the effort of trying to work around the bug is not worth it
+          constexpr unsigned int RIT_XIT_PM_ENTRY  { 18 };   // position of the RIT/XIT +/- indicator; compiler does not allow "±" in variable names
+
+          constexpr unsigned int RIT_XIT_OFFSET_ENTRY  { 19 };   // position of the RIT/XIT offset
+          constexpr unsigned int RIT_XIT_OFFSET_LENGTH { 4 };   // length of the RIT/XIT offset
+
           constexpr unsigned int RIT_ENTRY  { 23 };      // position of the RIT status byte in the K3 status string
           constexpr unsigned int XIT_ENTRY  { 24 };      // position of the XIT status byte in the K3 status string
           constexpr unsigned int MODE_ENTRY { 29 };      // position of the mode byte in the K3 status string
 
-          const char mode_char = status_str[MODE_ENTRY];
-          const string mode_str = ( (mode_char == '1') ? "LSB " : ( (mode_char == '2') ? "USB " : ( (mode_char == '3') ? " CW " : "UNK " ) ) );
-          const bool rit_is_on = (status_str[RIT_ENTRY] == '1');
-          const bool xit_is_on = (status_str[XIT_ENTRY] == '1');
+          constexpr unsigned int SPLIT_ENTRY = 32;      // position of the SPLIT status byte in the K3 status string
+
+          constexpr unsigned int RIT_XIT_DISPLAY_LENGTH  { 7 }; // display length of RIT/XIT info
+
+          const char mode_char  { status_str[MODE_ENTRY] };
+          const string mode_str { ( (mode_char == '1') ? "LSB "s : ( (mode_char == '2') ? "USB "s : ( (mode_char == '3') ? " CW "s : "UNK "s ) ) ) };
+          const bool rit_is_on  { (status_str[RIT_ENTRY] == '1') };
+          const bool xit_is_on  { (status_str[XIT_ENTRY] == '1') };
 
           string rit_xit_str;
 
           if (xit_is_on)
-            rit_xit_str += "X";
+            rit_xit_str += "X"s;
 
           if (rit_is_on)
-            rit_xit_str += "R";
+            rit_xit_str += "R"s;
 
           if (rit_is_on or xit_is_on)
-          { const int rit_xit_value = from_string<int>(substring(status_str, 19, 4));
+          { const int rit_xit_value { from_string<int>(substring(status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH)) };
 
-            rit_xit_str += (status_str[18] + to_string(rit_xit_value));
-            rit_xit_str = pad_string(rit_xit_str, 7);
+            rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + to_string(rit_xit_value));
+            rit_xit_str = pad_string(rit_xit_str, RIT_XIT_DISPLAY_LENGTH);
           }
 
           if (rit_xit_str.empty())
-            rit_xit_str = create_string(' ', 7);
-
-          static const unsigned int SPLIT_ENTRY = 32;      // position of the SPLIT status byte in the K3 status string
+            rit_xit_str = create_string(' ', RIT_XIT_DISPLAY_LENGTH);
 
           rig_is_split = (status_str[SPLIT_ENTRY] == '1');
 
-          const string bandwidth_str = to_string(rig_status_thread_parameters.rigp()->bandwidth());
-          const string frequency_b_str = f_b.display_string();
+          const string bandwidth_str   { to_string(rig_status_thread_parameters.rigp()->bandwidth()) };
+          const string frequency_b_str { f_b.display_string() };
 
 // now display the status
           win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
 
-          const bool sub_rx = (rig_status_thread_parameters.rigp())->sub_receiver_enabled();
-          const auto fg = win_rig.fg();    // original foreground colour
+          const bool sub_rx { (rig_status_thread_parameters.rigp())->sub_receiver_enabled() };
+          const auto fg     { win_rig.fg() };    // original foreground colour
 
           win_rig < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT
                   < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_BOLD)
                   < pad_string(f.display_string(), 7)
                   < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_NORMAL)
-                  < ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L " : "  " )
+                  < ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L "s : "  "s )
                   < mode_str
                   < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_BOLD : WINDOW_ATTRIBUTES::WINDOW_NORMAL);
 
@@ -2137,16 +2154,16 @@ void* display_rig_status(void* vp)
           win_rig < WINDOW_ATTRIBUTES::CURSOR_DOWN
                   < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
-          const size_t x_posn = rit_xit_str.find_first_of("X");
+          const size_t x_posn { rit_xit_str.find_first_of("X"s) };
 
           if (x_posn == string::npos)
             win_rig < rit_xit_str;
           else
-            win_rig < substring(rit_xit_str, 0, x_posn) < WINDOW_ATTRIBUTES::WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X" < WINDOW_ATTRIBUTES::WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring(rit_xit_str, x_posn + 1);
+            win_rig < substring(rit_xit_str, 0, x_posn) < WINDOW_ATTRIBUTES::WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X"s < WINDOW_ATTRIBUTES::WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring(rit_xit_str, x_posn + 1);
 
-// don't change the bandwidth if the rig has returned a ridiculous value, which happens occasionally with the K3
+// don't change the bandwidth if the rig has returned a ridiculous value, which happens occasionally with the K3 (!!)
           if (bandwidth_str.size() <= 4)
-            win_rig < "   " < bandwidth_str;
+            win_rig < "   "s < bandwidth_str;
 
           win_rig.refresh();
         }
@@ -2168,7 +2185,7 @@ void* display_rig_status(void* vp)
       if (exiting_rig_status)
       { ost << "display_rig_status() is exiting" << endl;
 
-        end_of_thread("display rig status");
+        end_of_thread("display rig status"s);
 
         ost << "will now exit other threads" << endl;
 
@@ -2190,20 +2207,20 @@ void* process_rbn_info(void* vp)
 { start_of_thread("process rbn info");
 
 // get access to the information that's been passed to the thread
-  cluster_info* cip = static_cast<cluster_info*>(vp);
-  window& cluster_line_win = *(cip->wclp());            // the window to which we will write each line from the cluster/RBN
-  window& cluster_mult_win = *(cip->wcmp());            // the window in which to write mults
-  dx_cluster& rbn = *(cip->dcp());                      // the DX cluster or RBN
-  running_statistics& statistics = *(cip->statistics_p());           // the statistics
-  location_database& location_db = *(cip->location_database_p());    // database of locations
-  window& bandmap_win = *(cip->win_bandmap_p());                     // bandmap window
-  array<bandmap, NUMBER_OF_BANDS>& bandmaps = *(cip->bandmaps_p());  // bandmaps
+  cluster_info*                    cip              { static_cast<cluster_info*>(vp) };
+  window&                          cluster_line_win { *(cip->wclp()) };            // the window to which we will write each line from the cluster/RBN
+  window&                          cluster_mult_win { *(cip->wcmp()) };            // the window in which to write mults
+  dx_cluster&                      rbn              { *(cip->dcp()) };                      // the DX cluster or RBN
+  running_statistics&              statistics       { *(cip->statistics_p()) };           // the statistics
+  location_database&               location_db      { *(cip->location_database_p()) };    // database of locations
+  window&                          bandmap_win      { *(cip->win_bandmap_p()) };                     // bandmap window
+  array<bandmap, NUMBER_OF_BANDS>& bandmaps         { *(cip->bandmaps_p()) };  // bandmaps
 
-  const bool is_rbn = (rbn.source() == POSTING_RBN);
-  const bool is_cluster = !is_rbn;
-  const bool rbn_beacons = context.rbn_beacons();
+  const bool is_rbn      { (rbn.source() == POSTING_SOURCE::RBN) };
+  const bool is_cluster  { !is_rbn };
+  const bool rbn_beacons { context.rbn_beacons() };
 
-  const size_t QUEUE_SIZE = 100;        // size of queue of recent calls posted to the mult window
+  constexpr size_t QUEUE_SIZE { 100 };        // size of queue of recent calls posted to the mult window
 
   string unprocessed_input;             // data from the cluster that have not yet been processed by this thread
 
@@ -2211,27 +2228,27 @@ void* process_rbn_info(void* vp)
 
   deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
 
-  const int highlight_colour = colours.add(COLOUR_WHITE, COLOUR_RED);             // colour that will mark that we are processing a ten-second pass
-  const int original_colour = colours.add(cluster_line_win.fg(), cluster_line_win.bg());
+  const int highlight_colour { static_cast<int>(colours.add(COLOUR_WHITE, COLOUR_RED)) };             // colour that will mark that we are processing a ten-second pass
+  const int original_colour  { static_cast<int>(colours.add(cluster_line_win.fg(), cluster_line_win.bg())) };
 
   if (is_cluster)
     win_cluster_screen < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT;  // probably unused
 
   while (1)                                                // forever; process a ten-second pass
   { set<BAND> changed_bands;                               // the bands that have been changed by this ten-second pass
-    bool cluster_mult_win_was_changed = false;             // has cluster_mult_win been changed by this pass?
+    bool cluster_mult_win_was_changed { false };           // has cluster_mult_win been changed by this pass?
     string last_processed_line;                            // the last line processed during this pass
-    const string new_input = rbn.get_unprocessed_input();  // add any unprocessed info from the cluster; deletes the data from the cluster
+    const string new_input { rbn.get_unprocessed_input() };  // add any unprocessed info from the cluster; deletes the data from the cluster
 
 // a visual marker that we are processing a pass; this should appear only briefly
-    const string win_contents = cluster_line_win.read();
-    const char first_char = win_contents.empty() ? ' ' : win_contents[0];
+    const string win_contents { cluster_line_win.read() };
+    const char   first_char   { (win_contents.empty() ? ' ' : win_contents[0]) };
 
     cluster_line_win < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < colour_pair(highlight_colour) < first_char <= colour_pair(original_colour);
 
     if (is_cluster and !new_input.empty())
-    { const string no_cr = remove_char(new_input, CR_CHAR);
-      const vector<string> lines = to_lines(no_cr);
+    { const string         no_cr { remove_char(new_input, CR_CHAR) };
+      const vector<string> lines { to_lines(no_cr) };
 
 // I don't understand why the scrolling occurs automatically... in particular,
 // I don't know what causes it to scroll
@@ -2250,41 +2267,41 @@ void* process_rbn_info(void* vp)
     unprocessed_input += new_input;
 
     while (contains(unprocessed_input, CRLF))              // look for EOL markers
-    { const size_t posn = unprocessed_input.find(CRLF);
-      const string line = substring(unprocessed_input, 0, posn);   // store the next unprocessed line
+    { const size_t posn { unprocessed_input.find(CRLF) };
+      const string line { substring(unprocessed_input, 0, posn) };   // store the next unprocessed line
 
       unprocessed_input = substring(unprocessed_input, min(posn + 2, unprocessed_input.length() - 1));  // delete the line (including the CRLF) from the buffer
 
       if (!line.empty())
-      { const bool is_beacon = contains(line, " BCN ") or contains(line, "/B ")  or contains(line, "/B2 ");
+      { const bool is_beacon { contains(line, " BCN "s) or contains(line, "/B "s)  or contains(line, "/B2 "s) };
 
         if (rbn_beacons or (!rbn_beacons and !is_beacon) )
         { last_processed_line = line;
 
 // display if this is a new mult on any band, and if the poster is on our own continent
-          const dx_post post(line, location_db, rbn.source());
-          const bool wrong_mode = is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW");      // don't process if RBN and not CW
+          const dx_post post    { line, location_db, rbn.source() };
+          const bool wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
 
           if (post.valid() and !wrong_mode)
-          { const BAND dx_band = post.band();
+          { const BAND dx_band { post.band() };
 
 // is this station being monitored?
             if (mp.is_monitored(post.callsign()))
               mp += post;
 
             if (permitted_bands < dx_band)              // process only if is on a band we care about
-            { const BAND cur_band = safe_get_band();
-              const string& dx_callsign = post.callsign();
-              const string& poster = post.poster();
-              const pair<string, BAND> target { dx_callsign, dx_band };
+            { const BAND               cur_band    { safe_get_band() };
+              const string&            dx_callsign { post.callsign() };
+              const string&            poster      { post.poster() };
+              const pair<string, BAND> target      { dx_callsign, dx_band };
 
-              bandmap_entry be( (post.source() == POSTING_CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN );
+              bandmap_entry be { (post.source() == POSTING_SOURCE::CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
 
               be.callsign(dx_callsign);
               be.freq(post.freq());        // also sets band and mode
               be.frequency_str_decimal_places(1);
 
-              be.expiration_time(post.time_processed() + ( post.source() == POSTING_CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
+              be.expiration_time(post.time_processed() + ( post.source() == POSTING_SOURCE::CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                               (context.bandmap_decay_time_rbn() * 60 ) ) );
               be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
 
@@ -2298,16 +2315,16 @@ void* process_rbn_info(void* vp)
                 update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
-              const vector<string> exch_mults = rules.expanded_exchange_mults();                                      // the exchange multipliers
+              const vector<string> exch_mults { rules.expanded_exchange_mults() };                                      // the exchange multipliers
 
               for (const auto& exch_mult_name : exch_mults)
               { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
 // *** consider putting the regex into the multiplier object (in addition to the list of known values)
-                { const vector<string> exchange_field_names = rules.expanded_exchange_field_names(be.canonical_prefix(), be.mode());
-                  const bool is_possible_exchange_field = ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() );
+                { const vector<string> exchange_field_names { rules.expanded_exchange_field_names(be.canonical_prefix(), be.mode()) };
+                  const bool is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
 
                   if (is_possible_exchange_field)
-                  { const string guess = exchange_db.guess_value(dx_callsign, exch_mult_name);
+                  { const string guess { exchange_db.guess_value(dx_callsign, exch_mult_name) };
 
                     if (!guess.empty())
                     { if ( statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess)) )
@@ -2319,9 +2336,9 @@ void* process_rbn_info(void* vp)
 
               be.calculate_mult_status(rules, statistics);
 
-              const bool is_recent_call = ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() );
-              const bool is_me = (be.callsign() == context.my_call());
-              const bool is_interesting_mode = (rules.score_modes() < be.mode());
+              const bool is_recent_call      { ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() ) };
+              const bool is_me               { (be.callsign() == context.my_call()) };
+              const bool is_interesting_mode { (rules.score_modes() < be.mode()) };
 
 // CLUSTER MULT window
               if (cluster_mult_win.defined())
@@ -2339,14 +2356,14 @@ void* process_rbn_info(void* vp)
                     if ( (dx_band == cur_band) or is_me)
                       cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_HIGHLIGHT;
 
-                    const int bg_colour = cluster_mult_win.bg();
+                    const int bg_colour { cluster_mult_win.bg() };
 
                     if (is_me)
                       cluster_mult_win.bg(COLOUR_YELLOW);
 
-                    const string frequency_str = pad_string(be.frequency_str(), 7);
+                    const string frequency_str { pad_string(be.frequency_str(), 7) };
 
-                    cluster_mult_win < pad_string(frequency_str + " " + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
+                    cluster_mult_win < pad_string(frequency_str + " "s + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
 
                     if (is_me)
                       cluster_mult_win.bg(bg_colour);
@@ -2365,20 +2382,20 @@ void* process_rbn_info(void* vp)
                     bm_buffer.add(be.callsign(), post.poster());
 
                     if (bm_buffer.sufficient_posters(be.callsign()))
-                    { bandmap& bandmap_this_band = bandmaps[dx_band];
+                    { //bandmap& bandmap_this_band { bandmaps[dx_band] };
 
-                      bandmap_this_band += be;
-
+                      //bandmap_this_band += be;
+                      bandmaps[dx_band] += be;
                       changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
                     }
 
                     break;
 
                   default :
-                    bandmap& bandmap_this_band = bandmaps[dx_band];
+                    //bandmap& bandmap_this_band { bandmaps[dx_band] };
 
-                    bandmap_this_band += be;
-
+                    //bandmap_this_band += be;
+                    bandmaps[dx_band] += be;
                     changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
                 }
               }
@@ -2405,38 +2422,34 @@ void* process_rbn_info(void* vp)
 
 // update monitored posts if there was a change
     if (mp.is_dirty())
-    { const deque<monitored_posts_entry> entries = mp.entries();
+    { const deque<monitored_posts_entry> entries { mp.entries() };
 
       win_monitored_posts < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-      unsigned int y = (win_monitored_posts.height() - 1) - (entries.size() - 1); // oldest entry
+      unsigned int y { (win_monitored_posts.height() - 1) - (entries.size() - 1) }; // oldest entry
 
-      const time_t now = ::time(NULL);
+      const time_t       now          { ::time(NULL) };
+      const vector<int>  fade_colours { context.bandmap_fade_colours() };
+      const unsigned int n_colours    { fade_colours.size() };
+      const float        interval     { 1.0f / n_colours };
 
-      const vector<int> fade_colours = context.bandmap_fade_colours();
-      const int n_colours = fade_colours.size();
-      const float interval = (1.0 / static_cast<float>(n_colours));
-
-      int default_colours = colours.add(win_monitored_posts.fg(), win_monitored_posts.bg());
+      int default_colours { static_cast<int>(colours.add(win_monitored_posts.fg(), win_monitored_posts.bg())) };
 
 // oldest to newest
       for (size_t n = 0; n < entries.size(); ++n)
-      { //ost << "n (index in deque) = " << n << endl;
-        //ost << "entry: " << entries[n] << endl;
-
-        win_monitored_posts < cursor(0, y++);
+      { win_monitored_posts < cursor(0, y++);
 
 // correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
 // minutes to expiration
-        const unsigned int seconds_to_expiration = entries[n].expiration() - now;
-        const float fraction = static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION);
+        const unsigned int seconds_to_expiration { static_cast<unsigned int>(entries[n].expiration() - now) };
+        const float        fraction { static_cast<float>(seconds_to_expiration) / (MONITORED_POSTS_DURATION) };
 
-        int n_intervals = fraction / interval;
+        unsigned int n_intervals { static_cast<unsigned int>(fraction / interval) };
 
         n_intervals = min(n_intervals, n_colours - 1);
         n_intervals = (n_colours - 1) - n_intervals;
 
-        const int cpu = colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg());
+        const int cpu { static_cast<int>(colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg())) };
 
         win_monitored_posts < colour_pair(cpu)
                             < entries[n].to_string() < colour_pair(default_colours);
@@ -2461,7 +2474,7 @@ void* process_rbn_info(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { end_of_thread("process rbn info");
+        { end_of_thread("process rbn info"s);
           return nullptr;
         }
       }
@@ -2475,9 +2488,9 @@ void* process_rbn_info(void* vp)
 
 /// thread function to obtain data from the cluster
 void* get_cluster_info(void* vp)
-{ start_of_thread("get cluster info");
+{ start_of_thread("get cluster info"s);
 
-  dx_cluster& cluster = *(static_cast<dx_cluster*>(vp));    // make the cluster available
+  dx_cluster& cluster { *(static_cast<dx_cluster*>(vp)) };    // make the cluster available
 
   while(1)                                                  // forever
   { cluster.read();                                         // reads the socket and stores the data
@@ -2488,7 +2501,7 @@ void* get_cluster_info(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { end_of_thread("get cluster info");
+        { end_of_thread("get cluster info"s);
           return nullptr;
         }
       }
@@ -2830,7 +2843,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       processed = true;
     }
 
-// M : insert memory
+#if 0
+    // M : insert memory
     if (!processed and (e.is_unmodified()) and (contents == "M"))
     { insert_memory();
       win_call <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
@@ -2844,11 +2858,17 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       const memory_entry me = recall_memory(number);
 
+      const frequency& freq = me.freq();
+
 //      ost << "Recalled memory number " << number << ": " << me << endl;
 
-      if (me.freq().hz())    // if valid
-      { rig.rig_frequency(me.freq());
+      if (freq.hz())    // if valid
+      { rig.rig_frequency(freq);
+        safe_set_band(static_cast<BAND>(freq));
+
         rig.rig_mode(me.mode());
+        safe_set_mode(me.mode());
+        display_band_mode(win_band_mode, safe_get_band(), me.mode());
 
         if (me.drlog_mode() == DRLOG_MODE::CQ)
           enter_cq_mode();
@@ -2860,6 +2880,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       processed = true;
     }
+#endif
 
 // process a command if the first character is the COMMAND_CHAR
     if (!processed and contents[0] == COMMAND_CHAR)
@@ -2894,6 +2915,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       if (command == "CLEAR")
         win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
+// .M : insert memory
+      if (command == "M")
+        insert_memory();
+
 // .MONITOR <call> -- add <call> to those being monitored
       if (starts_with(command, "MON"))
       { if (contains(command, " "))
@@ -2917,6 +2942,31 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // .QUIT
       if (command == "QUIT")
         exit_drlog();
+
+// .R[n] : recall memory and go there
+      if ( ((command.size() == 2) and (command[0] == 'R')) or (command == "R") )
+      { unsigned int number = (command.size() == 2 ? from_string<unsigned int>(create_string(command[1])) : 0);
+
+        const memory_entry me = recall_memory(number);
+
+        const frequency& freq = me.freq();
+
+      //      ost << "Recalled memory number " << number << ": " << me << endl;
+
+        if (freq.hz())    // if valid
+        { rig.rig_frequency(freq);
+          safe_set_band(static_cast<BAND>(freq));
+
+          rig.rig_mode(me.mode());
+          safe_set_mode(me.mode());
+          display_band_mode(win_band_mode, safe_get_band(), me.mode());
+
+          if (me.drlog_mode() == DRLOG_MODE::CQ)
+            enter_cq_mode();
+          else
+            enter_sap_mode();
+        }
+      }
 
 // .REMOVE <call> -- remove call from bandmap and add it to the do-not-show list
       if ( starts_with(command, "REMOVE") or starts_with(command, "RM"))
@@ -2945,7 +2995,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           string rhs = substring(command, posn);
           set<BAND> score_bands;
 
-//next bit of code is copied from drlog_context.cpp
+// next bit of code is copied from drlog_context.cpp
           const vector<string> bands_str = remove_peripheral_spaces(split_string(rhs, ","));
 
           for (const auto& band_str : bands_str)
@@ -6658,7 +6708,7 @@ void* spawn_dx_cluster(void* vp)
 { win_cluster_line <= "UNCONNECTED";
 
   try
-  { cluster_p = new dx_cluster(context, POSTING_CLUSTER);
+  { cluster_p = new dx_cluster(context, POSTING_SOURCE::CLUSTER);
   }
 
   catch (...)
@@ -6688,7 +6738,7 @@ void* spawn_dx_cluster(void* vp)
 
 /// Thread function to spawn the RBN
 void* spawn_rbn(void* vp)
-{ rbn_p = new dx_cluster(context, POSTING_RBN);
+{ rbn_p = new dx_cluster(context, POSTING_SOURCE::RBN);
 
   static cluster_info rbn_info_for_thread(&win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps);
   static pthread_t   thread_id_2;
@@ -7852,7 +7902,7 @@ const bool toggle_recording_status(audio_recorder& audio)
 */
 void start_recording(const drlog_context& context)
 { audio.base_filename(context.audio_file());
-  audio.maximum_duration(context.audio_duration() * 60);
+  audio.maximum_duration(context.audio_duration() * 60);    // convert minutes to seconds
   audio.pcm_name(context.audio_device_name());
   audio.n_channels(context.audio_channels());
   audio.samples_per_second(context.audio_rate());
@@ -7917,10 +7967,6 @@ const string run_external_command(const string& cmd)
   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
   if (!pipe)
-//  { alert("WARNING: Error executing command: " + cmd);
-//
-//    return string();
-//  }
     return ( alert("WARNING: Error executing command: "s + cmd), string() );
 
   while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
@@ -8012,27 +8058,35 @@ void populate_win_call_history(const string& callsign)
 { if (win_call_history.valid())              // check even though it should have been checked before being called
   { win_call_history < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_call_history.height() - 1);    // write the (partial) callsign
 
-    const MODE m                   { safe_get_mode() };
     const int  bg                  { win_call_history.bg() };
     const auto default_colour_pair { colours.add(win_call_history.fg(), bg) };
 
     int line_nr { 0 };
 
-    for (const auto b : rules.permitted_bands())
-    { const unsigned int n_qsos           { olog.n_qsos(callsign, b, m) };
-      const int          fg               { ( (n_qsos == 0) ?  COLOUR_WHITE : ( olog.confirmed(callsign, b, m) ? COLOUR_GREEN : COLOUR_RED ) ) };
-      const auto         this_colour_pair { colours.add(fg, bg) };
-      const cursor       c_posn           { 0, line_nr++ };
+    for (const auto b : permitted_bands)
+    { const cursor c_posn { 0, line_nr++ };
 
-      win_call_history < c_posn < pad_string(BAND_NAME[b], 3)            // low band is on bottom
-                       < colour_pair(this_colour_pair) < pad_string(to_string(n_qsos), 4)
-                       < colour_pair(default_colour_pair);
+      win_call_history < c_posn < pad_string(BAND_NAME[b], 3);            // low band is on bottom
+
+      for (const auto m : permitted_modes)
+      { const unsigned int n_qsos           { olog.n_qsos(callsign, b, m) };
+        const int          fg               { ( (n_qsos == 0) ?  COLOUR_WHITE : ( olog.confirmed(callsign, b, m) ? COLOUR_GREEN : COLOUR_RED ) ) };
+        const auto         this_colour_pair { colours.add(fg, bg) };
+
+        win_call_history < colour_pair(this_colour_pair) < pad_string(to_string(n_qsos), 4)
+                         < colour_pair(default_colour_pair);
+      }
     }
 
     win_call_history.refresh();
   }
 }
 
+/*! \brief              Insert the current rig configuration into the memories
+
+    Removes the oldest memory if the memory is full.
+    Also displays the (updated) contents of the memories.
+*/
 void insert_memory(void)
 { if (n_memories)
   { memory_entry me;
@@ -8050,6 +8104,7 @@ void insert_memory(void)
   }
 }
 
+/// display all the memories
 void display_memories(void)
 { win_memories < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
@@ -8065,9 +8120,5 @@ void display_memories(void)
   }
 
   win_memories.refresh();
-
 }
 
-inline const memory_entry recall_memory(const unsigned int n)
-{ return (n < memories.size() ? memories[n] : memory_entry());
-}

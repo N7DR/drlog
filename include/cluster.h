@@ -23,11 +23,11 @@
 #include <string>
 
 /// the source of a remote post
-enum POSTING_SOURCE { POSTING_CLUSTER,                  ///< traditional cluster
-                      POSTING_RBN                       ///< Reverse Beacon Network
-                    };
+enum class POSTING_SOURCE { CLUSTER,                  ///< traditional cluster
+                            RBN                       ///< Reverse Beacon Network
+                          };
 
-const unsigned int MONITORED_POSTS_DURATION = 3600;     ///< monitored posts are valid for one hour
+constexpr unsigned int MONITORED_POSTS_DURATION { 3600 };     ///< monitored posts are valid for one hour
 
 // -----------  dx_cluster  ----------------
 
@@ -50,9 +50,6 @@ protected:
 
 /// process a read error
   void _process_error(void);
-
-/// forbid copying: declared but never defined
-  dx_cluster(const dx_cluster&);
     
 public:
 
@@ -64,6 +61,8 @@ public:
   
 /// destructor
   virtual ~dx_cluster(void);
+
+  dx_cluster(const dx_cluster&) = delete;       /// forbid copying
   
 /*! \brief      Read from the cluster socket
     \return     the current bytes waiting on the cluster socket
@@ -78,7 +77,7 @@ public:
 /*! \brief          Send a message to the cluster
     \param  msg     the message to be sent
 */
-  inline void send(const std::string& msg = "\r\n")
+  inline void send(const std::string& msg = "\r\n"s)
    { _connection.send(msg); }
 
   READ(source);        ///< source for postings
@@ -124,8 +123,7 @@ public:
   dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
   
 /// destructor
-  inline virtual ~dx_post(void)
-    { }
+  inline virtual ~dx_post(void) = default;
 
   READ(band);                   ///< band of post
   READ(callsign);               ///< callsign that was heard
@@ -177,7 +175,7 @@ public:
 
 /// convert to a string suitable for display in a window
   inline const std::string to_string(void) const
-    { return ( pad_string(_frequency_str, 7, PAD_LEFT) + " " + _callsign ); }
+    { return ( pad_string(_frequency_str, 7, PAD_LEFT) + " "s + _callsign ); }
 };
 
 /*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream

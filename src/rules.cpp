@@ -33,7 +33,8 @@ extern location_database location_db;   ///< location information
 
 extern void alert(const string& msg, const bool show_time = true);  ///< Alert the user
 
-typedef std::map<std::string, unsigned int> MSI;                    ///< syntactic sugar
+//typedef std::map<std::string, unsigned int> MSI;                    ///< syntactic sugar
+using MSI = std::map<std::string, unsigned int>;
 
 // -------------------------  exchange_field_values  ---------------------------
 
@@ -71,7 +72,7 @@ void exchange_field_values::add_value(const string& cv, const string& v)
     Returns 0 if the canonical value does not exist
 */
 const size_t exchange_field_values::n_values(const string& cv) const
-{ const auto posn = _values.find(cv);
+{ const auto posn { _values.find(cv) };
 
   return ( (posn == _values.end()) ? 0 : posn->second.size() );
 }
@@ -83,7 +84,7 @@ const size_t exchange_field_values::n_values(const string& cv) const
     Returns empty set if the canonical value does not exist
 */
 const set<std::string> exchange_field_values::values(const string& cv) const
-{ const auto posn = _values.find(cv);
+{ const auto posn { _values.find(cv) };
 
   return ( (posn == _values.end()) ? set<string>() : posn->second );
 }
@@ -137,8 +138,8 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
 { if (!is_legal_canonical_value(cv))
     return false;
 
-  const auto posn = _values.find(cv);               // must be true if we get here
-  const set<string>& ss = posn->second;
+  const auto         posn { _values.find(cv) };               // must be true if we get here
+  const set<string>& ss   { posn->second };
 
   return ( ss.find(putative_value) != ss.cend() );
 }
@@ -148,19 +149,6 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
 /*! \class  exchange_field
     \brief  Encapsulates the name for an exchange field, and whether it's a mult
 */
-
-/*! \brief          Construct from name, multiplier and optional status
-    \param  nm      name of field
-    \param  mult    whether field is a mult
-    \param  opt     whether field is optional
-
-    Also the default constructor
-*/
-//exchange_field::exchange_field(const string& nm, const bool mult, const bool opt) :
-//  _name(nm),
-//  _is_mult(mult),
-//  _is_optional(opt)
-//{ }
 
 /*! \brief      Follow all trees to their leaves
     \return     the exchange field, expanded recursively into all possible choices
@@ -175,7 +163,7 @@ const vector<exchange_field> exchange_field::expand(void) const
 
 // it's a choice
   for (const auto& this_choice : _choice)
-  { const vector<exchange_field>& vec = this_choice.expand();   // recursive
+  { const vector<exchange_field>& vec { this_choice.expand() };   // recursive
 
     COPY_ALL(vec, back_inserter(rv));          // append to rv
   }

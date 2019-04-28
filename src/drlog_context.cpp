@@ -94,8 +94,6 @@ void drlog_context::_set_points(const string& command, const MODE m)
       { const string bands_str     { lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1)) };
         const vector<string> bands { remove_peripheral_spaces(split_string(bands_str, ","s)) };
 
-//        for (const auto b_str : bands)
-//          pbb.insert( { BAND_FROM_NAME[b_str], RHS } );
         FOR_ALL(bands, [=, &pbb] (const string& b_str) { pbb.insert( { BAND_FROM_NAME[b_str], RHS } ); } );
       }
     }
@@ -154,23 +152,23 @@ void drlog_context::_process_configuration_file(const string& filename)
       _alternative_qsl_message = RHS;
 
 // ARCHIVE
-    if ( (LHS == "ARCHIVE") and !rhs.empty() )
+    if ( (LHS == "ARCHIVE"s) and !rhs.empty() )
       _archive_name = rhs;
 
 // AUDIO CHANNELS
-    if (LHS == "AUDIO CHANNELS")
+    if (LHS == "AUDIO CHANNELS"s)
       _audio_channels = from_string<unsigned int>(rhs);
 
 // AUDIO DEVICE
-    if ( (LHS == "AUDIO DEVICE") or (LHS == "AUDIO DEVICE NAME") )
+    if ( (LHS == "AUDIO DEVICE"s) or (LHS == "AUDIO DEVICE NAME"s) )
       _audio_device_name = rhs;
 
 // AUDIO DURATION
-    if (LHS == "AUDIO DURATION")
+    if (LHS == "AUDIO DURATION"s)
       _audio_duration = from_string<unsigned int>(rhs);
 
 // AUDIO FILE
-    if (LHS == "AUDIO FILE")
+    if (LHS == "AUDIO FILE"s)
       _audio_file = rhs;
 
 // AUDIO RATE

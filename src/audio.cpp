@@ -51,13 +51,13 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
 
 // how many seconds to next time marker?
 // current seconds past midnight
-  const string now_str = hhmmss();                                      // HH:MM:SS
-  const uint64_t hh = from_string<uint64_t>(substring(now_str, 0, 2));
-  const uint64_t mm = from_string<uint64_t>(substring(now_str, 3, 2));
-  const uint64_t ss = from_string<uint64_t>(substring(now_str, 6, 2));
-  const uint64_t now = ss + (mm * 60) + (hh * 3600);
+  const string now_str { hhmmss() };                                      // HH:MM:SS
+  const uint64_t hh    { from_string<uint64_t>(substring(now_str, 0, 2)) };
+  const uint64_t mm    { from_string<uint64_t>(substring(now_str, 3, 2)) };
+  const uint64_t ss    { from_string<uint64_t>(substring(now_str, 6, 2)) };
+  const uint64_t now   { ss + (mm * 60) + (hh * 3600) };
 
-  int remainder = _max_file_time - (now % _max_file_time);
+  int remainder { _max_file_time - (now % _max_file_time) };
 
   if (remainder == 0)
     remainder = _max_file_time;
@@ -67,7 +67,7 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
   if (_time_limit == 0)
     total_bytes = _record_count;
   else
-  { const decltype(_record_count) bytes_per_second = snd_pcm_format_size(_hw_params.format, _hw_params.rate * _hw_params.channels);
+  { const decltype(_record_count) bytes_per_second { snd_pcm_format_size(_hw_params.format, _hw_params.rate * _hw_params.channels) };
 
     total_bytes = bytes_per_second * _time_limit;
   }
@@ -82,18 +82,18 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
     undocumented magic] means that it's safer, at least for now, to leave it in.
 */
 void audio_recorder::_set_params(void)
-{ snd_pcm_hw_params_t* params = nullptr;
-  snd_pcm_sw_params_t* swparams = nullptr;
+{ snd_pcm_hw_params_t* params   { nullptr };
+  snd_pcm_sw_params_t* swparams { nullptr };
 
   snd_pcm_hw_params_alloca(&params);
   snd_pcm_sw_params_alloca(&swparams);
 
-  int err = snd_pcm_hw_params_any(_handle, params);
+  int err { snd_pcm_hw_params_any(_handle, params) };
 
   if (err < 0)
   { ost << "ERROR: cannot obtain configuration for: " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_NO_CONFIGURATION, "Cannot obtain configuration for: " + _pcm_name);
+    throw audio_error(AUDIO_NO_CONFIGURATION, "Cannot obtain configuration for: "s + _pcm_name);
   }
   else
     ost << "ALSA configuration retrieved for " << _pcm_name << endl;
@@ -103,7 +103,7 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: access type not available for: " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_NO_ACCESS_TYPE, "Access type not available for: " + _pcm_name);
+    throw audio_error(AUDIO_NO_ACCESS_TYPE, "Access type not available for: "s + _pcm_name);
   }
 
   err = snd_pcm_hw_params_set_format(_handle, params, _hw_params.format);
@@ -111,7 +111,7 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: sample format " << _hw_params.format << " not available for: " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_NO_SAMPLE_FORMAT, "Sample format " + to_string(_hw_params.format) + " not available for: " + _pcm_name);
+    throw audio_error(AUDIO_NO_SAMPLE_FORMAT, "Sample format "s + to_string(_hw_params.format) + " not available for: "s + _pcm_name);
   }
 
   err = snd_pcm_hw_params_set_channels(_handle, params, _hw_params.channels);
@@ -119,21 +119,21 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: channel count " << _hw_params.channels << " not available for: " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_NO_CHANNEL_COUNT, "Channel count " + to_string(_hw_params.channels) + " not available for: " + _pcm_name);
+    throw audio_error(AUDIO_NO_CHANNEL_COUNT, "Channel count "s + to_string(_hw_params.channels) + " not available for: "s + _pcm_name);
   }
 
-  unsigned int rate = _hw_params.rate;
+  unsigned int rate { _hw_params.rate };
   err = snd_pcm_hw_params_set_rate_near(_handle, params, &_hw_params.rate, 0);
 
   if (err < 0)
   { ost << "ERROR: unable to set rate: " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_RATE_SET_ERROR, "Channel count not available for: " + _pcm_name);
+    throw audio_error(AUDIO_RATE_SET_ERROR, "Channel count not available for: "s + _pcm_name);
   }
 
   if ((float)rate * 1.05 < _hw_params.rate or (float)rate * 0.95 > _hw_params.rate)
   { ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << "for device: " << _pcm_name << endl;
-    throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested " + to_string(rate) + ", received " + to_string(_hw_params.rate) + "for device: " + _pcm_name);
+    throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested "s + to_string(rate) + ", received "s + to_string(_hw_params.rate) + "for device: "s + _pcm_name);
   }
 
   rate = _hw_params.rate;
@@ -144,10 +144,10 @@ void audio_recorder::_set_params(void)
     if (err < 0)
     { ost << "ERROR: buffer time = " << _buffer_time << " for " << _pcm_name << endl;
       ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-      throw audio_error(AUDIO_INVALID_BUFFER_TIME, "Invalid buffer time = " + to_string(_buffer_time) + " for " + _pcm_name);
+      throw audio_error(AUDIO_INVALID_BUFFER_TIME, "Invalid buffer time = "s + to_string(_buffer_time) + " for "s + _pcm_name);
     }
 
-    _buffer_time = min(_buffer_time, static_cast<unsigned int>(500000));
+    _buffer_time = min(_buffer_time, static_cast<unsigned int>(500'000));
   }
 
   if (_period_time == 0 and _period_frames == 0)
@@ -165,7 +165,7 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: invalid period for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_INVALID_PERIOD, "Invalid period for " + _pcm_name);
+    throw audio_error(AUDIO_INVALID_PERIOD, "Invalid period for "s + _pcm_name);
   }
 
   if (_buffer_time > 0)
@@ -176,7 +176,7 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: invalid buffer for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_INVALID_BUFFER, "Invalid buffer for " + _pcm_name);
+    throw audio_error(AUDIO_INVALID_BUFFER, "Invalid buffer for "s + _pcm_name);
   }
 
   _monotonic = (snd_pcm_hw_params_is_monotonic(params) == 1);
@@ -185,7 +185,7 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: unable to install params for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_CANNOT_INSTALL_HW_PARAMS, "Unable to install hardware parameters for " + _pcm_name);
+    throw audio_error(AUDIO_CANNOT_INSTALL_HW_PARAMS, "Unable to install hardware parameters for "s + _pcm_name);
   }
 
 //http://www.alsa-project.org/main/index.php/FramesPeriods
@@ -194,7 +194,7 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: unable to get period size for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-   throw audio_error(AUDIO_UNABLE_TO_GET_PERIOD_SIZE, "Unable to get period size for " + _pcm_name);
+   throw audio_error(AUDIO_UNABLE_TO_GET_PERIOD_SIZE, "Unable to get period size for "s + _pcm_name);
   }
   else
     ost << "ALSA period size in frames = " << _period_size_in_frames << endl;
@@ -206,13 +206,13 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: unable to get buffer size for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_UNABLE_TO_GET_BUFFER_SIZE, "Unable to get period size for " + _pcm_name);
+    throw audio_error(AUDIO_UNABLE_TO_GET_BUFFER_SIZE, "Unable to get period size for "s + _pcm_name);
   }
 
 // buffer must be larger than the number of bytes needed to hold a period
   if (_period_size_in_frames == buffer_size)
   { ost << "ERROR: buffer size = period_size_in_frames = " << _period_size_in_frames << " for " << _pcm_name << endl;
-    throw audio_error(AUDIO_EQUAL_PERIOD_AND_BUFFER_SIZE, "Buffer size = period_size_in_frames = " + to_string(_period_size_in_frames) + " for " + _pcm_name);
+    throw audio_error(AUDIO_EQUAL_PERIOD_AND_BUFFER_SIZE, "Buffer size = period_size_in_frames = "s + to_string(_period_size_in_frames) + " for "s + _pcm_name);
   }
 
   err = snd_pcm_sw_params_current(_handle, swparams);
@@ -220,7 +220,7 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: unable to get SW parameters for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_UNABLE_TO_GET_SW_PARAMS, "Unable to get SW parameters for " + _pcm_name);
+    throw audio_error(AUDIO_UNABLE_TO_GET_SW_PARAMS, "Unable to get SW parameters for "s + _pcm_name);
   }
 
   size_t n = _period_size_in_frames;
@@ -229,13 +229,13 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: unable to set avail_min for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_UNABLE_TO_SET_AVAIL_MIN, "Unable to set avail_min for " + _pcm_name);
+    throw audio_error(AUDIO_UNABLE_TO_SET_AVAIL_MIN, "Unable to set avail_min for "s + _pcm_name);
   }
 
 /* round up to closest transfer boundary */
   n = buffer_size;
 
-  snd_pcm_uframes_t start_threshold = ( (double)rate * _start_delay / 1000000 ) + ( (_start_delay <= 0) ? n : 0 );
+  snd_pcm_uframes_t start_threshold { ( (double)rate * _start_delay / 1'000'000 ) + ( (_start_delay <= 0) ? n : 0 ) };
 
   start_threshold = LIMIT(start_threshold, 1, n);
   err = snd_pcm_sw_params_set_start_threshold(_handle, swparams, start_threshold);
@@ -243,17 +243,17 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: unable to set start threshold for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_UNABLE_TO_SET_START_THRESHOLD, "Unable to set start threshold for " + _pcm_name);
+    throw audio_error(AUDIO_UNABLE_TO_SET_START_THRESHOLD, "Unable to set start threshold for "s + _pcm_name);
   }
 
-  const snd_pcm_uframes_t stop_threshold = buffer_size;
+  const snd_pcm_uframes_t stop_threshold { buffer_size };
 
   err = snd_pcm_sw_params_set_stop_threshold(_handle, swparams, stop_threshold);
 
   if (err < 0)
   { ost << "ERROR: unable to set stop threshold for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_UNABLE_TO_SET_STOP_THRESHOLD, "Unable to set stop threshold for " + _pcm_name);
+    throw audio_error(AUDIO_UNABLE_TO_SET_STOP_THRESHOLD, "Unable to set stop threshold for "s + _pcm_name);
   }
 
   err = snd_pcm_sw_params(_handle, swparams);
@@ -261,11 +261,11 @@ void audio_recorder::_set_params(void)
   if (err < 0)
   { ost << "ERROR: unable to install software params for " << _pcm_name << endl;
     ost << "Error number is: " << err << " [" <<  strerror(err) << "]" << endl;
-    throw audio_error(AUDIO_CANNOT_INSTALL_SW_PARAMS, "Unable to install software parameters for " + _pcm_name);
+    throw audio_error(AUDIO_CANNOT_INSTALL_SW_PARAMS, "Unable to install software parameters for "s + _pcm_name);
   }
 
 // at least for now, no support for setup_chmap()
-  const size_t bits_per_sample = snd_pcm_format_physical_width(_hw_params.format);
+  const size_t bits_per_sample { snd_pcm_format_physical_width(_hw_params.format) };
   _bits_per_frame = bits_per_sample * _hw_params.channels;
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
@@ -273,7 +273,7 @@ void audio_recorder::_set_params(void)
 
   if (_audio_buf == NULL)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;
-    throw audio_error(AUDIO_NO_MEMORY, "Out of memory for " + _pcm_name);
+    throw audio_error(AUDIO_NO_MEMORY, "Out of memory for "s + _pcm_name);
   }
 
   _buffer_frames = buffer_size;    /* for position test */ // ?????
@@ -284,13 +284,13 @@ void audio_recorder::_set_params(void)
     \return         total number of bytes read
 */
 const ssize_t audio_recorder::_pcm_read(u_char* data)
-{ size_t result = 0;
-  size_t count = _period_size_in_frames;
+{ size_t result { 0 };
+  size_t count  { _period_size_in_frames };
 
   while (count > 0)
-  { const ssize_t r = _readi_func(_handle, data, count);
+  { const ssize_t r { _readi_func(_handle, data, count) };
 
-    if (r == -EAGAIN or (r >= 0 and (size_t)r < count))
+    if ( (r == -EAGAIN) or (r >= 0 and (size_t)r < count) )
     { snd_pcm_wait(_handle, 100);
     }
     else if (r == -EPIPE)
@@ -302,7 +302,7 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
     else if (r < 0)
     { ost << "ERROR: audio device read error for " << _pcm_name << endl;
       ost << "Error number is: " << r << " [" <<  strerror(r) << "]" << endl;
-     throw audio_error(AUDIO_DEVICE_READ_ERROR, "Error reading audio device for " + _pcm_name);
+      throw audio_error(AUDIO_DEVICE_READ_ERROR, "Error reading audio device for " + _pcm_name);
     }
 
     if (r > 0)
@@ -320,7 +320,7 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
     \return         nullptr
 */
 void* audio_recorder::_static_capture(void* arg)
-{ audio_recorder* arp = static_cast<audio_recorder*>(arg);
+{ audio_recorder* arp { static_cast<audio_recorder*>(arg) };
 
   arp->_capture(nullptr);
 
@@ -332,14 +332,14 @@ void* audio_recorder::_static_capture(void* arg)
     \return         nullptr
 */
 void* close_it(void* vp)
-{ start_of_thread("close_WAV");
+{ start_of_thread("close_WAV"s);
 
-  wav_file* wfp = (wav_file*)(vp);
+  wav_file* wfp { (wav_file*)(vp) };
 
   wfp->close();
   delete wfp;
 
-  end_of_thread("close_WAV");
+  end_of_thread("close_WAV"s);
   return nullptr;
 }
 
@@ -349,7 +349,7 @@ void* close_it(void* vp)
 void* audio_recorder::_capture(void*)
 { ost << "starting _capture() thread" << endl;
 
-  const string thread_name = "_capture_" + to_string(_thread_number++);
+  const string thread_name { "_capture_"s + to_string(_thread_number++) };
 
 //  start_of_thread("_capture");
   start_of_thread(thread_name);
@@ -357,9 +357,9 @@ void* audio_recorder::_capture(void*)
   _aborting = false;
 
 create_file:
-  wav_file* wfp = new wav_file;
+  wav_file* wfp { new wav_file };
 
-  wfp->name(_base_filename + "-" + date_time_string(INCLUDE_SECONDS));
+  wfp->name(_base_filename + "-"s + date_time_string(INCLUDE_SECONDS));
   wfp->open();
 
 #if 0
@@ -402,7 +402,7 @@ create_file:
 
   wfp->add_chunk(fmt);
 
-  int64_t remaining_bytes_to_read = _total_bytes_to_read();
+  int64_t remaining_bytes_to_read { _total_bytes_to_read() };
 
   if (remaining_bytes_to_read == 0)
     remaining_bytes_to_read = numeric_limits<decltype(remaining_bytes_to_read)>::max();
@@ -410,21 +410,21 @@ create_file:
 /* WAVE-file should be even (I'm not sure), but wasting one byte
    isn't a problem (this can only be in 8 bit mono) */
   if (remaining_bytes_to_read < numeric_limits<decltype(remaining_bytes_to_read)>::max())
-    remaining_bytes_to_read += remaining_bytes_to_read % 2;
+    remaining_bytes_to_read += (remaining_bytes_to_read % 2);
   else
-    remaining_bytes_to_read -= remaining_bytes_to_read % 2;
+    remaining_bytes_to_read -= (remaining_bytes_to_read % 2);
 
   if (remaining_bytes_to_read > numeric_limits<int32_t>::max())
     remaining_bytes_to_read = numeric_limits<int32_t>::max();
 
-  bool first_time_through_loop = true;
+  bool first_time_through_loop { true };
 
 //  ost << "about to enter the big loop" << endl;
 
   do
-  { const size_t c = (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes;
-    const size_t f = c * 8 / _bits_per_frame;
-    const int pr = _pcm_read(_audio_buf);
+  { const size_t c { (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes };
+    const size_t f { c * 8 / _bits_per_frame };
+    const int pr   { _pcm_read(_audio_buf) };
 
     if (pr != static_cast<int>(f))
     { ost << "WARNING: pr != f" << endl;

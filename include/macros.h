@@ -133,7 +133,7 @@ public: \
     \param  n   error code \
     \param  s   reason \
 */ \
-  inline z(const int n, const std::string& s = (std::string)"") : \
+  inline z(const int n, const std::string& s = std::string()) : \
     x_error(n, s) \
   { } \
 }
@@ -720,8 +720,11 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 }
 
 // syntactic suger for time-related use
-typedef std::chrono::duration<long, std::centi> centiseconds;           ///< hundredths of a second
-typedef std::chrono::duration<long, std::deci>  deciseconds;            ///< tenths of a second
+//typedef std::chrono::duration<long, std::centi> centiseconds;           ///< hundredths of a second
+//typedef std::chrono::duration<long, std::deci>  deciseconds;            ///< tenths of a second
+
+using centiseconds = std::chrono::duration<long, std::centi>;
+using deciseconds = std::chrono::duration<long, std::deci>;
 
 #if 0
 template <class D, class P> // P = parameter; D = data in the database
@@ -851,12 +854,7 @@ public:
     \return         total number of times <i>value</i> has been added
 */
   const unsigned int value(const T& val) const
-  { //if (_values.find(val) == _values.cend())
-    //  return 0;
-
-    //return _values.at(val);
-    return ( ( _values.find(val) == _values.cend() ) ? 0 : _values.at(val) );
-  }
+    { return ( ( _values.find(val) == _values.cend() ) ? 0 : _values.at(val) ); }
 };
 
 // convenient syntactic sugar for some STL functions

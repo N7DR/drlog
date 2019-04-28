@@ -208,20 +208,20 @@ thread_attribute::thread_attribute(const pthread_t tid)
 
 /// destructor
 thread_attribute::~thread_attribute(void)
-{ const int status = pthread_attr_destroy(&_attr);
+{ const int status { pthread_attr_destroy(&_attr) };
 
   if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_destroy()");
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_destroy()"s);
 }
 
 /*! \brief      Set the detached state
     \param  b   whether to set to DETACHED (true) or JOINABLE (false)
 */
 void thread_attribute::detached(const bool b)
-{ const int status = pthread_attr_setdetachstate(&_attr, (b ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE));
+{ const int status { pthread_attr_setdetachstate(&_attr, (b ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE)) };
 
   if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure setting detached state of attribute");
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure setting detached state of attribute"s);
 }
 
 /*! \brief      Get the detached state
@@ -230,10 +230,10 @@ void thread_attribute::detached(const bool b)
 const bool thread_attribute::detached(void) const
 { int state;
 
-  const int status = pthread_attr_getdetachstate(&_attr, &state);
+  const int status { pthread_attr_getdetachstate(&_attr, &state) };
 
   if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute");
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute"s);
 
   return (state == PTHREAD_CREATE_DETACHED);
 }
@@ -250,12 +250,12 @@ const bool thread_attribute::detached(void) const
 */
 void thread_attribute::policy(const int policy)
 { if ( (policy != SCHED_FIFO) and (policy != SCHED_RR) )
-    throw pthread_error(PTHREAD_UNRECOGNISED_POLICY, "Unrecognised thread policy: " + to_string(policy));
+    throw pthread_error(PTHREAD_UNRECOGNISED_POLICY, "Unrecognised thread policy: "s + to_string(policy));
 
-  const int status = pthread_attr_setschedpolicy(&_attr, policy);
+  const int status { pthread_attr_setschedpolicy(&_attr, policy) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_POLICY_ERROR, "Error setting policy: " + to_string(policy) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_POLICY_ERROR, "Error setting policy: "s + to_string(policy) + "status = "s + to_string(status));
 }
 
 /// get the scheduling policy

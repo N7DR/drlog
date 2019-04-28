@@ -37,7 +37,7 @@ using namespace   this_thread;   // std::this_thread
 
 extern bool rig_is_split;
 
-const bool RESPONSE_EXPECTED = true;    ///< used to signal that a response is expected
+constexpr bool RESPONSE_EXPECTED { true };    ///< used to signal that a response is expected
 
 void alert(const string& msg, const bool show_time = true);     ///< alert the user (not used for errors)
 
@@ -116,7 +116,7 @@ void* rig_interface::_poll_thread_function(void* vp)
     \return         nullptr
 */
 void* rig_interface::_static_poll_thread_function(void* this_p)
-{ rig_interface* bufp = static_cast<rig_interface*>(this_p);
+{ rig_interface* bufp { static_cast<rig_interface*>(this_p) };
 
   bufp->_poll_thread_function(nullptr);
 
@@ -156,19 +156,19 @@ void rig_interface::prepare(const drlog_context& context)
   rig_load_all_backends();              // this function returns an int -- in true Linux fashion, there is no documentation as to possible values and their meaning
                                         // see: http://hamlib.sourceforge.net/manuals/1.2.15/group__rig.html
 
-  const string rig_type = context.rig1_type();
+  const string rig_type { context.rig1_type() };
 
 // ugly map of name to hamlib model number
   if (rig_type == "K3")
     _model = RIG_MODEL_K3;
 
   if (_model == RIG_MODEL_DUMMY and !rig_type.empty())
-    _error_alert("Unknown rig: " + rig_type);
+    _error_alert("Unknown rig: "s + rig_type);
 
   _rigp = rig_init(_model);
 
   if (!_rigp)
-    throw rig_interface_error(RIG_UNABLE_TO_INITIALISE, "Unable to initialise rig structure for rig type " + (rig_type.empty() ? "DUMMY" : rig_type));
+    throw rig_interface_error(RIG_UNABLE_TO_INITIALISE, "Unable to initialise rig structure for rig type "s + (rig_type.empty() ? "DUMMY"s : rig_type));
 
   if (_model != RIG_MODEL_DUMMY)        // hamlib documentation is unclear as to whether this is necessary; probably not
   { baud_rate(context.rig1_baud());
@@ -178,10 +178,10 @@ void rig_interface::prepare(const drlog_context& context)
     strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN);
   }
 
-  const int status = rig_open(_rigp);
+  const int status { rig_open(_rigp) };
 
   if (status != RIG_OK)
-  { const string msg = "Unable to open the rig on port " + _port_name + ": Error = " + hamlib_error_code_to_string(status);
+  { const string msg { "Unable to open the rig on port "s + _port_name + ": Error = "s + hamlib_error_code_to_string(status) };
 
     _error_alert(msg);
     ost << msg << endl;
@@ -209,7 +209,7 @@ void rig_interface::rig_frequency(const frequency& f)
       }
 
       if (status != RIG_OK)
-        _error_alert("Error setting A frequency");
+        _error_alert("Error setting A frequency"s);
     }
   }
 }
@@ -232,7 +232,7 @@ void rig_interface::rig_frequency_b(const frequency& f)
       }
 
       if (status != RIG_OK)
-        _error_alert("Error setting B frequency");
+        _error_alert("Error setting B frequency"s);
     }
   }
 }
@@ -243,13 +243,13 @@ void rig_interface::rig_frequency_b(const frequency& f)
     Also sets the bandwidth (because it's easier to follow hamlib's model, even though it is obviously flawed)
 */
 void rig_interface::rig_mode(const MODE m)
-{ static pbwidth_t last_cw_bandwidth  = 200;
-  static pbwidth_t last_ssb_bandwidth = 1800;
+{ static pbwidth_t last_cw_bandwidth  { 200 };
+  static pbwidth_t last_ssb_bandwidth { 1800 };
 
   _last_commanded_mode = m;
 
   if (_rig_connected)
-  { rmode_t hamlib_m = RIG_MODE_CW;
+  { rmode_t hamlib_m { RIG_MODE_CW };
 
     if (m == MODE_SSB)
       hamlib_m = ( (rig_frequency().mhz() < 10) ? RIG_MODE_LSB : RIG_MODE_USB );
@@ -275,7 +275,7 @@ void rig_interface::rig_mode(const MODE m)
 
           case RIG_MODE_LSB:
           case RIG_MODE_USB:
-              last_ssb_bandwidth = tmp_bandwidth;
+            last_ssb_bandwidth = tmp_bandwidth;
             break;
 
           default:
@@ -283,13 +283,13 @@ void rig_interface::rig_mode(const MODE m)
         }
 
         { SAFELOCK(_rig);
-          const pbwidth_t new_bandwidth = ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth );
+          const pbwidth_t new_bandwidth { ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth ) };
 
           status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
         }
 
         if (status != RIG_OK)
-          _error_alert("Error setting mode");
+          _error_alert("Error setting mode"s);
       }
     }
   }
@@ -306,10 +306,10 @@ const frequency rig_interface::rig_frequency(void)
 
     SAFELOCK(_rig);
 
-    const int status = rig_get_freq(_rigp, RIG_VFO_CURR, &hz);
+    const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) };
 
     if (status != RIG_OK)
-    { _error_alert("Error getting frequency");
+    { _error_alert("Error getting frequency"s);
       return _last_commanded_frequency;
     }
 

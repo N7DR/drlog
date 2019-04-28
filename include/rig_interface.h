@@ -32,18 +32,18 @@
 #include <utility>
 
 // Errors
-const int RIG_UNABLE_TO_OPEN       = -1,    ///< unable to access rig
-          RIG_UNABLE_TO_INITIALISE = -2,    ///< unable to initialise rig structure
-          RIG_NO_SUCH_RIG          = -3,    ///< unable to map rig name to hamlib model number
-          RIG_INVALID_DATA_BITS    = -4,    ///< data bits must be 7 or 8
-          RIG_INVALID_STOP_BITS    = -5,    ///< stop bits must be 1 or 2
-          RIG_NO_RESPONSE          = -6,    ///< no response received
-          RIG_HAMLIB_ERROR         = -7,    ///< unexpected event in hamlib
-          RIG_UNEXPECTED_RESPONSE  = -8,    ///< received unexpected response from rig
-          RIG_MISC_ERROR           = -9;    ///< other error
+constexpr int RIG_UNABLE_TO_OPEN       { -1 },    ///< unable to access rig
+              RIG_UNABLE_TO_INITIALISE { -2 },    ///< unable to initialise rig structure
+              RIG_NO_SUCH_RIG          { -3 },    ///< unable to map rig name to hamlib model number
+              RIG_INVALID_DATA_BITS    { -4 },    ///< data bits must be 7 or 8
+              RIG_INVALID_STOP_BITS    { -5 },    ///< stop bits must be 1 or 2
+              RIG_NO_RESPONSE          { -6 },    ///< no response received
+              RIG_HAMLIB_ERROR         { -7 },    ///< unexpected event in hamlib
+              RIG_UNEXPECTED_RESPONSE  { -8 },    ///< received unexpected response from rig
+              RIG_MISC_ERROR           { -9 };    ///< other error
 
-const bool RESPONSE = true,                 ///< raw K3 command expects a response
-           NO_RESPONSE = false;             ///< raw K3 command does not expect a response
+constexpr bool RESPONSE    { true },              ///< raw K3 command expects a response
+               NO_RESPONSE { false };             ///< raw K3 command does not expect a response
 
 /// the two VFOs
 enum VFO { VFO_A = 0,                       ///< VFO A
@@ -98,7 +98,7 @@ protected:
     \return     the file descriptor associated with the rig
 */
   inline const int _file_descriptor(void) const
-    { return _rigp->state.rigport.fd; }
+    { return (_rigp->state.rigport.fd); }
 
 /*! \brief          Pointer to function used to alert the user to an error
     \param  msg     message to be presented to the user
@@ -118,8 +118,7 @@ public:
   rig_interface (void);
 
 /// destructor
-  inline virtual ~rig_interface(void)
-    { }
+  inline virtual ~rig_interface(void) = default;
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
@@ -471,29 +470,6 @@ public:
     \return     Printable string corresponding to error code <i>e</i>
 */
 const std::string hamlib_error_code_to_string(const int e);
-
-#if 0
-// ---------------------------------------- rig_configuration -------------------------
-
-/*! \class  rig_configuration
-    \brief  A place to hold the state of a rig
-
-    Can't use the obvious "rig_state" because hamlib brilliantly usurps it
-*/
-
-class rig_configuration
-{
-protected:
-
-  frequency _freq;       // can't use "frequency" as that is a class
-  MODE      _mode;
-
-public:
-
-  READ_AND_WRITE(freq);
-  READ_AND_WRITE(mode);
-};
-#endif
 
 // -------------------------------------- Errors  -----------------------------------
 

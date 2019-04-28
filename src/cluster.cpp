@@ -48,15 +48,15 @@ pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
     \param  src         whether this is a real DX cluster or the RBN
 */
 dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
-  _connection(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server(),     // create the connection
-              src == POSTING_CLUSTER ? context.cluster_port() :  context.rbn_port(),
+  _connection(src == POSTING_SOURCE::CLUSTER ? context.cluster_server() : context.rbn_server(),     // create the connection
+              src == POSTING_SOURCE::CLUSTER ? context.cluster_port() :  context.rbn_port(),
               context.my_ip()),
-  _login_id(src == POSTING_CLUSTER ? context.cluster_username() : context.rbn_username()),  // choose the correct login name
-  _my_ip(context.my_ip()),                                                                  // set my IP address
-  _port(src == POSTING_CLUSTER ? context.cluster_port() : context.rbn_port()),              // choose the correct port
-  _server(src == POSTING_CLUSTER ? context.cluster_server() : context.rbn_server()),        // choose the correct server
-  _source(src),                                                                             // set the source
-  _timeout(2)                                                                              // two-second timeout
+  _login_id(src == POSTING_SOURCE::CLUSTER ? context.cluster_username() : context.rbn_username()),  // choose the correct login name
+  _my_ip(context.my_ip()),                                                                          // set my IP address
+  _port(src == POSTING_SOURCE::CLUSTER ? context.cluster_port() : context.rbn_port()),              // choose the correct port
+  _server(src == POSTING_SOURCE::CLUSTER ? context.cluster_server() : context.rbn_server()),        // choose the correct server
+  _source(src),                                                                                     // set the source
+  _timeout(2)                                                                                       // two-second timeout
 {
 // set the keepalive option
   _connection.keep_alive(300, 60, 2);
@@ -100,13 +100,13 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _connection.send(_login_id + CRLF);
 
 // if it's a cluster, show the last 100 postings in order to populate bandmap
-  if (_source == POSTING_CLUSTER)
-    _connection.send("sh/dx/100" + CRLF);
+  if (_source == POSTING_SOURCE::CLUSTER)
+    _connection.send("sh/dx/100"s + CRLF);
 }
 
 /// destructor
 dx_cluster::~dx_cluster(void)
-{ _connection.send("BYE" + CRLF);
+{ _connection.send("BYE"s + CRLF);
   
   { SAFELOCK(rbn_buffer);
     _unprocessed_input = _connection.read(_timeout / 2);  // add a delay before we tear down the connection
@@ -137,7 +137,7 @@ reconnect:
     { ost << "Attempting to reconnect to server: " << _server << " on port " << _port << endl;
 
 // resolve the name
-      const string dotted_decimal = name_to_dotted_decimal(_server);
+      const string dotted_decimal { name_to_dotted_decimal(_server) };
 
       _connection.destination(dotted_decimal, _port);
       ost << "Reconnected; now need to log in" << endl;
@@ -243,12 +243,12 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 // first non-space sharacter is a digit and last character is ">"
 // parsing failures are trapped
   if (last_char(received_info) == '>')
-  { const string copy = remove_leading_spaces(received_info);
+  { const string copy { remove_leading_spaces(received_info) };
   
 // 18073.1  P49V        29-Dec-2009 1931Z  nice signal NW            <N7XR> 
     if (!copy.empty() and isdigit(copy[0]))
     { try
-      { size_t char_posn = copy.find(" ");
+      { size_t char_posn { copy.find(" "s) };
         size_t space_posn;
 
         if (char_posn != string::npos)
@@ -256,25 +256,26 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
           _freq = frequency(_frequency_str);
 
           if (_valid_frequency())
-          { char_posn = copy.find_first_not_of(" ", char_posn);
-            space_posn = copy.find_first_of(" ", char_posn);
+          { char_posn = copy.find_first_not_of(" "s, char_posn);
+            space_posn = copy.find_first_of(" "s, char_posn);
 
             _callsign = copy.substr(char_posn, space_posn - char_posn);
 
-            const location_info li = db.info(_callsign);
+            const location_info li { db.info(_callsign) };
+
             _canonical_prefix = li.canonical_prefix();
             _continent = li.continent();
 
-            char_posn = copy.find_first_not_of(" ", space_posn);
-            space_posn = copy.find_first_of(" ", char_posn);
+            char_posn = copy.find_first_not_of(" "s, space_posn);
+            space_posn = copy.find_first_of(" "s, char_posn);
 
-            const string date = copy.substr(char_posn, space_posn - char_posn);     // we don't use this
+            const string date { copy.substr(char_posn, space_posn - char_posn) };     // we don't use this
 
-            char_posn = copy.find_first_not_of(" ", space_posn);
-            space_posn = copy.find_first_of(" ", char_posn);
-            char_posn = copy.find_first_not_of(" ", space_posn);
+            char_posn = copy.find_first_not_of(" "s, space_posn);
+            space_posn = copy.find_first_of(" "s, char_posn);
+            char_posn = copy.find_first_not_of(" "s, space_posn);
 
-            const size_t bra_posn = copy.find_last_of("<");
+            const size_t bra_posn { copy.find_last_of("<"s) };
 
             if (bra_posn != string::npos)
             { _comment = copy.substr(char_posn, bra_posn - char_posn);
@@ -303,10 +304,10 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
 // we treat everything after the call as a comment
   if (!_valid)
-  { if (substring(received_info, 0, 6) == "DX de " and received_info.length() > 70)
+  { if ( (substring(received_info, 0, 6) == "DX de "s) and (received_info.length() > 70) )
     { try
-      { if (post_source == POSTING_RBN)
-        { const vector<string> fields = split_string(squash(received_info), ' ');
+      { if (post_source == POSTING_SOURCE::RBN)
+        { const vector<string> fields { split_string(squash(received_info), ' ') };
 
           if (fields.size() >= 6)
           { _poster = substring(fields[2], 0, fields[2].length() - 1);      // remove colon
@@ -317,7 +318,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
             if (_valid_frequency())
             { _callsign = fields[4];
 
-              const location_info li = db.info(_callsign);
+              const location_info li { db.info(_callsign) };
 
               _canonical_prefix = li.canonical_prefix();
               _continent = li.continent();
@@ -331,31 +332,32 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
         }
 
         if (!_valid)
-        { const string copy = remove_leading_spaces(substring(received_info, 6));
-          const size_t colon_posn = copy.find(":");
+        { const string copy       { remove_leading_spaces(substring(received_info, 6)) };
+          const size_t colon_posn { copy.find(":"s) };
 
           if (colon_posn != string::npos)
           { _poster = copy.substr(0, colon_posn);
 
-            size_t char_posn = copy.find_first_not_of(" ", colon_posn + 1);
-            size_t space_posn = copy.find_first_of(" ", char_posn);
+            size_t char_posn  { copy.find_first_not_of(" "s, colon_posn + 1) };
+            size_t space_posn { copy.find_first_of(" "s, char_posn) };
 
             _frequency_str = copy.substr(char_posn, space_posn - char_posn);
             _freq = frequency(_frequency_str);
             _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
 
             if (_valid_frequency())
-            { char_posn = copy.find_first_not_of(" ", space_posn);
-              space_posn = copy.find_first_of(" ", char_posn);
+            { char_posn = copy.find_first_not_of(" "s, space_posn);
+              space_posn = copy.find_first_of(" "s, char_posn);
 
               _callsign = copy.substr(char_posn, space_posn - char_posn);
 
-              const location_info li = db.info(_callsign);
+              const location_info li { db.info(_callsign) };
+
               _canonical_prefix = li.canonical_prefix();
               _continent = li.continent();
 
-              char_posn = copy.find_first_not_of(" ", space_posn);
-              space_posn = copy.find_last_of(" ");
+              char_posn = copy.find_first_not_of(" "s, space_posn);
+              space_posn = copy.find_last_of(" "s);
 
               _comment = copy.substr(char_posn);
               _valid = true;
@@ -400,7 +402,7 @@ ostream& operator<<(ostream& ost, const dx_post& dxp)
       << "  frequency str: " << dxp.frequency_str() << endl
       << "  mode_str: " << dxp.mode_str() << endl
       << "  poster: " << dxp.poster() << endl
-      << "  source: " << ( (dxp.source() == POSTING_RBN) ? "RBN" : "Cluster") << endl
+      << "  source: " << ( (dxp.source() == POSTING_SOURCE::RBN) ? "RBN" : "Cluster") << endl
       << "  time processed: " << dxp.time_processed() << endl
       << "  valid: " << dxp.valid();
 

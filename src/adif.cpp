@@ -21,47 +21,7 @@
 
 using namespace std;
 
-// ---------------------------------------------------  adif_type  -----------------------------------------
-
-/*! \class  adif_type
-    \brief  Base class for all the ADIF types
-*/
-
-/*! \brief      Constructor
-    \param  ty  letter used to identify the type
-    \param  nm  name of the instance of the type
-    \param  v   value of the instance of the type
-*/
-//adif_type::adif_type(const char ty, const string& nm, const string& v) :
-//    _name(nm),
-//    _type_indicator(ty),
-//    _value(v)
-//{ }
-
-/// convert to printable string
-//const string adif_type::to_string(void) const
-//{ return ( (_name.empty() or _value.empty()) ? string() : ( (string)"<" + _name + ":" + ::to_string(_value.length()) +">" + _value ) );
-//}
-
 // ---------------------------------------------------  adif_DATE -----------------------------------------
-
-// default constructor
-//adif_DATE::adif_DATE(void) :
-//    adif_type('D')
-//{ }
-
-/*! \brief      Constructor
-    \param  nm  name
-    \param  v   value
-*/
-//adif_DATE::adif_DATE(const string& nm, const string& v) :
-//    adif_type('D', nm, v)
-//{ }
-
-// construct with name
-//adif_DATE::adif_DATE(const string& nm) :
-//    adif_type('D', nm, string())
-//{ }
 
 // set value
 void adif_DATE::value(const std::string& v)
@@ -71,16 +31,16 @@ void adif_DATE::value(const std::string& v)
   if ((v.find_first_not_of(DIGITS)) != string::npos)
     throw exception();
 
-  const string year_str = v.substr(0, 4);
-  const string month_str = v.substr(4, 2);
-  const string day_str = v.substr(6);
+  const string year_str  { v.substr(0, 4) };
+  const string month_str { v.substr(4, 2) };
+  const string day_str   { v.substr(6) };
 
-  unsigned int month = from_string<unsigned int>(month_str);
+  const unsigned int month { from_string<unsigned int>(month_str) };
 
   if (month < 1 or month > 12)
     throw exception();
 
-  unsigned int day = from_string<unsigned int>(day_str);
+  const unsigned int day { from_string<unsigned int>(day_str) };
 
   if (day < 1 or day > 31)
     throw exception();
@@ -109,10 +69,7 @@ adif_STRING::adif_STRING(const string& nm) :
 // a sequence of Characters
 // an ASCII character whose code lies in the range of 32 through 126, inclusive
 void adif_STRING::value(const std::string& v)
-{ //for (size_t n = 0; n < v.length(); ++n)
-  //  if ((v[n] < 32) or (v[n]  > 126))
-  //    throw exception();
-  FOR_ALL(v, [] (const char c) { if ( (c < 32) or (c > 126) ) throw exception(); } );
+{ FOR_ALL(v, [] (const char c) { if ( (c < 32) or (c > 126) ) throw exception(); } );
 
   _value = v;
 }
@@ -142,21 +99,21 @@ void adif_TIME::value(const std::string& v)
   if ((v.length() < 4) or (v.length() == 5) or (v.length() > 6))
     throw exception();
 
-  const string hour_str = v.substr(0, 2);
-  const string minute_str = v.substr(2, 2);
-  const unsigned int hour = from_string<unsigned int>(hour_str);
+  const string       hour_str   { v.substr(0, 2) };
+  const string       minute_str { v.substr(2, 2) };
+  const unsigned int hour       { from_string<unsigned int>(hour_str) };
 
   if (hour > 23)
     throw exception();
 
-  const unsigned int minute = from_string<unsigned int>(minute_str);
+  const unsigned int minute { from_string<unsigned int>(minute_str) };
 
   if (minute > 59)
     throw exception();
 
   if (v.length() == 6)
-  { const string second_str = v.substr(4, 2);
-    const unsigned int second = from_string<unsigned int>(second_str);
+  { const string       second_str { v.substr(4, 2) };
+    const unsigned int second     { from_string<unsigned int>(second_str) };
 
     if (second > 59)
       throw exception();
@@ -171,11 +128,11 @@ void adif_TIME::value(const std::string& v)
 adif_record::adif_record(void) :
     _linefeeds_after_field(1),
     _linefeeds_after_record(1),
-    _address("address"),
-    _adif_ver("adif_ver"),
-    _age("age"),
-    _a_index("a_index"),
-    _ant_az("ant_az"),
+    _address("address"s),
+    _adif_ver("adif_ver"s),
+    _age("age"s),
+    _a_index("a_index"s),
+    _ant_az("ant_az"s),
     _ant_el("ant_el"),
     _ant_path("ant_path"),
  //   _arrl_sect("arrl_sect"),
@@ -290,8 +247,7 @@ adif_record::adif_record(void) :
 
 template <class T>
 inline const string field_string(const T& mbr, const string& post)
-{ return mbr.to_string() + (mbr.value().empty() ? string() : post);
-}
+  { return mbr.to_string() + (mbr.value().empty() ? string() : post); }
 
 /// convert record to the printable string format
 const string adif_record::to_string(void) const
@@ -428,7 +384,7 @@ const string adif_record::to_string(void) const
   rv += field_string(_tx_pwr, post_field_string);
 
   rv += field_string(_web, post_field_string);
-  rv += "<eor>" + post_field_string;
+  rv += ("<eor>"s + post_field_string);
 
 
   return rv;
@@ -442,11 +398,11 @@ adif_country::adif_country(const string& nm, const string& pfx, bool del) :
     _deleted(del)
 { }
 
-unsigned int adif_country::next_code = 1;
+unsigned int adif_country::next_code { 1 };
 
 void adif_countries::_add_country(const string& nm, const unsigned int index, const string& pfx, const bool deleted)
 { while ((_countries.size() + 1)< index)
-    {  _countries.push_back(adif_country("")); }
+    { _countries.push_back(adif_country("")); }
 
   _countries.push_back(adif_country(nm, pfx, deleted));
 }
@@ -457,11 +413,11 @@ void adif_countries::_add_country(const string& nm, const unsigned int index, co
 // it gives every appearance of being simply irresponsible.
 // There are multiple holes in the array, I have no idea why
 adif_countries::adif_countries(void)
-{ _countries.push_back(adif_country("CANADA", "VE"));
-  _countries.push_back(adif_country("ABU AIL IS", "", true));
-  _countries.push_back(adif_country("AFGHANISTAN", "YA"));
-  _countries.push_back(adif_country("AGALEGA & ST BRANDON", "3B6"));
-  _countries.push_back(adif_country("ALAND IS", "OH0"));
+{ _countries.push_back(adif_country("CANADA"s, "VE"s));
+  _countries.push_back(adif_country("ABU AIL IS"s, ""s, true));
+  _countries.push_back(adif_country("AFGHANISTAN"s, "YA"s));
+  _countries.push_back(adif_country("AGALEGA & ST BRANDON"s, "3B6"s));
+  _countries.push_back(adif_country("ALAND IS"s, "OH0"s));
   _countries.push_back(adif_country("ALASKA", "KL"));
   _countries.push_back(adif_country("ALBANIA", "ZA"));
   _countries.push_back(adif_country("ALDABRA", "", true));
@@ -765,13 +721,9 @@ adif_countries::adif_countries(void)
   _countries.push_back(adif_country("BHUTAN", "A5"));
   _countries.push_back(adif_country("ZANZIBAR", "", true));
   _countries.push_back(adif_country("COSTA RICA", "TI"));
-  _countries.push_back(adif_country("MYANMAR", "XZ"));
-  _countries.push_back(adif_country(""));                                           // 310
-  _countries.push_back(adif_country(""));                                           // 311
-  _countries.push_back(adif_country("CAMBODIA", "XU"));     // Presumably this is supposed to be Kampuchea
-  _countries.push_back(adif_country(""));                                           // 313
-  _countries.push_back(adif_country(""));                                           // 314
-  _countries.push_back(adif_country("SRI LANKA", "4S"));
+  _add_country("MYANMAR", 309, "XZ");
+  _add_country("CAMBODIA", 312, "XU");     // Presumably this is supposed to be Kampuchea
+  _add_country("SRI LANKA", 315, "4S");
   _add_country("CHINA", 318, "BY");
   _add_country("HONG KONG", 321, "VR");
   _add_country("INDIA", 324, "VU");

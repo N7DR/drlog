@@ -225,7 +225,7 @@ public:
 
 /// get frequency in MHz
   inline const float MHz(void) const
-    { return static_cast<float>(_hz) / 1000000; }
+    { return static_cast<float>(_hz) / 1'000'000; }
 
 /// get frequency in MHz (even though I shudder at the use of "m" to mean "mega")
   inline const float mhz(void) const
