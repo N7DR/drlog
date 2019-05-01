@@ -2670,6 +2670,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
 
+//      ost << "ALT-B/V: current band = " << BAND_NAME[cur_band] << ", UP = " << BAND_NAME[rules.next_band_up(cur_band)] << ", DOWN = " << BAND_NAME[rules.next_band_down(cur_band)] << endl;
+
       BAND new_band = ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) );    // move up or down one band
       safe_set_band(new_band);
 
@@ -2697,7 +2699,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // is there a station close to our frequency?
       const string nearby_callsign { bm.nearest_rbn_threshold_and_filtered_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
 
-      display_nearby_callsign(nearby_callsign);  // clears nearby window if call is empty
+      display_nearby_callsign(nearby_callsign);  // clears NEARBY window if call is empty
 
 // update displays of needed mults
       update_remaining_callsign_mults_window(statistics, string(), new_band, cur_mode);

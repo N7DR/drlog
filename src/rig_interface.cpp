@@ -1451,17 +1451,22 @@ const string hamlib_error_code_to_string(const int e)
 }
 
 /// default frequencies for bands and modes
-map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { { BAND_160, MODE_CW },  frequency(1800000) },
-                                                          { { BAND_160, MODE_SSB }, frequency(1900000) },
-                                                          { { BAND_80,  MODE_CW },  frequency(3500000) },
-                                                          { { BAND_80,  MODE_SSB }, frequency(3750000) },
-                                                          { { BAND_40,  MODE_CW },  frequency(7000000) },
-                                                          { { BAND_40,  MODE_SSB }, frequency(7150000) },
-                                                          { { BAND_20,  MODE_CW },  frequency(14000000) },
-                                                          { { BAND_20,  MODE_SSB }, frequency(14150000) },
-                                                          { { BAND_15,  MODE_CW },  frequency(21000000) },
-                                                          { { BAND_15,  MODE_SSB }, frequency(21200000) },
-                                                          { { BAND_10,  MODE_CW },  frequency(28000000) },
-                                                          { { BAND_10,  MODE_SSB }, frequency(28300000) }
+map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { { BAND_160, MODE_CW },  frequency(1'800'000) },
+                                                          { { BAND_160, MODE_SSB }, frequency(1'900'000) },
+                                                          { { BAND_80,  MODE_CW },  frequency(3'500'000) },
+                                                          { { BAND_80,  MODE_SSB }, frequency(3'750'000) },
+                                                          { { BAND_40,  MODE_CW },  frequency(7'000'000) },
+                                                          { { BAND_40,  MODE_SSB }, frequency(7'150'000) },
+                                                          { { BAND_30,  MODE_CW },  frequency(10'100'000) },
+                                                          { { BAND_20,  MODE_CW },  frequency(14'000'000) },
+                                                          { { BAND_20,  MODE_SSB }, frequency(14'150'000) },
+                                                          { { BAND_17,  MODE_CW },  frequency(18'068'000) },
+                                                          { { BAND_17,  MODE_SSB }, frequency(18'100'000) },
+                                                          { { BAND_15,  MODE_CW },  frequency(21'000'000) },
+                                                          { { BAND_15,  MODE_SSB }, frequency(21'200'000) },
+                                                          { { BAND_12,  MODE_CW },  frequency(24'890'000) },
+                                                          { { BAND_12,  MODE_SSB }, frequency(24'940'000) },
+                                                          { { BAND_10,  MODE_CW },  frequency(28'000'000) },
+                                                          { { BAND_10,  MODE_SSB }, frequency(28'300'000) }
                                                         };
 
