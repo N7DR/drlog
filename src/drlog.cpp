@@ -957,13 +957,19 @@ int main(int argc, char** argv)
     }
 
 // set the initial band and mode from the configuration file
-    safe_set_band( (rules.score_bands().size() == 1) ? *(rules.score_bands().cbegin()) : context.start_band() );
-    safe_set_mode( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
+    if (context.qsy_on_startup())
+    { safe_set_band( (rules.score_bands().size() == 1) ? *(rules.score_bands().cbegin()) : context.start_band() );
+      safe_set_mode( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
 
 // see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
-    if (current_band != static_cast<BAND>(rig.rig_frequency()))
-    { rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
-      sleep_for(seconds(2));                                                       // give time for things to settle on the rig
+      if (current_band != static_cast<BAND>(rig.rig_frequency()))
+      { rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
+        sleep_for(seconds(2));                                                       // give time for things to settle on the rig
+      }
+    }
+    else                // do not QSY on startup
+    { safe_set_band(to_BAND(rig.rig_frequency()));
+      safe_set_mode( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
     }
 
 // the rig might have changed mode if we just changed bands
@@ -2382,19 +2388,13 @@ void* process_rbn_info(void* vp)
                     bm_buffer.add(be.callsign(), post.poster());
 
                     if (bm_buffer.sufficient_posters(be.callsign()))
-                    { //bandmap& bandmap_this_band { bandmaps[dx_band] };
-
-                      //bandmap_this_band += be;
-                      bandmaps[dx_band] += be;
+                    { bandmaps[dx_band] += be;
                       changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
                     }
 
                     break;
 
                   default :
-                    //bandmap& bandmap_this_band { bandmaps[dx_band] };
-
-                    //bandmap_this_band += be;
                     bandmaps[dx_band] += be;
                     changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
                 }
@@ -2515,12 +2515,12 @@ void* get_cluster_info(void* vp)
 
 /// thread function to prune the bandmaps once per minute
 void* prune_bandmap(void* vp)
-{ start_of_thread("prune bandmap");
+{ start_of_thread("prune bandmap"s);
 
 // get access to the information that's been passed to the thread
-  bandmap_info* cip = static_cast<bandmap_info*>(vp);
-  window& bandmap_win = *(cip->win_bandmap_p());                     // bandmap window
-  array<bandmap, NUMBER_OF_BANDS>& bandmaps = *(cip->bandmaps_p());  // bandmaps
+  bandmap_info*                    cip         { static_cast<bandmap_info*>(vp) };
+  window&                          bandmap_win { *(cip->win_bandmap_p()) };         // bandmap window
+  array<bandmap, NUMBER_OF_BANDS>& bandmaps    { *(cip->bandmaps_p()) };            // bandmaps
 
   while (1)
   { FOR_ALL(bandmaps, [](bandmap& bm) { bm.prune(); } );
@@ -2533,7 +2533,7 @@ void* prune_bandmap(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { end_of_thread("prune bandmap");
+        { end_of_thread("prune bandmap"s);
           return nullptr;
         }
       }
@@ -2600,15 +2600,16 @@ void* prune_bandmap(void* vp)
 void process_CALL_input(window* wp, const keyboard_event& e)
 {
 // syntactic sugar
-  window& win = *wp;
+  window& win { *wp };
 
-  static const char COMMAND_CHAR = '.';                                 // the character that introduces a command
+  constexpr char COMMAND_CHAR { '.' };                                 // the character that introduces a command
 
-  const MODE cur_mode = safe_get_mode();
-  const string original_contents = remove_peripheral_spaces(win.read());   // the original contents of the window, before we respond to a keypress
+//  const BAND   cur_band          { safe_get_band() };
+//  const MODE   cur_mode          { safe_get_mode() };
+  const string original_contents { remove_peripheral_spaces(win.read()) };   // the original contents of the window, before we respond to a keypress
 
 // keyboard_queue::process_events() has already filtered out uninteresting events
-  bool processed = win.common_processing(e);
+  bool processed { win.common_processing(e) };
 
 // BACKSPACE
   if (!processed and e.is_unmodified() and e.symbol() == XK_BackSpace)
@@ -2628,11 +2629,14 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // question mark, which is displayed in response to pressing the equals sign
   if (!processed and (e.is_char('=')))
-  { win <= "?";
+  { win <= "?"s;
     processed = true;
   }
 
-  const string call_contents = remove_peripheral_spaces(win.read());
+  const string call_contents { remove_peripheral_spaces(win.read()) };
+
+  const BAND   cur_band          { safe_get_band() };
+  const MODE   cur_mode          { safe_get_mode() };
 
 // populate the info and extract windows if we have already processed the input
   if (processed and !win_call.empty())
@@ -2660,18 +2664,19 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ALT-B and ALT-V (band up and down)
   if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
   { try
-    { BAND cur_band       = safe_get_band();
+    { // BAND cur_band       { safe_get_band() };
 
-      const MODE cur_mode = safe_get_mode();
+//      const MODE cur_mode = safe_get_mode();
 
       rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
 
-      cur_band = ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) );    // move up or down one band
-      safe_set_band(cur_band);
-      frequency last_frequency = rig.get_last_frequency(cur_band, cur_mode);  // go to saved frequency for this band/mode (if any)
+      BAND new_band = ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) );    // move up or down one band
+      safe_set_band(new_band);
+
+      frequency last_frequency { rig.get_last_frequency(new_band, cur_mode) };  // go to saved frequency for this band/mode (if any)
 
       if (last_frequency.hz() == 0)
-        last_frequency = DEFAULT_FREQUENCIES[ { cur_band, cur_mode } ];
+        last_frequency = DEFAULT_FREQUENCIES[ { new_band, cur_mode } ];
 
       rig.rig_frequency(last_frequency);
 
@@ -2682,23 +2687,24 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // clear the call window (since we're now on a new band)
       win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
-      display_band_mode(win_band_mode, cur_band, cur_mode);
+      display_band_mode(win_band_mode, new_band, cur_mode);
 
 // update bandmap; note that it will be updated at the next poll anyway (typically within one second)
-      bandmap& bm = bandmaps[cur_band];
+      bandmap& bm { bandmaps[new_band] };
+
       win_bandmap <= bm;
 
 // is there a station close to our frequency?
-      const string nearby_callsign = bm.nearest_rbn_threshold_and_filtered_callsign(last_frequency.khz(), context.guard_band(cur_mode));
+      const string nearby_callsign { bm.nearest_rbn_threshold_and_filtered_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
 
       display_nearby_callsign(nearby_callsign);  // clears nearby window if call is empty
 
 // update displays of needed mults
-      update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
-      update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-      update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+      update_remaining_callsign_mults_window(statistics, string(), new_band, cur_mode);
+      update_remaining_country_mults_window(statistics, new_band, cur_mode);
+      update_remaining_exchange_mults_windows(rules, statistics, new_band, cur_mode);
 
-      win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "[" < to_string(bm.column_offset()) < "] " <= bm.filter();
+      win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
     }
 
     catch (const rig_interface_error& e)
@@ -2710,7 +2716,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-M -- change mode
   if (!processed and e.is_alt('m') and (n_modes > 1))
-  { const BAND cur_band = safe_get_band();
+  { const BAND cur_band { safe_get_band() };
 
     MODE cur_mode = safe_get_mode();
 
@@ -3627,21 +3633,21 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
   if (!processed and (e.is_control_and_not_alt() or e.is_alt_and_not_control()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-    processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
+    processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
 
 // CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
   if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-    processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
+    processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
 
 // ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                                                           or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-    processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
+    processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
 
 // ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_2) or (e.symbol() == XK_KP_8)
                                                                           or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
-    processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION_DOWN : BANDMAP_DIRECTION_UP);
+    processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
 
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are testudine

@@ -46,8 +46,9 @@ extern const string callsign_mult_value(const string& callsign_mult_name, const 
 
 constexpr unsigned int  MAX_CALLSIGN_WIDTH { 11 };        ///< maximum width of a callsign in the bandmap window
 constexpr unsigned int  MAX_FREQUENCY_SKEW { 250 };       ///< maximum separation, in hertz, to be treated as same frequency
-const string        MODE_MARKER { "********"s };        ///< string to mark the mode break in the bandmap
-const string        MY_MARKER { "--------"s };          ///< the string that marks my position in the bandmap
+
+const string        MODE_MARKER { "********"s };          ///< string to mark the mode break in the bandmap
+const string        MY_MARKER   { "--------"s };          ///< the string that marks my position in the bandmap
 
 bandmap_filter_type BMF;                            ///< the global bandmap filter
 
@@ -58,16 +59,16 @@ bandmap_filter_type BMF;                            ///< the global bandmap filt
 const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
   { case BANDMAP_ENTRY_SOURCE::LOCAL :
-      return "BANDMAP_ENTRY_LOCAL";
+      return "BANDMAP_ENTRY_LOCAL"s;
 
     case BANDMAP_ENTRY_SOURCE::CLUSTER :
-      return "BANDMAP_ENTRY_CLUSTER";
+      return "BANDMAP_ENTRY_CLUSTER"s;
 
     case BANDMAP_ENTRY_SOURCE::RBN :
-      return "BANDMAP_ENTRY_RBN";
+      return "BANDMAP_ENTRY_RBN"s;
 
     default :
-      return "UNKNOWN";
+      return "UNKNOWN"s;
   }
 }
 
@@ -83,12 +84,12 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
 
     Does nothing if <i>new_poster</i> is already present
 */
-const unsigned int bandmap_buffer_entry::add(const string& new_poster)
-{ //_posters.insert(new_poster);
-
-  //return _posters.size();
-  return ( _posters.insert(new_poster), _posters.size() );
-}
+//const unsigned int bandmap_buffer_entry::add(const string& new_poster)
+//{ //_posters.insert(new_poster);
+//
+//  //return _posters.size();
+//  return ( _posters.insert(new_poster), _posters.size() );
+//}
 
 // -----------   bandmap_buffer ----------------
 
@@ -406,20 +407,21 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
 const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
-{ if (target_frequency_in_khz < 1800 or target_frequency_in_khz > 29700)
+{ if ( (target_frequency_in_khz < 1800) or (target_frequency_in_khz > 29700) )
   { ost << "WARNING: bandmap::_nearest_callsign called with frequency in kHz = " << target_frequency_in_khz << endl;
     return string();
   }
 
-  const float guard_band_in_khz = static_cast<float>(guard_band_in_hz) / 1000.0;
+  const float guard_band_in_khz { static_cast<float>(guard_band_in_hz) / 1000.0f };
 
-  bool finish_looking = false;
-  float smallest_difference = 1000000;              // start with a big number
+  bool  finish_looking      { false };
+  float smallest_difference { 1'000'000};              // start with a big number
+
   string rv;
 
   for (BM_ENTRIES::const_iterator cit = bme.cbegin(); (!finish_looking and cit != bme.cend()); ++cit)
-  { const float difference = cit->freq().kHz() - target_frequency_in_khz;
-    const float abs_difference = fabs(difference);
+  { const float difference     { cit->freq().kHz() - target_frequency_in_khz };
+    const float abs_difference { fabs(difference) };
 
     if ( (abs_difference <= guard_band_in_khz) and (!cit->is_my_marker()))
     { if (abs_difference < smallest_difference)
@@ -439,9 +441,9 @@ const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float targe
      \param be  entry to add
 */
 void bandmap::_insert(const bandmap_entry& be)
-{ SAFELOCK(_bandmap);
+{ bool inserted { false };
 
-  bool inserted = false;
+  SAFELOCK(_bandmap);
 
   for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
   { if (it->freq().hz() > be.freq().hz())
@@ -929,7 +931,7 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
 
   const string target_freq_str = cit->frequency_str();
 
-  if (dirn == BANDMAP_DIRECTION_DOWN)
+  if (dirn == BANDMAP_DIRECTION::DOWN)
   { auto crit = prev(reverse_iterator<decltype(cit)>(cit));             // Josuttis First ed. p. 66f.
 
     const auto crit2 = find_if(crit, fe.crend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); } ); // move away from my frequency, in downwards direction
@@ -942,7 +944,7 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
     }
   }
 
-  if (dirn == BANDMAP_DIRECTION_UP)
+  if (dirn == BANDMAP_DIRECTION::UP)
   { const auto cit2 = find_if(cit, fe.cend(), [=] (const bandmap_entry& be) { return (be.frequency_str() != target_freq_str); }); // move away from my frequency, in upwards direction
 
     if (cit2 != fe.cend())
@@ -973,13 +975,13 @@ const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP
   if (fe.empty())
     return rv;
 
-  if (dirn == BANDMAP_DIRECTION_DOWN and f <= fe.front().freq())
+  if (dirn == BANDMAP_DIRECTION::DOWN and f <= fe.front().freq())
     return rv;
 
-  if (dirn == BANDMAP_DIRECTION_UP and f >= fe.back().freq())
+  if (dirn == BANDMAP_DIRECTION::UP and f >= fe.back().freq())
     return rv;
 
-  if (dirn == BANDMAP_DIRECTION_DOWN)
+  if (dirn == BANDMAP_DIRECTION::DOWN)
   { if (f <= fe.front().freq())         // all frequencies are higher than the target
       return rv;
 
@@ -996,7 +998,7 @@ const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP
     return rv;
   }
 
-  if (dirn == BANDMAP_DIRECTION_UP)
+  if (dirn == BANDMAP_DIRECTION::UP)
   { if (f >= fe.back().freq())         // all frequencies are lower than the target
       return rv;
 

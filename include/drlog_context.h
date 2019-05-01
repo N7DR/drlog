@@ -212,6 +212,7 @@ protected:
   std::string                                  _qsl_message;         ///< confirm at end of QSO
   bool                                         _qso_multiple_bands;  ///< whether OK to work station on another band
   bool                                         _qso_multiple_modes;  ///< whether OK to work station on another mode
+  bool                                         _qsy_on_startup;      ///< whether to go to START BAND on startup
   bool                                         _qtcs;                ///< whether QTCs are enabled
   bool                                         _qtc_double_space;    ///< whether to leave a longer pause between elements of a QTC
   std::string                                  _qtc_filename;        ///< name of file where QTCs are stored
@@ -475,6 +476,7 @@ public:
   CONTEXTREAD(qsl_message);                  ///< confirm at end of QSO
   CONTEXTREAD(qso_multiple_bands);           ///< whether OK to work station on another band
   CONTEXTREAD(qso_multiple_modes);           ///< whether OK to work station on another mode
+  CONTEXTREAD(qsy_on_startup);               ///< whether to go to START BAND on startup
   CONTEXTREAD(qtcs);                         ///< whether QTCs are enabled
   CONTEXTREAD(qtc_double_space);             ///< whether to leave a longer pause between elements of a QTC
   CONTEXTREAD(qtc_filename);                 ///< name of file where QTCs are stored

@@ -133,13 +133,13 @@ adif_record::adif_record(void) :
     _age("age"s),
     _a_index("a_index"s),
     _ant_az("ant_az"s),
-    _ant_el("ant_el"),
-    _ant_path("ant_path"),
+    _ant_el("ant_el"s),
+    _ant_path("ant_path"s),
  //   _arrl_sect("arrl_sect"),
-    _arrl_sect("arrl_sect", SECTION_ENUMERATION),
+    _arrl_sect("arrl_sect"s, SECTION_ENUMERATION),
 //    _band("band"),
-    _band("band", BAND_ENUMERATION),
-    _band_rx("band_rx"),
+    _band("band"s, BAND_ENUMERATION),
+    _band_rx("band_rx"s),
     _call("call"),
     _check("check"),
     _class("class"),
@@ -418,26 +418,26 @@ adif_countries::adif_countries(void)
   _countries.push_back(adif_country("AFGHANISTAN"s, "YA"s));
   _countries.push_back(adif_country("AGALEGA & ST BRANDON"s, "3B6"s));
   _countries.push_back(adif_country("ALAND IS"s, "OH0"s));
-  _countries.push_back(adif_country("ALASKA", "KL"));
-  _countries.push_back(adif_country("ALBANIA", "ZA"));
-  _countries.push_back(adif_country("ALDABRA", "", true));
-  _countries.push_back(adif_country("AMERICAN SAMOA", "KH8"));
-  _countries.push_back(adif_country("AMSTERDAM & ST PAUL", "FT5Z"));
-  _countries.push_back(adif_country("ANDAMAN & NICOBAR IS", "VU4"));
-  _countries.push_back(adif_country("ANGUILLA", "VP2E"));
-  _countries.push_back(adif_country("ANTARCTICA", "CE9"));
-  _countries.push_back(adif_country("ARMENIA", "EK"));
-  _countries.push_back(adif_country("ASIATIC RUSSIA", "UA9"));
-  _countries.push_back(adif_country("AUCKLAND & CAMPBELL", "ZL9"));
-  _countries.push_back(adif_country("AVES ISLAND", "YV0"));
-  _countries.push_back(adif_country("AZERBAIJAN", "4J"));
-  _countries.push_back(adif_country("BAJO NUEVO", "", true));
-  _countries.push_back(adif_country("BAKER, HOWLAND IS", "KH1"));
-  _countries.push_back(adif_country("BALEARIC IS", "EA6"));
-  _countries.push_back(adif_country("PALAU", "T8"));
-  _countries.push_back(adif_country("BLENHEIM REEF", "", true));
-  _countries.push_back(adif_country("BOUVET", "3Y/b"));
-  _countries.push_back(adif_country("BRITISH N. BORNEO", "", true));
+  _countries.push_back(adif_country("ALASKA"s, "KL"s));
+  _countries.push_back(adif_country("ALBANIA"s, "ZA"s));
+  _countries.push_back(adif_country("ALDABRA"s, ""s, true));
+  _countries.push_back(adif_country("AMERICAN SAMOA"s, "KH8"s));
+  _countries.push_back(adif_country("AMSTERDAM & ST PAUL"s, "FT5Z"s));
+  _countries.push_back(adif_country("ANDAMAN & NICOBAR IS"s, "VU4"s));
+  _countries.push_back(adif_country("ANGUILLA"s, "VP2E"s));
+  _countries.push_back(adif_country("ANTARCTICA"s, "CE9"s));
+  _countries.push_back(adif_country("ARMENIA"s, "EK"s));
+  _countries.push_back(adif_country("ASIATIC RUSSIA"s, "UA9"s));
+  _countries.push_back(adif_country("AUCKLAND & CAMPBELL"s, "ZL9"s));
+  _countries.push_back(adif_country("AVES ISLAND"s, "YV0"s));
+  _countries.push_back(adif_country("AZERBAIJAN"s, "4J"s));
+  _countries.push_back(adif_country("BAJO NUEVO"s, ""s, true));
+  _countries.push_back(adif_country("BAKER, HOWLAND IS"s, "KH1"s));
+  _countries.push_back(adif_country("BALEARIC IS"s, "EA6"s));
+  _countries.push_back(adif_country("PALAU"s, "T8"s));
+  _countries.push_back(adif_country("BLENHEIM REEF"s, ""s, true));
+  _countries.push_back(adif_country("BOUVET"s, "3Y/b"s));
+  _countries.push_back(adif_country("BRITISH N. BORNEO"s, ""s, true));
   _countries.push_back(adif_country("BRITISH SOMALI", "", true));
   _countries.push_back(adif_country("BELARUS", "EU"));
   _countries.push_back(adif_country("CANAL ZONE", "", true));
@@ -699,28 +699,26 @@ adif_countries::adif_countries(void)
   _countries.push_back(adif_country("SWEDEN", "SM"));
   _countries.push_back(adif_country("US VIRGIN ISLANDS", "KP2"));
   _countries.push_back(adif_country("UGANDA", "5X"));
-  _countries.push_back(adif_country("SWITZERLAND", "HB"));
-  _countries.push_back(adif_country("UKRAINE", "UR"));
-  _countries.push_back(adif_country("UNITED NATIONS HQ", "4U1U"));
-  _countries.push_back(adif_country(""));                                           // 290
-  _countries.push_back(adif_country("UNITED STATES", "K"));
-  _countries.push_back(adif_country("UZBEKISTAN", "UK"));
-  _countries.push_back(adif_country("VIETNAM", "3W"));
-  _countries.push_back(adif_country("WALES", "GW"));
-  _countries.push_back(adif_country("VATICAN", "HV"));
-  _countries.push_back(adif_country("SERBIA", "YU"));
-  _countries.push_back(adif_country("WAKE IS", "KH9"));
-  _countries.push_back(adif_country("WALLIS & FUTUNA", "FW"));
-  _countries.push_back(adif_country("WEST MALAYSIA", "9M2"));
-  _countries.push_back(adif_country(""));                                           // 300
-  _countries.push_back(adif_country("W KIRIBATI", "T30"));
-  _countries.push_back(adif_country("WESTERN SAHARA", "S0"));
-  _countries.push_back(adif_country("WILLIS IS", "VK9W"));
-  _countries.push_back(adif_country("BAHRAIN", "A9"));
-  _countries.push_back(adif_country("BANGLADESH", "S2"));
-  _countries.push_back(adif_country("BHUTAN", "A5"));
-  _countries.push_back(adif_country("ZANZIBAR", "", true));
-  _countries.push_back(adif_country("COSTA RICA", "TI"));
+  _add_country("SWITZERLAND", 287, "HB");
+  _add_country("UKRAINE", 288, "UR");
+  _add_country("UNITED NATIONS HQ", 289, "4U1U");
+  _add_country("UNITED STATES", 291, "K");
+  _add_country("UZBEKISTAN", 292, "UK");
+  _add_country("VIETNAM", 293, "3W");
+  _add_country("WALES", 294, "GW");
+  _add_country("VATICAN", 295, "HV");
+  _add_country("SERBIA", 296, "YU");
+  _add_country("WAKE IS", 297, "KH9");
+  _add_country("WALLIS & FUTUNA", 298, "FW");
+  _add_country("WEST MALAYSIA", 299, "9M2");
+  _add_country("W KIRIBATI", 301, "T30");
+  _add_country("WESTERN SAHARA", 302, "S0");
+  _add_country("WILLIS IS", 303, "VK9W");
+  _add_country("BAHRAIN", 304, "A9");
+  _add_country("BANGLADESH", 305, "S2");
+  _add_country("BHUTAN", 306, "A5");
+  _add_country("ZANZIBAR", 307, "", true);
+  _add_country("COSTA RICA", 308, "TI");
   _add_country("MYANMAR", 309, "XZ");
   _add_country("CAMBODIA", 312, "XU");     // Presumably this is supposed to be Kampuchea
   _add_country("SRI LANKA", 315, "4S");
@@ -801,26 +799,26 @@ adif_countries::adif_countries(void)
   _add_country("PENGUIN ISLANDS", 493, "", true);
   _add_country("CROATIA", 497, "9A");
   _add_country("SLOVENIA", 499, "S5");
-  _add_country("BOSNIA-HERZEGOVINA", 501, "E7");
-  _add_country("MACEDONIA", 502, "Z3");
-  _add_country("CZECH REPUBLIC", 503, "OK");
-  _add_country("SLOVAK REPUBLIC", 504, "OM");
-  _add_country("PRATAS IS", 505, "BV9P");
-  _add_country("SCARBOROUGH REEF", 506, "BS7");
-  _add_country("TEMOTU PROVINCE", 507, "H40");
-  _add_country("AUSTRAL IS", 508, "FO/a");
-  _add_country("MARQUESAS IS", 509, "FO/m");
-  _add_country("PALESTINE", 510, "E4");
-  _add_country("TIMOR-LESTE", 511, "4W");
-  _add_country("CHESTERFIELD IS", 512, "FK/c");
-  _add_country("DUCIE IS", 513, "VP6/d");
-  _add_country("MONTENEGRO", 514, "4O");
-  _add_country("SWAINS ISLAND", 515, "KH8/s");
-  _add_country("ST. BARTHELEMY", 516, "FJ");
-  _add_country("CURACAO", 517, "PJ2");
-  _add_country("SINT MAARTEN", 518, "PJ7");
-  _add_country("ST EUSTATIUS AND SABA", 519, "PJ5");
-  _add_country("BONAIRE", 520, "PJ4");
+  _add_country("BOSNIA-HERZEGOVINA"s, 501, "E7"s);
+  _add_country("MACEDONIA"s,                502, "Z3"s);
+  _add_country("CZECH REPUBLIC"s,           503, "OK"s);
+  _add_country("SLOVAK REPUBLIC"s,          504, "OM"s);
+  _add_country("PRATAS IS"s,                505, "BV9P"s);
+  _add_country("SCARBOROUGH REEF"s,         506, "BS7"s);
+  _add_country("TEMOTU PROVINCE"s,          507, "H40"s);
+  _add_country("AUSTRAL IS"s,               508, "FO/a"s);
+  _add_country("MARQUESAS IS"s,             509, "FO/m"s);
+  _add_country("PALESTINE"s,                510, "E4"s);
+  _add_country("TIMOR-LESTE"s,              511, "4W"s);
+  _add_country("CHESTERFIELD IS"s,          512, "FK/c"s);
+  _add_country("DUCIE IS"s,                 513, "VP6/d"s);
+  _add_country("MONTENEGRO"s,               514, "4O"s);
+  _add_country("SWAINS ISLAND"s,            515, "KH8/s"s);
+  _add_country("ST. BARTHELEMY"s,           516, "FJ"s);
+  _add_country("CURACAO"s,                  517, "PJ2"s);
+  _add_country("SINT MAARTEN"s,             518, "PJ7"s);
+  _add_country("ST EUSTATIUS AND SABA"s,    519, "PJ5"s);
+  _add_country("BONAIRE"s,                  520, "PJ4"s);
 }
 
 /*! \brief              Extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
@@ -829,16 +827,16 @@ adif_countries::adif_countries(void)
     \return             value extracted from <i>this_line</i>
 */
 const string adif_value(const string& this_line, const unsigned int offset)
-{ const string tag = delimited_substring(this_line, '<', '>');
-  const vector<string> vs = split_string(tag, ":");
+{ const string         tag { delimited_substring(this_line, '<', '>') };
+  const vector<string> vs  { split_string(tag, ":"s) };
 
   if (vs.size() != 2)
   { cerr << "ERROR parsing old log line: " << this_line << endl;
     return string();
   }
   else
-  { const size_t n_chars = from_string<size_t>(vs[1]);
-    const size_t posn = this_line.find('>');
+  { const size_t n_chars { from_string<size_t>(vs[1]) };
+    const size_t posn    { this_line.find('>') };
 
     return substring(this_line, posn + 1, n_chars - offset);
   }

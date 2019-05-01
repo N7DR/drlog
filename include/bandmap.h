@@ -37,9 +37,9 @@ enum class BANDMAP_ENTRY_SOURCE { LOCAL,
                                 };
 
 /// search directions for the bandmap
-enum BANDMAP_DIRECTION { BANDMAP_DIRECTION_DOWN,
-                         BANDMAP_DIRECTION_UP
-                       };
+enum class BANDMAP_DIRECTION { DOWN,
+                               UP
+                             };
 
 // forward declarations
 class bandmap_filter_type;
@@ -49,7 +49,7 @@ extern const std::string   MODE_MARKER;                         ///< the string 
 extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
-const unsigned int COLUMN_WIDTH = 19;           ///< width of a column in the bandmap window
+constexpr unsigned int COLUMN_WIDTH = 19;           ///< width of a column in the bandmap window
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -71,7 +71,7 @@ protected:
 
 public:
 
-/// return the nuber of posters
+/// return the number of posters
   inline const unsigned int size(void) const
     { return _posters.size(); }
 
@@ -81,7 +81,9 @@ public:
 
     Does nothing if <i>new_poster</i> is already present
 */
-  const unsigned int add(const std::string& new_poster);
+//  const unsigned int add(const std::string& new_poster);
+  inline const unsigned int add(const std::string& new_poster)
+    { return ( _posters.insert(new_poster), _posters.size() ); }
 };
 
 // -----------   bandmap_buffer ----------------
@@ -144,6 +146,7 @@ template<typename T>
 class needed_mult_details
 {
 protected:
+
   bool           _is_needed;        ///< are any mult values needed?
   bool           _is_status_known;  ///< is the status known for sure?
   std::set<T>    _values;           ///< values that are needed
@@ -213,7 +216,7 @@ public:
     if (_values.find(v) == _values.cend())
       return false;
 
-    const bool rv = (_values.erase(v) == 1);
+    const bool rv { (_values.erase(v) == 1) };
 
     if (_values.empty())
       _is_needed = false;

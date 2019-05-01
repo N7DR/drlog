@@ -739,6 +739,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "QSO MULTIPLE MODES")
       _qso_multiple_modes = is_true;
 
+// QSY ON STARTUP
+    if (LHS == "QSY ON STARTUP")
+      _qsy_on_startup = is_true;
+
 // QTCS
     if (LHS == "QTCS")
       _qtcs = is_true;
@@ -1500,6 +1504,7 @@ drlog_context::drlog_context(const std::string& filename) :
   _qsl_message(),                                                   // no QSL message (default is changed once configuration file has been read)
   _qso_multiple_bands(false),                                       // each station may be worked on only one band
   _qso_multiple_modes(false),                                       // each station may be worked on only one mode
+  _qsy_on_startup(true),                                            // go to the defined START BAND (or 20m)
   _qtcs(false),                                                     // QTCs are disabled
   _qtc_double_space(false),                                         // QTC elements are single-spaced
   _qtc_filename("QTCs"),                                            // QTC filename

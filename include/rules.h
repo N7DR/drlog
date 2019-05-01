@@ -460,11 +460,11 @@ public:
   const BAND next_band_down(const BAND current_band) const;
   
   RULESREAD(bonus_countries);                     ///< countries that are eligible for bonus points
-  SAFEREAD(permitted_bands, rules);                     ///< bands allowed in this contest
-  SAFEREAD(permitted_modes, rules);                     ///< modes allowed in this contest
+  RULESREAD(permitted_bands);                     ///< bands allowed in this contest
+  RULESREAD(permitted_modes);                     ///< modes allowed in this contest
 
-  SAFEREAD(work_if_different_band, rules);              ///< whether it is OK to work the same station on different bands
-  SAFEREAD(work_if_different_mode, rules);              ///< whether it is OK to work the same station on different modes
+  RULESREAD(work_if_different_band);              ///< whether it is OK to work the same station on different bands
+  RULESREAD(work_if_different_mode);              ///< whether it is OK to work the same station on different modes
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
     \param  canonical_prefix    canonical prefix
@@ -486,19 +486,19 @@ public:
   inline const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
     { return _exchange_fields(canonical_prefix, m, true); }
 
-  SAFEREAD(callsign_mults, rules);                      ///< collection of types of mults based on callsign (e.g., "WPXPX")
-  SAFEREAD(callsign_mults_per_band, rules);             ///< are callsign mults counted per-band?
-  SAFEREAD(callsign_mults_per_mode, rules);             ///< are callsign mults counted per-mode?
-  SAFEREAD(callsign_mults_used, rules);                 ///< are callsign mults used?
+  RULESREAD(callsign_mults);                      ///< collection of types of mults based on callsign (e.g., "WPXPX")
+  RULESREAD(callsign_mults_per_band);             ///< are callsign mults counted per-band?
+  RULESREAD(callsign_mults_per_mode);             ///< are callsign mults counted per-mode?
+  RULESREAD(callsign_mults_used);                 ///< are callsign mults used?
 
-  SAFEREAD(country_mults, rules);                       ///< collection of canonical prefixes of country multipliers
-  SAFEREAD(country_mults_per_band, rules);              ///< are country mults counted per-band?
-  SAFEREAD(country_mults_per_mode, rules);              ///< are country mults counted per-mode?
+  RULESREAD(country_mults);                       ///< collection of canonical prefixes of country multipliers
+  RULESREAD(country_mults_per_band);              ///< are country mults counted per-band?
+  RULESREAD(country_mults_per_mode);              ///< are country mults counted per-mode?
 
-  SAFEREAD(exchange_mults, rules);                      ///< the exchange multipliers, in the same order as in the configuration file
-  SAFEREAD(exchange_mults_per_band, rules);             ///< are exchange mults counted per-band?
-  SAFEREAD(exchange_mults_per_mode, rules);             ///< are exchange mults counted per-mode?
-  SAFEREAD(exchange_mults_used, rules);                 ///< are exchange mults used?
+  RULESREAD(exchange_mults);                      ///< the exchange multipliers, in the same order as in the configuration file
+  RULESREAD(exchange_mults_per_band);             ///< are exchange mults counted per-band?
+  RULESREAD(exchange_mults_per_mode);             ///< are exchange mults counted per-mode?
+  RULESREAD(exchange_mults_used);                 ///< are exchange mults used?
   SAFEREAD(expanded_exchange_mults, rules);             ///< expanded exchange multipliers
 
   SAFEREAD(original_score_bands, rules);                ///< bands that were originally used to calculate score (from the configuration file)
