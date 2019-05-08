@@ -172,45 +172,45 @@ void drlog_context::_process_configuration_file(const string& filename)
       _audio_file = rhs;
 
 // AUDIO RATE
-    if (LHS == "AUDIO RATE")
+    if (LHS == "AUDIO RATE"s)
       _audio_rate = from_string<unsigned int>(rhs);
 
 // AUTO BACKUP
-    if ( (LHS =="AUTO BACKUP") and !rhs.empty() )
+    if ( (LHS =="AUTO BACKUP"s) and !rhs.empty() )
       _auto_backup = rhs;
 
 // AUTO SCREENSHOT
-    if ( (LHS == "AUTO SCREENSHOT") and !rhs.empty() )
+    if ( (LHS == "AUTO SCREENSHOT"s) and !rhs.empty() )
       _auto_screenshot = is_true;
 
 // BAND MAP DECAY TIME CLUSTER
-    if ( ( (LHS == "BAND MAP DECAY TIME CLUSTER") or (LHS == "BANDMAP DECAY TIME CLUSTER") ) and !rhs.empty() )
+    if ( ( (LHS == "BAND MAP DECAY TIME CLUSTER"s) or (LHS == "BANDMAP DECAY TIME CLUSTER"s) ) and !rhs.empty() )
       _bandmap_decay_time_cluster = from_string<int>(rhs);
 
 // BAND MAP DECAY TIME LOCAL
-    if ( ( (LHS == "BAND MAP DECAY TIME LOCAL") or (LHS == "BANDMAP DECAY TIME LOCAL") ) and !rhs.empty() )
+    if ( ( (LHS == "BAND MAP DECAY TIME LOCAL"s) or (LHS == "BANDMAP DECAY TIME LOCAL"s) ) and !rhs.empty() )
       _bandmap_decay_time_local = from_string<int>(rhs);
 
 // BAND MAP DECAY TIME RBN
-    if ( (LHS == "BAND MAP DECAY TIME RBN") or (LHS == "BANDMAP DECAY TIME RBN") )
+    if ( (LHS == "BAND MAP DECAY TIME RBN"s) or (LHS == "BANDMAP DECAY TIME RBN"s) )
       _bandmap_decay_time_rbn = from_string<int>(rhs);
 
 // BAND MAP FADE COLOURS
-    if ( (LHS == "BAND MAP FADE COLOURS") or (LHS == "BANDMAP FADE COLOURS") or
-         (LHS == "BAND MAP FADE COLORS") or (LHS == "BANDMAP FADE COLORS") )
+    if ( (LHS == "BAND MAP FADE COLOURS"s) or (LHS == "BANDMAP FADE COLOURS"s) or
+         (LHS == "BAND MAP FADE COLORS"s) or (LHS == "BANDMAP FADE COLORS"s) )
     { _bandmap_fade_colours.clear();
 
       if (!RHS.empty())
-      { const vector<string> colour_names = remove_peripheral_spaces(split_string(RHS, ","));
+      { const vector<string> colour_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
         FOR_ALL(colour_names, [&] (const string& name) { _bandmap_fade_colours.push_back(string_to_colour(name)); } );
       }
     }
 
 // BAND MAP FILTER
-    if ( (LHS == "BAND MAP FILTER") or (LHS == "BANDMAP FILTER") )
+    if ( (LHS == "BAND MAP FILTER"s) or (LHS == "BANDMAP FILTER"s) )
     { if (!RHS.empty())
-      { vector<string> filters = remove_peripheral_spaces(split_string(RHS, ","));
+      { vector<string> filters { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
         sort(filters.begin(), filters.end(), compare_calls);    // put the entries into callsign order
         _bandmap_filter = filters;
@@ -218,10 +218,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER COLOURS
-    if ( (LHS == "BAND MAP FILTER COLOURS") or (LHS == "BAND MAP FILTER COLORS") or
-         (LHS == "BANDMAP FILTER COLOURS") or (LHS == "BANDMAP FILTER COLORS") )
+    if ( (LHS == "BAND MAP FILTER COLOURS"s) or (LHS == "BAND MAP FILTER COLORS"s) or
+         (LHS == "BANDMAP FILTER COLOURS"s) or (LHS == "BANDMAP FILTER COLORS"s) )
     { if (!RHS.empty())
-      { const vector<string> colours = split_string(RHS, ",");
+      { const vector<string> colours { split_string(RHS, ","s) };
 
         if (colours.size() >= 1)
           _bandmap_filter_foreground_colour = string_to_colour(colours[0]);
@@ -238,112 +238,113 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // BAND MAP FILTER ENABLE
-    if ( (LHS == "BAND MAP FILTER ENABLE") or (LHS == "BANDMAP FILTER ENABLE") )
+    if ( (LHS == "BAND MAP FILTER ENABLE"s) or (LHS == "BANDMAP FILTER ENABLE"s) )
       _bandmap_filter_enabled = is_true;
 
 // BAND MAP FILTER MODE
-    if ( (LHS == "BAND MAP FILTER MODE") or (LHS == "BANDMAP FILTER MODE") )
-      _bandmap_filter_show = (RHS == "SHOW");
+    if ( (LHS == "BAND MAP FILTER MODE"s) or (LHS == "BANDMAP FILTER MODE"s) )
+      _bandmap_filter_show = (RHS == "SHOW"s);
 
 // BAND MAP FREQUENCY UP
-    if ( (LHS == "BAND MAP FREQUENCY UP") or (LHS == "BANDMAP FREQUENCY UP") )
+    if ( (LHS == "BAND MAP FREQUENCY UP"s) or (LHS == "BANDMAP FREQUENCY UP"s) )
       _bandmap_frequency_up = is_true;
 
 // BAND MAP GUARD BAND CW
-    if ( (LHS == "BAND MAP GUARD BAND CW") or (LHS == "BANDMAP GUARD BAND CW") )
+    if ( (LHS == "BAND MAP GUARD BAND CW"s) or (LHS == "BANDMAP GUARD BAND CW"s) )
       _guard_band[MODE_CW] = from_string<int>(rhs);
 
 // BAND MAP GUARD BAND SSB
-    if ( (LHS == "BAND MAP GUARD BAND SSB") or (LHS == "BANDMAP GUARD BAND SSB") )
+    if ( (LHS == "BAND MAP GUARD BAND SSB"s) or (LHS == "BANDMAP GUARD BAND SSB"s) )
       _guard_band[MODE_SSB] = from_string<int>(rhs);
 
 // BAND MAP RECENT COLOUR
-    if ( (LHS == "BAND MAP RECENT COLOUR") or (LHS == "BANDMAP RECENT COLOUR") or
-         (LHS == "BANDMAP RECENT COLOR") or (LHS == "BANDMAP RECENT COLOR") )
+    if ( (LHS == "BAND MAP RECENT COLOUR"s) or (LHS == "BANDMAP RECENT COLOUR"s) or
+         (LHS == "BANDMAP RECENT COLOR"s) or (LHS == "BANDMAP RECENT COLOR"s) )
     { if (!RHS.empty())
         _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces(RHS));
     }
 
 // BANDS
-    if (LHS == "BANDS")
+    if (LHS == "BANDS"s)
       _bands = RHS;
 
 // BATCH MESSAGES FILE
-    if (LHS == "BATCH MESSAGES FILE")
+    if (LHS == "BATCH MESSAGES FILE"s)
       _batch_messages_file = rhs;
 
 // BEST DX UNIT
-    if ( (LHS == "BEST DX UNIT") or (LHS == "BEST DX UNITS") )
+    if ( (LHS == "BEST DX UNIT"s) or (LHS == "BEST DX UNITS"s) )
       _best_dx_unit = RHS;
 
 // CABRILLO FILENAME
-    if (LHS == "CABRILLO FILENAME")
+    if (LHS == "CABRILLO FILENAME"s)
       _cabrillo_filename = rhs;
 
 // CALL OK NOW MESSAGE
-    if (LHS == "CALL OK NOW MESSAGE")
+    if (LHS == "CALL OK NOW MESSAGE"s)
       _call_ok_now_message = rhs;
 
 // CALLSIGN MULTS
-    if (LHS == "CALLSIGN MULTS")
-    { const vector<string> callsign_mults_vec = remove_peripheral_spaces(split_string(RHS, ","));
+    if (LHS == "CALLSIGN MULTS"s)
+    { const vector<string> callsign_mults_vec { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
       move(callsign_mults_vec.cbegin(), callsign_mults_vec.cend(), inserter(_callsign_mults, _callsign_mults.begin()));
     }
 
 // CALLSIGN MULTS PER BAND
-    if (LHS == "CALLSIGN MULTS PER BAND")
+    if (LHS == "CALLSIGN MULTS PER BAND"s)
       _callsign_mults_per_band = is_true;
 
 // CALLSIGN MULTS PER MODE
-    if (LHS == "CALLSIGN MULTS PER MODE")
+    if (LHS == "CALLSIGN MULTS PER MODE"s)
       _callsign_mults_per_mode = is_true;
 
 // CLUSTER PORT
-    if (LHS == "CLUSTER PORT")
+    if (LHS == "CLUSTER PORT"s)
       _cluster_port = from_string<unsigned int>(rhs);
 
 // CLUSTER SERVER
-    if (LHS == "CLUSTER SERVER")
+    if (LHS == "CLUSTER SERVER"s)
       _cluster_server = rhs;
 
 // CLUSTER USERNAME
-    if (LHS == "CLUSTER USERNAME")
+    if (LHS == "CLUSTER USERNAME"s)
       _cluster_username = rhs;
 
 // CONTEST
-    if (LHS == "CONTEST")
+    if (LHS == "CONTEST"s)
       _contest_name = RHS;
 
 // COUNTRY FILENAME
-    if (LHS == "COUNTRY FILENAME")
+    if (LHS == "COUNTRY FILENAME"s)
       _cty_filename = rhs;
 
 // COUNTRY LIST
-    if ( LHS == "COUNTRY LIST")
-    { if (RHS == "DXCC")
+    if ( LHS == "COUNTRY LIST"s)
+    { if (RHS == "DXCC"s)
         _country_list = COUNTRY_LIST_DXCC;
 
-      if (RHS == "WAEDC")
+      if (RHS == "WAEDC"s)
         _country_list = COUNTRY_LIST_WAEDC;
     }
 
 // COUNTRY MULT FACTOR
-    if (LHS == "COUNTRY MULT FACTOR")  // there may be an "=" in the points definitions
-    { const vector<string> str_vec = split_string(line, "=");
+    if (LHS == "COUNTRY MULT FACTOR"s)  // there may be an "=" in the points definitions
+    { const vector<string> str_vec { split_string(line, "="s) };
 
       if (!str_vec.empty())
       { string tmp_str;
 
-        const string lhs = str_vec[0];
+        const string lhs { str_vec[0] };
 
-        if (!contains(lhs, "[") or contains(lhs, "[*]"))             // for all bands
+        if (!contains(lhs, "["s) or contains(lhs, "[*]"s))             // for all bands
         { string new_str;
 
           for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
           { new_str += str_vec[n];
+
             if (n != str_vec.size() - 1)
-              new_str += "=";
+              new_str += "="s;
           }
 
           tmp_str = to_upper(remove_peripheral_spaces(new_str));
@@ -352,125 +353,123 @@ void drlog_context::_process_configuration_file(const string& filename)
             _per_band_country_mult_factor.insert( { static_cast<BAND>(n), from_string<int>(tmp_str) } );
         }
         else    // not all bands
-        {
-          { const string bands_str = delimited_substring(lhs, '[', ']');
-            const vector<string> bands = remove_peripheral_spaces(split_string(bands_str, ","));
+        { const string         bands_str { delimited_substring(lhs, '[', ']') };
+          const vector<string> bands     { remove_peripheral_spaces(split_string(bands_str, ","s)) };
 
-            for (const auto b_str: bands)
-            { const BAND b = BAND_FROM_NAME[b_str];
+          for (const auto b_str: bands)
+          { const BAND b { BAND_FROM_NAME[b_str] };
 
-              string new_str;
+            string new_str;
 
-              for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
-              { new_str += str_vec[n];
+            for (unsigned int n = 1; n < str_vec.size(); ++n)          // reconstitute rhs; why not just _points = RHS ? I think that comes to the same thing
+            { new_str += str_vec[n];
 
-                if (n != str_vec.size() - 1)
-                  new_str += "=";
-              }
-
-              tmp_str = to_upper(remove_peripheral_spaces(new_str));
-              _per_band_country_mult_factor.insert( { b, from_string<int>(tmp_str) } );
+              if (n != str_vec.size() - 1)
+                new_str += "="s;
             }
+
+            tmp_str = to_upper(remove_peripheral_spaces(new_str));
+            _per_band_country_mult_factor.insert( { b, from_string<int>(tmp_str) } );
           }
         }
       }
     }
 
 // COUNTRY MULTS PER BAND
-    if (LHS == "COUNTRY MULTS PER BAND")
+    if (LHS == "COUNTRY MULTS PER BAND"s)
       _country_mults_per_band = is_true;
 
 // COUNTRY MULTS PER MODE
-    if (LHS == "COUNTRY MULTS PER MODE")
+    if (LHS == "COUNTRY MULTS PER MODE"s)
       _country_mults_per_mode = is_true;
 
 // CQ AUTO LOCK
-    if (LHS == "CQ AUTO LOCK")
+    if (LHS == "CQ AUTO LOCK"s)
       _cq_auto_lock = is_true;
 
 // CQ AUTO RIT
-    if (LHS == "CQ AUTO RIT")
+    if (LHS == "CQ AUTO RIT"s)
       _cq_auto_rit = is_true;
 
 // CW PRIORITY
-    if (LHS == "CW PRIORITY")
+    if (LHS == "CW PRIORITY"s)
       _cw_priority = from_string<int>(RHS);
 
 // CW SPEED
-    if (LHS == "CW SPEED")
+    if (LHS == "CW SPEED"s)
       _cw_speed = from_string<unsigned int>(RHS);
 
 // CW SPEED CHANGE
-    if (LHS == "CW SPEED CHANGE")
+    if (LHS == "CW SPEED CHANGE"s)
       _cw_speed_change = from_string<unsigned int>(RHS);
 
 // DECIMAL POINT
-    if (LHS == "DECIMAL POINT")
+    if (LHS == "DECIMAL POINT"s)
       _decimal_point = rhs;
 
 // DISPLAY COMMUNICATION ERRORS
-    if (LHS == "DISPLAY COMMUNICATION ERRORS")
+    if (LHS == "DISPLAY COMMUNICATION ERRORS"s)
       _display_communication_errors = is_true;
 
 // DISPLAY GRID
-    if (LHS == "DISPLAY GRID")
+    if (LHS == "DISPLAY GRID"s)
       _display_grid = is_true;
 
 // DO NOT SHOW
-    if (LHS == "DO NOT SHOW")
-      _do_not_show = remove_peripheral_spaces(split_string(RHS, ","));
+    if (LHS == "DO NOT SHOW"s)
+      _do_not_show = remove_peripheral_spaces(split_string(RHS, ","s));
 
 // DO NOT SHOW FILE
-    if (LHS == "DO NOT SHOW FILE")
+    if (LHS == "DO NOT SHOW FILE"s)
       _do_not_show_filename = rhs;
 
 // DRMASTER FILENAME
-    if (LHS == "DRMASTER FILENAME")
+    if (LHS == "DRMASTER FILENAME"s)
       _drmaster_filename = rhs;
 
 // EXCHANGE
-    if (LHS == "EXCHANGE")
+    if (LHS == "EXCHANGE"s)
       _exchange = RHS;
 
 // EXCHANGE[
-    if (starts_with(testline, "EXCHANGE["))
-    { const string country_list = delimited_substring(LHS, '[', ']');
-      const vector<string> countries = remove_peripheral_spaces(split_string(country_list, ','));
+    if (starts_with(testline, "EXCHANGE["s))
+    { const string         country_list { delimited_substring(LHS, '[', ']') };
+      const vector<string> countries    { remove_peripheral_spaces(split_string(country_list, ',')) };
 
       FOR_ALL(countries, [&] (const string& str) { _exchange_per_country.insert( { str, RHS } ); } );
     }
 
 // EXCHANGE CQ
-    if (LHS == "EXCHANGE CQ")
+    if (LHS == "EXCHANGE CQ"s)
       _exchange_cq = RHS;
 
 // EXCHANGE FIELDS FILENAME (for all the regex-based exchange fields)
-    if (LHS == "EXCHANGE FIELDS FILENAME")
+    if (LHS == "EXCHANGE FIELDS FILENAME"s)
       _exchange_fields_filename = rhs;
 
 // EXCHANGE MULTS
-    if (LHS == "EXCHANGE MULTS")
+    if (LHS == "EXCHANGE MULTS"s)
     { _exchange_mults = RHS;
 
-      if (contains(_exchange_mults, ","))       // if there is more than one exchange mult
+      if (contains(_exchange_mults, ","s))       // if there is more than one exchange mult
         QSO_MULT_WIDTH = 4;                     // make them all the same width, so that the log line looks OK
     }
 
 // EXCHANGE MULTS PER BAND
-    if (LHS == "EXCHANGE MULTS PER BAND")
+    if (LHS == "EXCHANGE MULTS PER BAND"s)
       _exchange_mults_per_band = is_true;
 
 // EXCHANGE MULTS PER MODE
-    if (LHS == "EXCHANGE MULTS PER MODE")
+    if (LHS == "EXCHANGE MULTS PER MODE"s)
       _exchange_mults_per_mode = is_true;
 
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
-    if ( (LHS == "EXCHANGE PREFILL FILE") or (LHS == "EXCHANGE PREFILL FILES") )
-    { const vector<string> files = remove_peripheral_spaces(delimited_substrings(rhs, '[', ']'));
+    if ( (LHS == "EXCHANGE PREFILL FILE"s) or (LHS == "EXCHANGE PREFILL FILESs") )
+    { const vector<string> files { remove_peripheral_spaces(delimited_substrings(rhs, '[', ']')) };
 
       for (const auto& file : files)
-      { const vector<string> fields = remove_peripheral_spaces(split_string(file, ","));
+      { const vector<string> fields { remove_peripheral_spaces(split_string(file, ","s)) };
 
         if (fields.size() == 2)
           _exchange_prefill_files[to_upper(fields[0])] = fields[1];
@@ -478,29 +477,29 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // EXCHANGE SAP
-    if (LHS == "EXCHANGE SAP")
+    if (LHS == "EXCHANGE SAP"s)
       _exchange_sap = RHS;
 
 // EXCHANGE SENT
 // e.g., exchange sent = RST:599, CQZONE:4
-    if (LHS == "EXCHANGE SENT")
-    { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
-      const vector<string> fields = split_string(comma_delimited_list, ",");
+    if (LHS == "EXCHANGE SENT"s)
+    { const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
+      const vector<string> fields               { split_string(comma_delimited_list, ","s) };
 
       for (const auto& this_field : fields)
-      { const vector<string> field = split_string(this_field, ":");
+      { const vector<string> field { split_string(this_field, ":"s) };
 
         _sent_exchange.push_back( { remove_peripheral_spaces(field[0]), remove_peripheral_spaces(field[1]) } );
       }
     }
 
 // EXCHANGE SENT CW
-    if (LHS == "EXCHANGE SENT CW")
-    { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
-      const vector<string> fields = split_string(comma_delimited_list, ",");
+    if (LHS == "EXCHANGE SENT CW"s)
+    { const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
+      const vector<string> fields               { split_string(comma_delimited_list, ","s) };
 
       for (const auto& this_field : fields)
-      { const vector<string> field = split_string(this_field, ":");
+      { const vector<string> field { split_string(this_field, ":"s) };
 
         if (fields.size() != 2)
           print_error_and_exit(testline);
@@ -510,12 +509,12 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // EXCHANGE SENT SSB
-    if (LHS == "EXCHANGE SENT SSB")
-    { const string comma_delimited_list = to_upper(remove_peripheral_spaces((split_string(line, "="))[1]));    // RST:599, CQZONE:4
-      const vector<string> fields = split_string(comma_delimited_list, ",");
+    if (LHS == "EXCHANGE SENT SSB"s)
+    { const string         comma_delimited_list { to_upper(remove_peripheral_spaces((split_string(line, "="s))[1])) };    // RST:599, CQZONE:4
+      const vector<string> fields               { split_string(comma_delimited_list, ","s) };
 
       for (const auto& this_field : fields)
-      { const vector<string> field = split_string(this_field, ":");
+      { const vector<string> field { split_string(this_field, ":"s) };
 
         if (fields.size() != 2)
           print_error_and_exit(testline);
@@ -525,49 +524,49 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // FAST CQ BANDWIDTH; used only in CW mode
-    if (LHS == "FAST CQ BANDWIDTH")
+    if (LHS == "FAST CQ BANDWIDTH"s)
       _fast_cq_bandwidth = from_string<decltype(_fast_cq_bandwidth)>(RHS);
 
 // FAST SAP BANDWIDTH; used only in CW mode
-    if (LHS == "FAST SAP BANDWIDTH")
+    if (LHS == "FAST SAP BANDWIDTH"s)
       _fast_sap_bandwidth = from_string<decltype(_fast_sap_bandwidth)>(RHS);
 
 // GEOMAGNETIC INDICES COMMAND
-    if (LHS == "GEOMAGNETIC INDICES COMMAND")
+    if (LHS == "GEOMAGNETIC INDICES COMMAND"s)
       _geomagnetic_indices_command = rhs;
 
 // HOME EXCHANGE WINDOW
-    if (LHS == "HOME EXCHANGE WINDOW")
+    if (LHS == "HOME EXCHANGE WINDOW"s)
       _home_exchange_window = is_true;
 
 // INACTIVTY TIMER
-    if (LHS == "INACTIVITY TIMER")
+    if (LHS == "INACTIVITY TIMER"s)
       _inactivity_timer = from_string<int>(rhs);
 
 // INDIVIDUAL MESSAGES FILE
-    if (LHS == "INDIVIDUAL MESSAGES FILE")
+    if (LHS == "INDIVIDUAL MESSAGES FILE"s)
       _individual_messages_file = rhs;
 
 // KEYER PORT
-    if (LHS == "KEYER PORT")
+    if (LHS == "KEYER PORT"s)
       _keyer_port = rhs;
 
 // LOG
-    if ( (LHS == "LOG") and !rhs.empty() )
+    if ( (LHS == "LOG"s) and !rhs.empty() )
       _logfile = rhs;
 
 // LONG T
-    if (LHS == "LONG T")
+    if (LHS == "LONG T"s)
       _long_t = is_true;
 
 // MARK FREQUENCIES [CW|SSB]
-    if (starts_with(testline, "MARK FREQUENCIES") and !rhs.empty())
-    { const vector<string> ranges = remove_peripheral_spaces(split_string(rhs, ","));
+    if (starts_with(testline, "MARK FREQUENCIES"s) and !rhs.empty())
+    { const vector<string> ranges { remove_peripheral_spaces(split_string(rhs, ","s)) };
 
       vector<pair<frequency, frequency>> frequencies;
 
       for (const string& range : ranges)
-      { const vector<string> bounds = remove_peripheral_spaces(split_string(range, "-"));
+      { const vector<string> bounds { remove_peripheral_spaces(split_string(range, "-"s)) };
 
         try
         { frequencies.push_back( { frequency(bounds.at(0)), frequency(bounds.at(1))} );
@@ -578,59 +577,59 @@ void drlog_context::_process_configuration_file(const string& filename)
         }
       }
 
-      if (LHS == "MARK FREQUENCIES" or LHS == "MARK FREQUENCIES CW")
+      if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES CW"s)
         _mark_frequencies.insert( { MODE_CW, frequencies } );
 
-      if (LHS == "MARK FREQUENCIES" or LHS == "MARK FREQUENCIES SSB")
+      if (LHS == "MARK FREQUENCIES"s or LHS == "MARK FREQUENCIES SSB"s)
         _mark_frequencies.insert( { MODE_SSB, frequencies } );
     }
 
 // MATCH MINIMUM
-    if (LHS == "MATCH MINIMUM")
+    if (LHS == "MATCH MINIMUM"s)
       _match_minimum = from_string<int>(RHS);
 
 // MATCH MINIMUM
-    if (LHS == "MAX QSOS WITHOUT QSL")
+    if (LHS == "MAX QSOS WITHOUT QSL"s)
       _max_qsos_without_qsl = from_string<int>(RHS);
 
 // MODES
-    if (LHS == "MODES")
+    if (LHS == "MODES"s)
     { _modes = RHS;
 
-      if (contains(_modes, ","))        // if more than one mode
+      if (contains(_modes, ","s))        // if more than one mode
         _mark_mode_break_points = true;
       else
-      { if (_modes == "SSB")
+      { if (_modes == "SSB"s)
           _start_mode = MODE_SSB;
       }
     }
 
 // MODE BREAK POINTS
-    if (LHS == "MODE BREAK POINTS")
-    { const vector<string> break_points = remove_peripheral_spaces(split_string(RHS, ','));
+    if (LHS == "MODE BREAK POINTS"s)
+    { const vector<string> break_points { remove_peripheral_spaces(split_string(RHS, ',')) };
 
       for (const auto& break_point : break_points)
-      { const frequency f(break_point);
-        const BAND b = to_BAND(f);
+      { const frequency f { break_point };
+        const BAND      b { to_BAND(f) };
 
         _mode_break_points.insert( { b, f } );
       }
     }
 
 // MY CALL
-    if (LHS == "MY CALL")
+    if (LHS == "MY CALL"s)
       _my_call = RHS;
 
 // MY CONTINENT
-    if (LHS == "MY CONTINENT")
+    if (LHS == "MY CONTINENT"s)
       _my_continent = RHS;
 
 // MY CQ ZONE
-    if (LHS == "MY CQ ZONE")
+    if (LHS == "MY CQ ZONE"s)
       _my_cq_zone = from_string<int>(RHS);
 
 // MY GRID
-    if (LHS == "MY GRID")
+    if (LHS == "MY GRID"s)
       _my_grid = rhs;
 
 // MY IP

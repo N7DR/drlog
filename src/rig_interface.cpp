@@ -143,10 +143,6 @@ rig_interface::rig_interface (void) :
   _status(frequency(14000), MODE_CW)    // 14MHz, CW
 { }
 
-/// destructor
-//rig_interface::~rig_interface(void)
-//{ }
-
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
 */
@@ -326,10 +322,10 @@ const frequency rig_interface::rig_frequency_b(void)
 
     SAFELOCK(_rig);
 
-    const int status = rig_get_freq(_rigp, RIG_VFO_B, &hz);
+    const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) };
 
     if (status != RIG_OK)
-    { _error_alert("Error getting frequency of VFO B");
+    { _error_alert("Error getting frequency of VFO B"s);
       return _last_commanded_frequency_b;
     }
 
@@ -354,16 +350,16 @@ void rig_interface::split_enable(void)
   SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { raw_command("FT1;");
+  { raw_command("FT1;"s);
     rig_is_split = true;
     return;
   }
 
 // not a K3
-  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B);  // magic parameters
+  const int status { rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B) };  // magic parameters
 
   if (status != RIG_OK)
-    _error_alert("Error executing SPLIT command");
+    _error_alert("Error executing SPLIT command"s);
   else
     rig_is_split = true;
 }
@@ -376,17 +372,17 @@ void rig_interface::split_disable(void)
   SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { raw_command("FR0;");
+  { raw_command("FR0;"s);
     rig_is_split = false;
     return;
   }
 
 // not a K3
 //  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_OFF, RIG_VFO_A);    // do not delete this line, in case we ever need to use this version instead of the following line
-  const int status = rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A);         // the line above also works
+  const int status { rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A) };         // the line above also works
 
   if (status != RIG_OK)
-    _error_alert("Error executing SPLIT command");
+    _error_alert("Error executing SPLIT command"s);
   else
     rig_is_split = false;
 }
@@ -403,12 +399,12 @@ const bool rig_interface::split_enabled(void)
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
 
-    const string transmit_vfo = raw_command("FT;", true);
+    const string transmit_vfo { raw_command("FT;"s, true) };
 
     if (transmit_vfo.length() >= 4)
       return (transmit_vfo[2] == '1');
 
-    _error_alert("Unable to determine whether rig is SPLIT");
+    _error_alert("Unable to determine whether rig is SPLIT"s);
     return false;
   }
 
@@ -418,10 +414,10 @@ const bool rig_interface::split_enabled(void)
 
   SAFELOCK(_rig);
 
-  const int status = rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo);
+  const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) };
 
   if (status != RIG_OK)
-  { _error_alert("Error getting SPLIT");
+  { _error_alert("Error getting SPLIT"s);
     return false;
   }
 
@@ -504,10 +500,10 @@ const MODE rig_interface::rig_mode(void)
 
     SAFELOCK(_rig);
 
-    const int status = rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w);
+    const int status { rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w) };
 
     if (status != RIG_OK)
-    { _error_alert("Error getting mode");
+    { _error_alert("Error getting mode"s);
       return _last_commanded_mode;
     }
 
@@ -535,28 +531,28 @@ void rig_interface::rit(const int hz)
 // hamlib's behaviour anent the K3 is not what we want
   if (_model == RIG_MODEL_K3)
   { if (hz == 0)                                // just clear the RIT/XIT
-      raw_command(string("RC;"));
+      raw_command(string("RC;"s));
     else
     { const int positive_hz = abs(hz);
-      const string hz_str = ( (hz >= 0) ? string("+") : string("-") ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
+      const string hz_str = ( (hz >= 0) ? "+"s : "-"s) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
 
-      raw_command(string("RO") + hz_str +";", false);
+      raw_command(string("RO"s) + hz_str +";"s, false);
     }
   }
   else
   { SAFELOCK(_rig);
 
-    const int status = rig_set_rit(_rigp, RIG_VFO_CURR, hz);
+    const int status { rig_set_rit(_rigp, RIG_VFO_CURR, hz) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while setting RIT offset");
+      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while setting RIT offset"s);
   }
 }
 
 /// get rit offset (in Hz)
 const int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
-  { const string value = raw_command(string("RO;"), 8);
+  { const string value { raw_command("RO;"s, 8) };
 
     return from_string<int>(substring(value, 2, 5));
   }
@@ -564,10 +560,11 @@ const int rig_interface::rit(void)
   { SAFELOCK(_rig);
 
     shortfreq_t hz;
-    const int status = rig_get_rit(_rigp, RIG_VFO_CURR, &hz);
+
+    const int status { rig_get_rit(_rigp, RIG_VFO_CURR, &hz) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while getting RIT offset");
+      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while getting RIT offset"s);
 
     return static_cast<int>(hz);
   }
@@ -579,7 +576,7 @@ const int rig_interface::rit(void)
 */
 void rig_interface::rit_enable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("RT1;"), 0); // proper enable for the K3
+    raw_command(string("RT1;"s), 0); // proper enable for the K3
   else
     rit(1);                         // 1 Hz offset, since a zero offset would disable RIT
 }
@@ -590,7 +587,7 @@ void rig_interface::rit_enable(void)
 */
 void rig_interface::rit_disable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("RT0;"), 0); // proper disable for the K3
+    raw_command(string("RT0;"s), 0); // proper disable for the K3
   else
     rit(0);                         // 0 Hz offset, which hamlib regards as disabling RIT
 }
@@ -600,10 +597,10 @@ const bool rig_interface::rit_enabled(void)
 { string response;
 
   if (_model == RIG_MODEL_K3)
-    response = raw_command(string("RT;"), true);
+    response = raw_command(string("RT;"s), true);
 
   if (response.length() != 4)
-    throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in rit_enabled()");  // handle this error upstairs
+    throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in rit_enabled()"s);  // handle this error upstairs
 
   return (response[2] == '1');
 }
@@ -614,7 +611,7 @@ const bool rig_interface::rit_enabled(void)
 */
 void rig_interface::xit_enable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("XT1;"), 0);
+    raw_command(string("XT1;"s), 0);
   else
     xit(1);                 // 1 Hz offset
 }
@@ -625,7 +622,7 @@ void rig_interface::xit_enable(void)
 */
 void rig_interface::xit_disable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("XT0;"), 0);
+    raw_command(string("XT0;"s), 0);
   else
     xit(1);                 // 1 Hz offset
 }
@@ -635,10 +632,10 @@ const bool rig_interface::xit_enabled(void)
 { string response;
 
   if (_model == RIG_MODEL_K3)
-    response = raw_command(string("XT;"), true);
+    response = raw_command(string("XT;"s), true);
 
   if (response.length() != 4)
-    throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in xit_enabled()");  // handle this error upstairs
+    throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in xit_enabled()"s);  // handle this error upstairs
 
   return (response[2] == '1');
 }
@@ -651,18 +648,18 @@ const bool rig_interface::xit_enabled(void)
 void rig_interface::xit(const int hz)
 { if (_model == RIG_MODEL_K3)                   // hamlib's behaviour anent the K3 is not what we want, have K3-specific code
   { if (hz == 0)                                // just clear the RIT/XIT
-      raw_command(string("RC;"), 0);
+      raw_command(string("RC;"s), 0);
     else
-    { const int positive_hz = abs(hz);
-      const string hz_str = ( (hz >= 0) ? string("+") : string("-") ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
+    { const int    positive_hz { abs(hz) };
+      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0') };
 
-      raw_command(string("RO") + hz_str +";", 0);
+      raw_command(string("RO"s) + hz_str +";"s, 0);
     }
   }
   else
   { SAFELOCK(_rig);
 
-    const int status = rig_set_xit(_rigp, RIG_VFO_CURR, hz);
+    const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) };
 
     if (status != RIG_OK)
     { throw exception();
@@ -673,12 +670,13 @@ void rig_interface::xit(const int hz)
 /// get xit offset (in Hz)
 const int rig_interface::xit(void)
 { shortfreq_t hz;
+
   SAFELOCK(_rig);
 
-  const int status = rig_get_xit(_rigp, RIG_VFO_CURR, &hz);
+  const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) };
 
   if (status != RIG_OK)
-    throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error obtaining XIT offset");
+    throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error obtaining XIT offset"s);
 
   return static_cast<int>(hz);
 }
@@ -688,13 +686,13 @@ void rig_interface::lock(void)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-    raw_command("LK1;", 0);
+    raw_command("LK1;"s, 0);
   else
-  { const int v = 1;
-    const int status = rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v);
+  { const int v      { 1 };
+    const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error locking VFO");
+      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error locking VFO"s);
   }
 }
 
@@ -703,13 +701,13 @@ void rig_interface::unlock(void)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-    raw_command("LK0;", 0);
+    raw_command("LK0;"s, 0);
   else
-  { const int v = 0;
-    const int status = rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v);
+  { const int v      { 0 };
+    const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error unlocking VFO");
+      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error unlocking VFO"s);
   }
 }
 
@@ -718,17 +716,17 @@ void rig_interface::unlock(void)
 */
 void rig_interface::sub_receiver(const bool b)
 { if (_model == RIG_MODEL_K3)
-    raw_command( b ? "SB1;" : "SB0;", 0);
+    raw_command( b ? "SB1;"s : "SB0;"s, 0);
 }
 
 /// is sub-receiver on?
 const bool rig_interface::sub_receiver(void)
 { if (_model == RIG_MODEL_K3)
   { try
-    { const string str = raw_command("SB;", true);
+    { const string str { raw_command("SB;"s, true) };
 
       if (str.length() < 3)
-        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "SUBRX Short response");
+        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "SUBRX Short response"s);
 
       return (str[2] == '1');
     }
@@ -738,7 +736,7 @@ const bool rig_interface::sub_receiver(void)
     }
 
     catch (...)
-    { throw rig_interface_error(RIG_MISC_ERROR, "Error getting SUBRX status");
+    { throw rig_interface_error(RIG_MISC_ERROR, "Error getting SUBRX status"s);
     }
   }
 
@@ -767,17 +765,19 @@ void rig_interface::keyer_speed(const int wpm)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { string cmd = "KS" + pad_string(to_string(wpm), 3, PAD_LEFT, '0') + ";";
+  { string cmd { "KS"s + pad_string(to_string(wpm), 3, PAD_LEFT, '0') + ";"s };
+
     raw_command(cmd, 0);
   }
   else
   { value_t v;
+
     v.i = wpm;
 
-    const int status = rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v);
+    const int status { rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error setting keyer speed");
+      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error setting keyer speed"s);
   }
 }
 
@@ -786,16 +786,17 @@ const int rig_interface::keyer_speed(void)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { const string status_str = raw_command("KS;", 6);
+  { const string status_str { raw_command("KS;"s, 6) };
 
     return from_string<int>(substring(status_str, 2, 3));
   }
   else
   { value_t v;
-    const int status = rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v);
+
+    const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting keyer speed");
+      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting keyer speed"s);
 
     return v.i;
   }
@@ -851,14 +852,17 @@ const bool rig_interface::is_locked(void)
     \return                     the response from the rig, or the empty string
 */
 const string rig_interface::raw_command(const string& cmd, const bool response_expected)
-{ struct rig_state* rs_p = &(_rigp->state);
-//  struct rig_state& rs   = *rs_p;
-  const int fd           = _file_descriptor();
+{ struct rig_state* rs_p { &(_rigp->state) };
+
+  const int fd           { _file_descriptor() };
+
   static array<char, 1000> c_in;
-//  int n_read             = 0;
-  unsigned int total_read         = 0;
+
+  unsigned int total_read         { 0 };
+
   string rcvd;
-  const bool is_p3_screenshot = (cmd == "#BMP;");   // this has to be treated differently: the response is long and has no concluding semicolon
+
+  const bool is_p3_screenshot { (cmd == "#BMP;"s) };   // this has to be treated differently: the response is long and has no concluding semicolon
 
   if (!_rig_connected)
     return string();
@@ -866,16 +870,16 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
   if (cmd.empty())
     return string();
 
-  static const int max_attempts = 10;
-  static const int timeout_microseconds = 100000;    // 100 milliseconds
+  constexpr int MAX_ATTEMPTS { 10 };
+  constexpr int TIMEOUT_MICROSECONDS { 100'000 };    // 100 milliseconds
 
 // sanity check ... on K3 all commands end in a ";"
   if (cmd[cmd.length() - 1] != ';')
-  {  _error_alert("Invalid rig command: " + cmd);
+  {  _error_alert("Invalid rig command: "s + cmd);
     return string();
   }
 
-  bool completed = false;
+  bool completed { false };
 
   { SAFELOCK(_rig);
 
@@ -887,14 +891,16 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
     fd_set set;
     struct timeval timeout;
 
-    int counter = 0;
+    int counter { 0 };
+
+    constexpr int SCREEN_BITS = 131'640;
 
     if (response_expected)
     { if (is_p3_screenshot)
-      { array<char, 131640> c_in;    // hide the static array
+      { array<char, SCREEN_BITS> c_in;    // hide the static array
 
-        const int n_bits = 131640 * 10;
-        const int n_secs = n_bits / baud_rate();
+        const int n_bits { SCREEN_BITS * 10 };
+        const int n_secs { n_bits / baud_rate() };
 
         while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
         { FD_ZERO(&set);    // clear the set
@@ -903,7 +909,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           timeout.tv_sec = 1;
           timeout.tv_usec = 0;
 
-          int status = select(fd + 1, &set, NULL, NULL, &timeout);
+          int status { select(fd + 1, &set, NULL, NULL, &timeout) };
 
           if (status == -1)
             ost << "Error in select() in raw_command()" << endl;
@@ -911,23 +917,24 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           { if (status == 0)
              ost << "timeout in select() in raw_command: " << cmd << endl;
             else
-            { const int n_read = read(fd, c_in.data(), 131640 - total_read);
+            { const int n_read { read(fd, c_in.data(), SCREEN_BITS - total_read) };
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
                 rcvd.append(c_in.data(), n_read);
 
-                if (rcvd.length() == 131640)
+                if (rcvd.length() == SCREEN_BITS)
                   completed = true;
               }
             }
           }
           counter++;
           if (!completed)
-          { static const string percent_str("%%");
-            const int percent = rcvd.length() * 100 / 131640;
+          { static const string percent_str { "%%"s };
 
-            alert(string("P3 screendump progress: ") + to_string(percent) + percent_str);
+            const int percent { rcvd.length() * 100 / SCREEN_BITS };
+
+            alert("P3 screendump progress: "s + to_string(percent) + percent_str);
             sleep_for(milliseconds(1000));  // we have the lock for all this time
           }
 //          else
@@ -935,45 +942,44 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
         }
       }
       else
-      { static int rig_communication_failures = 0;
+      { static int rig_communication_failures { 0 };
 
-        while (!completed and (counter < max_attempts) )
+        while (!completed and (counter < MAX_ATTEMPTS) )
         { FD_ZERO(&set);    // clear the set
           FD_SET(fd, &set); // add the file descriptor to the set
 
           timeout.tv_sec = 0;
-          timeout.tv_usec = timeout_microseconds;
+          timeout.tv_usec = TIMEOUT_MICROSECONDS;
 
           if (counter)                          // we've already slept the first time through
             sleep_for(milliseconds(50));
 
-          int status = select(fd + 1, &set, NULL, NULL, &timeout);
-//          int nread = 0;
+          int status { select(fd + 1, &set, NULL, NULL, &timeout) };
 
           if (status == -1)
             ost << "Error in select() in raw_command()" << endl;
           else
           { if (status == 0)
-            { if (counter == max_attempts - 1)
-              { if (cmd == "TQ;")
+            { if (counter == MAX_ATTEMPTS - 1)
+              { if (cmd == "TQ;"s)
                 { rig_communication_failures++;
 
                   if (rig_communication_failures == 1)
                     ost << "status communication with rig failed" << endl;
                 }
                 else
-                  ost << "last-attempt timeout (" << timeout_microseconds << "µs) in select() in raw_command: " << cmd << endl;
+                  ost << "last-attempt timeout (" << TIMEOUT_MICROSECONDS << "µs) in select() in raw_command: " << cmd << endl;
               }
             }
             else
-            { if (cmd == "TQ;")
+            { if (cmd == "TQ;"s)
               { if (rig_communication_failures != 0)
                 { ost << "status communication with rig restored after " << rig_communication_failures << " failure" << (rig_communication_failures == 1 ? "" : "s") << endl;
                   rig_communication_failures = 0;
                 }
               }
 
-              const int n_read = read(fd, c_in.data(), 500);        // read a maximum of 500 characters
+              const int n_read { read(fd, c_in.data(), 500) };        // read a maximum of 500 characters
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
@@ -981,7 +987,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 
                 rcvd += string(c_in.data());
 
-                if (contains(rcvd, ";"))
+                if (contains(rcvd, ";"s))
                   completed = true;
               }
             }
@@ -1006,14 +1012,19 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 
 #if defined(NEW_RAW_COMMAND)
 const string rig_interface::raw_command(const string& cmd, const unsigned int expected_length)
-{ struct rig_state* rs_p = &(_rigp->state);
-  struct rig_state& rs   = *rs_p;
-  const int fd           = _file_descriptor();
+{ struct rig_state* rs_p { &(_rigp->state) };
+  struct rig_state& rs   { *rs_p };
+
+  const int fd           { _file_descriptor() };
+
   static array<char, 1000> c_in;
-  int n_read             = 0;
-  unsigned int total_read         = 0;
+
+  int n_read              { 0 };
+  unsigned int total_read { 0 };
+
   string rcvd;
-  const bool is_p3_screenshot = (cmd == "#BMP;");   // this has to be treated differently: the response is long and has no concluding semicolon
+
+  const bool is_p3_screenshot { (cmd == "#BMP;"s) };   // this has to be treated differently: the response is long and has no concluding semicolon
 
   if (!_rig_connected)
     return string();
@@ -1150,8 +1161,8 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
 /// is the VFO locked?
 const bool rig_interface::is_locked(void)
 { if (_model == RIG_MODEL_K3)
-  { const string status_str = raw_command("LK;", 4);
-    const char status_char = (status_str.length() >= 3 ? status_str[2] : '0');  // default is unlocked
+  { const string status_str  { raw_command("LK;"s, 4) };
+    const char   status_char { (status_str.length() >= 3 ? status_str[2] : '0') };  // default is unlocked
 
     return (status_char == '1');
   }
@@ -1159,10 +1170,10 @@ const bool rig_interface::is_locked(void)
   { SAFELOCK(_rig);
 
     int v;
-    const int status = rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v);
+    const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) };
 
     if (status != RIG_OK)
-      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting lock status");
+      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting lock status"s);
 
     return (v == 1);
   }
@@ -1175,10 +1186,7 @@ const int rig_interface::bandwidth(void)
 { if (!_rig_connected)
     return 0;
 
-  const string status_str = raw_command("BW;", 7);
-
-//  if (status_str.empty())
-//    return 0;
+  const string status_str { raw_command("BW;"s, 7) };
 
   return ( (status_str.size() < 7) ? 0 : from_string<int>(substring(status_str, 2, 4)) * 10);
 }
@@ -1191,7 +1199,7 @@ const int rig_interface::bandwidth(void)
 const frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
 { SAFELOCK(_rig);
 
-  const auto cit = _last_frequency.find( { b, m } );
+  const auto cit { _last_frequency.find( { b, m } ) };
 
   return ( ( cit == _last_frequency.cend() ) ? frequency() : cit->second );    // return 0 if there's no last frequency
 }
@@ -1216,10 +1224,10 @@ void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequen
 */
 const bool rig_interface::is_transmitting(void)
 { if (_rig_connected)
-  { bool rv = true;                                        // default: be paranoid
+  { bool rv { true };                                        // default: be paranoid
 
     if (_model == RIG_MODEL_K3)
-    { const string response = raw_command("TQ;", 4);
+    { const string response { raw_command("TQ;"s, 4) };
 
       if (response.length() < 4)
       { // because this happens so often, don't report it
@@ -1242,16 +1250,17 @@ const bool rig_interface::test(void)
 { if (_model == RIG_MODEL_DUMMY)
     return true;
 
-  bool rv = false;    // default
+  bool rv { false };    // default
 
   if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { const string response = raw_command("IC;", 8);
+    { const string response { raw_command("IC;"s, 8) };
 
       if (response.length() < 8)
-        _error_alert("Unable to retrieve rig icons and status");
+        _error_alert("Unable to retrieve rig icons and status"s);
       else
-      { const char c = response[2];
+      { const char c { response[2] };
+
         rv = (c bitand (1 << 5));
       }
     }
@@ -1270,9 +1279,9 @@ void rig_interface::test(const bool b)
   { if (_rig_connected)
     { if (_model == RIG_MODEL_K3)
 #if defined(NEW_RAW_COMMAND)
-        raw_command("SWH18;", 0);    // toggles state
+        raw_command("SWH18;"s, 0);    // toggles state
 #else
-        raw_command("SWH18;");    // toggles state
+        raw_command("SWH18;"s);    // toggles state
 #endif
     }
   }
@@ -1309,9 +1318,9 @@ const VFO rig_interface::tx_vfo(void)
 void rig_interface::bandwidth_a(const unsigned int hz)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { const string k3_bw_units = pad_string(to_string( (hz + 5) / 10 ), 4, PAD_LEFT, '0');
+    { const string k3_bw_units { pad_string(to_string( (hz + 5) / 10 ), 4, PAD_LEFT, '0') };
 
-      raw_command("BW" + k3_bw_units + ";");
+      raw_command("BW"s + k3_bw_units + ";"s);
     }
   }
 }
@@ -1322,9 +1331,9 @@ void rig_interface::bandwidth_a(const unsigned int hz)
 void rig_interface::bandwidth_b(const unsigned int hz)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { const string k3_bw_units = pad_string(to_string( (hz + 5) / 10 ), 4, PAD_LEFT, '0');
+    { const string k3_bw_units { pad_string(to_string( (hz + 5) / 10 ), 4, PAD_LEFT, '0') };
 
-      raw_command("BW$" + k3_bw_units + ";");
+      raw_command("BW$"s + k3_bw_units + ";"s);
     }
   }
 }
@@ -1337,12 +1346,12 @@ void rig_interface::bandwidth_b(const unsigned int hz)
 const bool rig_interface::rx_ant(void)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { const string result = raw_command("AR;", RESPONSE);
+    { const string result { raw_command("AR;"s, RESPONSE) };
 
-      if (result != "AR0;" and result != "AR1;")
+      if ( (result != "AR0;"s) and (result != "AR1;"s) )
         ost << "ERROR in rx_ant(): result = " << result << endl;
 
-      return (result == "AR1;");
+      return (result == "AR1;"s);
     }
   }
 
@@ -1357,7 +1366,7 @@ const bool rig_interface::rx_ant(void)
 void rig_interface::rx_ant(const bool torf)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-      raw_command( torf ? "AR1;" : "AR0;" );
+      raw_command( torf ? "AR1;"s : "AR0;"s );
   }
 }
 
@@ -1392,81 +1401,60 @@ void rig_interface::base_state(void)
 const string hamlib_error_code_to_string(const int e)
 { switch (e)
   { case RIG_OK :
-      return "No error, operation completed sucessfully";
+      return "No error, operation completed sucessfully"s;
 
     case RIG_EINVAL :
-      return "invalid parameter";
+      return "invalid parameter"s;
 
     case RIG_ECONF :
-      return "invalid configuration (serial,..)";
+      return "invalid configuration (serial,..)"s;
 
     case RIG_ENOMEM :
-      return "memory shortage";
+      return "memory shortage"s;
 
     case RIG_ENIMPL :
-      return "function not implemented, but will be";
+      return "function not implemented, but will be"s;
 
     case RIG_ETIMEOUT :
-      return "communication timed out";
+      return "communication timed out"s;
 
     case RIG_EIO :
-      return "IO error, including open failed";
+      return "IO error, including open failed"s;
 
     case RIG_EINTERNAL :
-      return "Internal Hamlib error, huh!";
+      return "Internal Hamlib error, huh!"s;
 
     case RIG_EPROTO :
-      return "Protocol error";
+      return "Protocol error"s;
 
     case RIG_ERJCTED :
-      return "Command rejected by the rig";
+      return "Command rejected by the rig"s;
 
     case RIG_ETRUNC :
-      return "Command performed, but arg truncated";
+      return "Command performed, but arg truncated"s;
 
     case RIG_ENAVAIL :
-      return "function not available";
+      return "function not available"s;
 
     case RIG_ENTARGET :
-      return "VFO not targetable";
+      return "VFO not targetable"s;
 
     case RIG_BUSERROR :
-      return "Error talking on the bus";
+      return "Error talking on the bus"s;
 
     case RIG_BUSBUSY :
-      return "Collision on the bus";
+      return "Collision on the bus"s;
 
     case RIG_EARG :
-      return "NULL RIG handle or any invalid pointer parameter in get arg";
+      return "NULL RIG handle or any invalid pointer parameter in get arg"s;
 
     case RIG_EVFO :
-      return "Invalid VFO";
+      return "Invalid VFO"s;
 
     case RIG_EDOM :
-      return "Argument out of domain of function";
+      return "Argument out of domain of function"s;
 
     default :
-      return "Unknown hamlib error number: " + to_string(e);
+      return "Unknown hamlib error number: "s + to_string(e);
   }
 }
-
-/// default frequencies for bands and modes
-map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { { BAND_160, MODE_CW },  frequency(1'800'000) },
-                                                          { { BAND_160, MODE_SSB }, frequency(1'900'000) },
-                                                          { { BAND_80,  MODE_CW },  frequency(3'500'000) },
-                                                          { { BAND_80,  MODE_SSB }, frequency(3'750'000) },
-                                                          { { BAND_40,  MODE_CW },  frequency(7'000'000) },
-                                                          { { BAND_40,  MODE_SSB }, frequency(7'150'000) },
-                                                          { { BAND_30,  MODE_CW },  frequency(10'100'000) },
-                                                          { { BAND_20,  MODE_CW },  frequency(14'000'000) },
-                                                          { { BAND_20,  MODE_SSB }, frequency(14'150'000) },
-                                                          { { BAND_17,  MODE_CW },  frequency(18'068'000) },
-                                                          { { BAND_17,  MODE_SSB }, frequency(18'100'000) },
-                                                          { { BAND_15,  MODE_CW },  frequency(21'000'000) },
-                                                          { { BAND_15,  MODE_SSB }, frequency(21'200'000) },
-                                                          { { BAND_12,  MODE_CW },  frequency(24'890'000) },
-                                                          { { BAND_12,  MODE_SSB }, frequency(24'940'000) },
-                                                          { { BAND_10,  MODE_CW },  frequency(28'000'000) },
-                                                          { { BAND_10,  MODE_SSB }, frequency(28'300'000) }
-                                                        };
-

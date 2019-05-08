@@ -251,7 +251,7 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<std::pair<
       << "is status known: " << nmd.is_status_known() << std::endl
       << "values: " << std::endl;
 
-  std::set<std::pair<S, S>> s = nmd.values();
+  std::set<std::pair<S, S>> s { nmd.values() };
 
   for (const auto& v : s)
     ost << "  value: " << v.first << ", " << v.second << std::endl;
@@ -270,7 +270,7 @@ std::ostream& operator<<(std::ostream& ost, const needed_mult_details<T>& nmd)
       << "is status known: " << nmd.is_status_known() << std::endl
       << "values: " << std::endl;
 
-  const std::set<T> s = nmd.values();
+  const std::set<T> s { nmd.values() };
 
   for (const auto& v : s)
     ost << "  value: " << v << std::endl;
@@ -706,8 +706,8 @@ std::ostream& operator<<(std::ostream& ost, const bandmap_entry& be);
 // remove_if internally calls the assignment operator, which is illegal... so basically means that in g++ set/multiset can't use remove_if
 // one can use complex workarounds (remove_copy_if and then re-assign back to the original container), but that's ugly and in any case
 // std::list seems to be fast enough
-typedef std::list<bandmap_entry> BM_ENTRIES;                        ///< syntactic sugar for the type used to store the bandmap entries
-typedef const bool (bandmap_entry::* PREDICATE_FUN_P)(void) const;  ///< used in directional searches
+using BM_ENTRIES      = std::list<bandmap_entry>;
+using PREDICATE_FUN_P = const bool (bandmap_entry::*)(void) const;
 
 // -----------  bandmap  ----------------
 
@@ -1110,6 +1110,7 @@ window& operator<(window& win, bandmap& bm);
 */
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
 
-typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
+//typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
+using BANDMAP_MEM_FUN_P = const bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 
 #endif    // BANDMAP_H

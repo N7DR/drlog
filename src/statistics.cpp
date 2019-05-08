@@ -411,7 +411,9 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
     \return             whether the country in which <i>callsign</i> is located is needed as a mult on band <i>b</i> and mode <i>m</i>
 */
 const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
-{ try
+{ //ost << "Inside running_statistics::is_needed_country_mult()" << endl;
+
+  try
   { SAFELOCK(statistics);
 
     const string canonical_prefix = _location_db.canonical_prefix(callsign);
@@ -421,6 +423,10 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 //    const bool is_needed = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
 
     bool is_needed_mult;
+
+//    ost << "auto_country_mults = " << boolalpha << _auto_country_mults << noboolalpha << endl;
+
+//    ost << "_country multipliers = " << _country_multipliers << endl;
 
     if (_auto_country_mults)
       is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet

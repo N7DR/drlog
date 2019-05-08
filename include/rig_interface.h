@@ -50,8 +50,6 @@ enum VFO { VFO_A = 0,                       ///< VFO A
            VFO_B                            ///< VFO B
          };
 
-extern std::map<std::pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band and per-mode
-
 // ---------------------------------------- rig_status -------------------------
 
 WRAPPER_2(rig_status, frequency, freq, MODE, mode);     ///< the status of a rig

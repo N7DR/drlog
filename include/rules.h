@@ -253,14 +253,12 @@ protected:
   std::map<std::string, unsigned int> _continent_points;                    ///< per-continent points
   std::map<std::string, unsigned int> _country_points;                      ///< per-country points
   unsigned int                        _default_points;                      ///< default points
-  enum POINTS                         _points_type { POINTS::NORMAL };      ///< is the points structure too complex for the configuration notation?
+  POINTS                              _points_type { POINTS::NORMAL };      ///< is the points structure too complex for the configuration notation?
 
 public:
 
 /// default constructor
-  inline points_structure(void) = default; //:
-//    _points_type(POINTS_NORMAL)
-//  { }
+  inline points_structure(void) = default;
 
   READ_AND_WRITE(continent_points);    ///< per-continent points
   READ_AND_WRITE(country_points);      ///< per-country points
@@ -499,20 +497,20 @@ public:
   RULESREAD(exchange_mults_per_band);             ///< are exchange mults counted per-band?
   RULESREAD(exchange_mults_per_mode);             ///< are exchange mults counted per-mode?
   RULESREAD(exchange_mults_used);                 ///< are exchange mults used?
-  SAFEREAD(expanded_exchange_mults, rules);             ///< expanded exchange multipliers
+  RULESREAD(expanded_exchange_mults);             ///< expanded exchange multipliers
 
-  SAFEREAD(original_score_bands, rules);                ///< bands that were originally used to calculate score (from the configuration file)
-  SAFEREAD(original_score_modes, rules);                ///< modes that were originally used to calculate score (from the configuration file)
+  RULESREAD(original_score_bands);                ///< bands that were originally used to calculate score (from the configuration file)
+  RULESREAD(original_score_modes);                ///< modes that were originally used to calculate score (from the configuration file)
 
-  SAFEREAD(per_band_country_mult_factor, rules);        ///< factor by which to multiply number of country mults, per band (see WAE rules)
+  RULESREAD(per_band_country_mult_factor);        ///< factor by which to multiply number of country mults, per band (see WAE rules)
 
-  SAFEREAD(score_bands, rules);                         ///< bands currently used to calculate score
-  SAFEREAD(score_modes, rules);                         ///< modes currently used to calculate score
-  SAFEREAD(send_qtcs, rules);                           ///< can QTCs be sent?
+  RULESREAD(score_bands);                         ///< bands currently used to calculate score
+  RULESREAD(score_modes);                         ///< modes currently used to calculate score
+  RULESREAD(send_qtcs);                           ///< can QTCs be sent?
 
-  SAFEREAD(uba_bonus, rules);                           ///< do we have bonus points for ON stations?
+  RULESREAD(uba_bonus);                           ///< do we have bonus points for ON stations?
 
-  SAFEREAD(exchange_field_eft, rules);                  ///< exchange field information
+  RULESREAD(exchange_field_eft);                  ///< exchange field information
 
 /*! \brief              The exchange field template corresponding to a particular field
     \param  field_name  name of the field

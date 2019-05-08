@@ -109,8 +109,12 @@ static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
                                                           { BAND_10,  "28000"s }
                                                         };
 
-//typedef std::pair<BAND, MODE> bandmode;    ///< tuple for encapsulating a band and mode
-using bandmode = std::pair<BAND, MODE>;
+using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band and mode
+
+// forward declaration
+class frequency;
+
+extern std::map<bandmode, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band and per-mode
 
 /*!  \brief     Convert a frequency to a band
      \param  f  frequency
@@ -311,15 +315,15 @@ inline const std::string to_string(const frequency& f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it
-static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency(1900) },
-                                                    { BAND_80,  frequency(3600) },
-                                                    { BAND_60,  frequency(5500) },
-                                                    { BAND_40,  frequency(7100) },
-                                                    { BAND_30,  frequency(10150) },
-                                                    { BAND_20,  frequency(14150) },
-                                                    { BAND_17,  frequency(18900) },
-                                                    { BAND_15,  frequency(21200) },
-                                                    { BAND_12,  frequency(24910) },
-                                                    { BAND_10,  frequency(28300) }
+static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency(1'900) },
+                                                    { BAND_80,  frequency(3'600) },
+                                                    { BAND_60,  frequency(5'500) },
+                                                    { BAND_40,  frequency(7'100) },
+                                                    { BAND_30,  frequency(10'150) },
+                                                    { BAND_20,  frequency(14'150) },
+                                                    { BAND_17,  frequency(18'900) },
+                                                    { BAND_15,  frequency(21'200) },
+                                                    { BAND_12,  frequency(24'910) },
+                                                    { BAND_10,  frequency(28'300) }
                                                   };
 #endif /* BANDSMODES_H */

@@ -14,16 +14,32 @@ using namespace std;
 
 extern string FREQUENCY_STRING_POINT;
 
+/// default frequencies for bands and modes
+map<pair<BAND, MODE>, frequency > DEFAULT_FREQUENCIES = { { { BAND_160, MODE_CW },  frequency(1'800'000) },
+                                                          { { BAND_160, MODE_SSB }, frequency(1'900'000) },
+                                                          { { BAND_80,  MODE_CW },  frequency(3'500'000) },
+                                                          { { BAND_80,  MODE_SSB }, frequency(3'750'000) },
+                                                          { { BAND_40,  MODE_CW },  frequency(7'000'000) },
+                                                          { { BAND_40,  MODE_SSB }, frequency(7'150'000) },
+                                                          { { BAND_30,  MODE_CW },  frequency(10'100'000) },
+                                                          { { BAND_30,  MODE_SSB }, frequency(10'100'000) },        // just to make things easier if we go to 30m while in SSB mode
+                                                          { { BAND_20,  MODE_CW },  frequency(14'000'000) },
+                                                          { { BAND_20,  MODE_SSB }, frequency(14'150'000) },
+                                                          { { BAND_17,  MODE_CW },  frequency(18'068'000) },
+                                                          { { BAND_17,  MODE_SSB }, frequency(18'100'000) },
+                                                          { { BAND_15,  MODE_CW },  frequency(21'000'000) },
+                                                          { { BAND_15,  MODE_SSB }, frequency(21'200'000) },
+                                                          { { BAND_12,  MODE_CW },  frequency(24'890'000) },
+                                                          { { BAND_12,  MODE_SSB }, frequency(24'940'000) },
+                                                          { { BAND_10,  MODE_CW },  frequency(28'000'000) },
+                                                          { { BAND_10,  MODE_SSB }, frequency(28'300'000) }
+                                                        };
+
 // ----------------------------------------------------  frequency  -----------------------------------------------
 
 /*! \class  frequency
     \brief  A convenient class for handling frequencies
 */
-
-/// default constructor
-//frequency::frequency(void) :
-//  _hz(0)
-//{ }
 
 /*! \brief      construct from a double
     \param f    frequency in Hz, kHz or MHz
@@ -51,11 +67,11 @@ frequency::frequency(const double f, const FREQUENCY_UNIT unit)
       break;
 
     case FREQUENCY_UNIT::KHZ :
-      _hz = static_cast<unsigned int>(f * 1000 + 0.5);
+      _hz = static_cast<unsigned int>(f * 1'000 + 0.5);
       break;
 
     case FREQUENCY_UNIT::MHZ :
-      _hz = static_cast<unsigned int>(f * 1000000 + 0.5);
+      _hz = static_cast<unsigned int>(f * 1'000'000 + 0.5);
       break;
   }
 }

@@ -28,16 +28,14 @@ using namespace std::literals::string_literals;
 // ant path  -------------------------------------------------------
 
 /// antenna path
-enum  ANT_PATH_ENUM { ANT_PATH_GREYLINE,
-                      ANT_PATH_OTHER,
-                      ANT_PATH_SHORT_PATH,
-                      ANT_PATH_LONG_PATH,
-                      N_ANT_PATHS
-                    };
+enum ANT_PATH_ENUM { ANT_PATH_GREYLINE,
+                     ANT_PATH_OTHER,
+                     ANT_PATH_SHORT_PATH,
+                     ANT_PATH_LONG_PATH,
+                     N_ANT_PATHS
+                   };
 
-//typedef std::array<std::string, N_ANT_PATHS> ANT_PATH_ENUMERATION_TYPE;     ///< type for antenna path enumeration
-
-using ANT_PATH_ENUMERATION_TYPE = std::array<std::string, N_ANT_PATHS>;
+using ANT_PATH_ENUMERATION_TYPE = std::array<std::string, N_ANT_PATHS>;     ///< type for antenna path enumeration
 
 /// legal values of ANT_PATH_ENUMERATION
 static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION { "G"s,    ///< greyline
@@ -123,9 +121,7 @@ enum MODE_ENUM { ADIF_MODE_AM,              // 0
                  N_ADIF_MODES
                };                                                       ///< enum for modes
 
-//typedef std::array<std::string, N_ADIF_MODES> MODE_ENUMERATION_TYPE;    ///< type for mode enumeration
-
-using MODE_ENUMERATION_TYPE = std::array<std::string, N_ADIF_MODES>;
+using MODE_ENUMERATION_TYPE = std::array<std::string, N_ADIF_MODES>;    ///< type for mode enumeration
 
 static MODE_ENUMERATION_TYPE MODE_ENUMERATION { "AM"s,               // 0
                                                 "AMTORFEC"s,
@@ -286,90 +282,88 @@ enum SECTION_ENUM { SECTION_AL,
                     N_SECTIONS
                   };                                                        ///< enum for sections
 
-//typedef std::array<std::string, N_SECTIONS> SECTION_ENUMERATION_TYPE;       ///< type for section enumeration
+using SECTION_ENUMERATION_TYPE = std::array<std::string, N_SECTIONS>;       ///< type for section enumeration
 
-using SECTION_ENUMERATION_TYPE = std::array<std::string, N_SECTIONS>;
-
-static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION { "AL",
-                                                      "AK",
-                                                      "AB",
-                                                      "AR",
-                                                      "AZ",
-                                                      "BC",
-                                                      "CO",
-                                                      "CT",
-                                                      "DE",
-                                                      "EB",
-                                                      "EMA",
-                                                      "ENY",
-                                                      "EPA",
-                                                      "EWA",
-                                                      "GA",
-                                                      "ID",
-                                                      "IL",
-                                                      "IN",
-                                                      "IA",
-                                                      "KS",
-                                                      "KY",
-                                                      "LAX",
-                                                      "LA",
-                                                      "ME",
-                                                      "MB",
-                                                      "MAR",
-                                                      "MDC",
-                                                      "MI",
-                                                      "MN",
-                                                      "MS",
-                                                      "MO",
-                                                      "MT",
-                                                      "NE",
-                                                      "NV",
-                                                      "NH",
-                                                      "NM",
-                                                      "NLI",
-                                                      "NL",
-                                                      "NC",
-                                                      "ND",
-                                                      "NTX",
-                                                      "NFL",
-                                                      "NNJ",
-                                                      "NNY",
-                                                      "NT",
-                                                      "OH",
-                                                      "OK",
-                                                      "ON",
-                                                      "ORG",
-                                                      "OR",
-                                                      "PAC",
-                                                      "PR",
-                                                      "QC",
-                                                      "RI",
-                                                      "SV",
-                                                      "SDG",
-                                                      "SF",
-                                                      "SJV",
-                                                      "SB",
-                                                      "SCV",
-                                                      "SK",
-                                                      "SC",
-                                                      "SD",
-                                                      "STX",
-                                                      "SFL",
-                                                      "SNJ",
-                                                      "TN",
-                                                      "VI",
-                                                      "UT",
-                                                      "VT",
-                                                      "VA",
-                                                      "WCF",
-                                                      "WTX",
-                                                      "WV",
-                                                      "WMA",
-                                                      "WNY",
-                                                      "WPA",
-                                                      "WWA",
-                                                      "WI",
-                                                      "WY"
+static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION { "AL"s,
+                                                      "AK"s,
+                                                      "AB"s,
+                                                      "AR"s,
+                                                      "AZ"s,
+                                                      "BC"s,
+                                                      "CO"s,
+                                                      "CT"s,
+                                                      "DE"s,
+                                                      "EB"s,
+                                                      "EMA"s,
+                                                      "ENY"s,
+                                                      "EPA"s,
+                                                      "EWA"s,
+                                                      "GA"s,
+                                                      "ID"s,
+                                                      "IL"s,
+                                                      "IN"s,
+                                                      "IA"s,
+                                                      "KS"s,
+                                                      "KY"s,
+                                                      "LAX"s,
+                                                      "LA"s,
+                                                      "ME"s,
+                                                      "MB"s,
+                                                      "MAR"s,
+                                                      "MDC"s,
+                                                      "MI"s,
+                                                      "MN"s,
+                                                      "MS"s,
+                                                      "MO"s,
+                                                      "MT"s,
+                                                      "NE"s,
+                                                      "NV"s,
+                                                      "NH"s,
+                                                      "NM"s,
+                                                      "NLI"s,
+                                                      "NL"s,
+                                                      "NC"s,
+                                                      "ND"s,
+                                                      "NTX"s,
+                                                      "NFL"s,
+                                                      "NNJ"s,
+                                                      "NNY"s,
+                                                      "NT"s,
+                                                      "OH"s,
+                                                      "OK"s,
+                                                      "ON"s,
+                                                      "ORG"s,
+                                                      "OR"s,
+                                                      "PAC"s,
+                                                      "PR"s,
+                                                      "QC"s,
+                                                      "RI"s,
+                                                      "SV"s,
+                                                      "SDG"s,
+                                                      "SF"s,
+                                                      "SJV"s,
+                                                      "SB"s,
+                                                      "SCV"s,
+                                                      "SK"s,
+                                                      "SC"s,
+                                                      "SD"s,
+                                                      "STX"s,
+                                                      "SFL"s,
+                                                      "SNJ"s,
+                                                      "TN"s,
+                                                      "VI"s,
+                                                      "UT"s,
+                                                      "VT"s,
+                                                      "VA"s,
+                                                      "WCF"s,
+                                                      "WTX"s,
+                                                      "WV"s,
+                                                      "WMA"s,
+                                                      "WNY"s,
+                                                      "WPA"s,
+                                                      "WWA"s,
+                                                      "WI"s,
+                                                      "WY"s
                                                     };
 
 // awards  -------------------------------------------------------
@@ -407,37 +401,40 @@ enum AWARD_ENUM { AWARD_AJA,
                   N_AWARDS
                 };                                                      ///< enum for awards
 
-typedef std::array<std::string, N_AWARDS> AWARD_ENUMERATION_TYPE;       ///< type for award enumeration
+//typedef std::array<std::string, N_AWARDS> AWARD_ENUMERATION_TYPE;       ///< type for award enumeration
 
-static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION { "AJA",
-                                                  "CQDX",
-                                                  "CQDXFIELD",
-                                                  "CQWAZ_MIXED",
-                                                  "CQWAZ_CW",
-                                                  "CQWAZ_PHONE",
-                                                  "CQWAZ_RTTY",
-                                                  "CQWAZ_160m",
-                                                  "CQWPX",
-                                                  "DARC_DOK",
-                                                  "DXCC",
-                                                  "DXCC_MIXED",
-                                                  "DXCC_CW",
-                                                  "DXCC_PHONE",
-                                                  "DXCC_RTTY",
-                                                  "IOTA",
-                                                  "JCC",
-                                                  "JCG",
-                                                  "MARATHON",
-                                                  "RDA",
-                                                  "WAB",
-                                                  "WAC",
-                                                  "WAE",
-                                                  "WAIP",
-                                                  "WAJA",
-                                                  "WAS",
-                                                  "WAZ",
-                                                  "USACA",
-                                                  "VUCC"
+using AWARD_ENUMERATION_TYPE = std::array<std::string, N_AWARDS>;       ///< type for award enumeration
+
+
+static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION { "AJA"s,
+                                                  "CQDX"s,
+                                                  "CQDXFIELD"s,
+                                                  "CQWAZ_MIXED"s,
+                                                  "CQWAZ_CW"s,
+                                                  "CQWAZ_PHONE"s,
+                                                  "CQWAZ_RTTY"s,
+                                                  "CQWAZ_160m"s,
+                                                  "CQWPX"s,
+                                                  "DARC_DOK"s,
+                                                  "DXCC"s,
+                                                  "DXCC_MIXED"s,
+                                                  "DXCC_CW"s,
+                                                  "DXCC_PHONE"s,
+                                                  "DXCC_RTTY"s,
+                                                  "IOTA"s,
+                                                  "JCC"s,
+                                                  "JCG"s,
+                                                  "MARATHON"s,
+                                                  "RDA"s,
+                                                  "WAB"s,
+                                                  "WAC"s,
+                                                  "WAE"s,
+                                                  "WAIP"s,
+                                                  "WAJA"s,
+                                                  "WAS"s,
+                                                  "WAZ"s,
+                                                  "USACA"s,
+                                                  "VUCC"s
                                                 } ;
 
 // band  -------------------------------------------------------
@@ -475,37 +472,39 @@ enum BAND_ENUM { ADIF_BAND_2190m,
                  N_ADIF_BANDS
                };                                                       ///< enum for bands
 
-typedef std::array<std::string, N_ADIF_BANDS> BAND_ENUMERATION_TYPE;    ///< type for band enumeration
+//typedef std::array<std::string, N_ADIF_BANDS> BAND_ENUMERATION_TYPE;    ///< type for band enumeration
 
-static BAND_ENUMERATION_TYPE BAND_ENUMERATION { "2190m",
-                                                "560m",
-                                                "160m",
-                                                "80m",
-                                                "60m",
-                                                "40m",
-                                                "30m",
-                                                "20m",
-                                                "17m",
-                                                "15m",
-                                                "12m",
-                                                "10m",
-                                                "6m",
-                                                "4m",
-                                                "2m",
-                                                "1.25m",
-                                                "70cm",
-                                                "33cm",
-                                                "23cm",
-                                                "13cm",
-                                                "9cm",
-                                                "6cm",
-                                                "3cm",
-                                                "1.25cm",
-                                                "6mm",
-                                                "4mm",
-                                                "2.5mm",
-                                                "2mm",
-                                                "1mm"
+using BAND_ENUMERATION_TYPE = std::array<std::string, N_ADIF_BANDS>;     ///< type for band enumeration
+
+static BAND_ENUMERATION_TYPE BAND_ENUMERATION { "2190m"s,
+                                                "560m"s,
+                                                "160m"s,
+                                                "80m"s,
+                                                "60m"s,
+                                                "40m"s,
+                                                "30m"s,
+                                                "20m"s,
+                                                "17m"s,
+                                                "15m"s,
+                                                "12m"s,
+                                                "10m"s,
+                                                "6m"s,
+                                                "4m"s,
+                                                "2m"s,
+                                                "1.25m"s,
+                                                "70cm"s,
+                                                "33cm"s,
+                                                "23cm"s,
+                                                "13cm"s,
+                                                "9cm"s,
+                                                "6cm"s,
+                                                "3cm"s,
+                                                "1.25cm"s,
+                                                "6mm"s,
+                                                "4mm"s,
+                                                "2.5mm"s,
+                                                "2mm"s,
+                                                "1mm"s
                                               };
 
 // contest  -------------------------------------------------------
@@ -627,122 +626,124 @@ enum CONTEST_ENUM { CONTEST_7QP,                //      7th-Area QSO Party
                     N_CONTESTS
                   };
 
-typedef std::array<std::string, N_CONTESTS> CONTEST_ENUMERATION_TYPE;                           ///< type for contest enumeration
+//typedef std::array<std::string, N_CONTESTS> CONTEST_ENUMERATION_TYPE;                           ///< type for contest enumeration
 
-static CONTEST_ENUMERATION_TYPE CONTEST_ENUMERATION = { { "7QP",                                //  7th-Area QSO Party
-                                                          "ANARTS-RTTY",                        //  ANARTS WW RTTY
-                                                          "ANATOLIAN-RTTY",                     //  Anatolian WW RTTY
-                                                          "AP-SPRINT",                          //  Asia - Pacific Sprint
-                                                          "ARI-DX",                             //  ARI DX Contest
-                                                          "ARRL-10",                            //  ARRL 10 Meter Contest
-                                                          "ARRL-160",                           //  ARRL 160 Meter Contest
-                                                          "ARRL-DX-CW",                         //  ARRL International DX Contest (CW)
-                                                          "ARRL-DX-SSB",                        //  ARRL International DX Contest (Phone)
-                                                          "ARRL-FIELD-DAY",                     //  ARRL Field Day
-                                                          "ARRL-RTTY",                          //  ARRL RTTY Round-Up
-                                                          "ARRL-SS-CW",                         //  ARRL November Sweepstakes (CW)
-                                                          "ARRL-SS-SSB",                        //  ARRL November Sweepstakes (Phone)
-                                                          "ARRL-UHF-AUG",                       //  ARRL August UHF Contest
-                                                          "ARRL-VHF-JAN",                       //  ARRL January VHF Sweepstakes
-                                                          "ARRL-VHF-JUN",                       //  ARRL June VHF QSO Party
-                                                          "ARRL-VHF-SEP",                       //  ARRL September VHF QSO Party
-                                                          "BARTG-RTTY",                         //  BARTG Spring RTTY Contest
-                                                          "BARTG-SPRINT",                       //  BARTG Sprint Contest
-                                                          "CA-QSO-PARTY",                       //  California QSO Party
-                                                          "CQ-160-CW",                          //  CQ WW 160 Meter DX Contest (CW)
-                                                          "CQ-160-SSB",                         //  CQ WW 160 Meter DX Contest (SSB)
-                                                          "CQ-VHF",                             //  CQ World-Wide VHF Contest
-                                                          "CQ-WPX-CW",                          //  CQ WW WPX Contest (CW)
-                                                          "CQ-WPX-RTTY",                        //  CQ/RJ WW RTTY WPX Contest
-                                                          "CQ-WPX-SSB",                         //  CQ WW WPX Contest (SSB)
-                                                          "CQ-WW-CW",                           //  CQ WW DX Contest (CW)
-                                                          "CQ-WW-RTTY",                         //  CQ/RJ WW RTTY DX Contest
-                                                          "CQ-WW-SSB",                          //  CQ WW DX Contest (SSB)
-                                                          "CWOPS-CWT",                          //  CWops Mini-CWT Test
-                                                          "CIS-DX",                             //  CIS DX Contest
-                                                          "DARC-WAEDC-CW",                      //  WAE DX Contest (CW)
-                                                          "DARC-WAEDC-RTTY",                    //  WAE DX Contest (RTTY)
-                                                          "DARC-WAEDC-SSB",                     //  WAE DX Contest (SSB)
-                                                          "DL-DX-RTTY",                         //  DL-DX RTTY Contest
-                                                          "EA-RTTY",                            //  EA-WW-RTTY
-                                                          "EPC-PSK63",                          //  PSK63 QSO Party
-                                                          "EU Sprint",                          //  EU Sprint
-                                                          "EUCW160M",                           //
-                                                          "EU-HF",                              //  EU HF Championship
-                                                          "EU-PSK-DX",                          //  EU PSK DX Contest
-                                                          "Fall Sprint",                        //  FISTS Fall Sprint
-                                                          "FL-QSO-PARTY",                       //  Florida QSO Party
-                                                          "GA-QSO-PARTY",                       //  Georgia QSO Party
-                                                          "HELVETIA",                           //  Helvetia Contest
-                                                          "IARU-HF",                            //  IARU HF World Championship
-                                                          "IL QSO Party",                       //  Illinois QSO Party
-                                                          "JARTS-WW-RTTY",                      //  JARTS WW RTTY
-                                                          "JIDX-CW",                            //  Japan International DX Contest (CW)
-                                                          "JIDX-SSB",                           //  Japan International DX Contest (SSB)
-                                                          "LZ DX",                              //  LZ DX Contest
-                                                          "MI-QSO-PARTY",                       //  Michigan QSO Party
-                                                          "NAQP-CW",                            //  North America QSO Party (CW)
-                                                          "NAQP-RTTY",                          //  North America QSO Party (RTTY)
-                                                          "NAQP-SSB",                           //  North America QSO Party (Phone)
-                                                          "NA-SPRINT-CW",                       //  North America Sprint (CW)
-                                                          "NA-SPRINT-RTTY",                     //  North America Sprint (RTTY)
-                                                          "NA-SPRINT-SSB",                      //  North America Sprint (Phone)
-                                                          "NEQP",                               //  New England QSO Party
-                                                          "NRAU-BALTIC-CW",                     //  NRAU-Baltic Contest (CW)
-                                                          "NRAU-BALTIC-SSB",                    //  NRAU-Baltic Contest (SSB)
-                                                          "OCEANIA-DX-CW",                      //  Oceania DX Contest (CW)
-                                                          "OCEANIA-DX-SSB",                     //  Oceania DX Contest (SSB)
-                                                          "OH-QSO-PARTY",                       //  Ohio QSO Party
-                                                          "OK-DX-RTTY",                         //
-                                                          "OK-OM-DX",                           //  OK-OM DX Contest
-                                                          "ON-QSO-PARTY",                       //  Ontario QSO Party
-                                                          "PACC",                               //
-                                                          "QC-QSO-PARTY",                       //  Quebec QSO Party
-                                                          "RAC, CANADA DAY, CANADA WINTER",     //  Canada Day, RAC Winter contests
-                                                          "RDAC",                               //  Russian District Award Contest
-                                                          "RDXC",                               //  Russian DX Contest
-                                                          "REF-160M",                           //
-                                                          "REF-CW",                             //
-                                                          "REF-SSB",                            //
-                                                          "RSGB-160",                           //  1.8Mhz (sic) Contest
-                                                          "RSGB-21/28-CW",                      //  21/28 MHz Contest (CW)
-                                                          "RSGB-21/28-SSB",                     //  21/28 MHz Contest (SSB)
-                                                          "RSGB-80M-CC",                        //  80m Club Championships
-                                                          "RSGB-AFS-CW",                        //  Affiliated Societies Team Contest (CW)
-                                                          "RSGB-AFS-SSB",                       //  Affiliated Societies Team Contest (SSB)
-                                                          "RSGB-CLUB-CALLS",                    //  Club Calls
-                                                          "RSGB-COMMONWEALTH",                  //  Commonwealth Contest
-                                                          "RSGB-IOTA",                          //  IOTA Contest
-                                                          "RSGB-LOW-POWER",                     //  Low Power Field Day
-                                                          "RSGB-NFD",                           //  National Field Day
-                                                          "RSGB-ROPOCO",                        //  RoPoCo
-                                                          "RSGB-SSB-FD",                        //  SSB Field Day
-                                                          "RUSSIAN-RTTY",                       //
-                                                          "SAC-CW",                             //  Scandinavian Activity Contest (CW)
-                                                          "SAC-SSB",                            //  Scandinavian Activity Contest (SSB)
-                                                          "SARTG-RTTY",                         //  SARTG WW RTTY
-                                                          "SCC-RTTY",                           //  SCC RTTY Championship
-                                                          "SMP-AUG",                            //  SSA Portabeltest
-                                                          "SMP-MAY",                            //  SSA Portabeltest
-                                                          "SPDXContest",                        //  SP DX Contest
-                                                          "Spring Sprint",                      //  FISTS Spring Sprint
-                                                          "SR-MARATHON",                        //  Scottish-Russian Marathon
-                                                          "STEW-PERRY",                         //  Stew Perry Topband Distance Challenge
-                                                          "Summer Sprint",                      //  FISTS Summer Sprint
-                                                          "TARA-RTTY",                          //  TARA RTTY Mêlée
-                                                          "TMC-RTTY",                           //  The Makrothen Contest
-                                                          "UBA-DX-CW",                          //  UBA Contest (CW)
-                                                          "UBA-DX-SSB",                         //  UBA Contest (SSB)
-                                                          "UK-DX-RTTY",                         //  UK DX RTTY Contest
-                                                          "UKRAINIAN DX",                       //  Ukrainian DX
-                                                          "UKR-CHAMP-RTTY",                     //  Open Ukraine RTTY Championship
-                                                          "URE-DX",                             //
-                                                          "Virginia QSO Party",                 //  Virginia QSO Party
-                                                          "VOLTA-RTTY",                         //  Alessandro Volta RTTY DX Contest
-                                                          "WI-QSO-PARTY",                       //  Wisconsin QSO Party
-                                                          "Winter Sprint",                      //  FISTS Winter Sprint
-                                                          "YUDXC",                              //  YU DX Contest
-                                                      } };                                          ///< values for contests
+using CONTEST_ENUMERATION_TYPE = std::array<std::string, N_CONTESTS>;                           ///< type for contest enumeration
+
+static CONTEST_ENUMERATION_TYPE CONTEST_ENUMERATION = { "7QP"s,                                //  7th-Area QSO Party
+                                                          "ANARTS-RTTY"s,                        //  ANARTS WW RTTY
+                                                          "ANATOLIAN-RTTY"s,                     //  Anatolian WW RTTY
+                                                          "AP-SPRINT"s,                          //  Asia - Pacific Sprint
+                                                          "ARI-DX"s,                             //  ARI DX Contest
+                                                          "ARRL-10"s,                            //  ARRL 10 Meter Contest
+                                                          "ARRL-160"s,                           //  ARRL 160 Meter Contest
+                                                          "ARRL-DX-CW"s,                         //  ARRL International DX Contest (CW)
+                                                          "ARRL-DX-SSB"s,                        //  ARRL International DX Contest (Phone)
+                                                          "ARRL-FIELD-DAY"s,                     //  ARRL Field Day
+                                                          "ARRL-RTTY"s,                          //  ARRL RTTY Round-Up
+                                                          "ARRL-SS-CW"s,                         //  ARRL November Sweepstakes (CW)
+                                                          "ARRL-SS-SSB"s,                        //  ARRL November Sweepstakes (Phone)
+                                                          "ARRL-UHF-AUG"s,                       //  ARRL August UHF Contest
+                                                          "ARRL-VHF-JAN"s,                       //  ARRL January VHF Sweepstakes
+                                                          "ARRL-VHF-JUN"s,                       //  ARRL June VHF QSO Party
+                                                          "ARRL-VHF-SEP"s,                       //  ARRL September VHF QSO Party
+                                                          "BARTG-RTTY"s,                         //  BARTG Spring RTTY Contest
+                                                          "BARTG-SPRINT"s,                       //  BARTG Sprint Contest
+                                                          "CA-QSO-PARTY"s,                       //  California QSO Party
+                                                          "CQ-160-CW"s,                          //  CQ WW 160 Meter DX Contest (CW)
+                                                          "CQ-160-SSB"s,                         //  CQ WW 160 Meter DX Contest (SSB)
+                                                          "CQ-VHF"s,                             //  CQ World-Wide VHF Contest
+                                                          "CQ-WPX-CW"s,                          //  CQ WW WPX Contest (CW)
+                                                          "CQ-WPX-RTTY"s,                        //  CQ/RJ WW RTTY WPX Contest
+                                                          "CQ-WPX-SSB"s,                         //  CQ WW WPX Contest (SSB)
+                                                          "CQ-WW-CW"s,                           //  CQ WW DX Contest (CW)
+                                                          "CQ-WW-RTTY"s,                         //  CQ/RJ WW RTTY DX Contest
+                                                          "CQ-WW-SSB"s,                          //  CQ WW DX Contest (SSB)
+                                                          "CWOPS-CWT"s,                          //  CWops Mini-CWT Test
+                                                          "CIS-DX"s,                             //  CIS DX Contest
+                                                          "DARC-WAEDC-CW"s,                      //  WAE DX Contest (CW)
+                                                          "DARC-WAEDC-RTTY"s,                    //  WAE DX Contest (RTTY)
+                                                          "DARC-WAEDC-SSB"s,                     //  WAE DX Contest (SSB)
+                                                          "DL-DX-RTTY"s,                         //  DL-DX RTTY Contest
+                                                          "EA-RTTY"s,                            //  EA-WW-RTTY
+                                                          "EPC-PSK63"s,                          //  PSK63 QSO Party
+                                                          "EU Sprint"s,                          //  EU Sprint
+                                                          "EUCW160M"s,                           //
+                                                          "EU-HF"s,                              //  EU HF Championship
+                                                          "EU-PSK-DX"s,                          //  EU PSK DX Contest
+                                                          "Fall Sprint"s,                        //  FISTS Fall Sprint
+                                                          "FL-QSO-PARTY"s,                       //  Florida QSO Party
+                                                          "GA-QSO-PARTY"s,                       //  Georgia QSO Party
+                                                          "HELVETIA"s,                           //  Helvetia Contest
+                                                          "IARU-HF"s,                            //  IARU HF World Championship
+                                                          "IL QSO Party"s,                       //  Illinois QSO Party
+                                                          "JARTS-WW-RTTY"s,                      //  JARTS WW RTTY
+                                                          "JIDX-CW"s,                            //  Japan International DX Contest (CW)
+                                                          "JIDX-SSB"s,                           //  Japan International DX Contest (SSB)
+                                                          "LZ DX"s,                              //  LZ DX Contest
+                                                          "MI-QSO-PARTY"s,                       //  Michigan QSO Party
+                                                          "NAQP-CW"s,                            //  North America QSO Party (CW)
+                                                          "NAQP-RTTY"s,                          //  North America QSO Party (RTTY)
+                                                          "NAQP-SSB"s,                           //  North America QSO Party (Phone)
+                                                          "NA-SPRINT-CW"s,                       //  North America Sprint (CW)
+                                                          "NA-SPRINT-RTTY"s,                     //  North America Sprint (RTTY)
+                                                          "NA-SPRINT-SSB"s,                      //  North America Sprint (Phone)
+                                                          "NEQP"s,                               //  New England QSO Party
+                                                          "NRAU-BALTIC-CW"s,                     //  NRAU-Baltic Contest (CW)
+                                                          "NRAU-BALTIC-SSB"s,                    //  NRAU-Baltic Contest (SSB)
+                                                          "OCEANIA-DX-CW"s,                      //  Oceania DX Contest (CW)
+                                                          "OCEANIA-DX-SSB"s,                     //  Oceania DX Contest (SSB)
+                                                          "OH-QSO-PARTY"s,                       //  Ohio QSO Party
+                                                          "OK-DX-RTTY"s,                         //
+                                                          "OK-OM-DX"s,                           //  OK-OM DX Contest
+                                                          "ON-QSO-PARTY"s,                       //  Ontario QSO Party
+                                                          "PACC"s,                               //
+                                                          "QC-QSO-PARTY"s,                       //  Quebec QSO Party
+                                                          "RAC, CANADA DAY, CANADA WINTER"s,     //  Canada Day, RAC Winter contests
+                                                          "RDAC"s,                               //  Russian District Award Contest
+                                                          "RDXC"s,                               //  Russian DX Contest
+                                                          "REF-160M"s,                           //
+                                                          "REF-CW"s,                             //
+                                                          "REF-SSB"s,                            //
+                                                          "RSGB-160"s,                           //  1.8Mhz (sic) Contest
+                                                          "RSGB-21/28-CW"s,                      //  21/28 MHz Contest (CW)
+                                                          "RSGB-21/28-SSB"s,                     //  21/28 MHz Contest (SSB)
+                                                          "RSGB-80M-CC"s,                        //  80m Club Championships
+                                                          "RSGB-AFS-CW"s,                        //  Affiliated Societies Team Contest (CW)
+                                                          "RSGB-AFS-SSB"s,                       //  Affiliated Societies Team Contest (SSB)
+                                                          "RSGB-CLUB-CALLS"s,                    //  Club Calls
+                                                          "RSGB-COMMONWEALTH"s,                  //  Commonwealth Contest
+                                                          "RSGB-IOTA"s,                          //  IOTA Contest
+                                                          "RSGB-LOW-POWER"s,                     //  Low Power Field Day
+                                                          "RSGB-NFD"s,                           //  National Field Day
+                                                          "RSGB-ROPOCO"s,                        //  RoPoCo
+                                                          "RSGB-SSB-FD"s,                        //  SSB Field Day
+                                                          "RUSSIAN-RTTY"s,                       //
+                                                          "SAC-CW"s,                             //  Scandinavian Activity Contest (CW)
+                                                          "SAC-SSB"s,                            //  Scandinavian Activity Contest (SSB)
+                                                          "SARTG-RTTY"s,                         //  SARTG WW RTTY
+                                                          "SCC-RTTY"s,                           //  SCC RTTY Championship
+                                                          "SMP-AUG"s,                            //  SSA Portabeltest
+                                                          "SMP-MAY"s,                            //  SSA Portabeltest
+                                                          "SPDXContest"s,                        //  SP DX Contest
+                                                          "Spring Sprint"s,                      //  FISTS Spring Sprint
+                                                          "SR-MARATHON"s,                        //  Scottish-Russian Marathon
+                                                          "STEW-PERRY"s,                         //  Stew Perry Topband Distance Challenge
+                                                          "Summer Sprint"s,                      //  FISTS Summer Sprint
+                                                          "TARA-RTTY"s,                          //  TARA RTTY Mêlée
+                                                          "TMC-RTTY"s,                           //  The Makrothen Contest
+                                                          "UBA-DX-CW"s,                          //  UBA Contest (CW)
+                                                          "UBA-DX-SSB"s,                         //  UBA Contest (SSB)
+                                                          "UK-DX-RTTY"s,                         //  UK DX RTTY Contest
+                                                          "UKRAINIAN DX"s,                       //  Ukrainian DX
+                                                          "UKR-CHAMP-RTTY"s,                     //  Open Ukraine RTTY Championship
+                                                          "URE-DX"s,                             //
+                                                          "Virginia QSO Party"s,                 //  Virginia QSO Party
+                                                          "VOLTA-RTTY"s,                         //  Alessandro Volta RTTY DX Contest
+                                                          "WI-QSO-PARTY"s,                       //  Wisconsin QSO Party
+                                                          "Winter Sprint"s,                      //  FISTS Winter Sprint
+                                                          "YUDXC"s,                              //  YU DX Contest
+                                                      };                                          ///< values for contests
 
 // propagation mode  -------------------------------------------------------
 
@@ -767,26 +768,28 @@ enum PROPAGATION_MODE_ENUM { PROP_MODE_AUR,         //      Aurora
                              N_PROP_MODES
 };
 
-typedef std::array<std::string, N_PROP_MODES> PROPAGATION_MODE_ENUMERATION_TYPE;    ///< type for propagation mode enumeration
+//typedef std::array<std::string, N_PROP_MODES> PROPAGATION_MODE_ENUMERATION_TYPE;    ///< type for propagation mode enumeration
 
-static PROPAGATION_MODE_ENUMERATION_TYPE PROPAGATION_MODE_ENUMERATION = { { "AUR",          //  Aurora
-                                                                            "AUE",          //  Aurora-E
-                                                                            "BS",           //  Back scatter
-                                                                            "ECH",          //  EchoLink
-                                                                            "EME",          //  Earth-Moon-Earth
-                                                                            "ES",           //  Sporadic E
-                                                                            "FAI",          //  Field Aligned Irregularities
-                                                                            "F2",           //  F2 Reflection
-                                                                            "INTERNET",     //  Internet-assisted
-                                                                            "ION",          //  Ionoscatter
-                                                                            "IRL",          //  IRLP
-                                                                            "MS",           //  Meteor scatter
-                                                                            "RPT",          //  Terrestrial or atmospheric repeater or transponder
-                                                                            "RS",           //  Rain scatter
-                                                                            "SAT",          //  Satellite
-                                                                            "TEP",          //  Trans-equatorial
-                                                                            "TR"            //  Tropospheric ducting
-                                                                        } };                    ///< values for propagatiom mode
+using PROPAGATION_MODE_ENUMERATION_TYPE = std::array<std::string, N_PROP_MODES>;    ///< type for propagation mode enumeration
+
+static PROPAGATION_MODE_ENUMERATION_TYPE PROPAGATION_MODE_ENUMERATION = { "AUR"s,          //  Aurora
+                                                                            "AUE"s,          //  Aurora-E
+                                                                            "BS"s,           //  Back scatter
+                                                                            "ECH"s,          //  EchoLink
+                                                                            "EME"s,          //  Earth-Moon-Earth
+                                                                            "ES"s,           //  Sporadic E
+                                                                            "FAI"s,          //  Field Aligned Irregularities
+                                                                            "F2"s,           //  F2 Reflection
+                                                                            "INTERNET"s,     //  Internet-assisted
+                                                                            "ION"s,          //  Ionoscatter
+                                                                            "IRL"s,          //  IRLP
+                                                                            "MS"s,           //  Meteor scatter
+                                                                            "RPT"s,          //  Terrestrial or atmospheric repeater or transponder
+                                                                            "RS"s,           //  Rain scatter
+                                                                            "SAT"s,          //  Satellite
+                                                                            "TEP"s,          //  Trans-equatorial
+                                                                            "TR"s            //  Tropospheric ducting
+                                                                        };                    ///< values for propagatiom mode
 
 // primary administrative subdivisions  -------------------------------------------------------
 
@@ -807,21 +810,23 @@ enum PRIMARY_ENUM_CANADA { CANADA_NS,                   // Nova Scotia
                            N_CANADA_PRIMARIES
                          };                             ///< enum for Canada
 
-typedef std::array<std::string, N_CANADA_PRIMARIES> PRIMARY_CANADA_ENUMERATION_TYPE; ///< type for Canada enumeration
+//typedef std::array<std::string, N_CANADA_PRIMARIES> PRIMARY_CANADA_ENUMERATION_TYPE; ///< type for Canada enumeration
 
-static PRIMARY_CANADA_ENUMERATION_TYPE PRIMARY_CANADA_ENUMERATION = { { "NS",
-                                                                        "QC",
-                                                                        "ON",
-                                                                        "MB",
-                                                                        "AB",
-                                                                        "BC",
-                                                                        "NT",
-                                                                        "NB",
-                                                                        "NL",
-                                                                        "YT",
-                                                                        "PE",
-                                                                        "NU"
-                                                                    } };            ///< values for Canada
+using PRIMARY_CANADA_ENUMERATION_TYPE = std::array<std::string, N_CANADA_PRIMARIES>; ///< type for Canada enumeration
+
+static PRIMARY_CANADA_ENUMERATION_TYPE PRIMARY_CANADA_ENUMERATION = { "NS"s,
+                                                                        "QC"s,
+                                                                        "ON"s,
+                                                                        "MB"s,
+                                                                        "AB"s,
+                                                                        "BC"s,
+                                                                        "NT"s,
+                                                                        "NB"s,
+                                                                        "NL"s,
+                                                                        "YT"s,
+                                                                        "PE"s,
+                                                                        "NU"s
+                                                                    };            ///< values for Canada
 
 /// Aland Is.
 enum PRIMARY_ENUM_ALAND { ALAND_001,    //     Brändö
@@ -1333,9 +1338,11 @@ enum PRIMARY_ENUM_HAWAII { HAWAII_HI,
                            N_HAWAII_PRIMARIES
                          };
 
-typedef std::array<std::string, N_HAWAII_PRIMARIES> PRIMARY_HAWAII_ENUMERATION_TYPE;    ///< primaries for Hawaii
+//typedef std::array<std::string, N_HAWAII_PRIMARIES> PRIMARY_HAWAII_ENUMERATION_TYPE;    ///< primaries for Hawaii
 
-static PRIMARY_HAWAII_ENUMERATION_TYPE PRIMARY_HAWAII_ENUMERATION = { { "HI"
+using PRIMARY_HAWAII_ENUMERATION_TYPE = std::array<std::string, N_HAWAII_PRIMARIES>;    ///< primaries for Hawaii
+
+static PRIMARY_HAWAII_ENUMERATION_TYPE PRIMARY_HAWAII_ENUMERATION = { { "HI"s
                                                                     } };
 
 /// Chile
@@ -1355,32 +1362,36 @@ enum PRIMARY_ENUM_CHILE { CHILE_II,  // Antofagasta
                           N_CHILE_PRIMARIES
                         };
 
-typedef std::array<std::string, N_CHILE_PRIMARIES> PRIMARY_CHILE_ENUMERATION_TYPE;    ///< primaries for Chile
+//typedef std::array<std::string, N_CHILE_PRIMARIES> PRIMARY_CHILE_ENUMERATION_TYPE;    ///< primaries for Chile
 
-static PRIMARY_CHILE_ENUMERATION_TYPE PRIMARY_CHILE_ENUMERATION = { { "II",   // Antofagasta
-                                                                      "III",  // Atacama
-                                                                      "I",    // Tarapacá
-                                                                      "IV",   // Coquimbo
-                                                                      "V",    // Valparaíso
-                                                                      "RM",   // Region Metropolitana de Santiago
-                                                                      "VI",   // Libertador General Bernardo O'Higgins
-                                                                      "VII",  // Maule
-                                                                      "VIII", // Bío-Bío
-                                                                      "IX",   // La Araucanía
-                                                                      "X",    // Los Lagos
-                                                                      "XI",   // Aisén del General Carlos Ibáñez del Campo
-                                                                      "XII"   // Magallanes
-                                                                  } };
+using PRIMARY_CHILE_ENUMERATION_TYPE = std::array<std::string, N_CHILE_PRIMARIES>;    ///< primaries for Chile
+
+static PRIMARY_CHILE_ENUMERATION_TYPE PRIMARY_CHILE_ENUMERATION = { "II"s,   // Antofagasta
+                                                                      "III"s,  // Atacama
+                                                                      "I"s,    // Tarapacá
+                                                                      "IV"s,   // Coquimbo
+                                                                      "V"s,    // Valparaíso
+                                                                      "RM"s,   // Region Metropolitana de Santiago
+                                                                      "VI"s,   // Libertador General Bernardo O'Higgins
+                                                                      "VIIs",  // Maule
+                                                                      "VIII"s, // Bío-Bío
+                                                                      "IX"s,   // La Araucanía
+                                                                      "X"s,    // Los Lagos
+                                                                      "XI"s,   // Aisén del General Carlos Ibáñez del Campo
+                                                                      "XIIs"   // Magallanes
+                                                                  };
 
 /// Kaliningrad
 enum PRIMARY_ENUM_KALININGRAD { KALININGRAD_KA, // obl. 125 Kalingrad (Kaliningradskaya oblast)
                                 N_KALININGRAD_PRIMARIES
                               };
 
-typedef std::array<std::string, N_KALININGRAD_PRIMARIES> PRIMARY_KALININGRAD_ENUMERATION_TYPE;    ///< primaries for Kaliningrad
+//typedef std::array<std::string, N_KALININGRAD_PRIMARIES> PRIMARY_KALININGRAD_ENUMERATION_TYPE;    ///< primaries for Kaliningrad
 
-static PRIMARY_KALININGRAD_ENUMERATION_TYPE PRIMARY_KALININGRAD_ENUMERATION = { { "KA"
-                                                                              } };
+using PRIMARY_KALININGRAD_ENUMERATION_TYPE = std::array<std::string, N_KALININGRAD_PRIMARIES>;    ///< primaries for Kaliningrad
+
+static PRIMARY_KALININGRAD_ENUMERATION_TYPE PRIMARY_KALININGRAD_ENUMERATION = { "KA"s
+                                                                              };
 
 /// Paraguay
 enum PRIMARY_ENUM_PARAGUAY { PARAGUAY_16,   // Alto Paraguay
@@ -1404,27 +1415,29 @@ enum PRIMARY_ENUM_PARAGUAY { PARAGUAY_16,   // Alto Paraguay
                              N_PARAGUAY_PRIMARIES
                            };
 
-typedef std::array<std::string, N_PARAGUAY_PRIMARIES> PRIMARY_PARAGUAY_ENUMERATION_TYPE;    ///< primaries for Paraguay
+//typedef std::array<std::string, N_PARAGUAY_PRIMARIES> PRIMARY_PARAGUAY_ENUMERATION_TYPE;    ///< primaries for Paraguay
 
-static PRIMARY_PARAGUAY_ENUMERATION_TYPE PRIMARY_PARAGUAY_ENUMERATION = { { "16",   // Alto Paraguay
-                                                                            "19",   // Boquerón
-                                                                            "15",   // Presidente Hayes
-                                                                            "13",   // Amambay
-                                                                            "01",   // Concepción
-                                                                            "14",   // Canindeyú
-                                                                            "02",   // San Pedro
-                                                                            "ASU",  // Asunción
-                                                                            "11",   // Central
-                                                                            "03",   // Cordillera
-                                                                            "09",   // Paraguarí
-                                                                            "06",   // Caazapl
-                                                                            "05",   // Caeguazú
-                                                                            "04",   // Guairá
-                                                                            "08",   // Miaiones
-                                                                            "12",   // Ñeembucu
-                                                                            "10",   // Alto Paraná
-                                                                            "07"    // Itapua
-                                                                        } };
+using PRIMARY_PARAGUAY_ENUMERATION_TYPE = std::array<std::string, N_PARAGUAY_PRIMARIES>;    ///< primaries for Paraguay
+
+static PRIMARY_PARAGUAY_ENUMERATION_TYPE PRIMARY_PARAGUAY_ENUMERATION = { "16"s,   // Alto Paraguay
+                                                                            "19"s,   // Boquerón
+                                                                            "15"s,   // Presidente Hayes
+                                                                            "13"s,   // Amambay
+                                                                            "01"s,   // Concepción
+                                                                            "14"s,   // Canindeyú
+                                                                            "02"s,   // San Pedro
+                                                                            "ASU"s,  // Asunción
+                                                                            "11"s,   // Central
+                                                                            "03"s,   // Cordillera
+                                                                            "09"s,   // Paraguarí
+                                                                            "06"s,   // Caazapl
+                                                                            "05"s,   // Caeguazú
+                                                                            "04"s,   // Guairá
+                                                                            "08"s,   // Miaiones
+                                                                            "12"s,   // Ñeembucu
+                                                                            "10"s,   // Alto Paraná
+                                                                            "07"s    // Itapua
+                                                                        };
 
 /// ROK
 enum PRIMARY_ENUM_SOUTH_KOREA { SOUTH_KOREA_A,  // Seoul (Seoul Teugbyeolsi)
@@ -1446,35 +1459,39 @@ enum PRIMARY_ENUM_SOUTH_KOREA { SOUTH_KOREA_A,  // Seoul (Seoul Teugbyeolsi)
                                 N_SOUTH_KOREA_PRIMARIES
                               };
 
-typedef std::array<std::string, N_SOUTH_KOREA_PRIMARIES> PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE;    ///< primaries for South Korea
+//typedef std::array<std::string, N_SOUTH_KOREA_PRIMARIES> PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE;    ///< primaries for South Korea
 
-static PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE PRIMARY_SOUTH_KOREA_ENUMERATION = { { "A",  // Seoul (Seoul Teugbyeolsi)
-                                                                                  "N",  // Inchon (Incheon Gwang'yeogsi)
-                                                                                  "D",  // Kangwon-do (Gang 'weondo)
-                                                                                  "C",  // Kyunggi-do (Gyeonggido)
-                                                                                  "E",  // Choongchungbuk-do (Chungcheongbugdo)
-                                                                                  "F",  // Choongchungnam-do (Chungcheongnamdo)
-                                                                                  "R",  // Taejon (Daejeon Gwang'yeogsi)
-                                                                                  "M",  // Cheju-do (Jejudo)
-                                                                                  "G",  // Chollabuk-do (Jeonrabugdo)
-                                                                                  "H",  // Chollanam-do (Jeonranamdo)
-                                                                                  "Q",  // Kwangju (Gwangju Gwang'yeogsi)
-                                                                                  "K",  // Kyungsangbuk-do (Gyeongsangbugdo)
-                                                                                  "L",  // Kyungsangnam-do (Gyeongsangnamdo)
-                                                                                  "B",  // Pusan (Busan Gwang'yeogsi)
-                                                                                  "P",  // Taegu (Daegu Gwang'yeogsi)
-                                                                                  "S"   // Ulsan (Ulsan Gwanq'yeogsi)
-                                                                              } };
+using PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE = std::array<std::string, N_SOUTH_KOREA_PRIMARIES>;    ///< primaries for South Korea
+
+static PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE PRIMARY_SOUTH_KOREA_ENUMERATION = { "A"s,  // Seoul (Seoul Teugbyeolsi)
+                                                                                  "N"s,  // Inchon (Incheon Gwang'yeogsi)
+                                                                                  "D"s,  // Kangwon-do (Gang 'weondo)
+                                                                                  "C"s,  // Kyunggi-do (Gyeonggido)
+                                                                                  "E"s,  // Choongchungbuk-do (Chungcheongbugdo)
+                                                                                  "F"s,  // Choongchungnam-do (Chungcheongnamdo)
+                                                                                  "R"s,  // Taejon (Daejeon Gwang'yeogsi)
+                                                                                  "M"s,  // Cheju-do (Jejudo)
+                                                                                  "G"s,  // Chollabuk-do (Jeonrabugdo)
+                                                                                  "H"s,  // Chollanam-do (Jeonranamdo)
+                                                                                  "Q"s,  // Kwangju (Gwangju Gwang'yeogsi)
+                                                                                  "K"s,  // Kyungsangbuk-do (Gyeongsangbugdo)
+                                                                                  "L"s,  // Kyungsangnam-do (Gyeongsangnamdo)
+                                                                                  "B"s,  // Pusan (Busan Gwang'yeogsi)
+                                                                                  "P"s,  // Taegu (Daegu Gwang'yeogsi)
+                                                                                  "S"s   // Ulsan (Ulsan Gwanq'yeogsi)
+                                                                              };
 
 /// Kure
 enum PRIMARY_ENUM_KURE { KURE_KI,
                          N_KURE_PRIMARIES
                        };
 
-typedef std::array<std::string, N_KURE_PRIMARIES> PRIMARY_KURE_ENUMERATION_TYPE;    ///< primaries for Kure
+//typedef std::array<std::string, N_KURE_PRIMARIES> PRIMARY_KURE_ENUMERATION_TYPE;    ///< primaries for Kure
 
-static PRIMARY_KURE_ENUMERATION_TYPE PRIMARY_KURE_ENUMERATION = { { "KI"
-                                                                } };
+using PRIMARY_KURE_ENUMERATION_TYPE = std::array<std::string, N_KURE_PRIMARIES>;    ///< primaries for Kure
+
+static PRIMARY_KURE_ENUMERATION_TYPE PRIMARY_KURE_ENUMERATION = { "KI"s
+                                                                };
 
 /// Uruguay
 enum PRIMARY_ENUM_URUGUAY { URUGUAY_MO, // Montevideo
@@ -1499,39 +1516,42 @@ enum PRIMARY_ENUM_URUGUAY { URUGUAY_MO, // Montevideo
                             N_URUGUAY_PRIMARIES
                           };
 
-typedef std::array<std::string, N_URUGUAY_PRIMARIES> PRIMARY_URUGUAY_ENUMERATION_TYPE;    ///< primaries for Uruguay
+//typedef std::array<std::string, N_URUGUAY_PRIMARIES> PRIMARY_URUGUAY_ENUMERATION_TYPE;    ///< primaries for Uruguay
 
-static PRIMARY_URUGUAY_ENUMERATION_TYPE PRIMARY_URUGUAY_ENUMERATION = { { "MO", // Montevideo
-                                                                          "CA", // Canelones
-                                                                          "SJ", // San José
-                                                                          "CO", // Colonia
-                                                                          "SO", // Soriano
-                                                                          "RN", // Rio Negro
-                                                                          "PA", // Paysandu
-                                                                          "SA", // Salto
-                                                                          "AR", // Artigsa
-                                                                          "FD", // Florida
-                                                                          "FS", // Flores
-                                                                          "DU", // Durazno
-                                                                          "TA", // Tacuarembo
-                                                                          "RV", // Rivera
-                                                                          "MA", // Maldonado
-                                                                          "LA", // Lavalleja
-                                                                          "RO", // Rocha
-                                                                          "TT", // Treinta y Tres
-                                                                          "CL" // Cerro Largo
-                                                                      } };
+using PRIMARY_URUGUAY_ENUMERATION_TYPE = std::array<std::string, N_URUGUAY_PRIMARIES>;    ///< primaries for Uruguay
+
+static PRIMARY_URUGUAY_ENUMERATION_TYPE PRIMARY_URUGUAY_ENUMERATION = { "MO"s, // Montevideo
+                                                                          "CA"s, // Canelones
+                                                                          "SJ"s, // San José
+                                                                          "CO"s, // Colonia
+                                                                          "SO"s, // Soriano
+                                                                          "RN"s, // Rio Negro
+                                                                          "PA"s, // Paysandu
+                                                                          "SA"s, // Salto
+                                                                          "AR"s, // Artigsa
+                                                                          "FD"s, // Florida
+                                                                          "FS"s, // Flores
+                                                                          "DU"s, // Durazno
+                                                                          "TA"s, // Tacuarembo
+                                                                          "RV"s, // Rivera
+                                                                          "MA"s, // Maldonado
+                                                                          "LA"s, // Lavalleja
+                                                                          "RO"s, // Rocha
+                                                                          "TT"s, // Treinta y Tres
+                                                                          "CL"s // Cerro Largo
+                                                                      };
 
 /// Lord Howe Is.
 enum PRIMARY_ENUM_LORD_HOWE { LORD_HOWE_LH,
                               N_LORD_HOWE_PRIMARIES
                             };
 
-typedef std::array<std::string, N_LORD_HOWE_PRIMARIES> PRIMARY_LORD_HOWE_ENUMERATION_TYPE;    ///< primaries for Lord Howe Is.
+//typedef std::array<std::string, N_LORD_HOWE_PRIMARIES> PRIMARY_LORD_HOWE_ENUMERATION_TYPE;    ///< primaries for Lord Howe Is.
 
-static PRIMARY_LORD_HOWE_ENUMERATION_TYPE PRIMARY_LORD_HOWE_ENUMERATION = { { "LH"
-                                                                          } };
+using PRIMARY_LORD_HOWE_ENUMERATION_TYPE = std::array<std::string, N_LORD_HOWE_PRIMARIES>;    ///< primaries for Lord Howe Is.
 
+static PRIMARY_LORD_HOWE_ENUMERATION_TYPE PRIMARY_LORD_HOWE_ENUMERATION = { "LH"s
+                                                                          };
 /// Venezuela
 enum PRIMARY_ENUM_VENEZUELA { VENEZUELA_AM,     // Amazonas
                               VENEZUELA_AN,     // Anzoátegui
@@ -1560,33 +1580,35 @@ enum PRIMARY_ENUM_VENEZUELA { VENEZUELA_AM,     // Amazonas
                               N_VENEZUELA_PRIMARIES
                             };
 
-typedef std::array<std::string, N_VENEZUELA_PRIMARIES> PRIMARY_VENEZUELA_ENUMERATION_TYPE;    ///< primaries for Venezuela
+//typedef std::array<std::string, N_VENEZUELA_PRIMARIES> PRIMARY_VENEZUELA_ENUMERATION_TYPE;    ///< primaries for Venezuela
 
-static PRIMARY_VENEZUELA_ENUMERATION_TYPE PRIMARY_VENEZUELA_ENUMERATION = { { "AM",     // Amazonas
-                                                                              "AN",     // Anzoátegui
-                                                                              "AP",     // Apure
-                                                                              "AR",     // Aragua
-                                                                              "BA",     // Barinas
-                                                                              "BO",     // Bolívar
-                                                                              "CA",     // Carabobo
-                                                                              "CO",     // Cojedes
-                                                                              "DA",     // Delta Amacuro
-                                                                              "DC",     // Distrito Capital
-                                                                              "FA",     // Falcón
-                                                                              "GU",     // Guárico
-                                                                              "LA",     // Lara
-                                                                              "ME",     // Mérida
-                                                                              "MI",     // Miranda
-                                                                              "MO",     // Monagas
-                                                                              "NE",     // Nueva Esparta
-                                                                              "PO",     // Portuguesa
-                                                                              "SU",     // Sucre
-                                                                              "TA",     // Táchira
-                                                                              "TR",     // Trujillo
-                                                                              "VA",     // Vargas
-                                                                              "YA",     // Yaracuy
-                                                                              "ZU"      // Zulia
-                                                                          } };
+using PRIMARY_VENEZUELA_ENUMERATION_TYPE = std::array<std::string, N_VENEZUELA_PRIMARIES>;    ///< primaries for Venezuela
+
+static PRIMARY_VENEZUELA_ENUMERATION_TYPE PRIMARY_VENEZUELA_ENUMERATION = { "AM"s,     // Amazonas
+                                                                              "AN"s,     // Anzoátegui
+                                                                              "AP"s,     // Apure
+                                                                              "AR"s,     // Aragua
+                                                                              "BA"s,     // Barinas
+                                                                              "BO"s,     // Bolívar
+                                                                              "CA"s,     // Carabobo
+                                                                              "CO"s,     // Cojedes
+                                                                              "DA"s,     // Delta Amacuro
+                                                                              "DC"s,     // Distrito Capital
+                                                                              "FA"s,     // Falcón
+                                                                              "GU"s,     // Guárico
+                                                                              "LA"s,     // Lara
+                                                                              "ME"s,     // Mérida
+                                                                              "MI"s,     // Miranda
+                                                                              "MO"s,     // Monagas
+                                                                              "NE"s,     // Nueva Esparta
+                                                                              "PO"s,     // Portuguesa
+                                                                              "SU"s,     // Sucre
+                                                                              "TA"s,     // Táchira
+                                                                              "TR"s,     // Trujillo
+                                                                              "VA"s,     // Vargas
+                                                                              "YA"s,     // Yaracuy
+                                                                              "ZU"s      // Zulia
+                                                                          };
 
 /// Azores
 enum PRIMARY_ENUM_AZORES { AZORES_AC,
@@ -4852,7 +4874,14 @@ protected:
     \param  pfx         canonical prefix
     \param  deleted     whether country has been deleted
 */
-  void _add_country(const std::string& nm, const unsigned int index, const std::string& pfx = "", const bool deleted = false);
+  void _add_country(const std::string& nm, const unsigned int index, const std::string& pfx = ""s, const bool deleted = false);
+
+/*! \brief              Add a deleted country at a particular index number
+    \param  nm          country name
+    \param  index       index at which the country is to be added
+*/
+  inline void _add_deleted_country(const std::string& nm, const unsigned int index)
+    { _add_country(nm, index, std::string(), true); }
 
 public:
 
