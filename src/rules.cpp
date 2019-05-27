@@ -1430,7 +1430,7 @@ const string wpx_prefix(const string& call)
     callsign = substring(callsign, 0, callsign.length() - 4);
 
 // remove portable designators
-  if (penultimate_char(callsign) == '/')
+  if ((callsign.length() >= 2) and (penultimate_char(callsign) == '/'))
   { static const string portables { "AEJMP"s };
 
     if (portables.find(last_char(callsign)) != string::npos)
