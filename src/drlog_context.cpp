@@ -633,148 +633,149 @@ void drlog_context::_process_configuration_file(const string& filename)
       _my_grid = rhs;
 
 // MY IP
-    if (LHS == "MY IP")
+    if (LHS == "MY IP"s)
       _my_ip = rhs;
 
 // MY LATITUDE
-    if (LHS == "MY LATITUDE")
+    if (LHS == "MY LATITUDE"s)
       _my_latitude = from_string<float>(rhs);
 
 // MY LATITUDE
-    if (LHS == "MY LONGITUDE")
+    if (LHS == "MY LONGITUDE"s)
       _my_longitude = from_string<float>(rhs);
 
 // MY ITU ZONE
-    if (LHS == "MY ITU ZONE")
+    if (LHS == "MY ITU ZONE"s)
       _my_itu_zone = from_string<int>(RHS);
 
 // N MEMORIES
-    if (LHS == "N MEMORIES")
+    if (LHS == "N MEMORIES"s)
       _n_memories = min(from_string<unsigned int>(rhs), 10u);  // maximum number of memories is 10
 
 // NEARBY EXTRACT
-    if (LHS == "NEARBY EXTRACT")
+    if (LHS == "NEARBY EXTRACT"s)
       _nearby_extract = is_true;
 
 // NO DEFAULT RST
-    if (LHS == "NO DEFAULT RST")
+    if (LHS == "NO DEFAULT RST"s)
       _no_default_rst = is_true;
 
 // NORMALISE RATE(S)
-    if ( (LHS == "NORMALISE RATE") or (LHS == "NORMALIZE RATE") or (LHS == "NORMALISE RATES") or (LHS == "NORMALIZE RATES") )
+    if ( (LHS == "NORMALISE RATE"s) or (LHS == "NORMALIZE RATE"s) or (LHS == "NORMALISE RATES"s) or (LHS == "NORMALIZE RATES"s) )
       _normalise_rate = is_true;
 
 // NOT COUNTRY MULTS
-    if (LHS == "NOT COUNTRY MULTS")
+    if (LHS == "NOT COUNTRY MULTS"s)
     { if (!rhs.empty())
         _not_country_mults = rhs;
     }
 
 // OLD ADIF LOG NAME
-    if (LHS == "OLD ADIF LOG NAME")
+    if (LHS == "OLD ADIF LOG NAME"s)
       _old_adif_log_name = rhs;
 
 // PATH
-    if (LHS == "PATH")
+    if (LHS == "PATH"s)
     { if (!rhs.empty())
-        _path = remove_peripheral_spaces(split_string(rhs, ";"));
+        _path = remove_peripheral_spaces(split_string(rhs, ";"s));
     }
 
 // POINTS
 // don't use LHS here because the command might be something like "POINTS[80] ="
-    if (starts_with(testline, "POINTS") and !starts_with(testline, "POINTS CW") and !starts_with(testline, "POINTS SSB"))  // there may be an "=" in the points definitions
+    if (starts_with(testline, "POINTS"s) and !starts_with(testline, "POINTS CW"s) and !starts_with(testline, "POINTS SSB"s))  // there may be an "=" in the points definitions
     { _set_points(testline, MODE_CW);
       _set_points(testline, MODE_SSB);
     }
 
 // POINTS CW
-    if (starts_with(testline, "POINTS CW"))
+    if (starts_with(testline, "POINTS CW"s))
       _set_points(testline, MODE_CW);
 
 // POINTS SSB
-    if (starts_with(testline, "POINTS SSB"))
+    if (starts_with(testline, "POINTS SSB"s))
       _set_points(testline, MODE_SSB);
 
 // PTT DELAY (0 => no PTT)
-    if (LHS == "PTT DELAY")
+    if (LHS == "PTT DELAY"s)
       _ptt_delay = from_string<unsigned int>(RHS);
 
 // POST MONITOR
-    if (LHS == "POST MONITOR")
-    { const vector<string> calls = remove_peripheral_spaces(split_string(RHS, ','));
+    if (LHS == "POST MONITOR"s)
+    { const vector<string> calls { remove_peripheral_spaces(split_string(RHS, ',')) };
 
       FOR_ALL(calls, [&] (const string& callsign) { _post_monitor_calls.insert(callsign); } );
     }
 
 // P3
-    if (LHS == "P3")
+    if (LHS == "P3"s)
       _p3 = is_true;
 
 // P3 IGNORE CHECKSUM ERROR
-    if (LHS == "P3 IGNORE CHECKSUM ERROR")
+    if (LHS == "P3 IGNORE CHECKSUM ERROR"s)
       _p3_ignore_checksum_error = is_true;
 
 // P3 SNAPSHOT FILE
-    if (LHS == "P3 SNAPSHOT FILE")
+    if (LHS == "P3 SNAPSHOT FILE"s)
       _p3_snapshot_file = rhs;
 
 // P3 SPAN CQ
-    if (LHS == "P3 SPAN CQ")
+    if (LHS == "P3 SPAN CQ"s)
       _p3_span_cq = from_string<unsigned int>(RHS);
 
 // P3 SPAN SAP
-    if (LHS == "P3 SPAN SAP")
+    if (LHS == "P3 SPAN SAP"s)
       _p3_span_sap = from_string<unsigned int>(RHS);
 
 // QSL MESSAGE
-    if (LHS == "QSL MESSAGE")
+    if (LHS == "QSL MESSAGE"s)
       _qsl_message = RHS;
 
 // QSO MULTIPLE BANDS
-    if (LHS == "QSO MULTIPLE BANDS")
+    if (LHS == "QSO MULTIPLE BANDS"s)
       _qso_multiple_bands = is_true;
 
 // QSO MULTIPLE MODES
-    if (LHS == "QSO MULTIPLE MODES")
+    if (LHS == "QSO MULTIPLE MODES"s)
       _qso_multiple_modes = is_true;
 
 // QSY ON STARTUP
-    if (LHS == "QSY ON STARTUP")
+    if (LHS == "QSY ON STARTUP"s)
       _qsy_on_startup = is_true;
 
 // QTCS
-    if (LHS == "QTCS")
+    if (LHS == "QTCS"s)
       _qtcs = is_true;
 
 // QTC DOUBLE SPACE
-    if (LHS == "QTC DOUBLE SPACE")
+    if (LHS == "QTC DOUBLE SPACE"s)
       _qtc_double_space = is_true;
 
 // QTC FILENAME
-    if (LHS == "QTC FILENAME")
+    if (LHS == "QTC FILENAME"s)
       _qtc_filename = rhs;
 
 // QTC QRS
-    if (LHS == "QTC QRS")
+    if (LHS == "QTC QRS"s)
       _qtc_qrs = from_string<unsigned int>(rhs);
 
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
-    if (starts_with(testline, "QTHX["))
-    { const vector<string> fields = remove_peripheral_spaces(split_string(testline, "="));
+    if (starts_with(testline, "QTHX["s))
+    { const vector<string> fields { remove_peripheral_spaces(split_string(testline, "="s)) };
 
       if (fields.size() == 2)
-      { const string canonical_prefix = delimited_substring(fields[0], '[', ']');
-        const vector<string> values = remove_peripheral_spaces(split_string(RHS, ","));
-        const set<string> ss(values.cbegin(), values.cend());
+      { const string         canonical_prefix { delimited_substring(fields[0], '[', ']') };
+        const vector<string> values           { remove_peripheral_spaces(split_string(RHS, ","s)) };
+        const set<string>    ss               { values.cbegin(), values.cend() };
 
         _qthx.insert( { canonical_prefix, ss } );
       }
     }
 
 // RATE
-    if (LHS == "RATE")
-    { const vector<string> vec_rates = remove_peripheral_spaces(split_string(rhs, ","));
+    if (LHS == "RATE"s)
+    { const vector<string> vec_rates { remove_peripheral_spaces(split_string(rhs, ","s)) };
+
       vector<unsigned int> new_rates;
 
       FOR_ALL(vec_rates, [&new_rates] (const string& str) { new_rates.push_back(from_string<unsigned int>(str)); } );
@@ -784,68 +785,68 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // RBN BEACONS
-    if (LHS == "RBN BEACONS")
+    if (LHS == "RBN BEACONS"s)
       _rbn_beacons = is_true;
 
 // RBN PORT
-    if (LHS == "RBN PORT")
+    if (LHS == "RBN PORT"s)
       _rbn_port = from_string<int>(rhs);
 
 // RBN SERVER
-    if (LHS == "RBN SERVER")
+    if (LHS == "RBN SERVER"s)
       _rbn_server = rhs;
 
 // RBN THRESHOLD
-    if (LHS == "RBN THRESHOLD")
+    if (LHS == "RBN THRESHOLD"s)
       _rbn_threshold = from_string<unsigned int>(rhs);
 
 // RBN USERNAME
-    if (LHS == "RBN USERNAME")
+    if (LHS == "RBN USERNAME"s)
       _rbn_username = rhs;
 
 // REJECT COLOUR
-    if ( ( (LHS == "REJECT COLOUR") or (LHS == "REJECT COLOR") ) and !rhs.empty() )
+    if ( ( (LHS == "REJECT COLOUR"s) or (LHS == "REJECT COLOR"s) ) and !rhs.empty() )
       _reject_colour = string_to_colour(RHS);
 
 // REQUIRE DOT IN REPLACEMENT CALL
-    if (LHS == "REQUIRE DOT IN REPLACEMENT CALL")
+    if (LHS == "REQUIRE DOT IN REPLACEMENT CALL"s)
       _require_dot_in_replacement_call = is_true;
 
 // RIG 1 BAUD
-    if ( (LHS == "RIG 1 BAUD") or (LHS == "RIG BAUD") )
+    if ( (LHS == "RIG 1 BAUD"s) or (LHS == "RIG BAUD"s) )
       _rig1_baud = from_string<unsigned int>(rhs);
 
 // RIG 1 DATA BITS
-    if ( (LHS == "RIG 1 DATA BITS") or (LHS == "RIG DATA BITS") )
+    if ( (LHS == "RIG 1 DATA BITS"s) or (LHS == "RIG DATA BITS"s) )
       _rig1_data_bits = from_string<unsigned int>(rhs);
 
 // RIG 1 NAME
-    if ( (LHS == "RIG 1 NAME") or (LHS == "RADIO ONE NAME") )
+    if ( (LHS == "RIG 1 NAME"s) or (LHS == "RADIO ONE NAME"s) )
       _rig1_name = rhs;
 
 // RIG 1 PORT
-    if ( (LHS == "RIG 1 PORT") or (LHS == "RADIO ONE CONTROL PORT") )
+    if ( (LHS == "RIG 1 PORT"s) or (LHS == "RADIO ONE CONTROL PORT"s) )
       _rig1_port = rhs;
 
 // RIG 1 STOP BITS
-    if ( (LHS == "RIG 1 STOP BITS") or (LHS == "RIG STOP BITS") )
+    if ( (LHS == "RIG 1 STOP BITS"s) or (LHS == "RIG STOP BITS"s) )
       _rig1_stop_bits = from_string<unsigned int>(rhs);
 
 // RIG 1 TYPE
-    if (LHS == "RIG 1 TYPE")
+    if (LHS == "RIG 1 TYPE"s)
       _rig1_type = RHS;
 
 // RULES
-    if (LHS == "RULES")
+    if (LHS == "RULES"s)
       _process_configuration_file(rhs);
 
 // RUSSIAN DATA
-    if (LHS == "RUSSIAN DATA")
+    if (LHS == "RUSSIAN DATA"s)
       _russian_filename = rhs;
 
 // SCORE BANDS
-    if (starts_with(testline, "SCORE BANDS"))
-    { const vector<string> bands_str = remove_peripheral_spaces(split_string(rhs, ","));
+    if (starts_with(testline, "SCORE BANDS"s))
+    { const vector<string> bands_str { remove_peripheral_spaces(split_string(rhs, ","s)) };
 
       for (const auto& band_str : bands_str)
       { try
@@ -858,86 +859,86 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // SCORE MODES
-    if (starts_with(testline, "SCORE MODES"))
-    { if (contains(testline, "CW"))
+    if (starts_with(testline, "SCORE MODES"s))
+    { if (contains(testline, "CW"s))
         _score_modes.insert(MODE_CW);
 
-      if (contains(testline, "SSB") or contains(testline, "PH"))
+      if (contains(testline, "SSB"s) or contains(testline, "PH"s))
         _score_modes.insert(MODE_SSB);
     }
 
 // SCREEN SNAPSHOT FILE
-    if ( (LHS == "SCREEN SNAPSHOT FILE") or (LHS == "SCREENSHOT FILE") )
+    if ( (LHS == "SCREEN SNAPSHOT FILE"s) or (LHS == "SCREENSHOT FILE"s) )
       _screen_snapshot_file = rhs;
 
 // SCREEN SNAPSHOT ON EXIT
-    if ( (LHS == "SCREEN SNAPSHOT ON EXIT") or (LHS == "SCREENSHOT ON EXIT") )
+    if ( (LHS == "SCREEN SNAPSHOT ON EXIT"s) or (LHS == "SCREENSHOT ON EXIT"s) )
       _screen_snapshot_on_exit = is_true;
 
 // SERIAL NUMBER SPACES
-    if (LHS == "SERIAL NUMBER SPACES")
+    if (LHS == "SERIAL NUMBER SPACES"s)
       _serno_spaces = from_string<unsigned int>(rhs);
 
 // SHIFT DELTA
-    if (LHS == "SHIFT DELTA")
+    if (LHS == "SHIFT DELTA"s)
       _shift_delta = from_string<unsigned int>(rhs);
 
 // SHIFT POLL
-    if (LHS == "SHIFT POLL")
+    if (LHS == "SHIFT POLL"s)
       _shift_poll = from_string<unsigned int>(rhs);
 
 // SHORT SERIAL NUMBER
-    if (LHS == "SHORT SERIAL NUMBER")
+    if (LHS == "SHORT SERIAL NUMBER"s)
       _short_serno = is_true;
 
 // SOCIETY LIST FILENAME
-    if (LHS == "SOCIETY LIST FILENAME")
+    if (LHS == "SOCIETY LIST FILENAME"s)
       _society_list_filename = rhs;
 
 // START AUDIO RECORDING
-    if (LHS == "START AUDIO RECORDING")
-    { if (rhs == "auto")
+    if (LHS == "START AUDIO RECORDING"s)
+    { if (rhs == "auto"s)
         _start_audio_recording = AUDIO_RECORDING::AUTO;
 
-      if (rhs == "false")
+      if (rhs == "false"s)
         _start_audio_recording = AUDIO_RECORDING::DO_NOT_START;
 
-      if (rhs == "true")
+      if (rhs == "true"s)
         _start_audio_recording = AUDIO_RECORDING::START;
     }
 
 // START BAND
-    if (LHS == "START BAND")
-    { const auto cit = BAND_FROM_NAME.find(RHS);
+    if (LHS == "START BAND"s)
+    { const auto cit { BAND_FROM_NAME.find(RHS) };
 
       if (cit != BAND_FROM_NAME.cend())
         _start_band = cit->second;
     }
 
 // START MODE
-    if (LHS == "START MODE")
-    { if (RHS == "SSB")
+    if (LHS == "START MODE"s)
+    { if (RHS == "SSB"s)
         _start_mode = MODE_SSB;
     }
 
 // SYNC KEYER
-    if (LHS == "SYNC KEYER")
+    if (LHS == "SYNC KEYER"s)
       _sync_keyer = is_true;
 
 // TEST
-    if (LHS == "TEST")
+    if (LHS == "TEST"s)
       _test = is_true;
 
 // THOUSANDS SEPARATOR
-    if (LHS == "THOUSANDS SEPARATOR")
+    if (LHS == "THOUSANDS SEPARATOR"s)
       _thousands_separator = rhs;
 
 // UBA BONUS
-    if (LHS == "UBA BONUS")
+    if (LHS == "UBA BONUS"s)
       _uba_bonus = is_true;
 
 // WORKED MULTS COLOUR
-    if ( (LHS == "WORKED MULTS COLOUR") or (LHS == "WORKED MULTS COLOR") )
+    if ( (LHS == "WORKED MULTS COLOUR"s) or (LHS == "WORKED MULTS COLOR"s) )
       _worked_mults_colour = RHS;
 
 // ---------------------------------------------  MULTIPLIERS  ---------------------------------
@@ -947,50 +948,50 @@ void drlog_context::_process_configuration_file(const string& filename)
 // Currently supported: ALL
 //                      NONE
 // any single continent
-    if (LHS == "COUNTRY MULTS")
+    if (LHS == "COUNTRY MULTS"s)
     { _country_mults_filter = RHS;
 
-      if (_country_mults_filter == "NONE")
+      if (_country_mults_filter == "NONE"s)
         QSO_DISPLAY_COUNTRY_MULT = false;                  // since countries aren't mults, don't take up space in the log line
     }
 
 // REMAINING CALLSIGN MULTS
-    if (LHS == "REMAINING CALLSIGN MULTS")
-    { _auto_remaining_callsign_mults = (RHS == "AUTO");
+    if (LHS == "REMAINING CALLSIGN MULTS"s)
+    { _auto_remaining_callsign_mults = (RHS == "AUTO"s);
 
       if (_auto_remaining_callsign_mults)
-      { const vector<string> tokens = split_string(RHS, " ");
+      { const vector<string> tokens { split_string(RHS, " "s) };
 
         if (tokens.size() == 2)
           _auto_remaining_callsign_mults_threshold = from_string<unsigned int>(tokens[1]);
       }
       else
-      { const vector<string> mults = remove_peripheral_spaces(split_string(RHS, ","));
+      { const vector<string> mults { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
         _remaining_callsign_mults_list = set<string>(mults.cbegin(), mults.cend());
       }
     }
 
 // REMAINING COUNTRY MULTS
-    if (LHS == "REMAINING COUNTRY MULTS")
-    { _auto_remaining_country_mults = contains(RHS, "AUTO");
+    if (LHS == "REMAINING COUNTRY MULTS"s)
+    { _auto_remaining_country_mults = contains(RHS, "AUTO"s);
 
       if (_auto_remaining_country_mults)
-      { const vector<string> tokens = split_string(RHS, " ");
+      { const vector<string> tokens { split_string(RHS, " "s) };
 
         if (tokens.size() == 2)
           _auto_remaining_country_mults_threshold = from_string<unsigned int>(tokens[1]);
       }
       else
-      { const vector<string> countries = remove_peripheral_spaces(split_string(RHS, ","));
+      { const vector<string> countries { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
         _remaining_country_mults_list = set<string>(countries.cbegin(), countries.cend());
       }
     }
 
 // AUTO REMAINING EXCHANGE MULTS (the exchange mults whose list of legal values can be augmented)
-    if (LHS == "AUTO REMAINING EXCHANGE MULTS")
-    { const vector<string> mult_names = remove_peripheral_spaces(split_string(RHS, ","));
+    if (LHS == "AUTO REMAINING EXCHANGE MULTS"s)
+    { const vector<string> mult_names { remove_peripheral_spaces(split_string(RHS, ","s)) };
 
       for (const auto& str : mult_names)
         _auto_remaining_exchange_mults.insert(str);
@@ -999,41 +1000,41 @@ void drlog_context::_process_configuration_file(const string& filename)
 // ---------------------------------------------  CABRILLO  ---------------------------------
 
 // CABRILLO CONTEST
-    if (LHS == "CABRILLO CONTEST")
+    if (LHS == "CABRILLO CONTEST"s)
       _cabrillo_contest = RHS;          // required to be upper case; don't limit to legal values defined in the "specification", since many contest require an illegal value
 
-    if ( (LHS == "CABRILLO CERTIFICATE") and is_legal_value(RHS, "YES,NO", ",") )
+    if ( (LHS == "CABRILLO CERTIFICATE"s) and is_legal_value(RHS, "YES,NO"s, ","s) )
       _cabrillo_certificate = RHS;
 
  // CABRILLO EMAIL (sic)
-    if ( (LHS == "CABRILLO E-MAIL") or (LHS == "CABRILLO EMAIL") )
+    if ( (LHS == "CABRILLO E-MAIL"s) or (LHS == "CABRILLO EMAIL"s) )
       _cabrillo_e_mail = rhs;
 
 // CABRILLO EOL
-    if (LHS == "CABRILLO EOL")
+    if (LHS == "CABRILLO EOL"s)
       _cabrillo_eol = RHS;
 
 // CABRILLO INCLUDE SCORE
-    if (LHS == "CABRILLO INCLUDE SCORE")
+    if (LHS == "CABRILLO INCLUDE SCOREs")
       _cabrillo_include_score = is_true;
 
 // CABRILLO LOCATION
-    if (LHS == "CABRILLO LOCATION")
+    if (LHS == "CABRILLO LOCATION"s)
       _cabrillo_location = rhs;
 
 // CABRILLO NAME
-    if (LHS == "CABRILLO NAME")
+    if (LHS == "CABRILLO NAME"s)
       _cabrillo_name = rhs;
 
 // CABRILLO CATEGORY-ASSISTED
-    if ( (LHS == "CABRILLO CATEGORY-ASSISTED") and is_legal_value(RHS, "ASSISTED,NON-ASSISTED", ",") )
+    if ( (LHS == "CABRILLO CATEGORY-ASSISTED"s) and is_legal_value(RHS, "ASSISTED,NON-ASSISTED"s, ","s) )
       _cabrillo_category_assisted = RHS;
 
 // CABRILLO CATEGORY-BAND
-    if (LHS == "CABRILLO CATEGORY-BAND")
+    if (LHS == "CABRILLO CATEGORY-BAND"s)
     {
 // The spec calls for bizarre capitalization
-      if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light", ","))
+      if (is_legal_value(rhs, "ALL,160M,80M,40M,20M,15M,10M,6M,2M,222,432,902,1.2G,2.3G,3.4G,5.7G,10G,24G,47G,75G,119G,142G,241G,Light"s, ","s))
         _cabrillo_category_band = rhs;
     }
 

@@ -28,6 +28,7 @@ using namespace std::literals::string_literals;
 // ant path  -------------------------------------------------------
 
 /// antenna path
+#if 0
 enum ANT_PATH_ENUM { ANT_PATH_GREYLINE,
                      ANT_PATH_OTHER,
                      ANT_PATH_SHORT_PATH,
@@ -36,6 +37,16 @@ enum ANT_PATH_ENUM { ANT_PATH_GREYLINE,
                    };
 
 using ANT_PATH_ENUMERATION_TYPE = std::array<std::string, N_ANT_PATHS>;     ///< type for antenna path enumeration
+#endif
+
+enum class ADIF_ANT_PATH { GREYLINE,
+                           OTHER,
+                           SHORT_PATH,
+                           LONG_PATH,
+                           N_ANT_PATHS
+                         };
+
+using ANT_PATH_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_ANT_PATH::N_ANT_PATHS)>;     ///< type for antenna path enumeration
 
 /// legal values of ANT_PATH_ENUMERATION
 static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION { "G"s,    ///< greyline
@@ -47,81 +58,81 @@ static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION { "G"s,    ///< greyline
 // mode  -------------------------------------------------------
 
 /// modes
-enum MODE_ENUM { ADIF_MODE_AM,              // 0
-                 ADIF_MODE_AMTORFEC,
-                 ADIF_MODE_ASCI,
-                 ADIF_MODE_ATV,
-                 ADIF_MODE_CHIP64,
-                 ADIF_MODE_CHIP128,
-                 ADIF_MODE_CLO,
-                 ADIF_MODE_CONTESTI,
-                 ADIF_MODE_CW,
-                 ADIF_MODE_DSTAR,
-                 ADIF_MODE_DOMINO,          // 10
-                 ADIF_MODE_DOMINOF,
-                 ADIF_MODE_FAX,
-                 ADIF_MODE_FM,
-                 ADIF_MODE_FMHELL,
-                 ADIF_MODE_FSK31,
-                 ADIF_MODE_FSK441,
-                 ADIF_MODE_GTOR,
-                 ADIF_MODE_HELL,
-                 ADIF_MODE_HELL80,
-                 ADIF_MODE_HFSK,            // 20
-                 ADIF_MODE_JT44,
-                 ADIF_MODE_JT4A,
-                 ADIF_MODE_JT4B,
-                 ADIF_MODE_JT4C,
-                 ADIF_MODE_JT4D,
-                 ADIF_MODE_JT4E,
-                 ADIF_MODE_JT4F,
-                 ADIF_MODE_JT4G,
-                 ADIF_MODE_JT65,
-                 ADIF_MODE_JT65A,           // 30
-                 ADIF_MODE_JT65B,
-                 ADIF_MODE_JT65C,
-                 ADIF_MODE_JT6M,
-                 ADIF_MODE_MFSK8,
-                 ADIF_MODE_MFSK16,
-                 ADIF_MODE_MT63,
-                 ADIF_MODE_OLIVIA,
-                 ADIF_MODE_PAC,
-                 ADIF_MODE_PAC2,
-                 ADIF_MODE_PAC3,            // 40
-                 ADIF_MODE_PAX,
-                 ADIF_MODE_PAX2,
-                 ADIF_MODE_PCW,
-                 ADIF_MODE_PKT,
-                 ADIF_MODE_PSK10,
-                 ADIF_MODE_PSK31,
-                 ADIF_MODE_PSK63,
-                 ADIF_MODE_PSK63F,
-                 ADIF_MODE_PSK125,
-                 ADIF_MODE_PSKAM10,         // 50
-                 ADIF_MODE_PSKAM31,
-                 ADIF_MODE_PSKAM50,
-                 ADIF_MODE_PSKFEC31,
-                 ADIF_MODE_PSKHELL,
-                 ADIF_MODE_Q15,
-                 ADIF_MODE_QPSK31,
-                 ADIF_MODE_QPSK63,
-                 ADIF_MODE_QPSK125,
-                 ADIF_MODE_ROS,
-                 ADIF_MODE_RTTY,            // 60
-                 ADIF_MODE_RTTYM,
-                 ADIF_MODE_SSB,
-                 ADIF_MODE_SSTV,
-                 ADIF_MODE_THRB,
-                 ADIF_MODE_THOR,
-                 ADIF_MODE_THRBX,
-                 ADIF_MODE_TOR,
-                 ADIF_MODE_VOI,
-                 ADIF_MODE_WINMOR,
-                 ADIF_MODE_WSPR,            // 70
+enum class ADIF_MODE { AM,              // 0
+                 AMTORFEC,
+                 ASCI,
+                 ATV,
+                 CHIP64,
+                 CHIP128,
+                 CLO,
+                 CONTESTI,
+                 CW,
+                 DSTAR,
+                 DOMINO,          // 10
+                 DOMINOF,
+                 FAX,
+                 FM,
+                 FMHELL,
+                 FSK31,
+                 FSK441,
+                 GTOR,
+                 HELL,
+                 HELL80,
+                 HFSK,            // 20
+                 JT44,
+                 JT4A,
+                 JT4B,
+                 JT4C,
+                 JT4D,
+                 JT4E,
+                 JT4F,
+                 JT4G,
+                 JT65,
+                 JT65A,           // 30
+                 JT65B,
+                 JT65C,
+                 JT6M,
+                 MFSK8,
+                 MFSK16,
+                 MT63,
+                 OLIVIA,
+                 PAC,
+                 PAC2,
+                 PAC3,            // 40
+                 PAX,
+                 PAX2,
+                 PCW,
+                 PKT,
+                 PSK10,
+                 PSK31,
+                 PSK63,
+                 PSK63F,
+                 PSK125,
+                 PSKAM10,         // 50
+                 PSKAM31,
+                 PSKAM50,
+                 PSKFEC31,
+                 PSKHELL,
+                 Q15,
+                 QPSK31,
+                 QPSK63,
+                 QPSK125,
+                 ROS,
+                 RTTY,            // 60
+                 RTTYM,
+                 SSB,
+                 SSTV,
+                 THRB,
+                 THOR,
+                 THRBX,
+                 TOR,
+                 VOI,
+                 WINMOR,
+                 WSPR,            // 70
                  N_ADIF_MODES
                };                                                       ///< enum for modes
 
-using MODE_ENUMERATION_TYPE = std::array<std::string, N_ADIF_MODES>;    ///< type for mode enumeration
+using MODE_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_MODE::N_ADIF_MODES)>;    ///< type for mode enumeration
 
 static MODE_ENUMERATION_TYPE MODE_ENUMERATION { "AM"s,               // 0
                                                 "AMTORFEC"s,
@@ -199,90 +210,90 @@ static MODE_ENUMERATION_TYPE MODE_ENUMERATION { "AM"s,               // 0
 // ARRL section  -------------------------------------------------------
 
 /// sections
-enum SECTION_ENUM { SECTION_AL,
-                    SECTION_AK,
-                    SECTION_AB,
-                    SECTION_AR,
-                    SECTION_AZ,
-                    SECTION_BC,
-                    SECTION_CO,
-                    SECTION_CT,
-                    SECTION_DE,
-                    SECTION_EB,
-                    SECTION_EMA,
-                    SECTION_ENY,
-                    SECTION_EPA,
-                    SECTION_EWA,
-                    SECTION_GA,
-                    SECTION_ID,
-                    SECTION_IL,
-                    SECTION_IN,
-                    SECTION_IA,
-                    SECTION_KS,
-                    SECTION_KY,
-                    SECTION_LAX,
-                    SECTION_LA,
-                    SECTION_ME,
-                    SECTION_MB,
-                    SECTION_MAR,
-                    SECTION_MDC,
-                    SECTION_MI,
-                    SECTION_MN,
-                    SECTION_MS,
-                    SECTION_MO,
-                    SECTION_MT,
-                    SECTION_NE,
-                    SECTION_NV,
-                    SECTION_NH,
-                    SECTION_NM,
-                    SECTION_NLI,
-                    SECTION_NL,
-                    SECTION_NC,
-                    SECTION_ND,
-                    SECTION_NTX,
-                    SECTION_NFL,
-                    SECTION_NNJ,
-                    SECTION_NNY,
-                    SECTION_NT,
-                    SECTION_OH,
-                    SECTION_OK,
-                    SECTION_ON,
-                    SECTION_ORG,
-                    SECTION_OR,
-                    SECTION_PAC,
-                    SECTION_PR,
-                    SECTION_QC,
-                    SECTION_RI,
-                    SECTION_SV,
-                    SECTION_SDG,
-                    SECTION_SF,
-                    SECTION_SJV,
-                    SECTION_SB,
-                    SECTION_SCV,
-                    SECTION_SK,
-                    SECTION_SC,
-                    SECTION_SD,
-                    SECTION_STX,
-                    SECTION_SFL,
-                    SECTION_SNJ,
-                    SECTION_TN,
-                    SECTION_VI,
-                    SECTION_UT,
-                    SECTION_VT,
-                    SECTION_VA,
-                    SECTION_WCF,
-                    SECTION_WTX,
-                    SECTION_WV,
-                    SECTION_WMA,
-                    SECTION_WNY,
-                    SECTION_WPA,
-                    SECTION_WWA,
-                    SECTION_WI,
-                    SECTION_WY,
+enum class ADIF_SECTION { AL,
+                    AK,
+                    AB,
+                    AR,
+                    AZ,
+                    BC,
+                    CO,
+                    CT,
+                    DE,
+                    EB,
+                    EMA,
+                    ENY,
+                    EPA,
+                    EWA,
+                    GA,
+                    ID,
+                    IL,
+                    IN,
+                    IA,
+                    KS,
+                    KY,
+                    LAX,
+                    LA,
+                    ME,
+                    MB,
+                    MAR,
+                    MDC,
+                    MI,
+                    MN,
+                    MS,
+                    MO,
+                    MT,
+                    NE,
+                    NV,
+                    NH,
+                    NM,
+                    NLI,
+                    NL,
+                    NC,
+                    ND,
+                    NTX,
+                    NFL,
+                    NNJ,
+                    NNY,
+                    NT,
+                    OH,
+                    OK,
+                    ON,
+                    ORG,
+                    OR,
+                    PAC,
+                    PR,
+                    QC,
+                    RI,
+                    SV,
+                    SDG,
+                    SF,
+                    SJV,
+                    SB,
+                    SCV,
+                    SK,
+                    SC,
+                    SD,
+                    STX,
+                    SFL,
+                    SNJ,
+                    TN,
+                    VI,
+                    UT,
+                    VT,
+                    VA,
+                    WCF,
+                    WTX,
+                    WV,
+                    WMA,
+                    WNY,
+                    WPA,
+                    WWA,
+                    WI,
+                    WY,
                     N_SECTIONS
                   };                                                        ///< enum for sections
 
-using SECTION_ENUMERATION_TYPE = std::array<std::string, N_SECTIONS>;       ///< type for section enumeration
+using SECTION_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_SECTION::N_SECTIONS)>;       ///< type for section enumeration
 
 static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION { "AL"s,
                                                       "AK"s,
@@ -369,42 +380,39 @@ static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION { "AL"s,
 // awards  -------------------------------------------------------
 
 /// awards
-enum AWARD_ENUM { AWARD_AJA,
-                  AWARD_CQDX,
-                  AWARD_CQDXFIELD,
-                  AWARD_CQWAZ_MIXED,
-                  AWARD_CQWAZ_CW,
-                  AWARD_CQWAZ_PHONE,
-                  AWARD_CQWAZ_RTTY,
-                  AWARD_CQWAZ_160m,
-                  AWARD_CQWPX,
-                  AWARD_DARC_DOK,
-                  AWARD_DXCC,
-                  AWARD_DXCC_MIXED,
-                  AWARD_DXCC_CW,
-                  AWARD_DXCC_PHONE,
-                  AWARD_DXCC_RTTY,
-                  AWARD_IOTA,
-                  AWARD_JCC,
-                  AWARD_JCG,
-                  AWARD_MARATHON,
-                  AWARD_RDA,
-                  AWARD_WAB,
-                  AWARD_WAC,
-                  AWARD_WAE,
-                  AWARD_WAIP,
-                  AWARD_WAJA,
-                  AWARD_WAS,
-                  AWARD_WAZ,
-                  AWARD_USACA,
-                  AWARD_VUCC,
+enum class ADIF_AWARD { AJA,
+                  CQDX,
+                  CQDXFIELD,
+                  CQWAZ_MIXED,
+                  CQWAZ_CW,
+                  CQWAZ_PHONE,
+                  CQWAZ_RTTY,
+                  CQWAZ_160m,
+                  CQWPX,
+                  DARC_DOK,
+                  DXCC,
+                  DXCC_MIXED,
+                  DXCC_CW,
+                  DXCC_PHONE,
+                  DXCC_RTTY,
+                  IOTA,
+                  JCC,
+                  JCG,
+                  MARATHON,
+                  RDA,
+                  WAB,
+                  WAC,
+                  WAE,
+                  WAIP,
+                  WAJA,
+                  WAS,
+                  WAZ,
+                  USACA,
+                  VUCC,
                   N_AWARDS
                 };                                                      ///< enum for awards
 
-//typedef std::array<std::string, N_AWARDS> AWARD_ENUMERATION_TYPE;       ///< type for award enumeration
-
-using AWARD_ENUMERATION_TYPE = std::array<std::string, N_AWARDS>;       ///< type for award enumeration
-
+using AWARD_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_AWARD::N_AWARDS)>;       ///< type for award enumeration
 
 static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION { "AJA"s,
                                                   "CQDX"s,
@@ -440,41 +448,39 @@ static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION { "AJA"s,
 // band  -------------------------------------------------------
 
 /// bands
-enum BAND_ENUM { ADIF_BAND_2190m,
-                 ADIF_BAND_560m,
-                 ADIF_BAND_160m,
-                 ADIF_BAND_80m,
-                 ADIF_BAND_60m,
-                 ADIF_BAND_40m,
-                 ADIF_BAND_30m,
-                 ADIF_BAND_20m,
-                 ADIF_BAND_17m,
-                 ADIF_BAND_15m,
-                 ADIF_BAND_12m,
-                 ADIF_BAND_10m,
-                 ADIF_BAND_6m,
-                 ADIF_BAND_4m,
-                 ADIF_BAND_2m,
-                 ADIF_BAND_1point25m,
-                 ADIF_BAND_70cm,
-                 ADIF_BAND_33cm,
-                 ADIF_BAND_23cm,
-                 ADIF_BAND_13cm,
-                 ADIF_BAND_9cm,
-                 ADIF_BAND_6cm,
-                 ADIF_BAND_3cm,
-                 ADIF_BAND_1point25cm,
-                 ADIF_BAND_6mm,
-                 ADIF_BAND_4mm,
-                 ADIF_BAND_2point5mm,
-                 ADIF_BAND_2mm,
-                 ADIF_BAND_1mm,
+enum class ADIF_BAND { BAND_2190m,  // keep the BAND_ prefix as names can't begin with a digit
+                 BAND_560m,
+                 BAND_160m,
+                 BAND_80m,
+                 BAND_60m,
+                 BAND_40m,
+                 BAND_30m,
+                 BAND_20m,
+                 BAND_17m,
+                 BAND_15m,
+                 BAND_12m,
+                 BAND_10m,
+                 BAND_6m,
+                 BAND_4m,
+                 BAND_2m,
+                 BAND_1point25m,
+                 BAND_70cm,
+                 BAND_33cm,
+                 BAND_23cm,
+                 BAND_13cm,
+                 BAND_9cm,
+                 BAND_6cm,
+                 BAND_3cm,
+                 BAND_1point25cm,
+                 BAND_6mm,
+                 BAND_4mm,
+                 BAND_2point5mm,
+                 BAND_2mm,
+                 BAND_1mm,
                  N_ADIF_BANDS
                };                                                       ///< enum for bands
 
-//typedef std::array<std::string, N_ADIF_BANDS> BAND_ENUMERATION_TYPE;    ///< type for band enumeration
-
-using BAND_ENUMERATION_TYPE = std::array<std::string, N_ADIF_BANDS>;     ///< type for band enumeration
+using BAND_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_BAND::N_ADIF_BANDS)>;     ///< type for band enumeration
 
 static BAND_ENUMERATION_TYPE BAND_ENUMERATION { "2190m"s,
                                                 "560m"s,
@@ -510,125 +516,123 @@ static BAND_ENUMERATION_TYPE BAND_ENUMERATION { "2190m"s,
 // contest  -------------------------------------------------------
 
 /// contests
-enum CONTEST_ENUM { CONTEST_7QP,                //      7th-Area QSO Party
-                    CONTEST_ANARTS_RTTY,        //      ANARTS WW RTTY
-                    CONTEST_ANATOLIAN_RTTY,     //      Anatolian WW RTTY
-                    CONTEST_AP_SPRINT,          //      Asia - Pacific Sprint
-                    CONTEST_ARI_DX,             //      ARI DX Contest
-                    CONTEST_ARRL_10,            //      ARRL 10 Meter Contest
-                    CONTEST_ARRL_160,           //      ARRL 160 Meter Contest
-                    CONTEST_ARRL_DX_CW,         //      ARRL International DX Contest (CW)
-                    CONTEST_ARRL_DX_SSB,        //      ARRL International DX Contest (Phone)
-                    CONTEST_ARRL_FIELD_DAY,     //      ARRL Field Day
-                    CONTEST_ARRL_RTTY,          //      ARRL RTTY Round-Up
-                    CONTEST_ARRL_SS_CW,         //      ARRL November Sweepstakes (CW)
-                    CONTEST_ARRL_SS_SSB,        //      ARRL November Sweepstakes (Phone)
-                    CONTEST_ARRL_UHF_AUG,       //      ARRL August UHF Contest
-                    CONTEST_ARRL_VHF_JAN,       //      ARRL January VHF Sweepstakes
-                    CONTEST_ARRL_VHF_JUN,       //      ARRL June VHF QSO Party
-                    CONTEST_ARRL_VHF_SEP,       //      ARRL September VHF QSO Party
-                    CONTEST_BARTG_RTTY,         //      BARTG Spring RTTY Contest
-                    CONTEST_BARTG_SPRINT,       //      BARTG Sprint Contest
-                    CONTEST_CA_QSO_PARTY,       //      California QSO Party
-                    CONTEST_CQ_160_CW,          //      CQ WW 160 Meter DX Contest (CW)
-                    CONTEST_CQ_160_SSB,         //      CQ WW 160 Meter DX Contest (SSB)
-                    CONTEST_CQ_VHF,             //      CQ World_Wide VHF Contest
-                    CONTEST_CQ_WPX_CW,          //      CQ WW WPX Contest (CW)
-                    CONTEST_CQ_WPX_RTTY,        //      CQ/RJ WW RTTY WPX Contest
-                    CONTEST_CQ_WPX_SSB,         //      CQ WW WPX Contest (SSB)
-                    CONTEST_CQ_WW_CW,           //      CQ WW DX Contest (CW)
-                    CONTEST_CQ_WW_RTTY,         //      CQ/RJ WW RTTY DX Contest
-                    CONTEST_CQ_WW_SSB,          //      CQ WW DX Contest (SSB)
-                    CONTEST_CWOPS_CWT,          //      CWops Mini-CWT Test
-                    CONTEST_CIS_DX,             //      CIS DX Contest
-                    CONTEST_DARC_WAEDC_CW,      //      WAE DX Contest (CW)
-                    CONTEST_DARC_WAEDC_RTTY,    //      WAE DX Contest (RTTY)
-                    CONTEST_DARC_WAEDC_SSB,     //      WAE DX Contest (SSB)
-                    CONTEST_DL_DX_RTTY,         //      DL-DX RTTY Contest
-                    CONTEST_EA_RTTY,            //      EA-WW-RTTY
-                    CONTEST_EPC_PSK63,          //      PSK63 QSO Party
-                    CONTEST_EU_SPRINT,          //      EU Sprint
-                    CONTEST_EUCW160M,           //
-                    CONTEST_EU_HF,              //      EU HF Championship
-                    CONTEST_EU_PSK_DX,          //      EU PSK DX Contest
-                    CONTEST_FALL_sprint,        //      FISTS Fall Sprint
-                    CONTEST_FL_QSO_PARTY,       //      Florida QSO Party
-                    CONTEST_GA_QSO_PARTY,       //      Georgia QSO Party
-                    CONTEST_HELVETIA,           //      Helvetia Contest
-                    CONTEST_IARU_HF,            //      IARU HF World Championship
-                    CONTEST_IL_QSO_party,       //      Illinois QSO Party
-                    CONTEST_JARTS_WW_RTTY,      //      JARTS WW RTTY
-                    CONTEST_JIDX_CW,            //      Japan International DX Contest (CW)
-                    CONTEST_JIDX_SSB,           //      Japan International DX Contest (SSB)
-                    CONTEST_LZ_DX,              //      LZ DX Contest
-                    CONTEST_MI_QSO_PARTY,       //      Michigan QSO Party
-                    CONTEST_NAQP_CW,            //      North America QSO Party (CW)
-                    CONTEST_NAQP_RTTY,          //      North America QSO Party (RTTY)
-                    CONTEST_NAQP_SSB,           //      North America QSO Party (Phone)
-                    CONTEST_NA_SPRINT_CW,       //      North America Sprint (CW)
-                    CONTEST_NA_SPRINT_RTTY,     //      North America Sprint (RTTY)
-                    CONTEST_NA_SPRINT_SSB,      //      North America Sprint (Phone)
-                    CONTEST_NEQP,               //      New England QSO Party
-                    CONTEST_NRAU_BALTIC_CW,     //      NRAU-Baltic Contest (CW)
-                    CONTEST_NRAU_BALTIC_SSB,    //      NRAU-Baltic Contest (SSB)
-                    CONTEST_OCEANIA_DX_CW,      //      Oceania DX Contest (CW)
-                    CONTEST_OCEANIA_DX_SSB,     //      Oceania DX Contest (SSB)
-                    CONTEST_OH_QSO_PARTY,       //      Ohio QSO Party
-                    CONTEST_OK_DX_RTTY,         //
-                    CONTEST_OK_OM_DX,           //      OK-OM DX Contest
-                    CONTEST_ON_QSO_PARTY,       //      Ontario QSO Party
-                    CONTEST_PACC,               //
-                    CONTEST_QC_QSO_PARTY,       //      Quebec QSO Party
-                    CONTEST_RAC,                //      Canada Day, RAC Winter contests
-                    CONTEST_RDAC,               //      Russian District Award Contest
-                    CONTEST_RDXC,               //      Russian DX Contest
-                    CONTEST_REF_160M,           //
-                    CONTEST_REF_CW,             //
-                    CONTEST_REF_SSB,            //
-                    CONTEST_RSGB_160,           //      1.8Mhz Contest
-                    CONTEST_RSGB_21_28_CW,      //      21/28 MHz Contest (CW)
-                    CONTEST_RSGB_21_28_SSB,     //      21/28 MHz Contest (SSB)
-                    CONTEST_RSGB_80M_CC,        //      80m Club Championships
-                    CONTEST_RSGB_AFS_CW,        //      Affiliated Societies Team Contest (CW)
-                    CONTEST_RSGB_AFS_SSB,       //      Affiliated Societies Team Contest (SSB)
-                    CONTEST_RSGB_CLUB_CALLS,    //      Club Calls
-                    CONTEST_RSGB_COMMONWEALTH,  //      Commonwealth Contest
-                    CONTEST_RSGB_IOTA,          //      IOTA Contest
-                    CONTEST_RSGB_LOW_POWER,     //      Low Power Field Day
-                    CONTEST_RSGB_NFD,           //      National Field Day
-                    CONTEST_RSGB_ROPOCO,        //      RoPoCo
-                    CONTEST_RSGB_SSB_FD,        //      SSB Field Day
-                    CONTEST_RUSSIAN_RTTY,       //
-                    CONTEST_SAC_CW,             //      Scandinavian Activity Contest (CW)
-                    CONTEST_SAC_SSB,            //      Scandinavian Activity Contest (SSB)
-                    CONTEST_SARTG_RTTY,         //      SARTG WW RTTY
-                    CONTEST_SCC_RTTY,           //      SCC RTTY Championship
-                    CONTEST_SMP_AUG,            //      SSA Portabeltest
-                    CONTEST_SMP_MAY,            //      SSA Portabeltest
-                    CONTEST_SPDXCCONTEST,       //       SP DX Contest
-                    CONTEST_SPRING_SPRINT,      //      FISTS Spring Sprint
-                    CONTEST_SR_MARATHON,        //      Scottish-Russian Marathon
-                    CONTEST_STEW_PERRY,         //      Stew Perry Topband Distance Challenge
-                    CONTEST_SUMMER_SPRINT,      //      FISTS Summer Sprint
-                    CONTEST_TARA_RTTY,          //      TARA RTTY Mêlée
-                    CONTEST_TMC_RTTY,           //      The Makrothen Contest
-                    CONTEST_UBA_DX_CW,          //      UBA Contest (CW)
-                    CONTEST_UBA_DX_SSB,         //      UBA Contest (SSB)
-                    CONTEST_UK_DX_RTTY,         //      UK DX RTTY Contest
-                    CONTEST_UKRAINIAN_DX,       //      Ukrainian DX
-                    CONTEST_UKR_CHAMP_RTTY,     //      Open Ukraine RTTY Championship
-                    CONTEST_URE_DX,             //
-                    CONTEST_VIRGINIA_QSO_PARTY, //      Virginia QSO Party
-                    CONTEST_VOLTA_RTTY,         //      Alessandro Volta RTTY DX Contest
-                    CONTEST_WI_QSO_PARTY,       //      Wisconsin QSO Party
-                    CONTEST_WINTER_SPRINT,      //      FISTS Winter Sprint
-                    CONTEST_YUDXC,              //      YU DX Contest
+enum class ADIF_CONTEST { SEVENQP,                //      7th-Area QSO Party
+                    ANARTS_RTTY,        //      ANARTS WW RTTY
+                    ANATOLIAN_RTTY,     //      Anatolian WW RTTY
+                    AP_SPRINT,          //      Asia - Pacific Sprint
+                    ARI_DX,             //      ARI DX Contest
+                    ARRL_10,            //      ARRL 10 Meter Contest
+                    ARRL_160,           //      ARRL 160 Meter Contest
+                    ARRL_DX_CW,         //      ARRL International DX Contest (CW)
+                    ARRL_DX_SSB,        //      ARRL International DX Contest (Phone)
+                    ARRL_FIELD_DAY,     //      ARRL Field Day
+                    ARRL_RTTY,          //      ARRL RTTY Round-Up
+                    ARRL_SS_CW,         //      ARRL November Sweepstakes (CW)
+                    ARRL_SS_SSB,        //      ARRL November Sweepstakes (Phone)
+                    ARRL_UHF_AUG,       //      ARRL August UHF Contest
+                    ARRL_VHF_JAN,       //      ARRL January VHF Sweepstakes
+                    ARRL_VHF_JUN,       //      ARRL June VHF QSO Party
+                    ARRL_VHF_SEP,       //      ARRL September VHF QSO Party
+                    BARTG_RTTY,         //      BARTG Spring RTTY Contest
+                    BARTG_SPRINT,       //      BARTG Sprint Contest
+                    CA_QSO_PARTY,       //      California QSO Party
+                    CQ_160_CW,          //      CQ WW 160 Meter DX Contest (CW)
+                    CQ_160_SSB,         //      CQ WW 160 Meter DX Contest (SSB)
+                    CQ_VHF,             //      CQ World_Wide VHF Contest
+                    CQ_WPX_CW,          //      CQ WW WPX Contest (CW)
+                    CQ_WPX_RTTY,        //      CQ/RJ WW RTTY WPX Contest
+                    CQ_WPX_SSB,         //      CQ WW WPX Contest (SSB)
+                    CQ_WW_CW,           //      CQ WW DX Contest (CW)
+                    CQ_WW_RTTY,         //      CQ/RJ WW RTTY DX Contest
+                    CQ_WW_SSB,          //      CQ WW DX Contest (SSB)
+                    CWOPS_CWT,          //      CWops Mini-CWT Test
+                    CIS_DX,             //      CIS DX Contest
+                    DARC_WAEDC_CW,      //      WAE DX Contest (CW)
+                    DARC_WAEDC_RTTY,    //      WAE DX Contest (RTTY)
+                    DARC_WAEDC_SSB,     //      WAE DX Contest (SSB)
+                    DL_DX_RTTY,         //      DL-DX RTTY Contest
+                    EA_RTTY,            //      EA-WW-RTTY
+                    EPC_PSK63,          //      PSK63 QSO Party
+                    EU_SPRINT,          //      EU Sprint
+                    EUCW160M,           //
+                    EU_HF,              //      EU HF Championship
+                    EU_PSK_DX,          //      EU PSK DX Contest
+                    FALL_sprint,        //      FISTS Fall Sprint
+                    FL_QSO_PARTY,       //      Florida QSO Party
+                    GA_QSO_PARTY,       //      Georgia QSO Party
+                    HELVETIA,           //      Helvetia Contest
+                    IARU_HF,            //      IARU HF World Championship
+                    IL_QSO_party,       //      Illinois QSO Party
+                    JARTS_WW_RTTY,      //      JARTS WW RTTY
+                    JIDX_CW,            //      Japan International DX Contest (CW)
+                    JIDX_SSB,           //      Japan International DX Contest (SSB)
+                    LZ_DX,              //      LZ DX Contest
+                    MI_QSO_PARTY,       //      Michigan QSO Party
+                    NAQP_CW,            //      North America QSO Party (CW)
+                    NAQP_RTTY,          //      North America QSO Party (RTTY)
+                    NAQP_SSB,           //      North America QSO Party (Phone)
+                    NA_SPRINT_CW,       //      North America Sprint (CW)
+                    NA_SPRINT_RTTY,     //      North America Sprint (RTTY)
+                    NA_SPRINT_SSB,      //      North America Sprint (Phone)
+                    NEQP,               //      New England QSO Party
+                    NRAU_BALTIC_CW,     //      NRAU-Baltic Contest (CW)
+                    NRAU_BALTIC_SSB,    //      NRAU-Baltic Contest (SSB)
+                    OCEANIA_DX_CW,      //      Oceania DX Contest (CW)
+                    OCEANIA_DX_SSB,     //      Oceania DX Contest (SSB)
+                    OH_QSO_PARTY,       //      Ohio QSO Party
+                    OK_DX_RTTY,         //
+                    OK_OM_DX,           //      OK-OM DX Contest
+                    ON_QSO_PARTY,       //      Ontario QSO Party
+                    PACC,               //
+                    QC_QSO_PARTY,       //      Quebec QSO Party
+                    RAC,                //      Canada Day, RAC Winter contests
+                    RDAC,               //      Russian District Award Contest
+                    RDXC,               //      Russian DX Contest
+                    REF_160M,           //
+                    REF_CW,             //
+                    REF_SSB,            //
+                    RSGB_160,           //      1.8Mhz Contest
+                    RSGB_21_28_CW,      //      21/28 MHz Contest (CW)
+                    RSGB_21_28_SSB,     //      21/28 MHz Contest (SSB)
+                    RSGB_80M_CC,        //      80m Club Championships
+                    RSGB_AFS_CW,        //      Affiliated Societies Team Contest (CW)
+                    RSGB_AFS_SSB,       //      Affiliated Societies Team Contest (SSB)
+                    RSGB_CLUB_CALLS,    //      Club Calls
+                    RSGB_COMMONWEALTH,  //      Commonwealth Contest
+                    RSGB_IOTA,          //      IOTA Contest
+                    RSGB_LOW_POWER,     //      Low Power Field Day
+                    RSGB_NFD,           //      National Field Day
+                    RSGB_ROPOCO,        //      RoPoCo
+                    RSGB_SSB_FD,        //      SSB Field Day
+                    RUSSIAN_RTTY,       //
+                    SAC_CW,             //      Scandinavian Activity Contest (CW)
+                    SAC_SSB,            //      Scandinavian Activity Contest (SSB)
+                    SARTG_RTTY,         //      SARTG WW RTTY
+                    SCC_RTTY,           //      SCC RTTY Championship
+                    SMP_AUG,            //      SSA Portabeltest
+                    SMP_MAY,            //      SSA Portabeltest
+                    SPDXCCONTEST,       //       SP DX Contest
+                    SPRING_SPRINT,      //      FISTS Spring Sprint
+                    SR_MARATHON,        //      Scottish-Russian Marathon
+                    STEW_PERRY,         //      Stew Perry Topband Distance Challenge
+                    SUMMER_SPRINT,      //      FISTS Summer Sprint
+                    TARA_RTTY,          //      TARA RTTY Mêlée
+                    TMC_RTTY,           //      The Makrothen Contest
+                    UBA_DX_CW,          //      UBA Contest (CW)
+                    UBA_DX_SSB,         //      UBA Contest (SSB)
+                    UK_DX_RTTY,         //      UK DX RTTY Contest
+                    UKRAINIAN_DX,       //      Ukrainian DX
+                    UKR_CHAMP_RTTY,     //      Open Ukraine RTTY Championship
+                    URE_DX,             //
+                    VIRGINIA_QSO_PARTY, //      Virginia QSO Party
+                    VOLTA_RTTY,         //      Alessandro Volta RTTY DX Contest
+                    WI_QSO_PARTY,       //      Wisconsin QSO Party
+                    WINTER_SPRINT,      //      FISTS Winter Sprint
+                    YUDXC,              //      YU DX Contest
                     N_CONTESTS
                   };
 
-//typedef std::array<std::string, N_CONTESTS> CONTEST_ENUMERATION_TYPE;                           ///< type for contest enumeration
-
-using CONTEST_ENUMERATION_TYPE = std::array<std::string, N_CONTESTS>;                           ///< type for contest enumeration
+using CONTEST_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_CONTEST::N_CONTESTS)>;                           ///< type for contest enumeration
 
 static CONTEST_ENUMERATION_TYPE CONTEST_ENUMERATION = { "7QP"s,                                //  7th-Area QSO Party
                                                           "ANARTS-RTTY"s,                        //  ANARTS WW RTTY
@@ -748,29 +752,27 @@ static CONTEST_ENUMERATION_TYPE CONTEST_ENUMERATION = { "7QP"s,                 
 // propagation mode  -------------------------------------------------------
 
 /// propagation modes
-enum PROPAGATION_MODE_ENUM { PROP_MODE_AUR,         //      Aurora
-                             PROP_MODE_AUE,         //      Aurora-E
-                             PROP_MODE_BS,          //      Back scatter
-                             PROP_MODE_ECH,         //      EchoLink
-                             PROP_MODE_EME,         //      Earth-Moon-Earth
-                             PROP_MODE_ES,          //      Sporadic E
-                             PROP_MODE_FAI,         //      Field Aligned Irregularities
-                             PROP_MODE_F2,          //      F2 Reflection
-                             PROP_MODE_INTERNET,    //      Internet-assisted
-                             PROP_MODE_ION,         //      Ionoscatter
-                             PROP_MODE_IRL,         //      IRLP
-                             PROP_MODE_MS,          //      Meteor scatter
-                             PROP_MODE_RPT,         //      Terrestrial or atmospheric repeater or transponder
-                             PROP_MODE_RS,          //      Rain scatter
-                             PROP_MODE_SAT,         //      Satellite
-                             PROP_MODE_TEP,         //      Trans-equatorial
-                             PROP_MODE_TR,          //      Tropospheric ducting
+enum class ADIF_PROPAGATION_MODE { AUR,         //      Aurora
+                             AUE,         //      Aurora-E
+                             BS,          //      Back scatter
+                             ECH,         //      EchoLink
+                             EME,         //      Earth-Moon-Earth
+                             ES,          //      Sporadic E
+                             FAI,         //      Field Aligned Irregularities
+                             F2,          //      F2 Reflection
+                             INTERNET,    //      Internet-assisted
+                             ION,         //      Ionoscatter
+                             IRL,         //      IRLP
+                             MS,          //      Meteor scatter
+                             RPT,         //      Terrestrial or atmospheric repeater or transponder
+                             RS,          //      Rain scatter
+                             SAT,         //      Satellite
+                             TEP,         //      Trans-equatorial
+                             TR,          //      Tropospheric ducting
                              N_PROP_MODES
 };
 
-//typedef std::array<std::string, N_PROP_MODES> PROPAGATION_MODE_ENUMERATION_TYPE;    ///< type for propagation mode enumeration
-
-using PROPAGATION_MODE_ENUMERATION_TYPE = std::array<std::string, N_PROP_MODES>;    ///< type for propagation mode enumeration
+using PROPAGATION_MODE_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_PROPAGATION_MODE::N_PROP_MODES)>;    ///< type for propagation mode enumeration
 
 static PROPAGATION_MODE_ENUMERATION_TYPE PROPAGATION_MODE_ENUMERATION = { "AUR"s,          //  Aurora
                                                                             "AUE"s,          //  Aurora-E
@@ -1615,10 +1617,12 @@ enum PRIMARY_ENUM_AZORES { AZORES_AC,
                            N_AZORES_PRIMARIES
                          };
 
-typedef std::array<std::string, N_AZORES_PRIMARIES> PRIMARY_AZORES_ENUMERATION_TYPE;    ///< primaries for Azores
+//typedef std::array<std::string, N_AZORES_PRIMARIES> PRIMARY_AZORES_ENUMERATION_TYPE;    ///< primaries for Azores
 
-static PRIMARY_AZORES_ENUMERATION_TYPE PRIMARY_AZORES_ENUMERATION = { { "AC"
-                                                                    } };
+using PRIMARY_AZORES_ENUMERATION_TYPE = std::array<std::string, N_AZORES_PRIMARIES>;    ///< primaries for Azores
+
+static PRIMARY_AZORES_ENUMERATION_TYPE PRIMARY_AZORES_ENUMERATION = { "AC"s
+                                                                    };
 
 /// Australia
 enum PRIMARY_ENUM_AUSTRALIA { AUSTRALIA_ACT,    // Australian Capital Territory
@@ -1632,37 +1636,43 @@ enum PRIMARY_ENUM_AUSTRALIA { AUSTRALIA_ACT,    // Australian Capital Territory
                               N_AUSTRALIA_PRIMARIES
                            };
 
-typedef std::array<std::string, N_AUSTRALIA_PRIMARIES> PRIMARY_AUSTRALIA_ENUMERATION_TYPE;    ///< primaries for Australia
+//typedef std::array<std::string, N_AUSTRALIA_PRIMARIES> PRIMARY_AUSTRALIA_ENUMERATION_TYPE;    ///< primaries for Australia
 
-static PRIMARY_AUSTRALIA_ENUMERATION_TYPE PRIMARY_AUSTRALIA_ENUMERATION = { { "ACT",    // Australian Capital Territory
-                                                                              "NSW",    // New South Wales
-                                                                              "VIC",    // Victoria
-                                                                              "QLD",    // Queensland
-                                                                              "SA",     // South Australia
-                                                                              "WA",     // Western Australia
-                                                                              "TAS",    // Tasmania
-                                                                              "NT",     // Northern Territory
-                                                                          } };
+using PRIMARY_AUSTRALIA_ENUMERATION_TYPE = std::array<std::string, N_AUSTRALIA_PRIMARIES>;    ///< primaries for Australia
+
+static PRIMARY_AUSTRALIA_ENUMERATION_TYPE PRIMARY_AUSTRALIA_ENUMERATION = { "ACT"s,    // Australian Capital Territory
+                                                                              "NSW"s,    // New South Wales
+                                                                              "VIC"s,    // Victoria
+                                                                              "QLD"s,    // Queensland
+                                                                              "SA"s,     // South Australia
+                                                                              "WA"s,     // Western Australia
+                                                                              "TAS"s,    // Tasmania
+                                                                              "NT"s,     // Northern Territory
+                                                                          };
 
 /// Malyj Vysotskij
 enum PRIMARY_ENUM_MV { MV_MV,
                        N_MV_PRIMARIES
                      };
 
-typedef std::array<std::string, N_MV_PRIMARIES> PRIMARY_MV_ENUMERATION_TYPE;    ///< primaries for Malyj Vysotskij
+//typedef std::array<std::string, N_MV_PRIMARIES> PRIMARY_MV_ENUMERATION_TYPE;    ///< primaries for Malyj Vysotskij
 
-static PRIMARY_MV_ENUMERATION_TYPE PRIMARY_MV_ENUMERATION = { { "MV"
-                                                            } };
+using PRIMARY_MV_ENUMERATION_TYPE = std::array<std::string, N_MV_PRIMARIES>;    ///< primaries for Malyj Vysotskij
+
+static PRIMARY_MV_ENUMERATION_TYPE PRIMARY_MV_ENUMERATION = { "MV"s
+                                                            };
 
 /// Macquerie Is.
 enum PRIMARY_ENUM_MACQUERIE { MACQUERIE_MA,
                               N_MACQUERIE_PRIMARIES
                             };
 
-typedef std::array<std::string, N_MACQUERIE_PRIMARIES> PRIMARY_MACQUERIE_ENUMERATION_TYPE;    ///< primaries for Macquerie
+//typedef std::array<std::string, N_MACQUERIE_PRIMARIES> PRIMARY_MACQUERIE_ENUMERATION_TYPE;    ///< primaries for Macquerie
 
-static PRIMARY_MACQUERIE_ENUMERATION_TYPE PRIMARY_MACQUERIE_ENUMERATION = { { "MA"
-                                                                        } };
+using PRIMARY_MACQUERIE_ENUMERATION_TYPE = std::array<std::string, N_MACQUERIE_PRIMARIES>;    ///< primaries for Macquerie
+
+static PRIMARY_MACQUERIE_ENUMERATION_TYPE PRIMARY_MACQUERIE_ENUMERATION = { "MA"s
+                                                                          };
 
 /// Papua New Guinea
 enum PRIMARY_ENUM_PAPUA_NEW_GUINEA { PAPUA_NEW_GUINEA_NCD,     // National Capital District (Port Moresby)
@@ -1688,29 +1698,31 @@ enum PRIMARY_ENUM_PAPUA_NEW_GUINEA { PAPUA_NEW_GUINEA_NCD,     // National Capit
                                      N_PAPUA_NEW_GUINEA_PRIMARIES
                                    };
 
-typedef std::array<std::string, N_PAPUA_NEW_GUINEA_PRIMARIES> PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE;    ///< primaries for Papua New Guinea
+//typedef std::array<std::string, N_PAPUA_NEW_GUINEA_PRIMARIES> PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE;    ///< primaries for Papua New Guinea
 
-static PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION = { { "NCD",     // National Capital District (Port Moresby)
-                                                                                            "CPM",     // Central
-                                                                                            "CPK",     // Chimbu
-                                                                                            "EHG",     // Eastern Highlands
-                                                                                            "EBR",     // East New Britain
-                                                                                            "ESW",     // East Sepik
-                                                                                            "EPW",     // Enga
-                                                                                            "GPK",     // Gulf
-                                                                                            "MPM",     // Madang
-                                                                                            "MRL",     // Manus
-                                                                                            "MBA",     // Milne Bay
-                                                                                            "MPL",     // Morobe
-                                                                                            "NIK",     // New Ireland
-                                                                                            "NPP",     // Northern
-                                                                                            "NSA",     // North Solomons
-                                                                                            "SAN",     // Santaun
-                                                                                            "SHM",     // Southern Highlands
-                                                                                            "WPD",     // Western
-                                                                                            "WHM",     // Western Highlands
-                                                                                            "WBR"      // West New Britain,
-                                                                                        } };
+using PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE = std::array<std::string, N_PAPUA_NEW_GUINEA_PRIMARIES>;    ///< primaries for Papua New Guinea
+
+static PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION = { "NCD"s,     // National Capital District (Port Moresby)
+                                                                                            "CPM"s,     // Central
+                                                                                            "CPK"s,     // Chimbu
+                                                                                            "EHG"s,     // Eastern Highlands
+                                                                                            "EBR"s,     // East New Britain
+                                                                                            "ESW"s,     // East Sepik
+                                                                                            "EPW"s,     // Enga
+                                                                                            "GPK"s,     // Gulf
+                                                                                            "MPM"s,     // Madang
+                                                                                            "MRL"s,     // Manus
+                                                                                            "MBA"s,     // Milne Bay
+                                                                                            "MPL"s,     // Morobe
+                                                                                            "NIK"s,     // New Ireland
+                                                                                            "NPP"s,     // Northern
+                                                                                            "NSA"s,     // North Solomons
+                                                                                            "SAN"s,     // Santaun
+                                                                                            "SHM"s,     // Southern Highlands
+                                                                                            "WPD"s,     // Western
+                                                                                            "WHM"s,     // Western Highlands
+                                                                                            "WBR"s      // West New Britain,
+                                                                                        };
 
 /// New Zealand
 enum PRIMARY_ENUM_NEW_ZEALAND { NEW_ZEALAND_NCD,    // National Capital District
@@ -1733,26 +1745,28 @@ enum PRIMARY_ENUM_NEW_ZEALAND { NEW_ZEALAND_NCD,    // National Capital District
                                 N_NEW_ZEALAND_PRIMARIES
                               };
 
-typedef std::array<std::string, N_NEW_ZEALAND_PRIMARIES> PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE;    ///< primaries for New  Zealand
+//typedef std::array<std::string, N_NEW_ZEALAND_PRIMARIES> PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE;    ///< primaries for New  Zealand
 
-static PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE PRIMARY_NEW_ZEALAND_ENUMERATION = { { "NCD",    // National Capital District
-                                                                                  "AUK",    // Auckland
-                                                                                  "BOP",    // Bay of Plenty
-                                                                                  "NTL",    // Northland
-                                                                                  "WKO",    // Waikato
-                                                                                  "GIS",    // Gisborne
-                                                                                  "HKB",    // Hawkes Bay
-                                                                                  "MWT",    // Manawatu-Wanganui
-                                                                                  "TKI",    // Taranaki
-                                                                                  "WGN",    // Wellington
-                                                                                  "CAN",    // Canterbury
-                                                                                  "MBH",    // Marlborough
-                                                                                  "NSN",    // Nelson
-                                                                                  "TAS",    // Tasman
-                                                                                  "WTC",    // West Coast
-                                                                                  "OTA",    // Otago
-                                                                                  "STL"     // Southland
-                                                                              } };
+using PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE = std::array<std::string, N_NEW_ZEALAND_PRIMARIES>;    ///< primaries for New  Zealand
+
+static PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE PRIMARY_NEW_ZEALAND_ENUMERATION = { "NCD"s,    // National Capital District
+                                                                                  "AUK"s,    // Auckland
+                                                                                  "BOP"s,    // Bay of Plenty
+                                                                                  "NTL"s,    // Northland
+                                                                                  "WKO"s,    // Waikato
+                                                                                  "GIS"s,    // Gisborne
+                                                                                  "HKB"s,    // Hawkes Bay
+                                                                                  "MWT"s,    // Manawatu-Wanganui
+                                                                                  "TKI"s,    // Taranaki
+                                                                                  "WGN"s,    // Wellington
+                                                                                  "CAN"s,    // Canterbury
+                                                                                  "MBH"s,    // Marlborough
+                                                                                  "NSN"s,    // Nelson
+                                                                                  "TAS"s,    // Tasman
+                                                                                  "WTC"s,    // West Coast
+                                                                                  "OTA"s,    // Otago
+                                                                                  "STL"s     // Southland
+                                                                              };
 
 /// Austria
 enum PRIMARY_ENUM_AUSTRIA { AUSTRIA_WC,   // Wien
@@ -1860,111 +1874,113 @@ enum PRIMARY_ENUM_AUSTRIA { AUSTRIA_WC,   // Wien
                             N_AUSTRIA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_AUSTRIA_PRIMARIES> PRIMARY_AUSTRIA_ENUMERATION_TYPE;    ///< primaries for Austria
+//typedef std::array<std::string, N_AUSTRIA_PRIMARIES> PRIMARY_AUSTRIA_ENUMERATION_TYPE;    ///< primaries for Austria
 
-static PRIMARY_AUSTRIA_ENUMERATION_TYPE PRIMARY_AUSTRIA_ENUMERATION = { { "WC",   // Wien
-                                                                          "HA",   // Hallein
-                                                                          "JO",   // St. Johann
-                                                                          "SC",   // Salzburg
-                                                                          "SL",   // Salzburg-Land
-                                                                          "TA",   // Tamsweg
-                                                                          "ZE",   // Zell Am See
-                                                                          "AM",   // Amstetten
-                                                                          "BL",   // Bruck/Leitha
-                                                                          "BN",   // Baden
-                                                                          "GD",   // Gmünd
-                                                                          "GF",   // Gänserndorf
-                                                                          "HL",   // Hollabrunn
-                                                                          "HO",   // Horn
-                                                                          "KO",   // Korneuburg
-                                                                          "KR",   // Krems-Region
-                                                                          "KS",   // Krems
-                                                                          "LF",   // Lilienfeld
-                                                                          "MD",   // Mödling
-                                                                          "ME",   // Melk
-                                                                          "MI",   // Mistelbach
-                                                                          "NK",   // Neunkirchen
-                                                                          "PC",   // St. Pölten
-                                                                          "PL",   // St. Pölten-Land
-                                                                          "SB",   // Scheibbs
-                                                                          "SW",   // Schwechat
-                                                                          "TU",   // Tulln
-                                                                          "WB",   // Wr.Neustadt-Bezirk
-                                                                          "WN",   // Wr.Neustadt
-                                                                          "WT",   // Waidhofen/Thaya
-                                                                          "WU",   // Wien-Umgebung
-                                                                          "WY",   // Waidhofen/Ybbs
-                                                                          "ZT",   // Zwettl
-                                                                          "EC",   // Eisenstadt
-                                                                          "EU",   // Eisenstadt-Umgebung
-                                                                          "GS",   // Güssing
-                                                                          "JE",   // Jennersdorf
-                                                                          "MA",   // Mattersburg
-                                                                          "ND",   // Neusiedl/See
-                                                                          "OP",   // Oberpullendorf
-                                                                          "OW",   // Oberwart
-                                                                          "BR",   // Braunau/Inn
-                                                                          "EF",   // Eferding
-                                                                          "FR",   // Freistadt
-                                                                          "GM",   // Gmunden
-                                                                          "GR",   // Grieskirchen
-                                                                          "KI",   // Kirchdorf
-                                                                          "LC",   // Linz
-                                                                          "LL",   // Linz-Land
-                                                                          "PE",   // Perg
-                                                                          "RI",   // Ried/Innkreis
-                                                                          "RO",   // Rohrbach
-                                                                          "SD",   // Schärding
-                                                                          "SE",   // Steyr-Land
-                                                                          "SR",   // Steyr
-                                                                          "UU",   // Urfahr
-                                                                          "VB",   // Vöcklabruck
-                                                                          "WE",   // Wels
-                                                                          "WL",   // Wels-Land
-                                                                          "BA",   // Bad Aussee
-                                                                          "BM",   // Bruck/Mur
-                                                                          "DL",   // Deutschlandsberg
-                                                                          "FB",   // Feldbach
-                                                                          "FF",   // Fürstenfeld
-                                                                          "GB",   // Gröbming
-                                                                          "GC",   // Graz
-                                                                          "GU",   // Graz-Umgebung
-                                                                          "HB",   // Hartberg
-                                                                          "JU",   // Judenburg
-                                                                          "KF",   // Knittelfeld
-                                                                          "LB",   // Leibnitz
-                                                                          "LE",   // Leoben
-                                                                          "LI",   // Liezen
-                                                                          "LN",   // Leoben-Land
-                                                                          "MU",   // Murau
-                                                                          "MZ",   // Mürzzuschlag
-                                                                          "RA",   // Radkersburg
-                                                                          "VO",   // Voitsberg
-                                                                          "WZ",   // Weiz
-                                                                          "IC",   // Innsbruck
-                                                                          "IL",   // Innsbruck-Land
-                                                                          "IM",   // Imst
-                                                                          "KB",   // Kitzbühel
-                                                                          "KU",   // Kufstein
-                                                                          "LA",   // Landeck
-                                                                          "LZ",   // Lienz
-                                                                          "RE",   // Reutte
-                                                                          "SZ",   // Schwaz
-                                                                          "FE",   // Feldkirchen
-                                                                          "HE",   // Hermagor
-                                                                          "KC",   // Klagenfurt
-                                                                          "KL",   // Klagenfurt-Land
-                                                                          "SP",   // Spittal/Drau
-                                                                          "SV",   // St.Veit/Glan
-                                                                          "VI",   // Villach
-                                                                          "VK",   // Völkermarkt
-                                                                          "VL",   // Villach-Land
-                                                                          "WO",   // Wolfsberg
-                                                                          "BC",   // Bregenz
-                                                                          "BZ",   // Bludenz
-                                                                          "DO",   // Dornbirn
-                                                                          "FK"    //Feldkirch
-                                                                      } };
+using PRIMARY_AUSTRIA_ENUMERATION_TYPE = std::array<std::string, N_AUSTRIA_PRIMARIES>;    ///< primaries for Austria
+
+static PRIMARY_AUSTRIA_ENUMERATION_TYPE PRIMARY_AUSTRIA_ENUMERATION = { "WC"s,   // Wien
+                                                                          "HA"s,   // Hallein
+                                                                          "JO"s,   // St. Johann
+                                                                          "SC"s,   // Salzburg
+                                                                          "SL"s,   // Salzburg-Land
+                                                                          "TA"s,   // Tamsweg
+                                                                          "ZE"s,   // Zell Am See
+                                                                          "AM"s,   // Amstetten
+                                                                          "BL"s,   // Bruck/Leitha
+                                                                          "BN"s,   // Baden
+                                                                          "GD"s,   // Gmünd
+                                                                          "GF"s,   // Gänserndorf
+                                                                          "HL"s,   // Hollabrunn
+                                                                          "HO"s,   // Horn
+                                                                          "KO"s,   // Korneuburg
+                                                                          "KR"s,   // Krems-Region
+                                                                          "KS"s,   // Krems
+                                                                          "LF"s,   // Lilienfeld
+                                                                          "MD"s,   // Mödling
+                                                                          "ME"s,   // Melk
+                                                                          "MI"s,   // Mistelbach
+                                                                          "NK"s,   // Neunkirchen
+                                                                          "PC"s,   // St. Pölten
+                                                                          "PL"s,   // St. Pölten-Land
+                                                                          "SB"s,   // Scheibbs
+                                                                          "SW"s,   // Schwechat
+                                                                          "TU"s,   // Tulln
+                                                                          "WB"s,   // Wr.Neustadt-Bezirk
+                                                                          "WN"s,   // Wr.Neustadt
+                                                                          "WT"s,   // Waidhofen/Thaya
+                                                                          "WU"s,   // Wien-Umgebung
+                                                                          "WY"s,   // Waidhofen/Ybbs
+                                                                          "ZT"s,   // Zwettl
+                                                                          "EC"s,   // Eisenstadt
+                                                                          "EU"s,   // Eisenstadt-Umgebung
+                                                                          "GS"s,   // Güssing
+                                                                          "JE"s,   // Jennersdorf
+                                                                          "MA"s,   // Mattersburg
+                                                                          "ND"s,   // Neusiedl/See
+                                                                          "OP"s,   // Oberpullendorf
+                                                                          "OW"s,   // Oberwart
+                                                                          "BR"s,   // Braunau/Inn
+                                                                          "EF"s,   // Eferding
+                                                                          "FR"s,   // Freistadt
+                                                                          "GM"s,   // Gmunden
+                                                                          "GR"s,   // Grieskirchen
+                                                                          "KI"s,   // Kirchdorf
+                                                                          "LC"s,   // Linz
+                                                                          "LL"s,   // Linz-Land
+                                                                          "PE"s,   // Perg
+                                                                          "RI"s,   // Ried/Innkreis
+                                                                          "RO"s,   // Rohrbach
+                                                                          "SD"s,   // Schärding
+                                                                          "SE"s,   // Steyr-Land
+                                                                          "SR"s,   // Steyr
+                                                                          "UU"s,   // Urfahr
+                                                                          "VB"s,   // Vöcklabruck
+                                                                          "WE"s,   // Wels
+                                                                          "WL"s,   // Wels-Land
+                                                                          "BA"s,   // Bad Aussee
+                                                                          "BM"s,   // Bruck/Mur
+                                                                          "DL"s,   // Deutschlandsberg
+                                                                          "FB"s,   // Feldbach
+                                                                          "FF"s,   // Fürstenfeld
+                                                                          "GB"s,   // Gröbming
+                                                                          "GC"s,   // Graz
+                                                                          "GU"s,   // Graz-Umgebung
+                                                                          "HB"s,   // Hartberg
+                                                                          "JU"s,   // Judenburg
+                                                                          "KF"s,   // Knittelfeld
+                                                                          "LB"s,   // Leibnitz
+                                                                          "LE"s,   // Leoben
+                                                                          "LI"s,   // Liezen
+                                                                          "LN"s,   // Leoben-Land
+                                                                          "MU"s,   // Murau
+                                                                          "MZ"s,   // Mürzzuschlag
+                                                                          "RA"s,   // Radkersburg
+                                                                          "VO"s,   // Voitsberg
+                                                                          "WZ"s,   // Weiz
+                                                                          "IC"s,   // Innsbruck
+                                                                          "IL"s,   // Innsbruck-Land
+                                                                          "IM"s,   // Imst
+                                                                          "KB"s,   // Kitzbühel
+                                                                          "KU"s,   // Kufstein
+                                                                          "LA"s,   // Landeck
+                                                                          "LZ"s,   // Lienz
+                                                                          "RE"s,   // Reutte
+                                                                          "SZ"s,   // Schwaz
+                                                                          "FE"s,   // Feldkirchen
+                                                                          "HE"s,   // Hermagor
+                                                                          "KC"s,   // Klagenfurt
+                                                                          "KL"s,   // Klagenfurt-Land
+                                                                          "SP"s,   // Spittal/Drau
+                                                                          "SV"s,   // St.Veit/Glan
+                                                                          "VI"s,   // Villach
+                                                                          "VK"s,   // Völkermarkt
+                                                                          "VL"s,   // Villach-Land
+                                                                          "WO"s,   // Wolfsberg
+                                                                          "BC"s,   // Bregenz
+                                                                          "BZ"s,   // Bludenz
+                                                                          "DO"s,   // Dornbirn
+                                                                          "FK"s    //Feldkirch
+                                                                      };
 
 /// Belgium
 enum PRIMARY_ENUM_BELGIUM { BELGIUM_AN,     // Antwerpen
@@ -1981,20 +1997,22 @@ enum PRIMARY_ENUM_BELGIUM { BELGIUM_AN,     // Antwerpen
                             N_BELGIUM_PRIMARIES
                          };
 
-typedef std::array<std::string, N_BELGIUM_PRIMARIES> PRIMARY_BELGIUM_ENUMERATION_TYPE;    ///< primaries for Belgium
+//typedef std::array<std::string, N_BELGIUM_PRIMARIES> PRIMARY_BELGIUM_ENUMERATION_TYPE;    ///< primaries for Belgium
 
-static PRIMARY_BELGIUM_ENUMERATION_TYPE PRIMARY_BELGIUM_ENUMERATION = { { "AN",     // Antwerpen
-                                                                          "BR",     // Brussels
-                                                                          "BW",     // Brabant Wallon
-                                                                          "HT",     // Hainaut
-                                                                          "LB",     // Limburg
-                                                                          "LG",     // Liêge
-                                                                          "NM",     // Namur
-                                                                          "LU",     // Luxembourg
-                                                                          "OV",     // Oost-Vlaanderen
-                                                                          "VB",     // Vlaams Brabant
-                                                                          "WZ"     // West-Vlaanderen
-                                                                      } };
+using PRIMARY_BELGIUM_ENUMERATION_TYPE = std::array<std::string, N_BELGIUM_PRIMARIES>;    ///< primaries for Belgium
+
+static PRIMARY_BELGIUM_ENUMERATION_TYPE PRIMARY_BELGIUM_ENUMERATION = { "AN"s,     // Antwerpen
+                                                                          "BR"s,     // Brussels
+                                                                          "BW"s,     // Brabant Wallon
+                                                                          "HT"s,     // Hainaut
+                                                                          "LB"s,     // Limburg
+                                                                          "LG"s,     // Liêge
+                                                                          "NM"s,     // Namur
+                                                                          "LU"s,     // Luxembourg
+                                                                          "OV"s,     // Oost-Vlaanderen
+                                                                          "VB"s,     // Vlaams Brabant
+                                                                          "WZ"s     // West-Vlaanderen
+                                                                      };
 
 /// Bulgaria
 enum PRIMARY_ENUM_BULGARIA { BULGARIA_BU,   // Burgas
@@ -2028,37 +2046,39 @@ enum PRIMARY_ENUM_BULGARIA { BULGARIA_BU,   // Burgas
                              N_BULGARIA_PRIMARIES
                            };
 
-typedef std::array<std::string, N_BULGARIA_PRIMARIES> PRIMARY_BULGARIA_ENUMERATION_TYPE;    ///< primaries for Bulgaria
+//typedef std::array<std::string, N_BULGARIA_PRIMARIES> PRIMARY_BULGARIA_ENUMERATION_TYPE;    ///< primaries for Bulgaria
 
-static PRIMARY_BULGARIA_ENUMERATION_TYPE PRIMARY_BULGARIA_ENUMERATION = { { "BU",   // Burgas
-                                                                            "SL",   // Sliven
-                                                                            "YA",   // Yambol (Jambol)
-                                                                            "SO",   // Sofija Grad
-                                                                            "HA",   // Haskovo
-                                                                            "KA",   // Kărdžali
-                                                                            "SZ",   // Stara Zagora
-                                                                            "PA",   // Pazardžik
-                                                                            "PD",   // Plovdiv
-                                                                            "SM",   // Smoljan
-                                                                            "BL",   // Blagoevgrad
-                                                                            "KD",   // Kjustendil
-                                                                            "PK",   // Pernik
-                                                                            "SF",   // Sofija (Sofia)
-                                                                            "GA",   // Gabrovo
-                                                                            "LV",   // Loveč (Lovech)
-                                                                            "PL",   // Pleven
-                                                                            "VT",   // Veliko Tărnovo
-                                                                            "MN",   // Montana
-                                                                            "VD",   // Vidin
-                                                                            "VR",   // Vraca
-                                                                            "RZ",   // Razgrad
-                                                                            "RS",   // Ruse
-                                                                            "SS",   // Silistra
-                                                                            "TA",   // Tărgovište
-                                                                            "DO",   // Dobrič
-                                                                            "SN",   // Šumen
-                                                                            "VN"    //Varna
-                                                                        } };
+using PRIMARY_BULGARIA_ENUMERATION_TYPE = std::array<std::string, N_BULGARIA_PRIMARIES>;    ///< primaries for Bulgaria
+
+static PRIMARY_BULGARIA_ENUMERATION_TYPE PRIMARY_BULGARIA_ENUMERATION = { "BU"s,   // Burgas
+                                                                            "SL"s,   // Sliven
+                                                                            "YA"s,   // Yambol (Jambol)
+                                                                            "SO"s,   // Sofija Grad
+                                                                            "HA"s,   // Haskovo
+                                                                            "KA"s,   // Kărdžali
+                                                                            "SZ"s,   // Stara Zagora
+                                                                            "PA"s,   // Pazardžik
+                                                                            "PD"s,   // Plovdiv
+                                                                            "SM"s,   // Smoljan
+                                                                            "BL"s,   // Blagoevgrad
+                                                                            "KD"s,   // Kjustendil
+                                                                            "PK"s,   // Pernik
+                                                                            "SF"s,   // Sofija (Sofia)
+                                                                            "GA"s,   // Gabrovo
+                                                                            "LV"s,   // Loveč (Lovech)
+                                                                            "PL"s,   // Pleven
+                                                                            "VT"s,   // Veliko Tărnovo
+                                                                            "MN"s,   // Montana
+                                                                            "VD"s,   // Vidin
+                                                                            "VR"s,   // Vraca
+                                                                            "RZ"s,   // Razgrad
+                                                                            "RS"s,   // Ruse
+                                                                            "SS"s,   // Silistra
+                                                                            "TA"s,   // Tărgovište
+                                                                            "DO"s,   // Dobrič
+                                                                            "SN"s,   // Šumen
+                                                                            "VN"s    //Varna
+                                                                        };
 
 /// Corsica
 enum PRIMARY_ENUM_CORSICA { CORSICA_2A, // Corse-du-Sud
@@ -2066,11 +2086,13 @@ enum PRIMARY_ENUM_CORSICA { CORSICA_2A, // Corse-du-Sud
                             N_CORSICA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_CORSICA_PRIMARIES> PRIMARY_CORSICA_ENUMERATION_TYPE;    ///< primaries for Corsica
+//typedef std::array<std::string, N_CORSICA_PRIMARIES> PRIMARY_CORSICA_ENUMERATION_TYPE;    ///< primaries for Corsica
 
-static PRIMARY_CORSICA_ENUMERATION_TYPE PRIMARY_CORSICA_ENUMERATION = { { "2A", // Corse-du-Sud
-                                                                          "2B"  // Haute-Corse
-                                                                      } };
+using PRIMARY_CORSICA_ENUMERATION_TYPE = std::array<std::string, N_CORSICA_PRIMARIES>;    ///< primaries for Corsica
+
+static PRIMARY_CORSICA_ENUMERATION_TYPE PRIMARY_CORSICA_ENUMERATION = { "2A"s, // Corse-du-Sud
+                                                                          "2B"s  // Haute-Corse
+                                                                      };
 
 /// Denmark
 enum PRIMARY_ENUM_DENMARK { DENMARK_015,  // Koebenhavns amt
@@ -2092,25 +2114,27 @@ enum PRIMARY_ENUM_DENMARK { DENMARK_015,  // Koebenhavns amt
                             N_DENMARK_PRIMARIES
                          };
 
-typedef std::array<std::string, N_DENMARK_PRIMARIES> PRIMARY_DENMARK_ENUMERATION_TYPE;    ///< primaries for Denmark
+//typedef std::array<std::string, N_DENMARK_PRIMARIES> PRIMARY_DENMARK_ENUMERATION_TYPE;    ///< primaries for Denmark
 
-static PRIMARY_DENMARK_ENUMERATION_TYPE PRIMARY_DENMARK_ENUMERATION = { { "015",  // Koebenhavns amt
-                                                                          "020",  // Frederiksborg amt
-                                                                          "025",  // Roskilde amt
-                                                                          "030",  // Vestsjaellands amt
-                                                                          "035",  // Storstrøm amt (Storstroems)
-                                                                          "040",  // Bornholms amt
-                                                                          "042",  // Fyns amt
-                                                                          "050",  // Sínderjylland amt (Sydjyllands)
-                                                                          "055",  // Ribe amt
-                                                                          "060",  // Vejle amt
-                                                                          "065",  // Ringkøbing amt (Ringkoebing)
-                                                                          "070",  // Århus amt (Aarhus)
-                                                                          "076",  // Viborg amt
-                                                                          "080",  // Nordjyllands amt
-                                                                          "101",  // Copenhagen City
-                                                                          "147"   // Frederiksberg
-                                                                      } };
+using PRIMARY_DENMARK_ENUMERATION_TYPE = std::array<std::string, N_DENMARK_PRIMARIES>;    ///< primaries for Denmark
+
+static PRIMARY_DENMARK_ENUMERATION_TYPE PRIMARY_DENMARK_ENUMERATION = { "015"s,  // Koebenhavns amt
+                                                                          "020"s,  // Frederiksborg amt
+                                                                          "025"s,  // Roskilde amt
+                                                                          "030"s,  // Vestsjaellands amt
+                                                                          "035"s,  // Storstrøm amt (Storstroems)
+                                                                          "040"s,  // Bornholms amt
+                                                                          "042"s,  // Fyns amt
+                                                                          "050"s,  // Sínderjylland amt (Sydjyllands)
+                                                                          "055"s,  // Ribe amt
+                                                                          "060"s,  // Vejle amt
+                                                                          "065"s,  // Ringkøbing amt (Ringkoebing)
+                                                                          "070"s,  // Århus amt (Aarhus)
+                                                                          "076"s,  // Viborg amt
+                                                                          "080"s,  // Nordjyllands amt
+                                                                          "101"s,  // Copenhagen City
+                                                                          "147"s   // Frederiksberg
+                                                                      };
 
 /// Finland
 enum PRIMARY_ENUM_FINLAND { FINLAND_100,    // Somero
@@ -2546,439 +2570,441 @@ enum PRIMARY_ENUM_FINLAND { FINLAND_100,    // Somero
                             N_FINLAND_PRIMARIES
                          };
 
-typedef std::array<std::string, N_FINLAND_PRIMARIES> PRIMARY_FINLAND_ENUMERATION_TYPE;    ///< primaries for Finland
+//typedef std::array<std::string, N_FINLAND_PRIMARIES> PRIMARY_FINLAND_ENUMERATION_TYPE;    ///< primaries for Finland
 
-static PRIMARY_FINLAND_ENUMERATION_TYPE PRIMARY_FINLAND_ENUMERATION = { { "100",    // Somero
-                                                                          "102",    // Alastaro
-                                                                          "103",    // Askainen
-                                                                          "104",    // Aura
-                                                                          "105",    // Dragsfjärd
-                                                                          "106",    // Eura
-                                                                          "107",    // Eurajoki
-                                                                          "108",    // Halikko
-                                                                          "109",    // Harjavalta
-                                                                          "110",    // Honkajoki
-                                                                          "111",    // Houtskari
-                                                                          "112",    // Huittinen
-                                                                          "115",    // Iniö
-                                                                          "116",    // Jämijärvi
-                                                                          "117",    // Kaarina
-                                                                          "119",    // Kankaanpää
-                                                                          "120",    // Karinainen
-                                                                          "122",    // Karvia
-                                                                          "123",    // Äetsä
-                                                                          "124",    // Kemiö
-                                                                          "126",    // Kiikala
-                                                                          "128",    // Kiikoinen
-                                                                          "129",    // Kisko
-                                                                          "130",    // Kiukainen
-                                                                          "131",    // Kodisjoki
-                                                                          "132",    // Kokemäki
-                                                                          "133",    // Korppoo
-                                                                          "134",    // Koski tl
-                                                                          "135",    // Kullaa
-                                                                          "136",    // Kustavi
-                                                                          "137",    // Kuusjoki
-                                                                          "138",    // Köyliö
-                                                                          "139",    // Laitila
-                                                                          "140",    // Lappi
-                                                                          "141",    // Lavia
-                                                                          "142",    // Lemu
-                                                                          "143",    // Lieto
-                                                                          "144",    // Loimaa
-                                                                          "145",    // Loimaan kunta
-                                                                          "147",    // Luvia
-                                                                          "148",    // Marttila
-                                                                          "149",    // Masku
-                                                                          "150",    // Mellilä
-                                                                          "151",    // Merikarvia
-                                                                          "152",    // Merimasku
-                                                                          "154",    // Mietoinen
-                                                                          "156",    // Muurla
-                                                                          "157",    // Mynämäki
-                                                                          "158",    // Naantali
-                                                                          "159",    // Nakkila
-                                                                          "160",    // Nauvo
-                                                                          "161",    // Noormarkku
-                                                                          "162",    // Nousiainen
-                                                                          "163",    // Oripää
-                                                                          "164",    // Paimio
-                                                                          "165",    // Parainen
-                                                                          "167",    // Perniö
-                                                                          "168",    // Pertteli
-                                                                          "169",    // Piikkiö
-                                                                          "170",    // Pomarkku
-                                                                          "171",    // Pori
-                                                                          "172",    // Punkalaidun
-                                                                          "173",    // Pyhäranta
-                                                                          "174",    // Pöytyä
-                                                                          "175",    // Raisio
-                                                                          "176",    // Rauma
-                                                                          "178",    // Rusko
-                                                                          "179",    // Rymättylä
-                                                                          "180",    // Salo
-                                                                          "181",    // Sauvo
-                                                                          "182",    // Siikainen
-                                                                          "183",    // Suodenniemi
-                                                                          "184",    // Suomusjärvi
-                                                                          "185",    // Säkylä
-                                                                          "186",    // Särkisalo
-                                                                          "187",    // Taivassalo
-                                                                          "188",    // Tarvasjoki
-                                                                          "189",    // Turku
-                                                                          "190",    // Ulvila
-                                                                          "191",    // Uusikaupunki
-                                                                          "192",    // Vahto
-                                                                          "193",    // Vammala
-                                                                          "194",    // Vampula
-                                                                          "195",    // Vehmaa
-                                                                          "196",    // Velkua
-                                                                          "198",    // Västanfjärd
-                                                                          "199",    // Yläne
-                                                                          "201",    // Artjärvi
-                                                                          "202",    // Askola
-                                                                          "204",    // Espoo
-                                                                          "205",    // Hanko
-                                                                          "206",    // Helsinki
-                                                                          "207",    // Hyvinkää
-                                                                          "208",    // Inkoo
-                                                                          "209",    // Järvenpää
-                                                                          "210",    // Karjaa
-                                                                          "211",    // Karjalohja
-                                                                          "212",    // Karkkila
-                                                                          "213",    // Kauniainen
-                                                                          "214",    // Kerava
-                                                                          "215",    // Kirkkonummi
-                                                                          "216",    // Lapinjärvi
-                                                                          "217",    // Liljendal
-                                                                          "218",    // Lohjan kaupunki
-                                                                          "220",    // Loviisa
-                                                                          "221",    // Myrskylä
-                                                                          "222",    // Mäntsälä
-                                                                          "223",    // Nummi-Pusula
-                                                                          "224",    // Nurmijärvi
-                                                                          "225",    // Orimattila
-                                                                          "226",    // Pernaja
-                                                                          "227",    // Pohja
-                                                                          "228",    // Pornainen
-                                                                          "229",    // Porvoo
-                                                                          "231",    // Pukkila
-                                                                          "233",    // Ruotsinpyhtää
-                                                                          "234",    // Sammatti
-                                                                          "235",    // Sipoo
-                                                                          "236",    // Siuntio
-                                                                          "238",    // Tammisaari
-                                                                          "241",    // Tuusula
-                                                                          "242",    // Vantaa
-                                                                          "243",    // Vihti
-                                                                          "301",    // Asikkala
-                                                                          "303",    // Forssa
-                                                                          "304",    // Hattula
-                                                                          "305",    // Hauho
-                                                                          "306",    // Hausjärvi
-                                                                          "307",    // Hollola
-                                                                          "308",    // Humppila
-                                                                          "309",    // Hämeenlinna
-                                                                          "310",    // Janakkala
-                                                                          "311",    // Jokioinen
-                                                                          "312",    // Juupajoki
-                                                                          "313",    // Kalvola
-                                                                          "314",    // Kangasala
-                                                                          "315",    // Hämeenkoski
-                                                                          "316",    // Kuhmalahti
-                                                                          "318",    // Kuru
-                                                                          "319",    // Kylmäkoski
-                                                                          "320",    // Kärkölä
-                                                                          "321",    // Lahti
-                                                                          "322",    // Lammi
-                                                                          "323",    // Lempäälä
-                                                                          "324",    // Loppi
-                                                                          "325",    // Luopioinen
-                                                                          "326",    // Längelmäki
-                                                                          "327",    // Mänttä
-                                                                          "328",    // Nastola
-                                                                          "329",    // Nokia
-                                                                          "330",    // Orivesi
-                                                                          "331",    // Padasjoki
-                                                                          "332",    // Pirkkala
-                                                                          "333",    // Pälkäne
-                                                                          "334",    // Renko
-                                                                          "335",    // Riihimäki
-                                                                          "336",    // Ruovesi
-                                                                          "337",    // Sahalahti
-                                                                          "340",    // Tammela
-                                                                          "341",    // Tampere
-                                                                          "342",    // Toijala
-                                                                          "344",    // Tuulos
-                                                                          "345",    // Urjala
-                                                                          "346",    // Valkeakoski
-                                                                          "347",    // Vesilahti
-                                                                          "348",    // Viiala
-                                                                          "349",    // Vilppula
-                                                                          "350",    // Virrat
-                                                                          "351",    // Ylöjärvi
-                                                                          "352",    // Ypäjä
-                                                                          "353",    // Hämeenkyrö
-                                                                          "354",    // Ikaalinen
-                                                                          "355",    // Kihniö
-                                                                          "356",    // Mouhijärvi
-                                                                          "357",    // Parkano
-                                                                          "358",    // Viljakkala
-                                                                          "402",    // Enonkoski
-                                                                          "403",    // Hartola
-                                                                          "404",    // Haukivuori
-                                                                          "405",    // Heinola
-                                                                          "407",    // Heinävesi
-                                                                          "408",    // Hirvensalmi
-                                                                          "409",    // Joroinen
-                                                                          "410",    // Juva
-                                                                          "411",    // Jäppilä
-                                                                          "412",    // Kangaslampi
-                                                                          "413",    // Kangasniemi
-                                                                          "414",    // Kerimäki
-                                                                          "415",    // Mikkeli
-                                                                          "417",    // Mäntyharju
-                                                                          "418",    // Pertunmaa
-                                                                          "419",    // Pieksämäki
-                                                                          "420",    // Pieksänmaa
-                                                                          "421",    // Punkaharju
-                                                                          "422",    // Puumala
-                                                                          "423",    // Rantasalmi
-                                                                          "424",    // Ristiina
-                                                                          "425",    // Savonlinna
-                                                                          "426",    // Savonranta
-                                                                          "427",    // Sulkava
-                                                                          "428",    // Sysmä
-                                                                          "502",    // Elimäki
-                                                                          "503",    // Hamina
-                                                                          "504",    // Iitti
-                                                                          "505",    // Imatra
-                                                                          "506",    // Jaala
-                                                                          "507",    // Joutseno
-                                                                          "509",    // Kotka
-                                                                          "510",    // Kouvola
-                                                                          "511",    // Kuusankoski
-                                                                          "513",    // Lappeenranta
-                                                                          "514",    // Lemi
-                                                                          "515",    // Luumäki
-                                                                          "516",    // Miehikkälä
-                                                                          "518",    // Parikkala
-                                                                          "519",    // Pyhtää
-                                                                          "520",    // Rautjärvi
-                                                                          "521",    // Ruokolahti
-                                                                          "522",    // Saari
-                                                                          "523",    // Savitaipale
-                                                                          "525",    // Suomenniemi
-                                                                          "526",    // Taipalsaari
-                                                                          "527",    // Uukuniemi
-                                                                          "528",    // Valkeala
-                                                                          "530",    // Virolahti
-                                                                          "531",    // Ylämaa
-                                                                          "532",    // Anjalankoski
-                                                                          "601",    // Alahärmä
-                                                                          "602",    // Alajärvi
-                                                                          "603",    // Alavus
-                                                                          "604",    // Evijärvi
-                                                                          "605",    // Halsua
-                                                                          "606",    // Hankasalmi
-                                                                          "607",    // Himanka
-                                                                          "608",    // Ilmajoki
-                                                                          "609",    // Isojoki
-                                                                          "610",    // Isokyrö
-                                                                          "611",    // Jalasjärvi
-                                                                          "612",    // Joutsa
-                                                                          "613",    // Jurva
-                                                                          "614",    // Jyväskylä
-                                                                          "615",    // Jyväskylän mlk
-                                                                          "616",    // Jämsä
-                                                                          "617",    // Jämsänkoski
-                                                                          "619",    // Kannonkoski
-                                                                          "620",    // Kannus
-                                                                          "621",    // Karijoki
-                                                                          "622",    // Karstula
-                                                                          "623",    // Kaskinen
-                                                                          "624",    // Kauhajoki
-                                                                          "625",    // Kauhava
-                                                                          "626",    // Kaustinen
-                                                                          "627",    // Keuruu
-                                                                          "628",    // Kinnula
-                                                                          "629",    // Kivijärvi
-                                                                          "630",    // Kokkola
-                                                                          "632",    // Konnevesi
-                                                                          "633",    // Korpilahti
-                                                                          "634",    // Korsnäs
-                                                                          "635",    // Kortesjärvi
-                                                                          "636",    // Kristiinankaupunki
-                                                                          "637",    // Kruunupyy
-                                                                          "638",    // Kuhmoinen
-                                                                          "639",    // Kuortane
-                                                                          "640",    // Kurikka
-                                                                          "641",    // Kyyjärvi
-                                                                          "642",    // Kälviä
-                                                                          "643",    // Laihia
-                                                                          "644",    // Lappajärvi
-                                                                          "645",    // Lapua
-                                                                          "646",    // Laukaa
-                                                                          "647",    // Lehtimäki
-                                                                          "648",    // Leivonmäki
-                                                                          "649",    // Lestijärvi
-                                                                          "650",    // Lohtaja
-                                                                          "651",    // Luhanka
-                                                                          "652",    // Luoto
-                                                                          "653",    // Maalahti
-                                                                          "654",    // Maksamaa
-                                                                          "655",    // Multia
-                                                                          "656",    // Mustasaari
-                                                                          "657",    // Muurame
-                                                                          "658",    // Nurmo
-                                                                          "659",    // Närpiö
-                                                                          "660",    // Oravainen
-                                                                          "661",    // Perho
-                                                                          "662",    // Peräseinäjoki
-                                                                          "663",    // Petäjävesi
-                                                                          "664",    // Pietarsaari
-                                                                          "665",    // Pedersöre
-                                                                          "666",    // Pihtipudas
-                                                                          "668",    // Pylkönmäki
-                                                                          "669",    // Saarijärvi
-                                                                          "670",    // Seinäjoki
-                                                                          "671",    // Soini
-                                                                          "672",    // Sumiainen
-                                                                          "673",    // Suolahti
-                                                                          "675",    // Teuva
-                                                                          "676",    // Toholampi
-                                                                          "677",    // Toivakka
-                                                                          "678",    // Töysä
-                                                                          "679",    // Ullava
-                                                                          "680",    // Uurainen
-                                                                          "681",    // Uusikaarlepyy
-                                                                          "682",    // Vaasa
-                                                                          "683",    // Veteli
-                                                                          "684",    // Viitasaari
-                                                                          "685",    // Vimpeli
-                                                                          "686",    // Vähäkyrö
-                                                                          "687",    // Vöyri
-                                                                          "688",    // Ylihärmä
-                                                                          "689",    // Ylistaro
-                                                                          "690",    // Ähtäri
-                                                                          "692",    // Äänekoski
-                                                                          "701",    // Eno
-                                                                          "702",    // Iisalmi
-                                                                          "703",    // Ilomantsi
-                                                                          "704",    // Joensuu
-                                                                          "705",    // Juankoski
-                                                                          "706",    // Juuka
-                                                                          "707",    // Kaavi
-                                                                          "708",    // Karttula
-                                                                          "709",    // Keitele
-                                                                          "710",    // Kesälahti
-                                                                          "711",    // Kiihtelysvaara
-                                                                          "712",    // Kitee
-                                                                          "713",    // Kiuruvesi
-                                                                          "714",    // Kontiolahti
-                                                                          "715",    // Kuopio
-                                                                          "716",    // Lapinlahti
-                                                                          "717",    // Leppävirta
-                                                                          "718",    // Lieksa
-                                                                          "719",    // Liperi
-                                                                          "720",    // Maaninka
-                                                                          "721",    // Nilsiä
-                                                                          "722",    // Nurmes
-                                                                          "723",    // Outokumpu
-                                                                          "724",    // Pielavesi
-                                                                          "725",    // Polvijärvi
-                                                                          "726",    // Pyhäselkä
-                                                                          "727",    // Rautalampi
-                                                                          "728",    // Rautavaara
-                                                                          "729",    // Rääkkylä
-                                                                          "730",    // Siilinjärvi
-                                                                          "731",    // Sonkajärvi
-                                                                          "732",    // Suonenjoki
-                                                                          "733",    // Tervo
-                                                                          "734",    // Tohmajärvi
-                                                                          "735",    // Tuupovaara
-                                                                          "736",    // Tuusniemi
-                                                                          "737",    // Valtimo
-                                                                          "738",    // Varkaus
-                                                                          "739",    // Varpaisjärvi
-                                                                          "740",    // Vehmersalmi
-                                                                          "741",    // Vesanto
-                                                                          "742",    // Vieremä
-                                                                          "743",    // Värtsilä
-                                                                          "801",    // Alavieska
-                                                                          "802",    // Haapajärvi
-                                                                          "803",    // Haapavesi
-                                                                          "804",    // Hailuoto
-                                                                          "805",    // Haukipudas
-                                                                          "806",    // Hyrynsalmi
-                                                                          "807",    // Ii
-                                                                          "808",    // Kajaani
-                                                                          "810",    // Kalajoki
-                                                                          "811",    // Kempele
-                                                                          "812",    // Kestilä
-                                                                          "813",    // Kiiminki
-                                                                          "814",    // Kuhmo
-                                                                          "815",    // Kuivaniemi
-                                                                          "816",    // Kuusamo
-                                                                          "817",    // Kärsämäki
-                                                                          "818",    // Liminka
-                                                                          "819",    // Lumijoki
-                                                                          "820",    // Merijärvi
-                                                                          "821",    // Muhos
-                                                                          "822",    // Nivala
-                                                                          "823",    // Oulainen
-                                                                          "824",    // Oulu
-                                                                          "825",    // Oulunsalo
-                                                                          "826",    // Paltamo
-                                                                          "827",    // Pattijoki
-                                                                          "828",    // Piippola
-                                                                          "829",    // Pudasjärvi
-                                                                          "830",    // Pulkkila
-                                                                          "831",    // Puolanka
-                                                                          "832",    // Pyhäjoki
-                                                                          "833",    // Pyhäjärvi
-                                                                          "834",    // Pyhäntä
-                                                                          "835",    // Raahe
-                                                                          "836",    // Rantsila
-                                                                          "837",    // Reisjärvi
-                                                                          "838",    // Ristijärvi
-                                                                          "839",    // Ruukki
-                                                                          "840",    // Sievi
-                                                                          "841",    // Siikajoki
-                                                                          "842",    // Sotkamo
-                                                                          "843",    // Suomussalmi
-                                                                          "844",    // Taivalkoski
-                                                                          "846",    // Tyrnävä
-                                                                          "847",    // Utajärvi
-                                                                          "848",    // Vaala
-                                                                          "849",    // Vihanti
-                                                                          "850",    // Vuolijoki
-                                                                          "851",    // Yli-Ii
-                                                                          "852",    // Ylikiiminki
-                                                                          "853",    // Ylivieska
-                                                                          "901",    // Enontekiö
-                                                                          "902",    // Inari
-                                                                          "903",    // Kemi
-                                                                          "904",    // Keminmaa
-                                                                          "905",    // Kemijärvi
-                                                                          "907",    // Kittilä
-                                                                          "908",    // Kolari
-                                                                          "909",    // Muonio
-                                                                          "910",    // Pelkosenniemi
-                                                                          "911",    // Pello
-                                                                          "912",    // Posio
-                                                                          "913",    // Ranua
-                                                                          "914",    // Rovaniemi
-                                                                          "915",    // Rovaniemen mlk
-                                                                          "916",    // Salla
-                                                                          "917",    // Savukoski
-                                                                          "918",    // Simo
-                                                                          "919",    // Sodankylä
-                                                                          "920",    // Tervola
-                                                                          "921",    // Tornio
-                                                                          "922",    // Utsjoki
-                                                                          "923"     // Ylitornio
-                                                                      } };
+using PRIMARY_FINLAND_ENUMERATION_TYPE = std::array<std::string, N_FINLAND_PRIMARIES>;    ///< primaries for Finland
+
+static PRIMARY_FINLAND_ENUMERATION_TYPE PRIMARY_FINLAND_ENUMERATION = { "100"s,    // Somero
+                                                                          "102"s,    // Alastaro
+                                                                          "103"s,    // Askainen
+                                                                          "104"s,    // Aura
+                                                                          "105"s,    // Dragsfjärd
+                                                                          "106"s,    // Eura
+                                                                          "107"s,    // Eurajoki
+                                                                          "108"s,    // Halikko
+                                                                          "109"s,    // Harjavalta
+                                                                          "110"s,    // Honkajoki
+                                                                          "111"s,    // Houtskari
+                                                                          "112"s,    // Huittinen
+                                                                          "115"s,    // Iniö
+                                                                          "116"s,    // Jämijärvi
+                                                                          "117"s,    // Kaarina
+                                                                          "119"s,    // Kankaanpää
+                                                                          "120"s,    // Karinainen
+                                                                          "122"s,    // Karvia
+                                                                          "123"s,    // Äetsä
+                                                                          "124"s,    // Kemiö
+                                                                          "126"s,    // Kiikala
+                                                                          "128"s,    // Kiikoinen
+                                                                          "129"s,    // Kisko
+                                                                          "130"s,    // Kiukainen
+                                                                          "131"s,    // Kodisjoki
+                                                                          "132"s,    // Kokemäki
+                                                                          "133"s,    // Korppoo
+                                                                          "134"s,    // Koski tl
+                                                                          "135"s,    // Kullaa
+                                                                          "136"s,    // Kustavi
+                                                                          "137"s,    // Kuusjoki
+                                                                          "138"s,    // Köyliö
+                                                                          "139"s,    // Laitila
+                                                                          "140"s,    // Lappi
+                                                                          "141"s,    // Lavia
+                                                                          "142"s,    // Lemu
+                                                                          "143"s,    // Lieto
+                                                                          "144"s,    // Loimaa
+                                                                          "145"s,    // Loimaan kunta
+                                                                          "147"s,    // Luvia
+                                                                          "148"s,    // Marttila
+                                                                          "149"s,    // Masku
+                                                                          "150"s,    // Mellilä
+                                                                          "151"s,    // Merikarvia
+                                                                          "152"s,    // Merimasku
+                                                                          "154"s,    // Mietoinen
+                                                                          "156"s,    // Muurla
+                                                                          "157"s,    // Mynämäki
+                                                                          "158"s,    // Naantali
+                                                                          "159"s,    // Nakkila
+                                                                          "160"s,    // Nauvo
+                                                                          "161"s,    // Noormarkku
+                                                                          "162"s,    // Nousiainen
+                                                                          "163"s,    // Oripää
+                                                                          "164"s,    // Paimio
+                                                                          "165"s,    // Parainen
+                                                                          "167"s,    // Perniö
+                                                                          "168"s,    // Pertteli
+                                                                          "169"s,    // Piikkiö
+                                                                          "170"s,    // Pomarkku
+                                                                          "171"s,    // Pori
+                                                                          "172"s,    // Punkalaidun
+                                                                          "173"s,    // Pyhäranta
+                                                                          "174"s,    // Pöytyä
+                                                                          "175"s,    // Raisio
+                                                                          "176"s,    // Rauma
+                                                                          "178"s,    // Rusko
+                                                                          "179"s,    // Rymättylä
+                                                                          "180"s,    // Salo
+                                                                          "181"s,    // Sauvo
+                                                                          "182"s,    // Siikainen
+                                                                          "183"s,    // Suodenniemi
+                                                                          "184"s,    // Suomusjärvi
+                                                                          "185"s,    // Säkylä
+                                                                          "186"s,    // Särkisalo
+                                                                          "187"s,    // Taivassalo
+                                                                          "188"s,    // Tarvasjoki
+                                                                          "189"s,    // Turku
+                                                                          "190"s,    // Ulvila
+                                                                          "191"s,    // Uusikaupunki
+                                                                          "192"s,    // Vahto
+                                                                          "193"s,    // Vammala
+                                                                          "194"s,    // Vampula
+                                                                          "195"s,    // Vehmaa
+                                                                          "196"s,    // Velkua
+                                                                          "198"s,    // Västanfjärd
+                                                                          "199"s,    // Yläne
+                                                                          "201"s,    // Artjärvi
+                                                                          "202"s,    // Askola
+                                                                          "204"s,    // Espoo
+                                                                          "205"s,    // Hanko
+                                                                          "206"s,    // Helsinki
+                                                                          "207"s,    // Hyvinkää
+                                                                          "208"s,    // Inkoo
+                                                                          "209"s,    // Järvenpää
+                                                                          "210"s,    // Karjaa
+                                                                          "211"s,    // Karjalohja
+                                                                          "212"s,    // Karkkila
+                                                                          "213"s,    // Kauniainen
+                                                                          "214"s,    // Kerava
+                                                                          "215"s,    // Kirkkonummi
+                                                                          "216"s,    // Lapinjärvi
+                                                                          "217"s,    // Liljendal
+                                                                          "218"s,    // Lohjan kaupunki
+                                                                          "220"s,    // Loviisa
+                                                                          "221"s,    // Myrskylä
+                                                                          "222"s,    // Mäntsälä
+                                                                          "223"s,    // Nummi-Pusula
+                                                                          "224"s,    // Nurmijärvi
+                                                                          "225"s,    // Orimattila
+                                                                          "226"s,    // Pernaja
+                                                                          "227"s,    // Pohja
+                                                                          "228"s,    // Pornainen
+                                                                          "229"s,    // Porvoo
+                                                                          "231"s,    // Pukkila
+                                                                          "233"s,    // Ruotsinpyhtää
+                                                                          "234"s,    // Sammatti
+                                                                          "235"s,    // Sipoo
+                                                                          "236"s,    // Siuntio
+                                                                          "238"s,    // Tammisaari
+                                                                          "241"s,    // Tuusula
+                                                                          "242"s,    // Vantaa
+                                                                          "243"s,    // Vihti
+                                                                          "301"s,    // Asikkala
+                                                                          "303"s,    // Forssa
+                                                                          "304"s,    // Hattula
+                                                                          "305"s,    // Hauho
+                                                                          "306"s,    // Hausjärvi
+                                                                          "307"s,    // Hollola
+                                                                          "308"s,    // Humppila
+                                                                          "309"s,    // Hämeenlinna
+                                                                          "310"s,    // Janakkala
+                                                                          "311"s,    // Jokioinen
+                                                                          "312"s,    // Juupajoki
+                                                                          "313"s,    // Kalvola
+                                                                          "314"s,    // Kangasala
+                                                                          "315"s,    // Hämeenkoski
+                                                                          "316"s,    // Kuhmalahti
+                                                                          "318"s,    // Kuru
+                                                                          "319"s,    // Kylmäkoski
+                                                                          "320"s,    // Kärkölä
+                                                                          "321"s,    // Lahti
+                                                                          "322"s,    // Lammi
+                                                                          "323"s,    // Lempäälä
+                                                                          "324"s,    // Loppi
+                                                                          "325"s,    // Luopioinen
+                                                                          "326"s,    // Längelmäki
+                                                                          "327"s,    // Mänttä
+                                                                          "328"s,    // Nastola
+                                                                          "329"s,    // Nokia
+                                                                          "330"s,    // Orivesi
+                                                                          "331"s,    // Padasjoki
+                                                                          "332"s,    // Pirkkala
+                                                                          "333"s,    // Pälkäne
+                                                                          "334"s,    // Renko
+                                                                          "335"s,    // Riihimäki
+                                                                          "336"s,    // Ruovesi
+                                                                          "337"s,    // Sahalahti
+                                                                          "340"s,    // Tammela
+                                                                          "341"s,    // Tampere
+                                                                          "342"s,    // Toijala
+                                                                          "344"s,    // Tuulos
+                                                                          "345"s,    // Urjala
+                                                                          "346"s,    // Valkeakoski
+                                                                          "347"s,    // Vesilahti
+                                                                          "348"s,    // Viiala
+                                                                          "349"s,    // Vilppula
+                                                                          "350"s,    // Virrat
+                                                                          "351"s,    // Ylöjärvi
+                                                                          "352"s,    // Ypäjä
+                                                                          "353"s,    // Hämeenkyrö
+                                                                          "354"s,    // Ikaalinen
+                                                                          "355"s,    // Kihniö
+                                                                          "356"s,    // Mouhijärvi
+                                                                          "357"s,    // Parkano
+                                                                          "358"s,    // Viljakkala
+                                                                          "402"s,    // Enonkoski
+                                                                          "403"s,    // Hartola
+                                                                          "404"s,    // Haukivuori
+                                                                          "405"s,    // Heinola
+                                                                          "407"s,    // Heinävesi
+                                                                          "408"s,    // Hirvensalmi
+                                                                          "409"s,    // Joroinen
+                                                                          "410"s,    // Juva
+                                                                          "411"s,    // Jäppilä
+                                                                          "412"s,    // Kangaslampi
+                                                                          "413"s,    // Kangasniemi
+                                                                          "414"s,    // Kerimäki
+                                                                          "415"s,    // Mikkeli
+                                                                          "417"s,    // Mäntyharju
+                                                                          "418"s,    // Pertunmaa
+                                                                          "419"s,    // Pieksämäki
+                                                                          "420"s,    // Pieksänmaa
+                                                                          "421"s,    // Punkaharju
+                                                                          "422"s,    // Puumala
+                                                                          "423"s,    // Rantasalmi
+                                                                          "424"s,    // Ristiina
+                                                                          "425"s,    // Savonlinna
+                                                                          "426"s,    // Savonranta
+                                                                          "427"s,    // Sulkava
+                                                                          "428"s,    // Sysmä
+                                                                          "502"s,    // Elimäki
+                                                                          "503"s,    // Hamina
+                                                                          "504"s,    // Iitti
+                                                                          "505"s,    // Imatra
+                                                                          "506"s,    // Jaala
+                                                                          "507"s,    // Joutseno
+                                                                          "509"s,    // Kotka
+                                                                          "510"s,    // Kouvola
+                                                                          "511"s,    // Kuusankoski
+                                                                          "513"s,    // Lappeenranta
+                                                                          "514"s,    // Lemi
+                                                                          "515"s,    // Luumäki
+                                                                          "516"s,    // Miehikkälä
+                                                                          "518"s,    // Parikkala
+                                                                          "519"s,    // Pyhtää
+                                                                          "520"s,    // Rautjärvi
+                                                                          "521"s,    // Ruokolahti
+                                                                          "522"s,    // Saari
+                                                                          "523"s,    // Savitaipale
+                                                                          "525"s,    // Suomenniemi
+                                                                          "526"s,    // Taipalsaari
+                                                                          "527"s,    // Uukuniemi
+                                                                          "528"s,    // Valkeala
+                                                                          "530"s,    // Virolahti
+                                                                          "531"s,    // Ylämaa
+                                                                          "532"s,    // Anjalankoski
+                                                                          "601"s,    // Alahärmä
+                                                                          "602"s,    // Alajärvi
+                                                                          "603"s,    // Alavus
+                                                                          "604"s,    // Evijärvi
+                                                                          "605"s,    // Halsua
+                                                                          "606"s,    // Hankasalmi
+                                                                          "607"s,    // Himanka
+                                                                          "608"s,    // Ilmajoki
+                                                                          "609"s,    // Isojoki
+                                                                          "610"s,    // Isokyrö
+                                                                          "611"s,    // Jalasjärvi
+                                                                          "612"s,    // Joutsa
+                                                                          "613"s,    // Jurva
+                                                                          "614"s,    // Jyväskylä
+                                                                          "615"s,    // Jyväskylän mlk
+                                                                          "616"s,    // Jämsä
+                                                                          "617"s,    // Jämsänkoski
+                                                                          "619"s,    // Kannonkoski
+                                                                          "620"s,    // Kannus
+                                                                          "621"s,    // Karijoki
+                                                                          "622"s,    // Karstula
+                                                                          "623"s,    // Kaskinen
+                                                                          "624"s,    // Kauhajoki
+                                                                          "625"s,    // Kauhava
+                                                                          "626"s,    // Kaustinen
+                                                                          "627"s,    // Keuruu
+                                                                          "628"s,    // Kinnula
+                                                                          "629"s,    // Kivijärvi
+                                                                          "630"s,    // Kokkola
+                                                                          "632"s,    // Konnevesi
+                                                                          "633"s,    // Korpilahti
+                                                                          "634"s,    // Korsnäs
+                                                                          "635"s,    // Kortesjärvi
+                                                                          "636"s,    // Kristiinankaupunki
+                                                                          "637"s,    // Kruunupyy
+                                                                          "638"s,    // Kuhmoinen
+                                                                          "639"s,    // Kuortane
+                                                                          "640"s,    // Kurikka
+                                                                          "641"s,    // Kyyjärvi
+                                                                          "642"s,    // Kälviä
+                                                                          "643"s,    // Laihia
+                                                                          "644"s,    // Lappajärvi
+                                                                          "645"s,    // Lapua
+                                                                          "646"s,    // Laukaa
+                                                                          "647"s,    // Lehtimäki
+                                                                          "648"s,    // Leivonmäki
+                                                                          "649"s,    // Lestijärvi
+                                                                          "650"s,    // Lohtaja
+                                                                          "651"s,    // Luhanka
+                                                                          "652"s,    // Luoto
+                                                                          "653"s,    // Maalahti
+                                                                          "654"s,    // Maksamaa
+                                                                          "655"s,    // Multia
+                                                                          "656"s,    // Mustasaari
+                                                                          "657"s,    // Muurame
+                                                                          "658"s,    // Nurmo
+                                                                          "659"s,    // Närpiö
+                                                                          "660"s,    // Oravainen
+                                                                          "661"s,    // Perho
+                                                                          "662"s,    // Peräseinäjoki
+                                                                          "663"s,    // Petäjävesi
+                                                                          "664"s,    // Pietarsaari
+                                                                          "665"s,    // Pedersöre
+                                                                          "666"s,    // Pihtipudas
+                                                                          "668"s,    // Pylkönmäki
+                                                                          "669"s,    // Saarijärvi
+                                                                          "670"s,    // Seinäjoki
+                                                                          "671"s,    // Soini
+                                                                          "672"s,    // Sumiainen
+                                                                          "673"s,    // Suolahti
+                                                                          "675"s,    // Teuva
+                                                                          "676"s,    // Toholampi
+                                                                          "677"s,    // Toivakka
+                                                                          "678"s,    // Töysä
+                                                                          "679"s,    // Ullava
+                                                                          "680"s,    // Uurainen
+                                                                          "681"s,    // Uusikaarlepyy
+                                                                          "682"s,    // Vaasa
+                                                                          "683"s,    // Veteli
+                                                                          "684"s,    // Viitasaari
+                                                                          "685"s,    // Vimpeli
+                                                                          "686"s,    // Vähäkyrö
+                                                                          "687"s,    // Vöyri
+                                                                          "688"s,    // Ylihärmä
+                                                                          "689"s,    // Ylistaro
+                                                                          "690"s,    // Ähtäri
+                                                                          "692"s,    // Äänekoski
+                                                                          "701"s,    // Eno
+                                                                          "702"s,    // Iisalmi
+                                                                          "703"s,    // Ilomantsi
+                                                                          "704"s,    // Joensuu
+                                                                          "705"s,    // Juankoski
+                                                                          "706"s,    // Juuka
+                                                                          "707"s,    // Kaavi
+                                                                          "708"s,    // Karttula
+                                                                          "709"s,    // Keitele
+                                                                          "710"s,    // Kesälahti
+                                                                          "711"s,    // Kiihtelysvaara
+                                                                          "712"s,    // Kitee
+                                                                          "713"s,    // Kiuruvesi
+                                                                          "714"s,    // Kontiolahti
+                                                                          "715"s,    // Kuopio
+                                                                          "716"s,    // Lapinlahti
+                                                                          "717"s,    // Leppävirta
+                                                                          "718"s,    // Lieksa
+                                                                          "719"s,    // Liperi
+                                                                          "720"s,    // Maaninka
+                                                                          "721"s,    // Nilsiä
+                                                                          "722"s,    // Nurmes
+                                                                          "723"s,    // Outokumpu
+                                                                          "724"s,    // Pielavesi
+                                                                          "725"s,    // Polvijärvi
+                                                                          "726"s,    // Pyhäselkä
+                                                                          "727"s,    // Rautalampi
+                                                                          "728"s,    // Rautavaara
+                                                                          "729"s,    // Rääkkylä
+                                                                          "730"s,    // Siilinjärvi
+                                                                          "731"s,    // Sonkajärvi
+                                                                          "732"s,    // Suonenjoki
+                                                                          "733"s,    // Tervo
+                                                                          "734"s,    // Tohmajärvi
+                                                                          "735"s,    // Tuupovaara
+                                                                          "736"s,    // Tuusniemi
+                                                                          "737"s,    // Valtimo
+                                                                          "738"s,    // Varkaus
+                                                                          "739"s,    // Varpaisjärvi
+                                                                          "740"s,    // Vehmersalmi
+                                                                          "741"s,    // Vesanto
+                                                                          "742"s,    // Vieremä
+                                                                          "743"s,    // Värtsilä
+                                                                          "801"s,    // Alavieska
+                                                                          "802"s,    // Haapajärvi
+                                                                          "803"s,    // Haapavesi
+                                                                          "804"s,    // Hailuoto
+                                                                          "805"s,    // Haukipudas
+                                                                          "806"s,    // Hyrynsalmi
+                                                                          "807"s,    // Ii
+                                                                          "808"s,    // Kajaani
+                                                                          "810"s,    // Kalajoki
+                                                                          "811"s,    // Kempele
+                                                                          "812"s,    // Kestilä
+                                                                          "813"s,    // Kiiminki
+                                                                          "814"s,    // Kuhmo
+                                                                          "815"s,    // Kuivaniemi
+                                                                          "816"s,    // Kuusamo
+                                                                          "817"s,    // Kärsämäki
+                                                                          "818"s,    // Liminka
+                                                                          "819"s,    // Lumijoki
+                                                                          "820"s,    // Merijärvi
+                                                                          "821"s,    // Muhos
+                                                                          "822"s,    // Nivala
+                                                                          "823"s,    // Oulainen
+                                                                          "824"s,    // Oulu
+                                                                          "825"s,    // Oulunsalo
+                                                                          "826"s,    // Paltamo
+                                                                          "827"s,    // Pattijoki
+                                                                          "828"s,    // Piippola
+                                                                          "829"s,    // Pudasjärvi
+                                                                          "830"s,    // Pulkkila
+                                                                          "831"s,    // Puolanka
+                                                                          "832"s,    // Pyhäjoki
+                                                                          "833"s,    // Pyhäjärvi
+                                                                          "834"s,    // Pyhäntä
+                                                                          "835"s,    // Raahe
+                                                                          "836"s,    // Rantsila
+                                                                          "837"s,    // Reisjärvi
+                                                                          "838"s,    // Ristijärvi
+                                                                          "839"s,    // Ruukki
+                                                                          "840"s,    // Sievi
+                                                                          "841"s,    // Siikajoki
+                                                                          "842"s,    // Sotkamo
+                                                                          "843"s,    // Suomussalmi
+                                                                          "844"s,    // Taivalkoski
+                                                                          "846"s,    // Tyrnävä
+                                                                          "847"s,    // Utajärvi
+                                                                          "848"s,    // Vaala
+                                                                          "849"s,    // Vihanti
+                                                                          "850"s,    // Vuolijoki
+                                                                          "851"s,    // Yli-Ii
+                                                                          "852"s,    // Ylikiiminki
+                                                                          "853"s,    // Ylivieska
+                                                                          "901"s,    // Enontekiö
+                                                                          "902"s,    // Inari
+                                                                          "903"s,    // Kemi
+                                                                          "904"s,    // Keminmaa
+                                                                          "905"s,    // Kemijärvi
+                                                                          "907"s,    // Kittilä
+                                                                          "908"s,    // Kolari
+                                                                          "909"s,    // Muonio
+                                                                          "910"s,    // Pelkosenniemi
+                                                                          "911"s,    // Pello
+                                                                          "912"s,    // Posio
+                                                                          "913"s,    // Ranua
+                                                                          "914"s,    // Rovaniemi
+                                                                          "915"s,    // Rovaniemen mlk
+                                                                          "916"s,    // Salla
+                                                                          "917"s,    // Savukoski
+                                                                          "918"s,    // Simo
+                                                                          "919"s,    // Sodankylä
+                                                                          "920"s,    // Tervola
+                                                                          "921"s,    // Tornio
+                                                                          "922"s,    // Utsjoki
+                                                                          "923"s     // Ylitornio
+                                                                      };
 
 /// Sardinia
 enum PRIMARY_ENUM_SARDINIA { SARDINIA_CA,   // Cagliari
@@ -2993,18 +3019,20 @@ enum PRIMARY_ENUM_SARDINIA { SARDINIA_CA,   // Cagliari
                              N_SARDINIA_PRIMARIES
                            };
 
-typedef std::array<std::string, N_SARDINIA_PRIMARIES> PRIMARY_SARDINIA_ENUMERATION_TYPE;    ///< primaries for Sardinia
+//typedef std::array<std::string, N_SARDINIA_PRIMARIES> PRIMARY_SARDINIA_ENUMERATION_TYPE;    ///< primaries for Sardinia
 
-static PRIMARY_SARDINIA_ENUMERATION_TYPE PRIMARY_SARDINIA_ENUMERATION = { { "CA",   // Cagliari
-                                                                            "CI",   //  Carbonia Iglesias
-                                                                            "MD",   //  Medio Campidano (deprecated)
-                                                                            "NU",   // Nuoro
-                                                                            "OG",   // Ogliastra
-                                                                            "OR",   // Oristano
-                                                                            "OT",   // Olbia Tempio
-                                                                            "SS",   // Sassari
-                                                                            "VS",   // Medio Campidano
-                                                                        } };
+using PRIMARY_SARDINIA_ENUMERATION_TYPE = std::array<std::string, N_SARDINIA_PRIMARIES>;    ///< primaries for Sardinia
+
+static PRIMARY_SARDINIA_ENUMERATION_TYPE PRIMARY_SARDINIA_ENUMERATION = { "CA"s,   // Cagliari
+                                                                            "CI"s,   //  Carbonia Iglesias
+                                                                            "MD"s,   //  Medio Campidano (deprecated)
+                                                                            "NU"s,   // Nuoro
+                                                                            "OG"s,   // Ogliastra
+                                                                            "OR"s,   // Oristano
+                                                                            "OT"s,   // Olbia Tempio
+                                                                            "SS"s,   // Sassari
+                                                                            "VS"s,   // Medio Campidano
+                                                                        };
 
 /// France
 enum PRIMARY_ENUM_FRANCE { FRANCE_01, // Ain
@@ -3104,103 +3132,105 @@ enum PRIMARY_ENUM_FRANCE { FRANCE_01, // Ain
                            N_FRANCE_PRIMARIES
                          };
 
-typedef std::array<std::string, N_FRANCE_PRIMARIES> PRIMARY_FRANCE_ENUMERATION_TYPE;    ///< primaries for France
+//typedef std::array<std::string, N_FRANCE_PRIMARIES> PRIMARY_FRANCE_ENUMERATION_TYPE;    ///< primaries for France
 
-static PRIMARY_FRANCE_ENUMERATION_TYPE PRIMARY_FRANCE_ENUMERATION = { { "01", // Ain
-                                                                        "02", // Aisne
-                                                                        "03", // Allier
-                                                                        "04", // Alpes-de-Haute-Provence
-                                                                        "05", // Hautes-Alpes
-                                                                        "06", // Alpes-Maritimes
-                                                                        "07", // Ardèche
-                                                                        "08", // Ardennes
-                                                                        "09", // Ariège
-                                                                        "10", // Aube
-                                                                        "11", // Aude
-                                                                        "12", // Aveyron
-                                                                        "13", // Bouches-du-Rhone
-                                                                        "14", // Calvados
-                                                                        "15", // Cantal
-                                                                        "16", // Charente
-                                                                        "17", // Charente-Maritime
-                                                                        "18", // Cher
-                                                                        "19", // Corrèze
-                                                                        "21", // Cote-d'Or
-                                                                        "22", // Cotes-d'Armor
-                                                                        "23", // Creuse
-                                                                        "24", // Dordogne
-                                                                        "25", // Doubs
-                                                                        "26", // Drôme
-                                                                        "27", // Eure
-                                                                        "28", // Eure-et-Loir
-                                                                        "29", // Finistère
-                                                                        "30", // Gard
-                                                                        "31", // Haute-Garonne
-                                                                        "32", // Gere
-                                                                        "33", // Gironde
-                                                                        "34", // Hérault
-                                                                        "35", // Ille-et-Vilaine
-                                                                        "36", // Indre
-                                                                        "37", // Indre-et-Loire
-                                                                        "38", // Isère
-                                                                        "39", // Jura
-                                                                        "40", // Landes
-                                                                        "41", // Loir-et-Cher
-                                                                        "42", // Loire
-                                                                        "43", // Haute-Loire
-                                                                        "44", // Loire-Atlantique
-                                                                        "45", // Loiret
-                                                                        "46", // Lot
-                                                                        "47", // Lot-et-Garonne
-                                                                        "48", // Lozère
-                                                                        "49", // Maine-et-Loire
-                                                                        "50", // Manche
-                                                                        "51", // Marne
-                                                                        "52", // Haute-Marne
-                                                                        "53", // Mayenne
-                                                                        "54", // Meurthe-et-Moselle
-                                                                        "55", // Meuse
-                                                                        "56", //Morbihan
-                                                                        "57", // Moselle
-                                                                        "58", // Niëvre
-                                                                        "59", // Nord
-                                                                        "60", // Oise
-                                                                        "61", // Orne
-                                                                        "62", // Pas-de-Calais
-                                                                        "63", // Puy-de-Dôme
-                                                                        "64", // Pyrénées-Atlantiques
-                                                                        "65", // Hautea-Pyrénées
-                                                                        "66", // Pyrénées-Orientales
-                                                                        "67", // Bas-Rhin
-                                                                        "68", // Haut-Rhin
-                                                                        "69", // Rhône
-                                                                        "70", // Haute-Saône
-                                                                        "71", // Saône-et-Loire
-                                                                        "72", // Sarthe
-                                                                        "73", // Savoie
-                                                                        "74", // Haute-Savoie
-                                                                        "75", // Paris
-                                                                        "76", // Seine-Maritime
-                                                                        "77", // Seine-et-Marne
-                                                                        "78", // Yvelines
-                                                                        "79", // Deux-Sèvres
-                                                                        "80", // Somme
-                                                                        "81", // Tarn
-                                                                        "82", // Tarn-et-Garonne
-                                                                        "83", // Var
-                                                                        "84", // Vaucluse
-                                                                        "85", // Vendée
-                                                                        "86", // Vienne
-                                                                        "87", // Haute-Vienne
-                                                                        "88", // Vosges
-                                                                        "89", // Yonne
-                                                                        "90", // Territoire de Belfort
-                                                                        "91", // Essonne
-                                                                        "92", // Hauts-de-Selne
-                                                                        "93", // Seine-Saint-Denis
-                                                                        "94", // Val-de-Marne
-                                                                        "95"  // Val-d'Oise
-                                                                    } };
+using PRIMARY_FRANCE_ENUMERATION_TYPE = std::array<std::string, N_FRANCE_PRIMARIES>;    ///< primaries for France
+
+static PRIMARY_FRANCE_ENUMERATION_TYPE PRIMARY_FRANCE_ENUMERATION = { "01"s, // Ain
+                                                                        "02"s, // Aisne
+                                                                        "03"s, // Allier
+                                                                        "04"s, // Alpes-de-Haute-Provence
+                                                                        "05"s, // Hautes-Alpes
+                                                                        "06"s, // Alpes-Maritimes
+                                                                        "07"s, // Ardèche
+                                                                        "08"s, // Ardennes
+                                                                        "09"s, // Ariège
+                                                                        "10"s, // Aube
+                                                                        "11"s, // Aude
+                                                                        "12"s, // Aveyron
+                                                                        "13"s, // Bouches-du-Rhone
+                                                                        "14"s, // Calvados
+                                                                        "15"s, // Cantal
+                                                                        "16"s, // Charente
+                                                                        "17"s, // Charente-Maritime
+                                                                        "18"s, // Cher
+                                                                        "19"s, // Corrèze
+                                                                        "21"s, // Cote-d'Or
+                                                                        "22"s, // Cotes-d'Armor
+                                                                        "23"s, // Creuse
+                                                                        "24"s, // Dordogne
+                                                                        "25"s, // Doubs
+                                                                        "26"s, // Drôme
+                                                                        "27"s, // Eure
+                                                                        "28"s, // Eure-et-Loir
+                                                                        "29"s, // Finistère
+                                                                        "30"s, // Gard
+                                                                        "31"s, // Haute-Garonne
+                                                                        "32"s, // Gere
+                                                                        "33"s, // Gironde
+                                                                        "34"s, // Hérault
+                                                                        "35"s, // Ille-et-Vilaine
+                                                                        "36"s, // Indre
+                                                                        "37"s, // Indre-et-Loire
+                                                                        "38"s, // Isère
+                                                                        "39"s, // Jura
+                                                                        "40"s, // Landes
+                                                                        "41"s, // Loir-et-Cher
+                                                                        "42"s, // Loire
+                                                                        "43"s, // Haute-Loire
+                                                                        "44"s, // Loire-Atlantique
+                                                                        "45"s, // Loiret
+                                                                        "46"s, // Lot
+                                                                        "47"s, // Lot-et-Garonne
+                                                                        "48"s, // Lozère
+                                                                        "49"s, // Maine-et-Loire
+                                                                        "50"s, // Manche
+                                                                        "51"s, // Marne
+                                                                        "52"s, // Haute-Marne
+                                                                        "53"s, // Mayenne
+                                                                        "54"s, // Meurthe-et-Moselle
+                                                                        "55"s, // Meuse
+                                                                        "56"s, //Morbihan
+                                                                        "57"s, // Moselle
+                                                                        "58"s, // Niëvre
+                                                                        "59"s, // Nord
+                                                                        "60"s, // Oise
+                                                                        "61"s, // Orne
+                                                                        "62"s, // Pas-de-Calais
+                                                                        "63"s, // Puy-de-Dôme
+                                                                        "64"s, // Pyrénées-Atlantiques
+                                                                        "65"s, // Hautea-Pyrénées
+                                                                        "66"s, // Pyrénées-Orientales
+                                                                        "67"s, // Bas-Rhin
+                                                                        "68"s, // Haut-Rhin
+                                                                        "69"s, // Rhône
+                                                                        "70"s, // Haute-Saône
+                                                                        "71"s, // Saône-et-Loire
+                                                                        "72"s, // Sarthe
+                                                                        "73"s, // Savoie
+                                                                        "74"s, // Haute-Savoie
+                                                                        "75"s, // Paris
+                                                                        "76"s, // Seine-Maritime
+                                                                        "77"s, // Seine-et-Marne
+                                                                        "78"s, // Yvelines
+                                                                        "79"s, // Deux-Sèvres
+                                                                        "80"s, // Somme
+                                                                        "81"s, // Tarn
+                                                                        "82"s, // Tarn-et-Garonne
+                                                                        "83"s, // Var
+                                                                        "84"s, // Vaucluse
+                                                                        "85"s, // Vendée
+                                                                        "86"s, // Vienne
+                                                                        "87"s, // Haute-Vienne
+                                                                        "88"s, // Vosges
+                                                                        "89"s, // Yonne
+                                                                        "90"s, // Territoire de Belfort
+                                                                        "91"s, // Essonne
+                                                                        "92"s, // Hauts-de-Selne
+                                                                        "93"s, // Seine-Saint-Denis
+                                                                        "94"s, // Val-de-Marne
+                                                                        "95"s  // Val-d'Oise
+                                                                    };
 
 /// Germany
 enum PRIMARY_ENUM_GERMANY { GERMANY_BB,   // Brandenburg
@@ -3222,25 +3252,27 @@ enum PRIMARY_ENUM_GERMANY { GERMANY_BB,   // Brandenburg
                             N_GERMANY_PRIMARIES
                           };
 
-typedef std::array<std::string, N_GERMANY_PRIMARIES> PRIMARY_GERMANY_ENUMERATION_TYPE;    ///< primaries for Germany
+//typedef std::array<std::string, N_GERMANY_PRIMARIES> PRIMARY_GERMANY_ENUMERATION_TYPE;    ///< primaries for Germany
 
-static PRIMARY_GERMANY_ENUMERATION_TYPE PRIMARY_GERMANY_ENUMERATION = { { "BB",   // Brandenburg
-                                                                          "BE",   // Berlin
-                                                                          "BW",   // Baden-Württemberg
-                                                                          "BY",   // Freistaat Bayern
-                                                                          "HB",   // Freie Hansestadt Bremen
-                                                                          "HE",   // Hessen
-                                                                          "HH",   // Freie und Hansestadt Hamburg
-                                                                          "MV",   // Mecklenburg-Vorpommern
-                                                                          "NI",   // Niedersachsen
-                                                                          "NW",   // Nordrhein-Westfalen
-                                                                          "RP",   // Rheinland-Pfalz
-                                                                          "SL",   // Saarland
-                                                                          "SH",   // Schleswig-Holstein
-                                                                          "SN",   // Freistaat Sachsen
-                                                                          "ST",   // Sachsen-Anhalt
-                                                                          "TH"   // Freistaat Thüringen
-                                                                      } };
+using PRIMARY_GERMANY_ENUMERATION_TYPE = std::array<std::string, N_GERMANY_PRIMARIES>;    ///< primaries for Germany
+
+static PRIMARY_GERMANY_ENUMERATION_TYPE PRIMARY_GERMANY_ENUMERATION = { "BB"s,   // Brandenburg
+                                                                          "BE"s,   // Berlin
+                                                                          "BW"s,   // Baden-Württemberg
+                                                                          "BY"s,   // Freistaat Bayern
+                                                                          "HB"s,   // Freie Hansestadt Bremen
+                                                                          "HE"s,   // Hessen
+                                                                          "HH"s,   // Freie und Hansestadt Hamburg
+                                                                          "MV"s,   // Mecklenburg-Vorpommern
+                                                                          "NI"s,   // Niedersachsen
+                                                                          "NW"s,   // Nordrhein-Westfalen
+                                                                          "RP"s,   // Rheinland-Pfalz
+                                                                          "SL"s,   // Saarland
+                                                                          "SH"s,   // Schleswig-Holstein
+                                                                          "SN"s,   // Freistaat Sachsen
+                                                                          "ST"s,   // Sachsen-Anhalt
+                                                                          "TH"s   // Freistaat Thüringen
+                                                                      };
 
 /// Hungary
 enum PRIMARY_ENUM_HUNGARY { HUNGARY_GY,   // Gyõr (Gyõr-Moson-Sopron)
@@ -3266,29 +3298,31 @@ enum PRIMARY_ENUM_HUNGARY { HUNGARY_GY,   // Gyõr (Gyõr-Moson-Sopron)
                             N_HUNGARY_PRIMARIES
                           };
 
-typedef std::array<std::string, N_HUNGARY_PRIMARIES> PRIMARY_HUNGARY_ENUMERATION_TYPE;    ///< primaries for Hungary
+//typedef std::array<std::string, N_HUNGARY_PRIMARIES> PRIMARY_HUNGARY_ENUMERATION_TYPE;    ///< primaries for Hungary
 
-static PRIMARY_HUNGARY_ENUMERATION_TYPE PRIMARY_HUNGARY_ENUMERATION = { { "GY",   // Gyõr (Gyõr-Moson-Sopron)
-                                                                          "VA",   // Vas
-                                                                          "ZA",   // Zala
-                                                                          "KO",   // Komárom (Komárom-Esztergom)
-                                                                          "VE",   // Veszprém
-                                                                          "BA",   // Baranya
-                                                                          "SO",   // Somogy
-                                                                          "TO",   // Tolna
-                                                                          "FE",   // Fejér
-                                                                          "BP",   // Budapest
-                                                                          "HE",   // Heves
-                                                                          "NG",   // Nógrád
-                                                                          "PE",   // Pest
-                                                                          "SZ",   // Szolnok (Jász-Nagykun-Szolnok)
-                                                                          "BE",   // Békés
-                                                                          "BN",   // Bács-Kiskun
-                                                                          "CS",   // Csongrád
-                                                                          "BO",   // Borsod (Borsod-Abaúj-Zemplén)
-                                                                          "HB",   // Hajdú-Bihar
-                                                                          "SA"   // Szabolcs (Szabolcs-Szatmár-Bereg)
-                                                                      } };
+using PRIMARY_HUNGARY_ENUMERATION_TYPE = std::array<std::string, N_HUNGARY_PRIMARIES>;    ///< primaries for Hungary
+
+static PRIMARY_HUNGARY_ENUMERATION_TYPE PRIMARY_HUNGARY_ENUMERATION = { "GY"s,   // Gyõr (Gyõr-Moson-Sopron)
+                                                                          "VA"s,   // Vas
+                                                                          "ZA"s,   // Zala
+                                                                          "KO"s,   // Komárom (Komárom-Esztergom)
+                                                                          "VE"s,   // Veszprém
+                                                                          "BA"s,   // Baranya
+                                                                          "SO"s,   // Somogy
+                                                                          "TO"s,   // Tolna
+                                                                          "FE"s,   // Fejér
+                                                                          "BP"s,   // Budapest
+                                                                          "HE"s,   // Heves
+                                                                          "NG"s,   // Nógrád
+                                                                          "PE"s,   // Pest
+                                                                          "SZ"s,   // Szolnok (Jász-Nagykun-Szolnok)
+                                                                          "BE"s,   // Békés
+                                                                          "BN"s,   // Bács-Kiskun
+                                                                          "CS"s,   // Csongrád
+                                                                          "BO"s,   // Borsod (Borsod-Abaúj-Zemplén)
+                                                                          "HB"s,   // Hajdú-Bihar
+                                                                          "SA"s   // Szabolcs (Szabolcs-Szatmár-Bereg)
+                                                                      };
 
 /// Ireland
 enum PRIMARY_ENUM_IRELAND { IRELAND_CW,  // Carlow (Ceatharlach)
@@ -3320,35 +3354,37 @@ enum PRIMARY_ENUM_IRELAND { IRELAND_CW,  // Carlow (Ceatharlach)
                             N_IRELAND_PRIMARIES
                           };
 
-typedef std::array<std::string, N_IRELAND_PRIMARIES> PRIMARY_IRELAND_ENUMERATION_TYPE;    ///< primaries for Ireland
+//typedef std::array<std::string, N_IRELAND_PRIMARIES> PRIMARY_IRELAND_ENUMERATION_TYPE;    ///< primaries for Ireland
 
-static PRIMARY_IRELAND_ENUMERATION_TYPE PRIMARY_IRELAND_ENUMERATION = { { "CW",  // Carlow (Ceatharlach)
-                                                                          "CN",  // Cavan (An Cabhán)
-                                                                          "CE",  // Clare (An Clár)
-                                                                          "C",   // Cork (Corcaigh)
-                                                                          "DL",  // Donegal (Dún na nGall)
-                                                                          "D",   // Dublin (Baile Áth Cliath)
-                                                                          "G",   // Galway (Gaillimh)
-                                                                          "KY",  // Kerry (Ciarraí)
-                                                                          "KE",  // Kildare (Cill Dara)
-                                                                          "KK",  // Kilkenny (Cill Chainnigh)
-                                                                          "LS",  // Laois (Laois)
-                                                                          "LM",  // Leitrim (Liatroim)
-                                                                          "LK",  // Limerick (Luimneach)
-                                                                          "LD",  // Longford (An Longfort)
-                                                                          "LH",  // Louth (Lú)
-                                                                          "MO",  // Mayo (Maigh Eo)
-                                                                          "MH",  // Meath (An Mhí)
-                                                                          "MN",  // Monaghan (Muineachán)
-                                                                          "OY",  // Offaly (Uíbh Fhailí)
-                                                                          "RN",  // Roscommon (Ros Comáin)
-                                                                          "SO",  // Sligo (Sligeach)
-                                                                          "TA",  // Tipperary (Tiobraid Árann)
-                                                                          "WD",  // Waterford (Port Láirge)
-                                                                          "WH",  // Westmeath (An Iarmhí)
-                                                                          "WX",  // Wexford (Loch Garman)
-                                                                          "WW"   // Wicklow (Cill Mhantáin)
-                                                                      } };
+using PRIMARY_IRELAND_ENUMERATION_TYPE = std::array<std::string, N_IRELAND_PRIMARIES>;    ///< primaries for Ireland
+
+static PRIMARY_IRELAND_ENUMERATION_TYPE PRIMARY_IRELAND_ENUMERATION = { "CW"s,  // Carlow (Ceatharlach)
+                                                                          "CN"s,  // Cavan (An Cabhán)
+                                                                          "CE"s,  // Clare (An Clár)
+                                                                          "C"s,   // Cork (Corcaigh)
+                                                                          "DL"s,  // Donegal (Dún na nGall)
+                                                                          "D"s,   // Dublin (Baile Áth Cliath)
+                                                                          "G"s,   // Galway (Gaillimh)
+                                                                          "KY"s,  // Kerry (Ciarraí)
+                                                                          "KE"s,  // Kildare (Cill Dara)
+                                                                          "KK"s,  // Kilkenny (Cill Chainnigh)
+                                                                          "LS"s,  // Laois (Laois)
+                                                                          "LM"s,  // Leitrim (Liatroim)
+                                                                          "LK"s,  // Limerick (Luimneach)
+                                                                          "LD"s,  // Longford (An Longfort)
+                                                                          "LH"s,  // Louth (Lú)
+                                                                          "MO"s,  // Mayo (Maigh Eo)
+                                                                          "MH"s,  // Meath (An Mhí)
+                                                                          "MN"s,  // Monaghan (Muineachán)
+                                                                          "OY"s,  // Offaly (Uíbh Fhailí)
+                                                                          "RN"s,  // Roscommon (Ros Comáin)
+                                                                          "SO"s,  // Sligo (Sligeach)
+                                                                          "TA"s,  // Tipperary (Tiobraid Árann)
+                                                                          "WD"s,  // Waterford (Port Láirge)
+                                                                          "WH"s,  // Westmeath (An Iarmhí)
+                                                                          "WX"s,  // Wexford (Loch Garman)
+                                                                          "WW"s   // Wicklow (Cill Mhantáin)
+                                                                      };
 
 /// Italy
 enum PRIMARY_ENUM_ITALY { ITALY_GE,   // Genova
@@ -3458,123 +3494,127 @@ enum PRIMARY_ENUM_ITALY { ITALY_GE,   // Genova
                           N_ITALY_PRIMARIES
                         };
 
-typedef std::array<std::string, N_ITALY_PRIMARIES> PRIMARY_ITALY_ENUMERATION_TYPE;    ///< primaries for Italy
+//typedef std::array<std::string, N_ITALY_PRIMARIES> PRIMARY_ITALY_ENUMERATION_TYPE;    ///< primaries for Italy
 
-static PRIMARY_ITALY_ENUMERATION_TYPE PRIMARY_ITALY_ENUMERATION = { { "GE",   // Genova
-                                                                      "IM",   // Imperia
-                                                                      "SP",   // La Spezia
-                                                                      "SV",   // Savona
-                                                                      "AL",   // Alessandria
-                                                                      "AT",   // Asti
-                                                                      "BI",   // Biella
-                                                                      "CN",   // Cuneo
-                                                                      "NO",   // Novara
-                                                                      "TO",   // Torino
-                                                                      "VB",   // Verbano Cusio Ossola
-                                                                      "VC",   // Vercelli
-                                                                      "AO",   // Aosta
-                                                                      "BG",   // Bergamo
-                                                                      "BS",   // Brescia
-                                                                      "CO",   // Como
-                                                                      "CR",   // Cremona
-                                                                      "LC",   // Lecco
-                                                                      "LO",   // Lodi
-                                                                      "MB",   // Monza e Brianza
-                                                                      "MN",   // Mantova
-                                                                      "MI",   // Milano
-                                                                      "PV",   // Pavia
-                                                                      "SO",   // Sondrio
-                                                                      "VA",   // Varese
-                                                                      "BL",   // Belluno
-                                                                      "PD",   // Padova
-                                                                      "RO",   // Rovigo
-                                                                      "TV",   // Treviso
-                                                                      "VE",   // Venezia
-                                                                      "VR",   // Verona
-                                                                      "VI",   // Vicenza
-                                                                      "BZ",   // Bolzano
-                                                                      "TN",   // Trento
-                                                                      "GO",   // Gorizia
-                                                                      "PN",   // Pordenone
-                                                                      "TS",   // Trieste
-                                                                      "UD",   // Udine
-                                                                      "BO",   // Bologna
-                                                                      "FE",   // Ferrara
-                                                                      "FO",   // Forli (Deprecated)
-                                                                      "FC",   // Forli Cesena
-                                                                      "MO",   // Modena
-                                                                      "PR",   // Parma
-                                                                      "PC",   // Piacenza
-                                                                      "RA",   // Ravenna
-                                                                      "RE",   // Reggio Emilia
-                                                                      "RN",   // Rimini
-                                                                      "AR",   // Arezzo
-                                                                      "FI",   // Firenze
-                                                                      "GR",   // Grosseto
-                                                                      "LI",   // Livorno
-                                                                      "LU",   // Lucca
-                                                                      "MS",   // Massa Carrara
-                                                                      "PT",   // Pistoia
-                                                                      "PI",   // Pisa
-                                                                      "PO",   // Prato
-                                                                      "SI",   // Siena
-                                                                      "CH",   // Chieti
-                                                                      "AQ",   // L'Aquila
-                                                                      "PE",   // Pescara
-                                                                      "TE",   // Teramo
-                                                                      "AN",   // Ancona
-                                                                      "AP",   // Ascoli Piceno
-                                                                      "FM",   // Fermo
-                                                                      "MC",   // Macerata
-                                                                      "PS",   // Pesaro e Urbino (Deprecated)
-                                                                      "PU",   // Pesaro e Urbino
-                                                                      "MT",   // Matera
-                                                                      "BA",   // Bari
-                                                                      "BT",   // Barletta Andria Trani
-                                                                      "BR",   // Brindisi
-                                                                      "FG",   // Foggia
-                                                                      "LE",   // Lecce
-                                                                      "TA",   // Taranto
-                                                                      "PZ",   // Potenza
-                                                                      "CZ",   // Catanzaro
-                                                                      "CS",   // Cosenza
-                                                                      "KR",   // Crotone
-                                                                      "RC",   // Reggio Calabria
-                                                                      "VV",   // Vibo Valentia
-                                                                      "AV",   // Avellino
-                                                                      "BN",   // Benevento
-                                                                      "CE",   // Caserta
-                                                                      "NA",   // Napoli
-                                                                      "SA",   // Salerno
-                                                                      "IS",   // Isernia
-                                                                      "CB",   // Campobasso
-                                                                      "FR",   // Frosinone
-                                                                      "LT",   // Latina
-                                                                      "RI",   // Rieti
-                                                                      "RM",   // Roma
-                                                                      "VT",   // Viterbo
-                                                                      "PG",   // Perugia
-                                                                      "TR",   // Terni
-                                                                      "AG",   // Agrigento
-                                                                      "CL",   // Caltanissetta
-                                                                      "CT",   // Catania
-                                                                      "EN",   // Enna
-                                                                      "ME",   // Messina
-                                                                      "PA",   // Palermo
-                                                                      "RG",   // Ragusa
-                                                                      "SR",   // Siracusa
-                                                                      "TP"   // Trapani
-                                                                  } };
+using PRIMARY_ITALY_ENUMERATION_TYPE = std::array<std::string, N_ITALY_PRIMARIES>;    ///< primaries for Italy
+
+static PRIMARY_ITALY_ENUMERATION_TYPE PRIMARY_ITALY_ENUMERATION = { "GE"s,   // Genova
+                                                                      "IM"s,   // Imperia
+                                                                      "SP"s,   // La Spezia
+                                                                      "SV"s,   // Savona
+                                                                      "AL"s,   // Alessandria
+                                                                      "AT"s,   // Asti
+                                                                      "BI"s,   // Biella
+                                                                      "CN"s,   // Cuneo
+                                                                      "NO"s,   // Novara
+                                                                      "TO"s,   // Torino
+                                                                      "VB"s,   // Verbano Cusio Ossola
+                                                                      "VC"s,   // Vercelli
+                                                                      "AO"s,   // Aosta
+                                                                      "BG"s,   // Bergamo
+                                                                      "BS"s,   // Brescia
+                                                                      "CO"s,   // Como
+                                                                      "CR"s,   // Cremona
+                                                                      "LC"s,   // Lecco
+                                                                      "LO"s,   // Lodi
+                                                                      "MB"s,   // Monza e Brianza
+                                                                      "MN"s,   // Mantova
+                                                                      "MI"s,   // Milano
+                                                                      "PV"s,   // Pavia
+                                                                      "SO"s,   // Sondrio
+                                                                      "VA"s,   // Varese
+                                                                      "BL"s,   // Belluno
+                                                                      "PD"s,   // Padova
+                                                                      "RO"s,   // Rovigo
+                                                                      "TV"s,   // Treviso
+                                                                      "VE"s,   // Venezia
+                                                                      "VR"s,   // Verona
+                                                                      "VI"s,   // Vicenza
+                                                                      "BZ"s,   // Bolzano
+                                                                      "TN"s,   // Trento
+                                                                      "GO"s,   // Gorizia
+                                                                      "PN"s,   // Pordenone
+                                                                      "TS"s,   // Trieste
+                                                                      "UD"s,   // Udine
+                                                                      "BO"s,   // Bologna
+                                                                      "FE"s,   // Ferrara
+                                                                      "FO"s,   // Forli (Deprecated)
+                                                                      "FC"s,   // Forli Cesena
+                                                                      "MO"s,   // Modena
+                                                                      "PR"s,   // Parma
+                                                                      "PC"s,   // Piacenza
+                                                                      "RA"s,   // Ravenna
+                                                                      "RE"s,   // Reggio Emilia
+                                                                      "RN"s,   // Rimini
+                                                                      "AR"s,   // Arezzo
+                                                                      "FI"s,   // Firenze
+                                                                      "GR"s,   // Grosseto
+                                                                      "LI"s,   // Livorno
+                                                                      "LU"s,   // Lucca
+                                                                      "MS"s,   // Massa Carrara
+                                                                      "PT"s,   // Pistoia
+                                                                      "PI"s,   // Pisa
+                                                                      "PO"s,   // Prato
+                                                                      "SI"s,   // Siena
+                                                                      "CH"s,   // Chieti
+                                                                      "AQ"s,   // L'Aquila
+                                                                      "PE"s,   // Pescara
+                                                                      "TE"s,   // Teramo
+                                                                      "AN"s,   // Ancona
+                                                                      "AP"s,   // Ascoli Piceno
+                                                                      "FM"s,   // Fermo
+                                                                      "MC"s,   // Macerata
+                                                                      "PS"s,   // Pesaro e Urbino (Deprecated)
+                                                                      "PU"s,   // Pesaro e Urbino
+                                                                      "MT"s,   // Matera
+                                                                      "BA"s,   // Bari
+                                                                      "BT"s,   // Barletta Andria Trani
+                                                                      "BR"s,   // Brindisi
+                                                                      "FG"s,   // Foggia
+                                                                      "LE"s,   // Lecce
+                                                                      "TA"s,   // Taranto
+                                                                      "PZ"s,   // Potenza
+                                                                      "CZ"s,   // Catanzaro
+                                                                      "CS"s,   // Cosenza
+                                                                      "KR"s,   // Crotone
+                                                                      "RC"s,   // Reggio Calabria
+                                                                      "VV"s,   // Vibo Valentia
+                                                                      "AV"s,   // Avellino
+                                                                      "BN"s,   // Benevento
+                                                                      "CE"s,   // Caserta
+                                                                      "NA"s,   // Napoli
+                                                                      "SA"s,   // Salerno
+                                                                      "IS"s,   // Isernia
+                                                                      "CB"s,   // Campobasso
+                                                                      "FR"s,   // Frosinone
+                                                                      "LT"s,   // Latina
+                                                                      "RI"s,   // Rieti
+                                                                      "RM"s,   // Roma
+                                                                      "VT"s,   // Viterbo
+                                                                      "PG"s,   // Perugia
+                                                                      "TR"s,   // Terni
+                                                                      "AG"s,   // Agrigento
+                                                                      "CL"s,   // Caltanissetta
+                                                                      "CT"s,   // Catania
+                                                                      "EN"s,   // Enna
+                                                                      "ME"s,   // Messina
+                                                                      "PA"s,   // Palermo
+                                                                      "RG"s,   // Ragusa
+                                                                      "SR"s,   // Siracusa
+                                                                      "TP"s   // Trapani
+                                                                  };
 
 /// Madeira
 enum PRIMARY_ENUM_MADEIRA { MADEIRA_MD, // Madeira
                             N_MADEIRA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_MADEIRA_PRIMARIES> PRIMARY_MADEIRA_ENUMERATION_TYPE;    ///< primaries for Madeira
+//typedef std::array<std::string, N_MADEIRA_PRIMARIES> PRIMARY_MADEIRA_ENUMERATION_TYPE;    ///< primaries for Madeira
 
-static PRIMARY_MADEIRA_ENUMERATION_TYPE PRIMARY_MADEIRA_ENUMERATION = { { "MD" // Madeira
-                                                                      } };
+using PRIMARY_MADEIRA_ENUMERATION_TYPE = std::array<std::string, N_MADEIRA_PRIMARIES>;    ///< primaries for Madeira
+
+static PRIMARY_MADEIRA_ENUMERATION_TYPE PRIMARY_MADEIRA_ENUMERATION = { "MD"s // Madeira
+                                                                      };
 
 /// The Netherlands
 enum PRIMARY_ENUM_NETHERLANDS { NETHERLANDS_DR,   // Drenthe
@@ -3592,21 +3632,23 @@ enum PRIMARY_ENUM_NETHERLANDS { NETHERLANDS_DR,   // Drenthe
                                 N_NETHERLANDS_PRIMARIES
                               };
 
-typedef std::array<std::string, N_NETHERLANDS_PRIMARIES> PRIMARY_NETHERLANDS_ENUMERATION_TYPE;    ///< primaries for Netherlands
+//typedef std::array<std::string, N_NETHERLANDS_PRIMARIES> PRIMARY_NETHERLANDS_ENUMERATION_TYPE;    ///< primaries for Netherlands
 
-static PRIMARY_NETHERLANDS_ENUMERATION_TYPE PRIMARY_NETHERLANDS_ENUMERATION = { { "DR",   // Drenthe
-                                                                                  "FR",   // Friesland
-                                                                                  "GR",   // Groningen
-                                                                                  "NB",   // Noord-Brabant
-                                                                                  "OV",   // Overijssel
-                                                                                  "ZH",   // Zuid-Holland
-                                                                                  "FL",   // Flevoland
-                                                                                  "GD",   // Gelderland
-                                                                                  "LB",   // Limburg
-                                                                                  "NH",   // Noord-Holland
-                                                                                  "UT",   // Utrecht
-                                                                                  "ZL"   // Zeeland
-                                                                              } };
+using PRIMARY_NETHERLANDS_ENUMERATION_TYPE = std::array<std::string, N_NETHERLANDS_PRIMARIES>;    ///< primaries for Netherlands
+
+static PRIMARY_NETHERLANDS_ENUMERATION_TYPE PRIMARY_NETHERLANDS_ENUMERATION = { "DR"s,   // Drenthe
+                                                                                  "FR"s,   // Friesland
+                                                                                  "GR"s,   // Groningen
+                                                                                  "NB"s,   // Noord-Brabant
+                                                                                  "OV"s,   // Overijssel
+                                                                                  "ZH"s,   // Zuid-Holland
+                                                                                  "FL"s,   // Flevoland
+                                                                                  "GD"s,   // Gelderland
+                                                                                  "LB"s,   // Limburg
+                                                                                  "NH"s,   // Noord-Holland
+                                                                                  "UT"s,   // Utrecht
+                                                                                  "ZL"s   // Zeeland
+                                                                              };
 
 /// Poland
 enum PRIMARY_ENUM_POLAND { POLAND_Z,    // Zachodnio-Pomorskie
@@ -3628,25 +3670,27 @@ enum PRIMARY_ENUM_POLAND { POLAND_Z,    // Zachodnio-Pomorskie
                            N_POLAND_PRIMARIES
                          };
 
-typedef std::array<std::string, N_POLAND_PRIMARIES> PRIMARY_POLAND_ENUMERATION_TYPE;    ///< primaries for Poland
+//typedef std::array<std::string, N_POLAND_PRIMARIES> PRIMARY_POLAND_ENUMERATION_TYPE;    ///< primaries for Poland
 
-static PRIMARY_POLAND_ENUMERATION_TYPE PRIMARY_POLAND_ENUMERATION = { { "Z",    // Zachodnio-Pomorskie
-                                                                        "F",    // Pomorskie
-                                                                        "P",    // Kujawsko-Pomorskie
-                                                                        "B",    // Lubuskie
-                                                                        "W",    // Wielkopolskie
-                                                                        "J",    // Warminsko-Mazurskie
-                                                                        "O",    // Podlaskie
-                                                                        "R",    // Mazowieckie
-                                                                        "D",    // Dolnoslaskie
-                                                                        "U",    // Opolskie
-                                                                        "C",    // Lodzkie
-                                                                        "S",    // Swietokrzyskie
-                                                                        "K",    // Podkarpackie
-                                                                        "L",    // Lubelskie
-                                                                        "G",    // Slaskie
-                                                                        "M",    // Malopolskie
-                                                                    } };
+using PRIMARY_POLAND_ENUMERATION_TYPE = std::array<std::string, N_POLAND_PRIMARIES>;    ///< primaries for Poland
+
+static PRIMARY_POLAND_ENUMERATION_TYPE PRIMARY_POLAND_ENUMERATION = { "Z"s,    // Zachodnio-Pomorskie
+                                                                        "F"s,    // Pomorskie
+                                                                        "P"s,    // Kujawsko-Pomorskie
+                                                                        "B"s,    // Lubuskie
+                                                                        "W"s,    // Wielkopolskie
+                                                                        "J"s,    // Warminsko-Mazurskie
+                                                                        "O"s,    // Podlaskie
+                                                                        "R"s,    // Mazowieckie
+                                                                        "D"s,    // Dolnoslaskie
+                                                                        "U"s,    // Opolskie
+                                                                        "C"s,    // Lodzkie
+                                                                        "S"s,    // Swietokrzyskie
+                                                                        "K"s,    // Podkarpackie
+                                                                        "L"s,    // Lubelskie
+                                                                        "G"s,    // Slaskie
+                                                                        "M"s,    // Malopolskie
+                                                                    };
 
 /// Portugal
 enum PRIMARY_ENUM_PORTUGAL { PORTUGAL_AV,   // Aveiro
@@ -3670,27 +3714,29 @@ enum PRIMARY_ENUM_PORTUGAL { PORTUGAL_AV,   // Aveiro
                              N_PORTUGAL_PRIMARIES
                            };
 
-typedef std::array<std::string, N_PORTUGAL_PRIMARIES> PRIMARY_PORTUGAL_ENUMERATION_TYPE;    ///< primaries for Portugal
+//typedef std::array<std::string, N_PORTUGAL_PRIMARIES> PRIMARY_PORTUGAL_ENUMERATION_TYPE;    ///< primaries for Portugal
 
-static PRIMARY_PORTUGAL_ENUMERATION_TYPE PRIMARY_PORTUGAL_ENUMERATION = { { "AV",   // Aveiro
-                                                                            "BJ",   // Beja
-                                                                            "BR",   // Braga
-                                                                            "BG",   // Bragança
-                                                                            "CB",   // Castelo Branco
-                                                                            "CO",   // Coimbra
-                                                                            "EV",   // Evora
-                                                                            "FR",   // Faro
-                                                                            "GD",   // Guarda
-                                                                            "LR",   // Leiria
-                                                                            "LX",   // Lisboa
-                                                                            "PG",   // Portalegre
-                                                                            "PT",   // Porto
-                                                                            "SR",   // Santarem
-                                                                            "ST",   // Setubal
-                                                                            "VC",   // Viana do Castelo
-                                                                            "VR",   // Vila Real
-                                                                            "VS",   // Viseu
-                                                                        } };
+using PRIMARY_PORTUGAL_ENUMERATION_TYPE = std::array<std::string, N_PORTUGAL_PRIMARIES>;    ///< primaries for Portugal
+
+static PRIMARY_PORTUGAL_ENUMERATION_TYPE PRIMARY_PORTUGAL_ENUMERATION = { "AV"s,   // Aveiro
+                                                                            "BJ"s,   // Beja
+                                                                            "BR"s,   // Braga
+                                                                            "BG"s,   // Bragança
+                                                                            "CB"s,   // Castelo Branco
+                                                                            "CO"s,   // Coimbra
+                                                                            "EV"s,   // Evora
+                                                                            "FR"s,   // Faro
+                                                                            "GD"s,   // Guarda
+                                                                            "LR"s,   // Leiria
+                                                                            "LX"s,   // Lisboa
+                                                                            "PG"s,   // Portalegre
+                                                                            "PT"s,   // Porto
+                                                                            "SR"s,   // Santarem
+                                                                            "ST"s,   // Setubal
+                                                                            "VC"s,   // Viana do Castelo
+                                                                            "VR"s,   // Vila Real
+                                                                            "VS"s,   // Viseu
+                                                                        };
 
 /// Romania
 enum PRIMARY_ENUM_ROMANIA { ROMANIA_AR,   //  Arad
@@ -3738,51 +3784,53 @@ enum PRIMARY_ENUM_ROMANIA { ROMANIA_AR,   //  Arad
                             N_ROMANIA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_ROMANIA_PRIMARIES> PRIMARY_ROMANIA_ENUMERATION_TYPE;    ///< primaries for Romania
+//typedef std::array<std::string, N_ROMANIA_PRIMARIES> PRIMARY_ROMANIA_ENUMERATION_TYPE;    ///< primaries for Romania
 
-static PRIMARY_ROMANIA_ENUMERATION_TYPE PRIMARY_ROMANIA_ENUMERATION = { { "AR", //  Arad
-                                                                          "CS",   // Cara'-Severin
-                                                                          "HD",   // Hunedoara
-                                                                          "TM",   // Timiş (Timis)
-                                                                          "BU",   // Bucureşti (Bucure'ti)
-                                                                          "IF",   // Ilfov
-                                                                          "BR",   // Brăila (Braila)
-                                                                          "CT",   // Conatarta
-                                                                          "GL",   // Galati
-                                                                          "TL",   // Tulcea
-                                                                          "VN",   // Vrancea
-                                                                          "AB",   // Alba
-                                                                          "BH",   // Bihor
-                                                                          "BN",   // Bistrita-Nasaud
-                                                                          "CJ",   // Cluj
-                                                                          "MM",   // Maramureş (Maramures)
-                                                                          "SJ",   // Sălaj (Salaj)
-                                                                          "SM",   // Satu Mare
-                                                                          "BV",   // Braşov (Bra'ov)
-                                                                          "CV",   // Covasna
-                                                                          "HR",   // Harghita
-                                                                          "MS",   // Mureş (Mures)
-                                                                          "SB",   // Sibiu
-                                                                          "AG",   // Arge'
-                                                                          "DJ",   // Dolj
-                                                                          "GJ",   // Gorj
-                                                                          "MH",   // Mehedinţi (Mehedinti)
-                                                                          "OT",   // Olt
-                                                                          "VL",   // Vâlcea
-                                                                          "BC",   // Bacau
-                                                                          "BT",   // Boto'ani
-                                                                          "IS",   // Iaşi (Iasi)
-                                                                          "NT",   // Neamţ (Neamt)
-                                                                          "SV",   // Suceava
-                                                                          "VS",   // Vaslui
-                                                                          "BZ",   // Buzău (Buzau)
-                                                                          "CL",   // Călăraşi (Calarasi)
-                                                                          "DB",   // Dâmboviţa (Dambovita)
-                                                                          "GR",   // Giurqiu
-                                                                          "IL",   // Ialomita
-                                                                          "PH",   // Prahova
-                                                                          "TR"    // Teleorman
-                                                                      } };
+using PRIMARY_ROMANIA_ENUMERATION_TYPE = std::array<std::string, N_ROMANIA_PRIMARIES>;    ///< primaries for Romania
+
+static PRIMARY_ROMANIA_ENUMERATION_TYPE PRIMARY_ROMANIA_ENUMERATION = { "AR"s, //  Arad
+                                                                          "CS"s,   // Cara'-Severin
+                                                                          "HD"s,   // Hunedoara
+                                                                          "TM"s,   // Timiş (Timis)
+                                                                          "BU"s,   // Bucureşti (Bucure'ti)
+                                                                          "IF"s,   // Ilfov
+                                                                          "BR"s,   // Brăila (Braila)
+                                                                          "CT"s,   // Conatarta
+                                                                          "GL"s,   // Galati
+                                                                          "TL"s,   // Tulcea
+                                                                          "VN"s,   // Vrancea
+                                                                          "AB"s,   // Alba
+                                                                          "BH"s,   // Bihor
+                                                                          "BN"s,   // Bistrita-Nasaud
+                                                                          "CJ"s,   // Cluj
+                                                                          "MM"s,   // Maramureş (Maramures)
+                                                                          "SJ"s,   // Sălaj (Salaj)
+                                                                          "SM"s,   // Satu Mare
+                                                                          "BV"s,   // Braşov (Bra'ov)
+                                                                          "CV"s,   // Covasna
+                                                                          "HR"s,   // Harghita
+                                                                          "MS"s,   // Mureş (Mures)
+                                                                          "SB"s,   // Sibiu
+                                                                          "AG"s,   // Arge'
+                                                                          "DJ"s,   // Dolj
+                                                                          "GJ"s,   // Gorj
+                                                                          "MH"s,   // Mehedinţi (Mehedinti)
+                                                                          "OT"s,   // Olt
+                                                                          "VL"s,   // Vâlcea
+                                                                          "BC"s,   // Bacau
+                                                                          "BT"s,   // Boto'ani
+                                                                          "IS"s,   // Iaşi (Iasi)
+                                                                          "NT"s,   // Neamţ (Neamt)
+                                                                          "SV"s,   // Suceava
+                                                                          "VS"s,   // Vaslui
+                                                                          "BZ"s,   // Buzău (Buzau)
+                                                                          "CL"s,   // Călăraşi (Calarasi)
+                                                                          "DB"s,   // Dâmboviţa (Dambovita)
+                                                                          "GR"s,   // Giurqiu
+                                                                          "IL"s,   // Ialomita
+                                                                          "PH"s,   // Prahova
+                                                                          "TR"s    // Teleorman
+                                                                      };
 
 /// Spain
 enum PRIMARY_ENUM_SPAIN { SPAIN_AV,   //  Avila
@@ -3835,56 +3883,58 @@ enum PRIMARY_ENUM_SPAIN { SPAIN_AV,   //  Avila
                           N_SPAIN_PRIMARIES
                        };
 
-typedef std::array<std::string, N_SPAIN_PRIMARIES> PRIMARY_SPAIN_ENUMERATION_TYPE;    ///< primaries for Spain
+//typedef std::array<std::string, N_SPAIN_PRIMARIES> PRIMARY_SPAIN_ENUMERATION_TYPE;    ///< primaries for Spain
 
-static PRIMARY_SPAIN_ENUMERATION_TYPE PRIMARY_SPAIN_ENUMERATION = { { "AV",   //  Avila
-                                                                      "BU",   //  Burgos
-                                                                      "C",    //  A Coruña
-                                                                      "LE",   //  Leon
-                                                                      "LO",   //  La Rioja
-                                                                      "LU",   //  Lugo
-                                                                      "O",    //  Asturias
-                                                                      "OU",   //  Ourense
-                                                                      "P",    //  Palencia
-                                                                      "PO",   //  Pontevedra
-                                                                      "S",    //  Cantabria
-                                                                      "SA",   //  Salamanca
-                                                                      "SG",   //  Segovia
-                                                                      "SO",   //  Soria
-                                                                      "VA",   //  Valladolid
-                                                                      "ZA",   //  Zamora
-                                                                      "BI",   //  Vizcaya
-                                                                      "HU",   //  Huesca
-                                                                      "NA",   //  Navarra
-                                                                      "SS",   //  Guipuzcoa
-                                                                      "TE",   //  Teruel
-                                                                      "VI",   //  Alava
-                                                                      "Z",    //  Zaragoza
-                                                                      "B",    //  Barcelona
-                                                                      "GI",   //  Girona
-                                                                      "L",    //  Lleida
-                                                                      "T",    //  Tarragona
-                                                                      "BA",   //  Badajoz
-                                                                      "CC",   //  Caceres
-                                                                      "CR",   //  Ciudad Real
-                                                                      "CU",   //  Cuenca
-                                                                      "GU",   //  Guadalajara
-                                                                      "M",    //  Madrid
-                                                                      "TO",   //  Toledo
-                                                                      "A",    //  Alicante
-                                                                      "AB",   //  Albacete
-                                                                      "CS",   //  Castellon
-                                                                      "MU",   //  Murcia
-                                                                      "V",    //  Valencia
-                                                                      "AL",   //  Almeria
-                                                                      "CA",   //  Cadiz
-                                                                      "CO",   //  Cordoba
-                                                                      "GR",   //  Granada
-                                                                      "H",    //  Huelva
-                                                                      "J",    //  Jaen
+using PRIMARY_SPAIN_ENUMERATION_TYPE = std::array<std::string, N_SPAIN_PRIMARIES>;    ///< primaries for Spain
+
+static PRIMARY_SPAIN_ENUMERATION_TYPE PRIMARY_SPAIN_ENUMERATION = { "AV"s,   //  Avila
+                                                                      "BU"s,   //  Burgos
+                                                                      "C"s,    //  A Coruña
+                                                                      "LE"s,   //  Leon
+                                                                      "LO"s,   //  La Rioja
+                                                                      "LU"s,   //  Lugo
+                                                                      "O"s,    //  Asturias
+                                                                      "OU"s,   //  Ourense
+                                                                      "P"s,    //  Palencia
+                                                                      "PO"s,   //  Pontevedra
+                                                                      "S"s,    //  Cantabria
+                                                                      "SA"s,   //  Salamanca
+                                                                      "SG"s,   //  Segovia
+                                                                      "SO"s,   //  Soria
+                                                                      "VA"s,   //  Valladolid
+                                                                      "ZA"s,   //  Zamora
+                                                                      "BI"s,   //  Vizcaya
+                                                                      "HU"s,   //  Huesca
+                                                                      "NA"s,   //  Navarra
+                                                                      "SS"s,   //  Guipuzcoa
+                                                                      "TE"s,   //  Teruel
+                                                                      "VI"s,   //  Alava
+                                                                      "Z"s,    //  Zaragoza
+                                                                      "B"s,    //  Barcelona
+                                                                      "GI"s,   //  Girona
+                                                                      "L"s,    //  Lleida
+                                                                      "T"s,    //  Tarragona
+                                                                      "BA"s,   //  Badajoz
+                                                                      "CC"s,   //  Caceres
+                                                                      "CR"s,   //  Ciudad Real
+                                                                      "CU"s,   //  Cuenca
+                                                                      "GU"s,   //  Guadalajara
+                                                                      "M"s,    //  Madrid
+                                                                      "TO"s,   //  Toledo
+                                                                      "A"s,    //  Alicante
+                                                                      "AB"s,   //  Albacete
+                                                                      "CS"s,   //  Castellon
+                                                                      "MU"s,   //  Murcia
+                                                                      "V"s,    //  Valencia
+                                                                      "AL"s,   //  Almeria
+                                                                      "CA"s,   //  Cadiz
+                                                                      "CO"s,   //  Cordoba
+                                                                      "GR"s,   //  Granada
+                                                                      "H"s,    //  Huelva
+                                                                      "J"s,    //  Jaen
                                                                       "MA",   //  Malaga
-                                                                      "SE"   //  Sevilla
-                                                                  } };
+                                                                      "SE"s   //  Sevilla
+                                                                  };
 
 /// Sweden
 enum PRIMARY_ENUM_SWEDEN { SWEDEN_AB,   //  Stockholm län
@@ -3911,30 +3961,32 @@ enum PRIMARY_ENUM_SWEDEN { SWEDEN_AB,   //  Stockholm län
                            N_SWEDEN_PRIMARIES
                          };
 
-typedef std::array<std::string, N_SWEDEN_PRIMARIES> PRIMARY_SWEDEN_ENUMERATION_TYPE;    ///< primaries for Sweden
+//typedef std::array<std::string, N_SWEDEN_PRIMARIES> PRIMARY_SWEDEN_ENUMERATION_TYPE;    ///< primaries for Sweden
 
-static PRIMARY_SWEDEN_ENUMERATION_TYPE PRIMARY_SWEDEN_ENUMERATION = { { "AB",   //  Stockholm län
-                                                                        "I",    //  Gotlands län
-                                                                        "BD",   //  Norrbottens län
-                                                                        "AC",   //  Västerbottens län
-                                                                        "X",    //  Gävleborgs län
-                                                                        "Z",    //  Jämtlands län
-                                                                        "Y",    //  Västernorrlands län
-                                                                        "W",    //  Dalarna län
-                                                                        "S",    //  Värmlands län
-                                                                        "O",    //  Västra Götalands län
-                                                                        "T",    //  Örebro län
-                                                                        "E",    //  Östergötlands län
-                                                                        "D",    //  Södermanlands län
-                                                                        "C",    //  Uppsala län
-                                                                        "U",    //  Västmanlands län
-                                                                        "N",    //  Hallands län
-                                                                        "K",    //  Blekinge län
-                                                                        "F",    //  Jönköpings län
-                                                                        "H",    //  Kalmar län
-                                                                        "G",    //  Kronobergs län
-                                                                        "L"     //   Skåne län
-                                                                    } };
+using PRIMARY_SWEDEN_ENUMERATION_TYPE = std::array<std::string, N_SWEDEN_PRIMARIES>;    ///< primaries for Sweden
+
+static PRIMARY_SWEDEN_ENUMERATION_TYPE PRIMARY_SWEDEN_ENUMERATION = { "AB"s,   //  Stockholm län
+                                                                        "I"s,    //  Gotlands län
+                                                                        "BD"s,   //  Norrbottens län
+                                                                        "AC"s,   //  Västerbottens län
+                                                                        "X"s,    //  Gävleborgs län
+                                                                        "Z"s,    //  Jämtlands län
+                                                                        "Y"s,    //  Västernorrlands län
+                                                                        "W"s,    //  Dalarna län
+                                                                        "S"s,    //  Värmlands län
+                                                                        "O"s,    //  Västra Götalands län
+                                                                        "T"s,    //  Örebro län
+                                                                        "E"s,    //  Östergötlands län
+                                                                        "D"s,    //  Södermanlands län
+                                                                        "C"s,    //  Uppsala län
+                                                                        "U"s,    //  Västmanlands län
+                                                                        "N"s,    //  Hallands län
+                                                                        "K"s,    //  Blekinge län
+                                                                        "F"s,    //  Jönköpings län
+                                                                        "H"s,    //  Kalmar län
+                                                                        "G"s,    //  Kronobergs län
+                                                                        "L"s     //   Skåne län
+                                                                    };
 
 /// Switzerland
 enum PRIMARY_ENUM_SWITZERLAND { SWITZERLAND_AG,   //  Aargau
@@ -3966,35 +4018,37 @@ enum PRIMARY_ENUM_SWITZERLAND { SWITZERLAND_AG,   //  Aargau
                                 N_SWITZERLAND_PRIMARIES
                               };
 
-typedef std::array<std::string, N_SWITZERLAND_PRIMARIES> PRIMARY_SWITZERLAND_ENUMERATION_TYPE;    ///< primaries for Switzerland
+//typedef std::array<std::string, N_SWITZERLAND_PRIMARIES> PRIMARY_SWITZERLAND_ENUMERATION_TYPE;    ///< primaries for Switzerland
 
-static PRIMARY_SWITZERLAND_ENUMERATION_TYPE PRIMARY_SWITZERLAND_ENUMERATION = { { "AG",   //  Aargau
-                                                                                  "AR",   //  Appenzell Ausserrhoden
-                                                                                  "AI",   //  Appenzell Innerrhoden
-                                                                                  "BL",   //  Basel Landschaft
-                                                                                  "BS",   //  Basel Stadt
-                                                                                  "BE",   //  Bern
-                                                                                  "FR",   //  Freiburg / Fribourg
-                                                                                  "GE",   //  Genf / Genève
-                                                                                  "GL",   //  Glarus
-                                                                                  "GR",   //  Graubuenden / Grisons
-                                                                                  "JU",   //  Jura
-                                                                                  "LU",   //  Luzern
-                                                                                  "NE",   //  Neuenburg / Neuchâtel
-                                                                                  "NW",   //  Nidwalden
-                                                                                  "OW",   //  Obwalden
-                                                                                  "SH",   //  Schaffhausen
-                                                                                  "SZ",   //  Schwyz
-                                                                                  "SO",   //  Solothurn
-                                                                                  "SG",   //  St. Gallen
-                                                                                  "TI",   //  Tessin / Ticino
-                                                                                  "TG",   //  Thurgau
-                                                                                  "UR",   //  Uri
-                                                                                  "VD",   //  Waadt / Vaud
-                                                                                  "VS",   //  Wallis / Valais
-                                                                                  "ZH",   //  Zuerich
-                                                                                  "ZG"    //  Zug
-                                                                              } };
+using PRIMARY_SWITZERLAND_ENUMERATION_TYPE = std::array<std::string, N_SWITZERLAND_PRIMARIES>;    ///< primaries for Switzerland
+
+static PRIMARY_SWITZERLAND_ENUMERATION_TYPE PRIMARY_SWITZERLAND_ENUMERATION = { "AG"s,   //  Aargau
+                                                                                  "AR"s,   //  Appenzell Ausserrhoden
+                                                                                  "AI"s,   //  Appenzell Innerrhoden
+                                                                                  "BL"s,   //  Basel Landschaft
+                                                                                  "BS"s,   //  Basel Stadt
+                                                                                  "BE"s,   //  Bern
+                                                                                  "FR"s,   //  Freiburg / Fribourg
+                                                                                  "GE"s,   //  Genf / Genève
+                                                                                  "GL"s,   //  Glarus
+                                                                                  "GR"s,   //  Graubuenden / Grisons
+                                                                                  "JU"s,   //  Jura
+                                                                                  "LU"s,   //  Luzern
+                                                                                  "NE"s,   //  Neuenburg / Neuchâtel
+                                                                                  "NW"s,   //  Nidwalden
+                                                                                  "OW"s,   //  Obwalden
+                                                                                  "SH"s,   //  Schaffhausen
+                                                                                  "SZ"s,   //  Schwyz
+                                                                                  "SO"s,   //  Solothurn
+                                                                                  "SG"s,   //  St. Gallen
+                                                                                  "TI"s,   //  Tessin / Ticino
+                                                                                  "TG"s,   //  Thurgau
+                                                                                  "UR"s,   //  Uri
+                                                                                  "VD"s,   //  Waadt / Vaud
+                                                                                  "VS"s,   //  Wallis / Valais
+                                                                                  "ZH"s,   //  Zuerich
+                                                                                  "ZG"s    //  Zug
+                                                                              };
 
 /// Ukraine
 enum PRIMARY_ENUM_UKRAINE { UKRAINE_SU, //  Sums'ka Oblast'
@@ -4027,36 +4081,38 @@ enum PRIMARY_ENUM_UKRAINE { UKRAINE_SU, //  Sums'ka Oblast'
                             N_UKRAINE_PRIMARIES
                           };
 
-typedef std::array<std::string, N_UKRAINE_PRIMARIES> PRIMARY_UKRAINE_ENUMERATION_TYPE;    ///< primaries for Ukraine
+//typedef std::array<std::string, N_UKRAINE_PRIMARIES> PRIMARY_UKRAINE_ENUMERATION_TYPE;    ///< primaries for Ukraine
 
-static PRIMARY_UKRAINE_ENUMERATION_TYPE PRIMARY_UKRAINE_ENUMERATION = { { "SU", //  Sums'ka Oblast'
-                                                                          "TE",   //  Ternopil's'ka Oblast'
-                                                                          "CH",   //  Cherkas'ka Oblast'
-                                                                          "ZA",   //  Zakarpats'ka Oblast'
-                                                                          "DN",   //  Dnipropetrovs'ka Oblast'
-                                                                          "OD",   //  Odes'ka Oblast'
-                                                                          "HE",   //  Khersons'ka Oblast'
-                                                                          "PO",   //  Poltavs'ka Oblast'
-                                                                          "DO",   //  Donets'ka Oblast'
-                                                                          "RI",   //  Rivnens'ka Oblast'
-                                                                          "HA",   //  Kharkivs'ka Oblast'
-                                                                          "LU",   //  Luhans'ka Oblast'
-                                                                          "VI",   //  Vinnyts'ka Oblast'
-                                                                          "VO",   //  Volyos'ka Oblast'
-                                                                          "ZP",   //  Zaporiz'ka Oblast'
-                                                                          "CR",   //  Chernihivs'ka Oblast'
-                                                                          "IF",   //  Ivano-Frankivs'ka Oblast'
-                                                                          "HM",   //  Khmel'nyts'ka Oblast'
-                                                                          "KV",   //  Kyïv
-                                                                          "KO",   //  Kyivs'ka Oblast'
-                                                                          "KI",   //  Kirovohrads'ka Oblast'
-                                                                          "LV",   //  L'vivs'ka Oblast'
-                                                                          "ZH",   //  Zhytomyrs'ka Oblast'
-                                                                          "CN",   //  Chernivets'ka Oblast'
-                                                                          "NI",   //  Mykolaivs'ka Oblast'
-                                                                          "KR",   //  Respublika Krym
-                                                                          "SL"    //  Sevastopol'
-                                                                      } };
+using PRIMARY_UKRAINE_ENUMERATION_TYPE = std::array<std::string, N_UKRAINE_PRIMARIES>;    ///< primaries for Ukraine
+
+static PRIMARY_UKRAINE_ENUMERATION_TYPE PRIMARY_UKRAINE_ENUMERATION = { "SU"s, //  Sums'ka Oblast'
+                                                                          "TE"s,   //  Ternopil's'ka Oblast'
+                                                                          "CH"s,   //  Cherkas'ka Oblast'
+                                                                          "ZA"s,   //  Zakarpats'ka Oblast'
+                                                                          "DN"s,   //  Dnipropetrovs'ka Oblast'
+                                                                          "OD"s,   //  Odes'ka Oblast'
+                                                                          "HE"s,   //  Khersons'ka Oblast'
+                                                                          "PO"s,   //  Poltavs'ka Oblast'
+                                                                          "DO"s,   //  Donets'ka Oblast'
+                                                                          "RI"s,   //  Rivnens'ka Oblast'
+                                                                          "HA"s,   //  Kharkivs'ka Oblast'
+                                                                          "LU"s,   //  Luhans'ka Oblast'
+                                                                          "VI"s,   //  Vinnyts'ka Oblast'
+                                                                          "VO"s,   //  Volyos'ka Oblast'
+                                                                          "ZP"s,   //  Zaporiz'ka Oblast'
+                                                                          "CR"s,   //  Chernihivs'ka Oblast'
+                                                                          "IF"s,   //  Ivano-Frankivs'ka Oblast'
+                                                                          "HM"s,   //  Khmel'nyts'ka Oblast'
+                                                                          "KV"s,   //  Kyïv
+                                                                          "KO"s,   //  Kyivs'ka Oblast'
+                                                                          "KI"s,   //  Kirovohrads'ka Oblast'
+                                                                          "LV"s,   //  L'vivs'ka Oblast'
+                                                                          "ZH"s,   //  Zhytomyrs'ka Oblast'
+                                                                          "CN"s,   //  Chernivets'ka Oblast'
+                                                                          "NI"s,   //  Mykolaivs'ka Oblast'
+                                                                          "KR"s,   //  Respublika Krym
+                                                                          "SL"s    //  Sevastopol'
+                                                                      };
 
 /// United States
 enum PRIMARY_ENUM_UNITED_STATES { UNITED_STATES_CT,   //  Connecticut
@@ -4111,58 +4167,60 @@ enum PRIMARY_ENUM_UNITED_STATES { UNITED_STATES_CT,   //  Connecticut
                                   N_UNITED_STATES_PRIMARIES
                                 };
 
-typedef std::array<std::string, N_UNITED_STATES_PRIMARIES> PRIMARY_UNITED_STATES_ENUMERATION_TYPE;    ///< primaries for United States
+//typedef std::array<std::string, N_UNITED_STATES_PRIMARIES> PRIMARY_UNITED_STATES_ENUMERATION_TYPE;    ///< primaries for United States
 
-static PRIMARY_UNITED_STATES_ENUMERATION_TYPE PRIMARY_UNITED_STATES_ENUMERATION = { { "CT",   //  Connecticut
-                                                                                      "ME",   //  Maine
-                                                                                      "MA",   //  Massachusetts
-                                                                                      "NH",   //  New Hampshire
-                                                                                      "RI",   //  Rhode Island
-                                                                                      "VT",   //  Vermont
-                                                                                      "NJ",   //  New Jersey
-                                                                                      "NY",   //  New York
-                                                                                      "DE",   //  Delaware
-                                                                                      "DC",   //  District of Columbia
-                                                                                      "MD",   //  Maryland
-                                                                                      "PA",   //  Pennsylvania
-                                                                                      "AL",   //  Alabama
-                                                                                      "FL",   //  Florida
-                                                                                      "GA",   //  Georgia
-                                                                                      "KY",   //  Kentucky
-                                                                                      "NC",   //  North Carolina
-                                                                                      "SC",   //  South Carolina
-                                                                                      "TN",   //  Tennessee
-                                                                                      "VA",   //  Virginia
-                                                                                      "AR",   //  Arkansas
-                                                                                      "LA",   //  Louisiana
-                                                                                      "MS",   //  Mississippi
-                                                                                      "NM",   //  New Mexico
-                                                                                      "OK",   //  Oklahoma
-                                                                                      "TX",   //  Texas
-                                                                                      "CA",   //  California
-                                                                                      "AZ",   //  Arizona
-                                                                                      "ID",   //  Idaho
-                                                                                      "MT",   //  Montana
-                                                                                      "NV",   //  Nevada
-                                                                                      "OR",   //  Oregon
-                                                                                      "UT",   //  Utah
-                                                                                      "WA",   //  Washington
-                                                                                      "WY",   //  Wyoming
-                                                                                      "MI",   //  Michigan
-                                                                                      "OH",   //  Ohio
-                                                                                      "WV",   //  West Virginia
-                                                                                      "IL",   //  Illinois
-                                                                                      "IN",   //  Indiana
-                                                                                      "WI",   //  Wisconsin
-                                                                                      "CO",   //  Colorado
-                                                                                      "IA",   //  Iowa
-                                                                                      "KS",   //  Kansas
-                                                                                      "MN",   //  Minnesota
-                                                                                      "MO",   //  Missouri
-                                                                                      "NE",   //  Nebraska
-                                                                                      "ND",   //  North Dakota
-                                                                                      "SD"    //  South Dakota
-                                                                                  } };
+using PRIMARY_UNITED_STATES_ENUMERATION_TYPE = std::array<std::string, N_UNITED_STATES_PRIMARIES>;    ///< primaries for United States
+
+static PRIMARY_UNITED_STATES_ENUMERATION_TYPE PRIMARY_UNITED_STATES_ENUMERATION = { "CT"s,   //  Connecticut
+                                                                                      "ME"s,   //  Maine
+                                                                                      "MA"s,   //  Massachusetts
+                                                                                      "NH"s,   //  New Hampshire
+                                                                                      "RI"s,   //  Rhode Island
+                                                                                      "VT"s,   //  Vermont
+                                                                                      "NJ"s,   //  New Jersey
+                                                                                      "NY"s,   //  New York
+                                                                                      "DE"s,   //  Delaware
+                                                                                      "DC"s,   //  District of Columbia
+                                                                                      "MD"s,   //  Maryland
+                                                                                      "PA"s,   //  Pennsylvania
+                                                                                      "AL"s,   //  Alabama
+                                                                                      "FL"s,   //  Florida
+                                                                                      "GA"s,   //  Georgia
+                                                                                      "KY"s,   //  Kentucky
+                                                                                      "NC"s,   //  North Carolina
+                                                                                      "SC"s,   //  South Carolina
+                                                                                      "TN"s,   //  Tennessee
+                                                                                      "VA"s,   //  Virginia
+                                                                                      "AR"s,   //  Arkansas
+                                                                                      "LA"s,   //  Louisiana
+                                                                                      "MS"s,   //  Mississippi
+                                                                                      "NM"s,   //  New Mexico
+                                                                                      "OK"s,   //  Oklahoma
+                                                                                      "TX"s,   //  Texas
+                                                                                      "CA"s,   //  California
+                                                                                      "AZ"s,   //  Arizona
+                                                                                      "ID"s,   //  Idaho
+                                                                                      "MT"s,   //  Montana
+                                                                                      "NV"s,   //  Nevada
+                                                                                      "OR"s,   //  Oregon
+                                                                                      "UT"s,   //  Utah
+                                                                                      "WA"s,   //  Washington
+                                                                                      "WY"s,   //  Wyoming
+                                                                                      "MI"s,   //  Michigan
+                                                                                      "OH"s,   //  Ohio
+                                                                                      "WV"s,   //  West Virginia
+                                                                                      "IL"s,   //  Illinois
+                                                                                      "IN"s,   //  Indiana
+                                                                                      "WI"s,   //  Wisconsin
+                                                                                      "CO"s,   //  Colorado
+                                                                                      "IA"s,   //  Iowa
+                                                                                      "KS"s,   //  Kansas
+                                                                                      "MN"s,   //  Minnesota
+                                                                                      "MO"s,   //  Missouri
+                                                                                      "NE"s,   //  Nebraska
+                                                                                      "ND"s,   //  North Dakota
+                                                                                      "SD"s    //  South Dakota
+                                                                                  };
 
 /// Japan
 enum PRIMARY_ENUM_JAPAN { JAPAN_12,   //  Chiba
@@ -4215,56 +4273,58 @@ enum PRIMARY_ENUM_JAPAN { JAPAN_12,   //  Chiba
                           N_JAPAN_PRIMARIES
                         };
 
-typedef std::array<std::string, N_JAPAN_PRIMARIES> PRIMARY_JAPAN_ENUMERATION_TYPE;    ///< primaries for Japan
+//typedef std::array<std::string, N_JAPAN_PRIMARIES> PRIMARY_JAPAN_ENUMERATION_TYPE;    ///< primaries for Japan
 
-static PRIMARY_JAPAN_ENUMERATION_TYPE PRIMARY_JAPAN_ENUMERATION = { { "12",   //  Chiba
-                                                                      "16",   //  Gunma
-                                                                      "14",   //  Ibaraki
-                                                                      "11",   //  Kanagawa
-                                                                      "13",   //  Saitama
-                                                                      "15",   //  Tochigi
-                                                                      "10",   //  Tokyo
-                                                                      "17",   //  Yamanashi
-                                                                      "20",   //  Aichi
-                                                                      "19",   //  Gifu
-                                                                      "21",   //  Mie
-                                                                      "18",   //  Shizuoka
-                                                                      "27",   //  Hyogo
-                                                                      "22",   //  Kyoto
-                                                                      "24",   //  Nara
-                                                                      "25",   //  Osaka
-                                                                      "23",   //  Shiga
-                                                                      "26",   //  Wakayama
-                                                                      "35",   //  Hiroshima
-                                                                      "31",   //  Okayama
-                                                                      "32",   //  Shimane
-                                                                      "34",   //  Tottori
-                                                                      "33",   //  Yamaguchi
-                                                                      "38",   //  Ehime
-                                                                      "36",   //  Kagawa
-                                                                      "39",   //  Kochi
-                                                                      "37",   //  Tokushima
-                                                                      "40",   //  Fukuoka
-                                                                      "46",   //  Kagoshima
-                                                                      "43",   //  Kumamoto
-                                                                      "45",   //  Miyazaki
-                                                                      "42",   //  Nagasaki
-                                                                      "44",   //  Oita
-                                                                      "47",   //  Okinawa
-                                                                      "41",   //  Saga
-                                                                      "04",   //  Akita
-                                                                      "02",   //  Aomori
-                                                                      "07",   //  Fukushima
-                                                                      "03",   //  Iwate
-                                                                      "06",   //  Miyagi
-                                                                      "05",   //  Yamagata
-                                                                      "01",   //  Hokkaido
-                                                                      "29",   //  Fukui
-                                                                      "30",   //  Ishikawa
-                                                                      "28",   //  Toyama
-                                                                      "09",   //  Nagano
-                                                                      "08"    //  Niigata
-                                                                  } };
+using PRIMARY_JAPAN_ENUMERATION_TYPE = std::array<std::string, N_JAPAN_PRIMARIES>;    ///< primaries for Japan
+
+static PRIMARY_JAPAN_ENUMERATION_TYPE PRIMARY_JAPAN_ENUMERATION = { "12"s,   //  Chiba
+                                                                      "16"s,   //  Gunma
+                                                                      "14"s,   //  Ibaraki
+                                                                      "11"s,   //  Kanagawa
+                                                                      "13"s,   //  Saitama
+                                                                      "15"s,   //  Tochigi
+                                                                      "10"s,   //  Tokyo
+                                                                      "17"s,   //  Yamanashi
+                                                                      "20"s,   //  Aichi
+                                                                      "19"s,   //  Gifu
+                                                                      "21"s,   //  Mie
+                                                                      "18"s,   //  Shizuoka
+                                                                      "27"s,   //  Hyogo
+                                                                      "22"s,   //  Kyoto
+                                                                      "24"s,   //  Nara
+                                                                      "25"s,   //  Osaka
+                                                                      "23"s,   //  Shiga
+                                                                      "26"s,   //  Wakayama
+                                                                      "35"s,   //  Hiroshima
+                                                                      "31"s,   //  Okayama
+                                                                      "32"s,   //  Shimane
+                                                                      "34"s,   //  Tottori
+                                                                      "33"s,   //  Yamaguchi
+                                                                      "38"s,   //  Ehime
+                                                                      "36"s,   //  Kagawa
+                                                                      "39"s,   //  Kochi
+                                                                      "37"s,   //  Tokushima
+                                                                      "40"s,   //  Fukuoka
+                                                                      "46"s,   //  Kagoshima
+                                                                      "43"s,   //  Kumamoto
+                                                                      "45"s,   //  Miyazaki
+                                                                      "42"s,   //  Nagasaki
+                                                                      "44"s,   //  Oita
+                                                                      "47"s,   //  Okinawa
+                                                                      "41"s,   //  Saga
+                                                                      "04"s,   //  Akita
+                                                                      "02"s,   //  Aomori
+                                                                      "07"s,   //  Fukushima
+                                                                      "03"s,   //  Iwate
+                                                                      "06"s,   //  Miyagi
+                                                                      "05"s,   //  Yamagata
+                                                                      "01"s,   //  Hokkaido
+                                                                      "29"s,   //  Fukui
+                                                                      "30"s,   //  Ishikawa
+                                                                      "28"s,   //  Toyama
+                                                                      "09"s,   //  Nagano
+                                                                      "08"s    //  Niigata
+                                                                  };
 
 /// Philippines
 enum PRIMARY_ENUM_PHILIPPINES { PHILIPPINES_AUR,  //  Aurora
@@ -4349,88 +4409,90 @@ enum PRIMARY_ENUM_PHILIPPINES { PHILIPPINES_AUR,  //  Aurora
                                 N_PHILIPPINES_PRIMARIES
                               };
 
-typedef std::array<std::string, N_PHILIPPINES_PRIMARIES> PRIMARY_PHILIPPINES_ENUMERATION_TYPE;    ///< primaries for Philippines
+//typedef std::array<std::string, N_PHILIPPINES_PRIMARIES> PRIMARY_PHILIPPINES_ENUMERATION_TYPE;    ///< primaries for Philippines
 
-static PRIMARY_PHILIPPINES_ENUMERATION_TYPE PRIMARY_PHILIPPINES_ENUMERATION = { { "AUR",  //  Aurora
-                                                                                  "BTG",  //  Batangas
-                                                                                  "CAV",  //  Cavite
-                                                                                  "LAG",  //  Laguna
-                                                                                  "MAD",  //  Marinduque
-                                                                                  "MDC",  //  Mindoro Occidental
-                                                                                  "MDR",  //  Mindoro Oriental
-                                                                                  "PLW",  //  Palawan
-                                                                                  "QUE",  //  Quezon
-                                                                                  "RIZ",  //  Rizal
-                                                                                  "ROM",  //  Romblon
-                                                                                  "ILN",  //  Ilocos Norte
-                                                                                  "ILS",  //  Ilocos Sur
-                                                                                  "LUN",  //  La Union
-                                                                                  "PAN",  //  Pangasinan
-                                                                                  "BTN",  //  Batanes
-                                                                                  "CAG",  //  Cagayan
-                                                                                  "ISA",  //  Isabela
-                                                                                  "NUV",  //  Nueva Vizcaya
-                                                                                  "QUI",  //  Quirino
-                                                                                  "ABR",  //  Abra
-                                                                                  "APA",  //  Apayao
-                                                                                  "BEN",  //  Benguet
-                                                                                  "IFU",  //  Ifugao
-                                                                                  "KAL",  //  Kalinga-Apayso
-                                                                                  "MOU",  //  Mountain Province
-                                                                                  "BAN",  //  Batasn
-                                                                                  "BUL",  //  Bulacan
-                                                                                  "NUE",  //  Nueva Ecija
-                                                                                  "PAM",  //  Pampanga
-                                                                                  "TAR",  //  Tarlac
-                                                                                  "ZMB",  //  Zambales
-                                                                                  "ALB",  //  Albay
-                                                                                  "CAN",  //  Camarines Norte
-                                                                                  "CAS",  //  Camarines Sur
-                                                                                  "CAT",  //  Catanduanes
-                                                                                  "MAS",  //  Masbate
-                                                                                  "SOR",  //  Sorsogon
-                                                                                  "BIL",  //  Biliran
-                                                                                  "EAS",  //  Eastern Samar
-                                                                                  "LEY",  //  Leyte
-                                                                                  "NSA",  //  Northern Samar
-                                                                                  "SLE",  //  Southern Leyte
-                                                                                  "WSA",  //  Western Samar
-                                                                                  "AKL",  //  Aklan
-                                                                                  "ANT",  //  Antique
-                                                                                  "CAP",  //  Capiz
-                                                                                  "GUI",  //  Guimaras
-                                                                                  "ILI",  //  Iloilo
-                                                                                  "NEC",  //  Negroe Occidental
-                                                                                  "BOH",  //  Bohol
-                                                                                  "CEB",  //  Cebu
-                                                                                  "NER",  //  Negros Oriental
-                                                                                  "SIG",  //  Siquijor
-                                                                                  "ZAN",  //  Zamboanga del Norte
-                                                                                  "ZAS",  //  Zamboanga del Sur
-                                                                                  "ZSI",  //  Zamboanga Sibugay
-                                                                                  "NCO",  //  North Cotabato
-                                                                                  "SUK",  //  Sultan Kudarat
-                                                                                  "SAR",  //  Sarangani
-                                                                                  "SCO",  //  South Cotabato
-                                                                                  "BAS",  //  Basilan
-                                                                                  "LAS",  //  Lanao del Sur
-                                                                                  "MAG",  //  Maguindanao
-                                                                                  "SLU",  //  Sulu
-                                                                                  "TAW",  //  Tawi-Tawi
-                                                                                  "LAN",  //  Lanao del Norte
-                                                                                  "BUK",  //  Bukidnon
-                                                                                  "CAM",  //  Camiguin
-                                                                                  "MSC",  //  Misamis Occidental
-                                                                                  "MSR",  //  Misamis Oriental
-                                                                                  "COM",  //  Compostela Valley
-                                                                                  "DAV",  //  Davao del Norte
-                                                                                  "DAS",  //  Davao del Sur
-                                                                                  "DAO",  //  Davao Oriental
-                                                                                  "AGN",  //  Agusan del Norte
-                                                                                  "AGS",  //  Agusan del Sur
-                                                                                  "SUN",  //  Surigao del Norte
-                                                                                  "SUR"   //  Surigao del Sur
-                                                                              } };
+using PRIMARY_PHILIPPINES_ENUMERATION_TYPE = std::array<std::string, N_PHILIPPINES_PRIMARIES>;    ///< primaries for Philippines
+
+static PRIMARY_PHILIPPINES_ENUMERATION_TYPE PRIMARY_PHILIPPINES_ENUMERATION = { "AUR"s,  //  Aurora
+                                                                                  "BTG"s,  //  Batangas
+                                                                                  "CAV"s,  //  Cavite
+                                                                                  "LAG"s,  //  Laguna
+                                                                                  "MAD"s,  //  Marinduque
+                                                                                  "MDC"s,  //  Mindoro Occidental
+                                                                                  "MDR"s,  //  Mindoro Oriental
+                                                                                  "PLW"s,  //  Palawan
+                                                                                  "QUE"s,  //  Quezon
+                                                                                  "RIZ"s,  //  Rizal
+                                                                                  "ROM"s,  //  Romblon
+                                                                                  "ILN"s,  //  Ilocos Norte
+                                                                                  "ILS"s,  //  Ilocos Sur
+                                                                                  "LUN"s,  //  La Union
+                                                                                  "PAN"s,  //  Pangasinan
+                                                                                  "BTN"s,  //  Batanes
+                                                                                  "CAG"s,  //  Cagayan
+                                                                                  "ISA"s,  //  Isabela
+                                                                                  "NUV"s,  //  Nueva Vizcaya
+                                                                                  "QUI"s,  //  Quirino
+                                                                                  "ABR"s,  //  Abra
+                                                                                  "APA"s,  //  Apayao
+                                                                                  "BEN"s,  //  Benguet
+                                                                                  "IFU"s,  //  Ifugao
+                                                                                  "KAL"s,  //  Kalinga-Apayso
+                                                                                  "MOU"s,  //  Mountain Province
+                                                                                  "BAN"s,  //  Batasn
+                                                                                  "BUL"s,  //  Bulacan
+                                                                                  "NUE"s,  //  Nueva Ecija
+                                                                                  "PAM"s,  //  Pampanga
+                                                                                  "TAR"s,  //  Tarlac
+                                                                                  "ZMB"s,  //  Zambales
+                                                                                  "ALB"s,  //  Albay
+                                                                                  "CAN"s,  //  Camarines Norte
+                                                                                  "CAS"s,  //  Camarines Sur
+                                                                                  "CAT"s,  //  Catanduanes
+                                                                                  "MAS"s,  //  Masbate
+                                                                                  "SOR"s,  //  Sorsogon
+                                                                                  "BIL"s,  //  Biliran
+                                                                                  "EAS"s,  //  Eastern Samar
+                                                                                  "LEY"s,  //  Leyte
+                                                                                  "NSA"s,  //  Northern Samar
+                                                                                  "SLE"s,  //  Southern Leyte
+                                                                                  "WSA"s,  //  Western Samar
+                                                                                  "AKL"s,  //  Aklan
+                                                                                  "ANT"s,  //  Antique
+                                                                                  "CAP"s,  //  Capiz
+                                                                                  "GUI"s,  //  Guimaras
+                                                                                  "ILI"s,  //  Iloilo
+                                                                                  "NEC"s,  //  Negroe Occidental
+                                                                                  "BOH"s,  //  Bohol
+                                                                                  "CEB"s,  //  Cebu
+                                                                                  "NER"s,  //  Negros Oriental
+                                                                                  "SIG"s,  //  Siquijor
+                                                                                  "ZAN"s,  //  Zamboanga del Norte
+                                                                                  "ZAS"s,  //  Zamboanga del Sur
+                                                                                  "ZSI"s,  //  Zamboanga Sibugay
+                                                                                  "NCO"s,  //  North Cotabato
+                                                                                  "SUK"s,  //  Sultan Kudarat
+                                                                                  "SAR"s,  //  Sarangani
+                                                                                  "SCO"s,  //  South Cotabato
+                                                                                  "BAS"s,  //  Basilan
+                                                                                  "LAS"s,  //  Lanao del Sur
+                                                                                  "MAG"s,  //  Maguindanao
+                                                                                  "SLU"s,  //  Sulu
+                                                                                  "TAW"s,  //  Tawi-Tawi
+                                                                                  "LAN"s,  //  Lanao del Norte
+                                                                                  "BUK"s,  //  Bukidnon
+                                                                                  "CAM"s,  //  Camiguin
+                                                                                  "MSC"s,  //  Misamis Occidental
+                                                                                  "MSR"s,  //  Misamis Oriental
+                                                                                  "COM"s,  //  Compostela Valley
+                                                                                  "DAV"s,  //  Davao del Norte
+                                                                                  "DAS"s,  //  Davao del Sur
+                                                                                  "DAO"s,  //  Davao Oriental
+                                                                                  "AGN"s,  //  Agusan del Norte
+                                                                                  "AGS"s,  //  Agusan del Sur
+                                                                                  "SUN"s,  //  Surigao del Norte
+                                                                                  "SUR"s   //  Surigao del Sur
+                                                                              };
 
 /// Croatia
 enum PRIMARY_ENUM_CROATIA { CROATIA_01,  //  Zagrebačka županija
@@ -4457,30 +4519,32 @@ enum PRIMARY_ENUM_CROATIA { CROATIA_01,  //  Zagrebačka županija
                             N_CROATIA_PRIMARIES
                           };
 
-typedef std::array<std::string, N_CROATIA_PRIMARIES> PRIMARY_CROATIA_ENUMERATION_TYPE;    ///< primaries for Croatia
+//typedef std::array<std::string, N_CROATIA_PRIMARIES> PRIMARY_CROATIA_ENUMERATION_TYPE;    ///< primaries for Croatia
 
-static PRIMARY_CROATIA_ENUMERATION_TYPE PRIMARY_CROATIA_ENUMERATION = { { "01",  //  Zagrebačka županija
-                                                                          "02",  //  Krapinsko-Zagorska županija
-                                                                          "03",  //  Sisačko-Moslavačka županija
-                                                                          "04",  //  Karlovačka županija
-                                                                          "05",  //  Varaždinska županija
-                                                                          "06",  //  Koprivničko-Križevačka županija
-                                                                          "07",  //  Bjelovarsko-Bilogorska županija
-                                                                          "08",  //  Primorsko-Goranska županija
-                                                                          "09",  //  Ličko-Senjska županija
-                                                                          "10",  //  Virovitičko-Podravska županija
-                                                                          "11",  //  Požeško-Slavonska županija
-                                                                          "12",  //  Brodsko-Posavska županija
-                                                                          "13",  //  Zadarska županija
-                                                                          "14",  //  Osječko-Baranjska županija
-                                                                          "15",  //  Šibensko-Kninska županija
-                                                                          "16",  //  Vukovarsko-Srijemska županija
-                                                                          "17",  //  Splitsko-Dalmatinska županija
-                                                                          "18",  //  Istarska županija
-                                                                          "19",  //  Dubrovačko-Neretvanska županija
-                                                                          "20",  //  Međimurska županija
-                                                                          "21"   //  Grad Zagreb
-                                                                      } };
+using PRIMARY_CROATIA_ENUMERATION_TYPE = std::array<std::string, N_CROATIA_PRIMARIES>;    ///< primaries for Croatia
+
+static PRIMARY_CROATIA_ENUMERATION_TYPE PRIMARY_CROATIA_ENUMERATION = { "01"s,  //  Zagrebačka županija
+                                                                          "02"s,  //  Krapinsko-Zagorska županija
+                                                                          "03"s,  //  Sisačko-Moslavačka županija
+                                                                          "04"s,  //  Karlovačka županija
+                                                                          "05"s,  //  Varaždinska županija
+                                                                          "06"s,  //  Koprivničko-Križevačka županija
+                                                                          "07"s,  //  Bjelovarsko-Bilogorska županija
+                                                                          "08"s,  //  Primorsko-Goranska županija
+                                                                          "09"s,  //  Ličko-Senjska županija
+                                                                          "10"s,  //  Virovitičko-Podravska županija
+                                                                          "11"s,  //  Požeško-Slavonska županija
+                                                                          "12"s,  //  Brodsko-Posavska županija
+                                                                          "13"s,  //  Zadarska županija
+                                                                          "14"s,  //  Osječko-Baranjska županija
+                                                                          "15"s,  //  Šibensko-Kninska županija
+                                                                          "16"s,  //  Vukovarsko-Srijemska županija
+                                                                          "17"s,  //  Splitsko-Dalmatinska županija
+                                                                          "18"s,  //  Istarska županija
+                                                                          "19"s,  //  Dubrovačko-Neretvanska županija
+                                                                          "20"s,  //  Međimurska županija
+                                                                          "21"s   //  Grad Zagreb
+                                                                      };
 
 /// Czech Republic
 enum PRIMARY_ENUM_CZECH { CZECH_APA,  //  Praha 1
@@ -4572,95 +4636,97 @@ enum PRIMARY_ENUM_CZECH { CZECH_APA,  //  Praha 1
                           N_CZECH_PRIMARIES
                         };
 
-typedef std::array<std::string, N_CZECH_PRIMARIES> PRIMARY_CZECH_ENUMERATION_TYPE;    ///< primaries for Czech Republic
+//typedef std::array<std::string, N_CZECH_PRIMARIES> PRIMARY_CZECH_ENUMERATION_TYPE;    ///< primaries for Czech Republic
 
-static PRIMARY_CZECH_ENUMERATION_TYPE PRIMARY_CZECH_ENUMERATION = { { "APA",  //  Praha 1
-                                                                      "APB",  //  Praha 2
-                                                                      "APC",  //  Praha 3
-                                                                      "APD",  //  Praha 4
-                                                                      "APE",  //  Praha 5
-                                                                      "APF",  //  Praha 6
-                                                                      "APG",  //  Praha 7
-                                                                      "APH",  //  Praha 8
-                                                                      "API",  //  Praha 9
-                                                                      "APJ",  //  Praha 10
-                                                                      "BBN",  //  Benesov
-                                                                      "BBE",  //  Beroun
-                                                                      "BKD",  //  Kladno
-                                                                      "BKO",  //  Kolin
-                                                                      "BKH",  //  Kutna Hora
-                                                                      "BME",  //  Melnik
-                                                                      "BMB",  //  Mlada Boleslav
-                                                                      "BNY",  //  Nymburk
-                                                                      "BPZ",  //  Praha zapad
-                                                                      "BPV",  //  Praha vychod
-                                                                      "BPB",  //  Pribram
-                                                                      "BRA",  //  Rakovnik
-                                                                      "CBU",  //  Ceske Budejovice
-                                                                      "CCK",  //  Cesky Krumlov
-                                                                      "CJH",  //  Jindrichuv Hradec
-                                                                      "CPE",  //  Pelhrimov
-                                                                      "CPI",  //  Pisek
-                                                                      "CPR",  //  Prachatice
-                                                                      "CST",  //  Strakonice
-                                                                      "CTA",  //  Tabor
-                                                                      "DDO",  //  Domazlice
-                                                                      "DCH",  //  Cheb
-                                                                      "DKV",  //  Karlovy Vary
-                                                                      "DKL",  //  Klatovy
-                                                                      "DPM",  //  Plzen mesto
-                                                                      "DPJ",  //  Plzen jih
-                                                                      "DPS",  //  Plzen sever
-                                                                      "DRO",  //  Rokycany
-                                                                      "DSO",  //  Sokolov
-                                                                      "DTA",  //  Tachov
-                                                                      "ECL",  //  Ceska Lipa
-                                                                      "EDE",  //  Decin
-                                                                      "ECH",  //  Chomutov
-                                                                      "EJA",  //  Jablonec n. Nisou
-                                                                      "ELI",  //  Liberec
-                                                                      "ELT",  //  Litomerice
-                                                                      "ELO",  //  Louny
-                                                                      "EMO",  //  Most
-                                                                      "ETE",  //  Teplice
-                                                                      "EUL",  //  Usti nad Labem
-                                                                      "FHB",  //  Havlickuv Brod
-                                                                      "FHK",  //  Hradec Kralove
-                                                                      "FCR",  //  Chrudim
-                                                                      "FJI",  //  Jicin
-                                                                      "FNA",  //  Nachod
-                                                                      "FPA",  //  Pardubice
-                                                                      "FRK",  //  Rychn n. Kneznou
-                                                                      "FSE",  //  Semily
-                                                                      "FSV",  //  Svitavy
-                                                                      "FTR",  //  Trutnov
-                                                                      "FUO",  //  Usti nad Orlici
-                                                                      "GBL",  //  Blansko
-                                                                      "GBM",  //  Brno mesto
-                                                                      "GBV",  //  Brno venkov
-                                                                      "GBR",  //  Breclav
-                                                                      "GHO",  //  Hodonin
-                                                                      "GJI",  //  Jihlava
-                                                                      "GKR",  //  Kromeriz
-                                                                      "GPR",  //  Prostejov
-                                                                      "GTR",  //  Trebic
-                                                                      "GUH",  //  Uherske Hradiste
-                                                                      "GVY",  //  Vyskov
-                                                                      "GZL",  //  Zlin
-                                                                      "GZN",  //  Znojmo
-                                                                      "GZS",  //  Zdar nad Sazavou
-                                                                      "HBR",  //  Bruntal
-                                                                      "HFM",  //  Frydek-Mistek
-                                                                      "HJE",  //  Jesenik
-                                                                      "HKA",  //  Karvina
-                                                                      "HNJ",  //  Novy Jicin
-                                                                      "HOL",  //  Olomouc
-                                                                      "HOP",  //  Opava
-                                                                      "HOS",  //  Ostrava
-                                                                      "HPR",  //  Prerov
-                                                                      "HSU",  //  Sumperk
-                                                                      "HVS"   //  Vsetin
-                                                                  } };
+using PRIMARY_CZECH_ENUMERATION_TYPE = std::array<std::string, N_CZECH_PRIMARIES>;    ///< primaries for Czech Republic
+
+static PRIMARY_CZECH_ENUMERATION_TYPE PRIMARY_CZECH_ENUMERATION = { "APA"s,  //  Praha 1
+                                                                      "APB"s,  //  Praha 2
+                                                                      "APC"s,  //  Praha 3
+                                                                      "APD"s,  //  Praha 4
+                                                                      "APE"s,  //  Praha 5
+                                                                      "APF"s,  //  Praha 6
+                                                                      "APG"s,  //  Praha 7
+                                                                      "APH"s,  //  Praha 8
+                                                                      "API"s,  //  Praha 9
+                                                                      "APJ"s,  //  Praha 10
+                                                                      "BBN"s,  //  Benesov
+                                                                      "BBE"s,  //  Beroun
+                                                                      "BKD"s,  //  Kladno
+                                                                      "BKO"s,  //  Kolin
+                                                                      "BKH"s,  //  Kutna Hora
+                                                                      "BME"s,  //  Melnik
+                                                                      "BMB"s,  //  Mlada Boleslav
+                                                                      "BNY"s,  //  Nymburk
+                                                                      "BPZ"s,  //  Praha zapad
+                                                                      "BPV"s,  //  Praha vychod
+                                                                      "BPB"s,  //  Pribram
+                                                                      "BRA"s,  //  Rakovnik
+                                                                      "CBU"s,  //  Ceske Budejovice
+                                                                      "CCK"s,  //  Cesky Krumlov
+                                                                      "CJH"s,  //  Jindrichuv Hradec
+                                                                      "CPE"s,  //  Pelhrimov
+                                                                      "CPI"s,  //  Pisek
+                                                                      "CPR"s,  //  Prachatice
+                                                                      "CST"s,  //  Strakonice
+                                                                      "CTA"s,  //  Tabor
+                                                                      "DDO"s,  //  Domazlice
+                                                                      "DCH"s,  //  Cheb
+                                                                      "DKV"s,  //  Karlovy Vary
+                                                                      "DKL"s,  //  Klatovy
+                                                                      "DPM"s,  //  Plzen mesto
+                                                                      "DPJ"s,  //  Plzen jih
+                                                                      "DPS"s,  //  Plzen sever
+                                                                      "DRO"s,  //  Rokycany
+                                                                      "DSO"s,  //  Sokolov
+                                                                      "DTA"s,  //  Tachov
+                                                                      "ECL"s,  //  Ceska Lipa
+                                                                      "EDE"s,  //  Decin
+                                                                      "ECH"s,  //  Chomutov
+                                                                      "EJA"s,  //  Jablonec n. Nisou
+                                                                      "ELI"s,  //  Liberec
+                                                                      "ELT"s,  //  Litomerice
+                                                                      "ELO"s,  //  Louny
+                                                                      "EMO"s,  //  Most
+                                                                      "ETE"s,  //  Teplice
+                                                                      "EUL"s,  //  Usti nad Labem
+                                                                      "FHB"s,  //  Havlickuv Brod
+                                                                      "FHK"s,  //  Hradec Kralove
+                                                                      "FCR"s,  //  Chrudim
+                                                                      "FJI"s,  //  Jicin
+                                                                      "FNA"s,  //  Nachod
+                                                                      "FPA"s,  //  Pardubice
+                                                                      "FRK"s,  //  Rychn n. Kneznou
+                                                                      "FSE"s,  //  Semily
+                                                                      "FSV"s,  //  Svitavy
+                                                                      "FTR"s,  //  Trutnov
+                                                                      "FUO"s,  //  Usti nad Orlici
+                                                                      "GBL"s,  //  Blansko
+                                                                      "GBM"s,  //  Brno mesto
+                                                                      "GBV"s,  //  Brno venkov
+                                                                      "GBR"s,  //  Breclav
+                                                                      "GHO"s,  //  Hodonin
+                                                                      "GJI"s,  //  Jihlava
+                                                                      "GKR"s,  //  Kromeriz
+                                                                      "GPR"s,  //  Prostejov
+                                                                      "GTR"s,  //  Trebic
+                                                                      "GUH"s,  //  Uherske Hradiste
+                                                                      "GVY"s,  //  Vyskov
+                                                                      "GZL"s,  //  Zlin
+                                                                      "GZN"s,  //  Znojmo
+                                                                      "GZS"s,  //  Zdar nad Sazavou
+                                                                      "HBR"s,  //  Bruntal
+                                                                      "HFM"s,  //  Frydek-Mistek
+                                                                      "HJE"s,  //  Jesenik
+                                                                      "HKA"s,  //  Karvina
+                                                                      "HNJ"s,  //  Novy Jicin
+                                                                      "HOL"s,  //  Olomouc
+                                                                      "HOP"s,  //  Opava
+                                                                      "HOS"s,  //  Ostrava
+                                                                      "HPR"s,  //  Prerov
+                                                                      "HSU"s,  //  Sumperk
+                                                                      "HVS"s   //  Vsetin
+                                                                  };
 
 /// Slovakia
 enum PRIMARY_ENUM_SLOVAKIA { SLOVAKIA_BAA,  //  Bratislava 1
@@ -4745,88 +4811,90 @@ enum PRIMARY_ENUM_SLOVAKIA { SLOVAKIA_BAA,  //  Bratislava 1
                              N_SLOVAKIA_PRIMARIES
                            };
 
-typedef std::array<std::string, N_SLOVAKIA_PRIMARIES> PRIMARY_SLOVAKIA_ENUMERATION_TYPE;    ///< primaries for Slovakia
+//typedef std::array<std::string, N_SLOVAKIA_PRIMARIES> PRIMARY_SLOVAKIA_ENUMERATION_TYPE;    ///< primaries for Slovakia
 
-static PRIMARY_SLOVAKIA_ENUMERATION_TYPE PRIMARY_SLOVAKIA_ENUMERATION = { { "BAA",  //  Bratislava 1
-                                                                            "BAB",  //  Bratislava 2
-                                                                            "BAC",  //  Bratislava 3
-                                                                            "BAD",  //  Bratislava 4
-                                                                            "BAE",  //  Bratislava 5
-                                                                            "MAL",  //  Malacky
-                                                                            "PEZ",  //  Pezinok
-                                                                            "SEN",  //  Senec
-                                                                            "DST",  //  Dunajska Streda
-                                                                            "GAL",  //  Galanta
-                                                                            "HLO",  //  Hlohovec
-                                                                            "PIE",  //  Piestany
-                                                                            "SEA",  //  Senica
-                                                                            "SKA",  //  Skalica
-                                                                            "TRN",  //  Trnava
-                                                                            "BAN",  //  Banovce n. Bebr.
-                                                                            "ILA",  //  Ilava
-                                                                            "MYJ",  //  Myjava
-                                                                            "NMV",  //  Nove Mesto n. Vah
-                                                                            "PAR",  //  Partizanske
-                                                                            "PBY",  //  Povazska Bystrica
-                                                                            "PRI",  //  Prievidza
-                                                                            "PUC",  //  Puchov
-                                                                            "TNC",  //  Trencin
-                                                                            "KOM",  //  Komarno
-                                                                            "LVC",  //  Levice
-                                                                            "NIT",  //  Nitra
-                                                                            "NZA",  //  Nove Zamky
-                                                                            "SAL",  //  Sala
-                                                                            "TOP",  //  Topolcany
-                                                                            "ZMO",  //  Zlate Moravce
-                                                                            "BYT",  //  Bytca
-                                                                            "CAD",  //  Cadca
-                                                                            "DKU",  //  Dolny Kubin
-                                                                            "KNM",  //  Kysucke N. Mesto
-                                                                            "LMI",  //  Liptovsky Mikulas
-                                                                            "MAR",  //  Martin
-                                                                            "NAM",  //  Namestovo
-                                                                            "RUZ",  //  Ruzomberok
-                                                                            "TTE",  //  Turcianske Teplice
-                                                                            "TVR",  //  Tvrdosin
-                                                                            "ZIL",  //  Zilina
-                                                                            "BBY",  //  Banska Bystrica
-                                                                            "BST",  //  Banska Stiavnica
-                                                                            "BRE",  //  Brezno
-                                                                            "DET",  //  Detva
-                                                                            "KRU",  //  Krupina
-                                                                            "LUC",  //  Lucenec
-                                                                            "POL",  //  Poltar
-                                                                            "REV",  //  Revuca
-                                                                            "RSO",  //  Rimavska Sobota
-                                                                            "VKR",  //  Velky Krtis
-                                                                            "ZAR",  //  Zarnovica
-                                                                            "ZIH",  //  Ziar nad Hronom
-                                                                            "ZVO",  //  Zvolen
-                                                                            "GEL",  //  Gelnica
-                                                                            "KEA",  //  Kosice 1
-                                                                            "KEB",  //  Kosice 2
-                                                                            "KEC",  //  Kosice 3
-                                                                            "KED",  //  Kosice 4
-                                                                            "KEO",  //  Kosice-okolie
-                                                                            "MIC",  //  Michalovce
-                                                                            "ROZ",  //  Roznava
-                                                                            "SOB",  //  Sobrance
-                                                                            "SNV",  //  Spisska Nova Ves
-                                                                            "TRE",  //  Trebisov
-                                                                            "BAR",  //  Bardejov
-                                                                            "HUM",  //  Humenne
-                                                                            "KEZ",  //  Kezmarok
-                                                                            "LEV",  //  Levoca
-                                                                            "MED",  //  Medzilaborce
-                                                                            "POP",  //  Poprad
-                                                                            "PRE",  //  Presov
-                                                                            "SAB",  //  Sabinov
-                                                                            "SNI",  //  Snina
-                                                                            "SLU",  //  Stara Lubovna
-                                                                            "STR",  //  Stropkov
+using PRIMARY_SLOVAKIA_ENUMERATION_TYPE = std::array<std::string, N_SLOVAKIA_PRIMARIES>;    ///< primaries for Slovakia
+
+static PRIMARY_SLOVAKIA_ENUMERATION_TYPE PRIMARY_SLOVAKIA_ENUMERATION = { "BAA"s,  //  Bratislava 1
+                                                                            "BAB"s,  //  Bratislava 2
+                                                                            "BAC"s,  //  Bratislava 3
+                                                                            "BAD"s,  //  Bratislava 4
+                                                                            "BAE"s,  //  Bratislava 5
+                                                                            "MAL"s,  //  Malacky
+                                                                            "PEZ"s,  //  Pezinok
+                                                                            "SEN"s,  //  Senec
+                                                                            "DST"s,  //  Dunajska Streda
+                                                                            "GAL"s,  //  Galanta
+                                                                            "HLO"s,  //  Hlohovec
+                                                                            "PIE"s,  //  Piestany
+                                                                            "SEA"s,  //  Senica
+                                                                            "SKA"s,  //  Skalica
+                                                                            "TRN"s,  //  Trnava
+                                                                            "BAN"s,  //  Banovce n. Bebr.
+                                                                            "ILA"s,  //  Ilava
+                                                                            "MYJ"s,  //  Myjava
+                                                                            "NMV"s,  //  Nove Mesto n. Vah
+                                                                            "PAR"s,  //  Partizanske
+                                                                            "PBY"s,  //  Povazska Bystrica
+                                                                            "PRI"s,  //  Prievidza
+                                                                            "PUC"s,  //  Puchov
+                                                                            "TNC"s,  //  Trencin
+                                                                            "KOM"s,  //  Komarno
+                                                                            "LVC"s,  //  Levice
+                                                                            "NIT"s,  //  Nitra
+                                                                            "NZA"s,  //  Nove Zamky
+                                                                            "SAL"s,  //  Sala
+                                                                            "TOP"s,  //  Topolcany
+                                                                            "ZMO"s,  //  Zlate Moravce
+                                                                            "BYT"s,  //  Bytca
+                                                                            "CAD"s,  //  Cadca
+                                                                            "DKU"s,  //  Dolny Kubin
+                                                                            "KNM"s,  //  Kysucke N. Mesto
+                                                                            "LMI"s,  //  Liptovsky Mikulas
+                                                                            "MAR"s,  //  Martin
+                                                                            "NAM"s,  //  Namestovo
+                                                                            "RUZ"s,  //  Ruzomberok
+                                                                            "TTE"s,  //  Turcianske Teplice
+                                                                            "TVR"s,  //  Tvrdosin
+                                                                            "ZIL"s,  //  Zilina
+                                                                            "BBY"s,  //  Banska Bystrica
+                                                                            "BST"s,  //  Banska Stiavnica
+                                                                            "BRE"s,  //  Brezno
+                                                                            "DET"s,  //  Detva
+                                                                            "KRU"s,  //  Krupina
+                                                                            "LUC"s,  //  Lucenec
+                                                                            "POL"s,  //  Poltar
+                                                                            "REV"s,  //  Revuca
+                                                                            "RSO"s,  //  Rimavska Sobota
+                                                                            "VKR"s,  //  Velky Krtis
+                                                                            "ZAR"s,  //  Zarnovica
+                                                                            "ZIH"s,  //  Ziar nad Hronom
+                                                                            "ZVO"s,  //  Zvolen
+                                                                            "GEL"s,  //  Gelnica
+                                                                            "KEA"s,  //  Kosice 1
+                                                                            "KEB"s,  //  Kosice 2
+                                                                            "KEC"s,  //  Kosice 3
+                                                                            "KED"s,  //  Kosice 4
+                                                                            "KEO"s,  //  Kosice-okolie
+                                                                            "MIC"s,  //  Michalovce
+                                                                            "ROZ"s,  //  Roznava
+                                                                            "SOB"s,  //  Sobrance
+                                                                            "SNV"s,  //  Spisska Nova Ves
+                                                                            "TRE"s,  //  Trebisov
+                                                                            "BAR"s,  //  Bardejov
+                                                                            "HUM"s,  //  Humenne
+                                                                            "KEZ"s,  //  Kezmarok
+                                                                            "LEV"s,  //  Levoca
+                                                                            "MED"s,  //  Medzilaborce
+                                                                            "POP"s,  //  Poprad
+                                                                            "PRE"s,  //  Presov
+                                                                            "SAB"s,  //  Sabinov
+                                                                            "SNI"s,  //  Snina
+                                                                            "SLU"s,  //  Stara Lubovna
+                                                                            "STR"s,  //  Stropkov
                                                                             "SVI",  //  Svidnik
-                                                                            "VRT"   //  Vranov nad Toplou
-                                                                        } };
+                                                                            "VRTs"   //  Vranov nad Toplou
+                                                                        };
 
 // ---------------------------------------------------  adif_country  -----------------------------------------
 
@@ -4853,7 +4921,7 @@ public:
     \param  pfx     canonical prefix
     \param  del     whether country has been deleted
 */
-  adif_country(const std::string& nm, const std::string& pfx = "", bool del = false);
+  adif_country(const std::string& nm, const std::string& pfx = ""s, bool del = false);
 };
 
 // ---------------------------------------------------  adif_countries  -----------------------------------------

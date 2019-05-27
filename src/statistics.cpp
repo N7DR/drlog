@@ -85,15 +85,15 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
   { SAFELOCK(statistics);
 
 // QSOs
-    unsigned int qsos_all_bands = 0;
+    unsigned int qsos_all_bands { 0 };
 
-    line = pad_string("QSOs", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');                                          // accumulator for total qsos
+    line = pad_string("QSOs"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');                                          // accumulator for total qsos
 
     for (const auto& b : permitted_bands)
-    { unsigned int qsos = 0;
+    { unsigned int qsos { 0 };
 
       for (const auto& m : modes)
-      { const auto& nq = _n_qsos[m];
+      { const auto& nq { _n_qsos[m] };
 
         if (modes.size() == 1)
           line += pad_string(to_string(nq[b]), FIELD_WIDTH);
@@ -112,15 +112,15 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
 // country mults
     if (_country_multipliers.used())                                         // if countries are mults
-    { unsigned int total_countries_all_bands = 0;
+    { unsigned int total_countries_all_bands { 0 };
 
-      line = pad_string("Countries", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+      line = pad_string("Countries"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
       for (const auto& b : permitted_bands)
-      { unsigned int countries = 0;
+      { unsigned int countries { 0 };
 
         for (const auto& m : modes)
-        { const unsigned int n_countries = _country_multipliers.n_worked(b, m);
+        { const unsigned int n_countries { _country_multipliers.n_worked(b, m) };
 
           if (modes.size() == 1)
             line += pad_string(to_string(n_countries), FIELD_WIDTH);
@@ -139,18 +139,18 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     }
 
 // callsign mults
-    const set<string>&  callsign_mults = rules.callsign_mults();      // collection of types of mults based on callsign (e.g., "WPXPX")
+    const set<string>&  callsign_mults { rules.callsign_mults() };      // collection of types of mults based on callsign (e.g., "WPXPX")
 
     if (!callsign_mults.empty())
     { for (const auto mult_name : callsign_mults)
-      { const MODE m = ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE);
+      { const MODE m { ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE) };
 
         line = pad_string(mult_name, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
-        const auto& cit = _callsign_multipliers.find(mult_name);
+        const auto& cit { _callsign_multipliers.find(mult_name) };
 
         if (cit != _callsign_multipliers.end())    // should always be true
-        { const multiplier& mult = cit->second;
+        { const multiplier& mult { cit->second };
 
           FOR_ALL(permitted_bands, [=, &line] (const BAND& b) { line += pad_string(to_string(mult.n_worked(b, m)), FIELD_WIDTH); } );
 
@@ -170,26 +170,26 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     }
 
 // Exchange mults
-    const bool exchange_mults_per_band = rules.exchange_mults_per_band();
+    const bool exchange_mults_per_band { rules.exchange_mults_per_band() };
 
     for (const auto& sm : _exchange_multipliers)
-    { const string& field_name = sm.first;
+    { const string& field_name { sm.first };
 
       line = pad_string(field_name, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
-      const multiplier& mult = sm.second;
-      unsigned int total = 0;
-      const MODE m = ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE);
+      const multiplier& mult { sm.second };
+
+      unsigned int total { 0 };
+
+      const MODE m { ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE) };
 
       for (const auto& b : permitted_bands)
-      {
-        { const unsigned int n_exchange_mults = mult.n_worked(b, m);
+      { const unsigned int n_exchange_mults { mult.n_worked(b, m) };
 
-          line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
+        line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
 
-          if (exchange_mults_per_band)
-            total += n_exchange_mults;
-        }
+        if (exchange_mults_per_band)
+          total += n_exchange_mults;
       }
 
       if (permitted_bands.size() != 1)
@@ -203,15 +203,15 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     }
 
 // dupes
-    unsigned int dupes_all_bands = 0;
+    unsigned int dupes_all_bands { 0 };
 
-    line = pad_string("Dupes", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+    line = pad_string("Dupes"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
     for (const auto& b : permitted_bands)
-    { unsigned int dupes = 0;
+    { unsigned int dupes { 0 };
 
       for (const auto& m : modes)
-      { const auto& nd = _n_dupes[m];
+      { const auto& nd { _n_dupes[m] };
 
         if (modes.size() == 1)
           line += pad_string(to_string(nd[b]), FIELD_WIDTH);
@@ -229,15 +229,15 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     rv += line + LF;
 
 // QSO points
-    unsigned int points_all_bands = 0;
+    unsigned int points_all_bands { 0 };
 
-    line = pad_string("Qpoints", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+    line = pad_string("Qpoints"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
     for (const auto& b : permitted_bands)
-    { unsigned int points = 0;
+    { unsigned int points { 0 };
 
       for (const auto& m : modes)
-      { const auto& qp = _qso_points[m];
+      { const auto& qp { _qso_points[m] };
 
         if (modes.size() == 1)
           line += pad_string(to_string(qp[b]), FIELD_WIDTH);
@@ -255,8 +255,8 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
     rv += line;
 
     if (_include_qtcs)
-    { line = LF + pad_string("QTC QSOs", FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
-      line += pad_string((to_string(_qtc_qsos_sent) + "|" + to_string(_qtc_qsos_unsent)), FIELD_WIDTH * (permitted_bands.size() + 1));
+    { line = LF + pad_string("QTC QSOs"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+      line += pad_string((to_string(_qtc_qsos_sent) + "|"s + to_string(_qtc_qsos_unsent)), FIELD_WIDTH * (permitted_bands.size() + 1));
 
       rv += line;
     }
@@ -264,40 +264,6 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
 
   return rv;
 }
-
-/// default constructor
-//running_statistics::running_statistics(void) :
-//  _auto_country_mults(false),
-//  _callsign_mults_used(false),
-//  _country_mults_used(false),
-//  _exchange_mults_used(false),
-//  _include_qtcs(false),
-//  _n_dupes( { {} } ),
-//  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-//  _qso_points( { {} } ),
-//  _qtc_qsos_sent(0),
-//  _qtc_qsos_unsent(0)
-//{ }
-
-/*! \brief                  Constructor
-    \param  country_data    data from cty.dat file
-    \param  context         drlog context
-    \param  rules           rules for this contest
-*/
-//running_statistics::running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
-//  _auto_country_mults(false),
-//  _callsign_mults_used(rules.callsign_mults_used()),
-//  _country_mults_used(rules.country_mults_used()),
-//  _exchange_mults_used(rules.exchange_mults_used()),
-//  _exch_mult_fields(rules.exchange_mults().cbegin(), rules.exchange_mults().cend()),
-//  _include_qtcs(rules.send_qtcs()),
-//  _location_db(country_data, context.country_list()),
-//  _n_dupes( { {} } ),
-//  _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
-//  _qso_points( { {} } ),
-//  _qtc_qsos_sent(0),
-//  _qtc_qsos_unsent(0)
-//{ }
 
 /*! \brief                  Prepare an object that was created with the default constructor
     \param  country_data    data from cty.dat file
@@ -315,13 +281,13 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
   _location_db.prepare(country_data, context.country_list());
 
-  const vector<string>& exchange_mults = rules.exchange_mults();
+  const vector<string>& exchange_mults { rules.exchange_mults() };
 
   FOR_ALL(exchange_mults, [&] (const string& exchange_mult) { _exch_mult_fields.insert(exchange_mult); } );
 
 // callsign mults
   if (_callsign_mults_used)
-  { const set<string> callsign_mult_names = rules.callsign_mults();
+  { const set<string> callsign_mult_names { rules.callsign_mults() };
 
     if (!callsign_mult_names.empty())                              // should always be true
     { for (const auto& callsign_mult_name : callsign_mult_names)
@@ -338,7 +304,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
 // country mults
   if (_country_mults_used)
-  { const set<string> country_mults = rules.country_mults();
+  { const set<string> country_mults { rules.country_mults() };
 
     _country_multipliers.used(!country_mults.empty() or context.auto_remaining_country_mults());  // should always be true
     _country_multipliers.per_band(rules.country_mults_per_band());
@@ -358,7 +324,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
       em.per_mode(rules.exchange_mults_per_mode());
 
 // if values are obtained from grep, then the next line returns an empty vector
-      const vector<string> canonical_values = rules.exch_canonical_values(exchange_mult_name);
+      const vector<string> canonical_values { rules.exch_canonical_values(exchange_mult_name) };
 
       if (!canonical_values.empty())
         em.add_known(canonical_values);
@@ -391,11 +357,11 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
   if (!known_callsign_mult_name(mult_name))
     return false;
 
-  const auto cit = _callsign_multipliers.find(mult_name);
+  const auto cit { _callsign_multipliers.find(mult_name) };
 
   if (cit != _callsign_multipliers.cend())                          // should always be true
-  { const multiplier& mult = cit->second;
-    const bool worked = mult.is_worked(mult_value, b, m);
+  { const      multiplier& mult { cit->second };
+    const bool worked           { mult.is_worked(mult_value, b, m) };
 
     return !(worked);
   }
@@ -411,35 +377,23 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
     \return             whether the country in which <i>callsign</i> is located is needed as a mult on band <i>b</i> and mode <i>m</i>
 */
 const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
-{ //ost << "Inside running_statistics::is_needed_country_mult()" << endl;
-
-  try
+{ try
   { SAFELOCK(statistics);
 
-    const string canonical_prefix = _location_db.canonical_prefix(callsign);
-
-//    const bool prefix_is_a_mult = _country_multipliers.is_known(canonical_prefix);
-
-//    const bool is_needed = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
+    const string canonical_prefix { _location_db.canonical_prefix(callsign) };
 
     bool is_needed_mult;
-
-//    ost << "auto_country_mults = " << boolalpha << _auto_country_mults << noboolalpha << endl;
-
-//    ost << "_country multipliers = " << _country_multipliers << endl;
 
     if (_auto_country_mults)
       is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
     else
-    { const bool prefix_is_a_mult = _country_multipliers.is_known(canonical_prefix);
+    { const bool prefix_is_a_mult { _country_multipliers.is_known(canonical_prefix) };
 
       if (prefix_is_a_mult)
         is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));
       else                                                                              // not a mult
         is_needed_mult = false;
     }
-
-//    ost << "running_statistics::is_needed_country_mult
 
     return is_needed_mult;
   }
@@ -459,8 +413,6 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 const bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 { SAFELOCK(statistics);
 
-//ost << "in running_statistics::add_known_country_mult() for " << str << " boolean = " << (rules.country_mults() < str) << endl;
-
   return ( (rules.country_mults() < str) ? _country_multipliers.add_known(str) : false );
 }
 
@@ -472,13 +424,14 @@ const bool running_statistics::add_known_country_mult(const string& str, const c
 void running_statistics::add_qso(const QSO& qso, const logbook& log, const contest_rules& rules)
 { SAFELOCK(statistics);
   
-  const BAND& b = qso.band();
-  const unsigned int band_nr = static_cast<int>(b);
-  const MODE& mo = qso.mode();
-  const unsigned int mode_nr = static_cast<int>(mo);
+  const BAND&        b       { qso.band() };
+  const unsigned int band_nr { static_cast<unsigned int>(b) };
+  const MODE&        mo      { qso.mode() };
+  const unsigned int mode_nr { static_cast<unsigned int>(mo) };
 
 // increment the number of QSOs
-  auto& pb = _n_qsos[mode_nr];
+  auto& pb { _n_qsos[mode_nr] };
+
   pb[band_nr]++;
 
 // multipliers
@@ -486,8 +439,9 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 // callsign mults
 // for now, just assume that there's at most one possible callsign mult, and the value is in qso.prefix()
   if (!_callsign_multipliers.empty() and !(qso.prefix().empty()) )
-  { const string mult_name = _callsign_multipliers.begin()->first;
-    multiplier& m = _callsign_multipliers.begin()->second;
+  { const string mult_name { _callsign_multipliers.begin()->first };
+
+    multiplier& m { _callsign_multipliers.begin()->second };
 
     m.unconditional_add_worked(qso.prefix(), static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
@@ -495,35 +449,35 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
   }
 
 // country mults
-  const string& call = qso.callsign();
-  const string& canonical_prefix = _location_db.canonical_prefix(call);
+  const string& call             { qso.callsign() };
+  const string& canonical_prefix { _location_db.canonical_prefix(call) };
 
   _country_multipliers.add_worked(canonical_prefix, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
 
 // exchange mults
   for (auto& exchange_multiplier : _exchange_multipliers)
-  { const string& field_name = exchange_multiplier.first;
-    const string value = qso.received_exchange(field_name);
-    const string mv = MULT_VALUE(field_name, value);            // the mult value of the received field
+  { const string& field_name { exchange_multiplier.first };
+    const string  value      { qso.received_exchange(field_name) };
+    const string  mv         { MULT_VALUE(field_name, value) };            // the mult value of the received field
 
     if (!value.empty())
-    { multiplier& mult = exchange_multiplier.second;
+    { multiplier& mult { exchange_multiplier.second };
 
       mult.unconditional_add_worked(mv, static_cast<BAND>(band_nr), static_cast<MODE>(mo));
     }
   }
   
-  const bool is_dupe = log.is_dupe(qso, rules);
+  const bool is_dupe { log.is_dupe(qso, rules) };
 
   if (is_dupe)
-  { auto& pb = _n_dupes[mode_nr];
+  { auto& pb { _n_dupes[mode_nr] };
 
     pb[band_nr]++;
   }
   else    // not a dupe; add qso points; this may not be a very clean algorithm; I should be able to do better
   {
 // try to calculate the points for this QSO; start with a default value
-    const unsigned int points_this_qso = rules.points(qso, _location_db);             // points based on country; something like :G:3
+    const unsigned int points_this_qso { rules.points(qso, _location_db) };             // points based on country; something like :G:3
 
     _qso_points[mode_nr][band_nr] += points_this_qso;
 
@@ -579,7 +533,7 @@ const set<string> running_statistics::known_exchange_mult_values(const string& n
 */
 const bool running_statistics::add_worked_exchange_mult(const string& field_name, const string& field_value, const int band_nr, const int mode_nr)
 { if (!field_value.empty())
-  {  const string mv = MULT_VALUE(field_name, field_value);  // the mult value of the received field
+  { const string mv { MULT_VALUE(field_name, field_value) };  // the mult value of the received field
 
     SAFELOCK(statistics);
 
@@ -614,7 +568,7 @@ void running_statistics::rebuild(const logbook& log, const contest_rules& rules)
     \return                         whether reception of exchange field <i>exchange_field_name</i> with value <i>exchange_field_value</i> on band <i>b</i> and mode <i>m</i> would be a multiplier
 */
 const bool running_statistics::is_needed_exchange_mult(const string& exchange_field_name, const string& exchange_field_value, const BAND b, const MODE m) const
-{ const string mv = MULT_VALUE(exchange_field_name, exchange_field_value);  // the mult value of the received field
+{ const string mv { MULT_VALUE(exchange_field_name, exchange_field_value) };  // the mult value of the received field
 
   SAFELOCK(statistics);
 
@@ -635,12 +589,13 @@ const string running_statistics::summary_string(const contest_rules& rules)
 
 // write the bands and underline them
   string line(FIRST_FIELD_WIDTH, ' ');
-  const vector<BAND>& permitted_bands = rules.permitted_bands();
+
+  const vector<BAND>& permitted_bands { rules.permitted_bands() };
 
   FOR_ALL(permitted_bands, [&line] (const BAND b) { line += pad_string(BAND_NAME[b], FIELD_WIDTH); } );
 
   if (permitted_bands.size() != 1)
-    line += pad_string("All", FIELD_WIDTH);
+    line += pad_string("All"s, FIELD_WIDTH);
   
   rv += (line + LF);
       
@@ -649,12 +604,13 @@ const string running_statistics::summary_string(const contest_rules& rules)
   FOR_ALL(permitted_bands, [&line] (const BAND) { line += pad_string("---", FIELD_WIDTH); } );
 
   if (permitted_bands.size() != 1)
-    line += pad_string("---", FIELD_WIDTH);
+    line += pad_string("---"s, FIELD_WIDTH);
 
   rv += line + LF;
 
 // now create the individual per-mode tables
-  const set<MODE> sm = rules.permitted_modes();
+  const set<MODE> sm { rules.permitted_modes() };
+
   vector<set<MODE>> vsm;
 
   for (const auto m : sm)
@@ -665,12 +621,7 @@ const string running_statistics::summary_string(const contest_rules& rules)
 
   for (const auto& mode_set : vsm)
   { if (vsm.size()  != 1)
-    { //if (mode_set.size() == 1)
-      //  rv += MODE_NAME[*(mode_set.cbegin())] + LF;
-     // else
-      //  rv += "All" + LF;
-      rv += ( ( (mode_set.size() == 1) ? MODE_NAME[*(mode_set.cbegin())] : "All" ) + LF );
-    }
+      rv += ( ( (mode_set.size() == 1) ? MODE_NAME[*(mode_set.cbegin())] : "All"s ) + LF );
   
     rv += _summary_string(rules, mode_set);
     
@@ -686,14 +637,15 @@ const string running_statistics::summary_string(const contest_rules& rules)
     \return         current point total
 */
 const unsigned int running_statistics::points(const contest_rules& rules) const
-{ unsigned int q_points = 0;
-  const set<BAND>& score_bands = rules.score_bands();
-  const set<MODE> score_modes = rules.score_modes();
+{ unsigned int q_points { 0 };
+
+  const set<BAND>& score_bands { rules.score_bands() };
+  const set<MODE>  score_modes { rules.score_modes() };
   
   SAFELOCK(statistics);
 
   for (const auto& m : score_modes)
-  { const auto& qp = _qso_points[m];
+  { const auto& qp { _qso_points[m] };
 
     for (const auto& b : score_bands)
       q_points += qp[b];
@@ -703,26 +655,29 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
   q_points += _qtc_qsos_sent;
 
 // callsign mults
-  const unsigned int callsign_mults = n_worked_callsign_mults(rules);
-  const unsigned int country_mults = n_worked_country_mults(rules);
+  const unsigned int callsign_mults { n_worked_callsign_mults(rules) };
+  const unsigned int country_mults  { n_worked_country_mults(rules) };
 
 // exchange mults
-  const unsigned int exchange_mults = n_worked_exchange_mults(rules);
-  unsigned int rv = q_points * (max((country_mults + exchange_mults + callsign_mults), static_cast<unsigned int>(1)));    // force mult to be at least unity
+  const unsigned int exchange_mults { n_worked_exchange_mults(rules) };
+
+  unsigned int rv { q_points * (max((country_mults + exchange_mults + callsign_mults), static_cast<unsigned int>(1))) };    // force mult to be at least unity
   
 // UBA has weird rules
   if (rules.uba_bonus())
-  { int bonus_qsos = 0;
+  { constexpr unsigned int ON_QSO_POINTS = 10;  // hardwire the ON points for now
+
+    int bonus_qsos { 0 };
 
     for (const auto& m : score_modes)
-    { const auto& qp = _n_ON_qsos[m];
+    { const auto& qp { _n_ON_qsos[m] };
 
       for (const auto& b : score_bands)
         bonus_qsos += qp[b];
     }
 
 // total QSOs
-    int total_qsos = 0;
+    int total_qsos { 0 };
 
     for (const auto& m : score_modes)
     { for (const auto& b : score_bands)
@@ -731,9 +686,9 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
       }
     }
 
-    const float on_fraction = static_cast<float>(bonus_qsos) / total_qsos;
-    const unsigned int points_ON_qso = 10;                                      // hardwire the ON points for now
-    const unsigned int bonus_points = on_fraction * bonus_qsos * points_ON_qso;
+    const float on_fraction { static_cast<float>(bonus_qsos) / total_qsos };
+//    const unsigned int points_ON_qso { 10 };                                      // hardwire the ON points for now
+    const unsigned int bonus_points { static_cast<unsigned int>(on_fraction * bonus_qsos * ON_QSO_POINTS) };
 
     rv += bonus_points;
   }
@@ -753,7 +708,7 @@ const set<string> running_statistics::worked_callsign_mults(const string& mult_n
   if (mult_name == string() and _callsign_multipliers.size() == 1)
     return _callsign_multipliers.cbegin()->second.worked(b, m);
 
-  const auto& cit = _callsign_multipliers.find(mult_name);
+  const auto& cit { _callsign_multipliers.find(mult_name) };
 
   return ( (cit == _callsign_multipliers.cend()) ? set<string>() : cit->second.worked(b, m) );
 }
@@ -769,7 +724,7 @@ const map<string /* field name */, set<string> /* values */ >  running_statistic
   SAFELOCK(statistics);
 
   for (const auto& psm : _exchange_multipliers)
-  { const multiplier& mult = psm.second;
+  { const multiplier& mult { psm.second };
 
     rv.insert( { psm.first, mult.worked(b, m) } );
   }
@@ -820,61 +775,43 @@ void running_statistics::qtc_qsos_unsent(const unsigned int n)
     There are many ways to come up with a plausible definition for the value of a mult
 */
 const float running_statistics::mult_to_qso_value(const contest_rules& rules, const BAND b, const MODE m) const
-{ const unsigned int current_mults = n_worked_callsign_mults(rules) + n_worked_country_mults(rules) + n_worked_exchange_mults(rules);
-  const set<BAND> score_bands = rules.score_bands();
-  const set<MODE> score_modes = rules.score_modes();
-  const unsigned int current_qsos = n_qsos(rules);
+{ const unsigned int current_mults { n_worked_callsign_mults(rules) + n_worked_country_mults(rules) + n_worked_exchange_mults(rules) };
+  const set<BAND>    score_bands   { rules.score_bands() };
+  const set<MODE>    score_modes   { rules.score_modes() };
+  const unsigned int current_qsos  { n_qsos(rules) };
 
-  unsigned int current_qso_points = 0;
+  unsigned int current_qso_points { 0 };
 
   SAFELOCK(statistics);
 
 // current QSO points
   for (const auto& m : score_modes)
-  { const auto& qp = _qso_points[m];
+  { const auto& qp { _qso_points[m] };
 
     FOR_ALL(score_bands, [&] (const BAND& b) { current_qso_points += qp[static_cast<int>(b)]; } );
   }
 
-  const float current_mean_qso_points = static_cast<float>(current_qso_points) / current_qsos;
-  const unsigned int current_points = current_qso_points * current_mults;  // should be same as points(rules)
+  const float        current_mean_qso_points { static_cast<float>(current_qso_points) / current_qsos };
+  const unsigned int current_points          { current_qso_points * current_mults };  // should be same as points(rules)
 
 // add a notional mult
-  unsigned int notional_mults = current_mults;
+  unsigned int notional_mults { current_mults };
 
-  const map<BAND, int>& per_band_country_mult_factor = rules.per_band_country_mult_factor();
+  const map<BAND, int>& per_band_country_mult_factor { rules.per_band_country_mult_factor() };
 
 // include the correct factor for a mult on the current band
-  //if (_country_multipliers.used())
-  //  notional_mults += per_band_country_mult_factor.at(b);
-  //else
-  //  notional_mults++;
-
   notional_mults += ( _country_multipliers.used() ? per_band_country_mult_factor.at(b) : 1 );
 
 // add a notional QSO; first calculate average qso point worth of a qso on the current band and mode
-  const unsigned int& n_qso_points = _qso_points[m][b];
-  const unsigned int& n_qsos = _n_qsos[m][b];
+  const unsigned int& n_qso_points { _qso_points[m][b] };
+  const unsigned int& n_qsos       { _n_qsos[m][b] };
 
-  const float mean_qso_points_band_mode = (n_qsos ? ( static_cast<float>(n_qso_points) / n_qsos ) : 0);
-  const float new_point_average = ( (current_qsos * current_mean_qso_points) + mean_qso_points_band_mode ) / (current_qsos + 1);
-
-  //ost << "new point average = " << new_point_average << endl;
-
-  const unsigned int score_with_new_qso = static_cast<unsigned int>((new_point_average * (current_qsos + 1) ) * current_mults);
-  const unsigned int score_with_new_mult = static_cast<unsigned int>((new_point_average * (current_qsos + 1) ) * notional_mults);
-
-  //ost << "current points = " << current_points << endl;
-  //ost << "score with new qso = " << score_with_new_qso << endl;
-  //ost << "score with new mult = " << score_with_new_mult << endl;
-
-  const unsigned int new_qso_value = score_with_new_qso - current_points;
-  const unsigned int new_mult_value = score_with_new_mult - current_points;
-
-  //ost << "new qso value = " << new_qso_value << endl;
-  //ost << "new mult value = " << new_mult_value << endl;
-
-  //ost << "returning: " << static_cast<float>(new_mult_value) / new_qso_value << endl;
+  const float        mean_qso_points_band_mode { (n_qsos ? ( static_cast<float>(n_qso_points) / n_qsos ) : 0) };
+  const float        new_point_average         { ( (current_qsos * current_mean_qso_points) + mean_qso_points_band_mode ) / (current_qsos + 1) };
+  const unsigned int score_with_new_qso        { static_cast<unsigned int>((new_point_average * (current_qsos + 1) ) * current_mults) };
+  const unsigned int score_with_new_mult       { static_cast<unsigned int>((new_point_average * (current_qsos + 1) ) * notional_mults) };
+  const unsigned int new_qso_value             { score_with_new_qso - current_points };
+  const unsigned int new_mult_value            { score_with_new_mult - current_points };
 
   return ( static_cast<float>(new_mult_value) / new_qso_value );
 }
@@ -885,15 +822,15 @@ const float running_statistics::mult_to_qso_value(const contest_rules& rules, co
     Counts only those QSOs on bands and modes being used to calculate the score. Includes dupes.
 */
 const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
-{ const set<BAND>& score_bands = rules.score_bands();
-  const set<MODE>& score_modes = rules.score_modes();
+{ const set<BAND>& score_bands { rules.score_bands() };
+  const set<MODE>& score_modes { rules.score_modes() };
 
-  unsigned int rv = 0;
+  unsigned int rv { 0 };
 
   SAFELOCK(statistics);
 
   for (const auto& m : score_modes)
-  { const auto& nq = _n_qsos[m];
+  { const auto& nq { _n_qsos[m] };
 
     FOR_ALL(score_bands, [&] (const BAND& b) { rv += nq[static_cast<int>(b)]; } );
   }
@@ -908,10 +845,10 @@ const unsigned int running_statistics::n_qsos(const contest_rules& rules) const
     Counts only those QSOs on bands being used to calculate the score. Includes dupes.
 */
 const unsigned int running_statistics::n_qsos(const contest_rules& rules, const MODE m) const
-{ const set<BAND>& score_bands = rules.score_bands();
-  const auto& nq = _n_qsos[m];
+{ const set<BAND>& score_bands { rules.score_bands() };
+  const auto&      nq          { _n_qsos[m] };
 
-  unsigned int rv = 0;
+  unsigned int rv { 0 };
 
   SAFELOCK(statistics);
 
@@ -925,14 +862,15 @@ const unsigned int running_statistics::n_qsos(const contest_rules& rules, const 
     \return         the number of callsign mults worked
 */
 const unsigned int running_statistics::n_worked_callsign_mults(const contest_rules& rules) const
-{ const vector<BAND>& permitted_bands = rules.permitted_bands();
-  const set<BAND>& score_bands = rules.score_bands();
-  unsigned int rv = 0;
+{ const vector<BAND>& permitted_bands { rules.permitted_bands() };
+  const set<BAND>&    score_bands     { rules.score_bands() };
+
+  unsigned int rv { 0 };
 
   SAFELOCK(statistics);
 
   for (const auto& sm : _callsign_multipliers)
-  { const multiplier& mult = sm.second;
+  { const multiplier& mult { sm.second };
 
     if (mult.per_band())
     { for (const auto& b : permitted_bands)
@@ -951,9 +889,10 @@ const unsigned int running_statistics::n_worked_callsign_mults(const contest_rul
     \return         the number of country mults worked
 */
 const unsigned int running_statistics::n_worked_country_mults(const contest_rules& rules) const
-{ const set<BAND>& score_bands = rules.score_bands();
-  const map<BAND, int>& per_band_country_mult_factor = rules.per_band_country_mult_factor();
-  unsigned int rv = 0;
+{ const set<BAND>&      score_bands                  { rules.score_bands() };
+  const map<BAND, int>& per_band_country_mult_factor { rules.per_band_country_mult_factor() };
+
+  unsigned int rv { 0 };
 
   SAFELOCK(statistics);
 
@@ -967,20 +906,21 @@ const unsigned int running_statistics::n_worked_country_mults(const contest_rule
     \return         the number of exchange mults worked
 */
 const unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& rules) const
-{ const vector<BAND> permitted_bands = rules.permitted_bands();
-  const set<MODE> permitted_modes = rules.permitted_modes();
-  unsigned int rv = 0;
+{ const vector<BAND> permitted_bands { rules.permitted_bands() };
+  const set<MODE>    permitted_modes { rules.permitted_modes() };
+
+  unsigned int rv { 0 };
 
   SAFELOCK(statistics);
 
   for (const auto& em : _exchange_multipliers)
-  { const multiplier& mult = em.second;
+  { const multiplier& mult { em.second };
 
     if (mult.per_mode())
     { for (const auto& m : permitted_modes)
       { if (mult.per_band())
         { for (const auto& b : permitted_bands)
-              rv += mult.n_worked(b, m);
+            rv += mult.n_worked(b, m);
         }
         else
           rv += mult.n_worked(ANY_BAND, m);
@@ -1006,8 +946,9 @@ const unsigned int running_statistics::n_worked_exchange_mults(const contest_rul
     \return     the number of exchange mults worked on band <i>b</i> and mode <i>m</i>
 */
 const unsigned int running_statistics::n_worked_exchange_mults(const BAND b, const MODE m) const
-{ const map<string, set<string> > worked = worked_exchange_mults(b, m);
-  unsigned int rv = 0;
+{ const map<string, set<string> > worked { worked_exchange_mults(b, m) };
+
+  unsigned int rv { 0 };
 
   for (const auto& psss : worked)
     rv += psss.second.size();
@@ -1026,8 +967,6 @@ void call_history::rebuild(const logbook& logbk)
 
   _history.clear();
 
-//  for (const auto& qso : logbk.as_vector())
-//    (*this) += qso;
   FOR_ALL(logbk.as_vector(), [&] (const QSO& qso) { *this += qso; } );
 }
 
@@ -1049,13 +988,13 @@ void call_history::operator+=(const QSO& qso)
 const bool call_history::worked(const string& s, const BAND b , const MODE m)
 { SAFELOCK(_history);
 
-  const auto& cit = _history.find(s);
+  const auto& cit { _history.find(s) };
 
   if (cit == _history.cend())
     return false;
 
-  const set<bandmode>& sbm = cit->second;
-  const set<bandmode>::const_iterator scit = sbm.find( { b, m } );
+  const set<bandmode>&                sbm  { cit->second };
+  const set<bandmode>::const_iterator scit { sbm.find( { b, m } ) };
 
   return (scit != sbm.cend());
 }

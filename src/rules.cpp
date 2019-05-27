@@ -565,7 +565,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // build expanded version of _received_exchange
   for (const auto& m : _permitted_modes)
   { map<string, vector<exchange_field>> expanded_exch;
-    auto& unexpanded_exch = _received_exchange.at(m);
+    auto& unexpanded_exch { _received_exchange.at(m) };
 
     for (const auto& qth_vec_field : unexpanded_exch)
     { const string& prefix              { qth_vec_field.first };
@@ -733,7 +733,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
     string entire_file;
 
-    bool   read_file_ok { false };
+    bool read_file_ok { false };
 
     if (!(no_canonical_values < field_name))
     { try
@@ -1443,7 +1443,7 @@ const string wpx_prefix(const string& call)
   }
 
 // /MM, /MA, /AM
-  if (antepenultimate_char(callsign) == '/')
+  if ((callsign.length() >= 3) and (antepenultimate_char(callsign) == '/'))
   { static const set<string> mobiles {"AM"s, "MA"s, "MM"s};
 
     if (mobiles < last(callsign, 2))
