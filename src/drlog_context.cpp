@@ -183,6 +183,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if ( (LHS == "AUTO SCREENSHOT"s) and !rhs.empty() )
       _auto_screenshot = is_true;
 
+// BAND MAP CULL FUNCTION
+    if ( ( (LHS == "BAND MAP CULL FUNCTION"s) or (LHS == "BANDMAP CULL FUNCTION"s) ) and !rhs.empty() )
+      _bandmap_cull_function = from_string<int>(rhs);
+
 // BAND MAP DECAY TIME CLUSTER
     if ( ( (LHS == "BAND MAP DECAY TIME CLUSTER"s) or (LHS == "BANDMAP DECAY TIME CLUSTER"s) ) and !rhs.empty() )
       _bandmap_decay_time_cluster = from_string<int>(rhs);
@@ -1039,85 +1043,85 @@ void drlog_context::_process_configuration_file(const string& filename)
     }
 
 // CABRILLO CATEGORY-MODE
-    if (LHS == "CABRILLO CATEGORY-MODE")
-    { if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB", ","))
+    if (LHS == "CABRILLO CATEGORY-MODE"s)
+    { if (is_legal_value(RHS, "CW,MIXED,RTTY,SSB"s, ","s))
         _cabrillo_category_mode = RHS;
     }
 
 // CABRILLO CATEGORY-OPERATOR
-    if (LHS == "CABRILLO CATEGORY-OPERATOR")
-    { if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP", ","))
+    if (LHS == "CABRILLO CATEGORY-OPERATOR"s)
+    { if (is_legal_value(RHS, "CHECKLOG,MULTI-OP,SINGLE-OP"s, ","s))
         _cabrillo_category_operator = RHS;
     }
 
 // CABRILLO CATEGORY-OVERLAY
-    if (LHS == "CABRILLO CATEGORY-OVERLAY")
-    { if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES", ","))
+    if (LHS == "CABRILLO CATEGORY-OVERLAY"s)
+    { if (is_legal_value(RHS, "NOVICE-TECH,OVER-50,ROOKIE,TB-WIRES"s, ","s))
         _cabrillo_category_overlay = RHS;
     }
 
 // CABRILLO CATEGORY-POWER
-    if (LHS == "CABRILLO CATEGORY-POWER")
-    { if (is_legal_value(RHS, "HIGH,LOW,QRP", ","))
+    if (LHS == "CABRILLO CATEGORY-POWER"s)
+    { if (is_legal_value(RHS, "HIGH,LOW,QRP"s, ","s))
         _cabrillo_category_power = RHS;
     }
 
 // CABRILLO CATEGORY-STATION
-    if (LHS == "CABRILLO CATEGORY-STATION")
-    { if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL", ","))
+    if (LHS == "CABRILLO CATEGORY-STATION"s)
+    { if (is_legal_value(RHS, "EXPEDITION,FIXED,HQ,MOBILE,PORTABLE,ROVER,SCHOOL"s, ","s))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TIME
-    if (LHS == "CABRILLO CATEGORY-TIME")
-    { if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS", ","))
+    if (LHS == "CABRILLO CATEGORY-TIME"s)
+    { if (is_legal_value(RHS, "6-HOURS,12-HOURS,24-HOURS"s, ","s))
         _cabrillo_category_station = RHS;
     }
 
 // CABRILLO CATEGORY-TRANSMITTER
-    if (LHS == "CABRILLO CATEGORY-TRANSMITTER")
-    { if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED", ","))
+    if (LHS == "CABRILLO CATEGORY-TRANSMITTER"s)
+    { if (is_legal_value(RHS, "LIMITED,ONE,SWL,TWO,UNLIMITED"s, ","s))
         _cabrillo_category_transmitter = RHS;
     }
 
 // CABRILLO CLUB
-    if (LHS == "CABRILLO CLUB")
+    if (LHS == "CABRILLO CLUB"s)
       _cabrillo_club = RHS;
 
 // CABRILLO ADDRESS first line
-    if (LHS == "CABRILLO ADDRESS 1")
+    if (LHS == "CABRILLO ADDRESS 1"s)
       _cabrillo_address_1 = rhs;
 
 // CABRILLO ADDRESS second line
-    if (LHS == "CABRILLO ADDRESS 2")
+    if (LHS == "CABRILLO ADDRESS 2"s)
       _cabrillo_address_2 = rhs;
 
 // CABRILLO ADDRESS third line
-    if (LHS == "CABRILLO ADDRESS 3")
+    if (LHS == "CABRILLO ADDRESS 3"s)
       _cabrillo_address_3 = rhs;
 
 // CABRILLO ADDRESS fourth line
-    if (starts_with(testline, "CABRILLO ADDRESS 4"))
-      _cabrillo_address_4 = remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (starts_with(testline, "CABRILLO ADDRESS 4"s))
+      _cabrillo_address_4 = remove_peripheral_spaces((split_string(line, "="s))[1]);
 
 // CABRILLO ADDRESS-CITY
     if (starts_with(testline, "CABRILLO ADDRESS-CITY"))
       _cabrillo_address_city = remove_peripheral_spaces((split_string(line, "="))[1]);
 
 // CABRILLO ADDRESS-STATE-PROVINCE
-    if (starts_with(testline, "CABRILLO ADDRESS-STATE-PROVINCE"))
-      _cabrillo_address_state_province = remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (starts_with(testline, "CABRILLO ADDRESS-STATE-PROVINCE"s))
+      _cabrillo_address_state_province = remove_peripheral_spaces((split_string(line, "="s))[1]);
 
 // CABRILLO ADDRESS-POSTALCODE
-    if (starts_with(testline, "CABRILLO ADDRESS-POSTALCODE"))
-      _cabrillo_address_postalcode = remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (starts_with(testline, "CABRILLO ADDRESS-POSTALCODE"s))
+      _cabrillo_address_postalcode = remove_peripheral_spaces((split_string(line, "="s))[1]);
 
 // CABRILLO ADDRESS-COUNTRY
-    if (starts_with(testline, "CABRILLO ADDRESS-COUNTRY"))
-      _cabrillo_address_country = remove_peripheral_spaces((split_string(line, "="))[1]);
+    if (starts_with(testline, "CABRILLO ADDRESS-COUNTRY"s))
+      _cabrillo_address_country = remove_peripheral_spaces((split_string(line, "="s))[1]);
 
 // CABRILLO OPERATORS
-    if (starts_with(testline, "CABRILLO OPERATORS"))
+    if (starts_with(testline, "CABRILLO OPERATORS"s))
       _cabrillo_operators = RHS;
 
 /*
@@ -1137,12 +1141,12 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 //                                                 { "ARRL DX SSB", "FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-STATE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-SSBPOWER:74:6:R, TXID:81:1" }
 //    };
 
-    if (LHS == "CABRILLO QSO")
+    if (LHS == "CABRILLO QSO"s)
     { _cabrillo_qso_template = RHS;
 
-      if (contains(RHS, "TEMPLATE"))
+      if (contains(RHS, "TEMPLATE"s))
       { try
-        { const string key = remove_peripheral_spaces(split_string(RHS, ":"))[1];
+        { const string key { remove_peripheral_spaces(split_string(RHS, ":"s))[1] };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
         }
@@ -1156,11 +1160,11 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  WINDOWS  ---------------------------------
 
-    if (LHS == "WINDOW")
+    if (LHS == "WINDOW"s)
     { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
 
       if (window_info.size() >= 5)
-      { const string name = window_info[0];
+      { const string name { window_info[0] };
 
         window_information winfo;
 
@@ -1186,12 +1190,14 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     static map<string /* name */, bool /* whether verbatim */> verbatim;
 
-    if (LHS == "STATIC WINDOW")
-    { const vector<string> fields = remove_peripheral_spaces(split_string(rhs, ","));
+    if (LHS == "STATIC WINDOW"s)
+    { const vector<string> fields { remove_peripheral_spaces(split_string(rhs, ","s)) };
 
       if (fields.size() == 2)  // name, contents
-      { const string name = fields[0];
-        string contents = fields[1];      // might be actual contents, or a fully-qualified filename
+      { const string name { fields[0] };
+
+        string contents { fields[1] };      // might be actual contents, or a fully-qualified filename
+
         verbatim[name] = contains(fields[1], "\"");     // verbatim if contains quotation mark
 
         if (file_exists(contents))
@@ -1202,11 +1208,11 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     }
 //    std::map<std::string /* name */, std::pair<std::string /* contents */, std::vector<window_information> > > _static_windows;
 
-    if (LHS == "STATIC WINDOW INFO")  // must come after the corresponding STATIC WINDOW command
-    { const vector<string> window_info = remove_peripheral_spaces(split_string(split_string(testline, "=")[1], ","));
+    if (LHS == "STATIC WINDOW INFO"s)  // must come after the corresponding STATIC WINDOW command
+    { const vector<string> window_info { remove_peripheral_spaces(split_string(split_string(testline, "="s)[1], ","s)) };
 
       if (!window_info.empty())
-      { const string name = window_info[0];
+      { const string name { window_info[0] };
 
         if (_static_windows.count(name) != 0)  // make sure that the window exists
         { if (window_info.size() >= 3)
@@ -1223,13 +1229,14 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             string final_contents;
 
             if (verbatim[name])
-            { string contents = _static_windows[name].first;
+            { string contents { _static_windows[name].first };
 
               if (contents.size() >= 2)
                 contents = delimited_substring(contents, '"', '"');
 
-              vector<string> lines = to_lines(contents);
-              const string contents_1 = replace(contents, "\\n", EOL);
+              vector<string> lines { to_lines(contents) };
+
+              const string contents_1 { replace(contents, "\\n"s, EOL) };
 
               lines = to_lines(contents_1);
 
@@ -1248,8 +1255,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents_1;
             }                                                       // end verbatim
             else                                                    // read from file
-            { const string contents = _static_windows[name].first;
-              const vector<string> lines = to_lines(contents);
+            { const string         contents { _static_windows[name].first };
+              const vector<string> lines    { to_lines(contents) };
 
               winfo.w(longest_line(lines).length());
               winfo.h(lines.size());
@@ -1266,7 +1273,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
               final_contents = contents;
             }
 
-            vector<window_information> vec = _static_windows[name].second;
+            vector<window_information> vec { _static_windows[name].second };
 
             vec.push_back(winfo);
             _static_windows[name] = { final_contents, vec };
@@ -1277,36 +1284,36 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
 // ---------------------------------------------  MESSAGES  ---------------------------------
 
-    if (starts_with(testline, "MESSAGE KEY"))
-    { vector<string> message_info = split_string(testline, " ");
+    if (starts_with(testline, "MESSAGE KEY"s))
+    { vector<string> message_info { split_string(testline, " "s) };
 
-      if (message_info.size() >= 5 and contains(testline, "="))
+      if (message_info.size() >= 5 and contains(testline, "="s))
       {
 // a big switch to convert from text in the configuration file to a KeySym, which is what we use as the key in the message map
 // this could be more efficient by generating a container of all the legal keysym names and then comparing the target to all those.
 // The latter is now what we do. The legal names are in key_names.
-        const string target = to_lower(message_info[2]);
-        const map<string, int>::const_iterator cit = key_names.find(target);
+        const string                           target { to_lower(message_info[2]) };
+        const map<string, int>::const_iterator cit    { key_names.find(target) };
 
         if (cit != key_names.cend())
-        { const vector<string> vec_str = split_string(testline, "=");
-          const string str = remove_leading_spaces(vec_str.at(1));
+        { const vector<string> vec_str { split_string(testline, "="s) };
+          const string         str     { remove_leading_spaces(vec_str.at(1)) };
 
 // everything to the right of the = -- we assume there's only one -- goes into the message, excepting any leading space
           _messages.insert( { cit->second, str } );
 
           ost << "message associated with " << target << ", which is keysym " << hex << cit->second << dec << ", is: " << str << endl;
 
-          const map<string, string>::const_iterator cit2 = equivalent_key_names.find(target);
+          const map<string, string>::const_iterator cit2 { equivalent_key_names.find(target) };
 
           if (cit2 != equivalent_key_names.cend())
           { ost << "found equivalent key name: " << cit2->second << endl;
 
-            const string alternative = cit2->second;
-            const map<string, int>::const_iterator cit = key_names.find(alternative);
+            const                                  string alternative { cit2->second };
+            const map<string, int>::const_iterator cit                { key_names.find(alternative) };
 
             if (cit != key_names.cend())
-            { const int keysym = cit->second;
+            { const int keysym { cit->second };
 
               if (_messages.find(keysym) == _messages.cend())  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
@@ -1319,8 +1326,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       }
     }
 
-    if (LHS == "MESSAGE CQ 1")
-    { const vector<string> tokens = split_string(testline, "=");
+    if (LHS == "MESSAGE CQ 1"s)
+    { const vector<string> tokens { split_string(testline, "="s) };
 
       if (tokens.size() != 2)
         print_error_and_exit(testline);
@@ -1328,8 +1335,8 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       _message_cq_1 = tokens[1];
     }
 
-    if (LHS == "MESSAGE CQ 2")
-    { const vector<string> tokens = split_string(testline, "=");
+    if (LHS == "MESSAGE CQ 2"s)
+    { const vector<string> tokens { split_string(testline, "="s) };
 
       if (tokens.size() == 2)
         _message_cq_2 = tokens[1];
@@ -1344,25 +1351,25 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _cabrillo_callsign = _my_call;
 
   if (_qsl_message.empty())
-    _qsl_message = "tu " + _my_call + " test";
+    _qsl_message = "tu "s + _my_call + " test"s;
 
   if (_alternative_qsl_message.empty())
-    _alternative_qsl_message = "tu " + _my_call;
+    _alternative_qsl_message = "tu "s + _my_call;
 
   if (_message_cq_1.empty())
-    _message_cq_1 = "test " + _my_call + " " + _my_call + " test";
+    _message_cq_1 = "test "s + _my_call + " "s + _my_call + " test"s;
 
   if (_message_cq_2.empty())
-    _message_cq_2 = "cq cq test de  " + _my_call + "  " + _my_call + "  " + _my_call + "  test";
+    _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
 
 // possibly fix Cabrillo template
-  if ( (_cabrillo_qso_template == "ARRL DX") or (_cabrillo_qso_template == "CQ WW") )
-  { const vector<string> actual_modes = remove_peripheral_spaces(split_string(_modes, ","));
+  if ( (_cabrillo_qso_template == "ARRL DX"s) or (_cabrillo_qso_template == "CQ WW"s) )
+  { const vector<string> actual_modes { remove_peripheral_spaces(split_string(_modes, ","s)) };
 
     if (actual_modes.size() == 1)
     { try
-      { if (set<string>( { "ARRL DX", "CQ WW", "JIDX"} ) < _cabrillo_qso_template)
-        {  const string key = _cabrillo_qso_template + ( (actual_modes[0] == "CW") ?  " CW" : " SSB");
+      { if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ) < _cabrillo_qso_template)
+        {  const string key { _cabrillo_qso_template + ( (actual_modes[0] == "CW"s) ?  " CW"s : " SSB"s) };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
         }
@@ -1381,167 +1388,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 }
 
 /// construct from file
-drlog_context::drlog_context(const std::string& filename) :
-  _accept_colour(COLOUR_GREEN),                                     // green for calls that are OK to work
-  _allow_audio_recording(false),                                    // do not allow audio recording
-//  _allow_variable_sent_rst(false),                                  // do not allow the sent RST to vary
-  _alternative_qsl_message(),                                       // no alternative QSL message (default is changed once configuration file has been read)
-  _archive_name("drlog-restart"s),                                   // name for the archive written when leaving drlog
-  _audio_channels(1),                                               // monophonic
-  _audio_device_name("default"s),                                    // default audio device
-  _audio_duration(60),                                              // record 60 minutes per file
-  _audio_file("audio"s),                                             // audio will be in audio-yymmdd-hhmmss
-  _audio_rate(8000),                                                // 8,000 samples per second
-  _auto_backup(""s),                                                 // no auto backup directory
-  _auto_remaining_callsign_mults_threshold(1),                      // a callsign mult must be seen only once before it becomes known
-  _auto_remaining_country_mults(false),                             // do not add country mults as we detect them
-  _auto_remaining_country_mults_threshold(1),                       // a canonical prefix must be seen only once before it becomes known
-  _auto_remaining_exchange_mults( { } ),                            // do not add any exchange mults as we detect them
-  _auto_screenshot(false),                                          // do not generate horal screenshots
-  _bandmap_decay_time_local(60),                                    // stay on bandmap for one hour
-  _bandmap_decay_time_cluster(60),                                  // stay on bandmap for one hour
-  _bandmap_decay_time_rbn(60),                                      // stay on bandmap for one hour
-  _bandmap_fade_colours( { 255, 200, 150, 100 } ),                  // four colour steps
-  _bandmap_filter(),                                                // empty bandmap filter
-  _bandmap_filter_disabled_colour(string_to_colour("BLACK"s)),       // background colour when bandmap filter is disabled
-  _bandmap_filter_enabled(false),                                   // do not filter bandmap
-  _bandmap_filter_foreground_colour(string_to_colour("WHITE")),     // letters are white
-  _bandmap_filter_hide_colour(string_to_colour("RED")),             // background colour when bandmap filter is in HIDE mode
-  _bandmap_filter_show(false),                                      // filter is used to hide entrie
-  _bandmap_filter_show_colour(string_to_colour("GREEN")),           // background colour when bandmap filter is in SHOW mode
-  _bandmap_frequency_up(false),                                     // increasing frequency goes downward on the bandmap
-  _bandmap_recent_colour(string_to_colour("BLACK")),                // do not indicate recent postings with special colour
-  _bands("160, 80, 40, 20, 15, 10"),                                // legal bands for the contest
-  _batch_messages_file(),                                           // name for batch messages file
-  _best_dx_unit("MILES"),                                           // DX is measured in miles
-  _cabrillo_address_1(),                                            // first line of Cabrillo ADDRESS
-  _cabrillo_address_2(),                                            // second line of Cabrillo ADDRESS
-  _cabrillo_address_3(),                                            // third line of Cabrillo ADDRESS
-  _cabrillo_address_4(),                                            // fourth line of Cabrillo ADDRESS
-  _cabrillo_address_city(),                                         // CITY in Cabrillo file
-  _cabrillo_address_country(),                                      // COUNTRY in Cabrillo file
-  _cabrillo_address_postalcode(),                                   // POSTALCODE in Cabrillo file
-  _cabrillo_address_state_province(),                               // PROVINCE in Cabrillo file
-  _cabrillo_callsign(),                                             // CALLSIGN in Cabrillo file
-  _cabrillo_category_assisted("ASSISTED"),                          // default is ASSISTED
-  _cabrillo_category_band("ALL"),                                   // default is all bands
-  _cabrillo_category_mode(),                                        // no default, must be filled in by the config file
-  _cabrillo_category_operator("SINGLE-OP"),                         // default is single op
-  _cabrillo_category_overlay(),                                     // no overlay
-  _cabrillo_category_power("HIGH"),                                 // default is high power
-  _cabrillo_category_station(),                                     // no default station category
-  _cabrillo_category_time(),                                        // no default time category
-  _cabrillo_category_transmitter("ONE"),                            // one transmitter
-  _cabrillo_certificate("YES"),                                     // explicitly request a certificate, because of inanity in the specification
-  _cabrillo_club(),                                                 // no club
-  _cabrillo_contest(),                                              // CONTEST in Cabrillo file
-  _cabrillo_eol("LF"),                                              // use LF as EOL in the Cabrillo file
-  _cabrillo_e_mail(),                                               // no e-mail address
-  _cabrillo_filename("cabrillo"),                                   // name of file that will store Cabrillo log
-  _cabrillo_include_score(true),                                    // include score in the Cabrillo file
-  _cabrillo_location(),                                             // LOCATION in Cabrillo file
-  _cabrillo_name(),                                                 // NAME in Cabrillo file
-  _cabrillo_qso_template(),                                         // empty QSO template; this must be properly defined if Cabrillo is used
-  _callsign_mults(),                                                // callsign is not the basis for any mults
-  _callsign_mults_per_band(false),                                  // any callsign mults are once-only
-  _callsign_mults_per_mode(false),                                  // any callsign mults are once-only
-  _cluster_port(23),                                                // standard telnet server port
-  _country_list(COUNTRY_LIST_WAEDC),                                // WAE country list
-  _country_mults_filter("ALL"),                                     // all countries are mults
-  _country_mults_per_band(true),                                    // any country mults are per-band
-  _country_mults_per_mode(false),                                   // any country mults are not per-mode
-  _cq_auto_lock(false),                                             // don't lock the TX frequency in CQ mode
-  _cq_auto_rit(false),                                              // don't enable RIT in CQ mode
-  _cty_filename("cty.dat"),                                         // filename for country data
-  _cw_priority(-1),                                                 // non-RT scheduling
-  _cw_speed(29),                                                    // 29 WPM
-  _cw_speed_change(3),                                              // change speed by 3 WPM
-  _decimal_point("·"),                                              // use centred dot as decimal point
-  _display_communication_errors(true),                              // display errors communicating with rig
-  _display_grid(false),                                             // do not display grid info in GRID and INFO windows
-  _do_not_show(),                                                   // all calls (apart from my_call()) should be shown on the bandmap
-  _do_not_show_filename(),                                          // no do-not-show file
-  _drmaster_filename("drmaster"),                                   // name of the drmaster file
-  _exchange("RST"),                                                 // exchange is just RST (or RS)
-  _exchange_fields_filename(),                                      // file that holds regex templates for exchange fields
-  _exchange_mults_per_band(false),                                  // any exchange mults are once-only
-  _exchange_mults_per_mode(false),                                  // any exchange mults are once-only
-  _fast_cq_bandwidth(400),                                          // fast CW bandwidth in CQ mode, in Hz
-  _fast_sap_bandwidth(400),                                         // fast CW bandwidth in SAP mode, in Hz
-  _geomagnetic_indices_command(""),                                 // do not get geomagnetic indices
-  _guard_band( { { MODE_CW, 500 }, { MODE_SSB, 2000 } } ),          // 500 Hz guard band on CW, 2 kHz on slopbucket
-  _home_exchange_window(false),                                     // do not move cursor to left of window (and insert space if necessary)
-  _inactivity_timer(0),                                             // no inactivity timer
-  _individual_messages_file(),                                      // no file of individual QSL messages
-  _logfile("drlog.dat"),                                            // name of log file
-  _long_t(false),                                                   // do not extend initial Ts in serial numbers
-  _mark_frequencies(),                                              // don't mark any frequencies
-  _mark_mode_break_points(false),                                   // do not mark the mode break points on the bandmap
-  _match_minimum(4),                                                // 4 characters required for SCP or fuzzy match
-  _max_qsos_without_qsl(4),                                         // for the N7DR matches_criteria algorithm
-  _message_cq_1(),                                                  // no short CQ (default is changed once configuration file has been read)
-  _message_cq_2(),                                                  // no long CQ (default is changed once configuration file has been read)
-  _modes("CW"),                                                     // only valid mode is CW
-  _my_call("NONE"),                                                 // set callsign to an invalid value
-  _my_continent("XX"),                                              // set continent to an invalid value
-  _my_latitude(0),                                                  // at the equator
-  _my_longitude(0),                                                 // Greenwich meridian
-  _nearby_extract(false),                                           // do not display NEARBY calls in the EXTRACT window
-  _normalise_rate(false),                                           // do not normalise rates to one-hour values
-  _not_country_mults(),                                             // no countries are explicitly not country mults
-  _no_default_rst(false),                                           // we do assign a default RST
-  _n_memories(0),                                                   // no memories
-  _old_adif_log_name(),                                             // no ADIF log of old QSOs
-  _path( { "." } ),                                                 // search only the current directory
-  _per_band_points( {} ),                                           // no points awarded anywhere
-  _post_monitor_calls( {} ),                                        // no calls are monitored
-  _ptt_delay(25),                                                   // 25ms PTT delay
-  _p3(false),                                                       // no P3 is available
-  _p3_ignore_checksum_error(false),                                 // don't ignore checksum errors when acquiring P3 screendumps
-  _p3_snapshot_file("P3"),                                          // P3 snapshots will be in P3-<n>
-  _p3_span_cq(0),                                                   // no default span in CQ mode
-  _p3_span_sap(0),                                                  // no default span in SAP mode
-  _qsl_message(),                                                   // no QSL message (default is changed once configuration file has been read)
-  _qso_multiple_bands(false),                                       // each station may be worked on only one band
-  _qso_multiple_modes(false),                                       // each station may be worked on only one mode
-  _qsy_on_startup(true),                                            // go to the defined START BAND (or 20m)
-  _qtcs(false),                                                     // QTCs are disabled
-  _qtc_double_space(false),                                         // QTC elements are single-spaced
-  _qtc_filename("QTCs"),                                            // QTC filename
-  _qtc_qrs(0),                                                      // no speed decrease when sending QTCs
-  _rate_periods( { 15, 30, 60 } ),                                  // 15-, 30-, 60-minute periods for rates
-  _rbn_beacons(false),                                              // do not place RBN posts from beacons on bandmap
-  _rbn_port(7000),                                                  // telnet port for the reverse beacon network
-  _rbn_server("telnet.reversebeacon.net"),                          // domain name of the reverse beacon network telnet server
-  _rbn_threshold(1),                                                // all received spots are posted
-  _rbn_username(""),                                                // no default name to access the RBN
-  _reject_colour(COLOUR_RED),                                       // red for dupes
-  _remaining_country_mults_list(),                                  // no remaining country mults
-  _require_dot_in_replacement_call(false),                          // try to parse additional (non-dotted) string as call
-  _rig1_baud(4800),                                                 // 4800 baud
-  _rig1_data_bits(8),                                               // 8-bit data
-  _rig1_port("/dev/ttyS0"),                                         // first serial port
-  _rig1_stop_bits(1),                                               // one stop bit
-  _rig1_type(""),                                                   // no default rig type
-  _russian_filename("russian-data"),                                // default file for Russian location information
-  _screen_snapshot_file("screen"),                                  // screen snapshots will be in screen-<n>
-  _screen_snapshot_on_exit(false),                                  // do not take a screenshot on exit
-  _sent_exchange(),                                                 // no default sent exchange
-  _sent_exchange_cw(),                                              // no default sent CW exchange
-  _sent_exchange_ssb(),                                             // no default sent SSB exchange
-  _serno_spaces(0),                                                 // no additional spaces in serial number
-  _shift_delta(10),                                                 // shift RIT by 10 Hz
-  _shift_poll(50),                                                  // poll every 50 milliseconds
-  _short_serno(false),                                              // send leading Ts
-  _society_list_filename(""),                                       // no default file for IARU society information
-  _start_audio_recording(AUDIO_RECORDING::DO_NOT_START),            // do not start audio recording
-  _start_band(BAND_20),                                             // start on 20m
-  _start_mode(MODE_CW),                                             // start on CW
-  _sync_keyer(false),                                               // do not synchronise rig keyer with computer
-  _test(false),                                                     // transmit is not disabled
-  _thousands_separator(","),                                        // numbers are written with ","
-  _uba_bonus(false),                                                // do not add UBA bonus points
-  _worked_mults_colour("RED")                                       // worked mults are in red
+drlog_context::drlog_context(const std::string& filename)
 { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
     _per_band_country_mult_factor.insert( { static_cast<BAND>(n), 1 } );
 
@@ -1549,11 +1396,12 @@ drlog_context::drlog_context(const std::string& filename) :
 
 // make sure that the default is to score all permitted bands
   if (_score_bands.empty())
-  { vector<string> bands_str = remove_peripheral_spaces(split_string(_bands, ","));
+  { vector<string> bands_str { remove_peripheral_spaces(split_string(_bands, ","s)) };
 
     for (const auto& band_name : bands_str)
     { try
-      { const BAND b = BAND_FROM_NAME.at(band_name);
+      { const BAND b { BAND_FROM_NAME.at(band_name) };
+
         _score_bands.insert(b);
       }
 
@@ -1564,10 +1412,10 @@ drlog_context::drlog_context(const std::string& filename) :
 
 // default is to score all permitted modes
   if (_score_modes.empty())
-  { if (contains(_modes, "CW"))
+  { if (contains(_modes, "CW"s))
       _score_modes.insert(MODE_CW);
 
-    if (contains(_modes, "SSB"))
+    if (contains(_modes, "SSB"s))
       _score_modes.insert(MODE_SSB);
   }
 }
@@ -1577,7 +1425,7 @@ drlog_context::drlog_context(const std::string& filename) :
     \return         location, size and colour information
 */
 const window_information drlog_context::window_info(const string& name) const
-{ const auto cit = _windows.find(name);
+{ const auto cit { _windows.find(name) };
 
   return (cit == _windows.cend() ? window_information() : cit->second);
 }
@@ -1605,7 +1453,7 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 { SAFELOCK(_context);
 
   try
-  { const vector<pair<frequency, frequency>>& vec = _mark_frequencies.at(m);
+  { const vector<pair<frequency, frequency>>& vec { _mark_frequencies.at(m) };
 
     for (const auto& pff : vec)
     { if ( (f >= pff.first) and (f <= pff.second))
@@ -1628,7 +1476,7 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 const string drlog_context::points_string(const BAND b, const MODE m) const
 { SAFELOCK(_context);
 
-  const auto& pbb = _per_band_points[m];
+  const auto& pbb { _per_band_points[m] };
 
   return ( pbb.find(b) != pbb.cend() ? pbb.at(b) : string() );
 }
@@ -1675,7 +1523,7 @@ const vector<string> drlog_context::sent_exchange_names(void) const
 const vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 
-  const std::vector<std::pair<std::string, std::string> >* ptr_vec_pss = (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb);
+  const std::vector<std::pair<std::string, std::string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
 
   for (const auto& pss : *ptr_vec_pss)
     rv.push_back(pss.first);
@@ -1690,20 +1538,20 @@ const vector<string> drlog_context::sent_exchange_names(const MODE m) const
 const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)        // doxygen complains about the decltype; I have no idea why
 { SAFELOCK(_context);
 
-  decltype(_sent_exchange) rv = ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb);
+  decltype(_sent_exchange) rv { ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb) };
 
   if (rv.empty())
   { rv = _sent_exchange;
 
 // fix RST/RS if using non-mode-specific exchange
     for (unsigned int n = 0; n < rv.size(); ++n)
-    { pair<string, string>& pss = rv[n];
+    { pair<string, string>& pss { rv[n] };
 
-      if ( (m == MODE_SSB) and (pss.first == "RST") )
-        pss = { "RS", "59" };       // hardwire report
+      if ( (m == MODE_SSB) and (pss.first == "RST"s) )
+        pss = { "RS"s, "59"s };       // hardwire report
 
-      if ( (m == MODE_CW) and (pss.first == "RS") )
-        pss = { "RST", "599" };     // hardwire report
+      if ( (m == MODE_CW) and (pss.first == "RS"s) )
+        pss = { "RST"s, "599"s };     // hardwire report
     }
   }
 

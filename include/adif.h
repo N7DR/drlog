@@ -59,78 +59,78 @@ static ANT_PATH_ENUMERATION_TYPE ANT_PATH_ENUMERATION { "G"s,    ///< greyline
 
 /// modes
 enum class ADIF_MODE { AM,              // 0
-                 AMTORFEC,
-                 ASCI,
-                 ATV,
-                 CHIP64,
-                 CHIP128,
-                 CLO,
-                 CONTESTI,
-                 CW,
-                 DSTAR,
-                 DOMINO,          // 10
-                 DOMINOF,
-                 FAX,
-                 FM,
-                 FMHELL,
-                 FSK31,
-                 FSK441,
-                 GTOR,
-                 HELL,
-                 HELL80,
-                 HFSK,            // 20
-                 JT44,
-                 JT4A,
-                 JT4B,
-                 JT4C,
-                 JT4D,
-                 JT4E,
-                 JT4F,
-                 JT4G,
-                 JT65,
-                 JT65A,           // 30
-                 JT65B,
-                 JT65C,
-                 JT6M,
-                 MFSK8,
-                 MFSK16,
-                 MT63,
-                 OLIVIA,
-                 PAC,
-                 PAC2,
-                 PAC3,            // 40
-                 PAX,
-                 PAX2,
-                 PCW,
-                 PKT,
-                 PSK10,
-                 PSK31,
-                 PSK63,
-                 PSK63F,
-                 PSK125,
-                 PSKAM10,         // 50
-                 PSKAM31,
-                 PSKAM50,
-                 PSKFEC31,
-                 PSKHELL,
-                 Q15,
-                 QPSK31,
-                 QPSK63,
-                 QPSK125,
-                 ROS,
-                 RTTY,            // 60
-                 RTTYM,
-                 SSB,
-                 SSTV,
-                 THRB,
-                 THOR,
-                 THRBX,
-                 TOR,
-                 VOI,
-                 WINMOR,
-                 WSPR,            // 70
-                 N_ADIF_MODES
-               };                                                       ///< enum for modes
+                       AMTORFEC,
+                       ASCI,
+                       ATV,
+                       CHIP64,
+                       CHIP128,
+                       CLO,
+                       CONTESTI,
+                       CW,
+                       DSTAR,
+                       DOMINO,          // 10
+                       DOMINOF,
+                       FAX,
+                       FM,
+                       FMHELL,
+                       FSK31,
+                       FSK441,
+                       GTOR,
+                       HELL,
+                       HELL80,
+                       HFSK,            // 20
+                       JT44,
+                       JT4A,
+                       JT4B,
+                       JT4C,
+                       JT4D,
+                       JT4E,
+                       JT4F,
+                       JT4G,
+                       JT65,
+                       JT65A,           // 30
+                       JT65B,
+                       JT65C,
+                       JT6M,
+                       MFSK8,
+                       MFSK16,
+                       MT63,
+                       OLIVIA,
+                       PAC,
+                       PAC2,
+                       PAC3,            // 40
+                       PAX,
+                       PAX2,
+                       PCW,
+                       PKT,
+                       PSK10,
+                       PSK31,
+                       PSK63,
+                       PSK63F,
+                       PSK125,
+                       PSKAM10,         // 50
+                       PSKAM31,
+                       PSKAM50,
+                       PSKFEC31,
+                       PSKHELL,
+                       Q15,
+                       QPSK31,
+                       QPSK63,
+                       QPSK125,
+                       ROS,
+                       RTTY,            // 60
+                       RTTYM,
+                       SSB,
+                       SSTV,
+                       THRB,
+                       THOR,
+                       THRBX,
+                       TOR,
+                       VOI,
+                       WINMOR,
+                       WSPR,            // 70
+                       N_ADIF_MODES
+                     };                                                       ///< enum for modes
 
 using MODE_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_MODE::N_ADIF_MODES)>;    ///< type for mode enumeration
 
@@ -211,87 +211,87 @@ static MODE_ENUMERATION_TYPE MODE_ENUMERATION { "AM"s,               // 0
 
 /// sections
 enum class ADIF_SECTION { AL,
-                    AK,
-                    AB,
-                    AR,
-                    AZ,
-                    BC,
-                    CO,
-                    CT,
-                    DE,
-                    EB,
-                    EMA,
-                    ENY,
-                    EPA,
-                    EWA,
-                    GA,
-                    ID,
-                    IL,
-                    IN,
-                    IA,
-                    KS,
-                    KY,
-                    LAX,
-                    LA,
-                    ME,
-                    MB,
-                    MAR,
-                    MDC,
-                    MI,
-                    MN,
-                    MS,
-                    MO,
-                    MT,
-                    NE,
-                    NV,
-                    NH,
-                    NM,
-                    NLI,
-                    NL,
-                    NC,
-                    ND,
-                    NTX,
-                    NFL,
-                    NNJ,
-                    NNY,
-                    NT,
-                    OH,
-                    OK,
-                    ON,
-                    ORG,
-                    OR,
-                    PAC,
-                    PR,
-                    QC,
-                    RI,
-                    SV,
-                    SDG,
-                    SF,
-                    SJV,
-                    SB,
-                    SCV,
-                    SK,
-                    SC,
-                    SD,
-                    STX,
-                    SFL,
-                    SNJ,
-                    TN,
-                    VI,
-                    UT,
-                    VT,
-                    VA,
-                    WCF,
-                    WTX,
-                    WV,
-                    WMA,
-                    WNY,
-                    WPA,
-                    WWA,
-                    WI,
-                    WY,
-                    N_SECTIONS
-                  };                                                        ///< enum for sections
+                          AK,
+                          AB,
+                          AR,
+                          AZ,
+                          BC,
+                          CO,
+                          CT,
+                          DE,
+                          EB,
+                          EMA,
+                          ENY,
+                          EPA,
+                          EWA,
+                          GA,
+                          ID,
+                          IL,
+                          IN,
+                          IA,
+                          KS,
+                          KY,
+                          LAX,
+                          LA,
+                          ME,
+                          MB,
+                          MAR,
+                          MDC,
+                          MI,
+                          MN,
+                          MS,
+                          MO,
+                          MT,
+                          NE,
+                          NV,
+                          NH,
+                          NM,
+                          NLI,
+                          NL,
+                          NC,
+                          ND,
+                          NTX,
+                          NFL,
+                          NNJ,
+                          NNY,
+                          NT,
+                          OH,
+                          OK,
+                          ON,
+                          ORG,
+                          OR,
+                          PAC,
+                          PR,
+                          QC,
+                          RI,
+                          SV,
+                          SDG,
+                          SF,
+                          SJV,
+                          SB,
+                          SCV,
+                          SK,
+                          SC,
+                          SD,
+                          STX,
+                          SFL,
+                          SNJ,
+                          TN,
+                          VI,
+                          UT,
+                          VT,
+                          VA,
+                          WCF,
+                          WTX,
+                          WV,
+                          WMA,
+                          WNY,
+                          WPA,
+                          WWA,
+                          WI,
+                          WY,
+                          N_SECTIONS
+                        };                                                        ///< enum for sections
 
 using SECTION_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_SECTION::N_SECTIONS)>;       ///< type for section enumeration
 
@@ -381,36 +381,36 @@ static SECTION_ENUMERATION_TYPE SECTION_ENUMERATION { "AL"s,
 
 /// awards
 enum class ADIF_AWARD { AJA,
-                  CQDX,
-                  CQDXFIELD,
-                  CQWAZ_MIXED,
-                  CQWAZ_CW,
-                  CQWAZ_PHONE,
-                  CQWAZ_RTTY,
-                  CQWAZ_160m,
-                  CQWPX,
-                  DARC_DOK,
-                  DXCC,
-                  DXCC_MIXED,
-                  DXCC_CW,
-                  DXCC_PHONE,
-                  DXCC_RTTY,
-                  IOTA,
-                  JCC,
-                  JCG,
-                  MARATHON,
-                  RDA,
-                  WAB,
-                  WAC,
-                  WAE,
-                  WAIP,
-                  WAJA,
-                  WAS,
-                  WAZ,
-                  USACA,
-                  VUCC,
-                  N_AWARDS
-                };                                                      ///< enum for awards
+                        CQDX,
+                        CQDXFIELD,
+                        CQWAZ_MIXED,
+                        CQWAZ_CW,
+                        CQWAZ_PHONE,
+                        CQWAZ_RTTY,
+                        CQWAZ_160m,
+                        CQWPX,
+                        DARC_DOK,
+                        DXCC,
+                        DXCC_MIXED,
+                        DXCC_CW,
+                        DXCC_PHONE,
+                        DXCC_RTTY,
+                        IOTA,
+                        JCC,
+                        JCG,
+                        MARATHON,
+                        RDA,
+                        WAB,
+                        WAC,
+                        WAE,
+                        WAIP,
+                        WAJA,
+                        WAS,
+                        WAZ,
+                        USACA,
+                        VUCC,
+                        N_AWARDS
+                      };                                                      ///< enum for awards
 
 using AWARD_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_AWARD::N_AWARDS)>;       ///< type for award enumeration
 
@@ -449,36 +449,36 @@ static AWARD_ENUMERATION_TYPE AWARD_ENUMERATION { "AJA"s,
 
 /// bands
 enum class ADIF_BAND { BAND_2190m,  // keep the BAND_ prefix as names can't begin with a digit
-                 BAND_560m,
-                 BAND_160m,
-                 BAND_80m,
-                 BAND_60m,
-                 BAND_40m,
-                 BAND_30m,
-                 BAND_20m,
-                 BAND_17m,
-                 BAND_15m,
-                 BAND_12m,
-                 BAND_10m,
-                 BAND_6m,
-                 BAND_4m,
-                 BAND_2m,
-                 BAND_1point25m,
-                 BAND_70cm,
-                 BAND_33cm,
-                 BAND_23cm,
-                 BAND_13cm,
-                 BAND_9cm,
-                 BAND_6cm,
-                 BAND_3cm,
-                 BAND_1point25cm,
-                 BAND_6mm,
-                 BAND_4mm,
-                 BAND_2point5mm,
-                 BAND_2mm,
-                 BAND_1mm,
-                 N_ADIF_BANDS
-               };                                                       ///< enum for bands
+                       BAND_560m,
+                       BAND_160m,
+                       BAND_80m,
+                       BAND_60m,
+                       BAND_40m,
+                       BAND_30m,
+                       BAND_20m,
+                       BAND_17m,
+                       BAND_15m,
+                       BAND_12m,
+                       BAND_10m,
+                       BAND_6m,
+                       BAND_4m,
+                       BAND_2m,
+                       BAND_1point25m,
+                       BAND_70cm,
+                       BAND_33cm,
+                       BAND_23cm,
+                       BAND_13cm,
+                       BAND_9cm,
+                       BAND_6cm,
+                       BAND_3cm,
+                       BAND_1point25cm,
+                       BAND_6mm,
+                       BAND_4mm,
+                       BAND_2point5mm,
+                       BAND_2mm,
+                       BAND_1mm,
+                       N_ADIF_BANDS
+                     };                                                       ///< enum for bands
 
 using BAND_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_BAND::N_ADIF_BANDS)>;     ///< type for band enumeration
 
@@ -517,823 +517,844 @@ static BAND_ENUMERATION_TYPE BAND_ENUMERATION { "2190m"s,
 
 /// contests
 enum class ADIF_CONTEST { SEVENQP,                //      7th-Area QSO Party
-                    ANARTS_RTTY,        //      ANARTS WW RTTY
-                    ANATOLIAN_RTTY,     //      Anatolian WW RTTY
-                    AP_SPRINT,          //      Asia - Pacific Sprint
-                    ARI_DX,             //      ARI DX Contest
-                    ARRL_10,            //      ARRL 10 Meter Contest
-                    ARRL_160,           //      ARRL 160 Meter Contest
-                    ARRL_DX_CW,         //      ARRL International DX Contest (CW)
-                    ARRL_DX_SSB,        //      ARRL International DX Contest (Phone)
-                    ARRL_FIELD_DAY,     //      ARRL Field Day
-                    ARRL_RTTY,          //      ARRL RTTY Round-Up
-                    ARRL_SS_CW,         //      ARRL November Sweepstakes (CW)
-                    ARRL_SS_SSB,        //      ARRL November Sweepstakes (Phone)
-                    ARRL_UHF_AUG,       //      ARRL August UHF Contest
-                    ARRL_VHF_JAN,       //      ARRL January VHF Sweepstakes
-                    ARRL_VHF_JUN,       //      ARRL June VHF QSO Party
-                    ARRL_VHF_SEP,       //      ARRL September VHF QSO Party
-                    BARTG_RTTY,         //      BARTG Spring RTTY Contest
-                    BARTG_SPRINT,       //      BARTG Sprint Contest
-                    CA_QSO_PARTY,       //      California QSO Party
-                    CQ_160_CW,          //      CQ WW 160 Meter DX Contest (CW)
-                    CQ_160_SSB,         //      CQ WW 160 Meter DX Contest (SSB)
-                    CQ_VHF,             //      CQ World_Wide VHF Contest
-                    CQ_WPX_CW,          //      CQ WW WPX Contest (CW)
-                    CQ_WPX_RTTY,        //      CQ/RJ WW RTTY WPX Contest
-                    CQ_WPX_SSB,         //      CQ WW WPX Contest (SSB)
-                    CQ_WW_CW,           //      CQ WW DX Contest (CW)
-                    CQ_WW_RTTY,         //      CQ/RJ WW RTTY DX Contest
-                    CQ_WW_SSB,          //      CQ WW DX Contest (SSB)
-                    CWOPS_CWT,          //      CWops Mini-CWT Test
-                    CIS_DX,             //      CIS DX Contest
-                    DARC_WAEDC_CW,      //      WAE DX Contest (CW)
-                    DARC_WAEDC_RTTY,    //      WAE DX Contest (RTTY)
-                    DARC_WAEDC_SSB,     //      WAE DX Contest (SSB)
-                    DL_DX_RTTY,         //      DL-DX RTTY Contest
-                    EA_RTTY,            //      EA-WW-RTTY
-                    EPC_PSK63,          //      PSK63 QSO Party
-                    EU_SPRINT,          //      EU Sprint
-                    EUCW160M,           //
-                    EU_HF,              //      EU HF Championship
-                    EU_PSK_DX,          //      EU PSK DX Contest
-                    FALL_sprint,        //      FISTS Fall Sprint
-                    FL_QSO_PARTY,       //      Florida QSO Party
-                    GA_QSO_PARTY,       //      Georgia QSO Party
-                    HELVETIA,           //      Helvetia Contest
-                    IARU_HF,            //      IARU HF World Championship
-                    IL_QSO_party,       //      Illinois QSO Party
-                    JARTS_WW_RTTY,      //      JARTS WW RTTY
-                    JIDX_CW,            //      Japan International DX Contest (CW)
-                    JIDX_SSB,           //      Japan International DX Contest (SSB)
-                    LZ_DX,              //      LZ DX Contest
-                    MI_QSO_PARTY,       //      Michigan QSO Party
-                    NAQP_CW,            //      North America QSO Party (CW)
-                    NAQP_RTTY,          //      North America QSO Party (RTTY)
-                    NAQP_SSB,           //      North America QSO Party (Phone)
-                    NA_SPRINT_CW,       //      North America Sprint (CW)
-                    NA_SPRINT_RTTY,     //      North America Sprint (RTTY)
-                    NA_SPRINT_SSB,      //      North America Sprint (Phone)
-                    NEQP,               //      New England QSO Party
-                    NRAU_BALTIC_CW,     //      NRAU-Baltic Contest (CW)
-                    NRAU_BALTIC_SSB,    //      NRAU-Baltic Contest (SSB)
-                    OCEANIA_DX_CW,      //      Oceania DX Contest (CW)
-                    OCEANIA_DX_SSB,     //      Oceania DX Contest (SSB)
-                    OH_QSO_PARTY,       //      Ohio QSO Party
-                    OK_DX_RTTY,         //
-                    OK_OM_DX,           //      OK-OM DX Contest
-                    ON_QSO_PARTY,       //      Ontario QSO Party
-                    PACC,               //
-                    QC_QSO_PARTY,       //      Quebec QSO Party
-                    RAC,                //      Canada Day, RAC Winter contests
-                    RDAC,               //      Russian District Award Contest
-                    RDXC,               //      Russian DX Contest
-                    REF_160M,           //
-                    REF_CW,             //
-                    REF_SSB,            //
-                    RSGB_160,           //      1.8Mhz Contest
-                    RSGB_21_28_CW,      //      21/28 MHz Contest (CW)
-                    RSGB_21_28_SSB,     //      21/28 MHz Contest (SSB)
-                    RSGB_80M_CC,        //      80m Club Championships
-                    RSGB_AFS_CW,        //      Affiliated Societies Team Contest (CW)
-                    RSGB_AFS_SSB,       //      Affiliated Societies Team Contest (SSB)
-                    RSGB_CLUB_CALLS,    //      Club Calls
-                    RSGB_COMMONWEALTH,  //      Commonwealth Contest
-                    RSGB_IOTA,          //      IOTA Contest
-                    RSGB_LOW_POWER,     //      Low Power Field Day
-                    RSGB_NFD,           //      National Field Day
-                    RSGB_ROPOCO,        //      RoPoCo
-                    RSGB_SSB_FD,        //      SSB Field Day
-                    RUSSIAN_RTTY,       //
-                    SAC_CW,             //      Scandinavian Activity Contest (CW)
-                    SAC_SSB,            //      Scandinavian Activity Contest (SSB)
-                    SARTG_RTTY,         //      SARTG WW RTTY
-                    SCC_RTTY,           //      SCC RTTY Championship
-                    SMP_AUG,            //      SSA Portabeltest
-                    SMP_MAY,            //      SSA Portabeltest
-                    SPDXCCONTEST,       //       SP DX Contest
-                    SPRING_SPRINT,      //      FISTS Spring Sprint
-                    SR_MARATHON,        //      Scottish-Russian Marathon
-                    STEW_PERRY,         //      Stew Perry Topband Distance Challenge
-                    SUMMER_SPRINT,      //      FISTS Summer Sprint
-                    TARA_RTTY,          //      TARA RTTY Mêlée
-                    TMC_RTTY,           //      The Makrothen Contest
-                    UBA_DX_CW,          //      UBA Contest (CW)
-                    UBA_DX_SSB,         //      UBA Contest (SSB)
-                    UK_DX_RTTY,         //      UK DX RTTY Contest
-                    UKRAINIAN_DX,       //      Ukrainian DX
-                    UKR_CHAMP_RTTY,     //      Open Ukraine RTTY Championship
-                    URE_DX,             //
-                    VIRGINIA_QSO_PARTY, //      Virginia QSO Party
-                    VOLTA_RTTY,         //      Alessandro Volta RTTY DX Contest
-                    WI_QSO_PARTY,       //      Wisconsin QSO Party
-                    WINTER_SPRINT,      //      FISTS Winter Sprint
-                    YUDXC,              //      YU DX Contest
-                    N_CONTESTS
-                  };
+                          ANARTS_RTTY,        //      ANARTS WW RTTY
+                          ANATOLIAN_RTTY,     //      Anatolian WW RTTY
+                          AP_SPRINT,          //      Asia - Pacific Sprint
+                          ARI_DX,             //      ARI DX Contest
+                          ARRL_10,            //      ARRL 10 Meter Contest
+                          ARRL_160,           //      ARRL 160 Meter Contest
+                          ARRL_DX_CW,         //      ARRL International DX Contest (CW)
+                          ARRL_DX_SSB,        //      ARRL International DX Contest (Phone)
+                          ARRL_FIELD_DAY,     //      ARRL Field Day
+                          ARRL_RTTY,          //      ARRL RTTY Round-Up
+                          ARRL_SS_CW,         //      ARRL November Sweepstakes (CW)
+                          ARRL_SS_SSB,        //      ARRL November Sweepstakes (Phone)
+                          ARRL_UHF_AUG,       //      ARRL August UHF Contest
+                          ARRL_VHF_JAN,       //      ARRL January VHF Sweepstakes
+                          ARRL_VHF_JUN,       //      ARRL June VHF QSO Party
+                          ARRL_VHF_SEP,       //      ARRL September VHF QSO Party
+                          BARTG_RTTY,         //      BARTG Spring RTTY Contest
+                          BARTG_SPRINT,       //      BARTG Sprint Contest
+                          CA_QSO_PARTY,       //      California QSO Party
+                          CQ_160_CW,          //      CQ WW 160 Meter DX Contest (CW)
+                          CQ_160_SSB,         //      CQ WW 160 Meter DX Contest (SSB)
+                          CQ_VHF,             //      CQ World_Wide VHF Contest
+                          CQ_WPX_CW,          //      CQ WW WPX Contest (CW)
+                          CQ_WPX_RTTY,        //      CQ/RJ WW RTTY WPX Contest
+                          CQ_WPX_SSB,         //      CQ WW WPX Contest (SSB)
+                          CQ_WW_CW,           //      CQ WW DX Contest (CW)
+                          CQ_WW_RTTY,         //      CQ/RJ WW RTTY DX Contest
+                          CQ_WW_SSB,          //      CQ WW DX Contest (SSB)
+                          CWOPS_CWT,          //      CWops Mini-CWT Test
+                          CIS_DX,             //      CIS DX Contest
+                          DARC_WAEDC_CW,      //      WAE DX Contest (CW)
+                          DARC_WAEDC_RTTY,    //      WAE DX Contest (RTTY)
+                          DARC_WAEDC_SSB,     //      WAE DX Contest (SSB)
+                          DL_DX_RTTY,         //      DL-DX RTTY Contest
+                          EA_RTTY,            //      EA-WW-RTTY
+                          EPC_PSK63,          //      PSK63 QSO Party
+                          EU_SPRINT,          //      EU Sprint
+                          EUCW160M,           //
+                          EU_HF,              //      EU HF Championship
+                          EU_PSK_DX,          //      EU PSK DX Contest
+                          FALL_sprint,        //      FISTS Fall Sprint
+                          FL_QSO_PARTY,       //      Florida QSO Party
+                          GA_QSO_PARTY,       //      Georgia QSO Party
+                          HELVETIA,           //      Helvetia Contest
+                          IARU_HF,            //      IARU HF World Championship
+                          IL_QSO_party,       //      Illinois QSO Party
+                          JARTS_WW_RTTY,      //      JARTS WW RTTY
+                          JIDX_CW,            //      Japan International DX Contest (CW)
+                          JIDX_SSB,           //      Japan International DX Contest (SSB)
+                          LZ_DX,              //      LZ DX Contest
+                          MI_QSO_PARTY,       //      Michigan QSO Party
+                          NAQP_CW,            //      North America QSO Party (CW)
+                          NAQP_RTTY,          //      North America QSO Party (RTTY)
+                          NAQP_SSB,           //      North America QSO Party (Phone)
+                          NA_SPRINT_CW,       //      North America Sprint (CW)
+                          NA_SPRINT_RTTY,     //      North America Sprint (RTTY)
+                          NA_SPRINT_SSB,      //      North America Sprint (Phone)
+                          NEQP,               //      New England QSO Party
+                          NRAU_BALTIC_CW,     //      NRAU-Baltic Contest (CW)
+                          NRAU_BALTIC_SSB,    //      NRAU-Baltic Contest (SSB)
+                          OCEANIA_DX_CW,      //      Oceania DX Contest (CW)
+                          OCEANIA_DX_SSB,     //      Oceania DX Contest (SSB)
+                          OH_QSO_PARTY,       //      Ohio QSO Party
+                          OK_DX_RTTY,         //
+                          OK_OM_DX,           //      OK-OM DX Contest
+                          ON_QSO_PARTY,       //      Ontario QSO Party
+                          PACC,               //
+                          QC_QSO_PARTY,       //      Quebec QSO Party
+                          RAC,                //      Canada Day, RAC Winter contests
+                          RDAC,               //      Russian District Award Contest
+                          RDXC,               //      Russian DX Contest
+                          REF_160M,           //
+                          REF_CW,             //
+                          REF_SSB,            //
+                          RSGB_160,           //      1.8Mhz Contest
+                          RSGB_21_28_CW,      //      21/28 MHz Contest (CW)
+                          RSGB_21_28_SSB,     //      21/28 MHz Contest (SSB)
+                          RSGB_80M_CC,        //      80m Club Championships
+                          RSGB_AFS_CW,        //      Affiliated Societies Team Contest (CW)
+                          RSGB_AFS_SSB,       //      Affiliated Societies Team Contest (SSB)
+                          RSGB_CLUB_CALLS,    //      Club Calls
+                          RSGB_COMMONWEALTH,  //      Commonwealth Contest
+                          RSGB_IOTA,          //      IOTA Contest
+                          RSGB_LOW_POWER,     //      Low Power Field Day
+                          RSGB_NFD,           //      National Field Day
+                          RSGB_ROPOCO,        //      RoPoCo
+                          RSGB_SSB_FD,        //      SSB Field Day
+                          RUSSIAN_RTTY,       //
+                          SAC_CW,             //      Scandinavian Activity Contest (CW)
+                          SAC_SSB,            //      Scandinavian Activity Contest (SSB)
+                          SARTG_RTTY,         //      SARTG WW RTTY
+                          SCC_RTTY,           //      SCC RTTY Championship
+                          SMP_AUG,            //      SSA Portabeltest
+                          SMP_MAY,            //      SSA Portabeltest
+                          SPDXCCONTEST,       //       SP DX Contest
+                          SPRING_SPRINT,      //      FISTS Spring Sprint
+                          SR_MARATHON,        //      Scottish-Russian Marathon
+                          STEW_PERRY,         //      Stew Perry Topband Distance Challenge
+                          SUMMER_SPRINT,      //      FISTS Summer Sprint
+                          TARA_RTTY,          //      TARA RTTY Mêlée
+                          TMC_RTTY,           //      The Makrothen Contest
+                          UBA_DX_CW,          //      UBA Contest (CW)
+                          UBA_DX_SSB,         //      UBA Contest (SSB)
+                          UK_DX_RTTY,         //      UK DX RTTY Contest
+                          UKRAINIAN_DX,       //      Ukrainian DX
+                          UKR_CHAMP_RTTY,     //      Open Ukraine RTTY Championship
+                          URE_DX,             //
+                          VIRGINIA_QSO_PARTY, //      Virginia QSO Party
+                          VOLTA_RTTY,         //      Alessandro Volta RTTY DX Contest
+                          WI_QSO_PARTY,       //      Wisconsin QSO Party
+                          WINTER_SPRINT,      //      FISTS Winter Sprint
+                          YUDXC,              //      YU DX Contest
+                          N_CONTESTS
+                        };
 
 using CONTEST_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_CONTEST::N_CONTESTS)>;                           ///< type for contest enumeration
 
 static CONTEST_ENUMERATION_TYPE CONTEST_ENUMERATION = { "7QP"s,                                //  7th-Area QSO Party
-                                                          "ANARTS-RTTY"s,                        //  ANARTS WW RTTY
-                                                          "ANATOLIAN-RTTY"s,                     //  Anatolian WW RTTY
-                                                          "AP-SPRINT"s,                          //  Asia - Pacific Sprint
-                                                          "ARI-DX"s,                             //  ARI DX Contest
-                                                          "ARRL-10"s,                            //  ARRL 10 Meter Contest
-                                                          "ARRL-160"s,                           //  ARRL 160 Meter Contest
-                                                          "ARRL-DX-CW"s,                         //  ARRL International DX Contest (CW)
-                                                          "ARRL-DX-SSB"s,                        //  ARRL International DX Contest (Phone)
-                                                          "ARRL-FIELD-DAY"s,                     //  ARRL Field Day
-                                                          "ARRL-RTTY"s,                          //  ARRL RTTY Round-Up
-                                                          "ARRL-SS-CW"s,                         //  ARRL November Sweepstakes (CW)
-                                                          "ARRL-SS-SSB"s,                        //  ARRL November Sweepstakes (Phone)
-                                                          "ARRL-UHF-AUG"s,                       //  ARRL August UHF Contest
-                                                          "ARRL-VHF-JAN"s,                       //  ARRL January VHF Sweepstakes
-                                                          "ARRL-VHF-JUN"s,                       //  ARRL June VHF QSO Party
-                                                          "ARRL-VHF-SEP"s,                       //  ARRL September VHF QSO Party
-                                                          "BARTG-RTTY"s,                         //  BARTG Spring RTTY Contest
-                                                          "BARTG-SPRINT"s,                       //  BARTG Sprint Contest
-                                                          "CA-QSO-PARTY"s,                       //  California QSO Party
-                                                          "CQ-160-CW"s,                          //  CQ WW 160 Meter DX Contest (CW)
-                                                          "CQ-160-SSB"s,                         //  CQ WW 160 Meter DX Contest (SSB)
-                                                          "CQ-VHF"s,                             //  CQ World-Wide VHF Contest
-                                                          "CQ-WPX-CW"s,                          //  CQ WW WPX Contest (CW)
-                                                          "CQ-WPX-RTTY"s,                        //  CQ/RJ WW RTTY WPX Contest
-                                                          "CQ-WPX-SSB"s,                         //  CQ WW WPX Contest (SSB)
-                                                          "CQ-WW-CW"s,                           //  CQ WW DX Contest (CW)
-                                                          "CQ-WW-RTTY"s,                         //  CQ/RJ WW RTTY DX Contest
-                                                          "CQ-WW-SSB"s,                          //  CQ WW DX Contest (SSB)
-                                                          "CWOPS-CWT"s,                          //  CWops Mini-CWT Test
-                                                          "CIS-DX"s,                             //  CIS DX Contest
-                                                          "DARC-WAEDC-CW"s,                      //  WAE DX Contest (CW)
-                                                          "DARC-WAEDC-RTTY"s,                    //  WAE DX Contest (RTTY)
-                                                          "DARC-WAEDC-SSB"s,                     //  WAE DX Contest (SSB)
-                                                          "DL-DX-RTTY"s,                         //  DL-DX RTTY Contest
-                                                          "EA-RTTY"s,                            //  EA-WW-RTTY
-                                                          "EPC-PSK63"s,                          //  PSK63 QSO Party
-                                                          "EU Sprint"s,                          //  EU Sprint
-                                                          "EUCW160M"s,                           //
-                                                          "EU-HF"s,                              //  EU HF Championship
-                                                          "EU-PSK-DX"s,                          //  EU PSK DX Contest
-                                                          "Fall Sprint"s,                        //  FISTS Fall Sprint
-                                                          "FL-QSO-PARTY"s,                       //  Florida QSO Party
-                                                          "GA-QSO-PARTY"s,                       //  Georgia QSO Party
-                                                          "HELVETIA"s,                           //  Helvetia Contest
-                                                          "IARU-HF"s,                            //  IARU HF World Championship
-                                                          "IL QSO Party"s,                       //  Illinois QSO Party
-                                                          "JARTS-WW-RTTY"s,                      //  JARTS WW RTTY
-                                                          "JIDX-CW"s,                            //  Japan International DX Contest (CW)
-                                                          "JIDX-SSB"s,                           //  Japan International DX Contest (SSB)
-                                                          "LZ DX"s,                              //  LZ DX Contest
-                                                          "MI-QSO-PARTY"s,                       //  Michigan QSO Party
-                                                          "NAQP-CW"s,                            //  North America QSO Party (CW)
-                                                          "NAQP-RTTY"s,                          //  North America QSO Party (RTTY)
-                                                          "NAQP-SSB"s,                           //  North America QSO Party (Phone)
-                                                          "NA-SPRINT-CW"s,                       //  North America Sprint (CW)
-                                                          "NA-SPRINT-RTTY"s,                     //  North America Sprint (RTTY)
-                                                          "NA-SPRINT-SSB"s,                      //  North America Sprint (Phone)
-                                                          "NEQP"s,                               //  New England QSO Party
-                                                          "NRAU-BALTIC-CW"s,                     //  NRAU-Baltic Contest (CW)
-                                                          "NRAU-BALTIC-SSB"s,                    //  NRAU-Baltic Contest (SSB)
-                                                          "OCEANIA-DX-CW"s,                      //  Oceania DX Contest (CW)
-                                                          "OCEANIA-DX-SSB"s,                     //  Oceania DX Contest (SSB)
-                                                          "OH-QSO-PARTY"s,                       //  Ohio QSO Party
-                                                          "OK-DX-RTTY"s,                         //
-                                                          "OK-OM-DX"s,                           //  OK-OM DX Contest
-                                                          "ON-QSO-PARTY"s,                       //  Ontario QSO Party
-                                                          "PACC"s,                               //
-                                                          "QC-QSO-PARTY"s,                       //  Quebec QSO Party
-                                                          "RAC, CANADA DAY, CANADA WINTER"s,     //  Canada Day, RAC Winter contests
-                                                          "RDAC"s,                               //  Russian District Award Contest
-                                                          "RDXC"s,                               //  Russian DX Contest
-                                                          "REF-160M"s,                           //
-                                                          "REF-CW"s,                             //
-                                                          "REF-SSB"s,                            //
-                                                          "RSGB-160"s,                           //  1.8Mhz (sic) Contest
-                                                          "RSGB-21/28-CW"s,                      //  21/28 MHz Contest (CW)
-                                                          "RSGB-21/28-SSB"s,                     //  21/28 MHz Contest (SSB)
-                                                          "RSGB-80M-CC"s,                        //  80m Club Championships
-                                                          "RSGB-AFS-CW"s,                        //  Affiliated Societies Team Contest (CW)
-                                                          "RSGB-AFS-SSB"s,                       //  Affiliated Societies Team Contest (SSB)
-                                                          "RSGB-CLUB-CALLS"s,                    //  Club Calls
-                                                          "RSGB-COMMONWEALTH"s,                  //  Commonwealth Contest
-                                                          "RSGB-IOTA"s,                          //  IOTA Contest
-                                                          "RSGB-LOW-POWER"s,                     //  Low Power Field Day
-                                                          "RSGB-NFD"s,                           //  National Field Day
-                                                          "RSGB-ROPOCO"s,                        //  RoPoCo
-                                                          "RSGB-SSB-FD"s,                        //  SSB Field Day
-                                                          "RUSSIAN-RTTY"s,                       //
-                                                          "SAC-CW"s,                             //  Scandinavian Activity Contest (CW)
-                                                          "SAC-SSB"s,                            //  Scandinavian Activity Contest (SSB)
-                                                          "SARTG-RTTY"s,                         //  SARTG WW RTTY
-                                                          "SCC-RTTY"s,                           //  SCC RTTY Championship
-                                                          "SMP-AUG"s,                            //  SSA Portabeltest
-                                                          "SMP-MAY"s,                            //  SSA Portabeltest
-                                                          "SPDXContest"s,                        //  SP DX Contest
-                                                          "Spring Sprint"s,                      //  FISTS Spring Sprint
-                                                          "SR-MARATHON"s,                        //  Scottish-Russian Marathon
-                                                          "STEW-PERRY"s,                         //  Stew Perry Topband Distance Challenge
-                                                          "Summer Sprint"s,                      //  FISTS Summer Sprint
-                                                          "TARA-RTTY"s,                          //  TARA RTTY Mêlée
-                                                          "TMC-RTTY"s,                           //  The Makrothen Contest
-                                                          "UBA-DX-CW"s,                          //  UBA Contest (CW)
-                                                          "UBA-DX-SSB"s,                         //  UBA Contest (SSB)
-                                                          "UK-DX-RTTY"s,                         //  UK DX RTTY Contest
-                                                          "UKRAINIAN DX"s,                       //  Ukrainian DX
-                                                          "UKR-CHAMP-RTTY"s,                     //  Open Ukraine RTTY Championship
-                                                          "URE-DX"s,                             //
-                                                          "Virginia QSO Party"s,                 //  Virginia QSO Party
-                                                          "VOLTA-RTTY"s,                         //  Alessandro Volta RTTY DX Contest
-                                                          "WI-QSO-PARTY"s,                       //  Wisconsin QSO Party
-                                                          "Winter Sprint"s,                      //  FISTS Winter Sprint
-                                                          "YUDXC"s,                              //  YU DX Contest
+                                                        "ANARTS-RTTY"s,                        //  ANARTS WW RTTY
+                                                        "ANATOLIAN-RTTY"s,                     //  Anatolian WW RTTY
+                                                        "AP-SPRINT"s,                          //  Asia - Pacific Sprint
+                                                        "ARI-DX"s,                             //  ARI DX Contest
+                                                        "ARRL-10"s,                            //  ARRL 10 Meter Contest
+                                                        "ARRL-160"s,                           //  ARRL 160 Meter Contest
+                                                        "ARRL-DX-CW"s,                         //  ARRL International DX Contest (CW)
+                                                        "ARRL-DX-SSB"s,                        //  ARRL International DX Contest (Phone)
+                                                        "ARRL-FIELD-DAY"s,                     //  ARRL Field Day
+                                                        "ARRL-RTTY"s,                          //  ARRL RTTY Round-Up
+                                                        "ARRL-SS-CW"s,                         //  ARRL November Sweepstakes (CW)
+                                                        "ARRL-SS-SSB"s,                        //  ARRL November Sweepstakes (Phone)
+                                                        "ARRL-UHF-AUG"s,                       //  ARRL August UHF Contest
+                                                        "ARRL-VHF-JAN"s,                       //  ARRL January VHF Sweepstakes
+                                                        "ARRL-VHF-JUN"s,                       //  ARRL June VHF QSO Party
+                                                        "ARRL-VHF-SEP"s,                       //  ARRL September VHF QSO Party
+                                                        "BARTG-RTTY"s,                         //  BARTG Spring RTTY Contest
+                                                        "BARTG-SPRINT"s,                       //  BARTG Sprint Contest
+                                                        "CA-QSO-PARTY"s,                       //  California QSO Party
+                                                        "CQ-160-CW"s,                          //  CQ WW 160 Meter DX Contest (CW)
+                                                        "CQ-160-SSB"s,                         //  CQ WW 160 Meter DX Contest (SSB)
+                                                        "CQ-VHF"s,                             //  CQ World-Wide VHF Contest
+                                                        "CQ-WPX-CW"s,                          //  CQ WW WPX Contest (CW)
+                                                        "CQ-WPX-RTTY"s,                        //  CQ/RJ WW RTTY WPX Contest
+                                                        "CQ-WPX-SSB"s,                         //  CQ WW WPX Contest (SSB)
+                                                        "CQ-WW-CW"s,                           //  CQ WW DX Contest (CW)
+                                                        "CQ-WW-RTTY"s,                         //  CQ/RJ WW RTTY DX Contest
+                                                        "CQ-WW-SSB"s,                          //  CQ WW DX Contest (SSB)
+                                                        "CWOPS-CWT"s,                          //  CWops Mini-CWT Test
+                                                        "CIS-DX"s,                             //  CIS DX Contest
+                                                        "DARC-WAEDC-CW"s,                      //  WAE DX Contest (CW)
+                                                        "DARC-WAEDC-RTTY"s,                    //  WAE DX Contest (RTTY)
+                                                        "DARC-WAEDC-SSB"s,                     //  WAE DX Contest (SSB)
+                                                        "DL-DX-RTTY"s,                         //  DL-DX RTTY Contest
+                                                        "EA-RTTY"s,                            //  EA-WW-RTTY
+                                                        "EPC-PSK63"s,                          //  PSK63 QSO Party
+                                                        "EU Sprint"s,                          //  EU Sprint
+                                                        "EUCW160M"s,                           //
+                                                        "EU-HF"s,                              //  EU HF Championship
+                                                        "EU-PSK-DX"s,                          //  EU PSK DX Contest
+                                                        "Fall Sprint"s,                        //  FISTS Fall Sprint
+                                                        "FL-QSO-PARTY"s,                       //  Florida QSO Party
+                                                        "GA-QSO-PARTY"s,                       //  Georgia QSO Party
+                                                        "HELVETIA"s,                           //  Helvetia Contest
+                                                        "IARU-HF"s,                            //  IARU HF World Championship
+                                                        "IL QSO Party"s,                       //  Illinois QSO Party
+                                                        "JARTS-WW-RTTY"s,                      //  JARTS WW RTTY
+                                                        "JIDX-CW"s,                            //  Japan International DX Contest (CW)
+                                                        "JIDX-SSB"s,                           //  Japan International DX Contest (SSB)
+                                                        "LZ DX"s,                              //  LZ DX Contest
+                                                        "MI-QSO-PARTY"s,                       //  Michigan QSO Party
+                                                        "NAQP-CW"s,                            //  North America QSO Party (CW)
+                                                        "NAQP-RTTY"s,                          //  North America QSO Party (RTTY)
+                                                        "NAQP-SSB"s,                           //  North America QSO Party (Phone)
+                                                        "NA-SPRINT-CW"s,                       //  North America Sprint (CW)
+                                                        "NA-SPRINT-RTTY"s,                     //  North America Sprint (RTTY)
+                                                        "NA-SPRINT-SSB"s,                      //  North America Sprint (Phone)
+                                                        "NEQP"s,                               //  New England QSO Party
+                                                        "NRAU-BALTIC-CW"s,                     //  NRAU-Baltic Contest (CW)
+                                                        "NRAU-BALTIC-SSB"s,                    //  NRAU-Baltic Contest (SSB)
+                                                        "OCEANIA-DX-CW"s,                      //  Oceania DX Contest (CW)
+                                                        "OCEANIA-DX-SSB"s,                     //  Oceania DX Contest (SSB)
+                                                        "OH-QSO-PARTY"s,                       //  Ohio QSO Party
+                                                        "OK-DX-RTTY"s,                         //
+                                                        "OK-OM-DX"s,                           //  OK-OM DX Contest
+                                                        "ON-QSO-PARTY"s,                       //  Ontario QSO Party
+                                                        "PACC"s,                               //
+                                                        "QC-QSO-PARTY"s,                       //  Quebec QSO Party
+                                                        "RAC, CANADA DAY, CANADA WINTER"s,     //  Canada Day, RAC Winter contests
+                                                        "RDAC"s,                               //  Russian District Award Contest
+                                                        "RDXC"s,                               //  Russian DX Contest
+                                                        "REF-160M"s,                           //
+                                                        "REF-CW"s,                             //
+                                                        "REF-SSB"s,                            //
+                                                        "RSGB-160"s,                           //  1.8Mhz (sic) Contest
+                                                        "RSGB-21/28-CW"s,                      //  21/28 MHz Contest (CW)
+                                                        "RSGB-21/28-SSB"s,                     //  21/28 MHz Contest (SSB)
+                                                        "RSGB-80M-CC"s,                        //  80m Club Championships
+                                                        "RSGB-AFS-CW"s,                        //  Affiliated Societies Team Contest (CW)
+                                                        "RSGB-AFS-SSB"s,                       //  Affiliated Societies Team Contest (SSB)
+                                                        "RSGB-CLUB-CALLS"s,                    //  Club Calls
+                                                        "RSGB-COMMONWEALTH"s,                  //  Commonwealth Contest
+                                                        "RSGB-IOTA"s,                          //  IOTA Contest
+                                                        "RSGB-LOW-POWER"s,                     //  Low Power Field Day
+                                                        "RSGB-NFD"s,                           //  National Field Day
+                                                        "RSGB-ROPOCO"s,                        //  RoPoCo
+                                                        "RSGB-SSB-FD"s,                        //  SSB Field Day
+                                                        "RUSSIAN-RTTY"s,                       //
+                                                        "SAC-CW"s,                             //  Scandinavian Activity Contest (CW)
+                                                        "SAC-SSB"s,                            //  Scandinavian Activity Contest (SSB)
+                                                        "SARTG-RTTY"s,                         //  SARTG WW RTTY
+                                                        "SCC-RTTY"s,                           //  SCC RTTY Championship
+                                                        "SMP-AUG"s,                            //  SSA Portabeltest
+                                                        "SMP-MAY"s,                            //  SSA Portabeltest
+                                                        "SPDXContest"s,                        //  SP DX Contest
+                                                        "Spring Sprint"s,                      //  FISTS Spring Sprint
+                                                        "SR-MARATHON"s,                        //  Scottish-Russian Marathon
+                                                        "STEW-PERRY"s,                         //  Stew Perry Topband Distance Challenge
+                                                        "Summer Sprint"s,                      //  FISTS Summer Sprint
+                                                        "TARA-RTTY"s,                          //  TARA RTTY Mêlée
+                                                        "TMC-RTTY"s,                           //  The Makrothen Contest
+                                                        "UBA-DX-CW"s,                          //  UBA Contest (CW)
+                                                        "UBA-DX-SSB"s,                         //  UBA Contest (SSB)
+                                                        "UK-DX-RTTY"s,                         //  UK DX RTTY Contest
+                                                        "UKRAINIAN DX"s,                       //  Ukrainian DX
+                                                        "UKR-CHAMP-RTTY"s,                     //  Open Ukraine RTTY Championship
+                                                        "URE-DX"s,                             //
+                                                        "Virginia QSO Party"s,                 //  Virginia QSO Party
+                                                        "VOLTA-RTTY"s,                         //  Alessandro Volta RTTY DX Contest
+                                                        "WI-QSO-PARTY"s,                       //  Wisconsin QSO Party
+                                                        "Winter Sprint"s,                      //  FISTS Winter Sprint
+                                                        "YUDXC"s,                              //  YU DX Contest
                                                       };                                          ///< values for contests
 
 // propagation mode  -------------------------------------------------------
 
 /// propagation modes
 enum class ADIF_PROPAGATION_MODE { AUR,         //      Aurora
-                             AUE,         //      Aurora-E
-                             BS,          //      Back scatter
-                             ECH,         //      EchoLink
-                             EME,         //      Earth-Moon-Earth
-                             ES,          //      Sporadic E
-                             FAI,         //      Field Aligned Irregularities
-                             F2,          //      F2 Reflection
-                             INTERNET,    //      Internet-assisted
-                             ION,         //      Ionoscatter
-                             IRL,         //      IRLP
-                             MS,          //      Meteor scatter
-                             RPT,         //      Terrestrial or atmospheric repeater or transponder
-                             RS,          //      Rain scatter
-                             SAT,         //      Satellite
-                             TEP,         //      Trans-equatorial
-                             TR,          //      Tropospheric ducting
-                             N_PROP_MODES
-};
+                                   AUE,         //      Aurora-E
+                                   BS,          //      Back scatter
+                                   ECH,         //      EchoLink
+                                   EME,         //      Earth-Moon-Earth
+                                   ES,          //      Sporadic E
+                                   FAI,         //      Field Aligned Irregularities
+                                   F2,          //      F2 Reflection
+                                   INTERNET,    //      Internet-assisted
+                                   ION,         //      Ionoscatter
+                                   IRL,         //      IRLP
+                                   MS,          //      Meteor scatter
+                                   RPT,         //      Terrestrial or atmospheric repeater or transponder
+                                   RS,          //      Rain scatter
+                                   SAT,         //      Satellite
+                                   TEP,         //      Trans-equatorial
+                                   TR,          //      Tropospheric ducting
+                                   N_PROP_MODES
+                                 };
 
 using PROPAGATION_MODE_ENUMERATION_TYPE = std::array<std::string, static_cast<unsigned int>(ADIF_PROPAGATION_MODE::N_PROP_MODES)>;    ///< type for propagation mode enumeration
 
 static PROPAGATION_MODE_ENUMERATION_TYPE PROPAGATION_MODE_ENUMERATION = { "AUR"s,          //  Aurora
-                                                                            "AUE"s,          //  Aurora-E
-                                                                            "BS"s,           //  Back scatter
-                                                                            "ECH"s,          //  EchoLink
-                                                                            "EME"s,          //  Earth-Moon-Earth
-                                                                            "ES"s,           //  Sporadic E
-                                                                            "FAI"s,          //  Field Aligned Irregularities
-                                                                            "F2"s,           //  F2 Reflection
-                                                                            "INTERNET"s,     //  Internet-assisted
-                                                                            "ION"s,          //  Ionoscatter
-                                                                            "IRL"s,          //  IRLP
-                                                                            "MS"s,           //  Meteor scatter
-                                                                            "RPT"s,          //  Terrestrial or atmospheric repeater or transponder
-                                                                            "RS"s,           //  Rain scatter
-                                                                            "SAT"s,          //  Satellite
-                                                                            "TEP"s,          //  Trans-equatorial
-                                                                            "TR"s            //  Tropospheric ducting
+                                                                          "AUE"s,          //  Aurora-E
+                                                                          "BS"s,           //  Back scatter
+                                                                          "ECH"s,          //  EchoLink
+                                                                          "EME"s,          //  Earth-Moon-Earth
+                                                                          "ES"s,           //  Sporadic E
+                                                                          "FAI"s,          //  Field Aligned Irregularities
+                                                                          "F2"s,           //  F2 Reflection
+                                                                          "INTERNET"s,     //  Internet-assisted
+                                                                          "ION"s,          //  Ionoscatter
+                                                                          "IRL"s,          //  IRLP
+                                                                          "MS"s,           //  Meteor scatter
+                                                                          "RPT"s,          //  Terrestrial or atmospheric repeater or transponder
+                                                                          "RS"s,           //  Rain scatter
+                                                                          "SAT"s,          //  Satellite
+                                                                          "TEP"s,          //  Trans-equatorial
+                                                                          "TR"s            //  Tropospheric ducting
                                                                         };                    ///< values for propagatiom mode
 
 // primary administrative subdivisions  -------------------------------------------------------
 
 /// Canada
-enum PRIMARY_ENUM_CANADA { CANADA_NS,                   // Nova Scotia
-                           CANADA_QC,                   // Québec
-                           CANADA_ON,                   // Ontario
-                           CANADA_MB,                   // Manitoba
-                           CANADA_SK,                   // Saskatchewan
-                           CANADA_AB,                   // ALberta
-                           CANADA_BC,                   // British Columbia
-                           CANADA_NT,                   // Northwest Territories
-                           CANADA_NB,                   // New Brunswick
-                           CANADA_NL,                   // Newfoundland and Labrador
-                           CANADA_YT,                   // Yukon
-                           CANADA_PE,                   // Prince Edward Island
-                           CANADA_NU,                   // Nunavut
-                           N_CANADA_PRIMARIES
-                         };                             ///< enum for Canada
+enum class PRIMARY_ENUM_CANADA { CANADA_NS,                   // Nova Scotia
+                                 CANADA_QC,                   // Québec
+                                 CANADA_ON,                   // Ontario
+                                 CANADA_MB,                   // Manitoba
+                                 CANADA_SK,                   // Saskatchewan
+                                 CANADA_AB,                   // ALberta
+                                 CANADA_BC,                   // British Columbia
+                                 CANADA_NT,                   // Northwest Territories
+                                 CANADA_NB,                   // New Brunswick
+                                 CANADA_NL,                   // Newfoundland and Labrador
+                                 CANADA_YT,                   // Yukon
+                                 CANADA_PE,                   // Prince Edward Island
+                                 CANADA_NU,                   // Nunavut
+                                 N_CANADA_PRIMARIES
+                               };                             ///< enum for Canada
 
-//typedef std::array<std::string, N_CANADA_PRIMARIES> PRIMARY_CANADA_ENUMERATION_TYPE; ///< type for Canada enumeration
-
-using PRIMARY_CANADA_ENUMERATION_TYPE = std::array<std::string, N_CANADA_PRIMARIES>; ///< type for Canada enumeration
+using PRIMARY_CANADA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_CANADA::N_CANADA_PRIMARIES)>; ///< type for Canada enumeration
 
 static PRIMARY_CANADA_ENUMERATION_TYPE PRIMARY_CANADA_ENUMERATION = { "NS"s,
-                                                                        "QC"s,
-                                                                        "ON"s,
-                                                                        "MB"s,
-                                                                        "AB"s,
-                                                                        "BC"s,
-                                                                        "NT"s,
-                                                                        "NB"s,
-                                                                        "NL"s,
-                                                                        "YT"s,
-                                                                        "PE"s,
-                                                                        "NU"s
+                                                                      "QC"s,
+                                                                      "ON"s,
+                                                                      "MB"s,
+                                                                      "AB"s,
+                                                                      "BC"s,
+                                                                      "NT"s,
+                                                                      "NB"s,
+                                                                      "NL"s,
+                                                                      "YT"s,
+                                                                      "PE"s,
+                                                                      "NU"s
                                                                     };            ///< values for Canada
 
 /// Aland Is.
-enum PRIMARY_ENUM_ALAND { ALAND_001,    //     Brändö
-                          ALAND_002,    //     Eckerö
-                          ALAND_003,    //     Finström
-                          ALAND_004,    //     Föglö
-                          ALAND_005,    //     Geta
-                          ALAND_006,    //     Hammarland
-                          ALAND_007,    //     Jomala
-                          ALAND_008,    //     Kumlinge
-                          ALAND_009,    //     Kökar
-                          ALAND_010,    //     Lemland
-                          ALAND_011,    //     Lumparland
-                          ALAND_012,    //     Maarianhamina
-                          ALAND_013,    //     Saltvik
-                          ALAND_014,    //     Sottunga
-                          ALAND_015,    //     Sund
-                          ALAND_016,    //     Vårdö
-                          N_ALAND_PRIMARIES
-                        };
+enum class PRIMARY_ENUM_ALAND { ALAND_001,    //     Brändö
+                                ALAND_002,    //     Eckerö
+                                ALAND_003,    //     Finström
+                                ALAND_004,    //     Föglö
+                                ALAND_005,    //     Geta
+                                ALAND_006,    //     Hammarland
+                                ALAND_007,    //     Jomala
+                                ALAND_008,    //     Kumlinge
+                                ALAND_009,    //     Kökar
+                                ALAND_010,    //     Lemland
+                                ALAND_011,    //     Lumparland
+                                ALAND_012,    //     Maarianhamina
+                                ALAND_013,    //     Saltvik
+                                ALAND_014,    //     Sottunga
+                                ALAND_015,    //     Sund
+                                ALAND_016,    //     Vårdö
+                                N_ALAND_PRIMARIES
+                              };
 
-typedef std::array<std::string, N_ALAND_PRIMARIES> PRIMARY_ALAND_ENUMERATION_TYPE;    ///< primaries for Aland Is.
+//typedef std::array<std::string, static_class<int>(PRIMARY_ENUM_ALAND::N_ALAND_PRIMARIES)> PRIMARY_ALAND_ENUMERATION_TYPE;    ///< primaries for Aland Is.
 
-static PRIMARY_ALAND_ENUMERATION_TYPE PRIMARY_ALAND_ENUMERATION = { { "001",    //     Brändö
-                                                                      "002",    //     Eckerö
-                                                                      "003",    //     Finström
-                                                                      "004",    //     Föglö
-                                                                      "005",    //     Geta
-                                                                      "006",    //     Hammarland
-                                                                      "007",    //     Jomala
-                                                                      "008",    //     Kumlinge
-                                                                      "009",    //     Kökar
-                                                                      "010",    //     Lemland
-                                                                      "011",    //     Lumparland
-                                                                      "012",    //     Maarianhamina
-                                                                      "013",    //     Saltvik
-                                                                      "014",    //     Sottunga
-                                                                      "015",    //     Sund
-                                                                      "016"     //     Vårdö
-                                                                    } };
+using PRIMARY_ALAND_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_ALAND::N_ALAND_PRIMARIES)>;    ///< primaries for Aland Is.
+
+static PRIMARY_ALAND_ENUMERATION_TYPE PRIMARY_ALAND_ENUMERATION = { "001"s,    //     Brändö
+                                                                    "002"s,    //     Eckerö
+                                                                    "003"s,    //     Finström
+                                                                    "004"s,    //     Föglö
+                                                                    "005"s,    //     Geta
+                                                                    "006"s,    //     Hammarland
+                                                                    "007"s,    //     Jomala
+                                                                    "008"s,    //     Kumlinge
+                                                                    "009"s,    //     Kökar
+                                                                    "010"s,    //     Lemland
+                                                                    "011"s,    //     Lumparland
+                                                                    "012"s,    //     Maarianhamina
+                                                                    "013"s,    //     Saltvik
+                                                                    "014"s,    //     Sottunga
+                                                                    "015"s,    //     Sund
+                                                                    "016"s     //     Vårdö
+                                                                  };
 
 /// Alaska
-enum PRIMARY_ENUM_ALASKA { ALASKA_AK,    //     ALASKA
-                           N_ALASKA_PRIMARIES
-                         };
+enum class PRIMARY_ENUM_ALASKA { AK,    //     ALASKA
+                                 N_ALASKA_PRIMARIES
+                               };
 
-typedef std::array<std::string, N_ALASKA_PRIMARIES> PRIMARY_ALASKA_ENUMERATION_TYPE;    ///< primaries for Alaska
+//typedef std::array<std::string, N_ALASKA_PRIMARIES> PRIMARY_ALASKA_ENUMERATION_TYPE;    ///< primaries for Alaska
 
-static PRIMARY_ALASKA_ENUMERATION_TYPE PRIMARY_ALASKA_ENUMERATION = { { "AK"    //     Alaska
-                                                                    } };
+using PRIMARY_ALASKA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_ALASKA::N_ALASKA_PRIMARIES)>;    ///< primaries for Alaska
+
+static PRIMARY_ALASKA_ENUMERATION_TYPE PRIMARY_ALASKA_ENUMERATION = { "AK"s    //     Alaska
+                                                                    };
 
 /// Asiatic Russia
-enum PRIMARY_ENUM_ASIATIC_RUSSIA { ASIATIC_RUSSIA_UO,      // 174  Ust\u2019-Ordynsky Autonomous Okrug - for contacts made before 2008-01-01
-                                   ASIATIC_RUSSIA_AB,      // 175  Aginsky Buryatsky Autonomous Okrug - for contacts made before 2008-03-01
-                                   ASIATIC_RUSSIA_CB,      // 165  Chelyabinsk (Chelyabinskaya oblast)
-                                   ASIATIC_RUSSIA_SV,      // 154  Sverdlovskaya oblast
-                                   ASIATIC_RUSSIA_PM,      // 140  Perm` (Permskaya oblast) - for contacts made on or after 2005-12-01
-//                                   ASIATIC_RUSSIA_PM,      // 140  Permskaya Kraj - for contacts made before 2005-12-01
-                                   ASIATIC_RUSSIA_KP,      // 141  Komi-Permyatsky Autonomous Okrug - for contacts made before 2005-12-01
-                                   ASIATIC_RUSSIA_TO,      // 158  Tomsk (Tomskaya oblast)
-                                   ASIATIC_RUSSIA_HM,      // 162  Khanty-Mansyisky Autonomous Okrug
-                                   ASIATIC_RUSSIA_YN,      // 163  Yamalo-Nenetsky Autonomous Okrug
-                                   ASIATIC_RUSSIA_TN,      // 161  Tyumen' (Tyumenskaya oblast)
-                                   ASIATIC_RUSSIA_OM,      // 146  Omsk (Omskaya oblast)
-                                   ASIATIC_RUSSIA_NS,      // 145  Novosibirsk (Novosibirskaya oblast)
-                                   ASIATIC_RUSSIA_KN,      // 134  Kurgan (Kurganskaya oblast)
-                                   ASIATIC_RUSSIA_OB,      // 167  Orenburg (Orenburgskaya oblast)
-                                   ASIATIC_RUSSIA_KE,      // 130  Kemerovo (Kemerovskaya oblast)
-                                   ASIATIC_RUSSIA_BA,      // 84   Republic of Bashkortostan
-                                   ASIATIC_RUSSIA_KO,      // 90   Republic of Komi
-                                   ASIATIC_RUSSIA_AL,      // 99   Altaysky Kraj
-                                   ASIATIC_RUSSIA_GA,      // 100  Republic Gorny Altay
-                                   ASIATIC_RUSSIA_KK,      // 103  Krasnoyarsk (Krasnoyarsk Kraj)
-//                                   ASIATIC_RUSSIA_KK,      // 103  Krasnoyarsk (Krasnoyarsk Kraj) - for contacts made on or after 2007-01-01
-                                   ASIATIC_RUSSIA_TM,      // 105  Taymyr Autonomous Okrug - for contacts made before 2007-01-01
-                                   ASIATIC_RUSSIA_HK,      // 110  Khabarovsk (Khabarovsky Kraj)
-                                   ASIATIC_RUSSIA_EA,      // 111  Yevreyskaya Autonomous Oblast
-                                   ASIATIC_RUSSIA_SL,      // 153  Sakhalin (Sakhalinskaya oblast)
-                                   ASIATIC_RUSSIA_EV,      // 106  Evenkiysky Autonomous Okrug - for contacts made before 2007-01-01
-                                   ASIATIC_RUSSIA_MG,      // 138  Magadan (Magadanskaya oblast)
-                                   ASIATIC_RUSSIA_AM,      // 112  Amurskaya oblast
-                                   ASIATIC_RUSSIA_CK,      // 139  Chukotka Autonomous Okrug
-                                   ASIATIC_RUSSIA_PK,      // 107  Primorsky Kraj
-                                   ASIATIC_RUSSIA_BU,      // 85   Republic of Buryatia
-                                   ASIATIC_RUSSIA_YA,      // 98   Sakha (Yakut) Republic
-                                   ASIATIC_RUSSIA_IR,      // 124  Irkutsk (Irkutskaya oblast)
-                                   ASIATIC_RUSSIA_CT,      // 166  Zabaykalsky Kraj - referred to as Chita (Chitinskaya oblast) before 2008-03-01
-                                   ASIATIC_RUSSIA_HA,      // 104  Republic of Khakassia
-                                   ASIATIC_RUSSIA_KY,      // 129  Koryaksky Autonomous Okrug - for contacts made before 2007-01-01
-                                   ASIATIC_RUSSIA_KT,      // 128  Kamchatka (Kamchatskaya oblast) - for contacts made on or after 2007-01-01
-                                   ASIATIC_RUSSIA_TU,      // 159  Republic of Tuva
+enum class PRIMARY_ENUM_ASIATIC_RUSSIA { UO,      // 174  Ust\u2019-Ordynsky Autonomous Okrug - for contacts made before 2008-01-01
+                                         AB,      // 175  Aginsky Buryatsky Autonomous Okrug - for contacts made before 2008-03-01
+                                         CB,      // 165  Chelyabinsk (Chelyabinskaya oblast)
+                                         SV,      // 154  Sverdlovskaya oblast
+                                         PM,      // 140  Perm` (Permskaya oblast) - for contacts made on or after 2005-12-01
+//                                   PM,      // 140  Permskaya Kraj - for contacts made before 2005-12-01
+                                         KP,      // 141  Komi-Permyatsky Autonomous Okrug - for contacts made before 2005-12-01
+                                         TO,      // 158  Tomsk (Tomskaya oblast)
+                                         HM,      // 162  Khanty-Mansyisky Autonomous Okrug
+                                         YN,      // 163  Yamalo-Nenetsky Autonomous Okrug
+                                         TN,      // 161  Tyumen' (Tyumenskaya oblast)
+                                         OM,      // 146  Omsk (Omskaya oblast)
+                                         NS,      // 145  Novosibirsk (Novosibirskaya oblast)
+                                         KN,      // 134  Kurgan (Kurganskaya oblast)
+                                         OB,      // 167  Orenburg (Orenburgskaya oblast)
+                                         KE,      // 130  Kemerovo (Kemerovskaya oblast)
+                                         BA,      // 84   Republic of Bashkortostan
+                                         KO,      // 90   Republic of Komi
+                                         AL,      // 99   Altaysky Kraj
+                                         GA,      // 100  Republic Gorny Altay
+                                         KK,      // 103  Krasnoyarsk (Krasnoyarsk Kraj)
+//                                   KK,      // 103  Krasnoyarsk (Krasnoyarsk Kraj) - for contacts made on or after 2007-01-01
+                                         TM,      // 105  Taymyr Autonomous Okrug - for contacts made before 2007-01-01
+                                         HK,      // 110  Khabarovsk (Khabarovsky Kraj)
+                                         EA,      // 111  Yevreyskaya Autonomous Oblast
+                                         SL,      // 153  Sakhalin (Sakhalinskaya oblast)
+                                         EV,      // 106  Evenkiysky Autonomous Okrug - for contacts made before 2007-01-01
+                                         MG,      // 138  Magadan (Magadanskaya oblast)
+                                         AM,      // 112  Amurskaya oblast
+                                         CK,      // 139  Chukotka Autonomous Okrug
+                                         PK,      // 107  Primorsky Kraj
+                                         BU,      // 85   Republic of Buryatia
+                                         YA,      // 98   Sakha (Yakut) Republic
+                                         IR,      // 124  Irkutsk (Irkutskaya oblast)
+                                         CT,      // 166  Zabaykalsky Kraj - referred to as Chita (Chitinskaya oblast) before 2008-03-01
+                                         HA,      // 104  Republic of Khakassia
+                                         KY,      // 129  Koryaksky Autonomous Okrug - for contacts made before 2007-01-01
+                                         KT,      // 128  Kamchatka (Kamchatskaya oblast) - for contacts made on or after 2007-01-01
+                                         TU,      // 159  Republic of Tuva
 //                                   ASIATIC_RUSSIA_KT,      // 128  Kamchatka (Kamchatskaya oblast)
-                                   N_ASIATIC_RUSSIA_PRIMARIES
-                                 };
+                                         N_ASIATIC_RUSSIA_PRIMARIES
+                                       };
 
-typedef std::array<std::string, N_ASIATIC_RUSSIA_PRIMARIES> PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE;    ///< primaries for Asiatic Russia
+//typedef std::array<std::string, N_ASIATIC_RUSSIA_PRIMARIES> PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE;    ///< primaries for Asiatic Russia
 
-static PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE PRIMARY_ASIATIC_RUSSIA_ENUMERATION = { { "UO",      // 174  Ust\u2019-Ordynsky Autonomous Okrug - for contacts made before 2008-01-01
-                                                                                        "AB",      // 175  Aginsky Buryatsky Autonomous Okrug - for contacts made before 2008-03-01
-                                                                                        "CB",      // 165  Chelyabinsk (Chelyabinskaya oblast)
-                                                                                        "SV",      // 154  Sverdlovskaya oblast
-                                                                                        "PM",      // 140  Perm` (Permskaya oblast) - for contacts made on or after 2005-12-01
+using PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_ASIATIC_RUSSIA::N_ASIATIC_RUSSIA_PRIMARIES)>;    ///< primaries for Asiatic Russia
+
+static PRIMARY_ASIATIC_RUSSIA_ENUMERATION_TYPE PRIMARY_ASIATIC_RUSSIA_ENUMERATION = { "UO"s,      // 174  Ust\u2019-Ordynsky Autonomous Okrug - for contacts made before 2008-01-01
+                                                                                      "AB"s,      // 175  Aginsky Buryatsky Autonomous Okrug - for contacts made before 2008-03-01
+                                                                                      "CB"s,      // 165  Chelyabinsk (Chelyabinskaya oblast)
+                                                                                      "SV"s,      // 154  Sverdlovskaya oblast
+                                                                                      "PM"s,      // 140  Perm` (Permskaya oblast) - for contacts made on or after 2005-12-01
 //                                   ASIATIC_RUSSIA_PM,      // 140  Permskaya Kraj - for contacts made before 2005-12-01
-                                                                                        "KP",      // 141  Komi-Permyatsky Autonomous Okrug - for contacts made before 2005-12-01
-                                                                                        "TO",      // 158  Tomsk (Tomskaya oblast)
-                                                                                        "HM",      // 162  Khanty-Mansyisky Autonomous Okrug
-                                                                                        "YN",      // 163  Yamalo-Nenetsky Autonomous Okrug
-                                                                                        "TN",      // 161  Tyumen' (Tyumenskaya oblast)
-                                                                                        "OM",      // 146  Omsk (Omskaya oblast)
-                                                                                        "NS",      // 145  Novosibirsk (Novosibirskaya oblast)
-                                                                                        "KN",      // 134  Kurgan (Kurganskaya oblast)
-                                                                                        "OB",      // 167  Orenburg (Orenburgskaya oblast)
-                                                                                        "KE",      // 130  Kemerovo (Kemerovskaya oblast)
-                                                                                        "BA",      // 84   Republic of Bashkortostan
-                                                                                        "KO",      // 90   Republic of Komi
-                                                                                        "AL",      // 99   Altaysky Kraj
-                                                                                        "GA",      // 100  Republic Gorny Altay
-                                                                                        "KK",      // 103  Krasnoyarsk (Krasnoyarsk Kraj)
+                                                                                      "KP"s,      // 141  Komi-Permyatsky Autonomous Okrug - for contacts made before 2005-12-01
+                                                                                      "TO"s,      // 158  Tomsk (Tomskaya oblast)
+                                                                                      "HM"s,      // 162  Khanty-Mansyisky Autonomous Okrug
+                                                                                      "YN"s,      // 163  Yamalo-Nenetsky Autonomous Okrug
+                                                                                      "TN"s,      // 161  Tyumen' (Tyumenskaya oblast)
+                                                                                      "OM"s,      // 146  Omsk (Omskaya oblast)
+                                                                                      "NS"s,      // 145  Novosibirsk (Novosibirskaya oblast)
+                                                                                      "KN"s,      // 134  Kurgan (Kurganskaya oblast)
+                                                                                      "OB"s,      // 167  Orenburg (Orenburgskaya oblast)
+                                                                                      "KE"s,      // 130  Kemerovo (Kemerovskaya oblast)
+                                                                                      "BA"s,      // 84   Republic of Bashkortostan
+                                                                                      "KO"s,      // 90   Republic of Komi
+                                                                                      "AL"s,      // 99   Altaysky Kraj
+                                                                                      "GA"s,      // 100  Republic Gorny Altay
+                                                                                      "KK"s,      // 103  Krasnoyarsk (Krasnoyarsk Kraj)
 //                                   ASIATIC_RUSSIA_KK,      // 103  Krasnoyarsk (Krasnoyarsk Kraj) - for contacts made on or after 2007-01-01
-                                                                                        "TM",      // 105  Taymyr Autonomous Okrug - for contacts made before 2007-01-01
-                                                                                        "HK",      // 110  Khabarovsk (Khabarovsky Kraj)
-                                                                                        "EA",      // 111  Yevreyskaya Autonomous Oblast
-                                                                                        "SL",      // 153  Sakhalin (Sakhalinskaya oblast)
-                                                                                        "EV",      // 106  Evenkiysky Autonomous Okrug - for contacts made before 2007-01-01
-                                                                                        "MG",      // 138  Magadan (Magadanskaya oblast)
-                                                                                        "AM",      // 112  Amurskaya oblast
-                                                                                        "CK",      // 139  Chukotka Autonomous Okrug
-                                                                                        "PK",      // 107  Primorsky Kraj
-                                                                                        "BU",      // 85   Republic of Buryatia
-                                                                                        "YA",      // 98   Sakha (Yakut) Republic
-                                                                                        "IR",      // 124  Irkutsk (Irkutskaya oblast)
-                                                                                        "CT",      // 166  Zabaykalsky Kraj - referred to as Chita (Chitinskaya oblast) before 2008-03-01
-                                                                                        "HA",      // 104  Republic of Khakassia
-                                                                                        "KY",      // 129  Koryaksky Autonomous Okrug - for contacts made before 2007-01-01
-                                                                                        "KT",      // 128  Kamchatka (Kamchatskaya oblast) - for contacts made on or after 2007-01-01
-                                                                                        "TU"       // 159  Republic of Tuva
+                                                                                      "TM"s,      // 105  Taymyr Autonomous Okrug - for contacts made before 2007-01-01
+                                                                                      "HK"s,      // 110  Khabarovsk (Khabarovsky Kraj)
+                                                                                      "EA"s,      // 111  Yevreyskaya Autonomous Oblast
+                                                                                      "SL"s,      // 153  Sakhalin (Sakhalinskaya oblast)
+                                                                                      "EV"s,      // 106  Evenkiysky Autonomous Okrug - for contacts made before 2007-01-01
+                                                                                      "MG"s,      // 138  Magadan (Magadanskaya oblast)
+                                                                                      "AM"s,      // 112  Amurskaya oblast
+                                                                                      "CK"s,      // 139  Chukotka Autonomous Okrug
+                                                                                      "PK"s,      // 107  Primorsky Kraj
+                                                                                      "BU"s,      // 85   Republic of Buryatia
+                                                                                      "YA"s,      // 98   Sakha (Yakut) Republic
+                                                                                      "IR"s,      // 124  Irkutsk (Irkutskaya oblast)
+                                                                                      "CT"s,      // 166  Zabaykalsky Kraj - referred to as Chita (Chitinskaya oblast) before 2008-03-01
+                                                                                      "HA"s,      // 104  Republic of Khakassia
+                                                                                      "KY"s,      // 129  Koryaksky Autonomous Okrug - for contacts made before 2007-01-01
+                                                                                      "KT"s,      // 128  Kamchatka (Kamchatskaya oblast) - for contacts made on or after 2007-01-01
+                                                                                      "TU"s       // 159  Republic of Tuva
 //                                   ASIATIC_RUSSIA_KT,      // 128  Kamchatka (Kamchatskaya oblast)
-                                                                    } };
+                                                                    };
 
 /// Balearic Is. (the spec for some reason calls them "Baleric")
-enum PRIMARY_ENUM_BALEARICS { BALEARICS_IB,
-                              N_BALEARICS_PRIMARIES
-                            };
+enum class PRIMARY_ENUM_BALEARICS { IB,
+                                    N_BALEARICS_PRIMARIES
+                                  };
 
-typedef std::array<std::string, N_BALEARICS_PRIMARIES> PRIMARY_BALEARICS_ENUMERATION_TYPE;    ///< primaries for Balearics
+//typedef std::array<std::string, N_BALEARICS_PRIMARIES> PRIMARY_BALEARICS_ENUMERATION_TYPE;    ///< primaries for Balearics
 
-static PRIMARY_BALEARICS_ENUMERATION_TYPE PRIMARY_BALEARICS_ENUMERATION = { { "IB"
-                                                                          } };
+using PRIMARY_BALEARICS_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_BALEARICS::N_BALEARICS_PRIMARIES)>;    ///< primaries for Balearics
+
+static PRIMARY_BALEARICS_ENUMERATION_TYPE PRIMARY_BALEARICS_ENUMERATION = { "IB"s
+                                                                          };
 /// Belarus
-enum PRIMARY_ENUM_BELARUS { BELARUS_MI,      // Minsk (Minskaya voblasts')
-                            BELARUS_BR,      // Brest (Brestskaya voblasts')
-                            BELARUS_HR,      // Grodno (Hrodzenskaya voblasts')
-                            BELARUS_VI,      // Vitebsk (Vitsyebskaya voblasts')
-                            BELARUS_MA,      // Mogilev (Mahilyowskaya voblasts')
-                            BELARUS_HO,      // Gomel (Homyel'skaya voblasts')
-                            BELARUS_HM,      // Horad Minsk
-                            N_BELARUS_PRIMARIES
-                          };
+enum class PRIMARY_ENUM_BELARUS { MI,      // Minsk (Minskaya voblasts')
+                                  BR,      // Brest (Brestskaya voblasts')
+                                  HR,      // Grodno (Hrodzenskaya voblasts')
+                                  VI,      // Vitebsk (Vitsyebskaya voblasts')
+                                  MA,      // Mogilev (Mahilyowskaya voblasts')
+                                  HO,      // Gomel (Homyel'skaya voblasts')
+                                  HM,      // Horad Minsk
+                                  N_BELARUS_PRIMARIES
+                                };
 
-typedef std::array<std::string, N_BELARUS_PRIMARIES> PRIMARY_BELARUS_ENUMERATION_TYPE;    ///< primaries for Belarus
+//typedef std::array<std::string, N_BELARUS_PRIMARIES> PRIMARY_BELARUS_ENUMERATION_TYPE;    ///< primaries for Belarus
 
-static PRIMARY_BELARUS_ENUMERATION_TYPE PRIMARY_BELARUS_ENUMERATION = { { "MI",      // Minsk (Minskaya voblasts')
-                                                                          "BR",      // Brest (Brestskaya voblasts')
-                                                                          "HR",      // Grodno (Hrodzenskaya voblasts')
-                                                                          "VI",      // Vitebsk (Vitsyebskaya voblasts')
-                                                                          "MA",      // Mogilev (Mahilyowskaya voblasts')
-                                                                          "HO",      // Gomel (Homyel'skaya voblasts')
-                                                                          "HM"       // Horad Minsk
-                                                                      } };
+using PRIMARY_BELARUS_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_BELARUS::N_BELARUS_PRIMARIES)>;    ///< primaries for Belarus
+
+static PRIMARY_BELARUS_ENUMERATION_TYPE PRIMARY_BELARUS_ENUMERATION = { "MI"s,      // Minsk (Minskaya voblasts')
+                                                                        "BR"s,      // Brest (Brestskaya voblasts')
+                                                                        "HR"s,      // Grodno (Hrodzenskaya voblasts')
+                                                                        "VI"s,      // Vitebsk (Vitsyebskaya voblasts')
+                                                                        "MA"s,      // Mogilev (Mahilyowskaya voblasts')
+                                                                        "HO"s,      // Gomel (Homyel'skaya voblasts')
+                                                                        "HM"s       // Horad Minsk
+                                                                      };
 
 /// Canary Is.
-enum PRIMARY_ENUM_CANARIES { CANARIES_GC,    // Las Palmas
-                             CANARIES_TF,    // Tenerife
-                             N_CANARIES_PRIMARIES
-                           };
+enum class PRIMARY_ENUM_CANARIES { GC,    // Las Palmas
+                                   TF,    // Tenerife
+                                   N_CANARIES_PRIMARIES
+                                 };
 
-typedef std::array<std::string, N_CANARIES_PRIMARIES> PRIMARY_CANARIES_ENUMERATION_TYPE;    ///< primaries for Canaries
+//typedef std::array<std::string, N_CANARIES_PRIMARIES> PRIMARY_CANARIES_ENUMERATION_TYPE;    ///< primaries for Canaries
+
+using PRIMARY_CANARIES_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_CANARIES::N_CANARIES_PRIMARIES)>;    ///< primaries for Canaries
 
 
-static PRIMARY_CANARIES_ENUMERATION_TYPE PRIMARY_CANARIES_ENUMERATION = { { "GC",    // Las Palmas
-                                                                            "TF"     // Tenerife
-                                                                        } };
+static PRIMARY_CANARIES_ENUMERATION_TYPE PRIMARY_CANARIES_ENUMERATION = { "GC"s,    // Las Palmas
+                                                                          "TF"s     // Tenerife
+                                                                        };
 
 /// Ceuta y Melilla. (which the standard calls "Cetua & Melilla". Sigh.)
-enum PRIMARY_ENUM_CEUTA { CEUTA_CU,    // Ceuta
-                          CEUTA_ML,    // Melilla
-                          N_CEUTA_PRIMARIES
-                        };
+enum class PRIMARY_ENUM_CEUTA { CU,    // Ceuta
+                                ML,    // Melilla
+                                N_CEUTA_PRIMARIES
+                              };
 
-typedef std::array<std::string, N_CEUTA_PRIMARIES> PRIMARY_CEUTA_ENUMERATION_TYPE;    ///< primaries for Ceuta
+//typedef std::array<std::string, N_CEUTA_PRIMARIES> PRIMARY_CEUTA_ENUMERATION_TYPE;    ///< primaries for Ceuta
 
+using PRIMARY_CEUTA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_CEUTA::N_CEUTA_PRIMARIES)>;    ///< primaries for Ceuta
 
-static PRIMARY_CEUTA_ENUMERATION_TYPE PRIMARY_CEUTA_ENUMERATION = { { "CE",    // Ceuta
-                                                                      "ML"     // Melilla
-                                                                  } };
+static PRIMARY_CEUTA_ENUMERATION_TYPE PRIMARY_CEUTA_ENUMERATION = { "CE"s,    // Ceuta
+                                                                    "ML"s     // Melilla
+                                                                  };
 
 /// Mexico
-enum PRIMARY_ENUM_MEXICO { MEXICO_COL,      // Colima
-                           MEXICO_DF,       //   Distrito Federal
-                           MEXICO_EMX,      //  Estado de México
-                           MEXICO_GTO,      //  Guanajuato
-                           MEXICO_HGO,      //  Hidalgo
-                           MEXICO_JAL,      //  Jalisco
-                           MEXICO_MIC,      //  Michoacán de Ocampo
-                           MEXICO_MOR,      //  Morelos
-                           MEXICO_NAY,      //  Nayarit
-                           MEXICO_PUE,      //  Puebla
-                           MEXICO_QRO,      //  Querétaro de Arteaga
-                           MEXICO_TLX,      //  Tlaxcala
-                           MEXICO_VER,      //  Veracruz-Llave
-                           MEXICO_AGS,      //  Aguascalientes
-                           MEXICO_BC,       //   Baja California
-                           MEXICO_BCS,      //  Baja California Sur
-                           MEXICO_CHH,      //  Chihuahua
-                           MEXICO_COA,      //  Coahuila de Zaragoza
-                           MEXICO_DGO,      //  Durango
-                           MEXICO_NL,       //   Nuevo Leon
-                           MEXICO_SLP,      //  San Luis Potosí
-                           MEXICO_SIN,      //  Sinaloa
-                           MEXICO_SON,      //  Sonora
-                           MEXICO_TMS,      //  Tamaulipas
-                           MEXICO_ZAC,      //  Zacatecas
-                           MEXICO_CAM,      //  Campeche
-                           MEXICO_CHS,      //  Chiapas
-                           MEXICO_GRO,      //  Guerrero
-                           MEXICO_OAX,      //  Oaxaca
-                           MEXICO_QTR,      //  Quintana Roo
-                           MEXICO_TAB,      //  Tabasco
-                           MEXICO_YUC,      //  Yucatán
-                           N_MEXICO_PRIMARIES
-                         };
+enum class PRIMARY_ENUM_MEXICO { COL,      // Colima
+                                 DF,       //   Distrito Federal
+                                 EMX,      //  Estado de México
+                                 GTO,      //  Guanajuato
+                                 HGO,      //  Hidalgo
+                                 JAL,      //  Jalisco
+                                 MIC,      //  Michoacán de Ocampo
+                                 MOR,      //  Morelos
+                                 NAY,      //  Nayarit
+                                 PUE,      //  Puebla
+                                 QRO,      //  Querétaro de Arteaga
+                                 TLX,      //  Tlaxcala
+                                 VER,      //  Veracruz-Llave
+                                 AGS,      //  Aguascalientes
+                                 BC,       //   Baja California
+                                 BCS,      //  Baja California Sur
+                                 CHH,      //  Chihuahua
+                                 COA,      //  Coahuila de Zaragoza
+                                 DGO,      //  Durango
+                                 NL,       //   Nuevo Leon
+                                 SLP,      //  San Luis Potosí
+                                 SIN,      //  Sinaloa
+                                 SON,      //  Sonora
+                                 TMS,      //  Tamaulipas
+                                 ZAC,      //  Zacatecas
+                                 CAM,      //  Campeche
+                                 CHS,      //  Chiapas
+                                 GRO,      //  Guerrero
+                                 OAX,      //  Oaxaca
+                                 QTR,      //  Quintana Roo
+                                 TAB,      //  Tabasco
+                                 YUC,      //  Yucatán
+                                 N_MEXICO_PRIMARIES
+                               };
 
-typedef std::array<std::string, N_MEXICO_PRIMARIES> PRIMARY_MEXICO_ENUMERATION_TYPE;    ///< primaries for Mexico
+//typedef std::array<std::string, N_MEXICO_PRIMARIES> PRIMARY_MEXICO_ENUMERATION_TYPE;    ///< primaries for Mexico
 
-static PRIMARY_MEXICO_ENUMERATION_TYPE PRIMARY_MEXICO_ENUMERATION = { { "COL",      // Colima
-                                                                        "DF",       //   Distrito Federal
-                                                                        "EMX",      //  Estado de México
-                                                                        "GTO",      //  Guanajuato
-                                                                        "HGO",      //  Hidalgo
-                                                                        "JAL",      //  Jalisco
-                                                                        "MIC",      //  Michoacán de Ocampo
-                                                                        "MOR",      //  Morelos
-                                                                        "NAY",      //  Nayarit
-                                                                        "PUE",      //  Puebla
-                                                                        "QRO",      //  Querétaro de Arteaga
-                                                                        "TLX",      //  Tlaxcala
-                                                                        "VER",      //  Veracruz-Llave
-                                                                        "AGS",      //  Aguascalientes
-                                                                        "BC",       //   Baja California
-                                                                        "BCS",      //  Baja California Sur
-                                                                        "CHH",      //  Chihuahua
-                                                                        "COA",      //  Coahuila de Zaragoza
-                                                                        "DGO",      //  Durango
-                                                                        "NL",       //   Nuevo Leon
-                                                                        "SLP",      //  San Luis Potosí
-                                                                        "SIN",      //  Sinaloa
-                                                                        "SON",      //  Sonora
-                                                                        "TMS",      //  Tamaulipas
-                                                                        "ZAC",      //  Zacatecas
-                                                                        "CAM",      //  Campeche
-                                                                        "CHS",      //  Chiapas
-                                                                        "GRO",      //  Guerrero
-                                                                        "OAX",      //  Oaxaca
-                                                                        "QTR",      //  Quintana Roo
-                                                                        "TAB",      //  Tabasco
-                                                                        "YUC"       //  Yucatán
-                                                                    } };
+using PRIMARY_MEXICO_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_MEXICO::N_MEXICO_PRIMARIES)>;    ///< primaries for Mexico
+
+static PRIMARY_MEXICO_ENUMERATION_TYPE PRIMARY_MEXICO_ENUMERATION = { "COL"s,      // Colima
+                                                                      "DF"s,       //   Distrito Federal
+                                                                      "EMX"s,      //  Estado de México
+                                                                      "GTO"s,      //  Guanajuato
+                                                                      "HGO"s,      //  Hidalgo
+                                                                      "JAL"s,      //  Jalisco
+                                                                      "MIC"s,      //  Michoacán de Ocampo
+                                                                      "MOR"s,      //  Morelos
+                                                                      "NAY"s,      //  Nayarit
+                                                                      "PUE"s,      //  Puebla
+                                                                      "QRO"s,      //  Querétaro de Arteaga
+                                                                      "TLX"s,      //  Tlaxcala
+                                                                      "VER"s,      //  Veracruz-Llave
+                                                                      "AGS"s,      //  Aguascalientes
+                                                                      "BC"s,       //   Baja California
+                                                                      "BCS"s,      //  Baja California Sur
+                                                                      "CHH"s,      //  Chihuahua
+                                                                      "COA"s,      //  Coahuila de Zaragoza
+                                                                      "DGO"s,      //  Durango
+                                                                      "NL"s,       //   Nuevo Leon
+                                                                      "SLP"s,      //  San Luis Potosí
+                                                                      "SIN"s,      //  Sinaloa
+                                                                      "SON"s,      //  Sonora
+                                                                      "TMS"s,      //  Tamaulipas
+                                                                      "ZAC"s,      //  Zacatecas
+                                                                      "CAM"s,      //  Campeche
+                                                                      "CHS"s,      //  Chiapas
+                                                                      "GRO"s,      //  Guerrero
+                                                                      "OAX"s,      //  Oaxaca
+                                                                      "QTR"s,      //  Quintana Roo
+                                                                      "TAB"s,      //  Tabasco
+                                                                      "YUC"s       //  Yucatán
+                                                                    };
 
 /// European Russia
-enum PRIMARY_ENUM_EU_RUSSIA { EU_RUSSIA_SP,      // 169  City of St. Petersburg
-                              EU_RUSSIA_LO,      // 136  Leningradskaya oblast
-                              EU_RUSSIA_KL,      // 88   Republic of Karelia
-                              EU_RUSSIA_AR,      // 113  Arkhangelsk (Arkhangelskaya oblast)
-                              EU_RUSSIA_NO,      // 114  Nenetsky Autonomous Okrug
-                              EU_RUSSIA_VO,      // 120  Vologda (Vologodskaya oblast)
-                              EU_RUSSIA_NV,      // 144  Novgorodskaya oblast
-                              EU_RUSSIA_PS,      // 149  Pskov (Pskovskaya oblast)
-                              EU_RUSSIA_MU,      // 143  Murmansk (Murmanskaya oblast)
-                              EU_RUSSIA_MA,      // 170  City of Moscow
-                              EU_RUSSIA_MO,      // 142  Moscowskaya oblast
-                              EU_RUSSIA_OR,      // 147  Oryel (Orlovskaya oblast)
-                              EU_RUSSIA_LP,      // 137  Lipetsk (Lipetskaya oblast)
-                              EU_RUSSIA_TV,      // 126  Tver' (Tverskaya oblast)
-                              EU_RUSSIA_SM,      // 155  Smolensk (Smolenskaya oblast)
-                              EU_RUSSIA_YR,      // 168  Yaroslavl (Yaroslavskaya oblast)
-                              EU_RUSSIA_KS,      // 132  Kostroma (Kostromskaya oblast)
-                              EU_RUSSIA_TL,      // 160  Tula (Tul'skaya oblast)
-                              EU_RUSSIA_VR,      // 121  Voronezh (Voronezhskaya oblast)
-                              EU_RUSSIA_TB,      // 157  Tambov (Tambovskaya oblast)
-                              EU_RUSSIA_RA,      // 151  Ryazan' (Ryazanskaya oblast)
-                              EU_RUSSIA_NN,      // 122  Nizhni Novgorod (Nizhegorodskaya oblast)
-                              EU_RUSSIA_IV,      // 123  Ivanovo (Ivanovskaya oblast)
-                              EU_RUSSIA_VL,      // 119  Vladimir (Vladimirskaya oblast)
-                              EU_RUSSIA_KU,      // 135  Kursk (Kurskaya oblast)
-                              EU_RUSSIA_KG,      // 127  Kaluga (Kaluzhskaya oblast)
-                              EU_RUSSIA_BR,      // 118  Bryansk (Bryanskaya oblast)
-                              EU_RUSSIA_BO,      // 117  Belgorod (Belgorodskaya oblast)
-                              EU_RUSSIA_VG,      // 156  Volgograd (Volgogradskaya oblast)
-                              EU_RUSSIA_SA,      // 152  Saratov (Saratovskaya oblast)
-                              EU_RUSSIA_PE,      // 148  Penza (Penzenskaya oblast)
-                              EU_RUSSIA_SR,      // 133  Samara (Samarskaya oblast)
-                              EU_RUSSIA_UL,      // 164  Ulyanovsk (Ulyanovskaya oblast)
-                              EU_RUSSIA_KI,      // 131  Kirov (Kirovskaya oblast)
-                              EU_RUSSIA_TA,      // 94   Republic of Tataria
-                              EU_RUSSIA_MR,      // 91   Republic of Marij-El
-                              EU_RUSSIA_MD,      // 92   Republic of Mordovia
-                              EU_RUSSIA_UD,      // 95   Republic of Udmurtia
-                              EU_RUSSIA_CU,      // 97   Republic of Chuvashia
-                              EU_RUSSIA_KR,      // 101  Krasnodar (Krasnodarsky Kraj)
-                              EU_RUSSIA_KC,      // 109  Republic of Karachaevo-Cherkessia
-                              EU_RUSSIA_ST,      // 108  Stavropol' (Stavropolsky Kraj)
-                              EU_RUSSIA_KM,      // 89   Republic of Kalmykia
-                              EU_RUSSIA_SO,      // 93   Republic of Northern Ossetia
-                              EU_RUSSIA_RO,      // 150  Rostov-on-Don (Rostovskaya oblast)
-                              EU_RUSSIA_CN,      // 96   Republic Chechnya
-                              EU_RUSSIA_IN,      // 96   Republic of Ingushetia
-                              EU_RUSSIA_AO,      // 115  Astrakhan' (Astrakhanskaya oblast)
-                              EU_RUSSIA_DA,      // 86   Republic of Daghestan
-                              EU_RUSSIA_KB,      // 87   Republic of Kabardino-Balkaria
-                              EU_RUSSIA_AD,      // 102  Republic of Adygeya
-                              N_EU_RUSSIA_PRIMARIES
-                            };
+enum class PRIMARY_ENUM_EU_RUSSIA { SP,      // 169  City of St. Petersburg
+                                    LO,      // 136  Leningradskaya oblast
+                                    KL,      // 88   Republic of Karelia
+                                    AR,      // 113  Arkhangelsk (Arkhangelskaya oblast)
+                                    NO,      // 114  Nenetsky Autonomous Okrug
+                                    VO,      // 120  Vologda (Vologodskaya oblast)
+                                    NV,      // 144  Novgorodskaya oblast
+                                    PS,      // 149  Pskov (Pskovskaya oblast)
+                                    MU,      // 143  Murmansk (Murmanskaya oblast)
+                                    MA,      // 170  City of Moscow
+                                    MO,      // 142  Moscowskaya oblast
+                                    OR,      // 147  Oryel (Orlovskaya oblast)
+                                    LP,      // 137  Lipetsk (Lipetskaya oblast)
+                                    TV,      // 126  Tver' (Tverskaya oblast)
+                                    SM,      // 155  Smolensk (Smolenskaya oblast)
+                                    YR,      // 168  Yaroslavl (Yaroslavskaya oblast)
+                                    KS,      // 132  Kostroma (Kostromskaya oblast)
+                                    TL,      // 160  Tula (Tul'skaya oblast)
+                                    VR,      // 121  Voronezh (Voronezhskaya oblast)
+                                    TB,      // 157  Tambov (Tambovskaya oblast)
+                                    RA,      // 151  Ryazan' (Ryazanskaya oblast)
+                                    NN,      // 122  Nizhni Novgorod (Nizhegorodskaya oblast)
+                                    IV,      // 123  Ivanovo (Ivanovskaya oblast)
+                                    VL,      // 119  Vladimir (Vladimirskaya oblast)
+                                    KU,      // 135  Kursk (Kurskaya oblast)
+                                    KG,      // 127  Kaluga (Kaluzhskaya oblast)
+                                    BR,      // 118  Bryansk (Bryanskaya oblast)
+                                    BO,      // 117  Belgorod (Belgorodskaya oblast)
+                                    VG,      // 156  Volgograd (Volgogradskaya oblast)
+                                    SA,      // 152  Saratov (Saratovskaya oblast)
+                                    PE,      // 148  Penza (Penzenskaya oblast)
+                                    SR,      // 133  Samara (Samarskaya oblast)
+                                    UL,      // 164  Ulyanovsk (Ulyanovskaya oblast)
+                                    KI,      // 131  Kirov (Kirovskaya oblast)
+                                    TA,      // 94   Republic of Tataria
+                                    MR,      // 91   Republic of Marij-El
+                                    MD,      // 92   Republic of Mordovia
+                                    UD,      // 95   Republic of Udmurtia
+                                    CU,      // 97   Republic of Chuvashia
+                                    KR,      // 101  Krasnodar (Krasnodarsky Kraj)
+                                    KC,      // 109  Republic of Karachaevo-Cherkessia
+                                    ST,      // 108  Stavropol' (Stavropolsky Kraj)
+                                    KM,      // 89   Republic of Kalmykia
+                                    SO,      // 93   Republic of Northern Ossetia
+                                    RO,      // 150  Rostov-on-Don (Rostovskaya oblast)
+                                    CN,      // 96   Republic Chechnya
+                                    IN,      // 96   Republic of Ingushetia
+                                    AO,      // 115  Astrakhan' (Astrakhanskaya oblast)
+                                    DA,      // 86   Republic of Daghestan
+                                    KB,      // 87   Republic of Kabardino-Balkaria
+                                    AD,      // 102  Republic of Adygeya
+                                    N_EU_RUSSIA_PRIMARIES
+                                  };
 
-typedef std::array<std::string, N_EU_RUSSIA_PRIMARIES> PRIMARY_EU_RUSSIA_ENUMERATION_TYPE;    ///< primaries for European Russia
+//typedef std::array<std::string, N_EU_RUSSIA_PRIMARIES> PRIMARY_EU_RUSSIA_ENUMERATION_TYPE;    ///< primaries for European Russia
 
-static PRIMARY_EU_RUSSIA_ENUMERATION_TYPE PRIMARY_EU_RUSSIA_ENUMERATION = { { "SP",      // 169  City of St. Petersburg
-                                                                              "LO",      // 136  Leningradskaya oblast
-                                                                              "KL",      // 88   Republic of Karelia
-                                                                              "AR",      // 113  Arkhangelsk (Arkhangelskaya oblast)
-                                                                              "NO",      // 114  Nenetsky Autonomous Okrug
-                                                                              "VO",      // 120  Vologda (Vologodskaya oblast)
-                                                                              "NV",      // 144  Novgorodskaya oblast
-                                                                              "PS",      // 149  Pskov (Pskovskaya oblast)
-                                                                              "MU",      // 143  Murmansk (Murmanskaya oblast)
-                                                                              "MA",      // 170  City of Moscow
-                                                                              "MO",      // 142  Moscowskaya oblast
-                                                                              "OR",      // 147  Oryel (Orlovskaya oblast)
-                                                                              "LP",      // 137  Lipetsk (Lipetskaya oblast)
-                                                                              "TV",      // 126  Tver' (Tverskaya oblast)
-                                                                              "SM",      // 155  Smolensk (Smolenskaya oblast)
-                                                                              "YR",      // 168  Yaroslavl (Yaroslavskaya oblast)
-                                                                              "KS",      // 132  Kostroma (Kostromskaya oblast)
-                                                                              "TL",      // 160  Tula (Tul'skaya oblast)
-                                                                              "VR",      // 121  Voronezh (Voronezhskaya oblast)
-                                                                              "TB",      // 157  Tambov (Tambovskaya oblast)
-                                                                              "RA",      // 151  Ryazan' (Ryazanskaya oblast)
-                                                                              "NN",      // 122  Nizhni Novgorod (Nizhegorodskaya oblast)
-                                                                              "IV",      // 123  Ivanovo (Ivanovskaya oblast)
-                                                                              "VL",      // 119  Vladimir (Vladimirskaya oblast)
-                                                                              "KU",      // 135  Kursk (Kurskaya oblast)
-                                                                              "KG",      // 127  Kaluga (Kaluzhskaya oblast)
-                                                                              "BR",      // 118  Bryansk (Bryanskaya oblast)
-                                                                              "BO",      // 117  Belgorod (Belgorodskaya oblast)
-                                                                              "VG",      // 156  Volgograd (Volgogradskaya oblast)
-                                                                              "SA",      // 152  Saratov (Saratovskaya oblast)
-                                                                              "PE",      // 148  Penza (Penzenskaya oblast)
-                                                                              "SR",      // 133  Samara (Samarskaya oblast)
-                                                                              "UL",      // 164  Ulyanovsk (Ulyanovskaya oblast)
-                                                                              "KI",      // 131  Kirov (Kirovskaya oblast)
-                                                                              "TA",      // 94   Republic of Tataria
-                                                                              "MR",      // 91   Republic of Marij-El
-                                                                              "MD",      // 92   Republic of Mordovia
-                                                                              "UD",      // 95   Republic of Udmurtia
-                                                                              "CU",      // 97   Republic of Chuvashia
-                                                                              "KR",      // 101  Krasnodar (Krasnodarsky Kraj)
-                                                                              "KC",      // 109  Republic of Karachaevo-Cherkessia
-                                                                              "ST",      // 108  Stavropol' (Stavropolsky Kraj)
-                                                                              "KM",      // 89   Republic of Kalmykia
-                                                                              "SO",      // 93   Republic of Northern Ossetia
-                                                                              "RO",      // 150  Rostov-on-Don (Rostovskaya oblast)
-                                                                              "CN",      // 96   Republic Chechnya
-                                                                              "IN",      // 96   Republic of Ingushetia
-                                                                              "AO",      // 115  Astrakhan' (Astrakhanskaya oblast)
-                                                                              "DA",      // 86   Republic of Daghestan
-                                                                              "KB",      // 87   Republic of Kabardino-Balkaria
-                                                                              "AD"      // 102  Republic of Adygeya
-                                                                          } };
+using PRIMARY_EU_RUSSIA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_EU_RUSSIA::N_EU_RUSSIA_PRIMARIES)>;    ///< primaries for European Russia
+
+static PRIMARY_EU_RUSSIA_ENUMERATION_TYPE PRIMARY_EU_RUSSIA_ENUMERATION = { "SP"s,      // 169  City of St. Petersburg
+                                                                            "LO"s,      // 136  Leningradskaya oblast
+                                                                            "KL"s,      // 88   Republic of Karelia
+                                                                            "AR"s,      // 113  Arkhangelsk (Arkhangelskaya oblast)
+                                                                            "NO"s,      // 114  Nenetsky Autonomous Okrug
+                                                                            "VO"s,      // 120  Vologda (Vologodskaya oblast)
+                                                                            "NV"s,      // 144  Novgorodskaya oblast
+                                                                            "PS"s,      // 149  Pskov (Pskovskaya oblast)
+                                                                            "MU"s,      // 143  Murmansk (Murmanskaya oblast)
+                                                                            "MA"s,      // 170  City of Moscow
+                                                                            "MO"s,      // 142  Moscowskaya oblast
+                                                                            "OR"s,      // 147  Oryel (Orlovskaya oblast)
+                                                                            "LP"s,      // 137  Lipetsk (Lipetskaya oblast)
+                                                                            "TV"s,      // 126  Tver' (Tverskaya oblast)
+                                                                            "SM"s,      // 155  Smolensk (Smolenskaya oblast)
+                                                                            "YR"s,      // 168  Yaroslavl (Yaroslavskaya oblast)
+                                                                            "KS"s,      // 132  Kostroma (Kostromskaya oblast)
+                                                                            "TL"s,      // 160  Tula (Tul'skaya oblast)
+                                                                            "VR"s,      // 121  Voronezh (Voronezhskaya oblast)
+                                                                            "TB"s,      // 157  Tambov (Tambovskaya oblast)
+                                                                            "RA"s,      // 151  Ryazan' (Ryazanskaya oblast)
+                                                                            "NN"s,      // 122  Nizhni Novgorod (Nizhegorodskaya oblast)
+                                                                            "IV"s,      // 123  Ivanovo (Ivanovskaya oblast)
+                                                                            "VL"s,      // 119  Vladimir (Vladimirskaya oblast)
+                                                                            "KU"s,      // 135  Kursk (Kurskaya oblast)
+                                                                            "KG"s,      // 127  Kaluga (Kaluzhskaya oblast)
+                                                                            "BR"s,      // 118  Bryansk (Bryanskaya oblast)
+                                                                            "BO"s,      // 117  Belgorod (Belgorodskaya oblast)
+                                                                            "VG"s,      // 156  Volgograd (Volgogradskaya oblast)
+                                                                            "SA"s,      // 152  Saratov (Saratovskaya oblast)
+                                                                            "PE"s,      // 148  Penza (Penzenskaya oblast)
+                                                                            "SR"s,      // 133  Samara (Samarskaya oblast)
+                                                                            "UL"s,      // 164  Ulyanovsk (Ulyanovskaya oblast)
+                                                                            "KI"s,      // 131  Kirov (Kirovskaya oblast)
+                                                                            "TA"s,      // 94   Republic of Tataria
+                                                                            "MR"s,      // 91   Republic of Marij-El
+                                                                            "MD"s,      // 92   Republic of Mordovia
+                                                                            "UD"s,      // 95   Republic of Udmurtia
+                                                                            "CU"s,      // 97   Republic of Chuvashia
+                                                                            "KR"s,      // 101  Krasnodar (Krasnodarsky Kraj)
+                                                                            "KC"s,      // 109  Republic of Karachaevo-Cherkessia
+                                                                            "ST"s,      // 108  Stavropol' (Stavropolsky Kraj)
+                                                                            "KM"s,      // 89   Republic of Kalmykia
+                                                                            "SO"s,      // 93   Republic of Northern Ossetia
+                                                                            "RO"s,      // 150  Rostov-on-Don (Rostovskaya oblast)
+                                                                            "CN"s,      // 96   Republic Chechnya
+                                                                            "IN"s,      // 96   Republic of Ingushetia
+                                                                            "AO"s,      // 115  Astrakhan' (Astrakhanskaya oblast)
+                                                                            "DA"s,      // 86   Republic of Daghestan
+                                                                            "KB"s,      // 87   Republic of Kabardino-Balkaria
+                                                                            "AD"s      // 102  Republic of Adygeya
+                                                                          };
 
 /// Franz Josef Land
-enum PRIMARY_ENUM_FJL { FJL_FJL,
-                        N_FJL_PRIMARIES
-                      };
+enum class PRIMARY_ENUM_FJL { FJL,
+                              N_FJL_PRIMARIES
+                            };
 
-typedef std::array<std::string, N_FJL_PRIMARIES> PRIMARY_FJL_ENUMERATION_TYPE;    ///< primaries for Franz Josef Land
+//typedef std::array<std::string, N_FJL_PRIMARIES> PRIMARY_FJL_ENUMERATION_TYPE;    ///< primaries for Franz Josef Land
 
-static PRIMARY_FJL_ENUMERATION_TYPE PRIMARY_FJL_ENUMERATION = { { "FJL"
-                                                              } };
+using PRIMARY_FJL_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_FJL::N_FJL_PRIMARIES)>;    ///< primaries for Franz Josef Land
+
+static PRIMARY_FJL_ENUMERATION_TYPE PRIMARY_FJL_ENUMERATION = { "FJL"
+                                                              };
 
 /// Argentina
-enum PRIMARY_ENUM_ARGENTINA { ARGENTINA_C,  // Capital federal (Buenos Aires City)
-                              ARGENTINA_B,  // Buenos Aires Province
-                              ARGENTINA_S,  // Santa Fe
-                              ARGENTINA_H,  // Chaco
-                              ARGENTINA_P,  // Formosa
-                              ARGENTINA_X,  // Cordoba
-                              ARGENTINA_N,  // Misiones
-                              ARGENTINA_E,  // Entre Rios
-                              ARGENTINA_T,  // Tucumán
-                              ARGENTINA_W,  // Corrientes
-                              ARGENTINA_M,  // Mendoza
-                              ARGENTINA_G,  // Santiago del Estero
-                              ARGENTINA_A,  // Salta
-                              ARGENTINA_J,  // San Juan
-                              ARGENTINA_D,  // San Luis
-                              ARGENTINA_K,  // Catamarca
-                              ARGENTINA_F,  // La Rioja
-                              ARGENTINA_Y,  // Jujuy
-                              ARGENTINA_L,  // La Pampa
-                              ARGENTINA_R,  // Rió Negro
-                              ARGENTINA_U,  // Chubut
-                              ARGENTINA_Z,  // Santa Cruz
-                              ARGENTINA_V,  // Tierra del Fuego
-                              ARGENTINA_Q,  // Neuquén
-                              N_ARGENTINA_PRIMARIES
-                      };
+enum class PRIMARY_ENUM_ARGENTINA { C,  // Capital federal (Buenos Aires City)
+                                    B,  // Buenos Aires Province
+                                    S,  // Santa Fe
+                                    H,  // Chaco
+                                    P,  // Formosa
+                                    X,  // Cordoba
+                                    N,  // Misiones
+                                    E,  // Entre Rios
+                                    T,  // Tucumán
+                                    W,  // Corrientes
+                                    M,  // Mendoza
+                                    G,  // Santiago del Estero
+                                    A,  // Salta
+                                    J,  // San Juan
+                                    D,  // San Luis
+                                    K,  // Catamarca
+                                    F,  // La Rioja
+                                    Y,  // Jujuy
+                                    L,  // La Pampa
+                                    R,  // Rió Negro
+                                    U,  // Chubut
+                                    Z,  // Santa Cruz
+                                    V,  // Tierra del Fuego
+                                    Q,  // Neuquén
+                                    N_ARGENTINA_PRIMARIES
+                            };
 
-typedef std::array<std::string, N_ARGENTINA_PRIMARIES> PRIMARY_ARGENTINA_ENUMERATION_TYPE;    ///< primaries for Argentina
+//typedef std::array<std::string, N_ARGENTINA_PRIMARIES> PRIMARY_ARGENTINA_ENUMERATION_TYPE;    ///< primaries for Argentina
 
-static PRIMARY_ARGENTINA_ENUMERATION_TYPE PRIMARY_ARGENTINA_ENUMERATION = { { "C",  // Capital federal (Buenos Aires City)
-                                                                              "B",  // Buenos Aires Province
-                                                                              "S",  // Santa Fe
-                                                                              "H",  // Chaco
-                                                                              "P",  // Formosa
-                                                                              "X",  // Cordoba
-                                                                              "N",  // Misiones
-                                                                              "E",  // Entre Rios
-                                                                              "T",  // Tucumán
-                                                                              "W",  // Corrientes
-                                                                              "M",  // Mendoza
-                                                                              "G",  // Santiago del Estero
-                                                                              "A",  // Salta
-                                                                              "J",  // San Juan
-                                                                              "D",  // San Luis
-                                                                              "K",  // Catamarca
-                                                                              "F",  // La Rioja
-                                                                              "Y",  // Jujuy
-                                                                              "L",  // La Pampa
-                                                                              "R",  // Rió Negro
-                                                                              "U",  // Chubut
-                                                                              "Z",  // Santa Cruz
-                                                                              "V",  // Tierra del Fuego
-                                                                              "Q"  // Neuquén
-                                                                          } };
+using PRIMARY_ARGENTINA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_ARGENTINA::N_ARGENTINA_PRIMARIES)>;    ///< primaries for Argentina
+
+static PRIMARY_ARGENTINA_ENUMERATION_TYPE PRIMARY_ARGENTINA_ENUMERATION = { "C",  // Capital federal (Buenos Aires City)
+                                                                            "B",  // Buenos Aires Province
+                                                                            "S",  // Santa Fe
+                                                                            "H",  // Chaco
+                                                                            "P",  // Formosa
+                                                                            "X",  // Cordoba
+                                                                            "N",  // Misiones
+                                                                            "E",  // Entre Rios
+                                                                            "T",  // Tucumán
+                                                                            "W",  // Corrientes
+                                                                            "M",  // Mendoza
+                                                                            "G",  // Santiago del Estero
+                                                                            "A",  // Salta
+                                                                            "J",  // San Juan
+                                                                            "D",  // San Luis
+                                                                            "K",  // Catamarca
+                                                                            "F",  // La Rioja
+                                                                            "Y",  // Jujuy
+                                                                            "L",  // La Pampa
+                                                                            "R",  // Rió Negro
+                                                                            "U",  // Chubut
+                                                                            "Z",  // Santa Cruz
+                                                                            "V",  // Tierra del Fuego
+                                                                            "Q"  // Neuquén
+                                                                          };
 
 /// Brazil
-enum PRIMARY_ENUM_BRAZIL { BRAZIL_ES,      // Espírito Santo
-                           BRAZIL_GO,      // Goiás
-                           BRAZIL_SC,      // Santa Catarina
-                           BRAZIL_SE,      // Sergipe
-                           BRAZIL_AL,      // Alagoas
-                           BRAZIL_AM,      // Amazonas
-                           BRAZIL_TO,      // Tocantins
-                           BRAZIL_AP,      // Amapã
-                           BRAZIL_PB,      // Paraíba
-                           BRAZIL_MA,      // Maranhao
-                           BRAZIL_RN,      // Rio Grande do Norte
-                           BRAZIL_PI,      // Piaui
-                           BRAZIL_DF,      // Oietrito Federal (Brasila)
-                           BRAZIL_CE,      // Ceará
-                           BRAZIL_AC,      // Acre
-                           BRAZIL_MS,      // Mato Grosso do Sul
-                           BRAZIL_RR,      // Roraima
-                           BRAZIL_RO,      // Rondônia
-                           BRAZIL_RJ,      // Rio de Janeiro
-                           BRAZIL_SP,      // Sao Paulo
-                           BRAZIL_RS,      // Rio Grande do Sul
-                           BRAZIL_MG,      // Minas Gerais
-                           BRAZIL_PR,      // Paranã
-                           BRAZIL_BA,      // Bahia
-                           BRAZIL_PE,      // Pernambuco
-                           BRAZIL_PA,      // Parã
-                           BRAZIL_MT,      // Mato Grosso
-                           N_BRAZIL_PRIMARIES
-                         };
+enum class PRIMARY_ENUM_BRAZIL { ES,      // Espírito Santo
+                                 GO,      // Goiás
+                                 SC,      // Santa Catarina
+                                 SE,      // Sergipe
+                                 AL,      // Alagoas
+                                 AM,      // Amazonas
+                                 TO,      // Tocantins
+                                 AP,      // Amapã
+                                 PB,      // Paraíba
+                                 MA,      // Maranhao
+                                 RN,      // Rio Grande do Norte
+                                 PI,      // Piaui
+                                 DF,      // Oietrito Federal (Brasila)
+                                 CE,      // Ceará
+                                 AC,      // Acre
+                                 MS,      // Mato Grosso do Sul
+                                 RR,      // Roraima
+                                 RO,      // Rondônia
+                                 RJ,      // Rio de Janeiro
+                                 SP,      // Sao Paulo
+                                 RS,      // Rio Grande do Sul
+                                 MG,      // Minas Gerais
+                                 PR,      // Paranã
+                                 BA,      // Bahia
+                                 PE,      // Pernambuco
+                                 PA,      // Parã
+                                 MT,      // Mato Grosso
+                                 N_BRAZIL_PRIMARIES
+                               };
 
-typedef std::array<std::string, N_BRAZIL_PRIMARIES> PRIMARY_BRAZIL_ENUMERATION_TYPE;    ///< primaries for Brazil
+//typedef std::array<std::string, N_BRAZIL_PRIMARIES> PRIMARY_BRAZIL_ENUMERATION_TYPE;    ///< primaries for Brazil
 
-static PRIMARY_BRAZIL_ENUMERATION_TYPE PRIMARY_BRAZIL_ENUMERATION = { { "ES",      // Espírito Santo
-                                                                        "GO",      // Goiás
-                                                                        "SC",      // Santa Catarina
-                                                                        "SE",      // Sergipe
-                                                                        "AL",      // Alagoas
-                                                                        "AM",      // Amazonas
-                                                                        "TO",      // Tocantins
-                                                                        "AP",      // Amapã
-                                                                        "PB",      // Paraíba
-                                                                        "MA",      // Maranhao
-                                                                        "RN",      // Rio Grande do Norte
-                                                                        "PI",      // Piaui
-                                                                        "DF",      // Oietrito Federal (Brasila)
-                                                                        "CE",      // Ceará
-                                                                        "AC",      // Acre
-                                                                        "MS",      // Mato Grosso do Sul
-                                                                        "RR",      // Roraima
-                                                                        "RO",      // Rondônia
-                                                                        "RJ",      // Rio de Janeiro
-                                                                        "SP",      // Sao Paulo
-                                                                        "RS",      // Rio Grande do Sul
-                                                                        "MG",      // Minas Gerais
-                                                                        "PR",      // Paranã
-                                                                        "BA",      // Bahia
-                                                                        "PE",      // Pernambuco
-                                                                        "PA",      // Parã
-                                                                        "MT"      // Mato Grosso
-                                                                    } };
+using PRIMARY_BRAZIL_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_BRAZIL::N_BRAZIL_PRIMARIES)>;    ///< primaries for Brazil
+
+static PRIMARY_BRAZIL_ENUMERATION_TYPE PRIMARY_BRAZIL_ENUMERATION = { "ES",      // Espírito Santo
+                                                                      "GO",      // Goiás
+                                                                      "SC",      // Santa Catarina
+                                                                      "SE",      // Sergipe
+                                                                      "AL",      // Alagoas
+                                                                      "AM",      // Amazonas
+                                                                      "TO",      // Tocantins
+                                                                      "AP",      // Amapã
+                                                                      "PB",      // Paraíba
+                                                                      "MA",      // Maranhao
+                                                                      "RN",      // Rio Grande do Norte
+                                                                      "PI",      // Piaui
+                                                                      "DF",      // Oietrito Federal (Brasila)
+                                                                      "CE",      // Ceará
+                                                                      "AC",      // Acre
+                                                                      "MS",      // Mato Grosso do Sul
+                                                                      "RR",      // Roraima
+                                                                      "RO",      // Rondônia
+                                                                      "RJ",      // Rio de Janeiro
+                                                                      "SP",      // Sao Paulo
+                                                                      "RS",      // Rio Grande do Sul
+                                                                      "MG",      // Minas Gerais
+                                                                      "PR",      // Paranã
+                                                                      "BA",      // Bahia
+                                                                      "PE",      // Pernambuco
+                                                                      "PA",      // Parã
+                                                                      "MT"      // Mato Grosso
+                                                                    };
 
 /// Hawaii
 enum PRIMARY_ENUM_HAWAII { HAWAII_HI,
@@ -1348,736 +1369,736 @@ static PRIMARY_HAWAII_ENUMERATION_TYPE PRIMARY_HAWAII_ENUMERATION = { { "HI"s
                                                                     } };
 
 /// Chile
-enum PRIMARY_ENUM_CHILE { CHILE_II,  // Antofagasta
-                          CHILE_III,  // Atacama
-                          CHILE_I,    // Tarapacá
-                          CHILE_IV,   // Coquimbo
-                          CHILE_V,    // Valparaíso
-                          CHILE_RM,   // Region Metropolitana de Santiago
-                          CHILE_VI,   // Libertador General Bernardo O'Higgins
-                          CHILE_VII,  // Maule
-                          CHILE_VIII, // Bío-Bío
-                          CHILE_IX,   // La Araucanía
-                          CHILE_X,    // Los Lagos
-                          CHILE_XI,   // Aisén del General Carlos Ibáñez del Campo
-                          CHILE_XII,  // Magallanes
-                          N_CHILE_PRIMARIES
-                        };
+enum class PRIMARY_ENUM_CHILE { II,  // Antofagasta
+                                III,  // Atacama
+                                I,    // Tarapacá
+                                IV,   // Coquimbo
+                                V,    // Valparaíso
+                                RM,   // Region Metropolitana de Santiago
+                                VI,   // Libertador General Bernardo O'Higgins
+                                VII,  // Maule
+                                VIII, // Bío-Bío
+                                IX,   // La Araucanía
+                                X,    // Los Lagos
+                                XI,   // Aisén del General Carlos Ibáñez del Campo
+                                XII,  // Magallanes
+                                N_CHILE_PRIMARIES
+                              };
 
 //typedef std::array<std::string, N_CHILE_PRIMARIES> PRIMARY_CHILE_ENUMERATION_TYPE;    ///< primaries for Chile
 
-using PRIMARY_CHILE_ENUMERATION_TYPE = std::array<std::string, N_CHILE_PRIMARIES>;    ///< primaries for Chile
+using PRIMARY_CHILE_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_CHILE::N_CHILE_PRIMARIES)>;    ///< primaries for Chile
 
 static PRIMARY_CHILE_ENUMERATION_TYPE PRIMARY_CHILE_ENUMERATION = { "II"s,   // Antofagasta
-                                                                      "III"s,  // Atacama
-                                                                      "I"s,    // Tarapacá
-                                                                      "IV"s,   // Coquimbo
-                                                                      "V"s,    // Valparaíso
-                                                                      "RM"s,   // Region Metropolitana de Santiago
-                                                                      "VI"s,   // Libertador General Bernardo O'Higgins
-                                                                      "VIIs",  // Maule
-                                                                      "VIII"s, // Bío-Bío
-                                                                      "IX"s,   // La Araucanía
-                                                                      "X"s,    // Los Lagos
-                                                                      "XI"s,   // Aisén del General Carlos Ibáñez del Campo
-                                                                      "XIIs"   // Magallanes
+                                                                    "III"s,  // Atacama
+                                                                    "I"s,    // Tarapacá
+                                                                    "IV"s,   // Coquimbo
+                                                                    "V"s,    // Valparaíso
+                                                                    "RM"s,   // Region Metropolitana de Santiago
+                                                                    "VI"s,   // Libertador General Bernardo O'Higgins
+                                                                    "VIIs",  // Maule
+                                                                    "VIII"s, // Bío-Bío
+                                                                    "IX"s,   // La Araucanía
+                                                                    "X"s,    // Los Lagos
+                                                                    "XI"s,   // Aisén del General Carlos Ibáñez del Campo
+                                                                    "XIIs"   // Magallanes
                                                                   };
 
 /// Kaliningrad
-enum PRIMARY_ENUM_KALININGRAD { KALININGRAD_KA, // obl. 125 Kalingrad (Kaliningradskaya oblast)
-                                N_KALININGRAD_PRIMARIES
-                              };
+enum class PRIMARY_ENUM_KALININGRAD { KA,   // obl. 125 Kalingrad (Kaliningradskaya oblast)
+                                      N_KALININGRAD_PRIMARIES
+                                    };
 
 //typedef std::array<std::string, N_KALININGRAD_PRIMARIES> PRIMARY_KALININGRAD_ENUMERATION_TYPE;    ///< primaries for Kaliningrad
 
-using PRIMARY_KALININGRAD_ENUMERATION_TYPE = std::array<std::string, N_KALININGRAD_PRIMARIES>;    ///< primaries for Kaliningrad
+using PRIMARY_KALININGRAD_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_KALININGRAD::N_KALININGRAD_PRIMARIES)>;    ///< primaries for Kaliningrad
 
 static PRIMARY_KALININGRAD_ENUMERATION_TYPE PRIMARY_KALININGRAD_ENUMERATION = { "KA"s
                                                                               };
 
 /// Paraguay
-enum PRIMARY_ENUM_PARAGUAY { PARAGUAY_16,   // Alto Paraguay
-                             PARAGUAY_19,   // Boquerón
-                             PARAGUAY_15,   // Presidente Hayes
-                             PARAGUAY_13,   // Amambay
-                             PARAGUAY_01,   // Concepción
-                             PARAGUAY_14,   // Canindeyú
-                             PARAGUAY_02,   // San Pedro
-                             PARAGUAY_ASU,  // Asunción
-                             PARAGUAY_11,   // Central
-                             PARAGUAY_03,   // Cordillera
-                             PARAGUAY_09,   // Paraguarí
-                             PARAGUAY_06,   // Caazapl
-                             PARAGUAY_05,   // Caeguazú
-                             PARAGUAY_04,   // Guairá
-                             PARAGUAY_08,   // Miaiones
-                             PARAGUAY_12,   // Ñeembucu
-                             PARAGUAY_10,   // Alto Paraná
-                             PARAGUAY_07,   // Itapua
-                             N_PARAGUAY_PRIMARIES
-                           };
+enum class PRIMARY_ENUM_PARAGUAY { PARAGUAY_16,   // Alto Paraguay
+                                   PARAGUAY_19,   // Boquerón
+                                   PARAGUAY_15,   // Presidente Hayes
+                                   PARAGUAY_13,   // Amambay
+                                   PARAGUAY_01,   // Concepción
+                                   PARAGUAY_14,   // Canindeyú
+                                   PARAGUAY_02,   // San Pedro
+                                   PARAGUAY_ASU,  // Asunción
+                                   PARAGUAY_11,   // Central
+                                   PARAGUAY_03,   // Cordillera
+                                   PARAGUAY_09,   // Paraguarí
+                                   PARAGUAY_06,   // Caazapl
+                                   PARAGUAY_05,   // Caeguazú
+                                   PARAGUAY_04,   // Guairá
+                                   PARAGUAY_08,   // Miaiones
+                                   PARAGUAY_12,   // Ñeembucu
+                                   PARAGUAY_10,   // Alto Paraná
+                                   PARAGUAY_07,   // Itapua
+                                   N_PARAGUAY_PRIMARIES
+                                 };
 
 //typedef std::array<std::string, N_PARAGUAY_PRIMARIES> PRIMARY_PARAGUAY_ENUMERATION_TYPE;    ///< primaries for Paraguay
 
-using PRIMARY_PARAGUAY_ENUMERATION_TYPE = std::array<std::string, N_PARAGUAY_PRIMARIES>;    ///< primaries for Paraguay
+using PRIMARY_PARAGUAY_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_PARAGUAY::N_PARAGUAY_PRIMARIES)>;    ///< primaries for Paraguay
 
 static PRIMARY_PARAGUAY_ENUMERATION_TYPE PRIMARY_PARAGUAY_ENUMERATION = { "16"s,   // Alto Paraguay
-                                                                            "19"s,   // Boquerón
-                                                                            "15"s,   // Presidente Hayes
-                                                                            "13"s,   // Amambay
-                                                                            "01"s,   // Concepción
-                                                                            "14"s,   // Canindeyú
-                                                                            "02"s,   // San Pedro
-                                                                            "ASU"s,  // Asunción
-                                                                            "11"s,   // Central
-                                                                            "03"s,   // Cordillera
-                                                                            "09"s,   // Paraguarí
-                                                                            "06"s,   // Caazapl
-                                                                            "05"s,   // Caeguazú
-                                                                            "04"s,   // Guairá
-                                                                            "08"s,   // Miaiones
-                                                                            "12"s,   // Ñeembucu
-                                                                            "10"s,   // Alto Paraná
-                                                                            "07"s    // Itapua
+                                                                          "19"s,   // Boquerón
+                                                                          "15"s,   // Presidente Hayes
+                                                                          "13"s,   // Amambay
+                                                                          "01"s,   // Concepción
+                                                                          "14"s,   // Canindeyú
+                                                                          "02"s,   // San Pedro
+                                                                          "ASU"s,  // Asunción
+                                                                          "11"s,   // Central
+                                                                          "03"s,   // Cordillera
+                                                                          "09"s,   // Paraguarí
+                                                                          "06"s,   // Caazapl
+                                                                          "05"s,   // Caeguazú
+                                                                          "04"s,   // Guairá
+                                                                          "08"s,   // Miaiones
+                                                                          "12"s,   // Ñeembucu
+                                                                          "10"s,   // Alto Paraná
+                                                                          "07"s    // Itapua
                                                                         };
 
 /// ROK
-enum PRIMARY_ENUM_SOUTH_KOREA { SOUTH_KOREA_A,  // Seoul (Seoul Teugbyeolsi)
-                                SOUTH_KOREA_N,  // Inchon (Incheon Gwang'yeogsi)
-                                SOUTH_KOREA_D,  // Kangwon-do (Gang 'weondo)
-                                SOUTH_KOREA_C,  // Kyunggi-do (Gyeonggido)
-                                SOUTH_KOREA_E,  // Choongchungbuk-do (Chungcheongbugdo)
-                                SOUTH_KOREA_F,  // Choongchungnam-do (Chungcheongnamdo)
-                                SOUTH_KOREA_R,  // Taejon (Daejeon Gwang'yeogsi)
-                                SOUTH_KOREA_M,  // Cheju-do (Jejudo)
-                                SOUTH_KOREA_G,  // Chollabuk-do (Jeonrabugdo)
-                                SOUTH_KOREA_H,  // Chollanam-do (Jeonranamdo)
-                                SOUTH_KOREA_Q,  // Kwangju (Gwangju Gwang'yeogsi)
-                                SOUTH_KOREA_K,  // Kyungsangbuk-do (Gyeongsangbugdo)
-                                SOUTH_KOREA_L,  // Kyungsangnam-do (Gyeongsangnamdo)
-                                SOUTH_KOREA_B,  // Pusan (Busan Gwang'yeogsi)
-                                SOUTH_KOREA_P,  // Taegu (Daegu Gwang'yeogsi)
-                                SOUTH_KOREA_S,  // Ulsan (Ulsan Gwanq'yeogsi)
-                                N_SOUTH_KOREA_PRIMARIES
-                              };
+enum class PRIMARY_ENUM_SOUTH_KOREA { A,  // Seoul (Seoul Teugbyeolsi)
+                                      N,  // Inchon (Incheon Gwang'yeogsi)
+                                      D,  // Kangwon-do (Gang 'weondo)
+                                      C,  // Kyunggi-do (Gyeonggido)
+                                      E,  // Choongchungbuk-do (Chungcheongbugdo)
+                                      F,  // Choongchungnam-do (Chungcheongnamdo)
+                                      R,  // Taejon (Daejeon Gwang'yeogsi)
+                                      M,  // Cheju-do (Jejudo)
+                                      G,  // Chollabuk-do (Jeonrabugdo)
+                                      H,  // Chollanam-do (Jeonranamdo)
+                                      Q,  // Kwangju (Gwangju Gwang'yeogsi)
+                                      K,  // Kyungsangbuk-do (Gyeongsangbugdo)
+                                      L,  // Kyungsangnam-do (Gyeongsangnamdo)
+                                      B,  // Pusan (Busan Gwang'yeogsi)
+                                      P,  // Taegu (Daegu Gwang'yeogsi)
+                                      S,  // Ulsan (Ulsan Gwanq'yeogsi)
+                                      N_SOUTH_KOREA_PRIMARIES
+                                    };
 
 //typedef std::array<std::string, N_SOUTH_KOREA_PRIMARIES> PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE;    ///< primaries for South Korea
 
-using PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE = std::array<std::string, N_SOUTH_KOREA_PRIMARIES>;    ///< primaries for South Korea
+using PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_SOUTH_KOREA::N_SOUTH_KOREA_PRIMARIES)>;    ///< primaries for South Korea
 
 static PRIMARY_SOUTH_KOREA_ENUMERATION_TYPE PRIMARY_SOUTH_KOREA_ENUMERATION = { "A"s,  // Seoul (Seoul Teugbyeolsi)
-                                                                                  "N"s,  // Inchon (Incheon Gwang'yeogsi)
-                                                                                  "D"s,  // Kangwon-do (Gang 'weondo)
-                                                                                  "C"s,  // Kyunggi-do (Gyeonggido)
-                                                                                  "E"s,  // Choongchungbuk-do (Chungcheongbugdo)
-                                                                                  "F"s,  // Choongchungnam-do (Chungcheongnamdo)
-                                                                                  "R"s,  // Taejon (Daejeon Gwang'yeogsi)
-                                                                                  "M"s,  // Cheju-do (Jejudo)
-                                                                                  "G"s,  // Chollabuk-do (Jeonrabugdo)
-                                                                                  "H"s,  // Chollanam-do (Jeonranamdo)
-                                                                                  "Q"s,  // Kwangju (Gwangju Gwang'yeogsi)
-                                                                                  "K"s,  // Kyungsangbuk-do (Gyeongsangbugdo)
-                                                                                  "L"s,  // Kyungsangnam-do (Gyeongsangnamdo)
-                                                                                  "B"s,  // Pusan (Busan Gwang'yeogsi)
-                                                                                  "P"s,  // Taegu (Daegu Gwang'yeogsi)
-                                                                                  "S"s   // Ulsan (Ulsan Gwanq'yeogsi)
+                                                                                "N"s,  // Inchon (Incheon Gwang'yeogsi)
+                                                                                "D"s,  // Kangwon-do (Gang 'weondo)
+                                                                                "C"s,  // Kyunggi-do (Gyeonggido)
+                                                                                "E"s,  // Choongchungbuk-do (Chungcheongbugdo)
+                                                                                "F"s,  // Choongchungnam-do (Chungcheongnamdo)
+                                                                                "R"s,  // Taejon (Daejeon Gwang'yeogsi)
+                                                                                "M"s,  // Cheju-do (Jejudo)
+                                                                                "G"s,  // Chollabuk-do (Jeonrabugdo)
+                                                                                "H"s,  // Chollanam-do (Jeonranamdo)
+                                                                                "Q"s,  // Kwangju (Gwangju Gwang'yeogsi)
+                                                                                "K"s,  // Kyungsangbuk-do (Gyeongsangbugdo)
+                                                                                "L"s,  // Kyungsangnam-do (Gyeongsangnamdo)
+                                                                                "B"s,  // Pusan (Busan Gwang'yeogsi)
+                                                                                "P"s,  // Taegu (Daegu Gwang'yeogsi)
+                                                                                "S"s   // Ulsan (Ulsan Gwanq'yeogsi)
                                                                               };
 
 /// Kure
-enum PRIMARY_ENUM_KURE { KURE_KI,
-                         N_KURE_PRIMARIES
-                       };
+enum class PRIMARY_ENUM_KURE { KI,
+                               N_KURE_PRIMARIES
+                             };
 
 //typedef std::array<std::string, N_KURE_PRIMARIES> PRIMARY_KURE_ENUMERATION_TYPE;    ///< primaries for Kure
 
-using PRIMARY_KURE_ENUMERATION_TYPE = std::array<std::string, N_KURE_PRIMARIES>;    ///< primaries for Kure
+using PRIMARY_KURE_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_KURE::N_KURE_PRIMARIES)>;    ///< primaries for Kure
 
 static PRIMARY_KURE_ENUMERATION_TYPE PRIMARY_KURE_ENUMERATION = { "KI"s
                                                                 };
 
 /// Uruguay
-enum PRIMARY_ENUM_URUGUAY { URUGUAY_MO, // Montevideo
-                            URUGUAY_CA, // Canelones
-                            URUGUAY_SJ, // San José
-                            URUGUAY_CO, // Colonia
-                            URUGUAY_SO, // Soriano
-                            URUGUAY_RN, // Rio Negro
-                            URUGUAY_PA, // Paysandu
-                            URUGUAY_SA, // Salto
-                            URUGUAY_AR, // Artigsa
-                            URUGUAY_FD, // Florida
-                            URUGUAY_FS, // Flores
-                            URUGUAY_DU, // Durazno
-                            URUGUAY_TA, // Tacuarembo
-                            URUGUAY_RV, // Rivera
-                            URUGUAY_MA, // Maldonado
-                            URUGUAY_LA, // Lavalleja
-                            URUGUAY_RO, // Rocha
-                            URUGUAY_TT, // Treinta y Tres
-                            URUGUAY_CL, // Cerro Largo
-                            N_URUGUAY_PRIMARIES
-                          };
+enum class PRIMARY_ENUM_URUGUAY { MO, // Montevideo
+                                  CA, // Canelones
+                                  SJ, // San José
+                                  CO, // Colonia
+                                  SO, // Soriano
+                                  RN, // Rio Negro
+                                  PA, // Paysandu
+                                  SA, // Salto
+                                  AR, // Artigsa
+                                  FD, // Florida
+                                  FS, // Flores
+                                  DU, // Durazno
+                                  TA, // Tacuarembo
+                                  RV, // Rivera
+                                  MA, // Maldonado
+                                  LA, // Lavalleja
+                                  RO, // Rocha
+                                  TT, // Treinta y Tres
+                                  CL, // Cerro Largo
+                                  N_URUGUAY_PRIMARIES
+                                };
 
 //typedef std::array<std::string, N_URUGUAY_PRIMARIES> PRIMARY_URUGUAY_ENUMERATION_TYPE;    ///< primaries for Uruguay
 
-using PRIMARY_URUGUAY_ENUMERATION_TYPE = std::array<std::string, N_URUGUAY_PRIMARIES>;    ///< primaries for Uruguay
+using PRIMARY_URUGUAY_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_URUGUAY::N_URUGUAY_PRIMARIES)>;    ///< primaries for Uruguay
 
 static PRIMARY_URUGUAY_ENUMERATION_TYPE PRIMARY_URUGUAY_ENUMERATION = { "MO"s, // Montevideo
-                                                                          "CA"s, // Canelones
-                                                                          "SJ"s, // San José
-                                                                          "CO"s, // Colonia
-                                                                          "SO"s, // Soriano
-                                                                          "RN"s, // Rio Negro
-                                                                          "PA"s, // Paysandu
-                                                                          "SA"s, // Salto
-                                                                          "AR"s, // Artigsa
-                                                                          "FD"s, // Florida
-                                                                          "FS"s, // Flores
-                                                                          "DU"s, // Durazno
-                                                                          "TA"s, // Tacuarembo
-                                                                          "RV"s, // Rivera
-                                                                          "MA"s, // Maldonado
-                                                                          "LA"s, // Lavalleja
-                                                                          "RO"s, // Rocha
-                                                                          "TT"s, // Treinta y Tres
-                                                                          "CL"s // Cerro Largo
+                                                                        "CA"s, // Canelones
+                                                                        "SJ"s, // San José
+                                                                        "CO"s, // Colonia
+                                                                        "SO"s, // Soriano
+                                                                        "RN"s, // Rio Negro
+                                                                        "PA"s, // Paysandu
+                                                                        "SA"s, // Salto
+                                                                        "AR"s, // Artigsa
+                                                                        "FD"s, // Florida
+                                                                        "FS"s, // Flores
+                                                                        "DU"s, // Durazno
+                                                                        "TA"s, // Tacuarembo
+                                                                        "RV"s, // Rivera
+                                                                        "MA"s, // Maldonado
+                                                                        "LA"s, // Lavalleja
+                                                                        "RO"s, // Rocha
+                                                                        "TT"s, // Treinta y Tres
+                                                                        "CL"s // Cerro Largo
                                                                       };
 
 /// Lord Howe Is.
-enum PRIMARY_ENUM_LORD_HOWE { LORD_HOWE_LH,
-                              N_LORD_HOWE_PRIMARIES
-                            };
+enum class PRIMARY_ENUM_LORD_HOWE { LH,
+                                    N_LORD_HOWE_PRIMARIES
+                                  };
 
 //typedef std::array<std::string, N_LORD_HOWE_PRIMARIES> PRIMARY_LORD_HOWE_ENUMERATION_TYPE;    ///< primaries for Lord Howe Is.
 
-using PRIMARY_LORD_HOWE_ENUMERATION_TYPE = std::array<std::string, N_LORD_HOWE_PRIMARIES>;    ///< primaries for Lord Howe Is.
+using PRIMARY_LORD_HOWE_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_LORD_HOWE::N_LORD_HOWE_PRIMARIES)>;    ///< primaries for Lord Howe Is.
 
 static PRIMARY_LORD_HOWE_ENUMERATION_TYPE PRIMARY_LORD_HOWE_ENUMERATION = { "LH"s
                                                                           };
 /// Venezuela
-enum PRIMARY_ENUM_VENEZUELA { VENEZUELA_AM,     // Amazonas
-                              VENEZUELA_AN,     // Anzoátegui
-                              VENEZUELA_AP,     // Apure
-                              VENEZUELA_AR,     // Aragua
-                              VENEZUELA_BA,     // Barinas
-                              VENEZUELA_BO,     // Bolívar
-                              VENEZUELA_CA,     // Carabobo
-                              VENEZUELA_CO,     // Cojedes
-                              VENEZUELA_DA,     // Delta Amacuro
-                              VENEZUELA_DC,     // Distrito Capital
-                              VENEZUELA_FA,     // Falcón
-                              VENEZUELA_GU,     // Guárico
-                              VENEZUELA_LA,     // Lara
-                              VENEZUELA_ME,     // Mérida
-                              VENEZUELA_MI,     // Miranda
-                              VENEZUELA_MO,     // Monagas
-                              VENEZUELA_NE,     // Nueva Esparta
-                              VENEZUELA_PO,     // Portuguesa
-                              VENEZUELA_SU,     // Sucre
-                              VENEZUELA_TA,     // Táchira
-                              VENEZUELA_TR,     // Trujillo
-                              VENEZUELA_VA,     // Vargas
-                              VENEZUELA_YA,     // Yaracuy
-                              VENEZUELA_ZU,     // Zulia
-                              N_VENEZUELA_PRIMARIES
-                            };
+enum class PRIMARY_ENUM_VENEZUELA { AM,     // Amazonas
+                                    AN,     // Anzoátegui
+                                    AP,     // Apure
+                                    AR,     // Aragua
+                                    BA,     // Barinas
+                                    BO,     // Bolívar
+                                    CA,     // Carabobo
+                                    CO,     // Cojedes
+                                    DA,     // Delta Amacuro
+                                    DC,     // Distrito Capital
+                                    FA,     // Falcón
+                                    GU,     // Guárico
+                                    LA,     // Lara
+                                    ME,     // Mérida
+                                    MI,     // Miranda
+                                    MO,     // Monagas
+                                    NE,     // Nueva Esparta
+                                    PO,     // Portuguesa
+                                    SU,     // Sucre
+                                    TA,     // Táchira
+                                    TR,     // Trujillo
+                                    VA,     // Vargas
+                                    YA,     // Yaracuy
+                                    ZU,     // Zulia
+                                    N_VENEZUELA_PRIMARIES
+                                  };
 
 //typedef std::array<std::string, N_VENEZUELA_PRIMARIES> PRIMARY_VENEZUELA_ENUMERATION_TYPE;    ///< primaries for Venezuela
 
-using PRIMARY_VENEZUELA_ENUMERATION_TYPE = std::array<std::string, N_VENEZUELA_PRIMARIES>;    ///< primaries for Venezuela
+using PRIMARY_VENEZUELA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_VENEZUELA::N_VENEZUELA_PRIMARIES)>;    ///< primaries for Venezuela
 
 static PRIMARY_VENEZUELA_ENUMERATION_TYPE PRIMARY_VENEZUELA_ENUMERATION = { "AM"s,     // Amazonas
-                                                                              "AN"s,     // Anzoátegui
-                                                                              "AP"s,     // Apure
-                                                                              "AR"s,     // Aragua
-                                                                              "BA"s,     // Barinas
-                                                                              "BO"s,     // Bolívar
-                                                                              "CA"s,     // Carabobo
-                                                                              "CO"s,     // Cojedes
-                                                                              "DA"s,     // Delta Amacuro
-                                                                              "DC"s,     // Distrito Capital
-                                                                              "FA"s,     // Falcón
-                                                                              "GU"s,     // Guárico
-                                                                              "LA"s,     // Lara
-                                                                              "ME"s,     // Mérida
-                                                                              "MI"s,     // Miranda
-                                                                              "MO"s,     // Monagas
-                                                                              "NE"s,     // Nueva Esparta
-                                                                              "PO"s,     // Portuguesa
-                                                                              "SU"s,     // Sucre
-                                                                              "TA"s,     // Táchira
-                                                                              "TR"s,     // Trujillo
-                                                                              "VA"s,     // Vargas
-                                                                              "YA"s,     // Yaracuy
-                                                                              "ZU"s      // Zulia
+                                                                            "AN"s,     // Anzoátegui
+                                                                            "AP"s,     // Apure
+                                                                            "AR"s,     // Aragua
+                                                                            "BA"s,     // Barinas
+                                                                            "BO"s,     // Bolívar
+                                                                            "CA"s,     // Carabobo
+                                                                            "CO"s,     // Cojedes
+                                                                            "DA"s,     // Delta Amacuro
+                                                                            "DC"s,     // Distrito Capital
+                                                                            "FA"s,     // Falcón
+                                                                            "GU"s,     // Guárico
+                                                                            "LA"s,     // Lara
+                                                                            "ME"s,     // Mérida
+                                                                            "MI"s,     // Miranda
+                                                                            "MO"s,     // Monagas
+                                                                            "NE"s,     // Nueva Esparta
+                                                                            "PO"s,     // Portuguesa
+                                                                            "SU"s,     // Sucre
+                                                                            "TA"s,     // Táchira
+                                                                            "TR"s,     // Trujillo
+                                                                            "VA"s,     // Vargas
+                                                                            "YA"s,     // Yaracuy
+                                                                            "ZU"s      // Zulia
                                                                           };
 
 /// Azores
-enum PRIMARY_ENUM_AZORES { AZORES_AC,
-                           N_AZORES_PRIMARIES
-                         };
+enum class PRIMARY_ENUM_AZORES { AC,
+                                 N_AZORES_PRIMARIES
+                               };
 
 //typedef std::array<std::string, N_AZORES_PRIMARIES> PRIMARY_AZORES_ENUMERATION_TYPE;    ///< primaries for Azores
 
-using PRIMARY_AZORES_ENUMERATION_TYPE = std::array<std::string, N_AZORES_PRIMARIES>;    ///< primaries for Azores
+using PRIMARY_AZORES_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_AZORES::N_AZORES_PRIMARIES)>;    ///< primaries for Azores
 
 static PRIMARY_AZORES_ENUMERATION_TYPE PRIMARY_AZORES_ENUMERATION = { "AC"s
                                                                     };
 
 /// Australia
-enum PRIMARY_ENUM_AUSTRALIA { AUSTRALIA_ACT,    // Australian Capital Territory
-                              AUSTRALIA_NSW,    // New South Wales
-                              AUSTRALIA_VIC,    // Victoria
-                              AUSTRALIA_QLD,    // Queensland
-                              AUSTRALIA_SA,     // South Australia
-                              AUSTRALIA_WA,     // Western Australia
-                              AUSTRALIA_TAS,    // Tasmania
-                              AUSTRALIA_NT,     // Northern Territory
-                              N_AUSTRALIA_PRIMARIES
-                           };
+enum class PRIMARY_ENUM_AUSTRALIA { ACT,    // Australian Capital Territory
+                                    NSW,    // New South Wales
+                                    VIC,    // Victoria
+                                    QLD,    // Queensland
+                                    SA,     // South Australia
+                                    WA,     // Western Australia
+                                    TAS,    // Tasmania
+                                    NT,     // Northern Territory
+                                    N_AUSTRALIA_PRIMARIES
+                                 };
 
 //typedef std::array<std::string, N_AUSTRALIA_PRIMARIES> PRIMARY_AUSTRALIA_ENUMERATION_TYPE;    ///< primaries for Australia
 
-using PRIMARY_AUSTRALIA_ENUMERATION_TYPE = std::array<std::string, N_AUSTRALIA_PRIMARIES>;    ///< primaries for Australia
+using PRIMARY_AUSTRALIA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_AUSTRALIA::N_AUSTRALIA_PRIMARIES)>;    ///< primaries for Australia
 
 static PRIMARY_AUSTRALIA_ENUMERATION_TYPE PRIMARY_AUSTRALIA_ENUMERATION = { "ACT"s,    // Australian Capital Territory
-                                                                              "NSW"s,    // New South Wales
-                                                                              "VIC"s,    // Victoria
-                                                                              "QLD"s,    // Queensland
-                                                                              "SA"s,     // South Australia
-                                                                              "WA"s,     // Western Australia
-                                                                              "TAS"s,    // Tasmania
-                                                                              "NT"s,     // Northern Territory
+                                                                            "NSW"s,    // New South Wales
+                                                                            "VIC"s,    // Victoria
+                                                                            "QLD"s,    // Queensland
+                                                                            "SA"s,     // South Australia
+                                                                            "WA"s,     // Western Australia
+                                                                            "TAS"s,    // Tasmania
+                                                                            "NT"s,     // Northern Territory
                                                                           };
 
 /// Malyj Vysotskij
-enum PRIMARY_ENUM_MV { MV_MV,
-                       N_MV_PRIMARIES
-                     };
+enum class PRIMARY_ENUM_MV { MV,
+                             N_MV_PRIMARIES
+                           };
 
 //typedef std::array<std::string, N_MV_PRIMARIES> PRIMARY_MV_ENUMERATION_TYPE;    ///< primaries for Malyj Vysotskij
 
-using PRIMARY_MV_ENUMERATION_TYPE = std::array<std::string, N_MV_PRIMARIES>;    ///< primaries for Malyj Vysotskij
+using PRIMARY_MV_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_MV::N_MV_PRIMARIES)>;    ///< primaries for Malyj Vysotskij
 
 static PRIMARY_MV_ENUMERATION_TYPE PRIMARY_MV_ENUMERATION = { "MV"s
                                                             };
 
 /// Macquerie Is.
-enum PRIMARY_ENUM_MACQUERIE { MACQUERIE_MA,
-                              N_MACQUERIE_PRIMARIES
-                            };
+enum class PRIMARY_ENUM_MACQUERIE { MA,
+                                    N_MACQUERIE_PRIMARIES
+                                  };
 
 //typedef std::array<std::string, N_MACQUERIE_PRIMARIES> PRIMARY_MACQUERIE_ENUMERATION_TYPE;    ///< primaries for Macquerie
 
-using PRIMARY_MACQUERIE_ENUMERATION_TYPE = std::array<std::string, N_MACQUERIE_PRIMARIES>;    ///< primaries for Macquerie
+using PRIMARY_MACQUERIE_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_MACQUERIE::N_MACQUERIE_PRIMARIES)>;    ///< primaries for Macquerie
 
 static PRIMARY_MACQUERIE_ENUMERATION_TYPE PRIMARY_MACQUERIE_ENUMERATION = { "MA"s
                                                                           };
 
 /// Papua New Guinea
-enum PRIMARY_ENUM_PAPUA_NEW_GUINEA { PAPUA_NEW_GUINEA_NCD,     // National Capital District (Port Moresby)
-                                     PAPUA_NEW_GUINEA_CPM,     // Central
-                                     PAPUA_NEW_GUINEA_CPK,     // Chimbu
-                                     PAPUA_NEW_GUINEA_EHG,     // Eastern Highlands
-                                     PAPUA_NEW_GUINEA_EBR,     // East New Britain
-                                     PAPUA_NEW_GUINEA_ESW,     // East Sepik
-                                     PAPUA_NEW_GUINEA_EPW,     // Enga
-                                     PAPUA_NEW_GUINEA_GPK,     // Gulf
-                                     PAPUA_NEW_GUINEA_MPM,     // Madang
-                                     PAPUA_NEW_GUINEA_MRL,     // Manus
-                                     PAPUA_NEW_GUINEA_MBA,     // Milne Bay
-                                     PAPUA_NEW_GUINEA_MPL,     // Morobe
-                                     PAPUA_NEW_GUINEA_NIK,     // New Ireland
-                                     PAPUA_NEW_GUINEA_NPP,     // Northern
-                                     PAPUA_NEW_GUINEA_NSA,     // North Solomons
-                                     PAPUA_NEW_GUINEA_SAN,     // Santaun
-                                     PAPUA_NEW_GUINEA_SHM,     // Southern Highlands
-                                     PAPUA_NEW_GUINEA_WPD,     // Western
-                                     PAPUA_NEW_GUINEA_WHM,     // Western Highlands
-                                     PAPUA_NEW_GUINEA_WBR,     // West New Britain,
-                                     N_PAPUA_NEW_GUINEA_PRIMARIES
-                                   };
+enum class PRIMARY_ENUM_PAPUA_NEW_GUINEA { NCD,     // National Capital District (Port Moresby)
+                                           CPM,     // Central
+                                           CPK,     // Chimbu
+                                           EHG,     // Eastern Highlands
+                                           EBR,     // East New Britain
+                                           ESW,     // East Sepik
+                                           EPW,     // Enga
+                                           GPK,     // Gulf
+                                           MPM,     // Madang
+                                           MRL,     // Manus
+                                           MBA,     // Milne Bay
+                                           MPL,     // Morobe
+                                           NIK,     // New Ireland
+                                           NPP,     // Northern
+                                           NSA,     // North Solomons
+                                           SAN,     // Santaun
+                                           SHM,     // Southern Highlands
+                                           WPD,     // Western
+                                           WHM,     // Western Highlands
+                                           WBR,     // West New Britain,
+                                           N_PAPUA_NEW_GUINEA_PRIMARIES
+                                         };
 
 //typedef std::array<std::string, N_PAPUA_NEW_GUINEA_PRIMARIES> PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE;    ///< primaries for Papua New Guinea
 
-using PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE = std::array<std::string, N_PAPUA_NEW_GUINEA_PRIMARIES>;    ///< primaries for Papua New Guinea
+using PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_PAPUA_NEW_GUINEA::N_PAPUA_NEW_GUINEA_PRIMARIES)>;    ///< primaries for Papua New Guinea
 
 static PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION_TYPE PRIMARY_PAPUA_NEW_GUINEA_ENUMERATION = { "NCD"s,     // National Capital District (Port Moresby)
-                                                                                            "CPM"s,     // Central
-                                                                                            "CPK"s,     // Chimbu
-                                                                                            "EHG"s,     // Eastern Highlands
-                                                                                            "EBR"s,     // East New Britain
-                                                                                            "ESW"s,     // East Sepik
-                                                                                            "EPW"s,     // Enga
-                                                                                            "GPK"s,     // Gulf
-                                                                                            "MPM"s,     // Madang
-                                                                                            "MRL"s,     // Manus
-                                                                                            "MBA"s,     // Milne Bay
-                                                                                            "MPL"s,     // Morobe
-                                                                                            "NIK"s,     // New Ireland
-                                                                                            "NPP"s,     // Northern
-                                                                                            "NSA"s,     // North Solomons
-                                                                                            "SAN"s,     // Santaun
-                                                                                            "SHM"s,     // Southern Highlands
-                                                                                            "WPD"s,     // Western
-                                                                                            "WHM"s,     // Western Highlands
-                                                                                            "WBR"s      // West New Britain,
+                                                                                          "CPM"s,     // Central
+                                                                                          "CPK"s,     // Chimbu
+                                                                                          "EHG"s,     // Eastern Highlands
+                                                                                          "EBR"s,     // East New Britain
+                                                                                          "ESW"s,     // East Sepik
+                                                                                          "EPW"s,     // Enga
+                                                                                          "GPK"s,     // Gulf
+                                                                                          "MPM"s,     // Madang
+                                                                                          "MRL"s,     // Manus
+                                                                                          "MBA"s,     // Milne Bay
+                                                                                          "MPL"s,     // Morobe
+                                                                                          "NIK"s,     // New Ireland
+                                                                                          "NPP"s,     // Northern
+                                                                                          "NSA"s,     // North Solomons
+                                                                                          "SAN"s,     // Santaun
+                                                                                          "SHM"s,     // Southern Highlands
+                                                                                          "WPD"s,     // Western
+                                                                                          "WHM"s,     // Western Highlands
+                                                                                          "WBR"s      // West New Britain,
                                                                                         };
 
 /// New Zealand
-enum PRIMARY_ENUM_NEW_ZEALAND { NEW_ZEALAND_NCD,    // National Capital District
-                                NEW_ZEALAND_AUK,    // Auckland
-                                NEW_ZEALAND_BOP,    // Bay of Plenty
-                                NEW_ZEALAND_NTL,    // Northland
-                                NEW_ZEALAND_WKO,    // Waikato
-                                NEW_ZEALAND_GIS,    // Gisborne
-                                NEW_ZEALAND_HKB,    // Hawkes Bay
-                                NEW_ZEALAND_MWT,    // Manawatu-Wanganui
-                                NEW_ZEALAND_TKI,    // Taranaki
-                                NEW_ZEALAND_WGN,    // Wellington
-                                NEW_ZEALAND_CAN,    // Canterbury
-                                NEW_ZEALAND_MBH,    // Marlborough
-                                NEW_ZEALAND_NSN,    // Nelson
-                                NEW_ZEALAND_TAS,    // Tasman
-                                NEW_ZEALAND_WTC,    // West Coast
-                                NEW_ZEALAND_OTA,    // Otago
-                                NEW_ZEALAND_STL,    // Southland
-                                N_NEW_ZEALAND_PRIMARIES
-                              };
+enum class PRIMARY_ENUM_NEW_ZEALAND { NCD,    // National Capital District
+                                      AUK,    // Auckland
+                                      BOP,    // Bay of Plenty
+                                      NTL,    // Northland
+                                      WKO,    // Waikato
+                                      GIS,    // Gisborne
+                                      HKB,    // Hawkes Bay
+                                      MWT,    // Manawatu-Wanganui
+                                      TKI,    // Taranaki
+                                      WGN,    // Wellington
+                                      CAN,    // Canterbury
+                                      MBH,    // Marlborough
+                                      NSN,    // Nelson
+                                      TAS,    // Tasman
+                                      WTC,    // West Coast
+                                      OTA,    // Otago
+                                      STL,    // Southland
+                                      N_NEW_ZEALAND_PRIMARIES
+                                    };
 
 //typedef std::array<std::string, N_NEW_ZEALAND_PRIMARIES> PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE;    ///< primaries for New  Zealand
 
-using PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE = std::array<std::string, N_NEW_ZEALAND_PRIMARIES>;    ///< primaries for New  Zealand
+using PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_NEW_ZEALAND::N_NEW_ZEALAND_PRIMARIES)>;    ///< primaries for New  Zealand
 
 static PRIMARY_NEW_ZEALAND_ENUMERATION_TYPE PRIMARY_NEW_ZEALAND_ENUMERATION = { "NCD"s,    // National Capital District
-                                                                                  "AUK"s,    // Auckland
-                                                                                  "BOP"s,    // Bay of Plenty
-                                                                                  "NTL"s,    // Northland
-                                                                                  "WKO"s,    // Waikato
-                                                                                  "GIS"s,    // Gisborne
-                                                                                  "HKB"s,    // Hawkes Bay
-                                                                                  "MWT"s,    // Manawatu-Wanganui
-                                                                                  "TKI"s,    // Taranaki
-                                                                                  "WGN"s,    // Wellington
-                                                                                  "CAN"s,    // Canterbury
-                                                                                  "MBH"s,    // Marlborough
-                                                                                  "NSN"s,    // Nelson
-                                                                                  "TAS"s,    // Tasman
-                                                                                  "WTC"s,    // West Coast
-                                                                                  "OTA"s,    // Otago
-                                                                                  "STL"s     // Southland
+                                                                                "AUK"s,    // Auckland
+                                                                                "BOP"s,    // Bay of Plenty
+                                                                                "NTL"s,    // Northland
+                                                                                "WKO"s,    // Waikato
+                                                                                "GIS"s,    // Gisborne
+                                                                                "HKB"s,    // Hawkes Bay
+                                                                                "MWT"s,    // Manawatu-Wanganui
+                                                                                "TKI"s,    // Taranaki
+                                                                                "WGN"s,    // Wellington
+                                                                                "CAN"s,    // Canterbury
+                                                                                "MBH"s,    // Marlborough
+                                                                                "NSN"s,    // Nelson
+                                                                                "TAS"s,    // Tasman
+                                                                                "WTC"s,    // West Coast
+                                                                                "OTA"s,    // Otago
+                                                                                "STL"s     // Southland
                                                                               };
 
 /// Austria
-enum PRIMARY_ENUM_AUSTRIA { AUSTRIA_WC,   // Wien
-                            AUSTRIA_HA,   // Hallein
-                            AUSTRIA_JO,   // St. Johann
-                            AUSTRIA_SC,   // Salzburg
-                            AUSTRIA_SL,   // Salzburg-Land
-                            AUSTRIA_TA,   // Tamsweg
-                            AUSTRIA_ZE,   // Zell Am See
-                            AUSTRIA_AM,   // Amstetten
-                            AUSTRIA_BL,   // Bruck/Leitha
-                            AUSTRIA_BN,   // Baden
-                            AUSTRIA_GD,   // Gmünd
-                            AUSTRIA_GF,   // Gänserndorf
-                            AUSTRIA_HL,   // Hollabrunn
-                            AUSTRIA_HO,   // Horn
-                            AUSTRIA_KO,   // Korneuburg
-                            AUSTRIA_KR,   // Krems-Region
-                            AUSTRIA_KS,   // Krems
-                            AUSTRIA_LF,   // Lilienfeld
-                            AUSTRIA_MD,   // Mödling
-                            AUSTRIA_ME,   // Melk
-                            AUSTRIA_MI,   // Mistelbach
-                            AUSTRIA_NK,   // Neunkirchen
-                            AUSTRIA_PC,   // St. Pölten
-                            AUSTRIA_PL,   // St. Pölten-Land
-                            AUSTRIA_SB,   // Scheibbs
-                            AUSTRIA_SW,   // Schwechat
-                            AUSTRIA_TU,   // Tulln
-                            AUSTRIA_WB,   // Wr.Neustadt-Bezirk
-                            AUSTRIA_WN,   // Wr.Neustadt
-                            AUSTRIA_WT,   // Waidhofen/Thaya
-                            AUSTRIA_WU,   // Wien-Umgebung
-                            AUSTRIA_WY,   // Waidhofen/Ybbs
-                            AUSTRIA_ZT,   // Zwettl
-                            AUSTRIA_EC,   // Eisenstadt
-                            AUSTRIA_EU,   // Eisenstadt-Umgebung
-                            AUSTRIA_GS,   // Güssing
-                            AUSTRIA_JE,   // Jennersdorf
-                            AUSTRIA_MA,   // Mattersburg
-                            AUSTRIA_ND,   // Neusiedl/See
-                            AUSTRIA_OP,   // Oberpullendorf
-                            AUSTRIA_OW,   // Oberwart
-                            AUSTRIA_BR,   // Braunau/Inn
-                            AUSTRIA_EF,   // Eferding
-                            AUSTRIA_FR,   // Freistadt
-                            AUSTRIA_GM,   // Gmunden
-                            AUSTRIA_GR,   // Grieskirchen
-                            AUSTRIA_KI,   // Kirchdorf
-                            AUSTRIA_LC,   // Linz
-                            AUSTRIA_LL,   // Linz-Land
-                            AUSTRIA_PE,   // Perg
-                            AUSTRIA_RI,   // Ried/Innkreis
-                            AUSTRIA_RO,   // Rohrbach
-                            AUSTRIA_SD,   // Schärding
-                            AUSTRIA_SE,   // Steyr-Land
-                            AUSTRIA_SR,   // Steyr
-                            AUSTRIA_UU,   // Urfahr
-                            AUSTRIA_VB,   // Vöcklabruck
-                            AUSTRIA_WE,   // Wels
-                            AUSTRIA_WL,   // Wels-Land
-                            AUSTRIA_BA,   // Bad Aussee
-                            AUSTRIA_BM,   // Bruck/Mur
-                            AUSTRIA_DL,   // Deutschlandsberg
-                            AUSTRIA_FB,   // Feldbach
-                            AUSTRIA_FF,   // Fürstenfeld
-                            AUSTRIA_GB,   // Gröbming
-                            AUSTRIA_GC,   // Graz
-                            AUSTRIA_GU,   // Graz-Umgebung
-                            AUSTRIA_HB,   // Hartberg
-                            AUSTRIA_JU,   // Judenburg
-                            AUSTRIA_KF,   // Knittelfeld
-                            AUSTRIA_LB,   // Leibnitz
-                            AUSTRIA_LE,   // Leoben
-                            AUSTRIA_LI,   // Liezen
-                            AUSTRIA_LN,   // Leoben-Land
-                            AUSTRIA_MU,   // Murau
-                            AUSTRIA_MZ,   // Mürzzuschlag
-                            AUSTRIA_RA,   // Radkersburg
-                            AUSTRIA_VO,   // Voitsberg
-                            AUSTRIA_WZ,   // Weiz
-                            AUSTRIA_IC,   // Innsbruck
-                            AUSTRIA_IL,   // Innsbruck-Land
-                            AUSTRIA_IM,   // Imst
-                            AUSTRIA_KB,   // Kitzbühel
-                            AUSTRIA_KU,   // Kufstein
-                            AUSTRIA_LA,   // Landeck
-                            AUSTRIA_LZ,   // Lienz
-                            AUSTRIA_RE,   // Reutte
-                            AUSTRIA_SZ,   // Schwaz
-                            AUSTRIA_FE,   // Feldkirchen
-                            AUSTRIA_HE,   // Hermagor
-                            AUSTRIA_KC,   // Klagenfurt
-                            AUSTRIA_KL,   // Klagenfurt-Land
-                            AUSTRIA_SP,   // Spittal/Drau
-                            AUSTRIA_SV,   // St.Veit/Glan
-                            AUSTRIA_VI,   // Villach
-                            AUSTRIA_VK,   // Völkermarkt
-                            AUSTRIA_VL,   // Villach-Land
-                            AUSTRIA_WO,   // Wolfsberg
-                            AUSTRIA_BC,   // Bregenz
-                            AUSTRIA_BZ,   // Bludenz
-                            AUSTRIA_DO,   // Dornbirn
-                            AUSTRIA_FK,   //Feldkirch
-                            N_AUSTRIA_PRIMARIES
-                          };
+enum class PRIMARY_ENUM_AUSTRIA { WC,   // Wien
+                                  HA,   // Hallein
+                                  JO,   // St. Johann
+                                  SC,   // Salzburg
+                                  SL,   // Salzburg-Land
+                                  TA,   // Tamsweg
+                                  ZE,   // Zell Am See
+                                  AM,   // Amstetten
+                                  BL,   // Bruck/Leitha
+                                  BN,   // Baden
+                                  GD,   // Gmünd
+                                  GF,   // Gänserndorf
+                                  HL,   // Hollabrunn
+                                  HO,   // Horn
+                                  KO,   // Korneuburg
+                                  KR,   // Krems-Region
+                                  KS,   // Krems
+                                  LF,   // Lilienfeld
+                                  MD,   // Mödling
+                                  ME,   // Melk
+                                  MI,   // Mistelbach
+                                  NK,   // Neunkirchen
+                                  PC,   // St. Pölten
+                                  PL,   // St. Pölten-Land
+                                  SB,   // Scheibbs
+                                  SW,   // Schwechat
+                                  TU,   // Tulln
+                                  WB,   // Wr.Neustadt-Bezirk
+                                  WN,   // Wr.Neustadt
+                                  WT,   // Waidhofen/Thaya
+                                  WU,   // Wien-Umgebung
+                                  WY,   // Waidhofen/Ybbs
+                                  ZT,   // Zwettl
+                                  EC,   // Eisenstadt
+                                  EU,   // Eisenstadt-Umgebung
+                                  GS,   // Güssing
+                                  JE,   // Jennersdorf
+                                  MA,   // Mattersburg
+                                  ND,   // Neusiedl/See
+                                  OP,   // Oberpullendorf
+                                  OW,   // Oberwart
+                                  BR,   // Braunau/Inn
+                                  EF,   // Eferding
+                                  FR,   // Freistadt
+                                  GM,   // Gmunden
+                                  GR,   // Grieskirchen
+                                  KI,   // Kirchdorf
+                                  LC,   // Linz
+                                  LL,   // Linz-Land
+                                  PE,   // Perg
+                                  RI,   // Ried/Innkreis
+                                  RO,   // Rohrbach
+                                  SD,   // Schärding
+                                  SE,   // Steyr-Land
+                                  SR,   // Steyr
+                                  UU,   // Urfahr
+                                  VB,   // Vöcklabruck
+                                  WE,   // Wels
+                                  WL,   // Wels-Land
+                                  BA,   // Bad Aussee
+                                  BM,   // Bruck/Mur
+                                  DL,   // Deutschlandsberg
+                                  FB,   // Feldbach
+                                  FF,   // Fürstenfeld
+                                  GB,   // Gröbming
+                                  GC,   // Graz
+                                  GU,   // Graz-Umgebung
+                                  HB,   // Hartberg
+                                  JU,   // Judenburg
+                                  KF,   // Knittelfeld
+                                  LB,   // Leibnitz
+                                  LE,   // Leoben
+                                  LI,   // Liezen
+                                  LN,   // Leoben-Land
+                                  MU,   // Murau
+                                  MZ,   // Mürzzuschlag
+                                  RA,   // Radkersburg
+                                  VO,   // Voitsberg
+                                  WZ,   // Weiz
+                                  IC,   // Innsbruck
+                                  IL,   // Innsbruck-Land
+                                  IM,   // Imst
+                                  KB,   // Kitzbühel
+                                  KU,   // Kufstein
+                                  LA,   // Landeck
+                                  LZ,   // Lienz
+                                  RE,   // Reutte
+                                  SZ,   // Schwaz
+                                  FE,   // Feldkirchen
+                                  HE,   // Hermagor
+                                  KC,   // Klagenfurt
+                                  KL,   // Klagenfurt-Land
+                                  SP,   // Spittal/Drau
+                                  SV,   // St.Veit/Glan
+                                  VI,   // Villach
+                                  VK,   // Völkermarkt
+                                  VL,   // Villach-Land
+                                  WO,   // Wolfsberg
+                                  BC,   // Bregenz
+                                  BZ,   // Bludenz
+                                  DO,   // Dornbirn
+                                  FK,   //Feldkirch
+                                  N_AUSTRIA_PRIMARIES
+                                };
 
 //typedef std::array<std::string, N_AUSTRIA_PRIMARIES> PRIMARY_AUSTRIA_ENUMERATION_TYPE;    ///< primaries for Austria
 
-using PRIMARY_AUSTRIA_ENUMERATION_TYPE = std::array<std::string, N_AUSTRIA_PRIMARIES>;    ///< primaries for Austria
+using PRIMARY_AUSTRIA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_AUSTRIA::N_AUSTRIA_PRIMARIES)>;    ///< primaries for Austria
 
 static PRIMARY_AUSTRIA_ENUMERATION_TYPE PRIMARY_AUSTRIA_ENUMERATION = { "WC"s,   // Wien
-                                                                          "HA"s,   // Hallein
-                                                                          "JO"s,   // St. Johann
-                                                                          "SC"s,   // Salzburg
-                                                                          "SL"s,   // Salzburg-Land
-                                                                          "TA"s,   // Tamsweg
-                                                                          "ZE"s,   // Zell Am See
-                                                                          "AM"s,   // Amstetten
-                                                                          "BL"s,   // Bruck/Leitha
-                                                                          "BN"s,   // Baden
-                                                                          "GD"s,   // Gmünd
-                                                                          "GF"s,   // Gänserndorf
-                                                                          "HL"s,   // Hollabrunn
-                                                                          "HO"s,   // Horn
-                                                                          "KO"s,   // Korneuburg
-                                                                          "KR"s,   // Krems-Region
-                                                                          "KS"s,   // Krems
-                                                                          "LF"s,   // Lilienfeld
-                                                                          "MD"s,   // Mödling
-                                                                          "ME"s,   // Melk
-                                                                          "MI"s,   // Mistelbach
-                                                                          "NK"s,   // Neunkirchen
-                                                                          "PC"s,   // St. Pölten
-                                                                          "PL"s,   // St. Pölten-Land
-                                                                          "SB"s,   // Scheibbs
-                                                                          "SW"s,   // Schwechat
-                                                                          "TU"s,   // Tulln
-                                                                          "WB"s,   // Wr.Neustadt-Bezirk
-                                                                          "WN"s,   // Wr.Neustadt
-                                                                          "WT"s,   // Waidhofen/Thaya
-                                                                          "WU"s,   // Wien-Umgebung
-                                                                          "WY"s,   // Waidhofen/Ybbs
-                                                                          "ZT"s,   // Zwettl
-                                                                          "EC"s,   // Eisenstadt
-                                                                          "EU"s,   // Eisenstadt-Umgebung
-                                                                          "GS"s,   // Güssing
-                                                                          "JE"s,   // Jennersdorf
-                                                                          "MA"s,   // Mattersburg
-                                                                          "ND"s,   // Neusiedl/See
-                                                                          "OP"s,   // Oberpullendorf
-                                                                          "OW"s,   // Oberwart
-                                                                          "BR"s,   // Braunau/Inn
-                                                                          "EF"s,   // Eferding
-                                                                          "FR"s,   // Freistadt
-                                                                          "GM"s,   // Gmunden
-                                                                          "GR"s,   // Grieskirchen
-                                                                          "KI"s,   // Kirchdorf
-                                                                          "LC"s,   // Linz
-                                                                          "LL"s,   // Linz-Land
-                                                                          "PE"s,   // Perg
-                                                                          "RI"s,   // Ried/Innkreis
-                                                                          "RO"s,   // Rohrbach
-                                                                          "SD"s,   // Schärding
-                                                                          "SE"s,   // Steyr-Land
-                                                                          "SR"s,   // Steyr
-                                                                          "UU"s,   // Urfahr
-                                                                          "VB"s,   // Vöcklabruck
-                                                                          "WE"s,   // Wels
-                                                                          "WL"s,   // Wels-Land
-                                                                          "BA"s,   // Bad Aussee
-                                                                          "BM"s,   // Bruck/Mur
-                                                                          "DL"s,   // Deutschlandsberg
-                                                                          "FB"s,   // Feldbach
-                                                                          "FF"s,   // Fürstenfeld
-                                                                          "GB"s,   // Gröbming
-                                                                          "GC"s,   // Graz
-                                                                          "GU"s,   // Graz-Umgebung
-                                                                          "HB"s,   // Hartberg
-                                                                          "JU"s,   // Judenburg
-                                                                          "KF"s,   // Knittelfeld
-                                                                          "LB"s,   // Leibnitz
-                                                                          "LE"s,   // Leoben
-                                                                          "LI"s,   // Liezen
-                                                                          "LN"s,   // Leoben-Land
-                                                                          "MU"s,   // Murau
-                                                                          "MZ"s,   // Mürzzuschlag
-                                                                          "RA"s,   // Radkersburg
-                                                                          "VO"s,   // Voitsberg
-                                                                          "WZ"s,   // Weiz
-                                                                          "IC"s,   // Innsbruck
-                                                                          "IL"s,   // Innsbruck-Land
-                                                                          "IM"s,   // Imst
-                                                                          "KB"s,   // Kitzbühel
-                                                                          "KU"s,   // Kufstein
-                                                                          "LA"s,   // Landeck
-                                                                          "LZ"s,   // Lienz
-                                                                          "RE"s,   // Reutte
-                                                                          "SZ"s,   // Schwaz
-                                                                          "FE"s,   // Feldkirchen
-                                                                          "HE"s,   // Hermagor
-                                                                          "KC"s,   // Klagenfurt
-                                                                          "KL"s,   // Klagenfurt-Land
-                                                                          "SP"s,   // Spittal/Drau
-                                                                          "SV"s,   // St.Veit/Glan
-                                                                          "VI"s,   // Villach
-                                                                          "VK"s,   // Völkermarkt
-                                                                          "VL"s,   // Villach-Land
-                                                                          "WO"s,   // Wolfsberg
-                                                                          "BC"s,   // Bregenz
-                                                                          "BZ"s,   // Bludenz
-                                                                          "DO"s,   // Dornbirn
-                                                                          "FK"s    //Feldkirch
+                                                                        "HA"s,   // Hallein
+                                                                        "JO"s,   // St. Johann
+                                                                        "SC"s,   // Salzburg
+                                                                        "SL"s,   // Salzburg-Land
+                                                                        "TA"s,   // Tamsweg
+                                                                        "ZE"s,   // Zell Am See
+                                                                        "AM"s,   // Amstetten
+                                                                        "BL"s,   // Bruck/Leitha
+                                                                        "BN"s,   // Baden
+                                                                        "GD"s,   // Gmünd
+                                                                        "GF"s,   // Gänserndorf
+                                                                        "HL"s,   // Hollabrunn
+                                                                        "HO"s,   // Horn
+                                                                        "KO"s,   // Korneuburg
+                                                                        "KR"s,   // Krems-Region
+                                                                        "KS"s,   // Krems
+                                                                        "LF"s,   // Lilienfeld
+                                                                        "MD"s,   // Mödling
+                                                                        "ME"s,   // Melk
+                                                                        "MI"s,   // Mistelbach
+                                                                        "NK"s,   // Neunkirchen
+                                                                        "PC"s,   // St. Pölten
+                                                                        "PL"s,   // St. Pölten-Land
+                                                                        "SB"s,   // Scheibbs
+                                                                        "SW"s,   // Schwechat
+                                                                        "TU"s,   // Tulln
+                                                                        "WB"s,   // Wr.Neustadt-Bezirk
+                                                                        "WN"s,   // Wr.Neustadt
+                                                                        "WT"s,   // Waidhofen/Thaya
+                                                                        "WU"s,   // Wien-Umgebung
+                                                                        "WY"s,   // Waidhofen/Ybbs
+                                                                        "ZT"s,   // Zwettl
+                                                                        "EC"s,   // Eisenstadt
+                                                                        "EU"s,   // Eisenstadt-Umgebung
+                                                                        "GS"s,   // Güssing
+                                                                        "JE"s,   // Jennersdorf
+                                                                        "MA"s,   // Mattersburg
+                                                                        "ND"s,   // Neusiedl/See
+                                                                        "OP"s,   // Oberpullendorf
+                                                                        "OW"s,   // Oberwart
+                                                                        "BR"s,   // Braunau/Inn
+                                                                        "EF"s,   // Eferding
+                                                                        "FR"s,   // Freistadt
+                                                                        "GM"s,   // Gmunden
+                                                                        "GR"s,   // Grieskirchen
+                                                                        "KI"s,   // Kirchdorf
+                                                                        "LC"s,   // Linz
+                                                                        "LL"s,   // Linz-Land
+                                                                        "PE"s,   // Perg
+                                                                        "RI"s,   // Ried/Innkreis
+                                                                        "RO"s,   // Rohrbach
+                                                                        "SD"s,   // Schärding
+                                                                        "SE"s,   // Steyr-Land
+                                                                        "SR"s,   // Steyr
+                                                                        "UU"s,   // Urfahr
+                                                                        "VB"s,   // Vöcklabruck
+                                                                        "WE"s,   // Wels
+                                                                        "WL"s,   // Wels-Land
+                                                                        "BA"s,   // Bad Aussee
+                                                                        "BM"s,   // Bruck/Mur
+                                                                        "DL"s,   // Deutschlandsberg
+                                                                        "FB"s,   // Feldbach
+                                                                        "FF"s,   // Fürstenfeld
+                                                                        "GB"s,   // Gröbming
+                                                                        "GC"s,   // Graz
+                                                                        "GU"s,   // Graz-Umgebung
+                                                                        "HB"s,   // Hartberg
+                                                                        "JU"s,   // Judenburg
+                                                                        "KF"s,   // Knittelfeld
+                                                                        "LB"s,   // Leibnitz
+                                                                        "LE"s,   // Leoben
+                                                                        "LI"s,   // Liezen
+                                                                        "LN"s,   // Leoben-Land
+                                                                        "MU"s,   // Murau
+                                                                        "MZ"s,   // Mürzzuschlag
+                                                                        "RA"s,   // Radkersburg
+                                                                        "VO"s,   // Voitsberg
+                                                                        "WZ"s,   // Weiz
+                                                                        "IC"s,   // Innsbruck
+                                                                        "IL"s,   // Innsbruck-Land
+                                                                        "IM"s,   // Imst
+                                                                        "KB"s,   // Kitzbühel
+                                                                        "KU"s,   // Kufstein
+                                                                        "LA"s,   // Landeck
+                                                                        "LZ"s,   // Lienz
+                                                                        "RE"s,   // Reutte
+                                                                        "SZ"s,   // Schwaz
+                                                                        "FE"s,   // Feldkirchen
+                                                                        "HE"s,   // Hermagor
+                                                                        "KC"s,   // Klagenfurt
+                                                                        "KL"s,   // Klagenfurt-Land
+                                                                        "SP"s,   // Spittal/Drau
+                                                                        "SV"s,   // St.Veit/Glan
+                                                                        "VI"s,   // Villach
+                                                                        "VK"s,   // Völkermarkt
+                                                                        "VL"s,   // Villach-Land
+                                                                        "WO"s,   // Wolfsberg
+                                                                        "BC"s,   // Bregenz
+                                                                        "BZ"s,   // Bludenz
+                                                                        "DO"s,   // Dornbirn
+                                                                        "FK"s    //Feldkirch
                                                                       };
 
 /// Belgium
-enum PRIMARY_ENUM_BELGIUM { BELGIUM_AN,     // Antwerpen
-                            BELGIUM_BR,     // Brussels
-                            BELGIUM_BW,     // Brabant Wallon
-                            BELGIUM_HT,     // Hainaut
-                            BELGIUM_LB,     // Limburg
-                            BELGIUM_LG,     // Liêge
-                            BELGIUM_NM,     // Namur
-                            BELGIUM_LU,     // Luxembourg
-                            BELGIUM_OV,     // Oost-Vlaanderen
-                            BELGIUM_VB,     // Vlaams Brabant
-                            BELGIUM_WZ,     // West-Vlaanderen
-                            N_BELGIUM_PRIMARIES
-                         };
+enum class PRIMARY_ENUM_BELGIUM { AN,     // Antwerpen
+                                  BR,     // Brussels
+                                  BW,     // Brabant Wallon
+                                  HT,     // Hainaut
+                                  LB,     // Limburg
+                                  LG,     // Liêge
+                                  NM,     // Namur
+                                  LU,     // Luxembourg
+                                  OV,     // Oost-Vlaanderen
+                                  VB,     // Vlaams Brabant
+                                  WZ,     // West-Vlaanderen
+                                  N_BELGIUM_PRIMARIES
+                               };
 
 //typedef std::array<std::string, N_BELGIUM_PRIMARIES> PRIMARY_BELGIUM_ENUMERATION_TYPE;    ///< primaries for Belgium
 
-using PRIMARY_BELGIUM_ENUMERATION_TYPE = std::array<std::string, N_BELGIUM_PRIMARIES>;    ///< primaries for Belgium
+using PRIMARY_BELGIUM_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_BELGIUM::N_BELGIUM_PRIMARIES)>;    ///< primaries for Belgium
 
 static PRIMARY_BELGIUM_ENUMERATION_TYPE PRIMARY_BELGIUM_ENUMERATION = { "AN"s,     // Antwerpen
-                                                                          "BR"s,     // Brussels
-                                                                          "BW"s,     // Brabant Wallon
-                                                                          "HT"s,     // Hainaut
-                                                                          "LB"s,     // Limburg
-                                                                          "LG"s,     // Liêge
-                                                                          "NM"s,     // Namur
-                                                                          "LU"s,     // Luxembourg
-                                                                          "OV"s,     // Oost-Vlaanderen
-                                                                          "VB"s,     // Vlaams Brabant
-                                                                          "WZ"s     // West-Vlaanderen
+                                                                        "BR"s,     // Brussels
+                                                                        "BW"s,     // Brabant Wallon
+                                                                        "HT"s,     // Hainaut
+                                                                        "LB"s,     // Limburg
+                                                                        "LG"s,     // Liêge
+                                                                        "NM"s,     // Namur
+                                                                        "LU"s,     // Luxembourg
+                                                                        "OV"s,     // Oost-Vlaanderen
+                                                                        "VB"s,     // Vlaams Brabant
+                                                                        "WZ"s     // West-Vlaanderen
                                                                       };
 
 /// Bulgaria
-enum PRIMARY_ENUM_BULGARIA { BULGARIA_BU,   // Burgas
-                             BULGARIA_SL,   // Sliven
-                             BULGARIA_YA,   // Yambol (Jambol)
-                             BULGARIA_SO,   // Sofija Grad
-                             BULGARIA_HA,   // Haskovo
-                             BULGARIA_KA,   // Kărdžali
-                             BULGARIA_SZ,   // Stara Zagora
-                             BULGARIA_PA,   // Pazardžik
-                             BULGARIA_PD,   // Plovdiv
-                             BULGARIA_SM,   // Smoljan
-                             BULGARIA_BL,   // Blagoevgrad
-                             BULGARIA_KD,   // Kjustendil
-                             BULGARIA_PK,   // Pernik
-                             BULGARIA_SF,   // Sofija (Sofia)
-                             BULGARIA_GA,   // Gabrovo
-                             BULGARIA_LV,   // Loveč (Lovech)
-                             BULGARIA_PL,   // Pleven
-                             BULGARIA_VT,   // Veliko Tărnovo
-                             BULGARIA_MN,   // Montana
-                             BULGARIA_VD,   // Vidin
-                             BULGARIA_VR,   // Vraca
-                             BULGARIA_RZ,   // Razgrad
-                             BULGARIA_RS,   // Ruse
-                             BULGARIA_SS,   // Silistra
-                             BULGARIA_TA,   // Tărgovište
-                             BULGARIA_DO,   // Dobrič
-                             BULGARIA_SN,   // Šumen
-                             BULGARIA_VN,   //Varna
-                             N_BULGARIA_PRIMARIES
-                           };
+enum class PRIMARY_ENUM_BULGARIA { BU,   // Burgas
+                                   SL,   // Sliven
+                                   YA,   // Yambol (Jambol)
+                                   SO,   // Sofija Grad
+                                   HA,   // Haskovo
+                                   KA,   // Kărdžali
+                                   SZ,   // Stara Zagora
+                                   PA,   // Pazardžik
+                                   PD,   // Plovdiv
+                                   SM,   // Smoljan
+                                   BL,   // Blagoevgrad
+                                   KD,   // Kjustendil
+                                   PK,   // Pernik
+                                   SF,   // Sofija (Sofia)
+                                   GA,   // Gabrovo
+                                   LV,   // Loveč (Lovech)
+                                   PL,   // Pleven
+                                   VT,   // Veliko Tărnovo
+                                   MN,   // Montana
+                                   VD,   // Vidin
+                                   VR,   // Vraca
+                                   RZ,   // Razgrad
+                                   RS,   // Ruse
+                                   SS,   // Silistra
+                                   TA,   // Tărgovište
+                                   DO,   // Dobrič
+                                   SN,   // Šumen
+                                   VN,   //Varna
+                                   N_BULGARIA_PRIMARIES
+                                 };
 
 //typedef std::array<std::string, N_BULGARIA_PRIMARIES> PRIMARY_BULGARIA_ENUMERATION_TYPE;    ///< primaries for Bulgaria
 
-using PRIMARY_BULGARIA_ENUMERATION_TYPE = std::array<std::string, N_BULGARIA_PRIMARIES>;    ///< primaries for Bulgaria
+using PRIMARY_BULGARIA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_BULGARIA::N_BULGARIA_PRIMARIES)>;    ///< primaries for Bulgaria
 
 static PRIMARY_BULGARIA_ENUMERATION_TYPE PRIMARY_BULGARIA_ENUMERATION = { "BU"s,   // Burgas
-                                                                            "SL"s,   // Sliven
-                                                                            "YA"s,   // Yambol (Jambol)
-                                                                            "SO"s,   // Sofija Grad
-                                                                            "HA"s,   // Haskovo
-                                                                            "KA"s,   // Kărdžali
-                                                                            "SZ"s,   // Stara Zagora
-                                                                            "PA"s,   // Pazardžik
-                                                                            "PD"s,   // Plovdiv
-                                                                            "SM"s,   // Smoljan
-                                                                            "BL"s,   // Blagoevgrad
-                                                                            "KD"s,   // Kjustendil
-                                                                            "PK"s,   // Pernik
-                                                                            "SF"s,   // Sofija (Sofia)
-                                                                            "GA"s,   // Gabrovo
-                                                                            "LV"s,   // Loveč (Lovech)
-                                                                            "PL"s,   // Pleven
-                                                                            "VT"s,   // Veliko Tărnovo
-                                                                            "MN"s,   // Montana
-                                                                            "VD"s,   // Vidin
-                                                                            "VR"s,   // Vraca
-                                                                            "RZ"s,   // Razgrad
-                                                                            "RS"s,   // Ruse
-                                                                            "SS"s,   // Silistra
-                                                                            "TA"s,   // Tărgovište
-                                                                            "DO"s,   // Dobrič
-                                                                            "SN"s,   // Šumen
-                                                                            "VN"s    //Varna
+                                                                          "SL"s,   // Sliven
+                                                                          "YA"s,   // Yambol (Jambol)
+                                                                          "SO"s,   // Sofija Grad
+                                                                          "HA"s,   // Haskovo
+                                                                          "KA"s,   // Kărdžali
+                                                                          "SZ"s,   // Stara Zagora
+                                                                          "PA"s,   // Pazardžik
+                                                                          "PD"s,   // Plovdiv
+                                                                          "SM"s,   // Smoljan
+                                                                          "BL"s,   // Blagoevgrad
+                                                                          "KD"s,   // Kjustendil
+                                                                          "PK"s,   // Pernik
+                                                                          "SF"s,   // Sofija (Sofia)
+                                                                          "GA"s,   // Gabrovo
+                                                                          "LV"s,   // Loveč (Lovech)
+                                                                          "PL"s,   // Pleven
+                                                                          "VT"s,   // Veliko Tărnovo
+                                                                          "MN"s,   // Montana
+                                                                          "VD"s,   // Vidin
+                                                                          "VR"s,   // Vraca
+                                                                          "RZ"s,   // Razgrad
+                                                                          "RS"s,   // Ruse
+                                                                          "SS"s,   // Silistra
+                                                                          "TA"s,   // Tărgovište
+                                                                          "DO"s,   // Dobrič
+                                                                          "SN"s,   // Šumen
+                                                                          "VN"s    //Varna
                                                                         };
 
 /// Corsica

@@ -1106,7 +1106,7 @@ window& operator<(window& win, bandmap& bm)
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
   const BM_ENTRIES entries { bm.rbn_threshold_and_filtered_entries() };    // automatically filter
-  const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0 };
+  const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0u };
 
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
 
@@ -1127,10 +1127,10 @@ window& operator<(window& win, bandmap& bm)
       const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
 
       const vector<int> fade_colours { bm.fade_colours() };
-      const int         n_colours    { fade_colours.size() };
+      const int         n_colours    { static_cast<int>(fade_colours.size()) };
       const float       interval     { (1.0f / static_cast<float>(n_colours)) };
 
-      int n_intervals { fraction / interval };
+      int n_intervals { static_cast<int>(fraction / interval) };
 
       n_intervals = min(n_intervals, n_colours - 1);
 
@@ -1156,7 +1156,7 @@ window& operator<(window& win, bandmap& bm)
                              ) };
 
 // now work out the status colour
-      int status_colour { colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR) };                      // default
+      int status_colour { static_cast<int>(colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR)) };                      // default
 
       if (!is_marker)
       { if (be.is_needed())

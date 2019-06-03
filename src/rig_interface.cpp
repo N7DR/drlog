@@ -900,7 +900,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
       { array<char, SCREEN_BITS> c_in;    // hide the static array
 
         const int n_bits { SCREEN_BITS * 10 };
-        const int n_secs { n_bits / baud_rate() };
+        const int n_secs { n_bits / static_cast<int>(baud_rate() )};
 
         while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
         { FD_ZERO(&set);    // clear the set
@@ -932,7 +932,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           if (!completed)
           { static const string percent_str { "%%"s };
 
-            const int percent { rcvd.length() * 100 / SCREEN_BITS };
+            const int percent { static_cast<int>(rcvd.length() * 100) / SCREEN_BITS };
 
             alert("P3 screendump progress: "s + to_string(percent) + percent_str);
             sleep_for(milliseconds(1000));  // we have the lock for all this time
@@ -941,7 +941,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 //            alert("P3 screendump complete");
         }
       }
-      else
+      else              // not a P3 screenshot
       { static int rig_communication_failures { 0 };
 
         while (!completed and (counter < MAX_ATTEMPTS) )
@@ -956,10 +956,13 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 
           int status { select(fd + 1, &set, NULL, NULL, &timeout) };
 
+//          if (cmd == "AR;")
+//            ost << "AR counter, status = " << counter << ", " << status << endl;
+
           if (status == -1)
             ost << "Error in select() in raw_command()" << endl;
           else
-          { if (status == 0)
+          { if (status == 0)                // possibly a timeout error
             { if (counter == MAX_ATTEMPTS - 1)
               { if (cmd == "TQ;"s)
                 { rig_communication_failures++;
@@ -968,7 +971,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
                     ost << "status communication with rig failed" << endl;
                 }
                 else
-                  ost << "last-attempt timeout (" << TIMEOUT_MICROSECONDS << "µs) in select() in raw_command: " << cmd << endl;
+                  ost << "last-attempt timeout (" << (TIMEOUT_MICROSECONDS * MAX_ATTEMPTS) << "µs) in select() in raw_command: " << cmd << endl;
               }
             }
             else
@@ -982,7 +985,10 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
               const int n_read { read(fd, c_in.data(), 500) };        // read a maximum of 500 characters
 
               if (n_read > 0)                      // should always be true
-              { total_read += n_read;
+              { if (cmd == "AR;")
+                  ost << "n_read = " << n_read << endl;
+
+                total_read += n_read;
                 c_in[n_read] = static_cast<char>(0);    // append a null byte
 
                 rcvd += string(c_in.data());
@@ -1343,10 +1349,12 @@ void rig_interface::bandwidth_b(const unsigned int hz)
 
     Works only with K3
 */
+#if 1
 const bool rig_interface::rx_ant(void)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    { const string result { raw_command("AR;"s, RESPONSE) };
+    {// const string result { raw_command("AR;"s, RESPONSE) };
+      const string result = raw_command("AR;", true);
 
       if ( (result != "AR0;"s) and (result != "AR1;"s) )
         ost << "ERROR in rx_ant(): result = " << result << endl;
@@ -1357,6 +1365,31 @@ const bool rig_interface::rx_ant(void)
 
   return false;
 }
+#endif
+#if 0
+const bool rig_interface::rx_ant(void)
+{ if (_model == RIG_MODEL_K3)
+  { try
+    { const string str { raw_command("AR;"s, true) };
+
+      if (str.length() < 3)
+        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "RX ANT rhort response"s);
+
+      return (str[2] == '1');
+    }
+
+    catch (const rig_interface_error& e)
+    { throw e;
+    }
+
+    catch (...)
+    { throw rig_interface_error(RIG_MISC_ERROR, "Error getting RX ANT status"s);
+    }
+  }
+
+  return false;    // keep compiler happy
+}
+#endif
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna

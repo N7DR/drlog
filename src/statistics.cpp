@@ -1008,7 +1008,7 @@ const bool call_history::worked(const string& s, const BAND b)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
-  { const string& call = pssbm.first;
+  { const string& call { pssbm.first };
 
     if (s == call)
     { for (const auto& bm : pssbm.second)
@@ -1030,7 +1030,7 @@ const bool call_history::worked(const string& s, const MODE m)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
-  { const string& call = pssbm.first;
+  { const string& call { pssbm.first };
 
     if (s == call)
     { for (const auto& bm : pssbm.second)
@@ -1062,7 +1062,7 @@ const bool call_history::worked_on_another_band(const string& s, const BAND b)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
-  { const string& call = pssbm.first;
+  { const string& call { pssbm.first };
 
     if (s == call)
     { for (const auto& bm : pssbm.second)
@@ -1084,7 +1084,7 @@ const bool call_history::worked_on_another_mode(const string& s, const MODE m)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
-  { const string& call = pssbm.first;
+  { const string& call { pssbm.first };
 
     if (s == call)
     { for (const auto& bm : pssbm.second)
@@ -1107,7 +1107,7 @@ const bool call_history::worked_on_another_band_and_mode(const std::string& s, c
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
-  { const string& call = pssbm.first;
+  { const string& call { pssbm.first };
 
     if (s == call)
     { for (const auto& bm : pssbm.second)

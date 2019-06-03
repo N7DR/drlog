@@ -2673,13 +2673,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // ALT-B and ALT-V (band up and down)
   if (!processed and (e.is_alt('b') or e.is_alt('v')) and (rules.n_bands() > 1))
   { try
-    { // BAND cur_band       { safe_get_band() };
-
-//      const MODE cur_mode = safe_get_mode();
-
-      rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
-
-//      ost << "ALT-B/V: current band = " << BAND_NAME[cur_band] << ", UP = " << BAND_NAME[rules.next_band_up(cur_band)] << ", DOWN = " << BAND_NAME[rules.next_band_down(cur_band)] << endl;
+    { rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
 
       BAND new_band { ( e.is_alt('b') ? rules.next_band_up(cur_band) : rules.next_band_down(cur_band) ) };    // move up or down one band
 
@@ -2728,11 +2722,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-M -- change mode
   if (!processed and e.is_alt('m') and (n_modes > 1))
-  { //const BAND cur_band { safe_get_band() };
-
-    //MODE cur_mode = safe_get_mode();
-
-    rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
+  { rig.set_last_frequency(cur_band, cur_mode, rig.rig_frequency());             // save current frequency
 
     const MODE new_mode { rules.next_mode(cur_mode) };
 
@@ -2796,7 +2786,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // F11 -- band map filtering
   if (!processed and (e.symbol() == XK_F11))
   { const string contents { remove_peripheral_spaces(win.read()) };
-//    const BAND cur_band = safe_get_band();
 
     bandmap& bm = bandmaps[cur_band];        // use current bandmap to make it easier to display column offset
 
@@ -2873,7 +2862,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // .ADD <call> -- remove call from the do-not-show list
       if (starts_with(command, "ADD"s))
       { if (contains(command, " "s))
-        { const size_t posn     { command.find(" "s) };
+        { const size_t posn     { command.find(SPACE_STR) };
           const string callsign { remove_peripheral_spaces(substring(command, posn)) };
 
           for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.remove_from_do_not_add(callsign); } );
@@ -2901,8 +2890,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .MONITOR <call> -- add <call> to those being monitored
       if (starts_with(command, "MON"s))
-      { if (contains(command, " "s))
-        { const size_t posn     { command.find(" ") };
+      { if (contains(command, SPACE_STR))
+        { const size_t posn     { command.find(SPACE_STR) };
           const string callsign { remove_peripheral_spaces(substring(command, posn)) };
 
           mp += callsign;
@@ -2946,8 +2935,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .REMOVE <call> -- remove call from bandmap and add it to the do-not-show list
       if ( starts_with(command, "REMOVE"s) or starts_with(command, "RM"s))
-      { if (contains(command, " "s))
-        { const size_t posn     { command.find(" "s) };
+      { if (contains(command, SPACE_STR))
+        { const size_t posn     { command.find(SPACE_STR) };
           const string callsign { remove_peripheral_spaces(substring(command, posn)) };
 
           FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
@@ -2960,8 +2949,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .RESCOREB or .SCOREB
       if ( starts_with(command, "RESCOREB"s) or starts_with(command, "SCOREB"s) )
-      { if (contains(command, " "s))
-        { size_t posn { command.find(" "s) };
+      { if (contains(command, SPACE_STR))
+        { size_t posn { command.find(SPACE_STR) };
           string rhs  { substring(command, posn) };
 
           set<BAND> score_bands;
@@ -2991,7 +2980,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           string bands_str;
 
-          FOR_ALL(score_bands, [&] (const BAND& b) { bands_str += (BAND_NAME[b] + " "); } );
+          FOR_ALL(score_bands, [&] (const BAND& b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
 
           win_score_bands < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "Score Bands: "s <= bands_str;
         }
@@ -3004,8 +2993,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .RESCOREM or .SCOREM
       if ( starts_with(command, "RESCOREM"s) or starts_with(command, "SCOREM"s) )
-      { if (contains(command, " "s))
-        { size_t posn { command.find(" "s) };
+      { if (contains(command, SPACE_STR))
+        { size_t posn { command.find(SPACE_STR) };
           string rhs  { substring(command, posn) };
 
           set<MODE> score_modes;
@@ -3060,7 +3049,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .UNMONITOR <call> -- remove <call> from those being monitored
       if (starts_with(command, "UNMON"s))
-      { if (contains(command, " "s))
+      { if (contains(command, SPACE_STR))
         { const size_t posn     { command.find(" "s) };
           const string callsign { remove_peripheral_spaces(substring(command, posn)) };
 
@@ -3102,9 +3091,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           { const bool possible_qsy { ( (contents.length() >= 3) and (contents[contents.size() - 2] == '.') ) };
 
             if (possible_qsy)
-            { //const BAND cur_band = safe_get_band();
-
-              float band_edge_in_khz { rig.rig_frequency().lower_band_edge().khz() };
+            { float band_edge_in_khz { rig.rig_frequency().lower_band_edge().khz() };
 
               switch (cur_band)
               { case BAND_160 :
@@ -3140,8 +3127,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           if (valid)
           { const BAND cur_band { to_BAND(cur_rig_frequency) };                     // hide old cur_band
 
-//            MODE cur_mode = safe_get_mode();
-
             rig.set_last_frequency(cur_band, cur_mode, cur_rig_frequency);             // save current frequency
             rig.rig_frequency(new_frequency);
 
@@ -3151,7 +3136,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             const MODE m { default_mode(new_frequency) };
 
             rig.rig_mode(m);
-//              cur_mode = m;
             safe_set_mode(m);
 
             display_band_mode(win_band_mode, new_band, m);
@@ -3185,10 +3169,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // assume it's a call
     if (!processed)
-    { const string& callsign = contents;
-//      const BAND cur_band = safe_get_band();
-//      const MODE cur_mode = safe_get_mode();
-      const bool is_dupe { logbk.is_dupe(callsign, cur_band, cur_mode, rules) };
+    { const string& callsign { contents };
+      const bool    is_dupe  { logbk.is_dupe(callsign, cur_band, cur_mode, rules) };
 
 // if we're in SAP mode, don't call him if he's a dupe
       if (drlog_mode == DRLOG_MODE::SAP and is_dupe)
@@ -3295,7 +3277,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           { const string guess { exchange_db.guess_value(contents, "DOK"s) };
 
             if (!guess.empty())
-            { exchange_str += (guess + " "s);
+            { exchange_str += (guess + SPACE_STR);
               processed_field = true;
             }
           }
@@ -3323,13 +3305,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           if (!processed_field)
           { if (!(variable_exchange_fields < exf.name()))    // if not a variable field
-            { ost << "About to generate guess" << endl;
+            { //ost << "About to generate guess" << endl;
 
-              ost << "Guessed value from exchange db = " << exchange_db.guess_value(contents, exf.name()) << endl;
+              //ost << "Guessed value from exchange db = " << exchange_db.guess_value(contents, exf.name()) << endl;
 
               const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) };
 
-              ost << "Generated guess = *" << guess << "*" << endl;
+              //ost << "Generated guess = *" << guess << "*" << endl;
 
               if (!guess.empty())
               { if ((exf.name() == "RDA"s) and (guess.length() == 2))  // RDA guess might just have first two characters
@@ -3384,12 +3366,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
   if (!processed and e.is_control() and (e.symbol() == XK_Return))
-  { //string contents { remove_peripheral_spaces(win.read()) };
-    bool found_call { false };
+  { bool found_call { false };
 
     frequency new_frequency;
-
-//    const string original_contents = contents;
 
 // define what needs to be done for a QSY
     auto ctrl_enter_activity = [&] (bandmap_entry& be)
@@ -3403,7 +3382,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       };
 
 // assume it's a call -- look for the same call in the current bandmap
-    bandmap_entry be = bandmaps[safe_get_band()][original_contents];
+    bandmap_entry be { bandmaps[safe_get_band()][original_contents] };
 
     if (!(be.callsign().empty()))
     { found_call = true;
@@ -3416,7 +3395,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       if (!(be.callsign().empty()))     // if we found a match
       { found_call = true;
         win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
-//        contents = be.callsign();
 
         ctrl_enter_activity(be);
       }
@@ -3439,10 +3417,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // KP ENTER -- send CQ #2
   if (!processed and (!e.is_control()) and (e.symbol() == XK_KP_Enter))
-  { const string contents { remove_peripheral_spaces(win.read()) };
-
+  {
 // if empty, send CQ #2
-    if (contents.empty() and (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ) )
+    if (original_contents.empty() and (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ) )
     { const string msg { context.message_cq_2() };
 
       if (!msg.empty())
@@ -3454,15 +3431,14 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
   if (!processed and e.is_control() and (e.symbol() == XK_KP_Enter))
-  { //const string contents = remove_peripheral_spaces(win.read());
-    const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
+  { const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
 
     string results;
 
     for (const auto& b : permitted_bands)
-    { bandmap& bm = bandmaps[b];        // use current bandmap to make it easier to display column offset
+    { bandmap& bm { bandmaps[b] };        // use current bandmap to make it easier to display column offset
 
-      const bandmap_entry be = bm[original_contents];
+      const bandmap_entry be { bm[original_contents] };
 
       if (!be.empty())
       { if (!results.empty())
@@ -3503,9 +3479,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // possibly add the call to known mults
         update_known_callsign_mults(current_contents);
         update_known_country_mults(current_contents, FORCE_THRESHOLD);
-
-//        const BAND cur_band = safe_get_band();
-//        const MODE cur_mode = safe_get_mode();
 
         bandmap_entry be;                        // default source is BANDMAP_ENTRY_LOCAL
 
@@ -3606,18 +3579,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         if (octothorpe)
           octothorpe--;
 
-//        octothorpe = (octothorpe == 0 ? octothorpe : octothorpe -1);
         win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
-
-//        next_qso_number = (next_qso_number == 0 ? next_qso_number : next_qso_number -1);
 
         if (next_qso_number)
           next_qso_number--;
 
         win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
-
-//        const BAND cur_band = safe_get_band();
-//        const MODE cur_mode = safe_get_mode();
 
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
@@ -4080,7 +4047,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-R -- toggle RX antenna
   if (!processed and (e.is_alt('r')))
-  { rig.toggle_rx_ant();
+  { ost << "Processing ALT-R" << endl;
+    rig.toggle_rx_ant();
     processed = update_rx_ant_window();
   }
 
@@ -5362,7 +5330,7 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
     return string();
 
   const float  lat { location_db.latitude(callsign) };
-  const float  lon { -location_db.longitude(callsign) };    // minus sign to get in the correct direction
+  const float  lon { -location_db.longitude(callsign) };          // minus sign to get in the correct direction
   const string rv  { sunrise_or_sunset(lat, lon, calc_sunset) };
 
   return rv;

@@ -972,4 +972,14 @@ template <typename T, typename U, typename V>
 inline const T LIMIT(const T val, const U low_val, const V high_val)
   { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
 
+/// a version of floor() that returns a float instead of a double (not quite the same as floorf)
+template <typename T>
+inline const float ffloor(T val)
+  { return static_cast<float>(floor(val)); }
+
+/// a version of floor() that returns an int instead of a double (not quite the same as floorl)
+template <typename T>
+inline const int ifloor(T val)
+  { return static_cast<int>(floor(val)); }
+
 #endif    // MACROS_H
