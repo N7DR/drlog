@@ -104,7 +104,8 @@ const bool change_cw_speed(const keyboard_event& e);                            
 void cw_speed(const unsigned int new_speed);                                                ///< Set speed of computer keyer
 
 const bool debug_dump(void);                                                                          ///< Dump useful information to disk
-const MODE default_mode(const frequency& f);                                                    ///< get the default mode on a frequency
+const MODE default_mode(const frequency& f);              ///< get the default mode on a frequency
+void display_bandmap_filter(bandmap& bm);                                                       ///< display the bandmap cull/filter information in win_bandmap_filter
 void display_band_mode(window& win, const BAND current_band, const enum MODE current_mode);     ///< Display band and mode
 void display_call_info(const string& callsign, const bool display_extract = DISPLAY_EXTRACT);   ///< Update several call-related windows
 void display_memories(void);                                                                    ///< Update MEMORIES window
@@ -1011,6 +1012,13 @@ int main(int argc, char** argv)
     if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
       FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
+// set the initial cull function for each bandmap
+    { const int cull_function { context.bandmap_cull_function() };
+
+      if (cull_function)
+        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
+    }
+
 // initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function
     my_bandmap_entry.callsign(MY_MARKER);
@@ -1465,7 +1473,8 @@ int main(int argc, char** argv)
 
     FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
-    win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();       // display filter
+//    win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();       // display filter
+    display_bandmap_filter(bm);
   }
 
   // read a Cabrillo log
@@ -2710,7 +2719,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       update_remaining_country_mults_window(statistics, new_band, cur_mode);
       update_remaining_exchange_mults_windows(rules, statistics, new_band, cur_mode);
 
-      win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+//      win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+      display_bandmap_filter(bm);
     }
 
     catch (const rig_interface_error& e)
@@ -2794,8 +2804,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { bm.filter_enabled(false);
 
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
-        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
-
+//        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+        display_bandmap_filter(bm);
         processed = true;
       }
 
@@ -2804,8 +2814,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         bm.filter_hide(true);
 
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_hide_colour());
-        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
-
+//        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+        display_bandmap_filter(bm);
         processed = true;
       }
 
@@ -2813,8 +2823,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { bm.filter_show(true);
 
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_show_colour());
-        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
-
+//        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+        display_bandmap_filter(bm);
         processed = true;
       }
     }
@@ -2822,8 +2832,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     { const string str { ( (CONTINENT_SET < contents) ? contents : location_db.canonical_prefix(contents) ) };
 
       bm.filter_add_or_subtract(str);
-      win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
-
+//      win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+      display_bandmap_filter(bm);
       processed = true;         //  processed even if haven't been able to do anything with it
     }
 
@@ -2861,11 +2871,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // .ADD <call> -- remove call from the do-not-show list
       if (starts_with(command, "ADD"s))
-      { if (contains(command, " "s))
+      { if (contains(command, SPACE_STR))
         { const size_t posn     { command.find(SPACE_STR) };
           const string callsign { remove_peripheral_spaces(substring(command, posn)) };
 
-          for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.remove_from_do_not_add(callsign); } );
+//          for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.remove_from_do_not_add(callsign); } );
+          FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.remove_from_do_not_add(callsign); } );
         }
       }
 
@@ -2883,6 +2894,31 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // .CLEAR
       if (command == "CLEAR"s)
         win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+// .CULL <n>
+      if (starts_with(command, "CULL"s))
+      { if (contains(command, SPACE_STR))
+        { const size_t posn        { command.find(SPACE_STR) };
+          const int  cull_function { from_string<int>(substring(command, posn)) };
+
+//          for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.cull_function(cull_function); } );
+          FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
+        }
+
+        bandmap& bm { bandmaps[safe_get_band()] };
+
+        win_bandmap <= bm;
+#if 0
+        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+        if (bm.cull_function())
+          win_bandmap_filter < "(C"s < to_string(bm.cull_function()) < ") "s;
+
+        win_bandmap_filter < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+#endif
+        display_bandmap_filter(bm);
+        win <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      }
 
 // .M : insert memory
       if (command == "M"s)
@@ -3050,7 +3086,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // .UNMONITOR <call> -- remove <call> from those being monitored
       if (starts_with(command, "UNMON"s))
       { if (contains(command, SPACE_STR))
-        { const size_t posn     { command.find(" "s) };
+        { const size_t posn     { command.find(SPACE_STR) };
           const string callsign { remove_peripheral_spaces(substring(command, posn)) };
 
           mp -= callsign;
@@ -5203,7 +5239,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
 
   for (const auto& canonical_prefix : vec_str)
   { const bool is_needed          { ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() ) };
-    const int  colour_pair_number { static_cast<int>(colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : string_to_colour(context.worked_mults_colour()) ), win_remaining_callsign_mults.bg())) };
+    const int  colour_pair_number { static_cast<int>(colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : context.worked_mults_colour() ), win_remaining_callsign_mults.bg())) };
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
   }
@@ -5230,7 +5266,7 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
 
   for (const auto& canonical_prefix : vec_str)
   { const bool is_needed          { worked_country_mults.find(canonical_prefix) == worked_country_mults.cend() };
-    const int  colour_pair_number { static_cast<int>(colours.add( is_needed ? win_remaining_country_mults.fg() : string_to_colour(context.worked_mults_colour()), win_remaining_country_mults.bg())) };
+    const int  colour_pair_number { static_cast<int>(colours.add( is_needed ? win_remaining_country_mults.fg() : context.worked_mults_colour(), win_remaining_country_mults.bg())) };
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
   }
@@ -5263,7 +5299,7 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
 
   for (const auto& known_value : known_exchange_values)
   { const bool is_needed          { statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m) };
-    const int  colour_pair_number { static_cast<int>( ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(string_to_colour(context.worked_mults_colour()),  win.bg())) ) };
+    const int  colour_pair_number { static_cast<int>( ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(context.worked_mults_colour(),  win.bg())) ) };
 
     vec.push_back( { known_value, colour_pair_number } );
   }
@@ -5404,7 +5440,7 @@ void populate_win_info(const string& callsign)
       ost << current_time << ": error calculating whether daylight for: " << callsign << endl;
 
     win_info < cursor(0, win_info.height() - 2) < location_db.canonical_prefix(callsign) < ": "s
-                                                < pad_string(bearing(callsign), 5)       < "  "s
+                                                < pad_string(bearing(callsign), 5)       < SPACE_STR
                                                 < sunrise_time                           < "/"s      < sunset_time
                                                 < (is_daylight ? "(D)"s : "(N)"s);
 
@@ -7345,7 +7381,8 @@ const bool process_change_in_bandmap_column_offset(const KeySym symbol)
     alert("Bandmap column offset set to: "s + to_string(bm.column_offset()));
 
     win_bandmap <= bm;
-    win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+//    win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+    display_bandmap_filter(bm);
   }
 
   return true;
@@ -7613,7 +7650,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     bm += my_bandmap_entry;
     win_bandmap <= bm;       // move this outside the SAFELOCK?
 
-    win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+//    win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+    display_bandmap_filter(bm);
 
 // is there a station close to our frequency?
 // use the filtered bandmap (maybe should make this controllable? but used to use unfiltered version, and it was annoying
@@ -7959,4 +7997,16 @@ void update_score_window(const unsigned int score)
 
   win_score < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < RUBRIC
             <= (pad_string(separated_string(score, TS), win_score.width() - RUBRIC.length()));
+}
+
+/*! \brief      Update the BANDMAP FILTER window
+    \param  bm  the bandmap that contains the filter information to be written
+*/
+void display_bandmap_filter(bandmap& bm)                                                       ///< display the bandmap cull/filter information in win_bandmap_filter
+{ win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
+
+  if (bm.cull_function())
+    win_bandmap_filter < "(C"s < to_string(bm.cull_function()) < ") "s;
+
+  win_bandmap_filter < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
 }

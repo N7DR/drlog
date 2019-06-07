@@ -721,6 +721,7 @@ protected:
 
   pt_mutex                  _bandmap_mutex;                             ///< mutex for this bandmap
   int                       _column_offset;                             ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
+  int                       _cull_function;                             ///< cull function number to apply
   std::set<std::string>     _do_not_add;                                ///< do not add these calls
   BM_ENTRIES                _entries;                                   ///< all the entries
   std::vector<int>          _fade_colours;                              ///< the colours to use as entries age
@@ -768,12 +769,13 @@ public:
 /// default constructor
   inline bandmap(void) :
     _column_offset(0),
+    _cull_function(0),
     _filtered_entries_dirty(false),
     _filter_p(&BMF),
     _mode_marker_frequency(frequency(0)),
     _rbn_threshold(1),
     _rbn_threshold_and_filtered_entries_dirty(false),
-    _recent_colour(string_to_colour("BLACK"))
+    _recent_colour(COLOUR_BLACK)
   { }
 
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
@@ -798,6 +800,9 @@ public:
       return _entries.size(); 
     }
   
+/// cull function number for the bandmap
+  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(cull_function, _bandmap);
+
 /// all the entries in the bandmap
   SAFEREAD_WITH_INTERNAL_MUTEX(entries, _bandmap);
     

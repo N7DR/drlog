@@ -561,7 +561,7 @@ window& window::operator<(const enum WINDOW_ATTRIBUTES wa)
       break;
 
     case WINDOW_ATTRIBUTES::CURSOR_END_OF_LINE :
-    { const size_t posn { read().find_last_not_of(" "s) };
+    { const size_t posn { read().find_last_not_of(SPACE_STR) };
 
       move_cursor(posn + 1, cursor_position().y());
       break;
@@ -677,7 +677,8 @@ const string window::read(int x, int y)
 { if (!_wp)
     return string();
   
-  const unsigned int BUF_SIZE = 1024;
+  constexpr unsigned int BUF_SIZE { 1024 };
+
   char tmp[BUF_SIZE];
 
   tmp[0] = '\0';
@@ -685,8 +686,9 @@ const string window::read(int x, int y)
   SAFELOCK(screen);
   
 // we need to save the current logical cursor position in the window, because mvwinstr() silently moves it
-  const cursor c = cursor_position();
-  const int n_chars = mvwinnstr(_wp,  LIMIT(_height - y - 1, 0, _height - 1),  LIMIT(x, 0, _width - 1), tmp, BUF_SIZE - 1);
+  const cursor c       { cursor_position() };
+  const int    n_chars { mvwinnstr(_wp,  LIMIT(_height - y - 1, 0, _height - 1),  LIMIT(x, 0, _width - 1), tmp, BUF_SIZE - 1) };
+
   move_cursor(c.x(), c.y());          // restore the logical cursor position
   
   if (n_chars != ERR)
@@ -712,13 +714,10 @@ const vector<string> window::snapshot(void)
     Limits <i>line_nr</i> to a valid value for the window before clearing the line.
 */
 window& window::clear_line(const int line_nr)
-{ //if (!_wp)
-  //  return *this;
-
-  if (_wp)
+{ if (_wp)
   { SAFELOCK(screen);
 
-    const cursor c = cursor_position();
+    const cursor c { cursor_position() };
 
     move_cursor(0, line_nr);
     (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL;
@@ -751,7 +750,6 @@ window& window::delete_character(const int n)
     Line number zero is the bottom line
 */
 window& window::delete_character(const int n, const int line_nr)
-
 { if (!_wp)
     return *this;
 
@@ -761,7 +759,7 @@ window& window::delete_character(const int n, const int line_nr)
 // make sure nothing changes from this point onwards
   SAFELOCK(screen);
 
-  const string old_line = getline(line_nr);
+  const string old_line { getline(line_nr) };
 
   if (old_line.empty())
     return *this;
@@ -769,15 +767,15 @@ window& window::delete_character(const int n, const int line_nr)
   if (n >= static_cast<int>(old_line.length()))
     return *this;
 
-  const string new_line = old_line.substr(0, n) + old_line.substr(n + 1);
-  const cursor c = cursor_position();
+  const string new_line { old_line.substr(0, n) + old_line.substr(n + 1) };
+  const cursor c        { cursor_position() };
 
   move_cursor(0, line_nr);
 
 // ensure we are not in insert mode
   { SAFELOCK(screen);
 
-    const bool insert_enabled = _insert;
+    const bool insert_enabled { _insert };
 
     _insert = false;
     (*this) < WINDOW_ATTRIBUTES::WINDOW_CLEAR_TO_EOL < new_line;
@@ -813,7 +811,7 @@ void window::show(void)
     \return whether the event was processed
 */
 const bool window::common_processing(const keyboard_event& e)
-{ window& win = (*this);
+{ window& win { (*this) };
 
 // a..z A..Z
   if (e.is_letter())
@@ -848,8 +846,8 @@ const bool window::common_processing(const keyboard_event& e)
 
 // END
   if (e.is_unmodified() and e.symbol() == XK_End)
-  { const string contents = win.read();
-    const size_t posn = contents.find_last_not_of(" ");
+  { const string contents { win.read() };
+    const size_t posn     { contents.find_last_not_of(SPACE_STR) };
 
     win <= cursor(posn + 1, 0);
     return true;
@@ -959,27 +957,27 @@ const int cpair::bg(const int pair_nr) const
     \return         the colour corresponding to <i>str</i>
 */
 const int string_to_colour(const string& str)
-{ static const map<string, int> colour_map { { "BLACK",   COLOUR_BLACK },
-                                             { "BLUE",    COLOUR_BLUE },
-                                             { "CYAN",    COLOUR_CYAN },
-                                             { "GREEN",   COLOUR_GREEN },
-                                             { "MAGENTA", COLOUR_MAGENTA },
-                                             { "RED",     COLOUR_RED },
-                                             { "WHITE",   COLOUR_WHITE },
-                                             { "YELLOW",  COLOUR_YELLOW }
+{ static const map<string, int> colour_map { { "BLACK"s,   COLOUR_BLACK },
+                                             { "BLUE"s,    COLOUR_BLUE },
+                                             { "CYAN"s,    COLOUR_CYAN },
+                                             { "GREEN"s,   COLOUR_GREEN },
+                                             { "MAGENTA"s, COLOUR_MAGENTA },
+                                             { "RED"s,     COLOUR_RED },
+                                             { "WHITE"s,   COLOUR_WHITE },
+                                             { "YELLOW"s,  COLOUR_YELLOW }
                                            };
 
-  const string s = to_upper(remove_peripheral_spaces(str));
-  const auto cit = colour_map.find(s);
+  const string s   { to_upper(remove_peripheral_spaces(str)) };
+  const auto   cit { colour_map.find(s) };
 
   if (cit != colour_map.cend())
     return cit->second;
 
 // should change this so it works with a colour name and not just a number
-  if (begins_with(s, "COLOUR_"))
+  if (begins_with(s, "COLOUR_"s))
     return (from_string<int>(substring(s, 7)));
 
-  if (begins_with(s, "COLOR_"))
+  if (begins_with(s, "COLOR_"s))
     return (from_string<int>(substring(s, 6)));
 
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits

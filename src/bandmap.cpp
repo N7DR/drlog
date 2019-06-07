@@ -1105,7 +1105,17 @@ window& operator<(window& win, bandmap& bm)
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
-  const BM_ENTRIES entries { bm.rbn_threshold_and_filtered_entries() };    // automatically filter
+  BM_ENTRIES entries { bm.rbn_threshold_and_filtered_entries() };    // automatically filter
+
+  switch (bm.cull_function())
+  { case 1 :                                                         // N7DR criteria
+      REMOVE_IF_AND_RESIZE(entries, [] (bandmap_entry& be) { return (!be.matches_criteria()); });
+      break;
+
+    default :
+      break;
+  }
+
   const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0u };
 
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
@@ -1114,7 +1124,7 @@ window& operator<(window& win, bandmap& bm)
 
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-    { const string entry_str     { pad_string(pad_string(be.frequency_str(), 7)  + " " + substring(be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH, PAD_RIGHT) };
+    { const string entry_str     { pad_string(pad_string(be.frequency_str(), 7)  + SPACE_STR + substring(be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH, PAD_RIGHT) };
       const string frequency_str { substring(entry_str, 0, 7) };
       const string callsign_str  { substring(entry_str, 8) };
       const bool   is_marker     { be.is_marker() };
@@ -1130,14 +1140,14 @@ window& operator<(window& win, bandmap& bm)
       const int         n_colours    { static_cast<int>(fade_colours.size()) };
       const float       interval     { (1.0f / static_cast<float>(n_colours)) };
 
-      int n_intervals { static_cast<int>(fraction / interval) };
+//      int n_intervals { static_cast<int>(fraction / interval) };
 
-      n_intervals = min(n_intervals, n_colours - 1);
+      const int n_intervals { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
       int cpu = colours.add(fade_colours.at(n_intervals), win.bg());
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
-      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != string_to_colour("BLACK"s)))
+      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != COLOUR_BLACK))
         cpu = colours.add(bm.recent_colour(), win.bg());
 
       if (is_marker)
@@ -1181,7 +1191,7 @@ window& operator<(window& win, bandmap& bm)
       if (reverse)
         win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
 
-      win < colour_pair(status_colour) < " "s
+      win < colour_pair(status_colour) < SPACE_STR
           < colour_pair(cpu) < callsign_str;
     }
 

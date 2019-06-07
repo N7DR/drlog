@@ -2102,59 +2102,59 @@ static PRIMARY_BULGARIA_ENUMERATION_TYPE PRIMARY_BULGARIA_ENUMERATION = { "BU"s,
                                                                         };
 
 /// Corsica
-enum PRIMARY_ENUM_CORSICA { CORSICA_2A, // Corse-du-Sud
-                            CORSICA_2B, // Haute-Corse
-                            N_CORSICA_PRIMARIES
-                          };
+enum class PRIMARY_ENUM_CORSICA { CORSICA_2A, // Corse-du-Sud
+                                  CORSICA_2B, // Haute-Corse
+                                  N_CORSICA_PRIMARIES
+                                };
 
 //typedef std::array<std::string, N_CORSICA_PRIMARIES> PRIMARY_CORSICA_ENUMERATION_TYPE;    ///< primaries for Corsica
 
-using PRIMARY_CORSICA_ENUMERATION_TYPE = std::array<std::string, N_CORSICA_PRIMARIES>;    ///< primaries for Corsica
+using PRIMARY_CORSICA_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_CORSICA::N_CORSICA_PRIMARIES)>;    ///< primaries for Corsica
 
 static PRIMARY_CORSICA_ENUMERATION_TYPE PRIMARY_CORSICA_ENUMERATION = { "2A"s, // Corse-du-Sud
-                                                                          "2B"s  // Haute-Corse
+                                                                        "2B"s  // Haute-Corse
                                                                       };
 
 /// Denmark
-enum PRIMARY_ENUM_DENMARK { DENMARK_015,  // Koebenhavns amt
-                            DENMARK_020,  // Frederiksborg amt
-                            DENMARK_025,  // Roskilde amt
-                            DENMARK_030,  // Vestsjaellands amt
-                            DENMARK_035,  // Storstrøm amt (Storstroems)
-                            DENMARK_040,  // Bornholms amt
-                            DENMARK_042,  // Fyns amt
-                            DENMARK_050,  // Sínderjylland amt (Sydjyllands)
-                            DENMARK_055,  // Ribe amt
-                            DENMARK_060,  // Vejle amt
-                            DENMARK_065,  // Ringkøbing amt (Ringkoebing)
-                            DENMARK_070,  // Århus amt (Aarhus)
-                            DENMARK_076,  // Viborg amt
-                            DENMARK_080,  // Nordjyllands amt
-                            DENMARK_101,  // Copenhagen City
-                            DENMARK_147,  // Frederiksberg
-                            N_DENMARK_PRIMARIES
-                         };
+enum class PRIMARY_ENUM_DENMARK { DENMARK_015,  // Koebenhavns amt
+                                  DENMARK_020,  // Frederiksborg amt
+                                  DENMARK_025,  // Roskilde amt
+                                  DENMARK_030,  // Vestsjaellands amt
+                                  DENMARK_035,  // Storstrøm amt (Storstroems)
+                                  DENMARK_040,  // Bornholms amt
+                                  DENMARK_042,  // Fyns amt
+                                  DENMARK_050,  // Sínderjylland amt (Sydjyllands)
+                                  DENMARK_055,  // Ribe amt
+                                  DENMARK_060,  // Vejle amt
+                                  DENMARK_065,  // Ringkøbing amt (Ringkoebing)
+                                  DENMARK_070,  // Århus amt (Aarhus)
+                                  DENMARK_076,  // Viborg amt
+                                  DENMARK_080,  // Nordjyllands amt
+                                  DENMARK_101,  // Copenhagen City
+                                  DENMARK_147,  // Frederiksberg
+                                  N_DENMARK_PRIMARIES
+                               };
 
 //typedef std::array<std::string, N_DENMARK_PRIMARIES> PRIMARY_DENMARK_ENUMERATION_TYPE;    ///< primaries for Denmark
 
-using PRIMARY_DENMARK_ENUMERATION_TYPE = std::array<std::string, N_DENMARK_PRIMARIES>;    ///< primaries for Denmark
+using PRIMARY_DENMARK_ENUMERATION_TYPE = std::array<std::string, static_cast<int>(PRIMARY_ENUM_DENMARK::N_DENMARK_PRIMARIES)>;    ///< primaries for Denmark
 
 static PRIMARY_DENMARK_ENUMERATION_TYPE PRIMARY_DENMARK_ENUMERATION = { "015"s,  // Koebenhavns amt
-                                                                          "020"s,  // Frederiksborg amt
-                                                                          "025"s,  // Roskilde amt
-                                                                          "030"s,  // Vestsjaellands amt
-                                                                          "035"s,  // Storstrøm amt (Storstroems)
-                                                                          "040"s,  // Bornholms amt
-                                                                          "042"s,  // Fyns amt
-                                                                          "050"s,  // Sínderjylland amt (Sydjyllands)
-                                                                          "055"s,  // Ribe amt
-                                                                          "060"s,  // Vejle amt
-                                                                          "065"s,  // Ringkøbing amt (Ringkoebing)
-                                                                          "070"s,  // Århus amt (Aarhus)
-                                                                          "076"s,  // Viborg amt
-                                                                          "080"s,  // Nordjyllands amt
-                                                                          "101"s,  // Copenhagen City
-                                                                          "147"s   // Frederiksberg
+                                                                        "020"s,  // Frederiksborg amt
+                                                                        "025"s,  // Roskilde amt
+                                                                        "030"s,  // Vestsjaellands amt
+                                                                        "035"s,  // Storstrøm amt (Storstroems)
+                                                                        "040"s,  // Bornholms amt
+                                                                        "042"s,  // Fyns amt
+                                                                        "050"s,  // Sínderjylland amt (Sydjyllands)
+                                                                        "055"s,  // Ribe amt
+                                                                        "060"s,  // Vejle amt
+                                                                        "065"s,  // Ringkøbing amt (Ringkoebing)
+                                                                        "070"s,  // Århus amt (Aarhus)
+                                                                        "076"s,  // Viborg amt
+                                                                        "080"s,  // Nordjyllands amt
+                                                                        "101"s,  // Copenhagen City
+                                                                        "147"s   // Frederiksberg
                                                                       };
 
 /// Finland

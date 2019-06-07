@@ -263,7 +263,7 @@ protected:
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
   std::map<std::string, window_information >   _windows                                 { };                                ///< size and position info for each window
-  std::string                                  _worked_mults_colour                     { "RED"s };                         ///< colour of worked mults in the mult windows
+  int                                          _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
 /*! \brief              Process a configuration file
     \param  filename    name of file to process
@@ -285,6 +285,8 @@ public:
 
 /// construct from file
   drlog_context( const std::string& filename );
+
+  drlog_context(const drlog_context&) = delete;         ///< disallow copying
 
   CONTEXTREAD(accept_colour);                            ///< colour for calls that have been worked, but are not dupes
   CONTEXTREAD(allow_audio_recording);                    ///< whether to allow recording of audio

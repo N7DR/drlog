@@ -943,7 +943,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // WORKED MULTS COLOUR
     if ( (LHS == "WORKED MULTS COLOUR"s) or (LHS == "WORKED MULTS COLOR"s) )
-      _worked_mults_colour = RHS;
+      _worked_mults_colour = string_to_colour(RHS);
 
 // ---------------------------------------------  MULTIPLIERS  ---------------------------------
 
@@ -964,7 +964,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _auto_remaining_callsign_mults = (RHS == "AUTO"s);
 
       if (_auto_remaining_callsign_mults)
-      { const vector<string> tokens { split_string(RHS, " "s) };
+      { const vector<string> tokens { split_string(RHS, SPACE_STR) };
 
         if (tokens.size() == 2)
           _auto_remaining_callsign_mults_threshold = from_string<unsigned int>(tokens[1]);
@@ -981,7 +981,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { _auto_remaining_country_mults = contains(RHS, "AUTO"s);
 
       if (_auto_remaining_country_mults)
-      { const vector<string> tokens { split_string(RHS, " "s) };
+      { const vector<string> tokens { split_string(RHS, SPACE_STR) };
 
         if (tokens.size() == 2)
           _auto_remaining_country_mults_threshold = from_string<unsigned int>(tokens[1]);
@@ -1285,7 +1285,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // ---------------------------------------------  MESSAGES  ---------------------------------
 
     if (starts_with(testline, "MESSAGE KEY"s))
-    { vector<string> message_info { split_string(testline, " "s) };
+    { vector<string> message_info { split_string(testline, SPACE_STR) };
 
       if (message_info.size() >= 5 and contains(testline, "="s))
       {
@@ -1357,7 +1357,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
     _alternative_qsl_message = "tu "s + _my_call;
 
   if (_message_cq_1.empty())
-    _message_cq_1 = "test "s + _my_call + " "s + _my_call + " test"s;
+    _message_cq_1 = "test "s + _my_call + SPACE_STR + _my_call + " test"s;
 
   if (_message_cq_2.empty())
     _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
