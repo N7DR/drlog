@@ -176,8 +176,8 @@ void drlog_context::_process_configuration_file(const string& filename)
       _audio_rate = from_string<unsigned int>(rhs);
 
 // AUTO BACKUP
-    if ( (LHS =="AUTO BACKUP"s) and !rhs.empty() )
-      _auto_backup = rhs;
+    if ( ((LHS == "AUTO BACKUP DIRECTORY"s) or (LHS == "AUTO BACKUP"s)) and !rhs.empty() )  // AUTO BACKUP was the old name for this command
+      _auto_backup_directory = rhs;
 
 // AUTO SCREENSHOT
     if ( (LHS == "AUTO SCREENSHOT"s) and !rhs.empty() )
@@ -326,10 +326,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // COUNTRY LIST
     if ( LHS == "COUNTRY LIST"s)
     { if (RHS == "DXCC"s)
-        _country_list = COUNTRY_LIST_DXCC;
+        _country_list = COUNTRY_LIST::DXCC;
 
-      if (RHS == "WAEDC"s)
-        _country_list = COUNTRY_LIST_WAEDC;
+      if ( (RHS == "WAEDC"s) or (RHS == "WAE"s) )
+        _country_list = COUNTRY_LIST::WAEDC;
     }
 
 // COUNTRY MULT FACTOR

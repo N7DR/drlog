@@ -39,12 +39,12 @@ class multiplier
 {
 protected:
 
-  std::set<std::string>                                            _known;     ///< all the (currently) known possible values
+  std::set<std::string>                                            _known      { };     ///< all the (currently) known possible values
 
-  bool                                                             _per_band;  ///< is this multiplier accumulated per-band?
-  bool                                                             _per_mode;  ///< is this multiplier accumulated per-mode?
+  bool                                                             _per_band   { false };  ///< is this multiplier accumulated per band?
+  bool                                                             _per_mode   { false };  ///< is this multiplier accumulated per mode?
 
-  bool                                                             _used;      ///< is this object in use?
+  bool                                                             _used       { false };      ///< is this object in use?
 
 /* Stored in the _worked array is the precise detail of what has been worked and where.
    However, "worked" as used as an access verb really means "do I need this mult"? Thus,
@@ -55,7 +55,7 @@ protected:
 public:
 
 /// default constructor
-  multiplier(void);
+  inline multiplier(void) = default;
 
   SAFE_READ(known, multiplier);                                     ///< all the (currently) known possible values
   SAFE_READ_AND_WRITE(per_band, multiplier);                        ///< is this multiplier accumulated per-band?
@@ -77,7 +77,7 @@ public:
 */
   template<typename T>
   const unsigned int add_known(const T& k)
-    { unsigned int rv = 0;
+    { unsigned int rv { 0 };
 
       SAFELOCK(multiplier);
 

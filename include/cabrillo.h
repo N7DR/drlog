@@ -48,6 +48,11 @@ protected:
   std::string                 _name;            ///< name of the tag
   std::vector<std::string>    _legal_values;    ///< allowed values; if empty then any text is permitted
 
+/*! \brief      Initialise the name from a string
+    \param  nm  tag name
+*/
+  void _init_from_string(const std::string& str);
+
 public:
   
 /*! \brief      Construct from name
@@ -55,14 +60,15 @@ public:
         
     Any tag value is legal for this tag
 */
-  explicit cabrillo_tag_template(const std::string& nm);
+  inline explicit cabrillo_tag_template(const std::string& nm)
+    { _init_from_string(nm); }
     
 /// destructor
-  inline virtual ~cabrillo_tag_template(void)
-  { }
+  inline virtual ~cabrillo_tag_template(void) = default;
 
 /// cabrillo_tag_template = string
-  void operator=(const std::string& nm);
+  inline void operator=(const std::string& nm)
+    { _init_from_string(nm); }
   
 /*! \brief          Add a legal value
     \param  val     value to add
@@ -95,8 +101,7 @@ public:
   cabrillo_tag_templates(void);
     
 /// destructor
-  inline virtual ~cabrillo_tag_templates(void)
-  { }  
+  inline virtual ~cabrillo_tag_templates(void) = default;
 };
 
 #endif    // CABRILLO_H

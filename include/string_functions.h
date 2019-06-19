@@ -56,11 +56,11 @@ static const std::string  CR       { "\r"s };       ///< CR as string
 static const std::string& CR_STR   { CR };         ///< CR as string
 static const char         CR_CHAR  { '\r' };       ///< CR as character
 
-static const std::string CRLF     = "\r\n"s;     ///< CR followed by LF
+static const std::string CRLF      { "\r\n"s };     ///< CR followed by LF
 
-static const std::string FULL_STOP = "."s;       ///< full stop as string
-
-static const std::string SPACE_STR = " "s;       ///< space as string
+static const std::string EMPTY_STR { };          ///< an empty string
+static const std::string FULL_STOP { "."s };       ///< full stop as string
+static const std::string SPACE_STR { " "s };       ///< space as string
 
 static const std::string CALLSIGN_CHARS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"s };                ///< convenient place to hold all characters that are legal in callsigns
 static const std::string DIGITS { "0123456789"s };                                                   ///< convenient place to hold all digits

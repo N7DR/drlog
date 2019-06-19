@@ -248,7 +248,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 // 18073.1  P49V        29-Dec-2009 1931Z  nice signal NW            <N7XR> 
     if (!copy.empty() and isdigit(copy[0]))
     { try
-      { size_t char_posn { copy.find(" "s) };
+      { size_t char_posn { copy.find(SPACE_STR) };
         size_t space_posn;
 
         if (char_posn != string::npos)
@@ -256,8 +256,8 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
           _freq = frequency(_frequency_str);
 
           if (_valid_frequency())
-          { char_posn = copy.find_first_not_of(" "s, char_posn);
-            space_posn = copy.find_first_of(" "s, char_posn);
+          { char_posn = copy.find_first_not_of(SPACE_STR, char_posn);
+            space_posn = copy.find_first_of(SPACE_STR, char_posn);
 
             _callsign = copy.substr(char_posn, space_posn - char_posn);
 
@@ -266,14 +266,14 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
             _canonical_prefix = li.canonical_prefix();
             _continent = li.continent();
 
-            char_posn = copy.find_first_not_of(" "s, space_posn);
-            space_posn = copy.find_first_of(" "s, char_posn);
+            char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
+            space_posn = copy.find_first_of(SPACE_STR, char_posn);
 
             const string date { copy.substr(char_posn, space_posn - char_posn) };     // we don't use this
 
-            char_posn = copy.find_first_not_of(" "s, space_posn);
-            space_posn = copy.find_first_of(" "s, char_posn);
-            char_posn = copy.find_first_not_of(" "s, space_posn);
+            char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
+            space_posn = copy.find_first_of(SPACE_STR, char_posn);
+            char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
 
             const size_t bra_posn { copy.find_last_of("<"s) };
 
@@ -338,16 +338,16 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
           if (colon_posn != string::npos)
           { _poster = copy.substr(0, colon_posn);
 
-            size_t char_posn  { copy.find_first_not_of(" "s, colon_posn + 1) };
-            size_t space_posn { copy.find_first_of(" "s, char_posn) };
+            size_t char_posn  { copy.find_first_not_of(SPACE_STR, colon_posn + 1) };
+            size_t space_posn { copy.find_first_of(SPACE_STR, char_posn) };
 
             _frequency_str = copy.substr(char_posn, space_posn - char_posn);
             _freq = frequency(_frequency_str);
             _frequency_str = _freq.display_string();  // normalise the _frequency_str; some posters use two decimal places
 
             if (_valid_frequency())
-            { char_posn = copy.find_first_not_of(" "s, space_posn);
-              space_posn = copy.find_first_of(" "s, char_posn);
+            { char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
+              space_posn = copy.find_first_of(SPACE_STR, char_posn);
 
               _callsign = copy.substr(char_posn, space_posn - char_posn);
 
@@ -356,8 +356,8 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
               _canonical_prefix = li.canonical_prefix();
               _continent = li.continent();
 
-              char_posn = copy.find_first_not_of(" "s, space_posn);
-              space_posn = copy.find_last_of(" "s);
+              char_posn = copy.find_first_not_of(SPACE_STR, space_posn);
+              space_posn = copy.find_last_of(SPACE_STR);
 
               _comment = copy.substr(char_posn);
               _valid = true;
@@ -446,9 +446,9 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
 */
 
 /// constructor
-monitored_posts::monitored_posts(void) :
-  _is_dirty(false)
-{ }
+//monitored_posts::monitored_posts(void) :
+//  _is_dirty(false)
+//{ }
 
 /*! \brief              Is a particular call monitored?
     \param  callsign    call to be tested
@@ -464,14 +464,14 @@ const bool monitored_posts::is_monitored(const std::string& callsign) const
     \param  post    post to be tested
 */
 void monitored_posts::operator+=(const dx_post& post)
-{ monitored_posts_entry mpe(post);
-  bool stop_search = false;
-  bool found_call_and_band = false;
+{ monitored_posts_entry mpe                 { post };
+  bool                  stop_search         { false };
+  bool                  found_call_and_band { false };
 
   SAFELOCK(monitored_posts);
 
   for (deque<monitored_posts_entry>::iterator it = _entries.begin(); (!stop_search and (it != _entries.end())); ++it)
-  { monitored_posts_entry& old_mpe = *it;
+  { monitored_posts_entry& old_mpe { *it };
 
     if ( (mpe.callsign() == old_mpe.callsign()) and (mpe.band() == old_mpe.band()) )
     { if ( mpe.expiration() > old_mpe.expiration() )
@@ -519,26 +519,30 @@ void monitored_posts::operator-=(const string& call_to_remove)
   _callsigns.erase(call_to_remove);
 
 // remove any entries that have this call
-  const size_t original_size = _entries.size();
+  const size_t original_size { _entries.size() };
 
-  _entries.erase(remove_if(_entries.begin(), _entries.end(),
-                   [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } ),
-                 _entries.end() );
+//  _entries.erase(remove_if(_entries.begin(), _entries.end(),
+//                   [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } ),
+//                 _entries.end() );
+
+  REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } );
 
   _is_dirty |= (original_size != _entries.size());
 }
 
 /// prune <i>_entries</i>
 void monitored_posts::prune(void)
-{ const time_t now = ::time(NULL);
+{ const time_t now { ::time(NULL) };
 
   SAFELOCK(monitored_posts);
 
-  const size_t original_size = _entries.size();
+  const size_t original_size { _entries.size() };
 
-  _entries.erase(remove_if(_entries.begin(), _entries.end(),
-                 [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } ),
-                 _entries.end() );
+//  _entries.erase(remove_if(_entries.begin(), _entries.end(),
+//                 [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } ),
+//                 _entries.end() );
+
+  REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
 
   _is_dirty |= (original_size != _entries.size());
 }

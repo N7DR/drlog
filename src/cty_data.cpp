@@ -401,11 +401,11 @@ const location_info guess_zones(const string& call, const location_info& li)
     \param  cty             cty.dat data
     \param  country_list    type of country list
 */
-void location_database::_init(const cty_data& cty, const enum country_list_type country_list)
+void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_list)
 {
 // re-organize the cty data according to the correct country list  
   switch (country_list)
-  { case COUNTRY_LIST_DXCC:                                                       // use DXCC countries only
+  { case COUNTRY_LIST::DXCC:                                                       // use DXCC countries only
     { for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
       //for (const auto& cty_rec : cty)
       { const cty_record& rec = cty[n_country];
@@ -424,7 +424,7 @@ void location_database::_init(const cty_data& cty, const enum country_list_type 
       break;
     }
     
-    case COUNTRY_LIST_WAEDC:
+    case COUNTRY_LIST::WAEDC:
     {
 // start by copying all the useful information for all records      
       for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
@@ -536,29 +536,29 @@ void location_database::_insert_alternatives(const location_info& info, const ma
 //{ }
 
 // construct from CTY.DAT filename and the definition of which country list to use
-location_database::location_database(const string& filename, const enum country_list_type country_list)
+location_database::location_database(const string& filename, const COUNTRY_LIST country_list)
 { if (!filename.empty())
     _init(cty_data(filename), country_list);
 }
 
 /// construct from CTY.DAT data and the definition of which country list to use
-location_database::location_database(const cty_data& cty, const enum country_list_type country_list)
+location_database::location_database(const cty_data& cty, const COUNTRY_LIST country_list)
 { _init(cty, country_list);
 }
 
 /// construct from CTY.DAT data, the definition of which country list to use and a secondary qth database
-location_database::location_database(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary) :
+location_database::location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary) :
   _qth_db(secondary)
 { _init(cty, country_list);
 }
 
 /// prepare a default-constructed object for use
-void location_database::prepare(const cty_data& cty, const enum country_list_type country_list)
+void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list)
 { _init(cty, country_list);
 }
 
 /// prepare a default-constructed object for use
-void location_database::prepare(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary)
+void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary)
 { _qth_db = secondary;
   _init(cty, country_list);
 }
@@ -585,9 +585,9 @@ void location_database::add_russian_database(const vector<string>& path, const s
     \return             location information corresponding to <i>call</i>
 */
 const location_info location_database::info(const string& callpart)
-{ const string original_callsign = remove_peripheral_spaces(callpart);
+{ const string original_callsign { remove_peripheral_spaces(callpart) };
 
-  string callsign = original_callsign;                  // make callsign mutable, for handling case of /n
+  string callsign { original_callsign };                  // make callsign mutable, for handling case of /n
   
   SAFELOCK(_location_database);
 
@@ -607,12 +607,12 @@ const location_info location_database::info(const string& callpart)
 
 // see if it's some guy already in the db but now signing /QRP
   if (callsign.length() >= 5 and last(callsign, 4) == "/QRP")
-  { const string target = substring(callsign, 0, callsign.length() - 4);    // remove "/QRP"
+  { const string target { substring(callsign, 0, callsign.length() - 4) };    // remove "/QRP"
   
     db_posn = _db_checked.find(target);
     
     if (db_posn != _db_checked.end())
-    { const location_info rv = db_posn->second;
+    { const location_info rv { db_posn->second };
       
       _db_checked.insert( { callsign, rv } );
       return rv;
@@ -641,15 +641,17 @@ const location_info location_database::info(const string& callpart)
 // country is determined by the longest substring starting at the start of the call and which is already
 // in the database. This assumes that, for example, G4AMJ is in the same country as G4AM [if G4AM has already been worked]).
 // I can think of counter-examples to do with the silly US call system, but at least this is a starting point.
-    bool found_any_hits = false;              // no hits so far with this call
+    bool found_any_hits { false };              // no hits so far with this call
+
     string best_fit;
     location_info best_info;
-    unsigned int len = 1;
+
+    unsigned int len { 1 };
 
     if ( (callsign.length() >= 2) and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)) )    // if /n; this changes callsign
-    { static const string digits( { "0123456789" } );
+    { //static const string digits( { "0123456789"s } );
 
-      const size_t last_digit_posn = substring(callsign, 0, callsign.length() - 2).find_last_of(digits);
+      const size_t last_digit_posn { substring(callsign, 0, callsign.length() - 2).find_last_of(DIGITS) };
 
       if (last_digit_posn != string::npos)
       { callsign[last_digit_posn] = last_char(callsign);
@@ -658,8 +660,9 @@ const location_info location_database::info(const string& callpart)
     }
 
     while (len <= callsign.length())
-    { const string target = callsign.substr(0, len);
-      map<string, location_info>::iterator db_posn = _db.find(target);
+    { const string target { callsign.substr(0, len) };
+
+      map<string, location_info>::iterator db_posn { _db.find(target) };
      
       if (db_posn != _db.end())
       { found_any_hits = true;
@@ -674,12 +677,8 @@ const location_info location_database::info(const string& callpart)
     }
 
 // Guantanamo Bay is a mess
-    if (best_fit == "KG4" and (callsign.length() != 5) )
-    { best_fit = "K";
-
-//      const map<string, location_info>::iterator db_posn = _db.find("K");
-
-//      best_info = db_posn->second;
+    if (best_fit == "KG4"s and (callsign.length() != 5) )
+    { best_fit = "K"s;
       best_info = _db.find(best_fit)->second;
     }
 
@@ -726,20 +725,21 @@ const location_info location_database::info(const string& callpart)
       best_info = guess_zones(callsign, best_info);
 
 // insert Russian information
-      static const set<string> RUSSIAN_COUNTRIES { "UA", "UA2", "UA9" };
+      static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
 
       if (RUSSIAN_COUNTRIES < best_info.canonical_prefix())
-      { const size_t posn_1 = callsign.find_first_of("0123456789");
+      { //const size_t posn_1 = callsign.find_first_of("0123456789");
+        const size_t posn_1 { callsign.find_first_of(DIGITS) };
 
         if (posn_1 != string::npos)
-        { const size_t posn_2 = callsign.find_first_not_of("0123456789", posn_1);
+        { const size_t posn_2 { callsign.find_first_not_of(DIGITS, posn_1) };
 
           if (posn_2 != string::npos)
-          { const string sub = create_string(callsign[posn_1]) + create_string(callsign[posn_2]);
-            const auto map_it = _russian_db.find(sub);
+          { const string sub    { create_string(callsign[posn_1]) + create_string(callsign[posn_2]) };
+            const auto   map_it { _russian_db.find(sub) };
 
             if (map_it != _russian_db.end())
-            { const russian_data_per_substring& data = map_it->second;
+            { const russian_data_per_substring& data { map_it->second };
 
               best_info.cq_zone(data.cq_zone());
               best_info.itu_zone(data.itu_zone());
@@ -763,35 +763,35 @@ const location_info location_database::info(const string& callpart)
 
 // it looks like maybe it's a reciprocal license
 // how many slashes are there?
-  vector<string> parts = split_string(callsign, "/");
+  vector<string> parts { split_string(callsign, "/") };
 
   if (parts.size() == 1)        // slash is first or last character
     return location_info();
 
   if (parts.size() > 3)
-     throw location_error(LOCATION_TOO_MANY_SLASHES, to_string(parts.size() - 1) + " slashes in call: " + callsign);
+    throw location_error(LOCATION_TOO_MANY_SLASHES, to_string(parts.size() - 1) + " slashes in call: "s + callsign);
 
   if (parts.size() == 2)        // one slash
   {
 // see if either part matches anything in the initial database
-     map<string, location_info>::iterator db_posn_0 = _db.find(parts[0]);
-     map<string, location_info>::iterator db_posn_1 = _db.find(parts[1]);
+     map<string, location_info>::iterator db_posn_0 { _db.find(parts[0]) };
+     map<string, location_info>::iterator db_posn_1 { _db.find(parts[1]) };
      
-     const bool found_0 = (db_posn_0 != _db.end());
-     const bool found_1 = (db_posn_1 != _db.end());
+     const bool found_0 { (db_posn_0 != _db.end()) };
+     const bool found_1 { (db_posn_1 != _db.end()) };
 
      if (found_0 and !found_1)                        // first part had an exact match
      { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
 
-        _db_checked.insert( { callsign, best_info } );
+       _db_checked.insert( { callsign, best_info } );
         
-        return best_info;
+       return best_info;
      }
 
 // we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat
 // add them on a case by case basis, rather than using all possible long prefixes listed in cty.dat, since this
 // should be a very rare occurrence
-     static const set<string> russian_long_prefixes { "RU4W" };
+     static const set<string> russian_long_prefixes { "RU4W"s };
 
      if (found_1 and !found_0)                        // second part had an exact match
      { if (!(russian_long_prefixes < parts[1]))         // the normal case
@@ -802,7 +802,7 @@ const location_info location_database::info(const string& callpart)
          return best_info;
        }
        else                                             // the pathological case, a call like "K4/RU4W"
-       { const location_info best_info = info(parts[0]);  // recursive
+       { const location_info best_info { info(parts[0]) };  // recursive
 
          _db_checked.insert( { callsign, best_info } );
 
@@ -828,8 +828,8 @@ const location_info location_database::info(const string& callpart)
     }
 
     if (!found_0 and !found_1)    // neither matched exactly; use one that ends with a digit if there is one
-    { const bool first_ends_with_digit = isdigit(parts[0][parts[0].length()-1]);
-      const bool second_ends_with_digit = isdigit(parts[1][parts[1].length()-1]);
+    { const bool first_ends_with_digit  { isdigit(parts[0][parts[0].length()-1]) };
+      const bool second_ends_with_digit { isdigit(parts[1][parts[1].length()-1]) };
       
       if (first_ends_with_digit and !second_ends_with_digit)
         return info(parts[0]);
@@ -841,14 +841,13 @@ const location_info location_database::info(const string& callpart)
     if (!found_0 and !found_1)    // neither matched exactly; use the one with the longest match
     {
 // length of match for part 0
-      unsigned int len_0 = 0;
-      unsigned int len_1 = 0;
-      unsigned int len = 1;
+      unsigned int len_0 { 0 };
+      unsigned int len_1 { 0 };
+      unsigned int len   { 1 };
      
       while (len <= parts[0].length())
-      { string target = parts[0].substr(0, len);
-     
-        map<string, location_info>::iterator db_posn = _db.find(target);
+      { string                               target  { parts[0].substr(0, len) };
+        map<string, location_info>::iterator db_posn { _db.find(target) };
      
         if (db_posn != _db.end())
         { len_0 = len;
@@ -861,9 +860,8 @@ const location_info location_database::info(const string& callpart)
       len = 1;
     
       while (len <= parts[1].length())
-      { string target = parts[1].substr(0, len);
-     
-        map<string, location_info>::iterator db_posn = _db.find(target);
+      { string                               target  { parts[1].substr(0, len) };
+        map<string, location_info>::iterator db_posn { _db.find(target) };
      
         if (db_posn != _db.end())
         { len_1 = len;
@@ -874,7 +872,7 @@ const location_info location_database::info(const string& callpart)
       }
 
       if (len_0 > len_1)                // parts[0] was the better match
-      { const location_info best_info = guess_zones(callsign, db_posn_0->second);
+      { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
 
         _db_checked.insert( { callsign, best_info } );
         
@@ -882,7 +880,7 @@ const location_info location_database::info(const string& callpart)
       }
 
       if (len_1 > len_0)                // parts[1] was the better match
-      { const location_info best_info = guess_zones(callsign, db_posn_1->second);
+      { const location_info best_info { guess_zones(callsign, db_posn_1->second) };
 
         _db_checked.insert( { callsign, best_info } );
         
@@ -895,10 +893,7 @@ const location_info location_database::info(const string& callpart)
         return location_info();    // we know nothing about either part of the call
       
       if (parts[0].length() < parts[1].length())
-      { //location_info best_info = db_posn_0->second;
-
-        //best_info = guess_zones(callsign, best_info);
-        const location_info best_info = guess_zones(callsign, db_posn_0->second);
+      { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
         
         _db_checked.insert( { callsign, best_info } );
         
@@ -906,10 +901,7 @@ const location_info location_database::info(const string& callpart)
       }
 
       if (parts[1].length() < parts[0].length())
-      { //location_info best_info = db_posn_1->second;
-
-        //best_info = guess_zones(callsign, best_info);
-        const location_info best_info = guess_zones(callsign, db_posn_1->second);
+      { const location_info best_info { guess_zones(callsign, db_posn_1->second) };
 
         _db_checked.insert( { callsign, best_info } );
         
@@ -917,10 +909,7 @@ const location_info location_database::info(const string& callpart)
       }
  
 // same length; arbitrarily choose the first
-      { //location_info best_info = db_posn_0->second;
-
-        //best_info = guess_zones(callsign, best_info);
-        const location_info best_info = guess_zones(callsign, db_posn_0->second);
+      { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
 
         _db_checked.insert( { callsign, best_info } );
         
@@ -932,11 +921,12 @@ const location_info location_database::info(const string& callpart)
   if (parts.size() == 3)        // two slashes
   {
 // ignore the second slash and everything after it (assume W0/G4AMJ/P or G4AMJ/VP9/M)
-    string target = parts[0] + "/" + parts[1];
+    string target { parts[0] + "/"s + parts[1] };
+
     if (parts[2].length() != 1)                    // SP/DL/SP2SWA
       target = parts[0];
     
-    const location_info best_info = info(target);   // recursive, so we need ref count in safelock
+    const location_info best_info { info(target) };   // recursive, so we need ref count in safelock
     
     _db_checked.erase(target);
     _db_checked.insert( { callsign, best_info } );
@@ -960,7 +950,7 @@ const set<string> location_database::countries(void)
 
 /// create a set of all the canonical prefixes for a particular continent
 const set<string> location_database::countries(const string& cont_target)
-{ const set<string> all_countries = countries();
+{ const set<string> all_countries { countries() };
 
   set <string> rv;
 
@@ -980,31 +970,31 @@ drlog_qth_database::drlog_qth_database(const std::string& filename)
 { if (filename.empty())
    return;
 
-  const string contents = read_file(filename);
-  const vector<string> lines = to_lines(contents);
+  const string         contents { read_file(filename) };
+  const vector<string> lines    { to_lines(contents) };
   
   for (const auto& line : lines)
-  { const vector<string> fields = split_string(line, ',');
+  { const vector<string> fields { split_string(line, ',') };
 
     drlog_qth_database_record record;
     
     for (const auto& field : fields)
-    { const vector<string> elements = remove_peripheral_spaces(split_string(remove_peripheral_spaces(field), '='));
+    { const vector<string> elements { remove_peripheral_spaces(split_string(remove_peripheral_spaces(field), '=')) };
       
 // process the possibilities
-      if (elements[0] == "id")
+      if (elements[0] == "id"s)
         record.id(elements[1]);
       
-      if (elements[0] == "area")
+      if (elements[0] == "area"s)
         record.set_area(from_string<unsigned int>(elements[1]));  // problem is that I'm setting a returned object
 
-      if (elements[0] == "cq_zone")
+      if (elements[0] == "cq_zone"s)
         record.set_cq_zone(from_string<unsigned int>(elements[1]));
 
-      if (elements[0] == "latitude")
+      if (elements[0] == "latitude"s)
         record.set_latitude(from_string<float>(elements[1]));
 
-      if (elements[0] == "longitude")
+      if (elements[0] == "longitude"s)
         record.set_longitude(from_string<float>(elements[1]));     
     }
     
@@ -1118,20 +1108,20 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   _sstring(ss)
 {
 // check that the prefix matches the line
-  const vector<string> substrings = remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","));
+  const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","s)) };
 
   if (find(substrings.cbegin(), substrings.cend(), ss) == substrings.cend())
-    throw russian_error(RUSSIAN_INVALID_SUBSTRING, (string("Substring ") + ss + " not found"));
+    throw russian_error(RUSSIAN_INVALID_SUBSTRING, "Substring "s + ss + " not found"s);
 
-  const size_t posn_1 = line.find(']');
-  const size_t posn_2 = line.find(':');
+  const size_t posn_1 { line.find(']') };
+  const size_t posn_2 { line.find(':') };
 
   if (posn_1 == posn_2)
-    throw russian_error(RUSSIAN_INVALID_FORMAT, string("Delimiter not found"));
+    throw russian_error(RUSSIAN_INVALID_FORMAT, "Delimiter not found"s);
 
   _region_name = ::substring(line, posn_1 + 1, posn_2 - posn_1 - 1);
 
-  const vector<string> fields = remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(line.substr(posn_2 + 1), ' ')), " "));
+  const vector<string> fields { remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(line.substr(posn_2 + 1), ' ')), SPACE_STR)) };
 
   try
   { _region_abbreviation = fields.at(0);
@@ -1144,7 +1134,7 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   }
 
   catch (...)
-  { throw russian_error(RUSSIAN_INVALID_FORMAT, string("Error parsing fields"));
+  { throw russian_error(RUSSIAN_INVALID_FORMAT, "Error parsing fields"s);
   }
 }
 
@@ -1179,11 +1169,11 @@ ostream& operator<<(ostream& ost, const russian_data_per_substring& info)
 */
 russian_data::russian_data(const vector<string>& path, const string& filename)
 { try
-  { const vector<string> lines = to_lines(replace_char(read_file(path, filename), '\t', ' '));
+  { const vector<string> lines { to_lines(replace_char(read_file(path, filename), '\t', ' ')) };
 
     for (const auto& line : lines)
     { if (!starts_with(line, "//"))
-      { const vector<string> substrings = remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","));
+      { const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","s)) };
 
         for (const auto& sstring : substrings)
           _data.insert( { sstring, russian_data_per_substring(sstring, line) } );

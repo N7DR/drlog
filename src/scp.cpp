@@ -29,33 +29,31 @@ extern message_stream ost;
 
 /// constructor from filename
 scp_database::scp_database(const string& filename)
-{ const string file_contents = to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' '));
-  const vector<string> calls = to_lines(file_contents); 
+{ const string file_contents { to_upper(remove_char(remove_char(read_file(filename), CR_CHAR), ' ')) };
+  const vector<string> calls { to_lines(file_contents) };
 
   init_from_calls(calls);
 }
 
 /// construct from vector of calls
-scp_database::scp_database(const std::vector<std::string>& calls)
-{ init_from_calls(calls);
-}
+//scp_database::scp_database(const std::vector<std::string>& calls)
+//{ init_from_calls(calls);
+//}
 
 /// construct from a master_dta
-scp_database::scp_database(const master_dta& md)
-{ init_from_calls(md.calls());
-}
+//scp_database::scp_database(const master_dta& md)
+//{ init_from_calls(md.calls());
+//}
 
 /// construct from a drmaster object
-scp_database::scp_database(const drmaster& drm)
-{ init_from_calls(drm.calls());
-}
+//scp_database::scp_database(const drmaster& drm)
+//{ init_from_calls(drm.calls());
+//}
 
 /// populate the database from a vector of calls
-void scp_database::init_from_calls(const vector<string>& calls)
-{ //for_each(calls.begin(), calls.end(), bind( &scp_database::add_call, this, _1) );
-//  for_each(calls.begin(), calls.end(), [&] (const string& this_call) { add_call(this_call); } );
-  FOR_ALL(calls, [&] (const string& this_call) { add_call(this_call); } );
-}
+//void scp_database::init_from_calls(const vector<string>& calls)
+//{ FOR_ALL(calls, [&] (const string& this_call) { add_call(this_call); } );
+//}
 
 /// add a call
 void scp_database::add_call(const string& call)
@@ -66,11 +64,12 @@ void scp_database::add_call(const string& call)
 
 /// remove a call; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
 const unsigned int scp_database::remove_call(const std::string& call)
-{ unsigned int rv = 0;
+{ unsigned int rv { 0 };
 
   if (call.length() >= 2)
   { for (const auto start_index : RANGE<size_t>(0, call.length() - 2))
-    { SCP_SET& ss = _db[substring(call, start_index, 2)];
+    { SCP_SET& ss { _db[substring(call, start_index, 2)] };
+
       rv = ss.erase(call);                                      // all except the last will be thrown away
     }
   }
@@ -105,7 +104,8 @@ const SCP_SET scp_database::operator[](const string& key)
   }
   
 // cache miss
-  SCP_SET& calls = _db[substring(key, 0, 2)];
+  SCP_SET& calls { _db[substring(key, 0, 2)] };
+
   SCP_SET rv;
 
   for (const auto& callsign : calls)
@@ -130,21 +130,17 @@ void scp_database::clear_cache(void)
   _last_result.clear();
 
 // must also clear the cache of any parents
-//  for (auto& parent_p : _parents)
-//    parent_p->clear_cache_no_children();
   FOR_ALL(_parents, [] (scp_databases* parent_p) { parent_p->clear_cache_no_children(); } );
-
-//  std::vector<scp_databases*> _parents;
 }
 
 // -----------  scp_databases  ----------------
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
 void scp_databases::remove_call(const string& call)
-{ bool removed = false;
+{ bool removed { false };
 
   for (size_t n = 0; (n < _vec.size() and !removed); ++n)  // in priority order
-  { const size_t rev = _vec.size() - 1 - n;                // reverse the order
+  { const size_t rev { _vec.size() - 1 - n };                // reverse the order
 
     removed = _vec[rev]->remove_call(call);
   }
@@ -166,8 +162,9 @@ const SCP_SET scp_databases::operator[](const string& key)
     _last_result.clear();
 
     for (auto& db_p : _vec)
-    { scp_database& db = *(db_p);
-      const SCP_SET ss = db[key];
+    { scp_database& db { *(db_p) };
+
+      const SCP_SET ss { db[key] };
 
       _last_result.insert(ss.cbegin(), ss.cend());
     }
@@ -192,10 +189,10 @@ const SCP_SET scp_databases::operator[](const string& key)
 // key length is > 2; cache miss
   SCP_SET rv;
 
-//  for (size_t n = 0; n < _vec.size(); ++n)
   for (auto& db_p : _vec)
-  { scp_database& db = *(db_p);
-    const SCP_SET& calls = db[substring(key, 0, 2)];
+  { scp_database& db { *(db_p) };
+
+    const SCP_SET& calls { db[substring(key, 0, 2)] };
 
     for (const auto& callsign : calls)
       if (::contains(callsign, key))
@@ -212,9 +209,6 @@ const SCP_SET scp_databases::operator[](const string& key)
 void scp_databases::clear_cache(void)
 { clear_cache_no_children();
 
-//  for (auto& db_p : _vec)
-//    db_p->clear_cache();
-//  for_each(_vec.begin(), _vec.end(), [] (scp_database* db_p) { db_p->clear_cache(); } );
   FOR_ALL(_vec, [] (scp_database* db_p) { db_p->clear_cache(); } );
 }
 

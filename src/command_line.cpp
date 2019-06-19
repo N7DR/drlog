@@ -38,28 +38,20 @@ void command_line::_init(void)
     \param  argc    number of arguments
     \param  argv    pointer to array of individual arguments
 */
-command_line::command_line(int argc, char** argv) : 
-  _argc(argc), 
-  _argv((char**)argv)
-{ _init();
-//  _arg = new string [_argc];
-
-//  for (unsigned int n = 0; n < _argc; n++)
-//    _arg[n] = (string)(_argv[n]);
-}
+//command_line::command_line(int argc, char** argv) :
+//  _argc(argc),
+//  _argv((char**)argv)
+//{ _init();
+//}
 
 /*! \brief      Copy constructor
     \param  cl  object to be copied
 */
-command_line::command_line(const command_line& cl) : 
-  _argc(cl._argc), 
-  _argv(cl._argv)
-{ _init();
-//  _arg = new string [_argc];
-
-//  for (unsigned int n = 0; n < _argc; n++)
-//    _arg[n] = (string)(_argv[n]);
-}
+//command_line::command_line(const command_line& cl) :
+//  _argc(cl._argc),
+//  _argv(cl._argv)
+//{ _init();
+//}
 
 /*! \brief  Destructor
 */
@@ -76,19 +68,15 @@ void command_line::operator=(const command_line& cl)
     delete [] _arg;
 
   _init();
-//  _arg = new string [_argc];
-
-//  for (unsigned int n = 0; n < _argc; n++)
-//    _arg[n] = (string)(_argv[n]);
 }
 
 /*! \brief  Obtain the base name of the program
     \return The base name of the program (i.e., with no "/" characters)
 */
 const string command_line::base_program_name(void) const
-{ string rv = program_name();
+{ string rv { program_name() };
 
-  const size_t posn = rv.find_last_of("/");
+  const size_t posn { rv.find_last_of("/"s) };
 
   if (posn != string::npos)
     rv = rv.substr(posn + 1);
@@ -123,7 +111,7 @@ void command_line::tolower(const unsigned int n)
 { if (n >= _argc)
     throw x_command_line_invalid_parameter();
 
-  string& s = _arg[n];
+  string& s { _arg[n] };
     
   s = ::to_lower(s);
 }
@@ -159,7 +147,7 @@ void command_line::toupper(const unsigned int n)
 { if (n >= _argc)
     throw x_command_line_invalid_parameter();
     
-  string& s = _arg[n];
+  string& s { _arg[n] };
 
   s = ::to_upper(s);
 }
@@ -171,7 +159,7 @@ void command_line::toupper(const unsigned int n)
     A "value" is something like a parameter to a -xxx option. If, for example, value_present("-xxx") is TRUE, it means that -xxx is present, and a value follows it
 */
 const bool command_line::value_present(const string& s) const
-{ bool rv = false;
+{ bool rv { false };
   
   for (int n = 1; n < n_parameters(); n++)    // < because last might be the actual value
     rv = (rv || (parameter(n) == s));
@@ -187,7 +175,7 @@ const bool command_line::value_present(const string& s) const
 */
 const string command_line::value(const string& s) const
 { if (!value_present(s))
-    return "";
+    return string();
 
   string rv;
 
@@ -206,7 +194,7 @@ const string command_line::value(const string& s) const
     A "parameter" is an actual parameter that appears on the command line.
 */
 const bool command_line::parameter_present(const string& s) const
-{ bool rv = false;
+{ bool rv { false };
   
   for (int n = 1; n <= n_parameters(); n++)
     rv = (rv or (parameter(n) == s));

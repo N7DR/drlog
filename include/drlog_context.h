@@ -58,7 +58,7 @@ protected:
   unsigned int                                 _audio_duration                          { 60 };                         ///< maximum duration in minutes, per file
   std::string                                  _audio_file                              { "audio"s };                   ///< base name of file for audio recordings
   unsigned int                                 _audio_rate                              { 8000 };                       ///< number of samples per second
-  std::string                                  _auto_backup                             { };                            ///< directory for auto backup files (default = no directory)
+  std::string                                  _auto_backup_directory                   { };                            ///< directory for auto backup files (default = no directory)
   bool                                         _auto_remaining_callsign_mults           { false };                      ///< do we auto-generate the remaining callsign mults?
   unsigned int                                 _auto_remaining_callsign_mults_threshold { 1 };                          ///< number of times a callsign mult must be seen before it becomes known
   bool                                         _auto_remaining_country_mults            { false };                      ///< do we auto-generate the remaining country mults?
@@ -123,7 +123,7 @@ protected:
   std::string                                  _cluster_server                          { };                            ///< hostname or IP of cluster server
   std::string                                  _cluster_username                        { };                            ///< username to use on the cluster
   std::string                                  _contest_name                            { };                            ///< name of the contest
-  enum country_list_type                       _country_list                            { COUNTRY_LIST_WAEDC };         ///< DXCC or WAE list?
+  COUNTRY_LIST                                 _country_list                            { COUNTRY_LIST::WAEDC };         ///< DXCC or WAE list?
   std::string                                  _country_mults_filter                    { "ALL"s };                     ///< the command from the configuration file; default all countries are mults
   bool                                         _country_mults_per_band                  { true };                       ///< are country mults per-band?
   bool                                         _country_mults_per_mode                  { false };                      ///< are country mults per-mode?
@@ -300,7 +300,7 @@ public:
   CONTEXTREAD(audio_duration);                           ///< maximum duration in minutes, per file
   CONTEXTREAD(audio_file);                               ///< base name of file for audio recordings
   CONTEXTREAD(audio_rate);                               ///< number of samples per second
-  CONTEXTREAD(auto_backup);                              ///< directory for auto backup files
+  CONTEXTREAD(auto_backup_directory);                    ///< directory for auto backup files
   CONTEXTREAD(auto_remaining_callsign_mults);            ///< do we auto-generate the remaining callsign mults?
   CONTEXTREAD(auto_remaining_country_mults);             ///< do we auto-generate the remaining country mults?
   CONTEXTREAD(auto_remaining_callsign_mults_threshold);  ///< number of times a callsign mult must be seen before it becomes known

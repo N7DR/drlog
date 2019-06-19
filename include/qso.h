@@ -311,6 +311,6 @@ inline const bool earlier(const QSO& qso_1, const QSO& qso_2)
 
     The value of <i>posn</i> might be changed by this function.
 */
-  const std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);
+const std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);
 
 #endif    // QSO_H

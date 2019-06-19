@@ -119,6 +119,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 {
 // build a vector of name/value pairs
   size_t cur_posn { min(static_cast<size_t>(5), str.size()) };  // skip the "QSO: "
+
   vector<pair<string, string> > name_value;
 
   while (cur_posn != string::npos)
@@ -135,40 +136,42 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 //    };
 
   for (const auto& nv : name_value)
-  { bool processed = false;
-    const string& name = nv.first;
-    const string& value = nv.second;
+  { bool processed { false };
 
-    if (!processed and (name == "number"))
+    const string& name  { nv.first };
+    const string& value { nv.second };
+
+    if (!processed and (name == "number"s))
     { //_number = from_string<decltype(_number)>(value);
       //processed = true;
        processed = ( _number = from_string<decltype(_number)>(value), true );
       //processed = set_value(_number, value);
     }
 
-    if (!processed and (name == "date"))
+    if (!processed and (name == "date"s))
     { //_date = value;
       //processed = true;
       processed = ( _date = value, true );
       //processed = set_value(_date, value);
     }
 
-    if (!processed and (name == "utc"))
+    if (!processed and (name == "utc"s))
     { //_utc = value;
       //processed = true;
       processed = ( _utc = value, true );
     }
 
-    if (!processed and (name == "mode"))
+    if (!processed and (name == "mode"s))
     { //_mode = ( ( value == "CW") ? MODE_CW : MODE_SSB);
       //processed = true;
-      processed = ( _mode = ( ( value == "CW") ? MODE_CW : MODE_SSB), true );
+      processed = ( _mode = ( ( value == "CW"s) ? MODE_CW : MODE_SSB), true );
     }
 
-    if (!processed and (name == "frequency"))               // old version
+    if (!processed and (name == "frequency"s))               // old version
     { _frequency_tx = value;
 
       const double f { from_string<double>(_frequency_tx) };
+
       const frequency freq(f);
 
 //      _band = static_cast<BAND>(freq);
@@ -176,11 +179,12 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = ( _band = static_cast<BAND>(freq), true );
     }
 
-    if (!processed and (name == "frequency-tx"))
+    if (!processed and (name == "frequency-tx"s))
     { _frequency_tx = value;
 
       if (!_frequency_tx.empty())
-      { const double f = from_string<double>(_frequency_tx);
+      { const double f { from_string<double>(_frequency_tx) };
+
         const frequency freq(f);
 
         _band = static_cast<BAND>(freq);
@@ -188,7 +192,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = true;
     }
 
-    if (!processed and (name == "frequency-rx"))
+    if (!processed and (name == "frequency-rx"s))
     { _frequency_rx = value;
 
       if (!_frequency_rx.empty())
@@ -197,39 +201,39 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = true;
     }
 
-    if (!processed and (name == "hiscall"))
+    if (!processed and (name == "hiscall"s))
     { _callsign = value;
       _canonical_prefix = location_db.canonical_prefix(_callsign);
       _continent = location_db.continent(_callsign);
       processed = true;
     }
 
-    if (!processed and (name == "mycall"))
+    if (!processed and (name == "mycall"s))
     { //_my_call = value;
       //processed = true;
       processed = ( _my_call = value, true );
     }
 
-    if (!processed and (starts_with(name, "sent-")))
+    if (!processed and (starts_with(name, "sent-"s)))
     { _sent_exchange.push_back( { to_upper(name.substr(5)), value } );
       processed = true;
     }
 
-    if (!processed and (starts_with(name, "received-")))
-    { const string name_upper = to_upper(name.substr(9));
+    if (!processed and (starts_with(name, "received-"s)))
+    { const string name_upper { to_upper(name.substr(9)) };
 
       if (!(rules.all_known_field_names() < name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
-        alert("Unknown exch field: " + name_upper);
+        alert("Unknown exch field: "s + name_upper);
       }
 
-      const bool is_possible_mult = rules.is_exchange_mult(name_upper);
+      const bool is_possible_mult { rules.is_exchange_mult(name_upper) };
 
       if (is_possible_mult and context.auto_remaining_exchange_mults(name_upper))
         statistics.add_known_exchange_mult(name_upper, value);
 
-      const bool is_mult = is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band, _mode) : false;
-      const received_field rf { name_upper, value , is_possible_mult, is_mult };
+      const bool           is_mult { is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band, _mode) : false };
+      const received_field rf      { name_upper, value , is_possible_mult, is_mult };
 
       _received_exchange.push_back(rf);
       processed = true;
@@ -264,62 +268,63 @@ void QSO::populate_from_log_line(const string& str)
       ost << "_log_line_fields[" << n << "] = " << _log_line_fields[n] << endl;
   }
 
-  size_t sent_index = 0;
-  size_t received_index = 0;
+  size_t sent_index     { 0 };
+  size_t received_index { 0 };
 
-  const vector<exchange_field> exchange_fields = rules.expanded_exch(_callsign, _mode);
+  const vector<exchange_field> exchange_fields { rules.expanded_exch(_callsign, _mode) };
 
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { ost << "Processing log_line field number " << n << endl;
 
-    bool processed = false;
+    bool processed { false };
 
-    const string& field = _log_line_fields[n];
+    const string& field { _log_line_fields[n] };
 
     ost << "log_line field field name " << field << endl;
 
-    if (!processed and (field == "NUMBER"))
+    if (!processed and (field == "NUMBER"s))
     { _number = from_string<decltype(_number)>(vec[n]);
       processed = true;
     }
 
-    if (!processed and (field == "DATE"))
+    if (!processed and (field == "DATE"s))
     { _date = vec[n];
       processed = true;
     }
 
-    if (!processed and (field == "UTC"))
+    if (!processed and (field == "UTC"s))
     { _utc = vec[n];
       processed = true;
     }
 
-    if (!processed and (field == "MODE"))
-    { _mode = ( (vec[n] == "CW") ? MODE_CW : MODE_SSB);
+    if (!processed and (field == "MODE"s))
+    { _mode = ( (vec[n] == "CW"s) ? MODE_CW : MODE_SSB);
       processed = true;
     }
 
-    if (!processed and (field == "FREQUENCY"))
+    if (!processed and (field == "FREQUENCY"s))
     { _frequency_tx = vec[n];
 
-      const double f = from_string<double>(_frequency_tx);
+      const double f { from_string<double>(_frequency_tx) };
+
       const frequency freq(f);
 
       _band = static_cast<BAND>(freq);
       processed = true;
     }
 
-    if (!processed and (field == "CALLSIGN"))
+    if (!processed and (field == "CALLSIGN"s))
     { _callsign = vec[n];
       processed = true;
     }
 
-    if (!processed and (starts_with(field, "sent-")))
+    if (!processed and (starts_with(field, "sent-"s)))
     { if (sent_index < _sent_exchange.size())
         _sent_exchange[sent_index++].second = vec[n];
       processed = true;
     }
 
-    if (!processed and (starts_with(field, "received-")))
+    if (!processed and (starts_with(field, "received-"s)))
     { if (_is_received_field_optional(field, exchange_fields) and !rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))  // empty optional field
       { ost << "field = " << field << endl;
         ost << "OPTIONAL AND NOT LEGAL VALUE" << endl;
@@ -327,7 +332,7 @@ void QSO::populate_from_log_line(const string& str)
         ost << "Value to be tested = *" << _received_exchange[received_index].value()<< "*" << endl;
         ost << "Is legal value = " << boolalpha << rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()) << endl;
 
-        _received_exchange[received_index++].value("");
+        _received_exchange[received_index++].value(string());
 
         if (received_index < _received_exchange.size())
           _received_exchange[received_index++].value(vec[n]);  // assume that only one field is optional
@@ -343,7 +348,7 @@ void QSO::populate_from_log_line(const string& str)
 
           ost << "Assigned: " << _received_exchange[received_index - 1] << endl;
 
-          if (starts_with(field, "received-PREC"))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
+          if (starts_with(field, "received-PREC"s))               // SS is, as always, special; received-CALL is not in the line, but it's in _received_exchange after PREC
           { //ost << "** received-PREC **" << endl;
             _received_exchange[received_index++].value(_callsign);
             //ost << "updated " << _received_exchange[received_index - 1].name() << " to value " << _received_exchange[received_index - 1].value() << endl;
@@ -372,16 +377,17 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
 { if (str.empty())
     return;
 
-  const vector<string> fields = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
+  const vector<string> fields { remove_peripheral_spaces(split_string(squash(str, ' '), SPACE_STR)) };
 
 // number, date, UTC, mode, frequency
   number(from_string<unsigned int>(fields[0]));
   date(fields[1]);
   utc(fields[2]);
-  mode( (fields[3] == string("CW") ? MODE_CW : MODE_SSB) );
+  mode( (fields[3] == "CW"s ? MODE_CW : MODE_SSB) );
   freq(fields[4]);
 
-  const double f = from_string<double>(_frequency_tx);
+  const double f { from_string<double>(_frequency_tx) };
+
   const frequency freq(f);
 
   band(static_cast<BAND>(freq));
@@ -393,8 +399,9 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
   my_call(mycall);
 
 // the sent exchange starts at fields[6]
-  vector<pair<string, string> > tmp_sent_exchange = context.sent_exchange(mode());
-  const size_t n_sent_fields = tmp_sent_exchange.size();
+  vector<pair<string, string> > tmp_sent_exchange { context.sent_exchange(mode()) };
+
+  const size_t n_sent_fields { tmp_sent_exchange.size() };
 
   for (size_t field_nr = 0; field_nr < n_sent_fields; ++field_nr)
     tmp_sent_exchange[field_nr].second = fields[6 + field_nr];
@@ -412,7 +419,7 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
   const parsed_exchange pexch(callsign(), canonical_prefix(), rules, mode(), exchange_field_values, true);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
 
   if (!pexch.valid())
-  { alert("Unable to parse exchange in log line");
+  { alert("Unable to parse exchange in log line"s);
     return;
   }
 }
@@ -548,21 +555,21 @@ mo is mode:
     * RY
     * (in the case of cross-mode QSOs, indicate the transmitting mode) 
 */
-    if (name == "MODE")
+    if (name == "MODE"s)
     { switch (_mode)
       { case MODE_CW:
-          value = "CW";
+          value = "CW"s;
          break;
 
         case MODE_SSB:
-          value = "PH";
+          value = "PH"s;
           break;
 //  case MODE_DIGI:
 //    value = "RY";
 //    break;
 
         default:
-          value = "XX";
+          value = "XX"s;
           break;
       }
     }
@@ -570,7 +577,7 @@ mo is mode:
 /*
 date is UTC date in yyyy-mm-dd form
 */      
-    if (name == "DATE")
+    if (name == "DATE"s)
       value = _date;
       
 /*
@@ -578,19 +585,19 @@ time is UTC time in nnnn form; the "specification" doesn't bother to tell
 us whether to round or to truncate.  Truncation is easier, so until the
 specification tells us otherwise, that's what we do.
 */
-    if (name == "TIME")
+    if (name == "TIME"s)
       value = _utc.substr(0, 2) + _utc.substr(3, 2);
   
 // TCALL == transmitted call == my call
-    if (name == "TCALL")
+    if (name == "TCALL"s)
       value = _my_call;
       
 // TEXCH-xxx
-    if (starts_with(name, "TEXCH-"))
+    if (starts_with(name, "TEXCH-"s))
     { const string field_name = name.substr(6);
     
-      if (contains(field_name, "+"))
-      { const vector<string> vec = remove_peripheral_spaces(split_string(field_name, "+"));
+      if (contains(field_name, "+"s))
+      { const vector<string> vec { remove_peripheral_spaces(split_string(field_name, "+"s)) };
 
         for (const auto& name : vec)
         { for (const auto& pss : _sent_exchange)
@@ -606,11 +613,11 @@ specification tells us otherwise, that's what we do.
     }
 
 // REXCH-xxx
-    if (starts_with(name, "REXCH-"))
+    if (starts_with(name, "REXCH-"s))
     { const string field_name = substring(name, 6);
 
-      if (contains(field_name, "+"))                        // "+" indicates a CHOICE
-      { const vector<string> vec = remove_peripheral_spaces(split_string(field_name, "+"));
+      if (contains(field_name, "+"s))                        // "+" indicates a CHOICE
+      { const vector<string> vec { remove_peripheral_spaces(split_string(field_name, "+"s)) };
 
         for (const auto& name : vec)
         { if (!received_exchange(name).empty())
@@ -622,12 +629,12 @@ specification tells us otherwise, that's what we do.
     }
     
 // RCALL
-    if (name == "RCALL")
+    if (name == "RCALL"s)
       value = _callsign;  
 
 // TXID
-    if (name == "TXID")
-      value = "0";  
+    if (name == "TXID"s)
+      value = "0"s;
   
     value = pad_string(value, len, pdirn, pad_char);
     record.replace(posn, len, value);             // put into record
@@ -640,53 +647,59 @@ specification tells us otherwise, that's what we do.
     \return     QSO formatted for writing to disk
 */
 const string QSO::verbose_format(void) const
-{ static const int NUMBER_WIDTH   = 5;
-  static const int CALLSIGN_WIDTH = 12;
-  static const int MODE_WIDTH = 3;
-  static const int BAND_WIDTH = 3;
-  static const int FREQUENCY_WIDTH = 7;
+{ //static const int NUMBER_WIDTH   = 5;
+  //static const int CALLSIGN_WIDTH = 12;
+  //static const int MODE_WIDTH = 3;
+  //static const int BAND_WIDTH = 3;
+  //static const int FREQUENCY_WIDTH = 7;
 
-  static const map<string /* tx field name */, pair< int /* width */, pad_direction> > TX_WIDTH { { "sent-RST",    { 3, PAD_LEFT } },
-                                                                                                  { "sent-CQZONE", { 2, PAD_LEFT } }
+  constexpr int NUMBER_WIDTH    { 5 };
+  constexpr int CALLSIGN_WIDTH  { 12 };
+  constexpr int MODE_WIDTH      { 3 };
+  constexpr int BAND_WIDTH      { 3 };
+  constexpr int FREQUENCY_WIDTH { 7 };
+
+  static const map<string /* tx field name */, pair< int /* width */, pad_direction> > TX_WIDTH { { "sent-RST"s,    { 3, PAD_LEFT } },
+                                                                                                  { "sent-CQZONE"s, { 2, PAD_LEFT } }
                                                                                                 };
 
-  static const map<string /* tx field name */, pair< int /* width */, pad_direction> > RX_WIDTH { { "received-RST",    { 3, PAD_LEFT } },
-                                                                                                  { "received-CQZONE", { 2, PAD_LEFT } }
+  static const map<string /* tx field name */, pair< int /* width */, pad_direction> > RX_WIDTH { { "received-RST"s,    { 3, PAD_LEFT } },
+                                                                                                  { "received-CQZONE"s, { 2, PAD_LEFT } }
                                                                                                 };
 
   string rv;
 
-  rv = "QSO: ";
+  rv = "QSO: "s;
   
-  rv += "number=" + pad_string(to_string(_number), NUMBER_WIDTH);
-  rv += " date=" + _date;
-  rv += " utc=" + _utc;
-  rv += " hiscall=" + pad_string(_callsign, CALLSIGN_WIDTH, PAD_RIGHT);
-  rv += " mode=" + pad_string(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH, PAD_RIGHT);
-  rv += " band=" + pad_string(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH, PAD_RIGHT);
-  rv += " frequency-tx=" + pad_string(_frequency_tx, FREQUENCY_WIDTH, PAD_RIGHT);
-  rv += " frequency-rx=" + pad_string( (_frequency_rx.empty() ? "0" : _frequency_rx), FREQUENCY_WIDTH, PAD_RIGHT );
-  rv += " mycall=" + pad_string(_my_call, CALLSIGN_WIDTH, PAD_RIGHT);
+  rv += "number="s + pad_string(to_string(_number), NUMBER_WIDTH);
+  rv += " date="s + _date;
+  rv += " utc="s + _utc;
+  rv += " hiscall="s + pad_string(_callsign, CALLSIGN_WIDTH, PAD_RIGHT);
+  rv += " mode="s + pad_string(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH, PAD_RIGHT);
+  rv += " band="s + pad_string(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH, PAD_RIGHT);
+  rv += " frequency-tx="s + pad_string(_frequency_tx, FREQUENCY_WIDTH, PAD_RIGHT);
+  rv += " frequency-rx="s + pad_string( (_frequency_rx.empty() ? "0"s : _frequency_rx), FREQUENCY_WIDTH, PAD_RIGHT );
+  rv += " mycall="s + pad_string(_my_call, CALLSIGN_WIDTH, PAD_RIGHT);
 
   for (const auto& exch_field : _sent_exchange)
-  { const string name = "sent-" + exch_field.first;
-    const auto cit = TX_WIDTH.find(name);
-    const string value = (cit == TX_WIDTH.cend() ? exch_field.second : pad_string(exch_field.second, cit->second.first, cit->second.second));
+  { const string name  { "sent-"s + exch_field.first };
+    const auto   cit   { TX_WIDTH.find(name) };
+    const string value { (cit == TX_WIDTH.cend() ? exch_field.second : pad_string(exch_field.second, cit->second.first, cit->second.second)) };
   
-    rv += " " + name + "=" + value;
+    rv += SPACE_STR + name + "="s + value;
   } 
 
   for (const auto& field : _received_exchange)
-  { const string name = "received-" + field.name();
-    const auto cit = RX_WIDTH.find(name);
-    const string value = (cit == RX_WIDTH.cend() ? field.value() : pad_string(field.value(), cit->second.first, cit->second.second));
+  { const string name  { "received-"s + field.name() };
+    const auto   cit   { RX_WIDTH.find(name) };
+    const string value { (cit == RX_WIDTH.cend() ? field.value() : pad_string(field.value(), cit->second.first, cit->second.second)) };
 
-    rv += " " + name + "=" + value;
+    rv += SPACE_STR + name + "="s + value;
   }
 
-  rv += " points=" + to_string(_points);
-  rv += static_cast<string>(" dupe=") + (_is_dupe ? "true " : "false");
-  rv += " comment=" + _comment;
+  rv += " points="s + to_string(_points);
+  rv += " dupe="s + (_is_dupe ? "true "s : "false"s);
+  rv += " comment="s + _comment;
     
   return rv; 
 }

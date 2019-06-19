@@ -72,25 +72,6 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
   }
 }
 
-// -----------   bandmap_buffer_entry ----------------
-
-/*! \class  bandmap_buffer_entry
-    \brief  Class for entries in the bandmap_buffer class
-*/
-
-/*! \brief              Add a new poster
-    \param  new_poster  poster to add
-    \return             total number of posters following the addition
-
-    Does nothing if <i>new_poster</i> is already present
-*/
-//const unsigned int bandmap_buffer_entry::add(const string& new_poster)
-//{ //_posters.insert(new_poster);
-//
-//  //return _posters.size();
-//  return ( _posters.insert(new_poster), _posters.size() );
-//}
-
 // -----------   bandmap_buffer ----------------
 
 /*! \class  bandmap_buffer
@@ -914,6 +895,25 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
   return rv;
 }
 
+/// all the entries, after the RBN threshold, filtering and culling have been applied
+const BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
+{ SAFELOCK (_bandmap);
+
+  switch (_cull_function)
+  { default :
+    case 0 :
+      return rbn_threshold_and_filtered_entries();
+
+    case 1 :                                                            // N7DR criteria
+    { BM_ENTRIES rv { rbn_threshold_and_filtered_entries() };    // only slow if dirty, although does perform copy
+
+      REMOVE_IF_AND_RESIZE(rv, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
+
+      return rv;
+    }
+  }
+}
+
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
      \param dirn    direction in which to search
@@ -923,7 +923,7 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
      Applies filtering and the RBN threshold before searching for the next station.
 */
 const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
-{ const BM_ENTRIES fe { rbn_threshold_and_filtered_entries() };
+{ const BM_ENTRIES fe { displayed_entries() };
 
   auto cit { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
 
@@ -971,7 +971,7 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
 const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn)
 { bandmap_entry rv;
 
-  const BM_ENTRIES fe { rbn_threshold_and_filtered_entries() };
+  const BM_ENTRIES fe { displayed_entries() };
 
   if (fe.empty())
     return rv;
@@ -1026,7 +1026,8 @@ const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
 const frequency bandmap::lowest_frequency(void)
-{ const BM_ENTRIES bme { rbn_threshold_and_filtered_entries() };
+{ //const BM_ENTRIES bme { rbn_threshold_and_filtered_entries() };
+  const BM_ENTRIES bme { displayed_entries() };
 
   return (bme.empty() ? frequency() : bme.front().freq());
 }
@@ -1038,7 +1039,8 @@ const frequency bandmap::lowest_frequency(void)
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
 const frequency bandmap::highest_frequency(void)
-{ const BM_ENTRIES bme { rbn_threshold_and_filtered_entries() };
+{ //const BM_ENTRIES bme { rbn_threshold_and_filtered_entries() };
+  const BM_ENTRIES bme { displayed_entries() };
 
   return (bme.empty() ? frequency() : bme.back().freq());
 }
@@ -1049,12 +1051,14 @@ const string bandmap::to_str(void)
   BM_ENTRIES raw;
   BM_ENTRIES filtered;
   BM_ENTRIES threshold_and_filtered;
+  BM_ENTRIES threshold_filtered_and_culled;
 
   { SAFELOCK(_bandmap);
 
     raw = entries();
     filtered = filtered_entries();
     threshold_and_filtered = rbn_threshold_and_filtered_entries();
+    threshold_filtered_and_culled = rbn_threshold_filtered_and_culled_entries();
   }
 
   rv += "RAW bandmap:"s + EOL;
@@ -1075,6 +1079,13 @@ const string bandmap::to_str(void)
   rv += "number of entries = "s + to_string(threshold_and_filtered.size());
 
   for (const auto& be : threshold_and_filtered)
+    rv += to_string(be) + EOL;
+
+  rv += EOL + "THRESHOLD, FILTERED and CULLED bandmap:"s + EOL;
+
+  rv += "number of entries = "s + to_string(threshold_filtered_and_culled.size());
+
+  for (const auto& be : threshold_filtered_and_culled)
     rv += to_string(be) + EOL;
 
   return rv;
@@ -1105,16 +1116,20 @@ window& operator<(window& win, bandmap& bm)
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
+#if 0
   BM_ENTRIES entries { bm.rbn_threshold_and_filtered_entries() };    // automatically filter
 
   switch (bm.cull_function())
   { case 1 :                                                         // N7DR criteria
-      REMOVE_IF_AND_RESIZE(entries, [] (bandmap_entry& be) { return (!be.matches_criteria()); });
+      REMOVE_IF_AND_RESIZE(entries, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
       break;
 
     default :
       break;
   }
+#endif
+
+  BM_ENTRIES entries { bm.displayed_entries() };    // automatically filter
 
   const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0u };
 
@@ -1139,15 +1154,13 @@ window& operator<(window& win, bandmap& bm)
       const vector<int> fade_colours { bm.fade_colours() };
       const int         n_colours    { static_cast<int>(fade_colours.size()) };
       const float       interval     { (1.0f / static_cast<float>(n_colours)) };
-
-//      int n_intervals { static_cast<int>(fraction / interval) };
-
       const int n_intervals { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
       int cpu = colours.add(fade_colours.at(n_intervals), win.bg());
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
-      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != COLOUR_BLACK))
+//      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != COLOUR_BLACK))
+      if (age_since_original_inserted < 120 and !be.is_marker() and (bm.recent_colour() != COLOUR_BLACK))
         cpu = colours.add(bm.recent_colour(), win.bg());
 
       if (is_marker)

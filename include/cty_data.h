@@ -19,6 +19,7 @@
 #include "macros.h"
 #include "pthread_support.h"
 #include "serialization.h"
+#include "string_functions.h"
 #include "x_error.h"
 
 #include <array>
@@ -30,25 +31,25 @@
 #include <vector>
 
 /// country lists
-enum country_list_type { COUNTRY_LIST_DXCC,     ///< DXCC list
-                         COUNTRY_LIST_WAEDC     ///< DARC WAEDC list
-                       };
+enum class COUNTRY_LIST { DXCC,     ///< DXCC list
+                          WAEDC     ///< DARC WAEDC list
+                        };
                        
 // error numbers
-const int CTY_INCORRECT_NUMBER_OF_FIELDS       = -1,    ///< Wrong number of fields in a record
-          CTY_INVALID_CQ_ZONE                  = -2,    ///< Invalid CQ zone
-          CTY_INVALID_ITU_ZONE                 = -3,    ///< Invalid ITU zone
-          CTY_INVALID_CONTINENT                = -4,    ///< Invalid continent
-          CTY_INVALID_LATITUDE                 = -5,    ///< Invalid latitude
-          CTY_INVALID_LONGITUDE                = -6,    ///< Invalid longitude
-          CTY_INVALID_UTC_OFFSET               = -7,    ///< Invalid UTC offset
-          CTY_INVALID_PREFIX                   = -8;    ///< Invalid country prefix
+constexpr int CTY_INCORRECT_NUMBER_OF_FIELDS       { -1 },    ///< Wrong number of fields in a record
+              CTY_INVALID_CQ_ZONE                  { -2 },    ///< Invalid CQ zone
+              CTY_INVALID_ITU_ZONE                 { -3 },    ///< Invalid ITU zone
+              CTY_INVALID_CONTINENT                { -4 },    ///< Invalid continent
+              CTY_INVALID_LATITUDE                 { -5 },    ///< Invalid latitude
+              CTY_INVALID_LONGITUDE                { -6 },    ///< Invalid longitude
+              CTY_INVALID_UTC_OFFSET               { -7 },    ///< Invalid UTC offset
+              CTY_INVALID_PREFIX                   { -8 };    ///< Invalid country prefix
           
-const int LOCATION_NO_PREFIX_MATCH             = -1,    ///< unable to find a prefix match in the database
-          LOCATION_TOO_MANY_SLASHES            = -2;    ///< more than two slashes in the call
+constexpr int LOCATION_NO_PREFIX_MATCH             { -1 },    ///< unable to find a prefix match in the database
+              LOCATION_TOO_MANY_SLASHES            { -2 };    ///< more than two slashes in the call
 
-const int RUSSIAN_INVALID_SUBSTRING            = -1,    ///< source substring does not match target line in constructor
-          RUSSIAN_INVALID_FORMAT               = -2;    ///< format of file is invalid
+constexpr int RUSSIAN_INVALID_SUBSTRING            { -1 },    ///< source substring does not match target line in constructor
+              RUSSIAN_INVALID_FORMAT               { -2 };    ///< format of file is invalid
 
 // -----------  value ----------------
 
@@ -60,15 +61,17 @@ template <typename T>
 class value
 {
 protected:
-  bool     _is_valid;    ///< is the value valid?
-  T        _val;         ///< the encapsulated value
+
+  bool     _is_valid { false }; ///< is the value valid?
+  T        _val;                ///< the encapsulated value
     
 public:
   
 /// default constructor
-  value(void) :
-    _is_valid(false)
-  { }
+//  value(void) :
+//    _is_valid(false)
+//  { }
+  value(void) = default;
   
 /// construct from a value
   explicit value(T v) :
@@ -138,11 +141,10 @@ public:
     <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
     is optional
 */
-  alternative_country_info(const std::string& record, const std::string& canonical_prefix = "");
+  alternative_country_info(const std::string& record, const std::string& canonical_prefix = std::string());
 
 /// destructor
-  inline virtual ~alternative_country_info(void)
-    { }
+  inline virtual ~alternative_country_info(void) = default;
 
   READ(country);               ///< canonical country prefix
   READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
@@ -197,8 +199,7 @@ public:
   cty_record(const std::string& record);
   
 /// destructor
-  inline virtual ~cty_record(void)
-    { }
+  inline virtual ~cty_record(void) = default;
 
   READ(alt_callsigns);          ///< alternative callsigns used by this country
   READ(alt_prefixes);           ///< alternative prefixes used by this country
@@ -287,17 +288,16 @@ public:
 /*! \brief              Construct from a file
     \param  filename    name of file
 */
-  cty_data(const std::string& filename = "cty.dat");   // somewhere along the way the default name changed from CTY.DAT
+  cty_data(const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
 
 /*! \brief              Construct from a file
     \param  path        directories in which to search for <i>filename</i>, in order
     \param  filename    name of file
 */
-  cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat");   // somewhere along the way the default name changed from CTY.DAT
+  cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
 
 /// destructor
-  inline virtual ~cty_data(void)
-    { }
+  inline virtual ~cty_data(void) = default;
     
 /// how many countries are present?
   inline unsigned int n_countries(void) const
@@ -428,8 +428,7 @@ public:
   explicit location_info(const cty_record& rec);
 
 /// destructor
-  inline virtual ~location_info(void)
-    { }
+  inline virtual ~location_info(void) = default;
 
 /// location_info == location_info
   const bool operator==(const location_info& li) const;
@@ -574,8 +573,7 @@ protected:
 public:
   
 /// default constructor
-  drlog_qth_database(void)
-    { }
+  drlog_qth_database(void) = default;
 
 /// construct from filename
   drlog_qth_database(const std::string& filename);
@@ -666,7 +664,7 @@ protected:
     \param  cty             cty.dat data
     \param  country_list    type of country list
 */
-  void _init(const cty_data& cty, const enum country_list_type country_list);
+  void _init(const cty_data& cty, const COUNTRY_LIST country_list);
 
 /*! \brief                  Insert alternatives into the database
     \param  info            the original location information
@@ -686,33 +684,33 @@ public:
     \param  filename        name of cty.dat file
     \param  country_list    type of country list
 */
-  location_database(const std::string& filename, const enum country_list_type country_list = COUNTRY_LIST_DXCC);
+  location_database(const std::string& filename, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
 
 /*! \brief                  Constructor
     \param  cty             cty.dat data
     \param  country_list    type of country list
 */
-  location_database(const cty_data& cty, const enum country_list_type country_list = COUNTRY_LIST_DXCC);
+  location_database(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
 
 /*! \brief                  Constructor
     \param  cty             cty.dat data
     \param  country_list    type of country list
     \param  secondary       secondary QTH database
 */
-  location_database(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary);
+  location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
 
 /*! \brief                  Prepare a default-constructed object for use
     \param  cty             cty.dat data
     \param  country_list    type of country list
 */
-  void prepare(const cty_data& cty, const enum country_list_type country_list = COUNTRY_LIST_DXCC);
+  void prepare(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
 
 /*! \brief                  Prepare a default-constructed object for use
     \param  cty             cty.dat data
     \param  country_list    type of country list
     \param  secondary       secondary QTH database
 */
-  void prepare(const cty_data& cty, const enum country_list_type country_list, const drlog_qth_database& secondary);
+  void prepare(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
 
 /*! \brief              Add Russian information
     \param  path        vector of directories to check for file <i>filename</i>

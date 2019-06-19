@@ -27,11 +27,11 @@ using namespace std;
 */
 message_stream::message_stream(const string& filename, const string& error_name)
 { if (file_exists(filename))
-  { int index = 0;
-    string target = filename + "-" + to_string(index);
+  { int    index  { 0 };
+    string target { filename + "-"s + to_string(index) };
 
     while (file_exists(target))
-      target = filename + "-" + to_string(++index);
+      target = filename + "-"s + to_string(++index);
 
     file_rename(filename, target);
   }
@@ -39,5 +39,3 @@ message_stream::message_stream(const string& filename, const string& error_name)
   _ost.open(filename);
   _err.open(error_name);
 }
-
-

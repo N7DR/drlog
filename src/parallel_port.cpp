@@ -36,19 +36,20 @@ extern message_stream ost;                                  ///< for debugging, 
     \param  filename    name of the port to open
 */
 parallel_port::parallel_port(const string& filename)
-{ int status = ieee1284_find_ports(&_list_from_library, 0);
+{ int status { ieee1284_find_ports(&_list_from_library, 0) };
 
   if (status != E1284_OK)
-    throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_LIST, "Unable to list parallel ports.");
+    throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_LIST, "Unable to list parallel ports."s);
 
-  const unsigned int n_ports = _list_from_library.portc;
+  const unsigned int n_ports { static_cast<unsigned int>(_list_from_library.portc) };
 
   int capabilities;
-  bool found_match = false;
+
+  bool found_match { false };
 
   for (unsigned int n = 0; !found_match and n < n_ports; ++n)
   { if (static_cast<string>(_list_from_library.portv[n]->filename) == filename)
-    { const int status = ieee1284_open(_list_from_library.portv[n], 0, &capabilities);
+    { const int status { ieee1284_open(_list_from_library.portv[n], 0, &capabilities) };
 
       if (status == E1284_INIT)
         ost << "Error opening parallel port: E1284_INIT" << endl;
@@ -66,7 +67,7 @@ parallel_port::parallel_port(const string& filename)
         ost << "Error opening parallel port: E1284_SYS" << endl;
 
       if (status != E1284_OK)
-        throw parallel_port_error(PARALLEL_PORT_MISC_ERROR, "Error trying to open parallel port " + filename + ".");
+        throw parallel_port_error(PARALLEL_PORT_MISC_ERROR, "Error trying to open parallel port "s + filename + "."s);
 
       found_match = true;
       _port_nr = n;
@@ -74,7 +75,7 @@ parallel_port::parallel_port(const string& filename)
   }
 
   if (!found_match)
-    throw parallel_port_error(PARALLEL_PORT_NO_SUCH_PORT, "Parallel port " + filename + " does not exist on this system");
+    throw parallel_port_error(PARALLEL_PORT_NO_SUCH_PORT, "Parallel port "s + filename + " does not exist on this system"s);
 
   status = ieee1284_claim(_list_from_library.portv[_port_nr]);
 
@@ -88,17 +89,11 @@ parallel_port::parallel_port(const string& filename)
     ost << "Error claiming parallel port: E1284_SYS" << endl;
 
   if (status != E1284_OK)
-    throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_CLAIM, "Cannot claim parallel port " + filename + ".");
+    throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_CLAIM, "Cannot claim parallel port "s + filename + "."s);
 }
 
 /// destructor -- closes the port
-parallel_port::~parallel_port(void)
-{ ieee1284_free_ports(&_list_from_library);
-}
-
-/*! \brief                  Set control lines
-    \param  char_to_assert  bit pattern to assert
-*/
-//void parallel_port::control(const char c) const
-//{ ieee1284_write_control(_list_from_library.portv[_port_nr], c);
+//parallel_port::~parallel_port(void)
+//{ ieee1284_free_ports(&_list_from_library);
 //}
+

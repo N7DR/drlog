@@ -26,11 +26,11 @@ pt_mutex multiplier_mutex;          ///< mutex for all the multiplier objects
 */
 
 /// default constructor
-multiplier::multiplier(void) :
-  _per_band(false),
-  _per_mode(false),
-  _used(false)
-{ }
+//multiplier::multiplier(void) :
+//  _per_band(false),
+//  _per_mode(false),
+//  _used(false)
+//{ }
 
 /*! \brief          Remove a value from the known values
     \param  str     value to be removed
@@ -66,17 +66,17 @@ const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
   if ((_used) and is_known(str))                                          // add only known mults
-  { const int b_nr = static_cast<int>(b);
-    const int m_nr = static_cast<int>(m);
+  { const int b_nr { static_cast<int>(b) };
+    const int m_nr { static_cast<int>(m) };
 
-    auto& pb = _worked[m_nr];
+    auto& pb { _worked[m_nr] };
 
-    bool rv = (pb[b_nr].insert(str)).second;  // BAND, MODE
+    bool rv { (pb[b_nr].insert(str)).second };  // BAND, MODE
 
     if (rv)
     { pb[ANY_BAND].insert(str);        // ANY_BAND, MODE
 
-      auto& pb_any = _worked[ANY_MODE];
+      auto& pb_any { _worked[ANY_MODE] };
 
       pb_any[b_nr].insert(str);        // BAND, ANY_MODE
       pb_any[ANY_BAND].insert(str);    // ANY_BAND, ANY_MODE
@@ -113,16 +113,17 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
   if (_used)
-  { const int b_nr = static_cast<int>(b);
-    const int m_nr = static_cast<int>(m);
+  { const int b_nr { static_cast<int>(b) };
+    const int m_nr { static_cast<int>(m) };
 
     _worked[m_nr][b_nr].erase(str);
 
 // is it still present in any band for this mode?
-    bool present = false;
+    bool present { false };
 
     for (int n = MIN_BAND; n < MAX_BAND; ++n)
-      present = present or (_worked[m_nr][n] < str);
+//      present = present or (_worked[m_nr][n] < str);
+      present |= (_worked[m_nr][n] < str);
 
     if (!present)
       _worked[m_nr][ANY_BAND].erase(str);
@@ -131,7 +132,8 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     present = false;
 
     for (int n = MIN_MODE; n < MAX_MODE; ++n)
-      present = present or (_worked[n][b_nr] < str);
+//      present = present or (_worked[n][b_nr] < str);
+      present |= (_worked[n][b_nr] < str);
 
     if (!present)
       _worked[ANY_MODE][b_nr].erase(str);
@@ -156,9 +158,9 @@ const bool multiplier::is_worked(const string& str, const BAND b, const MODE m) 
   if (!_used)
     return false;
 
-  auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ];
+  auto& pb { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
 
-  const set<string>& worked_this_band = pb[ (_per_band ? b : ANY_BAND) ];
+  const set<string>& worked_this_band { pb[ (_per_band ? b : ANY_BAND) ] };
 
   return (worked_this_band.find(str) != worked_this_band.cend());
 }
@@ -174,9 +176,9 @@ const size_t multiplier::n_worked(const BAND b, const MODE m) const
   if (!_used)
     return 0;
 
-  const int b_nr = static_cast<int>(b);
-  const int m_nr = static_cast<int>(m);
-  const auto& pb = _worked[m_nr];
+  const int b_nr { static_cast<int>(b) };
+  const int m_nr { static_cast<int>(m) };
+  const auto& pb { _worked[m_nr] };
 
   return pb[b_nr].size();
 }
@@ -191,7 +193,7 @@ const size_t multiplier::n_worked(const BAND b) const
   if (!_used)
     return 0;
 
-  const auto& pb = _worked[ N_MODES ];
+  const auto& pb { _worked[ N_MODES ] };
 
   return pb[ (_per_band ? b : N_BANDS) ].size();
 }
@@ -207,7 +209,7 @@ const set<string> multiplier::worked(const int b, const int m) const
   if (!_used)
     return set<string>();
 
-  const auto& pb = _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ];
+  const auto& pb { _worked[ (_per_mode ? static_cast<int>(m) : ANY_MODE) ] };
 
   return pb[ (_per_band ? b : ANY_BAND) ];
 }
@@ -218,7 +220,7 @@ const set<string> multiplier::worked(const int b, const int m) const
     \return         the output stream
 */
 ostream& operator<<(ostream& ost, const multiplier& m)
-{ const auto flags = ost.flags();
+{ const auto flags { ost.flags() };
 
   ost << "multiplier is per-mode = " << boolalpha << m.per_mode() << endl
       << "multiplier is per-band = " << boolalpha << m.per_band() << endl
@@ -228,7 +230,7 @@ ostream& operator<<(ostream& ost, const multiplier& m)
   { for (size_t n = 0; n <= N_BANDS; ++n)
     { ost << "mode = " << nm << ", band = " << n << " : ";
 
-      const set<string>& ss = m.worked(n, static_cast<MODE>(nm));
+      const set<string>& ss { m.worked(n, static_cast<MODE>(nm)) };
 
       for (const auto& worked : ss)
         ost << worked << " ";
@@ -239,7 +241,7 @@ ostream& operator<<(ostream& ost, const multiplier& m)
 
   ost << "known multipliers: ";
 
-  const set<string>& ss = m.known();
+  const set<string>& ss { m.known() };
 
   for (const auto& known : ss)
     ost << known << " ";
@@ -250,4 +252,3 @@ ostream& operator<<(ostream& ost, const multiplier& m)
 
   return ost;
 }
-

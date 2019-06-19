@@ -90,6 +90,7 @@ void* cw_buffer::_play(void*)
 
   while (true)
   { int next_action { 0 };                // next key up/down/command
+
     bool buffer_was_empty;
 
     { SAFELOCK(_key_buffer);
@@ -281,8 +282,6 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
   _condvar.set_mutex(_condvar_mutex);
   _port.control(0);                            // explicitly turn off PTT
 
-//  const int cw_priority = context.cw_priority();
-
   if (cw_priority == -1)                        // default; no RT scheduling
   { try
     { create_thread(&_thread_id, NULL, &_static_play, this, "CW BUFFER");
@@ -298,7 +297,7 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
   }
   else    // RT scheduled thread
   { try
-    { thread_attribute cw_attr;   ///< attributes for the CW thread
+    { static thread_attribute cw_attr;   ///< attributes for the CW thread
 
       cw_attr.inheritance_policy(PTHREAD_EXPLICIT_SCHED);     // required for explicit policy
       cw_attr.policy(SCHED_FIFO);                             // soft realtime
@@ -345,7 +344,7 @@ cw_buffer::~cw_buffer(void)
     \param  wpm     speed in WPM
 */
 void cw_buffer::speed(const unsigned int wpm)
-{ const unsigned int new_wpm = max( min(wpm, MAX_SPEED), MIN_SPEED );
+{ const unsigned int new_wpm { max( min(wpm, MAX_SPEED), MIN_SPEED ) };
 
   SAFELOCK(_speed);
 
@@ -432,7 +431,7 @@ void cw_buffer::add(const char c, const int character_space)
 { if (disabled())
     return;
 
-  int space = character_space;                                 // a non-constant version
+  int space { character_space };                                 // a non-constant version
 
   switch (c)
   { case 'A' :
@@ -751,8 +750,9 @@ void cw_buffer::add(const char c, const int character_space)
     prior to transmission
 */
 void cw_buffer::operator<<(const string& str)
-{ for (const auto& c : str)
-    add(c);
+{ if (!str.empty())
+    for (const auto& c : str)
+      add(c);
 }
 
 /// clear the buffer
@@ -793,7 +793,7 @@ const bool cw_buffer::empty(void)
 const string cw_messages::operator[](const int n)
 { SAFELOCK(_messages);
 
-  map<int, string>::const_iterator cit = _messages.find(n);
+  map<int, string>::const_iterator cit { _messages.find(n) };
 
   return (cit == _messages.cend() ? string() : cit->second);
 }

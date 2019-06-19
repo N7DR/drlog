@@ -918,7 +918,7 @@ const unsigned int cpair::add(const int fg, const int bg)
   if (_colours.empty())
     return _add_to_vector(fgbg);
 
-  const auto cit = find(_colours.cbegin(), _colours.cend(), fgbg);
+  const auto cit { find(_colours.cbegin(), _colours.cend(), fgbg) };
 
   if (cit == _colours.cend())
     return _add_to_vector(fgbg);

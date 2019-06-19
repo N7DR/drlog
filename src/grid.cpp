@@ -22,10 +22,10 @@ using namespace std;
 
 extern message_stream ost;                  ///< for debugging, info
 
-const float FIELD_WIDTH = 20.0;             ///< width of a Maidenhead field, in degrees
-const float FIELD_HEIGHT = 10.0;            ///< height of a Maidenhead field, in degrees
-const float SQUARE_WIDTH = 2.0;             ///< width of a Maidenhead "square", in degrees
-const float SQUARE_HEIGHT = 1.0;            ///< width of a Maidenhead "square", in degrees
+constexpr float FIELD_WIDTH  { 20.0f };             ///< width of a Maidenhead field, in degrees
+constexpr float FIELD_HEIGHT  { 10.0f };            ///< height of a Maidenhead field, in degrees
+constexpr float SQUARE_WIDTH  { 2.0f };             ///< width of a Maidenhead "square", in degrees
+constexpr float SQUARE_HEIGHT { 1.0f };            ///< width of a Maidenhead "square", in degrees
 
 // -------------------------  grid_square  ---------------------------
 
@@ -38,32 +38,32 @@ const float SQUARE_HEIGHT = 1.0;            ///< width of a Maidenhead "square",
 */
 grid_square::grid_square(const string& gs)
 { if ( is_valid_designation(gs) )
-  { auto round_it = [] (const float f) { return static_cast<int>(round(f)); };
+  { auto round_it { [] (const float f) { return static_cast<int>(round(f)); } };
 
     _designation = to_upper(gs);
 
 // http://www.arrl.org/files/file/protected/Group/Members/Technology/tis/info/pdf/18929.pdf
 // longitude
-    const char c1 = _designation[0];
-    const int l1 = round_it(FIELD_WIDTH * (c1 - 'J'));
-    const char c2 = _designation[2];
+    const char c1 { _designation[0] };
+    const int  l1 { round_it(FIELD_WIDTH * (c1 - 'J')) };
+    const char c2 { _designation[2] };
 
     int l2 = round_it(SQUARE_WIDTH * (c2 - '0'));
 
-    const float rounding_lon = ( SQUARE_WIDTH / 2 );
-    const float lon = l1 + l2 + rounding_lon;
+    const float rounding_lon { ( SQUARE_WIDTH / 2 ) };
+    const float lon { l1 + l2 + rounding_lon };
 
     _longitude = lon;
 
 // latitude
-    const char c3 = _designation[1];
-    const int n3 = c3 - 'A';
-    const int l3 = -90 + round_it(FIELD_HEIGHT * n3);
-    const char c4 = _designation[3];
-    const int n4 = c4 - '0';
-    const int l4 = round_it(SQUARE_HEIGHT * n4);
-    const float rounding_lat = ( SQUARE_HEIGHT / 2 );
-    const float lat = l3 + l4 + rounding_lat;
+    const char  c3           { _designation[1] };
+    const int   n3           { c3 - 'A' };
+    const int   l3           { -90 + round_it(FIELD_HEIGHT * n3) };
+    const char  c4           { _designation[3] };
+    const int   n4           { c4 - '0' };
+    const int   l4           { round_it(SQUARE_HEIGHT * n4) };
+    const float rounding_lat { ( SQUARE_HEIGHT / 2 ) };
+    const float lat          { l3 + l4 + rounding_lat };
 
     _latitude = lat;
   }
@@ -83,7 +83,7 @@ const bool is_valid_designation(const string& putative_designation)
   if (putative_designation.length() == 5)
     return false;
 
-  const string designation_copy = to_upper(putative_designation);
+  const string designation_copy { to_upper(putative_designation) };
 
 // longitude; http://www.arrl.org/files/file/protected/Group/Members/Technology/tis/info/pdf/18929.pdf
 
@@ -103,4 +103,3 @@ const bool is_valid_designation(const string& putative_designation)
 
   return true;
 }
-

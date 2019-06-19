@@ -29,9 +29,13 @@ class exchange_field_template;                  ///< forward declaration
 
 extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
 
-typedef std::tuple<int        /* field number wrt 0 */,
-        std::string           /* received value */,
-        std::set<std::string> /* unassigned field names */> TRIPLET;   ///< used in parsed_exchange
+using TRIPLET = std::tuple<int        /* field number wrt 0 */,
+                           std::string           /* received value */,
+                           std::set<std::string> /* unassigned field names */>;   ///< used in parsed_exchange
+
+//typedef std::tuple<int        /* field number wrt 0 */,
+//        std::string           /* received value */,
+//        std::set<std::string> /* unassigned field names */> TRIPLET;   ///< used in parsed_exchange
 
 const std::set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
 
@@ -52,8 +56,7 @@ public:
 //  std::map<std::string, std::string>           _exchange_prefill_file;      ///< external prefill files for exchange fields
 
 /// default constructor
-  inline exchange_field_prefill(void)
-    { }
+  inline exchange_field_prefill(void) = default;
 
 /*! \brief                          Constructor
     \param  prefill_filename_map    map of fields and filenames
@@ -195,7 +198,8 @@ protected:
     \param  str     string to check
     \return         whether <i>str</i> is a reasonable callsign
 */
-  const bool _is_possible_callsign(const std::string& str) const;
+  inline const bool _is_possible_callsign(const std::string& str) const
+    { return ( (str.length() < 3) ? false : ( isalpha(str[0]) and contains_digit(str) ) ); }
 
 public:
 
@@ -435,8 +439,7 @@ protected:
 public:
 
 /// default constructor
-  inline EFT(void)
-    { }
+  inline EFT(void) = default;
 
 /*! \brief      construct from name
     \param  nm  name

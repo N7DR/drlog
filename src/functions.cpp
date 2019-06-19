@@ -23,11 +23,11 @@ extern message_stream ost;  ///< debugging/logging output
 
 using namespace std;
 
-constexpr float PI   { 3.14159265 };
-constexpr float R    { 6371 };                  // radius in km
+constexpr float PI   { 3.14159265f };
+constexpr float R    { 6371.0f };                  // radius in km
 
-constexpr float DTOR { PI / 180.0 };
-constexpr float RTOD { 1.0 / DTOR };
+constexpr float DTOR { PI / 180.0f };
+constexpr float RTOD { 1.0f / DTOR };
 
 /*! \brief          Obtain distance in km between two locations
     \param  lat1    latitude of source, in degrees (+ve north)
@@ -57,8 +57,6 @@ const float distance(const float& lat1, const float& long1, const float& lat2, c
 
   const float c { 2 * atan2(sqrt(a), sqrt(1 - a)) };
   const float d { R * c };
-
-//  ost << "distance in km = " << d << endl;
 
   return d;
 }
@@ -157,7 +155,7 @@ const string sunrise_or_sunset(const float& lat, const float& lon, const bool ca
 
   h /= 15;
 
-  float big_t { h + ra - (0.06571f * t) - 6.622f };
+  const float big_t { h + ra - (0.06571f * t) - 6.622f };
   float ut    { big_t - lnghour };
 
   if (ut > 24)

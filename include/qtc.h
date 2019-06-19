@@ -459,6 +459,9 @@ public:
 
 // -------------------------------------- Errors  -----------------------------------
 
+ERROR_CLASS(qtc_error);         ///< Errors related to QTC processing
+
+#if 0
 /*! \class  qtc_error
     \brief  Errors related to QTC processing
 */
@@ -477,5 +480,6 @@ public:
     x_error(n, s)
   { }
 };
+#endif
 
 #endif /* QTC_H */

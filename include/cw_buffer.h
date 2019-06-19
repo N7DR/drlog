@@ -87,6 +87,9 @@ public:
 */
   cw_buffer(const std::string& filename, const unsigned int delay, const unsigned int wpm_speed, const int cw_priority);
 
+/// no copy constructor
+  cw_buffer(const cw_buffer& cwb) = delete;
+
 /// destructor
   virtual ~cw_buffer(void);
 
@@ -204,8 +207,7 @@ public:
     { }
 
 /// default constructor
-  inline cw_messages(void)
-    { }
+  inline cw_messages(void) = default;
 
 /*! \brief      Get a particular CW message
     \param  n   number of message to return

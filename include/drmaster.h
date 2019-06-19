@@ -53,7 +53,7 @@ public:
 /*! \brief              Default constructor
     \param  filename    name of file from which to donstruct the object
 */
-  explicit master_dta(const std::string& filename = "master.dta");
+  explicit master_dta(const std::string& filename = "master.dta"s);
 
 /*! \brief      Get all the calls
     \return     all the calls from the file
@@ -68,7 +68,7 @@ public:
     \brief  Manipulate a line from an N6TR TRMASTER.ASC file
 */
 
-const unsigned int TRMASTER_N_USER_PARAMETERS = 5;      ///< the number of user parameters in a TRMASTER file
+constexpr unsigned int TRMASTER_N_USER_PARAMETERS { 5 };      ///< the number of user parameters in a TRMASTER file
 
 class trmaster_line
 {
@@ -106,8 +106,7 @@ public:
   explicit trmaster_line(const std::string& line);
 
 /// destructor
-  inline virtual ~trmaster_line(void)
-    { }
+  inline virtual ~trmaster_line(void) = default;
 
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
@@ -200,7 +199,7 @@ public:
 
     The file <i>filename</i> may be either an ASCII or a binary file
 */
-  explicit trmaster(const std::string& filename = "trmaster.asc");
+  explicit trmaster(const std::string& filename = "trmaster.asc"s);
 
 /// all the calls (in alphabetical order)
   const std::vector<std::string> calls(void) const;
@@ -256,8 +255,7 @@ protected:
 public:
 
 /// default constructor
-  inline drmaster_line(void)
-    { }
+  inline drmaster_line(void) = default;
 
 /*! \brief                  Construct fronm a call or from a line from a drmaster file
     \param  line_or_call    line from file, or a call
@@ -267,8 +265,7 @@ public:
   explicit drmaster_line(const std::string& line_or_call);
 
 /// destructor
-  inline virtual ~drmaster_line(void)
-    { }
+  inline virtual ~drmaster_line(void) = default;
 
 /// convert to a string
   const std::string to_string(void) const;
@@ -355,7 +352,7 @@ public:
 
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  explicit drmaster(const std::string& filename = "drmaster");
+  explicit drmaster(const std::string& filename = "drmaster"s);
 
 /*! \brief              Construct from a file
     \param  path        directories to check
@@ -364,14 +361,14 @@ public:
     Constructs from the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  drmaster(const std::vector<std::string>& path, const std::string& filename = "drmaster");
+  drmaster(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
 
 /*! \brief              Prepare the object by reading a file
     \param  filename    name of file to read
 
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  void prepare(const std::string& filename = "drmaster");
+  void prepare(const std::string& filename = "drmaster"s);
 
 /*! \brief              Prepare the object by reading a file
     \param  path        directories to check
@@ -380,7 +377,7 @@ public:
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories.
     Throws exception if the file does not exist or is incorrectly formatted
 */
-  void prepare(const std::vector<std::string>& path, const std::string& filename = "drmaster");
+  void prepare(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
 
 /// all the calls (in alphabetical order)
   const std::vector<std::string> calls(void) const;

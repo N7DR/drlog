@@ -111,7 +111,7 @@ protected:
     
 /// does the frequency appear to be valid? Nothing fancy needed here
   inline const bool _valid_frequency(void) const
-    { return (_freq.khz() >= 1800 and _freq.khz() <= 29700); }
+    { return (_freq.khz() >= 1'800 and _freq.khz() <= 29'700); }
 
 public:
     
@@ -197,16 +197,16 @@ class monitored_posts
 {
 protected:
 
-  std::set<std::string> _callsigns;     ///< monitored calls
-  bool                  _is_dirty;      ///< whether info has changed since last output
-  unsigned int          _max_entries;   ///< number of displayable entries
+  std::set<std::string> _callsigns;             ///< monitored calls
+  bool                  _is_dirty   { false };  ///< whether info has changed since last output
+  unsigned int          _max_entries;           ///< number of displayable entries
 
   std::deque<monitored_posts_entry> _entries;          ///< calls monitored within past MONITORED_POSTS_DURATION seconds
 
 public:
 
 /// constructor
-  monitored_posts(void);
+  monitored_posts(void) = default;
 
   SAFEREAD(entries, monitored_posts);           ///< calls monitored within past MONITORED_POSTS_DURATION seconds
   READ(is_dirty);                               ///< whether info has changed since last output

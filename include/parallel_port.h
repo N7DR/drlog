@@ -26,10 +26,10 @@
 #include <ieee1284.h>
 
 // error numbers
-const int PARALLEL_PORT_NO_SUCH_PORT            = -1,    ///< port does not exist
-          PARALLEL_PORT_MISC_ERROR              = -2,    ///< misc. error
-          PARALLEL_PORT_UNABLE_TO_CLAIM         = -3,    ///< can't claim the port
-          PARALLEL_PORT_UNABLE_TO_LIST          = -4;    ///< can't list the ports
+constexpr int PARALLEL_PORT_NO_SUCH_PORT            { -1 },    ///< port does not exist
+              PARALLEL_PORT_MISC_ERROR              { -2 },    ///< misc. error
+              PARALLEL_PORT_UNABLE_TO_CLAIM         { -3 },    ///< can't claim the port
+              PARALLEL_PORT_UNABLE_TO_LIST          { -4 };    ///< can't list the ports
 
 /* From https://secure.wikimedia.org/wikipedia/en/wiki/Parallel_port:
 
@@ -123,7 +123,8 @@ public:
   explicit parallel_port(const std::string& filename);
 
 /// destructor -- closes the port
-  virtual ~parallel_port(void);
+  inline virtual ~parallel_port(void)
+    { ieee1284_free_ports(&_list_from_library); }
 
 /*! \brief                  Set control lines
     \param  char_to_assert  bit pattern to assert
@@ -135,26 +136,5 @@ public:
 // -------------------------------------- Errors  -----------------------------------
 
 ERROR_CLASS(parallel_port_error);   ///< errors related to parallel port processing
-
-#if 0
-/*! \class  parallel_port_error
-    \brief  Errors related to parallel port processing
-*/
-
-class parallel_port_error : public x_error
-{
-protected:
-
-public:
-
-/*! \brief      Construct from error code and reason
-    \param  n   error code
-    \param  s   reason
-*/
-  inline parallel_port_error(const int n, const std::string& s) :
-    x_error(n, s)
-  { }
-};
-#endif
 
 #endif    // PARALLEL_PORT_H

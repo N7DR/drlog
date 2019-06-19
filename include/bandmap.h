@@ -49,7 +49,7 @@ extern const std::string   MODE_MARKER;                         ///< the string 
 extern const std::string   MY_MARKER;                           ///< the string that marks my position in the bandmap
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
-constexpr unsigned int COLUMN_WIDTH = 19;           ///< width of a column in the bandmap window
+constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -81,7 +81,6 @@ public:
 
     Does nothing if <i>new_poster</i> is already present
 */
-//  const unsigned int add(const std::string& new_poster);
   inline const unsigned int add(const std::string& new_poster)
     { return ( _posters.insert(new_poster), _posters.size() ); }
 };
@@ -147,24 +146,26 @@ class needed_mult_details
 {
 protected:
 
-  bool           _is_needed;        ///< are any mult values needed?
-  bool           _is_status_known;  ///< is the status known for sure?
-  std::set<T>    _values;           ///< values that are needed
+  bool           _is_needed       { false };  ///< are any mult values needed?
+  bool           _is_status_known { true };   ///< is the status known for sure?
+  std::set<T>    _values          { };        ///< values that are needed
 
 public:
 
 /// default constructor
-  needed_mult_details(void) :
-    _is_needed(false),
-    _is_status_known(true)          //  for backwards compatibility
-  { }
+  needed_mult_details(void) = default;
+
+//  needed_mult_details(void) :
+//    _is_needed(false),
+//    _is_status_known(true)          //  for backwards compatibility
+//  { }
 
 /*! \brief      Constructor from a needed value
     \param  v   needed value
 */
   inline explicit needed_mult_details(const T& v) :
     _is_needed(true)
-  { _values.insert(v); }
+    { _values.insert(v); }
 
 /// is any value needed?
   inline const bool is_any_value_needed(void) const
@@ -732,6 +733,7 @@ protected:
   unsigned int              _rbn_threshold;                             ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)        _rbn_threshold_and_filtered_entries;        ///< entries, with the filter and RBN threshold applied
   bool                      _rbn_threshold_and_filtered_entries_dirty;  ///< is the RBN threshold and filtered version dirty?
+  decltype(_entries)        _rbn_threshold_filtered_and_culled_entries; ///< entries, with the RBN threshold, filter and cull function applied
   std::set<std::string>     _recent_calls;                              ///< calls recently added
   int                       _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
 
@@ -928,6 +930,13 @@ public:
 /// all the entries, after the RBN threshold and filtering have been applied
   const BM_ENTRIES rbn_threshold_and_filtered_entries(void);
 
+/// all the entries, after the RBN threshold, filtering and culling have been applied
+  const BM_ENTRIES rbn_threshold_filtered_and_culled_entries(void);
+
+/// synonym that creates the displayed calls
+  inline const BM_ENTRIES displayed_entries(void)
+    { return rbn_threshold_filtered_and_culled_entries(); }
+
 /// get the column offset
   inline int column_offset(void) const
     { return _column_offset; }
@@ -952,6 +961,9 @@ public:
 */
   inline const std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
+
+  inline const std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
+    { return _nearest_callsign(displayed_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
 /*!  \brief         Find the next needed station up or down in frequency from the current location
      \param fp      pointer to function to be used to determine whether a station is needed
@@ -1115,7 +1127,6 @@ window& operator<(window& win, bandmap& bm);
 */
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
 
-//typedef const bandmap_entry (bandmap::* BANDMAP_MEM_FUN_P)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 using BANDMAP_MEM_FUN_P = const bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 
 #endif    // BANDMAP_H

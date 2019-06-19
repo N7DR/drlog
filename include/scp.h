@@ -26,7 +26,8 @@
 // forward declaration
 class scp_databases;
 
-typedef std::unordered_set<std::string> SCP_SET;    ///< define the type of set used in SCP functions
+//typedef std::unordered_set<std::string> SCP_SET;    ///< define the type of set used in SCP functions
+using SCP_SET = std::unordered_set<std::string>;    ///< define the type of set used in SCP functions
 
 // -----------  scp_database  ----------------
 
@@ -53,27 +54,29 @@ protected:
 public:
 
 /// default constructor
-  inline scp_database(void)
-    { }
+  inline scp_database(void) = default;
 
 /// construct from filename; file is assumed to look similar to TRMASTER.ASC
   explicit scp_database(const std::string& filename);
   
 /// construct from vector of calls
-  explicit scp_database(const std::vector<std::string>& calls);
+  inline explicit scp_database(const std::vector<std::string>& calls)
+    { init_from_calls(calls); }
 
 /// construct from a master_dta
-  explicit scp_database(const master_dta& md);
+  inline explicit scp_database(const master_dta& md)
+    { init_from_calls(md.calls()); }
 
 /// construct from a drmaster object
-  explicit scp_database(const drmaster& drm);
+  inline explicit scp_database(const drmaster& drm)
+    { init_from_calls(drm.calls()); }
 
 /// destructor
-  inline virtual ~scp_database(void)
-    { }
+  inline virtual ~scp_database(void) = default;
 
 /// populate the database from a vector of calls
-  void init_from_calls(const std::vector<std::string>& calls);
+  inline void init_from_calls(const std::vector<std::string>& calls)
+    { FOR_ALL(calls, [&] (const std::string& this_call) { add_call(this_call); } ); }
 
 /// add a call to the database
   void add_call(const std::string& call);
@@ -120,8 +123,7 @@ protected:
 public:
 
 /// default constructor
-  inline scp_databases(void)
-    { }
+  inline scp_databases(void) = default;
 
 /// destructor
   inline virtual ~scp_databases(void)

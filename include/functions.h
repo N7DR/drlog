@@ -20,7 +20,7 @@
 
 //static const float KM_PER_MILE = 1.609344;                  ///< number of kilometres in a mile
 
-constexpr float KM_PER_MILE = 1.609344;                  ///< number of kilometres in a mile
+constexpr float KM_PER_MILE { 1.609344f };                  ///< number of kilometres in a mile
 
 /*! \brief              Convert miles to kilometres
     \param  dx_miles    distance in miles

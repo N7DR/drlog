@@ -35,8 +35,6 @@ extern bool                    require_dot_in_replacement_call;     ///< whether
 
 pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
 
-//static const set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
-
 // -------------------------  exchange_field_prefill  ---------------------------
 
 /*! \class  exchange_field_prefill
@@ -89,9 +87,6 @@ const string exchange_field_prefill::prefill_data(const string& field_name, cons
   const unordered_map<string /* callsign */, string /* value */>& field_map   { it->second };
   const auto                                                      callsign_it { field_map.find(callsign) };
 
-//  if (callsign_it == field_map.cend())
-//    return string();
-
   return ( (callsign_it == field_map.cend()) ? string() : callsign_it->second );
 }
 
@@ -99,14 +94,14 @@ ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
 {
 //  std::map<std::string /* field-name */, std::unordered_map<std::string /* callsign */, std::string /* value */>> _db;  ///< all values are upper case
 
-  const auto& db = epf.db();
+  const auto& db { epf.db() };
 
   ost << "Number of field names = " << db.size() << endl;
 
   for (const auto& element : db)
   { ost << "Field name = " << element.first << endl;
 
-    const auto& um = element.second;
+    const auto& um { element.second };
 
     ost << "  Number of callsigns = " << um.size() << endl;
 
@@ -180,25 +175,13 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 
 // now do the last character, which might be a digit or a precedence
   if (possible)
-  { const char& lchar = last_char(str);
+  { const char lchar { last_char(str) };
 
     possible = isdigit(lchar) or (legal_prec < lchar);
   }
 
   return possible;
 }
-
-/*! \brief          Does a string contain a precedence?
-    \param  str     string to check
-    \return         whether <i>str</i> contains a precedence
-
-    Currently returns true only for strings of the form:
-      <i>precedence</i>
-      <i>n</i><i>precedence</i>
-*/
-//const bool parsed_ss_exchange::_is_possible_prec(const string& str) const
-//{ return ( (str.length() == 1) ? (legal_prec < last_char(str)) : (_is_possible_serno(str) and (legal_prec < last_char(str))) );
-//}
 
 /*! \brief          Does a string contain a possible check?
     \param  str     string to check
@@ -222,14 +205,9 @@ const bool parsed_ss_exchange::_is_possible_check(const string& str) const
     \param  str     string to check
     \return         whether <i>str</i> is a reasonable callsign
 */
-const bool parsed_ss_exchange::_is_possible_callsign(const string& str) const
-{ //if (str.length() < 3)
-  //  return false;
-
-  //return (isalpha(str[0]) and contains_digit(str));
-
-  return ( (str.length() < 3) ? false : ( isalpha(str[0]) and contains_digit(str) ) );
-}
+//const bool parsed_ss_exchange::_is_possible_callsign(const string& str) const
+//{ return ( (str.length() < 3) ? false : ( isalpha(str[0]) and contains_digit(str) ) );
+//}
 
 /*! \brief                      Constructor
     \param  call                callsign
@@ -238,20 +216,20 @@ const bool parsed_ss_exchange::_is_possible_callsign(const string& str) const
 parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>& received_fields) :
   _callsign(call),
   _prec('Z'),
-  _check("XX"),
+  _check("XX"s),
   _serno(0),
-  _section("AAA")
+  _section("AAA"s)
 { if (received_fields.size() < 3)                    // at least 3 fields are required (<n><prec> <check> <sec>)
     return;
 
   vector<string> copy_received_fields = received_fields;
-  bool is_special = false;
+  bool is_special { false };
 
 // deal with: B 71 CO 10 N7DR
 // which might be a common case
 
-  if (received_fields[0].length() == 1 and isalpha(received_fields[0][0]))
-  { if (received_fields[1].length() == 2 and isdigit(received_fields[1][0]) and isdigit(received_fields[1][1]))
+  if ( (received_fields[0].length() == 1) and isalpha(received_fields[0][0]) )
+  { if ( (received_fields[1].length() == 2) and isdigit(received_fields[1][0]) and isdigit(received_fields[1][1]))
     { _prec = received_fields[0][0];
       _check = received_fields[1];
       copy_received_fields = vector<string>(received_fields.begin() + 2, received_fields.end());
@@ -262,7 +240,8 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 //  count the number fields that might be, or might contain, a serial number
 // i.e., all digits, or digits followed by a single letter
   vector<size_t> possible_sernos;
-  size_t index = 0;
+
+  size_t index { 0 };
 
   for (const auto& field : copy_received_fields)
   { if (_is_possible_serno(field))
@@ -315,16 +294,16 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   }
   else
   { if (!possible_prec.empty())
-    { const unsigned int field_nr = possible_prec[possible_prec.size() - 1];
+    { const unsigned int field_nr { possible_prec[possible_prec.size() - 1] };
 
       _prec = last_char(copy_received_fields[field_nr]);
     }
   }
 
 // get the check; for this use the last field that is a possible check
-  unsigned int check_field_nr = numeric_limits<unsigned int>::max();
+  unsigned int check_field_nr { numeric_limits<unsigned int>::max() };
 
-  if (possible_check.empty() and (_check == "XX") )  // _check unchanged from default
+  if (possible_check.empty() and (_check == "XX"s) )  // _check unchanged from default
   { ost << "ERROR: no possible check in exchange received from " << call << endl;
     for (const auto& field : received_fields)
       ost << field << " : " << endl;
@@ -339,7 +318,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
           default :
             ost << "Too many ambiguous fields: " << ambiguous_fields.size() << "; doing my best" << endl; // NB no break
           case 2 :  // first should be serial number, second should check
-          { const unsigned int field_nr = ambiguous_fields[1];
+          { const unsigned int field_nr { ambiguous_fields[1] };
 
             _check = copy_received_fields[field_nr];
             check_field_nr = static_cast<int>(field_nr);
@@ -348,7 +327,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
         }
       }
       else
-      { const unsigned int field_nr = possible_check[possible_check.size() - 1];
+      { const unsigned int field_nr { possible_check[possible_check.size() - 1] };
 
         _check = copy_received_fields[field_nr];
         check_field_nr = static_cast<int>(field_nr);
@@ -362,7 +341,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   if (possible_callsigns.empty())
     _callsign = call;    // default
   else
-  { const unsigned int field_nr = possible_callsigns[possible_callsigns.size() - 1];
+  { const unsigned int field_nr { possible_callsigns[possible_callsigns.size() - 1] };
 
     _callsign = copy_received_fields[field_nr];
   }
@@ -376,7 +355,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
       ost << field << " : " << endl;
   }
   else
-  { unsigned int field_nr = possible_sernos[possible_sernos.size() - 1];
+  { unsigned int field_nr { possible_sernos[possible_sernos.size() - 1] };
 
     ost << "serno field number = " << field_nr << endl;
     ost << "check field number = " << check_field_nr << endl;
@@ -410,14 +389,15 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 // get the section
   ost << "getting section" << endl;
-  map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+  map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
 
 //  vector<size_t> possible_sections;
   index = 0;
 
   try
-  { const EFT sec_eft = exchange_field_eft.at("SECTION");
-    int section_field_nr = -1;
+  { const EFT sec_eft { exchange_field_eft.at("SECTION"s) };
+
+    int section_field_nr { -1 };
 
     for (const auto& field : copy_received_fields)
     { if (sec_eft.is_legal_value(field))
@@ -483,7 +463,7 @@ void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const v
 
   for (unsigned int field_nr = 0; field_nr < remaining_matches.size(); ++field_nr)
   { if (remaining_matches.at(field_nr).size() == 1)  // there is a single match between field number and name
-    { const string& matched_field_name = *(remaining_matches.at(field_nr).cbegin());
+    { const string& matched_field_name { *(remaining_matches.at(field_nr).cbegin()) };
 
       for (unsigned int n = 0; n < _fields.size(); ++n)
       { if (_fields[n].name() == matched_field_name)
@@ -501,7 +481,7 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
   ost << "  field number: " << get<0>(t) << endl;
   ost << "  field value: " << get<1>(t) << endl;
 
-  const set<string>& ss = get<2>(t);
+  const set<string>& ss { get<2>(t) };
 
   ost << "  { ";
 
@@ -516,15 +496,15 @@ void parsed_exchange::_print_tuple(const tuple<int, string, set<string>>& t) con
     \param  tuple_map_assignmens    the assignments
 */
 void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tuples, std::map<std::string, TRIPLET>& tuple_map_assignments)
-{ size_t               old_size_of_tuple_deque;
+{ size_t old_size_of_tuple_deque;
 
   do
   { old_size_of_tuple_deque = unassigned_tuples.size();  // this is changed if an assignment is made
 
     for (const auto& t : unassigned_tuples)
     { if (FIELD_NAMES(t).size() == 1)
-      { const string& field_name = *(FIELD_NAMES(t).cbegin());    // syntactic sugar
-        const auto it = tuple_map_assignments.find( field_name );
+      { const string& field_name { *(FIELD_NAMES(t).cbegin()) };    // syntactic sugar
+        const auto    it { tuple_map_assignments.find( field_name ) };
 
         if (it != tuple_map_assignments.end())
          tuple_map_assignments.erase(it);        // erase any previous entry with this key
@@ -538,16 +518,13 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     REMOVE_IF_AND_RESIZE(unassigned_tuples,  [] (TRIPLET& t) { return (FIELD_NAMES(t).size() == 1); } );
 
     for (auto& t : unassigned_tuples)
-    { set<string>& ss = FIELD_NAMES(t);
+    { set<string>& ss { FIELD_NAMES(t) };
 
       for (const auto& tm : tuple_map_assignments)  // for each one that has been definitively assigned
         ss.erase(tm.first);
     }
   } while (old_size_of_tuple_deque != unassigned_tuples.size());
 }
-
-//  typedef tuple<int /* field number wrt 0 */, string /* received value */, set<string> /* unassigned field names */> TRIPLET;
-
 
 /*! \brief                              Constructor
     \param  from_callsign               callsign of the station from which the exchange was received
@@ -560,13 +537,13 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
 parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values, const bool truncate_received_values) :
   _replacement_call(),
   _valid(false)
-{ static const string EMPTY_STRING("");
+{ static const string EMPTY_STRING;
 
   extern bool is_ss;                    // Sweepstakes is special; this is set to the correct value by drlog.cpp
 
   vector<string> copy_received_values(received_values);
 
-  const vector<exchange_field> exchange_template = rules.unexpanded_exch(canonical_prefix, m);
+  const vector<exchange_field> exchange_template { rules.unexpanded_exch(canonical_prefix, m) };
 
   if (is_ss)                // SS is oh-so-special
   { const parsed_ss_exchange exch(from_callsign, received_values);
@@ -574,15 +551,15 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     if (exch.callsign() != from_callsign)
       _replacement_call = exch.callsign();
 
-    _fields.push_back( { "SERNO", to_string(exch.serno()), false } );
-    _fields.push_back( { "PREC", create_string(exch.prec()), false } );
-    _fields.push_back( { "CALL", exch.callsign(), false } );
-    _fields.push_back( { "CHECK", exch.check(), false } );
-    _fields.push_back( parsed_exchange_field("SECTION", exch.section(), true) );    // convert section to canonical form if necessary
+    _fields.push_back( { "SERNO"s, to_string(exch.serno()), false } );
+    _fields.push_back( { "PREC"s, create_string(exch.prec()), false } );
+    _fields.push_back( { "CALL"s, exch.callsign(), false } );
+    _fields.push_back( { "CHECK"s, exch.check(), false } );
+    _fields.push_back( parsed_exchange_field("SECTION"s, exch.section(), true) );    // convert section to canonical form if necessary
 
     FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
 
-    _valid = ( (exch.serno() != 0) and (exch.section() != "AAA") and (exch.prec() != 'Z') );
+    _valid = ( (exch.serno() != 0) and (exch.section() != "AAA"s) and (exch.prec() != 'Z') );
 
     return;
   }
@@ -591,8 +568,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   set<string> optional_field_names;
 
   FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
-                                                              { //n_optional_fields++;
-                                                                optional_field_names.insert(ef.name());
+                                                              { optional_field_names.insert(ef.name());
                                                               }
                                                             } );
 
@@ -615,13 +591,13 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   }
 
   if (truncate_received_values)
-  { map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+  { map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
 
     ost << "exchange_field_eft map: " << exchange_field_eft << endl;
 
 // remove any inappropriate RS(T)
-    auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST" and m != MODE_CW )  or
-                                                                      ( psE.first == "RS" and m != MODE_SSB )
+    auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST"s and m != MODE_CW )  or
+                                                                      ( psE.first == "RS"s and m != MODE_SSB )
                                                                     );
                                                       };
 
@@ -631,24 +607,25 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
 //  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
 
-    const vector<string> exchange_field_names = rules.unexpanded_exchange_field_names(canonical_prefix, m);
+    const vector<string> exchange_field_names { rules.unexpanded_exchange_field_names(canonical_prefix, m) };
 
     for (const auto& efn : exchange_field_names)
       ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
 
     map<string /* field name */, string /* value */> result_map;
 
-    const string rv0 = received_values[0];
-    bool found_match = false;
+    const string rv0 { received_values[0] };
+
+    bool found_match { false };
 
     for (auto cit = exchange_field_names.cbegin(); !found_match and cit != exchange_field_names.cend(); ++cit)
-    { const string exchange_field_name = *cit;
+    { const string exchange_field_name { *cit };
 
       if (contains(exchange_field_name, "+"))    // if a choice
-      { const vector<string> choices_vec = split_string(exchange_field_name, '+');
+      { const vector<string> choices_vec { split_string(exchange_field_name, '+') };
 
         for (auto it = choices_vec.begin(); it != choices_vec.end(); )    // see Josuttis 2nd edition, p. 343
-        { const EFT& eft = exchange_field_eft.at(*it);
+        { const EFT& eft { exchange_field_eft.at(*it) };
 
           if (eft.is_legal_value(rv0))
           { result_map[*it] = rv0;
@@ -660,7 +637,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
         }
       }
       else        // not a choice
-      { const EFT& eft = exchange_field_eft.at(exchange_field_name);
+      { const EFT& eft { exchange_field_eft.at(exchange_field_name) };
 
         if (eft.is_legal_value(rv0))
         { result_map[exchange_field_name] = rv0;
@@ -676,7 +653,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   {
 // for each received field, which output fields does it match?
   map<int /* received field number */, set<string>> matches;
-  const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+
+  const map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
 
 //  ost << "The EFT for each field name: " << endl;
 
@@ -689,17 +667,18 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   { set<string> match;
 
     for (const auto& field : exchange_template)
-    { const string& field_name = field.name();
+    { const string& field_name { field.name() };
 
       try
-      { const bool is_choice = contains(field_name, "+");
+      { const bool is_choice { contains(field_name, "+") };
 
         if (is_choice)
-        { const vector<string> choices_vec = split_string(field_name, '+');
+        { const vector<string> choices_vec { split_string(field_name, '+') };
+
           set<string> choices(choices_vec.cbegin(), choices_vec.cend());
 
           for (auto it = choices.begin(); it != choices.end(); )    // see Josuttis 2nd edition, p. 343
-          { const EFT& eft = exchange_field_eft.at(*it);
+          { const EFT& eft { exchange_field_eft.at(*it) };
 
             if (eft.is_legal_value(received_value))
             { match.insert(field_name);                 // insert the "+" version of the name
@@ -710,7 +689,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
           }
         }
         else    // not a choice
-        { const EFT& eft = exchange_field_eft.at(field_name);
+        { const EFT& eft { exchange_field_eft.at(field_name) };
 
           if (eft.is_legal_value(received_value))
             match.insert(field_name);
@@ -745,7 +724,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
       ost << "Size of deque = " << dt.size() << endl;
 
-      size_t index = 0;
+      size_t index { 0 };
 
       for (const auto& t : dt)
       { ost << "triplet number: " << index++ << endl;
@@ -767,7 +746,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
   vector<TRIPLET>      tuple_vector_assignments;
   map<string, TRIPLET> tuple_map_assignments;
-//  size_t               old_size_of_tuple_deque;
 
 // find entries with only one entry in set
   _assign_unambiguous_fields(tuple_deque, tuple_map_assignments);
@@ -779,21 +757,21 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   if (tuple_deque.empty())
     _valid = true;
 
-  bool processed_field_on_last_pass = true;     // whether we processed any fields on the last pass through the loop that we are baout to execute
+  bool processed_field_on_last_pass { true };     // whether we processed any fields on the last pass through the loop that we are baout to execute
 
 //  if (!_valid) // we aren't finished
   while (processed_field_on_last_pass and !_valid) // we aren't finished; if we processed a field last time, we should try again with the new head of the deque
   { processed_field_on_last_pass = false;
 
-    const TRIPLET& t = tuple_deque[0];    // first received field we haven't been able to use, even tentatively
+    const TRIPLET& t { tuple_deque[0] };    // first received field we haven't been able to use, even tentatively
 
 // find first received field that's a match for any exchange field and that we haven't used
-    const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } );
+    const auto cit { find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } ) };
 
     if (cit != exchange_template.cend())
     { processed_field_on_last_pass = true;
 
-      const string& field_name = cit->name();    // syntactic sugar
+      const string& field_name { cit->name() };    // syntactic sugar
 
 //    map<string, tuple<int, string, set<string>>> tuple_map_assignments;
 
@@ -802,7 +780,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 //ost << "  Corresponding tuple: " << endl;
 //_print_tuple(t);
 
-      const bool inserted = (tuple_map_assignments.insert( { field_name, t } )).second;
+      const bool inserted { (tuple_map_assignments.insert( { field_name, t } )).second };
 
       if (!inserted)
         ost << "WARNING: Unable to insert map assignment for field: " << field_name << ". This should never happen" << endl;
@@ -820,10 +798,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 // then the deque will be empty, but the mapping will still be incomplete.
 // So we provisionally set _valid here, but might revoke it when preparing the output
       if (tuple_deque.empty())
-      { _valid = true;
-
-//        ost << "tuple_deque is empty, mapping is valid" << endl;
-      }
+        _valid = true;
     }
 
     if (!_valid) // we aren't finished -- tuple_vector is not empty
@@ -831,12 +806,12 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
       FOR_ALL(tuple_deque, [this] (TRIPLET& t) { _print_tuple(t); } );
 
-      const TRIPLET& t = tuple_deque[0];
-      const auto cit = find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } );
+      const TRIPLET& t   { tuple_deque[0] };
+      const auto     cit { find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } ) };
 
       if (cit == exchange_template.cend())
       { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )             // maybe test for replacement call
-        { const bool replace_callsign = CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t));
+        { const bool replace_callsign { CALLSIGN_EFT.is_legal_value(RECEIVED_VALUE(t)) };
 
           if (replace_callsign)
           { _replacement_call = RECEIVED_VALUE(t);
@@ -854,24 +829,25 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
 // prepare output; includes optional fields and all choices
   for (auto& pef : _fields)
-  { const string& name = pef.name();
+  { const string& name { pef.name() };
 
      try
-    { const auto& t = tuple_map_assignments.at(name);
+    { const auto& t { tuple_map_assignments.at(name) };
 
       pef.value(RECEIVED_VALUE(t));
     }
 
     catch (...)
-    { const bool is_choice = contains(name, "+");
-      bool found_map = false;
+    { const bool is_choice { contains(name, "+") };
+
+      bool found_map { false };
 
       if (is_choice)
-      { const vector<string> choices_vec = split_string(name, '+');
+      { const vector<string> choices_vec { split_string(name, '+') };
 
         for (unsigned int n = 0; n < choices_vec.size() and !found_map; ++n)
         { try
-          { const auto& t = tuple_map_assignments.at(choices_vec[n]);
+          { const auto& t { tuple_map_assignments.at(choices_vec[n]) };
 
             pef.value(RECEIVED_VALUE(t));
             found_map = true;
@@ -930,7 +906,7 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
   { if (!contains(pef.name(), "+"))             // not a CHOICE
       rv.push_back(pef);
     else                                        // is a CHOICE
-    { parsed_exchange_field pef_chosen = pef;
+    { parsed_exchange_field pef_chosen { pef };
 
       pef_chosen.name(resolve_choice(pef.name(), pef.value(), rules));
 
@@ -963,12 +939,12 @@ const string parsed_exchange::resolve_choice(const string& field_name, const str
   if (!contains(field_name, "+"))   // if not a CHOICE
     return field_name;
 
-  const vector<string> choices_vec = split_string(field_name, '+');
-  const map<string /* field name */, EFT>  exchange_field_eft = rules.exchange_field_eft();  // EFTs have the choices already expanded
+  const vector<string>                     choices_vec        { split_string(field_name, '+') };
+  const map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
 
   for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
   { try
-    { const EFT& eft = exchange_field_eft.at(choice);
+    { const EFT& eft { exchange_field_eft.at(choice) };
 
       if (eft.is_legal_value(received_value))
         return choice;
@@ -991,12 +967,12 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 { ost << "parsed exchange object IS " << (pe.valid() ? "" : "NOT ") << "valid" << endl
       << "replacement call = " << pe.replacement_call() << endl;
 
-  const vector<parsed_exchange_field> vec = pe.fields();
+  const vector<parsed_exchange_field> vec { pe.fields() };
 
   ost << "parsed exchange fields: " << endl;
 
   for (size_t n = 0; n < vec.size(); ++n)
-  { const parsed_exchange_field& pef = vec[n];
+  { const parsed_exchange_field& pef { vec[n] };
 
     ost << n << ": " << "name: " << pef.name() << ", value: " << pef.value() << ", is mult = " << (pef.is_mult() ? "TRUE" : "FALSE");
     if (n != vec.size() - 1)
@@ -1025,15 +1001,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 { SAFELOCK(exchange_field_database);
 
 // first, check the database
-  const auto it = _db.find( pair<string, string>( { callsign, field_name } ) ) ;
+  const auto it { _db.find( pair<string, string>( { callsign, field_name } ) ) };
 
   if (it != _db.end())
     return it->second;
 
 // see if there's a pre-fill entry
-  const string prefill_datum = prefill_data.prefill_data(field_name, callsign);
-
-//  ost << "Prefill " << field_name << " data for " << callsign << ": " << prefill_datum << endl;
+  const string prefill_datum { prefill_data.prefill_data(field_name, callsign) };
 
   if (!prefill_datum.empty())
   { _db.insert( { { callsign, field_name }, prefill_datum } );
@@ -1042,8 +1016,8 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
 // if it's a QTHX, then don't go any further if the country doesn't match
-  if (starts_with(field_name, "QTHX["))
-  { const string canonical_prefix = delimited_substring(field_name, '[', ']');
+  if (starts_with(field_name, "QTHX["s))
+  { const string canonical_prefix { delimited_substring(field_name, '[', ']') };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { _db.insert( { { callsign, field_name }, string() } );                     // so that it can be found immediately in future
@@ -1052,13 +1026,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
 // no prior QSO; is it in the drmaster database?
-  const drmaster_line drm_line = (*drm_p)[callsign];
+  const drmaster_line drm_line { (*drm_p)[callsign] };
 
   auto get_qth = [&] (void)
     { if (drm_line.empty())
         return string();
 
-      const string rv = drm_line.qth();
+      const string rv { drm_line.qth() };
 
       if (rv.empty())
         return string();
@@ -1071,7 +1045,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   string rv;
 
 // currently identical to 10MSTATE, except look up different value on the drmaster line
-  if (field_name == "160MSTATE")
+  if (field_name == "160MSTATE"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1081,23 +1055,23 @@ const string exchange_field_database::guess_value(const string& callsign, const 
         rv = to_upper(drm_line.qth());
     }
 
-    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE") )  // can often guess province for VEs
-    { const string pfx = wpx_prefix(callsign);
+    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"s) )  // can often guess province for VEs
+    { const string pfx { wpx_prefix(callsign) };
 
-      if (pfx == "VY2")
-        rv = "PE";
+      if (pfx == "VY2"s)
+        rv = "PE"s;
 
-      if (rv.empty() and (pfx == "VO1"))
-        rv = "NF";
+      if (rv.empty() and (pfx == "VO1"s))
+        rv = "NF"s;
 
-      if (rv.empty() and (pfx == "VO2"))
-        rv = "LB";
+      if (rv.empty() and (pfx == "VO2"s))
+        rv = "LB"s;
 
       if (rv.empty())
-      { const char call_area = pfx[pfx.length() - 1];
+      { const char call_area { pfx[pfx.length() - 1] };
 
         if (isdigit(call_area))
-        { static const std::array<string, 10> abbreviations { { string(), "NS", "PQ", "ON", "MB", "SK", "AB", "BC", string(), "NB"} };  // std:: qualifier needed because we have boost here as well
+        { static const std::array<string, 10> abbreviations { { string(), "NS"s, "PQ"s, "ON"s, "MB"s, "SK"s, "AB"s, "BC"s, string(), "NB"s} };  // std:: qualifier needed because we have boost here as well
 
           rv = abbreviations[call_area - '0'];    // convert to number
         }
@@ -1105,14 +1079,14 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
 
     if (!rv.empty())
-      rv = rules.canonical_value("160MSTATE", rv);
+      rv = rules.canonical_value("160MSTATE"s, rv);
 
     _db.insert( { { callsign, field_name }, rv } );
 
     return rv;
   }
 
-  if (field_name == "10MSTATE")
+  if (field_name == "10MSTATE"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1122,20 +1096,20 @@ const string exchange_field_database::guess_value(const string& callsign, const 
         rv = to_upper(drm_line.qth());
     }
 
-    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE") )  // can often guess province for VEs
-    { const string pfx = wpx_prefix(callsign);
+    if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"s) )  // can often guess province for VEs
+    { const string pfx { wpx_prefix(callsign) };
 
-      if (pfx == "VY2")
-        rv = "PE";
+      if (pfx == "VY2"s)
+        rv = "PE"s;
 
-      if (rv.empty() and (pfx == "VO1"))
-        rv = "NF";
+      if (rv.empty() and (pfx == "VO1"s))
+        rv = "NF"s;
 
       if (rv.empty())
-      { const char call_area_c = pfx[pfx.length() - 1];
+      { const char call_area_c { pfx[pfx.length() - 1] };
 
         if (isdigit(call_area_c))
-        { static const std::array<string, 10> abbreviations { { string(), "NS", "PQ", "ON", "MB", "SK", "AB", "BC", string(), "NB"} };  // std:: qualifier needed because we have boost here as well
+        { static const std::array<string, 10> abbreviations { { string(), "NS"s, "PQ"s, "ON"s, "MB"s, "SK"s, "AB"s, "BC"s, string(), "NB"s} };  // std:: qualifier needed because we have boost here as well
 
           rv = abbreviations[call_area_c - '0'];    // convert to number
         }
@@ -1143,14 +1117,14 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
 
     if (!rv.empty())
-    { rv = rules.canonical_value("10MSTATE", rv);
+    { rv = rules.canonical_value("10MSTATE"s, rv);
       _db.insert( { { callsign, field_name }, rv } );
 
       return rv;
     }
   }
 
-  if (field_name == "CHECK")
+  if (field_name == "CHECK"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1165,7 +1139,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "CQZONE")
+  if (field_name == "CQZONE"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1189,7 +1163,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "CWPOWER")
+  if (field_name == "CWPOWER"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1204,10 +1178,10 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "DOK")
+  if (field_name == "DOK"s)
   { string rv;
 
-    if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "DL")
+    if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "DL"s)
     { rv = drm_line.qth();
 
       if (!rv.empty())
@@ -1218,14 +1192,14 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "FDEPT")
-  { const string rv = get_qth();
+  if (field_name == "FDEPT"s)
+  { const string rv { get_qth() };
 
     if (!rv.empty())
       return rv;
   }
 
-  if (field_name == "GRID")
+  if (field_name == "GRID"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1239,7 +1213,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "HADXC")     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
+  if (field_name == "HADXC"s)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
   { string rv;
 
     if (!drm_line.empty())
@@ -1253,14 +1227,14 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "ITUZONE")
+  if (field_name == "ITUZONE"s)
   { string rv;
 
     if (!drm_line.empty())
     { rv = drm_line.itu_zone();
 
       if (!rv.empty())
-      { rv = rules.canonical_value("ITUZONE", rv);
+      { rv = rules.canonical_value("ITUZONE"s, rv);
         _db.insert( { { callsign, field_name }, rv } );
 
         return rv;
@@ -1271,17 +1245,17 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     rv = to_string(location_db.itu_zone(callsign));
 
     if (!rv.empty())    // should always be true
-    { rv = rules.canonical_value("ITUZONE", rv);
+    { rv = rules.canonical_value("ITUZONE"s, rv);
       _db.insert( { { callsign, field_name }, rv } );
 
       return rv;
     }
   }
 
-  if (field_name == "JAPREF")
+  if (field_name == "JAPREF"s)
   { string rv;
 
-    if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "JA")
+    if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "JA"s)
     { rv = drm_line.qth();
 
       if (!rv.empty())
@@ -1293,7 +1267,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "NAME")
+  if (field_name == "NAME"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1307,7 +1281,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "PREC")
+  if (field_name == "PREC"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1322,7 +1296,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (starts_with(field_name, "QTHX["))  // by the time we get here, the call should match the canonical prefix in the name of the exchange field
+  if (starts_with(field_name, "QTHX["s))  // by the time we get here, the call should match the canonical prefix in the name of the exchange field
   { const string canonical_prefix = delimited_substring(field_name, '[', ']');
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
@@ -1343,15 +1317,15 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if ((field_name == "RDA") or (field_name == "RD2"))
-  { static const set<string> countries { "R1FJ", "UA", "UA2", "UA9" };
+  if ((field_name == "RDA"s) or (field_name == "RD2"s))
+  { static const set<string> countries { "R1FJ"s, "UA"s, "UA2"s, "UA9"s };
 
     string rv;
 
-    if (!drm_line.empty() and ( (countries < location_db.canonical_prefix(callsign)) or starts_with(callsign, "RI1AN")) )
+    if (!drm_line.empty() and ( (countries < location_db.canonical_prefix(callsign)) or starts_with(callsign, "RI1AN"s)) )
     { rv = drm_line.qth();
 
-      if (field_name == "RD2" and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
+      if (field_name == "RD2"s and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
         rv = substring(rv, 0, 2);
 
       if (!rv.empty())
@@ -1372,7 +1346,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "SECTION")
+  if (field_name == "SECTION"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1387,7 +1361,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "SKCCNO")               // shouldn't really get here, because there should be a pre-fill file
+  if (field_name == "SKCCNO"s)               // shouldn't really get here, because there should be a pre-fill file
   { string rv;
 
     if (!drm_line.empty())
@@ -1401,7 +1375,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "SOCIETY")
+  if (field_name == "SOCIETY"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1416,7 +1390,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "SPC")
+  if (field_name == "SPC"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1430,7 +1404,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "SSBPOWER")
+  if (field_name == "SSBPOWER"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1445,7 +1419,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     }
   }
 
-  if (field_name == "UKEICODE")
+  if (field_name == "UKEICODE"s)
   { string rv;
 
     if (!drm_line.empty())
@@ -1461,7 +1435,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
 // choices
-  if (field_name == "ITUZONE+SOCIETY")    // IARU
+  if (field_name == "ITUZONE+SOCIETY"s)    // IARU
   { string rv;
 
     if (!drm_line.empty())
@@ -1486,11 +1460,11 @@ const string exchange_field_database::guess_value(const string& callsign, const 
   }
 
 // give up
-  static const string empty_string;
+//  static const string empty_string;
 
-  _db.insert( { { callsign, field_name }, empty_string } );  // so we find it next time
+  _db.insert( { { callsign, field_name }, EMPTY_STR } );  // so we find it next time
 
-  return empty_string;
+  return EMPTY_STR;
 }
 
 /*! \brief              Set a value in the database
@@ -1516,22 +1490,20 @@ void exchange_field_database::set_value(const string& callsign, const string& fi
 */
 void exchange_field_database::set_values_from_file(const vector<string>& path, const string& filename, const string& field_name)
 { try
-  { string contents = read_file(path, filename);
+  { string contents { read_file(path, filename) };
 
     if (!contents.empty())
-    { contents = remove_char(contents, CR_CHAR);        // in case it's a silly Microsoft-format file
-
-      const vector<string> lines = to_lines(to_upper(contents));
+    { const vector<string> lines { to_lines(to_upper(remove_char(contents, CR_CHAR))) };        // in case it's a silly Microsoft-format file
 
       for (unsigned int n = 0; n < lines.size(); ++n)
-      { string line = lines[n];
-        line = replace_char(line, '\t', ' ');
-        line = squash(line, ' ');
-
-        const vector<string> tokens = remove_peripheral_spaces(split_string(line, " "));
+//      for (auto line : lines)
+      { //string line = lines[n];
+        //line = replace_char(line, '\t', ' ');
+        const string         line   { squash(replace_char(lines[n], '\t', ' '), ' ') };
+        const vector<string> tokens { remove_peripheral_spaces(split_string(line, SPACE_STR)) };
 
         if (tokens.size() == 2)
-        { if ( (n == 0) and (tokens[0] == "CALL") )
+        { if ( (n == 0) and (tokens[0] == "CALL"s) )
             continue;
 
           set_value(tokens[0], field_name, tokens[1]);
@@ -1552,7 +1524,7 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
     Replaces [aA], [nN], [tT]
 */
 const string process_cut_digits(const string& input)
-{ string rv = input;
+{ string rv { input };
 
   for (char& c : rv)
   { if ((c == 'T') or (c == 't'))
@@ -1599,17 +1571,13 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
     const drlog_context& context, location_database& location_db) :
   _is_mult(false),
   _name(nm)
-{ //ost << "Creating EFT for exchange field: " << nm << endl;
-
-  read_regex_expression_file(path, regex_filename);
+{ read_regex_expression_file(path, regex_filename);
   read_values_file(path, nm);
   parse_context_qthx(context, location_db);
 
-  const vector<string> exchange_mults =  remove_peripheral_spaces(split_string(context.exchange_mults(), ","));
+  const vector<string> exchange_mults {  remove_peripheral_spaces(split_string(context.exchange_mults(), ",")) };
 
   _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
-
- // ost << "EFT for " << nm << ": " << (*this) << endl;
 }
 
 /*! \brief              Get regex expression from file
@@ -1622,18 +1590,19 @@ const bool EFT::read_regex_expression_file(const vector<string>& paths, const st
     return false;
 
   try
-  { const vector<string> lines = to_lines(read_file(paths, filename));
-    bool found_it = false;
+  { const vector<string> lines { to_lines(read_file(paths, filename)) };
+
+    bool found_it { false };
 
     for (const auto& line : lines)
     { if (!found_it and !line.empty())
-      { const vector<string> fields = split_string(line, ":");
+      { const vector<string> fields { split_string(line, ":") };
 
 // a bit complex because ":" may appear in the regex
         if (fields.size() >= 2)
-        { const string field_name = remove_peripheral_spaces(fields[0]);
-          const size_t posn = line.find(":");
-          const string regex_str = remove_peripheral_spaces(substring(line, posn + 1));
+        { const string field_name { remove_peripheral_spaces(fields[0]) };
+          const size_t posn       { line.find(":") };
+          const string regex_str  { remove_peripheral_spaces(substring(line, posn + 1)) };
 
           if (field_name == _name)
           { _regex_expression = regex(regex_str);
@@ -1659,21 +1628,21 @@ const bool EFT::read_regex_expression_file(const vector<string>& paths, const st
 */
 const bool EFT::read_values_file(const vector<string>& path, const string& filename)
 { try
-  { const vector<string> lines = to_lines(read_file(path, filename + ".values"));
+  { const vector<string> lines { to_lines(read_file(path, filename + ".values"s)) };
 
     for (const auto& line : lines)
     { set<string> equivalent_values;    // includes the canonical
 
-      if (!line.empty() and line[0] != ';' and !starts_with(line, "//") ) // ";" and "//" introduce comments
-      { if (contains(line, "=") )
-        { const vector<string> lhsrhs = split_string(line, "=");
-          const string lhs = remove_peripheral_spaces(lhsrhs[0]);
+      if (!line.empty() and line[0] != ';' and !starts_with(line, "//"s) ) // ";" and "//" introduce comments
+      { if (contains(line, "="s) )
+        { const vector<string> lhsrhs { split_string(line, "="s) };
+          const string         lhs    { remove_peripheral_spaces(lhsrhs[0]) };
 
           equivalent_values.insert(lhs);                  // canonical value
 
           if (lhsrhs.size() != 1)
-          { const string& rhs = lhsrhs[1];
-            const vector<string> remaining_equivalent_values = remove_peripheral_spaces(split_string(rhs, ","));
+          { const string&        rhs                         { lhsrhs[1] };
+            const vector<string> remaining_equivalent_values { remove_peripheral_spaces(split_string(rhs, ",")) };
 
             COPY_ALL(remaining_equivalent_values, inserter(equivalent_values, equivalent_values.begin()));
 
@@ -1682,7 +1651,7 @@ const bool EFT::read_values_file(const vector<string>& path, const string& filen
           }
         }
         else    // no "="
-        { const string str = remove_peripheral_spaces(line);
+        { const string str { remove_peripheral_spaces(line) };
 
           if (!str.empty())
           { _values.insert( { str, /* set<string> */ { str } } );
@@ -1705,25 +1674,25 @@ const bool EFT::read_values_file(const vector<string>& path, const string& filen
     \param  location_db     location database
 */
 void EFT::parse_context_qthx(const drlog_context& context, location_database& location_db)
-{ if (!starts_with(_name, "QTHX["))
+{ if (!starts_with(_name, "QTHX["s))
     return;
 
-  const auto& context_qthx = context.qthx();  // map; key = canonical prefix; value = set of legal values
+  const auto& context_qthx { context.qthx() };  // map; key = canonical prefix; value = set of legal values
 
   if (context_qthx.empty())
     return;
 
   for (const auto& this_qthx : context_qthx)
-  { const string canonical_prefix = location_db.canonical_prefix(this_qthx.first);
+  { const string canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
 
     if (canonical_prefix == location_db.canonical_prefix(delimited_substring(_name, '[', ']')))
-    { const set<string> ss = this_qthx.second;
+    { const set<string>& ss { this_qthx.second };
 
-      for (const auto this_value : ss)
-      { if (!contains(this_value, "|"))
+      for (const auto& this_value : ss)
+      { if (!contains(this_value, "|"s))
           add_canonical_value(this_value);
         else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
-        { const vector<string> equivalent_values = remove_peripheral_spaces(split_string(this_value, "|"));
+        { const vector<string> equivalent_values { remove_peripheral_spaces(split_string(this_value, "|"s)) };
 
           if (!equivalent_values.empty())
             add_canonical_value(equivalent_values[0]);
@@ -1760,8 +1729,9 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
 { if (!is_canonical_value(cv))
     add_canonical_value(cv);
 
-  const auto& it = _values.find(cv);
-  auto& ss = it->second;
+  const auto& it { _values.find(cv) };
+
+  auto& ss { it->second };
 
   ss.insert(new_value);
 
@@ -1790,7 +1760,7 @@ const bool EFT::is_legal_value(const string& str) const
     \return         value to be logged
 */
 const string EFT::value_to_log(const string& str) const
-{ const string rv = canonical_value(str);
+{ const string rv { canonical_value(str) };
 
   return (rv.empty() ? str : rv);
 }
@@ -1802,7 +1772,7 @@ const string EFT::value_to_log(const string& str) const
     Returns empty string if no equivalent canonical value can be found
 */
 const string EFT::canonical_value(const std::string& str) const
-{ const auto& it = _value_to_canonical.find(str);
+{ const auto& it { _value_to_canonical.find(str) };
 
   if (it != _value_to_canonical.cend())
     return it->second;
@@ -1832,18 +1802,18 @@ ostream& operator<<(ostream& ost, const EFT& eft)
 //         set                             /* each equivalent value is a member of the set, including the canonical value */
 //          <string                       /* indistinguishable legal values */
 //          >> values = eft.values();
-  const auto values = eft.values();
+  const auto values { eft.values() };
 
   for (const auto& sss : values)
   { ost << "  canonical value = " << sss.first << endl;
 
-    const auto& ss = sss.second;
+    const auto& ss { sss.second };
 
     for (const auto& s : ss)
       ost << "  value = " << s << endl;
   }
 
-  const auto v = eft.legal_non_regex_values();
+  const auto v { eft.legal_non_regex_values() };
 
   if (!v.empty())
   { ost << "  legal_non_regex_values : ";
@@ -1853,7 +1823,7 @@ ostream& operator<<(ostream& ost, const EFT& eft)
     ost << endl;
   }
 
-  const auto vcv = eft.value_to_canonical();
+  const auto vcv { eft.value_to_canonical() };
 
   if (!vcv.empty())
   { ost << "  v -> cv : " << endl;
@@ -1882,18 +1852,18 @@ sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const str
   static EFT serno_eft;
   static EFT prec_eft;
   static EFT section_eft;
-  static bool first_time = true;
+  static bool first_time { true };
 
   if (first_time)
-  { check_eft = rules.exchange_field_eft("CHECK");
-    serno_eft = rules.exchange_field_eft("SERNO");
-    prec_eft = rules.exchange_field_eft("PREC");
-    section_eft = rules.exchange_field_eft("SECTION");
+  { check_eft = rules.exchange_field_eft("CHECK"s);
+    serno_eft = rules.exchange_field_eft("SERNO"s);
+    prec_eft = rules.exchange_field_eft("PREC"s);
+    section_eft = rules.exchange_field_eft("SECTION"s);
 
     first_time = false;
   }
 
-  const vector<string> r_vec = remove_peripheral_spaces(split_string(received_exchange, " "));
+  const vector<string> r_vec = remove_peripheral_spaces(split_string(received_exchange, SPACE_STR));
 
 //  static const EFT check_eft = rules.exchange_field_eft("CHECK");
 //  static const EFT serno_eft = rules.exchange_field_eft("SERNO");

@@ -17,6 +17,7 @@
 class drlog_error : public std::exception
 {
 protected:
+
   int         _code;      ///< Error code
   std::string _reason;      ///< Error reason
 
@@ -30,8 +31,7 @@ public:
 
 /*! \brief  Destructor
 */
-  virtual ~drlog_error(void) throw()
-    { }
+  inline virtual ~drlog_error(void) = default; /* throw() */
 
 /*! \brief  RO access to _code
 */

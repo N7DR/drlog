@@ -55,13 +55,13 @@ const string master_dta::_get_call(const string& contents, size_t& posn) const
     Also default constructor, with filename "master.dta"
 */
 master_dta::master_dta(const string& filename)
-{ const string contents = read_file(filename);                // throws exception if there's a problem
+{ const string contents { read_file(filename) };                // throws exception if there's a problem
 
   if (contents.length() < sizeof(uint32_t))
     return;
 
 // point to the start of the calls
-  uint32_t pointer = (contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8));
+  uint32_t pointer { (contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8)) };
 
   vector<string> tmp_calls;
 
@@ -72,7 +72,7 @@ master_dta::master_dta(const string& filename)
 // remove duplicates
   sort(tmp_calls.begin(), tmp_calls.end());
 
-  vector<string>::iterator pos = unique(tmp_calls.begin(), tmp_calls.end());
+  vector<string>::iterator pos { unique(tmp_calls.begin(), tmp_calls.end()) };
 
   copy(tmp_calls.begin(), pos, back_inserter(_calls));          // put calls into the permanent container
 }
@@ -94,10 +94,10 @@ const string __extract_value(const string& line, const string& param)
 { if (!contains(line, param))
     return string();
 
-  const size_t start_position = line.find(param);
-  const string short_line = substring(line, start_position + param.length());
-  const size_t space_posn = short_line.find(" ");
-  const size_t end_position = ( (space_posn == string::npos) ? short_line.length() : space_posn );
+  const size_t start_position { line.find(param) };
+  const string short_line     { substring(line, start_position + param.length()) };
+  const size_t space_posn     { short_line.find(SPACE_STR) };
+  const size_t end_position   { ( (space_posn == string::npos) ? short_line.length() : space_posn ) };
 
   return substring(short_line, 0, end_position);
 }
@@ -140,17 +140,6 @@ t = temporary
 //   User1 => SS precedence
 //   User2 => ARRL DX power
 
-/// Default empty constructor
-/*
-trmaster_line::trmaster_line(void) :
-    _check(0),
-    _cq_zone(0),
-    _foc(0),
-    _hit_count(0),
-    _ten_ten(0)
-{ }
-*/
-
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file
 */
@@ -158,27 +147,28 @@ trmaster_line::trmaster_line(const string& line)
 {
 // parsing the line is tricky because items are in no particular order, except for the call;
 // call
-  const bool contains_parameters = contains(line, " ");
-  const size_t length_of_call = (contains_parameters ? line.find(" ") : line.length());
+  const bool   contains_parameters { contains(line, SPACE_STR) };
+  const size_t length_of_call      { (contains_parameters ? line.find(SPACE_STR) : line.length()) };
 
   _call = to_upper(substring(line, 0, length_of_call));
 
-  _check     = from_string<int>( __extract_value(line, "=K") );
-  _cq_zone   = from_string<int>( __extract_value(line, "=C") );
-  _foc       = from_string<int>( __extract_value(line, "=F") );
-  _grid      = __extract_value(line, "=G");
-  _hit_count = from_string<int>( __extract_value(line, "=H") );
-  _itu_zone  = __extract_value(line, "=I");
-  _name      = __extract_value(line, "=N");
-  _qth       = __extract_value(line, "=Q");
-  _section   = __extract_value(line, "=A");
-  _ten_ten   = from_string<int>( __extract_value(line, "=T") );
+  _check     = from_string<int>( __extract_value(line, "=K"s) );
+  _cq_zone   = from_string<int>( __extract_value(line, "=C"s) );
+  _foc       = from_string<int>( __extract_value(line, "=F"s) );
+  _grid      = __extract_value(line, "=G"s);
+  _hit_count = from_string<int>( __extract_value(line, "=H"s) );
+  _itu_zone  = __extract_value(line, "=I"s);
+  _name      = __extract_value(line, "=N"s);
+  _qth       = __extract_value(line, "=Q"s);
+  _section   = __extract_value(line, "=A"s);
+  _ten_ten   = from_string<int>( __extract_value(line, "=T"s) );
 
 // user parameters
   char user_parameter = 'U';
 
   for (unsigned int n_user_parameter = 0; n_user_parameter < TRMASTER_N_USER_PARAMETERS; ++n_user_parameter)
   { char marker[3];
+
     marker[0] = '=';
     marker[1] = user_parameter;
     marker[2] = 0;                // marker == "=x"
@@ -195,40 +185,40 @@ const string trmaster_line::to_string(void) const
 { string rv = call();
 
   if (!section().empty())
-    rv += ((string)(" =A") + section());
+    rv += (" =A"s + section());
 
   if (cq_zone())
-    rv += ((string)(" =C") + ::to_string(cq_zone()));
+    rv += (" =C"s + ::to_string(cq_zone()));
 
   if (foc())
-    rv += ((string)(" =F") + ::to_string(foc()));
+    rv += (" =F"s + ::to_string(foc()));
 
   if (!grid().empty())
-    rv += ((string)(" =G") + grid());
+    rv += (" =G"s + grid());
 
   if (hit_count())
-    rv += ((string)(" =H") + ::to_string(hit_count()));
+    rv += (" =H"s + ::to_string(hit_count()));
 
   if (!itu_zone().empty())
-    rv += ((string)(" =I") + itu_zone());
+    rv += (" =I"s + itu_zone());
 
   if (check())
-    rv += ((string)(" =K") + ::to_string(check()));
+    rv += (" =K"s + ::to_string(check()));
 
   if (!name().empty())
-    rv += ((string)(" =N") + name());
+    rv += (" =N"s + name());
 
   if (!qth().empty())
-    rv += ((string)(" =Q") + qth());
+    rv += (" =Q"s + qth());
 
   if (ten_ten())
-    rv += ((string)(" =T") +  ::to_string(ten_ten()));
+    rv += (" =T"s +  ::to_string(ten_ten()));
 
   char user_letter = 'U';
 
   for (unsigned int n = 0; n < TRMASTER_N_USER_PARAMETERS; n++)
   { if (!user(n + 1).empty())
-    { rv += (string)(" =");
+    { rv += " ="s;
       rv += user_letter;
       rv += user(n + 1);
     }
@@ -345,7 +335,7 @@ control characters are:
     Updates <i>posn</i> to point to the start of the next call
 */
 const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
-{ const int CTRL_Y { 25 };
+{ constexpr int CTRL_Y { 25 };
 
   string callsign;
   string section;
@@ -520,22 +510,22 @@ const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_
     The file <i>filename</i> may be either an ASCII or a binary file
 */
 trmaster::trmaster(const string& filename)
-{ const string contents = read_file(filename);      // throws exception if fails
-  const bool is_binary = contains(contents, create_string(static_cast<char>(0)));
+{ const string contents  { read_file(filename) };      // throws exception if fails
+  const bool   is_binary { contains(contents, create_string(static_cast<char>(0))) };
 
   if (is_binary)
   { if (contents.length() < sizeof(uint32_t))
       return;
 
 // point to the start of the calls
-    uint32_t pointer = (contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8));
+    uint32_t pointer { (contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8)) };
 
 // extract all the calls
     while (pointer < contents.length())
-    { trmaster_line record = _get_binary_record(contents, pointer);
+    { trmaster_line record { _get_binary_record(contents, pointer) };
 
 // is there already a record for this call?
-      const string call = record.call();
+      const string call { record.call() };
 
       if (_records.find(call) != _records.end())
         record += _records[call];
@@ -544,7 +534,7 @@ trmaster::trmaster(const string& filename)
     }
   }
   else              // not binary
-  { const vector<string> lines = to_lines(contents);
+  { const vector<string> lines { to_lines(contents) };
 
     FOR_ALL(lines, [&] (const string& line) { const trmaster_line record(line);
 
@@ -607,41 +597,41 @@ const string drmaster_line::_extract_field(const vector<string>& fields, const s
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
 drmaster_line::drmaster_line(const string& line_or_call)
-{ const vector<string> fields = split_string(line_or_call, " ");
-  const size_t n_fields = fields.size();
+{ const vector<string> fields   { split_string(line_or_call, SPACE_STR) };
+  const size_t         n_fields { fields.size() };
 
   if (n_fields == 0)
     return;
 
   _call = to_upper(fields[0]);
 
-  _check     = _extract_field(fields, "=K");
-  _cq_zone   = _extract_field(fields, "=C");
-  _foc       = _extract_field(fields, "=F");
-  _grid      = _extract_field(fields, "=G");
-  _hit_count = _extract_field(fields, "=H");
-  _itu_zone  = _extract_field(fields, "=I");
-  _name      = _extract_field(fields, "=N");
-  _qth       = _extract_field(fields, "=Q");
-  _section   = _extract_field(fields, "=A");
-  _ten_ten   = _extract_field(fields, "=T");
-  _user[0]   = _extract_field(fields, "=U");
-  _user[1]   = _extract_field(fields, "=V");
-  _user[2]   = _extract_field(fields, "=W");
-  _user[3]   = _extract_field(fields, "=X");
-  _user[4]   = _extract_field(fields, "=Y");
+  _check     = _extract_field(fields, "=K"s);
+  _cq_zone   = _extract_field(fields, "=C"s);
+  _foc       = _extract_field(fields, "=F"s);
+  _grid      = _extract_field(fields, "=G"s);
+  _hit_count = _extract_field(fields, "=H"s);
+  _itu_zone  = _extract_field(fields, "=I"s);
+  _name      = _extract_field(fields, "=N"s);
+  _qth       = _extract_field(fields, "=Q"s);
+  _section   = _extract_field(fields, "=A"s);
+  _ten_ten   = _extract_field(fields, "=T"s);
+  _user[0]   = _extract_field(fields, "=U"s);
+  _user[1]   = _extract_field(fields, "=V"s);
+  _user[2]   = _extract_field(fields, "=W"s);
+  _user[3]   = _extract_field(fields, "=X"s);
+  _user[4]   = _extract_field(fields, "=Y"s);
 
 // drmaster extensions
-  _cw_power   = _extract_field(fields, "=y");
-  _date       = _extract_field(fields, "=z");
-  _iota       = _extract_field(fields, "=w");
-  _precedence = _extract_field(fields, "=u");
-  _skcc       = _extract_field(fields, "=q");
-  _society    = _extract_field(fields, "=v");
-  _spc        = _extract_field(fields, "=r");
-  _ssb_power  = _extract_field(fields, "=x");
-  _state_160  = _extract_field(fields, "=s");
-  _state_10   = _extract_field(fields, "=t");
+  _cw_power   = _extract_field(fields, "=y"s);
+  _date       = _extract_field(fields, "=z"s);
+  _iota       = _extract_field(fields, "=w"s);
+  _precedence = _extract_field(fields, "=u"s);
+  _skcc       = _extract_field(fields, "=q"s);
+  _society    = _extract_field(fields, "=v"s);
+  _spc        = _extract_field(fields, "=r"s);
+  _ssb_power  = _extract_field(fields, "=x"s);
+  _state_160  = _extract_field(fields, "=s"s);
+  _state_10   = _extract_field(fields, "=t"s);
 }
 
 /// convert to string
@@ -651,39 +641,39 @@ const string drmaster_line::to_string(void) const
   rv += call();
 
   if (!section().empty())
-    rv += string(" =A") + section();
+    rv += " =A"s + section();
 
   if (!cq_zone().empty())
-    rv += string(" =C") + cq_zone();
+    rv += " =C"s + cq_zone();
 
   if (!foc().empty())
-    rv += string(" =F") + foc();
+    rv += " =F"s + foc();
 
   if (!grid().empty())
-    rv += string(" =G") + grid();
+    rv += " =G"s + grid();
 
   if (!hit_count().empty())
-    rv += string(" =H") + hit_count();
+    rv += " =H"s + hit_count();
 
   if (!itu_zone().empty())
-    rv += string(" =I") + itu_zone();
+    rv += " =I"s + itu_zone();
 
   if (!check().empty())
-    rv += string(" =K") + check();
+    rv += " =K"s + check();
 
   if (!name().empty())
-    rv += string(" =N") + name();
+    rv += " =N"s + name();
 
   if (!qth().empty())
-    rv += string(" =Q") + qth();
+    rv += " =Q"s + qth();
 
   if (!ten_ten().empty())
-    rv += string(" =T") + ten_ten();
+    rv += " =T"s + ten_ten();
 
   char user_letter = 'U';
   for (unsigned int n = 0; n < TRMASTER_N_USER_PARAMETERS; n++)
   { if (!user(n + 1).empty())
-    { rv += (string)(" =");
+    { rv += " ="s;
       rv += user_letter;
       rv += user(n + 1);
     }
@@ -691,34 +681,34 @@ const string drmaster_line::to_string(void) const
   }
 
   if (!cw_power().empty())
-    rv += string(" =y") + cw_power();
+    rv += " =y"s + cw_power();
 
   if (!date().empty())
-    rv += string(" =z") + date();
+    rv += " =z"s + date();
 
   if (!iota().empty())
-    rv += string(" =w") + iota();
+    rv += " =w"s + iota();
 
   if (!precedence().empty())
-    rv += string(" =u") + precedence();
+    rv += " =u"s + precedence();
 
   if (!skcc().empty())
-    rv += string(" =q") + skcc();
+    rv += " =q"s + skcc();
 
   if (!society().empty())
-    rv += string(" =v") + society();
+    rv += " =v"s + society();
 
   if (!spc().empty())
-    rv += string(" =r") + spc();
+    rv += " =r"s + spc();
 
   if (!ssb_power().empty())
-    rv += string(" =x") + ssb_power();
+    rv += " =x"s + ssb_power();
 
   if (!state_160().empty())
-    rv += string(" =s") + state_160();
+    rv += " =s"s + state_160();
 
   if (!state_10().empty())
-    rv += string(" =t") + state_10();
+    rv += " =t"s + state_10();
 
   return rv;
 }
@@ -728,7 +718,7 @@ const drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 { if (call() != drml.call())
     return *this;
 
-  drmaster_line rv = drml;
+  drmaster_line rv { drml };
 
   if (rv.section().empty())
     rv.section(section());
@@ -828,10 +818,11 @@ drmaster::drmaster(const string& filename)
 { if (filename.empty())
     return;
 
-  const string contents = read_file(filename);      // throws exception if fails
-  const vector<string> lines = to_lines(contents);
+  const string contents      { read_file(filename) };      // throws exception if fails
+  const vector<string> lines { to_lines(contents) };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record(line);
+  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+
                                                                     _records.insert( { record.call(), record } );
                                                                   } );
 }
@@ -847,10 +838,11 @@ drmaster::drmaster(const vector<string>& path, const string& filename)
 { if (filename.empty())
     return;
 
-  const string contents = read_file(path, filename);      // throws exception if fails
-  const vector<string> lines = to_lines(contents);
+  const string         contents { read_file(path, filename) };      // throws exception if fails
+  const vector<string> lines    { to_lines(contents) };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record(line);
+  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+
                                                                     _records.insert( { record.call(), record } );
                                                                   } );
 }
@@ -864,10 +856,11 @@ void drmaster::prepare(const string& filename)
 { if (filename.empty())
     return;
 
-  const string contents = read_file(filename);      // throws exception if fails
-  const vector<string> lines = to_lines(contents);
+  const string         contents { read_file(filename) };      // throws exception if fails
+  const vector<string> lines    { to_lines(contents) };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record(line);
+  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+
                                                                     _records.insert( { record.call(), record } );
                                                                   } );
 }
@@ -882,10 +875,11 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
 { if (filename.empty())
     return;
 
-  const string contents = read_file(path, filename);      // throws exception if fails
-  const vector<string> lines = to_lines(contents);
+  const string         contents { read_file(path, filename) };      // throws exception if fails
+  const vector<string> lines    { to_lines(contents) };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record(line);
+  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+
                                                                     _records.insert( { record.call(), record } );
                                                                   } );
 }
@@ -911,10 +905,8 @@ const string drmaster::to_string(void) const
     lines.push_back((cit->second).to_string() + EOL);
 
   sort(lines.begin(), lines.end());
-//  const string rv = join(lines, "");            // don't add the default (space) separator
 
-//  return rv;
-  return ( join(lines, "") );            // don't add the default (space) separator
+  return ( join(lines, string()) );            // don't add the default (space) separator
 }
 
 /*! \brief          Add a callsign.
@@ -923,10 +915,9 @@ const string drmaster::to_string(void) const
     If there's already an entry for <i>call</i>, then does nothing
 */
 void drmaster::operator+=(const string& call)
-{ if (!::contains(call, " "))                                                // basic sanity check for a call
+{ if (!::contains(call, SPACE_STR))                                                // basic sanity check for a call
   { if (_records.find(call) == _records.end())
-//      _records.insert(make_pair(str, static_cast<drmaster_line>(str) ));    // cast needed in order to keep the temporary around long enough to use
-     _records.insert( { call, static_cast<drmaster_line>(call) } );
+     _records.insert( { call, static_cast<drmaster_line>(call) } );    // cast needed in order to keep the temporary around long enough to use
   }
 }
 
@@ -936,20 +927,17 @@ void drmaster::operator+=(const string& call)
     If there's already an entry for the call in <i>drml</i>, then performs a merge
 */
 void drmaster::operator+=(const drmaster_line& drml)
-{ const string call = drml.call();
+{ const string call { drml.call() };
 
   if (_records.find(call) == _records.end())        // no pre-existing record
     _records.insert(make_pair(call, drml));
   else
-  { drmaster_line old_drml = _records[call];
+  { drmaster_line old_drml { _records[call] };
 
     old_drml += drml;
     _records.erase(call);
-    _records.insert(make_pair(call, old_drml));
-
-//    cout << "record now is: " << (_records[call]).to_string() << endl;
-
-//    cout << "Added: " << old_drml.to_string() << endl;
+//    _records.insert(make_pair(call, old_drml));
+    _records.insert( { call, old_drml });
   }
 
 }
@@ -961,18 +949,7 @@ void drmaster::operator+=(const drmaster_line& drml)
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
 const drmaster_line drmaster::operator[](const string& call) const
-{ const auto cit = _records.find(call);
+{ const auto cit { _records.find(call) };
 
   return (cit == _records.cend() ? drmaster_line() : cit->second);
 }
-
-// remove a call -- does nothing if the call is not present
-//void drmaster::operator-=(const string& str)
-//{ _records.erase(str);
-//}
-
-// is a particular call present?
-//const bool drmaster::contains(const string& call)
-//{ return ( _records.find(call) != _records.end() );
-//}
-

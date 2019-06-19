@@ -30,8 +30,8 @@
     \brief  The database for the fuzzy function
 */
 
-const size_t MIN_FUZZY_SIZE = 3;               ///< any call with fewer than this number of characters is included with size MIN_FUZZY_SIZE
-const size_t MAX_FUZZY_SIZE = 8;               ///< any call with more than this number of characters is included with size MAX_FUZZY_SIZE
+constexpr size_t MIN_FUZZY_SIZE { 3 };               ///< any call with fewer than this number of characters is included with size MIN_FUZZY_SIZE
+constexpr size_t MAX_FUZZY_SIZE { 8 };               ///< any call with more than this number of characters is included with size MAX_FUZZY_SIZE
 
 class fuzzy_database
 {
@@ -52,8 +52,7 @@ protected:
 public:
 
 /// default constructor
-  inline fuzzy_database(void)
-    { }
+  inline fuzzy_database(void) = default;
 
 /*! \brief              Construct from a file
     \param  filename    name of the file from which to construct the object
@@ -68,8 +67,7 @@ public:
   explicit fuzzy_database(const drmaster& drm);
   
 /// destructor
-  inline virtual ~fuzzy_database(void)
-    { }
+  inline virtual ~fuzzy_database(void) = default;
 
 /*! \brief          Add the calls in a vector to the database
     \param  calls   calls to be added
@@ -131,12 +129,10 @@ protected:
 public:
 
 /// default constructor
-  inline fuzzy_databases(void)
-    { }
+  inline fuzzy_databases(void) = default;
 
 /// destructor
-  inline virtual ~fuzzy_databases(void)
-    { }
+  inline virtual ~fuzzy_databases(void) = default;
 
 /// add a database to those that are consulted
   inline void add_db(fuzzy_database& db)

@@ -44,12 +44,18 @@ public:
     \param  argc    number of arguments
     \param  argv    pointer to array of individual arguments
 */
-  command_line(int argc, char** argv);
+  inline command_line(int argc, char** argv) :
+    _argc(argc),
+    _argv((char**)argv)
+    { _init(); }
 
 /*! \brief      Copy constructor
     \param  cl  object to be copied
 */
-  command_line(const command_line& cl);
+  inline command_line(const command_line& cl) :
+    _argc(cl._argc),
+    _argv(cl._argv)
+    { _init(); }
 
 /*! \brief  Destructor
 */

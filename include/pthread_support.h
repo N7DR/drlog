@@ -9,6 +9,8 @@
 //    IPfonix, Inc.
 //    N7DR
 
+// I find pthreads to be far less confusing than the native C++ library support for threading
+
 #ifndef PTHREADSUPPORT_H
 #define PTHREADSUPPORT_H
 
@@ -26,6 +28,8 @@
 
 #include <pthread.h>
 
+using namespace std::literals::string_literals;
+
 /// Lock a mutex
 #define LOCK(z)  z##_mutex.lock()
 
@@ -36,23 +40,23 @@
 #define SAFELOCK(z) safelock safelock_z(z##_mutex, (std::string)(#z))
 
 // errors
-const int PTHREAD_LOCK_ERROR                      = -1,       ///< Error locking mutex
-          PTHREAD_UNLOCK_ERROR                    = -2,       ///< Error unlocking mutex
-          PTHREAD_INVALID_MUTEX                   = -3,       ///< Attempt to operate on an invalid mutex
-          PTHREAD_ATTR_ERROR                      = -4,       ///< Error when managing a thread_attribute
-          PTHREAD_CREATION_ERROR                  = -5,       ///< Error attempting to create a pthread
-          PTHREAD_CONDVAR_WAIT_ERROR              = -6,       ///< Error while waiting on a condvar
-          PTHREAD_UNRECOGNISED_POLICY             = -7,       ///< Policy is unknown
-          PTHREAD_POLICY_ERROR                    = -8,       ///< Error setting policy
-          PTHREAD_UNRECOGNISED_SCOPE              = -9,       ///< Scope is unknown
-          PTHREAD_SCOPE_ERROR                     = -10,      ///< Error setting scope
-          PTHREAD_UNRECOGNISED_INHERITANCE_POLICY = -11,      ///< Inheritance policy is unknown
-          PTHREAD_INHERITANCE_POLICY_ERROR        = -12,      ///< Error setting inheritance policy
-          PTHREAD_STACK_SIZE_ERROR                = -13,      ///< Error setting stack size
-          PTHREAD_PRIORITY_ERROR                  = -14;      ///< Error related to priority
+constexpr int PTHREAD_LOCK_ERROR                      { -1 },       ///< Error locking mutex
+              PTHREAD_UNLOCK_ERROR                    { -2 },       ///< Error unlocking mutex
+              PTHREAD_INVALID_MUTEX                   { -3 },       ///< Attempt to operate on an invalid mutex
+              PTHREAD_ATTR_ERROR                      { -4 },       ///< Error when managing a thread_attribute
+              PTHREAD_CREATION_ERROR                  { -5 },       ///< Error attempting to create a pthread
+              PTHREAD_CONDVAR_WAIT_ERROR              { -6 },       ///< Error while waiting on a condvar
+              PTHREAD_UNRECOGNISED_POLICY             { -7 },       ///< Policy is unknown
+              PTHREAD_POLICY_ERROR                    { -8 },       ///< Error setting policy
+              PTHREAD_UNRECOGNISED_SCOPE              { -9 },       ///< Scope is unknown
+              PTHREAD_SCOPE_ERROR                     { -10 },      ///< Error setting scope
+              PTHREAD_UNRECOGNISED_INHERITANCE_POLICY { -11 },      ///< Inheritance policy is unknown
+              PTHREAD_INHERITANCE_POLICY_ERROR        { -12 },      ///< Error setting inheritance policy
+              PTHREAD_STACK_SIZE_ERROR                { -13 },      ///< Error setting stack size
+              PTHREAD_PRIORITY_ERROR                  { -14 };      ///< Error related to priority
 
 // attributes that can be set at the time that a thread_attribute object is created
-const unsigned int PTHREAD_DETACHED     = 1;        ///< detached pthread
+constexpr unsigned int PTHREAD_DETACHED     { 1 };        ///< detached pthread
 
 // -------------------------------------------  thread_attribute  -----------------------
 
@@ -267,11 +271,12 @@ public:
     Returns 0 if the data do not exist
 */
   T* get(void)
-    { T* tp = (T*)pthread_getspecific(_key); 
+    { T* tp { (T*)pthread_getspecific(_key) };
+
       if (tp)
         return tp;
 
-      return 0;
+      return nullptr;
     }
 
 /*! \brief      Set thread-specific data
@@ -302,13 +307,16 @@ protected:
 
     Not public, so it cannot be called, since we should never copy a mutex
 */
-  pt_mutex(const pt_mutex&);
+//  pt_mutex(const pt_mutex&);
 
 public:
 
 /// constructor
   inline pt_mutex(void)
     { pthread_mutex_init(&_mutex, NULL); }
+
+/// forbid copying
+  pt_mutex(const pt_mutex&) = delete;
 
 /// destructor
   virtual ~pt_mutex(void);
@@ -346,13 +354,16 @@ protected:
 
   Not public, so it cannot be called, since we should never copy a condition variable
 */
-  pt_condition_variable(const pt_condition_variable&);
+//  pt_condition_variable(const pt_condition_variable&);
 
 public:
 
 /*! \brief  Default Constructor
 */
   pt_condition_variable(void);
+
+/// forbid copying
+  pt_condition_variable(const pt_condition_variable&) = delete;
 
 /*! \brief          Construct and associate a mutex with the condition variable
     \param  mtx     mutex to be associated with the condition variable
@@ -416,13 +427,13 @@ protected:
 
     Not public, so it cannot be called, since we should never copy a mutex
 */
-  safelock(const safelock&);
+//  safelock(const safelock&);
 
 /*! \brief  safelock = safelock
 
     Not public, so it cannot be called, since we should never copy a mutex
 */
-  void operator=(const safelock&);
+//  void operator=(const safelock&);
 
 public:
 
@@ -431,6 +442,12 @@ public:
     \param  name    name of mutex
 */
   safelock(pt_mutex& ptm, const std::string& name);
+
+/// forbid copying
+  safelock(const safelock&) = delete;
+
+/// forbid setting equal
+  void operator=(const safelock&) = delete;
 
 /*! \brief  Destructor
 */
@@ -451,7 +468,7 @@ public:
   pthread_error_messages(void);
 
 /// Destructor
-  virtual ~pthread_error_messages(void) { }
+  inline virtual ~pthread_error_messages(void) = default;
 
 /*!  \brief             Add a reason message to the list of possible error messages
      \param  code       reason code
@@ -473,7 +490,7 @@ extern const pthread_error_messages pthread_error_message;    ///< pthread error
 */
 template <class T>
 const T SAFELOCK_GET(pt_mutex& m, const T& v)
-{ safelock safelock_z(m, "SAFELOCK_GET");
+{ safelock safelock_z(m, "SAFELOCK_GET"s);
 
   return v;
 }
@@ -485,7 +502,7 @@ const T SAFELOCK_GET(pt_mutex& m, const T& v)
 */
 template <class T>
 void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
-{ safelock safelock_z(m, "SAFELOCK_SET");
+{ safelock safelock_z(m, "SAFELOCK_SET"s);
 
   var = val;
 }
@@ -499,7 +516,7 @@ void SAFELOCK_SET(pt_mutex& m, T& var, const T& val)
 
     The first four parameters are passed without change to <i>pthread_create</i>
 */
-void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = "");
+void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = std::string());
 
 /*! \brief                  Wrapper for pthread_create()
     \param  thread          pointer to thread ID
@@ -510,7 +527,7 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
 
     The first four parameters are passed without change to <i>pthread_create</i>
 */
-inline void create_thread(pthread_t *thread, const thread_attribute& t_attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = "")
+inline void create_thread(pthread_t *thread, const thread_attribute& t_attr, void *(*start_routine) (void *), void *arg, const std::string& thread_name = std::string())
   { create_thread(thread, &(t_attr.attr()), start_routine, arg, thread_name); }
 
 // -------------------------------------- Errors  -----------------------------------

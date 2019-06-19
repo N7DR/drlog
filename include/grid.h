@@ -38,8 +38,7 @@ protected:
 public:
 
 /// default constructor
-  grid_square(void)
-    { }
+  inline grid_square(void) = default;
 
 /*! \brief      Construct from a designation
     \param  gs  four-character designation
