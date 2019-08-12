@@ -302,7 +302,7 @@ window& window::operator<(const set<string>& ss)
     const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
     
     if ((idx != v.size() - 1) and !end_of_line)
-      *this < " ";
+      *this < SPACE_STR;
     
     idx++;
   }
@@ -342,7 +342,7 @@ window& window::operator<(const vector<string>& v)
     const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
 
     if ( (idx != (v.size() - 1)) and !end_of_line )
-      *this < " ";
+      *this < SPACE_STR;
 
     idx++;
   }
@@ -387,7 +387,7 @@ window& window::operator<(const vector<std::pair<string, int /* colour pair numb
     const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
 
     if ( (idx != (vec.size() - 1)) and !end_of_line )
-      *this < " ";
+      *this < SPACE_STR;
 
     idx++;
   }
@@ -880,11 +880,6 @@ const bool window::common_processing(const keyboard_event& e)
   return false;
 }
 
-/// utterly trivial class for changing colour to a colour pair
-//window& operator<(window& win, const colour_pair& cpair)
-//{ return win.cpair(cpair.pair_nr());
-//}
-
 // -----------  colour_pair  ----------------
 
 /*! \class  colour_pair
@@ -920,10 +915,12 @@ const unsigned int cpair::add(const int fg, const int bg)
 
   const auto cit { find(_colours.cbegin(), _colours.cend(), fgbg) };
 
-  if (cit == _colours.cend())
-    return _add_to_vector(fgbg);
-  else
-    return (cit - _colours.cbegin() + 1);    // the first entry (at _colours.begin()) is ncurses colour pair number 1
+  return ( (cit == _colours.cend()) ? _add_to_vector(fgbg) : (cit - _colours.cbegin() + 1) );
+
+//  if (cit == _colours.cend())
+//    return _add_to_vector(fgbg);
+//  else
+//    return (cit - _colours.cbegin() + 1);    // the first entry (at _colours.begin()) is ncurses colour pair number 1
 }
 
 /*! \brief              Get the foreground colour of a pair

@@ -394,7 +394,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 // add the ordinary exchange to the permitted exchange fields
   const vector<string> exchange_vec { remove_peripheral_spaces(split_string(context.exchange(), ","s)) };
 
-  permitted_exchange_fields.insert( { ""s, exchange_vec } );
+  permitted_exchange_fields.insert( { EMPTY_STR, exchange_vec } );
 
   const vector<string> exchange_mults_vec { remove_peripheral_spaces(split_string(context.exchange_mults(), ","s)) };
 
@@ -619,12 +619,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
       if (is_special_points)
       { if (context_points == "IARU"s)  // special
-        { //points_structure ps = pb[b];
-
-          //ps.points_type(POINTS_IARU);
-          //pb[b] = ps;
           pb[b].points_type(POINTS::IARU);
-        }
 
         if (context_points == "STEW"s)  // special
           pb[b].points_type(POINTS::STEW);
@@ -797,7 +792,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 }
 
 /// default constructor
-contest_rules::contest_rules(void) :
+contest_rules::contest_rules(void) :        // can't go in rules.h because the defn of EFT is incomplete at that point
   _callsign_mults_used(false),
   _exchange_mults_used(false),
   _send_qtcs(false),
@@ -1252,11 +1247,10 @@ const unsigned int contest_rules::points(const QSO& qso, location_database& loca
     }
 
     case POINTS::STEW :
-    { const string grid_value { qso.received_exchange("GRID"s) };
+    { constexpr int STEW_PERRY_BONUS_DISTANCE { 500 };  // distance for bonus point(s) in Stew Perry, in km
 
-      const unsigned int distance { static_cast<unsigned int>( (grid_square(grid_value) - _my_grid) / 500 ) + 1 };
-
-//      ost << "returning points = " << distance << endl;
+      const string       grid_value { qso.received_exchange("GRID"s) };
+      const unsigned int distance   { static_cast<unsigned int>( (grid_square(grid_value) - _my_grid) / STEW_PERRY_BONUS_DISTANCE ) + 1 };
 
       return distance;
     }
@@ -1379,8 +1373,6 @@ const set<string> contest_rules::exchange_field_names(void) const
 // a lot more helpful if they actually supplied a strict algorithm rather than
 // an ambiguous definition. What follows attempts to implement my guess as to what
 // they mean.
-
-//extern location_database location_db;
 
 /*
  *  1. A PREFIX is the letter/numeral combination which forms the first part of the amateur call.

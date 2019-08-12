@@ -601,7 +601,7 @@ const string running_statistics::summary_string(const contest_rules& rules)
       
   line = string(FIRST_FIELD_WIDTH, ' ');
 
-  FOR_ALL(permitted_bands, [&line] (const BAND) { line += pad_string("---", FIELD_WIDTH); } );
+  FOR_ALL(permitted_bands, [&line] (const BAND) { line += pad_string("---"s, FIELD_WIDTH); } );
 
   if (permitted_bands.size() != 1)
     line += pad_string("---"s, FIELD_WIDTH);
@@ -654,18 +654,16 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
 // QTC points
   q_points += _qtc_qsos_sent;
 
-// callsign mults
+// mults
   const unsigned int callsign_mults { n_worked_callsign_mults(rules) };
   const unsigned int country_mults  { n_worked_country_mults(rules) };
-
-// exchange mults
   const unsigned int exchange_mults { n_worked_exchange_mults(rules) };
 
   unsigned int rv { q_points * (max((country_mults + exchange_mults + callsign_mults), static_cast<unsigned int>(1))) };    // force mult to be at least unity
   
 // UBA has weird rules
   if (rules.uba_bonus())
-  { constexpr unsigned int ON_QSO_POINTS = 10;  // hardwire the ON points for now
+  { constexpr unsigned int ON_QSO_POINTS { 10 };  // hardwire the ON points for now
 
     int bonus_qsos { 0 };
 
@@ -686,8 +684,7 @@ const unsigned int running_statistics::points(const contest_rules& rules) const
       }
     }
 
-    const float on_fraction { static_cast<float>(bonus_qsos) / total_qsos };
-//    const unsigned int points_ON_qso { 10 };                                      // hardwire the ON points for now
+    const float        on_fraction  { static_cast<float>(bonus_qsos) / total_qsos };
     const unsigned int bonus_points { static_cast<unsigned int>(on_fraction * bonus_qsos * ON_QSO_POINTS) };
 
     rv += bonus_points;

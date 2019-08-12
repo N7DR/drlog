@@ -33,42 +33,43 @@
 #include <arpa/inet.h>
 
 // Errors
-const int SOCKET_SUPPORT_UNABLE_TO_LISTEN    = -1,  ///< Unable to listen on socket
-          SOCKET_SUPPORT_TIMEOUT             = -2,  ///< Socket timeout
-          SOCKET_SUPPORT_SELECT_ERROR        = -3,  ///< Unable to select socket
-          SOCKET_SUPPORT_RX_BUFFER_TOO_SMALL = -4,  ///< Socket receive buffer is too small
-          SOCKET_SUPPORT_EFAULT              = -5,  ///< EFAULT error
-          SOCKET_SUPPORT_RECVFROM_ERROR      = -6,  ///< Error receiving on socket
-          SOCKET_SUPPORT_BIND_ERROR          = -7,  ///< Unable to bind socket
-          SOCKET_SUPPORT_CONNECT_ERROR       = -8,  ///< Error received from connect()
-          SOCKET_SUPPORT_LISTEN_ERROR        = -9,  ///< Error received from listen()
-          SOCKET_SUPPORT_ACCEPT_ERROR        = -10, ///< Error received from accept()
-          SOCKET_SUPPORT_WRONG_PROTOCOL      = -11; ///< Incorrect protocol (IPv4 vs. IPv6)
+constexpr int SOCKET_SUPPORT_UNABLE_TO_LISTEN    { -1 },  ///< Unable to listen on socket
+              SOCKET_SUPPORT_TIMEOUT             { -2 },  ///< Socket timeout
+              SOCKET_SUPPORT_SELECT_ERROR        { -3 },  ///< Unable to select socket
+              SOCKET_SUPPORT_RX_BUFFER_TOO_SMALL { -4 },  ///< Socket receive buffer is too small
+              SOCKET_SUPPORT_EFAULT              { -5 },  ///< EFAULT error
+              SOCKET_SUPPORT_RECVFROM_ERROR      { -6 },  ///< Error receiving on socket
+              SOCKET_SUPPORT_BIND_ERROR          { -7 },  ///< Unable to bind socket
+              SOCKET_SUPPORT_CONNECT_ERROR       { -8 },  ///< Error received from connect()
+              SOCKET_SUPPORT_LISTEN_ERROR        { -9 },  ///< Error received from listen()
+              SOCKET_SUPPORT_ACCEPT_ERROR        { -10 }, ///< Error received from accept()
+              SOCKET_SUPPORT_WRONG_PROTOCOL      { -11 }; ///< Incorrect protocol (IPv4 vs. IPv6)
 
-const int TCP_SOCKET_UNKNOWN_DESTINATION  = -1,     ///< Destination not set
-          TCP_SOCKET_ERROR_IN_WRITE       = -2,     ///< Error received from write()
-          TCP_SOCKET_ERROR_IN_RECV        = -3,     ///< Error received from recv()
-          TCP_SOCKET_UNABLE_TO_SET_OPTION = -4,     ///< Error setting a socket option
-          TCP_SOCKET_UNABLE_TO_CLOSE      = -5,     ///< Error closing socket
-          TCP_SOCKET_UNABLE_TO_RESOLVE    = -6;     ///< Error resolving destination
+constexpr int TCP_SOCKET_UNKNOWN_DESTINATION  { -1 },     ///< Destination not set
+              TCP_SOCKET_ERROR_IN_WRITE       { -2 },     ///< Error received from write()
+              TCP_SOCKET_ERROR_IN_RECV        { -3 },     ///< Error received from recv()
+              TCP_SOCKET_UNABLE_TO_SET_OPTION { -4 },     ///< Error setting a socket option
+              TCP_SOCKET_UNABLE_TO_CLOSE      { -5 },     ///< Error closing socket
+              TCP_SOCKET_UNABLE_TO_RESOLVE    { -6 };     ///< Error resolving destination
 
 /// TCP socket error messages
-const std::string tcp_socket_error_string[7] = { "",
-                                                 "Destination not set",
-                                                 "Error return from write()",
-                                                 "Error return from recv()",
-                                                 "Error return from setsockopt()",
-                                                 "Error closing socket",
-                                                 "Error resolving destination"
-                                               };
+const std::string tcp_socket_error_string[7] { std::string(),
+                                               "Destination not set"s,
+                                               "Error return from write()"s,
+                                               "Error return from recv()"s,
+                                               "Error return from setsockopt()"s,
+                                               "Error closing socket"s,
+                                               "Error resolving destination"s
+                                             };
 
 /// Type that holds a socket -- syntactic sugar
-typedef int SOCKET;
+//typedef int SOCKET;
+using SOCKET = int;
 
 /// used to create sockets of different protocol families
-enum socket_family { IPV4_SOCKET,
-                     IPV6_SOCKET
-                   };
+//enum class SOCKET_FAMILY { IPV4,
+//                           IPV6
+//                         };
 
 /*! \brief                  Return the name of an error
     \param  error_number    socket error number

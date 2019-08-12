@@ -33,50 +33,42 @@ using namespace std;
 
 /// month of the year; 1 - 12
 const int tr_record::month(void) const
-{ //char tmp[4];
+{ const string tmps { substring(_record, 10, 3) };
 
-  //tmp[0] = _record[10];
-  //tmp[1] = _record[11];
-  //tmp[2] = _record[12];
-  //tmp[3] = 0;
-
-  //const string tmps = to_upper(tmp);
-  const string tmps = substring(_record, 10, 3);
-
-  if (tmps == "JAN")
+  if (tmps == "JAN"s)
     return 1;
 
-  if (tmps == "FEB")
+  if (tmps == "FEB"s)
     return 2;
 
-  if (tmps == "MAR")
+  if (tmps == "MAR"s)
     return 3;
 
-  if (tmps == "APR")
+  if (tmps == "APR"s)
     return 4;
 
-  if (tmps == "MAY")
+  if (tmps == "MAY"s)
     return 5;
 
-  if (tmps == "JUN")
+  if (tmps == "JUN"s)
     return 6;
 
-  if (tmps == "JUL")
+  if (tmps == "JUL"s)
     return 7;
 
-  if (tmps == "AUG")
+  if (tmps == "AUG"s)
     return 8;
 
-  if (tmps == "SEP")
+  if (tmps == "SEP"s)
     return 9;
 
-  if (tmps == "OCT")
+  if (tmps == "OCT"s)
     return 10;
 
-  if (tmps == "NOV")
+  if (tmps == "NOV"s)
     return 11;
 
-  if (tmps == "DEC")
+  if (tmps == "DEC"s)
     return 12;
 
   return 0;    // error
@@ -84,53 +76,29 @@ const int tr_record::month(void) const
 
 /// four-digit year
 const int tr_record::year(void) const
-{ const int two_digit_year = _convert_to_int(14, 2);
+{ const int two_digit_year { _convert_to_int(14, 2) };
 
   return (two_digit_year + ( (two_digit_year < 50) ? 2000 : 1900 ) );
 }
 
 /// sent RST
 const int tr_record::rst(void) const
-{ //char tmp[4];
-
-  //tmp[0] = _record[44];
-  //tmp[1] = _record[45];
-  //tmp[2] = _record[46];
-  //tmp[3] = 0;
-
-  //if (tmp[2] == ' ')
-  //  tmp[2] = 0;
-
-  //return atoi(tmp);
-
-  const string tmp = substring(_record, 44, _record[46] == ' ' ? 2 : 3);
+{ const string tmp { substring(_record, 44, _record[46] == ' ' ? 2 : 3) };
 
   return from_string<int>(tmp);
 }
 
 /// received RST
 const int tr_record::rst_received(void) const
-{ //char tmp[4];
-
-//  tmp[0] = _record[49];
-//  tmp[1] = _record[50];
-//  tmp[2] = _record[51];
-//  tmp[3] = 0;
-
-//  if (tmp[2] == ' ')
-//    tmp[2] = 0;
-
-//  return atoi(tmp);
-  const string tmp = substring(_record, 49, _record[51] == ' ' ? 2 : 3);
+{ const string tmp { substring(_record, 49, _record[51] == ' ' ? 2 : 3) };
 
   return from_string<int>(tmp);
 }
 
 /// band
 const BAND tr_record::band(void) const
-{ string band_string = substring(_record, 0, 3);
-
-  const int b = atoi(band_string.c_str());
+{ const string band_string { substring(_record, 0, 3) };
+  const int    b           { atoi(band_string.c_str()) };
 
   switch (b)
   { case 160 : return BAND_160;
@@ -183,10 +151,10 @@ const string tr_record::frequency(void) const
    }
 
 // the kHz portion of the frequency might be elsewhere in the record
-  const string qso_number_str = substring(_record, 23, 4);
+  const string qso_number_str { substring(_record, 23, 4) };
 
   if (contains(qso_number_str, "."))
-  { float to_add = from_string<float>(qso_number_str);
+  { float to_add { from_string<float>(qso_number_str) };
 
     switch (band())
     { case BAND_160:
@@ -213,80 +181,22 @@ const string tr_record::frequency(void) const
 
 /// the received exchange; maximum of four characters
 const string tr_record::exchange_received(void) const
-{ char tmp[5];
+{ const string tmp { substring(_record, 53, 4) };
 
-  tmp[0] = _record[53];
-  tmp[1] = _record[54];
-  tmp[2] = _record[55];
-  tmp[3] = _record[56];
-  tmp[4] = 0;
+//  char tmp[5];
 
-  string rv(&tmp[0]);
+//  tmp[0] = _record[53];
+//  tmp[1] = _record[54];
+//  tmp[2] = _record[55];
+//  tmp[3] = _record[56];
+//  tmp[4] = 0;
 
-  return remove_peripheral_spaces(rv);
+//  string rv(&tmp[0]);
+
+  return remove_peripheral_spaces(tmp);
 }
 
 // -----------  tr_log  ----------------
-#if 0
-tr_log::tr_log(const std::string& filename)
-{ ifstream original_file(filename);
-
-  char buffer [1000];
-
-  original_file.getline(buffer, 1000);
-  string title = buffer;
-
-  _fp = tmpfile();
-  _number_of_qsos = 0;
-  _record_length = 0;
-
-  while (!original_file.eof())
-  { // getline does not leave the EOL marker in buffer
-    original_file.getline(buffer, 1000);
-
-    string this_line = buffer;
-
-// line_of_log_info is a boolean to see if this is real data
-    int line_of_log_info = (this_line != title);
-    line_of_log_info = line_of_log_info && (this_line.length() > 40);
-
-    string mode;
-    if (line_of_log_info)
-      mode = substring(this_line, 3, 3);
-
-    line_of_log_info = line_of_log_info && ((mode == "CW ") || (mode == "SSB"));
-
-    if (line_of_log_info)
-    {
-// strip any dollar signs
-      this_line = remove_char(this_line, '$');
-
-      const int old_record_length = _record_length;
-      _record_length = this_line.length();
-
-//      cerr << "Processing line: " << this_line << endl;
-
-      if (old_record_length)
-      { if (_record_length != old_record_length)
-        { cerr << "Error creating tr_log; inconsistent record length: _record_length = " << _record_length << "; old_record_length = " << old_record_length << endl;
-          exit(-2);;
-        }
-      }
-//      assert(fwrite(buffer, _record_length, 1, _fp) == 1);
-
-      int status = fwrite(buffer, _record_length, 1, _fp);
-
-      if (status != 1)
-       { cerr << "Write error" << endl;
-         throw exception();
-       }
-
-      _number_of_qsos++;
-    }
-  }
-  fflush(_fp);
-}
-#endif
 
 /// compare order of calls
 int _compare_calls(const void* a, const void* b)
@@ -302,26 +212,27 @@ int _compare_calls(const void* a, const void* b)
     \param  filename  name of a TRLOG file
 */
 tr_log::tr_log(const std::string& filename)
-{ const string contents = remove_char(read_file(filename), '$');  // remove and dollar signs as we import file
-  const vector<string> lines = to_lines(contents);
-
-  const string title = lines.empty() ? "" : remove_peripheral_spaces(lines[0]);
+{ const string         contents { remove_char(read_file(filename), '$') };  // remove any dollar signs as we import file
+  const vector<string> lines    { to_lines(contents) };
+  const string         title    { lines.empty() ? EMPTY_STR : remove_peripheral_spaces(lines[0]) };
 
   _fp = tmpfile();
   _number_of_qsos = 0;
   _record_length = 0;
 
   for (size_t n = 1; n < lines.size(); ++n)
-  { const string& this_line = lines[n];
+  { const string& this_line { lines[n] };
 
 // is this line real data?
-    bool line_of_log_info = ( (this_line != title) and (this_line.length() > 40) );
-    const string mode = (line_of_log_info ? substring(this_line, 3, 3) : "");
+    bool line_of_log_info { ( (this_line != title) and (this_line.length() > 40) ) };
+
+    const string mode { (line_of_log_info ? substring(this_line, 3, 3) : EMPTY_STR) };
 
     line_of_log_info = line_of_log_info and ((mode == "CW ") or (mode == "SSB"));
 
     if (line_of_log_info)
-    { const int old_record_length = _record_length;
+    { const int old_record_length { _record_length };
+
       _record_length = this_line.length();
 
       if (old_record_length)
@@ -331,7 +242,7 @@ tr_log::tr_log(const std::string& filename)
         }
       }
 
-      int status = fwrite(this_line.c_str(), _record_length, 1, _fp);
+      const auto status { fwrite(this_line.c_str(), _record_length, 1, _fp) };
 
       if (status != 1)
       { cerr << "Write error" << endl;
@@ -345,15 +256,14 @@ tr_log::tr_log(const std::string& filename)
   fflush(_fp);
 }
 
-
 /// destructor
-tr_log::~tr_log(void)
-{ fclose(_fp);          // not really necessary
-}
+//tr_log::~tr_log(void)
+//{ fclose(_fp);          // not really necessary
+//}
 
 /// sort the log in order of callsign
 void tr_log::sort_by_call(void)
-{ struct QSO_CALL* table = new struct QSO_CALL [_number_of_qsos];
+{ struct QSO_CALL* table { new struct QSO_CALL [_number_of_qsos] };
 
   for (int n = 0; n < _number_of_qsos; ++n)
   { table[n]._qso = n;
@@ -364,10 +274,11 @@ void tr_log::sort_by_call(void)
   qsort((void*)table, _number_of_qsos, sizeof(struct QSO_CALL), _compare_calls);
 
 // create a revised file
-  FILE* tmpfp = tmpfile();
+  FILE* tmpfp { tmpfile() };
+
   for (int n = 0; n < _number_of_qsos; ++n)
-  { const int original_position = table[n]._qso;
-    int status = fseek(_fp, original_position * _record_length, 0);
+  { const int original_position { table[n]._qso };
+    int       status            { fseek(_fp, original_position * _record_length, 0) };
 
     if (status != 0)
       throw exception();
@@ -410,7 +321,7 @@ const tr_record tr_log::read(const int n)
     \param  n    the record number at which <i>trr</i> should be written
 */
 void tr_log::write(const tr_record& trr, const int n)
-{ int status = fseek(_fp, n * _record_length, 0);
+{ int status { fseek(_fp, n * _record_length, 0) };
 
   if (status != 0)
     throw exception();
@@ -420,4 +331,3 @@ void tr_log::write(const tr_record& trr, const int n)
   if (status != 1)
     throw exception();
 }
-

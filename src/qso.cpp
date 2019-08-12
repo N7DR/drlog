@@ -251,6 +251,39 @@ void QSO::populate_from_log_line(const string& str)
 { ost << "Inside populate_from_log_line(); initial QSO is:" << *this << endl;
   ost << "string = *" << str << "*" << endl;
 
+#if 0
+  from rules.h:
+  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded; key = string() is default exchange
+  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
+#endif
+
+  const vector<string> expanded = rules.expanded_exchange_field_names(_canonical_prefix, _mode);
+
+  ost << "expanded received exchange from rules:" << endl;
+
+  for (const auto& fn : expanded)
+    ost << fn << endl;
+
+  const vector<string> unexpanded = rules.unexpanded_exchange_field_names(_canonical_prefix, _mode);
+
+  ost << "UNexpanded received exchange from rules:" << endl;
+
+  for (const auto& fn : unexpanded)
+    ost << fn << endl;
+
+  map<string, string> alternative_choice;
+
+  for (const auto& fn : unexpanded)
+    if (contains(fn, "+"))
+    { ost << "Field " << fn << " is a CHOICE" << endl;
+
+      vector<string> choices = split_string(fn, "+");
+
+// assume just two choices
+      alternative_choice[choices[0]] = choices[1];
+      alternative_choice[choices[1]] = choices[0];
+    }
+
 // separate the line into fields
   const vector<string> vec = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
 
@@ -272,6 +305,16 @@ void QSO::populate_from_log_line(const string& str)
   size_t received_index { 0 };
 
   const vector<exchange_field> exchange_fields { rules.expanded_exch(_callsign, _mode) };
+
+//  const parsed_exchange pexch { from_callsign, canonical_prefix, rules, cur_mode, exchange_field_values };  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
+
+// build the received exchange field values
+//  vector<string> exchange_field_values;
+
+//  for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
+//  {
+//  }
+
 
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { ost << "Processing log_line field number " << n << endl;
@@ -343,6 +386,28 @@ void QSO::populate_from_log_line(const string& str)
           ost << "About to assign: received_index = " << received_index << "; value = " << vec[n] << endl;
 
           ost << "Original received exchange[received_index]: " << _received_exchange[received_index] << endl << endl;
+
+          bool is_legal = rules.is_legal_value(substring(field, 9), vec[n]);
+
+          ost << vec[n] << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " << _received_exchange[received_index].name() << endl;
+          ost << vec[n] << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring(field, 9) << endl;
+
+// if the field is a CHOICE and the value isn't legal, for the original choice, see if it's valid for the other
+          if (!rules.is_legal_value(substring(field, 9), vec[n]))
+          { const string& original_field_name = _received_exchange[received_index].name();
+
+            auto posn = alternative_choice.find(original_field_name);
+
+            if (posn != alternative_choice.end())
+              _received_exchange[received_index].name(posn->second);
+
+            if (!rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))
+            { ost << "UNABLE TO PARSE REVISED EXCHANGE CORRECTLY" << endl;
+
+              alert("Unable to parse exchange; making ad hoc decision");
+            }
+          }
+
 
           _received_exchange[received_index++].value(vec[n]);
 
@@ -805,7 +870,7 @@ const bool QSO::sent_exchange_includes(const string& field_name) const
 }
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
-    \return     QSO formatted for writing in the LOG window
+    \return     QSO formatted for writing into the LOG window
 
     Also populates <i>_log_line_fields</i> to match the returned string
 */

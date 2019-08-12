@@ -34,8 +34,8 @@ const pair<unsigned int, unsigned int> rate_meter::current_qsos_and_score(void)
 
 /// Return the number of QSOs at the epoch <i>t</i>
 const unsigned int rate_meter::qsos(const time_t t)
-{ const time_t now = ::time(NULL);                                     // time in seconds since the epoch
-  const time_t query_time = min(now, t);
+{ const time_t now        { ::time(NULL) };                                     // time in seconds since the epoch
+  const time_t query_time { min(now, t) };
 
   if (query_time == now)
     return current_qsos();
@@ -50,8 +50,8 @@ const unsigned int rate_meter::qsos(const time_t t)
 
 /// Return the number of points at the epoch <i>t</i>
 const unsigned int rate_meter::score(const time_t t)
-{ const time_t now = ::time(NULL);                                     // time in seconds since the epoch
-  const time_t query_time = min(now, t);
+{ const time_t now        { ::time(NULL) };                                     // time in seconds since the epoch
+  const time_t query_time { min(now, t) };
 
   if (query_time == now)
     return current_score();
@@ -68,8 +68,8 @@ const unsigned int rate_meter::score(const time_t t)
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
 const pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t)
-{ const time_t now = ::time(NULL);                                     // time in seconds since the epoch
-  const time_t query_time = min(now, t);
+{ const time_t now        { ::time(NULL) };                                     // time in seconds since the epoch
+  const time_t query_time { min(now, t) };
 
   if (query_time == now)
     return current_qsos_and_score();
@@ -79,7 +79,7 @@ const pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t
   if (_data.empty() or (t < _data.begin()->first))  // no data or we precede all the data
     return { 0, 0 };
 
-  const auto ub = _data.upper_bound(query_time);    // first element with key > query_time
+  const auto ub { _data.upper_bound(query_time) };    // first element with key > query_time
 
   if (ub == _data.begin())                          // should never be true
     return { 0, 0 };
@@ -99,13 +99,13 @@ const pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t
 const pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seconds_in_past, const unsigned int normalisation_period)
 { SAFELOCK(_rate);  // don't allow any changes while we're performing this calculation
 
-  const time_t now = ::time(NULL);
-  const pair<unsigned int, unsigned int> current_values = qsos_and_score(now);
+  const time_t                           now            { ::time(NULL) };
+  const pair<unsigned int, unsigned int> current_values { qsos_and_score(now) };
 
   if (seconds_in_past <= 0)
     return current_values;
 
-  const pair<unsigned int, unsigned int> old_values = qsos_and_score(now - seconds_in_past);
+  const pair<unsigned int, unsigned int> old_values { qsos_and_score(now - seconds_in_past) };
 
   if (normalisation_period == 0)
     return { current_values.first - old_values.first, current_values.second - old_values.second };
@@ -118,12 +118,12 @@ const pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seco
 const string rate_meter::to_string(void)
 { string rv;
 
-  rv += "Number of points in rate = " + ::to_string(_data.size()) + EOL;
+  rv += "Number of points in rate = "s + ::to_string(_data.size()) + EOL;
 
-  size_t index = 0;
+  size_t index { 0 };
 
   for (auto datum : _data)
-  { rv += "time = " + ::to_string(datum.first) + "; n QSOs = " + ::to_string(datum.second.first) + "; points = " + ::to_string(datum.second.second);
+  { rv += "time = "s + ::to_string(datum.first) + "; n QSOs = "s + ::to_string(datum.second.first) + "; points = "s + ::to_string(datum.second.second);
 
     if (index++ != (_data.size() - 1) )
         rv += EOL;
@@ -138,4 +138,3 @@ ostream& operator<<(ostream& ost, rate_meter& rate)
 
   return ost;
 }
-

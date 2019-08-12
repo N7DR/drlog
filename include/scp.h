@@ -126,8 +126,7 @@ public:
   inline scp_databases(void) = default;
 
 /// destructor
-  inline virtual ~scp_databases(void)
-    { }
+  inline virtual ~scp_databases(void) = default;
 
 /// add a database to those that are consulted
   void add_db(scp_database& db);

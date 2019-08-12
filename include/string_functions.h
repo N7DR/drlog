@@ -613,13 +613,34 @@ inline const bool is_maritime_mobile(const std::string& callsign)
 
     Uses comma as separator if <i>sep</i> is empty.
 */
-const std::string separated_string(const int n, const std::string& sep = ",");
+//const std::string separated_string(const int n, const std::string& sep = ",");
+template <typename T>
+const std::string separated_string(const T n, const std::string& sep = ","s)
+{ const char separator = (sep.empty() ? ',' : sep[0]);
 
+  std::string tmp = to_string(n);
+  std::string rv;
+
+  while (!tmp.empty())
+  { for (unsigned int N = 0; N < 3 and !tmp.empty(); ++N)
+    { rv = std::string(1, last_char(tmp)) + rv;
+      tmp = tmp.substr(0, tmp.length() - 1);
+    }
+
+    if (!tmp.empty())
+      rv = std::string(1, separator) + rv;
+  }
+
+  return rv;
+}
 /*! \brief      Convert an integer to a comma-separated string
     \param  n   number to convert
     \return     <i>n</i> with the separator <i>,</i> separating each triplet
 */
-inline const std::string comma_separated_string(const int n)
+//inline const std::string comma_separated_string(const int n)
+//  { return separated_string(n); }
+template <typename T>
+inline const std::string comma_separated_string(const T n)
   { return separated_string(n); }
 
 /*! \brief                  Get location of start of next word

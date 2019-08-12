@@ -64,8 +64,7 @@ protected:
 public:
 
 /// default constructor
-  inline exchange_field_values(void)
-  { }
+  inline exchange_field_values(void) = default;
 
 /*! \brief          Construct from name
     \param  nm      name of exchange field
@@ -84,8 +83,7 @@ public:
   { }
 
 /// destructor
-  inline virtual ~exchange_field_values(void)
-  { }
+  inline virtual ~exchange_field_values(void) = default;
 
   READ_AND_WRITE(name);             ///< name of the exchange field
   READ_AND_WRITE(values);           ///< associate legal values with a canonical value
@@ -413,7 +411,7 @@ protected:
 public:
   
 /// default constructor
-  contest_rules(void);
+  contest_rules(void);      // can't put the code here because the defn of EFT is incomplete at this point
 
 /*! \brief              Construct an object ready for use
     \param  context     context for this contest
@@ -498,11 +496,14 @@ public:
   RULESREAD(exchange_mults_per_mode);             ///< are exchange mults counted per-mode?
   RULESREAD(exchange_mults_used);                 ///< are exchange mults used?
   RULESREAD(expanded_exchange_mults);             ///< expanded exchange multipliers
+//  RULESREAD(expanded_received_exchange);          ///< details of the received exchange fields; choices expanded; key = string() is default exchange
 
   RULESREAD(original_score_bands);                ///< bands that were originally used to calculate score (from the configuration file)
   RULESREAD(original_score_modes);                ///< modes that were originally used to calculate score (from the configuration file)
 
   RULESREAD(per_band_country_mult_factor);        ///< factor by which to multiply number of country mults, per band (see WAE rules)
+
+//  RULESREAD(received_exchange);                   ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
 
   RULESREAD(score_bands);                         ///< bands currently used to calculate score
   RULESREAD(score_modes);                         ///< modes currently used to calculate score

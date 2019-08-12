@@ -35,26 +35,6 @@ scp_database::scp_database(const string& filename)
   init_from_calls(calls);
 }
 
-/// construct from vector of calls
-//scp_database::scp_database(const std::vector<std::string>& calls)
-//{ init_from_calls(calls);
-//}
-
-/// construct from a master_dta
-//scp_database::scp_database(const master_dta& md)
-//{ init_from_calls(md.calls());
-//}
-
-/// construct from a drmaster object
-//scp_database::scp_database(const drmaster& drm)
-//{ init_from_calls(drm.calls());
-//}
-
-/// populate the database from a vector of calls
-//void scp_database::init_from_calls(const vector<string>& calls)
-//{ FOR_ALL(calls, [&] (const string& this_call) { add_call(this_call); } );
-//}
-
 /// add a call
 void scp_database::add_call(const string& call)
 { if (call.length() >= 2)

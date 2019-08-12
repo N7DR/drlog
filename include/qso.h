@@ -231,7 +231,7 @@ public:
   const bool sent_exchange_includes(const std::string& field_name) const;
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
-    \return     QSO formatted for writing to in the LOG window
+    \return     QSO formatted for writing into the LOG window
 
     Also populates <i>_log_line_fields</i> to match the returned string
 */

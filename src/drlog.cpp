@@ -2571,10 +2571,11 @@ void* prune_bandmap(void* vp)
     \param  e   keyboard event to process
 */
 /*  KP numbers -- CW messages
-    CTRL-C -- EXIT (same as .QUIT)
     ALT-M -- change mode
-    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+    ALT-Q -- send QTC
+    CTRL-C -- EXIT (same as .QUIT)
     CTRL-S -- send to scratchpad
+    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     ALT-K -- toggle CW
     ESCAPE
     TAB -- switch between CQ and SAP mode
@@ -4981,9 +4982,9 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // add the new QSOs
         for (size_t n = 0; n < new_win_log_snapshot.size(); ++n)
         { if (!remove_peripheral_spaces(new_win_log_snapshot[n]).empty())
-          { QSO qso { original_qsos[n] };
+          { QSO qso { original_qsos[n] };           // start with the original QSO as a basis *** THIS IS A PROBLEM, AS THE MEANING OF A EXCHANGE COLUMN MIGHT CHANGE
 
-            qso.log_line();
+            qso.log_line();                         // populate _log_line_fields
 
 // fills some fields in the QSO
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO

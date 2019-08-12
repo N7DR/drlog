@@ -774,6 +774,7 @@ const string transform_string(const string& cs, int(*pf)(int))
 
     Uses comma as separator if <i>sep</i> is empty.
 */
+#if 0
 const string separated_string(const int n, const string& sep)
 { const char separator { (sep.empty() ? ',' : sep[0]) };
 
@@ -793,6 +794,7 @@ const string separated_string(const int n, const string& sep)
   
   return rv;
 }
+#endif
 
 /*! \brief      Get location of start all words
     \param  s   string to be analysed

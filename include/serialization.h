@@ -31,8 +31,8 @@
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/set.hpp>
-//#include <boost/serialization/unordered_map.hpp>
-//#include <boost/serialization/unordered_set.hpp>
+#include <boost/serialization/unordered_map.hpp>
+#include <boost/serialization/unordered_set.hpp>
 #include <boost/serialization/vector.hpp>
 
 #if 0
@@ -272,6 +272,10 @@ inline void serialize(Archive & ar,
 } // namespace boost
 #endif
 
+
+/// THIS works -- temporary no compile
+
+#if 0
 // http://stackoverflow.com/questions/16314996/compile-error-on-serializing-boostunordered-set
 
 #include <unordered_map>
@@ -325,7 +329,7 @@ void serialize(Archive &ar,
 }
 }
 
-
+#endif
 
 
 #endif /* SERIALIZATION_H */

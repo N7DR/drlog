@@ -113,7 +113,18 @@ protected:
 public:
 
 /// default constructor
-  rig_interface (void);
+  rig_interface (void) :
+    _error_alert_function(nullptr),       // no default error handler
+    _last_commanded_frequency(),          // no last-commanded frequency
+    _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
+    _last_commanded_mode(MODE_CW),        // last commanded mode was CW
+    _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
+    _port_name(),                         // no default port
+    _rigp(nullptr),                       // no rig connected
+    _rig_connected(false),                // no rig connected
+    _rig_poll_interval(1000),             // poll once per second
+    _status(frequency(14000), MODE_CW)    // 14MHz, CW
+  { }
 
 /// destructor
   inline virtual ~rig_interface(void) = default;

@@ -39,7 +39,7 @@ using namespace   this_thread;   // std::this_thread
 extern message_stream ost;                                              ///< for debugging and logging
 extern void alert(const string& msg, const bool show_time = true);      ///< function to alert the user
 
-const int SOCKET_ERROR = -1;            ///< error return from various socket-related system functions
+constexpr int SOCKET_ERROR { -1 };            ///< error return from various socket-related system functions
 
 // ---------------------------------  tcp_socket  -------------------------------
 
@@ -65,19 +65,19 @@ tcp_socket::tcp_socket(void)  :
 { try
   { 
 // enable re-use
-    static const int on = 1;
+    static const int on { 1 };
 
-    int status = setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) );  // char* cast is needed for Windows
+    int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };  // char* cast is needed for Windows
 
     if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR");
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
 
     const struct linger lgr = { 1, 0 };
 
     status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
 
     if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER");    
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
   }
 
   catch (...)
@@ -103,19 +103,19 @@ tcp_socket::tcp_socket(SOCKET* sp) :
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 // enable re-use
-      static const int on = 1;
+      static const int on { 1 };
 
-      int status = setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) );    // char* cast is needed for Windows
+      int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };    // char* cast is needed for Windows
 
       if (status)
-        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR");
+        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
 
       const struct linger lgr { 1, 0 };
 
       status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
 
       if (status)
-        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER");    
+        throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
 
       _preexisting_socket = false;
     }
@@ -157,25 +157,26 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
   try
   { 
 // enable re-use
-    static const int on = 1;
+    static const int on { 1 };
 
-    int status = setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) );      // char* cast is needed for Windows
+    int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };      // char* cast is needed for Windows
 
     if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR");
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
     
     const struct linger lgr = { 1, 0 };
 
     status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
 
     if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER");    
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
 
     bind(source_address);
 
 // try to connect to the other end
-    { const int TIMEOUT = 10;       // timeout in seconds
-      bool connected = false;
+    { constexpr int TIMEOUT { 10 };       // timeout in seconds
+
+      bool connected { false };
 
       while (!connected)            // repeat until success
       { try
@@ -184,7 +185,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
           else                                                                // FQDN was passed instead of dotted decimal
           {
 // resolve the name
-            const string dotted_decimal = name_to_dotted_decimal(destination_ip_address_or_fqdn, 10);       // up to ten attempts at one-second intervals
+            const string dotted_decimal { name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };       // up to ten attempts at one-second intervals
 
             destination(dotted_decimal, destination_port, TIMEOUT );
           }
@@ -196,7 +197,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
         { ost << "caught socket_support_error exception while setting destination " << destination_ip_address_or_fqdn << " in tcp_socket constructor" << endl;
           ost << "Socket support error number " << e.code() << "; " << e.reason() << endl;
 
-          alert("Error setting socket destination: " + destination_ip_address_or_fqdn +":" + to_string(destination_port));
+          alert("Error setting socket destination: "s + destination_ip_address_or_fqdn +":"s + to_string(destination_port));
 
           ost << "sleeping for " << retry_time_in_seconds << " seconds" << endl;
           sleep_for(seconds(retry_time_in_seconds));
@@ -248,19 +249,19 @@ void tcp_socket::new_socket(void)
     _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 // enable re-use
-    static const int on = 1;
+    static const int on { 1 };
 
-    int status = setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) );      // char* cast is needed for Windows
+    int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };      // char* cast is needed for Windows
 
     if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR");
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
     
     const struct linger lgr = { 1, 0 };
 
     status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
 
     if (status)
-      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER");      
+      throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_LINGER"s);
   }
   
   catch (...)
@@ -274,10 +275,10 @@ void tcp_socket::new_socket(void)
 void tcp_socket::bind(const sockaddr_storage& local_address)
 { SAFELOCK(_tcp_socket);
 
-  const int status = ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address));
+  const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) };
 
   if (status)
-    throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Errno = " + to_string(errno) + "; " + strerror(errno));
+    throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Errno = "s + to_string(errno) + "; "s + strerror(errno));
 
   _bound_address = local_address;
 }
@@ -288,7 +289,7 @@ void tcp_socket::bind(const sockaddr_storage& local_address)
 void tcp_socket::destination(const sockaddr_storage& adr)
 { SAFELOCK(_tcp_socket);
 
-  const int status = ::connect(_sock, (sockaddr*)(&adr), sizeof(adr));
+  const int status { ::connect(_sock, (sockaddr*)(&adr), sizeof(adr)) };
 
   if (status == 0)
   { _destination = adr; 
@@ -297,10 +298,10 @@ void tcp_socket::destination(const sockaddr_storage& adr)
   else
   { _destination_is_set = false;
   
-    const string address = dotted_decimal_address(*(sockaddr*)(&adr));
-    const unsigned int p = port(*(sockaddr*)(&adr));
+    const string       address { dotted_decimal_address(*(sockaddr*)(&adr)) };
+    const unsigned int p       { port(*(sockaddr*)(&adr)) };
   
-    throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status " + to_string(errno) + " received from ::connect; " + strerror(errno) + " while trying to connect to address " + address + "; port " + to_string(p));
+    throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + to_string(p));
   }
 }
 
@@ -326,7 +327,7 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   flags = fcntl(_sock, F_GETFL, 0);
   fcntl(_sock, F_SETFL, flags | O_NONBLOCK);
 
-  int status = ::connect(_sock, (sockaddr*)(&adr), sizeof(adr));
+  int status { ::connect(_sock, (sockaddr*)(&adr), sizeof(adr)) };
 
   if (status == 0)        // all OK
   { _destination = adr;
@@ -335,20 +336,20 @@ void tcp_socket::destination(const sockaddr_storage& adr, const unsigned long ti
   else
   { _destination_is_set = false;
 
-    const string address = dotted_decimal_address(*(sockaddr*)(&adr));
-    const unsigned int p = port(*(sockaddr*)(&adr));
+    const string       address { dotted_decimal_address(*(sockaddr*)(&adr)) };
+    const unsigned int p       { port(*(sockaddr*)(&adr)) };
 
     if (errno != EINPROGRESS)
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status " + to_string(errno) + " received from ::connect; " + strerror(errno) + " while trying to connect to address " + address + "; port " + to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "Status "s + to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + to_string(p));
 
     status = select(_sock + 1, &r_set, &w_set, NULL, (timeout_secs) ? &timeout : NULL);
 
     if (status < 0)
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: " + to_string(errno) + " received from ::connect; " + strerror(errno) + " while trying to connect to address " + address + "; port " + to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, "EINPROGRESS: "s + to_string(errno) + " received from ::connect; "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + to_string(p));
 
     if (status == 0)  // timed out
     { errno = ETIMEDOUT;
-      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, (string)"Timeout received from ::connect: " + strerror(errno) + " while trying to connect to address " + address + "; port " + to_string(p));
+      throw socket_support_error(SOCKET_SUPPORT_CONNECT_ERROR, (string)"Timeout received from ::connect: "s + strerror(errno) + " while trying to connect to address "s + address + "; port "s + to_string(p));
     }
 
 // select is positive, which means that the file descriptor is OK
@@ -379,7 +380,7 @@ void tcp_socket::send(const std::string& msg)
 
   SAFELOCK(_tcp_socket);
 
-  const int status = ::send(_sock, msg.c_str(), msg.length(), 0);
+  const int status { ::send(_sock, msg.c_str(), msg.length(), 0) };
   
   if (status == -1)
     throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);   
@@ -389,7 +390,7 @@ void tcp_socket::send(const std::string& msg)
     \return     received string
 */
 const string tcp_socket::read(void)
-{ static const unsigned int BUFLEN = 4096;
+{ /* static */ constexpr unsigned int BUFLEN { 4096 };
 
   char cp[BUFLEN];
   string rv;
@@ -420,7 +421,9 @@ const string tcp_socket::read(void)
 */
 const string tcp_socket::read(const unsigned long timeout_secs)
 { string rv;
+
   struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
+
   fd_set ps_set;
 
   FD_ZERO(&ps_set);
@@ -434,14 +437,15 @@ const string tcp_socket::read(const unsigned long timeout_secs)
     throw socket_support_error(SOCKET_SUPPORT_UNABLE_TO_LISTEN);
   }
 
-  const int max_socket_number = _sock + 1;               // see p. 292 of Linux socket programming
+  const int max_socket_number { _sock + 1 };               // see p. 292 of Linux socket programming
 
-  int socket_status = select(max_socket_number, &ps_set, NULL, NULL, &timeout);  // under Linux, timeout has the remaining time, but this is not to be relied on because it's not generally true in other systems. See Linux select() man page
+  int socket_status { select(max_socket_number, &ps_set, NULL, NULL, &timeout) };  // under Linux, timeout has the remaining time, but this is not to be relied on because it's not generally true in other systems. See Linux select() man page
+
   switch (socket_status)
   { case 0:                    // timeout
     { if (timeout_secs)        // don't signal timeout if we weren't given a duration to wait
       { ost << "Throwing SOCKET_SUPPORT_TIMEOUT; timeout in read() after " << to_string(timeout_secs) << " seconds" << endl;
-        throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, "Timeout after " + to_string(timeout_secs) + " seconds");
+        throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, "Timeout after "s + to_string(timeout_secs) + " seconds"s);
       }
       break;
     }
@@ -452,7 +456,7 @@ const string tcp_socket::read(const unsigned long timeout_secs)
     }
 
     default:                   // response is waiting to be read
-    { const int BUFSIZE = 4096;
+    { constexpr int BUFSIZE { 4096 };
 
       char cp[BUFSIZE];    // a reasonable sized buffer
       int status;
@@ -461,7 +465,7 @@ const string tcp_socket::read(const unsigned long timeout_secs)
       { status  = ::recv(_sock, cp, BUFSIZE, 0);
 
         if (status == -1)
-        { const string msg = "errno = " + to_string(errno) + ": " + strerror(errno);
+        { const string msg { "errno = "s + to_string(errno) + ": "s + strerror(errno) };
 
           ost << "Throwing TCP_SOCKET_ERROR_IN_RECV; " << msg << endl;
           throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV, msg);
@@ -481,68 +485,64 @@ const string tcp_socket::read(const unsigned long timeout_secs)
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::idle_time(const unsigned int seconds)
-{ static const int optlen = sizeof(int);
+{ /* static */ constexpr int optlen = sizeof(int);
 
-  const int optval = seconds;
-//  const int optlen = sizeof(optval);
+  const int optval { static_cast<int>(seconds) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status = setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, optlen);
+  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, optlen) };
 
   if (status)
-    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting idle time");
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting idle time"s);
 }
 
 /*! \brief              Set the time between keep-alives
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::retry_time(const unsigned int seconds)
-{ static const int optlen = sizeof(int);
+{ /* static */ constexpr int optlen { sizeof(int) };
 
-  const int optval = seconds;
-//  const int optlen = sizeof(optval);
+  const int optval { static_cast<int>(seconds) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status = setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, optlen);
+  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, optlen) };
 
   if (status)
-    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting retry time");
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting retry time"s);
 }
 
 /*! \brief      Set the maximum number of retries
     \param  n   maximum number of retries
 */
 void tcp_socket::max_retries(const unsigned int n)
-{ static const int optlen = sizeof(int);
+{ /* static */ constexpr int optlen { sizeof(int) };
 
-  const int optval = n;
-//  const int optlen = sizeof(optval);
+  const int optval { static_cast<int>(n) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status = setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, optlen);
+  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, optlen) };
 
   if (status)
-    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting maximum number of retries");
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting maximum number of retries"s);
 }
 
 /*! \brief          Set or unset the use of keep-alives
     \param  torf    whether to use keep-alives
 */
 void tcp_socket::keep_alive(const bool torf)
-{ static const int optlen = sizeof(int);
+{ /* static */ constexpr int optlen { sizeof(int) };
 
-  const int optval = torf ? 1 : 0;
-//  const int optlen = sizeof(optval);
+  const int optval { torf ? 1 : 0 };
   
   SAFELOCK(_tcp_socket);
 
-  const int status = setsockopt(socket(), SOL_SOCKET, SO_KEEPALIVE, &optval, optlen);
+  const int status { setsockopt(socket(), SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) };
 
   if (status)
-    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error to control keep-alive");
+    throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error to control keep-alive"s);
 }
 
 /*! \brief          Set properties of the keep-alive
@@ -581,13 +581,13 @@ const string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const i
   if (!FD_ISSET(in_socket, &ps_set))      // unable to set socket for listening
     throw socket_support_error(SOCKET_SUPPORT_UNABLE_TO_LISTEN);
 
-  const int max_socket_number = in_socket + 1;               // see p. 292 of Linux socket programming
+  const int max_socket_number { in_socket + 1 };               // see p. 292 of Linux socket programming
 
-  int socket_status = select(max_socket_number, &ps_set, NULL, NULL, &timeout);  // under Linux, timeout has the remaining time, but this is not to be relied on because it's not generally true in other systems. See Linux select() man page
+  int socket_status { select(max_socket_number, &ps_set, NULL, NULL, &timeout) };  // under Linux, timeout has the remaining time, but this is not to be relied on because it's not generally true in other systems. See Linux select() man page
 
   switch (socket_status)
   { case 0:                    // timeout
-      throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, (string)"Socket timeout exceeded: " + to_string(timeout_in_tenths) + (string)" tenths of seconds");
+      throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, (string)"Socket timeout exceeded: "s + to_string(timeout_in_tenths) + (string)" tenths of seconds"s);
 
     case SOCKET_ERROR:
       throw socket_support_error(SOCKET_SUPPORT_SELECT_ERROR);
@@ -609,7 +609,7 @@ const string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const i
         }
       }
       else                                   // have read message from other end OK
-      { const int octets_received = socket_status;
+      { const int octets_received { socket_status };
 
         return string(&(socket_buffer[0]), octets_received);
       }
@@ -628,9 +628,11 @@ void flush_read_socket(SOCKET& sock)
 
   FD_ZERO(&ps_set);
   FD_SET(sock, &ps_set);
-  const int max_socket_number= sock + 1;               // see p. 292 of Linux socket programming
 
-  socklen_t from_length = sizeof(sockaddr_storage);
+  const int max_socket_number { sock + 1 };               // see p. 292 of Linux socket programming
+
+  socklen_t from_length { sizeof(sockaddr_storage) };
+
   sockaddr_storage ps_sockaddr;                                // unused but needed in recvfrom
 
   while (select(max_socket_number, &ps_set, NULL, NULL, &timeout) == 1)
@@ -657,7 +659,8 @@ void flush_read_socket(SOCKET& sock)
 //const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr)
 const sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr)
 { sockaddr_storage rv;
-  sockaddr_in* sinp = (sockaddr_in*)(&rv);
+
+  sockaddr_in* sinp { (sockaddr_in*)(&rv) };
   
   sinp->sin_family = AF_INET;
   sinp->sin_port = htons(port_nr);
@@ -676,7 +679,7 @@ const sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
 { sockaddr_in rv;
 
   if (ss.ss_family != AF_INET)
-    throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Attempt to convert non-IPv4 sockaddr_storage to sockaddr_in");
+    throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Attempt to convert non-IPv4 sockaddr_storage to sockaddr_in"s);
 
   rv.sin_family = AF_INET;
   rv.sin_port = ((sockaddr_in*)(&ss))->sin_port;
@@ -696,17 +699,20 @@ const sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
 */
 string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
 { if (fqdn.empty())                  // gethostbyname (at least on Windows) is hosed if one calls it with null string
-    throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to lookup empty name");
+    throw socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL, "Asked to lookup empty name"s);
+
+  constexpr int BUF_LEN { 2048 };
   
-  const int BUF_LEN = 2048;
   const size_t buflen(BUF_LEN);
 
   struct hostent ret;
   char buf[BUF_LEN];
   struct hostent* result;
   int h_errnop;
-  remove_const_t<decltype(n_tries)> n_try = 0;
-  bool success = false;
+
+  remove_const_t<decltype(n_tries)> n_try   { 0 };
+  bool                              success { false };
+
   int status;
 
   while (n_try++ < n_tries and !success)
@@ -718,14 +724,15 @@ string name_to_dotted_decimal(const string& fqdn, const unsigned int n_tries)
   }
 
   if (success)
-  { char** h_addr_list = result->h_addr_list;
-    const uint32_t addr_long = htonl(*(uint32_t*)(*h_addr_list));    // host order
+  { char** h_addr_list { result->h_addr_list };
+
+    const uint32_t addr_long { htonl(*(uint32_t*)(*h_addr_list)) };    // host order
 
     return convert_to_dotted_decimal(addr_long);
   }
   else
   { ost << "Error return" << endl;
 
-    throw(tcp_socket_error(TCP_SOCKET_UNABLE_TO_RESOLVE, (string)"Unable to resolve name: " + fqdn));
+    throw(tcp_socket_error(TCP_SOCKET_UNABLE_TO_RESOLVE, (string)"Unable to resolve name: "s + fqdn));
   }
 }

@@ -55,8 +55,7 @@ protected:
 public:
 
 /// default constructor
-  inline tr_record(void)
-    { }
+  inline tr_record(void) = default;
 
 /*! \brief      Construct from a line of a TRLOG file
     \param  s   a single line from a TRLOG file
@@ -66,8 +65,7 @@ public:
     { }
 
 /// copy constructor
-  inline tr_record(const tr_record& rec)
-    { _record = rec._record; }
+  inline tr_record(const tr_record& rec) = default;
 
 /*! \brief      Construct from a line of a TRLOG file
     \param  cp  a single line from a TRLOG file
@@ -76,8 +74,8 @@ public:
     { _record = cp; }
 
 /// tr_record = tr_record
-  inline void operator=(const tr_record& rec)
-    { _record = rec._record; }
+  inline tr_record& operator=(const tr_record& rec) = default;
+//    { _record = rec._record; }
 
 /// tr_record = char*
   inline void operator=(const char* cp)
@@ -151,7 +149,8 @@ public:
   explicit tr_log(const std::string& filename);
 
 /// destructor
-  virtual ~tr_log(void);
+  inline virtual ~tr_log(void)
+    { fclose(_fp); }              // not really necessary
 
 /// return record number <i>n</i>
   const tr_record read(const int n);

@@ -130,18 +130,18 @@ void* rig_interface::_static_poll_thread_function(void* this_p)
 */
 
 /// default constructor
-rig_interface::rig_interface (void) :
-  _error_alert_function(nullptr),       // no default error handler
-  _last_commanded_frequency(),          // no last-commanded frequency
-  _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
-  _last_commanded_mode(MODE_CW),        // last commanded mode was CW
-  _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
-  _port_name(),                         // no default port
-  _rigp(nullptr),                       // no rig connected
-  _rig_connected(false),                // no rig connected
-  _rig_poll_interval(1000),             // poll once per second
-  _status(frequency(14000), MODE_CW)    // 14MHz, CW
-{ }
+//rig_interface::rig_interface (void) :
+//  _error_alert_function(nullptr),       // no default error handler
+//  _last_commanded_frequency(),          // no last-commanded frequency
+//  _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
+//  _last_commanded_mode(MODE_CW),        // last commanded mode was CW
+//  _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
+//  _port_name(),                         // no default port
+//  _rigp(nullptr),                       // no rig connected
+//  _rig_connected(false),                // no rig connected
+//  _rig_poll_interval(1000),             // poll once per second
+//  _status(frequency(14000), MODE_CW)    // 14MHz, CW
+//{ }
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
@@ -155,7 +155,7 @@ void rig_interface::prepare(const drlog_context& context)
   const string rig_type { context.rig1_type() };
 
 // ugly map of name to hamlib model number
-  if (rig_type == "K3")
+  if (rig_type == "K3"s)
     _model = RIG_MODEL_K3;
 
   if (_model == RIG_MODEL_DUMMY and !rig_type.empty())
@@ -449,7 +449,7 @@ const unsigned int rig_interface::baud_rate(void)
 */
 void rig_interface::data_bits(const unsigned int bits)
 { if (bits < 7 or bits > 8)
-    throw rig_interface_error(RIG_INVALID_DATA_BITS, "Attempt to set invalid number of data bits: " + to_string(bits));
+    throw rig_interface_error(RIG_INVALID_DATA_BITS, "Attempt to set invalid number of data bits: "s + to_string(bits));
 
   SAFELOCK(_rig);
 
@@ -473,7 +473,7 @@ const unsigned int rig_interface::data_bits(void)
 */
 void rig_interface::stop_bits(const unsigned int bits)
 { if (bits < 1 or bits > 2)
-    throw rig_interface_error(RIG_INVALID_STOP_BITS, "Attempt to set invalid number of stop bits: " + to_string(bits));
+    throw rig_interface_error(RIG_INVALID_STOP_BITS, "Attempt to set invalid number of stop bits: "s + to_string(bits));
 
   SAFELOCK(_rig);
 
@@ -536,7 +536,7 @@ void rig_interface::rit(const int hz)
     { const int positive_hz = abs(hz);
       const string hz_str = ( (hz >= 0) ? "+"s : "-"s) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
 
-      raw_command(string("RO"s) + hz_str +";"s, false);
+      raw_command(string("RO"s) + hz_str + ";"s, false);
     }
   }
   else
@@ -653,7 +653,7 @@ void rig_interface::xit(const int hz)
     { const int    positive_hz { abs(hz) };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0') };
 
-      raw_command(string("RO"s) + hz_str +";"s, 0);
+      raw_command(string("RO"s) + hz_str + ";"s, 0);
     }
   }
   else
@@ -870,7 +870,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
   if (cmd.empty())
     return string();
 
-  constexpr int MAX_ATTEMPTS { 10 };
+  constexpr int MAX_ATTEMPTS         { 10 };
   constexpr int TIMEOUT_MICROSECONDS { 100'000 };    // 100 milliseconds
 
 // sanity check ... on K3 all commands end in a ";"
@@ -893,7 +893,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 
     int counter { 0 };
 
-    constexpr int SCREEN_BITS = 131'640;
+    constexpr int SCREEN_BITS { 131'640 };
 
     if (response_expected)
     { if (is_p3_screenshot)
@@ -985,7 +985,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
               const int n_read { read(fd, c_in.data(), 500) };        // read a maximum of 500 characters
 
               if (n_read > 0)                      // should always be true
-              { if (cmd == "AR;")
+              { if (cmd == "AR;"s)
                   ost << "n_read = " << n_read << endl;
 
                 total_read += n_read;
