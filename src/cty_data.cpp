@@ -24,13 +24,13 @@
 
 using namespace std;
 
-extern const set<string> CONTINENT_SET { "AF", "AS", "EU", "NA", "OC", "SA", "AN" };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
+extern const set<string> CONTINENT_SET { "AF"s, "AS"s, "EU"s, "NA"s, "OC"s, "SA"s, "AN"s };  ///< abbreviations for continents; // see https://stackoverflow.com/questions/177437/const-static
 
-const unsigned int CTY_FIELDS_PER_RECORD = 9;                                                   ///< Number of fields in a single CTY record
-const array<int, 10> VE_CQ = { { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 }  };  ///< default CQ zones for VE call areas; 0 to 9
-const array<int, 10> W_CQ = { { 4, 5, 5, 5, 5, 4, 3, 3, 4, 4 } };                               ///< default CQ zones for W call areas; 0 to 9
-const array<int, 10> VE_ITU = { { 8 /* probably not correct */, 9, 4, 4, 3, 3, 2, 2, 4, 9 }  }; ///< default ITU zones for VE call areas; 0 to 9
-const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };                              ///< default ITU zones for W call areas; 0 to 9
+constexpr unsigned int   CTY_FIELDS_PER_RECORD { 9 };                                                           ///< Number of fields in a single CTY record
+constexpr array<int, 10> VE_CQ                 { 5 /* probably not correct */, 5, 5, 4, 4, 4, 4, 3, 1, 5 };     ///< default CQ zones for VE call areas; 0 to 9
+constexpr array<int, 10> W_CQ                  { 4, 5, 5, 5, 5, 4, 3, 3, 4, 4 };                                ///< default CQ zones for W call areas; 0 to 9
+constexpr array<int, 10> VE_ITU                { 8 /* probably not correct */, 9, 4, 4, 3, 3, 2, 2, 4, 9 } ;    ///< default ITU zones for VE call areas; 0 to 9
+constexpr array<int, 10> W_ITU                 { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 };                                ///< default ITU zones for W call areas; 0 to 9
 
 // -----------  cty_record  ----------------
 
@@ -51,35 +51,33 @@ const array<int, 10> W_ITU = { { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 } };              
             possible errors, but we do test for the most obvious ones.
 */
 cty_record::cty_record(const string& record)
-{ //const string record_copy = remove_char(remove_char(record, LF_CHAR), CR_CHAR);            // make it all one line
-  //const string record_copy = remove_chars(record, CRLF);
-  const vector<string> fields = remove_peripheral_spaces(split_string( remove_chars(record, CRLF), ":" ));   // split the record into fields instead of lines
+{ const vector<string> fields { remove_peripheral_spaces(split_string( remove_chars(record, CRLF), ":"s )) };   // split the record into fields instead of lines
 
   if (fields.size() != CTY_FIELDS_PER_RECORD)                                       // check the number of fields
-    throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found " + to_string(fields.size()) + " fields in record for " + fields[0]); 
+    throw cty_error(CTY_INCORRECT_NUMBER_OF_FIELDS, "Found "s + to_string(fields.size()) + " fields in record for "s + fields[0]);
   
   _country_name = fields[0];
 
   _cq_zone = from_string<int>(fields[1]);
   if (_cq_zone < 1 or _cq_zone > 40)
-    throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = " + to_string(_cq_zone) + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in record for "s + _country_name);
   
   _itu_zone = from_string<int>(fields[2]);
   if (_itu_zone < 1 or _itu_zone > 90)
-    throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = " + to_string(_itu_zone) + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in record for "s + _country_name);
 
   _continent = fields[3];
 
   if ( !(CONTINENT_SET < _continent) )
-    throw cty_error(CTY_INVALID_CONTINENT, "Continent = " + _continent + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_CONTINENT, "Continent = "s + _continent + " in record for "s + _country_name);
   
   _latitude = from_string<float>(fields[4]);
   if (_latitude < -90 or _latitude > 90)
-    throw cty_error(CTY_INVALID_LATITUDE, "Latitude = " + fields[4] + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_LATITUDE, "Latitude = "s + fields[4] + " in record for "s + _country_name);
 
   _longitude = from_string<float>(fields[5]);
   if (_longitude < -180 or _longitude > 180)
-    throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = " + fields[5] + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_LONGITUDE, "Longitude = "s + fields[5] + " in record for "s + _country_name);
   
 // map to (0, 360)
   if (_longitude < 0)
@@ -88,15 +86,15 @@ cty_record::cty_record(const string& record)
   _utc_offset = static_cast<int>(from_string<float>(fields[6]) * 60 + 0.5);  // convert to minutes
 
   if ( (_utc_offset < -24 * 60) or (_utc_offset > 24 * 60) )                 // check that it's reasonable
-    throw cty_error(CTY_INVALID_UTC_OFFSET, "UTC offset = " + fields[6] + " in record for " + _country_name);
+    throw cty_error(CTY_INVALID_UTC_OFFSET, "UTC offset = "s + fields[6] + " in record for "s + _country_name);
 
   _prefix = to_upper(fields[7]);  // so that, for example, JD/o -> JD/O
   
   if (_prefix.empty())
-    throw cty_error(CTY_INVALID_PREFIX, "PREFIX is empty in record for " + _country_name);
+    throw cty_error(CTY_INVALID_PREFIX, "PREFIX is empty in record for "s + _country_name);
   
   if (_prefix == "*")
-    throw cty_error(CTY_INVALID_PREFIX, "PREFIX is '*' in record for " + _country_name);
+    throw cty_error(CTY_INVALID_PREFIX, "PREFIX is '*' in record for "s + _country_name);
 
   _waedc_country_only = (_prefix[0] == '*');    // is this only on the WAEDC list?
   
@@ -104,7 +102,7 @@ cty_record::cty_record(const string& record)
     _prefix = _prefix.substr(1);
 
 // now we have to get tricky... start by getting the presumptive alternative prefixes
-  const vector<string> presumptive_prefixes = remove_peripheral_spaces(split_string(fields[8], ","));
+  const vector<string> presumptive_prefixes = remove_peripheral_spaces(split_string(fields[8], ","s));
    
 // separate out the alternative prefixes and the alternative calls
   vector<string> alt_callsigns;
@@ -208,7 +206,7 @@ alternative_country_info::alternative_country_info(const string& record, const s
     { _cq_zone = from_string<int>(cq_zone_str);
 
       if (_cq_zone < 1 or _cq_zone > 40)
-        throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = " + to_string(_cq_zone) + " in alternative record for " + _identifier);
+        throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
        
     const string itu_zone_str = delimited_substring(record, '[', ']');
@@ -217,7 +215,7 @@ alternative_country_info::alternative_country_info(const string& record, const s
     { _itu_zone = from_string<int>(itu_zone_str);
 
       if (_itu_zone < 1 or _itu_zone > 90)
-        throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = " + to_string(_itu_zone) + " in alternative record for " + _identifier);
+        throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in alternative record for "s + _identifier);
     }
   }
 }
@@ -247,7 +245,7 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
 */
 cty_data::cty_data(const string& filename)
 { const string entire_file = remove_char(remove_char(read_file(filename), LF_CHAR), CR_CHAR);   // read file and remove EOL markers
-  const vector<string> records = split_string(entire_file, ";");                                // split into records
+  const vector<string> records = split_string(entire_file, ";"s);                                // split into records
   
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
@@ -272,17 +270,19 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 */
 
 /// default constructor
+#if 0
 location_info::location_info(void) :
-  _canonical_prefix("NONE"),
-  _continent("XX"),
-  _country_name("None"),
+  _canonical_prefix("NONE"s),
+  _continent("XX"s),
+  _country_name("None"s),
   _cq_zone(0),
   _itu_zone(0),
   _latitude(0),
   _longitude(0),
   _utc_offset(0)
 { }
-  
+#endif
+
 /// construct from a cty.dat record
 location_info::location_info(const cty_record& rec) :
   _canonical_prefix(rec.prefix()),
@@ -351,7 +351,7 @@ const location_info guess_zones(const string& call, const location_info& li)
 { location_info rv = li;
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
-   if (rv.canonical_prefix() == "VE")
+   if (rv.canonical_prefix() == "VE"s)
    { const size_t posn = call.find_last_of(DIGITS);
 
      if (posn != string::npos)
@@ -361,7 +361,7 @@ const location_info guess_zones(const string& call, const location_info& li)
    }
 
 // if it's a W, then make a guess as to the CQ and ITU zones
-   if (rv.canonical_prefix() == "K")
+   if (rv.canonical_prefix() == "K"s)
    { const size_t posn = call.find_last_of(DIGITS);
 
      if (posn != string::npos)
@@ -477,9 +477,9 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
 // do essentially the same for the alternative callsigns -- we should just make this a callable private function and call it twice;
 // these go into the _alt_call_db
       for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      { const cty_record& rec = cty[n_country];
-        const map<string, alternative_country_info>& alt_callsigns = rec.alt_callsigns();
-        const bool country_is_waedc_only = rec.waedc_country_only();
+      { const cty_record&                            rec                   { cty[n_country] };
+        const map<string, alternative_country_info>& alt_callsigns         { rec.alt_callsigns() };
+        const bool                                   country_is_waedc_only { rec.waedc_country_only() };
         
         for (map<string, alternative_country_info>::const_iterator cit = alt_callsigns.begin(); cit != alt_callsigns.end(); ++cit)
         { const string callsign = cit->first;
@@ -531,10 +531,6 @@ void location_database::_insert_alternatives(const location_info& info, const ma
   }
 }
 
-/// default constructor
-//location_database::location_database(void)
-//{ }
-
 // construct from CTY.DAT filename and the definition of which country list to use
 location_database::location_database(const string& filename, const COUNTRY_LIST country_list)
 { if (!filename.empty())
@@ -584,14 +580,14 @@ void location_database::add_russian_database(const vector<string>& path, const s
     \param  callpart    call (or partial call)
     \return             location information corresponding to <i>call</i>
 */
-const location_info location_database::info(const string& callpart)
+const location_info location_database::info(const string& callpart) const
 { const string original_callsign { remove_peripheral_spaces(callpart) };
 
   string callsign { original_callsign };                  // make callsign mutable, for handling case of /n
   
   SAFELOCK(_location_database);
 
-  auto db_posn = _db_checked.find(callsign);
+  map<string, location_info>::const_iterator db_posn = _db_checked.find(callsign);
 
 // it's easy if there's already an entry
   if (db_posn != _db_checked.end())
@@ -606,7 +602,7 @@ const location_info location_database::info(const string& callpart)
   }
 
 // see if it's some guy already in the db but now signing /QRP
-  if (callsign.length() >= 5 and last(callsign, 4) == "/QRP")
+  if (callsign.length() >= 5 and last(callsign, 4) == "/QRP"s)
   { const string target { substring(callsign, 0, callsign.length() - 4) };    // remove "/QRP"
   
     db_posn = _db_checked.find(target);
@@ -628,7 +624,7 @@ const location_info location_database::info(const string& callpart)
   }
 
 // /MM and /AM are in no country
-  if (last(callsign, 3) == "/AM" or last(callsign, 3) == "/MM")
+  if (last(callsign, 3) == "/AM"s or last(callsign, 3) == "/MM"s)
   { location_info rv;
   
     _db_checked.insert( { callsign, rv } );
@@ -636,7 +632,7 @@ const location_info location_database::info(const string& callpart)
   }
   
 // try to determine the canonical prefix
-  if (!contains(callsign, "/") or (callsign.length() >= 2 and penultimate_char(callsign) == '/'))    // "easy" -- no portable indicator
+  if (!contains(callsign, "/"s) or (callsign.length() >= 2 and penultimate_char(callsign) == '/'))    // "easy" -- no portable indicator
   {
 // country is determined by the longest substring starting at the start of the call and which is already
 // in the database. This assumes that, for example, G4AMJ is in the same country as G4AM [if G4AM has already been worked]).
@@ -662,7 +658,7 @@ const location_info location_database::info(const string& callpart)
     while (len <= callsign.length())
     { const string target { callsign.substr(0, len) };
 
-      map<string, location_info>::iterator db_posn { _db.find(target) };
+      map<string, location_info>::const_iterator db_posn { _db.find(target) };
      
       if (db_posn != _db.end())
       { found_any_hits = true;
@@ -763,7 +759,7 @@ const location_info location_database::info(const string& callpart)
 
 // it looks like maybe it's a reciprocal license
 // how many slashes are there?
-  vector<string> parts { split_string(callsign, "/") };
+  vector<string> parts { split_string(callsign, "/"s) };
 
   if (parts.size() == 1)        // slash is first or last character
     return location_info();
@@ -774,8 +770,8 @@ const location_info location_database::info(const string& callpart)
   if (parts.size() == 2)        // one slash
   {
 // see if either part matches anything in the initial database
-     map<string, location_info>::iterator db_posn_0 { _db.find(parts[0]) };
-     map<string, location_info>::iterator db_posn_1 { _db.find(parts[1]) };
+     map<string, location_info>::const_iterator db_posn_0 { _db.find(parts[0]) };
+     map<string, location_info>::const_iterator db_posn_1 { _db.find(parts[1]) };
      
      const bool found_0 { (db_posn_0 != _db.end()) };
      const bool found_1 { (db_posn_1 != _db.end()) };
@@ -847,7 +843,7 @@ const location_info location_database::info(const string& callpart)
      
       while (len <= parts[0].length())
       { string                               target  { parts[0].substr(0, len) };
-        map<string, location_info>::iterator db_posn { _db.find(target) };
+        map<string, location_info>::const_iterator db_posn { _db.find(target) };
      
         if (db_posn != _db.end())
         { len_0 = len;
@@ -861,7 +857,7 @@ const location_info location_database::info(const string& callpart)
     
       while (len <= parts[1].length())
       { string                               target  { parts[1].substr(0, len) };
-        map<string, location_info>::iterator db_posn { _db.find(target) };
+        map<string, location_info>::const_iterator db_posn { _db.find(target) };
      
         if (db_posn != _db.end())
         { len_1 = len;
@@ -938,10 +934,13 @@ const location_info location_database::info(const string& callpart)
 }
 
 /// get a set of all the canonical prefixes for all countries
-const set<string> location_database::countries(void)
+//const unordered_set<string> location_database::countries(void) const
+auto location_database::countries(void) const -> unordered_set<string>
 { SAFELOCK(_location_database);
 
-  set<string> rv;
+  unordered_set<string> rv;     // there's probably some horrible way to set the type using decltype and the return type of the function, but I don't know what it is
+// std::result_of<decltype(&foo::memfun1)(foo, int)>::type  https://stackoverflow.com/questions/26107041/how-can-i-determine-the-return-type-of-a-c11-member-function
+//  result_of<decltype(&location_database::countries)(location_database, void)>::type rv;
 
   FOR_ALL(_db, [&rv] (const pair<string, location_info>& prefix_li) { rv.insert((prefix_li.second).canonical_prefix()); } );  // there are a lot more entries in the db than there are countries
 
@@ -949,10 +948,11 @@ const set<string> location_database::countries(void)
 }
 
 /// create a set of all the canonical prefixes for a particular continent
-const set<string> location_database::countries(const string& cont_target)
-{ const set<string> all_countries { countries() };
+const unordered_set<string> location_database::countries(const string& cont_target) const
+{ //const set<string> all_countries { countries() };
+  const auto all_countries { countries() };
 
-  set <string> rv;
+  unordered_set <string> rv;
 
   copy_if(all_countries.cbegin(), all_countries.cend(), inserter(rv, rv.begin()), [=, &rv] (const string& cp) { return (continent(cp) == cont_target); } );
 

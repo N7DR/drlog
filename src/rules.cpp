@@ -35,6 +35,59 @@ extern void alert(const string& msg, const bool show_time = true);  ///< Alert t
 
 using MSI = std::map<std::string, unsigned int>;                    ///< syntactic sugar
 
+// -------------------------  choice_equivalents  ---------------------------
+
+/*! \class  choice_equivalents
+    \brief  Encapsulates the possibilities for a CHOICE received exchange
+
+    Assumes that CHOICEs are in pairs
+*/
+
+
+/*! \brief          Add a pair of equivalent fields
+    \param  ch1     first element of choice
+    \param  ch2     second element of choice
+*/
+void choice_equivalents::add(const string& ch1, const string& ch2)
+{ _choices[ch1] = ch2;
+  _choices[ch2] = ch1;
+}
+
+/*! \brief          Add a pair of equivalent fields
+    \param  chvec   A two-element vector of equivalent fields
+
+    Throws exception if <i>chvec</i> does not have exactly two elements
+*/
+void choice_equivalents::add(const vector<string>& chvec)
+{ if (chvec.size() != 2)
+    throw exception();
+
+  _choices[chvec[0]] = chvec[1];
+  _choices[chvec[1]] = chvec[0];
+}
+
+/*! \brief              Add a pair of equivalent fields only if the form is "FIELD1+FIELD2"
+    \param  ch1_ch2     the two fields, separated by a plus sign
+
+    If <i>ch1_ch2</i> appears to be malformed, does not attempt to add.
+*/
+void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FIELD2"
+{ if (contains(ch1_ch2, "+"s))
+    add(ch1_ch2);
+}
+
+/*! \brief              Return the other choice of a pair
+    \param  field_name  current field name
+    \return             alternative choice for the field name
+
+    Return empty string if <i>field_name</i> is not a choice
+*/
+const string choice_equivalents::other_choice(const std::string& field_name) const
+{ const auto posn = _choices.find(field_name);
+
+  return ( (posn == _choices.cend()) ? string() : posn->second );
+}
+
 // -------------------------  exchange_field_values  ---------------------------
 
 /*! \class  exchange_field_values
@@ -146,7 +199,7 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
 // -------------------------  exchange_field  ---------------------------
 
 /*! \class  exchange_field
-    \brief  Encapsulates the name for an exchange field, and whether it's a mult
+    \brief  Encapsulates the name for an exchange field, and whether it's a mult/optional/choice
 */
 
 /*! \brief      Follow all trees to their leaves
@@ -466,9 +519,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   if (_uba_bonus)
     _bonus_countries.insert("ON"s);                  // weird UBA scoring adds bonus for QSOs with ON
 
-// generate the country mults; the value from context is either "ALL" or "NONE"
+// generate the country mults; the value from context is either "ALL" or "NONE" or a comma-separated list
   if (context.country_mults_filter() == "NONE"s)
-    _countries.clear();
+    _countries.clear();                             // remove concept of countries
   else
   { if (context.country_mults_filter() == "ALL"s)
       copy(_countries.cbegin(), _countries.cend(), inserter(_country_mults, _country_mults.begin()));
@@ -562,14 +615,17 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _exchange_mults_per_mode = context.exchange_mults_per_mode();
   _exchange_mults_used = !_exchange_mults.empty();
 
-// build expanded version of _received_exchange
+// build expanded version of _received_exchange, and _choice_exchange_equivalents
   for (const auto& m : _permitted_modes)
   { map<string, vector<exchange_field>> expanded_exch;
     auto& unexpanded_exch { _received_exchange.at(m) };
 
+    auto& choice_equivalents_this_mode { _choice_exchange_equivalents[m] };     // map<prefix, choice_equivalents>
+
     for (const auto& qth_vec_field : unexpanded_exch)
     { const string& prefix              { qth_vec_field.first };
       const vector<exchange_field>& vef { qth_vec_field.second };
+
 
       vector<exchange_field> expanded_vef;
 
@@ -577,7 +633,13 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       { if (!field.is_choice())
           expanded_vef.push_back(field);
         else
-        { const vector<exchange_field> vec { field.expand() };
+        { auto& choice_equivalents_this_mode_and_cp { choice_equivalents_this_mode[prefix] };     // map<prefix, choice_equivalents>; null porefix implies applies to all
+
+          choice_equivalents_this_mode_and_cp.add(field.name());
+
+          ost << "Added CHOICE field in rules::_init() for cp [" << prefix << "] : " << field << endl;
+
+          const vector<exchange_field> vec { field.expand() };
 
           copy(vec.cbegin(), vec.cend(), back_inserter(expanded_vef));
         }
@@ -1365,6 +1427,34 @@ const set<string> contest_rules::exchange_field_names(void) const
 //std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
 
   FOR_ALL(_exchange_field_eft, [&] (const pair<string, EFT>& pse) { rv.insert(pse.first); } );
+
+  return rv;
+}
+
+/*! \brief      The equivalent choices of exchange fields for a given mode and country?
+    \param  m   mode
+    \param  cp  canonical prefix of country
+    \return     all the equivalent firlds for mode <i>m</i> and country <i>cp</i>
+*/
+const choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) const
+{ choice_equivalents rv;
+
+  map<MODE, map<string, choice_equivalents>>::const_iterator cit_mode { _choice_exchange_equivalents.find(m) };
+
+  if (cit_mode == _choice_exchange_equivalents.cend())     // no choice equivalents for this mode
+    return rv;
+
+  const map<string, choice_equivalents>&          choice_equivalents_this_mode { cit_mode->second };                         // there are choice equivalents for this mode
+  map<string, choice_equivalents>::const_iterator cit_cp                       { choice_equivalents_this_mode.find(cp) };
+
+  if (cit_cp != choice_equivalents_this_mode.cend())
+    return (cit_cp->second);
+
+// if there's no choice for this particular cp, perhaps there's a choice for all cps
+  const map<string, choice_equivalents>::const_iterator cit_nocp { choice_equivalents_this_mode.find(string()) };   // empty string signifies all prefixes
+
+  if (cit_nocp != choice_equivalents_this_mode.cend())
+    return (cit_nocp->second);
 
   return rv;
 }

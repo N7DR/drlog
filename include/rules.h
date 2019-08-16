@@ -45,6 +45,76 @@ enum class POINTS { NORMAL,                       ///< points defined in configu
 #define RULESREAD(y)          \
   inline const decltype(_##y)& y(void) const { SAFELOCK(rules); return _##y; }
 
+// -------------------------  choice_equivalents  ---------------------------
+
+/*! \class  choice_equivalents
+    \brief  Encapsulates the possibilities for a CHOICE received exchange
+
+    Assumes that CHOICEs are in pairs
+*/
+
+class choice_equivalents
+{
+protected:
+
+  std::map<std::string /* one possible field name */, std::string /* other possible field name */> _choices;    // the choices; could have inherited this class from this type
+
+public:
+
+/*! \brief          Add a pair of equivalent fields
+    \param  ch1     first element of choice
+    \param  ch2     second element of choice
+*/
+  void add(const std::string& ch1, const std::string& ch2);
+
+/*! \brief          Add a pair of equivalent fields
+    \param  chvec   A two-element vector of equivalent fields
+
+    Throws exception if <i>chvec</i> does not have exactly two elements
+*/
+  void add(const std::vector<std::string>& chvec);
+
+/*! \brief              Add a pair of equivalent fields in the form "FIELD1+FIELD2"
+    \param  ch1_ch2     the two fields, separated by a plus sign
+
+    Throws exception if <i>ch1_ch2<i> appears to be malformed
+*/
+  inline void add(const std::string& ch1_ch2)
+    { add(remove_peripheral_spaces(split_string(ch1_ch2, "+"s))); }
+
+/*! \brief              Add a pair of equivalent fields only if the form is "FIELD1+FIELD2"
+    \param  ch1_ch2     the two fields, separated by a plus sign
+
+    If <i>ch1_ch2</i> appears to be malformed, does not attempt to add.
+*/
+  void add_if_choice(const std::string& ch1_ch2);
+
+/*! \brief              Return the other choice of a pair
+    \param  field_name  current field name
+    \return             alternative choice for the field name
+
+    Return empty string if <i>field_name</i> is not a choice
+*/
+  const std::string other_choice(const std::string& field_name) const;
+
+/*! \brief              Is a field a choice?
+    \param  field_name  current field name
+    \return             whether there is an alternative field for <i>field_name</i>
+*/
+  inline const bool is_choice(const std::string& field_name) const
+    { return (_choices.find(field_name) != _choices.cend() ); }
+
+/// return the inverse of whether there are any choices
+  inline const bool empty(void) const
+    { return _choices.empty(); }
+
+/// serialise
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version)
+    { ar & _choices;
+    }
+};
+
 // -------------------------  exchange_field_values  ---------------------------
 
 /*! \class  exchange_field_values
@@ -176,7 +246,7 @@ public:
 // -------------------------  exchange_field  ---------------------------
 
 /*! \class  exchange_field
-    \brief  Encapsulates the name for an exchange field, and whether it's a mult
+    \brief  Encapsulates the name for an exchange field, and whether it's a mult/optional/choice
 */
 
 class exchange_field
@@ -295,8 +365,8 @@ protected:
   bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
-  std::set<std::string>               _countries;                     ///< collection of canonical prefixes for all the valid countries
-  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
+  std::unordered_set<std::string>               _countries;           ///< collection of canonical prefixes for all the valid countries
+  std::set<std::string>               _country_mults;       ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
   std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
@@ -315,7 +385,8 @@ protected:
   std::set<MODE>    _permitted_modes;                               ///< modes allowed in this contest
   std::array<std::map<BAND, points_structure>, N_MODES> _points;    ///< points structure for each band and mode
   
-  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
+  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;             ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
+  std::map<MODE, std::map<std::string /* canonical prefix */, choice_equivalents>>          _choice_exchange_equivalents;   ///< choices
 
   std::map<MODE, std::vector<std::string>>    _sent_exchange_names;    ///< names of fields in the sent exchange, per mode
 
@@ -496,14 +567,11 @@ public:
   RULESREAD(exchange_mults_per_mode);             ///< are exchange mults counted per-mode?
   RULESREAD(exchange_mults_used);                 ///< are exchange mults used?
   RULESREAD(expanded_exchange_mults);             ///< expanded exchange multipliers
-//  RULESREAD(expanded_received_exchange);          ///< details of the received exchange fields; choices expanded; key = string() is default exchange
 
   RULESREAD(original_score_bands);                ///< bands that were originally used to calculate score (from the configuration file)
   RULESREAD(original_score_modes);                ///< modes that were originally used to calculate score (from the configuration file)
 
   RULESREAD(per_band_country_mult_factor);        ///< factor by which to multiply number of country mults, per band (see WAE rules)
-
-//  RULESREAD(received_exchange);                   ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
 
   RULESREAD(score_bands);                         ///< bands currently used to calculate score
   RULESREAD(score_modes);                         ///< modes currently used to calculate score
@@ -712,6 +780,13 @@ public:
 /// the names of all the possible exchange fields
   const std::set<std::string> exchange_field_names(void) const;
 
+/*! \brief      The equivalent choices of exchange fields for a given mode and country?
+    \param  m   mode
+    \param  cp  canonical prefix of country
+    \return     all the equivalent firlds for mode <i>m</i> and country <i>cp</i>
+*/
+  const choice_equivalents equivalents(const MODE m, const std::string& cp) const;
+
 /// read from and write to disk
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -722,6 +797,7 @@ public:
          & _callsign_mults_per_band
          & _callsign_mults_per_mode
          & _callsign_mults_used
+         & _choice_exchange_equivalents
          & _countries
          & _country_mults
          & _country_mults_per_band

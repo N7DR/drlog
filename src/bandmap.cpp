@@ -923,7 +923,9 @@ const BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
      Applies filtering and the RBN threshold before searching for the next station.
 */
 const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
-{ const BM_ENTRIES fe { displayed_entries() };
+{ SAFELOCK(_bandmap);    // I hate to try this, but hold the lock for ages
+
+  const BM_ENTRIES fe { displayed_entries() };
 
   auto cit { FIND_IF(fe, [=] (const bandmap_entry& be) { return (be.is_my_marker()); } ) };  // find myself
 

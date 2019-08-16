@@ -128,13 +128,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
   _sent_exchange.clear();
   _received_exchange.clear();
 
-  //auto glambda = [] (auto a) { return a; };
-
-//  auto set_value = [] (auto variable, const string& value)
-//    { variable = from_string<decltype(variable)>(value);
-//      return true;
-//    };
-
   for (const auto& nv : name_value)
   { bool processed { false };
 
@@ -142,30 +135,16 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     const string& value { nv.second };
 
     if (!processed and (name == "number"s))
-    { //_number = from_string<decltype(_number)>(value);
-      //processed = true;
        processed = ( _number = from_string<decltype(_number)>(value), true );
-      //processed = set_value(_number, value);
-    }
 
     if (!processed and (name == "date"s))
-    { //_date = value;
-      //processed = true;
       processed = ( _date = value, true );
-      //processed = set_value(_date, value);
-    }
 
     if (!processed and (name == "utc"s))
-    { //_utc = value;
-      //processed = true;
       processed = ( _utc = value, true );
-    }
 
     if (!processed and (name == "mode"s))
-    { //_mode = ( ( value == "CW") ? MODE_CW : MODE_SSB);
-      //processed = true;
       processed = ( _mode = ( ( value == "CW"s) ? MODE_CW : MODE_SSB), true );
-    }
 
     if (!processed and (name == "frequency"s))               // old version
     { _frequency_tx = value;
@@ -174,8 +153,6 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
 
       const frequency freq(f);
 
-//      _band = static_cast<BAND>(freq);
-//      processed = true;
       processed = ( _band = static_cast<BAND>(freq), true );
     }
 
@@ -209,14 +186,12 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     }
 
     if (!processed and (name == "mycall"s))
-    { //_my_call = value;
-      //processed = true;
       processed = ( _my_call = value, true );
-    }
 
     if (!processed and (starts_with(name, "sent-"s)))
-    { _sent_exchange.push_back( { to_upper(name.substr(5)), value } );
-      processed = true;
+    { //_sent_exchange.push_back( { to_upper(name.substr(5)), value } );
+      //processed = true;
+      processed = ( _sent_exchange.push_back( { to_upper(name.substr(5)), value } ), true );
     }
 
     if (!processed and (starts_with(name, "received-"s)))
@@ -257,35 +232,35 @@ void QSO::populate_from_log_line(const string& str)
   std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
 #endif
 
-  const vector<string> expanded = rules.expanded_exchange_field_names(_canonical_prefix, _mode);
+//  const vector<string> expanded = rules.expanded_exchange_field_names(_canonical_prefix, _mode);
 
-  ost << "expanded received exchange from rules:" << endl;
+//  ost << "expanded received exchange from rules:" << endl;
 
-  for (const auto& fn : expanded)
-    ost << fn << endl;
+//  for (const auto& fn : expanded)
+//    ost << fn << endl;
 
-  const vector<string> unexpanded = rules.unexpanded_exchange_field_names(_canonical_prefix, _mode);
+//  const vector<string> unexpanded = rules.unexpanded_exchange_field_names(_canonical_prefix, _mode);
 
-  ost << "UNexpanded received exchange from rules:" << endl;
+//  ost << "UNexpanded received exchange from rules:" << endl;
 
-  for (const auto& fn : unexpanded)
-    ost << fn << endl;
+//  for (const auto& fn : unexpanded)
+//    ost << fn << endl;
 
-  map<string, string> alternative_choice;
+//  map<string, string> alternative_choice;
 
-  for (const auto& fn : unexpanded)
-    if (contains(fn, "+"))
-    { ost << "Field " << fn << " is a CHOICE" << endl;
+//  for (const auto& fn : unexpanded)
+//    if (contains(fn, "+"))
+//    { ost << "Field " << fn << " is a CHOICE" << endl;
 
-      vector<string> choices = split_string(fn, "+");
+ //     vector<string> choices = split_string(fn, "+");
 
 // assume just two choices
-      alternative_choice[choices[0]] = choices[1];
-      alternative_choice[choices[1]] = choices[0];
-    }
+ //     alternative_choice[choices[0]] = choices[1];
+ //     alternative_choice[choices[1]] = choices[0];
+//    }
 
 // separate the line into fields
-  const vector<string> vec = remove_peripheral_spaces(split_string(squash(str, ' '), " "));
+  const vector<string> vec { remove_peripheral_spaces(split_string(squash(str, ' '), SPACE_STR)) };
 
   if (vec.size() > _log_line_fields.size())                        // output debugging info; this can be triggered if there are mults on the log line
   { ost << "populate_from_log_line parameter: " << str << endl;
@@ -305,16 +280,6 @@ void QSO::populate_from_log_line(const string& str)
   size_t received_index { 0 };
 
   const vector<exchange_field> exchange_fields { rules.expanded_exch(_callsign, _mode) };
-
-//  const parsed_exchange pexch { from_callsign, canonical_prefix, rules, cur_mode, exchange_field_values };  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
-
-// build the received exchange field values
-//  vector<string> exchange_field_values;
-
-//  for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
-//  {
-//  }
-
 
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { ost << "Processing log_line field number " << n << endl;
@@ -358,6 +323,9 @@ void QSO::populate_from_log_line(const string& str)
 
     if (!processed and (field == "CALLSIGN"s))
     { _callsign = vec[n];
+      _canonical_prefix = location_db.canonical_prefix(_callsign);
+      _continent = location_db.continent(_callsign);
+
       processed = true;
     }
 
@@ -392,20 +360,42 @@ void QSO::populate_from_log_line(const string& str)
           ost << vec[n] << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " << _received_exchange[received_index].name() << endl;
           ost << vec[n] << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring(field, 9) << endl;
 
+//          const auto& ec = rules.equivalents(_mode, _canonical_prefix);
+
+//          const bool field_is_choice = !ec.empty();
+
 // if the field is a CHOICE and the value isn't legal, for the original choice, see if it's valid for the other
           if (!rules.is_legal_value(substring(field, 9), vec[n]))
-          { const string& original_field_name = _received_exchange[received_index].name();
+          { const string&             original_field_name { _received_exchange[received_index].name() };
+            const choice_equivalents& ec                  { rules.equivalents(_mode, _canonical_prefix) };
 
-            auto posn = alternative_choice.find(original_field_name);
+            if (ec.is_choice(original_field_name))
+            { const string& alternative_choice_field_name { ec.other_choice(original_field_name) };
 
-            if (posn != alternative_choice.end())
-              _received_exchange[received_index].name(posn->second);
+              ost << "original field name = " << original_field_name << ", alternative field name = " << alternative_choice_field_name << endl;
 
-            if (!rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))
-            { ost << "UNABLE TO PARSE REVISED EXCHANGE CORRECTLY" << endl;
+              _received_exchange[received_index].name(alternative_choice_field_name);
 
-              alert("Unable to parse exchange; making ad hoc decision");
+              if (!rules.is_legal_value(alternative_choice_field_name, vec[n]))
+              { ost << "UNABLE TO PARSE REVISED EXCHANGE CORRECTLY" << endl;
+
+                alert("Unable to parse exchange; making ad hoc decision");
+              }
             }
+//            else
+
+
+
+//            auto posn = alternative_choice.find(original_field_name);
+
+//            if (posn != alternative_choice.end())
+//              _received_exchange[received_index].name(posn->second);
+
+//            if (!rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))
+//            { ost << "UNABLE TO PARSE REVISED EXCHANGE CORRECTLY" << endl;
+
+//              alert("Unable to parse exchange; making ad hoc decision");
+//            }
           }
 
 
@@ -425,8 +415,8 @@ void QSO::populate_from_log_line(const string& str)
     }
   }
 
-  _canonical_prefix = location_db.canonical_prefix(_callsign);
-  _continent = location_db.continent(_callsign);
+//  _canonical_prefix = location_db.canonical_prefix(_callsign);
+//  _continent = location_db.continent(_callsign);
   _epoch_time = _to_epoch_time(_date, _utc);
 
   ost << "Ending populate_from_log_line(); QSO is now: " << *this << endl;
@@ -519,6 +509,7 @@ void QSO::set_exchange_mult(const string& field_name)
 */
 const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
 { static unsigned int              record_length { 0 };
+
   static vector< vector< string> > individual_values;
   
   if (!record_length)                                         // if we don't yet know the record length
@@ -543,8 +534,8 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
   for (unsigned int n = 0; n < individual_values.size(); ++n)
   { const vector<string>& vec  { individual_values[n] };
     const string          name { vec[0] };
-    const unsigned int posn { from_string<unsigned int>(vec[1]) - 1 };
-    const unsigned int len  { from_string<unsigned int>(vec[2]) };
+    const unsigned int    posn { from_string<unsigned int>(vec[1]) - 1 };
+    const unsigned int    len  { from_string<unsigned int>(vec[2]) };
 
     pad_direction pdirn    { PAD_LEFT };
     char          pad_char { ' ' };
@@ -593,15 +584,7 @@ const string QSO::cabrillo_format(const string& cabrillo_qso_template) const
     { if (!_frequency_tx.empty())                                      // frequency is available
         value = to_string(from_string<unsigned int>(_frequency_tx));
       else                                                          // we have only the band; this should never be true
-      { //static const std::map<BAND, string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
-        //                                                     { BAND_80,  "3500"s },
-        //                                                     { BAND_40,  "7100"s },
-        //                                                     { BAND_20,  "14000"s },
-        //                                                     { BAND_15,  "21000"s },
-        //                                                     { BAND_10,  "28000"s }
-        //                                                   };
-
-        try
+      { try
         { value = BOTTOM_OF_BAND.at(_band);
         }
 
@@ -712,13 +695,7 @@ specification tells us otherwise, that's what we do.
     \return     QSO formatted for writing to disk
 */
 const string QSO::verbose_format(void) const
-{ //static const int NUMBER_WIDTH   = 5;
-  //static const int CALLSIGN_WIDTH = 12;
-  //static const int MODE_WIDTH = 3;
-  //static const int BAND_WIDTH = 3;
-  //static const int FREQUENCY_WIDTH = 7;
-
-  constexpr int NUMBER_WIDTH    { 5 };
+{ constexpr int NUMBER_WIDTH    { 5 };
   constexpr int CALLSIGN_WIDTH  { 12 };
   constexpr int MODE_WIDTH      { 3 };
   constexpr int BAND_WIDTH      { 3 };
@@ -779,28 +756,31 @@ const string QSO::verbose_format(void) const
 const bool QSO::exchange_match(const string& rule_to_match) const
 {
 // remove the [] markers
-  const string target = rule_to_match.substr(1, rule_to_match.length() - 2);
-  const vector<string> tokens = split_string(target, " ");
+  const string         target { rule_to_match.substr(1, rule_to_match.length() - 2) };
+  const vector<string> tokens { split_string(target, SPACE_STR) };
 
   if (tokens.size() != 3)
   { ost << "Number of tokens = " << tokens.size() << endl;
   }
   else                          // three tokens
-  { const string& exchange_field_name = remove_peripheral_spaces(tokens[0]);                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
+  { const string& exchange_field_name { remove_peripheral_spaces(tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
+
     string exchange_field_value;                                   // default is empty field
 
 // is this field present?
     exchange_field_value = received_exchange(exchange_field_name);
 
 // now try the various legal operations
-    const string op = remove_peripheral_spaces(tokens[1]);
-    string target = remove_peripheral_spaces(tokens[2]);
+    const string op { remove_peripheral_spaces(tokens[1]) };
+
+    string target { remove_peripheral_spaces(tokens[2]) };
+
     target = remove_leading(target, '"');
     target = remove_trailing(target, '"');                  // strip any double quotation marks
 
 // !=
     if (!remove_leading_spaces(exchange_field_value).empty())        // only check if we actually received something; catch the empty and all-spaces cases
-    { if (op == "!=")                                                // precise inequality
+    { if (op == "!="s)                                                // precise inequality
       { ost << "matched operator: " << op << endl;
         ost << "exchange field value: *" << exchange_field_value << "* " << endl;
         ost << "target: *" << target << "* " << endl;
@@ -875,28 +855,29 @@ const bool QSO::sent_exchange_includes(const string& field_name) const
     Also populates <i>_log_line_fields</i> to match the returned string
 */
 const string QSO::log_line(void)
-{ static const map<string, unsigned int> field_widths { { "CHECK",     2 },
-                                                        { "CQZONE",    2 },
-                                                        { "CWPOWER",   3 },
-                                                        { "DOK",       1 },
-                                                        { "GRID",      4 },
-                                                        { "ITUZONE",   2 },
-                                                        { "NAME",      6 },
-                                                        { "PREC",      1 },
-                                                        { "RDA",       4 },
-                                                        { "RS",        2 },
-                                                        { "RST",       3 },
-                                                        { "SECTION",   3 },
-                                                        { "SKCCNO",    6 },
-                                                        { "SPC",       3 },
-                                                        { "SSBPOWER",  4 },
-                                                        { "UKEICODE",  2 },
-                                                        { "160MSTATE", 2 },
-                                                        { "10MSTATE",  3 }
+{ static const map<string, unsigned int> field_widths { { "CHECK"s,     2 },
+                                                        { "CQZONE"s,    2 },
+                                                        { "CWPOWER"s,   3 },
+                                                        { "DOK"s,       1 },
+                                                        { "GRID"s,      4 },
+                                                        { "ITUZONE"s,   2 },
+                                                        { "NAME"s,      6 },
+                                                        { "PREC"s,      1 },
+                                                        { "RDA"s,       4 },
+                                                        { "RS"s,        2 },
+                                                        { "RST"s,       3 },
+                                                        { "SECTION"s,   3 },
+                                                        { "SKCCNO"s,    6 },
+                                                        { "SPC"s,       3 },
+                                                        { "SSBPOWER"s,  4 },
+                                                        { "UKEICODE"s,  2 },
+                                                        { "160MSTATE"s, 2 },
+                                                        { "10MSTATE"s,  3 }
                                                       };
-  static const size_t CALL_FIELD_LENGTH = 12;
 
-  string rv = pad_string(to_string(number()), 5);
+  constexpr size_t CALL_FIELD_LENGTH { 12 };
+
+  string rv { pad_string(to_string(number()), 5) };
 
   rv += pad_string(date(), 11);
   rv += pad_string(utc(), 9);
@@ -904,16 +885,16 @@ const string QSO::log_line(void)
   rv += pad_string(freq(), 8);
   rv += pad_string(pad_string(callsign(), CALL_FIELD_LENGTH, PAD_RIGHT), CALL_FIELD_LENGTH + 1);
 
-  FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += " " + se.second; });
+  FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += SPACE_STR + se.second; });
 
 // print in same order they are present in the config file
   for (const auto& field : _received_exchange)
-  { unsigned int field_width = QSO_MULT_WIDTH;
+  { unsigned int field_width { QSO_MULT_WIDTH };
 
-    const string& name = field.name();
+    const string& name { field.name() };
 
 // skip the CALL field from SS, since it's already on the line
-    if (name != "CALL" and name != "CALLSIGN")
+    if (name != "CALL"s and name != "CALLSIGN"s)
     { try
       { field_width = field_widths.at(name);
       }
@@ -934,12 +915,13 @@ const string QSO::log_line(void)
 
 // country mult
   if (QSO_DISPLAY_COUNTRY_MULT)                                                         // set in drlog_context when parsing the config file
-    rv += (_is_country_mult ? pad_string(_canonical_prefix, 5, PAD_LEFT) : "     ");    // sufficient for VP2E
+    rv += (_is_country_mult ? pad_string(_canonical_prefix, 5, PAD_LEFT) : "     "s);    // sufficient for VP2E
 
 // exchange mult
   for (const auto& field : _received_exchange)
-  { unsigned int field_width = QSO_MULT_WIDTH;
-    const string& name = field.name();
+  { unsigned int field_width { QSO_MULT_WIDTH };
+
+    const string& name { field.name() };
 
     try
     { field_width = field_widths.at(name);
@@ -948,24 +930,24 @@ const string QSO::log_line(void)
     catch (...)
     { }
 
-    rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : "");  // TODO: think about a way to make this in a different colour
+    rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : EMPTY_STR);  // TODO: think about a way to make this in a different colour
   }
 
   _log_line_fields.clear();    // make sure it's empty before we fill it
 
-  _log_line_fields.push_back("NUMBER");
-  _log_line_fields.push_back("DATE");
-  _log_line_fields.push_back("UTC");
-  _log_line_fields.push_back("MODE");
-  _log_line_fields.push_back("FREQUENCY");
-  _log_line_fields.push_back("CALLSIGN");
+  _log_line_fields.push_back("NUMBER"s);
+  _log_line_fields.push_back("DATE"s);
+  _log_line_fields.push_back("UTC"s);
+  _log_line_fields.push_back("MODE"s);
+  _log_line_fields.push_back("FREQUENCY"s);
+  _log_line_fields.push_back("CALLSIGN"s);
 
   for (const auto& exch_field : _sent_exchange)
-    _log_line_fields.push_back("sent-" + exch_field.first);
+    _log_line_fields.push_back("sent-"s + exch_field.first);
 
   for (const auto& field : _received_exchange)
-  { if (field.name() != "CALL")                               // SS is special
-      _log_line_fields.push_back("received-" + field.name());
+  { if (field.name() != "CALL"s)                               // SS is special
+      _log_line_fields.push_back("received-"s + field.name());
   }
 
   return rv;
@@ -1023,13 +1005,14 @@ ostream& operator<<(ostream& ost, const QSO& q)
       << ", Freq: " << q.freq()
       << ", Sent: ";
       
-  const vector<pair<string, string> > sent_exchange = q.sent_exchange();
+  const vector<pair<string, string> > sent_exchange { q.sent_exchange() };
+
   for (unsigned int n = 0; n < sent_exchange.size(); ++n)
     ost << sent_exchange[n].first << " " << sent_exchange[n].second << " ";    
 
   ost << ", Rcvd: ";
 
-  const vector<received_field> received_exchange = q.received_exchange();
+  const vector<received_field> received_exchange { q.received_exchange() };
 
   for (const auto& received_exchange_field : received_exchange)
     ost << received_exchange_field << "  ";
@@ -1055,49 +1038,35 @@ const pair<string, string> next_name_value_pair(const string& str, size_t& posn)
 { static const pair<string, string> empty_pair;
 
   if (posn >= str.size())
-  { //posn = string::npos;
-    //return empty_pair;
     return ( posn = string::npos, empty_pair);
-  }
 
-  const size_t first_char_posn = str.find_first_not_of(" ", posn);
+  const size_t first_char_posn { str.find_first_not_of(SPACE_STR, posn) };
 
   if (first_char_posn == string::npos)
-  { //posn = string::npos;
-    //return empty_pair;
     return ( posn = string::npos, empty_pair);
-  }
 
-  const size_t equals_posn = str.find("=", first_char_posn);
+  const size_t equals_posn { str.find("="s, first_char_posn) };
 
   if (equals_posn == string::npos)
-  { //posn = string::npos;
-    //return empty_pair;
     return ( posn = string::npos, empty_pair);
-  }
 
-  const string name = remove_peripheral_spaces(str.substr(first_char_posn, equals_posn - first_char_posn));
-  const size_t value_first_char_posn = str.find_first_not_of(" ", equals_posn + 1);
+  const string name                  { remove_peripheral_spaces(str.substr(first_char_posn, equals_posn - first_char_posn)) };
+  const size_t value_first_char_posn { str.find_first_not_of(SPACE_STR, equals_posn + 1) };
 
   if (value_first_char_posn == string::npos)
-  { //posn = string::npos;
-    //return empty_pair;
     return ( posn = string::npos, empty_pair);
-  }
 
-  const size_t space_posn = str.find(" ", value_first_char_posn);
-  const string value = (space_posn == string::npos) ? str.substr(value_first_char_posn)
-                                                    : str.substr(value_first_char_posn, space_posn - value_first_char_posn);
+  const size_t space_posn { str.find(SPACE_STR, value_first_char_posn) };
+  const string value      { (space_posn == string::npos) ? str.substr(value_first_char_posn)
+                                                         : str.substr(value_first_char_posn, space_posn - value_first_char_posn) };
 
 // handle "frequency_rx=     mycall=N7DR"
-  if (contains(value, "="))
+  if (contains(value, "="s))
   { posn = value_first_char_posn;
-    return pair<string, string> { name, string() };
+    return /* pair<string, string> */ { name, string() };
   }
 
   posn = space_posn;
 
-  return pair<string, string> { name, value };
+  return /* pair<string, string> */ { name, value };
 }
-
-

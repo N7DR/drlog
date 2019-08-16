@@ -57,7 +57,7 @@ const int64_t audio_recorder::_total_bytes_to_read(void)
   const uint64_t ss    { from_string<uint64_t>(substring(now_str, 6, 2)) };
   const uint64_t now   { ss + (mm * 60) + (hh * 3600) };
 
-  int remainder { _max_file_time - (now % _max_file_time) };
+  int remainder { static_cast<int>( _max_file_time - (now % _max_file_time) ) };
 
   if (remainder == 0)
     remainder = _max_file_time;
@@ -235,7 +235,7 @@ void audio_recorder::_set_params(void)
 /* round up to closest transfer boundary */
   n = buffer_size;
 
-  snd_pcm_uframes_t start_threshold { ( (double)rate * _start_delay / 1'000'000 ) + ( (_start_delay <= 0) ? n : 0 ) };
+  snd_pcm_uframes_t start_threshold { static_cast<snd_pcm_uframes_t>( ( (double)rate * _start_delay / 1'000'000 ) + ( (_start_delay <= 0) ? n : 0 ) ) };
 
   start_threshold = LIMIT(start_threshold, 1, n);
   err = snd_pcm_sw_params_set_start_threshold(_handle, swparams, start_threshold);
@@ -265,7 +265,8 @@ void audio_recorder::_set_params(void)
   }
 
 // at least for now, no support for setup_chmap()
-  const size_t bits_per_sample { snd_pcm_format_physical_width(_hw_params.format) };
+  const size_t bits_per_sample { static_cast<size_t>( snd_pcm_format_physical_width(_hw_params.format) ) };
+
   _bits_per_frame = bits_per_sample * _hw_params.channels;
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
@@ -465,7 +466,7 @@ create_file:
   static pthread_t closing_file_thread_id;
 
   try
-  { create_thread(&closing_file_thread_id, NULL, &close_it, (void*)wfp, "audio capturefile close");     // close file in separate thread
+  { create_thread(&closing_file_thread_id, NULL, &close_it, (void*)wfp, "audio capturefile close"s);     // close file in separate thread
   }
 
   catch (const pthread_error& e)
@@ -482,7 +483,7 @@ goto create_file;
 audio_recorder::audio_recorder(void) :
   _aborting(false),                         // we are not aborting a capture
   _audio_buf(nullptr),                      // no buffer by default
-  _base_filename("drlog-audio"),            // default output file
+  _base_filename("drlog-audio"s),            // default output file
   _buffer_frames(0),                        // no frames in buffer?
   _buffer_time(0),                          // no time covered by buffer?
   _file_type(AUDIO_FORMAT_WAVE),            // WAV format
@@ -493,7 +494,7 @@ audio_recorder::audio_recorder(void) :
   _monotonic(false),                        // device cannot do monotonic timestamps
   _n_channels(1),                           // monophonic
   _open_mode(0),                            // blocking
-  _pcm_name("default"),
+  _pcm_name("default"s),
   _period_frames(0),
   _period_time(0),
   _readi_func(snd_pcm_readi),               // function to read interleaved frames (the only one that we actually use)
@@ -537,7 +538,7 @@ void audio_recorder::initialise(void)
   }  while ((status < 0) and (n_failures <= MAX_FAILURES));
 
   if (n_failures > MAX_FAILURES)
-    throw audio_error(AUDIO_UNABLE_TO_OPEN, "Cannot open audio device: " + _pcm_name);
+    throw audio_error(AUDIO_UNABLE_TO_OPEN, "Cannot open audio device: "s + _pcm_name);
 
   status = snd_pcm_info(_handle, _info);   // gets info
 
@@ -545,7 +546,7 @@ void audio_recorder::initialise(void)
   { ost << "ERROR: cannot obtain info for audio device: " << _pcm_name << endl;
     ost << "error number " << status << endl;
     ost << snd_strerror(status) << endl;
-    throw audio_error(AUDIO_UNABLE_TO_OBTAIN_INFO, "Cannot obtain info for device device: " + _pcm_name);
+    throw audio_error(AUDIO_UNABLE_TO_OBTAIN_INFO, "Cannot obtain info for device device: "s + _pcm_name);
   }
 
   _hw_params = rhwparams;
@@ -588,7 +589,7 @@ void wav_file::_write_buffer(void* bufp, const size_t buffer_size)
   }
   else    // no buffering
   { if ( fwrite(bufp, buffer_size, 1, _fp) != 1 )
-      throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing buffer to WAV file; buffer size =  " + to_string(buffer_size));
+      throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing buffer to WAV file; buffer size =  "s + to_string(buffer_size));
   }
 }
 

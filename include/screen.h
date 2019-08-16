@@ -85,6 +85,18 @@ constexpr int COLOUR_BLACK   { COLOR_BLACK },         ///< black
                        
 extern pt_mutex screen_mutex;                   ///< mutex for the screen
 
+//template <typename T>
+//concept bool is_set()
+//{ return std::is_same<T, std::set<std::string>>::value; }
+
+//template <typename T>
+//concept bool is_unordered_set()
+//{ return std::is_same<T, std::unordered_set<std::string>>::value; }
+
+//template <typename T>
+//concept bool is_any_set()
+//{ return (is_set<T>() || is_unordered_set<T>); }
+
 // -----------  cursor  ----------------
 
 /// class used for moving the cursor; encapsulates x,y coordinates
@@ -481,6 +493,37 @@ public:
 */
   window& operator<(const std::set<std::string>& ss);
 
+/*! \brief          Write a set of strings to a window
+    \param  ss      set to write
+    \return         the window
+
+    The set is written in callsign order.
+    Wraps words to new lines.
+    Stops writing if there's insufficient room for the next string.
+*/
+  window& operator<(const std::unordered_set<std::string>& ss);
+
+//  template<typename T>
+//  concept bool Integral(){
+//    return std::is_integral<T>::value;
+//  }
+
+//  template < typename T >
+//  template<typename T> concept bool C = sizeof(T) == sizeof(int);
+//  concept bool Integral = std::is_integral<T>::value
+//  concept any_set = (std::is_same<T, std::set<std::string>>::value);
+
+//template <typename T>
+//  requires (std::disjunction<std::is_same<T, std::set<std::string>>, std::is_same<T, std::unordered_set<std::string>>>)
+//  requires (any_set<T>)
+//window& operator<(const T& ss)
+//{ return *this; }
+
+//  template <typename T>
+//    requires (is_any_set<T>() == true)
+//  window& operator<(const T& ss)
+//  { return *this; }
+
 /*! \brief          Write a vector of strings with possible different colours to a window
     \param  vec     vector of pairs <string, int [colour number]> to write
     \return         the window
@@ -501,6 +544,13 @@ public:
     \return     the window
 */
   inline window& operator<(const int n)
+    { return (*this < to_string(n)); }
+
+/*! \brief      Write a uint64_t to a window
+    \param  n   uint64_t to write
+    \return     the window
+*/
+  inline window& operator<(const uint64_t n)
     { return (*this < to_string(n)); }
   
 /*! \brief              Set the colour pair

@@ -279,6 +279,9 @@ window& window::operator<(const set<string>& ss)
 
   sort(v.begin(), v.end(), compare_calls);
 
+  return (*this < v);
+
+#if 0
   unsigned int idx { 0 };
   
   for (const auto& str : v)
@@ -308,6 +311,60 @@ window& window::operator<(const set<string>& ss)
   }
 
   return *this;
+#endif
+}
+
+/*! \brief          Write an unordered set of strings to a window
+    \param  ss      set to write
+    \return         the window
+
+    The set is written in callsign order.
+    Wraps words to new lines.
+    Stops writing if there's insufficient room for the next string.
+
+    This is exactly the same as for a set.
+*/
+window& window::operator<(const unordered_set<string>& ss)
+{ if (!_wp)
+    return *this;
+
+  vector<string> v { ss.cbegin(), ss.cend() };
+
+  sort(v.begin(), v.end(), compare_calls);
+
+  return (*this < v);
+
+#if 0
+  unsigned int idx { 0 };
+
+  for (const auto& str : v)
+  {
+// see if there's enough room on this line
+    cursor_position();
+
+    const int remaining_space { width() - _cursor_x };
+
+// stop writing if there's insufficient room for the next string
+    if (remaining_space < static_cast<int>(str.length()))
+      if (!scrolling() and (_cursor_y == 0))
+        break;
+
+    if (remaining_space < static_cast<int>(str.length()))
+      *this < "\n";
+
+    *this < str;
+
+// add space unless we're at the end of a line or this is the last string
+    const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
+
+    if ((idx != v.size() - 1) and !end_of_line)
+      *this < SPACE_STR;
+
+    idx++;
+  }
+
+  return *this;
+#endif
 }
 
 /*! \brief      Write a vector of strings to a window

@@ -27,7 +27,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/drlog/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include/hamlib}&quot;"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.other.other.1623545008" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -Wno-reorder -std=c++17 `libpng-config --cflags`" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.1623545008" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fconcepts -fmessage-length=0 -Wno-reorder -std=c++17 `libpng-config --cflags`" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1107903688" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_REENTRANT"/>
 									<listOptionValue builtIn="false" value="LINUX"/>

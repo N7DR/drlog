@@ -75,7 +75,6 @@ public:
 
 /// tr_record = tr_record
   inline tr_record& operator=(const tr_record& rec) = default;
-//    { _record = rec._record; }
 
 /// tr_record = char*
   inline void operator=(const char* cp)
@@ -121,7 +120,7 @@ public:
     { return _record; }
 
   inline const bool sap_mode(void) const            ///< was this a SAP-mode QSO?
-    { return contains(_record, "$"); }
+    { return contains(_record, "$"s); }
 
   inline const bool cq_mode(void) const             ///< was this a CQ-mode QSO?
     { return !sap_mode(); }
@@ -155,9 +154,9 @@ public:
 /// return record number <i>n</i>
   const tr_record read(const int n);
 
-/*! \brief  Write a record to the file
-    \param  trr  the text of the record to be written
-    \param  n    the record number at which <i>trr</i> should be written
+/*! \brief          Write a record to the file
+    \param  trr     the text of the record to be written
+    \param  n       the record number at which <i>trr</i> should be written
 */
   void write(const tr_record& trr, const int n);
 

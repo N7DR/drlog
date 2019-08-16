@@ -406,14 +406,14 @@ class location_info
 {
 protected:
 
-  std::string   _canonical_prefix;      ///< official prefix
-  std::string   _continent;             ///< two-letter abbreviation for continent
-  std::string   _country_name;          ///< official name of the country
-  unsigned int  _cq_zone;               ///< CQ zone
-  unsigned int  _itu_zone;              ///< ITU zone
-  float         _latitude;              ///< latitude in degrees (+ve north)
-  float         _longitude;             ///< longitude in degrees (+ve west)
-  int           _utc_offset;            ///< local-time offset from UTC, in minutes
+  std::string   _canonical_prefix { "NONE"s };      ///< official prefix
+  std::string   _continent        { "XX"s };        ///< two-letter abbreviation for continent
+  std::string   _country_name     { "None"s };      ///< official name of the country
+  unsigned int  _cq_zone          { 0 };            ///< CQ zone
+  unsigned int  _itu_zone         { 0 };            ///< ITU zone
+  float         _latitude         { 0 };            ///< latitude in degrees (+ve north)
+  float         _longitude        { 0 };            ///< longitude in degrees (+ve west)
+  int           _utc_offset       { 0 };            ///< local-time offset from UTC, in minutes
   
 // used only by Russian stations
   std::string  _region_name;            ///< name of (Russian) region in which station resides
@@ -422,7 +422,7 @@ protected:
 public:
 
 /// default constructor
-  location_info(void);
+  location_info(void) = default;
   
 /// construct from a record from a CTY file
   explicit location_info(const cty_record& rec);
@@ -649,7 +649,8 @@ protected:
 
   std::map<std::string, location_info> _db;          ///< prefix-associated info -- the original database
   std::map<std::string, location_info> _alt_call_db; ///< database of alternative calls
-  std::map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
+
+  mutable std::map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
 
   std::map<std::string, russian_data_per_substring> _russian_db;  ///< Russian substring-indexed info
 
@@ -672,13 +673,12 @@ protected:
 */
   void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
 
-  pt_mutex                             _location_database_mutex;  ///< to make location_database objects thread-safe;
+  mutable pt_mutex _location_database_mutex;  ///< to make location_database objects thread-safe;
    
 public:
 
 /// default constructor
-  inline location_database(void)
-    { }
+  location_database(void) = default;
 
 /*! \brief                  Constructor
     \param  filename        name of cty.dat file
@@ -719,7 +719,7 @@ public:
   void add_russian_database(const std::vector<std::string>& path, const std::string& filename);
 
 /// how large is the main database?
-  inline const size_t size(void)
+  inline const size_t size(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db.size() )); }
 
 /*! \brief          Add a call to the alt_call database
@@ -735,37 +735,38 @@ public:
     \param  callpart    call (or partial call)
     \return             location information corresponding to <i>call</i>
 */
-  const location_info info(const std::string& callpart);
+  const location_info info(const std::string& callpart) const;
   
 /// return the database
-  inline const std::map<std::string, location_info> db(void)
+  inline const std::map<std::string, location_info> db(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
 /// create a set of all the canonical prefixes for countries
-  const std::set<std::string> countries(void);
+//  const std::unordered_set<std::string> countries(void) const;
+  auto countries(void) const -> std::unordered_set<std::string>;
 
 /// create a set of all the canonical prefixes for a particular continent
-  const std::set<std::string> countries(const std::string& cont_target);
+  const std::unordered_set<std::string> countries(const std::string& cont_target) const;
   
 /*! \brief              Get official name of the country associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             official name of the country corresponding to <i>callpart</i>
 */
-  inline const std::string country_name(const std::string& callpart)
+  inline const std::string country_name(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).country_name() )); }
 
 /*! \brief              Get CQ zone associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             CQ zone corresponding to <i>callpart</i>
 */
-  inline const unsigned int cq_zone(const std::string& callpart)
+  inline const unsigned int cq_zone(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).cq_zone() )); }
 
 /*! \brief              Get ITU zone associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             ITU zone corresponding to <i>callpart</i>
 */
-  inline const unsigned int itu_zone(const std::string& callpart)
+  inline const unsigned int itu_zone(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).itu_zone() )); }
 
 /*! \brief              Get the continent associated with a call or partial call
@@ -774,35 +775,35 @@ public:
 
     The returned continent is in the form of the two-letter code
 */
-  inline const std::string continent(const std::string& callpart)
+  inline const std::string continent(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).continent() )); }
 
 /*! \brief              Get the latitude for a call or partial call
     \param  callpart    call (or partial call)
     \return             latitude (in degrees) corresponding to <i>callpart</i> (+ve north)
 */
-  inline const float latitude(const std::string& callpart)
+  inline const float latitude(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).latitude() )); }
 
 /*! \brief              Get the longitude for a call or partial call
     \param  callpart    call (or partial call)
     \return             longitude (in degrees) corresponding to <i>callpart</i> (+ve west)
 */
-  inline const float longitude(const std::string& callpart)
+  inline const float longitude(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).longitude() )); }
 
 /*! \brief              Get the UTC offset for a call or partial call
     \param  callpart    call (or partial call)
     \return             UTC offset (in minutes) corresponding to <i>callpart</i>
 */
-  inline const int utc_offset(const std::string& callpart)
+  inline const int utc_offset(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).utc_offset() )); }
 
 /*! \brief              Get the canonical prefix for a call or partial call
     \param  callpart    call (or partial call)
     \return             canonical prefix corresponding to <i>callpart</i>
 */
-  inline const std::string canonical_prefix(const std::string& callpart)
+  inline const std::string canonical_prefix(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).canonical_prefix() )); }
 
 /*! \brief              Get name of the Russian district for a particular call or partial call
@@ -811,7 +812,7 @@ public:
 
     Returns the empty string if <i>callpart</i> is not Russian
 */
-  inline const std::string region_name(const std::string& callpart)
+  inline const std::string region_name(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
 
 /*! \brief              Get two-letter abbreviation for the Russian district for a particular call or partial call
@@ -820,7 +821,7 @@ public:
 
     Returns the empty string if <i>callpart</i> is not Russian
 */
-  inline const std::string region_abbreviation(const std::string& callpart)
+  inline const std::string region_abbreviation(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
 /// serialise

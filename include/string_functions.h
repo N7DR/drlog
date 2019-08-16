@@ -616,9 +616,9 @@ inline const bool is_maritime_mobile(const std::string& callsign)
 //const std::string separated_string(const int n, const std::string& sep = ",");
 template <typename T>
 const std::string separated_string(const T n, const std::string& sep = ","s)
-{ const char separator = (sep.empty() ? ',' : sep[0]);
+{ const char separator { (sep.empty() ? ',' : sep[0]) };
 
-  std::string tmp = to_string(n);
+  std::string tmp { to_string(n) };
   std::string rv;
 
   while (!tmp.empty())

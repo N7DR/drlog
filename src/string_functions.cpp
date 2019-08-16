@@ -767,35 +767,6 @@ const string transform_string(const string& cs, int(*pf)(int))
   return rv;
 }
 
-/*! \brief          Convert an integer to a character-separated string
-    \param  n       number to convert
-    \param  sep     string to act as the triplet separator
-    \return         <i>n</i> with the separator <i>sep</i> separating each triplet
-
-    Uses comma as separator if <i>sep</i> is empty.
-*/
-#if 0
-const string separated_string(const int n, const string& sep)
-{ const char separator { (sep.empty() ? ',' : sep[0]) };
-
-  string tmp { to_string(n) };
-
-  string rv;
-  
-  while (!tmp.empty())
-  { for (unsigned int N = 0; N < 3 and !tmp.empty(); ++N)
-    { rv = string(1, last_char(tmp)) + rv;
-      tmp = tmp.substr(0, tmp.length() - 1);
-    }
-    
-    if (!tmp.empty())
-      rv = string(1, separator) + rv;
-  }
-  
-  return rv;
-}
-#endif
-
 /*! \brief      Get location of start all words
     \param  s   string to be analysed
     \return     positions of all the starts of words in <i>s</i>

@@ -33,8 +33,31 @@ using namespace std;
 
 /// month of the year; 1 - 12
 const int tr_record::month(void) const
-{ const string tmps { substring(_record, 10, 3) };
+{ static const unordered_map<string, int> month_nr { { "JAN"s, 1 },
+                                                     { "FEB"s, 2 },
+                                                     { "MAR"s, 3 },
+                                                     { "APR"s, 4 },
+                                                     { "MAY"s, 5 },
+                                                     { "JUN"s, 6 },
+                                                     { "JUL"s, 7 },
+                                                     { "AUG"s, 8 },
+                                                     { "SEP"s, 9 },
+                                                     { "OCT"s, 10 },
+                                                     { "NOV"s, 11 },
+                                                     { "DEC"s, 12 }
+                                                   };
 
+  const string tmps { substring(_record, 10, 3) };
+
+  try
+  { return month_nr.at(tmps);
+  }
+
+  catch (...)
+  { return 0;       // error
+  }
+
+#if 0
   if (tmps == "JAN"s)
     return 1;
 
@@ -72,6 +95,7 @@ const int tr_record::month(void) const
     return 12;
 
   return 0;    // error
+#endif
 }
 
 /// four-digit year
@@ -153,7 +177,7 @@ const string tr_record::frequency(void) const
 // the kHz portion of the frequency might be elsewhere in the record
   const string qso_number_str { substring(_record, 23, 4) };
 
-  if (contains(qso_number_str, "."))
+  if (contains(qso_number_str, "."s))
   { float to_add { from_string<float>(qso_number_str) };
 
     switch (band())
@@ -228,7 +252,7 @@ tr_log::tr_log(const std::string& filename)
 
     const string mode { (line_of_log_info ? substring(this_line, 3, 3) : EMPTY_STR) };
 
-    line_of_log_info = line_of_log_info and ((mode == "CW ") or (mode == "SSB"));
+    line_of_log_info = line_of_log_info and ((mode == "CW "s) or (mode == "SSB"s));
 
     if (line_of_log_info)
     { const int old_record_length { _record_length };
@@ -255,11 +279,6 @@ tr_log::tr_log(const std::string& filename)
 
   fflush(_fp);
 }
-
-/// destructor
-//tr_log::~tr_log(void)
-//{ fclose(_fp);          // not really necessary
-//}
 
 /// sort the log in order of callsign
 void tr_log::sort_by_call(void)

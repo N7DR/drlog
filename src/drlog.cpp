@@ -26,6 +26,7 @@
 #include "keyboard.h"
 #include "log.h"
 #include "log_message.h"
+#include "memory.h"
 #include "parallel_port.h"
 #include "qso.h"
 #include "qtc.h"
@@ -80,6 +81,7 @@ constexpr bool DISPLAY_EXTRACT        { true },                       ///< displ
                DO_NOT_DISPLAY_EXTRACT { !DISPLAY_EXTRACT };           ///< do not display log extracts
 
 constexpr bool FORCE_THRESHOLD { true };                              ///< for forcing accumulator to threshold
+constexpr int  MILLION         { 1'000'000 };                         // syntactic sugar
 
 // define class for memory entries
 WRAPPER_3(memory_entry,
@@ -181,6 +183,7 @@ void update_rate_window(void);                                              ///<
 void update_recording_status_window(void);                                  ///< update the RECORDING STATUS window
 const bool update_rx_ant_window(void);                                            ///< get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
 void update_score_window(const unsigned int score);                         ///< update the SCORE window
+void update_system_memory(void);                                            ///< update the SYSTEM MEMORY window
 
 // functions for processing input to windows
 void process_CALL_input(window* wp, const keyboard_event& e);               ///< Process an event in CALL window
@@ -301,6 +304,7 @@ logbook                 logbk;                                      ///< the log
 bool                    long_t { false };                           ///< whether to send long Ts at beginning of serno
 
 unsigned int            max_qsos_without_qsl;                       ///< limit for the N7DR matches_criteria() algorithm
+memory_information      meminfo;                                    ///< to monitor the state of memory
 monitored_posts         mp;                                         ///< the calls being monitored
 bool                    multiple_modes { false };                   ///< are multiple modes permitted in the contest?
 string                  my_call;                                    ///< what is my callsign?
@@ -373,6 +377,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_local_time,                  ///< window for local time
        win_log,                         ///< main visible log
        win_memories,                    ///< the memory contents
+       win_system_memory,               ///< system memory
        win_message,                     ///< messages from drlog to the user
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
@@ -1024,7 +1029,7 @@ int main(int argc, char** argv)
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function
     my_bandmap_entry.callsign(MY_MARKER);
     my_bandmap_entry.source(BANDMAP_ENTRY_SOURCE::LOCAL);
-    my_bandmap_entry.expiration_time(my_bandmap_entry.time() + 1'000'000);    // a million seconds in the future
+    my_bandmap_entry.expiration_time(my_bandmap_entry.time() + MILLION);    // a million seconds in the future
 
 // possibly add a mode marker bandmap entry to each bandmap
     if (context.mark_mode_break_points())
@@ -1035,7 +1040,7 @@ int main(int argc, char** argv)
 
         be.callsign(MODE_MARKER);
         be.source(BANDMAP_ENTRY_SOURCE::LOCAL);
-        be.expiration_time(be.time() + 1'000'000);        // expiration is a long time in the future
+        be.expiration_time(be.time() + MILLION);        // expiration is a long time in the future
         be.freq(MODE_BREAK_POINT[b]);
 
         bm += be;
@@ -1304,7 +1309,7 @@ int main(int argc, char** argv)
 
     FOR_ALL(score_bands, [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
 
-    win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: " <= bands_str;
+    win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= bands_str;
   }
 
 // SCORE MODES window
@@ -1315,7 +1320,7 @@ int main(int argc, char** argv)
 
     FOR_ALL(score_modes, [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
 
-    win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: " <= modes_str;
+    win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= modes_str;
   }
 
 // SCP window
@@ -1339,6 +1344,10 @@ int main(int argc, char** argv)
 // SUMMARY window
   win_summary.init(context.window_info("SUMMARY"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
   display_statistics(statistics.summary_string(rules));
+
+// SYSTEM MEMORY window
+  win_system_memory.init(context.window_info("SYSTEM MEMORY"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
+  update_system_memory();
 
 // TITLE window
   win_title.init(context.window_info("TITLE"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
@@ -1959,12 +1968,19 @@ void* display_date_and_time(void* vp)
           }
         }
 
+// possibly update SYSTEM MEMORY window
+        if (win_system_memory.wp())
+          update_system_memory();
+ //         { const uint64_t mem_available { meminfo.mem_available()  / MILLION };
+//            const uint64_t mem_total     { meminfo.mem_total() / MILLION };
+//
+//            win_system_memory < mem_available < "M / " < mem_total <= "M";
+//          }
+
+
 // possibly turn off audio recording
         if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and audio.recording())
-        { //ost << "time since last QSO = " << time_since_last_qso(logbk) << endl;
-          //ost << "time since last QSY = " << time_since_last_qsy() << endl;
-
-          const auto qso { time_since_last_qso(logbk) };
+        { const auto qso { time_since_last_qso(logbk) };
           const auto qsy { time_since_last_qsy() };
 
           if (inactivity_timer > 0)
@@ -2057,7 +2073,7 @@ void* display_rig_status(void* vp)
 // populate the bandmap entry stuff that won't change
   be.callsign(MY_MARKER);
   be.source(BANDMAP_ENTRY_SOURCE::LOCAL);
-  be.expiration_time(be.time() + 1'000'000);    // a million seconds in the future
+  be.expiration_time(be.time() + MILLION);    // a million seconds in the future
 
   while (true)
   {
@@ -2571,12 +2587,12 @@ void* prune_bandmap(void* vp)
     \param  e   keyboard event to process
 */
 /*  KP numbers -- CW messages
+    ALT-K -- toggle CW
     ALT-M -- change mode
     ALT-Q -- send QTC
     CTRL-C -- EXIT (same as .QUIT)
     CTRL-S -- send to scratchpad
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
-    ALT-K -- toggle CW
     ESCAPE
     TAB -- switch between CQ and SAP mode
     F10 -- toggle filter_remaining_country_mults
@@ -8038,4 +8054,14 @@ void display_bandmap_filter(bandmap& bm)                                        
     win_bandmap_filter < "(C"s < to_string(bm.cull_function()) < ") "s;
 
   win_bandmap_filter < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
+}
+
+/*! \brief  Update the SYSTEM MEMORY window
+*/
+void update_system_memory(void)
+{ const auto   mem_available { meminfo.mem_available()  / MILLION };
+  const auto   mem_total     { meminfo.mem_total() / MILLION };
+  const string contents      { to_string(mem_available) + "M / "s + to_string(mem_total) + "M"s };
+
+  win_system_memory < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= centre(contents, 0);
 }
