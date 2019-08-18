@@ -8059,9 +8059,21 @@ void display_bandmap_filter(bandmap& bm)                                        
 /*! \brief  Update the SYSTEM MEMORY window
 */
 void update_system_memory(void)
-{ const auto   mem_available { meminfo.mem_available()  / MILLION };
-  const auto   mem_total     { meminfo.mem_total() / MILLION };
-  const string contents      { to_string(mem_available) + "M / "s + to_string(mem_total) + "M"s };
+{ try
+  { const auto   mem_available { meminfo.mem_available()  / MILLION };
+    const auto   mem_total     { meminfo.mem_total() / MILLION };
+    const string contents      { to_string(mem_available) + "M / "s + to_string(mem_total) + "M"s };
 
-  win_system_memory < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= centre(contents, 0);
+    win_system_memory < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= centre(contents, 0);
+  }
+
+  catch (const string_function_error& e)        // in 2019 RDA, the open in read_file() failed and threw an exception!!
+  { ost << "meminfo threw string error: code = " << e.code() << "; reason = " << e.reason() << endl;
+    alert("Exception in meminfo!"s);
+  }
+
+  catch (...)
+  { ost << "meminfo threw error non-string error" << endl;
+    alert("Non-string exception in meminfo!!"s);
+  }
 }

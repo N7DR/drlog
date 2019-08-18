@@ -34,7 +34,7 @@ void memory_information::_get_meminfo(const bool force)
   const system_clock::time_point now { system_clock::now() };
 
   if ( force or ( (now - _last_update_time) >  _minimum_interval) )      // update only of forced or if enough time has passed
-  { const vector<string> file_lines { to_lines(squash(read_file("/proc/meminfo"s))) };
+  { const vector<string> file_lines { to_lines(squash(read_file("/proc/meminfo"s))) };  // amazingly, opening the file can fail and throw an exception! I've seen it happen
 
     _last_update_time = now;                                // update the time of last update
 
