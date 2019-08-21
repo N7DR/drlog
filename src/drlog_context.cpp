@@ -469,7 +469,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
-    if ( (LHS == "EXCHANGE PREFILL FILE"s) or (LHS == "EXCHANGE PREFILL FILESs") )
+    if ( (LHS == "EXCHANGE PREFILL FILE"s) or (LHS == "EXCHANGE PREFILL FILES"s) )
     { const vector<string> files { remove_peripheral_spaces(delimited_substrings(rhs, '[', ']')) };
 
       for (const auto& file : files)
@@ -1019,7 +1019,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       _cabrillo_eol = RHS;
 
 // CABRILLO INCLUDE SCORE
-    if (LHS == "CABRILLO INCLUDE SCOREs")
+    if (LHS == "CABRILLO INCLUDE SCORE"s)
       _cabrillo_include_score = is_true;
 
 // CABRILLO LOCATION

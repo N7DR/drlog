@@ -636,7 +636,7 @@ void bandmap::operator+=(bandmap_entry& be)
 
 /// prune the bandmap
 void bandmap::prune(void)
-{ SAFELOCK(_bandmap);
+{ SAFELOCK(_bandmap);                                   // hold the lock for the entire process
 
   const time_t now          { ::time(NULL) };             // get the time from the kernel
   const size_t initial_size { _entries.size() };

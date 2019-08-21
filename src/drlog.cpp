@@ -28,6 +28,7 @@
 #include "log_message.h"
 #include "memory.h"
 #include "parallel_port.h"
+#include "procfs.h"
 #include "qso.h"
 #include "qtc.h"
 #include "rate.h"
@@ -2250,9 +2251,10 @@ void* process_rbn_info(void* vp)
   window&                          bandmap_win      { *(cip->win_bandmap_p()) };                     // bandmap window
   array<bandmap, NUMBER_OF_BANDS>& bandmaps         { *(cip->bandmaps_p()) };  // bandmaps
 
-  const bool is_rbn      { (rbn.source() == POSTING_SOURCE::RBN) };
-  const bool is_cluster  { !is_rbn };
-  const bool rbn_beacons { context.rbn_beacons() };
+  const bool is_rbn                 { (rbn.source() == POSTING_SOURCE::RBN) };
+  const bool is_cluster             { !is_rbn };
+  const bool rbn_beacons            { context.rbn_beacons() };
+  const int  my_cluster_mult_colour { string_to_colour("COLOUR_17"s) }; // tthe oclour of my call in th eCLUSTER MULT window
 
   constexpr size_t QUEUE_SIZE { 100 };        // size of queue of recent calls posted to the mult window
 
@@ -2303,6 +2305,9 @@ void* process_rbn_info(void* vp)
 
     unprocessed_input += new_input;
 
+//    SAFELOCK(_bandmap);    // *** 190821 new; _bandmap_mutex is internal to each bandmap; have to think about this
+    // make an insertion queue and then execute all the insertions under a single locked mutex
+{
     while (contains(unprocessed_input, CRLF))              // look for EOL markers
     { const size_t posn { unprocessed_input.find(CRLF) };
       const string line { substring(unprocessed_input, 0, posn) };   // store the next unprocessed line
@@ -2316,8 +2321,8 @@ void* process_rbn_info(void* vp)
         { last_processed_line = line;
 
 // display if this is a new mult on any band, and if the poster is on our own continent
-          const dx_post post    { line, location_db, rbn.source() };
-          const bool wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
+          const dx_post post       { line, location_db, rbn.source() };
+          const bool    wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
 
           if (post.valid() and !wrong_mode)
           { const BAND dx_band { post.band() };
@@ -2392,8 +2397,8 @@ void* process_rbn_info(void* vp)
                     const int bg_colour { cluster_mult_win.bg() };
 
                     if (is_me)
-//                      cluster_mult_win.bg(COLOUR_YELLOW);               // ??? this doesn't seem to happen
-                      cluster_mult_win < COLOURS(cluster_mult_win.fg(), COLOUR_YELLOW);
+ //                     cluster_mult_win < COLOURS(cluster_mult_win.fg(), COLOUR_YELLOW);  // darkish blue
+                      cluster_mult_win < COLOURS(cluster_mult_win.fg(), my_cluster_mult_colour);  // darkish blue
 
                     const string frequency_str { pad_string(be.frequency_str(), 7) };
 
@@ -2404,7 +2409,6 @@ void* process_rbn_info(void* vp)
                     cluster_mult_win < pad_string(frequency_str + SPACE_STR + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
 
                     if (is_me)
- //                     cluster_mult_win.bg(bg_colour);
                       cluster_mult_win < COLOURS(cluster_mult_win.fg(), bg_colour);
 
                     if ( (dx_band == cur_band) or is_me)
@@ -2443,6 +2447,7 @@ void* process_rbn_info(void* vp)
         }
       }
     }
+}      // to protect SAFELOCK -- possibly move down past the window write, but I don't think that's necessary
 
 // update displayed bandmap if there was a change
     const BAND cur_band { safe_get_band() };
@@ -8059,10 +8064,15 @@ void display_bandmap_filter(bandmap& bm)                                        
 /*! \brief  Update the SYSTEM MEMORY window
 */
 void update_system_memory(void)
-{ try
-  { const auto   mem_available { meminfo.mem_available()  / MILLION };
+{ static procfs proc_fs;
+
+  static const long page_size { sysconf(_SC_PAGESIZE) };
+
+  try
+  { const auto   rss           { (proc_fs.stat_rss() * page_size) / MILLION };
+    const auto   mem_available { meminfo.mem_available()  / MILLION };
     const auto   mem_total     { meminfo.mem_total() / MILLION };
-    const string contents      { to_string(mem_available) + "M / "s + to_string(mem_total) + "M"s };
+    const string contents      { to_string(rss) + "M / "s + to_string(mem_available) + "M / "s + to_string(mem_total) + "M"s };
 
     win_system_memory < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= centre(contents, 0);
   }

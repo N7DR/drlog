@@ -319,6 +319,8 @@ const string read_file(const string& filename)
 
   if (!fp)
     throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename);
+  else
+    fclose(fp);
 
 // check that the file is not a directory  
   struct stat stat_buffer;
