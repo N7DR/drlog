@@ -1,4 +1,4 @@
-// $Id: bandmap.h 151 2019-04-14 18:05:58Z  $
+// $Id: bandmap.h 152 2019-08-21 20:23:38Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,6 +42,7 @@ enum class BANDMAP_DIRECTION { DOWN,
                              };
 
 // forward declarations
+class bandmap_entry;
 class bandmap_filter_type;
 
 extern bandmap_filter_type BMF;                                 ///< the bandmap filter
@@ -50,6 +51,8 @@ extern const std::string   MY_MARKER;                           ///< the string 
 extern old_log             olog;                                ///< old (ADIF) log containing QSO and QSL information
 
 constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
+
+using BANDMAP_INSERTION_QUEUE = std::deque<bandmap_entry>;
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -1094,6 +1097,10 @@ public:
 /// convert to a printable string
   const std::string to_str(void);
 
+  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
+
+  void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
+
 /// serialize using boost
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -1126,6 +1133,21 @@ window& operator<(window& win, bandmap& bm);
     \return         the output stream
 */
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
+
+// -----------  bandmap_insertion_queue  ----------------
+
+/*! \class  bandmap_insertion_queue
+    \brief  A queue of bandmap entries to be added to bandmaps
+*/
+#if 0
+class bandmap_insertion_queue : public std::deque<std::pair<BAND, bandmap_entry>>
+{
+protected:
+
+public:
+
+};
+#endif
 
 using BANDMAP_MEM_FUN_P = const bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 

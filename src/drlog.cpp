@@ -432,13 +432,15 @@ rig_interface rig;                          ///< rig control
 
 thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute for threads
 
-window* win_active_p { &win_call };               ///< start with the CALL window active
+window* win_active_p      { &win_call };          ///< start with the CALL window active
 window* last_active_win_p { nullptr };            ///< keep track of the last window that was active, before the current one
 
 const string OUTPUT_FILENAME { "output.txt"s };     ///< file to which debugging output is directed
+
 message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
 
-array<bandmap, NUMBER_OF_BANDS>  bandmaps;      ///< one bandmap per band
+array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band
+array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
 
 call_history q_history;                         ///< history of calls worked
 
@@ -2307,7 +2309,7 @@ void* process_rbn_info(void* vp)
 
 //    SAFELOCK(_bandmap);    // *** 190821 new; _bandmap_mutex is internal to each bandmap; have to think about this
     // make an insertion queue and then execute all the insertions under a single locked mutex
-{
+//{
     while (contains(unprocessed_input, CRLF))              // look for EOL markers
     { const size_t posn { unprocessed_input.find(CRLF) };
       const string line { substring(unprocessed_input, 0, posn) };   // store the next unprocessed line
@@ -2425,14 +2427,16 @@ void* process_rbn_info(void* vp)
                     bm_buffer.add(be.callsign(), post.poster());
 
                     if (bm_buffer.sufficient_posters(be.callsign()))
-                    { bandmaps[dx_band] += be;
+                    { //bandmaps[dx_band] += be;
+                      bandmap_insertion_queues[dx_band].push_back(be);
                       changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
                     }
 
                     break;
 
                   default :
-                    bandmaps[dx_band] += be;
+                    //bandmaps[dx_band] += be;
+                    bandmap_insertion_queues[dx_band].push_back(be);
                     changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
                 }
               }
@@ -2447,13 +2451,22 @@ void* process_rbn_info(void* vp)
         }
       }
     }
-}      // to protect SAFELOCK -- possibly move down past the window write, but I don't think that's necessary
+//}      // to protect SAFELOCK -- possibly move down past the window write, but I don't think that's necessary
 
 // update displayed bandmap if there was a change
     const BAND cur_band { safe_get_band() };
 
-    if (changed_bands < cur_band)
-      bandmap_win <= bandmaps[cur_band];
+    for (const auto& b : changed_bands)
+    { if (b == cur_band)
+        bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b], bandmap_win);
+      else
+        bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b]);
+    }
+
+// there is still a small race condition here; need to pass window to the above routine
+
+//    if (changed_bands < cur_band)
+//      bandmap_win <= bandmaps[cur_band];
 
     if (cluster_mult_win_was_changed)    // update the window on the screen
       cluster_mult_win.refresh();

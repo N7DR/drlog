@@ -1103,6 +1103,36 @@ const bool bandmap::is_present(const string& target_callsign)
   return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 }
 
+// biq changes (is emptied) by this routine
+// other threads MUST NOT access biq while this is executing
+void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
+{ SAFELOCK(_bandmap);
+
+  while (!biq.empty())
+  { bandmap_entry be { biq.front() };
+
+    *this += be;
+
+    biq.pop_front();
+  }
+}
+
+// biq changes (is emptied) by this routine
+// other threads MUST NOT access biq while this is executing
+void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
+{ SAFELOCK(_bandmap);
+
+  while (!biq.empty())
+  { bandmap_entry be { biq.front() };
+
+    *this += be;
+
+    biq.pop_front();
+  }
+
+  w <= (*this);
+}
+
 /*! \brief          Write a <i>bandmap</i> object to a window
     \param  win     window
     \param  bm      object to write
