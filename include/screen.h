@@ -1,4 +1,4 @@
-// $Id: screen.h 152 2019-08-21 20:23:38Z  $
+// $Id: screen.h 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -202,7 +202,6 @@ public:
 
   READ_AND_WRITE(colours_set);      ///< have the colours been set explicitly?
 };
-
 
 // -----------  window  ----------------
 

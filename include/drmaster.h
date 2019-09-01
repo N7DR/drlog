@@ -1,4 +1,4 @@
-// $Id: drmaster.h 152 2019-08-21 20:23:38Z  $
+// $Id: drmaster.h 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -345,6 +345,8 @@ class drmaster
 protected:
 
   std::unordered_map<std::string, drmaster_line> _records;       ///< the information
+
+  void _prepare_from_file_contents(const std::string& contents);
 
 public:
 

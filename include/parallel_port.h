@@ -1,4 +1,4 @@
-// $Id: parallel_port.h 152 2019-08-21 20:23:38Z  $
+// $Id: parallel_port.h 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,7 +59,6 @@ Pin No (DB25)   Pin No (36 pin)     Signal name     Direction   Register - bit  
 // PTT = DB25 16
 // CW  = DB25 17
 
-
 /*
   enum ieee1284_control_bits
 {
@@ -73,8 +72,6 @@ Pin No (DB25)   Pin No (36 pin)     Signal name     Direction   Register - bit  
                     C1284_NSELECTIN),
 };
 */
-
-
 
 /*
   struct parport {

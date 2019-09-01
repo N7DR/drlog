@@ -1,4 +1,4 @@
-// $Id: audio.h 147 2018-04-20 21:32:50Z  $
+// $Id: audio.h 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -120,7 +120,9 @@ protected:
 public:
 
 /// default constructor
-  wav_file(void);
+  inline wav_file(void) :
+    _is_buffered(false)
+  { }
 
   READ_AND_WRITE(is_buffered)    ///< whether to use buffering to avoid writing when sending CW (not yet supported)
   READ_AND_WRITE(name);          ///< name of file
@@ -252,7 +254,38 @@ protected:
 public:
 
 /// constructor
-  audio_recorder(void);
+//  audio_recorder(void);
+  /// constructor
+  inline audio_recorder(void) :
+    _aborting(false),                         // we are not aborting a capture
+    _audio_buf(nullptr),                      // no buffer by default
+    _base_filename("drlog-audio"s),            // default output file
+    _buffer_frames(0),                        // no frames in buffer?
+    _buffer_time(0),                          // no time covered by buffer?
+    _file_type(AUDIO_FORMAT_WAVE),            // WAV format
+    _handle(nullptr),                         // no PCM handle
+    _info(nullptr),                           // explicitly set to uninitialised
+    _max_file_time(0),                        // no maximum duration (in seconds)
+    _period_size_in_frames(0),
+    _monotonic(false),                        // device cannot do monotonic timestamps
+    _n_channels(1),                           // monophonic
+    _open_mode(0),                            // blocking
+    _pcm_name("default"s),
+    _period_frames(0),
+    _period_time(0),
+    _readi_func(snd_pcm_readi),               // function to read interleaved frames (the only one that we actually use)
+    _readn_func(snd_pcm_readn),               // function to read non-interleaved frames
+    _recording(false),                        // initially, not recording
+    _record_count(9999999999),                // big number
+    _samples_per_second(8000),                // G.711 rate
+    _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
+    _start_delay(1),
+    _stream(SND_PCM_STREAM_CAPTURE),          // we are capturing a stream
+    _time_limit(0),                           // no limit
+    _thread_number(0),
+    _writei_func(snd_pcm_writei),             // function to write interleaved frames
+    _writen_func(snd_pcm_writen)              // function to write non-interleaved frames
+  { }
 
 /// destructor
   inline virtual ~audio_recorder(void)

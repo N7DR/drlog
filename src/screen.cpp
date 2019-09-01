@@ -1,4 +1,4 @@
-// $Id: screen.cpp 150 2019-04-05 16:09:55Z  $
+// $Id: screen.cpp 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -280,38 +280,6 @@ window& window::operator<(const set<string>& ss)
   sort(v.begin(), v.end(), compare_calls);
 
   return (*this < v);
-
-#if 0
-  unsigned int idx { 0 };
-  
-  for (const auto& str : v)
-  { 
-// see if there's enough room on this line    
-    cursor_position();
-
-    const int remaining_space { width() - _cursor_x };
-
-// stop writing if there's insufficient room for the next string
-    if (remaining_space < static_cast<int>(str.length()))
-      if (!scrolling() and (_cursor_y == 0))
-        break;
-    
-    if (remaining_space < static_cast<int>(str.length()))
-      *this < "\n";
-
-    *this < str;
-  
-// add space unless we're at the end of a line or this is the last string
-    const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
-    
-    if ((idx != v.size() - 1) and !end_of_line)
-      *this < SPACE_STR;
-    
-    idx++;
-  }
-
-  return *this;
-#endif
 }
 
 /*! \brief          Write an unordered set of strings to a window
@@ -333,38 +301,6 @@ window& window::operator<(const unordered_set<string>& ss)
   sort(v.begin(), v.end(), compare_calls);
 
   return (*this < v);
-
-#if 0
-  unsigned int idx { 0 };
-
-  for (const auto& str : v)
-  {
-// see if there's enough room on this line
-    cursor_position();
-
-    const int remaining_space { width() - _cursor_x };
-
-// stop writing if there's insufficient room for the next string
-    if (remaining_space < static_cast<int>(str.length()))
-      if (!scrolling() and (_cursor_y == 0))
-        break;
-
-    if (remaining_space < static_cast<int>(str.length()))
-      *this < "\n";
-
-    *this < str;
-
-// add space unless we're at the end of a line or this is the last string
-    const bool end_of_line { (remaining_space == static_cast<int>(str.length())) };
-
-    if ((idx != v.size() - 1) and !end_of_line)
-      *this < SPACE_STR;
-
-    idx++;
-  }
-
-  return *this;
-#endif
 }
 
 /*! \brief      Write a vector of strings to a window
@@ -973,11 +909,6 @@ const unsigned int cpair::add(const int fg, const int bg)
   const auto cit { find(_colours.cbegin(), _colours.cend(), fgbg) };
 
   return ( (cit == _colours.cend()) ? _add_to_vector(fgbg) : (cit - _colours.cbegin() + 1) );
-
-//  if (cit == _colours.cend())
-//    return _add_to_vector(fgbg);
-//  else
-//    return (cit - _colours.cbegin() + 1);    // the first entry (at _colours.begin()) is ncurses colour pair number 1
 }
 
 /*! \brief              Get the foreground colour of a pair

@@ -1,4 +1,4 @@
-// $Id: bandmap.h 152 2019-08-21 20:23:38Z  $
+// $Id: bandmap.h 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1107,14 +1107,17 @@ public:
     { SAFELOCK(_bandmap);
 
       ar & _column_offset
+         & _cull_function
          & _do_not_add
          & _entries
          & _fade_colours
          & _filtered_entries
-         & _filtered_entries_dirty    // filter_p ??
+         & _filtered_entries_dirty    // **** WHAT ABOUT filter_p ???
+         & _mode_marker_frequency
          & _rbn_threshold
          & _rbn_threshold_and_filtered_entries
          & _rbn_threshold_and_filtered_entries_dirty
+         & _rbn_threshold_filtered_and_culled_entries
          & _recent_calls
          & _recent_colour;
     }

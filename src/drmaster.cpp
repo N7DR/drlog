@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 149 2019-01-03 19:24:01Z  $
+// $Id: drmaster.cpp 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -164,7 +164,7 @@ trmaster_line::trmaster_line(const string& line)
   _ten_ten   = from_string<int>( __extract_value(line, "=T"s) );
 
 // user parameters
-  char user_parameter = 'U';
+  char user_parameter { 'U' };
 
   for (unsigned int n_user_parameter = 0; n_user_parameter < TRMASTER_N_USER_PARAMETERS; ++n_user_parameter)
   { char marker[3];
@@ -182,7 +182,7 @@ trmaster_line::trmaster_line(const string& line)
     \return     the line as a string suitable for use in a TRMASTER file
 */
 const string trmaster_line::to_string(void) const
-{ string rv = call();
+{ string rv { call() };
 
   if (!section().empty())
     rv += (" =A"s + section());
@@ -214,7 +214,7 @@ const string trmaster_line::to_string(void) const
   if (ten_ten())
     rv += (" =T"s +  ::to_string(ten_ten()));
 
-  char user_letter = 'U';
+  char user_letter { 'U' };
 
   for (unsigned int n = 0; n < TRMASTER_N_USER_PARAMETERS; n++)
   { if (!user(n + 1).empty())
@@ -670,7 +670,8 @@ const string drmaster_line::to_string(void) const
   if (!ten_ten().empty())
     rv += " =T"s + ten_ten();
 
-  char user_letter = 'U';
+  char user_letter { 'U' };
+
   for (unsigned int n = 0; n < TRMASTER_N_USER_PARAMETERS; n++)
   { if (!user(n + 1).empty())
     { rv += " ="s;
@@ -809,6 +810,15 @@ const drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
     A drmaster file is a superset of a TRMASTER.ASC file
 */
 
+void drmaster::_prepare_from_file_contents(const string& contents)
+{ const vector<string> lines { to_lines(contents) };
+
+  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+
+                                                                    _records.insert( { record.call(), record } );
+                                                                  } );
+}
+
 /*! \brief              Construct from a file
     \param  filename    name of file to read
 
@@ -819,12 +829,15 @@ drmaster::drmaster(const string& filename)
     return;
 
   const string contents      { read_file(filename) };      // throws exception if fails
-  const vector<string> lines { to_lines(contents) };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+  _prepare_from_file_contents(contents);
 
-                                                                    _records.insert( { record.call(), record } );
-                                                                  } );
+//  const vector<string> lines { to_lines(contents) };
+//
+//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//
+//                                                                    _records.insert( { record.call(), record } );
+//                                                                  } );
 }
 
 /*! \brief              Construct from a file
@@ -839,12 +852,15 @@ drmaster::drmaster(const vector<string>& path, const string& filename)
     return;
 
   const string         contents { read_file(path, filename) };      // throws exception if fails
-  const vector<string> lines    { to_lines(contents) };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+  _prepare_from_file_contents(contents);
 
-                                                                    _records.insert( { record.call(), record } );
-                                                                  } );
+//  const vector<string> lines    { to_lines(contents) };
+//
+//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//
+//                                                                    _records.insert( { record.call(), record } );
+//                                                                  } );
 }
 
 /*! \brief              Prepare the object by reading a file
@@ -857,12 +873,15 @@ void drmaster::prepare(const string& filename)
     return;
 
   const string         contents { read_file(filename) };      // throws exception if fails
-  const vector<string> lines    { to_lines(contents) };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+  _prepare_from_file_contents(contents);
 
-                                                                    _records.insert( { record.call(), record } );
-                                                                  } );
+//  const vector<string> lines    { to_lines(contents) };
+//
+//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//
+//                                                                    _records.insert( { record.call(), record } );
+//                                                                  } );
 }
 
 /*! \brief          Prepare the object by reading a file
@@ -876,12 +895,15 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
     return;
 
   const string         contents { read_file(path, filename) };      // throws exception if fails
-  const vector<string> lines    { to_lines(contents) };
 
-  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+  _prepare_from_file_contents(contents);
 
-                                                                    _records.insert( { record.call(), record } );
-                                                                  } );
+//  const vector<string> lines    { to_lines(contents) };
+//
+//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//
+//                                                                    _records.insert( { record.call(), record } );
+//                                                                  } );
 }
 
 /// all the calls (in alphabetical order)

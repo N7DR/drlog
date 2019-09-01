@@ -1,4 +1,4 @@
-// $Id: audio.cpp 147 2018-04-20 21:32:50Z  $
+// $Id: audio.cpp 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -420,8 +420,6 @@ create_file:
 
   bool first_time_through_loop { true };
 
-//  ost << "about to enter the big loop" << endl;
-
   do
   { const size_t c { (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes };
     const size_t f { c * 8 / _bits_per_frame };
@@ -479,6 +477,7 @@ goto create_file;
   return nullptr;       // should never get here
 }
 
+#if 0
 /// constructor
 audio_recorder::audio_recorder(void) :
   _aborting(false),                         // we are not aborting a capture
@@ -510,19 +509,18 @@ audio_recorder::audio_recorder(void) :
   _writei_func(snd_pcm_writei),             // function to write interleaved frames
   _writen_func(snd_pcm_writen)              // function to write non-interleaved frames
 { }
-
-/// destructor
-//audio_recorder::~audio_recorder(void)
-//{ }
+#endif
 
 /// initialise the object
 void audio_recorder::initialise(void)
 { snd_pcm_info_alloca(&_info);          // create an invalid snd_pcm_info_t
 
   const PARAMS_STRUCTURE rhwparams { _n_channels, _sample_format, _samples_per_second };
-  const int MAX_FAILURES = 1;           // maximum number of permitted failures
 
-  int n_failures = 0;                   // current number of failures
+  constexpr int MAX_FAILURES { 1 };           // maximum number of permitted failures
+
+  int n_failures { 0 };                   // current number of failures
+
   int status;
 
   do
@@ -594,9 +592,9 @@ void wav_file::_write_buffer(void* bufp, const size_t buffer_size)
 }
 
 /// default constructor
-wav_file::wav_file(void) :
-  _is_buffered(false)
-{ }
+//wav_file::wav_file(void) :
+//  _is_buffered(false)
+//{ }
 
 /// open the file for writing
 void wav_file::open(void)

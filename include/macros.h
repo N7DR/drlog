@@ -1,4 +1,4 @@
-// $Id: macros.h 152 2019-08-21 20:23:38Z  $
+// $Id: macros.h 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -18,7 +18,6 @@
     Macros and templates for drlog.
 */
 
-//#include "pthread_support.h"
 #include "serialization.h"
 
 #include <algorithm>
@@ -28,6 +27,8 @@
 #include <set>
 #include <tuple>
 #include <unordered_set>
+
+#include <cmath>
 
 /// Syntactic sugar for read/write access
 #if (!defined(READ_AND_WRITE))

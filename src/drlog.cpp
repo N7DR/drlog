@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 151 2019-04-14 18:05:58Z  $
+// $Id: drlog.cpp 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -2256,7 +2256,7 @@ void* process_rbn_info(void* vp)
   const bool is_rbn                 { (rbn.source() == POSTING_SOURCE::RBN) };
   const bool is_cluster             { !is_rbn };
   const bool rbn_beacons            { context.rbn_beacons() };
-  const int  my_cluster_mult_colour { string_to_colour("COLOUR_17"s) }; // tthe oclour of my call in th eCLUSTER MULT window
+  const int  my_cluster_mult_colour { string_to_colour("COLOUR_17"s) }; // the colour of my call in the CLUSTER MULT window
 
   constexpr size_t QUEUE_SIZE { 100 };        // size of queue of recent calls posted to the mult window
 
@@ -2307,9 +2307,6 @@ void* process_rbn_info(void* vp)
 
     unprocessed_input += new_input;
 
-//    SAFELOCK(_bandmap);    // *** 190821 new; _bandmap_mutex is internal to each bandmap; have to think about this
-    // make an insertion queue and then execute all the insertions under a single locked mutex
-//{
     while (contains(unprocessed_input, CRLF))              // look for EOL markers
     { const size_t posn { unprocessed_input.find(CRLF) };
       const string line { substring(unprocessed_input, 0, posn) };   // store the next unprocessed line
@@ -2451,7 +2448,6 @@ void* process_rbn_info(void* vp)
         }
       }
     }
-//}      // to protect SAFELOCK -- possibly move down past the window write, but I don't think that's necessary
 
 // update displayed bandmap if there was a change
     const BAND cur_band { safe_get_band() };
