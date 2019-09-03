@@ -211,7 +211,9 @@ thread_attribute::~thread_attribute(void)
 { const int status { pthread_attr_destroy(&_attr) };
 
   if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_destroy()"s);
+    ost << "Failure in pthread_attr_destroy(); Error "  << PTHREAD_ATTR_ERROR << "; status = " << status << endl;
+      
+  // throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_destroy()"s);  // don't throw in destructor
 }
 
 /*! \brief      Set the detached state
@@ -262,10 +264,10 @@ void thread_attribute::policy(const int policy)
 const int thread_attribute::policy(void) const
 { int policy;
 
-  const int status = pthread_attr_getschedpolicy(&_attr, &policy);
+  const int status { pthread_attr_getschedpolicy(&_attr, &policy) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: " + to_string(policy) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: "s + to_string(policy) + "status = "s + to_string(status));
 
   return policy;
 }
@@ -280,22 +282,22 @@ const int thread_attribute::policy(void) const
 */
 void thread_attribute::scope(const int scope)
 { if ( (scope != SCHED_FIFO) and (scope != SCHED_RR) )
-    throw pthread_error(PTHREAD_UNRECOGNISED_SCOPE, "Unrecognised thread scope: " + to_string(scope));
+    throw pthread_error(PTHREAD_UNRECOGNISED_SCOPE, "Unrecognised thread scope: "s + to_string(scope));
 
-  const int status = pthread_attr_setscope(&_attr, scope);
+  const int status { pthread_attr_setscope(&_attr, scope) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error setting scope: " + to_string(scope) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error setting scope: "s + to_string(scope) + "status = "s + to_string(status));
 }
 
 /// get the scope
 const int thread_attribute::scope(void) const
 { int scope;
 
-  const int status = pthread_attr_getscope(&_attr, &scope);
+  const int status { pthread_attr_getscope(&_attr, &scope) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: " + to_string(scope) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: "s + to_string(scope) + "status = "s + to_string(status));
 
   return scope;
 }
@@ -312,22 +314,22 @@ const int thread_attribute::scope(void) const
 */
 void thread_attribute::inheritance_policy(const int ipolicy)
 { if ( (ipolicy != PTHREAD_EXPLICIT_SCHED) and (ipolicy != PTHREAD_INHERIT_SCHED) )
-    throw pthread_error(PTHREAD_UNRECOGNISED_INHERITANCE_POLICY, "Unrecognised thread inheritance policy: " + to_string(ipolicy));
+    throw pthread_error(PTHREAD_UNRECOGNISED_INHERITANCE_POLICY, "Unrecognised thread inheritance policy: "s + to_string(ipolicy));
 
-  const int status = pthread_attr_setinheritsched(&_attr, ipolicy);
+  const int status { pthread_attr_setinheritsched(&_attr, ipolicy) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error setting inheritance policy: " + to_string(ipolicy) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error setting inheritance policy: "s + to_string(ipolicy) + "status = "s + to_string(status));
 }
 
 /// get the inheritance policy
 const int thread_attribute::inheritance_policy(void) const
 { int ipolicy;
 
-  const int status = pthread_attr_getinheritsched(&_attr, &ipolicy);
+  const int status { pthread_attr_getinheritsched(&_attr, &ipolicy) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: " + to_string(ipolicy) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: "s + to_string(ipolicy) + "status = "s + to_string(status));
 
   return ipolicy;
 }
@@ -906,7 +908,7 @@ safelock::~safelock(void)
 
   catch (...)
   { ost << "ERROR in safelock destructor: " + _name << endl;
-    throw;
+//    throw;            // don't throw in destructor
   }
 }
 

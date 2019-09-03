@@ -61,7 +61,7 @@ master_dta::master_dta(const string& filename)
     return;
 
 // point to the start of the calls
-  uint32_t pointer { (contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8)) };
+  uint32_t pointer { static_cast<uint32_t>(contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8)) };
 
   vector<string> tmp_calls;
 
@@ -518,7 +518,7 @@ trmaster::trmaster(const string& filename)
       return;
 
 // point to the start of the calls
-    uint32_t pointer { (contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8)) };
+    uint32_t pointer { static_cast<uint32_t>(contents[0] + ((contents[1] + ((contents[2] + (contents[3] << 8)) << 8)) << 8)) };
 
 // extract all the calls
     while (pointer < contents.length())
@@ -547,8 +547,9 @@ trmaster::trmaster(const string& filename)
 const vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
-  for (map<string, trmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
-    rv.push_back(cit->first);
+//  for (unordered_map<string, trmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
+  for (const auto& rec : _records)
+    rv.push_back(rec.first);
 
   sort(rv.begin(), rv.end());
 
@@ -825,19 +826,12 @@ void drmaster::_prepare_from_file_contents(const string& contents)
     Throws exception if the file does not exist or is incorrectly formatted
 */
 drmaster::drmaster(const string& filename)
-{ if (filename.empty())
-    return;
-
-  const string contents      { read_file(filename) };      // throws exception if fails
-
-  _prepare_from_file_contents(contents);
-
-//  const vector<string> lines { to_lines(contents) };
+{ if (!filename.empty())
+//    return;
 //
-//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//  const string contents      { read_file(filename) };      // throws exception if fails
 //
-//                                                                    _records.insert( { record.call(), record } );
-//                                                                  } );
+    _prepare_from_file_contents(read_file(filename));      // throws exception if fails
 }
 
 /*! \brief              Construct from a file
@@ -848,19 +842,12 @@ drmaster::drmaster(const string& filename)
     Throws exception if the file does not exist or is incorrectly formatted
 */
 drmaster::drmaster(const vector<string>& path, const string& filename)
-{ if (filename.empty())
-    return;
-
-  const string         contents { read_file(path, filename) };      // throws exception if fails
-
-  _prepare_from_file_contents(contents);
-
-//  const vector<string> lines    { to_lines(contents) };
+{ if (!filename.empty())
+//    return;
 //
-//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//  const string         contents { read_file(path, filename) };      // throws exception if fails
 //
-//                                                                    _records.insert( { record.call(), record } );
-//                                                                  } );
+    _prepare_from_file_contents(read_file(path, filename));      // throws exception if fails
 }
 
 /*! \brief              Prepare the object by reading a file
@@ -869,19 +856,12 @@ drmaster::drmaster(const vector<string>& path, const string& filename)
     Throws exception if the file does not exist or is incorrectly formatted
 */
 void drmaster::prepare(const string& filename)
-{ if (filename.empty())
-    return;
-
-  const string         contents { read_file(filename) };      // throws exception if fails
-
-  _prepare_from_file_contents(contents);
-
-//  const vector<string> lines    { to_lines(contents) };
+{ if (!filename.empty())
+//    return;
 //
-//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//  const string         contents { read_file(filename) };      // throws exception if fails
 //
-//                                                                    _records.insert( { record.call(), record } );
-//                                                                  } );
+    _prepare_from_file_contents(read_file(filename));      // throws exception if fails
 }
 
 /*! \brief          Prepare the object by reading a file
@@ -891,19 +871,12 @@ void drmaster::prepare(const string& filename)
     Processes the first instance of <i>filename</i> when traversing the <i>path</i> directories
 */
 void drmaster::prepare(const vector<string>& path, const string& filename)
-{ if (filename.empty())
-    return;
-
-  const string         contents { read_file(path, filename) };      // throws exception if fails
-
-  _prepare_from_file_contents(contents);
-
-//  const vector<string> lines    { to_lines(contents) };
+{ if (!filename.empty())
+//    return;
 //
-//  for_each(lines.cbegin(), lines.cend(), [&] (const string& line) { const drmaster_line record { line };
+//  const string         contents { read_file(path, filename) };      // throws exception if fails
 //
-//                                                                    _records.insert( { record.call(), record } );
-//                                                                  } );
+    _prepare_from_file_contents(read_file(path, filename));      // throws exception if fails
 }
 
 /// all the calls (in alphabetical order)
@@ -958,7 +931,6 @@ void drmaster::operator+=(const drmaster_line& drml)
 
     old_drml += drml;
     _records.erase(call);
-//    _records.insert(make_pair(call, old_drml));
     _records.insert( { call, old_drml });
   }
 

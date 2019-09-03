@@ -201,14 +201,6 @@ const bool parsed_ss_exchange::_is_possible_check(const string& str) const
   return ( isdigit(str[0]) and isdigit(str[1]) );
 }
 
-/*! \brief          Does a string contain a possible callsign?
-    \param  str     string to check
-    \return         whether <i>str</i> is a reasonable callsign
-*/
-//const bool parsed_ss_exchange::_is_possible_callsign(const string& str) const
-//{ return ( (str.length() < 3) ? false : ( isalpha(str[0]) and contains_digit(str) ) );
-//}
-
 /*! \brief                      Constructor
     \param  call                callsign
     \param  received_fields     separated strings from the exchange
@@ -581,7 +573,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
 // if there's an explicit . field, use it to replace the call
   for (const auto& received_value : received_values)
-  { if (contains(received_value, "."))
+  { if (contains(received_value, "."s))
       _replacement_call = remove_char(received_value, '.');
   }
 
@@ -597,8 +589,8 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
 // remove any inappropriate RS(T)
     auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST"s and m != MODE_CW )  or
-                                                                      ( psE.first == "RS"s and m != MODE_SSB )
-                                                                    );
+                                                                 ( psE.first == "RS"s and m != MODE_SSB )
+                                                               );
                                                       };
 
     REMOVE_IF_AND_RESIZE(exchange_field_eft, pred_fn);
@@ -719,6 +711,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
 //  typedef tuple<int /* field number wrt 0 */, string /* received value */, set<string> /* unassigned field names */> TRIPLET;
 // function to output the details of a deque of TRIPLETs; used for debugging only
+#if 0
   auto print_tuple_deque = [this](const deque<TRIPLET>& dt)
     { ost << "START OF DEQUE" << endl;
 
@@ -734,6 +727,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
       ost << "END OF DEQUE" << endl;
     };
+#endif
 
   deque<TRIPLET> tuple_deque;
 
@@ -772,15 +766,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     { processed_field_on_last_pass = true;
 
       const string& field_name { cit->name() };    // syntactic sugar
-
-//    map<string, tuple<int, string, set<string>>> tuple_map_assignments;
-
-//ost << "About to try to insert assignment:" << endl;
-//ost << "  Field name: " << field_name << endl;
-//ost << "  Corresponding tuple: " << endl;
-//_print_tuple(t);
-
-      const bool inserted { (tuple_map_assignments.insert( { field_name, t } )).second };
+      const bool    inserted   { (tuple_map_assignments.insert( { field_name, t } )).second };
 
       if (!inserted)
         ost << "WARNING: Unable to insert map assignment for field: " << field_name << ". This should never happen" << endl;

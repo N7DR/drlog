@@ -29,13 +29,9 @@ class exchange_field_template;                  ///< forward declaration
 
 extern pt_mutex exchange_field_database_mutex;  ///< mutex for the exchange field database
 
-using TRIPLET = std::tuple<int        /* field number wrt 0 */,
+using TRIPLET = std::tuple<int                   /* field number wrt 0 */,
                            std::string           /* received value */,
                            std::set<std::string> /* unassigned field names */>;   ///< used in parsed_exchange
-
-//typedef std::tuple<int        /* field number wrt 0 */,
-//        std::string           /* received value */,
-//        std::set<std::string> /* unassigned field names */> TRIPLET;   ///< used in parsed_exchange
 
 const std::set<char> legal_prec { 'A', 'B', 'M', 'Q', 'S', 'U' };     ///< legal values of the precedence for Sweepstakes
 

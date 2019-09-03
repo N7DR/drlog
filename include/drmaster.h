@@ -182,7 +182,7 @@ class trmaster
 {
 protected:
 
-  std::map<std::string /* callsign */, trmaster_line> _records;       ///< the information for each call
+  std::unordered_map<std::string /* callsign */, trmaster_line> _records;       ///< the information for each call
 
 /*! \brief              Get a "line" from a TRMASTER binary file
     \param  contents    string that contains a record (plus, perhaps, much more)

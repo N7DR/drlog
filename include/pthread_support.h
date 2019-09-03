@@ -303,12 +303,6 @@ protected:
   pthread_t                 _thread_id;         ///< ID of the thread that owns the locked mutex
   thread_specific_data<int> _tsd_refcount;      ///< reference counter for recursive locking
 
-/*! \brief  Copy constructor
-
-    Not public, so it cannot be called, since we should never copy a mutex
-*/
-//  pt_mutex(const pt_mutex&);
-
 public:
 
 /// constructor
@@ -349,12 +343,6 @@ protected:
   pthread_cond_t _cond;         ///< Encapsulated condition variable
   pt_mutex*      _mutex_p;      ///< Pointer to associated mutex
   bool           _predicate;    ///< predicate used to handle false wake-ups on brain-dead systems
-
-/*! \brief  Copy constructor
-
-  Not public, so it cannot be called, since we should never copy a condition variable
-*/
-//  pt_condition_variable(const pt_condition_variable&);
 
 public:
 
@@ -422,18 +410,6 @@ protected:
 
   std::string _name;        ///< name (if any)
   pt_mutex*   _ptm_p;       ///< encapsulated mutex
-
-/*! \brief  Copy constructor
-
-    Not public, so it cannot be called, since we should never copy a mutex
-*/
-//  safelock(const safelock&);
-
-/*! \brief  safelock = safelock
-
-    Not public, so it cannot be called, since we should never copy a mutex
-*/
-//  void operator=(const safelock&);
 
 public:
 

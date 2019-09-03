@@ -90,12 +90,16 @@ include/log_message.h : include/pthread_support.h
 include/macros.h : include/serialization.h
 	touch include/macros.h
 	
+include/memory.h : include/macros.h
+	
 include/multiplier.h : include/bands-modes.h include/log_message.h include/macros.h include/pthread_support.h include/serialization.h
 	touch include/multiplier.h
 	
 include/parallel_port.h : include/macros.h include/x_error.h
 	touch include/parallel_port.h
 	
+include/procfs.h : include/string_functions.h
+
 include/pthread_support.h : include/macros.h include/x_error.h
 	touch include/pthread_support.h
 	
@@ -173,7 +177,8 @@ src/diskfile.cpp : include/diskfile.h
 src/drlog.cpp : include/audio.h include/bandmap.h include/bands-modes.h include/cluster.h include/command_line.h \
                 include/cty_data.h include/cw_buffer.h include/diskfile.h include/drlog_context.h include/exchange.h \
                 include/functions.h include/fuzzy.h include/grid.h include/keyboard.h include/log.h \
-                include/log_message.h include/parallel_port.h include/qso.h include/qtc.h include/rate.h \
+                include/memory.h \
+                include/log_message.h include/parallel_port.h include/procfs.h include/qso.h include/qtc.h include/rate.h \
                 include/rig_interface.h include/rules.h include/scp.h include/screen.h include/serialization.h \
                 include/socket_support.h include/statistics.h include/string_functions.h include/trlog.h include/version.h
 	touch src/drlog.cpp
@@ -209,11 +214,15 @@ src/log.cpp : include/cabrillo.h include/log.h include/statistics.h include/stri
 src/log_message.cpp : include/diskfile.h include/log_message.h
 	touch src/log_message.cpp
 	
+src/memory.cpp : include/memory.h
+
 src/multiplier.cpp : include/multiplier.h
 	touch src/multiplier.cpp
 	
 src/parallel_port.cpp : include/log_message.h include/parallel_port.h
 	touch src/parallel_port.cpp
+	
+src/procfs.cpp : include/procfs.h
 	
 src/pthread_support.cpp : include/log_message.h include/pthread_support.h include/string_functions.h
 	touch src/pthread_support.cpp
@@ -321,11 +330,17 @@ bin/log.o : src/log.cpp
 bin/log_message.o : src/log_message.cpp
 	$(CC) $(CFLAGS) -o $@ src/log_message.cpp
 
+bin/memory.o : src/memory.cpp
+	$(CC) $(CFLAGS) -o $@ src/memory.cpp
+
 bin/multiplier.o : src/multiplier.cpp
 	$(CC) $(CFLAGS) -o $@ src/multiplier.cpp
 
 bin/parallel_port.o : src/parallel_port.cpp
 	$(CC) $(CFLAGS) -o $@ src/parallel_port.cpp
+
+bin/procfs.o : src/procfs.cpp
+	$(CC) $(CFLAGS) -o $@ src/procfs.cpp
 
 bin/pthread_support.o : src/pthread_support.cpp
 	$(CC) $(CFLAGS) -o $@ src/pthread_support.cpp
@@ -373,7 +388,8 @@ bin/drlog : bin/adif.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.
             bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
             bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
             bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
-            bin/log_message.o bin/multiplier.o bin/parallel_port.o bin/pthread_support.o bin/qso.o \
+            bin/log_message.o bin/memory.o bin/multiplier.o bin/parallel_port.o \
+            bin/procfs.o bin/pthread_support.o bin/qso.o \
             bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
             bin/screen.o bin/socket_support.o bin/statistics.o bin/string_functions.o bin/trlog.o \
             bin/version.o bin/x_error.o
@@ -381,7 +397,8 @@ bin/drlog : bin/adif.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.
 	bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
 	bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
 	bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
-	bin/log_message.o bin/multiplier.o bin/parallel_port.o bin/pthread_support.o bin/qso.o \
+	bin/log_message.o bin/memory.o bin/multiplier.o bin/parallel_port.o \
+	bin/procfs.o bin/pthread_support.o bin/qso.o \
 	bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
 	bin/screen.o bin/socket_support.o bin/statistics.o bin/string_functions.o bin/trlog.o \
 	bin/version.o bin/x_error.o \

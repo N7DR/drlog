@@ -1903,7 +1903,7 @@ void* display_date_and_time(void* vp)
   update_local_time();                          // update the LOCAL TIME window
 
   while (true)                                  // forever
-  { const time_t now { time(NULL) };              ///< get the time from the kernel
+  { const time_t now { ::time(NULL) };              ///< get the time from the kernel
 
     struct tm structured_time;               ///< for holding the time
 
@@ -1941,7 +1941,7 @@ void* display_date_and_time(void* vp)
 // possibly run thread to perform auto backup
         if (!context.auto_backup_directory().empty())
         { static tuple<string, string, string> tsss;
-          static pthread_t auto_backup_thread_id;
+          static pthread_t                     auto_backup_thread_id;
 
 //          const string filename     { context.logfile() };
 //          const string directory    { context.auto_backup() };
@@ -1974,12 +1974,6 @@ void* display_date_and_time(void* vp)
 // possibly update SYSTEM MEMORY window
         if (win_system_memory.wp())
           update_system_memory();
- //         { const uint64_t mem_available { meminfo.mem_available()  / MILLION };
-//            const uint64_t mem_total     { meminfo.mem_total() / MILLION };
-//
-//            win_system_memory < mem_available < "M / " < mem_total <= "M";
-//          }
-
 
 // possibly turn off audio recording
         if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and audio.recording())
@@ -2005,11 +1999,6 @@ void* display_date_and_time(void* vp)
         { static pthread_t auto_screenshot_thread_id;
           static string filename;
 
-//          const string dts           { date_time_string() };
-//          const string suffix        { dts.substr(0, 13) + '-' + dts.substr(14) };   // replace : with -
-//          const string complete_name { "auto-screenshot-"s + suffix};
-
-//          filename = complete_name;
           filename = "auto-screenshot-"s + dts.substr(0, 13) + '-' + dts.substr(14);   // replace : with -
 
           ost << "dumping screenshot at time: " << hhmmss() << endl;
@@ -2040,7 +2029,6 @@ void* display_date_and_time(void* vp)
       }
 
 // if a new day, then update date window
-//      const string date_string { substring(date_time_string(), 0, 10) };
       const string date_string { substring(dts, 0, 10) };
 
       if (date_string != last_date)
@@ -6002,7 +5990,7 @@ void alert(const string& msg, const bool show_time)
   win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
   if (show_time)
-    win_message < now < " "s;
+    win_message < now < SPACE_STR;
 
   win_message <= msg;
   ost << "ALERT: " << now << " " << msg << endl;
@@ -6022,22 +6010,26 @@ void rig_error_alert(const string& msg)
 
 /// update the QSO and score values in <i>win_rate</i>
 void update_rate_window(void)
-{ const vector<unsigned int> rate_periods { context.rate_periods() };    // in minutes
+{ constexpr int RATE_PERIOD_WIDTH { 3 };
+  constexpr int QS_WIDTH          { 3 };
+  constexpr int SCORE_WIDTH       { 10 };
+  
+  const vector<unsigned int> rate_periods { context.rate_periods() };    // in minutes
 
-  string rate_str { pad_string(""s, 3) + pad_string("Qs"s, 3) + pad_string("Score"s, 10) };
+  string rate_str { pad_string(EMPTY_STR, RATE_PERIOD_WIDTH) + pad_string("Qs"s, QS_WIDTH) + pad_string("Score"s, SCORE_WIDTH) };
 
   if (rate_str.length() != static_cast<unsigned int>(win_rate.width()))    // LF is added automatically if a string fills a line
     rate_str += LF;
 
   for (const auto& rate_period : rate_periods)
-  { string str { pad_string(to_string(rate_period), 3, PAD_RIGHT) };
+  { string str { pad_string(to_string(rate_period), RATE_PERIOD_WIDTH, PAD_RIGHT) };
 
     const pair<unsigned int, unsigned int> qs { rate.calculate_rate(rate_period * 60, context.normalise_rate() ? 3600 : 0) };
 
-    str += pad_string(to_string(qs.first), 3);
-    str += pad_string(separated_string(qs.second, TS), 10);
+    str += pad_string(to_string(qs.first), QS_WIDTH);
+    str += pad_string(separated_string(qs.second, TS), SCORE_WIDTH);
 
-    rate_str += (str + (str.length() == static_cast<unsigned int>(win_rate.width()) ? ""s : LF) );      // LF is added automatically if a string fills a line
+    rate_str += (str + (str.length() == static_cast<unsigned int>(win_rate.width()) ? EMPTY_STR : LF) );      // LF is added automatically if a string fills a line
   }
 
   win_rate < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < centre("RATE"s, win_rate.height() - 1)
