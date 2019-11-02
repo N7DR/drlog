@@ -191,7 +191,7 @@ protected:
   Window                      _window_id;           ///< the X window ID
   bool                        _x_multithreaded;     ///< do we permit multiple threads in X?
 
-  pt_mutex _keyboard_mutex;                         ///< mutex to keep the object thread-safe
+  mutable pt_mutex _keyboard_mutex { "keyboard queue" };                 ///< mutex to keep the object thread-safe
 
 /*! \brief                  X error handler
     \param  display_p       pointer to X display
@@ -202,24 +202,29 @@ protected:
 */
   static int _x_error_handler(Display* display_p, XErrorEvent* error_event_p);
 
+  static int _x_io_error_handler(Display* display_p);
+
 public:
 
 /// default constructor
   keyboard_queue(void);
 
 /// destructor
-  virtual ~keyboard_queue(void)
-  { }
+  virtual ~keyboard_queue(void) = default;
 
-  READ(display_p);                      ///< the X display pointer
-  READ(window_id);                      ///< the X window ID
-  READ_AND_WRITE(x_multithreaded);      ///< do we permit multiple threads in X?
+//  READ(display_p);                      ///< the X display pointer
+//  READ(window_id);                      ///< the X window ID
+//  READ_AND_WRITE(x_multithreaded);      ///< do we permit multiple threads in X?
+
+  SAFEREAD_WITH_INTERNAL_MUTEX(display_p, _keyboard);
+  SAFEREAD_WITH_INTERNAL_MUTEX(window_id, _keyboard);
+  SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(x_multithreaded, _keyboard);
 
 /// how many events are in the queue?
-  const size_t size(void);
+  const size_t size(void) const;
 
 /// is the queue empty?
-  const bool empty(void);
+  const bool empty(void) const;
 
 /// move any pending X keyboard events to the queue
   void process_events(void);

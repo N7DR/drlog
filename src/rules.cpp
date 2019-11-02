@@ -342,6 +342,8 @@ const vector<exchange_field> contest_rules::_exchange_fields(const string& canon
   { ost << "Out of Range error in contest_rules::_exchange_fields: " << oor.what() << endl;
     ost << "canonical prefix = " << canonical_prefix << ", mode = " << MODE_NAME[m] << ", expand_choices = " << boolalpha << expand_choices << endl;
 
+//    throw;  // I want to see how we get here
+
     return vector<exchange_field>();
   }
 }

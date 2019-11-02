@@ -37,9 +37,61 @@ extern message_stream           ost;    ///< for debugging, info
     Although ignored, the return type has to match the type documented for the parameter to XSetErrorHandler()
 */
 int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_event_p)
-{ cerr << "X Error" << endl;
+{ 
+// http://www.rahul.net/kenton/xproto/xrequests.html
+  if ( (static_cast<int>(error_event_p->error_code) == BadMatch) and (static_cast<int>(error_event_p->request_code) == 73) )
+  { ost << "X BadMatch error in XGetImage() ignored" << endl;
+      return 0;
+  }
+  
+  ost << "X Error" << endl;
+
+/* from man XErrorEvent:
+
+       typedef struct {
+               int type;
+               Display *display;       // Display the event was read from
+               XID resourceid;         // resource id
+               unsigned long serial;           // serial number of failed request
+               unsigned char error_code;       // error code of failed request
+               unsigned char request_code;     // Major op-code of failed request
+               unsigned char minor_code;       // Minor op-code of failed request
+       } XErrorEvent;
+       
+      The serial member is the number of requests, starting from one, sent over the network connection since it was opened.  
+      It is the number that was the value of NextRequest immediately before the failing call was made.  The
+      request_code member is a protocol request of the procedure that failed, as defined in <X11/Xproto.h>.
+
+*/
+
+  ost << "XErrorEvent: " << endl
+      << "  type         : " << error_event_p->type << endl
+      << "  display ptr  : " << error_event_p->display << endl
+      << "  resourceid   : " << error_event_p->resourceid << endl
+      << "  serial       : " << error_event_p->serial << endl
+      << "  error code   : " << static_cast<int>(error_event_p->error_code) << endl
+      << "  request code : " << static_cast<int>(error_event_p->request_code) << endl
+      << "  minor code   : " << static_cast<int>(error_event_p->minor_code) << endl;
+
+    constexpr int BUF_SIZE { 4096 };
+
+    char buf[BUF_SIZE];
+
+    XGetErrorText(error_event_p->display, error_event_p->error_code, &buf[0], BUF_SIZE);
+    
+    ost << "Error text : " << buf << endl;
+
   sleep(2);
   exit(-1);
+}
+
+int keyboard_queue::_x_io_error_handler(Display* display_p)
+{ ost << "X IO Error; terminating" << endl;
+
+  sleep(2);
+  exit(-1);
+  
+  return -1;
 }
 
 /*! \brief      Thread function to run the X event loop
@@ -67,10 +119,14 @@ keyboard_queue::keyboard_queue(void) :
     exit(-1);
   };
 
-  XInitThreads();
+  Status status = XInitThreads();
+  
+  if (status == 0)
+    delayed_exit("ERROR returned from XInitThreads; aborting"s, 2);
 
-// set the error handler for X
+// set the error handlers for X
   XSetErrorHandler(_x_error_handler);
+  XSetIOErrorHandler(_x_io_error_handler);
 
   _display_p = XOpenDisplay(NULL);
 
@@ -79,16 +135,26 @@ keyboard_queue::keyboard_queue(void) :
 
 // get the window ID
   const char* cp { getenv("WINDOWID") };
+  
   if (!cp)
     delayed_exit("Fatal error: unable to obtain window ID"s, 2);
 
   _window_id = from_string<Window>(cp);
 
 // we want to be the only process to have access to key presses in our window
-  XGrabKey(_display_p, AnyKey, AnyModifier, _window_id, false, GrabModeAsync, GrabModeAsync);
+
+  XLockDisplay(_display_p);     // overkill, but do it anyway
+
+  int istatus = XGrabKey(_display_p, AnyKey, AnyModifier, _window_id, false, GrabModeAsync, GrabModeAsync);
+  
+  ost << "Returned from XGrabKey: " << istatus << endl;
 
 // we are interested only in key events
-  XSelectInput(_display_p, _window_id, KeyPressMask | KeyReleaseMask);
+  istatus = XSelectInput(_display_p, _window_id, KeyPressMask | KeyReleaseMask);
+
+  XUnlockDisplay(_display_p);
+
+  ost << "Returned from XSelectInput: " << istatus << endl;
 
   static pthread_t thread_id_1;
 
@@ -105,7 +171,7 @@ keyboard_queue::keyboard_queue(void) :
 void keyboard_queue::process_events(void)
 { XEvent event;                    // the X event
 
-  const int BUF_SIZE = 256;
+  constexpr int BUF_SIZE { 256 };
 
   char buf[BUF_SIZE + 1];
   KeySym ks;
@@ -141,21 +207,24 @@ void keyboard_queue::process_events(void)
   {
 // get the next event
     if (_x_multithreaded)           // this should always be true in drlog
-    { bool got_event = false;
+    { bool got_event { false };
 
       while (!got_event)
       { XLockDisplay(_display_p);
-        int pending = XPending(_display_p);
-        XUnlockDisplay(_display_p);
-
+      
+        int pending { XPending(_display_p) };
+//        XUnlockDisplay(_display_p);
+        
         if (pending)
-        { XLockDisplay(_display_p);
+        { //XLockDisplay(_display_p);
           XWindowEvent(_display_p, _window_id, KeyPressMask | KeyReleaseMask, &event);
           XUnlockDisplay(_display_p);
           got_event = true;
         }
         else
+        { XUnlockDisplay(_display_p);
           sleep_for(milliseconds(10));
+        }
       }
     }
     else                            // this should never be true in drlog
@@ -170,7 +239,7 @@ void keyboard_queue::process_events(void)
       ke.xkey_time(event.xkey.time);
 
 // get the related KeySym and string representation
-      const int n_chars = XLookupString((XKeyEvent*)(&event), buf, BUF_SIZE, &ks, NULL);
+      const int n_chars { XLookupString((XKeyEvent*)(&event), buf, BUF_SIZE, &ks, NULL) };
 
       buf[n_chars] = static_cast<char>(0);
 
@@ -182,7 +251,8 @@ void keyboard_queue::process_events(void)
 //   2. KeyRelease for the SHIFT keys
 // KeySyms are defined in:      /usr/include/X11/keysymdef.h
 
-      bool interesting_event = false;
+      bool interesting_event { false };
+      
       interesting_event |= (event.type == KeyPress);
       interesting_event |= (event.type == KeyRelease and ((ks == XK_Shift_L) or (ks == XK_Shift_R)));
 
@@ -196,17 +266,24 @@ void keyboard_queue::process_events(void)
 }
 
 /// how many events are in the queue?
-const size_t keyboard_queue::size(void)
+const size_t keyboard_queue::size(void) const
 { SAFELOCK(_keyboard);
 
   return _events.size();
 }
 
 /// is the queue empty?
-const bool keyboard_queue::empty(void)
-{ SAFELOCK(_keyboard);
+const bool keyboard_queue::empty(void) const
+{ try
+  { SAFELOCK(_keyboard);
 
-  return _events.empty();
+    return _events.empty();
+  }
+  
+  catch (const pthread_error& e)
+  { ost << "Caught pthread exception in keyboard_queue::empty(); code = " << e.code() << "; reason = " << e.reason() << endl;
+    throw;
+  }
 }
 
 /*! \brief      What event is at the front of the queue?
@@ -282,7 +359,7 @@ void keyboard_queue::push_key_press(const KeySym ks)
 
    const Window window_id = _window_id;
 
-   Display* display_p = _display_p;
+//   Display* display_p = _display_p;
 
 // TRY http://stackoverflow.com/questions/6560553/linux-x11-global-keyboard-hook
 
@@ -300,8 +377,8 @@ void keyboard_queue::push_key_press(const KeySym ks)
    event.xkey.same_screen = True;
 
  // TRY   http://www.doctort.org/adam/nerd-notes/x11-fake-keypress-event.html
-   /* const int status = */ XSendEvent(display_p, window_id, False, KeyPressMask, &event);
-   XFlush(display_p);
+   /* const int status = */ XSendEvent(_display_p, window_id, False, KeyPressMask, &event);
+   XFlush(_display_p);
 
    if (_x_multithreaded)
      XUnlockDisplay(_display_p);

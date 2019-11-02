@@ -985,10 +985,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
               const int n_read { read(fd, c_in.data(), 500) };        // read a maximum of 500 characters
 
               if (n_read > 0)                      // should always be true
-              { if (cmd == "AR;"s)
-                  ost << "n_read = " << n_read << endl;
-
-                total_read += n_read;
+              { total_read += n_read;
                 c_in[n_read] = static_cast<char>(0);    // append a null byte
 
                 rcvd += string(c_in.data());

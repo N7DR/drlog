@@ -53,7 +53,8 @@ constexpr int PTHREAD_LOCK_ERROR                      { -1 },       ///< Error l
               PTHREAD_UNRECOGNISED_INHERITANCE_POLICY { -11 },      ///< Inheritance policy is unknown
               PTHREAD_INHERITANCE_POLICY_ERROR        { -12 },      ///< Error setting inheritance policy
               PTHREAD_STACK_SIZE_ERROR                { -13 },      ///< Error setting stack size
-              PTHREAD_PRIORITY_ERROR                  { -14 };      ///< Error related to priority
+              PTHREAD_PRIORITY_ERROR                  { -14 },      ///< Error related to priority
+              PTHREAD_MUTEX_ATTR_GET_SET_ERROR        { -15 };      ///< Error getting or setting a mutex attribute
 
 // attributes that can be set at the time that a thread_attribute object is created
 constexpr unsigned int PTHREAD_DETACHED     { 1 };        ///< detached pthread
@@ -300,6 +301,7 @@ class pt_mutex
 protected:
 
   pthread_mutex_t           _mutex;             ///< Encapsulated mutex
+  std::string               _name { "NONE"s };  ///< name of mutex
   pthread_t                 _thread_id;         ///< ID of the thread that owns the locked mutex
   thread_specific_data<int> _tsd_refcount;      ///< reference counter for recursive locking
 
@@ -308,7 +310,11 @@ public:
 /// constructor
   inline pt_mutex(void)
     { pthread_mutex_init(&_mutex, NULL); }
-
+    
+  inline explicit pt_mutex(const std::string& nm) :
+    _name(nm)
+  { pthread_mutex_init(&_mutex, NULL); }
+    
 /// forbid copying
   pt_mutex(const pt_mutex&) = delete;
 
@@ -324,8 +330,50 @@ public:
 /// get the thread ID
   inline const pthread_t thread_id(void) const
     { return _thread_id; }
+    
+  inline const std::string name(void) const
+    { return _name; }
 
   friend class pt_condition_variable;       ///< needs access to details of the mutex
+};
+
+// --------------------------------------------  pt_mutex_attributes  ----------------------------------
+
+/*! \class  pt_mutex_attributes
+    \brief  Encapsulate a pthread_mutexattr
+*/
+
+class pt_mutex_attributes
+{
+protected:
+
+  pthread_mutexattr_t         _mutexattr;         ///< Encapsulated mutexsttr object
+
+public:
+
+/// constructor
+  inline pt_mutex_attributes(void)
+    { pthread_mutexattr_init(&_mutexattr); }
+
+/// destructor
+  inline virtual ~pt_mutex_attributes(void)
+    { pthread_mutexattr_destroy(&_mutexattr); }
+
+  const int priority_ceiling(void) const;
+
+  void priority_ceiling(const int pc);
+
+  const int protocol(void) const;
+  
+  const std::string protocol_name(void) const;
+
+  void protocol(const int pc);
+
+  const int type(void) const;
+  
+  const std::string type_name(void) const;
+
+  void type(const int ty);
 };
 
 // --------------------------------------------  pt_condition variable  --------------------------

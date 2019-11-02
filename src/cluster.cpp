@@ -184,7 +184,7 @@ const string dx_cluster::read(void)
   }
     
   catch (const socket_support_error& e)
-  { ost << "caught socket_support_error in read()" << endl;
+  { //ost << "caught socket_support_error in read()" << endl;
 
     if (e.code() != SOCKET_SUPPORT_TIMEOUT)    // an error that is not a timeout has to be handled
     {
@@ -192,9 +192,9 @@ const string dx_cluster::read(void)
       ost << "Error reading from socket; attempting reconnection" << endl;
 
       _process_error();
-    }
-    else
-      ost << "tcp_socket_error timeout in read: code = " << e.code() << "; reason = " << e.reason() << endl;
+    }  // be silent if it's just a timeout
+//    else
+//      ost << "tcp_socket_error timeout in reading dx_cluster: code = " << e.code() << "; reason = " << e.reason() << endl;
   }
 
   catch (const tcp_socket_error&)
@@ -385,6 +385,11 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
   if (_valid)
     _band = static_cast<BAND>(_freq);
 }
+
+//const MODE dx_post:mode(void) const
+//{
+//  
+//}
 
 /*! \brief          Write a <i>dx_post</i> object to an output stream
     \param  ost     output stream

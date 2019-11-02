@@ -78,7 +78,7 @@ public:
     \param  msg     the message to be sent
 */
   inline void send(const std::string& msg = "\r\n"s)
-   { _connection.send(msg); }
+    { _connection.send(msg); }
 
   READ(source);        ///< source for postings
 
@@ -137,6 +137,8 @@ public:
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
   READ(valid);                  ///< is it a valid post?
+  
+//  const MODE mode(void) const;
 };
 
 /*! \brief          Write a <i>dx_post</i> object to an output stream

@@ -444,7 +444,8 @@ const string tcp_socket::read(const unsigned long timeout_secs)
   switch (socket_status)
   { case 0:                    // timeout
     { if (timeout_secs)        // don't signal timeout if we weren't given a duration to wait
-      { ost << "Throwing SOCKET_SUPPORT_TIMEOUT; timeout in read() after " << to_string(timeout_secs) << " seconds" << endl;
+      { //ost << "Throwing SOCKET_SUPPORT_TIMEOUT; timeout in read() after " << to_string(timeout_secs) << " seconds" << endl;
+        //throw exception();
         throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, "Timeout after "s + to_string(timeout_secs) + " seconds"s);
       }
       break;
@@ -462,7 +463,7 @@ const string tcp_socket::read(const unsigned long timeout_secs)
       int status;
   
       do
-      { status  = ::recv(_sock, cp, BUFSIZE, 0);
+      { status = ::recv(_sock, cp, BUFSIZE, 0);
 
         if (status == -1)
         { const string msg { "errno = "s + to_string(errno) + ": "s + strerror(errno) };
@@ -472,7 +473,7 @@ const string tcp_socket::read(const unsigned long timeout_secs)
         }
 
         rv += string(cp, status);
-      }     while (status == BUFSIZE);
+      } while (status == BUFSIZE);
 
       break;
     }
@@ -485,7 +486,7 @@ const string tcp_socket::read(const unsigned long timeout_secs)
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::idle_time(const unsigned int seconds)
-{ /* static */ constexpr int optlen = sizeof(int);
+{ constexpr int optlen { sizeof(int) };
 
   const int optval { static_cast<int>(seconds) };
   
@@ -517,7 +518,7 @@ void tcp_socket::retry_time(const unsigned int seconds)
     \param  n   maximum number of retries
 */
 void tcp_socket::max_retries(const unsigned int n)
-{ /* static */ constexpr int optlen { sizeof(int) };
+{ constexpr int optlen { sizeof(int) };
 
   const int optval { static_cast<int>(n) };
   
@@ -533,7 +534,7 @@ void tcp_socket::max_retries(const unsigned int n)
     \param  torf    whether to use keep-alives
 */
 void tcp_socket::keep_alive(const bool torf)
-{ /* static */ constexpr int optlen { sizeof(int) };
+{ constexpr int optlen { sizeof(int) };
 
   const int optval { torf ? 1 : 0 };
   

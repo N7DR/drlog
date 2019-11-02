@@ -712,6 +712,12 @@ pt_mutex::~pt_mutex(void)
 
   ip = _tsd_refcount.get();
   delete ip; 
+  
+// debug
+  ost << "Mutex destroyed: " << _name << endl;
+  
+// create core dump
+//  throw exception();
 }
 
 /// lock
@@ -726,10 +732,10 @@ void pt_mutex::lock(void)
   }
   
   if (*ip == 0)
-  { const int status = pthread_mutex_lock(&_mutex);
+  { const int status { pthread_mutex_lock(&_mutex) };
 
     if (status != 0)
-      throw pthread_error(PTHREAD_LOCK_ERROR, (string)"ERROR LOCKING MUTEX: " + to_string(status));
+      throw pthread_error(PTHREAD_LOCK_ERROR, (string)"ERROR LOCKING MUTEX: " + to_string(status) + " : " + strerror(status));
 
     _thread_id = pthread_self();
   }
@@ -760,11 +766,110 @@ void pt_mutex::unlock(void)
 // we will report that no thread has this lock, even though in fact someone still does.  
     _thread_id = 0;
 
-    const int status = pthread_mutex_unlock(&_mutex);
+    const int status { pthread_mutex_unlock(&_mutex) };
 
     if (status != 0)
       throw pthread_error(PTHREAD_UNLOCK_ERROR, (string)"ERROR UNLOCKING MUTEX: " + to_string(status));
   }
+}
+
+// --------------------------------------------  pt_mutex_attributes  ----------------------------------
+
+/*! \class  pt_mutex_attributes
+    \brief  Encapsulate a pthread_mutexattr
+*/
+
+const int pt_mutex_attributes::priority_ceiling(void) const
+{ int rv;
+  
+  const int status { pthread_mutexattr_getprioceiling(&_mutexattr, &rv) };
+  
+  if (status)
+    throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR GETTING MUTEX PRIORITY CEILING: "s  + to_string(status));
+    
+  return rv;
+}
+
+void pt_mutex_attributes::priority_ceiling(const int pc)
+{ const int status { pthread_mutexattr_setprioceiling(&_mutexattr, pc) }; 
+
+  if (status)
+    throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR SETTING MUTEX PRIORITY CEILING: "s  + to_string(status));
+}
+
+const int pt_mutex_attributes::protocol(void) const
+{ int rv;
+  
+  const int status { pthread_mutexattr_getprotocol(&_mutexattr, &rv) };
+  
+  if (status)
+    throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR GETTING MUTEX PROTOCOL: "s  + to_string(status));
+
+  return rv;
+}
+
+const string pt_mutex_attributes::protocol_name(void) const
+{ switch (protocol())
+  { case PTHREAD_PRIO_NONE :
+      return "PTHREAD_PRIO_NONE";
+      
+    case PTHREAD_PRIO_INHERIT :
+      return "PTHREAD_PRIO_INHERIT";
+      
+    case PTHREAD_PRIO_PROTECT :
+      return "PTHREAD_PRIO_PROTECT";
+      
+    default :
+      return "UNKNOWN";
+  }
+}
+
+void pt_mutex_attributes::protocol(const int pr)
+{ const int status { pthread_mutexattr_setprotocol(&_mutexattr, pr) }; 
+
+  if (status)
+    throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR SETTING MUTEX PROTOCOL: "s  + to_string(status));
+}
+
+const int pt_mutex_attributes::type(void) const
+{ int rv;
+  
+  const int status { pthread_mutexattr_gettype(&_mutexattr, &rv) };
+
+  if (status)
+    throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR GETTING MUTEX TYPE: "s  + to_string(status));
+    
+  return rv;
+}
+
+const string pt_mutex_attributes::type_name(void) const
+{ const int t { type() };
+
+  string rv { ( (t == PTHREAD_MUTEX_DEFAULT) ? "PTHREAD_MUTEX_DEFAULT = " : string() ) };
+  
+  switch (t)
+  { case PTHREAD_MUTEX_NORMAL :
+      return rv + "PTHREAD_MUTEX_NORMAL";
+      
+    case PTHREAD_MUTEX_ERRORCHECK :
+      return rv + "PTHREAD_MUTEX_ERRORCHECK";
+      
+    case PTHREAD_MUTEX_RECURSIVE :
+      return rv + "PTHREAD_MUTEX_RECURSIVE";
+      
+//    case PTHREAD_MUTEX_DEFAULT :          same as PTHREAD_MUTEX_NORMAL
+//      return "PTHREAD_MUTEX_DEFAULT";
+
+    default :
+      return rv + "UNKNOWN";
+  }
+}
+
+void pt_mutex_attributes::type(const int ty)
+{ const int status {  pthread_mutexattr_settype(&_mutexattr, ty) };
+
+  if (status)
+    throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR SETTING MUTEX TYPE: "s  + to_string(status));
 }
 
 // ------------------------------ pt_condition variable ------------------------------
@@ -779,8 +884,7 @@ void pt_mutex::unlock(void)
 pt_condition_variable::pt_condition_variable(void) :
   _mutex_p(NULL),
   _predicate(false)
-{ pthread_cond_init(&_cond, NULL);
-}
+{ pthread_cond_init(&_cond, NULL); }
 
 /*! \brief          Construct and associate a mutex with the condition variable
     \param  mtx     mutex to be associated with the condition variable
@@ -788,8 +892,7 @@ pt_condition_variable::pt_condition_variable(void) :
 pt_condition_variable::pt_condition_variable(pt_mutex& mtx) :
   _mutex_p(&mtx),
   _predicate(false)
-{ pthread_cond_init(&_cond, NULL);
-}
+{ pthread_cond_init(&_cond, NULL); }
 
 /*! \brief  Wait on the condition variable
 
@@ -805,7 +908,7 @@ void pt_condition_variable::wait(void)
 
 execute_wait:
   try
-  { const int status =  pthread_cond_wait(&_cond, &(_mutex_p->_mutex));
+  { const int status {  pthread_cond_wait(&_cond, &(_mutex_p->_mutex)) };
 
     if (status != 0)
       throw pthread_error(PTHREAD_CONDVAR_WAIT_ERROR, "Error waiting on condition variable");
@@ -833,7 +936,7 @@ const bool pt_condition_variable::wait(const unsigned int n_secs)
 
   struct timespec timeout { static_cast<__time_t>(time(NULL) + n_secs), 0 };
 
-  int status = pthread_cond_timedwait(&_cond, &(_mutex_p->_mutex), &timeout);
+  int status { pthread_cond_timedwait(&_cond, &(_mutex_p->_mutex), &timeout) };
 
 // ETIMEDOUT is not defined in Linux
   return (status != 0);
@@ -894,7 +997,7 @@ safelock::safelock(pt_mutex& ptm, const string& name) :
   }
 
   catch (...)
-  { ost << "ERROR in safelock constructor: " + _name << endl;
+  { ost << "ERROR in safelock constructor: " + _name + "; " << endl;
     throw;
   }
 }
@@ -914,15 +1017,15 @@ safelock::~safelock(void)
 
 /// How many threads belong to this process?
 const unsigned int n_threads(void)
-{ const pid_t pid = getpid();
-  const string filename = string("/proc/") + to_string(pid) + "/status";
-  const string contents = read_file(filename);
-  const vector<string> lines = to_lines(contents);
+{ const pid_t          pid      { getpid() };
+  const string         filename { "/proc/"s + to_string(pid) + "/status"s };
+  const string         contents { read_file(filename) };
+  const vector<string> lines    { to_lines(contents) };
 
   for (const auto& line : lines)
   { if (line.length() > 8 and line.substr(0, 8) == string("Threads:"))
-   { const string n = remove_peripheral_spaces(line.substr(8));
-     const unsigned int rv = from_string<unsigned int>(n);
+   { const string       n  { remove_peripheral_spaces(line.substr(8)) };
+     const unsigned int rv { from_string<unsigned int>(n) };
 
      return rv;
    }

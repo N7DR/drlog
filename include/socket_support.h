@@ -63,13 +63,7 @@ const std::string tcp_socket_error_string[7] { std::string(),
                                              };
 
 /// Type that holds a socket -- syntactic sugar
-//typedef int SOCKET;
 using SOCKET = int;
-
-/// used to create sockets of different protocol families
-//enum class SOCKET_FAMILY { IPV4,
-//                           IPV6
-//                         };
 
 /*! \brief                  Return the name of an error
     \param  error_number    socket error number
@@ -100,7 +94,6 @@ void flush_read_socket(SOCKET& sock);
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-//const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr = 0);
 const sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr = 0);
 
 /*! \brief                          Generate a sockaddr_storage from an address and port

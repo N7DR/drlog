@@ -26,40 +26,49 @@
 
 #include <alsa/asoundlib.h>
 
-/// audio formats
-enum AUDIO_FORMAT { AUDIO_FORMAT_DEFAULT = -1,
-                    AUDIO_FORMAT_RAW     = 0,
-                    AUDIO_FORMAT_VOC     = 1,
-                    AUDIO_FORMAT_WAVE    = 2,
-                    AUDIO_FORMAT_AU      = 3
-                  };
+#undef BEXT_EXTENSION
+
+/// audio formats -- these are not actually used
+enum class AUDIO_FORMAT { DEFAULT = -1,
+                          RAW     = 0,
+                          VOC     = 1,
+                          WAVE    = 2,
+                          AU      = 3
+                        };
+
+//enum AUDIO_FORMAT { AUDIO_FORMAT_DEFAULT = -1,
+//                    AUDIO_FORMAT_RAW     = 0,
+//                    AUDIO_FORMAT_VOC     = 1,
+//                    AUDIO_FORMAT_WAVE    = 2,
+//                    AUDIO_FORMAT_AU      = 3
+//                  };
 
 // Errors
-const int AUDIO_UNABLE_TO_OPEN                = -1,      ///< unable to open audio device
-          AUDIO_UNABLE_TO_OBTAIN_INFO         = -2,      ///< cannot get info about audio device
-          AUDIO_NO_CONFIGURATION              = -3,      ///< no configuration abailable for a PCM
-          AUDIO_NO_ACCESS_TYPE                = -4,      ///< no access type
-          AUDIO_NO_SAMPLE_FORMAT              = -5,      ///< no sample format
-          AUDIO_NO_CHANNEL_COUNT              = -6,      ///< no channel count
-          AUDIO_RATE_SET_ERROR                = -7,      ///< error setting rate
-          AUDIO_INACCURATE_RATE               = -8,      ///< rate is not accurate
-          AUDIO_PLUGIN_ERROR                  = -9,      ///< error related to plugin
-          AUDIO_INVALID_BUFFER_TIME           = -10,     ///< buffer time is invalid
-          AUDIO_INVALID_PERIOD                = -11,     ///< invalid period time or size
-          AUDIO_INVALID_BUFFER                = -12,     ///< invalid buffer time or size
-          AUDIO_CANNOT_INSTALL_HW_PARAMS      = -13,     ///< unable to install hardware parameters
-          AUDIO_EQUAL_PERIOD_AND_BUFFER_SIZE  = -14,     ///< period and buffer size are equal
-          AUDIO_UNABLE_TO_GET_PERIOD_SIZE     = -15,     ///< unable to get a single period size
-          AUDIO_UNABLE_TO_GET_BUFFER_SIZE     = -16,     ///< unable to get a single buffer size
-          AUDIO_UNABLE_TO_GET_SW_PARAMS       = -17,     ///< unable to get software parameters
-          AUDIO_UNABLE_TO_SET_AVAIL_MIN       = -18,     ///< unable to set available minimum
-          AUDIO_UNABLE_TO_SET_START_THRESHOLD = -19,     ///< cannot set start threshold
-          AUDIO_UNABLE_TO_SET_STOP_THRESHOLD  = -20,     ///< cannot set stop threshold
-          AUDIO_CANNOT_INSTALL_SW_PARAMS      = -21,     ///< unable to install software parameters
-          AUDIO_NO_MEMORY                     = -22,     ///< out of memory
-          AUDIO_WAV_WRITE_ERROR               = -23,     ///< error writing file
-          AUDIO_DEVICE_READ_ERROR             = -24,     ///< error reading audio device
-          AUDIO_WAV_OPEN_ERROR                = -25;     ///< error opening file
+constexpr int AUDIO_UNABLE_TO_OPEN                { -1 },      ///< unable to open audio device
+              AUDIO_UNABLE_TO_OBTAIN_INFO         { -2 },      ///< cannot get info about audio device
+              AUDIO_NO_CONFIGURATION              { -3 },      ///< no configuration abailable for a PCM
+              AUDIO_NO_ACCESS_TYPE                { -4 },      ///< no access type
+              AUDIO_NO_SAMPLE_FORMAT              { -5 },      ///< no sample format
+              AUDIO_NO_CHANNEL_COUNT              { -6 },      ///< no channel count
+              AUDIO_RATE_SET_ERROR                { -7 },      ///< error setting rate
+              AUDIO_INACCURATE_RATE               { -8 },      ///< rate is not accurate
+              AUDIO_PLUGIN_ERROR                  { -9 },      ///< error related to plugin
+              AUDIO_INVALID_BUFFER_TIME           { -10 },     ///< buffer time is invalid
+              AUDIO_INVALID_PERIOD                { -11 },     ///< invalid period time or size
+              AUDIO_INVALID_BUFFER                { -12 },     ///< invalid buffer time or size
+              AUDIO_CANNOT_INSTALL_HW_PARAMS      { -13 },     ///< unable to install hardware parameters
+              AUDIO_EQUAL_PERIOD_AND_BUFFER_SIZE  { -14 },     ///< period and buffer size are equal
+              AUDIO_UNABLE_TO_GET_PERIOD_SIZE     { -15 },     ///< unable to get a single period size
+              AUDIO_UNABLE_TO_GET_BUFFER_SIZE     { -16 },     ///< unable to get a single buffer size
+              AUDIO_UNABLE_TO_GET_SW_PARAMS       { -17 },     ///< unable to get software parameters
+              AUDIO_UNABLE_TO_SET_AVAIL_MIN       { -18 },     ///< unable to set available minimum
+              AUDIO_UNABLE_TO_SET_START_THRESHOLD { -19 },     ///< cannot set start threshold
+              AUDIO_UNABLE_TO_SET_STOP_THRESHOLD  { -20 },     ///< cannot set stop threshold
+              AUDIO_CANNOT_INSTALL_SW_PARAMS      { -21 },     ///< unable to install software parameters
+              AUDIO_NO_MEMORY                     { -22 },     ///< out of memory
+              AUDIO_WAV_WRITE_ERROR               { -23 },     ///< error writing file
+              AUDIO_DEVICE_READ_ERROR             { -24 },     ///< error reading audio device
+              AUDIO_WAV_OPEN_ERROR                { -25 };     ///< error opening file
 
 // -----------  riff_header  ----------------
 
@@ -73,14 +82,12 @@ class riff_header
 {
 protected:
 
-  uint32_t  _chunk_size;                ///< file size - 8 (bytes)
+  uint32_t  _chunk_size { 0 };                ///< file size - 8 (bytes)
 
 public:
 
 /// constructor
-  inline riff_header(void) :
-    _chunk_size(0)
-  { }
+  inline riff_header(void) = default;
 
   READ_AND_WRITE(chunk_size);          ///< file size - 8 (bytes)
 
@@ -179,7 +186,7 @@ protected:
   size_t            _bits_per_frame;            ///< bits per sample * number of channels
   snd_pcm_uframes_t _buffer_frames;             ///< number of frames in buffer?
   unsigned int      _buffer_time;               ///< amount of time in buffer?
-  int               _file_type;                 ///< format of file
+//  int               _file_type;                 ///< format of file
   snd_pcm_t*        _handle;                    ///< PCM handle
   PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
   snd_pcm_info_t*   _info;                      ///< pointer to information structure that corresponds to <i>_handle</i>
@@ -254,15 +261,13 @@ protected:
 public:
 
 /// constructor
-//  audio_recorder(void);
-  /// constructor
   inline audio_recorder(void) :
     _aborting(false),                         // we are not aborting a capture
     _audio_buf(nullptr),                      // no buffer by default
     _base_filename("drlog-audio"s),            // default output file
     _buffer_frames(0),                        // no frames in buffer?
     _buffer_time(0),                          // no time covered by buffer?
-    _file_type(AUDIO_FORMAT_WAVE),            // WAV format
+//    _file_type(AUDIO_FORMAT::WAVE),            // WAV format
     _handle(nullptr),                         // no PCM handle
     _info(nullptr),                           // explicitly set to uninitialised
     _max_file_time(0),                        // no maximum duration (in seconds)
@@ -288,8 +293,7 @@ public:
   { }
 
 /// destructor
-  inline virtual ~audio_recorder(void)
-    { }
+  inline virtual ~audio_recorder(void) = default;
 
   READ_AND_WRITE(base_filename);            ///< base name of output file
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds

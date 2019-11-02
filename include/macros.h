@@ -814,7 +814,7 @@ public:
 /// Syntactic sugar to avoid the "unused variable" warning when using the RANGE template, until C++ provides a proper way to have unused range-based loop variables
 template<typename Unused>
 inline void UNUSED( Unused&& )
-{ }
+  { }
 
 /*! \class  accumulator
     \brief  accumulate values, and inform when a threshold is reached

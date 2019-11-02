@@ -730,6 +730,14 @@ int main(int argc, char** argv)
 
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
 
+// write default mutex attribute information
+    { pt_mutex_attributes pta;
+    
+      ost << "default mutex priority ceiling: " << pta.priority_ceiling() << endl;
+      ost << "default mutex protocol: " << pta.protocol_name() << endl;
+      ost << "default mutex type: " << pta.type_name() << endl;
+    }      
+
 // possibly configure audio recording
     if (context.allow_audio_recording() and (context.start_audio_recording() != AUDIO_RECORDING::DO_NOT_START))
     { start_recording(context);
@@ -1999,7 +2007,7 @@ void* display_date_and_time(void* vp)
         { static pthread_t auto_screenshot_thread_id;
           static string filename;
 
-          filename = "auto-screenshot-"s + dts.substr(0, 13) + '-' + dts.substr(14);   // replace : with -
+          filename = "auto-screenshot-"s + dts.substr(0, 13) + "-"s + dts.substr(14);   // replace : with -
 
           ost << "dumping screenshot at time: " << hhmmss() << endl;
 
@@ -2310,6 +2318,12 @@ void* process_rbn_info(void* vp)
 // display if this is a new mult on any band, and if the poster is on our own continent
           const dx_post post       { line, location_db, rbn.source() };
           const bool    wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
+//          bool    wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
+
+//          if (!wrong_mode)
+//          { wrong_mode = 
+//            
+//          }
 
           if (post.valid() and !wrong_mode)
           { const BAND dx_band { post.band() };
@@ -2328,107 +2342,110 @@ void* process_rbn_info(void* vp)
 
               be.callsign(dx_callsign);
               be.freq(post.freq());        // also sets band and mode
-              be.frequency_str_decimal_places(1);
+              
+              if (rules.score_modes() < be.mode())
+              { be.frequency_str_decimal_places(1);
 
-              be.expiration_time(post.time_processed() + ( post.source() == POSTING_SOURCE::CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
-                              (context.bandmap_decay_time_rbn() * 60 ) ) );
-              be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
+                be.expiration_time(post.time_processed() + ( post.source() == POSTING_SOURCE::CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
+                                                                                                        (context.bandmap_decay_time_rbn() * 60 ) ) );
+                be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
 
 // update known mults before we test to see if this is a needed mult
 
 // possibly add the call to the known prefixes
-              update_known_callsign_mults(dx_callsign);
+                update_known_callsign_mults(dx_callsign);
 
 // possibly add the call to the known countries
-              if (context.auto_remaining_country_mults())
-                update_known_country_mults(dx_callsign);
+                if (context.auto_remaining_country_mults())
+                  update_known_country_mults(dx_callsign);
 
 // possibly add exchange mult value
-              const vector<string> exch_mults { rules.expanded_exchange_mults() };                                      // the exchange multipliers
+                const vector<string> exch_mults { rules.expanded_exchange_mults() };                                      // the exchange multipliers
 
-              for (const auto& exch_mult_name : exch_mults)
-              { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
+                for (const auto& exch_mult_name : exch_mults)
+                { if (context.auto_remaining_exchange_mults(exch_mult_name))                   // this means that for any mult that is not completely determined, it needs to be listed in AUTO REMAINING EXCHANGE MULTS
 // *** consider putting the regex into the multiplier object (in addition to the list of known values)
-                { const vector<string> exchange_field_names { rules.expanded_exchange_field_names(be.canonical_prefix(), be.mode()) };
-                  const bool is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
+                  { const vector<string> exchange_field_names       { rules.expanded_exchange_field_names(be.canonical_prefix(), be.mode()) };
+                    const bool           is_possible_exchange_field { ( find(exchange_field_names.cbegin(), exchange_field_names.cend(), exch_mult_name) != exchange_field_names.cend() ) };
 
-                  if (is_possible_exchange_field)
-                  { const string guess { exchange_db.guess_value(dx_callsign, exch_mult_name) };
+                    if (is_possible_exchange_field)
+                    { const string guess { exchange_db.guess_value(dx_callsign, exch_mult_name) };
 
-                    if (!guess.empty())
-                    { if ( statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess)) )
-                        update_remaining_exch_mults_window(exch_mult_name, rules, statistics, safe_get_band(), safe_get_mode());    // update if we added a new value of the mult
+                      if (!guess.empty())
+                      { if ( statistics.add_known_exchange_mult(exch_mult_name, MULT_VALUE(exch_mult_name, guess)) )
+                          update_remaining_exch_mults_window(exch_mult_name, rules, statistics, safe_get_band(), safe_get_mode());    // update if we added a new value of the mult
+                      }
                     }
                   }
                 }
-              }
 
-              be.calculate_mult_status(rules, statistics);
+                be.calculate_mult_status(rules, statistics);
 
-              const bool is_recent_call      { ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() ) };
-              const bool is_me               { (be.callsign() == context.my_call()) };
-              const bool is_interesting_mode { (rules.score_modes() < be.mode()) };
+                const bool is_recent_call      { ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() ) };
+                const bool is_me               { (be.callsign() == context.my_call()) };
+                const bool is_interesting_mode { (rules.score_modes() < be.mode()) };
 
 // CLUSTER MULT window
-              if (cluster_mult_win.defined())
-              { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
-                { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
-                  { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
-                    recent_mult_calls.push_back(target);
+                if (cluster_mult_win.defined())
+                { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
+                  { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
+                    { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
+                      recent_mult_calls.push_back(target);
 
-                    while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
-                      recent_mult_calls.pop_front();
+                      while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
+                        recent_mult_calls.pop_front();
 
-                    cluster_mult_win < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
+                      cluster_mult_win < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
 
-                    const int bg_colour { cluster_mult_win.bg() };
+                      const int bg_colour { cluster_mult_win.bg() };
+                      const int fg_colour { cluster_mult_win.fg() };
 
-                    if (is_me)
- //                     cluster_mult_win < COLOURS(cluster_mult_win.fg(), COLOUR_YELLOW);  // darkish blue
-                      cluster_mult_win < COLOURS(cluster_mult_win.fg(), my_cluster_mult_colour);  // darkish blue
+                      if (is_me)
+                        cluster_mult_win < COLOURS(COLOUR_YELLOW, my_cluster_mult_colour);  // darkish blue
 
-                    const string frequency_str { pad_string(be.frequency_str(), 7) };
+                      const string frequency_str { pad_string(be.frequency_str(), 7) };
 
 // highlight it if it's on our current band
-                    if ( (dx_band == cur_band) or is_me)
-                      cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_HIGHLIGHT;
+                      if ( (dx_band == cur_band) or is_me)
+                        cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_HIGHLIGHT;       // swaps fg/bg
+                      
+                      if (is_me)
+                        cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_BOLD;            // call in bold darkish blue
 
-                    cluster_mult_win < pad_string(frequency_str + SPACE_STR + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
+                      cluster_mult_win < pad_string(frequency_str + SPACE_STR + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
 
-                    if (is_me)
-                      cluster_mult_win < COLOURS(cluster_mult_win.fg(), bg_colour);
+                      if (is_me)
+                        cluster_mult_win < COLOURS(fg_colour, bg_colour);
 
-                    if ( (dx_band == cur_band) or is_me)
-                      cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+                      if ( (dx_band == cur_band) or is_me)
+                        cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+                    }
                   }
                 }
-              }
 
 // add the post to the correct bandmap
-              if (is_interesting_mode)
-              { switch (be.source())
-                { case BANDMAP_ENTRY_SOURCE::CLUSTER :
-                  case BANDMAP_ENTRY_SOURCE::RBN :
-                    bm_buffer.add(be.callsign(), post.poster());
+                if (is_interesting_mode)
+                { switch (be.source())
+                  { case BANDMAP_ENTRY_SOURCE::CLUSTER :
+                    case BANDMAP_ENTRY_SOURCE::RBN :
+                      bm_buffer.add(be.callsign(), post.poster());
 
-                    if (bm_buffer.sufficient_posters(be.callsign()))
-                    { //bandmaps[dx_band] += be;
-                      bandmap_insertion_queues[dx_band].push_back(be);
-                      changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
-                    }
+                      if (bm_buffer.sufficient_posters(be.callsign()))
+                      { //bandmaps[dx_band] += be;
+                        bandmap_insertion_queues[dx_band].push_back(be);
+                        changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
+                      }
 
-                    break;
+                      break;
 
-                  default :
+                    default :
                     //bandmaps[dx_band] += be;
-                    bandmap_insertion_queues[dx_band].push_back(be);
-                    changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
+                      bandmap_insertion_queues[dx_band].push_back(be);
+                      changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
+                  }
                 }
               }
             }
-            else
-              { //ost << "not a contest posting" << endl;
-              }
           }
           else
           { //ost << "invalid post" << endl;
@@ -2446,11 +2463,6 @@ void* process_rbn_info(void* vp)
       else
         bandmaps[b].process_insertion_queue(bandmap_insertion_queues[b]);
     }
-
-// there is still a small race condition here; need to pass window to the above routine
-
-//    if (changed_bands < cur_band)
-//      bandmap_win <= bandmaps[cur_band];
 
     if (cluster_mult_win_was_changed)    // update the window on the screen
       cluster_mult_win.refresh();
@@ -3812,7 +3824,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
+//    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
+    processed = (dump_screen(), true);
 
 // ALT-D -- debug dump
   if (!processed and e.is_alt('d'))
@@ -4829,8 +4842,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
-
+//    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
+    processed = (dump_screen(), true);
+    
 // CTRL-ENTER -- repeat last message if in CQ mode
   if (!processed and e.is_control() and (e.symbol() == XK_Return) and (drlog_mode == DRLOG_MODE::CQ))
   { if (cw_p)
@@ -5182,7 +5196,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
+//    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
+    processed = (dump_screen(), true);
 }
 
 // functions that include thread safety
@@ -6703,31 +6718,104 @@ const string dump_screen(const string& dump_filename)
 
   const Status status { XGetWindowAttributes(display_p, window_id, &win_attr) };
 
-  if (status == 0)
-    ost << hhmmss() << ": ERROR returned by XGetWindowAttributes: " << status << endl;
-
   if (multithreaded)
     XUnlockDisplay(display_p);
+
+  if (status == 0)
+  { ost << hhmmss() << ": ERROR returned by XGetWindowAttributes(): " << status << endl;
+    alert("ERROR from XGetWindowAttributes()");
+    return "ERROR"s;
+  }
+
+//  const bool viewable = (win_attr.map_state == IsViewable);
+  
+//  ost << "Window is " << (viewable ? "" : "NOT ") << "viewable" << endl;
+
+// try holding the lock until we're finished
+//  if (multithreaded)
+//    XUnlockDisplay(display_p);
+
+//  ost << "XAllPlanes() = " << XAllPlanes() << endl;
 
   const int width  { win_attr.width };
   const int height { win_attr.height };
+  
+//  ost << "width and height = " << width << ", " << height << endl;
 
   if (multithreaded)
     XLockDisplay(display_p);
+//  ost << "Calling XGetImage" << endl;
 
-  XImage* xim_p { XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap) };
+//  XImage* xim_p { XGetImage(display_p, window_id, 0, 0, width, height, XAllPlanes(), ZPixmap) };
+//  XImage* xim_p { XGetImage(display_p, window_id, 0, 0, width, height, -1, ZPixmap) };
 
+  int int_x_y = 0;
+
+//  ost << "  parameters = " << display_p << ", " << window_id << ", " << int_x_y << ", " << int_x_y << ", " << width << ", " << height << ", " << AllPlanes << ", " << ZPixmap << endl;
+
+  XImage* xim_p { XGetImage(display_p, window_id, int_x_y, int_x_y, width, height, AllPlanes, ZPixmap) };
+  
+//  ost << "Returned from XGetImage" << endl;
+  
   if (multithreaded)
     XUnlockDisplay(display_p);
 
+  if (xim_p == NULL)
+  { ost << "NULL returned from XGetImage(); screen not written to file" << endl;
+    alert("Internal error: screen not dumped to file");
+
+//    sleep_for(seconds(1));
+//    exit(-1);
+    return string();
+  }
+
+#if 0
+ typedef struct XImage XImage;
+ struct XImage {
+   int width, height;		/* size of image */
+   int xoffset;			/* number of pixels offset in X direction */
+   int format;			/* XYBitmap, XYPixmap, ZPixmap */
+   char *data;			/* pointer to image data */
+   int byte_order;		/* data byte order, LSBFirst, MSBFirst */
+   int bitmap_unit;		/* quant. of scanline 8, 16, 32 */
+   int bitmap_bit_order;		/* LSBFirst, MSBFirst */
+   int bitmap_pad;		/* 8, 16, 32 either XY or ZPixmap */
+   int depth;			/* depth of image */
+   int bytes_per_line;		/* accelerator to next scanline */
+   int bits_per_pixel;		/* bits per pixel (ZPixmap) */
+   unsigned long red_mask;	/* bits in z arrangement */
+   unsigned long green_mask;
+   unsigned long blue_mask;
+   XPointer obdata;		/* hook for the object routines to hang on */
+   struct funcs {		/* image manipulation routines */
+     XImage *(*create_image)();
+     int (*destroy_image)();
+     unsigned long (*get_pixel)();
+     int (*put_pixel)();
+     XImage *(*sub_image)();
+     int (*add_pixel)();
+   } f;
+ }; 
+#endif
+/*
+  ost << "XImage: " << endl
+      << "  width = " << xim_p -> width << endl
+      << "  height = " << xim_p -> height << endl
+      << "  xoffset = " << xim_p -> xoffset << endl
+      << "  format = " << xim_p -> format << endl
+      << "  byte order = " << xim_p -> byte_order << endl
+      << "  bitmap unit = " << xim_p -> bitmap_unit << endl
+      << "  bitmap bit order = " << xim_p -> bitmap_bit_order << endl
+      << "  bitmap pad = " << xim_p -> bitmap_pad
+      << endl;
+*/
+
   png::image< png::rgb_pixel > image(width, height);
 
-//  static const unsigned int BLUE_MASK = 0xff;
-//  static const unsigned int GREEN_MASK = 0xff << 8;
-//  static const unsigned int RED_MASK = 0xff << 16;
+//  png::image< png::rgb_pixel > image1();
 
-  constexpr unsigned int FF { 0xff };
 
+  constexpr unsigned int FF         { 0xff };
   constexpr unsigned int BLUE_MASK  { FF };
   constexpr unsigned int GREEN_MASK { FF << 8 };
   constexpr unsigned int RED_MASK   { FF << 16 };
@@ -6742,6 +6830,8 @@ const string dump_screen(const string& dump_filename)
       image[y][x] = png::rgb_pixel(red, green, blue);
     }
   }
+
+  XDestroyImage(xim_p);
 
   string filename;
 
@@ -7676,6 +7766,9 @@ void end_of_thread(const string& name)
     ost << "unable to remove: " << name << endl;
 
   ost << "concluding end_of_thread for thread " << name << "; " << n_running_threads << " still running" << endl;
+  
+// debug
+  print_thread_names();
 }
 
 /// update some windows based on a change in frequency
