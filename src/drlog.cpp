@@ -417,7 +417,7 @@ log_extract extract(win_log_extract);       ///< earlier QSOs with a station
 
 // some windows are accessed from multiple threads
 pt_mutex band_mode_mutex;                   ///< mutex for win_band_mode
-pt_mutex bandmap_mutex;                     ///< mutex for win_bandmap
+//pt_mutex bandmap_mutex;                     ///< mutex for win_bandmap
 
 cw_messages cwm;                            ///< pre-defined CW messages
 
@@ -462,6 +462,8 @@ fuzzy_databases fuzzy_dbs;                      ///< container for the fuzzy dat
 
 pthread_t thread_id_display_date_and_time,      ///< thread ID for the thread that displays date and time
           thread_id_rig_status;                 ///< thread ID for the thread that displays rig status
+          
+pair<frequency, MODE>   quick_qsy_info { 14000, MODE_CW };
 
 /// define wrappers to pass parameters to threads
 
@@ -595,6 +597,9 @@ inline void safe_set_band(const BAND b)
 /// set value of <i>current_mode</i> in thread-safe manner
 inline void safe_set_mode(const MODE m)
   { SAFELOCK_SET(current_mode_mutex, current_mode, m); }
+
+const pair<frequency, MODE> get_frequency_and_mode(void)
+  { return pair<frequency, MODE> { rig.rig_frequency(), safe_get_mode() }; }
 
 /*! \brief      Convert a serial number to a string
     \param  n   serial number
@@ -731,12 +736,12 @@ int main(int argc, char** argv)
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
 
 // write default mutex attribute information
-    { pt_mutex_attributes pta;
-    
-      ost << "default mutex priority ceiling: " << pta.priority_ceiling() << endl;
-      ost << "default mutex protocol: " << pta.protocol_name() << endl;
-      ost << "default mutex type: " << pta.type_name() << endl;
-    }      
+//    { pt_mutex_attributes pta;
+//    
+//      ost << "default mutex priority ceiling: " << pta.priority_ceiling() << endl;
+//      ost << "default mutex protocol: " << pta.protocol_name() << endl;
+//      ost << "default mutex type: " << pta.type_name() << endl;
+//    }      
 
 // possibly configure audio recording
     if (context.allow_audio_recording() and (context.start_audio_recording() != AUDIO_RECORDING::DO_NOT_START))
@@ -1517,6 +1522,9 @@ int main(int argc, char** argv)
 
 // create the cluster, and package it for use by the process_rbn_info() thread dedicated to the cluster
 // constructor for cluster has to be in a different thread, so that we don't block this one
+// MOVE THIS AFTER THE CONTEST HAS BEEN REBUILT
+
+#if 0
   if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
   { static pthread_t spawn_thread_id;
 
@@ -1543,6 +1551,7 @@ int main(int argc, char** argv)
       exit(-1);
     }
   }
+#endif
 
 // backup the last-used log, if one exists
   { const string filename { context.logfile() };
@@ -1753,6 +1762,38 @@ int main(int argc, char** argv)
       if (send_qtcs)
         file_truncate(context.qtc_filename());
     }
+
+
+// now we can start the cluster/RBN threads, since we know what we've worked if this was a rebuild
+  if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
+  { static pthread_t spawn_thread_id;
+
+    try
+    { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_dx_cluster, nullptr, "cluster spawn"s);
+    }
+
+    catch (const pthread_error& e)
+    { ost << e.reason() << endl;
+      exit(-1);
+    }
+  }
+
+// ditto for the RBN
+  if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
+  { static pthread_t spawn_thread_id;
+
+    try
+    { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_rbn, nullptr, "RBN spawn"s);
+    }
+
+    catch (const pthread_error& e)
+    { ost << e.reason() << endl;
+      exit(-1);
+    }
+  }
+
+
+
 
     enter_sap_mode();                   // explicitly enter SAP mode
     win_active_p = &win_call;           // set the active window
@@ -2431,15 +2472,13 @@ void* process_rbn_info(void* vp)
                       bm_buffer.add(be.callsign(), post.poster());
 
                       if (bm_buffer.sufficient_posters(be.callsign()))
-                      { //bandmaps[dx_band] += be;
-                        bandmap_insertion_queues[dx_band].push_back(be);
+                      { bandmap_insertion_queues[dx_band].push_back(be);
                         changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
                       }
 
                       break;
 
                     default :
-                    //bandmaps[dx_band] += be;
                       bandmap_insertion_queues[dx_band].push_back(be);
                       changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
                   }
@@ -2644,6 +2683,7 @@ void* prune_bandmap(void* vp)
     ' -- Place NEARBY call into CALL window and update QSL window
     CTRL-R -- toggle audio recording
     ALT-R -- toggle RX antenna
+    CTRL-= -- quick QSY
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
 {
@@ -3426,7 +3466,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
   if (!processed and e.is_control() and (e.symbol() == XK_Return))
-  { bool found_call { false };
+  { quick_qsy_info = get_frequency_and_mode();
+  
+    bool found_call { false };
 
     frequency new_frequency;
 
@@ -3604,21 +3646,29 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
   if (!processed and (e.is_control_and_not_alt() or e.is_alt_and_not_control()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
+  { quick_qsy_info = get_frequency_and_mode();
     processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  }
 
 // CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
   if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
+  { quick_qsy_info = get_frequency_and_mode();
     processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  }
 
 // ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                                                           or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
+  { quick_qsy_info = get_frequency_and_mode();
     processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  }
 
 // ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_2) or (e.symbol() == XK_KP_8)
                                                                           or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
+  { quick_qsy_info = get_frequency_and_mode();
     processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  }
 
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are testudine
@@ -4133,9 +4183,19 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-R -- toggle RX antenna
   if (!processed and (e.is_alt('r')))
-  { ost << "Processing ALT-R" << endl;
+  { //ost << "Processing ALT-R" << endl;
     rig.toggle_rx_ant();
     processed = update_rx_ant_window();
+  }
+  
+// CTRL-= -- quick QSY
+  if (!processed and (e.is_control('=')))
+  { ost << "quick QSY to " << quick_qsy_info.first.display_string() << endl;
+    
+    rig.rig_frequency(quick_qsy_info.first);
+    rig.rig_mode(quick_qsy_info.second);
+    
+    processed = true;
   }
 
 // finished processing a keypress

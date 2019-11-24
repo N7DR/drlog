@@ -779,6 +779,7 @@ void pt_mutex::unlock(void)
     \brief  Encapsulate a pthread_mutexattr
 */
 
+/// get the priority ceiling
 const int pt_mutex_attributes::priority_ceiling(void) const
 { int rv;
   
@@ -790,6 +791,9 @@ const int pt_mutex_attributes::priority_ceiling(void) const
   return rv;
 }
 
+/*! \brief      Set the priority ceiling
+    \param  pc  new priority ceiling
+*/
 void pt_mutex_attributes::priority_ceiling(const int pc)
 { const int status { pthread_mutexattr_setprioceiling(&_mutexattr, pc) }; 
 
@@ -797,6 +801,7 @@ void pt_mutex_attributes::priority_ceiling(const int pc)
     throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR SETTING MUTEX PRIORITY CEILING: "s  + to_string(status));
 }
 
+/// get the protocol
 const int pt_mutex_attributes::protocol(void) const
 { int rv;
   
@@ -808,6 +813,7 @@ const int pt_mutex_attributes::protocol(void) const
   return rv;
 }
 
+/// get the protocol name
 const string pt_mutex_attributes::protocol_name(void) const
 { switch (protocol())
   { case PTHREAD_PRIO_NONE :
@@ -824,6 +830,9 @@ const string pt_mutex_attributes::protocol_name(void) const
   }
 }
 
+/*! \brief      Set the protocol
+    \param  pr  new protocol
+*/
 void pt_mutex_attributes::protocol(const int pr)
 { const int status { pthread_mutexattr_setprotocol(&_mutexattr, pr) }; 
 
@@ -831,6 +840,7 @@ void pt_mutex_attributes::protocol(const int pr)
     throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR SETTING MUTEX PROTOCOL: "s  + to_string(status));
 }
 
+/// get the type
 const int pt_mutex_attributes::type(void) const
 { int rv;
   
@@ -842,6 +852,7 @@ const int pt_mutex_attributes::type(void) const
   return rv;
 }
 
+/// get the name of the type
 const string pt_mutex_attributes::type_name(void) const
 { const int t { type() };
 
@@ -865,6 +876,9 @@ const string pt_mutex_attributes::type_name(void) const
   }
 }
 
+/*! \brief      Set the type
+    \param  ty  new type
+*/
 void pt_mutex_attributes::type(const int ty)
 { const int status {  pthread_mutexattr_settype(&_mutexattr, ty) };
 

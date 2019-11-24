@@ -24,7 +24,7 @@
 
 using namespace std;
 
-extern pt_mutex                      bandmap_mutex;          ///< used when writing to the bandmap window
+//extern pt_mutex                      bandmap_mutex;          ///< used when writing to the bandmap window
 extern pt_mutex                      batch_messages_mutex;   ///< mutex for batch messages
 extern unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
 extern bandmap_buffer                bm_buffer;              ///< global control buffer for all the bandmaps
@@ -1139,12 +1139,21 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
     \return         the window
 */
 window& operator<(window& win, bandmap& bm)
-{ constexpr int NOT_NEEDED_COLOUR          { COLOUR_BLACK };
+{ return bm.write_to_window(win);       // need access to _bandmap_mutex
+
+#if 0  
+  constexpr int NOT_NEEDED_COLOUR          { COLOUR_BLACK };
   constexpr int MULT_COLOUR                { COLOUR_GREEN };
   constexpr int NOT_MULT_COLOUR            { COLOUR_BLUE };
   constexpr int UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
 
   const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
+  const vector<int> fade_colours { bm.fade_colours() };
+
+// be very, very careful: don't call anything that locks _bandmap, as process_insertion_queue
+// locks _bandmap and then calls this routine
+
+// *****  NEED A NEW WAY TO HANDLE LOCKING FOR BANDMAPS -- this allows locking inversion *****
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
 
@@ -1183,8 +1192,8 @@ window& operator<(window& win, bandmap& bm)
       const time_t expiration_time             { be.expiration_time() };
       const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
 
-      const vector<int> fade_colours { bm.fade_colours() };
-      const int         n_colours    { static_cast<int>(fade_colours.size()) };
+//      const vector<int> fade_colours { bm.fade_colours() };
+      const int         n_colours    { static_cast<int>(fade_colours().size()) };
       const float       interval     { (1.0f / static_cast<float>(n_colours)) };
       const int n_intervals { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
@@ -1194,6 +1203,121 @@ window& operator<(window& win, bandmap& bm)
 //      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != COLOUR_BLACK))
       if (age_since_original_inserted < 120 and !be.is_marker() and (bm.recent_colour() != COLOUR_BLACK))
         cpu = colours.add(bm.recent_colour(), win.bg());
+
+      if (is_marker)
+        cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
+
+// work out where to start the display of this call
+      const unsigned int x { ( (index  - start_entry) / win.height()) * COLUMN_WIDTH };
+    
+// check that there's room to display the entire entry
+      if ((win.width() - x) < COLUMN_WIDTH)
+        break;
+
+// get the right y ordinate
+      const unsigned int y { (bandmap_frequency_up ? 0 + (index - start_entry) % win.height()
+                                                   : (win.height() - 1) - (index - start_entry) % win.height()
+                             ) };
+
+// now work out the status colour
+      int status_colour { static_cast<int>(colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR)) };                      // default
+
+      if (!is_marker)
+      { if (be.is_needed())
+        { if (be.mult_status_is_known())
+            status_colour = (be.is_needed_mult() ? colours.add(MULT_COLOUR, MULT_COLOUR) : colours.add(NOT_MULT_COLOUR, NOT_MULT_COLOUR));
+          else
+            status_colour = colours.add(UNKNOWN_MULT_STATUS_COLOUR, UNKNOWN_MULT_STATUS_COLOUR);
+        }
+      }
+
+// reverse the colour of the frequency if there are unseen entries lower or higher in frequency
+      const bool reverse { ( (start_entry != 0) and (start_entry == index) ) or
+                             (index == (start_entry + maximum_number_of_displayable_entries - 1) and (entries.size() > (index + 1))) };
+
+      win < cursor(x, y) < colour_pair(cpu);
+
+      if (reverse)
+        win < WINDOW_ATTRIBUTES::WINDOW_REVERSE;
+
+      win < frequency_str;
+
+      if (reverse)
+        win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
+
+      win < colour_pair(status_colour) < SPACE_STR
+          < colour_pair(cpu) < callsign_str;
+    }
+
+    index++;
+  }
+
+  return win;
+#endif
+}
+
+window& bandmap::write_to_window(window& win)
+{ constexpr int NOT_NEEDED_COLOUR          { COLOUR_BLACK };
+  constexpr int MULT_COLOUR                { COLOUR_GREEN };
+  constexpr int NOT_MULT_COLOUR            { COLOUR_BLUE };
+  constexpr int UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
+
+  const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
+//  const vector<int> fade_colours { bm.fade_colours() };
+
+// be very, very careful: don't call anything that locks _bandmap, as process_insertion_queue
+// locks _bandmap and then calls this routine
+
+// *****  NEED A NEW WAY TO HANDLE LOCKING FOR BANDMAPS -- this allows locking inversion *****
+
+  SAFELOCK(_bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
+
+#if 0
+  BM_ENTRIES entries { bm.rbn_threshold_and_filtered_entries() };    // automatically filter
+
+  switch (bm.cull_function())
+  { case 1 :                                                         // N7DR criteria
+      REMOVE_IF_AND_RESIZE(entries, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
+      break;
+
+    default :
+      break;
+  }
+#endif
+
+  BM_ENTRIES entries { displayed_entries() };    // automatically filter
+
+  const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? column_offset() * win.height() : 0u };
+
+  win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
+
+  size_t index { 0 };    // keep track of where we are in the bandmap
+
+  for (const auto& be : entries)
+  { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
+    { const string entry_str     { pad_string(pad_string(be.frequency_str(), 7)  + SPACE_STR + substring(be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH, PAD_RIGHT) };
+      const string frequency_str { substring(entry_str, 0, 7) };
+      const string callsign_str  { substring(entry_str, 8) };
+      const bool   is_marker     { be.is_marker() };
+  
+// change to the correct colour
+      const time_t age_since_original_inserted { be.time_since_this_or_earlier_inserted() };
+      const time_t age_since_this_inserted     { be.time_since_inserted() };
+      const time_t start_time                  { be.time() };                  // time it was inserted
+      const time_t expiration_time             { be.expiration_time() };
+      const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
+
+//      const vector<int> fade_colours { bm.fade_colours() };
+      const int         n_colours    { static_cast<int>(fade_colours().size()) };
+      const float       interval     { (1.0f / static_cast<float>(n_colours)) };
+      const int n_intervals { min(static_cast<int>(fraction / interval), n_colours - 1) };
+
+      int cpu = colours.add(fade_colours().at(n_intervals), win.bg());
+
+// mark in GREEN if less than two minutes since the original spot at this freq was inserted
+//      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != COLOUR_BLACK))
+      if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != COLOUR_BLACK))
+        cpu = colours.add(recent_colour(), win.bg());
 
       if (is_marker)
         cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers

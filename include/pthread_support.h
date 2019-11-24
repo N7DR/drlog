@@ -85,7 +85,6 @@ public:
 */
   explicit thread_attribute(const pthread_t tid);
 
-
 /*! \brief              Construct using data from a C-style attribute "object"
     \param  ori_attr    C-style attributes
 */
@@ -300,10 +299,10 @@ class pt_mutex
 {
 protected:
 
-  pthread_mutex_t           _mutex;             ///< Encapsulated mutex
-  std::string               _name { "NONE"s };  ///< name of mutex
-  pthread_t                 _thread_id;         ///< ID of the thread that owns the locked mutex
-  thread_specific_data<int> _tsd_refcount;      ///< reference counter for recursive locking
+  pthread_mutex_t           _mutex;                         ///< Encapsulated mutex
+  std::string               _name           { "NONE"s };    ///< name of mutex
+  pthread_t                 _thread_id;                     ///< ID of the thread that owns the locked mutex
+  thread_specific_data<int> _tsd_refcount;                  ///< reference counter for recursive locking
 
 public:
 
@@ -331,6 +330,7 @@ public:
   inline const pthread_t thread_id(void) const
     { return _thread_id; }
     
+/// get the name
   inline const std::string name(void) const
     { return _name; }
 
@@ -359,20 +359,36 @@ public:
   inline virtual ~pt_mutex_attributes(void)
     { pthread_mutexattr_destroy(&_mutexattr); }
 
+/// get the priority ceiling
   const int priority_ceiling(void) const;
 
+/*! \brief      Set the priority ceiling
+    \param  pc  new priority ceiling
+*/
   void priority_ceiling(const int pc);
 
+/// get the protocol
   const int protocol(void) const;
   
+/*! \brief      Set the protocol name
+    \param  pc  new protocol name
+*/
   const std::string protocol_name(void) const;
 
-  void protocol(const int pc);
+/*! \brief      Set the protocol
+    \param  pr  new protocol
+*/
+  void protocol(const int pr);
 
+/// get the type
   const int type(void) const;
   
+/// get the name of the type
   const std::string type_name(void) const;
 
+/*! \brief      Set the type
+    \param  ty  new type
+*/
   void type(const int ty);
 };
 

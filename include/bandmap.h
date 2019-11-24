@@ -768,7 +768,7 @@ protected:
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
   const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
-
+  
 public:
 
 /// default constructor
@@ -1100,6 +1100,8 @@ public:
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
 
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
+
+  window& write_to_window(window& win);
 
 /// serialize using boost
   template<typename Archive>
