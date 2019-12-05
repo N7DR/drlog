@@ -16,8 +16,9 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-#include "pthread_support.h"
+#include "log_message.h"
 #include "macros.h"
+#include "pthread_support.h"
 #include "string_functions.h"
 
 #include <deque>
@@ -32,12 +33,16 @@ extern const std::map<std::string, int>         key_names;              ///< The
 extern const std::map<std::string, std::string> equivalent_key_names;   ///< names that are equivalent
 extern const std::unordered_set<KeySym>         keypad_numbers;         ///< the keypad numbers and their equivalents
 
+extern message_stream ost;                  ///< for debugging, info
+
 /// key events
 enum key_event_type { KEY_PRESS,
                       KEY_RELEASE
                     };
 
-typedef unsigned int key_code;                                          ///< syntactic sugar
+//typedef unsigned int key_code;                                          ///< syntactic sugar
+
+using key_code = unsigned int;                                          ///< syntactic sugar
 
 // helper functions for KeySyms
 
@@ -167,12 +172,30 @@ public:
      { return (is_char(static_cast<char>(n))); }
 
 /// is a character a control character version of the character in <i>_str</i>?
-  inline const bool is_control(const char c) const
-    { return (is_control() and (_str == create_string(c - 'a' + 1))); }
+  /* inline */ const bool is_control(const char c) const;
+#if 0
+//    { return (is_control() and (_str == create_string(c - 'a' + 1))); }
+//    { return (is_control() and (_str == std::string(1, c))); }
+{ if (is_control())
+  { const int i = static_cast<int>(c);
+
+    ost << "i = " << i << std::endl;
+
+//    if ( (i >= 1) and (i <= 26) )  // if it's a letter
+    if ( (c >= 'a') and (c <= 'z') )  // if it's a letter
+      return (_str == create_string(c - 'a' + 1));
+    else
+      return (_str == std::string(1, c));
+  }
+  else
+    return false;
+}
+#endif
 
 /// is a character an alt version of the character in <i>_str</i>?
   inline const bool is_alt(const char c) const
     { return (is_alt() and (_str == create_string(c))); }
+//    { return (is_alt() and (_str == std::string(1, c))); }
 };
 
 // -------------------------------------  keyboard_queue  ---------------------------

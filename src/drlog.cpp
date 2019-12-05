@@ -178,6 +178,7 @@ void update_known_callsign_mults(const string& callsign, const bool force_known 
 const bool update_known_country_mults(const string& callsign, const bool force_known = false);                    ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                               ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                               ///< Calculate the value of a mult and update <i>win_mult_value</i>
+void update_quick_qsy(void);                                                ///< update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
 void update_qsls_window(const string& = "");                                ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                         ///< the head of the QTC queue
 void update_rate_window(void);                                              ///< Update the QSO and score values in <i>win_rate</i>
@@ -383,6 +384,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_mult_value,                  ///< value of a mult
        win_nearby,                      ///< nearby station
        win_monitored_posts,             ///< monitored posts
+       win_quick_qsy,                   ///< QRG and mode for ctrl-=
        win_qsls,                        ///< QSLs from old QSOs
        win_qso_number,                  ///< number of the next QSO
        win_qtc_queue,                   ///< the head of the unsent QTC queue
@@ -1248,7 +1250,12 @@ int main(int argc, char** argv)
 // POST MONITOR window
   win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
   mp.max_entries(win_monitored_posts.height());
-
+  
+// QUICK QSY window
+  win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
+  win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+                <= pad_string(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
+  
 // QSLs window
   win_qsls.init(context.window_info("QSLS"s), WINDOW_NO_CURSOR);
   update_qsls_window();
@@ -2714,7 +2721,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   }
 
 // question mark, which is displayed in response to pressing the equals sign
-  if (!processed and (e.is_char('=')))
+  if (!processed and e.is_unmodified() and e.is_char('='))
   { win <= "?"s;
     processed = true;
   }
@@ -3466,7 +3473,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
   if (!processed and e.is_control() and (e.symbol() == XK_Return))
-  { quick_qsy_info = get_frequency_and_mode();
+  { //quick_qsy_info = get_frequency_and_mode();
+  
+    //ost << "quick_qsy_info = " << quick_qsy_info.first.display_string() << ", " << MODE_NAME[quick_qsy_info.second] << endl;
+    update_quick_qsy();
   
     bool found_call { false };
 
@@ -3646,27 +3656,31 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
   if (!processed and (e.is_control_and_not_alt() or e.is_alt_and_not_control()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-  { quick_qsy_info = get_frequency_and_mode();
+  { //quick_qsy_info = get_frequency_and_mode();
+    update_quick_qsy();
     processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
 // CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
   if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-  { quick_qsy_info = get_frequency_and_mode();
+  { //quick_qsy_info = get_frequency_and_mode();
+    update_quick_qsy();
     processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
 // ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                                                           or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-  { quick_qsy_info = get_frequency_and_mode();
+  { //quick_qsy_info = get_frequency_and_mode();
+    update_quick_qsy();
     processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
 // ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_2) or (e.symbol() == XK_KP_8)
                                                                           or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
-  { quick_qsy_info = get_frequency_and_mode();
+  { //quick_qsy_info = get_frequency_and_mode();
+    update_quick_qsy();
     processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
@@ -4187,6 +4201,18 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     rig.toggle_rx_ant();
     processed = update_rx_ant_window();
   }
+  
+//  ost << "processed = " << processed << ": " << e.str() << endl;
+//  ost << "length = " << e.str().length() << endl;
+  
+//  if (e.str().length())
+//    ost << "char number = " << static_cast<int>(e.str()[0]) << endl;
+//  if (e.is_control())
+//    ost << "CONTROL" << endl;
+//  if (e.is_control('='))
+//    ost << "MATCH FOUND" << endl;
+    
+//  win <= e.str();
   
 // CTRL-= -- quick QSY
   if (!processed and (e.is_control('=')))
@@ -8240,4 +8266,12 @@ void update_system_memory(void)
   { ost << "meminfo threw error non-string error" << endl;
     alert("Non-string exception in meminfo!!"s);
   }
+}
+
+///< update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
+void update_quick_qsy(void)
+{ quick_qsy_info = get_frequency_and_mode();
+
+  win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+                <= pad_string(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
 }

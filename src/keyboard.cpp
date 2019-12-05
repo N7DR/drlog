@@ -22,6 +22,29 @@ using namespace   this_thread;   // std::this_thread
 
 extern message_stream           ost;    ///< for debugging, info
 
+// -------------------------------------------------  keyboard_event  -----------------------------------
+
+/*! \class  keyboard_event
+    \brief  encapsulate an event from the keyboard
+*/
+
+/// is a character a control character version of the character in <i>_str</i>?
+// this is complicated because c might not be a letter
+const bool keyboard_event::is_control(const char c) const
+{ if (is_control())
+  { //const int i = static_cast<int>(c);
+
+    //ost << "i = " << i << std::endl;
+
+    if ( (c >= 'a') and (c <= 'z') )  // if it's a letter
+      return (_str == create_string(c - 'a' + 1));
+    else
+      return (_str == string(1, c));
+  }
+  else
+    return false;
+}
+
 // -------------------------------------  keyboard_queue  ---------------------------
 
 /*! \class  keyboard_queue
