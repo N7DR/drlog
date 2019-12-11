@@ -425,7 +425,16 @@ public:
   location_info(void) = default;
   
 /// construct from a record from a CTY file
-  explicit location_info(const cty_record& rec);
+  inline explicit location_info(const cty_record& rec) :
+    _canonical_prefix(rec.prefix()),
+    _continent(rec.continent()),
+    _country_name(rec.country_name()),
+    _cq_zone(rec.cq_zone()),
+    _itu_zone(rec.itu_zone()),
+    _latitude(rec.latitude()),
+    _longitude(rec.longitude()),
+    _utc_offset(rec.utc_offset())
+  { }
 
 /// destructor
   inline virtual ~location_info(void) = default;

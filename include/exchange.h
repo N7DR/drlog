@@ -601,4 +601,3 @@ public:
 };
 
 #endif /* EXCHANGE_H */
-

@@ -545,6 +545,9 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
   FOR_ALL(not_country_mults_vec, [&] (const string& not_country_mult) { _country_mults.erase(location_db.canonical_prefix(not_country_mult)); } );
 
+// /MM stations
+  _mm_country_mults = context.mm_country_mults();
+
 // are any mults derived from callsigns?
   _callsign_mults = context.callsign_mults();                    // e.g., "WPXPX"
   _callsign_mults_per_band = context.callsign_mults_per_band();

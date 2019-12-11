@@ -177,6 +177,7 @@ protected:
 
   std::string                                  _message_cq_1                            { };                            ///< CQ message #1 (generally, a short CQ)
   std::string                                  _message_cq_2                            { };                            ///< CQ message #2 (generally, a long CQ)
+  bool                                         _mm_country_mults                        { false };                      ///< can /MM QSOs be mults?
   std::string                                  _modes                                   { "CW"s };                      ///< comma-delimited list of modes that are legal for the contest
   std::map<BAND, frequency>                    _mode_break_points                       { };                            ///< override default mode break points
   std::string                                  _my_call                                 { "NONE"s };                    ///< my call
@@ -443,6 +444,7 @@ public:
   CONTEXTREAD(messages);                     ///< CW messages
   CONTEXTREAD(message_cq_1);                 ///< CQ message #1 (generally, a short CQ)
   CONTEXTREAD(message_cq_2);                 ///< CQ message #2 (generally, a long CQ)
+  CONTEXTREAD(mm_country_mults);             ///< can /MM QSOs be mults?
   CONTEXTREAD(modes);                        ///< comma-delimited modes CW, SSB
   CONTEXTREAD(mode_break_points);            ///< override default mode break points
   CONTEXTREAD(my_call);                      ///< my call

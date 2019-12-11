@@ -492,8 +492,10 @@ keyboard_queue keyboard;                    ///< queue of keyboard events
 
 // quick access to whether particular types of mults are in use; these are written only during start-up, so we don't bother to protect them
 bool callsign_mults_used { false };            ///< do the rules call for callsign mults?
-bool country_mults_used  { false };             ///< do the rules call for country mults?
+bool country_mults_used  { false };            ///< do the rules call for country mults?
 bool exchange_mults_used { false };            ///< do the rules call for exchange mults?
+
+bool mm_country_mults { false };
 
 /*! \brief                  Update the SCP or fuzzy window and vector of matches
     \param  matches         container of matches
@@ -942,6 +944,7 @@ int main(int argc, char** argv)
     callsign_mults_used = rules.callsign_mults_used();
     country_mults_used = rules.country_mults_used();
     exchange_mults_used = rules.exchange_mults_used();
+    mm_country_mults = rules.mm_country_mults();
 
 // possibly get a list of IARU society exchanges
     if (!context.society_list_filename().empty())
@@ -4549,8 +4552,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // is this a country mult?
             if (country_mults_used and (all_country_mults < qso.canonical_prefix()))  // is it even possible that this is a country mult?
-            { update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);                                      // does nothing if not auto remaining country mults
-              qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );     // set whether it's a country mult
+            { if (mm_country_mults or !is_maritime_mobile(qso.call()))
+              { update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);                                      // does nothing if not auto remaining country mults
+                qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );     // set whether it's a country mult
+              }
             }
 
 // if callsign mults matter, add more to the qso
@@ -7261,9 +7266,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // T, U -- repeat time
   if (!processed and ( (e.is_char('t')) or (e.is_char('u'))))
   { if (cw)
-    { const int qtc_nr { static_cast<int>(qtcs_sent) - 1 };
+    { //const int qtc_nr { static_cast<int>(qtcs_sent) - 1 };
 
-      if ((qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
+      if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
         send_msg(series[qtc_nr].first.utc());
     }
 
@@ -7273,9 +7278,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // C -- repeat call
   if (!processed and ( (e.is_char('c'))) )
   { if (cw)
-    { const int qtc_nr { static_cast<int>(qtcs_sent) - 1 };
+    { //const int qtc_nr { static_cast<int>(qtcs_sent) - 1 };
 
-      if ((qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
+      if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
         send_msg(series[qtc_nr].first.callsign());
     }
 
@@ -7285,9 +7290,9 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // N, S -- repeat number
   if (!processed and ( (e.is_char('n')) or (e.is_char('s'))))
   { if (cw)
-    { const int qtc_nr { static_cast<int>(qtcs_sent) - 1 };
+    { //const int qtc_nr { static_cast<int>(qtcs_sent) - 1 };
 
-      if ((qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
+      if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())))
       { const string serno { pad_string(remove_leading(remove_peripheral_spaces(series[qtc_nr].first.serno()), '0'), 3, PAD_LEFT, 'T') };
 
         send_msg(serno);
@@ -7541,9 +7546,9 @@ void display_statistics(const string& summary_str)
   { for (unsigned int n = 0; n < static_cast<unsigned int>(win_summary.height()); ++n)
     {
 // we have to be a bit complicated because we need to have spaces after the string, so that the colours for the entire line are handled correctly
-      const string line { remove_peripheral_spaces(win_summary.getline(n)) };
+      //const string line { remove_peripheral_spaces(win_summary.getline(n)) };
 
-      if (MODE_STRINGS < line)
+      if (const string line { remove_peripheral_spaces(win_summary.getline(n)) }; MODE_STRINGS < line)
         win_summary < cursor(0, n) < WINDOW_ATTRIBUTES::WINDOW_REVERSE <  create_centred_string(line, win_summary.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
     }
   }
@@ -7593,7 +7598,6 @@ const bool process_change_in_bandmap_column_offset(const KeySym symbol)
 // don't let it increment if there is space in the last column
     const unsigned int number_of_columns                     { bm.n_columns(win_bandmap) };
     const unsigned int maximum_number_of_displayable_entries { number_of_columns * win_bandmap.height() };
-//    const unsigned int n_entries_in_bandmap                  { bm.rbn_threshold_and_filtered_entries().size() };
     const unsigned int n_entries_in_bandmap                  { bm.displayed_entries().size() };
     const unsigned int start_entry                           { static_cast<unsigned int>( (n_entries_in_bandmap > maximum_number_of_displayable_entries) ? bm.column_offset() * win_bandmap.height() : 0 ) };
     const unsigned int column_of_last_entry                  { ( ((n_entries_in_bandmap - start_entry) - 1) / win_bandmap.height() ) + 1 };    // wrt 1
@@ -7607,7 +7611,6 @@ const bool process_change_in_bandmap_column_offset(const KeySym symbol)
     alert("Bandmap column offset set to: "s + to_string(bm.column_offset()));
 
     win_bandmap <= bm;
-//    win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
     display_bandmap_filter(bm);
   }
 
@@ -7741,9 +7744,9 @@ const bool process_keypress_F5(void)
       win_exchange.move_cursor(0, 0);
     }
     else
-    { const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };                    // first empty space
+    { //const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };                    // first empty space
 
-      if (posn != string::npos)
+      if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)    // posn of first empty space
       { win_exchange.move_cursor(posn + 1, 0);
         win_exchange.refresh();
         win_active_p = &win_exchange;
@@ -7756,9 +7759,7 @@ const bool process_keypress_F5(void)
 
 /// update the QTC QUEUE window
 void update_qtc_queue_window(void)
-{ //static const string SPACE(" ");
-
-  win_qtc_queue < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+{ win_qtc_queue < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
   if (qtc_buf.n_unsent_qsos())
   { const unsigned int      win_height          { static_cast<unsigned int>(win_qtc_queue.height()) };
@@ -7932,9 +7933,9 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn)
 { bandmap& bm { bandmaps[safe_get_band()] };
 
-  const bandmap_entry be { (bm.*fn_p)( dirn ) };  // get the next stn/mult, according to the function
+  //const bandmap_entry be { (bm.*fn_p)( dirn ) };  // get the next stn/mult, according to the function
 
-  if (!be.empty())
+  if (const bandmap_entry be { (bm.*fn_p)( dirn ) }; !be.empty())  // get and process the next non-empty stn/mult, according to the function
   { rig.rig_frequency(be.freq());
     win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
 
@@ -7960,9 +7961,9 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
 */
 void possible_mode_change(const frequency& f)
 { if (multiple_modes)
-  { const MODE m { default_mode(f) };
+  { //const MODE m { default_mode(f) };
 
-    if (m != safe_get_mode())
+    if (const MODE m { default_mode(f) }; m != safe_get_mode())
     { rig.rig_mode(m);
       safe_set_mode(m);
       display_band_mode(win_band_mode, safe_get_band(), m);
@@ -8160,6 +8161,7 @@ void populate_win_call_history(const string& callsign)
 
     int line_nr { 0 };
 
+// think about whether we want an option to NOT limit to permitted bands/modes; in 160m contests, this window isn't very useful as-is
     for (const auto b : permitted_bands)
     { const cursor c_posn { 0, line_nr++ };
 

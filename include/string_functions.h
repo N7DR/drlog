@@ -613,7 +613,6 @@ inline const bool is_maritime_mobile(const std::string& callsign)
 
     Uses comma as separator if <i>sep</i> is empty.
 */
-//const std::string separated_string(const int n, const std::string& sep = ",");
 template <typename T>
 const std::string separated_string(const T n, const std::string& sep = ","s)
 { const char separator { (sep.empty() ? ',' : sep[0]) };
@@ -637,8 +636,6 @@ const std::string separated_string(const T n, const std::string& sep = ","s)
     \param  n   number to convert
     \return     <i>n</i> with the separator <i>,</i> separating each triplet
 */
-//inline const std::string comma_separated_string(const int n)
-//  { return separated_string(n); }
 template <typename T>
 inline const std::string comma_separated_string(const T n)
   { return separated_string(n); }

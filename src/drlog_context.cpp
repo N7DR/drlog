@@ -596,6 +596,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "MAX QSOS WITHOUT QSL"s)
       _max_qsos_without_qsl = from_string<int>(RHS);
 
+// MM COUNTRY MULTS
+    if (LHS == "MM COUNTRY MULTS"s)
+      _mm_country_mults = is_true;
+
 // MODES
     if (LHS == "MODES"s)
     { _modes = RHS;

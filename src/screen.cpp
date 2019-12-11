@@ -319,6 +319,7 @@ window& window::operator<(const vector<string>& v)
   {
 // see if there's enough room on this line
     cursor_position();
+    
     const int remaining_space { width() - _cursor_x };
 
  // stop writing if there's insufficient room for the next string

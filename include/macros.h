@@ -35,7 +35,7 @@
 
 #define READ_AND_WRITE(y)                                       \
 /*! Read access to _##y */                                      \
-  inline const decltype(_##y)& y(void) const { return _##y; }   \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { return _##y; }   \
 /*! Write access to _##y */                                     \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
@@ -46,7 +46,7 @@
 
 #define SAFE_READ_AND_WRITE(y, z)                                           \
 /*! Read access to _##y */                                                  \
-  inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }  \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }  \
 /*! Write access to _##y */                                                 \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
@@ -57,7 +57,7 @@
 
 #define SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(y, z)                                           \
 /*! Read access to _##y */                                                  \
-  inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }  \
+  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }  \
 /*! Write access to _##y */                                                 \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
@@ -68,7 +68,7 @@
 
 #define READ(y)                                                 \
 /*! Read-only access to _##y */                                 \
-  inline const decltype(_##y)& y(void) const { return _##y; }
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { return _##y; }
 
 #endif    // !READ
 
@@ -77,7 +77,7 @@
 
 #define SAFEREAD(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
-  inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD
 
@@ -87,7 +87,7 @@
 /// read with a mutex
 #define SAFE_READ(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
-  inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ
 
@@ -96,7 +96,7 @@
 
 #define SAFEREAD_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
-  inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
+  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD_WITH_INTERNAL_MUTEX
 
@@ -106,7 +106,7 @@
 /// read with an internal mutex
 #define SAFE_READ_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
-  inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
+  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ_WITH_INTERNAL_MUTEX
 

@@ -93,7 +93,7 @@ cty_record::cty_record(const string& record)
   if (_prefix.empty())
     throw cty_error(CTY_INVALID_PREFIX, "PREFIX is empty in record for "s + _country_name);
   
-  if (_prefix == "*")
+  if (_prefix == "*"s)
     throw cty_error(CTY_INVALID_PREFIX, "PREFIX is '*' in record for "s + _country_name);
 
   _waedc_country_only = (_prefix[0] == '*');    // is this only on the WAEDC list?
@@ -109,7 +109,7 @@ cty_record::cty_record(const string& record)
   vector<string> alt_prefixes;
   
   for (const auto& candidate : presumptive_prefixes)
-  { vector<string>* vsp = ( contains(candidate, "=") ? &alt_callsigns : &alt_prefixes );  // callsigns are marked with an '='
+  { vector<string>* vsp = ( contains(candidate, "="s) ? &alt_callsigns : &alt_prefixes );  // callsigns are marked with an '='
   
     vsp->push_back(candidate);
   }
@@ -193,25 +193,25 @@ alternative_country_info::alternative_country_info(const string& record, const s
   _cq_zone(0),
   _itu_zone(0),
   _country(canonical_prefix)
-{ size_t end_identifier = record.find_first_of("([");
+{ //size_t end_identifier = record.find_first_of("(["s);
 
-  if (end_identifier == string::npos)
+  if (const size_t end_identifier { record.find_first_of("(["s) }; end_identifier == string::npos)
     _identifier = record;                                // no change
   else
   { _identifier = substring(record, 0, end_identifier);      // read up to the first delimiter
   
-    const string cq_zone_str = delimited_substring(record, '(', ')');
+//    const string cq_zone_str = delimited_substring(record, '(', ')');
   
-    if (!cq_zone_str.empty())
+    if (const string cq_zone_str { delimited_substring(record, '(', ')') }; !cq_zone_str.empty())
     { _cq_zone = from_string<int>(cq_zone_str);
 
       if (_cq_zone < 1 or _cq_zone > 40)
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
        
-    const string itu_zone_str = delimited_substring(record, '[', ']');
+//    const string itu_zone_str = delimited_substring(record, '[', ']');
   
-    if (!itu_zone_str.empty())
+    if (const string itu_zone_str { delimited_substring(record, '[', ']') }; !itu_zone_str.empty())
     { _itu_zone = from_string<int>(itu_zone_str);
 
       if (_itu_zone < 1 or _itu_zone > 90)
@@ -244,8 +244,8 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
     \param  filename    name of file
 */
 cty_data::cty_data(const string& filename)
-{ const string entire_file = remove_char(remove_char(read_file(filename), LF_CHAR), CR_CHAR);   // read file and remove EOL markers
-  const vector<string> records = split_string(entire_file, ";"s);                                // split into records
+{ const string         entire_file { remove_char(remove_char(read_file(filename), LF_CHAR), CR_CHAR) };   // read file and remove EOL markers
+  const vector<string> records     { split_string(entire_file, ";"s) };                                // split into records
   
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
@@ -255,8 +255,8 @@ cty_data::cty_data(const string& filename)
     \param  filename    name of file
 */
 cty_data::cty_data(const vector<string>& path, const string& filename)
-{ const string entire_file = remove_char(remove_char(read_file(path, filename), LF_CHAR), CR_CHAR);     // read file and remove EOL markers
-  const vector<string> records = split_string(entire_file, ";");                                        // split into records
+{ const string         entire_file { remove_char(remove_char(read_file(path, filename), LF_CHAR), CR_CHAR) };     // read file and remove EOL markers
+  const vector<string> records     { split_string(entire_file, ";"s) };                                        // split into records
 
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
 }
@@ -269,20 +269,7 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
     This is basically just a simple tuple
 */
 
-/// default constructor
 #if 0
-location_info::location_info(void) :
-  _canonical_prefix("NONE"s),
-  _continent("XX"s),
-  _country_name("None"s),
-  _cq_zone(0),
-  _itu_zone(0),
-  _latitude(0),
-  _longitude(0),
-  _utc_offset(0)
-{ }
-#endif
-
 /// construct from a cty.dat record
 location_info::location_info(const cty_record& rec) :
   _canonical_prefix(rec.prefix()),
@@ -294,6 +281,7 @@ location_info::location_info(const cty_record& rec) :
   _longitude(rec.longitude()),
   _utc_offset(rec.utc_offset())
 { }
+#endif
 
 /// location_info == location_info
 const bool location_info::operator==(const location_info& li) const
@@ -348,13 +336,13 @@ ostream& operator<<(ostream& ost, const location_info& info)
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
 const location_info guess_zones(const string& call, const location_info& li)
-{ location_info rv = li;
+{ location_info rv { li };
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
    if (rv.canonical_prefix() == "VE"s)
-   { const size_t posn = call.find_last_of(DIGITS);
+   { //const size_t posn { call.find_last_of(DIGITS) };
 
-     if (posn != string::npos)
+     if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
      { rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, call[posn]))]);
        rv.itu_zone(VE_ITU[from_string<unsigned int>(string(1, call[posn]))]);
      }
@@ -362,9 +350,9 @@ const location_info guess_zones(const string& call, const location_info& li)
 
 // if it's a W, then make a guess as to the CQ and ITU zones
    if (rv.canonical_prefix() == "K"s)
-   { const size_t posn = call.find_last_of(DIGITS);
+   { //const size_t posn { call.find_last_of(DIGITS) };
 
-     if (posn != string::npos)
+     if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
      { rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, call[posn]))]);
        rv.itu_zone(W_ITU[from_string<unsigned int>(string(1, call[posn]))]);
 
@@ -677,7 +665,28 @@ const location_info location_database::info(const string& callpart) const
     { best_fit = "K"s;
       best_info = _db.find(best_fit)->second;
     }
+    
+// special stuff for Greek call areas
+    if (best_fit == "SV"s and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)))
+    { const char lc = last_char(callsign);
+    
+      if (lc == '5')
+      { best_fit = "SV5"s;
+        best_info = _db.find(best_fit)->second;
+      }
 
+      if (lc == '9')
+      { best_fit = "SV9"s;
+        best_info = _db.find(best_fit)->second;
+      }    
+    }
+    
+// and Ecuador
+    if (best_fit == "HC"s and (penultimate_char(callsign) == '/') and (last_char(callsign) == '8'))
+    { best_fit = "HC8"s;
+      best_info = _db.find(best_fit)->second;
+    }
+    
     if (found_any_hits)                                 // return the best fit
     { // bool found_in_secondary_database = false;
          

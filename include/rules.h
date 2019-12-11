@@ -365,10 +365,11 @@ protected:
   bool                                _callsign_mults_per_mode;  ///< are callsign mults counted per-mode?
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
-  std::unordered_set<std::string>               _countries;           ///< collection of canonical prefixes for all the valid countries
-  std::set<std::string>               _country_mults;       ///< collection of canonical prefixes of all the valid country multipliers
+  std::unordered_set<std::string>     _countries;                     ///< collection of canonical prefixes for all the valid countries
+  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
+  bool                                _mm_country_mults;              ///< can /MM QSOs be mults?
   std::map<BAND, int>                 _per_band_country_mult_factor;  ///< factor by which to multiply number of country mults, per band
 
   std::vector<std::string>            _exchange_mults;           ///< names of the exchange fields that are mults, in the same order as in the configuration file
@@ -561,6 +562,7 @@ public:
   RULESREAD(country_mults);                       ///< collection of canonical prefixes of country multipliers
   RULESREAD(country_mults_per_band);              ///< are country mults counted per-band?
   RULESREAD(country_mults_per_mode);              ///< are country mults counted per-mode?
+  RULESREAD(mm_country_mults);                    ///< can /MM stations be country mults?
 
   RULESREAD(exchange_mults);                      ///< the exchange multipliers, in the same order as in the configuration file
   RULESREAD(exchange_mults_per_band);             ///< are exchange mults counted per-band?

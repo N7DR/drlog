@@ -108,6 +108,13 @@ int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_even
   exit(-1);
 }
 
+/*! \brief                  X I/O error handler
+    \param  display_p       pointer to X display
+    \return                 ignored value (see man XSetIOErrorHandler)
+
+    Although ignored, the return type has to match the type documented for the parameter to XSetErrorHandler().
+    The XSetIOErrorHandler man page says: If the I/O error handler does return, the client process exits.
+*/
 int keyboard_queue::_x_io_error_handler(Display* display_p)
 { ost << "X IO Error; terminating" << endl;
 

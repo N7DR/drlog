@@ -173,24 +173,6 @@ public:
 
 /// is a character a control character version of the character in <i>_str</i>?
   /* inline */ const bool is_control(const char c) const;
-#if 0
-//    { return (is_control() and (_str == create_string(c - 'a' + 1))); }
-//    { return (is_control() and (_str == std::string(1, c))); }
-{ if (is_control())
-  { const int i = static_cast<int>(c);
-
-    ost << "i = " << i << std::endl;
-
-//    if ( (i >= 1) and (i <= 26) )  // if it's a letter
-    if ( (c >= 'a') and (c <= 'z') )  // if it's a letter
-      return (_str == create_string(c - 'a' + 1));
-    else
-      return (_str == std::string(1, c));
-  }
-  else
-    return false;
-}
-#endif
 
 /// is a character an alt version of the character in <i>_str</i>?
   inline const bool is_alt(const char c) const
@@ -225,6 +207,12 @@ protected:
 */
   static int _x_error_handler(Display* display_p, XErrorEvent* error_event_p);
 
+/*! \brief                  X I/O error handler
+    \param  display_p       pointer to X display
+    \return                 ignored value (see man XSetIOErrorHandler)
+
+    Although ignored, the return type has to match the type documented for the parameter to XSetErrorHandler()
+*/
   static int _x_io_error_handler(Display* display_p);
 
 public:
@@ -234,10 +222,6 @@ public:
 
 /// destructor
   virtual ~keyboard_queue(void) = default;
-
-//  READ(display_p);                      ///< the X display pointer
-//  READ(window_id);                      ///< the X window ID
-//  READ_AND_WRITE(x_multithreaded);      ///< do we permit multiple threads in X?
 
   SAFEREAD_WITH_INTERNAL_MUTEX(display_p, _keyboard);
   SAFEREAD_WITH_INTERNAL_MUTEX(window_id, _keyboard);
