@@ -51,6 +51,7 @@ constexpr int LOCATION_NO_PREFIX_MATCH             { -1 },    ///< unable to fin
 constexpr int RUSSIAN_INVALID_SUBSTRING            { -1 },    ///< source substring does not match target line in constructor
               RUSSIAN_INVALID_FORMAT               { -2 };    ///< format of file is invalid
 
+#if 0
 // -----------  value ----------------
 
 /*! \class  value
@@ -114,6 +115,7 @@ public:
          & _val;
     }
 };
+#endif
 
 // -----------  alternative_country_info  ----------------
 
@@ -486,6 +488,7 @@ std::ostream& operator<<(std::ostream& ost, const location_info& info);
  */
 const location_info guess_zones(const std::string& call, const location_info& li);
 
+#if 0
 // -----------  drlog_qth_database_record  ----------------
 
 /*! \class  drlog_qth_database_record
@@ -566,7 +569,9 @@ public:
          & _longitude;
     }
 };
+#endif
 
+#if 0
 // -----------  drlog_qth_database  ----------------
 
 /*! \class  drlog_qth_database
@@ -645,6 +650,7 @@ public:
     { ar & _db;
     }
 };
+#endif
 
 // -----------  location_database  ----------------
 
@@ -668,7 +674,7 @@ protected:
 //  std::unordered_map<std::string, location_info> _alt_call_db; ///< database of alternative calls
 //  std::unordered_map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- checked calls
   
-  drlog_qth_database                   _qth_db;      ///< additional database
+//  drlog_qth_database                   _qth_db;      ///< additional database
 
 /*! \brief                  Initialise the database
     \param  cty             cty.dat data
@@ -706,7 +712,7 @@ public:
     \param  country_list    type of country list
     \param  secondary       secondary QTH database
 */
-  location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
+//  location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
 
 /*! \brief                  Prepare a default-constructed object for use
     \param  cty             cty.dat data
@@ -719,7 +725,7 @@ public:
     \param  country_list    type of country list
     \param  secondary       secondary QTH database
 */
-  void prepare(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
+//  void prepare(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
 
 /*! \brief              Add Russian information
     \param  path        vector of directories to check for file <i>filename</i>
@@ -840,8 +846,8 @@ public:
 
       ar & _db
          & _alt_call_db
-         & _db_checked
-         & _qth_db;
+         & _db_checked;
+//         & _qth_db;
     }
 };
 

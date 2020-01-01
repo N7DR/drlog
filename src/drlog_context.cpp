@@ -78,6 +78,7 @@ void drlog_context::_set_points(const string& command, const MODE m)
   { const string lhs { str_vec[0] };
 
     string tmp_points_str;
+    
     auto& pbb { _per_band_points[m] };
 
     if (!contains(lhs, "["s) or contains(lhs, "[*]"s))            // for all bands
@@ -268,6 +269,10 @@ void drlog_context::_process_configuration_file(const string& filename)
         _bandmap_recent_colour = string_to_colour(remove_peripheral_spaces(RHS));
     }
 
+// BAND MAP SHOW MARKED FREQUENCIES
+    if ( (LHS == "BAND MAP SHOW MARKED FREQUENCIES"s) or (LHS == "BANDMAP SHOW MARKED FREQUENCIES"s) )
+      _bandmap_show_marked_frequencies = is_true;
+
 // BANDS
     if (LHS == "BANDS"s)
       _bands = RHS;
@@ -455,7 +460,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "EXCHANGE MULTS"s)
     { _exchange_mults = RHS;
 
-      if (contains(_exchange_mults, ","s))       // if there is more than one exchange mult
+      if (contains(_exchange_mults, ","s))      // if there is more than one exchange mult
         QSO_MULT_WIDTH = 4;                     // make them all the same width, so that the log line looks OK
     }
 
@@ -1297,9 +1302,9 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // this could be more efficient by generating a container of all the legal keysym names and then comparing the target to all those.
 // The latter is now what we do. The legal names are in key_names.
         const string                           target { to_lower(message_info[2]) };
-        const map<string, int>::const_iterator cit    { key_names.find(target) };
+//        const map<string, int>::const_iterator cit    { key_names.find(target) };
 
-        if (cit != key_names.cend())
+        if (const auto& cit { key_names.find(target) }; cit != key_names.cend())
         { const vector<string> vec_str { split_string(testline, "="s) };
           const string         str     { remove_leading_spaces(vec_str.at(1)) };
 
@@ -1313,11 +1318,12 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
           if (cit2 != equivalent_key_names.cend())
           { ost << "found equivalent key name: " << cit2->second << endl;
 
-            const                                  string alternative { cit2->second };
-            const map<string, int>::const_iterator cit                { key_names.find(alternative) };
+            const string alternative { cit2->second };
+//            const map<string, int>::const_iterator cit                { key_names.find(alternative) };
 
-            if (cit != key_names.cend())
-            { const int keysym { cit->second };
+ //           if (cit != key_names.cend())
+            if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
+            { const int& keysym { cit->second };
 
               if (_messages.find(keysym) == _messages.cend())  // only if there is no message for this key
               {  ost << "message associated with equivalent key is: " << str << endl;
@@ -1514,8 +1520,8 @@ const string drlog_context::points(const std::string& exchange_field, const BAND
 const vector<string> drlog_context::sent_exchange_names(void) const
 { vector<string> rv;
 
-  for (const auto& pss : _sent_exchange)
-    rv.push_back(pss.first);
+  for (const auto& [name, value] : _sent_exchange)
+    rv.push_back(name);
 
   return rv;
 }

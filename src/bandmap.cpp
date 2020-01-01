@@ -1028,8 +1028,7 @@ const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
 const frequency bandmap::lowest_frequency(void)
-{ //const BM_ENTRIES bme { rbn_threshold_and_filtered_entries() };
-  const BM_ENTRIES bme { displayed_entries() };
+{ const BM_ENTRIES bme { displayed_entries() };
 
   return (bme.empty() ? frequency() : bme.front().freq());
 }
@@ -1041,8 +1040,7 @@ const frequency bandmap::lowest_frequency(void)
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
 const frequency bandmap::highest_frequency(void)
-{ //const BM_ENTRIES bme { rbn_threshold_and_filtered_entries() };
-  const BM_ENTRIES bme { displayed_entries() };
+{ const BM_ENTRIES bme { displayed_entries() };
 
   return (bme.empty() ? frequency() : bme.back().freq());
 }
@@ -1156,19 +1154,6 @@ window& operator<(window& win, bandmap& bm)
 // *****  NEED A NEW WAY TO HANDLE LOCKING FOR BANDMAPS -- this allows locking inversion *****
 
   SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
-
-#if 0
-  BM_ENTRIES entries { bm.rbn_threshold_and_filtered_entries() };    // automatically filter
-
-  switch (bm.cull_function())
-  { case 1 :                                                         // N7DR criteria
-      REMOVE_IF_AND_RESIZE(entries, [] (bandmap_entry& be) { return ( !( be.is_marker() or be.matches_criteria() ) ); });
-      break;
-
-    default :
-      break;
-  }
-#endif
 
   BM_ENTRIES entries { bm.displayed_entries() };    // automatically filter
 
@@ -1306,16 +1291,13 @@ window& bandmap::write_to_window(window& win)
       const time_t start_time                  { be.time() };                  // time it was inserted
       const time_t expiration_time             { be.expiration_time() };
       const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
-
-//      const vector<int> fade_colours { bm.fade_colours() };
-      const int         n_colours    { static_cast<int>(fade_colours().size()) };
-      const float       interval     { (1.0f / static_cast<float>(n_colours)) };
-      const int n_intervals { min(static_cast<int>(fraction / interval), n_colours - 1) };
+      const int    n_colours                   { static_cast<int>(fade_colours().size()) };
+      const float  interval                    { (1.0f / static_cast<float>(n_colours)) };
+      const int    n_intervals                 { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
       int cpu = colours.add(fade_colours().at(n_intervals), win.bg());
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
-//      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != COLOUR_BLACK))
       if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != COLOUR_BLACK))
         cpu = colours.add(recent_colour(), win.bg());
 

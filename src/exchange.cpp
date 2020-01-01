@@ -55,9 +55,9 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
       unordered_map<string /* call */, string /* prefill value */> call_value_map;
 
       for (const auto& line : lines)                                // each line should now be: callsign value (+ ignored later stuff)
-      { const vector<string> this_pair { split_string(line, ' ') };
+      { //const vector<string> this_pair { split_string(line, ' ') };
 
-        if (this_pair.size() >= 2)
+        if (const vector<string> this_pair { split_string(line, ' ') }; this_pair.size() >= 2)
           call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
       }
 
@@ -166,7 +166,7 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 { if (!contains_digit(str))
     return false;
 
-  bool possible = true;
+  bool possible { true };
 
 // check all except the last character
   for (size_t n = 0; n < str.length() - 1; ++n)
@@ -214,8 +214,8 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 { if (received_fields.size() < 3)                    // at least 3 fields are required (<n><prec> <check> <sec>)
     return;
 
-  vector<string> copy_received_fields = received_fields;
-  bool is_special { false };
+  vector<string> copy_received_fields { received_fields };
+  bool           is_special           { false };
 
 // deal with: B 71 CO 10 N7DR
 // which might be a common case
@@ -333,7 +333,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   if (possible_callsigns.empty())
     _callsign = call;    // default
   else
-  { const unsigned int field_nr { possible_callsigns[possible_callsigns.size() - 1] };
+  { const unsigned int& field_nr { possible_callsigns[possible_callsigns.size() - 1] };
 
     _callsign = copy_received_fields[field_nr];
   }
@@ -454,7 +454,7 @@ void parsed_exchange::_fill_fields(const map<int, set<string>>& matches, const v
   decltype(matches) remaining_matches(matches);
 
   for (unsigned int field_nr = 0; field_nr < remaining_matches.size(); ++field_nr)
-  { if (remaining_matches.at(field_nr).size() == 1)  // there is a single match between field number and name
+  { if (remaining_matches.at(field_nr).size() == 1)         // there is a single match between field number and name
     { const string& matched_field_name { *(remaining_matches.at(field_nr).cbegin()) };
 
       for (unsigned int n = 0; n < _fields.size(); ++n)
@@ -496,7 +496,6 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     for (const auto& t : unassigned_tuples)
     { if (FIELD_NAMES(t).size() == 1)
       { const string& field_name { *(FIELD_NAMES(t).cbegin()) };    // syntactic sugar
-//        const auto    it         { tuple_map_assignments.find( field_name ) };
 
         if (const auto it { tuple_map_assignments.find( field_name ) }; it != tuple_map_assignments.end())
          tuple_map_assignments.erase(it);        // erase any previous entry with this key
@@ -617,9 +616,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     bool found_match { false };
 
     for (auto cit = exchange_field_names.cbegin(); !found_match and cit != exchange_field_names.cend(); ++cit)
-    { const string exchange_field_name { *cit };
-
-      if (contains(exchange_field_name, "+"))    // if a choice
+    { if (const string exchange_field_name { *cit }; contains(exchange_field_name, "+"s))    // if a choice
       { const vector<string> choices_vec { split_string(exchange_field_name, '+') };
 
         for (auto it = choices_vec.begin(); it != choices_vec.end(); )    // see Josuttis 2nd edition, p. 343
@@ -652,55 +649,49 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 // for each received field, which output fields does it match?
     map<int /* received field number */, set<string>> matches;
 
-  const map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
+    const map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
 
 //  ost << "The EFT for each field name: " << endl;
 
 //  for (const auto& [ field_name, this_eft ] : exchange_field_eft)
 //    ost << "field name = " << field_name << "; EFT = " << this_eft << endl;
 
-  int field_nr = 0;
+    int field_nr { 0 };
 
-  for (const string& received_value : copy_received_values)
-  { set<string> match;
+    for (const string& received_value : copy_received_values)
+    { set<string> match;
 
-    for (const auto& field : exchange_template)
-    { const string& field_name { field.name() };
+      for (const auto& field : exchange_template)
+      { const string& field_name { field.name() };
 
-      try
-      { //const bool is_choice { contains(field_name, "+"s) };
+        try
+        { if (const bool is_choice { contains(field_name, "+"s) }; is_choice)
+          { const vector<string> choices_vec { split_string(field_name, '+') };
 
-        if (const bool is_choice { contains(field_name, "+"s) }; is_choice)
-        { const vector<string> choices_vec { split_string(field_name, '+') };
+            set<string> choices(choices_vec.cbegin(), choices_vec.cend());
 
-          set<string> choices(choices_vec.cbegin(), choices_vec.cend());
-
-          for (auto it = choices.begin(); it != choices.end(); )    // see Josuttis 2nd edition, p. 343
-          { //const EFT& eft { exchange_field_eft.at(*it) };
-
-            if (const EFT& eft { exchange_field_eft.at(*it) }; eft.is_legal_value(received_value))
-            { match.insert(field_name);                 // insert the "+" version of the name
-              it = choices.end();
+            for (auto it = choices.begin(); it != choices.end(); )    // see Josuttis 2nd edition, p. 343
+            { if (const EFT& eft { exchange_field_eft.at(*it) }; eft.is_legal_value(received_value))
+              { match.insert(field_name);                 // insert the "+" version of the name
+                it = choices.end();
+              }
+              else
+                it++;
             }
-            else
-              it++;
+          }
+          else    // not a choice
+          { if (const EFT& eft { exchange_field_eft.at(field_name) }; eft.is_legal_value(received_value))
+              match.insert(field_name);
           }
         }
-        else    // not a choice
-        { //const EFT& eft { exchange_field_eft.at(field_name) };
 
-          if (const EFT& eft { exchange_field_eft.at(field_name) }; eft.is_legal_value(received_value))
-            match.insert(field_name);
+        catch (...)
+        { ost << "Error: cannot find field name: " << field_name << endl;
         }
       }
 
-      catch (...)
-      { ost << "Error: cannot find field name: " << field_name << endl;
-      }
+      matches.insert( { field_nr++, match } );
     }
-
-    matches.insert( { field_nr++, match } );
-  }
 
 //  ost << "Finished matching" << endl;
 
@@ -740,9 +731,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
   deque<TRIPLET> tuple_deque;
 
-//  for (const auto& m : matches)
-//    tuple_deque.push_back(TRIPLET { m.first, copy_received_values[m.first], m.second } );  // field number, value, matching field names
-
   for (const auto& [ field_number, matching_names ] : matches)
     tuple_deque.push_back(TRIPLET { field_number, copy_received_values[field_number], matching_names } );  // field number, value, matching field names
 
@@ -767,7 +755,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
   bool processed_field_on_last_pass { true };     // whether we processed any fields on the last pass through the loop that we are baout to execute
 
-//  if (!_valid) // we aren't finished
   while (processed_field_on_last_pass and !_valid) // we aren't finished; if we processed a field last time, we should try again with the new head of the deque
   { processed_field_on_last_pass = false;
 
@@ -842,7 +829,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
       bool found_map { false };
 
-      if (const bool is_choice { contains(name, "+") }; is_choice)
+      if (const bool is_choice { contains(name, "+"s) }; is_choice)
       { const vector<string> choices_vec { split_string(name, '+') };
 
         for (unsigned int n = 0; n < choices_vec.size() and !found_map; ++n)

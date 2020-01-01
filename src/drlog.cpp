@@ -788,6 +788,7 @@ int main(int argc, char** argv)
     const drmaster& drm { *drm_p };
 
 // read (optional) secondary QTH database
+#if 0
     drlog_qth_database* qth_db_p { nullptr };
 
     try
@@ -800,10 +801,11 @@ int main(int argc, char** argv)
     }
 
     const drlog_qth_database& qth_db { *qth_db_p };
+#endif
 
 // location database
     try
-    { location_db.prepare(country_data, context.country_list(), qth_db);
+    { location_db.prepare(country_data, context.country_list() /*, qth_db */);
     }
 
     catch (...)
@@ -2369,12 +2371,6 @@ void* process_rbn_info(void* vp)
 // display if this is a new mult on any band, and if the poster is on our own continent
           const dx_post post       { line, location_db, rbn.source() };
           const bool    wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
-//          bool    wrong_mode { is_rbn and (!post.mode_str().empty() and post.mode_str() != "CW"s) };      // don't process if RBN and not CW
-
-//          if (!wrong_mode)
-//          { wrong_mode = 
-//            
-//          }
 
           if (post.valid() and !wrong_mode)
           { const BAND dx_band { post.band() };
@@ -2474,8 +2470,9 @@ void* process_rbn_info(void* vp)
                   }
                 }
 
-// add the post to the correct bandmap
-                if (is_interesting_mode)
+// add the post to the correct bandmap unless it's a marked frequency  ...  win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
+
+                if ( is_interesting_mode and (context.bandmap_show_marked_frequencies() or !context.mark_frequency(be.mode(), be.freq())) )
                 { switch (be.source())
                   { case BANDMAP_ENTRY_SOURCE::CLUSTER :
                     case BANDMAP_ENTRY_SOURCE::RBN :

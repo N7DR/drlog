@@ -187,7 +187,7 @@ const std::string replace(const std::string& s, const std::string& old_str, cons
     Will not return a string of length greater than <i>s</i>; will truncate to that length if necessary
 */
 template <typename T>
-const std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
+[[nodiscard]] const std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
 { std::string rv { s };
 
   constexpr size_t value_size { sizeof(value) };
@@ -207,7 +207,7 @@ const std::string replace_substring(const std::string& s, const size_t start_pos
     \param  ss  substring for which to search
     \return     whether <i>s</i> contains the substring <i>ss</i>
 */
-inline const bool contains(const std::string& s, const std::string& ss)
+[[nodiscard]] inline const bool contains(const std::string& s, const std::string& ss)
   { return s.find(ss) != std::string::npos; }
 
 /*! \brief      Does a string contain a particular character?
@@ -215,27 +215,27 @@ inline const bool contains(const std::string& s, const std::string& ss)
     \param  c   character for which to search
     \return     whether <i>s</i> contains the character <i>c</i>
 */
-inline const bool contains(const std::string& s, const char c)
+[[nodiscard]] inline const bool contains(const std::string& s, const char c)
   { return s.find(c) != std::string::npos; }
 
 /*! \brief          Does a string contain any letters?
     \param  str     string to test
     \return         whether <i>str</i> contains any letters
 */
-const bool contains_letter(const std::string& str);
+[[nodiscard]] const bool contains_letter(const std::string& str);
 
 /*! \brief          Does a string contain any upper case letters?
     \param  str     string to test
     \return         whether <i>str</i> contains any upper case letters
 */
-inline const bool contains_upper_case_letter(const std::string& str)
+[[nodiscard]] inline const bool contains_upper_case_letter(const std::string& str)
   { return (str.find_first_of(UPPER_CASE_LETTERS) != std::string::npos); }
 
 /*! \brief          Does a string contain any digits?
     \param  str     string to test
     \return         whether <i>str</i> contains any digits
 */
-const bool contains_digit(const std::string& str);
+[[nodiscard]] const bool contains_digit(const std::string& str);
 
 /*! \brief              Pad a string to a particular size
     \param  s           original string
@@ -246,7 +246,7 @@ const bool contains_digit(const std::string& str);
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-const std::string pad_string(const std::string& s, const unsigned int len, const enum pad_direction pad_side = PAD_LEFT, const char pad_char = ' ');
+[[nodiscard]] const std::string pad_string(const std::string& s, const unsigned int len, const enum pad_direction pad_side = PAD_LEFT, const char pad_char = ' ');
 
 /*! \brief              Read the contents of a file into a single string
     \param  filename    name of file to be read
@@ -255,7 +255,7 @@ const std::string pad_string(const std::string& s, const unsigned int len, const
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-const std::string read_file(const std::string& filename);
+[[nodiscard]] const std::string read_file(const std::string& filename);
 
 /*! \brief              Read the contents of a file into a single string
     \param  path        the different directories to try, in order
@@ -265,7 +265,7 @@ const std::string read_file(const std::string& filename);
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-const std::string read_file(const std::vector<std::string>& path, const std::string& filename);
+[[nodiscard]] const std::string read_file(const std::vector<std::string>& path, const std::string& filename);
 
 /*! \brief              Read the contents of a file into a single string
     \param  filename    name of file to be read
@@ -275,7 +275,7 @@ const std::string read_file(const std::vector<std::string>& path, const std::str
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-inline const std::string read_file(const std::string& filename, const std::vector<std::string>& path)
+[[nodiscard]] inline const std::string read_file(const std::string& filename, const std::vector<std::string>& path)
   { return read_file(path, filename); }
 
 /*! \brief              Write a string to a file
@@ -295,7 +295,7 @@ inline void write_file(const std::string& cs, const std::string& filename)
     If <i>n</i> is equal to or greater than the length of <i>s</i>, then
     the empty string is returned.
 */
-inline const std::string remove_from_end(const std::string& s, const unsigned int n)
+[[nodiscard]] inline const std::string remove_from_end(const std::string& s, const unsigned int n)
   { return ( (n >= s.length()) ? std::string() : s.substr(0, s.length() - n) ); }
 
 /*! \brief              Split a string into components

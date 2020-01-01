@@ -512,10 +512,16 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
 void location_database::_insert_alternatives(const location_info& info, const map<string, alternative_country_info>& alternatives)
 { location_info info_copy = info;
 
-  for (map<string, alternative_country_info>::const_iterator cit = alternatives.begin(); cit != alternatives.end(); ++cit)
-  { info_copy.cq_zone(cit->second.cq_zone());
-    info_copy.itu_zone(cit->second.itu_zone());
-    _db.insert( { cit->first, info_copy } );
+//  for (map<string, alternative_country_info>::const_iterator cit = alternatives.begin(); cit != alternatives.end(); ++cit)
+//  { info_copy.cq_zone(cit->second.cq_zone());
+//    info_copy.itu_zone(cit->second.itu_zone());
+//    _db.insert( { cit->first, info_copy } );
+//  }
+
+  for (const auto& [call_or_prefix, aci] : alternatives)
+  { info_copy.cq_zone(aci.cq_zone());
+    info_copy.itu_zone(aci.itu_zone());
+    _db.insert( { call_or_prefix, info_copy } );
   }
 }
 
@@ -531,10 +537,12 @@ location_database::location_database(const cty_data& cty, const COUNTRY_LIST cou
 }
 
 /// construct from CTY.DAT data, the definition of which country list to use and a secondary qth database
+#if 0
 location_database::location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary) :
   _qth_db(secondary)
 { _init(cty, country_list);
 }
+#endif
 
 /// prepare a default-constructed object for use
 void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list)
@@ -542,10 +550,12 @@ void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_
 }
 
 /// prepare a default-constructed object for use
+#if 0
 void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary)
 { _qth_db = secondary;
   _init(cty, country_list);
 }
+#endif
 
 /*! \brief              Add Russian information
     \param  path        vector of directories to check for file <i>filename</i>
@@ -968,6 +978,7 @@ const unordered_set<string> location_database::countries(const string& cont_targ
   return rv;
 }
 
+#if 0
 // -----------  drlog_qth_database  ----------------
 
 /*! \class  drlog_qth_database
@@ -1102,6 +1113,7 @@ const float drlog_qth_database::longitude(const string& country, const unsigned 
 
   return 0;
 }
+#endif
 
 // -----------  russian_data_per_substring  ----------------
 

@@ -75,7 +75,7 @@ protected:
 public:
 
 /// return the number of posters
-  inline const unsigned int size(void) const
+  [[nodiscard]] inline const unsigned int size(void) const
     { return _posters.size(); }
 
 /*! \brief              Add a new poster
@@ -119,7 +119,7 @@ public:
     \param  callsign    the callsign to test
     \return             The number of posters associated with <i>callsign</i>
 */
-  const unsigned int n_posters(const std::string& callsign);
+  [[nodiscard]] const unsigned int n_posters(const std::string& callsign);
 
 /*! \brief              Associate a poster with a call
     \param  callsign    the callsign
@@ -134,7 +134,7 @@ public:
     \param  callsign    the callsign to test
     \return             Whether the number of posters associated with <i>callsign</i> is equal to or greater than the necessary minimum
 */
-  inline const bool sufficient_posters(const std::string& callsign)
+  [[nodiscard]] inline const bool sufficient_posters(const std::string& callsign)
     { return (n_posters(callsign) >= _min_posters); }
 };
 
@@ -158,11 +158,6 @@ public:
 /// default constructor
   needed_mult_details(void) = default;
 
-//  needed_mult_details(void) :
-//    _is_needed(false),
-//    _is_status_known(true)          //  for backwards compatibility
-//  { }
-
 /*! \brief      Constructor from a needed value
     \param  v   needed value
 */
@@ -171,19 +166,19 @@ public:
     { _values.insert(v); }
 
 /// is any value needed?
-  inline const bool is_any_value_needed(void) const
+  [[nodiscard]] inline const bool is_any_value_needed(void) const
     { return _is_needed; }
 
 /// is the status known?
-  inline const bool is_status_known(void) const
+  [[nodiscard]] inline const bool is_status_known(void) const
     { return _is_status_known; }
 
-/// is sthe tatus known?
+/// is the status known?
   inline void status_is_known(const bool torf)
     { _is_status_known = torf; }
 
 /// return all the needed values (as a set)
-  inline const std::set<T> values(void) const
+  [[nodiscard]] inline const std::set<T> values(void) const
     { return _values; }
 
 /*! \brief      Add a needed value
@@ -200,7 +195,7 @@ public:
     \param  v   value to test
     \return     whether <i>v</i> is needed
 */
-  const bool is_value_needed(const T& v) const
+  [[nodiscard]] const bool is_value_needed(const T& v) const
   { if (!_is_needed)
       return false;
 
@@ -315,7 +310,7 @@ public:
 
     The continents precede the canonical prefixes
 */
-  const std::vector<std::string> filter(void) const;
+  [[nodiscard]] const std::vector<std::string> filter(void) const;
 
 /*!  \brief         Add a string to, or remove a string from, the filter
      \param str     string to add or subtract
@@ -380,7 +375,7 @@ public:
     \param  be  comparison bandmap_entry
     \return     whether <i>this</i> should be sorted earlier than <i>be</i>
 */
-  inline const bool operator<(const bandmap_entry& be) const
+  [[nodiscard]] inline const bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
   READ(band);                           ///< band

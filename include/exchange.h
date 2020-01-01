@@ -57,7 +57,7 @@ public:
 /*! \brief                          Constructor
     \param  prefill_filename_map    map of fields and filenames
 */
-  inline exchange_field_prefill(const std::map<std::string /* field name */, std::string /* filename */>& prefill_filename_map)
+  inline explicit exchange_field_prefill(const std::map<std::string /* field name */, std::string /* filename */>& prefill_filename_map)
     { insert_prefill_filename_map(prefill_filename_map); }
 
   READ(db);                                 ///< all the data
@@ -71,7 +71,7 @@ public:
     \param  field_name  field name to test
     \return             whether prefill data exist for the field <i>field_name</i>
 */
-  inline const bool prefill_data_exists(const std::string& field_name)
+  [[nodiscard]] inline const bool prefill_data_exists(const std::string& field_name)
     { return ( _db.empty() ? false : (_db.count(field_name) == 1) ); }
 
 /*! \brief              Get the prefill data for a particular field name and callsign
@@ -82,7 +82,7 @@ public:
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-  const std::string prefill_data(const std::string& field_name, const std::string& callsign);
+  [[nodiscard]] const std::string prefill_data(const std::string& field_name, const std::string& callsign);
 };
 
 std::ostream& operator<<(std::ostream& ost, const exchange_field_prefill& epf);
@@ -101,6 +101,8 @@ protected:
   std::string    _value;                ///< field value
   bool           _is_mult;              ///< is this field a mult?
   std::string    _mult_value;           ///< actual value of the mult (if it is a mult)
+  
+  std::optional<std::string> _mvalue;
 
 public:
 
@@ -171,7 +173,7 @@ protected:
       <i>n</i>
       <i>n</i><i>precedence</i>
 */
-  const bool _is_possible_serno(const std::string& str) const;
+  [[nodiscard]] const bool _is_possible_serno(const std::string& str) const;
 
 /*! \brief          Does a string possibly contain a precedence?
     \param  str     string to check
@@ -181,14 +183,14 @@ protected:
       <i>precedence</i>
       <i>n</i><i>precedence</i>
 */
-  inline const bool _is_possible_prec(const std::string& str) const
+  [[nodiscard]] inline const bool _is_possible_prec(const std::string& str) const
     { return ( (str.length() == 1) ? (legal_prec < last_char(str)) : (_is_possible_serno(str) and (legal_prec < last_char(str))) ); }
 
 /*! \brief          Does a string possibly contain a check?
     \param  str     string to check
     \return         whether <i>str</i> is a (two-digit) check
 */
-  const bool _is_possible_check(const std::string& str) const;
+  [[nodiscard]] const bool _is_possible_check(const std::string& str) const;
 
 /*! \brief          Does a string contain a possible callsign?
     \param  str     string to check

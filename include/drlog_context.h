@@ -79,6 +79,7 @@ protected:
   int                                          _bandmap_filter_show_colour              { COLOUR_GREEN };               ///< background colour when bandmap filter is in show mode
   bool                                         _bandmap_frequency_up                    { false };                      ///< should increasing frequency go upwards in the bandmap?
   int                                          _bandmap_recent_colour                   { COLOUR_BLACK };               ///< colour for bandmap entries that are less than two minutes old
+  bool                                         _bandmap_show_marked_frequencies         { true };                       ///< whether to display entries that would be marked
   std::string                                  _bands                                   { "160, 80, 40, 20, 15, 10"s }; ///< comma-delimited list of bands that are legal for the contest
   std::string                                  _batch_messages_file                     { };                            ///< file that contains per-call batch messages
   std::string                                  _best_dx_unit                            { "MILES"s };                   ///< name of unit for the BEST DX window ("MILES" or "KM")
@@ -338,6 +339,7 @@ public:
   CONTEXTREAD(bandmap_filter_show_colour);       ///< background colour when bandmap filter is in show mode
   CONTEXTREAD(bandmap_frequency_up);             ///< should increasing frequency go upwards in the bandmap?
   CONTEXTREAD(bandmap_recent_colour);            ///< colour for bandmap entries that are less than two minutes old
+  CONTEXTREAD(bandmap_show_marked_frequencies);  ///< whether to display entries that would be marked
   CONTEXTREAD(bands);                            ///< comma-delimited list of bands that are legal for the contest
   CONTEXTREAD(batch_messages_file);              ///< file that contains per-call batch messages
   CONTEXTREAD(best_dx_unit);                     ///< name of unit for the BEST DX window ("MILES" or "KM")
@@ -412,7 +414,7 @@ public:
   CONTEXTREAD(fast_cq_bandwidth);                ///< fast CW bandwidth in CQ mode, in Hz
   CONTEXTREAD(fast_sap_bandwidth);               ///< fast CW bandwidth in SAP mode, in Hz
 
-  CONTEXTREAD(geomagnetic_indices_command);     ///< command to get geomagnetic indices
+  CONTEXTREAD(geomagnetic_indices_command);      ///< command to get geomagnetic indices
 
 
 /*! \brief      Get the guard band for a particular mode
