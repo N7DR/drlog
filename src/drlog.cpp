@@ -2651,6 +2651,9 @@ void* prune_bandmap(void* vp)
     ALT-M -- change mode
     ALT-Q -- send QTC
     CTRL-C -- EXIT (same as .QUIT)
+    CTRL-F -- find matches for exchange in log
+    CTRL-I -- refresh geomagnetic indices
+    CTRL-Q -- swap QSL and QUICK QSL messages
     CTRL-S -- send to scratchpad
     PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     ESCAPE
@@ -2680,8 +2683,6 @@ void* prune_bandmap(void* vp)
     BACKSLASH -- send to the scratchpad
     ALT--> -- VFO A -> VFO B
     ALT-<- -- VFO B -> VFO A
-    CTRL-Q -- swap QSL and QUICK QSL messages
-    CTRL-F -- find matches for exchange in log
     CTRL-B -- fast bandwidth
     F1 -- first step in SAP QSO during run
     F4 -- swap contents of CALL and BCALL windows
@@ -4222,6 +4223,23 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     rig.rig_mode(quick_qsy_info.second);
     
     processed = true;
+  }
+
+// CTRL-I -- refresh geomagnetic indices
+  if (!processed and (e.is_control('i')))
+  { if (!context.geomagnetic_indices_command().empty())
+    { static pthread_t get_indices_thread_id;
+
+      static string cmd { context.geomagnetic_indices_command() };
+
+      try
+      { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices-manual"s);
+      }
+
+      catch (const pthread_error& e)
+      { ost << e.reason() << endl;
+      }
+    }
   }
 
 // finished processing a keypress
