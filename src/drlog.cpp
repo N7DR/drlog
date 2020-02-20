@@ -3775,8 +3775,21 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = true;
   }
 
+  const bool cursor_down { (e.is_unmodified() and e.symbol() == XK_Down) }; ///< is the event a CURSOR DOWN?
+  const bool cursor_up { (e.is_unmodified() and e.symbol() == XK_Up) }; ///< is the event a CURSOR DOWN?
+
+  static bool in_scp_matching { false };          ///< are we walking through the calls?
+  static int  scp_index       { -1 };     ///< index into matched calls
+
+ if (!cursor_down and !cursor_up)                 // clear memory of walking through matched calls every time we press a different key
+  { in_scp_matching = false;
+    scp_index = -1;
+//    last_scp_index = -1;
+  }
+
 // CURSOR UP -- go to log window
-  if (!processed and e.is_unmodified() and e.symbol() == XK_Up)
+//  if (!processed and e.is_unmodified() and e.symbol() == XK_Up)
+  if (!processed and cursor_up and !in_scp_matching)
   { win_active_p = &win_log;
 
     win_log_snapshot = win_log.snapshot();
@@ -3788,40 +3801,56 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // CURSOR DOWN -- possibly replace call with SCP info
 // some trickery needed to provide capability to walk through SCP calls after trying to find an obvious match
 // includes fuzzy matches after SCP matches
-  static bool in_scp_matching;          ///< are we walking through the calls?
-  static unsigned int scp_index;        ///< index into matched calls
+//  static /* unsigned */ int scp_index;                    ///< index into matched calls
+//  static /* unsigned */ int last_scp_index { -1 };        ///< index into matched calls
 
-  bool cursor_down { (e.is_unmodified() and e.symbol() == XK_Down) }; ///< is the event a CURSOR DOWN?
+//  const bool cursor_down { (e.is_unmodified() and e.symbol() == XK_Down) }; ///< is the event a CURSOR DOWN?
+ 
+//  if (cursor_up)
+//    ost << "Cursor Up" << endl;
 
-  if (!cursor_down)                 // clear memory of walking through matched calls every time we press a different key
-  { in_scp_matching = false;
-    scp_index = 0;
-  }
-
-  if (!processed and cursor_down)
+//  if (cursor_down)
+//    ost << "Cursor Down" << endl;
+ 
+  if (!processed and (cursor_down or cursor_up))
   { bool found_match { false };
 
     string new_callsign;
 
-    if (!in_scp_matching)                           // first down arrow
-    { new_callsign = match_callsign(scp_matches);
+    if ( (!in_scp_matching) and cursor_down)                          // first down arrow; select best match, according to match_callsign() algorithm
+    { //ost << "NOT in scp_matching" << endl;
+    
+  //    ost << "length of scp_matches = " << scp_matches.size() << endl;
+  //    ost << "length of fuzzy_matches = " << fuzzy_matches.size() << endl;
+    
+      new_callsign = match_callsign(scp_matches);       // match_callsign returns the empty string if there is NO OBVIOUS BEST MATCH
 
       if (new_callsign.empty())
         new_callsign = match_callsign(fuzzy_matches);
-      else
+      
+      if (!new_callsign.empty())
       { win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= new_callsign;
         display_call_info(new_callsign);
         found_match = true;
-        in_scp_matching = true;
+    //    in_scp_matching = true;
       }
+      
+      in_scp_matching = true;
+ 
+ //     ost << "new callsign = " << new_callsign << endl;
     }
 
-    if (in_scp_matching or !found_match)
-    { in_scp_matching = true;
+  //  if (in_scp_matching or !found_match)        // no "best" callsign, or we didn't like it and want to walk through the matches
+    if (in_scp_matching and !found_match)        // no "best" callsign, or we didn't like it and want to walk through the matches
+    { //ost << "in scp_matching" << endl;
+      
+ //     in_scp_matching = true;
 
       static vector<string>  all_matches;
 
-      if (scp_index == 0)
+ //     ost << "scp_index = " << scp_index << endl;
+
+      if (scp_index == -1)                  // if we haven't created the list of matches
       { all_matches.clear();
         FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
 
@@ -3829,12 +3858,33 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         FOR_ALL(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
       }
 
-      if (scp_index < all_matches.size())
-      { new_callsign = all_matches[scp_index++];
+      if (!all_matches.empty())                         // if there are some matches
+      { //ost << "there are " << all_matches.size() << " matches" << endl;
+        //ost << "scp_index = " << scp_index << endl;
+        
+        if (scp_index == -1)
+        { scp_index = 0;                                  // go to first call
+          
+          if (all_matches[scp_index] == remove_peripheral_spaces(win.read()))               // there was a best match and it's the same as the first SCP/fuzzy match
+            scp_index = min(scp_index + 1, static_cast<int>(all_matches.size() - 1));
+        }
+        else
+        { if (cursor_down)
+            scp_index = min(scp_index + 1, static_cast<int>(all_matches.size() - 1));
+          if (cursor_up)                                  // one of cursor_up and cursor_down should be true
+            scp_index = max(scp_index - 1, 0);
+        }
+        
+  //      ost << "scp_index now = " << scp_index << endl;
+        
+        new_callsign = all_matches[scp_index];
+        
+ //       ost << "new callsign = " << new_callsign << endl;
 
         win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= new_callsign;
         display_call_info(new_callsign);
       }
+// do nothing if the matches are empty      
     }
 
     processed = true;
