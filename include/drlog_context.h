@@ -116,6 +116,7 @@ protected:
   std::string                                  _cabrillo_operators                      { };                            ///< OPERATORS:
   std::string                                  _cabrillo_qso_template                   { };                            ///< format for Cabrillo QSOs; empty QSO template; this must be properly defined if Cabrillo is used
 
+  std::set<BAND>                               _call_history_bands                      { };                            ///< bands to show in CALL HISTORY window
   std::string                                  _call_ok_now_message                     { };                            ///< message if call was changed
   std::set<std::string>                        _callsign_mults                          { };                            ///< mults derived from callsign; e.g., WPXPX
   bool                                         _callsign_mults_per_band                 { false };                      ///< are callsign mults per-band?
@@ -374,6 +375,7 @@ public:
   CONTEXTREAD(cabrillo_operators);               ///< OPERATORS:
   CONTEXTREAD(cabrillo_qso_template);            ///< format for Cabrillo QSOs
 
+  CONTEXTREAD(call_history_bands);               ///< bands to show in CALL HISTORY window
   CONTEXTREAD(call_ok_now_message);              ///< message if call was changed
   CONTEXTREAD(callsign_mults);                   ///< mults derived from callsign; e.g., WPXPX
   CONTEXTREAD(callsign_mults_per_band);          ///< are callsign mults per-band?

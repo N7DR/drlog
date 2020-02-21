@@ -289,6 +289,15 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "CABRILLO FILENAME"s)
       _cabrillo_filename = rhs;
 
+// CALL HISTORY BANDS
+    if (LHS == "CALL HISTORY BANDS"s)
+    { const string bands_str = rhs;
+      const vector<string> bands_str_vec = remove_peripheral_spaces(split_string(bands_str, ","s));
+      
+      for (const auto& band_str : bands_str_vec)
+        _call_history_bands.insert(BAND_FROM_NAME[band_str]); 
+    }
+
 // CALL OK NOW MESSAGE
     if (LHS == "CALL OK NOW MESSAGE"s)
       _call_ok_now_message = rhs;
@@ -1371,6 +1380,19 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
   if (_message_cq_2.empty())
     _message_cq_2 = "cq cq test de  "s + _my_call + "  "s + _my_call + "  "s + _my_call + "  test"s;
+
+  if (_call_history_bands.empty())
+  { const vector<string> bands_vec { remove_peripheral_spaces( split_string(bands(), ","s) ) };
+
+    for (const auto& str : bands_vec)
+    { try
+      { _call_history_bands.insert(BAND_FROM_NAME.at(str));
+      }
+
+      catch (...)
+      { }
+    }
+  }
 
 // possibly fix Cabrillo template
   if ( (_cabrillo_qso_template == "ARRL DX"s) or (_cabrillo_qso_template == "CQ WW"s) )

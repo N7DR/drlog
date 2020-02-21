@@ -283,6 +283,8 @@ bool                    bandmap_frequency_up { false };             ///< whether
 bool                    best_dx_is_in_miles;                        ///< whether unit for BEST DX window is miles
 bandmap_buffer          bm_buffer;                                  ///< global control buffer for all the bandmaps
 
+
+set<BAND>               call_history_bands;                         ///< bands displayed in CALL HISTORY window
 drlog_context           context;                                    ///< context taken from configuration file
 unsigned int            cw_speed_change;                            ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
 
@@ -717,6 +719,7 @@ int main(int argc, char** argv)
 
     bandmap_frequency_up            = context.bandmap_frequency_up();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"s);
+    call_history_bands              = context.call_history_bands();
     cw_speed_change                 = context.cw_speed_change();
     display_grid                    = context.display_grid();
     home_exchange_window            = context.home_exchange_window();
@@ -8227,7 +8230,7 @@ void populate_win_call_history(const string& callsign)
     int line_nr { 0 };
 
 // think about whether we want an option to NOT limit to permitted bands/modes; in 160m contests, this window isn't very useful as-is
-    for (const auto b : permitted_bands)
+    for (const auto b : call_history_bands /* permitted_bands */)
     { const cursor c_posn { 0, line_nr++ };
 
       win_call_history < c_posn < pad_string(BAND_NAME[b], 3);            // low band is on bottom
