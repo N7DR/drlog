@@ -1,4 +1,4 @@
-// $Id: macros.h 153 2019-09-01 14:27:02Z  $
+// $Id: macros.h 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -872,6 +872,23 @@ std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
 
   return ost;
 }
+
+/*! \brief          Write an <i>unordered_map<key, value></i> object to an output stream
+    \param  ost     output stream
+    \param  mp      object to write
+    \return         the output stream
+    
+    Note that the output order is, unsurprisingly, effectively random
+*/
+template <class T1, class T2>
+std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp)
+{ for (typename std::unordered_map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
+    ost << "unordered_map[" << cit->first << "]: " << cit->second << std::endl;
+
+  return ost;
+}
+
+
 
 /*! \brief          Apply a function to all in a container
     \param  first   container

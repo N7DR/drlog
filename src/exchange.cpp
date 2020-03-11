@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: exchange.cpp 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -211,7 +211,9 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   _check("XX"s),
   _serno(0),
   _section("AAA"s)
-{ if (received_fields.size() < 3)                    // at least 3 fields are required (<n><prec> <check> <sec>)
+{ using INDEX_TYPE = uint8_t;
+
+  if (received_fields.size() < 3)                    // at least 3 fields are required (<n><prec> <check> <sec>)
     return;
 
   vector<string> copy_received_fields { received_fields };
@@ -231,9 +233,9 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
 
 //  count the number fields that might be, or might contain, a serial number
 // i.e., all digits, or digits followed by a single letter
-  vector<size_t> possible_sernos;
+  vector<INDEX_TYPE> possible_sernos;
 
-  size_t index { 0 };
+  INDEX_TYPE index { 0 };
 
   for (const auto& field : copy_received_fields)
   { if (_is_possible_serno(field))
@@ -242,7 +244,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     index++;
   }
 
-  vector<size_t> possible_prec;
+  vector<INDEX_TYPE> possible_prec;
   index = 0;
 
   for (const auto& field : copy_received_fields)
@@ -252,7 +254,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     index++;
   }
 
-  vector<size_t> possible_check;
+  vector<INDEX_TYPE> possible_check;
   index = 0;
 
   for (const auto& field : copy_received_fields)
@@ -262,7 +264,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
     index++;
   }
 
-  vector<size_t> possible_callsigns;
+  vector<INDEX_TYPE> possible_callsigns;
   index = 0;
 
   for (const auto& field : copy_received_fields)
@@ -273,7 +275,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   }
 
 // calculate number of entries that might be a check or a serial number
-  vector<size_t> ambiguous_fields;
+  vector<INDEX_TYPE> ambiguous_fields;
 
   for (const auto& possible_check_field : possible_check)
     if (find(possible_sernos.cbegin(), possible_sernos.cend(), possible_check_field) != possible_sernos.cend())

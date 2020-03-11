@@ -282,8 +282,8 @@ class log_extract
 {
 protected:
 
-  window&      _win;                        ///< window associated with the log extract  (NB, during construction, _win will be constructed first)
-  unsigned int _win_size;                   ///< height of the associated window
+  window& _win;                        ///< window associated with the log extract  (NB, during construction, _win will be constructed first)
+  size_t  _win_size;                   ///< height of the associated window
 
   std::deque<QSO> _qsos;                    ///< QSOs contained in the extract
 

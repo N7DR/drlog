@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: drlog.cpp 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1722,7 +1722,7 @@ int main(int argc, char** argv)
     if (send_qtcs)
     {
 // number of EU QSOs from logbook
-      const unsigned int n_eu_qsos { logbk.filter([] (const QSO& q) { return (q.continent() == "EU"s); } ).size() };
+      const size_t n_eu_qsos { logbk.filter([] (const QSO& q) { return (q.continent() == "EU"s); } ).size() };
 
       try
       { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
@@ -2522,11 +2522,11 @@ void* process_rbn_info(void* vp)
 
       win_monitored_posts < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-      unsigned int y { (win_monitored_posts.height() - 1) - (entries.size() - 1) }; // oldest entry
+      unsigned int y { static_cast<unsigned int>( (win_monitored_posts.height() - 1) - (entries.size() - 1) ) }; // oldest entry
 
       const time_t       now          { ::time(NULL) };
       const vector<int>  fade_colours { context.bandmap_fade_colours() };
-      const unsigned int n_colours    { fade_colours.size() };
+      const unsigned int n_colours    { static_cast<unsigned int>(fade_colours.size()) };
       const float        interval     { 1.0f / n_colours };
 
       int default_colours { static_cast<int>(colours.add(win_monitored_posts.fg(), win_monitored_posts.bg())) };
@@ -2883,7 +2883,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { bm.filter_enabled(false);
 
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
-//        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
         display_bandmap_filter(bm);
         processed = true;
       }
@@ -2893,7 +2892,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         bm.filter_hide(true);
 
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_hide_colour());
-//        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
         display_bandmap_filter(bm);
         processed = true;
       }
@@ -2902,7 +2900,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { bm.filter_show(true);
 
         win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_show_colour());
-//        win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
         display_bandmap_filter(bm);
         processed = true;
       }
@@ -2911,7 +2908,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     { const string str { ( (CONTINENT_SET < contents) ? contents : location_db.canonical_prefix(contents) ) };
 
       bm.filter_add_or_subtract(str);
-//      win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
       display_bandmap_filter(bm);
       processed = true;         //  processed even if haven't been able to do anything with it
     }
@@ -2931,12 +2927,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // if empty, send CQ #1, if in CQ mode
     if (contents.empty())
     { if ( (safe_get_mode() == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ))
-      { //const string msg { context.message_cq_1() };
-
-        //if (!msg.empty())
-       //   (*cw_p) << msg;
         (*cw_p) << context.message_cq_1();
-      }
 
       processed = true;
     }
@@ -3779,7 +3770,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   }
 
   const bool cursor_down { (e.is_unmodified() and e.symbol() == XK_Down) }; ///< is the event a CURSOR DOWN?
-  const bool cursor_up { (e.is_unmodified() and e.symbol() == XK_Up) }; ///< is the event a CURSOR DOWN?
+  const bool cursor_up   { (e.is_unmodified() and e.symbol() == XK_Up) }; ///< is the event a CURSOR DOWN?
 
   static bool in_scp_matching { false };          ///< are we walking through the calls?
   static int  scp_index       { -1 };     ///< index into matched calls
@@ -3787,7 +3778,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
  if (!cursor_down and !cursor_up)                 // clear memory of walking through matched calls every time we press a different key
   { in_scp_matching = false;
     scp_index = -1;
-//    last_scp_index = -1;
   }
 
 // CURSOR UP -- go to log window
@@ -3804,29 +3794,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // CURSOR DOWN -- possibly replace call with SCP info
 // some trickery needed to provide capability to walk through SCP calls after trying to find an obvious match
 // includes fuzzy matches after SCP matches
-//  static /* unsigned */ int scp_index;                    ///< index into matched calls
-//  static /* unsigned */ int last_scp_index { -1 };        ///< index into matched calls
-
-//  const bool cursor_down { (e.is_unmodified() and e.symbol() == XK_Down) }; ///< is the event a CURSOR DOWN?
- 
-//  if (cursor_up)
-//    ost << "Cursor Up" << endl;
-
-//  if (cursor_down)
-//    ost << "Cursor Down" << endl;
- 
   if (!processed and (cursor_down or cursor_up))
   { bool found_match { false };
 
     string new_callsign;
 
     if ( (!in_scp_matching) and cursor_down)                          // first down arrow; select best match, according to match_callsign() algorithm
-    { //ost << "NOT in scp_matching" << endl;
-    
-  //    ost << "length of scp_matches = " << scp_matches.size() << endl;
-  //    ost << "length of fuzzy_matches = " << fuzzy_matches.size() << endl;
-    
-      new_callsign = match_callsign(scp_matches);       // match_callsign returns the empty string if there is NO OBVIOUS BEST MATCH
+    { new_callsign = match_callsign(scp_matches);       // match_callsign returns the empty string if there is NO OBVIOUS BEST MATCH
 
       if (new_callsign.empty())
         new_callsign = match_callsign(fuzzy_matches);
@@ -3835,23 +3809,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= new_callsign;
         display_call_info(new_callsign);
         found_match = true;
-    //    in_scp_matching = true;
       }
       
       in_scp_matching = true;
- 
- //     ost << "new callsign = " << new_callsign << endl;
     }
 
-  //  if (in_scp_matching or !found_match)        // no "best" callsign, or we didn't like it and want to walk through the matches
     if (in_scp_matching and !found_match)        // no "best" callsign, or we didn't like it and want to walk through the matches
-    { //ost << "in scp_matching" << endl;
-      
- //     in_scp_matching = true;
-
-      static vector<string>  all_matches;
-
- //     ost << "scp_index = " << scp_index << endl;
+    { static vector<string>  all_matches;
 
       if (scp_index == -1)                  // if we haven't created the list of matches
       { all_matches.clear();
@@ -3862,10 +3826,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
       if (!all_matches.empty())                         // if there are some matches
-      { //ost << "there are " << all_matches.size() << " matches" << endl;
-        //ost << "scp_index = " << scp_index << endl;
-        
-        if (scp_index == -1)
+      { if (scp_index == -1)
         { scp_index = 0;                                  // go to first call
           
           if (all_matches[scp_index] == remove_peripheral_spaces(win.read()))               // there was a best match and it's the same as the first SCP/fuzzy match
@@ -3878,12 +3839,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
             scp_index = max(scp_index - 1, 0);
         }
         
-  //      ost << "scp_index now = " << scp_index << endl;
-        
         new_callsign = all_matches[scp_index];
-        
- //       ost << "new callsign = " << new_callsign << endl;
-
         win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= new_callsign;
         display_call_info(new_callsign);
       }
@@ -5138,7 +5094,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
         deque<QSO> original_qsos;
 
-        unsigned int qso_number  { logbk.size() };
+        unsigned int qso_number  { static_cast<unsigned int>(logbk.size()) };
         unsigned int n_to_remove { 0 };
 
         for (size_t n = 0; n < win_log_snapshot.size(); ++n)
@@ -5612,6 +5568,8 @@ void populate_win_info(const string& callsign)
   else
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
 
+//  ost << "in populate_win_info(): display_grid = " << boolalpha << display_grid << endl;
+  
   if (display_grid)
   { const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };
 
@@ -7168,7 +7126,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
         if (cw)
           original_cw_speed = cw_p->speed();
 
-        const unsigned int number_of_qtc { qtc_db.size() + 1 };
+        const unsigned int number_of_qtc { static_cast<unsigned int>(qtc_db.size() + 1) };
 
         qtc_id = to_string(number_of_qtc) + "/"s + to_string(qtc_entries_to_send.size());
         series.id(qtc_id);
@@ -7666,7 +7624,7 @@ const bool process_change_in_bandmap_column_offset(const KeySym symbol)
 // don't let it increment if there is space in the last column
     const unsigned int number_of_columns                     { bm.n_columns(win_bandmap) };
     const unsigned int maximum_number_of_displayable_entries { number_of_columns * win_bandmap.height() };
-    const unsigned int n_entries_in_bandmap                  { bm.displayed_entries().size() };
+    const unsigned int n_entries_in_bandmap                  { static_cast<unsigned int>(bm.displayed_entries().size()) };
     const unsigned int start_entry                           { static_cast<unsigned int>( (n_entries_in_bandmap > maximum_number_of_displayable_entries) ? bm.column_offset() * win_bandmap.height() : 0 ) };
     const unsigned int column_of_last_entry                  { ( ((n_entries_in_bandmap - start_entry) - 1) / win_bandmap.height() ) + 1 };    // wrt 1
 

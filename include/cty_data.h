@@ -1,4 +1,4 @@
-// $Id: cty_data.h 152 2019-08-21 20:23:38Z  $
+// $Id: cty_data.h 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -178,8 +178,10 @@ class cty_record
 {
 protected:
 
-  std::map<std::string, alternative_country_info>   _alt_callsigns;         ///< alternative callsigns used by this country
-  std::map<std::string, alternative_country_info>   _alt_prefixes;          ///< alternative prefixes used by this country
+  using ACI_DBTYPE = std::unordered_map<std::string, alternative_country_info>;
+
+  ACI_DBTYPE   _alt_callsigns;         ///< alternative callsigns used by this country
+  ACI_DBTYPE   _alt_prefixes;          ///< alternative prefixes used by this country
   std::string                                       _continent;             ///< two-letter abbreviation for continent
   std::string                                       _country_name;          ///< official name of the country
   unsigned int                                      _cq_zone;               ///< CQ zone
@@ -248,6 +250,8 @@ public:
 */
   inline const bool is_alternative_prefix(const std::string& pfx)
     { return (_alt_prefixes.find(pfx) != _alt_prefixes.end()); }
+    
+  friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
 };
 
 /*! \brief          Write a <i>map<key, value></i> object to an output stream
@@ -371,31 +375,6 @@ public:
 */
 std::ostream& operator<<(std::ostream& ost, const russian_data_per_substring& info);
 
-// -----------  russian_data  ----------------
-
-/*! \class  russian_data
-    \brief  Encapsulate the data from a Russian data file
-
-    Russian data file is based on http://www.rdxc.org/asp/pages/regions.asp?ORDER=1
-*/
-
-class russian_data
-{
-protected:
-
-  std::map<std::string /* substring */, russian_data_per_substring> _data;          ///< map substring to the matching data
-
-public:
-
-/*! \brief              Construct from a file
-    \param  path        the directory path to be searched in order
-    \param  filename    the name of the file to be read
-*/
-  russian_data(const std::vector<std::string>& path, const std::string& filename);
-
-  READ(data);  ///< map substring to the matching data
-};
-
 // -----------  location_info  ----------------
 
 /*! \class  location_info
@@ -455,6 +434,12 @@ public:
 
   READ_AND_WRITE(region_abbreviation);   ///< (Russian) two-letter abbreviation for region
   READ_AND_WRITE(region_name);           ///< (Russian) name of region
+  
+/*! \brief          Set both latitude and longitude at once
+    \param  lat     latitude in degrees (+ve north)
+    \param  lon     longitude in degrees (+ve west)
+*/
+  void latitude_longitude(const float lat, const float lon);    // set both latitude and longitude at once
 
 /// archive using boost
    template<typename Archive>
@@ -662,17 +647,20 @@ class location_database
 {
 protected:
 
-  std::map<std::string, location_info> _db;          ///< prefix-associated info -- the original database
-  std::map<std::string, location_info> _alt_call_db; ///< database of alternative calls
+  using ACI_DBTYPE = decltype(cty_record::_alt_callsigns);
+  using LOCATION_DBTYPE = std::unordered_map<std::string, location_info>;
+  using RUSSIAN_DBTYPE  = std::unordered_map<std::string, russian_data_per_substring>;  // there doesn't seem to be any way to make this accessible to russian_data; so it is redefined in that class
 
-  mutable std::map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
+//  std::map<std::string, location_info> _db;          ///< prefix-associated info -- the original database
+  LOCATION_DBTYPE _db;          ///< prefix-associated info -- the original database
+  
+//  std::map<std::string, location_info> _alt_call_db; ///< database of alternative calls
+  LOCATION_DBTYPE _alt_call_db; ///< database of alternative calls
 
-  std::map<std::string, russian_data_per_substring> _russian_db;  ///< Russian substring-indexed info
+//  mutable std::map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
+  mutable LOCATION_DBTYPE _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
 
-// unordered_map will not serialize with boost 1.49
-//   it still doesn't serialize in boost 1.53
-//  std::unordered_map<std::string, location_info> _alt_call_db; ///< database of alternative calls
-//  std::unordered_map<std::string, location_info> _db_checked;  ///< call- or prefix-associated info -- checked calls
+  RUSSIAN_DBTYPE _russian_db;  ///< Russian substring-indexed info
   
 //  drlog_qth_database                   _qth_db;      ///< additional database
 
@@ -686,7 +674,8 @@ protected:
     \param  info            the original location information
     \param  alternatives    alternative country information
 */
-  void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
+//  void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
+  void _insert_alternatives(const location_info& info, const ACI_DBTYPE& alternatives);
 
   mutable pt_mutex _location_database_mutex;  ///< to make location_database objects thread-safe;
    
@@ -753,7 +742,8 @@ public:
   const location_info info(const std::string& callpart) const;
   
 /// return the database
-  inline const std::map<std::string, location_info> db(void) const
+//  inline const std::map<std::string, location_info> db(void) const
+  inline const decltype(location_database::_db) db(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
 /// create a set of all the canonical prefixes for countries
@@ -849,6 +839,8 @@ public:
          & _db_checked;
 //         & _qth_db;
     }
+    
+  friend class russian_data;    // in order to keep consistent definitions of database types
 };
 
 /*! \brief          Write a <i>location_database</i> object to an output stream
@@ -857,6 +849,34 @@ public:
     \return         the output stream
 */
 std::ostream& operator<<(std::ostream& ost, const location_database& db);
+
+// -----------  russian_data  ----------------
+
+/*! \class  russian_data
+    \brief  Encapsulate the data from a Russian data file
+
+    Russian data file is based on http://www.rdxc.org/asp/pages/regions.asp?ORDER=1
+*/
+
+class russian_data
+{
+protected:
+
+  using RUSSIAN_DBTYPE  = decltype(location_database::_russian_db);
+
+ // std::map<std::string /* substring */, russian_data_per_substring> _data;          ///< map substring to the matching data
+  RUSSIAN_DBTYPE _data;          ///< map substring to the matching data
+
+public:
+
+/*! \brief              Construct from a file
+    \param  path        the directory path to be searched in order
+    \param  filename    the name of the file to be read
+*/
+  russian_data(const std::vector<std::string>& path, const std::string& filename);
+
+  READ(data);  ///< map substring to the matching data
+};
 
 // -------------------------------------- Errors  -----------------------------------
 

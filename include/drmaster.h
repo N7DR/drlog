@@ -1,4 +1,4 @@
-// $Id: drmaster.h 153 2019-09-01 14:27:02Z  $
+// $Id: drmaster.h 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -47,7 +47,7 @@ protected:
 
     <i>posn</i> is updated to point at the start of the next call
 */
-  const std::string _get_call(const std::string& contents, size_t& posn) const;
+  const std::string _get_call(const std::string& contents, uint32_t& posn) const;
 
 public:
 
