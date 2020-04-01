@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 154 2020-03-05 15:36:24Z  $
+// $Id: drlog.cpp 155 2020-04-01 18:45:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -305,7 +305,8 @@ bool                    is_ss { false };                            ///< ss is s
 //rig_configuration       last_cqmode_configuration;                  ///< most recent CQMODE configuration
 //rig_configuration       last_sapmode_configuration;                 ///< most recent SAPMODE configuration
 logbook                 logbk;                                      ///< the log; can't be called "log" if mathcalls.h is in the compilation path
-bool                    long_t { false };                           ///< whether to send long Ts at beginning of serno
+//bool                    long_t { false };                           ///< whether to send long Ts at beginning of serno
+unsigned short          long_t { 0 };                               ///< do not send long Ts at beginning of serno
 
 unsigned int            max_qsos_without_qsl;                       ///< limit for the N7DR matches_criteria() algorithm
 memory_information      meminfo;                                    ///< to monitor the state of memory
@@ -712,7 +713,7 @@ int main(int argc, char** argv)
     delete context_p;
 
 // set some immutable variables from the context
-    DP           = context.decimal_point();             // correct decimal point indicator
+    DP            = context.decimal_point();            // correct decimal point indicator
     TS            = context.thousands_separator();      // correct thousands separator
     ACCEPT_COLOUR = context.accept_colour();            // colour for calls it is OK to work
     REJECT_COLOUR = context.reject_colour();            // colour for calls it is not OK to work
@@ -5753,17 +5754,20 @@ const string expand_cw_message(const string& msg)
       octothorpe_str += tmp[tmp.size() - 1];
     }
 
-    if (long_t and (octothorpe < 100))
-    { constexpr char LONG_T_CHAR { 15 };                         // character number that represents a long T (127%)
+    if ( (long_t > 0) and (octothorpe < 100) )
+    { constexpr char LONG_T_CHAR { 15 };                              // character number that represents a long T (127%) -- see cw_buffer.cpp
+      constexpr char LONG_LONG_T_CHAR { ')' };                        // character number that represents a long long T (150%) -- see cw_buffer.cpp
 
       const int n_to_find { (octothorpe < 10 ? 2 : 1) };
+
+      const char char_to_send { (long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR };   // default is 125
 
       bool found_all { false };
       int  n_found   { 0 };
 
       for (size_t n = 0; !found_all and (n < octothorpe_str.size() - 1); ++n)
       { if (!found_all and octothorpe_str[n] == '0')
-        { octothorpe_str[n] = LONG_T_CHAR;
+        { octothorpe_str[n] = char_to_send /* LONG_T_CHAR */;
           found_all = (++n_found == n_to_find);
         }
       }

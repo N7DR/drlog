@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 154 2020-03-05 15:36:24Z  $
+// $Id: drlog_context.h 155 2020-04-01 18:45:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -167,7 +167,8 @@ protected:
   std::string                                  _keyer_port                              { };                            ///< the device that is to be used as a keyer
 
   std::string                                  _logfile                                 { "drlog.dat"s };               ///< name of the log file
-  bool                                         _long_t                                  { false };                      ///< whether to extend length of initial Ts in serial number
+//  bool                                         _long_t                                  { false };                      ///< whether to extend length of initial Ts in serial number
+  unsigned short                               _long_t                                  { 0 };                          ///< whether and amount to extend length of initial Ts in serial number
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies        { };                            ///< frequency ranges to be marked on-screen
   bool                                         _mark_mode_break_points                  { false };                      ///< whether to mark the mode break points on the bandmap
