@@ -170,6 +170,7 @@ const bool toggle_drlog_mode(void);                       ///< Toggle between CQ
 const bool toggle_cw(void);                         ///< Toggle CW on/off
 const bool toggle_recording_status(audio_recorder& audio);        ///< toggle status of audio recording
 
+void update_bandmap_size_window(void);                         ///< update the BANDMAP SIZE window
 void update_based_on_frequency_change(const frequency& f, const MODE m);    ///< Update some windows based on a change in frequency
 void update_batch_messages_window(const string& callsign = string());       ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);      ///< Update bext DX window, if it exists
@@ -359,6 +360,7 @@ bool ok_to_poll_k3 { true };                  ///< is it safe to poll the K3?
 window win_band_mode,                   ///< the band and mode indicator
        win_bandmap,                     ///< the bandmap for the current band
        win_bandmap_filter,              ///< bandmap filter information
+       win_bandmap_size,                ///< the sizes of the bandmaps
        win_batch_messages,              ///< messages from the batch messages file
        win_bcall,                       ///< call associated with VFO B
        win_best_dx,                     ///< best DX QSO
@@ -1507,6 +1509,9 @@ int main(int argc, char** argv)
     display_bandmap_filter(bm);
   }
 
+// BANDMAP SIZE window
+  win_bandmap_size.init(context.window_info("BANDMAP SIZE"s), WINDOW_NO_CURSOR);
+
   // read a Cabrillo log
   //  logbook cablog;
 
@@ -2002,6 +2007,7 @@ void* display_date_and_time(void* vp)
         update_local_time();
         update_rate_window();
         update_mult_value();
+        update_bandmap_size_window();
 
 // possibly run thread to perform auto backup
         if (!context.auto_backup_directory().empty())
@@ -8303,10 +8309,29 @@ void update_system_memory(void)
   }
 }
 
-///< update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
+/// update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
 void update_quick_qsy(void)
 { quick_qsy_info = get_frequency_and_mode();
 
   win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
                 <= pad_string(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
+}
+
+/// update the window containing the sizes of the bandmaps
+void update_bandmap_size_window(void)
+{ if (win_bandmap_size.valid())
+  { win_bandmap_size < WINDOW_ATTRIBUTES::WINDOW_CLEAR < centre("BM SIZE"s, win_bandmap_size.height() - 1);
+
+// modelled after populate_win_call_history()
+    int line_nr { 0 };
+
+    for (const auto b : permitted_bands)
+    { const cursor c_posn { 0, line_nr++ };
+
+      win_bandmap_size < c_posn < pad_string(BAND_NAME[b], 3)            // low band is on bottom
+                       < pad_string(to_string(bandmaps[b].displayed_entries().size()), 5);
+    }
+
+    win_bandmap_size.refresh();
+  }
 }
