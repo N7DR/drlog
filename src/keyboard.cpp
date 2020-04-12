@@ -167,7 +167,7 @@ keyboard_queue::keyboard_queue(void) :
   const char* cp { getenv("WINDOWID") };
   
   if (!cp)
-    delayed_exit("Fatal error: unable to obtain window ID"s, 2);
+    delayed_exit("Fatal error: unable to obtain window ID; perhaps you are not running in an xterm; program must be run in an xterm."s, 2);
 
   _window_id = from_string<Window>(cp);
 
