@@ -158,7 +158,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // AUDIO CHANNELS
     if (LHS == "AUDIO CHANNELS"s)
-      _audio_channels = from_string<unsigned int>(rhs);
+      _audio_channels = from_string<decltype(_audio_channels)>(rhs);
 
 // AUDIO DEVICE
     if ( (LHS == "AUDIO DEVICE"s) or (LHS == "AUDIO DEVICE NAME"s) )
@@ -166,7 +166,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // AUDIO DURATION
     if (LHS == "AUDIO DURATION"s)
-      _audio_duration = from_string<unsigned int>(rhs);
+      _audio_duration = from_string<decltype(_audio_duration)>(rhs);
 
 // AUDIO FILE
     if (LHS == "AUDIO FILE"s)
@@ -174,7 +174,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // AUDIO RATE
     if (LHS == "AUDIO RATE"s)
-      _audio_rate = from_string<unsigned int>(rhs);
+      _audio_rate = from_string<decltype(_audio_rate)>(rhs);
 
 // AUTO BACKUP
     if ( ((LHS == "AUTO BACKUP DIRECTORY"s) or (LHS == "AUTO BACKUP"s)) and !rhs.empty() )  // AUTO BACKUP was the old name for this command
@@ -186,19 +186,19 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // BAND MAP CULL FUNCTION
     if ( ( (LHS == "BAND MAP CULL FUNCTION"s) or (LHS == "BANDMAP CULL FUNCTION"s) ) and !rhs.empty() )
-      _bandmap_cull_function = from_string<int>(rhs);
+      _bandmap_cull_function = from_string<decltype(_bandmap_cull_function)>(rhs);
 
 // BAND MAP DECAY TIME CLUSTER
     if ( ( (LHS == "BAND MAP DECAY TIME CLUSTER"s) or (LHS == "BANDMAP DECAY TIME CLUSTER"s) ) and !rhs.empty() )
-      _bandmap_decay_time_cluster = from_string<int>(rhs);
+      _bandmap_decay_time_cluster = from_string<decltype(_bandmap_decay_time_cluster)>(rhs);
 
 // BAND MAP DECAY TIME LOCAL
     if ( ( (LHS == "BAND MAP DECAY TIME LOCAL"s) or (LHS == "BANDMAP DECAY TIME LOCAL"s) ) and !rhs.empty() )
-      _bandmap_decay_time_local = from_string<int>(rhs);
+      _bandmap_decay_time_local = from_string<decltype(_bandmap_decay_time_local)>(rhs);
 
 // BAND MAP DECAY TIME RBN
     if ( (LHS == "BAND MAP DECAY TIME RBN"s) or (LHS == "BANDMAP DECAY TIME RBN"s) )
-      _bandmap_decay_time_rbn = from_string<int>(rhs);
+      _bandmap_decay_time_rbn = from_string<decltype(_bandmap_decay_time_rbn)>(rhs);
 
 // BAND MAP FADE COLOURS
     if ( (LHS == "BAND MAP FADE COLOURS"s) or (LHS == "BANDMAP FADE COLOURS"s) or
@@ -256,11 +256,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // BAND MAP GUARD BAND CW
     if ( (LHS == "BAND MAP GUARD BAND CW"s) or (LHS == "BANDMAP GUARD BAND CW"s) )
-      _guard_band[MODE_CW] = from_string<int>(rhs);
+      _guard_band[MODE_CW] = from_string<unsigned int>(rhs);
 
 // BAND MAP GUARD BAND SSB
     if ( (LHS == "BAND MAP GUARD BAND SSB"s) or (LHS == "BANDMAP GUARD BAND SSB"s) )
-      _guard_band[MODE_SSB] = from_string<int>(rhs);
+      _guard_band[MODE_SSB] = from_string<unsigned int>(rhs);
 
 // BAND MAP RECENT COLOUR
     if ( (LHS == "BAND MAP RECENT COLOUR"s) or (LHS == "BANDMAP RECENT COLOUR"s) or
@@ -319,7 +319,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CLUSTER PORT
     if (LHS == "CLUSTER PORT"s)
-      _cluster_port = from_string<unsigned int>(rhs);
+      _cluster_port = from_string<decltype(_cluster_port)>(rhs);
 
 // CLUSTER SERVER
     if (LHS == "CLUSTER SERVER"s)
@@ -411,15 +411,15 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CW PRIORITY
     if (LHS == "CW PRIORITY"s)
-      _cw_priority = from_string<int>(RHS);
+      _cw_priority = from_string<decltype(_cw_priority)>(RHS);
 
 // CW SPEED
     if (LHS == "CW SPEED"s)
-      _cw_speed = from_string<unsigned int>(RHS);
+      _cw_speed = from_string<decltype(_cw_speed)>(RHS);
 
 // CW SPEED CHANGE
     if (LHS == "CW SPEED CHANGE"s)
-      _cw_speed_change = from_string<unsigned int>(RHS);
+      _cw_speed_change = from_string<decltype(_cw_speed_change)>(RHS);
 
 // DECIMAL POINT
     if (LHS == "DECIMAL POINT"s)
@@ -559,7 +559,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // INACTIVTY TIMER
     if (LHS == "INACTIVITY TIMER"s)
-      _inactivity_timer = from_string<int>(rhs);
+      _inactivity_timer = from_string<decltype(_inactivity_timer)>(rhs);
 
 // INDIVIDUAL MESSAGES FILE
     if (LHS == "INDIVIDUAL MESSAGES FILE"s)
@@ -575,8 +575,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // LONG T
     if (LHS == "LONG T"s)
-//      _long_t = is_true;
-      _long_t = from_string<unsigned short>(rhs);
+      _long_t = from_string<decltype(_long_t)>(rhs);
 
 // MARK FREQUENCIES [CW|SSB]
     if (starts_with(testline, "MARK FREQUENCIES"s) and !rhs.empty())
@@ -605,11 +604,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // MATCH MINIMUM
     if (LHS == "MATCH MINIMUM"s)
-      _match_minimum = from_string<int>(RHS);
+      _match_minimum = from_string<decltype(_match_minimum)>(RHS);
 
 // MATCH MINIMUM
     if (LHS == "MAX QSOS WITHOUT QSL"s)
-      _max_qsos_without_qsl = from_string<int>(RHS);
+      _max_qsos_without_qsl = from_string<decltype(_max_qsos_without_qsl)>(RHS);
 
 // MM COUNTRY MULTS
     if (LHS == "MM COUNTRY MULTS"s)
@@ -649,7 +648,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // MY CQ ZONE
     if (LHS == "MY CQ ZONE"s)
-      _my_cq_zone = from_string<int>(RHS);
+      _my_cq_zone = from_string<decltype(_my_cq_zone)>(RHS);
 
 // MY GRID
     if (LHS == "MY GRID"s)
@@ -661,19 +660,19 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // MY LATITUDE
     if (LHS == "MY LATITUDE"s)
-      _my_latitude = from_string<float>(rhs);
+      _my_latitude = from_string<decltype(_my_latitude)>(rhs);
 
 // MY LATITUDE
     if (LHS == "MY LONGITUDE"s)
-      _my_longitude = from_string<float>(rhs);
+      _my_longitude = from_string<decltype(_my_longitude)>(rhs);
 
 // MY ITU ZONE
     if (LHS == "MY ITU ZONE"s)
-      _my_itu_zone = from_string<int>(RHS);
+      _my_itu_zone = from_string<decltype(_my_itu_zone)>(RHS);
 
 // N MEMORIES
     if (LHS == "N MEMORIES"s)
-      _n_memories = min(from_string<unsigned int>(rhs), 10u);  // maximum number of memories is 10
+      _n_memories = min(from_string<decltype(_n_memories)>(rhs), 10u);  // maximum number of memories is 10
 
 // NEARBY EXTRACT
     if (LHS == "NEARBY EXTRACT"s)
@@ -720,7 +719,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // PTT DELAY (0 => no PTT)
     if (LHS == "PTT DELAY"s)
-      _ptt_delay = from_string<unsigned int>(RHS);
+      _ptt_delay = from_string<decltype(_ptt_delay)>(RHS);
 
 // POST MONITOR
     if (LHS == "POST MONITOR"s)
@@ -743,11 +742,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // P3 SPAN CQ
     if (LHS == "P3 SPAN CQ"s)
-      _p3_span_cq = from_string<unsigned int>(RHS);
+      _p3_span_cq = from_string<decltype(_p3_span_cq)>(RHS);
 
 // P3 SPAN SAP
     if (LHS == "P3 SPAN SAP"s)
-      _p3_span_sap = from_string<unsigned int>(RHS);
+      _p3_span_sap = from_string<decltype(_p3_span_sap)>(RHS);
 
 // QSL MESSAGE
     if (LHS == "QSL MESSAGE"s)
@@ -779,7 +778,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // QTC QRS
     if (LHS == "QTC QRS"s)
-      _qtc_qrs = from_string<unsigned int>(rhs);
+      _qtc_qrs = from_string<decltype(_qtc_qrs)>(rhs);
 
 // QTHX: QTHX[callsign-or-canonical prefix] = aa, bb, cc...
 // the conversion to canonical prefix occurs later, inside contest_rules::_parse_context_qthx()
@@ -813,7 +812,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // RBN PORT
     if (LHS == "RBN PORT"s)
-      _rbn_port = from_string<int>(rhs);
+      _rbn_port = from_string<decltype(_rbn_port)>(rhs);
 
 // RBN SERVER
     if (LHS == "RBN SERVER"s)
@@ -821,7 +820,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // RBN THRESHOLD
     if (LHS == "RBN THRESHOLD"s)
-      _rbn_threshold = from_string<unsigned int>(rhs);
+      _rbn_threshold = from_string<decltype(_rbn_threshold)>(rhs);
 
 // RBN USERNAME
     if (LHS == "RBN USERNAME"s)
@@ -837,11 +836,11 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // RIG 1 BAUD
     if ( (LHS == "RIG 1 BAUD"s) or (LHS == "RIG BAUD"s) )
-      _rig1_baud = from_string<unsigned int>(rhs);
+      _rig1_baud = from_string<decltype(_rig1_baud)>(rhs);
 
 // RIG 1 DATA BITS
     if ( (LHS == "RIG 1 DATA BITS"s) or (LHS == "RIG DATA BITS"s) )
-      _rig1_data_bits = from_string<unsigned int>(rhs);
+      _rig1_data_bits = from_string<decltype(_rig1_data_bits)>(rhs);
 
 // RIG 1 NAME
     if ( (LHS == "RIG 1 NAME"s) or (LHS == "RADIO ONE NAME"s) )
@@ -853,7 +852,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // RIG 1 STOP BITS
     if ( (LHS == "RIG 1 STOP BITS"s) or (LHS == "RIG STOP BITS"s) )
-      _rig1_stop_bits = from_string<unsigned int>(rhs);
+      _rig1_stop_bits = from_string<decltype(_rig1_stop_bits)>(rhs);
 
 // RIG 1 TYPE
     if (LHS == "RIG 1 TYPE"s)
@@ -900,15 +899,15 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // SERIAL NUMBER SPACES
     if (LHS == "SERIAL NUMBER SPACES"s)
-      _serno_spaces = from_string<unsigned int>(rhs);
+      _serno_spaces = from_string<decltype(_serno_spaces)>(rhs);
 
 // SHIFT DELTA
     if (LHS == "SHIFT DELTA"s)
-      _shift_delta = from_string<unsigned int>(rhs);
+      _shift_delta = from_string<decltype(_shift_delta)>(rhs);
 
 // SHIFT POLL
     if (LHS == "SHIFT POLL"s)
-      _shift_poll = from_string<unsigned int>(rhs);
+      _shift_poll = from_string<decltype(_shift_poll)>(rhs);
 
 // SHORT SERIAL NUMBER
     if (LHS == "SHORT SERIAL NUMBER"s)
@@ -986,7 +985,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const vector<string> tokens { split_string(RHS, SPACE_STR) };
 
         if (tokens.size() == 2)
-          _auto_remaining_callsign_mults_threshold = from_string<unsigned int>(tokens[1]);
+          _auto_remaining_callsign_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
       { const vector<string> mults { remove_peripheral_spaces(split_string(RHS, ","s)) };
@@ -1003,7 +1002,7 @@ void drlog_context::_process_configuration_file(const string& filename)
       { const vector<string> tokens { split_string(RHS, SPACE_STR) };
 
         if (tokens.size() == 2)
-          _auto_remaining_country_mults_threshold = from_string<unsigned int>(tokens[1]);
+          _auto_remaining_country_mults_threshold = from_string<decltype(_auto_remaining_callsign_mults_threshold)>(tokens[1]);
       }
       else
       { const vector<string> countries { remove_peripheral_spaces(split_string(RHS, ","s)) };

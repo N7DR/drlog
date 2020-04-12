@@ -5756,18 +5756,19 @@ const string expand_cw_message(const string& msg)
 
     if ( (long_t > 0) and (octothorpe < 100) )
     { constexpr char LONG_T_CHAR { 15 };                              // character number that represents a long T (127%) -- see cw_buffer.cpp
-      constexpr char LONG_LONG_T_CHAR { ')' };                        // character number that represents a long long T (150%) -- see cw_buffer.cpp
+      constexpr char LONG_LONG_T_CHAR { ')' };                        // character that represents a long long T (150%) -- see cw_buffer.cpp
+      constexpr char DOUBLE_T_CHAR { '|' };                           // character that represents a double T (200%) -- see cw_buffer.cpp
 
       const int n_to_find { (octothorpe < 10 ? 2 : 1) };
 
-      const char char_to_send { (long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR };   // default is 125
+      const char char_to_send { long_t == 3 ? DOUBLE_T_CHAR : ((long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR) };   // default is 125
 
       bool found_all { false };
       int  n_found   { 0 };
 
       for (size_t n = 0; !found_all and (n < octothorpe_str.size() - 1); ++n)
       { if (!found_all and octothorpe_str[n] == '0')
-        { octothorpe_str[n] = char_to_send /* LONG_T_CHAR */;
+        { octothorpe_str[n] = char_to_send;
           found_all = (++n_found == n_to_find);
         }
       }
@@ -8183,7 +8184,9 @@ void update_best_dx(const grid_square& dx_gs, const string& callsign)
     \param  callsign    full or partial call
 */
 void populate_win_call_history(const string& callsign)
-{ if (win_call_history.valid())              // check even though it should have been checked before being called
+{ static const set<MODE> call_history_modes { MODE_CW, MODE_SSB };
+
+  if (win_call_history.valid())              // check even though it should have been checked before being called
   { win_call_history < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_call_history.height() - 1);    // write the (partial) callsign
 
     const int  bg                  { win_call_history.bg() };
@@ -8197,7 +8200,7 @@ void populate_win_call_history(const string& callsign)
 
       win_call_history < c_posn < pad_string(BAND_NAME[b], 3);            // low band is on bottom
 
-      for (const auto m : permitted_modes)
+      for (const auto m : call_history_modes /* permitted_modes*/ )
       { const unsigned int n_qsos           { olog.n_qsos(callsign, b, m) };
         const int          fg               { ( (n_qsos == 0) ?  COLOUR_WHITE : ( olog.confirmed(callsign, b, m) ? COLOUR_GREEN : COLOUR_RED ) ) };
         const auto         this_colour_pair { colours.add(fg, bg) };

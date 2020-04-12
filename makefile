@@ -404,10 +404,14 @@ bin/drlog : bin/adif.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.
 	bin/version.o bin/x_error.o \
 	-o bin/drlog
 	
-drlog : bin/drlog
+directory:
+	@mkdir -p bin
+	
+drlog : directory bin/drlog
 
 # clean everything
 clean :
 	rm bin/*
 	
 FORCE:
+

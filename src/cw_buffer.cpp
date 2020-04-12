@@ -714,6 +714,11 @@ void cw_buffer::add(const char c, const int character_space)
       key_down(450);
       break;
 
+    case '|' :                                  // 200% dah
+      space = 0;
+      key_down(600);
+      break;
+
 // special commands
     case '>' :                               // clear RIT
       space = 0;
