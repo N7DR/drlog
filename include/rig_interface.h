@@ -42,8 +42,8 @@ constexpr int RIG_UNABLE_TO_OPEN       { -1 },    ///< unable to access rig
               RIG_UNEXPECTED_RESPONSE  { -8 },    ///< received unexpected response from rig
               RIG_MISC_ERROR           { -9 };    ///< other error
 
-constexpr bool RESPONSE    { true },              ///< raw K3 command expects a response
-               NO_RESPONSE { false };             ///< raw K3 command does not expect a response
+constexpr bool RESPONSE_EXPECTED    { true },               ///< raw K3 command expects a response
+               NO_RESPONSE_EXPECTED { !RESPONSE_EXPECTED }; ///< raw K3 command does not expect a response
 
 /// the two VFOs
 enum VFO { VFO_A = 0,                       ///< VFO A
@@ -68,11 +68,11 @@ protected:
   frequency                                     _last_commanded_frequency_b;    ///< last frequency to which VFO B was commanded to QSY
   MODE                                          _last_commanded_mode;           ///< last mode into which the rig was commanded
   std::map< std::pair <BAND, MODE>, frequency > _last_frequency;                ///< last-used frequencies on per-band, per-mode basis
-  rig_model_t                                   _model;                         ///< hamlib model
+  rig_model_t                                   _model { RIG_MODEL_DUMMY };     ///< hamlib model
   hamlib_port_t                                 _port;                          ///< hamlib port
   std::string                                   _port_name;                     ///< name of port
   RIG*                                          _rigp;                          ///< hamlib handle
-  bool                                          _rig_connected;                 ///< is a rig connected?
+  bool                                          _rig_connected { false };       ///< is a rig connected?
   pt_mutex                                      _rig_mutex;                     ///< mutex for all operations
   unsigned int                                  _rig_poll_interval;             ///< interval between polling for rig status, in milliseconds
   rig_status                                    _status;                        ///< most recent rig frequency and mode from the periodic poll
@@ -118,10 +118,10 @@ public:
     _last_commanded_frequency(),          // no last-commanded frequency
     _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
     _last_commanded_mode(MODE_CW),        // last commanded mode was CW
-    _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
+//    _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
     _port_name(),                         // no default port
     _rigp(nullptr),                       // no rig connected
-    _rig_connected(false),                // no rig connected
+//    _rig_connected(false),                // no rig connected
     _rig_poll_interval(1000),             // poll once per second
     _status(frequency(14000), MODE_CW)    // 14MHz, CW
   { }
@@ -392,7 +392,7 @@ public:
     \return                     the response from the rig, or the empty string
 */
   const std::string raw_command(const std::string& cmd,
-                                const bool response_expected = NO_RESPONSE);
+                                const bool response_expected = NO_RESPONSE_EXPECTED);
 
 #endif
 

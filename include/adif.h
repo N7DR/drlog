@@ -23,6 +23,12 @@
 
 using namespace std::literals::string_literals;
 
+// error numbers
+constexpr int ADIF_INCORRECT_LENGTH            { -1 },    ///< string has incorrect length
+              ADIF_INCORRECT_CONTENTS          { -2 };    ///< string has invalid content
+
+
+
 // enumerations
 
 // ant path  -------------------------------------------------------
@@ -5712,11 +5718,15 @@ public:
   const std::string to_string(void) const;
 };
 
-/*! \brief              Extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
+/*! \brief              Extract the value from an ADIF line, ignoring the last <i>offset</i> characters
     \param  this_line   line from an ADIF file
     \param  offset      number of characters to ignore at the end of the line
     \return             value extracted from <i>this_line</i>
 */
 const std::string adif_value(const std::string& this_line, const unsigned int offset = 0);
+
+// -------------------------------------- Errors  -----------------------------------
+
+ERROR_CLASS(adif_error);     ///< ADIF error
 
 #endif /* ADIF_H_ */

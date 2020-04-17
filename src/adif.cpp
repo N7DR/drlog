@@ -24,12 +24,12 @@ using namespace std;
 // ---------------------------------------------------  adif_DATE -----------------------------------------
 
 // set value
-void adif_DATE::value(const std::string& v)
+void adif_DATE::value(const string& v)
 { if (v.length() != 8)
-    throw exception();
+    throw adif_error(ADIF_INCORRECT_LENGTH, "Incorrect length setting value of ADIF_DATE: "s + v);
 
   if ((v.find_first_not_of(DIGITS)) != string::npos)
-    throw exception();
+    throw adif_error(ADIF_INCORRECT_CONTENTS, "String to set ADIF_DATE contains a non-digit character: "s + v);
 
   const string year_str  { v.substr(0, 4) };
   const string month_str { v.substr(4, 2) };
@@ -38,12 +38,12 @@ void adif_DATE::value(const std::string& v)
   const unsigned int month { from_string<unsigned int>(month_str) };
 
   if (month < 1 or month > 12)
-    throw exception();
+    throw adif_error(ADIF_INCORRECT_CONTENTS, "Invalid month when setting ADIF_DATE: "s + month_str);
 
   const unsigned int day { from_string<unsigned int>(day_str) };
 
   if (day < 1 or day > 31)
-    throw exception();
+    throw adif_error(ADIF_INCORRECT_CONTENTS, "Invalid day when setting ADIF_DATE: "s + day_str);
 
   _value = v;
 }
@@ -92,31 +92,31 @@ adif_TIME::adif_TIME(const string& nm) :
 { }
 
 // set value
-void adif_TIME::value(const std::string& v)
+void adif_TIME::value(const string& v)
 { if ((v.find_first_not_of(DIGITS)) != string::npos)
-    throw exception();
+    throw adif_error(ADIF_INCORRECT_CONTENTS, "String to set ADIF_TIME contains a non-digit character: "s + v);
 
   if ((v.length() < 4) or (v.length() == 5) or (v.length() > 6))
-    throw exception();
+    throw adif_error(ADIF_INCORRECT_LENGTH, "Incorrect length setting value of ADIF_TIME: "s + v);
 
   const string       hour_str   { v.substr(0, 2) };
   const string       minute_str { v.substr(2, 2) };
   const unsigned int hour       { from_string<unsigned int>(hour_str) };
 
   if (hour > 23)
-    throw exception();
+    throw adif_error(ADIF_INCORRECT_CONTENTS, "Invalid hour when setting ADIF_DATE: "s + hour_str);
 
   const unsigned int minute { from_string<unsigned int>(minute_str) };
 
   if (minute > 59)
-    throw exception();
+    throw adif_error(ADIF_INCORRECT_CONTENTS, "Invalid minute when setting ADIF_DATE: "s + minute_str);
 
   if (v.length() == 6)
   { const string       second_str { v.substr(4, 2) };
     const unsigned int second     { from_string<unsigned int>(second_str) };
 
     if (second > 59)
-      throw exception();
+      throw adif_error(ADIF_INCORRECT_CONTENTS, "Invalid second when setting ADIF_DATE: "s + second_str);
   }
 
   _value = v;
@@ -140,16 +140,16 @@ adif_record::adif_record(void) :
 //    _band("band"),
     _band("band"s, BAND_ENUMERATION),
     _band_rx("band_rx"s),
-    _call("call"),
-    _check("check"),
-    _class("class"),
-    _cnty("cnty"),
-    _comment("comment"),
-    _cont("cont"),
-    _contacted_op("contacted_op"),
-    _contest_id("contest_id"),
-    _country("country"),
-    _cqz("cqz"),
+    _call("call"s),
+    _check("check"s),
+    _class("class"s),
+    _cnty("cnty"s),
+    _comment("comment"s),
+    _cont("cont"s),
+    _contacted_op("contacted_op"s),
+    _contest_id("contest_id"s),
+    _country("country"s),
+    _cqz("cqz"s),
     _credit_submitted("credit_submitted"),
     _credit_granted("credit_granted"),
     _distance("distance"),
@@ -559,19 +559,19 @@ adif_countries::adif_countries(void)
   _add_country("AZORES"s,                                   149, "CU"s);
   _add_country("AUSTRALIA"s,                                150, "VK"s);
   _add_country("MALYJ VYSOTSKI IS"s,                        151, "R1MV"s);
-  _add_country("MACAO"s,                                    152, "XX9");
-  _add_country("MACQUARIE IS"s,                             153, "VK0M");
+  _add_country("MACAO"s,                                    152, "XX9"s);
+  _add_country("MACQUARIE IS"s,                             153, "VK0M"s);
   _add_deleted_country("YEMEN ARAB REP"s,                   154);
   _add_deleted_country("MALAYA"s,                           155);
-  _add_country("NAURU"s,                                    157, "C2");
-  _add_country("VANUATU"s,                                  158, "YJ");
-  _add_country("MALDIVES"s,                                 159, "8Q");
-  _add_country("TONGA"s,                                    160, "A3");
-  _add_country("MALPELO IS"s,                               161, "HK0/m");
-  _add_country("NEW CALEDONIA"s,                            162, "FK");
-  _add_country("PAPUA NEW GUINEA"s,                         163, "P2");
+  _add_country("NAURU"s,                                    157, "C2"s);
+  _add_country("VANUATU"s,                                  158, "YJ"s);
+  _add_country("MALDIVES"s,                                 159, "8Q"s);
+  _add_country("TONGA"s,                                    160, "A3"s);
+  _add_country("MALPELO IS"s,                               161, "HK0/m"s);
+  _add_country("NEW CALEDONIA"s,                            162, "FK"s);
+  _add_country("PAPUA NEW GUINEA"s,                         163, "P2"s);
   _add_deleted_country("MANCHURIA"s,                        164);
-  _add_country("MAURITIUS IS"s,                             165, "3B8");
+  _add_country("MAURITIUS IS"s,                             165, "3B8"s);
   _add_country("MARIANA IS"s,                               166, "KH0");
   _add_country("MARKET REEF"s,                              167, "OJ0");
   _add_country("MARSHALL IS"s,                              168, "V7");
@@ -815,7 +815,7 @@ adif_countries::adif_countries(void)
   _add_country("BONAIRE"s,                                  520, "PJ4"s);
 }
 
-/*! \brief              Extract the value from an ADIF line, ignoring the last <i>offeset</i> characters
+/*! \brief              Extract the value from an ADIF line, ignoring the last <i>offset</i> characters
     \param  this_line   line from an ADIF file
     \param  offset      number of characters to ignore at the end of the line
     \return             value extracted from <i>this_line</i>

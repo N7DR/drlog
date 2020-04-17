@@ -884,8 +884,25 @@ int main(int argc, char** argv)
     if (!context.old_adif_log_name().empty())
     { alert("reading old log file: "s + context.old_adif_log_name(), false);
 
-      const vector<string> records { split_string( read_file(context.path(), context.old_adif_log_name()) , "<eor>"s + EOL) };
+      vector<string> records;
 
+      try
+      { records = move(split_string( read_file(context.path(), context.old_adif_log_name()) , "<eor>"s + EOL));
+      }
+      
+      catch (const string_function_error& e)
+      { ost << "Unable to read old log file: " + context.old_adif_log_name() << "code = " << e.code() << ", reason = " << e.reason() << endl;
+        exit(-1);
+      }
+      
+      catch (...)
+      { ost << "Undefined error reading old log file: " + context.old_adif_log_name() << endl;
+        exit(-1);
+      }
+      
+      
+      alert("read " + comma_separated_string(to_string(records.size())) + " ADIF records from file: " + context.old_adif_log_name(), false);
+      
 // function to extract the value from an ADIF line, ignoring the last <i>offset</i> characters
       auto adif_value = [](const string& this_line, const unsigned int offset = 0)
         { const vector<string> tokens { split_string(delimited_substring(this_line, '<', '>'), ":"s) };
@@ -976,8 +993,19 @@ int main(int argc, char** argv)
     rig.register_error_alert_function(rig_error_alert);
 
     if (!context.rig1_port().empty() and !context.rig1_type().empty())
-      rig.prepare(context);
-
+    { try
+      { rig.prepare(context);
+      }
+      
+      catch (const rig_interface_error& e)
+      { const string msg { "Error initialising rig; error code = " + to_string(e.code()) + ", reason = " + e.reason() };
+      
+        alert(msg, false);
+        ost << msg << endl;
+        exit(-1);
+      }
+    }
+    
 // possibly put rig into TEST mode
     if (context.test())
       rig.test(true);
@@ -6486,17 +6514,23 @@ const bool rit_control(const keyboard_event& e)
 
 /// switch the states of RIT and XIT
 const bool swap_rit_xit(void)
-{ if (rig.rit_enabled())
-  { rig.xit_enable();
-    rig.rit_disable();
-  }
-  else
-  { if (rig.xit_enabled())
-    { rig.rit_enable();
-      rig.xit_disable();
+{ try
+  { if (rig.rit_enabled())
+    { rig.xit_enable();
+      rig.rit_disable();
     }
     else
-      rig.rit_enable();
+    { if (rig.xit_enabled())
+      { rig.rit_enable();
+        rig.xit_disable();
+      }
+      else
+        rig.rit_enable();
+    }
+  }
+  
+  catch (const rig_interface_error& e)
+  { alert("Invalid rig response in swap_rit_xit(): "s + e.reason());
   }
 
   return true;

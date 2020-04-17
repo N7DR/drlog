@@ -37,7 +37,7 @@ using namespace   this_thread;   // std::this_thread
 
 extern bool rig_is_split;
 
-constexpr bool RESPONSE_EXPECTED { true };    ///< used to signal that a response is expected
+//constexpr bool RESPONSE_EXPECTED { true };    ///< used to signal that a response is expected
 
 void alert(const string& msg, const bool show_time = true);     ///< alert the user (not used for errors)
 
@@ -399,7 +399,7 @@ const bool rig_interface::split_enabled(void)
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
 
-    const string transmit_vfo { raw_command("FT;"s, true) };
+    const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) };
 
     if (transmit_vfo.length() >= 4)
       return (transmit_vfo[2] == '1');
@@ -531,12 +531,12 @@ void rig_interface::rit(const int hz)
 // hamlib's behaviour anent the K3 is not what we want
   if (_model == RIG_MODEL_K3)
   { if (hz == 0)                                // just clear the RIT/XIT
-      raw_command(string("RC;"s));
+      raw_command("RC;"s);
     else
-    { const int positive_hz = abs(hz);
-      const string hz_str = ( (hz >= 0) ? "+"s : "-"s) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0');
+    { const int    positive_hz { abs(hz) };
+      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0') };
 
-      raw_command(string("RO"s) + hz_str + ";"s, false);
+      raw_command("RO"s + hz_str + ";"s);
     }
   }
   else
@@ -552,7 +552,13 @@ void rig_interface::rit(const int hz)
 /// get rit offset (in Hz)
 const int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
-  { const string value { raw_command("RO;"s, 8) };
+  { //const string value { raw_command("RO;"s, 8) };
+    const string value { raw_command("RO;"s, RESPONSE_EXPECTED) };
+
+    if (value.length() != 8)
+    { _error_alert("Invalid rig response in rit(): "s + value);
+      return 0;
+    }
 
     return from_string<int>(substring(value, 2, 5));
   }
@@ -576,7 +582,7 @@ const int rig_interface::rit(void)
 */
 void rig_interface::rit_enable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("RT1;"s), 0); // proper enable for the K3
+    raw_command("RT1;"s);           // proper enable for the K3
   else
     rit(1);                         // 1 Hz offset, since a zero offset would disable RIT
 }
@@ -587,22 +593,28 @@ void rig_interface::rit_enable(void)
 */
 void rig_interface::rit_disable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("RT0;"s), 0); // proper disable for the K3
+    raw_command("RT0;"s); // proper disable for the K3
   else
     rit(0);                         // 0 Hz offset, which hamlib regards as disabling RIT
 }
 
 /// is rit enabled?
 const bool rig_interface::rit_enabled(void)
-{ string response;
+{ switch (_model)
+  { case RIG_MODEL_K3 :
+    { const string response { raw_command("RT;"s, RESPONSE_EXPECTED) };
 
-  if (_model == RIG_MODEL_K3)
-    response = raw_command(string("RT;"s), true);
-
-  if (response.length() != 4)
-    throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in rit_enabled()"s);  // handle this error upstairs
-
-  return (response[2] == '1');
+      if (response.length() != 4)
+        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in rit_enabled(): "s + response);  // handle this error upstairs
+        
+      return (response[2] == '1');
+    }
+    
+    case RIG_MODEL_DUMMY :
+      return false;
+  }
+  
+  return false;         // default response
 }
 
 /*! \brief  Turn xit on
@@ -611,7 +623,7 @@ const bool rig_interface::rit_enabled(void)
 */
 void rig_interface::xit_enable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("XT1;"s), 0);
+    raw_command("XT1;"s);
   else
     xit(1);                 // 1 Hz offset
 }
@@ -622,38 +634,44 @@ void rig_interface::xit_enable(void)
 */
 void rig_interface::xit_disable(void)
 { if (_model == RIG_MODEL_K3)
-    raw_command(string("XT0;"s), 0);
+    raw_command("XT0;"s);
   else
     xit(1);                 // 1 Hz offset
 }
 
 /// is xit enabled?
 const bool rig_interface::xit_enabled(void)
-{ string response;
+{ switch (_model)
+  { case RIG_MODEL_K3 :
+    { const string response { raw_command("XT;"s, RESPONSE_EXPECTED) };
 
-  if (_model == RIG_MODEL_K3)
-    response = raw_command(string("XT;"s), true);
+      if (response.length() != 4)
+        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in xit_enabled(): "s + response);  // handle this error upstairs
 
-  if (response.length() != 4)
-    throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "Invalid length in xit_enabled()"s);  // handle this error upstairs
-
-  return (response[2] == '1');
+      return (response[2] == '1');
+    }
+    
+    case RIG_MODEL_DUMMY :
+      return false;
+  }
+  
+  return false;         // default response
 }
 
 /*! \brief      Set xit offset (in Hz)
     \param  hz  offset in Hz
 
-    On the K3 this also sets the RIT
+    On the K3 this also sets the RIT offset
 */
 void rig_interface::xit(const int hz)
 { if (_model == RIG_MODEL_K3)                   // hamlib's behaviour anent the K3 is not what we want, have K3-specific code
   { if (hz == 0)                                // just clear the RIT/XIT
-      raw_command(string("RC;"s), 0);
+      raw_command("RC;"s);
     else
     { const int    positive_hz { abs(hz) };
       const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0') };
 
-      raw_command(string("RO"s) + hz_str + ";"s, 0);
+      raw_command("RO"s + hz_str + ";"s);
     }
   }
   else
@@ -662,8 +680,7 @@ void rig_interface::xit(const int hz)
     const int status { rig_set_xit(_rigp, RIG_VFO_CURR, hz) };
 
     if (status != RIG_OK)
-    { throw exception();
-    }
+      throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error in xit(int)");  // handle this error upstairs
   }
 }
 
