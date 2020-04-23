@@ -149,7 +149,7 @@ void rebuild_history(const logbook& logbk,
                      const contest_rules& rules,
                      running_statistics& statistics,
                      call_history& q_history,
-                     rate_meter& rate);             ///< Rebuild the history (and statistics and rate), using the logbook
+                     rate_meter& rate);             ///< Rebuild the history (and statistics and rate and greatest distance), using the logbook
 const memory_entry recall_memory(const unsigned int n);     ///< recall a memory
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
@@ -1681,8 +1681,8 @@ int main(int argc, char** argv)
           rate.insert(qso.epoch_time(), statistics.points(rules));
 
 // possibly update BEST DX window
-          if (win_best_dx.valid())
-            update_best_dx(qso.received_exchange("GRID"s), qso.callsign());
+//          if (win_best_dx.valid())
+//            update_best_dx(qso.received_exchange("GRID"s), qso.callsign());
         }
 
 // rebuild the history
@@ -5789,25 +5789,24 @@ const string expand_cw_message(const string& msg)
     }
 
     if ( (long_t > 0) and (octothorpe < 100) )
-    { constexpr char LONG_T_CHAR { 15 };                              // character number that represents a long T (127%) -- see cw_buffer.cpp
+    { constexpr char LONG_T_CHAR      { 15 };                         // character number that represents a long T (127%) -- see cw_buffer.cpp
       constexpr char LONG_LONG_T_CHAR { ')' };                        // character that represents a long long T (150%) -- see cw_buffer.cpp
-      constexpr char DOUBLE_T_CHAR { '|' };                           // character that represents a double T (200%) -- see cw_buffer.cpp
+      constexpr char DOUBLE_T_CHAR    { '|' };                        // character that represents a double T (200%) -- see cw_buffer.cpp
 
-      const int n_to_find { (octothorpe < 10 ? 2 : 1) };
-
+      const int  n_to_find    { (octothorpe < 10 ? 2 : 1) };
       const char char_to_send { long_t == 3 ? DOUBLE_T_CHAR : ((long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR) };   // default is 125
 
       bool found_all { false };
       int  n_found   { 0 };
 
       for (size_t n = 0; !found_all and (n < octothorpe_str.size() - 1); ++n)
-      { if (!found_all and octothorpe_str[n] == '0')
+      { if (!found_all and octothorpe_str[n] == 'T')
         { octothorpe_str[n] = char_to_send;
           found_all = (++n_found == n_to_find);
         }
       }
     }
-
+    
     octothorpe_replaced = replace(msg, "#"s, octothorpe_str);
   }
 
@@ -6252,7 +6251,7 @@ const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
   return rv;
 }
 
-/*! \brief              Rebuild the history (and statistics and rate), using the logbook
+/*! \brief              Rebuild the history (and statistics, rate and greatest_distance if necessary), using the logbook
     \param  logbk       logbook of QSOs
     \param  rules       rules for this contest
     \param  statistics  global statistics
@@ -6268,6 +6267,13 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
   statistics.clear_info();
   q_history.clear();
   rate.clear();
+  
+  const bool using_best_dx { win_best_dx.valid() };
+
+  if (using_best_dx)  
+  { greatest_distance = 0;
+    win_best_dx < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+  }
 
   logbook l;
 
@@ -6279,6 +6285,10 @@ void rebuild_history(const logbook& logbk, const contest_rules& rules,
   { statistics.add_qso(qso, l, rules);
     q_history += qso;
     rate.insert(qso.epoch_time(), ++n_qsos, statistics.points(rules));
+    
+    if (using_best_dx)
+      update_best_dx(qso.received_exchange("GRID"s), qso.callsign());
+    
     l += qso;
   }
 }
@@ -8200,8 +8210,10 @@ const int time_since_last_qsy(void)
     Also updates <i>win_best_dx</i> if necessary
 */
 void update_best_dx(const grid_square& dx_gs, const string& callsign)
-{ if (win_best_dx.valid())              // check even though it should have been checked before being called
-  { if (!dx_gs.designation().empty())
+{ static const string INVALID_GRID { "AA00"s };                 // the way to mark a bad grid in the log; don't calculate distance to this square
+  
+  if (win_best_dx.valid())              // check even though it should have been checked before being called
+  { if (!dx_gs.designation().empty() and dx_gs.designation() != INVALID_GRID)
     { float distance_in_units { ( my_grid - dx_gs.designation() ) };    // km
 
       if (best_dx_is_in_miles)
