@@ -423,6 +423,15 @@ void cw_buffer::key_up(const int n)
 /// dah
 #define DAH key_down(300)
 
+/// long dah -- 25% longer
+#define LONG_DAH key_down(375)
+
+/// long long dah -- 50% longer
+#define LONG_LONG_DAH key_down(450)
+
+/// extra long dah -- 75% longer
+#define EXTRA_LONG_DAH key_down(525)
+
 /*! \brief                      Send a single character (followed by a character_space)
     \param  c                   character to send
     \param  character_space     duration of the character space (100 = 1 dot)
@@ -736,6 +745,18 @@ void cw_buffer::add(const char c, const int character_space)
       space = 0;
       _key_buffer.push(0);                   // command
       _key_buffer.push(CMD_FASTER);
+      break;
+
+    case static_cast<char>(23) :                // 125% dah
+      LONG_DAH;
+      break;
+
+    case static_cast<char>(24) :                // 150% dah
+      LONG_LONG_DAH;
+      break;
+
+    case static_cast<char>(25) :                // 175% dah
+      EXTRA_LONG_DAH;
       break;
 
     default:

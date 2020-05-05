@@ -5789,12 +5789,12 @@ const string expand_cw_message(const string& msg)
     }
 
     if ( (long_t > 0) and (octothorpe < 100) )
-    { constexpr char LONG_T_CHAR      { 15 };                         // character number that represents a long T (127%) -- see cw_buffer.cpp
-      constexpr char LONG_LONG_T_CHAR { ')' };                        // character that represents a long long T (150%) -- see cw_buffer.cpp
-      constexpr char DOUBLE_T_CHAR    { '|' };                        // character that represents a double T (200%) -- see cw_buffer.cpp
+    { constexpr char LONG_T_CHAR       { 23 };                         // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
+      constexpr char LONG_LONG_T_CHAR  { 24 };                         // character that represents a long long T (150%) -- see cw_buffer.cpp
+      constexpr char EXTRA_LONG_T_CHAR { 25 };                     // character that represents a double T (175%) -- see cw_buffer.cpp
 
       const int  n_to_find    { (octothorpe < 10 ? 2 : 1) };
-      const char char_to_send { long_t == 3 ? DOUBLE_T_CHAR : ((long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR) };   // default is 125
+      const char char_to_send { long_t == 3 ? EXTRA_LONG_T_CHAR : ((long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR) };   // default is 125
 
       bool found_all { false };
       int  n_found   { 0 };
