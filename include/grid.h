@@ -58,6 +58,13 @@ public:
   inline const float operator-(const grid_square& gs) const
     { return distance(_latitude, _longitude, gs._latitude, gs._longitude); }
 
+/*! \brief      Calculate bearing to another grid square
+    \param  gs  other grid square
+    \return     bearing of <i>gs</i>, in degrees from *this
+*/
+  inline const float bearing(const grid_square& gs) const
+    { return ::bearing(_latitude, _longitude, gs._latitude, gs._longitude); }
+  
 /// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)
@@ -71,6 +78,6 @@ public:
     \param  putative_designation    the putative designation
     \return                         whether <i>putative_designation</i> is a valid designation of a Maidenhead square or subsquare
 */
-const bool is_valid_designation(const std::string& putative_designation);
+const bool is_valid_grid_designation(const std::string& putative_designation);
 
 #endif // GRID_H

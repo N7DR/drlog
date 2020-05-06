@@ -5532,7 +5532,8 @@ void update_remaining_exchange_mults_windows(const contest_rules& rules, running
     \param  callsign    target call
     \return             bearing, in degrees, to <i>callsign</i>
 
-    Returned string includes the degree sign
+    Returned string includes the degree sign. Uses gridd if known, otherwise
+    cty.dat
 */
 const string bearing(const string& callsign)
 { static const string degree { "°"s };
@@ -5542,16 +5543,36 @@ const string bearing(const string& callsign)
 
   const float& lat1      { my_latitude };
   const float& long1     { my_longitude };
-  const location_info li { location_db.info(callsign) };
+  const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };
 
-  const location_info default_li;
+  float lat2;
+  float long2;
 
-  if (li == default_li)
-    return string();
+  if (grid_name.empty() or !is_valid_grid_designation(grid_name))
+  { const location_info li { location_db.info(callsign) };
 
-  const float lat2  { location_db.latitude(callsign) };
-  const float long2 { -location_db.longitude(callsign) };    // minus sign to get in the correct direction
+    const location_info default_li;
+
+    if (li == default_li)
+      return string();
+      
+    lat2 = location_db.latitude(callsign);
+    long2 = -location_db.longitude(callsign);    // minus sign to get in the correct direction
+  }
+  else
+  { const grid_square grid { grid_name };
+  
+    lat2 = grid.latitude();
+    long2 = grid.longitude();
+    
+//    ost << "latitude = " << lat1 << ", longitude = " << long1 << endl;
+//   ost << "grid = " << grid_name << "; latitude = " << lat2 << ", longitude = " << long2 << endl;
+  }
+
+//  const float lat2  { location_db.latitude(callsign) };
+//  const float long2 { -location_db.longitude(callsign) };    // minus sign to get in the correct direction
   const float b     { bearing(lat1, long1, lat2, long2) };
+  
   int ibearing      { static_cast<int>(b + 0.5) };
 
   if (ibearing < 0)
@@ -5602,8 +5623,6 @@ void populate_win_info(const string& callsign)
   }
   else
     win_info < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= centre(callsign, win_info.height() - 1);    // write the (partial) callsign
-
-//  ost << "in populate_win_info(): display_grid = " << boolalpha << display_grid << endl;
   
   if (display_grid)
   { const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };

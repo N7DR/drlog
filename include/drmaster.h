@@ -413,6 +413,15 @@ public:
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
   const drmaster_line operator[](const std::string& call) const;
+  
+/*! \brief          Return the record for a particular call
+    \param  call    target callsign
+    \return         the record corresponding to <i>call</i>
+
+    Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
+*/
+  inline const drmaster_line data(const std::string& call) const
+    { return ((*this)[call]); }
 
 /*! \brief          Remove a call
     \param  call    target callsign
