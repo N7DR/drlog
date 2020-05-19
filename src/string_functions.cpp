@@ -277,24 +277,17 @@ const string replace(const string& s, const string& old_str, const string& new_s
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-const string pad_string(const string& s, const unsigned int len, const enum pad_direction pad_side, const char pad_char)
+const string pad_string(const string& s, const size_t len, const enum pad_direction pad_side, const char pad_char)
 { string rv { s };
 
   if (rv.length() >= len)
     return rv;
   
-  const unsigned int n_pad_chars { len - rv.length() };
+  const size_t n_pad_chars { len - rv.length() };
   
   const string pstring(n_pad_chars, pad_char);
 
   return ( (pad_side == PAD_LEFT) ? pstring + rv : rv + pstring );
-
-//  if (pad_side == PAD_LEFT)
-//    rv = pstring + rv;
-//  else
-//    rv += pstring;
-  
-//  return rv;
 }
 
 /*! \brief              Read the contents of a file into a single string

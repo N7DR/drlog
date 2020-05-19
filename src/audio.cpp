@@ -421,11 +421,11 @@ create_file:
   bool first_time_through_loop { true };
 
   do
-  { const size_t c { (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes };
-    const size_t f { c * 8 / _bits_per_frame };
-    const int pr   { _pcm_read(_audio_buf) };
+  { const size_t c   { (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes };
+    const size_t f   { c * 8 / _bits_per_frame };
+    const ssize_t pr { _pcm_read(_audio_buf) };
 
-    if (pr != static_cast<int>(f))
+    if (static_cast<decltype(f)>(pr) != f)
     { ost << "WARNING: pr != f" << endl;
         break;
     }

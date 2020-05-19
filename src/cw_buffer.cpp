@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: cw_buffer.cpp 156 2020-05-17 19:13:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -304,12 +304,12 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
 
       if (cw_priority == 0)                                                         // middling priority
         cw_attr.priority( (cw_attr.max_priority() + cw_attr.min_priority()) / 2);
-      else                                                                          // explicit priority
+      else                                                                          // explicit priority; but really set to maximum allowed
         cw_attr.priority(cw_priority);
 
       create_thread(&_thread_id, cw_attr, &_static_play, this, "CW RT BUFFER");
 
-      ost << "Created RT thread: CW RT BUFFER" << endl;
+      ost << "Created RT thread: CW RT BUFFER, with priority " << cw_attr.priority() << endl;
     }
 
     catch (const pthread_error& e)

@@ -1,4 +1,4 @@
-// $Id: log.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: log.cpp 156 2020-05-17 19:13:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -502,8 +502,9 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
           qso.my_call(value);
     
 // transmitted exchange
-        if (name.substr(0, 5) == "TEXCH"s)
-        { const string                  field_name            { name.substr(6) };
+//        if (name.substr(0, 5) == "TEXCH"s)
+        if (starts_with(name, "TEXCH"s))
+        { const string field_name { name.substr(6) };
 
           vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
   
@@ -515,8 +516,9 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
           qso.callsign(value);
 
 // received exchange
-        if (name.substr(0, 5) == "REXCH"s)
-        { const string           field_name                { name.substr(6) };
+//        if (name.substr(0, 5) == "REXCH"s)
+        if (starts_with(name, "REXCH"s))
+        { const string field_name { name.substr(6) };
 
           vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
 
@@ -563,8 +565,6 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
     
           const unsigned int _frequency { from_string<unsigned int>(value) };
 
-//          const BAND _band { to_BAND(_frequency) };
-
           qso.band(to_BAND(_frequency));
         }
 
@@ -585,19 +585,15 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
 
 // time
         if (name == "TIME"s)
-        { //if (value.find(":") == 2)
-          //  qso.utc(value.substr(0, 2) + value.substr(3, 2));
-          //else
-          //  qso.utc(value);
           qso.utc( (value.find(":"s) == 2) ? (value.substr(0, 2) + value.substr(3, 2)) : value) ;   // handle HHMM and HH:MM
-        }
 
 // tcall
         if (name == "TCALL"s)
           qso.my_call(value);
     
 // transmitted exchange
-        if (name.substr(0, 5) == "TEXCH"s)
+//        if (name.substr(0, 5) == "TEXCH"s)
+        if (starts_with(name, "TEXCH"s))
         { const string field_name { name.substr(6) };
 
           vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
@@ -610,7 +606,8 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
           qso.callsign(value);
 
 // received exchange
-        if (name.substr(0, 5) == "REXCH"s)
+//        if (name.substr(0, 5) == "REXCH"s)
+        if (starts_with(name, "REXCH"s))
         { const string field_name { name.substr(6) };
 
           vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
@@ -772,8 +769,8 @@ void log_extract::recent_qsos(const logbook& lgbook, const bool to_display)
     allows, only the most recent QSOs are displayed.
 */
 void log_extract::match_exchange(const logbook& lgbook, const string& target)
-{ const vector<QSO> vec  { lgbook.match_exchange(target) };
-  const size_t n_to_copy { min(vec.size(), _win_size) };
+{ const vector<QSO> vec       { lgbook.match_exchange(target) };
+  const size_t      n_to_copy { min(vec.size(), _win_size) };
 
   clear();    // empty the container of QSOs
 

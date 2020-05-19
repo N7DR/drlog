@@ -120,7 +120,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
       { unsigned int countries { 0 };
 
         for (const auto& m : modes)
-        { const unsigned int n_countries { _country_multipliers.n_worked(b, m) };
+        { const auto n_countries { _country_multipliers.n_worked(b, m) };
 
           if (modes.size() == 1)
             line += pad_string(to_string(n_countries), FIELD_WIDTH);
@@ -184,7 +184,7 @@ const string running_statistics::_summary_string(const contest_rules& rules, con
       const MODE m { ((modes.size() == 1) ? *(modes.cbegin()) : ANY_MODE) };
 
       for (const auto& b : permitted_bands)
-      { const unsigned int n_exchange_mults { mult.n_worked(b, m) };
+      { const auto n_exchange_mults { mult.n_worked(b, m) };
 
         line += pad_string(to_string(n_exchange_mults), FIELD_WIDTH);
 

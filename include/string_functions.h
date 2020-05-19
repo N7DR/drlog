@@ -246,7 +246,7 @@ template <typename T>
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-[[nodiscard]] const std::string pad_string(const std::string& s, const unsigned int len, const enum pad_direction pad_side = PAD_LEFT, const char pad_char = ' ');
+[[nodiscard]] const std::string pad_string(const std::string& s, const size_t len, const enum pad_direction pad_side = PAD_LEFT, const char pad_char = ' ');
 
 /*! \brief              Read the contents of a file into a single string
     \param  filename    name of file to be read

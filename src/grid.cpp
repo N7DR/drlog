@@ -1,4 +1,4 @@
-// $Id: grid.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: grid.cpp 156 2020-05-17 19:13:15Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -73,7 +73,10 @@ grid_square::grid_square(const string& gs)
     \return                         whether <i>putative_designation</i> is a valid designation of a Maidenhead square or subsquare
 */
 const bool is_valid_grid_designation(const string& putative_designation)
-{ if (putative_designation.length() < 4)
+{ if (putative_designation.empty())
+    return false;
+  
+  if (putative_designation.length() < 4)
     return false;
 
   if (putative_designation.length() > 6)

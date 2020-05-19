@@ -28,8 +28,6 @@ using namespace std;
 const string qtc_entry::to_string(void) const
 { constexpr unsigned int CALL_WIDTH { 12 };
 
-//  static const string SPACE(" ");
-
   return (_utc + SPACE_STR + pad_string(_callsign, CALL_WIDTH, PAD_RIGHT) + SPACE_STR + _serno);
 }
 
@@ -193,10 +191,10 @@ const string qtc_series::complete_output_string(void) const
 
 /// window < qtc_series
 window& operator<(window& win, const qtc_series& qs)
-{ /* static */ const unsigned int COLUMN_WIDTH { qtc_entry().size() };                           // width of a column
+{ const size_t COLUMN_WIDTH { qtc_entry().size() };                           // width of a column
 
-  /* static */ constexpr unsigned int COLUMN_GAP { 2 };                                              // gap between columns
-  /* static */ constexpr int GAP_COLOUR { COLOUR_YELLOW };
+  constexpr unsigned int COLUMN_GAP { 2 };                                              // gap between columns
+  constexpr int          GAP_COLOUR { COLOUR_YELLOW };
 
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT;
 
@@ -214,8 +212,8 @@ window& operator<(window& win, const qtc_series& qs)
     int cpu { static_cast<int>(colours.add(win.fg(), pr.second ? COLOUR_RED : win.bg())) };
 
 // work out where to start the display of this call
-    const unsigned int x { (index / win.height()) * (COLUMN_WIDTH + COLUMN_GAP) };
-    const unsigned int y { (win.height() - 1) - (index % win.height()) };
+    const unsigned int x { static_cast<unsigned int>( (index / win.height()) * (COLUMN_WIDTH + COLUMN_GAP) ) };
+    const unsigned int y { static_cast<unsigned int>( (win.height() - 1) - (index % win.height()) ) };
 
     win < cursor(x, y) < colour_pair(cpu) < entry_str;
 

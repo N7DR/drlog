@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 154 2020-03-05 15:36:24Z  $
+// $Id: rig_interface.cpp 156 2020-05-17 19:13:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -934,7 +934,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
           { if (status == 0)
              ost << "timeout in select() in raw_command: " << cmd << endl;
             else
-            { const int n_read { read(fd, c_in.data(), SCREEN_BITS - total_read) };
+            { const ssize_t n_read { read(fd, c_in.data(), SCREEN_BITS - total_read) };
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
@@ -973,9 +973,6 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 
           int status { select(fd + 1, &set, NULL, NULL, &timeout) };
 
-//          if (cmd == "AR;")
-//            ost << "AR counter, status = " << counter << ", " << status << endl;
-
           if (status == -1)
             ost << "Error in select() in raw_command()" << endl;
           else
@@ -999,7 +996,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
                 }
               }
 
-              const int n_read { read(fd, c_in.data(), 500) };        // read a maximum of 500 characters
+              const ssize_t n_read { read(fd, c_in.data(), 500) };        // read a maximum of 500 characters
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;
@@ -1190,6 +1187,7 @@ const bool rig_interface::is_locked(void)
   { SAFELOCK(_rig);
 
     int v;
+    
     const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) };
 
     if (status != RIG_OK)

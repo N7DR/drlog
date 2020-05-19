@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 155 2020-04-01 18:45:34Z  $
+// $Id: drlog.cpp 156 2020-05-17 19:13:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -130,6 +130,8 @@ void* get_indices(void* vp);                                           ///< Get 
 const string hhmmss(void);                          ///< Obtain the current time in HH:MM:SS format
 
 void insert_memory(void);                           ///< insert an entry into the memories
+
+const pair<float, float> latitude_and_longitude(const string& callsign);    ///< obtain latitude and longtide associated with a call
 
 const string match_callsign(const vector<pair<string /* callsign */,
                             int /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
@@ -3818,7 +3820,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // CURSOR UP -- go to log window
 //  if (!processed and e.is_unmodified() and e.symbol() == XK_Up)
   if (!processed and cursor_up and !in_scp_matching)
-  { win_active_p = &win_log;
+  { ost << "ENTERING EDITABLE LOG WINDOW" << endl;
+  
+    win_active_p = &win_log;
 
     win_log_snapshot = win_log.snapshot();
     win_log.toggle_hidden();
@@ -5543,8 +5547,9 @@ const string bearing(const string& callsign)
 
   const float& lat1      { my_latitude };
   const float& long1     { my_longitude };
-  const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };
+//  const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };
 
+/*
   float lat2;
   float long2;
 
@@ -5564,16 +5569,12 @@ const string bearing(const string& callsign)
   
     lat2 = grid.latitude();
     long2 = grid.longitude();
-    
-//    ost << "latitude = " << lat1 << ", longitude = " << long1 << endl;
-//   ost << "grid = " << grid_name << "; latitude = " << lat2 << ", longitude = " << long2 << endl;
   }
-
-//  const float lat2  { location_db.latitude(callsign) };
-//  const float long2 { -location_db.longitude(callsign) };    // minus sign to get in the correct direction
-  const float b     { bearing(lat1, long1, lat2, long2) };
+*/
+  const auto  [lat2, long2] { latitude_and_longitude(callsign) };
+  const float b             { bearing(lat1, long1, lat2, long2) };
   
-  int ibearing      { static_cast<int>(b + 0.5) };
+  int ibearing { static_cast<int>(b + 0.5) };
 
   if (ibearing < 0)
     ibearing += 360;
@@ -5589,7 +5590,33 @@ const string bearing(const string& callsign)
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
-{ const location_info li { location_db.info(callsign) };
+{ 
+/*  
+  const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };
+
+  float lat;
+  float lon;
+
+  if (is_valid_grid_designation(grid_name))
+  { const grid_square grid { grid_name };
+  
+    lat = grid.latitude();
+    lon = grid.longitude();
+  }
+  else
+  { const location_info li { location_db.info(callsign) };
+
+    const location_info default_li;
+
+    if (li == default_li)
+      return string();
+      
+    lat = location_db.latitude(callsign);
+    lon = -location_db.longitude(callsign);    // minus sign to get in the correct direction
+  }
+*/
+/*  
+  const location_info li { location_db.info(callsign) };
 
   const location_info default_li;
 
@@ -5598,7 +5625,10 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
 
   const float  lat { location_db.latitude(callsign) };
   const float  lon { -location_db.longitude(callsign) };          // minus sign to get in the correct direction
-  const string rv  { sunrise_or_sunset(lat, lon, calc_sunset) };
+*/
+
+  const auto   [lat, lon] { latitude_and_longitude(callsign) };
+  const string rv         { sunrise_or_sunset(lat, lon, calc_sunset) };
 
   return rv;
 }
@@ -6847,7 +6877,19 @@ void* spawn_dx_cluster(void* vp)
 
 /// Thread function to spawn the RBN
 void* spawn_rbn(void* vp)
-{ rbn_p = new dx_cluster(context, POSTING_SOURCE::RBN);
+{ try
+  { rbn_p = new dx_cluster(context, POSTING_SOURCE::RBN);
+  }
+  
+  catch (const x_error& e)
+  { ost << "Error creating dx_cluster object; exiting: " << e.reason() << endl;
+    exit(-1);
+  }
+  
+  catch (...)
+  { ost << "Unknown error creating dx_cluster object; exiting." << endl;
+    exit(-1);
+  }
 
   static cluster_info rbn_info_for_thread(&win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps);
   static pthread_t thread_id_2;
@@ -8399,4 +8441,36 @@ void update_bandmap_size_window(void)
 
     win_bandmap_size.refresh();
   }
+}
+
+/*! \brief  Return latitude and longitude of a call or partial call
+    \param  callsign    call or partial call
+    \return             latitude (+ve north) and longitude (+ve west) of <i>callsign</i>
+    
+    Returns (0, 0) if latitude or longitude cannot be calculated
+*/
+const pair<float, float> latitude_and_longitude(const string& callsign)
+{ const string grid_name { exchange_db.guess_value(callsign, "GRID"s) };
+
+  pair<float, float> rv;
+
+  if (is_valid_grid_designation(grid_name))
+  { const grid_square grid { grid_name };
+  
+    rv.first = grid.latitude();
+    rv.second = grid.longitude();
+  }
+  else
+  { const location_info li { location_db.info(callsign) };
+
+    const location_info default_li;
+
+    if (li == default_li)
+      return rv;
+      
+    rv.first = location_db.latitude(callsign);
+    rv.second = -location_db.longitude(callsign);    // minus sign to get in the correct direction
+  }
+  
+  return rv;
 }

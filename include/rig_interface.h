@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 152 2019-08-21 20:23:38Z  $
+// $Id: rig_interface.h 156 2020-05-17 19:13:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

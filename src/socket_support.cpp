@@ -380,7 +380,7 @@ void tcp_socket::send(const std::string& msg)
 
   SAFELOCK(_tcp_socket);
 
-  const int status { ::send(_sock, msg.c_str(), msg.length(), 0) };
+  const ssize_t status { ::send(_sock, msg.c_str(), msg.length(), 0) };
   
   if (status == -1)
     throw tcp_socket_error(TCP_SOCKET_ERROR_IN_WRITE);   

@@ -136,9 +136,9 @@ class tr_log
 {
 protected:
 
-  long _number_of_qsos;      ///< number of QSOs in the log
-  long _record_length;       ///< length of a single QSO
-  FILE* _fp;                 ///< file pointer
+  long   _number_of_qsos;      ///< number of QSOs in the log
+  size_t _record_length;       ///< length of a single QSO -- use size_t to match parameter to fwrite
+  FILE*  _fp;                  ///< file pointer
 
 public:
 

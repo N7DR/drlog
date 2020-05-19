@@ -1305,16 +1305,15 @@ window& bandmap::write_to_window(window& win)
         cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
 
 // work out where to start the display of this call
-      const unsigned int x { ( (index  - start_entry) / win.height()) * COLUMN_WIDTH };
+      const unsigned int x { static_cast<unsigned int>( ( (index  - start_entry) / win.height()) * COLUMN_WIDTH ) };
     
 // check that there's room to display the entire entry
       if ((win.width() - x) < COLUMN_WIDTH)
         break;
 
 // get the right y ordinate
-      const unsigned int y { (bandmap_frequency_up ? 0 + (index - start_entry) % win.height()
-                                                   : (win.height() - 1) - (index - start_entry) % win.height()
-                             ) };
+      const unsigned int y { static_cast<unsigned int>( (bandmap_frequency_up ? 0 + (index - start_entry) % win.height()
+                                                                              : (win.height() - 1) - (index - start_entry) % win.height() ) ) };
 
 // now work out the status colour
       int status_colour { static_cast<int>(colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR)) };                      // default

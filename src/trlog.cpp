@@ -255,14 +255,14 @@ tr_log::tr_log(const std::string& filename)
     line_of_log_info = line_of_log_info and ((mode == "CW "s) or (mode == "SSB"s));
 
     if (line_of_log_info)
-    { const int old_record_length { _record_length };
+    { const auto old_record_length { _record_length };
 
       _record_length = this_line.length();
 
       if (old_record_length)
       { if (_record_length != old_record_length)
         { cerr << "Error creating tr_log; inconsistent record length: _record_length = " << _record_length << "; old_record_length = " << old_record_length << endl;
-          exit(-2);;
+          exit(-2);
         }
       }
 
