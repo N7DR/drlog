@@ -1186,11 +1186,11 @@ window& operator<(window& win, bandmap& bm)
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
 //      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != COLOUR_BLACK))
-      if (age_since_original_inserted < 120 and !be.is_marker() and (bm.recent_colour() != COLOUR_BLACK))
+      if (age_since_original_inserted < 120 and !be.is_marker() and (bm.recent_colour() != 16 /* COLOUR_BLACK */))
         cpu = colours.add(bm.recent_colour(), win.bg());
 
       if (is_marker)
-        cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
+        cpu = colours.add(COLOUR_WHITE, 16);    // colours for markers
 
 // work out where to start the display of this call
       const unsigned int x { ( (index  - start_entry) / win.height()) * COLUMN_WIDTH };
@@ -1242,7 +1242,7 @@ window& operator<(window& win, bandmap& bm)
 }
 
 window& bandmap::write_to_window(window& win)
-{ constexpr int NOT_NEEDED_COLOUR          { COLOUR_BLACK };
+{ constexpr int NOT_NEEDED_COLOUR          { 16 /* COLOUR_BLACK */ };
   constexpr int MULT_COLOUR                { COLOUR_GREEN };
   constexpr int NOT_MULT_COLOUR            { COLOUR_BLUE };
   constexpr int UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
@@ -1298,11 +1298,11 @@ window& bandmap::write_to_window(window& win)
       int cpu = colours.add(fade_colours().at(n_intervals), win.bg());
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
-      if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != COLOUR_BLACK))
+      if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != 16 /* COLOUR_BLACK */))
         cpu = colours.add(recent_colour(), win.bg());
 
       if (is_marker)
-        cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
+        cpu = colours.add(COLOUR_WHITE, 16 /* COLOUR_BLACK */);    // colours for markers
 
 // work out where to start the display of this call
       const unsigned int x { static_cast<unsigned int>( ( (index  - start_entry) / win.height()) * COLUMN_WIDTH ) };

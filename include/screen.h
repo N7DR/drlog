@@ -73,6 +73,7 @@ constexpr unsigned int WINDOW_INSERT    { 2 };        ///< INSERT mode
                     
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
 constexpr int COLOUR_BLACK   { COLOR_BLACK },         ///< black
+              COLOUR_BLACK_2 { 16 },                  ///< On 64-bit machines a COLOR_BLACK background doesn't work if COLOUR_BLACK is zero; it produces black-on-black when text is written
               COLOUR_RED     { COLOR_RED },           ///< red
               COLOUR_GREEN   { COLOR_GREEN },         ///< green
               COLOUR_YELLOW  { COLOR_YELLOW },        ///< yellow
@@ -171,7 +172,8 @@ protected:
   int   _h { 0 };                     ///< height
 
   std::string _fg_colour { "white"s };       ///< name of foreground colour
-  std::string _bg_colour { "black"s };       ///< name of background colour
+//  std::string _bg_colour { "black"s };       ///< name of background colour
+  std::string _bg_colour { "colour_16"s };       ///< name of background colour
 
   bool  _colours_set { false };           ///< have the colours been set explicitly?
 
@@ -208,8 +210,8 @@ class window
 protected:
   
   unsigned int  _column_width;      ///< width of columns
-  int           _cursor_x;          ///< used to hold x cursor
-  int           _cursor_y;          ///< used to hold y cursor
+  /* mutable */int           _cursor_x;          ///< used to hold x cursor
+  /* mutable */int           _cursor_y;          ///< used to hold y cursor
   bool          _echoing;           ///< whether echoing characters
   int           _height;            ///< height
   bool          _hidden_cursor;     ///< whether to hide the cursor
@@ -342,7 +344,7 @@ public:
     \return         the window
 */
   window& move_cursor(const int new_x, const int new_y);
-  
+ 
 /*! \brief      Move the logical cursor
     \param  c   new cursor (used to derive the new location)
     \return     the window
@@ -631,6 +633,13 @@ public:
 /// toggle the insert mode
   inline window& toggle_insert(void)
     { return (_insert = !_insert, *this); }
+
+/*! \brief          Obtain a readable description of the window properties
+    \return         the window properties as a human-readable string
+    
+    Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
+*/
+const std::string properties(const std::string& name = ""s);
 
 // http://stackoverflow.com/questions/1154212/how-could-i-print-the-contents-of-any-container-in-a-generic-way 
 /* I do not understand why this template is not used in:   win_remaining_mults < (context.remaining_country_mults_list());

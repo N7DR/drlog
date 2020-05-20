@@ -70,6 +70,9 @@ screen::screen(void)
     exit(-1);
   }
 
+//  use_default_colors();
+//  init_color(COLOR_BLACK, 1, 1, 1);
+
   if (refresh() == ERR)
   { cerr << "Error calling refresh()" << endl;
     sleep(2);
@@ -230,6 +233,7 @@ window& window::move_cursor(const int new_x, const int new_y)
   
   return *this;
 }
+
 
 /*! \brief      Write a string to the window
     \param  s   string to write
@@ -666,6 +670,7 @@ window& operator<(window& win, const centre& c)
 
     By default reads the entirety of the bottom line.
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
+    Cannot be const, because because mvwinstr() silently moves the cursor, and we then move it back
 */
 const string window::read(int x, int y)
 { if (!_wp)
@@ -800,9 +805,47 @@ void window::show(void)
   }
 }
 
-/*! \brief  character processing that is the same in multiple windows
+/*! \brief      Obtain a readable description of the window properties
+    \return     the window properties as a human-readable string
+*/
+const string window::properties(const string& name)
+{ string rv;
+
+  rv += "Window " + (name.empty() ? ""s : name + " "s) + "is "s + (defined() ? ""s : "NOT "s) + "defined"s + EOL;
+  
+  if (defined())
+  { rv += "  x origin = " + to_string(_x) + EOL;
+    rv += "  y origin = " + to_string(_y) + EOL;
+    rv += "  height = " + to_string(height()) + EOL;
+    rv += "  width = " + to_string(width()) + EOL;
+    rv += "  foreground colour = " + to_string(fg()) + EOL;
+    rv += "  background colour = " + to_string(bg()) + EOL;
+    rv += "  cursor is "s + (hidden_cursor() ? ""s : "NOT "s) + "hidden"s + EOL;
+    rv += "  x cursor = "s + to_string(_cursor_x) + EOL;
+    rv += "  y cursor = "s + to_string(_cursor_y) + EOL;
+    rv += "  window is "s + (insert() ? ""s : "NOT "s) + "in INSERT mode"s + EOL;
+    rv += "  column width = " + to_string(column_width()) + EOL;
+    rv += "  string containers are " + (vertical() ? ""s : "NOT "s) + "displayed vertically"s + EOL;
+    rv += "  characters are " + (_echoing ? ""s : "NOT "s) + "echoed"s + EOL;
+    rv += "  leaveok is " + (_leaveok ? ""s : "NOT "s) + "set"s + EOL;
+    rv += "  scrolling is " + (_scrolling ? ""s : "NOT "s) + "enabled"s + EOL;
+    rv += "  function to process input " + ( (_process_input != nullptr) ? "EXISTS"s : "DOES NOT EXIST"s ) + EOL;
+    rv += "  window is " + (hidden() ? ""s : "NOT "s) + "hidden"s + EOL;
+
+    const vector<string> lines = snapshot();
+    
+    rv += "  number of lines in snapshot = "s + to_string(lines.size()) + EOL;
+    
+    for (size_t n = 0; n < lines.size(); ++n)
+      rv += "    ["s + to_string(n) + "]: "s + lines[n] + EOL;
+  }
+  
+  return rv;
+}
+
+/*! \brief      character processing that is the same in multiple windows
     \param  e   keyboard event to be processed
-    \return whether the event was processed
+    \return     whether the event was processed
 */
 const bool window::common_processing(const keyboard_event& e)
 { window& win { (*this) };
@@ -950,7 +993,8 @@ const int string_to_colour(const string& str)
                                              { "MAGENTA"s, COLOUR_MAGENTA },
                                              { "RED"s,     COLOUR_RED },
                                              { "WHITE"s,   COLOUR_WHITE },
-                                             { "YELLOW"s,  COLOUR_YELLOW }
+                                             { "YELLOW"s,  COLOUR_YELLOW },
+                                             { "BLACK_2"s, 16 }                // added to work around bug in 64-bit ncurses: a COLOUR_BLACK background causes any text to be invisible
                                            };
 
   const string s   { to_upper(remove_peripheral_spaces(str)) };
@@ -969,5 +1013,5 @@ const int string_to_colour(const string& str)
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits
     return from_string<int>(s);
 
-  return COLOUR_BLACK;    // default
+  return COLOUR_BLACK;    // default (NB this is dangerous in the current 64-bit buggy version of ncurses; should probably return 16 if this is 64 bits)
 }

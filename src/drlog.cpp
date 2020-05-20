@@ -1190,7 +1190,7 @@ int main(int argc, char** argv)
   win_date.init(context.window_info("DATE"s), WINDOW_NO_CURSOR);
 
 // DRLOG MODE window
-  win_drlog_mode.init(context.window_info("DRLOG MODE"s), COLOUR_WHITE, COLOUR_BLACK, WINDOW_NO_CURSOR);
+  win_drlog_mode.init(context.window_info("DRLOG MODE"s), WINDOW_NO_CURSOR);
 
 // EXCHANGE window
   win_exchange.init(context.window_info("EXCHANGE"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
@@ -1418,7 +1418,7 @@ int main(int argc, char** argv)
   win_title <= centre(context.contest_name(), 0);
 
 // TIME window
-  win_time.init(context.window_info("TIME"s), COLOUR_WHITE, COLOUR_BLACK, WINDOW_NO_CURSOR);  // WHITE / BLACK are default anyway, so don't actually need them
+  win_time.init(context.window_info("TIME"s), WINDOW_NO_CURSOR);  // WHITE / BLACK are default anyway, so don't actually need them
 
 // WPM window
   if (rules.permitted_modes() < MODE_CW)                                    // don't have a WPM window if CW is not permitted, even if the window is defined in the config file
@@ -2131,11 +2131,19 @@ void* display_date_and_time(void* vp)
 
 // if a new day, then update date window
       const string date_string { substring(dts, 0, 10) };
+      
+ //     ost << "date_string = " << date_string << endl;
+ //     ost << "last_date = " << last_date << endl;
+
+ //     ost << win_date.properties("DATE WINDOW"s) << endl;
 
       if (date_string != last_date)
-      { win_date < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= date_string;
-        last_date = date_string;
-        ost << "Date: " << substring(string(buf.data(), 26), 11, 8) << endl;
+      { //ost << "Writing to Date Window" << endl;
+        win_date /* < WINDOW_ATTRIBUTES::WINDOW_CLEAR */ < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= date_string;
+ 
+       last_date = date_string;
+       ost << "Date: " << date_string << endl;
+//        ost << win_date.properties("UPDATED DATE WINDOW"s) << endl;
       }
     }
 
@@ -2255,7 +2263,8 @@ void* display_rig_status(void* vp)
           const string frequency_b_str { f_b.display_string() };
 
 // now display the status
-          win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : COLOUR_BLACK);  // red if this contest doesn't want us to be on this QRG
+          win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : 16);  // red if this contest doesn't want us to be on this QRG
+          win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : 16);  // red if this contest doesn't want us to be on this QRG
 
           const bool sub_rx { (rig_status_thread_parameters.rigp())->sub_receiver_enabled() };
           const auto fg     { win_rig.fg() };                                          // original foreground colour
