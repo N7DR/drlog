@@ -28,7 +28,7 @@
     Creates <i>filename</i> if it does not exist
 */
 inline void append_to_file(const std::string& filename, const std::string& str)
-  { std::ofstream(filename, std::ios_base::app) << str; }
+  { std::ofstream(filename, std::ofstream::binary | std::ios_base::app) << str; }
 
 /*! \brief              Does a file exist?
     \param  filename    name of file

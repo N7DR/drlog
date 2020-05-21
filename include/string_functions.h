@@ -287,6 +287,15 @@ template <typename T>
 inline void write_file(const std::string& cs, const std::string& filename)
   { std::ofstream(filename.c_str(), std::ofstream::binary) << cs; }
 
+/*! \brief              Write a string to a file
+    \param  cs          string to be written to file
+    \param  filename    name of file to be written
+
+    Throws exception if the file cannot be written
+*/
+//inline void append_to_file(const std::string& cs, const std::string& filename)
+//  { std::ofstream(filename.c_str(), std::ofstream::binary | std::ios_base::app) << cs; }
+
 /*! \brief      Remove characters from the end of a string
     \param  s   original string
     \param  n   number of chars to remove

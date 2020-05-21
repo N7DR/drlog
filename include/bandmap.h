@@ -723,7 +723,7 @@ protected:
   int                       _cull_function;                             ///< cull function number to apply
   std::set<std::string>     _do_not_add;                                ///< do not add these calls
   BM_ENTRIES                _entries;                                   ///< all the entries
-  std::vector<int>          _fade_colours;                              ///< the colours to use as entries age
+  std::vector<COLOUR_TYPE>  _fade_colours;                              ///< the colours to use as entries age
   decltype(_entries)        _filtered_entries;                          ///< entries, with the filter applied
   bool                      _filtered_entries_dirty;                    ///< is the filtered version dirty?
   bandmap_filter_type*      _filter_p;                                  ///< pointer to a bandmap filter
@@ -733,7 +733,7 @@ protected:
   bool                      _rbn_threshold_and_filtered_entries_dirty;  ///< is the RBN threshold and filtered version dirty?
   decltype(_entries)        _rbn_threshold_filtered_and_culled_entries; ///< entries, with the RBN threshold, filter and cull function applied
   std::set<std::string>     _recent_calls;                              ///< calls recently added
-  int                       _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
+  COLOUR_TYPE               _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);

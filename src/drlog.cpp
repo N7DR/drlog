@@ -57,7 +57,7 @@ using namespace   chrono;        // std::chrono
 using namespace   placeholders;  // std::placeholders
 using namespace   this_thread;   // std::this_thread
 
-extern cpair colours;                       ///< program-wide definitions of colour pairs in use
+//extern cpair colours;                       ///< program-wide definitions of colour pairs in use
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
 /// drlog mode
@@ -71,6 +71,9 @@ ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
 
   return ost;
 }
+
+screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed;
+                                            // declare early so it is ready when any of the colour functions are called
 
 string VERSION;         ///< version string
 string DP("·"s);        ///< character for decimal point
@@ -134,18 +137,18 @@ void insert_memory(void);                           ///< insert an entry into th
 const pair<float, float> latitude_and_longitude(const string& callsign);    ///< obtain latitude and longtide associated with a call
 
 const string match_callsign(const vector<pair<string /* callsign */,
-                            int /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
+                                              PAIR_TYPE /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
 
 void populate_win_call_history(const string& str);                  ///< Populate the QSO/QSL call history window
 void populate_win_info(const string& str);                          ///< Populate the information window
 void possible_mode_change(const frequency& f);                      ///< possibly change mode in accordance with frequency
 void print_thread_names(void);
 const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);  ///< process a bandmap function, to jump to the next frequency returned by the function
-const bool process_change_in_bandmap_column_offset(const KeySym symbol);  ///< change the offset of the bandmap
-const bool process_backspace(window& win);                          ///< process backspace
-const bool process_keypress_F5(void);                               ///< process key F5
-const bool p3_screenshot(void);                                           ///< Start a thread to take a snapshot of a P3
-void p3_span(const unsigned int khz_span);                          ///< set the span of a P3
+const bool process_change_in_bandmap_column_offset(const KeySym symbol);    ///< change the offset of the bandmap
+const bool process_backspace(window& win);                                  ///< process backspace
+const bool process_keypress_F5(void);                                       ///< process key F5
+const bool p3_screenshot(void);                                             ///< Start a thread to take a snapshot of a P3
+void p3_span(const unsigned int khz_span);                                  ///< set the span of a P3
 
 void rebuild_history(const logbook& logbk,
                      const contest_rules& rules,
@@ -358,6 +361,12 @@ EFT CALLSIGN_EFT("CALLSIGN"s);           ///< EFT used in constructor for parsed
 */
 bool ok_to_poll_k3 { true };                  ///< is it safe to poll the K3?
 
+const string OUTPUT_FILENAME { "output.txt"s };     ///< file to which debugging output is directed
+
+message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
+
+cpair colours;  // must be declared before windows
+
 // windows -- these should automatically be thread_safe
 window win_band_mode,                   ///< the band and mode indicator
        win_bandmap,                     ///< the bandmap for the current band
@@ -366,13 +375,13 @@ window win_band_mode,                   ///< the band and mode indicator
        win_batch_messages,              ///< messages from the batch messages file
        win_bcall,                       ///< call associated with VFO B
        win_best_dx,                     ///< best DX QSO
-       win_bexchange,                   ///< exchnage associated with VFO B
+       win_bexchange,                   ///< exchange associated with VFO B
        win_call,                        ///< callsign of other station, or command
        win_call_history,                ///< historical QSO and QSL information
        win_cluster_line,                ///< last line received from cluster
        win_cluster_mult,                ///< mults received from cluster
        win_cluster_screen,              ///< interactive screen on to the cluster
-       win_date,                        ///< the date
+       win_date("DATE"s),               ///< the date
        win_drlog_mode,                  ///< indicate whether in CQ or SAP mode
        win_exchange,                    ///< QSO exchange received from other station
        win_log_extract,                 ///< to show earlier QSOs
@@ -444,9 +453,9 @@ thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute fo
 window* win_active_p      { &win_call };          ///< start with the CALL window active
 window* last_active_win_p { nullptr };            ///< keep track of the last window that was active, before the current one
 
-const string OUTPUT_FILENAME { "output.txt"s };     ///< file to which debugging output is directed
+//const string OUTPUT_FILENAME { "output.txt"s };     ///< file to which debugging output is directed
 
-message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
+//message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
 
 array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band
 array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
@@ -462,8 +471,8 @@ scp_database  scp_db,                           ///< static SCP database from fi
 scp_databases scp_dbs;                          ///< container for the SCP databases
 
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
-vector<pair<string /* callsign */, int /* colour pair number */ > > scp_matches;    ///< SCP matches
-vector<pair<string /* callsign */, int /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
+vector<pair<string /* callsign */, PAIR_TYPE /* colour pair number */ > > scp_matches;    ///< SCP matches
+vector<pair<string /* callsign */, PAIR_TYPE /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
 
 fuzzy_database  fuzzy_db,                       ///< static fuzzy database from file
                 fuzzy_dynamic_db;               ///< dynamic SCP database from QSOs
@@ -494,7 +503,7 @@ WRAPPER_2_NC(rig_status_info,
                rig_interface*, rigp);              ///< parameters for rig status
 
 // prepare for terminal I/O
-screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed
+//screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed
 keyboard_queue keyboard;                    ///< queue of keyboard events
 
 // quick access to whether particular types of mults are in use; these are written only during start-up, so we don't bother to protect them
@@ -521,7 +530,7 @@ bool mm_country_mults { false };
     Might want to put red matches after green matches
 */
 template <typename T>
-void update_matches_window(const T& matches, vector<pair<string, int>>& match_vector, window& win, const string& callsign)
+void update_matches_window(const T& matches, vector<pair<string, PAIR_TYPE>>& match_vector, window& win, const string& callsign)
 { if (callsign.length() >= context.match_minimum())
   {
 // put in right order and also get the colours right
@@ -1489,8 +1498,8 @@ int main(int argc, char** argv)
   win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
 
 // set recent and fade colours for each bandmap
-  { const vector<int> fc { context.bandmap_fade_colours() };
-    const int         rc { context.bandmap_recent_colour() };
+  { const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
+    const COLOUR_TYPE         rc { context.bandmap_recent_colour() };
 
     FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.fade_colours(fc);
                                           bm.recent_colour(rc);
@@ -2570,12 +2579,12 @@ void* process_rbn_info(void* vp)
 
       unsigned int y { static_cast<unsigned int>( (win_monitored_posts.height() - 1) - (entries.size() - 1) ) }; // oldest entry
 
-      const time_t       now          { ::time(NULL) };
-      const vector<int>  fade_colours { context.bandmap_fade_colours() };
-      const unsigned int n_colours    { static_cast<unsigned int>(fade_colours.size()) };
-      const float        interval     { 1.0f / n_colours };
+      const time_t              now          { ::time(NULL) };
+      const vector<COLOUR_TYPE> fade_colours { context.bandmap_fade_colours() };
+      const unsigned int        n_colours    { static_cast<unsigned int>(fade_colours.size()) };
+      const float               interval     { 1.0f / n_colours };
 
-      int default_colours { static_cast<int>(colours.add(win_monitored_posts.fg(), win_monitored_posts.bg())) };
+      const PAIR_TYPE default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
 
 // oldest to newest
       for (size_t n = 0; n < entries.size(); ++n)
@@ -2591,7 +2600,7 @@ void* process_rbn_info(void* vp)
         n_intervals = min(n_intervals, n_colours - 1);
         n_intervals = (n_colours - 1) - n_intervals;
 
-        const int cpu { static_cast<int>(colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg())) };
+        const PAIR_TYPE cpu { colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg()) };
 
         win_monitored_posts < colour_pair(cpu)
                             < entries[n].to_string() < colour_pair(default_colours);
@@ -5458,11 +5467,11 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   copy(original.cbegin(), original.cend(), back_inserter(vec_str));
   sort(vec_str.begin(), vec_str.end(), compare_calls);    // need to change the collation order
 
-  vector<pair<string /* country */, int /* colour pair number */ > > vec;
+  vector<pair<string /* country */, PAIR_TYPE /* colour pair number */ > > vec;
 
   for (const auto& canonical_prefix : vec_str)
-  { const bool is_needed          { ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() ) };
-    const int  colour_pair_number { static_cast<int>(colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : context.worked_mults_colour() ), win_remaining_callsign_mults.bg())) };
+  { const bool      is_needed          { ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() ) };
+    const PAIR_TYPE colour_pair_number { colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : context.worked_mults_colour() ), win_remaining_callsign_mults.bg()) };
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
   }
@@ -5485,11 +5494,11 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   copy(known_country_mults.cbegin(), known_country_mults.cend(), back_inserter(vec_str));
   sort(vec_str.begin(), vec_str.end(), compare_calls);    // non-default collation order
 
-  vector<pair<string /* country */, int /* colour pair number */ > > vec;
+  vector<pair<string /* country */, PAIR_TYPE /* colour pair number */ > > vec;
 
   for (const auto& canonical_prefix : vec_str)
-  { const bool is_needed          { worked_country_mults.find(canonical_prefix) == worked_country_mults.cend() };
-    const int  colour_pair_number { static_cast<int>(colours.add( is_needed ? win_remaining_country_mults.fg() : context.worked_mults_colour(), win_remaining_country_mults.bg())) };
+  { const bool      is_needed          { worked_country_mults.find(canonical_prefix) == worked_country_mults.cend() };
+    const PAIR_TYPE colour_pair_number { colours.add( is_needed ? win_remaining_country_mults.fg() : context.worked_mults_colour(), win_remaining_country_mults.bg()) };
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
   }
@@ -5518,11 +5527,11 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
   window& win { ( *(win_remaining_exch_mults_p[exch_mult_name]) ) };
 
 // get the colours right
-  vector<pair<string /* exch value */, int /* colour pair number */ > > vec;
+  vector<pair<string /* exch value */, PAIR_TYPE /* colour pair number */ > > vec;
 
   for (const auto& known_value : known_exchange_values)
-  { const bool is_needed          { statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m) };
-    const int  colour_pair_number { static_cast<int>( ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(context.worked_mults_colour(),  win.bg())) ) };
+  { const bool      is_needed          { statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m) };
+    const PAIR_TYPE colour_pair_number { ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(context.worked_mults_colour(),  win.bg())) };
 
     vec.push_back( { known_value, colour_pair_number } );
   }
@@ -6486,7 +6495,7 @@ void exit_drlog(void)
     the operator would agree. In the absence of an obvious candidate for "best match", the
     empty string is returned.
 */
-const string match_callsign(const vector<pair<string /* callsign */, int /* colour pair number */ > >& matches)
+const string match_callsign(const vector<pair<string /* callsign */, PAIR_TYPE /* colour pair number */ > >& matches)
 { string new_callsign;
 
   if ((matches.size() == 1) and (colours.fg(matches[0].second) != REJECT_COLOUR))
@@ -7547,7 +7556,7 @@ void display_nearby_callsign(const string& callsign)
     const int  background { win_nearby.bg() };
 
 // in what colour should we display this call?
-    int colour_pair_number { static_cast<int>(colours.add(foreground, background)) };
+    PAIR_TYPE colour_pair_number { colours.add(foreground, background) };
 
     if (!worked)
       colour_pair_number = colours.add(ACCEPT_COLOUR,  background);
@@ -7556,7 +7565,7 @@ void display_nearby_callsign(const string& callsign)
       colour_pair_number = colours.add(REJECT_COLOUR,  background);
 
     win_nearby < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
-    win_nearby.cpair(colour_pair_number);
+    win_nearby.set_colour_pair(colour_pair_number);
     win_nearby < callsign <= COLOURS(foreground, background);
 
     if (context.nearby_extract())               // possibly display the callsign in the LOG EXTRACT window
@@ -7813,9 +7822,9 @@ void update_qsls_window(const string& str)
       const unsigned int n_qsos                   { olog.n_qsos(callsign) };
       const unsigned int n_qsos_this_band_mode    { olog.n_qsos(callsign, b, m) };
       const bool         confirmed_this_band_mode { olog.confirmed(callsign, b, m) };
-
-      int default_colour_pair { static_cast<int>(colours.add(win_qsls.fg(), win_qsls.bg())) };
-      int new_colour_pair     { default_colour_pair };
+      const PAIR_TYPE    default_colour_pair      { colours.add(win_qsls.fg(), win_qsls.bg()) };
+ 
+      PAIR_TYPE new_colour_pair     { default_colour_pair };
 
       if ( (n_qsls == 0) and (n_qsos != 0) )
         new_colour_pair = colours.add(COLOUR_RED, win_qsls.bg());
@@ -7824,7 +7833,7 @@ void update_qsls_window(const string& str)
         new_colour_pair = colours.add(COLOUR_GREEN, win_qsls.bg());
 
       if (new_colour_pair != default_colour_pair)
-        win_qsls.cpair(new_colour_pair);
+        win_qsls.set_colour_pair(new_colour_pair);
 
       win_qsls < pad_string(to_string(n_qsls), 3, PAD_LEFT, '0')
                < colour_pair(default_colour_pair) < "/"s
@@ -7836,7 +7845,7 @@ void update_qsls_window(const string& str)
 
       win_qsls <= pad_string(to_string(n_qsos_this_band_mode), 3, PAD_LEFT, '0');
 
-      win_qsls.cpair(default_colour_pair);
+      win_qsls.set_colour_pair(default_colour_pair);
     }
   }
 }

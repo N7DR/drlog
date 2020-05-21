@@ -29,8 +29,11 @@
 
 using namespace std;
 
+extern message_stream   ost;                        ///< for debugging, info
+
 // globals
-cpair    colours;               ///< global repository for information about colour pairs
+//cpair    colours;               ///< global repository for information about colour pairs
+extern cpair colours;
 pt_mutex screen_mutex;          ///< mutex for access to screen
 
 // -----------  screen  ----------------
@@ -160,7 +163,7 @@ window::window(const window_information& wi, const unsigned int flags) :
 { if (_width and _height)
   { SAFELOCK(screen);
 
-    _wp = newwin(_height, _width, LINES - _y /* - 1 */ - _height, /*COLS - */_x);
+    _wp = newwin(_height, _width, LINES - _y - _height, _x);
     keypad(_wp, true);
     _pp = new_panel(_wp);
 
@@ -188,7 +191,49 @@ void window::init(const window_information& wi, const unsigned int flags)
 
   _fg = string_to_colour(wi.fg_colour());
   _bg = string_to_colour(wi.bg_colour());
-  _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
+#if 0  
+  if (_name == "DATE")
+  { ost << "DATE intialisation" << std::endl;
+
+    ost << "fg = " << _fg << " bg = " << _bg << endl;
+    
+    const auto cp { COLOUR_PAIR(colours.add(_fg, _bg)) };
+      
+    ost << "cp = " << cp << std::endl;
+    
+//    _default_colours(cp);
+    short f;
+    short b;
+    pair_content(1, &f, &b);
+    
+    ost << "pair content before 2nd init = " << f << ", " << b << endl;
+
+
+ //    init_pair(1, COLOR_WHITE, COLOR_BLACK);
+         pair_content(1, &f, &b);
+
+     ost << "pair content after 2nd init = " << f << ", " << b << endl;
+    
+//     int pair_content(short pair, short *f, short *b);
+//     wbkgd(_wp, COLOR_PAIR(1));    // set default colours
+   
+    ost << "End DATE initialisation" << std::endl;
+    
+    wprintw(_wp, "TEST DATE");
+    
+      int sx, sy;
+  getsyx(sy, sx);
+  
+  wrefresh(_wp);
+  
+  setsyx(sy, sx);
+  doupdate();
+    sleep(10);
+    cout << "End of sleep" << endl;
+  }
+  else
+#endif
+    _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
 
   (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
@@ -202,7 +247,7 @@ void window::init(const window_information& wi, const unsigned int flags)
     The window is ready for use after this function has been called. <i>fg</i> and <i>bg</i>
     override <i>wi.fg_colour()</i> and <i>wi.bg_colour()</i> iff wi.colours_set() is false.
 */
-void window::init(const window_information& wi, int fg, int bg, const unsigned int flags)
+void window::init(const window_information& wi, const COLOUR_TYPE fg, const COLOUR_TYPE bg, const unsigned int flags)
 { _init(wi, flags);
 
   if (wi.colours_set())
@@ -233,7 +278,6 @@ window& window::move_cursor(const int new_x, const int new_y)
   
   return *this;
 }
-
 
 /*! \brief      Write a string to the window
     \param  s   string to write
@@ -349,20 +393,20 @@ window& window::operator<(const vector<string>& v)
 }
 
 /*! \brief          Write a vector of strings with possible different colours to a window
-    \param  vec     vector of pairs <string, int [colour number]> to write
+    \param  vec     vector of pairs <string, PAIR_TYPE [colour pair number]> to write
     \return         the window
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
-window& window::operator<(const vector<std::pair<string, int /* colour pair number */ > >& vec)     // bizarrely, doxygen complains if I remove the std:: qualifier
+window& window::operator<(const vector<std::pair<string, PAIR_TYPE /* colour pair number */ > >& vec)     // bizarrely, doxygen complains if I remove the std:: qualifier
 { if (!_wp)
     return *this;
 
   unsigned int idx { 0 };
 
   for (const auto& psi : vec)
-  { const string& str { psi.first };
-    const int&    cp  { psi.second };
+  { const string&    str { psi.first };
+    const PAIR_TYPE& cp  { psi.second };
 
 // see if there's enough room on this line
     cursor_position();
@@ -377,7 +421,7 @@ window& window::operator<(const vector<std::pair<string, int /* colour pair numb
     if (remaining_space < static_cast<int>(str.length()))
       *this < "\n";
 
-    this->cpair(cp);
+    this->set_colour_pair(cp);
 
     *this < str < COLOURS(_fg, _bg);    // back to default colours
 
@@ -426,7 +470,7 @@ window& window::move_cursor_relative(const int delta_x, const int delta_y)
     \param  pair_nr     number of the new colour pair
     \return             the window
 */
-window& window::cpair(const int pair_nr)
+window& window::set_colour_pair(const PAIR_TYPE pair_nr)
 { if (_wp)
   { SAFELOCK(screen);  
 
@@ -441,7 +485,7 @@ window& window::cpair(const int pair_nr)
     \param  background_colour   background colour
     \return                     the window
 */
-window& window::default_colours(const int foreground_colour, const int background_colour)
+window& window::default_colours(const COLOUR_TYPE foreground_colour, const COLOUR_TYPE background_colour)
 { if (!_wp)
     return *this;
 
@@ -923,15 +967,22 @@ const bool window::common_processing(const keyboard_event& e)
     \brief  A class to hold information about used colour pairs
 */
 
+//#include "diskfile.h"
+
 /*! \brief      Private function to add a new pair of colours
     \param  p   foreground colour, background colour
     \return     the number of the colour pair
 */
-const unsigned int cpair::_add_to_vector(const pair< int, int>& fgbg)
+const PAIR_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
 { _colours.push_back(fgbg);
-  init_pair(_colours.size(), fgbg.first, fgbg.second);
 
-  return _colours.size();
+//  ost << "CALLING init_pair() with parameters: " << static_cast<PAIR_TYPE>(_colours.size()) << ", " << fgbg.first << ", " << fgbg.second << endl;
+
+  init_pair(static_cast<PAIR_TYPE>(_colours.size()), fgbg.first, fgbg.second);
+
+//  ost << "Added colour pair number " << static_cast<PAIR_TYPE>(_colours.size()) << ": fg = " << fgbg.first << ", bg = " << fgbg.second << endl;
+
+  return static_cast<PAIR_TYPE>(_colours.size());
 }
 
 /*! \brief      Add a pair of colours
@@ -942,60 +993,82 @@ const unsigned int cpair::_add_to_vector(const pair< int, int>& fgbg)
     If the pair is already known, returns the number of the known pair.
     Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
-const unsigned int cpair::add(const int fg, const int bg)
-{ const pair<int, int> fgbg { fg, bg };
+const PAIR_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
+{ const pair<COLOUR_TYPE, COLOUR_TYPE> fgbg { fg, bg };
 
   SAFELOCK(_colours);
+
+//  const auto adr = this;
+  
+//  ost << "cpair address = " << (unsigned long)(adr) << endl;
+
+//  ost << "In cpair::add(); fg = " << fg << ", bg = " << bg << ", initial size of _colours = " << _colours.size() << endl;
 
   if (_colours.empty())
     return _add_to_vector(fgbg);
 
-  const auto cit { find(_colours.cbegin(), _colours.cend(), fgbg) };
+  const auto it { find(_colours.begin(), _colours.end(), fgbg) };
 
-  return ( (cit == _colours.cend()) ? _add_to_vector(fgbg) : (cit - _colours.cbegin() + 1) );
+//  return ( (cit == _colours.cend()) ? _add_to_vector(fgbg) : static_cast<PAIR_TYPE>((cit - _colours.cbegin() + 1)) );
+    return ( (it == _colours.end()) ? _add_to_vector(fgbg) : static_cast<PAIR_TYPE>( distance(_colours.begin(), it) + 1));
+#if 0
+  if (it == _colours.end()) 
+    return _add_to_vector(fgbg);
+    
+  const PAIR_TYPE pair_number = distance(_colours.begin(), it) + 1;
+  
+  ost << "pair number = " << pair_number << endl;
+            
+    short f;
+    short b;
+    pair_content(pair_number, &f, &b);
+    ost << "pair content in cpair::add() = " << f << ", " << b << std::endl;
+  
+  return pair_number;
+#endif
 }
 
 /*! \brief              Get the foreground colour of a pair
     \param  pair_nr     number of the pair
     \return             the foreground colour of the pair number <i>pair_nr</i>
 */
-const int cpair::fg(const int pair_nr) const
-{ short f;
-  short b;
+const COLOUR_TYPE cpair::fg(const PAIR_TYPE pair_nr) const
+{ short f;      // defined to be short in the man page for pair_content
+  short b;      // defined to be short in the man page for pair_content
 
   pair_content(pair_nr, &f, &b);
 
-  return static_cast<int>(f);
+  return static_cast<COLOUR_TYPE>(f);
 }
 
 /*! \brief              Get the background colour of a pair
     \param  pair_nr     number of the pair
     \return             the background colour of the pair number <i>pair_nr</i>
 */
-const int cpair::bg(const int pair_nr) const
-{ short f;
-  short b;
+const COLOUR_TYPE cpair::bg(const PAIR_TYPE pair_nr) const
+{ short f;      // defined to be short in the man page for pair_content
+  short b;      // defined to be short in the man page for pair_content
 
   pair_content(pair_nr, &f, &b);
 
-  return static_cast<int>(b);
+  return static_cast<COLOUR_TYPE>(b);
 }
 
 /*! \brief          Convert the name of a colour to a colour
     \param  str     name of a colour
     \return         the colour corresponding to <i>str</i>
 */
-const int string_to_colour(const string& str)
-{ static const map<string, int> colour_map { { "BLACK"s,   COLOUR_BLACK },
-                                             { "BLUE"s,    COLOUR_BLUE },
-                                             { "CYAN"s,    COLOUR_CYAN },
-                                             { "GREEN"s,   COLOUR_GREEN },
-                                             { "MAGENTA"s, COLOUR_MAGENTA },
-                                             { "RED"s,     COLOUR_RED },
-                                             { "WHITE"s,   COLOUR_WHITE },
-                                             { "YELLOW"s,  COLOUR_YELLOW },
-                                             { "BLACK_2"s, 16 }                // added to work around bug in 64-bit ncurses: a COLOUR_BLACK background causes any text to be invisible
-                                           };
+const COLOUR_TYPE string_to_colour(const string& str)
+{ static const map<string, COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
+                                                     { "BLUE"s,    COLOUR_BLUE },
+                                                     { "CYAN"s,    COLOUR_CYAN },
+                                                     { "GREEN"s,   COLOUR_GREEN },
+                                                     { "MAGENTA"s, COLOUR_MAGENTA },
+                                                     { "RED"s,     COLOUR_RED },
+                                                     { "WHITE"s,   COLOUR_WHITE },
+                                                     { "YELLOW"s,  COLOUR_YELLOW },
+                                                     { "BLACK_2"s, 16 }                // added to work around bug in 64-bit ncurses: a COLOUR_BLACK background causes any text to be invisible
+                                                   };
 
   const string s   { to_upper(remove_peripheral_spaces(str)) };
   const auto   cit { colour_map.find(s) };
@@ -1005,13 +1078,13 @@ const int string_to_colour(const string& str)
 
 // should change this so it works with a colour name and not just a number
   if (begins_with(s, "COLOUR_"s))
-    return (from_string<int>(substring(s, 7)));
+    return (from_string<COLOUR_TYPE>(substring(s, 7)));
 
   if (begins_with(s, "COLOR_"s))
-    return (from_string<int>(substring(s, 6)));
+    return (from_string<COLOUR_TYPE>(substring(s, 6)));
 
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits
-    return from_string<int>(s);
+    return from_string<COLOUR_TYPE>(s);
 
   return COLOUR_BLACK;    // default (NB this is dangerous in the current 64-bit buggy version of ncurses; should probably return 16 if this is 64 bits)
 }

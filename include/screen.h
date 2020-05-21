@@ -36,7 +36,7 @@
 extern message_stream ost;                  ///< for debugging, info
 
 class cpair;                                ///< forward declaration for a pair of colours
-extern cpair colours;                       ///< singleton used to hold  a pair of colours
+extern cpair colours;                       ///< singleton used to hold a pair of colours
 
 /// attributes and pre-defined cursor movement
 enum class WINDOW_ATTRIBUTES { WINDOW_NORMAL,
@@ -70,21 +70,29 @@ enum class WINDOW_ATTRIBUTES { WINDOW_NORMAL,
 // window creation flags
 constexpr unsigned int WINDOW_NO_CURSOR { 1 };        ///< do not display the cursor
 constexpr unsigned int WINDOW_INSERT    { 2 };        ///< INSERT mode
-                    
-/// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
-constexpr int COLOUR_BLACK   { COLOR_BLACK },         ///< black
-              COLOUR_BLACK_2 { 16 },                  ///< On 64-bit machines a COLOR_BLACK background doesn't work if COLOUR_BLACK is zero; it produces black-on-black when text is written
-              COLOUR_RED     { COLOR_RED },           ///< red
-              COLOUR_GREEN   { COLOR_GREEN },         ///< green
-              COLOUR_YELLOW  { COLOR_YELLOW },        ///< yellow
-              COLOUR_BLUE    { COLOR_BLUE },          ///< blue
-              COLOUR_MAGENTA { COLOR_MAGENTA },       ///< magenta
-              COLOUR_CYAN    { COLOR_CYAN },          ///< cyan
-              COLOUR_WHITE   { COLOR_WHITE };         ///< white
 
-#define COLOUR_PAIR(n)  COLOR_PAIR(n)           ///< English spelling allowed
+// the tests at https://invisible-island.net/ncurses/ncurses-examples.html, ftp://ftp.invisible-island.net/ncurses-examples/ncurses-examples.tar.gz
+// use NCURSES_COLOR_T as a synonym for short, which is 16 bits. Ditto for NCURSES_PAIR_T.
+using COLOUR_TYPE = short;
+using PAIR_TYPE   = short;
+
+/// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
+constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
+//                      COLOUR_BLACK_2 { 16 },                  ///< On 64-bit machines a COLOR_BLACK background doesn't work if COLOUR_BLACK is zero; it produces black-on-black when text is written
+                      COLOUR_RED     { COLOR_RED },           ///< red
+                      COLOUR_GREEN   { COLOR_GREEN },         ///< green
+                      COLOUR_YELLOW  { COLOR_YELLOW },        ///< yellow
+                      COLOUR_BLUE    { COLOR_BLUE },          ///< blue
+                      COLOUR_MAGENTA { COLOR_MAGENTA },       ///< magenta
+                      COLOUR_CYAN    { COLOR_CYAN },          ///< cyan
+                      COLOUR_WHITE   { COLOR_WHITE };         ///< white
                        
 extern pt_mutex screen_mutex;                   ///< mutex for the screen
+
+//#define COLOUR_PAIR(n)  COLOR_PAIR(n)           ///< English spelling allowed
+// workaround for stupid COLOR_PAIR *MACRO*
+inline const chtype COLOUR_PAIR(const PAIR_TYPE n)
+  { return COLOR_PAIR(n); }
 
 // -----------  cursor  ----------------
 
@@ -94,14 +102,14 @@ WRAPPER_2(cursor, int, x, int, y);
 // -----------  cpair  ----------------
 
 /*! \class  cpair
-    \brief  A class to hold information about used colour pairs
+    \brief  A class to hold information about used colour pairs. There should be only one instantiation of this
 */
 
 class cpair
 {
 protected:
 
-  std::vector< std::pair< int, int> > _colours;    ///< the (globally) used colour pairs
+  std::vector< std::pair< COLOUR_TYPE, COLOUR_TYPE> > _colours;    ///< the (globally) used colour pairs
 
   pt_mutex _colours_mutex;                         ///< allow thread-safe access
 
@@ -109,9 +117,15 @@ protected:
     \param  p       foreground colour, background colour
     \return         the number of the colour pair
 */
-  const unsigned int _add_to_vector(const std::pair<int, int>& p);
+  const PAIR_TYPE _add_to_vector(const std::pair<COLOUR_TYPE, COLOUR_TYPE>& p);
 
 public:
+
+ // cpair(void) = default;
+ cpair(void)
+ { //ost << "IN CPAIR CONSTRUCTOR" << std::endl;
+ }
+  cpair(const cpair&) = delete;
 
 /*! \brief          Add a pair of colours
     \param  fg      foreground colour
@@ -121,19 +135,19 @@ public:
     If the pair is already known, returns the number of the known pair.
     Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
-  const unsigned int add(const int fg, const int bg);
+  const PAIR_TYPE add(const COLOUR_TYPE fg, const COLOUR_TYPE bg);
 
 /*! \brief              Get the foreground colour of a pair
     \param  pair_nr     number of the pair
     \return             the foreground colour of the pair number <i>pair_nr</i>
 */
-  const int fg(const int pair_nr) const;
+  const COLOUR_TYPE fg(const PAIR_TYPE pair_nr) const;
 
 /*! \brief              Get the background colour of a pair
     \param  pair_nr     number of the pair
     \return             the background colour of the pair number <i>pair_nr</i>
 */
-  const int bg(const int pair_nr) const;
+  const COLOUR_TYPE bg(const PAIR_TYPE pair_nr) const;
 };
 
 // -----------  screen  ----------------
@@ -172,10 +186,10 @@ protected:
   int   _h { 0 };                     ///< height
 
   std::string _fg_colour { "white"s };       ///< name of foreground colour
-//  std::string _bg_colour { "black"s };       ///< name of background colour
-  std::string _bg_colour { "colour_16"s };       ///< name of background colour
+  std::string _bg_colour { "black"s };       ///< name of background colour
+//  std::string _bg_colour { "colour_16"s };       ///< name of background colour; "black" results in invisible text on 64-bit machines
 
-  bool  _colours_set { false };           ///< have the colours been set explicitly?
+  bool _colours_set { false };           ///< have the colours been set explicitly?
 
 public:
 
@@ -209,9 +223,11 @@ class window
 {
 protected:
   
+  std::string   _name               { ""s };    ///< (optional) name of window
+  
   unsigned int  _column_width;      ///< width of columns
-  /* mutable */int           _cursor_x;          ///< used to hold x cursor
-  /* mutable */int           _cursor_y;          ///< used to hold y cursor
+  int           _cursor_x;          ///< used to hold x cursor
+  int           _cursor_y;          ///< used to hold y cursor
   bool          _echoing;           ///< whether echoing characters
   int           _height;            ///< height
   bool          _hidden_cursor;     ///< whether to hide the cursor
@@ -229,8 +245,8 @@ protected:
   int    _sx;                   ///< system cursor x value
   int    _sy;                   ///< system cursor y value
   
-  int    _fg;                   ///< foreground colour
-  int    _bg;                   ///< background colour
+  COLOUR_TYPE    _fg;                   ///< foreground colour
+  COLOUR_TYPE    _bg;                   ///< background colour
 
   WINDOW_PROCESS_INPUT_TYPE _process_input;    ///< function to handle input to this window
 
@@ -256,7 +272,8 @@ public:
 
     The window is not ready for use after this constructor: it still needs to be initialised.
 */
-  inline explicit window(const unsigned int flags = 0) :
+  inline explicit window(const std::string& win_name = ""s, const unsigned int flags = 0) :
+    _name(win_name),
     _x(0),
     _y(0),
     _width(0),
@@ -271,7 +288,41 @@ public:
     _process_input(nullptr),
     _fg(COLOUR_WHITE),
     _bg(COLOUR_BLACK)
-  { _default_colours(COLOUR_PAIR(colours.add(_fg, _bg))); }
+  { 
+  #if 0  
+    if (_name == "DATE")
+    { ost << "DATE window constructor" << std::endl;
+    
+      ost << "_fg = " << _fg << ", _bg = " << _bg << std::endl;
+      
+      const auto cp { COLOUR_PAIR(colours.add(_fg, _bg)) };
+      
+      ost << "cp = " << cp << std::endl;
+      
+      ost << "colours.add(_fg, _bg) returns " << colours.add(_fg, _bg) << std::endl;
+      
+          short f;
+    short b;
+    pair_content(1, &f, &b);
+    
+    ost << "first pair content in constructor = " << f << ", " << b << std::endl;
+    init_pair(1, COLOUR_WHITE, COLOUR_BLACK);
+    pair_content(1, &f, &b);
+    
+    ost << "second pair content in constructor = " << f << ", " << b << std::endl;
+ 
+    init_pair(short(1), short(7), short(0));
+    pair_content(short(1), &f, &b);
+    
+    ost << "third pair content in constructor = " << f << ", " << b << std::endl;
+   
+      _default_colours(cp);
+      
+      ost << "End DATE window constructor" << std::endl;
+    }
+    else
+  #endif
+      _default_colours(COLOUR_PAIR(colours.add(_fg, _bg))); }
 
 /*! \brief          Create using position and size information from the configuration file
     \param  wi      window position and size
@@ -304,7 +355,7 @@ public:
     The window is ready for use after this function has been called. <i>fg</i> and <i>bg</i>
     override <i>wi.fg_colour()</i> and <i>wi.bg_colour()</i> iff wi.colours_set() is false.
 */
-  void init(const window_information& wi, int fg, int bg, const unsigned int flags = 0);
+  void init(const window_information& wi, const COLOUR_TYPE fg, const COLOUR_TYPE bg, const unsigned int flags = 0);
 
 // RO access
   READ(height);                     ///< height
@@ -498,7 +549,7 @@ public:
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
-  window& operator<(const std::vector<std::pair<std::string /* callsign */, int /* colour pair number */ > >& vec);
+  window& operator<(const std::vector<std::pair<std::string /* callsign */, PAIR_TYPE /* colour pair number */ > >& vec);
 
 /*! \brief      Write an unsigned integer to a window
     \param  n   unsigned integer to write
@@ -525,14 +576,14 @@ public:
     \param  pair_nr     number of the new colour pair
     \return             the window
 */
-  window& cpair(const int pair_nr);
+  window& set_colour_pair(const PAIR_TYPE pair_nr);
 
 /*! \brief                      Set the default colours
     \param  foreground_colour   foreground colour
     \param  background_colour   background colour
     \return                     the window
 */
-  window& default_colours(const int foreground_colour, const int background_colour);
+  window& default_colours(const COLOUR_TYPE foreground_colour, const COLOUR_TYPE background_colour);
   
 /*! \brief      Control an attribute or perform a simple operation
     \param  wa  the attribute or operation
@@ -699,7 +750,7 @@ WRAPPER_2(centre, std::string, s, int, y);
 window& operator<(window& win, const centre& c);
 
 /// utterly trivial class for changing colour to a colour pair
-WRAPPER_1(colour_pair, int, pair_nr);
+WRAPPER_1(colour_pair, PAIR_TYPE, pair_nr);
 
 /*! \brief          Change the colours of a window
     \param  win     target window
@@ -707,27 +758,27 @@ WRAPPER_1(colour_pair, int, pair_nr);
     \return         the window
 */
 inline window& operator<(window& win, const colour_pair& cpair)
-  { return win.cpair(cpair.pair_nr()); }
+  { return win.set_colour_pair(cpair.pair_nr()); }
 
 // the next two lines allow us to write:
 // win < COLOURS(fgcolour, bgcolour)
 // in order to change the colours
 
 /// encapsulate foreground and background colours
-WRAPPER_2(COLOURS, int, fg, int, bg);
+WRAPPER_2(COLOURS, COLOUR_TYPE, fg, COLOUR_TYPE, bg);
 
 /// window < COLOURS
 inline window& operator<(window& win, const COLOURS& CP)
-  { return win.cpair(colours.add(CP.fg(), CP.bg())); }
+  { return win.set_colour_pair(colours.add(CP.fg(), CP.bg())); }
 
 /// obtain colour pair corresponding to foreground and background colours
-inline const int FGBG(const int fg, const int bg)
+inline const int FGBG(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
   { return COLOUR_PAIR(colours.add(fg, bg)); }
 
 /*! \brief          Convert the name of a colour to a colour
     \param  str     name of a colour
     \return         the colour corresponding to <i>str</i>
 */
-const int string_to_colour(const std::string& str);
+const COLOUR_TYPE string_to_colour(const std::string& str);
 
 #endif    // SCREEN_H

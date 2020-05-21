@@ -69,16 +69,16 @@ protected:
   unsigned int                                 _bandmap_decay_time_local                { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (local entries)
   unsigned int                                 _bandmap_decay_time_cluster              { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
   unsigned int                                 _bandmap_decay_time_rbn                  { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (RBN entries)
-  std::vector<int>                             _bandmap_fade_colours                    { 255, 200, 150, 100 };         ///< the colours calls adopt as they fade
+  std::vector<COLOUR_TYPE>                     _bandmap_fade_colours                    { 255, 200, 150, 100 };         ///< the colours calls adopt as they fade
   std::vector<std::string>                     _bandmap_filter                          { };                            ///< the strings in the bandmap filter
-  int                                          _bandmap_filter_disabled_colour          { COLOUR_BLACK };               ///< background colour when bandmap filter is disabled
+  COLOUR_TYPE                                  _bandmap_filter_disabled_colour          { COLOUR_BLACK };               ///< background colour when bandmap filter is disabled
   bool                                         _bandmap_filter_enabled                  { false };                      ///< is the bandmap filter enabled?
-  int                                          _bandmap_filter_foreground_colour        { COLOUR_WHITE };               ///< colour of foreground in the bandmap filter
-  int                                          _bandmap_filter_hide_colour              { COLOUR_RED };                 ///< background colour when bandmap filter is in hide mode
+  COLOUR_TYPE                                  _bandmap_filter_foreground_colour        { COLOUR_WHITE };               ///< colour of foreground in the bandmap filter
+  COLOUR_TYPE                                  _bandmap_filter_hide_colour              { COLOUR_RED };                 ///< background colour when bandmap filter is in hide mode
   bool                                         _bandmap_filter_show                     { false };                      ///< is the bandmap filter set to show? (If not, then it's set to hide)
-  int                                          _bandmap_filter_show_colour              { COLOUR_GREEN };               ///< background colour when bandmap filter is in show mode
+  COLOUR_TYPE                                  _bandmap_filter_show_colour              { COLOUR_GREEN };               ///< background colour when bandmap filter is in show mode
   bool                                         _bandmap_frequency_up                    { false };                      ///< should increasing frequency go upwards in the bandmap?
-  int                                          _bandmap_recent_colour                   { COLOUR_BLACK };               ///< colour for bandmap entries that are less than two minutes old
+  COLOUR_TYPE                                  _bandmap_recent_colour                   { COLOUR_BLACK };               ///< colour for bandmap entries that are less than two minutes old
   bool                                         _bandmap_show_marked_frequencies         { true };                       ///< whether to display entries that would be marked
   std::string                                  _bands                                   { "160, 80, 40, 20, 15, 10"s }; ///< comma-delimited list of bands that are legal for the contest
   std::string                                  _batch_messages_file                     { };                            ///< file that contains per-call batch messages
@@ -267,7 +267,7 @@ protected:
   bool                                         _uba_bonus                               { false };                          ///< whether to add UBA bonus QSO points
 
   std::map<std::string, window_information >   _windows                                 { };                                ///< size and position info for each window
-  int                                          _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
+  COLOUR_TYPE                                  _worked_mults_colour                     { COLOUR_RED };                     ///< colour of worked mults in the mult windows
 
 /*! \brief              Process a configuration file
     \param  filename    name of file to process

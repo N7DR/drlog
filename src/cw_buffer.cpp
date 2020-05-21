@@ -296,16 +296,17 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
     }
   }
   else    // RT scheduled thread
-  { try
+  { int desired_thread_priority;
+    
+    try
     { static thread_attribute cw_attr;   ///< attributes for the CW thread
+
+// // middling priority or explicit priority (but really set to maximum allowed)
+      desired_thread_priority = ( (cw_priority == 0) ? ( (cw_attr.max_priority() + cw_attr.min_priority()) / 2 ) : cw_priority );
 
       cw_attr.inheritance_policy(PTHREAD_EXPLICIT_SCHED);     // required for explicit policy
       cw_attr.policy(SCHED_FIFO);                             // soft realtime
-
-      if (cw_priority == 0)                                                         // middling priority
-        cw_attr.priority( (cw_attr.max_priority() + cw_attr.min_priority()) / 2);
-      else                                                                          // explicit priority; but really set to maximum allowed
-        cw_attr.priority(cw_priority);
+      cw_attr.priority(desired_thread_priority);
 
       create_thread(&_thread_id, cw_attr, &_static_play, this, "CW RT BUFFER");
 
@@ -313,7 +314,7 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
     }
 
     catch (const pthread_error& e)
-    { ost << "Error creating realtime-scheduled thread: CW RT BUFFER" << endl;
+    { ost << "Error creating realtime-scheduled thread CW RT BUFFER with priority " << desired_thread_priority << endl;
 
 // try to create an ordinary (non-realtime) thread
       try

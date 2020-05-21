@@ -1205,7 +1205,7 @@ window& operator<(window& win, bandmap& bm)
                              ) };
 
 // now work out the status colour
-      int status_colour { static_cast<int>(colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR)) };                      // default
+      PAIR_TYPE status_colour { colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR) };                      // default
 
       if (!is_marker)
       { if (be.is_needed())
@@ -1242,10 +1242,10 @@ window& operator<(window& win, bandmap& bm)
 }
 
 window& bandmap::write_to_window(window& win)
-{ constexpr int NOT_NEEDED_COLOUR          { 16 /* COLOUR_BLACK */ };
-  constexpr int MULT_COLOUR                { COLOUR_GREEN };
-  constexpr int NOT_MULT_COLOUR            { COLOUR_BLUE };
-  constexpr int UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
+{ constexpr COLOUR_TYPE NOT_NEEDED_COLOUR          { 16 /* COLOUR_BLACK */ };
+  constexpr COLOUR_TYPE MULT_COLOUR                { COLOUR_GREEN };
+  constexpr COLOUR_TYPE NOT_MULT_COLOUR            { COLOUR_BLUE };
+  constexpr COLOUR_TYPE UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
 
   const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
 //  const vector<int> fade_colours { bm.fade_colours() };
@@ -1295,7 +1295,7 @@ window& bandmap::write_to_window(window& win)
       const float  interval                    { (1.0f / static_cast<float>(n_colours)) };
       const int    n_intervals                 { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
-      int cpu = colours.add(fade_colours().at(n_intervals), win.bg());
+      PAIR_TYPE cpu = colours.add(fade_colours().at(n_intervals), win.bg());
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
       if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != 16 /* COLOUR_BLACK */))
@@ -1316,7 +1316,7 @@ window& bandmap::write_to_window(window& win)
                                                                               : (win.height() - 1) - (index - start_entry) % win.height() ) ) };
 
 // now work out the status colour
-      int status_colour { static_cast<int>(colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR)) };                      // default
+      PAIR_TYPE status_colour { colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR) };                      // default
 
       if (!is_marker)
       { if (be.is_needed())
