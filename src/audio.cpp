@@ -1,4 +1,4 @@
-// $Id: audio.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: audio.cpp 157 2020-05-21 18:14:13Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -105,6 +105,8 @@ void audio_recorder::_set_params(void)
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
     throw audio_error(AUDIO_NO_ACCESS_TYPE, "Access type not available for: "s + _pcm_name);
   }
+  else
+    ost << "ALSA access type set to SND_PCM_ACCESS_RW_INTERLEAVED" << endl;
 
   err = snd_pcm_hw_params_set_format(_handle, params, _hw_params.format);
 
@@ -113,6 +115,8 @@ void audio_recorder::_set_params(void)
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
     throw audio_error(AUDIO_NO_SAMPLE_FORMAT, "Sample format "s + to_string(_hw_params.format) + " not available for: "s + _pcm_name);
   }
+  else
+    ost << "ALSA sample format set to " << _hw_params.format << endl;
 
   err = snd_pcm_hw_params_set_channels(_handle, params, _hw_params.channels);
 
@@ -121,8 +125,11 @@ void audio_recorder::_set_params(void)
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
     throw audio_error(AUDIO_NO_CHANNEL_COUNT, "Channel count "s + to_string(_hw_params.channels) + " not available for: "s + _pcm_name);
   }
+  else
+    ost << "ALSA channel count set to " << _hw_params.channels << endl;
 
   unsigned int rate { _hw_params.rate };
+  
   err = snd_pcm_hw_params_set_rate_near(_handle, params, &_hw_params.rate, 0);
 
   if (err < 0)
@@ -130,10 +137,12 @@ void audio_recorder::_set_params(void)
     ost << "Error number is: " << err << " [" << snd_strerror(err) << "]" << endl;
     throw audio_error(AUDIO_RATE_SET_ERROR, "Channel count not available for: "s + _pcm_name);
   }
-
+  else
+    ost << "Asked for ALSA rate " << rate << ", actual rate = " << _hw_params.rate << endl;
+    
   if ((float)rate * 1.05 < _hw_params.rate or (float)rate * 0.95 > _hw_params.rate)
-  { ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << "for device: " << _pcm_name << endl;
-    throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested "s + to_string(rate) + ", received "s + to_string(_hw_params.rate) + "for device: "s + _pcm_name);
+  { ost << "ERROR: inaccurate rate; requested " << rate << ", received " << _hw_params.rate << " for device: " << _pcm_name << endl;
+    throw audio_error(AUDIO_INACCURATE_RATE, "inaccurate rate; requested "s + to_string(rate) + ", received "s + to_string(_hw_params.rate) + " for device: "s + _pcm_name);
   }
 
   rate = _hw_params.rate;
@@ -476,40 +485,6 @@ goto create_file;
 
   return nullptr;       // should never get here
 }
-
-#if 0
-/// constructor
-audio_recorder::audio_recorder(void) :
-  _aborting(false),                         // we are not aborting a capture
-  _audio_buf(nullptr),                      // no buffer by default
-  _base_filename("drlog-audio"s),            // default output file
-  _buffer_frames(0),                        // no frames in buffer?
-  _buffer_time(0),                          // no time covered by buffer?
-  _file_type(AUDIO_FORMAT_WAVE),            // WAV format
-  _handle(nullptr),                         // no PCM handle
-  _info(nullptr),                           // explicitly set to uninitialised
-  _max_file_time(0),                        // no maximum duration (in seconds)
-  _period_size_in_frames(0),
-  _monotonic(false),                        // device cannot do monotonic timestamps
-  _n_channels(1),                           // monophonic
-  _open_mode(0),                            // blocking
-  _pcm_name("default"s),
-  _period_frames(0),
-  _period_time(0),
-  _readi_func(snd_pcm_readi),               // function to read interleaved frames (the only one that we actually use)
-  _readn_func(snd_pcm_readn),               // function to read non-interleaved frames
-  _recording(false),                        // initially, not recording
-  _record_count(9999999999),                // big number
-  _samples_per_second(8000),                // G.711 rate
-  _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
-  _start_delay(1),
-  _stream(SND_PCM_STREAM_CAPTURE),          // we are capturing a stream
-  _time_limit(0),                           // no limit
-  _thread_number(0),
-  _writei_func(snd_pcm_writei),             // function to write interleaved frames
-  _writen_func(snd_pcm_writen)              // function to write non-interleaved frames
-{ }
-#endif
 
 /// initialise the object
 void audio_recorder::initialise(void)

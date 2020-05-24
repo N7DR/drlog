@@ -1,4 +1,4 @@
-// $Id: screen.h 154 2020-03-05 15:36:24Z  $
+// $Id: screen.h 157 2020-05-21 18:14:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -78,7 +78,6 @@ using PAIR_TYPE   = short;
 
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
 constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
-//                      COLOUR_BLACK_2 { 16 },                  ///< On 64-bit machines a COLOR_BLACK background doesn't work if COLOUR_BLACK is zero; it produces black-on-black when text is written
                       COLOUR_RED     { COLOR_RED },           ///< red
                       COLOUR_GREEN   { COLOR_GREEN },         ///< green
                       COLOUR_YELLOW  { COLOR_YELLOW },        ///< yellow
@@ -89,10 +88,16 @@ constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
                        
 extern pt_mutex screen_mutex;                   ///< mutex for the screen
 
-//#define COLOUR_PAIR(n)  COLOR_PAIR(n)           ///< English spelling allowed
-// workaround for stupid COLOR_PAIR *MACRO*
-inline const chtype COLOUR_PAIR(const PAIR_TYPE n)
-  { return COLOR_PAIR(n); }
+/*! \brief      Return a pair of colours
+    \param  n   pair number
+    \return     the pair of colours that constitute pair number <i>n</i>
+    
+    This is a workaround for the macro COLOR_PAIR().
+    
+    I note that ncurses is inconsistent about the types used to hold colour pairs; the actual definition of COLOR_PAIR()
+    defines the return value as an int, so that's what we use here
+*/
+const int COLOUR_PAIR(const PAIR_TYPE n);
 
 // -----------  cursor  ----------------
 
@@ -113,18 +118,15 @@ protected:
 
   pt_mutex _colours_mutex;                         ///< allow thread-safe access
 
-/*! \brief          Private function to add a new pair of colours
-    \param  p       foreground colour, background colour
-    \return         the number of the colour pair
+/*! \brief      Private function to add a new pair of colours
+    \param  p   foreground colour, background colour
+    \return     the number of the colour pair
 */
   const PAIR_TYPE _add_to_vector(const std::pair<COLOUR_TYPE, COLOUR_TYPE>& p);
 
 public:
 
- // cpair(void) = default;
- cpair(void)
- { //ost << "IN CPAIR CONSTRUCTOR" << std::endl;
- }
+  cpair(void) = default;
   cpair(const cpair&) = delete;
 
 /*! \brief          Add a pair of colours
@@ -187,7 +189,6 @@ protected:
 
   std::string _fg_colour { "white"s };       ///< name of foreground colour
   std::string _bg_colour { "black"s };       ///< name of background colour
-//  std::string _bg_colour { "colour_16"s };       ///< name of background colour; "black" results in invisible text on 64-bit machines
 
   bool _colours_set { false };           ///< have the colours been set explicitly?
 
@@ -288,41 +289,7 @@ public:
     _process_input(nullptr),
     _fg(COLOUR_WHITE),
     _bg(COLOUR_BLACK)
-  { 
-  #if 0  
-    if (_name == "DATE")
-    { ost << "DATE window constructor" << std::endl;
-    
-      ost << "_fg = " << _fg << ", _bg = " << _bg << std::endl;
-      
-      const auto cp { COLOUR_PAIR(colours.add(_fg, _bg)) };
-      
-      ost << "cp = " << cp << std::endl;
-      
-      ost << "colours.add(_fg, _bg) returns " << colours.add(_fg, _bg) << std::endl;
-      
-          short f;
-    short b;
-    pair_content(1, &f, &b);
-    
-    ost << "first pair content in constructor = " << f << ", " << b << std::endl;
-    init_pair(1, COLOUR_WHITE, COLOUR_BLACK);
-    pair_content(1, &f, &b);
-    
-    ost << "second pair content in constructor = " << f << ", " << b << std::endl;
- 
-    init_pair(short(1), short(7), short(0));
-    pair_content(short(1), &f, &b);
-    
-    ost << "third pair content in constructor = " << f << ", " << b << std::endl;
-   
-      _default_colours(cp);
-      
-      ost << "End DATE window constructor" << std::endl;
-    }
-    else
-  #endif
-      _default_colours(COLOUR_PAIR(colours.add(_fg, _bg))); }
+  { _default_colours(COLOUR_PAIR(colours.add(_fg, _bg))); }
 
 /*! \brief          Create using position and size information from the configuration file
     \param  wi      window position and size

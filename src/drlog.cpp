@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 156 2020-05-17 19:13:15Z  $
+// $Id: drlog.cpp 157 2020-05-21 18:14:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -381,7 +381,7 @@ window win_band_mode,                   ///< the band and mode indicator
        win_cluster_line,                ///< last line received from cluster
        win_cluster_mult,                ///< mults received from cluster
        win_cluster_screen,              ///< interactive screen on to the cluster
-       win_date("DATE"s),               ///< the date
+       win_date,                        ///< the date
        win_drlog_mode,                  ///< indicate whether in CQ or SAP mode
        win_exchange,                    ///< QSO exchange received from other station
        win_log_extract,                 ///< to show earlier QSOs
@@ -1677,7 +1677,7 @@ int main(int argc, char** argv)
 
 // country mults
           update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
-          qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode()) );
+          qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules) );
 
 // add exchange info for this call to the exchange db
           const vector<received_field>& received_exchange { qso.received_exchange() };
@@ -1690,10 +1690,6 @@ int main(int argc, char** argv)
           statistics.add_qso(qso, logbk, rules);
           logbk += qso;
           rate.insert(qso.epoch_time(), statistics.points(rules));
-
-// possibly update BEST DX window
-//          if (win_best_dx.valid())
-//            update_best_dx(qso.received_exchange("GRID"s), qso.callsign());
         }
 
 // rebuild the history
@@ -2350,6 +2346,8 @@ void* display_rig_status(void* vp)
 void* process_rbn_info(void* vp)
 { start_of_thread("process rbn info");
 
+  constexpr unsigned int POLL_INTERVAL { 10 };      // seconds between processing passes
+
 // get access to the information that's been passed to the thread
   cluster_info*                    cip              { static_cast<cluster_info*>(vp) };
   window&                          cluster_line_win { *(cip->wclp()) };            // the window to which we will write each line from the cluster/RBN
@@ -2379,7 +2377,7 @@ void* process_rbn_info(void* vp)
   if (is_cluster)
     win_cluster_screen < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT;  // probably unused
 
-  while (1)                                                // forever; process a ten-second pass
+  while (1)                                                // forever; process a POLL_INTERVAL pass
   { set<BAND> changed_bands;                               // the bands that have been changed by this ten-second pass
 
     bool cluster_mult_win_was_changed { false };           // has cluster_mult_win been changed by this pass?
@@ -2619,7 +2617,7 @@ void* process_rbn_info(void* vp)
     if (context.auto_remaining_country_mults())
       update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());  // might have added a new one if in auto mode
 
-    for (const auto n : RANGE<unsigned int>(1, 10) )    // wait 10 seconds before getting any more unprocessed info
+    for (const auto n : RANGE<unsigned int>(1, POLL_INTERVAL) )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
     { UNUSED(n);
 
       { SAFELOCK(thread_check);
@@ -3081,11 +3079,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           display_band_mode(win_band_mode, safe_get_band(), me.mode());
 
           enter_cq_or_sap_mode(me.drlog_mode());
-
-//          if (me.drlog_mode() == DRLOG_MODE::CQ)
-//            enter_cq_mode();
-//          else
-//            enter_sap_mode();
         }
       }
 
@@ -3830,13 +3823,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   static bool in_scp_matching { false };          ///< are we walking through the calls?
   static int  scp_index       { -1 };     ///< index into matched calls
 
- if (!cursor_down and !cursor_up)                 // clear memory of walking through matched calls every time we press a different key
+  if (!cursor_down and !cursor_up)                 // clear memory of walking through matched calls every time we press a different key
   { in_scp_matching = false;
     scp_index = -1;
   }
 
 // CURSOR UP -- go to log window
-//  if (!processed and e.is_unmodified() and e.symbol() == XK_Up)
   if (!processed and cursor_up and !in_scp_matching)
   { ost << "ENTERING EDITABLE LOG WINDOW" << endl;
   
@@ -4268,18 +4260,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     rig.toggle_rx_ant();
     processed = update_rx_ant_window();
   }
-  
-//  ost << "processed = " << processed << ": " << e.str() << endl;
-//  ost << "length = " << e.str().length() << endl;
-  
-//  if (e.str().length())
-//    ost << "char number = " << static_cast<int>(e.str()[0]) << endl;
-//  if (e.is_control())
-//    ost << "CONTROL" << endl;
-//  if (e.is_control('='))
-//    ost << "MATCH FOUND" << endl;
-    
-//  win <= e.str();
   
 // CTRL-= -- quick QSY
   if (!processed and (e.is_control('=')))
@@ -5203,8 +5183,13 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // is this a country mult?
 //            const bool is_country_mult = statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode());
 
-            qso.is_country_mult(statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode()));
+//            ost << "ABOUT TO DETERMINE WHETHER IT'S A COUNTRY MULT AFTER EDIT" << endl;            
 
+ //           if (rules.is_country_mult(qso.canonical_prefix()))  // only determine whether actually a country mult if the country is a mult in the contest
+              qso.is_country_mult(statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules));
+//            else
+//              qso.is_country_mult(false);       // explicitly not a country mult
+              
 // exchange mults
             if (exchange_mults_used)
               calculate_exchange_mults(qso, rules);
@@ -5751,7 +5736,7 @@ void populate_win_info(const string& callsign)
       const string canonical_prefix { location_db.canonical_prefix(callsign) };
 
       if (!all_country_mults.empty() or context.auto_remaining_country_mults())
-      { if (all_country_mults < canonical_prefix)                                           // country_mults is from rules, and has all the valid mults for the contest
+      { if (all_country_mults < canonical_prefix)                                           // all_country_mults is from rules, and has all the valid mults for the contest
         { const set<string> known_country_mults { statistics.known_country_mults() };
 
           line = pad_string("Country ["s + canonical_prefix + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
@@ -8093,7 +8078,7 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn)
 { bandmap& bm { bandmaps[safe_get_band()] };
 
-  //const bandmap_entry be { (bm.*fn_p)( dirn ) };  // get the next stn/mult, according to the function
+// should lock the bm here?
 
   if (const bandmap_entry be { (bm.*fn_p)( dirn ) }; !be.empty())  // get and process the next non-empty stn/mult, according to the function
   { rig.rig_frequency(be.freq());
@@ -8104,7 +8089,7 @@ const bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECT
 // we may require a mode change
     possible_mode_change(be.freq());
 
-    update_based_on_frequency_change(be.freq(), safe_get_mode());
+    update_based_on_frequency_change(be.freq(), safe_get_mode());   // update win_bandmap, and other windows
 
     SAFELOCK(dupe_check);
     last_call_inserted_with_space = be.callsign();

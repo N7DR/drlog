@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: statistics.cpp 157 2020-05-21 18:14:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -375,6 +375,9 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
     \param  b           band to test
     \param  m           mode to test
     \return             whether the country in which <i>callsign</i> is located is needed as a mult on band <i>b</i> and mode <i>m</i>
+    
+    Note that this does not take into account whether the country is actually a mult in the contest. Currently, this must be checked
+    before this function is called. Perhaps we should include the rules as a parameter and perform the check here?
 */
 const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
 { try
@@ -384,10 +387,14 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 
     bool is_needed_mult;
 
+//    ost << "_auto_country_mults = " << _auto_country_mults << endl;
+
     if (_auto_country_mults)
       is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
     else
     { const bool prefix_is_a_mult { _country_multipliers.is_known(canonical_prefix) };
+    
+//      ost << "prefix_is_a_mult = " << prefix_is_a_mult << endl;
 
       if (prefix_is_a_mult)
         is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));
@@ -401,6 +408,41 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
   catch (const location_error& e)
   { return false;
   }
+}
+
+const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m, const contest_rules& rules)
+{ try
+  { SAFELOCK(statistics);
+
+    const string canonical_prefix { _location_db.canonical_prefix(callsign) };
+
+    if (!rules.is_country_mult(canonical_prefix))  // only determine whether actually a country mult if the country is a mult in the contest
+      return false;
+
+    bool is_needed_mult;
+
+//    ost << "_auto_country_mults = " << _auto_country_mults << endl;
+
+    if (_auto_country_mults)
+      is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
+    else
+    { const bool prefix_is_a_mult { _country_multipliers.is_known(canonical_prefix) };
+    
+//      ost << "prefix_is_a_mult = " << prefix_is_a_mult << endl;
+
+      if (prefix_is_a_mult)
+        is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));
+      else                                                                              // not a mult
+        is_needed_mult = false;
+    }
+
+    return is_needed_mult;
+  }
+  
+  catch (const location_error& e)
+  { return false;
+  }
+  
 }
 
 /*! \brief          Add a known value of country mult

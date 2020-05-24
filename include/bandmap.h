@@ -1,4 +1,4 @@
-// $Id: bandmap.h 154 2020-03-05 15:36:24Z  $
+// $Id: bandmap.h 157 2020-05-21 18:14:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,6 +29,15 @@
 #include <list>
 #include <string>
 #include <utility>
+
+/* On a slow machine you might want to undefine BBML. The cost will be the introduction of a
+   (non-dangerous) race condition in that if you QSY by pressing CTRL-ALT-KP-8 or some similar
+   way, the QSY might occur and then be reverted if some other operation on the bandmap was
+   under way at the same time.
+   
+   BBML stands for "big bandmap lock".
+*/
+//#define BBML
 
 /// possible sources for bandmap entries
 enum class BANDMAP_ENTRY_SOURCE { LOCAL,

@@ -1,4 +1,4 @@
-// $Id: screen.cpp 154 2020-03-05 15:36:24Z  $
+// $Id: screen.cpp 157 2020-05-21 18:14:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,6 +35,26 @@ extern message_stream   ost;                        ///< for debugging, info
 //cpair    colours;               ///< global repository for information about colour pairs
 extern cpair colours;
 pt_mutex screen_mutex;          ///< mutex for access to screen
+
+/*! \brief      Return a pair of colours
+    \param  n   pair number
+    \return     the pair of colours that constitute pair number <i>n</i>
+    
+    This is a workaround for the macro COLOR_PAIR().
+    
+    I note that ncurses is inconsistent about the types used to hold colour pairs; the actual definition of COLOR_PAIR()
+    defines the return value as an int, so that's what we use here
+*/
+const int COLOUR_PAIR(const PAIR_TYPE n)
+{ const int result { COLOR_PAIR(n) }; 
+  
+  if (result == ERR)
+  { ost << "Error result from calling COLOR_PAIR with parameter: " << n << endl;
+    throw exception();
+  }
+  
+  return result;
+}
 
 // -----------  screen  ----------------
 
@@ -191,49 +211,8 @@ void window::init(const window_information& wi, const unsigned int flags)
 
   _fg = string_to_colour(wi.fg_colour());
   _bg = string_to_colour(wi.bg_colour());
-#if 0  
-  if (_name == "DATE")
-  { ost << "DATE intialisation" << std::endl;
 
-    ost << "fg = " << _fg << " bg = " << _bg << endl;
-    
-    const auto cp { COLOUR_PAIR(colours.add(_fg, _bg)) };
-      
-    ost << "cp = " << cp << std::endl;
-    
-//    _default_colours(cp);
-    short f;
-    short b;
-    pair_content(1, &f, &b);
-    
-    ost << "pair content before 2nd init = " << f << ", " << b << endl;
-
-
- //    init_pair(1, COLOR_WHITE, COLOR_BLACK);
-         pair_content(1, &f, &b);
-
-     ost << "pair content after 2nd init = " << f << ", " << b << endl;
-    
-//     int pair_content(short pair, short *f, short *b);
-//     wbkgd(_wp, COLOR_PAIR(1));    // set default colours
-   
-    ost << "End DATE initialisation" << std::endl;
-    
-    wprintw(_wp, "TEST DATE");
-    
-      int sx, sy;
-  getsyx(sy, sx);
-  
-  wrefresh(_wp);
-  
-  setsyx(sy, sx);
-  doupdate();
-    sleep(10);
-    cout << "End of sleep" << endl;
-  }
-  else
-#endif
-    _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
+  _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
 
   (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
 }
@@ -714,7 +693,7 @@ window& operator<(window& win, const centre& c)
 
     By default reads the entirety of the bottom line.
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
-    Cannot be const, because because mvwinstr() silently moves the cursor, and we then move it back
+    Cannot be const, because because mvwinstr() silently moves the cursor and we then move it back
 */
 const string window::read(int x, int y)
 { if (!_wp)
@@ -967,8 +946,6 @@ const bool window::common_processing(const keyboard_event& e)
     \brief  A class to hold information about used colour pairs
 */
 
-//#include "diskfile.h"
-
 /*! \brief      Private function to add a new pair of colours
     \param  p   foreground colour, background colour
     \return     the number of the colour pair
@@ -976,11 +953,12 @@ const bool window::common_processing(const keyboard_event& e)
 const PAIR_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
 { _colours.push_back(fgbg);
 
-//  ost << "CALLING init_pair() with parameters: " << static_cast<PAIR_TYPE>(_colours.size()) << ", " << fgbg.first << ", " << fgbg.second << endl;
+  const auto status { init_pair(static_cast<PAIR_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
 
-  init_pair(static_cast<PAIR_TYPE>(_colours.size()), fgbg.first, fgbg.second);
-
-//  ost << "Added colour pair number " << static_cast<PAIR_TYPE>(_colours.size()) << ": fg = " << fgbg.first << ", bg = " << fgbg.second << endl;
+  if (status == ERR)
+  { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fgbg.first << ", " << fgbg.second << endl;
+    throw exception();
+  }
 
   return static_cast<PAIR_TYPE>(_colours.size());
 }
@@ -998,34 +976,12 @@ const PAIR_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
 
   SAFELOCK(_colours);
 
-//  const auto adr = this;
-  
-//  ost << "cpair address = " << (unsigned long)(adr) << endl;
-
-//  ost << "In cpair::add(); fg = " << fg << ", bg = " << bg << ", initial size of _colours = " << _colours.size() << endl;
-
   if (_colours.empty())
     return _add_to_vector(fgbg);
 
   const auto it { find(_colours.begin(), _colours.end(), fgbg) };
 
-//  return ( (cit == _colours.cend()) ? _add_to_vector(fgbg) : static_cast<PAIR_TYPE>((cit - _colours.cbegin() + 1)) );
-    return ( (it == _colours.end()) ? _add_to_vector(fgbg) : static_cast<PAIR_TYPE>( distance(_colours.begin(), it) + 1));
-#if 0
-  if (it == _colours.end()) 
-    return _add_to_vector(fgbg);
-    
-  const PAIR_TYPE pair_number = distance(_colours.begin(), it) + 1;
-  
-  ost << "pair number = " << pair_number << endl;
-            
-    short f;
-    short b;
-    pair_content(pair_number, &f, &b);
-    ost << "pair content in cpair::add() = " << f << ", " << b << std::endl;
-  
-  return pair_number;
-#endif
+  return ( (it == _colours.end()) ? _add_to_vector(fgbg) : static_cast<PAIR_TYPE>( distance(_colours.begin(), it) + 1));
 }
 
 /*! \brief              Get the foreground colour of a pair
@@ -1036,7 +992,10 @@ const COLOUR_TYPE cpair::fg(const PAIR_TYPE pair_nr) const
 { short f;      // defined to be short in the man page for pair_content
   short b;      // defined to be short in the man page for pair_content
 
-  pair_content(pair_nr, &f, &b);
+  const auto status { pair_content(pair_nr, &f, &b) };
+  
+  if (status == ERR)
+    ost << "Error extracting foreground colour from colour pair number " << pair_nr << endl;
 
   return static_cast<COLOUR_TYPE>(f);
 }
@@ -1049,7 +1008,10 @@ const COLOUR_TYPE cpair::bg(const PAIR_TYPE pair_nr) const
 { short f;      // defined to be short in the man page for pair_content
   short b;      // defined to be short in the man page for pair_content
 
-  pair_content(pair_nr, &f, &b);
+  const auto status { pair_content(pair_nr, &f, &b) };
+
+  if (status == ERR)
+    ost << "Error extracting background colour from colour pair number " << pair_nr << endl;
 
   return static_cast<COLOUR_TYPE>(b);
 }
@@ -1066,8 +1028,7 @@ const COLOUR_TYPE string_to_colour(const string& str)
                                                      { "MAGENTA"s, COLOUR_MAGENTA },
                                                      { "RED"s,     COLOUR_RED },
                                                      { "WHITE"s,   COLOUR_WHITE },
-                                                     { "YELLOW"s,  COLOUR_YELLOW },
-                                                     { "BLACK_2"s, 16 }                // added to work around bug in 64-bit ncurses: a COLOUR_BLACK background causes any text to be invisible
+                                                     { "YELLOW"s,  COLOUR_YELLOW }
                                                    };
 
   const string s   { to_upper(remove_peripheral_spaces(str)) };

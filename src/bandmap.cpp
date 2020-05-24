@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 154 2020-03-05 15:36:24Z  $
+// $Id: bandmap.cpp 157 2020-05-21 18:14:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -923,7 +923,7 @@ const BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
      Applies filtering and the RBN threshold before searching for the next station.
 */
 const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
-{ SAFELOCK(_bandmap);    // I hate to try this, but hold the lock for ages
+{ SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
 
   const BM_ENTRIES fe { displayed_entries() };
 

@@ -172,8 +172,13 @@ public:
     \param  b           band to test
     \param  m           mode to test
     \return             whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i> and mode <i>m</i>.
+    
+    Note that this does not take into account whether the country is actually a mult in the contest. Currently, this must be checked
+    before this function is called. Perhaps we should include the rules as a parameter and perform the check here?
 */
   const bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m);
+  
+  const bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m, const contest_rules& rules);
   
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add
