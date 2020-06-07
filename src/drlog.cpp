@@ -117,6 +117,7 @@ void display_call_info(const string& callsign, const bool display_extract = DISP
 void display_memories(void);                                                                    ///< Update MEMORIES window
 void display_nearby_callsign(const string& callsign);                                           ///< Display a callsign in the NEARBY window, in the correct colour
 void display_statistics(const string& summary_str);                                             ///< Display the current statistics
+void do_not_show(const string& callsign);                                                       ///< Mark a callsign as not to be shown
 const string dump_screen(const string& filename = string());                                    ///< Dump a screen image to PNG file
 
 void end_of_thread(const string& name);
@@ -162,8 +163,8 @@ void rig_error_alert(const string& msg);            ///< Alert the user to a rig
 const bool rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 
 const bool send_to_scratchpad(const string& str);                               ///< Send a string to the SCRATCHPAD window
-void start_recording(const drlog_context& context);                             ///< start audio recording
-void start_of_thread(const string& name);                                                     ///< Increase the counter for the number of running threads
+void start_recording(audio_recorder& audio, const drlog_context& context);      ///< start audio recording
+void start_of_thread(const string& name);                                       ///< Increase the counter for the number of running threads
 void stop_recording(audio_recorder& audio);                                     ///< stop audio recording
 const string sunrise_or_sunset(const string& callsign, const bool calc_sunset); ///< Calculate the sunrise or sunset time for a station
 const bool swap_rit_xit(void);                                                        ///< Swap the states of RIT and XIT
@@ -282,6 +283,7 @@ map<string /* mult name */, accumulator<string> > acc_callsigns;    ///< accumul
 accumulator<string>     acc_countries;                              ///< accumulator for canonical prefixes for auto countries
 int                     ACCEPT_COLOUR { COLOUR_GREEN };             ///< colour for calls that have been worked, but are not dupes
 unordered_set<string>   all_country_mults;                          ///< all the country mults from the rules
+bool                    allow_audio_recording { false };            ///< may we record audio?
 string                  at_call;                                    ///< call that should replace comat in "call ok now" message
 audio_recorder          audio;                                      ///< provide capability to record audio
 
@@ -655,7 +657,7 @@ inline void update_fuzzy_window(const string& callsign)
 /*! \brief  Update <i>win_recording_status</i>
 */
 inline void update_recording_status_window(void)
-  { win_recording_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= ( audio.recording() ? "REC" : "---" ); }
+  { win_recording_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= ( (allow_audio_recording and audio.valid() and audio.recording()) ? "REC" : "---" ); }
 
 /*! \brief              Update the SCP window with matches for a particular call
     \param  callsign    callsign against which to generate the SCP matches
@@ -731,6 +733,7 @@ int main(int argc, char** argv)
     ACCEPT_COLOUR = context.accept_colour();            // colour for calls it is OK to work
     REJECT_COLOUR = context.reject_colour();            // colour for calls it is not OK to work
 
+    allow_audio_recording           = context.allow_audio_recording();
     bandmap_frequency_up            = context.bandmap_frequency_up();
     best_dx_is_in_miles             = (context.best_dx_unit() == "MILES"s);
     call_history_bands              = context.call_history_bands();
@@ -765,8 +768,10 @@ int main(int argc, char** argv)
 //    }      
 
 // possibly configure audio recording
-    if (context.allow_audio_recording() and (context.start_audio_recording() != AUDIO_RECORDING::DO_NOT_START))
-    { start_recording(context);
+//    audio_recorder          audio;                                      ///< provide capability to record audio
+
+    if (allow_audio_recording and (context.start_audio_recording() != AUDIO_RECORDING::DO_NOT_START))
+    { start_recording(audio, context);
       alert("audio recording started due to activity"s);
     }
 
@@ -2082,7 +2087,7 @@ void* display_date_and_time(void* vp)
           update_system_memory();
 
 // possibly turn off audio recording
-        if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and audio.recording())
+        if ( allow_audio_recording and (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and audio.recording())
         { const auto qso { time_since_last_qso(logbk) };
           const auto qsy { time_since_last_qsy() };
 
@@ -2137,18 +2142,11 @@ void* display_date_and_time(void* vp)
 // if a new day, then update date window
       const string date_string { substring(dts, 0, 10) };
       
- //     ost << "date_string = " << date_string << endl;
- //     ost << "last_date = " << last_date << endl;
-
- //     ost << win_date.properties("DATE WINDOW"s) << endl;
-
       if (date_string != last_date)
-      { //ost << "Writing to Date Window" << endl;
-        win_date /* < WINDOW_ATTRIBUTES::WINDOW_CLEAR */ < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= date_string;
+      { win_date < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= date_string;
  
-       last_date = date_string;
-       ost << "Date: " << date_string << endl;
-//        ost << win_date.properties("UPDATED DATE WINDOW"s) << endl;
+        last_date = date_string;
+        ost << "Date: " << date_string << endl;
       }
     }
 
@@ -2195,9 +2193,14 @@ void* display_rig_status(void* vp)
 
 // if it's a K3 we can get a lot of info with just one query -- for now just assume it's a K3
       if (ok_to_poll_k3)
-      { const string status_str { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, 38) };          // K3 returns 38 characters
+      { constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
+      
+// get the bandmap version number
+ //       const BAND current_band { safe_get_band() };
+        const uint32_t initial_verno { bandmaps[safe_get_band()].verno() };
+        const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, STATUS_REPLY_LENGTH) };          // K3 returns 38 characters
 
-        if (status_str.length() == 38)                                                          // do something only if it's the correct length
+        if (status_str.length() == STATUS_REPLY_LENGTH)                                                          // do something only if it's the correct length
         { const frequency f                   { from_string<double>(substring(status_str, 2, 11)) };           // frequency of VFO A
           const frequency target              { SAFELOCK_GET(cq_mode_frequency_mutex, cq_mode_frequency) };    // frequency in CQ mode
           const frequency f_b                 { rig.rig_frequency_b() };                                          // frequency of VFO B
@@ -2219,9 +2222,15 @@ void* display_rig_status(void* vp)
             update_remaining_callsign_mults_window(statistics, string(), safe_get_band(), m);
             update_remaining_country_mults_window(statistics, safe_get_band(), m);
             update_remaining_exchange_mults_windows(rules, statistics, safe_get_band(), m);
+            
+            update_based_on_frequency_change(f, m);   // changes windows, including bandmap
           }
-
-          update_based_on_frequency_change(f, m);   // changes windows
+          else          // we haven't changed band
+          { const uint32_t current_verno { bandmaps[safe_get_band()].verno() };
+          
+            if (current_verno == initial_verno)         // don't update bm if the version number has changed
+              update_based_on_frequency_change(f, m);   // changes windows, including bandmap
+          }
 
 // mode: the K3 is its usual rubbish self; sometimes the mode returned by the rig is incorrect
 // following a recent change of mode. By the next poll it seems to be OK, though, so for now
@@ -2711,9 +2720,7 @@ void* prune_bandmap(void* vp)
     CTRL-I -- refresh geomagnetic indices
     CTRL-Q -- swap QSL and QUICK QSL messages
     CTRL-S -- send to scratchpad
-    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
     ESCAPE
-    TAB -- switch between CQ and SAP mode
     F10 -- toggle filter_remaining_country_mults
     F11 -- band map filtering
     ALT-KP_4 -- decrement bandmap column offset
@@ -2748,6 +2755,9 @@ void* prune_bandmap(void* vp)
     CTRL-R -- toggle audio recording
     ALT-R -- toggle RX antenna
     CTRL-= -- quick QSY
+    KP Del -- remove from bandmap and add to do-not-add list (like .REMOVE)
+    PAGE DOWN or CTRL-PAGE DOWN; PAGE UP or CTRL-PAGE UP -- change CW speed
+    TAB -- switch between CQ and SAP mode
 */
 void process_CALL_input(window* wp, const keyboard_event& e)
 {
@@ -3087,12 +3097,18 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { if (contains(command, SPACE_STR))
         { const size_t posn     { command.find(SPACE_STR) };
           const string callsign { remove_peripheral_spaces(substring(command, posn)) };
+          
+          do_not_show(callsign);
 
-          FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
-                                                bm.do_not_add(callsign);
-                                              } );
+ //         FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
+ //                                               bm.do_not_add(callsign);
+ //                                             } );
 
           win_bandmap <= bandmaps[safe_get_band()];
+          
+// add to do not show file if it exists
+//          if (!context.do_not_show_filename().empty())
+//            append_to_file(callsign + EOL, context.do_not_show_filename());
         }
       }
 
@@ -3926,15 +3942,19 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Subtract)
     processed = ( win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(--next_qso_number), win_qso_number.width()), true );
 
-// KP Del -- remove from bandmap and add to do-not-add list (like .REMOVE)
+// KP Del -- remove from bandmap and add to do-not-add list and file (like .REMOVE)
   if (!processed and e.symbol() == XK_KP_Delete)
-  { // const string callsign = remove_peripheral_spaces(win.read());
+  { do_not_show(original_contents);
 
-    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= original_contents;
-                                          bm.do_not_add(original_contents);
-                                        } );
+  //  FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= original_contents;
+  //                                        bm.do_not_add(original_contents);
+  //                                      } );
 
     processed = ( win_bandmap <= (bandmaps[safe_get_band()]), true );
+    
+// add to do not show file if it exists
+ //   if (!context.do_not_show_filename().empty())
+ //     append_to_file(original_contents + EOL, context.do_not_show_filename());
   }
 
 // ` -- SWAP RIT and XIT
@@ -4251,7 +4271,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   }
 
 // CTRL-R -- toggle audio recording
-  if (!processed and (e.is_control('r')))
+  if (!processed and (e.is_control('r')) and allow_audio_recording)
     processed = toggle_recording_status(audio);
 
 // ALT-R -- toggle RX antenna
@@ -4492,7 +4512,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               }
               else                                                         // SAP exchange
               { if (!send_qtc)
-                  (*cw_p) << expand_cw_message( e.is_unmodified() ? context.exchange_sap() : context.alternative_exchange_sap()  );
+                { (*cw_p) << expand_cw_message( e.is_unmodified() ? context.exchange_sap() : context.alternative_exchange_sap()  );
+                  last_exchange = expand_cw_message(context.exchange_cq());       // the CQ exchange doesn't have a "TU" in it
+                }
               }
               sent_acknowledgement = true;  // should rename this variable now that we've added QTC processing here
             }
@@ -4501,7 +4523,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           if (!sent_acknowledgement)
           { if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::SAP))    // in SAP mode, he doesn't care that we might have changed his call
             { if (!send_qtc)
-                (*cw_p) << expand_cw_message(context.exchange_sap());
+              { (*cw_p) << expand_cw_message(context.exchange_sap());
+                last_exchange = expand_cw_message(context.exchange_cq());       // the CQ exchange doesn't have a "TU" in it
+              }
             }
 
             if ( (cur_mode == MODE_CW) and (cw_p) and (drlog_mode == DRLOG_MODE::CQ))    // in CQ mode, he does
@@ -4523,7 +4547,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               const bool quick_qsl { (e.symbol() == XK_KP_Enter) };
 
               if (!send_qtc)
-                (*cw_p) << expand_cw_message( quick_qsl ? context.alternative_qsl_message() : context.qsl_message() );
+              { (*cw_p) << expand_cw_message( quick_qsl ? context.alternative_qsl_message() : context.qsl_message() );
+  //              last_exchange = expand_cw_message( quick_qsl ? context.alternative_qsl_message() : context.qsl_message() );
+              }
             }
           }
 
@@ -4815,8 +4841,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     win_exchange.insert(true);
 
 // possibly start audio recording; perhaps this should go elsewhere?
-    if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
-    { start_recording(context);
+    if ( allow_audio_recording and (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
+    { start_recording(audio, context);
       alert("audio recording started due to activity"s);
     }
   }        // end ENTER [log_the_qso]
@@ -5630,7 +5656,8 @@ const string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
   const float  lon { -location_db.longitude(callsign) };          // minus sign to get in the correct direction
 */
 
-  const auto   [lat, lon] { latitude_and_longitude(callsign) };
+  const auto [lat, lon] { latitude_and_longitude(callsign) };
+  
   const string rv         { sunrise_or_sunset(lat, lon, calc_sunset) };
 
   return rv;
@@ -5820,7 +5847,9 @@ void populate_win_info(const string& callsign)
     * maps to last_exchange
 */
 const string expand_cw_message(const string& msg)
-{ string octothorpe_replaced;
+{ ost << "Expanding message: " << msg << endl;
+
+  string octothorpe_replaced;
 
   if (contains(msg, "#"s))
   { string octothorpe_str { to_string(octothorpe) };
@@ -5841,9 +5870,9 @@ const string expand_cw_message(const string& msg)
     }
 
     if ( (long_t > 0) and (octothorpe < 100) )
-    { constexpr char LONG_T_CHAR       { 23 };                         // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
-      constexpr char LONG_LONG_T_CHAR  { 24 };                         // character that represents a long long T (150%) -- see cw_buffer.cpp
-      constexpr char EXTRA_LONG_T_CHAR { 25 };                     // character that represents a double T (175%) -- see cw_buffer.cpp
+    { constexpr char LONG_T_CHAR       { 23 };                      // character number that represents a long T (125%) -- see cw_buffer.cpp... sends a LONG_DAH
+      constexpr char LONG_LONG_T_CHAR  { 24 };                      // character that represents a long long T (150%) -- see cw_buffer.cpp
+      constexpr char EXTRA_LONG_T_CHAR { 25 };                      // character that represents a double T (175%) -- see cw_buffer.cpp
 
       const int  n_to_find    { (octothorpe < 10 ? 2 : 1) };
       const char char_to_send { long_t == 3 ? EXTRA_LONG_T_CHAR : ((long_t == 2) ? LONG_LONG_T_CHAR : LONG_T_CHAR) };   // default is 125
@@ -5866,7 +5895,11 @@ const string expand_cw_message(const string& msg)
 
   SAFELOCK(last_exchange);
 
+  ost << "last_exhange = <" << last_exchange << ">" << endl;
+
   const string asterisk_replaced { replace(at_replaced, "*"s, last_exchange) };
+  
+  ost << "asterisk_replaced = <" << asterisk_replaced << ">" << endl;  
 
   return asterisk_replaced;
 }
@@ -6399,7 +6432,9 @@ void update_local_time(void)
 
 /// Increase the counter for the number of running threads
 void start_of_thread(const string& name)
-{ SAFELOCK(thread_check);
+{ ost << "thread [" << name  << "] is starting" << endl;
+
+  SAFELOCK(thread_check);
 
   n_running_threads++;
 
@@ -7524,14 +7559,15 @@ const string active_window_name(void)
 /*! \brief              Display a callsign in the NEARBY window, in the correct colour
     \param  callsign    call to display
 
-    Also displays log extract data if context.nearby_extract() is true, and QSL information if
-    the CALL window is empty
+    If the CALL window is empty, displays:
+      log extract data if context.nearby_extract() is true
+      QSL information 
 */
 void display_nearby_callsign(const string& callsign)
 { if (callsign.empty())
   { win_nearby <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-    if (context.nearby_extract())
+    if (win_call.empty() and context.nearby_extract())
       win_log_extract <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
   }
   else
@@ -7553,14 +7589,16 @@ void display_nearby_callsign(const string& callsign)
     win_nearby.set_colour_pair(colour_pair_number);
     win_nearby < callsign <= COLOURS(foreground, background);
 
-    if (context.nearby_extract())               // possibly display the callsign in the LOG EXTRACT window
-    { extract = logbk.worked( callsign );
-      extract.display();
-    }
+    if (win_call.empty())
+    { if (context.nearby_extract())               // possibly display the callsign in the LOG EXTRACT window
+      { extract = logbk.worked(callsign);
+        extract.display();
+      }
 
 // display QSL information if the CALL window is empty
-    if (win_call.empty())
+//    if (win_call.empty())
       update_qsls_window(callsign);
+    }
   }
 }
 
@@ -8063,8 +8101,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     }
 
 // possibly start audio recording
-    if ( (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
-    { start_recording(context);
+    if ( allow_audio_recording and (context.start_audio_recording() == AUDIO_RECORDING::AUTO) and !audio.recording())
+    { start_recording(audio, context);
       alert("audio recording started due to activity"s);
     }
   }                 // end of changed frequency
@@ -8123,11 +8161,11 @@ void possible_mode_change(const frequency& f)
     Does nothing if recording is not permitted.
 */
 const bool toggle_recording_status(audio_recorder& audio)
-{ if (context.allow_audio_recording())      // toggle only if recording is allowed
+{ if (allow_audio_recording)      // toggle only if recording is allowed
   { if (audio.recording())
       stop_recording(audio);
     else                                  // not recording
-      start_recording(context);
+      start_recording(audio, context);
 
     if (win_recording_status.defined())
       update_recording_status_window();
@@ -8139,17 +8177,29 @@ const bool toggle_recording_status(audio_recorder& audio)
 }
 
 /*! \brief              Start audio recording
+    \param  audio       the audio recorder
     \param  context     context for the contest
 
     Updates recording status window
 */
-void start_recording(const drlog_context& context)
-{ audio.base_filename(context.audio_file());
-  audio.maximum_duration(context.audio_duration() * 60);    // convert minutes to seconds
-  audio.pcm_name(context.audio_device_name());
-  audio.n_channels(context.audio_channels());
-  audio.samples_per_second(context.audio_rate());
-  audio.initialise();
+void start_recording(audio_recorder& audio, const drlog_context& context)
+{ 
+// don't do anything if recording is not allowed, or if we're already recording
+  if (!allow_audio_recording or audio.recording())
+    return;  
+ 
+// configure some stuff if the recorder is not initialised
+  if (!audio.valid()) 
+  { audio.base_filename(context.audio_file());
+    audio.maximum_duration(context.audio_duration() * 60);    // convert minutes to seconds
+    audio.pcm_name(context.audio_device_name());
+    audio.n_channels(context.audio_channels());
+    audio.samples_per_second(context.audio_rate());
+ //   audio.log("audio-log"s);                                  // must come before initialise()
+    audio.initialise();
+  }
+  
+// turn on the capture
   audio.capture();
 
   if (win_recording_status.defined())
@@ -8162,10 +8212,12 @@ void start_recording(const drlog_context& context)
     Updates recording status window
 */
 void stop_recording(audio_recorder& audio)
-{ audio.abort();
+{ if (allow_audio_recording)                    // don't do anything if recording is not allowed
+  { audio.abort();
 
-  if (win_recording_status.defined())
-    update_recording_status_window();
+    if (win_recording_status.defined())
+      update_recording_status_window();
+  }
 }
 
 /*! \brief      Get the status of the RX ant, and update <i>win_rx_ant</i> appropriately
@@ -8458,7 +8510,9 @@ const pair<float, float> latitude_and_longitude(const string& callsign)
   pair<float, float> rv;
 
   if (is_valid_grid_designation(grid_name))
-  { const grid_square grid { grid_name };
+  { //ost << "grid: " << grid_name << endl;
+
+    const grid_square grid { grid_name };
   
     rv.first = grid.latitude();
     rv.second = grid.longitude();
@@ -8475,5 +8529,23 @@ const pair<float, float> latitude_and_longitude(const string& callsign)
     rv.second = -location_db.longitude(callsign);    // minus sign to get in the correct direction
   }
   
+  //ost << "latitude_and_longitude() returning: " << rv.first << ", " << rv.second << endl;
+  
   return rv;
+}
+
+/*! \brief              Mark a callsign as not to be shown
+    \param  callsign    call
+    
+    Removes <i>callsign</i> from bandmap, adds it to the do-not-show list, and
+    appends it to the do-not-show file if one has been defined
+*/
+void do_not_show(const string& callsign)
+{ FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
+                                        bm.do_not_add(callsign);
+                                      } );
+
+// add to do not show file if it exists
+  if (!context.do_not_show_filename().empty())
+    append_to_file(callsign + EOL, context.do_not_show_filename());
 }

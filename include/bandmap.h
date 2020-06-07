@@ -743,6 +743,7 @@ protected:
   decltype(_entries)        _rbn_threshold_filtered_and_culled_entries; ///< entries, with the RBN threshold, filter and cull function applied
   std::set<std::string>     _recent_calls;                              ///< calls recently added
   COLOUR_TYPE               _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
+  uint32_t                  _verno;                                     /// < version number
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);
@@ -784,8 +785,11 @@ public:
     _mode_marker_frequency(frequency(0)),
     _rbn_threshold(1),
     _rbn_threshold_and_filtered_entries_dirty(false),
-    _recent_colour(COLOUR_BLACK)
+    _recent_colour(COLOUR_BLACK),
+    _verno(0)
   { }
+  
+  bandmap(const bandmap& bm) = delete;
 
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
 
@@ -809,6 +813,9 @@ public:
       return _entries.size(); 
     }
   
+/// version number -- just needs to be read via this function, so don't need to lock the mutex
+  READ(verno);
+
 /// cull function number for the bandmap
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(cull_function, _bandmap);
 

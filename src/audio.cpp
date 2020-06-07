@@ -85,6 +85,8 @@ void audio_recorder::_set_params(void)
 { snd_pcm_hw_params_t* params   { nullptr };
   snd_pcm_sw_params_t* swparams { nullptr };
 
+//  auto audio_log_message = [this](const string& msg) { fwrite(msg.c_str(), msg.size(), 1, this -> _log_fp); };
+  
   snd_pcm_hw_params_alloca(&params);
   snd_pcm_sw_params_alloca(&swparams);
 
@@ -97,6 +99,12 @@ void audio_recorder::_set_params(void)
   }
   else
     ost << "ALSA configuration retrieved for " << _pcm_name << endl;
+
+  if (_log_fp)
+  { _audio_log_message("\nHW PARAMS:\n"s);
+
+	snd_pcm_hw_params_dump(params, _log_output_p);
+  }
 
   err = snd_pcm_hw_params_set_access(_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
 
@@ -273,11 +281,16 @@ void audio_recorder::_set_params(void)
     throw audio_error(AUDIO_CANNOT_INSTALL_SW_PARAMS, "Unable to install software parameters for "s + _pcm_name);
   }
 
+  if (_log_fp)
+  { _audio_log_message("\nHANDLE:\n"s);		
+    snd_pcm_dump(_handle, _log_output_p);
+  }
+
 // at least for now, no support for setup_chmap()
   const size_t bits_per_sample { static_cast<size_t>( snd_pcm_format_physical_width(_hw_params.format) ) };
 
   _bits_per_frame = bits_per_sample * _hw_params.channels;
-  _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
+  _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;     // _period_size_in_bytes is the size of the audio buffer
 
   _audio_buf = (u_char *)malloc(_period_size_in_bytes);
 
@@ -285,8 +298,19 @@ void audio_recorder::_set_params(void)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;
     throw audio_error(AUDIO_NO_MEMORY, "Out of memory for "s + _pcm_name);
   }
+  
+  ost << "SIZE OF AUDIO BUFFER = " << _period_size_in_bytes << " bytes" << endl;
 
   _buffer_frames = buffer_size;    /* for position test */ // ?????
+  
+// debug
+  if (_log_fp)
+  { _audio_log_message("\nPARAMS:\n"s);
+	snd_pcm_hw_params_dump(params, _log_output_p);
+
+    _audio_log_message("\nSWPARAMS:\n"s);
+	snd_pcm_sw_params_dump(swparams, _log_output_p);
+  }
 }
 
 /*! \brief          Read from the PCM device
@@ -294,11 +318,49 @@ void audio_recorder::_set_params(void)
     \return         total number of bytes read
 */
 const ssize_t audio_recorder::_pcm_read(u_char* data)
-{ size_t result { 0 };
+{ //ost << "Inside _pcm_read" << endl;
+  
+  size_t result { 0 };
   size_t count  { _period_size_in_frames };
+  
+//  ost << "Initial value of count = " << count << endl;
 
   while (count > 0)
-  { const ssize_t r { _readi_func(_handle, data, count) };
+  { //ost << "in loop; count = " << count << "; calling _redi_func" << endl;
+    
+ //   const ssize_t r { _readi_func(_handle, data, count) };
+    
+//    const auto avail = snd_pcm_avail(_handle);
+    
+//    ost << "avail     = " << snd_pcm_avail(_handle) << endl;
+//    sleep(1);
+//    ost << "avail +1s = " << snd_pcm_avail(_handle) << endl;
+//    if (avail < count)
+//    { sleep_for(milliseconds(100));
+//      ost << "avail +100ms = " << snd_pcm_avail(_handle) << endl;
+ //   }
+    
+ //   sleep_for(milliseconds(200));
+ //   ost << "avail +200ms = " << snd_pcm_avail(_handle) << endl;
+    
+ //   ost << "calling snd_pcm_readi" << endl;
+    
+ //   char sdata [10000];
+    
+//    const snd_pcm_sframes_t r = snd_pcm_readi(_handle, data, count);
+     const ssize_t r { _readi_func(_handle, data, count) };
+//      const ssize_t r { _readi_func(_handle, &sdata, count) };
+
+  if (_log_fp)
+  { _audio_log_message("\nHANDLE BEFORE snd_pcm_readi():\n"s);		
+    snd_pcm_dump(_handle, _log_output_p);
+  }
+
+//    snd_pcm_uframes_t n_to_read { 10 };
+
+//    const snd_pcm_sframes_t r = snd_pcm_readi(_handle, (void*)(&sdata), n_to_read);
+
+//    ost << "value returned by _readi_func = " << r << endl;
 
     if ( (r == -EAGAIN) or (r >= 0 and (size_t)r < count) )
     { snd_pcm_wait(_handle, 100);
@@ -322,6 +384,8 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
     }
   }
 
+//  ost << "Returning " << result << " from _pcm_read" << endl;
+  
   return result;
 }
 
@@ -342,7 +406,9 @@ void* audio_recorder::_static_capture(void* arg)
     \return         nullptr
 */
 void* close_it(void* vp)
-{ start_of_thread("close_WAV"s);
+{ ost << "close_it() called to close audio file" << endl;
+
+  start_of_thread("close_WAV"s);
 
   wav_file* wfp { (wav_file*)(vp) };
 
@@ -429,9 +495,17 @@ create_file:
 
   bool first_time_through_loop { true };
 
+//  ost << "About to enter audio loop" << endl;
+  
+//  if (_audio_buf != nullptr)
+//    ost << "_audio_buf is not nullptr" << endl;
+
   do
   { const size_t c   { (remaining_bytes_to_read <= (off64_t)_period_size_in_bytes) ? (size_t)remaining_bytes_to_read : _period_size_in_bytes };
     const size_t f   { c * 8 / _bits_per_frame };
+    
+ //   ost << "f value = " << f << endl;
+    
     const ssize_t pr { _pcm_read(_audio_buf) };
 
     if (static_cast<decltype(f)>(pr) != f)
@@ -449,6 +523,8 @@ create_file:
 
     remaining_bytes_to_read -= c;
   } while ( (remaining_bytes_to_read > 0) and !exiting and !_aborting );
+  
+ // ost << "Exited audio loop" << endl;
 
   { SAFELOCK(thread_check);
 
@@ -488,9 +564,16 @@ goto create_file;
 
 /// initialise the object
 void audio_recorder::initialise(void)
-{ snd_pcm_info_alloca(&_info);          // create an invalid snd_pcm_info_t
+{ 
+// don't initialise more than once!
+  if (_valid)
+  { ost << "Attempt to initialise already-initialised device: " << _pcm_name << endl;
+    throw audio_error(AUDIO_ALREADY_INITIALISED, "Attempt to initialise already-initialised device: "s + _pcm_name);
+  }  
+  
+  snd_pcm_info_alloca(&_info);          // create an invalid snd_pcm_info_t
 
-  const PARAMS_STRUCTURE rhwparams { _n_channels, _sample_format, _samples_per_second };
+  const PARAMS_STRUCTURE rhwparams { _sample_format, _n_channels, _samples_per_second };
 
   constexpr int MAX_FAILURES { 1 };           // maximum number of permitted failures
 
@@ -525,7 +608,40 @@ void audio_recorder::initialise(void)
   _hw_params = rhwparams;
 
   _set_params();
+  
+  status = snd_pcm_start(_handle);  // start the device
+  
+// mark object as valid
+  _valid = true;  
+  
+//  ost << "status from snd_pcm_start() = " << status << endl;
 }
+
+/// create and open log
+void audio_recorder::log(const string& filename)
+{ if (_log_fp)      // if already logging, then close the current log
+  { const int status { fclose(_log_fp) };
+  
+    if (status)
+    { ost << "ERROR closing audio logging file" << endl;
+    }
+  }
+  
+// open the file
+  _log_fp = fopen(filename.c_str(), "w");     // open for writing
+
+  if (_log_fp == NULL)
+  { ost << "ERROR creating audio logging file: " << filename << endl;
+    exit(-1);
+  }  
+  
+  int err = snd_output_stdio_attach(&_log_output_p, _log_fp, 0);
+  
+  if (err < 0)
+  { ost << "ERROR attaching audio logging file: " << filename << endl;
+    exit(-1);
+  }    
+} 
 
 /// public function to capture the audio
 void audio_recorder::capture(void)
@@ -594,47 +710,63 @@ void wav_file::open(void)
     the total length to be placed into chunks at the start of the file.
 */
 void wav_file::close(void)
-{
+{ ost << "inside wav_file::close()" << endl;
+
 // put correct length into RIFF header
 // == file size - 8
 
-  fseek(_fp, 0, SEEK_END);
-
-  const uint32_t length = ftell(_fp);
-  const uint32_t length_for_riff = (length - 8);
-
-  int status = fseek(_fp, 4, SEEK_SET);      // go to byte #4
-
+  int status { fseek(_fp, 0, SEEK_END) };
+  
   if (status != 0)
-  { ost << "Error seeking in file: " << _name << endl;
-    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error closing WAV file: " +_name);
+  { ost << "Error seeking to end of audio file: " << _name << endl;
+    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error seeking to end of file when closing WAV file: " +_name);
   }
 
-  int bytes_written = fwrite( (char*)&length_for_riff, 1, 4, _fp);
+  const long length { ftell(_fp) };
+  
+  ost << "audio file length = " << comma_separated_string(to_string(length)) << " prior to closing" << endl;
+  
+  const long length_for_riff { (length - 8) };
+
+  status = fseek(_fp, 4, SEEK_SET);      // go to byte #4
+
+  if (status != 0)
+  { ost << "Error seeking to byte #4 in file: " << _name << endl;
+    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error seeking to byte #4 when closing WAV file: " +_name);
+  }
+
+  size_t bytes_written { fwrite( (void*)&length_for_riff, 1, 4, _fp) };
 
   if (bytes_written != 4)
   { ost << "Error writing length in RIFF chunk in file: " << _name << endl;
-    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error closing WAV file: " +_name);
+    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing length in RIFF chunk when closing WAV file: " +_name);
   }
 
 // put correct length into data chunk... assumes no bext chunk
-  const uint32_t length_for_data_chunk = (length - 44);
+  const long length_for_data_chunk { (length - 44) };
 
   status = fseek(_fp, 40, SEEK_SET);      // go to byte #40
 
   if (status != 0)
-  { ost << "Error seeking (2) in file: " << _name << endl;
-    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error closing WAV file: " +_name);
+  { ost << "Error seeking to byte 40 in file: " << _name << endl;
+    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error seeking to byte #40 closing WAV file: " +_name);
   }
 
-  bytes_written = fwrite( (char*)&length_for_data_chunk, 1, 4, _fp);
+  bytes_written = fwrite( (void*)&length_for_data_chunk, 1, 4, _fp);
 
   if (bytes_written != 4)
   { ost << "Error writing length in data chunk in file: " << _name << endl;
-    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error closing WAV file: " +_name);
+    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing length in data chunk when closing WAV file: " +_name);
   }
 
-  fclose(_fp);      // at last we can close the file
+  status = fclose(_fp);      // at last we can close the file
+  
+  if (status != 0)
+  { ost << "Error closing file: " << _name << endl;
+    throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error returned from fclose() when closing WAV file: " +_name);
+  }   
+  
+  ost << "wav file successfully closed" << endl;
 }
 
 /*! \brief          Append data to the file
