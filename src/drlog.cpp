@@ -1079,10 +1079,12 @@ int main(int argc, char** argv)
 
         for (const auto& callsign : lines)
           FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+          
+        ost << "Read do not show file: " << context.do_not_show_filename() << endl;
       }
 
       catch (...)
-      { cerr << "Unable to read do-not-show file: " << context.do_not_show_filename() << endl;
+      { ost << "Fatal error: unable to read do-not-show file: " << context.do_not_show_filename() << endl;
         exit(-1);
       }
     }
@@ -8545,7 +8547,18 @@ void do_not_show(const string& callsign)
                                         bm.do_not_add(callsign);
                                       } );
 
-// add to do not show file if it exists
+// add to do not show file if it exists (maintaining order)
   if (!context.do_not_show_filename().empty())
-    append_to_file(callsign + EOL, context.do_not_show_filename());
+  { const auto do_not_add_set { bandmaps[0].do_not_add() };   // any old bandmap will do for this
+
+    set<string, decltype(&compare_calls)> output_set(compare_calls);
+  
+    for (const auto& callsign : do_not_add_set)
+      output_set.insert(callsign);
+    
+    ofstream outfile(context.do_not_show_filename());
+    
+    for (const auto& callsign : output_set)
+      outfile << callsign << endl;
+  }
 }

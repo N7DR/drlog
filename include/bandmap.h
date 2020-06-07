@@ -727,23 +727,23 @@ class bandmap
 {
 protected:
 
-  pt_mutex                  _bandmap_mutex;                             ///< mutex for this bandmap
-  int                       _column_offset;                             ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
-  int                       _cull_function;                             ///< cull function number to apply
-  std::set<std::string>     _do_not_add;                                ///< do not add these calls
-  BM_ENTRIES                _entries;                                   ///< all the entries
-  std::vector<COLOUR_TYPE>  _fade_colours;                              ///< the colours to use as entries age
-  decltype(_entries)        _filtered_entries;                          ///< entries, with the filter applied
-  bool                      _filtered_entries_dirty;                    ///< is the filtered version dirty?
-  bandmap_filter_type*      _filter_p;                                  ///< pointer to a bandmap filter
-  frequency                 _mode_marker_frequency;                     ///< the frequency of the mode marker
-  unsigned int              _rbn_threshold;                             ///< number of posters needed before a station appears in the bandmap
-  decltype(_entries)        _rbn_threshold_and_filtered_entries;        ///< entries, with the filter and RBN threshold applied
-  bool                      _rbn_threshold_and_filtered_entries_dirty;  ///< is the RBN threshold and filtered version dirty?
-  decltype(_entries)        _rbn_threshold_filtered_and_culled_entries; ///< entries, with the RBN threshold, filter and cull function applied
-  std::set<std::string>     _recent_calls;                              ///< calls recently added
-  COLOUR_TYPE               _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
-  uint32_t                  _verno;                                     /// < version number
+  pt_mutex                        _bandmap_mutex;                             ///< mutex for this bandmap
+  int                             _column_offset;                             ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
+  int                             _cull_function;                             ///< cull function number to apply
+  std::unordered_set<std::string> _do_not_add;                                ///< do not add these calls
+  BM_ENTRIES                      _entries;                                   ///< all the entries
+  std::vector<COLOUR_TYPE>        _fade_colours;                              ///< the colours to use as entries age
+  decltype(_entries)              _filtered_entries;                          ///< entries, with the filter applied
+  bool                            _filtered_entries_dirty;                    ///< is the filtered version dirty?
+  bandmap_filter_type*            _filter_p;                                  ///< pointer to a bandmap filter
+  frequency                       _mode_marker_frequency;                     ///< the frequency of the mode marker
+  unsigned int                    _rbn_threshold;                             ///< number of posters needed before a station appears in the bandmap
+  decltype(_entries)              _rbn_threshold_and_filtered_entries;        ///< entries, with the filter and RBN threshold applied
+  bool                            _rbn_threshold_and_filtered_entries_dirty;  ///< is the RBN threshold and filtered version dirty?
+  decltype(_entries)              _rbn_threshold_filtered_and_culled_entries; ///< entries, with the RBN threshold, filter and cull function applied
+  std::unordered_set<std::string> _recent_calls;                              ///< calls recently added
+  COLOUR_TYPE                     _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
+  uint32_t                        _verno;                                     /// < version number
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);
@@ -818,6 +818,9 @@ public:
 
 /// cull function number for the bandmap
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(cull_function, _bandmap);
+
+/// all the do-not-add calls
+  SAFEREAD_WITH_INTERNAL_MUTEX(do_not_add, _bandmap);
 
 /// all the entries in the bandmap
   SAFEREAD_WITH_INTERNAL_MUTEX(entries, _bandmap);
