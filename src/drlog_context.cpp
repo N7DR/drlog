@@ -569,6 +569,10 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "KEYER PORT"s)
       _keyer_port = rhs;
 
+// LIMIT OLD QSOS
+    if (LHS == "LIMIT OLD QSOS"s)
+      _limit_old_qsos = is_true;
+
 // LOG
     if ( (LHS == "LOG"s) and !rhs.empty() )
       _logfile = rhs;

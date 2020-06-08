@@ -395,6 +395,7 @@ protected:
 
   BAND          _band;          ///< band
   std::string   _callsign;      ///< callsign
+  std::string   _date;          ///< YYYYMMDD
   MODE          _mode;          ///< mode
   bool          _qsl_received;  ///< has a QSL been received?
 
@@ -402,6 +403,7 @@ public:
 
   READ_AND_WRITE(band);             ///< band
   READ_AND_WRITE(callsign);         ///< callsign
+  READ_AND_WRITE(date);             ///< YYYYMMDD
   READ_AND_WRITE(mode);             ///< mode
   READ_AND_WRITE(qsl_received);     ///< has a QSL been received?
 };

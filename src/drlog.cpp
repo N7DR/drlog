@@ -331,7 +331,7 @@ bool                    no_default_rst { false };             ///< do we not ass
 unsigned int            n_modes { 0 };                        ///< number of modes allowed in the contest
 unsigned int            n_memories { 0 };                     ///< number of memeories on the rig
 
-unsigned int            octothorpe { 1 };                     ///< serial number of next QSO
+unsigned int            octothorpe { 1 };                   ///< serial number of next QSO
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
 
 vector<BAND>            permitted_bands;                    ///< permitted bands, in frequency order
@@ -896,9 +896,15 @@ int main(int argc, char** argv)
     win_message.init(context.window_info("MESSAGE"s), WINDOW_NO_CURSOR);
     win_message < WINDOW_ATTRIBUTES::WINDOW_BOLD <= "";                                       // use bold in this window
 
-// is there a log of old QSOs?
+// is there a log of old QSOs? *** This assumes that the log is in chronological order [for the 10-year calculation ] Alternative would be to perform two passes through the log ***
     if (!context.old_adif_log_name().empty())
-    { alert("reading old log file: "s + context.old_adif_log_name(), false);
+    { 
+// calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
+      const string dts              { date_time_string() };
+      const string current_date_str { substring(dts, 0, 4) + substring(dts, 5, 2) + substring(dts, 8, 2) };                                         // YYYYMMDD
+      const string old_date_str     { to_string((from_string<int>(substring(dts, 0, 4)) - 10)) + substring(dts, 5, 2) + substring(dts, 8, 2)   };   // minus 10 years
+      
+      alert("reading old log file: "s + context.old_adif_log_name(), false);
 
       vector<string> records;
 
@@ -916,8 +922,21 @@ int main(int argc, char** argv)
         exit(-1);
       }
       
-      
       alert("read " + comma_separated_string(to_string(records.size())) + " ADIF records from file: " + context.old_adif_log_name(), false);
+      
+      // the algorithm is simple, perhaps too much so:
+// if first QSO on a b/m was < 10 years ago, then add as normal
+// if it was > 10 years ago, then pretend that we have not had any before now
+
+        using CBM = tuple<string, BAND, MODE>;  // call, band, mode
+        
+        map<CBM, string /* date */> first_qso_map;
+
+        auto first_qso_more_than_ten_years_ago = [=](const string& callsign, const BAND b, const MODE m)
+        { const string& first_qso_date { first_qso_map.find( { callsign, b, m } )->second };
+        
+          return (first_qso_date < old_date_str);
+        };
       
 // function to extract the value from an ADIF line, ignoring the last <i>offset</i> characters
       auto adif_value = [](const string& this_line, const unsigned int offset = 0)
@@ -948,6 +967,9 @@ int main(int argc, char** argv)
 
             if (starts_with(line, "<call"s))                                   // <call:5>RZ3FW
               rec.callsign( adif_value(line) );
+              
+            if (starts_with(line, "<qso-date"s))                               // <qso_date:8>20100718
+              rec.date( adif_value(line) );
 
             if (starts_with(line, "<mode"s))                                   // <mode:2>CW
               rec.mode(MODE_FROM_NAME.at( adif_value(line) ));
@@ -961,13 +983,20 @@ int main(int argc, char** argv)
             exit(-1);
           }
         }
+        
+        const CBM key { rec.callsign(), rec.band(), rec.mode() };
+                
+        if (first_qso_map.find(key) == first_qso_map.end())    // not in map; this is the first QSO
+          first_qso_map.insert( { key, rec.date() } );
 
-        olog.increment_n_qsos(rec.callsign());
-        olog.increment_n_qsos(rec.callsign(), rec.band(), rec.mode());
+        if (!context.limit_old_qsos() or !first_qso_more_than_ten_years_ago(rec.callsign(), rec.band(), rec.mode())) // treat as normal; else do nothing
+        { olog.increment_n_qsos(rec.callsign());
+          olog.increment_n_qsos(rec.callsign(), rec.band(), rec.mode());
 
-        if (rec.qsl_received())
-        { olog.increment_n_qsls(rec.callsign());
-          olog.qsl_received(rec.callsign(), rec.band(), rec.mode());
+          if (rec.qsl_received())
+          { olog.increment_n_qsls(rec.callsign());
+            olog.qsl_received(rec.callsign(), rec.band(), rec.mode());
+          }
         }
       }
 

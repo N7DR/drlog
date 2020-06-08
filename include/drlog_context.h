@@ -166,6 +166,7 @@ protected:
 
   std::string                                  _keyer_port                              { };                            ///< the device that is to be used as a keyer
 
+  bool                                         _limit_old_qsos                          { false };                      ///< whether to include only old QSOs from the last ten years 
   std::string                                  _logfile                                 { "drlog.dat"s };               ///< name of the log file
 //  bool                                         _long_t                                  { false };                      ///< whether to extend length of initial Ts in serial number
   unsigned short                               _long_t                                  { 0 };                          ///< whether and amount to extend length of initial Ts in serial number
@@ -439,6 +440,7 @@ public:
 
   CONTEXTREAD(keyer_port);                   ///< the device that is to be used as a keyer
 
+  CONTEXTREAD(limit_old_qsos);               ///< whether to include only old QSOs from the last ten years 
   CONTEXTREAD(logfile);                      ///< name of the log file
   CONTEXTREAD(long_t);                       ///< whether to extend length of initial Ts in serial number
 
