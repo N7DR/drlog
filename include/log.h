@@ -389,13 +389,15 @@ template <typename T>
     Not thread safe, so create once and then never change. Just a trivial tuple.
 */
 
+using OLR_DATE_TYPE = uint32_t;
+
 class old_log_record
 {
 protected:
 
   BAND          _band;          ///< band
   std::string   _callsign;      ///< callsign
-  std::string   _date;          ///< YYYYMMDD
+  OLR_DATE_TYPE _date;          ///< YYYYMMDD
   MODE          _mode;          ///< mode
   bool          _qsl_received;  ///< has a QSL been received?
 

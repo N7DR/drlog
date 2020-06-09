@@ -571,7 +571,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // LIMIT OLD QSOS
     if (LHS == "LIMIT OLD QSOS"s)
-      _limit_old_qsos = is_true;
+      _limit_old_qsos = from_string<decltype(_limit_old_qsos)>(rhs);
 
 // LOG
     if ( (LHS == "LOG"s) and !rhs.empty() )
