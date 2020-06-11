@@ -675,8 +675,38 @@ inline void update_scp_window(const string& callsign)
 inline const bool sending_cw(void)
   { return (cw_p != nullptr) and !(cw_p->empty()); }
 
+
+using CBM = tuple<string /* callsign */, BAND, MODE>;  // call, band, mode -- need a hash function to create an unordered_map  
+
+/// define a hash function for CBM; needed because we will use an unordered map
+// http://stackoverflow.com/questions/13485979/hash-function-of-unordered-set/13486174#13486174
+// http://www.cplusplus.com/reference/functional/hash/
+// https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
+namespace std
+{ template <>
+  struct hash< CBM >
+
+  { using result_type = size_t;
+
+    result_type operator()( const CBM& k ) const
+    { result_type res = 17;
+            res = res * 31 + hash<string>()( get<0>(k) );
+            res = res * 31 + hash<BAND>()( get<1>(k) );
+            res = res * 31 + hash<MODE>()( get<2>(k) );
+            return res;
+    }
+  };
+}
+
+inline const bool operator==(const CBM& v1, const CBM& v2)
+  { return ( (get<0>(v1) == get<0>(v2)) and (get<1>(v1) == get<1>(v2)) and (get<2>(v1) == get<2>(v2)) ); }
+
 int main(int argc, char** argv)
 {
+  
+  
+  
+  
 // generate version information
   try
   { const map<string, string> MONTH_NAME_TO_NUMBER( { { "Jan"s, "01"s },
@@ -726,6 +756,39 @@ int main(int argc, char** argv)
 // make the context available globally and cleanup the context pointer
     context = *context_p;
     delete context_p;
+
+#if 0
+
+// this does not behave as expected if context._limit_old_qsos is a uint8_t; I really don't understand why that is.
+// but see: https://www.learncpp.com/cpp-tutorial/fixed-width-integers-and-size-t/ which basically warns about using uint8_t
+// but also see: http://www.cplusplus.com/doc/tutorial/typecasting/:
+//   "Converting to int from some smaller integer type, or to double from float is known as promotion, 
+//   and is guaranteed to produce the exact same value in the destination type
+  { const string        dts              { date_time_string() };
+ //     const string        current_date_str { substring(dts, 0, 4) + substring(dts, 5, 2) + substring(dts, 8, 2) };                                         // YYYYMMDD
+      const string        old_date_str     { to_string((from_string<int>(substring(dts, 0, 4)) - context.limit_old_qsos())) + substring(dts, 5, 2) + substring(dts, 8, 2)   };   // minus limit_old_qsos years
+      const OLR_DATE_TYPE old_date         { from_string<OLR_DATE_TYPE>(old_date_str) };
+      const bool          limit_old_qsos   { context.limit_old_qsos() != 0 };  // whether to limit old qsos
+
+      const int t1 = 2020;
+      const uint8_t t2 = 5;
+      
+      ost << "t1 = " << t1 << ", t2 = " << t2 << ", subtraction = " << t1 - t2 << endl;
+
+
+      ost << "dts = " << dts << endl;
+      
+      ost << "year_str = " << substring(dts, 0, 4) << endl;
+      ost << "year (int) " << from_string<int>(substring(dts, 0, 4)) << endl;
+      ost << "limit = " << context.limit_old_qsos() << endl;
+      ost << "after subtraction = " << from_string<int>(substring(dts, 0, 4)) - static_cast<int>(context.limit_old_qsos()) << endl;
+      
+
+        exit(0);
+  }
+#endif
+
+
 
 // set some immutable variables from the context
     DP            = context.decimal_point();            // correct decimal point indicator
@@ -901,11 +964,32 @@ int main(int argc, char** argv)
     { 
 // calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
       const string        dts              { date_time_string() };
-      const string        current_date_str { substring(dts, 0, 4) + substring(dts, 5, 2) + substring(dts, 8, 2) };                                         // YYYYMMDD
+ //     const string        current_date_str { substring(dts, 0, 4) + substring(dts, 5, 2) + substring(dts, 8, 2) };                                         // YYYYMMDD
       const string        old_date_str     { to_string((from_string<int>(substring(dts, 0, 4)) - context.limit_old_qsos())) + substring(dts, 5, 2) + substring(dts, 8, 2)   };   // minus limit_old_qsos years
       const OLR_DATE_TYPE old_date         { from_string<OLR_DATE_TYPE>(old_date_str) };
       const bool          limit_old_qsos   { context.limit_old_qsos() != 0 };  // whether to limit old qsos
+#if 0      
+      ost << "dts = " << dts << endl;
       
+      ost << "year_str = " << substring(dts, 0, 4) << endl;
+      ost << "year (int) " << from_string<int>(substring(dts, 0, 4)) << endl;
+      ost << "limit = " << context.limit_old_qsos() << endl;
+      ost << "after subtraction = " << from_string<int>(substring(dts, 0, 4)) - static_cast<int>(context.limit_old_qsos()) << endl;
+      
+      const int t1 = from_string<int>(substring(dts, 0, 4));
+      const int t2 = static_cast<int>(context.limit_old_qsos());
+      
+      ost << "int subtraction = " << t1 << ", " << t2 << ", " << t1 - t2 << endl;
+      
+      ost << "without cast = " << t1 << ", " << context.limit_old_qsos() << ", " << t1 - context.limit_old_qsos() << endl;
+      
+      ost << "year = " << to_string((from_string<int>(substring(dts, 0, 4)) - context.limit_old_qsos())) << endl;
+      
+      ost << "old_date_str = " << old_date_str << endl;
+      ost << "limit old qsos = " << context.limit_old_qsos() << endl;
+      ost << "old date = " << old_date << endl;
+ #endif
+     
       alert("reading old log file: "s + context.old_adif_log_name(), false);
 
       vector<string> records;
@@ -915,12 +999,12 @@ int main(int argc, char** argv)
       }
       
       catch (const string_function_error& e)
-      { ost << "Unable to read old log file: " + context.old_adif_log_name() << "code = " << e.code() << ", reason = " << e.reason() << endl;
+      { ost << "Unable to read old log file: " << context.old_adif_log_name() << "code = " << e.code() << ", reason = " << e.reason() << endl;
         exit(-1);
       }
       
       catch (...)
-      { ost << "Undefined error reading old log file: " + context.old_adif_log_name() << endl;
+      { ost << "Undefined error reading old log file: " << context.old_adif_log_name() << endl;
         exit(-1);
       }
       
@@ -930,31 +1014,31 @@ int main(int argc, char** argv)
 // if first QSO on a b/m was < N years ago, then add as normal
 // if it was > N years ago, then pretend that we have not had any before now
 
-        using CBM = tuple<string, BAND, MODE>;  // call, band, mode
+ //     using CBM = tuple<string /* callsign */, BAND, MODE>;  // call, band, mode -- need a hash function to create an unordered_map
         
-        map<CBM, OLR_DATE_TYPE /* date */> first_qso_map;
+      unordered_map<CBM, OLR_DATE_TYPE /* date */> first_qso_map;
 
-        auto first_qso_is_too_old = [=](const string& callsign, const BAND b, const MODE m)
-        { if (!limit_old_qsos)      // in case this wasn't tested before we got here
-            return false;
+      auto first_qso_is_too_old = [=, &first_qso_map](const string& callsign, const BAND b, const MODE m)
+      { if (!limit_old_qsos)      // in case this wasn't tested before we got here
+          return false;
           
-          const auto it { first_qso_map.find( { callsign, b, m } ) };
+        const auto it { first_qso_map.find( { callsign, b, m } ) };
           
-          if (it == first_qso_map.end())                                        // should never happen
-          { ost << "ERROR: PASSED END OF MAP IN FIRST_QSO_IS_TOO_OLD()" << endl;
-            return false;
-          }
+        if (it == first_qso_map.end())                                        // should never happen
+        { ost << "ERROR: PASSED END OF MAP IN FIRST_QSO_IS_TOO_OLD(): " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << "; size = " << first_qso_map.size() << endl;
+          return false;
+        }
           
-          const OLR_DATE_TYPE first_qso_date { it->second };
+        const OLR_DATE_TYPE first_qso_date { it->second };
         
-          return (first_qso_date < old_date);
-        };
+        return (first_qso_date < old_date);
+      };
       
 // function to extract the value from an ADIF line, ignoring the last <i>offset</i> characters
       auto adif_value = [](const string& this_line, const unsigned int offset = 0)
-        { const vector<string> tokens { split_string(delimited_substring(this_line, '<', '>'), ":"s) };
+        { //const vector<string> tokens { split_string(delimited_substring(this_line, '<', '>'), ":"s) };
 
-          if (tokens.size() != 2)
+          if (const vector<string> tokens { split_string(delimited_substring(this_line, '<', '>'), ":"s) }; tokens.size() != 2)
           { ost << "ERROR parsing old log line: " << this_line << endl;
             return string();
           }
@@ -982,7 +1066,7 @@ int main(int argc, char** argv)
             if (starts_with(line, "<call"s))                                   // <call:5>RZ3FW
               rec.callsign( adif_value(line) );
               
-            if (starts_with(line, "<qso-date"s))                               // <qso_date:8>20100718
+            if (starts_with(line, "<qso_date"s))                               // <qso_date:8>20100718
               rec.date( from_string<OLR_DATE_TYPE>(adif_value(line)) );
 
             if (starts_with(line, "<mode"s))                                   // <mode:2>CW
@@ -998,25 +1082,36 @@ int main(int argc, char** argv)
           }
         }
  
-        old_log_records.push_back(rec);
+        if (!rec.callsign().empty())                                        // the last record is likely to be empty
+        { old_log_records.push_back(rec);
         
-        if (limit_old_qsos)
-        { const CBM  key { rec.callsign(), rec.band(), rec.mode() };
-          const auto it  { first_qso_map.find(key) };
+          if (limit_old_qsos)
+          { const CBM  key { rec.callsign(), rec.band(), rec.mode() };
+ //          const auto it  { first_qso_map.find(key) };
         
-          if (it == first_qso_map.end())      // not in map; this is the first QSO
-            first_qso_map.insert( { key, rec.date() } );
-          else                                // already in map; replace if this one is older (should never happen with a chronologically sorted log)
-          { if (rec.date() < it->second)
-              it->second = rec.date();
+           // ost << "testing: " << rec.callsign().length() << ", " << rec.callsign() << ", band = " << BAND_NAME[rec.band()] << ", mode = " << MODE_NAME[rec.mode()] << ", date = " << rec.date() << endl;
+        
+            if (const auto it  { first_qso_map.find(key) }; it == first_qso_map.end())      // not in map; this is the first QSO
+            { first_qso_map.insert( { key, rec.date() } );
+            //  ost << "added to first qso map with date: " << rec.date() << endl;
+            }
+            else                                // already in map; replace if this one is older (should never happen with a chronologically sorted log)
+            { //ost << "already in first qso map" << endl;
+              if (rec.date() < it->second)
+                it->second = rec.date();
+            }
           }
         }
       }
+      
+      //ost << "Size of first_qso_map = " << first_qso_map.size() << endl;
 
 // put only the required records into the old log
       for (const auto& olr : old_log_records)
       { if (!limit_old_qsos or !first_qso_is_too_old(olr.callsign(), olr.band(), olr.mode())) // treat as normal; else do nothing
-        { olog.increment_n_qsos(olr.callsign());
+        { //ost << "adding: " << olr.callsign() << ", band = " << BAND_NAME[olr.band()] << ", mode = " << MODE_NAME[olr.mode()] << endl;
+          
+          olog.increment_n_qsos(olr.callsign());
           olog.increment_n_qsos(olr.callsign(), olr.band(), olr.mode());
 
           if (olr.qsl_received())
@@ -1149,11 +1244,11 @@ int main(int argc, char** argv)
       FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
-    { const int cull_function { context.bandmap_cull_function() };
+//    { //const int cull_function { context.bandmap_cull_function() };
 
-      if (cull_function)
-        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
-    }
+    if (const int cull_function { context.bandmap_cull_function() }; cull_function)
+      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
+//    }
 
 // initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function

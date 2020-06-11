@@ -166,9 +166,10 @@ protected:
 
   std::string                                  _keyer_port                              { };                            ///< the device that is to be used as a keyer
 
-  uint8_t                                      _limit_old_qsos                          { 0 };                          ///< include old QSOs newer than this value (in years) [0 => all no limit]  
+ // uint8_t                                      _limit_old_qsos                          { 0 };                          ///< include old QSOs newer than this value (in years) [0 => all no limit]  
+  unsigned int                                      _limit_old_qsos                          { 0 };                          ///< include old QSOs newer than this value (in years) [0 => all no limit]  
   std::string                                  _logfile                                 { "drlog.dat"s };               ///< name of the log file
-  uint8_t                                      _long_t                                  { 0 };                          ///< whether and amount to extend length of initial Ts in serial number
+  unsigned int                                      _long_t                                  { 0 };                          ///< whether and amount to extend length of initial Ts in serial number
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies        { };                            ///< frequency ranges to be marked on-screen
   bool                                         _mark_mode_break_points                  { false };                      ///< whether to mark the mode break points on the bandmap
