@@ -657,7 +657,7 @@ inline void update_fuzzy_window(const string& callsign)
 /*! \brief  Update <i>win_recording_status</i>
 */
 inline void update_recording_status_window(void)
-  { win_recording_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= ( (allow_audio_recording and audio.valid() and audio.recording()) ? "REC" : "---" ); }
+  { win_recording_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= ( (allow_audio_recording /* and audio.valid() */ and audio.recording()) ? "REC" : "---" ); }
 
 /*! \brief              Update the SCP window with matches for a particular call
     \param  callsign    callsign against which to generate the SCP matches
@@ -8341,7 +8341,7 @@ void start_recording(audio_recorder& audio, const drlog_context& context)
     return;  
  
 // configure some stuff if the recorder is not initialised
-  if (!audio.valid()) 
+//  if (!audio.valid()) 
   { audio.base_filename(context.audio_file());
     audio.maximum_duration(context.audio_duration() * 60);    // convert minutes to seconds
     audio.pcm_name(context.audio_device_name());

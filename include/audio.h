@@ -68,8 +68,7 @@ constexpr int AUDIO_UNABLE_TO_OPEN                { -1 },      ///< unable to op
               AUDIO_NO_MEMORY                     { -22 },     ///< out of memory
               AUDIO_WAV_WRITE_ERROR               { -23 },     ///< error writing file
               AUDIO_DEVICE_READ_ERROR             { -24 },     ///< error reading audio device
-              AUDIO_WAV_OPEN_ERROR                { -25 },     ///< error opening file
-              AUDIO_ALREADY_INITIALISED           { -26 };     ///< attempt to initialise an already-initialised object
+              AUDIO_WAV_OPEN_ERROR                { -25 };     ///< error opening file
 
 // -----------  riff_header  ----------------
 
@@ -172,8 +171,8 @@ public:
 */
 
 /// structure to encapsulate parameters
-typedef struct { snd_pcm_format_t format;       ///< format number; defined in alsa/pcm.h
-                 unsigned int     channels;     ///< number of channels
+typedef struct { unsigned int     channels;     ///< number of channels
+                 snd_pcm_format_t format;       ///< format number; defined in alsa/pcm.h
                  unsigned int     rate;         ///< rate (bytes per second)
                } PARAMS_STRUCTURE ;
 
@@ -187,6 +186,7 @@ protected:
   size_t            _bits_per_frame;            ///< bits per sample * number of channels
   snd_pcm_uframes_t _buffer_frames;             ///< number of frames in buffer?
   unsigned int      _buffer_time;               ///< amount of time in buffer?
+//  int               _file_type;                 ///< format of file
   snd_pcm_t*        _handle;                    ///< PCM handle
   PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
   snd_pcm_info_t*   _info;                      ///< pointer to information structure that corresponds to <i>_handle</i>
@@ -208,8 +208,6 @@ protected:
   pthread_t         _thread_id;                 ///< ID for the thread that plays the buffer
   unsigned int      _thread_number;             ///< number of the thread currently being used
   unsigned int      _time_limit;                ///< number of seconds to record
-  
-  bool              _valid { false };           ///< has the object been initialised?
 
 // stuff for bext extension
 #if 0
@@ -226,10 +224,6 @@ protected:
   snd_pcm_sframes_t (*_writei_func)(snd_pcm_t *handle, const void *buffer, snd_pcm_uframes_t size);     ///< function to write interleaved frames
   snd_pcm_sframes_t (*_readn_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);             ///< function to read non-interleaved frames
   snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);            ///< function to write non-interleaved frames
-
-// useful for debugging; otherwise not necessary
-  FILE*             _log_fp { nullptr };    // file pointer for logging purposes
-  snd_output_t *    _log_output_p { nullptr };
 
 /// Declare, but do not define, copy constructor
   audio_recorder(const audio_recorder&);
@@ -264,11 +258,6 @@ protected:
 */
   static void* _static_capture(void*);
 
-  inline void _audio_log_message(const std::string& msg) 
-  { if (_log_fp)
-      fwrite(msg.c_str(), msg.size(), 1, _log_fp); 
-  }
-
 public:
 
 /// constructor
@@ -285,7 +274,7 @@ public:
     _period_size_in_frames(0),
     _monotonic(false),                        // device cannot do monotonic timestamps
     _n_channels(1),                           // monophonic
-    _open_mode(0),                            // 0 => blocking -- wait for values; SND_PCM_NONBLOCK => non-blocking
+    _open_mode(0),                            // blocking
     _pcm_name("default"s),
     _period_frames(0),
     _period_time(0),
@@ -304,12 +293,7 @@ public:
   { }
 
 /// destructor
-  inline virtual ~audio_recorder(void)
-  { if (_log_fp)
-      fclose(_log_fp);
-      
-    _log_fp = nullptr;
-  }
+  inline virtual ~audio_recorder(void) = default;
 
   READ_AND_WRITE(base_filename);            ///< base name of output file
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds
@@ -317,8 +301,7 @@ public:
   READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle
   READ(recording);                          ///< whether the recorder is currently recording
   READ_AND_WRITE(samples_per_second);       ///< number of samples per second
-  READ(valid);                              ///< has the pobject been initialised?
-  
+
 // stuff for bext extension
 #if 0
   READ_AND_WRITE(description);
@@ -332,9 +315,6 @@ public:
 
 /// abort recording
   void abort(void);
-
-/// create and open log
-  void log(const std::string& filename);
 
 /*! \brief          Set maximum duration
     \param  secs    maximum duration, in seconds
