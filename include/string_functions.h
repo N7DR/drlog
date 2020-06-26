@@ -783,6 +783,16 @@ const std::string remove_trailing_comment(const std::string& str, const std::str
 inline const std::string delimit(const std::string& str, const std::string& delim_1, const std::string& delim_2)
   { return (delim_1 + str + delim_2); }
 
+/*! \brief              Perform a case-insensitive search for a substring
+    \param  str         string to search
+    \param  target      substring for which to search
+    \param  start_posn  location in <i>str</i> at which to start the search
+    \return             position of the first character in <i>target</i> in <i>str</i>
+    
+    Returns string::npos if <i>target</i> cannot be found
+*/
+const size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn = 0);
+
 // -------------------------------------- Errors  -----------------------------------
 
 ERROR_CLASS(string_function_error);     ///< string_function error

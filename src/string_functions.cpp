@@ -1138,3 +1138,22 @@ const string remove_trailing_comment(const string& str, const string& comment_st
 
   return ( (posn == string::npos) ? str : remove_trailing_spaces(substring(str, 0, posn)) );
 }
+
+/*! \brief              Perform a case-insensitive search for a substring
+    \param  str         string to search
+    \param  target      substring for which to search
+    \param  start_posn  location in <i>str</i> at which to start the search
+    \return             position of the first character in <i>target</i> in <i>str</i>
+    
+    Returns string::npos if <i>target</i> cannot be found
+*/
+const size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn)
+{ auto it = str.cbegin();
+
+  if (start_posn != 0)
+    advance(it, start_posn);
+  
+  const auto posn { search(it, str.cend (), target.cbegin(), target.cend(), [](const char ch1, const char ch2) { return toupper(ch1) == toupper(ch2); } ) };
+
+  return ( (posn == str.cend()) ? string::npos : distance(it, posn) + start_posn);
+}

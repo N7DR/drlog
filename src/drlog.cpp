@@ -10,6 +10,7 @@
     The main program for drlog
  */
 
+#include "adif3.h"
 #include "audio.h"
 #include "bandmap.h"
 #include "bands-modes.h"
