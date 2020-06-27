@@ -1,4 +1,4 @@
-// $Id: adif.h 13 2018-12-15 00:34:28Z n7dr $
+// $Id: adif3.h 158 2020-06-27 20:33:02Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -175,13 +175,26 @@ public:
   inline const std::string date(void) const
     { return value("QSO_DATE"s); }
 
+  inline const int idate(void) const        // YYYYMMDD
+    { return from_string<int>(date()); }
+
   inline const std::string mode(void) const
     { return value("MODE"s); }
 
   inline const std::string time(void) const
     { return value("TIME_ON"s); }
+    
+  inline const bool empty(void) const
+    { return _elements.empty(); }
 };
 
+/*! \brief         Is one ADIF3 record chronologically earlier than another
+    \param  rec1   first record
+    \param  rec2   second record
+    \return        whether <i>record1</i> is chronologically before <i>record2</i> 
+*/
+const bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2);
+  
 // ---------------------------------------------------  adif3_file -----------------------------------------
 
 /*! \class  adif3_file
@@ -198,12 +211,18 @@ public:
 
 // construct from file name
   adif3_file(const std::string& filename);
+
+  adif3_file(const std::vector<std::string>& path, const std::string& filename);
   
 // is a QSO present? -1 => no, otherwise the index number
   const int is_present(const adif3_record& rec) const; 
   
   const adif3_record get_record(const adif3_record& rec) const; 
   
+  const std::vector<adif3_record> matching_qsos(const std::string& callsign, const std::string& b, const std::string& m) const;
+
+  const std::vector<adif3_record> matching_qsos(const std::string& callsign) const;
+
 };
 
 /// return position at which to start processing the body of the file

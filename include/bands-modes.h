@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 155 2020-04-01 18:45:34Z  $
+// $Id: bands-modes.h 158 2020-06-27 20:33:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -72,6 +72,19 @@ static std::map<std::string, BAND> BAND_FROM_NAME { { "160"s, BAND_160 },
                                                     { "10"s,  BAND_10 }
                                                   };                    ///< map a band name to a band
 
+static std::map<std::string, BAND> BAND_FROM_ADIF3_NAME { { "160m"s, BAND_160 },
+                                                          { "80m"s,  BAND_80 },
+                                                          { "60m"s,  BAND_60 },
+                                                          { "40m"s,  BAND_40 },
+                                                          { "30m"s,  BAND_30 },
+                                                          { "20m"s,  BAND_20 },
+                                                          { "17m"s,  BAND_17 },
+                                                          { "15m"s,  BAND_15 },
+                                                          { "12m"s,  BAND_12 },
+                                                          { "10m"s,  BAND_10 }
+                                                        };                    ///< map an ADIF3 band to a band
+
+
 /// modes that drlog knows about
 enum MODE { MODE_CW = 0,
             MODE_SSB,
@@ -110,6 +123,27 @@ static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
                                                         };
 
 using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band and mode
+
+/// define a hash function for bandmode
+// http://stackoverflow.com/questions/13485979/hash-function-of-unordered-set/13486174#13486174
+// http://www.cplusplus.com/reference/functional/hash/
+// https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
+namespace std
+{ template <>
+  struct hash< bandmode >
+
+  { using result_type = size_t;
+
+    result_type operator()( const bandmode& k ) const
+    { result_type res { 17 };
+            
+      res = res * 31 + hash<BAND>()( k.first );
+      res = res * 31 + hash<MODE>()( k.second );
+      
+      return res;
+    }
+  };
+}
 
 // forward declaration
 class frequency;

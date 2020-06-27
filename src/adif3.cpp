@@ -387,6 +387,22 @@ const bool adif3_record::value(const string& field_name, const string& field_val
   return inserted;
 }
 
+/*! \brief         Is one ADIF3 record chronologically earlier than another
+    \param  rec1   first record
+    \param  rec2   second record
+    \return        whether <i>record1</i> is chronologically before <i>record2</i> 
+*/
+const bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
+{ if (rec1.date() < rec2.date())
+    return true;
+    
+  if (rec2.date() < rec1.date())
+    return false;
+    
+// same date
+  return (rec1.time() < rec2.time());
+}
+
 // ---------------------------------------------------  adif3_file -----------------------------------------
 
 /*! \class  adif3_file
@@ -410,11 +426,22 @@ adif3_file::adif3_file(const string& filename)
   }
 }
 
+adif3_file::adif3_file(const vector<string>& path, const string& filename)
+{ for (const auto& this_path : path)
+  { try
+    { *this = move(adif3_file(this_path + "/"s + filename));
+      return;
+    }
+
+    catch (...)
+    {
+    }
+  }
+}
+
 // is a QSO present? -1 => no, otherwise the index number
 const int adif3_file::is_present(const adif3_record& rec) const
-{ //bool found_it = false;
-
-  for (size_t n = 0; /* !found_it and */ n < size(); ++n)
+{ for (size_t n = 0; /* !found_it and */ n < size(); ++n)
   { const adif3_record& this_rec = (*this)[n];
   
     const bool found_it = ( (this_rec.callsign() == rec.callsign()) and
@@ -447,6 +474,29 @@ const adif3_record adif3_file::get_record(const adif3_record& rec) const
   }
   
   return adif3_record();        // return empty record
+}
+
+const std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, const string& b, const string& m) const
+{ vector<adif3_record> rv;
+
+  const auto [begin_it, end_it] = _map_data.equal_range(callsign);
+  
+  for_each(begin_it, end_it, [=, &rv](const auto& map_entry) 
+    { if ( (map_entry.second.band() == b) and (map_entry.second.mode() == m) ) 
+        rv.push_back(map_entry.second); 
+    });
+  
+  return rv;
+}
+
+const std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) const
+{ vector<adif3_record> rv;
+
+  const auto [begin_it, end_it] = _map_data.equal_range(callsign);
+  
+  for_each(begin_it, end_it, [=, &rv](const auto& map_entry) { rv.push_back(map_entry.second); });
+  
+  return rv;
 }
 
 /// return position at which to start processing the body of the file
