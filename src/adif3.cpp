@@ -311,20 +311,16 @@ size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
     
   if (posn_2 == string::npos)        // could not find end-of-record marker
     return string::npos;
-    
- // cout << posn_1 << ", " << posn_2 << endl;
-  
- // cout << "string: " << str.substr(posn_1, posn_2 - posn_1 + 1) << endl;
   
 //  string record_str { str.substr(posn_1, posn_2 - posn_1 - 5) };
   
-  const size_t rv = ( (posn_2 + 1) >= str.length() ? string::npos : posn_2 + 1);
+  const size_t rv { ( (posn_2 + 1) >= str.length() ? string::npos : posn_2 + 1) };
   
 //  cout << "rv = " << rv << endl;
   
 //  cout << "char = " << str[posn_2] << endl;
   
-  size_t start_posn = posn_1;
+  size_t start_posn { posn_1 };
   
   while (start_posn <= posn_2)
   { adif3_field element;

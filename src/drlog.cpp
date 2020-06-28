@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 158 2020-06-27 20:33:02Z  $
+// $Id: drlog.cpp 159 2020-06-28 17:27:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -8889,19 +8889,19 @@ void adif3_build_old_log(void)
       for (const adif3_record& rec : old_adif3_log)
       { const string callsign { rec.callsign() };
 
-        ost << "whether to process: " << boolalpha << !(processed_calls < callsign) << endl;
+   //     ost << "whether to process: " << boolalpha << !(processed_calls < callsign) << endl;
 
         if (!(processed_calls < callsign))        // if not yet processed this call
-        { ost << "Processing" << endl;
+        { //ost << "Processing" << endl;
 
           vector<adif3_record> matching_qsos { old_adif3_log.matching_qsos(callsign) };
         
-          ost << "Number of matching QSOs: " << matching_qsos.size() << endl;
+          //ost << "Number of matching QSOs: " << matching_qsos.size() << endl;
 
           if (!matching_qsos.empty())       // should always be true
           { sort(matching_qsos.begin(), matching_qsos.end(), compare_adif3_records);    // in chronological order
 
-            ost << "QSOs sorted into chronological order" << endl;
+            //ost << "QSOs sorted into chronological order" << endl;
 
             unordered_map<bandmode, vector<adif3_record>> bm_records;
 
@@ -8933,11 +8933,11 @@ void adif3_build_old_log(void)
   //              forward_date_limit = to_string(from_string<int>(date_last_marked_qso) + (context.limit_old_qsos() * 10000));    // forward ten years
                  forward_idate_limit = idate_last_marked_qso + (context.limit_old_qsos() * 10000);    // forward ten years
      
-              ost << "forward date limit = " << forward_idate_limit << endl;
+              //ost << "forward date limit = " << forward_idate_limit << endl;
       
                 rec_index = first_qso_after(vrec, forward_idate_limit);
       
-              ost << "index of first QSO after forward date limit = " << rec_index.second << endl;
+              //ost << "index of first QSO after forward date limit = " << rec_index.second << endl;
 
 //      cout << "date next marked qso = " << next_marked_qso.date() << endl;
       
@@ -8950,13 +8950,13 @@ void adif3_build_old_log(void)
               } while ( (forward_idate_limit < itoday) and (rec_index.second != -1) );
 
               if (last_marked_qso.date() >= cutoff_date)  // one or more QSOs are sufficiently recent to add to the old log
-              { ost << "Adding one or more QSOs to olog" << endl;
+              { //ost << "Adding one or more QSOs to olog" << endl;
 
                 for (int n = index_last_marked_qso; n < static_cast<int>(vrec.size()); ++n)
                   add_record_to_olog(vrec[n]);
               }
-              else
-                ost << "Adding no QSOs to olog" << endl;
+//              else
+//                ost << "Adding no QSOs to olog" << endl;
             }
           }
           else  // no matching QSOs; should never happen
@@ -8965,7 +8965,7 @@ void adif3_build_old_log(void)
           }
         
           processed_calls.insert(callsign);
-          ost << "Inserted call: " << callsign << endl;
+ //         ost << "Inserted call: " << callsign << endl;
         }   // end of processing for this call; do nothing if already processed
       }
     }

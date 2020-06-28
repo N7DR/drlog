@@ -1,4 +1,4 @@
-// $Id: log.h 158 2020-06-27 20:33:02Z  $
+// $Id: log.h 159 2020-06-28 17:27:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -383,6 +383,7 @@ template <typename T>
 
 // -----------  old_log_record  ----------------
 
+#if 0
 /*! \class  old_log_record
     \brief  A record in an old ADIF log
 
@@ -409,6 +410,7 @@ public:
   READ_AND_WRITE(mode);             ///< mode
   READ_AND_WRITE(qsl_received);     ///< has a QSL been received?
 };
+#endif
 
 // -----------  old_log  ----------------
 
@@ -442,7 +444,6 @@ public:
     \param  n       number of QSLs from <i>call</i>
 */
   void n_qsls(const std::string& call, const unsigned int n);
-
 
 /*! \brief          Increment the number of QSLs from a particular callsign
     \param  call    callsign
