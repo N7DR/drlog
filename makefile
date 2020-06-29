@@ -30,8 +30,8 @@ CFLAGS = $(INCL) -D_REENTRANT -c -g3 -O0 -pipe -DLINUX -D_FILE_OFFSET_BITS=64 -f
 
 LINKFLAGS = $(LIBRARIES)
 
-include/adif.h : include/macros.h
-	touch include/adif.h
+include/adif3.h : include/macros.h include/string_functions.h include/x_error.h
+	touch include/adif3.h
 	
 include/audio.h : include/macros.h include/string_functions.h include/x_error.h
 	touch include/audio.h
@@ -144,8 +144,8 @@ include/trlog.h : include/bands-modes.h
 
 # x_error.h has no dependencies
 
-src/adif.cpp : include/adif.h include/string_functions.h
-	touch src/adif.cpp
+src/adif3.cpp : include/adif3.h 
+	touch src/adif3.cpp
 	
 src/audio.cpp : include/audio.h include/log_message.h include/string_functions.h
 	touch src/audio.cpp
@@ -267,8 +267,8 @@ src/version.cpp : include/version.h
 src/x_error.cpp : include/x_error.h
 	touch src/x_error.cpp
 	
-bin/adif.o : src/adif.cpp
-	$(CC) $(CFLAGS) -o $@ src/adif.cpp
+bin/adif3.o : src/adif3.cpp
+	$(CC) $(CFLAGS) -o $@ src/adif3.cpp
 
 bin/audio.o : src/audio.cpp
 	$(CC) $(CFLAGS) -o $@ src/audio.cpp
@@ -384,7 +384,7 @@ bin/version.o : src/version.cpp FORCE
 bin/x_error.o : src/x_error.cpp
 	$(CC) $(CFLAGS) -o $@ src/x_error.cpp
 
-bin/drlog : bin/adif.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
+bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
             bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
             bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
             bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
@@ -393,7 +393,7 @@ bin/drlog : bin/adif.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.
             bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
             bin/screen.o bin/socket_support.o bin/statistics.o bin/string_functions.o bin/trlog.o \
             bin/version.o bin/x_error.o
-	$(CC) $(LINKFLAGS) bin/adif.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
+	$(CC) $(LINKFLAGS) bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
 	bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
 	bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
 	bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \

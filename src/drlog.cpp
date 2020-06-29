@@ -99,8 +99,8 @@ deque<memory_entry> memories;
 // some forward declarations; others, that depend on these, occur later
 const string active_window_name(void);                                  ///< Return the name of the active window in printable form
 void         add_qso(const QSO& qso);                                   ///< Add a QSO into the all the objects that need to know about it
-void adif3_build_old_log(void);                       ///< build the old log from an ADIF3 file
-void adif3_build_old_log_ok(void);                       ///< build the old log from an ADIF3 file
+void         adif3_build_old_log(void);                                 ///< build the old log from an ADIF3 file
+//void adif3_build_old_log_ok(void);                       ///< build the old log from an ADIF3 file
 void         alert(const string& msg, const bool show_time = true);     ///< Alert the user
 void         allow_for_callsign_mults(QSO& qso);                        ///< Add info to QSO if callsign mults are in use; may change qso
 void         archive_data(void);                                        ///< Send data to the archive file
@@ -966,151 +966,7 @@ int main(int argc, char** argv)
 
 // is there a log of old QSOs?
     if (!context.old_adif_log_name().empty())
-//      build_old_log();
       adif3_build_old_log();
- #if 0     
-    { 
-// calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
-      const string        dts              { date_time_string() };
- //     const string        current_date_str { substring(dts, 0, 4) + substring(dts, 5, 2) + substring(dts, 8, 2) };                                         // YYYYMMDD
-      const string        old_date_str     { to_string((from_string<int>(substring(dts, 0, 4)) - context.limit_old_qsos())) + substring(dts, 5, 2) + substring(dts, 8, 2)   };   // minus limit_old_qsos years
-      const OLR_DATE_TYPE old_date         { from_string<OLR_DATE_TYPE>(old_date_str) };
-      const bool          limit_old_qsos   { context.limit_old_qsos() != 0 };  // whether to limit old qsos
-     
-      alert("reading old log file: "s + context.old_adif_log_name(), false);
-
-      vector<string> records;
-
-      try
-      { records = move(split_string( read_file(context.path(), context.old_adif_log_name()) , "<eor>"s + EOL));
-      }
-      
-      catch (const string_function_error& e)
-      { ost << "Unable to read old log file: " << context.old_adif_log_name() << "code = " << e.code() << ", reason = " << e.reason() << endl;
-        exit(-1);
-      }
-      
-      catch (...)
-      { ost << "Undefined error reading old log file: " << context.old_adif_log_name() << endl;
-        exit(-1);
-      }
-      
-      alert("read " + comma_separated_string(to_string(records.size())) + " ADIF records from file: " + context.old_adif_log_name(), false);
-      
-// the algorithm is simple, perhaps too much so:
-// if first QSO on a b/m was < N years ago, then add as normal
-// if it was > N years ago, then pretend that we have not had any before now
-
- //     using CBM = tuple<string /* callsign */, BAND, MODE>;  // call, band, mode -- need a hash function to create an unordered_map
-        
-      unordered_map<CBM, OLR_DATE_TYPE /* date */> first_qso_map;
-
-      auto first_qso_is_too_old = [=, &first_qso_map](const string& callsign, const BAND b, const MODE m)
-      { if (!limit_old_qsos)      // in case this wasn't tested before we got here
-          return false;
-          
-        const auto it { first_qso_map.find( { callsign, b, m } ) };
-          
-        if (it == first_qso_map.end())                                        // should never happen
-        { ost << "ERROR: PASSED END OF MAP IN FIRST_QSO_IS_TOO_OLD(): " << callsign << ", " << BAND_NAME[b] << ", " << MODE_NAME[m] << "; size = " << first_qso_map.size() << endl;
-          return false;
-        }
-          
-        const OLR_DATE_TYPE first_qso_date { it->second };
-        
-        return (first_qso_date < old_date);
-      };
-      
-// function to extract the value from an ADIF line, ignoring the last <i>offset</i> characters
-      auto adif_value = [](const string& this_line, const unsigned int offset = 0)
-        { //const vector<string> tokens { split_string(delimited_substring(this_line, '<', '>'), ":"s) };
-
-          if (const vector<string> tokens { split_string(delimited_substring(this_line, '<', '>'), ":"s) }; tokens.size() != 2)
-          { ost << "ERROR parsing old log line: " << this_line << endl;
-            return string();
-          }
-          else
-          { const size_t n_chars { from_string<size_t>(tokens[1]) };
-            const size_t posn    { this_line.find('>') };
-
-            return substring(this_line, posn + 1, n_chars - offset);
-          }
-        };
-
-      vector<old_log_record> old_log_records;       // accumulator for all the old records
-
-      for (const auto& record : records)
-      { const vector<string> lines { remove_empty_lines(remove_peripheral_spaces(to_lines( record ))) };
-
-        old_log_record rec;
-
-// place values into the record
-        for (const auto& line : lines)
-        { try
-          { if (starts_with(line, "<band"s))                                   // <band:3>20m
-              rec.band(BAND_FROM_NAME.at( adif_value(line, 1) ));              // don't include the "m" (and we assume that it *is* "m")
-
-            if (starts_with(line, "<call"s))                                   // <call:5>RZ3FW
-              rec.callsign( adif_value(line) );
-              
-            if (starts_with(line, "<qso_date"s))                               // <qso_date:8>20100718
-              rec.date( from_string<OLR_DATE_TYPE>(adif_value(line)) );
-
-            if (starts_with(line, "<mode"s))                                   // <mode:2>CW
-              rec.mode(MODE_FROM_NAME.at( adif_value(line) ));
-
-            if (starts_with(line, "<qsl_rcvd"s))                               // <qsl_rcvd:1>Y
-              rec.qsl_received( adif_value(line) == "Y"s);
-          }
-
-          catch (...)
-          { ost << "Error processing ADIF line: " << line << endl;
-            exit(-1);
-          }
-        }
- 
-        if (!rec.callsign().empty())                                        // the last record is likely to be empty
-        { old_log_records.push_back(rec);
-        
-          if (limit_old_qsos)
-          { const CBM  key { rec.callsign(), rec.band(), rec.mode() };
- //          const auto it  { first_qso_map.find(key) };
-        
-           // ost << "testing: " << rec.callsign().length() << ", " << rec.callsign() << ", band = " << BAND_NAME[rec.band()] << ", mode = " << MODE_NAME[rec.mode()] << ", date = " << rec.date() << endl;
-        
-            if (const auto it  { first_qso_map.find(key) }; it == first_qso_map.end())      // not in map; this is the first QSO
-            { first_qso_map.insert( { key, rec.date() } );
-            //  ost << "added to first qso map with date: " << rec.date() << endl;
-            }
-            else                                // already in map; replace if this one is older (should never happen with a chronologically sorted log)
-            { //ost << "already in first qso map" << endl;
-              if (rec.date() < it->second)
-                it->second = rec.date();
-            }
-          }
-        }
-      }
-      
-      //ost << "Size of first_qso_map = " << first_qso_map.size() << endl;
-
-// put only the required records into the old log
-      for (const auto& olr : old_log_records)
-      { if (!limit_old_qsos or !first_qso_is_too_old(olr.callsign(), olr.band(), olr.mode())) // treat as normal; else do nothing
-        { //ost << "adding: " << olr.callsign() << ", band = " << BAND_NAME[olr.band()] << ", mode = " << MODE_NAME[olr.mode()] << endl;
-          
-          olog.increment_n_qsos(olr.callsign());
-          olog.increment_n_qsos(olr.callsign(), olr.band(), olr.mode());
-
-          if (olr.qsl_received())
-          { olog.increment_n_qsls(olr.callsign());
-            olog.qsl_received(olr.callsign(), olr.band(), olr.mode());
-          }
-        }
-      }
-
-      win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
-    }
-#endif
 
 // make some things available file-wide
 // make callsign parser available now that we can create it
@@ -1232,11 +1088,8 @@ int main(int argc, char** argv)
       FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
-//    { //const int cull_function { context.bandmap_cull_function() };
-
     if (const int cull_function { context.bandmap_cull_function() }; cull_function)
       FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
-//    }
 
 // initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function
@@ -9082,27 +8935,6 @@ void adif3_build_old_log_ok(void)
 
               for (int n = index_last_marked_qso; n < static_cast<int>(matching_qsos.size()); ++n)
               { add_record_to_olog(matching_qsos[n]);
-
-#if 0
-const adif3_record& arec { matching_qsos[n] };
-                
-// build an old_log_record
-                old_log_record rec;
-                   
-                rec.band(BAND_FROM_ADIF3_NAME[arec.band()]);
-                rec.callsign(arec.callsign());
-                rec.date(from_string<OLR_DATE_TYPE>(arec.date()));
-                rec.mode(MODE_FROM_NAME[arec.mode()]);
-                rec.qsl_received(arec.confirmed());
-
-                olog.increment_n_qsos(rec.callsign());
-                olog.increment_n_qsos(rec.callsign(), rec.band(), rec.mode());
-
-                if (rec.qsl_received())
-                { olog.increment_n_qsls(rec.callsign());
-                  olog.qsl_received(rec.callsign(), rec.band(), rec.mode());
-                }
-#endif
               }
             }
             else
@@ -9123,38 +8955,6 @@ const adif3_record& arec { matching_qsos[n] };
       else                      // no limitation to old QSOs, so add them all
       { //for (const adif3_record& arec : old_adif3_log)
         add_record_to_olog(rec);
-#if 0
-        { const string callsign { rec.callsign() };
-          const BAND   b        { BAND_FROM_ADIF3_NAME[rec.band()] };
-          const MODE   m        { MODE_FROM_NAME[rec.mode()] };
-
-          olog.increment_n_qsos(callsign);
-          olog.increment_n_qsos(callsign, b, m);
-
-          if (rec.confirmed())
-          { olog.increment_n_qsls(callsign);
-            olog.qsl_received(callsign, b, m);
-          }
-
-#if 0
-          old_log_record olr;
-                   
-          olr.band(BAND_FROM_ADIF3_NAME[rec.band()]);
-          olr.callsign(rec.callsign());
-          olr.date(from_string<OLR_DATE_TYPE>(rec.date()));
-          olr.mode(MODE_FROM_NAME[rec.mode()]);
-          olr.qsl_received(rec.confirmed());
-
-          olog.increment_n_qsos(olr.callsign());
-          olog.increment_n_qsos(olr.callsign(), olr.band(), olr.mode());
-
-          if (olr.qsl_received())
-          { olog.increment_n_qsls(olr.callsign());
-            olog.qsl_received(olr.callsign(), olr.band(), olr.mode());
-          }
-#endif
-        }
-#endif        
       }
       
     }

@@ -124,6 +124,7 @@ static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
 
 using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band and mode
 
+#if 0
 /// define a hash function for bandmode
 // http://stackoverflow.com/questions/13485979/hash-function-of-unordered-set/13486174#13486174
 // http://www.cplusplus.com/reference/functional/hash/
@@ -144,6 +145,7 @@ namespace std
     }
   };
 }
+#endif
 
 // forward declaration
 class frequency;

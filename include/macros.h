@@ -1000,4 +1000,25 @@ template <typename T>
 inline const int ifloor(T val)
   { return static_cast<int>(floor(val)); }
 
+// define a hash function for pairs
+// http://stackoverflow.com/questions/13485979/hash-function-of-unordered-set/13486174#13486174
+// http://www.cplusplus.com/reference/functional/hash/
+// https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
+namespace std
+{ template <typename T, typename U>
+  struct hash< std::pair<T, U> >
+
+  { using result_type = size_t;
+
+    result_type operator()( const std::pair<T, U>& k ) const
+    { result_type res { 17 };
+            
+      res = res * 31 + hash<T>()( k.first );
+      res = res * 31 + hash<U>()( k.second );
+      
+      return res;
+    }
+  };
+}
+
 #endif    // MACROS_H
