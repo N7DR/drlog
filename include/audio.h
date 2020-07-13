@@ -190,6 +190,7 @@ protected:
   snd_pcm_t*        _handle;                    ///< PCM handle
   PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
   snd_pcm_info_t*   _info;                      ///< pointer to information structure that corresponds to <i>_handle</i>
+  bool              _initialised { false };     ///< has the hardware been initialised, ready for reading?
   int64_t           _max_file_time;             ///< maximum duration in seconds
   size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
@@ -296,6 +297,7 @@ public:
   inline virtual ~audio_recorder(void) = default;
 
   READ_AND_WRITE(base_filename);            ///< base name of output file
+  READ(initialised);                        ///< has the hardware been initialised, ready for reading?
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds
   READ_AND_WRITE(n_channels);               ///< number of channels to record
   READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle

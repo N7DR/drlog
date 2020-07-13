@@ -10,10 +10,7 @@
 
 /*! \file   rig_interface.h
 
-    Classes and functions related to transferring information
-    between the computer and the rig.
-
-    The more I spend time here, the more I think that it was a mistake to use hamlib :-(
+    Classes and functions related to transferring information between the computer and the rig.
 */
 
 #ifndef RIG_INTERFACE_H
@@ -78,6 +75,15 @@ protected:
   rig_status                                    _status;                        ///< most recent rig frequency and mode from the periodic poll
   pthread_t                                     _thread_id;                     ///< ID for the thread that polls the rig for status
 
+// protected pointers to functions
+
+/*! \brief          Pointer to function used to alert the user to an error
+    \param  msg     message to be presented to the user
+*/
+  void (*_error_alert_function)(const std::string& msg) { nullptr };
+
+// protected functions
+
 /*! \brief      Thread function to poll rig for status, forever
     \param  vp  unused (should be nullptr)
     \return     nullptr
@@ -101,7 +107,7 @@ protected:
 /*! \brief          Pointer to function used to alert the user to an error
     \param  msg     message to be presented to the user
 */
-  void (*_error_alert_function)(const std::string& msg);
+//  void (*_error_alert_function)(const std::string& msg);
 
 /*! \brief       Alert the user with a message
     \param  msg  message for the user
@@ -118,10 +124,8 @@ public:
     _last_commanded_frequency(),          // no last-commanded frequency
     _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
     _last_commanded_mode(MODE_CW),        // last commanded mode was CW
-//    _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
     _port_name(),                         // no default port
     _rigp(nullptr),                       // no rig connected
-//    _rig_connected(false),                // no rig connected
     _rig_poll_interval(1000),             // poll once per second
     _status(frequency(14000), MODE_CW)    // 14MHz, CW
   { }
@@ -223,7 +227,7 @@ public:
             of any of this, not all backends are guaranteed to behave the same.
 
             Hence we use the explicit K3 command, since at least we know what that is supposed to do on that rig.
-            (With the caveat that since there is no proper transactional processing of K3 commands, any of all of
+            (With the caveat that, because there is no proper transactional processing of K3 commands, any or all of
             this could fail silently. All we can do is to throw the commands at the rig and hope that they work.)
 */
   void split_enable(void);
@@ -270,19 +274,19 @@ public:
 
 /*! \brief  Turn rit on
 
-    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
   void rit_enable(void);
 
 /*! \brief  Turn rit off
 
-    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
   void rit_disable(void);
 
 /*! \brief  Turn rit off
 
-    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
   inline void disable_rit(void)
     { rit_disable(); }
@@ -306,19 +310,19 @@ public:
 
 /*! \brief  Turn xit on
 
-    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
+    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
   void xit_enable(void);
 
 /*! \brief  Turn xit off
 
-    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
+    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
   void xit_disable(void);
 
 /*! \brief  Turn xit off
 
-    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
+    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
   inline void disable_xit(void)
     { xit_disable(); }
@@ -328,7 +332,7 @@ public:
 
 /*! \brief  Turn xit on
 
-    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
+    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
 */
   inline void enable_xit(void)
     { xit_enable(); }

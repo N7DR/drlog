@@ -99,7 +99,7 @@ public:
     \return         whether <i>call</i> is present in the database
 */
   inline const bool contains(const std::string& call) const
-    { return (_db[ _to_valid_size(call.length()) ] < call); }
+    { return (_db[ _to_valid_size(call.length()) ] > call); }
   
 /*! \brief          Return matches
     \param  key     basic call against which to compare

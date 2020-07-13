@@ -131,12 +131,12 @@ const vector<string> bandmap_filter_type::filter(void) const
      if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
-{ vector<string>* vs_p { ( (CONTINENT_SET < str) ? &_continents : &_prefixes ) };          // create pointer to correct vector
+{ vector<string>* vs_p { ( (CONTINENT_SET > str) ? &_continents : &_prefixes ) };          // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss.insert(continent_or_prefix); } );  // create a copy of current values
 
-  if (ss < str)              // remove a value
+  if (ss > str)              // remove a value
     ss.erase(str);
   else                       // add a value
     ss.insert(str);
@@ -550,7 +550,7 @@ void bandmap::operator+=(bandmap_entry& be)
   const string& callsign               { be.callsign() };
 
 // do not add if it's already been done recently, or matches several other conditions
-  bool add_it { !(_do_not_add < callsign) };
+  bool add_it { !(_do_not_add > callsign) };
 
   if (add_it)
     add_it = be.freq().is_within_ham_band();

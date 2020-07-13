@@ -550,6 +550,7 @@ void audio_recorder::initialise(void)
   _hw_params = rhwparams;
 
   _set_params();
+  _initialised = true;      // flag that we don't need to initialise next time we start recording
 }
 
 /// public function to capture the audio

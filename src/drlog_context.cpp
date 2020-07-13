@@ -1404,7 +1404,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     if (actual_modes.size() == 1)
     { try
-      { if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ) < _cabrillo_qso_template)
+      { if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ) > _cabrillo_qso_template)
         {  const string key { _cabrillo_qso_template + ( (actual_modes[0] == "CW"s) ?  " CW"s : " SSB"s) };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);

@@ -462,7 +462,7 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
 const bool monitored_posts::is_monitored(const std::string& callsign) const
 { SAFELOCK(monitored_posts);
 
-  return (_callsigns < callsign);
+  return (_callsigns > callsign);
 }
 
 /*! \brief          Test a post, and possibly add to <i>_entries</i>

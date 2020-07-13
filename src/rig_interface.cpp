@@ -49,7 +49,7 @@ void alert(const string& msg, const bool show_time = true);     ///< alert the u
  *
  * Another issue is that there is simply no good detailed description of the expected behaviour corresponding to many hamlib
  * functions (for example, the split-related functions -- e.g., CURR_VFO is defined simply as "the current VFO", but it plainly is not,
- * as a few test function calls quickly demonstrate); nor, indeed, is there a even description of the theoretical transceiver that is modelled by
+ * as a few test function calls quickly demonstrate); nor, indeed, is there even a description of the theoretical transceiver that is modelled by
  * hamlib. There doesn't even appear to be a guarantee that if a function is "successful" (i.e., does not return an error), it
  * will behave identically on all rigs.
  *
@@ -72,8 +72,8 @@ void alert(const string& msg, const bool show_time = true);     ///< alert the u
  *   6. What is the precise definition of "busy"?
  *
  *   All in all, the only thing to do seems to be to throw commands at the K3 and hope that they stick. It is impractical to
- *   check each time whether a command was executed, because the documentation says that certain (undefined) commands might take as
- *   long as half a second to execute if the K3 is "busy".
+ *   check each time whether a command was executed, because the documentation says that certain commands (which it does not define)
+ *   might take as long as half a second to execute if the K3 is "busy".
  *
  *   The fundamental problem in all this is that the protocol has no concept of a transaction. It is unclear why simple 1980s-era
  *   protocols are still being used to exchange information with rigs. Baud rates now are fast enough that, even for serial lines, real
@@ -128,20 +128,6 @@ void* rig_interface::_static_poll_thread_function(void* this_p)
 /*! \class  rig_interface
     \brief  The interface to a rig
 */
-
-/// default constructor
-//rig_interface::rig_interface (void) :
-//  _error_alert_function(nullptr),       // no default error handler
-//  _last_commanded_frequency(),          // no last-commanded frequency
-//  _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
-//  _last_commanded_mode(MODE_CW),        // last commanded mode was CW
-//  _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
-//  _port_name(),                         // no default port
-//  _rigp(nullptr),                       // no rig connected
-//  _rig_connected(false),                // no rig connected
-//  _rig_poll_interval(1000),             // poll once per second
-//  _status(frequency(14000), MODE_CW)    // 14MHz, CW
-//{ }
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
@@ -252,41 +238,39 @@ void rig_interface::rig_mode(const MODE m)
 
     int status;
 
-    {
 // hamlib, for reasons I can't even guess at, sets both the mode and the bandwidth in a single command
-      pbwidth_t tmp_bandwidth;
-      rmode_t tmp_mode;
+    pbwidth_t tmp_bandwidth;
+    rmode_t tmp_mode;
+
+    { SAFELOCK(_rig);
+      status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
+    }
+
+    if (status != RIG_OK)
+      _error_alert("Error getting mode prior to setting mode");
+    else
+    { switch (tmp_mode)
+      { case RIG_MODE_CW:
+          last_cw_bandwidth = tmp_bandwidth;
+          break;
+
+        case RIG_MODE_LSB:
+        case RIG_MODE_USB:
+          last_ssb_bandwidth = tmp_bandwidth;
+          break;
+
+        default:
+          break;
+      }
 
       { SAFELOCK(_rig);
-        status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
+        const pbwidth_t new_bandwidth { ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth ) };
+
+        status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
       }
 
       if (status != RIG_OK)
-        _error_alert("Error getting mode prior to setting mode");
-      else
-      { switch (tmp_mode)
-        { case RIG_MODE_CW:
-            last_cw_bandwidth = tmp_bandwidth;
-            break;
-
-          case RIG_MODE_LSB:
-          case RIG_MODE_USB:
-            last_ssb_bandwidth = tmp_bandwidth;
-            break;
-
-          default:
-            break;
-        }
-
-        { SAFELOCK(_rig);
-          const pbwidth_t new_bandwidth { ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth ) };
-
-          status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
-        }
-
-        if (status != RIG_OK)
-          _error_alert("Error setting mode"s);
-      }
+        _error_alert("Error setting mode"s);
     }
   }
 }
@@ -302,9 +286,9 @@ const frequency rig_interface::rig_frequency(void)
 
     SAFELOCK(_rig);
 
-    const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) };
+//    const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) }; status != RIG_OK)
     { _error_alert("Error getting frequency"s);
       return _last_commanded_frequency;
     }
@@ -322,9 +306,9 @@ const frequency rig_interface::rig_frequency_b(void)
 
     SAFELOCK(_rig);
 
-    const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) };
+ //   const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) }; status != RIG_OK)
     { _error_alert("Error getting frequency of VFO B"s);
       return _last_commanded_frequency_b;
     }
@@ -399,9 +383,9 @@ const bool rig_interface::split_enabled(void)
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
 
-    const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) };
+ //   const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) };
 
-    if (transmit_vfo.length() >= 4)
+    if (const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) }; transmit_vfo.length() >= 4)
       return (transmit_vfo[2] == '1');
 
     _error_alert("Unable to determine whether rig is SPLIT"s);
@@ -578,7 +562,7 @@ const int rig_interface::rit(void)
 
 /*! \brief  Turn rit on
 
-    This is a kludge, since hamlib brilliantly equates an offset of zero with rit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
 void rig_interface::rit_enable(void)
 { if (_model == RIG_MODEL_K3)
@@ -589,7 +573,7 @@ void rig_interface::rit_enable(void)
 
 /*! \brief  Turn rit off
 
-    This is a kludge, since hamlib brilliantly equates an offset of zero with rit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
 void rig_interface::rit_disable(void)
 { if (_model == RIG_MODEL_K3)
@@ -619,7 +603,7 @@ const bool rig_interface::rit_enabled(void)
 
 /*! \brief  Turn xit on
 
-    This is a kludge, since hamlib brilliantly equates an offset of zero with xit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with xit turned off (!)
 */
 void rig_interface::xit_enable(void)
 { if (_model == RIG_MODEL_K3)
@@ -630,7 +614,7 @@ void rig_interface::xit_enable(void)
 
 /*! \brief  Turn xit off
 
-    This is a kludge, since hamlib brilliantly equates an offset of zero with xit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with xit turned off (!)
 */
 void rig_interface::xit_disable(void)
 { if (_model == RIG_MODEL_K3)

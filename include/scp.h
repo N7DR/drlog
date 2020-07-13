@@ -86,7 +86,7 @@ public:
 
 /// is a call in the database?
   inline const bool contains(const std::string& call)
-    { return (call.empty() ? false : (_db[substring(call, 0, 2)] < call) ); }
+    { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
 
 /// return SCP matches
   const SCP_SET operator[](const std::string& key);

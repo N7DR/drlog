@@ -177,7 +177,7 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
   if (possible)
   { const char lchar { last_char(str) };
 
-    possible = isdigit(lchar) or (legal_prec < lchar);
+    possible = isdigit(lchar) or (legal_prec > lchar);
   }
 
   return possible;
@@ -763,7 +763,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     const TRIPLET& t { tuple_deque[0] };    // first received field we haven't been able to use, even tentatively
 
 // find first received field that's a match for any exchange field and that we haven't used
-    const auto cit { find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } ) };
+    const auto cit { find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
 
     if (cit != exchange_template.cend())
     { processed_field_on_last_pass = true;
@@ -796,7 +796,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       FOR_ALL(tuple_deque, [this] (TRIPLET& t) { _print_tuple(t); } );
 
       const TRIPLET& t   { tuple_deque[0] };
-      const auto     cit { find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) < ef.name()); } ) };
+      const auto     cit { find_if(exchange_template.cbegin(), exchange_template.cend(), [=] (const exchange_field& ef) { return ( FIELD_NAMES(t) > ef.name()); } ) };
 
       if (cit == exchange_template.cend())
       { if ( !require_dot_in_replacement_call and (_replacement_call.empty()) )             // maybe test for replacement call
@@ -849,7 +849,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       }
 
 // we might revoke the validity flag here, if we spot a problem
-      if (!found_map and !(optional_field_names < name))
+      if (!found_map and !(optional_field_names > name))
       { ost << "WARNING: unable to find map assignment for key = " << name << endl;
         _valid = false;
       }
@@ -1313,7 +1313,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
     string rv;
 
-    if (!drm_line.empty() and ( (countries < location_db.canonical_prefix(callsign)) or starts_with(callsign, "RI1AN"s)) )
+    if (!drm_line.empty() and ( (countries > location_db.canonical_prefix(callsign)) or starts_with(callsign, "RI1AN"s)) )
     { rv = drm_line.qth();
 
       if (field_name == "RD2"s and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
@@ -1741,7 +1741,7 @@ const bool EFT::is_legal_value(const string& str) const
     return true;
 
   if (!_values.empty())
-    return (_legal_non_regex_values < str);
+    return (_legal_non_regex_values > str);
 
   return false;
 }

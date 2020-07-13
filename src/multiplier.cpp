@@ -51,7 +51,7 @@ void multiplier::remove_known(const string& str)
 const bool multiplier::is_known(const string& str) const
 { SAFELOCK(multiplier);
 
-  return (_used ? (_known < str) : false);
+  return (_used ? (_known > str) : false);
 }
 
 /*! \brief          Add a worked multiplier
@@ -123,7 +123,7 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
 
     for (int n = MIN_BAND; n < MAX_BAND; ++n)
 //      present = present or (_worked[m_nr][n] < str);
-      present |= (_worked[m_nr][n] < str);
+      present |= (_worked[m_nr][n] > str);
 
     if (!present)
       _worked[m_nr][ANY_BAND].erase(str);
@@ -133,13 +133,13 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
 
     for (int n = MIN_MODE; n < MAX_MODE; ++n)
 //      present = present or (_worked[n][b_nr] < str);
-      present |= (_worked[n][b_nr] < str);
+      present |= (_worked[n][b_nr] > str);
 
     if (!present)
       _worked[ANY_MODE][b_nr].erase(str);
 
 // is it still present in any band and any mode?
-    present = ( (_worked[m_nr][ANY_BAND] < str) or (_worked[ANY_MODE][b_nr] < str) );
+    present = ( (_worked[m_nr][ANY_BAND] > str) or (_worked[ANY_MODE][b_nr] > str) );
 
     if (!present)
       _worked[ANY_MODE][ANY_BAND].erase(str);

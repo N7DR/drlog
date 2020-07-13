@@ -692,7 +692,7 @@ public:                                                                         
     \return     Whether <i>t</i> is a member of <i>s</i>
 */
 template <class T>
-const bool operator<(const std::set<T>& s, const T& v)
+const bool operator>(const std::set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
 /*! \brief      Is an object a member of an unordered set?
@@ -701,8 +701,42 @@ const bool operator<(const std::set<T>& s, const T& v)
     \return     Whether <i>t</i> is a member of <i>s</i>
 */
 template <class T>
-const bool operator<(const std::unordered_set<T>& s, const T& v)
+const bool operator>(const std::unordered_set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
+
+template <class K, class V>
+/*! \brief      Is an object a key of a map, and if so return the value
+    \param  m   map to be searched
+    \param  k   target key
+    \return     Whether <i>k</i> is a member of <i>m</i> and, if so the corresponding value
+    
+    // possibly should return variant instead
+*/
+std::pair<bool, V> operator>(const std::map<K, V>& m, const K& k) requires std::is_default_constructible<V>::value == true
+{ const auto cit { m.find(k) };
+
+  if (cit == m.cend())
+    return { false, V() };  // needs default constructor for K
+    
+  return { true, cit->second };
+}
+
+template <class K, class V>
+/*! \brief      Is an object a key of an unordered map, and if so return the value
+    \param  m   unordered map to be searched
+    \param  k   target key
+    \return     Whether <i>k</i> is a member of <i>m</i> and, if so the corresponding value
+    
+    // possibly should return variant instead
+*/
+std::pair<bool, V> operator>(const std::unordered_map<K, V>& m, const K& k) requires std::is_default_constructible<V>::value == true
+{ const auto cit { m.find(k) };
+
+  if (cit == m.cend())
+    return { false, V() };  // needs default constructor for V
+    
+  return { true, cit->second };
+}
 
 /*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
     \param  original_mapping    original mapping

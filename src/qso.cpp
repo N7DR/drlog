@@ -197,7 +197,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     if (!processed and (starts_with(name, "received-"s)))
     { const string name_upper { to_upper(name.substr(9)) };
 
-      if (!(rules.all_known_field_names() < name_upper))
+      if (!(rules.all_known_field_names() > name_upper))
       { ost << "Warning: unknown exchange field: " << name_upper << " in QSO: " << *this << endl;
         alert("Unknown exch field: "s + name_upper);
       }
@@ -868,6 +868,7 @@ const string QSO::log_line(void)
                                                         { "RST"s,       3 },
                                                         { "SECTION"s,   3 },
                                                         { "SKCCNO"s,    6 },
+                                                        { "SOCIETY"s,   5 },
                                                         { "SPC"s,       3 },
                                                         { "SSBPOWER"s,  4 },
                                                         { "UKEICODE"s,  2 },

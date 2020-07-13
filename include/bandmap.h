@@ -1079,7 +1079,7 @@ public:
 */
   inline const bool is_recent_call(const std::string& callsign)
     { SAFELOCK(_bandmap);
-      return (_recent_calls < callsign);
+      return (_recent_calls > callsign);
     }
 
 /*!  \brief             Add a call to the do-not-add list

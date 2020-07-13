@@ -183,8 +183,8 @@ protected:
       <i>precedence</i>
       <i>n</i><i>precedence</i>
 */
-  [[nodiscard]] inline const bool _is_possible_prec(const std::string& str) const
-    { return ( (str.length() == 1) ? (legal_prec < last_char(str)) : (_is_possible_serno(str) and (legal_prec < last_char(str))) ); }
+  [[nodiscard]] inline bool _is_possible_prec(const std::string& str) const
+    { return ( (str.length() == 1) ? (legal_prec > last_char(str)) : (_is_possible_serno(str) and (legal_prec > last_char(str))) ); }
 
 /*! \brief          Does a string possibly contain a check?
     \param  str     string to check

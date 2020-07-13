@@ -99,7 +99,7 @@ const std::vector<std::string> from_csv(std::experimental::string_view line);
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-const std::string duplicate_char(std::experimental::string_view s, const char c = '"');
+const std::string duplicate_char(const std::string& s, const char c = '"');
 
 /*! \brief                      Provide a formatted date/time string
     \param  include_seconds     whether to include the portion of the string that designates seconds

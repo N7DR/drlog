@@ -45,9 +45,9 @@ enum class ADIF3_DATA_TYPE { AWARD_LIST,
                              BOOLEAN,
                              CREDIT_LIST,
                              DIGIT,
-                             SPONSORED_AWARD_LIST,
                              INTEGER,
                              NUMBER,
+                             SPONSORED_AWARD_LIST,
                              POSITIVE_INTEGER,
                              CHARACTER,
                              INTERNATIONAL_CHARACTER,
@@ -172,10 +172,18 @@ class adif3_record
 {
 protected:
 
-  std::map<std::string /* call */, adif3_field>  _elements;          // simplest to keep this ordered so that the fields are in alphabetical order
+  std::map<std::string /* field name */, adif3_field>  _elements;    ///< map field name to the complete field; simplest to keep this ordered so that the fields are in alphabetical order
   
-  static std::set<ADIF3_DATA_TYPE> _import_only;                     // fields that are not to be output
-  
+  static std::set<ADIF3_DATA_TYPE> _import_only;                     ///< fields that are not to be output
+
+/*! \brief          Convert a string to an int, assuming that the string contains just digits
+    \param  str     string to convert
+    \return         <i>str</i> rendered as an int
+
+    Result is valid ONLY if <i>str</i> contains only digits
+*/  
+  const int _fast_string_to_int(const std::string& str) const;            // convert a string to an int, assuming that the string contains just digits
+
 public:
 
   adif3_record(void) = default;
@@ -233,7 +241,7 @@ public:
 
 /// return the ADIF3 value of the date [YYYYMMDD] (zero if none)
   inline const int idate(void) const        // YYYYMMDD
-    { return from_string<int>(date()); }
+    { return _fast_string_to_int(date()); }
 
 /// return the ADIF3 value of the band (empty string if none)
   inline const std::string mode(void) const

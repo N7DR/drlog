@@ -46,15 +46,17 @@ const vector<string> from_csv(experimental::string_view line)
   constexpr char comma { ',' };
 
   vector<string> rv;
+
   size_t posn { 0 };
 
   string this_value;
+
   bool inside_value { false };
 
   while (posn < line.size())
-  { const char this_char { line[posn] };
+  { //const char this_char { line[posn] };
 
-    if (this_char == quote)
+    if (const char this_char { line[posn] }; this_char == quote)
     { if (inside_value)               // we're inside a field
       { if (posn < line.size() - 1)   // make sure there's at least one unread character
         { const char next_char { line[posn + 1] };
@@ -115,43 +117,37 @@ const vector<string> from_csv(experimental::string_view line)
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-const string duplicate_char(experimental::string_view s, const char c)
+const string duplicate_char(const string& s, const char c)
 {
-// should try .find() followed by += repeatedly
+// should try .find() followed by += repeatedly *****
 
-#if 0
-  const string dupe_str { create_string(c, 2) };
+#if 1 
+//  { 
 
-  string rv;
+    size_t start_posn { 0 };
 
-  for (size_t n = 0; n < s.length(); ++n)
-  { if (s[n] == c)
-      rv += c;
-    else
-      rv += dupe_str;
-  }
+    size_t next_posn;
+    string rv;
+
+    do
+    { next_posn = s.find(c, start_posn);
+
+      if (next_posn != string::npos)
+      { rv += s.substr(start_posn, next_posn - start_posn + 1);
+        rv += c;
+        start_posn = next_posn + 1;
+      }
+    } while (next_posn != string::npos);
+
+    rv += s.substr(start_posn);
+//  }
 #endif
 
-//  FOR_ALL(s, [=, &rv] (const char cc) { rv += ( (cc == c) ? dupe_str : cc ); } );
+//  const string dupe_str { create_string(c, 2) };
 
-#if 0
-  string rv;
+//  string rv;
 
-  for (size_t n = 0; n < s.length(); ++n)
-  { if (s[n] == c)
-      rv += c;
-
-    rv += s[n];
-  }
-
-  return rv;
-#endif
-
-  const string dupe_str { create_string(c, 2) };
-
-  string rv;
-
-  FOR_ALL(s, [=, &rv] (const char cc) { ( (cc == c) ? rv += dupe_str : rv += cc ); } );
+//  FOR_ALL(s, [=, &rv] (const char cc) { ( (cc == c) ? rv += dupe_str : rv += cc ); } );
 
   return rv;
 }
@@ -194,22 +190,25 @@ const string substring(const string& str, const size_t start_posn)
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
 const string date_time_string(const bool include_seconds)
-{ const time_t now { time(NULL) };            // get the time from the kernel
+{ constexpr size_t TIME_BUF_LEN { 26 };
+
+  const time_t now { time(NULL) };            // get the time from the kernel
+
   struct tm    structured_time;
 
   gmtime_r(&now, &structured_time);         // convert to UTC
 
-  array<char, 26> buf;                           // buffer to hold the ASCII date/time info; see man page for gmtime()
+  array<char, TIME_BUF_LEN> buf;                           // buffer to hold the ASCII date/time info; see man page for gmtime()
 
   asctime_r(&structured_time, buf.data());                     // convert to ASCII
 
-  const string ascii_time { buf.data(), 26 };
+  const string ascii_time { buf.data(), TIME_BUF_LEN };
   const string _utc       { ascii_time.substr(11, (include_seconds ? 8 : 5)) };                            // hh:mm[:ss]
-  const string _date = to_string(structured_time.tm_year + 1900) + "-" +
-                         pad_string(to_string(structured_time.tm_mon + 1), 2, PAD_LEFT, '0') + "-" +
-                         pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');              // yyyy-mm-dd
+  const string _date      { to_string(structured_time.tm_year + 1900) + "-" +
+                              pad_string(to_string(structured_time.tm_mon + 1), 2, PAD_LEFT, '0') + "-" +
+                              pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0') };          // yyyy-mm-dd
 
-  return _date + "T" + _utc;
+  return (_date + "T" + _utc);
 }
 
 /*! \brief          Convert struct tm pointer to formatted string
@@ -224,7 +223,7 @@ const string format_time(const string& format, const tm* tmp)
 
   char buf[BUFLEN];
 
-  const size_t nchars = strftime(buf, BUFLEN, format.c_str(), tmp);
+  const size_t nchars { strftime(buf, BUFLEN, format.c_str(), tmp) };
 
   if (!nchars)
     throw string_function_error(STRING_CONVERSION_FAILURE, "Unable to format time");
@@ -437,9 +436,9 @@ const vector<string> split_string(const string& cs, const string& separator)
   vector<string> rv;
 
   while (start_posn < cs.length())
-  { unsigned long posn { cs.find(separator, start_posn) };
+  { //unsigned long posn { cs.find(separator, start_posn) };
 
-    if (posn == string::npos)                       // no more separators
+    if (unsigned long posn { cs.find(separator, start_posn) }; posn == string::npos)                       // no more separators
     { rv.push_back(cs.substr(start_posn));
       start_posn = cs.length();
     }

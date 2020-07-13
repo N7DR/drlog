@@ -68,7 +68,7 @@ cty_record::cty_record(const string& record)
 
   _continent = fields[3];
 
-  if ( !(CONTINENT_SET < _continent) )
+  if ( !(CONTINENT_SET > _continent) )
     throw cty_error(CTY_INVALID_CONTINENT, "Continent = "s + _continent + " in record for "s + _country_name);
   
   _latitude = from_string<float>(fields[4]);
@@ -698,7 +698,7 @@ const location_info location_database::info(const string& callpart) const
 // insert Russian information
       static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
 
-      if (RUSSIAN_COUNTRIES < best_info.canonical_prefix())
+      if (RUSSIAN_COUNTRIES > best_info.canonical_prefix())
       { const size_t posn_1 { callsign.find_first_of(DIGITS) };
 
         if (posn_1 != string::npos)
@@ -764,7 +764,7 @@ const location_info location_database::info(const string& callpart) const
      static const set<string> russian_long_prefixes { "RU4W"s };
 
      if (found_1 and !found_0)                        // second part had an exact match
-     { if (!(russian_long_prefixes < parts[1]))         // the normal case
+     { if (!(russian_long_prefixes > parts[1]))         // the normal case
        { const location_info best_info { guess_zones(callsign, db_posn_1->second) };
 
          _db_checked.insert( { callsign, best_info } );

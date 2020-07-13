@@ -923,7 +923,7 @@ const bool old_log::confirmed(const string& call, const BAND b, const MODE m) co
   if (cit == _olog.cend())
     return false;
 
-  return (get<2>(cit->second) < ( pair<BAND, MODE>( { b, m } ) ) );
+  return (get<2>(cit->second) > ( pair<BAND, MODE>( { b, m } ) ) );
 }
 
 /*! \brief          Mark a QSL as being received for a particular call on a particular band and mode

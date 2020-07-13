@@ -455,7 +455,7 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
 const bool running_statistics::add_known_country_mult(const string& str, const contest_rules& rules)
 { SAFELOCK(statistics);
 
-  return ( (rules.country_mults() < str) ? _country_multipliers.add_known(str) : false );
+  return ( (rules.country_mults() > str) ? _country_multipliers.add_known(str) : false );
 }
 
 /*! \brief          Add a QSO to the ongoing statistics
@@ -525,7 +525,7 @@ void running_statistics::add_qso(const QSO& qso, const logbook& log, const conte
 
 // if it's not a dupe, we may need to track whether it's an ON QSO in the UBA contest
     if (rules.uba_bonus())
-    { if (rules.bonus_countries() < canonical_prefix)
+    { if (rules.bonus_countries() > canonical_prefix)
         _n_ON_qsos[mode_nr][band_nr]++;
     }
   }
@@ -913,7 +913,7 @@ const unsigned int running_statistics::n_worked_callsign_mults(const contest_rul
 
     if (mult.per_band())
     { for (const auto& b : permitted_bands)
-        if (score_bands < b)
+        if (score_bands > b)
           rv += mult.n_worked(b);
     }
     else
