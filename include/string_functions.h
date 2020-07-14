@@ -151,7 +151,7 @@ const std::string to_string(const T val)
 
     Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception
 */
-const std::string substring(const std::string& str, const size_t start_posn, const size_t length);
+std::string substring(const std::string& str, const size_t start_posn, const size_t length);
 
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
@@ -160,7 +160,8 @@ const std::string substring(const std::string& str, const size_t start_posn, con
 
     Operates like <i>str.substr(start_posn)</i>, except does not throw a range exception
 */
-const std::string substring(const std::string& str, const size_t start_posn);
+inline std::string substring(const std::string& str, const size_t start_posn)
+  { return substring(str, start_posn, str.size() - start_posn); }
 
 /*! \brief              Replace every instance of one character with another
     \param  s           string on which to operate
@@ -462,6 +463,13 @@ T remove_char(T& t, const char char_to_remove)
     \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
 */
 const std::string remove_chars(const std::string& s, const std::string& chars_to_remove);
+
+/*! \brief                      Remove all instances of particular characters from a string
+    \param  cs                  original string
+    \param  chars_to_remove     vector whose elements are to be removed from <i>s</i>
+    \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
+*/
+//std::string remove_chars(const std::string& cs, const std::vector<char>& chars_to_remove);
 
 /*! \brief                  Remove all instances of a particular char from all delimited substrings
     \param  cs              original string

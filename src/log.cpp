@@ -58,7 +58,7 @@ void logbook::operator+=(const QSO& q)
 
     If <i>n</i> is out of range, then returns an empty QSO
 */
-const QSO logbook::operator[](const size_t n) const
+QSO logbook::operator[](const size_t n) const
 { const static QSO empty_qso;
 
   SAFELOCK(_log);
@@ -95,7 +95,7 @@ void logbook::operator-=(const unsigned int n)
 
     If there are no QSOs with <i>call</i>, returns an empty vector
 */
-const vector<QSO> logbook::worked(const string& call) const
+vector<QSO> logbook::worked(const string& call) const
 { vector<QSO> rv;
 
   { SAFELOCK(_log);
@@ -112,7 +112,7 @@ const vector<QSO> logbook::worked(const string& call) const
     \param  call    target callsign
     \return         number of times that <i>call</i> has been worked
 */
-const unsigned int logbook::n_worked(const string& call) const
+unsigned int logbook::n_worked(const string& call) const
 { SAFELOCK(_log);
 
   const auto range { _log.equal_range(call) };
@@ -679,7 +679,7 @@ void logbook::remove_last_qsos(const unsigned int n_to_remove)
 
     Does nothing and returns an empty QSO if there are no QSOs in the log
 */
-const QSO logbook::remove_last_qso(void)
+QSO logbook::remove_last_qso(void)
 { if (empty())
     return QSO();
 

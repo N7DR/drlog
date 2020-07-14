@@ -67,7 +67,7 @@ using BANDMAP_INSERTION_QUEUE = std::deque<bandmap_entry>;
     \param  bes     source of a bandmap entry
     \return         printable version of <i>bes</i>
 */
-const std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
+std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 
 // -----------   bandmap_buffer_entry ----------------
 
@@ -79,12 +79,12 @@ class bandmap_buffer_entry
 {
 protected:
 
-  std::set<std::string>  _posters;           ///< the posters
+  std::unordered_set<std::string>  _posters;           ///< the posters
 
 public:
 
 /// return the number of posters
-  [[nodiscard]] inline const unsigned int size(void) const
+  [[nodiscard]] inline unsigned int size(void) const
     { return _posters.size(); }
 
 /*! \brief              Add a new poster
@@ -93,7 +93,7 @@ public:
 
     Does nothing if <i>new_poster</i> is already present
 */
-  inline const unsigned int add(const std::string& new_poster)
+  inline unsigned int add(const std::string& new_poster)
     { return ( _posters.insert(new_poster), _posters.size() ); }
 };
 
@@ -1111,8 +1111,21 @@ public:
 /// convert to a printable string
   const std::string to_str(void);
 
+/*! \brief         Process an insertion queue, adding the elements to the bandmap
+    \param biq     insertion queue to process
+     
+    <i>biq</i> changes (is emptied) by this routine
+    other threads MUST NOT access biq while this is executing
+*/
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
 
+/*! \brief          Process an insertion queue, adding the elements to the bandmap
+    \param  biq     insertion queue to process
+    \param  w       window to which to write the revised bandmap
+     
+    <i>biq</i> changes (is emptied) by this routine
+    other threads MUST NOT access biq while this is executing
+*/
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
 
   window& write_to_window(window& win);

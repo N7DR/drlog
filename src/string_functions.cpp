@@ -160,7 +160,7 @@ const string duplicate_char(const string& s, const char c)
 
     Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception
 */
-const string substring(const string& str, const size_t start_posn, const size_t length)
+string substring(const string& str, const size_t start_posn, const size_t length)
 { if (str.size() > start_posn)
     return str.substr(start_posn, length);
 
@@ -176,14 +176,14 @@ const string substring(const string& str, const size_t start_posn, const size_t 
 
     Operates like <i>str.substr(start_posn)</i>, except does not throw a range exception
 */
-const string substring(const string& str, const size_t start_posn)
-{ if (str.size() > start_posn)
-    return str.substr(start_posn);
-
-  ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << endl;    // log the problem
-
-  return string();
-}
+//string substring(const string& str, const size_t start_posn)
+//{ if (str.size() > start_posn)
+//    return str.substr(start_posn);
+//
+//  ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << endl;    // log the problem
+//
+//  return string();
+//}
 
 /*! \brief                      Provide a formatted date/time string
     \param  include_seconds     whether to include the portion oft he string that designates seconds
@@ -620,6 +620,20 @@ const string remove_chars(const string& s, const string& chars_to_remove)
 
   return rv;
 }
+
+/*! \brief                      Remove all instances of particular characters from a string
+    \param  cs                  original string
+    \param  chars_to_remove     vector whose elements are to be removed from <i>s</i>
+    \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
+*/
+//string remove_chars(const string& cs, const vector<char>& chars_to_remove)
+//{ string rv { cs };
+  
+//  for (const char c : chars_to_remove)
+//    rv = remove_char(rv, c);
+      
+//  return rv;
+//}
 
 /*! \brief              Obtain a delimited substring
     \param  cs          original string

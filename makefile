@@ -26,7 +26,7 @@ PROG = all
 # -O works
 # -O1 works
 # -O2 works
-CFLAGS = $(INCL) -D_REENTRANT -c -g3 -O0 -pipe -DLINUX -D_FILE_OFFSET_BITS=64 -fmessage-length=0 -Wno-reorder -std=c++2a `libpng-config --cflags`
+CFLAGS = $(INCL) -D_REENTRANT -c -g3 -O0 -pipe -DLINUX -D_FILE_OFFSET_BITS=64 -fmessage-length=0 -fconcepts -Wno-reorder -std=c++2a `libpng-config --cflags`
 
 LINKFLAGS = $(LIBRARIES)
 

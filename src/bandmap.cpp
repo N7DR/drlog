@@ -56,7 +56,7 @@ bandmap_filter_type BMF;                            ///< the global bandmap filt
     \param  bes     source of a bandmap entry
     \return         printable version of <i>bes</i>
 */
-const string to_string(const BANDMAP_ENTRY_SOURCE bes)
+string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
   { case BANDMAP_ENTRY_SOURCE::LOCAL :
       return "BANDMAP_ENTRY_LOCAL"s;
@@ -1101,8 +1101,12 @@ const bool bandmap::is_present(const string& target_callsign)
   return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 }
 
-// biq changes (is emptied) by this routine
-// other threads MUST NOT access biq while this is executing
+/*! \brief         Process an insertion queue, adding the elements to the bandmap
+    \param biq     insertion queue to process
+     
+    <i>biq</i> changes (is emptied) by this routine
+    other threads MUST NOT access biq while this is executing
+*/
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 { SAFELOCK(_bandmap);
 
@@ -1115,10 +1119,17 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
   }
 }
 
-// biq changes (is emptied) by this routine
-// other threads MUST NOT access biq while this is executing
+/*! \brief          Process an insertion queue, adding the elements to the bandmap
+    \param  biq     insertion queue to process
+    \param  w       window to which to write the revised bandmap
+     
+    <i>biq</i> changes (is emptied) by this routine
+    other threads MUST NOT access biq while this is executing
+*/
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
-{ SAFELOCK(_bandmap);
+{ process_insertion_queue(biq);
+/*
+  SAFELOCK(_bandmap);
 
   while (!biq.empty())
   { bandmap_entry be { biq.front() };
@@ -1127,7 +1138,7 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
 
     biq.pop_front();
   }
-
+*/
   w <= (*this);
 }
 

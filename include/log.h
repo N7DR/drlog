@@ -35,8 +35,6 @@
 
 extern message_stream ost;                  ///< for debugging, info
 
-class running_statistics;                   // forward declaration
-
 // -----------  logbook  ----------------
 
 /*! \class  logbook
@@ -53,7 +51,7 @@ protected:
 // not possible to put that in chronological order without including seconds...
 // and even with seconds a change would be necessary should this ever be adapted for
 // use in a multi station
-  std::multimap<std::string, QSO>  _log;        ///< map version of log
+  std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap; we need call ordering
   std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
 
 public:
@@ -64,10 +62,10 @@ public:
 
     If <i>n</i> is out of range, then returns an empty QSO
 */
-  const QSO operator[](const size_t n) const;
+  QSO operator[](const size_t n) const;
 
 /// return the most recent QSO
-  inline const QSO last_qso(void) const
+  inline QSO last_qso(void) const
     { SAFELOCK(_log);
 
       return ( (*this)[size()] );
@@ -90,7 +88,7 @@ public:
 
     Does nothing and returns an empty QSO if there are no QSOs in the log
 */
-  const QSO remove_last_qso(void);
+  QSO remove_last_qso(void);
 
 /*! \brief                  Remove several recent QSOs
     \param  n_to_remove     number of QSOs to remove
@@ -106,13 +104,13 @@ public:
 
     If there are no QSOs with <i>call</i>, returns an empty vector
 */
-  const std::vector<QSO> worked(const std::string& call) const;
+  std::vector<QSO> worked(const std::string& call) const;
   
 /*! \brief          The number of times that a particular call has been worked
     \param  call    target callsign
     \return         number of times that <i>call</i> has been worked
 */
-  const unsigned int n_worked(const std::string& call) const;
+  unsigned int n_worked(const std::string& call) const;
 
 /*! \brief          Has a particular call been worked at all?
     \param  call    target callsign
@@ -380,37 +378,6 @@ template <typename T>
     copy(t.cbegin(), t.cend(), back_inserter(_qsos));
   }
 };
-
-// -----------  old_log_record  ----------------
-
-#if 0
-/*! \class  old_log_record
-    \brief  A record in an old ADIF log
-
-    Not thread safe, so create once and then never change. Just a trivial tuple.
-*/
-
-using OLR_DATE_TYPE = uint32_t;
-
-class old_log_record
-{
-protected:
-
-  BAND          _band;          ///< band
-  std::string   _callsign;      ///< callsign
-  OLR_DATE_TYPE _date;          ///< YYYYMMDD
-  MODE          _mode;          ///< mode
-  bool          _qsl_received;  ///< has a QSL been received?
-
-public:
-
-  READ_AND_WRITE(band);             ///< band
-  READ_AND_WRITE(callsign);         ///< callsign
-  READ_AND_WRITE(date);             ///< YYYYMMDD
-  READ_AND_WRITE(mode);             ///< mode
-  READ_AND_WRITE(qsl_received);     ///< has a QSL been received?
-};
-#endif
 
 // -----------  old_log  ----------------
 

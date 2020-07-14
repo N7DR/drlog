@@ -34,6 +34,11 @@
 enum class COUNTRY_LIST { DXCC,     ///< DXCC list
                           WAEDC     ///< DARC WAEDC list
                         };
+
+/// alterntive prexies and alternative callsigns are /almost/ the same
+enum class ALTERNATIVES { CALLSIGNS,
+                          PREFIXES
+                        };
                        
 // error numbers
 constexpr int CTY_INCORRECT_NUMBER_OF_FIELDS       { -1 },    ///< Wrong number of fields in a record
@@ -676,6 +681,9 @@ protected:
 */
 //  void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
   void _insert_alternatives(const location_info& info, const ACI_DBTYPE& alternatives);
+
+  void _process_alternative(const cty_record& rec, /* LOCATION_DBTYPE& db, */const enum ALTERNATIVES alt_type);
+
 
   mutable pt_mutex _location_database_mutex;  ///< to make location_database objects thread-safe;
    

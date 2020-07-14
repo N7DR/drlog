@@ -159,7 +159,7 @@ void rebuild_history(const logbook& logbk,
                      running_statistics& statistics,
                      call_history& q_history,
                      rate_meter& rate);             ///< Rebuild the history (and statistics and rate and greatest distance), using the logbook
-const memory_entry recall_memory(const unsigned int n);     ///< recall a memory
+memory_entry recall_memory(const unsigned int n);     ///< recall a memory
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
@@ -221,8 +221,8 @@ void* spawn_dx_cluster(void*);                                              ///<
 void* spawn_rbn(void*);                                                     ///< Thread function to spawn the RBN
 
 // necessary forward declaration of functions that include thread safety
-const BAND safe_get_band(void);                             ///< get value of <i>current_band</i>
-const MODE safe_get_mode(void);                             ///< get value of <i>current_mode</i>
+BAND safe_get_band(void);                             ///< get value of <i>current_band</i>
+MODE safe_get_mode(void);                             ///< get value of <i>current_mode</i>
 
 // more forward declarations (dependent on earlier ones)
 const bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                   ///<   Is a callsign needed on a particular band and mode?
@@ -459,10 +459,6 @@ thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute fo
 window* win_active_p      { &win_call };          ///< start with the CALL window active
 window* last_active_win_p { nullptr };            ///< keep track of the last window that was active, before the current one
 
-//const string OUTPUT_FILENAME { "output.txt"s };     ///< file to which debugging output is directed
-
-//message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
-
 array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band
 array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
 
@@ -487,7 +483,7 @@ fuzzy_databases fuzzy_dbs;                      ///< container for the fuzzy dat
 pthread_t thread_id_display_date_and_time,      ///< thread ID for the thread that displays date and time
           thread_id_rig_status;                 ///< thread ID for the thread that displays rig status
           
-pair<frequency, MODE>   quick_qsy_info { 14000, MODE_CW };
+pair<frequency, MODE>   quick_qsy_info { 14'000, MODE_CW };
 
 /// define wrappers to pass parameters to threads
 
@@ -562,9 +558,9 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_TYPE>>& ma
         if (dupe)
           tmp_red_matches.push_back(cs);
         else
-        { const bool qso_b4 { logbk.qso_b4(cs) };
+        { //const bool qso_b4 { logbk.qso_b4(cs) };
 
-          if (qso_b4)
+          if (const bool qso_b4 { logbk.qso_b4(cs) }; qso_b4)
             tmp_green_matches.push_back(cs);
           else
             tmp_ordinary_matches.push_back(cs);
@@ -573,17 +569,19 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_TYPE>>& ma
     }
 
     for (const auto& cs : tmp_exact_matches)
-    { const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) };
+    { //const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) };
 
-      if (dupe)
+      if (const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) }; dupe)
         match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
       else
-      { const bool qso_b4 = logbk.qso_b4(cs);
+      { const bool qso_b4 { logbk.qso_b4(cs) };
 
-        if (qso_b4)
-          match_vector.push_back( { cs, colours.add(ACCEPT_COLOUR, win.bg()) } );
-        else
-          match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
+        match_vector.push_back( { cs, colours.add( (qso_b4 ? ACCEPT_COLOUR : win.fg()), win.bg() ) } );
+
+ //       if (qso_b4)
+ //         match_vector.push_back( { cs, colours.add(ACCEPT_COLOUR, win.bg()) } );
+ //       else
+//          match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
       }
     }
 
@@ -605,15 +603,15 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_TYPE>>& ma
 // simple inline functions
 
 /// recall a memory
-inline const memory_entry recall_memory(const unsigned int n)
+inline memory_entry recall_memory(const unsigned int n)
   { return ( (n < memories.size()) ? memories[n] : memory_entry() ); }
 
 /// get value of <i>current_band</i> in thread-safe manner
-inline const BAND safe_get_band(void)
+inline BAND safe_get_band(void)
   { return (SAFELOCK_GET(current_band_mutex, current_band)); }
 
 /// get value of <i>current_mode</i> in thread-safe manner
-inline const MODE safe_get_mode(void)
+inline MODE safe_get_mode(void)
   { return (SAFELOCK_GET(current_mode_mutex, current_mode)); }
 
 /// set value of <i>current_band</i> in thread-safe manner
@@ -624,14 +622,14 @@ inline void safe_set_band(const BAND b)
 inline void safe_set_mode(const MODE m)
   { SAFELOCK_SET(current_mode_mutex, current_mode, m); }
 
-const pair<frequency, MODE> get_frequency_and_mode(void)
+pair<frequency, MODE> get_frequency_and_mode(void)
   { return pair<frequency, MODE> { rig.rig_frequency(), safe_get_mode() }; }
 
 /*! \brief      Convert a serial number to a string
     \param  n   serial number
     \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
 */
-inline const string serial_number_string(const unsigned int n)
+inline string serial_number_string(const unsigned int n)
   { return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) ); }
 
 /*! \brief              Calculate the sunrise time for a station
@@ -640,7 +638,7 @@ inline const string serial_number_string(const unsigned int n)
 
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
-inline const string sunrise(const string& callsign)
+inline string sunrise(const string& callsign)
   { return sunrise_or_sunset(callsign, false); }
 
 /*! \brief              Calculate the sunset time for a station
@@ -649,7 +647,7 @@ inline const string sunrise(const string& callsign)
 
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
-inline const string sunset(const string& callsign)
+inline string sunset(const string& callsign)
   { return sunrise_or_sunset(callsign, true); }
 
 /*! \brief              Update the fuzzy window with matches for a particular call
@@ -661,7 +659,7 @@ inline void update_fuzzy_window(const string& callsign)
 /*! \brief  Update <i>win_recording_status</i>
 */
 inline void update_recording_status_window(void)
-  { win_recording_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= ( (allow_audio_recording /* and audio.valid() */ and audio.recording()) ? "REC" : "---" ); }
+  { win_recording_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= ( (allow_audio_recording and audio.recording()) ? "REC"s : "---"s ); }
 
 /*! \brief              Update the SCP window with matches for a particular call
     \param  callsign    callsign against which to generate the SCP matches
@@ -676,35 +674,8 @@ inline void update_scp_window(const string& callsign)
     behaviour when recording audio, as disk writes can cause minor, occasional CW stutter on
     a slow machine if the CW is not being sent on a thread with RT scheduling.
 */
-inline const bool sending_cw(void)
+inline bool sending_cw(void)
   { return (cw_p != nullptr) and !(cw_p->empty()); }
-
-#if 0
-using CBM = tuple<string /* callsign */, BAND, MODE>;  // call, band, mode -- need a hash function to create an unordered_map  
-
-/// define a hash function for CBM; needed because we will use an unordered map
-// http://stackoverflow.com/questions/13485979/hash-function-of-unordered-set/13486174#13486174
-// http://www.cplusplus.com/reference/functional/hash/
-// https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
-namespace std
-{ template <>
-  struct hash< CBM >
-
-  { using result_type = size_t;
-
-    result_type operator()( const CBM& k ) const
-    { result_type res = 17;
-            res = res * 31 + hash<string>()( get<0>(k) );
-            res = res * 31 + hash<BAND>()( get<1>(k) );
-            res = res * 31 + hash<MODE>()( get<2>(k) );
-            return res;
-    }
-  };
-}
-
-inline const bool operator==(const CBM& v1, const CBM& v2)
-  { return ( (get<0>(v1) == get<0>(v2)) and (get<1>(v1) == get<1>(v2)) and (get<2>(v1) == get<2>(v2)) ); }
-#endif
 
 int main(int argc, char** argv)
 {
@@ -724,10 +695,10 @@ int main(int argc, char** argv)
                                                       { "Dec"s, "12"s }
                                                     } );
 
-    const string date_str = DATE_STR.substr(DATE_STR.length() - 4) + "-" + MONTH_NAME_TO_NUMBER.at(DATE_STR.substr(0, 3)) + "-"s +
-                            (DATE_STR[4] == ' ' ? "0"s + DATE_STR.substr(5, 1) : DATE_STR.substr(4, 2));
+    const string date_str { DATE_STR.substr(DATE_STR.length() - 4) + "-"s + MONTH_NAME_TO_NUMBER.at(DATE_STR.substr(0, 3)) + "-"s +
+                            (DATE_STR[4] == ' ' ? "0"s + DATE_STR.substr(5, 1) : DATE_STR.substr(4, 2)) };
 
-    VERSION = VERSION_TYPE + " "s + date_str + " "s + TIME_STR.substr(0, 5);
+    VERSION = VERSION_TYPE + SPACE_STR + date_str + SPACE_STR + TIME_STR.substr(0, 5);
 
     ost << "Running drlog version " << VERSION << endl;
   }
@@ -737,7 +708,7 @@ int main(int argc, char** argv)
     VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
 
-  command_line cl              { argc, argv };                                                              ///< for parsing the ocmmand line
+  command_line cl              { argc, argv };                                                              ///< for parsing the command line
   const string config_filename { (cl.value_present("-c"s) ? cl.value("-c"s) : "logcfg.dat"s) };
 
   try    // put it all in one big try block (one of the few things in C++ I have hated ever since we introduced it)
@@ -788,19 +759,9 @@ int main(int argc, char** argv)
     shift_delta                     = static_cast<int>(context.shift_delta());  // forced positive int
     shift_poll                      = context.shift_poll();
 
-    prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());
-
-// write default mutex attribute information
-//    { pt_mutex_attributes pta;
-//    
-//      ost << "default mutex priority ceiling: " << pta.priority_ceiling() << endl;
-//      ost << "default mutex protocol: " << pta.protocol_name() << endl;
-//      ost << "default mutex type: " << pta.type_name() << endl;
-//    }      
+    prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
 
 // possibly configure audio recording
-//    audio_recorder          audio;                                      ///< provide capability to record audio
-
     if (allow_audio_recording and (context.start_audio_recording() != AUDIO_RECORDING::DO_NOT_START))
     { start_recording(audio, context);
       alert("audio recording started due to activity"s);
@@ -908,7 +869,7 @@ int main(int argc, char** argv)
     permitted_bands = rules.permitted_bands();
     permitted_modes = rules.permitted_modes();
 
-    { const auto cm_set = rules.country_mults();
+    { const auto cm_set { rules.country_mults() };
 
       all_country_mults = move(unordered_set<string> { begin(cm_set), end(cm_set) });
     }
@@ -944,7 +905,7 @@ int main(int argc, char** argv)
     exchange_mults_used = rules.exchange_mults_used();
     mm_country_mults = rules.mm_country_mults();
 
-// possibly get a list of IARU society exchanges
+// possibly get a list of IARU society exchanges; note that we normally do this with a prefill file instead
     if (!context.society_list_filename().empty())
       exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY"s);
 
@@ -1026,10 +987,11 @@ int main(int argc, char** argv)
 // configure bandmaps so user's call does not display
     FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
 
-// ditto for other calls in the do-not-show list or file
+// ditto for other calls in the do-not-show list
     for (const auto& callsign : context.do_not_show())
       FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
 
+// ditto for other calls in the do-not-show file
     if (!context.do_not_show_filename().empty())
     { try
       { const vector<string> lines { remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), context.do_not_show_filename())))) };
@@ -1485,9 +1447,6 @@ int main(int argc, char** argv)
   win_bandmap_filter.init(context.window_info("BANDMAP FILTER"s), WINDOW_NO_CURSOR);
 
 // set up correct colours for bandmap filter window
-//  bool bandmap_filtering_enabled { context.bandmap_filter_enabled() };
-
-//  if (!bandmap_filtering_enabled)                                                                          // disabled
   if (!context.bandmap_filter_enabled())
     win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
   else
@@ -1541,43 +1500,10 @@ int main(int argc, char** argv)
   //  vector<QSO> vec = cablog.as_vector();
   //  win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= vec.size();
 
-// create the cluster, and package it for use by the process_rbn_info() thread dedicated to the cluster
-// constructor for cluster has to be in a different thread, so that we don't block this one
-// MOVE THIS AFTER THE CONTEST HAS BEEN REBUILT
-
-#if 0
-  if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
-  { static pthread_t spawn_thread_id;
-
-    try
-    { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_dx_cluster, nullptr, "cluster spawn"s);
-    }
-
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
-      exit(-1);
-    }
-  }
-
-// ditto for the RBN
-  if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
-  { static pthread_t spawn_thread_id;
-
-    try
-    { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_rbn, nullptr, "RBN spawn"s);
-    }
-
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
-      exit(-1);
-    }
-  }
-#endif
-
 // backup the last-used log, if one exists
-  { const string filename { context.logfile() };
+  { //const string filename { context.logfile() };
 
-    if (file_exists(filename))
+    if (const string filename { context.logfile() }; file_exists(filename))
     { int index { 0 };
 
       while (file_exists(filename + "-"s + to_string(index)))
@@ -1780,37 +1706,33 @@ int main(int argc, char** argv)
         file_truncate(context.qtc_filename());
     }
 
-
 // now we can start the cluster/RBN threads, since we know what we've worked if this was a rebuild
-  if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
-  { static pthread_t spawn_thread_id;
+    if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
+    { static pthread_t spawn_thread_id;
 
-    try
-    { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_dx_cluster, nullptr, "cluster spawn"s);
-    }
+      try
+      { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_dx_cluster, nullptr, "cluster spawn"s);
+      }
 
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
-      exit(-1);
+      catch (const pthread_error& e)
+      { ost << e.reason() << endl;
+        exit(-1);
+      }
     }
-  }
 
 // ditto for the RBN
-  if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
-  { static pthread_t spawn_thread_id;
+    if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
+    { static pthread_t spawn_thread_id;
 
-    try
-    { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_rbn, nullptr, "RBN spawn"s);
+      try
+      { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_rbn, nullptr, "RBN spawn"s);
+      }
+
+      catch (const pthread_error& e)
+      { ost << e.reason() << endl;
+        exit(-1);
+      }
     }
-
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
-      exit(-1);
-    }
-  }
-
-
-
 
     enter_sap_mode();                   // explicitly enter SAP mode
     win_active_p = &win_call;           // set the active window
@@ -2007,16 +1929,8 @@ void* display_date_and_time(void* vp)
 
 // possibly run thread to perform auto backup
         if (!context.auto_backup_directory().empty())
-        { static tuple<string, string, string> tsss;
+        { static tuple<string, string, string> tsss;                // directory, filename, qtc filename
           static pthread_t                     auto_backup_thread_id;
-
-//          const string filename     { context.logfile() };
-//          const string directory    { context.auto_backup() };
-//          const string qtc_filename { (context.qtcs() ? context.qtc_filename() : string()) };
-
-//          get<0>(tsss) = directory;
-//          get<1>(tsss) = filename;
-//          get<2>(tsss) = qtc_filename;
 
           tsss = { context.auto_backup_directory(), context.logfile(), (context.qtcs() ? context.qtc_filename() : string()) };
 

@@ -102,14 +102,14 @@ cty_record::cty_record(const string& record)
     _prefix = _prefix.substr(1);
 
 // now we have to get tricky... start by getting the presumptive alternative prefixes
-  const vector<string> presumptive_prefixes = remove_peripheral_spaces(split_string(fields[8], ","s));
+  const vector<string> presumptive_prefixes { remove_peripheral_spaces(split_string(fields[8], ","s)) };
    
 // separate out the alternative prefixes and the alternative calls
   vector<string> alt_callsigns;
   vector<string> alt_prefixes;
   
   for (const auto& candidate : presumptive_prefixes)
-  { vector<string>* vsp = ( contains(candidate, "="s) ? &alt_callsigns : &alt_prefixes );  // callsigns are marked with an '='
+  { vector<string>* vsp { ( contains(candidate, "="s) ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
   
     vsp->push_back(candidate);
   }
@@ -119,14 +119,25 @@ cty_record::cty_record(const string& record)
 
 // save the alternative info; also modify the zone info now, since it will be faster later to retrieve it
 // directly from here than to check for zero here and then retrieve from the main record
+  
+  auto set_zone_info = [](alternative_country_info& aci, const auto cq_info, const auto itu_info)
+    { if (!aci.cq_zone())
+        aci.cq_zone(cq_info);
+    
+      if (!aci.itu_zone())
+        aci.itu_zone(itu_info);  
+    };
+
   for (const auto& alt_prefix : alt_prefixes)
   { alternative_country_info aci(alt_prefix, _prefix);
 
-    if (!aci.cq_zone())
-      aci.cq_zone(_cq_zone);
+    set_zone_info(aci, _cq_zone, _itu_zone);  
+
+//    if (!aci.cq_zone())
+//      aci.cq_zone(_cq_zone);
     
-    if (!aci.itu_zone())
-      aci.itu_zone(_itu_zone);  
+//    if (!aci.itu_zone())
+//      aci.itu_zone(_itu_zone);  
     
     _alt_prefixes.insert( { aci.identifier(), aci } );
   }
@@ -135,11 +146,13 @@ cty_record::cty_record(const string& record)
   for (const auto& alt_callsign : alt_callsigns)
   { alternative_country_info aci(alt_callsign);
 
-    if (!aci.cq_zone())
-      aci.cq_zone(_cq_zone);
+    set_zone_info(aci, _cq_zone, _itu_zone);
+
+//    if (!aci.cq_zone())
+//      aci.cq_zone(_cq_zone);
     
-    if (!aci.itu_zone())
-      aci.itu_zone(_itu_zone);  
+//    if (!aci.itu_zone())
+//      aci.itu_zone(_itu_zone);  
   
     _alt_callsigns.insert( { aci.identifier(), aci } );
   }
@@ -238,7 +251,8 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
     \param  filename    name of file
 */
 cty_data::cty_data(const string& filename)
-{ const string         entire_file { remove_char(remove_char(read_file(filename), LF_CHAR), CR_CHAR) };   // read file and remove EOL markers
+{ //const string         entire_file { remove_char(remove_char(read_file(filename), LF_CHAR), CR_CHAR) };   // read file and remove EOL markers
+  const string         entire_file { remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) };   // read file and remove EOL markers
   const vector<string> records     { split_string(entire_file, ";"s) };                                // split into records
   
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
@@ -249,7 +263,8 @@ cty_data::cty_data(const string& filename)
     \param  filename    name of file
 */
 cty_data::cty_data(const vector<string>& path, const string& filename)
-{ const string         entire_file { remove_char(remove_char(read_file(path, filename), LF_CHAR), CR_CHAR) };     // read file and remove EOL markers
+{ //const string         entire_file { remove_char(remove_char(read_file(path, filename), LF_CHAR), CR_CHAR) };     // read file and remove EOL markers
+  const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };     // read file and remove EOL markers
   const vector<string> records     { split_string(entire_file, ";"s) };                                        // split into records
 
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
@@ -361,10 +376,10 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
   switch (country_list)
   { case COUNTRY_LIST::DXCC:                                                       // use DXCC countries only
     { for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      { const cty_record& rec = cty[n_country];
+      { const cty_record& rec { cty[n_country] };
     
         if (!rec.waedc_country_only())    // ignore WAEDC-only entries
-        { const location_info info(rec);
+        { const location_info info { rec };
 
 // insert the canonical entry for this country
           _db.insert( { info.canonical_prefix(), info } );
@@ -381,30 +396,32 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
     {
 // start by copying all the useful information for all records      
       for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      { const cty_record& rec { cty[n_country] };
+      { const cty_record&   rec  { cty[n_country] };
         const location_info info { rec };
 
 // insert the canonical entry for this country
         _db.insert( { info.canonical_prefix(), info } );
       }
       
+// TRY _process_alternative *****
+
 // now do the alternative prefixes
       for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      { const cty_record&                            rec                   { cty[n_country] };
+      { const cty_record& rec                   { cty[n_country] };
         const ACI_DBTYPE& alt_prefixes          { rec.alt_prefixes() };
-        const bool                                   country_is_waedc_only { rec.waedc_country_only() };
+        const bool        country_is_waedc_only { rec.waedc_country_only() };
         
-        for (ACI_DBTYPE::const_iterator cit = alt_prefixes.cbegin(); cit != alt_prefixes.cend(); ++cit)
-        { const string& prefix = cit->first;
-          const alternative_country_info& aci = cit->second;
+        for (auto cit = alt_prefixes.cbegin(); cit != alt_prefixes.cend(); ++cit)
+        { const string&                   prefix { cit->first };
+          const alternative_country_info& aci    { cit->second };
         
           if (country_is_waedc_only)            // if country is WAEDC only and there's an entry already for this prefix, delete it before inserting
-          { const LOCATION_DBTYPE::const_iterator db_posn = _db.find(prefix);
+          { const auto db_posn { _db.find(prefix) };
           
             if (db_posn != _db.cend())
               _db.erase(db_posn);
     
-            location_info info(rec);
+            location_info info { rec };
 
             info.cq_zone(aci.cq_zone());        
             info.itu_zone(aci.itu_zone());         
@@ -412,10 +429,10 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
             _db.insert( { prefix, info } );
           }
           else                                  // country is in DXCC list; don't add if there's an entry already
-          { const LOCATION_DBTYPE::const_iterator db_posn = _db.find(prefix);
+          { const auto db_posn { _db.find(prefix) };
           
             if (db_posn == _db.cend())    // if it's not already in the database
-            { location_info info(rec);
+            { location_info info { rec };
 
               info.cq_zone(aci.cq_zone());        
               info.itu_zone(aci.itu_zone());         
@@ -429,9 +446,9 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
 // do essentially the same for the alternative callsigns -- we should just make this a callable private function and call it twice;
 // these go into the _alt_call_db
       for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      { const cty_record&                            rec                   { cty[n_country] };
+      { const cty_record& rec                   { cty[n_country] };
         const ACI_DBTYPE& alt_callsigns         { rec.alt_callsigns() };
-        const bool                                   country_is_waedc_only { rec.waedc_country_only() };
+        const bool        country_is_waedc_only { rec.waedc_country_only() };
         
         for (ACI_DBTYPE::const_iterator cit = alt_callsigns.begin(); cit != alt_callsigns.end(); ++cit)
         { const string callsign = cit->first;
@@ -480,6 +497,54 @@ void location_database::_insert_alternatives(const location_info& info, const AC
   { info_copy.cq_zone(aci.cq_zone());
     info_copy.itu_zone(aci.itu_zone());
     _db.insert( { call_or_prefix, info_copy } );
+  }
+}
+
+void location_database::_process_alternative(const cty_record& rec, /* LOCATION_DBTYPE& db, */ const enum ALTERNATIVES alt_type)
+{ const ACI_DBTYPE& alts                  { alt_type == ALTERNATIVES::CALLSIGNS ? rec.alt_callsigns() : rec.alt_prefixes() };
+  LOCATION_DBTYPE&  db                    { alt_type == ALTERNATIVES::CALLSIGNS ? _alt_call_db : _db };
+  const bool        country_is_waedc_only { rec.waedc_country_only() };
+    
+  auto add_to_database = [&db](const cty_record& rec, const alternative_country_info& aci, const string& prefix_or_callsign)
+    { location_info info { rec };
+
+      info.cq_zone(aci.cq_zone());        
+      info.itu_zone(aci.itu_zone());         
+            
+      db.insert( { prefix_or_callsign, info } );
+    };
+    
+  for (auto cit = alts.cbegin(); cit != alts.cend(); ++cit)
+  { const string&                   prefix_or_callsign { cit->first };
+    const alternative_country_info& aci                { cit->second };
+        
+    if (country_is_waedc_only)            // if country is WAEDC only and there's an entry already for this prefix or call, delete it before inserting
+    { //const auto db_posn { db.find(prefix_or_callsign) };
+          
+      if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn != db.cend())
+        db.erase(db_posn);
+    
+      add_to_database(rec, aci, prefix_or_callsign);
+      //location_info info { rec };
+
+      //info.cq_zone(aci.cq_zone());        
+      //info.itu_zone(aci.itu_zone());         
+            
+      //db.insert( { prefix_or_callsign, info } );
+    }
+    else                                  // country is in DXCC list; don't add if there's an entry already
+    { //const auto db_posn { db.find(prefix_or_callsign) };
+          
+      if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn == db.cend())    // if it's not already in the database
+      { add_to_database(rec, aci, prefix_or_callsign);
+        //location_info info { rec };
+
+        //info.cq_zone(aci.cq_zone());        
+        //info.itu_zone(aci.itu_zone());         
+            
+        //db.insert( { prefix_or_callsign, info } );
+      }
+    }
   }
 }
 
