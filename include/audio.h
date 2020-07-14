@@ -209,6 +209,8 @@ protected:
   pthread_t         _thread_id;                 ///< ID for the thread that plays the buffer
   unsigned int      _thread_number;             ///< number of the thread currently being used
   unsigned int      _time_limit;                ///< number of seconds to record
+  unsigned int      _xrun_counter { 0 };        ///< number of xrun errors
+  unsigned int      _xrun_threshhold { 1 };     ///< xrun target for displaying error message (doubled each time a message is written)
 
 // stuff for bext extension
 #if 0
@@ -227,7 +229,16 @@ protected:
   snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);            ///< function to write non-interleaved frames
 
 /// Declare, but do not define, copy constructor
-  audio_recorder(const audio_recorder&);
+//  audio_recorder(const audio_recorder&);
+
+// protected pointers to functions
+
+/*! \brief          Pointer to function used to alert the user to an error
+    \param  msg     message to be presented to the user
+*/
+  void (*_error_alert_function)(const std::string& msg) { nullptr };
+
+// protected functions
 
 /*! \brief          Read from the PCM device
     \param  data    buffer in which to store the read data
@@ -258,6 +269,13 @@ protected:
     \return         nullptr
 */
   static void* _static_capture(void*);
+
+/*! \brief       Alert the user with a message
+    \param  msg  message for the user
+
+    Calls <i>_error_alert_function</i> to perform the actual alerting
+*/
+  void _error_alert(const std::string& msg);
 
 public:
 
@@ -293,6 +311,8 @@ public:
     _writen_func(snd_pcm_writen)              // function to write non-interleaved frames
   { }
 
+  audio_recorder(const audio_recorder&) = delete;
+
 /// destructor
   inline virtual ~audio_recorder(void) = default;
 
@@ -303,6 +323,7 @@ public:
   READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle
   READ(recording);                          ///< whether the recorder is currently recording
   READ_AND_WRITE(samples_per_second);       ///< number of samples per second
+  READ(xrun_counter);                       ///< number of xrun errors
 
 // stuff for bext extension
 #if 0
@@ -329,6 +350,10 @@ public:
 
 /// public function to capture the audio
   void capture(void);
+
+/// register a function for alerting the user
+inline void register_error_alert_function(void (*error_alert_function)(const std::string&) )
+  { _error_alert_function = error_alert_function; }
 };
 
 /*! \brief          Write a <i>PARAMS_STUCTURE</i> object to an output stream

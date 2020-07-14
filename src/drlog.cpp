@@ -103,14 +103,14 @@ void         adif3_build_old_log(void);                                 ///< bui
 void         alert(const string& msg, const bool show_time = true);     ///< Alert the user
 void         allow_for_callsign_mults(QSO& qso);                        ///< Add info to QSO if callsign mults are in use; may change qso
 void         archive_data(void);                                        ///< Send data to the archive file
+void         audio_error_alert(const string& msg);                      ///< Alert the user to an audio-related error
 
 const string bearing(const string& callsign);   ///< Return the bearing to a station
-//void build_old_log(void);                       ///< build the old log from an ADIF file
 
-const bool calculate_exchange_mults(QSO& qso, const contest_rules& rules);                  ///< Populate QSO with correct exchange mults
-const string callsign_mult_value(const string& callsign_mult_name, const string& callsign); ///< Obtain value corresponding to a type of callsign mult from a callsign
-const bool change_cw_speed(const keyboard_event& e);                                        ///< change CW speed as function of keyboard event
-void cw_speed(const unsigned int new_speed);                                                ///< Set speed of computer keyer
+const bool   calculate_exchange_mults(QSO& qso, const contest_rules& rules);                    ///< Populate QSO with correct exchange mults
+const string callsign_mult_value(const string& callsign_mult_name, const string& callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
+const bool   change_cw_speed(const keyboard_event& e);                                          ///< change CW speed as function of keyboard event
+void         cw_speed(const unsigned int new_speed);                                            ///< Set speed of computer keyer
 
 const bool debug_dump(void);                                                                          ///< Dump useful information to disk
 const MODE default_mode(const frequency& f);              ///< get the default mode on a frequency
@@ -5765,7 +5765,7 @@ const string expand_cw_message(const string& msg)
 
   SAFELOCK(last_exchange);
 
-//  ost << "last_exhange = <" << last_exchange << ">" << endl;
+//  ost << "last_exchange = <" << last_exchange << ">" << endl;
 
   const string asterisk_replaced { replace(at_replaced, "*"s, last_exchange) };
   
@@ -6322,6 +6322,9 @@ void exit_drlog(void)
   const string suffix { dts.substr(0, 13) + '-' + dts.substr(14) }; // replace : with -
 
   dump_screen("screenshot-EXIT-"s + suffix);
+
+  if (const auto xruns { audio.xrun_counter() }; xruns)
+    ost << "Total number of audio XRUN errors = " << xruns << endl;
 
   archive_data();
 
@@ -8026,6 +8029,7 @@ void start_recording(audio_recorder& audio, const drlog_context& context)
     audio.n_channels(context.audio_channels());
     audio.samples_per_second(context.audio_rate());
  //   audio.log("audio-log"s);                                  // must come before initialise()
+    audio.register_error_alert_function(audio_error_alert);
     audio.initialise();
   }
   
@@ -8546,4 +8550,14 @@ void send_qtc_entry(const qtc_entry& qe, const bool logit)
       ost << "QTC sent: " << msg << endl;
   }
 };
-  
+
+/*! \brief          Logs an audio-related error
+    \param  msg     message to display
+
+    Also alerts on the screen
+*/
+void audio_error_alert(const string& msg)
+{ ost << "Audio error: " << msg << endl;
+
+  alert(msg);
+}

@@ -295,7 +295,12 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
     { snd_pcm_wait(_handle, 100);
     }
     else if (r == -EPIPE)
-    { ost << "XRUN()!!" << endl;
+    { if (++_xrun_counter == _xrun_threshhold)
+      { _error_alert("audio XRUN error count = "s + to_string(_xrun_threshhold));
+        _xrun_threshhold *= 2;
+      }
+
+//      ost << "XRUN()!!" << endl;
     }
     else if (r == -ESTRPIPE)
     { ost << "SUSPEND()!!!" << endl;
@@ -326,6 +331,16 @@ void* audio_recorder::_static_capture(void* arg)
   arp->_capture(nullptr);
 
   return nullptr;
+}
+
+/*! \brief       Alert the user with a message
+    \param  msg  message for the user
+
+    Calls <i>_error_alert_function</i> to perform the actual alerting
+*/
+void audio_recorder::_error_alert(const string& msg)
+{ if (_error_alert_function)
+    (*_error_alert_function)(msg);
 }
 
 /*! \brief          Close the WAV file associated with a wav_file
