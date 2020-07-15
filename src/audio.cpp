@@ -270,7 +270,8 @@ void audio_recorder::_set_params(void)
   _bits_per_frame = bits_per_sample * _hw_params.channels;
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
-  _audio_buf = (u_char *)malloc(_period_size_in_bytes);
+//  _audio_buf = (u_char *)malloc(_period_size_in_bytes);
+  _audio_buf = (u_char *)malloc(_period_size_in_bytes * 2); // try doubling the size of the ring buffer
 
   if (_audio_buf == NULL)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;
@@ -292,13 +293,16 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
   { const ssize_t r { _readi_func(_handle, data, count) };
 
     if ( (r == -EAGAIN) or (r >= 0 and (size_t)r < count) )
-    { snd_pcm_wait(_handle, 100);
+    { snd_pcm_wait(_handle, 100);   // wait for 100 ms, then try again
     }
-    else if (r == -EPIPE)
+    else if (r == -EPIPE)           // this means we have an overrun on capture; https://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html
     { if (++_xrun_counter == _xrun_threshhold)
       { _error_alert("audio XRUN error count = "s + to_string(_xrun_threshhold));
         _xrun_threshhold *= 2;
       }
+
+// try this
+      snd_pcm_recover(_handle, -EPIPE, 0);
 
 //      ost << "XRUN()!!" << endl;
     }

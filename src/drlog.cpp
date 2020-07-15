@@ -1501,9 +1501,7 @@ int main(int argc, char** argv)
   //  win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= vec.size();
 
 // backup the last-used log, if one exists
-  { //const string filename { context.logfile() };
-
-    if (const string filename { context.logfile() }; file_exists(filename))
+  { if (const string filename { context.logfile() }; file_exists(filename))
     { int index { 0 };
 
       while (file_exists(filename + "-"s + to_string(index)))
@@ -1521,28 +1519,32 @@ int main(int argc, char** argv)
     exit(-1);
   }
 
+  const bool clean { cl.parameter_present("-clean"s) };
+  const bool rebuild { !clean };
+
 // now we can restore data from the last run
-  if (!cl.parameter_present("-clean"s))
-  { if (!cl.parameter_present("-rebuild"s))    // if -rebuild is present, then don't restore from archive; rebuild only from logbook
-    { const string archive_filename { context.archive_name() };
+//  if (!cl.parameter_present("-clean"s))
+//  { if (!cl.parameter_present("-rebuild"s))    // if -rebuild is present, then don't restore from archive; rebuild only from logbook
+//    { const string archive_filename { context.archive_name() };
 
-      if (file_exists(archive_filename) and !file_empty(archive_filename))
-        restore_data(archive_filename);
-      else
-        alert("No archive data present"s);
+//      if (file_exists(archive_filename) and !file_empty(archive_filename))
+//        restore_data(archive_filename);
+//      else
+//        alert("No archive data present"s);
+//    }
+//    else     // rebuild
+  if (rebuild)
+  { ost << "rebuilding from: " << context.logfile() << endl;
+
+    string file;
+
+    try
+    { file = read_file(context.logfile());    // in current directory
     }
-    else     // rebuild
-    { ost << "rebuilding from: " << context.logfile() << endl;
 
-      string file;
-
-      try
-      { file = read_file(context.logfile());    // in current directory
-      }
-
-      catch (...)
-      { alert("Error reading log file: " + context.logfile());
-      }
+    catch (...)
+    { alert("Error reading log file: " + context.logfile());
+    }
 
       if (!file.empty())
       { static const string rebuilding_msg("Rebuilding..."s);
@@ -1614,7 +1616,7 @@ int main(int argc, char** argv)
       }
       else
         octothorpe = 1;
-    }
+//    }
 
 // display most-recent lines from log
     editable_log.recent_qsos(logbk, true);
@@ -1692,7 +1694,8 @@ int main(int argc, char** argv)
 // now delete the archive file if it exists, regardless of whether we've used it
     file_delete(context.archive_name());
 
-    if (cl.parameter_present("-clean"s))                          // start with clean slate
+//    if (cl.parameter_present("-clean"s))                          // start with clean slate
+    if (clean)
     { int    index  { 0 };
       string target { OUTPUT_FILENAME + "-"s + to_string(index) };
 
