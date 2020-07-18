@@ -81,7 +81,7 @@ protected:
     \param  modes   the set of modes that are to be included in the summary string
     \return         summary string for modes in <i>modes</i>
 */
-  const std::string _summary_string(const contest_rules& rules, const std::set<MODE>& modes);
+  std::string _summary_string(const contest_rules& rules, const std::set<MODE>& modes);
 
 public:
 
@@ -156,7 +156,7 @@ public:
     \param  m           mode to test
     \return             whether the mult <i>mult_name</i> with value <i>mult_value</i> is a needed callsign mult on band <i>b</i> and mode <i>m</i>
 */
-  const bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
+  bool is_needed_callsign_mult(const std::string& mult_name, const std::string& mult_value, const BAND b, const MODE m) const;
 
 /*! \brief          Add a known value of country mult
     \param  str     canonical prefix of mult
@@ -176,9 +176,16 @@ public:
     Note that this does not take into account whether the country is actually a mult in the contest. Currently, this must be checked
     before this function is called. Perhaps we should include the rules as a parameter and perform the check here?
 */
-  const bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m);
+ // bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m);
   
-  const bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m, const contest_rules& rules);
+/*! \brief              Do we still need to work a particular country as a mult on a particular band and a particular mode?
+    \param  callsign    call to test
+    \param  b           band to test
+    \param  m           mode to test
+    \param  rules       rules for this context
+    \return             whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i> and mode <i>m</i>.
+*/
+  bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m, const contest_rules& rules);
   
 /*! \brief          Add a QSO to the ongoing statistics
     \param  qso     QSO to add
@@ -279,7 +286,7 @@ public:
     \param  putative_callsign_mult_name     string to test
     \return                                 whether <i>putative_callsign_mult_name</i> is a known callsign mult name
 */
-  const bool known_callsign_mult_name(const std::string& putative_callsign_mult_name) const;
+  bool known_callsign_mult_name(const std::string& putative_callsign_mult_name) const;
 
 /// clear the dynamic information
   void clear_info(void);

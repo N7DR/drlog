@@ -376,16 +376,20 @@ const string adif3_record::to_string(void) const
     \return     the value of the field <i>str</i>
 
     Returns the empty string if the field <i>str</i> does not exist in the record 
-*/  
+*/
+#if 0
 const string adif3_record::value(const string& str) const               // str is field name
 { //return (_elements > to_upper(str)).second;
 
-  const string uc { to_upper(str) };
+  //const string uc { to_upper(str) };
 
-  const auto cit { _elements.find( to_upper(str) ) };     // name is always stored in upper case
+  return MUM_VALUE(_elements, to_upper(str)).value();
 
-  return ( (cit == _elements.cend()) ? string() : cit->second.value() );
+//const auto cit { _elements.find( to_upper(str) ) };     // name is always stored in upper case
+
+//  return ( (cit == _elements.cend()) ? string() : cit->second.value() );
 }
+#endif
 
 /*! \brief                  Set the value of a field (which does not have to be extant in the record)
     \param  field_name      name of the field whose value is to be set

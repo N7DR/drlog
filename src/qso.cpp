@@ -215,7 +215,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     }
   }
 
-  _is_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode);
+  _is_country_mult = statistics.is_needed_country_mult(_callsign, _band, _mode, rules);
   _epoch_time = _to_epoch_time(_date, _utc);
 }
 

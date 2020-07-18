@@ -200,7 +200,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   if (rules.n_country_mults())        // if country mults are used
   { clear_country_mult();
 
-    if (statistics.is_needed_country_mult(_callsign, _band, _mode))
+    if (statistics.is_needed_country_mult(_callsign, _band, _mode, rules))
       add_country_mult(_canonical_prefix);
 
     _is_needed_country_mult.status_is_known(true);

@@ -70,7 +70,7 @@ void running_statistics::_insert_callsign_mult(const string& mult_name, const st
     \param  modes   the set of modes that are to be included in the summary string
     \return         summary string for modes in <i>modes</i>
 */
-const string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
+string running_statistics::_summary_string(const contest_rules& rules, const set<MODE>& modes)
 { const set<MODE>    permitted_modes { rules.permitted_modes() };
   const vector<BAND> permitted_bands { rules.permitted_bands() };
 
@@ -338,7 +338,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
     \param  putative_callsign_mult_name     string to test
     \return                                 whether <i>putative_callsign_mult_name</i> is a known callsign mult name
 */
-const bool running_statistics::known_callsign_mult_name(const string& putative_callsign_mult_name) const
+bool running_statistics::known_callsign_mult_name(const string& putative_callsign_mult_name) const
 { SAFELOCK(statistics);
 
   return ( _callsign_multipliers.find(putative_callsign_mult_name) != _callsign_multipliers.cend() );
@@ -351,7 +351,7 @@ const bool running_statistics::known_callsign_mult_name(const string& putative_c
     \param  m           mode to test
     \return             whether the callsign mult <i>mult_name</i> with the value <i>mult_value</i> is still needed on band <i>b</i> and mode <i>m</i>
 */
-const bool running_statistics::is_needed_callsign_mult(const string& mult_name, const string& mult_value, const BAND b, const MODE m) const
+bool running_statistics::is_needed_callsign_mult(const string& mult_name, const string& mult_value, const BAND b, const MODE m) const
 { SAFELOCK(statistics);
 
   if (!known_callsign_mult_name(mult_name))
@@ -379,7 +379,8 @@ const bool running_statistics::is_needed_callsign_mult(const string& mult_name, 
     Note that this does not take into account whether the country is actually a mult in the contest. Currently, this must be checked
     before this function is called. Perhaps we should include the rules as a parameter and perform the check here?
 */
-const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
+#if 0
+bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
 { try
   { SAFELOCK(statistics);
 
@@ -409,8 +410,9 @@ const bool running_statistics::is_needed_country_mult(const string& callsign, co
   { return false;
   }
 }
+#endif
 
-const bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m, const contest_rules& rules)
+bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m, const contest_rules& rules)
 { try
   { SAFELOCK(statistics);
 

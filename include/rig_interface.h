@@ -101,13 +101,8 @@ protected:
 /*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
     \return     the file descriptor associated with the rig
 */
-  inline const int _file_descriptor(void) const
+  inline int _file_descriptor(void) const
     { return (_rigp->state.rigport.fd); }
-
-/*! \brief          Pointer to function used to alert the user to an error
-    \param  msg     message to be presented to the user
-*/
-//  void (*_error_alert_function)(const std::string& msg);
 
 /*! \brief       Alert the user with a message
     \param  msg  message for the user
@@ -130,6 +125,8 @@ public:
     _status(frequency(14000), MODE_CW)    // 14MHz, CW
   { }
 
+  rig_interface(const rig_interface&) = delete;
+
 /// destructor
   inline virtual ~rig_interface(void) = default;
 
@@ -141,7 +138,7 @@ public:
 /*! \brief      Is a rig ready for use?
     \return     whether a rig is available
 */
-  inline const bool valid(void) const
+  inline bool valid(void) const
     { return (_rigp != nullptr); }
 
 /*! \brief          Set baud rate
@@ -152,7 +149,7 @@ public:
 /*! \brief      Get baud rate
     \return     rig baud rate
 */
-  const unsigned int baud_rate(void);
+  unsigned int baud_rate(void);
 
 /*! \brief          Set the number of data bits (7 or 8)
     \param  bits    the number of data bits to which the rig should be set
@@ -164,7 +161,7 @@ public:
 /*! \brief      Get the number of data bits
     \return     number of data bits
 */
-  const unsigned int data_bits(void);
+  unsigned int data_bits(void);
 
 /*! \brief          Set the number of stop bits (1 or 2)
     \param  bits    the number of stop bits to which the rig should be set
@@ -196,7 +193,7 @@ public:
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-  const frequency rig_frequency(void);
+  frequency rig_frequency(void);
 
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
@@ -212,7 +209,7 @@ public:
   void rig_frequency_b(const frequency& f);
 
 /// get frequency of VFO B
-  const frequency rig_frequency_b(void);
+  frequency rig_frequency_b(void);
 
 /// set frequency of VFO B to match that of VFO A
   inline void rig_frequency_a_to_b(void)
@@ -240,7 +237,7 @@ public:
 
                 This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
-  const bool split_enabled(void);
+  bool split_enabled(void);
 
 /// get mode
   const MODE rig_mode(void);

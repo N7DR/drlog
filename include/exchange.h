@@ -71,7 +71,7 @@ public:
     \param  field_name  field name to test
     \return             whether prefill data exist for the field <i>field_name</i>
 */
-  [[nodiscard]] inline const bool prefill_data_exists(const std::string& field_name)
+  inline const bool prefill_data_exists(const std::string& field_name)
     { return ( _db.empty() ? false : (_db.count(field_name) == 1) ); }
 
 /*! \brief              Get the prefill data for a particular field name and callsign
@@ -82,7 +82,7 @@ public:
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-  [[nodiscard]] const std::string prefill_data(const std::string& field_name, const std::string& callsign);
+  std::string prefill_data(const std::string& field_name, const std::string& callsign);
 };
 
 std::ostream& operator<<(std::ostream& ost, const exchange_field_prefill& epf);

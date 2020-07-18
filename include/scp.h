@@ -26,7 +26,6 @@
 // forward declaration
 class scp_databases;
 
-//typedef std::unordered_set<std::string> SCP_SET;    ///< define the type of set used in SCP functions
 using SCP_SET = std::unordered_set<std::string>;    ///< define the type of set used in SCP functions
 
 // -----------  scp_database  ----------------
@@ -42,7 +41,7 @@ class scp_database
 {
 protected:
 
-  std::map<std::string  /* two characters */, SCP_SET /* calls that contain the two characters */ >  _db;    ///< the main database;
+  std::unordered_map<std::string /* two characters */, SCP_SET /* calls that contain the two characters */ > _db;   ///< the main database;
 
 // a one-shot cache; I'm far from convinced that this is useful,
 // because an ordinary cache-miss lookup is so fast
@@ -82,14 +81,14 @@ public:
   void add_call(const std::string& call);
   
 /// remove a call from the database; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
-  const unsigned int remove_call(const std::string& call);
+  unsigned int remove_call(const std::string& call);
 
 /// is a call in the database?
-  inline const bool contains(const std::string& call)
+  inline bool contains(const std::string& call)
     { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
 
 /// return SCP matches
-  const SCP_SET operator[](const std::string& key);
+  SCP_SET operator[](const std::string& key);
 
 /// empty the database; also clears the cache
   void clear(void);

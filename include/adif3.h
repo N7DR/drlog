@@ -211,7 +211,8 @@ public:
 
     Returns the empty string if the field <i>str</i> does not exist in the record 
 */
-  const std::string value(const std::string& str) const;
+  inline std::string value(const std::string& str) const
+    { return MUM_VALUE(_elements, to_upper(str)).value(); }
   
 /*! \brief                  Set the value of a field (which does not have to be extant in the record)
     \param  field_name      name of the field whose value is to be set

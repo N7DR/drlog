@@ -30,6 +30,10 @@
 
 #include <cmath>
 
+// convenient definitions for use with chrono functions
+using centiseconds = std::chrono::duration<long, std::centi>;
+using deciseconds = std::chrono::duration<long, std::deci>;
+
 /// Syntactic sugar for read/write access
 #if (!defined(READ_AND_WRITE))
 
@@ -140,6 +144,56 @@ public: \
 }
 
 #endif      // !ERROR_CLASS
+
+// https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
+// https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
+template<class T>
+struct is_vector 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_vector<std::vector<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+struct is_set 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_set<std::set<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+struct is_unordered_set 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_unordered_set<std::unordered_set<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+struct is_map 
+  { constexpr static bool value { false }; };
+
+template<class K, class V>
+struct is_map<std::map<K, V>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+struct is_unordered_map 
+  { constexpr static bool value { false }; };
+
+template<class K, class V>
+struct is_unordered_map<std::unordered_map<K, V>> 
+  { constexpr static bool value { true }; };
+  
+// current g++ does not support definition of concepts, even with -fconcepts
+//template<typename T>
+//concept SET_TYPE = requires(T a) 
+//{ is_set<T>::value == true;
+//    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+//};
+
 
 // classes for tuples... it seems like there should be a way to do this with TMP,
 // but the level-breaking caused by the need to control textual names seems to make
@@ -686,24 +740,39 @@ public:                                                                         
     { std::get<7>(*this) = var; }                                                           \
 }
 
+#if 0
 /*! \brief      Is an object a member of a set?
     \param  s   set to be tested
     \param  v   object to be tested for membership
     \return     Whether <i>t</i> is a member of <i>s</i>
 */
 template <class T>
-const bool operator>(const std::set<T>& s, const T& v)
+bool operator>(const std::set<T>& s, const T& v)
+  { return s.find(v) != s.cend(); }
+#endif
+
+/*! \brief      Is an object a member of a set or unordered_set?
+    \param  s   set or unordered_set  to be tested
+    \param  v   object to be tested for membership
+    \return     Whether <i>t</i> is a member of <i>s</i>
+*/
+template <class T, class U>
+bool operator>(const T& s, const U& v)
+  requires (is_set<T>::value == true || is_unordered_set<T>::value == true) && (std::is_same<typename T::value_type, U>::value == true)
   { return s.find(v) != s.cend(); }
 
+#if 0
 /*! \brief      Is an object a member of an unordered set?
     \param  s   unordered set to be tested
     \param  v   object to be tested for membership
     \return     Whether <i>t</i> is a member of <i>s</i>
 */
 template <class T>
-const bool operator>(const std::unordered_set<T>& s, const T& v)
+bool operator>(const std::unordered_set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
+#endif
 
+#if 0
 template <class K, class V>
 /*! \brief      Is an object a key of a map, and if so return the value
     \param  m   map to be searched
@@ -737,6 +806,43 @@ std::pair<bool, V> operator>(const std::unordered_map<K, V>& m, const K& k) requ
     
   return { true, cit->second };
 }
+#endif
+
+/*! \brief      Is an object a key of a map or unordered_map, and if so return the value (or the default-constructed value)
+    \param  m   map or unordered_map to be searched
+    \param  k   target key
+    \return     Whether <i>k</i> is a member of <i>m</i> and, if so the corresponding value (or the default-constructed value)
+    
+    // possibly should return variant instead
+*/
+template <class M, class K>
+std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
+  requires (is_map<M>::value == true || is_unordered_map<M>::value == true) && std::is_same<typename M::key_type, K>::value == true && std::is_default_constructible<typename M::mapped_type>::value == true
+{ using V = typename M::mapped_type;
+
+  const auto cit { m.find(k) };
+
+  if (cit == m.cend())
+    return { false, V() };  // needs default constructor for V
+    
+  return { true, cit->second };
+}
+
+/*! \brief      Is an object a key of a map or unordered map; if so return the value, otherwise return a provided default
+    \param  m   map or unordered map to be searched
+    \param  k   target key
+    \param  d   default
+    \return     if <i>k</i> is a member of <i>m</i>, the corresponding value, otherwise the default
+
+    The difference between this and ">" is that this does not tell you whether the key was found
+*/
+template <class C, class K>
+typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
+  requires (is_map<C>::value == true || is_unordered_map<C>::value == true) && std::is_same<typename C::key_type, K>::value == true /* && std::is_default_constructible<typename C::mapped_type>::value == true */
+{ const auto cit { m.find(k) };
+
+  return ( (cit == m.cend()) ? d : cit->second );
+}
 
 /*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
     \param  original_mapping    original mapping
@@ -754,12 +860,8 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
   return rv;
 }
 
-// syntactic suger for time-related use
-//typedef std::chrono::duration<long, std::centi> centiseconds;           ///< hundredths of a second
-//typedef std::chrono::duration<long, std::deci>  deciseconds;            ///< tenths of a second
-
-using centiseconds = std::chrono::duration<long, std::centi>;
-using deciseconds = std::chrono::duration<long, std::deci>;
+//using centiseconds = std::chrono::duration<long, std::centi>;
+//using deciseconds = std::chrono::duration<long, std::deci>;
 
 #if 0
 template <class D, class P> // P = parameter; D = data in the database
@@ -921,8 +1023,6 @@ std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp
 
   return ost;
 }
-
-
 
 /*! \brief          Apply a function to all in a container
     \param  first   container

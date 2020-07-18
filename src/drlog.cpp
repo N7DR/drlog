@@ -1514,12 +1514,12 @@ int main(int argc, char** argv)
 // for now, require one of -clean or -rebuild
 // once data restoration works completely correctly, this requirement should be removed;
 // changing this is a low priority until serialization of unordered sets becomes possible
-  if (cl.parameter_present("-clean"s) == cl.parameter_present("-rebuild"s))
-  { ost << "Need exactly one of \"-clean\" or \"-rebuild\"" << endl;
-    exit(-1);
-  }
+//  if (cl.parameter_present("-clean"s) == cl.parameter_present("-rebuild"s))
+//  { ost << "Need exactly one of \"-clean\" or \"-rebuild\"" << endl;
+//    exit(-1);
+//  }
 
-  const bool clean { cl.parameter_present("-clean"s) };
+  const bool clean   { cl.parameter_present("-clean"s) };
   const bool rebuild { !clean };
 
 // now we can restore data from the last run
@@ -1546,76 +1546,76 @@ int main(int argc, char** argv)
     { alert("Error reading log file: " + context.logfile());
     }
 
-      if (!file.empty())
-      { static const string rebuilding_msg("Rebuilding..."s);
+    if (!file.empty())
+    { static const string rebuilding_msg { "Rebuilding..."s };
 
-        win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= rebuilding_msg;
+      win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= rebuilding_msg;
 
-        const vector<string> lines { to_lines(file) };
+      const vector<string> lines { to_lines(file) };
 
-        for (const auto& line : lines)
-        { QSO qso;
+      for (const auto& line : lines)
+      { QSO qso;
 
-          qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
+        qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
 
 // callsign mults
-          allow_for_callsign_mults(qso);
+        allow_for_callsign_mults(qso);
 
 // possibly add the call to the known prefixes
-          update_known_callsign_mults(qso.callsign());
+        update_known_callsign_mults(qso.callsign());
 
 // country mults
-          update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
-          qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules) );
+        update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
+        qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules) );
 
 // add exchange info for this call to the exchange db
-          const vector<received_field>& received_exchange { qso.received_exchange() };
+        const vector<received_field>& received_exchange { qso.received_exchange() };
 
-          for (const auto& exchange_field : received_exchange)
-          { if (!(variable_exchange_fields > exchange_field.name()))
-              exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
-          }
-
-          statistics.add_qso(qso, logbk, rules);
-          logbk += qso;
-          rate.insert(qso.epoch_time(), statistics.points(rules));
+        for (const auto& exchange_field : received_exchange)
+        { if (!(variable_exchange_fields > exchange_field.name()))
+            exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
         }
+
+        statistics.add_qso(qso, logbk, rules);
+        logbk += qso;
+        rate.insert(qso.epoch_time(), statistics.points(rules));
+      }
 
 // rebuild the history
-        rebuild_history(logbk, rules, statistics, q_history, rate);
+      rebuild_history(logbk, rules, statistics, q_history, rate);
 
 // rescore the log
-        rescore(rules);
-        update_rate_window();
+      rescore(rules);
+      update_rate_window();
 
-        scp_dynamic_db.clear();       // clears cache of parent
-        fuzzy_dynamic_db.clear();
+      scp_dynamic_db.clear();       // clears cache of parent
+      fuzzy_dynamic_db.clear();
 
-        const vector<QSO> qso_vec { logbk.as_vector() };
+      const vector<QSO> qso_vec { logbk.as_vector() };
 
-        for (const auto& qso : qso_vec)
-        { const string& callsign { qso.callsign() };
+      for (const auto& qso : qso_vec)
+      { const string& callsign { qso.callsign() };
 
-          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-            scp_dynamic_db.add_call(callsign);
+        if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+          scp_dynamic_db.add_call(callsign);
 
-          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-            fuzzy_dynamic_db.add_call(callsign);
-        }
-
-        if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
-          win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+        if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+          fuzzy_dynamic_db.add_call(callsign);
       }
+
+      if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
+        win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+    }
 
 // octothorpe
-      if (logbk.size() >= 1)
-      { const QSO& last_qso { logbk[logbk.size()] };    // wrt 1
+    if (logbk.size() >= 1)
+    { //const QSO& last_qso { logbk[logbk.size()] };    // wrt 1
 
-        if (rules.sent_exchange_includes("SERNO"s, last_qso.mode()))
-          octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO"s)) + 1;
-      }
-      else
-        octothorpe = 1;
+      if (const QSO& last_qso { logbk[logbk.size()] }; rules.sent_exchange_includes("SERNO"s, last_qso.mode()))   // logbook is wrt 1
+        octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO"s)) + 1;
+    }
+    else
+      octothorpe = 1;
 //    }
 
 // display most-recent lines from log
@@ -1885,7 +1885,9 @@ void display_band_mode(window& win, const BAND b, const enum MODE m)
 /*! \brief  Thread function to display the date and time, and perform other periodic functions
 */
 void* display_date_and_time(void* vp)
-{ start_of_thread("display date and time"s);
+{ const string THREAD_NAME { "display date and time"s };
+
+  start_of_thread(THREAD_NAME);
 
   int last_second;                              ///< so that we can tell when the time has changed
   array<char, 26> buf;                          ///< buffer to hold the ASCII date/time info; see man page for gmtime()
@@ -1908,7 +1910,7 @@ void* display_date_and_time(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { end_of_thread("display date and time"s);
+        { end_of_thread(THREAD_NAME);
 
           return nullptr;
         }
@@ -2035,7 +2037,9 @@ void* display_date_and_time(void* vp)
     NB It doesn't matter *how* the rig's frequency came to change; it could be manual
 */
 void* display_rig_status(void* vp)
-{ start_of_thread("display rig status"s);
+{ const string THREAD_NAME { "display rig status"s };
+
+  start_of_thread(THREAD_NAME);
 
   rig_status_info* rig_status_thread_parameters_p { static_cast<rig_status_info*>(vp) };
   rig_status_info& rig_status_thread_parameters   { *rig_status_thread_parameters_p };
@@ -2069,7 +2073,6 @@ void* display_rig_status(void* vp)
       { constexpr size_t STATUS_REPLY_LENGTH { 38 };          // K3 returns 38 characters
       
 // get the bandmap version number
- //       const BAND current_band { safe_get_band() };
         const uint32_t initial_verno { bandmaps[safe_get_band()].verno() };
         const string   status_str    { (rig_status_thread_parameters.rigp())->raw_command("IF;"s, STATUS_REPLY_LENGTH) };          // K3 returns 38 characters
 
@@ -2151,7 +2154,6 @@ void* display_rig_status(void* vp)
 
 // now display the status
           win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : 16);  // red if this contest doesn't want us to be on this QRG
-          win_rig.default_colours(win_rig.fg(), context.mark_frequency(m, f) ? COLOUR_RED : 16);  // red if this contest doesn't want us to be on this QRG
 
           const bool sub_rx { (rig_status_thread_parameters.rigp())->sub_receiver_enabled() };
           const auto fg     { win_rig.fg() };                                          // original foreground colour
@@ -2176,9 +2178,7 @@ void* display_rig_status(void* vp)
           win_rig < WINDOW_ATTRIBUTES::CURSOR_DOWN
                   < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
-          const size_t x_posn { rit_xit_str.find_first_of("X"s) };
-
-          if (x_posn == string::npos)
+          if (const size_t x_posn { rit_xit_str.find('X') }; x_posn == string::npos)
             win_rig < rit_xit_str;
           else
             win_rig < substring(rit_xit_str, 0, x_posn) < WINDOW_ATTRIBUTES::WINDOW_BOLD < COLOURS(COLOUR_YELLOW, win_rig.bg()) < "X"s < WINDOW_ATTRIBUTES::WINDOW_NORMAL < COLOURS(fg, win_rig.bg()) < substring(rit_xit_str, x_posn + 1);
@@ -2205,12 +2205,7 @@ void* display_rig_status(void* vp)
     { SAFELOCK(thread_check);
 
       if (exiting_rig_status)
-      { ost << "display_rig_status() is exiting" << endl;
-
-        end_of_thread("display rig status"s);
-
-        ost << "will now exit other threads" << endl;
-
+      { end_of_thread(THREAD_NAME);
         exiting = true;
         pthread_exit(nullptr);
       }
@@ -2226,7 +2221,9 @@ void* display_rig_status(void* vp)
     pulls the data from the cluster object [and removes the data from it]
 */
 void* process_rbn_info(void* vp)
-{ start_of_thread("process rbn info");
+{ const string THREAD_NAME { "process rbn info"s };
+
+  start_of_thread(THREAD_NAME);
 
   constexpr unsigned int POLL_INTERVAL { 10 };      // seconds between processing passes
 
@@ -2499,13 +2496,14 @@ void* process_rbn_info(void* vp)
     if (context.auto_remaining_country_mults())
       update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());  // might have added a new one if in auto mode
 
+// see also repeat() suggestion at: https://stackoverflow.com/questions/17711655/c11-range-based-for-loops-without-loop-variable
     for (const auto n : RANGE<unsigned int>(1, POLL_INTERVAL) )    // wait POLL_INTERVAL seconds before getting any more unprocessed info
     { UNUSED(n);
 
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { end_of_thread("process rbn info"s);
+        { end_of_thread(THREAD_NAME);
           return nullptr;
         }
       }
@@ -2519,7 +2517,9 @@ void* process_rbn_info(void* vp)
 
 /// thread function to obtain data from the cluster
 void* get_cluster_info(void* vp)
-{ start_of_thread("get cluster info"s);
+{ const string THREAD_NAME { "get cluster info"s };
+
+  start_of_thread(THREAD_NAME);
 
   dx_cluster& cluster { *(static_cast<dx_cluster*>(vp)) };    // make the cluster available
 
@@ -2532,7 +2532,7 @@ void* get_cluster_info(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { end_of_thread("get cluster info"s);
+        { end_of_thread(THREAD_NAME);
           return nullptr;
         }
       }
@@ -2546,7 +2546,9 @@ void* get_cluster_info(void* vp)
 
 /// thread function to prune the bandmaps once per minute
 void* prune_bandmap(void* vp)
-{ start_of_thread("prune bandmap"s);
+{ const string THREAD_NAME { "prune bandmap"s };
+
+  start_of_thread(THREAD_NAME);
 
 // get access to the information that's been passed to the thread
   bandmap_info*                    cip         { static_cast<bandmap_info*>(vp) };
@@ -2564,7 +2566,7 @@ void* prune_bandmap(void* vp)
       { SAFELOCK(thread_check);
 
         if (exiting)
-        { end_of_thread("prune bandmap"s);
+        { end_of_thread(THREAD_NAME);
           return nullptr;
         }
       }
@@ -2882,7 +2884,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         { const size_t posn     { command.find(SPACE_STR) };
           const string callsign { remove_peripheral_spaces(substring(command, posn)) };
 
-//          for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.remove_from_do_not_add(callsign); } );
           FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.remove_from_do_not_add(callsign); } );
         }
       }
@@ -2905,10 +2906,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // .CULL <n>
       if (starts_with(command, "CULL"s))
       { if (contains(command, SPACE_STR))
-        { const size_t posn        { command.find(SPACE_STR) };
-          const int  cull_function { from_string<int>(substring(command, posn)) };
+        { const size_t posn          { command.find(SPACE_STR) };
+          const int    cull_function { from_string<int>(substring(command, posn)) };
 
-//          for_each(bandmaps.begin(), bandmaps.end(), [=] (bandmap& bm) { bm.cull_function(cull_function); } );
           FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
         }
 
@@ -2973,15 +2973,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           
           do_not_show(callsign);
 
- //         FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= callsign;
- //                                               bm.do_not_add(callsign);
- //                                             } );
-
           win_bandmap <= bandmaps[safe_get_band()];
-          
-// add to do not show file if it exists
-//          if (!context.do_not_show_filename().empty())
-//            append_to_file(callsign + EOL, context.do_not_show_filename());
         }
       }
 
@@ -4514,7 +4506,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             if (country_mults_used and (all_country_mults > qso.canonical_prefix()))  // is it even possible that this is a country mult?
             { if (mm_country_mults or !is_maritime_mobile(qso.call()))
               { update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);                                      // does nothing if not auto remaining country mults
-                qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode) );     // set whether it's a country mult
+                qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode, rules) );     // set whether it's a country mult
               }
             }
 
@@ -5645,7 +5637,7 @@ void populate_win_info(const string& callsign)
           { string per_band_indicator;
 
             if (known_country_mults > canonical_prefix)
-              per_band_indicator = ( statistics.is_needed_country_mult(callsign, b, this_mode) ? BAND_NAME[b] : "-"s );
+              per_band_indicator = ( statistics.is_needed_country_mult(callsign, b, this_mode, rules) ? BAND_NAME[b] : "-"s );
             else
               per_band_indicator = BAND_NAME.at(b);
 

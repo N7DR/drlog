@@ -37,8 +37,6 @@ using namespace   this_thread;   // std::this_thread
 
 extern bool rig_is_split;
 
-//constexpr bool RESPONSE_EXPECTED { true };    ///< used to signal that a response is expected
-
 void alert(const string& msg, const bool show_time = true);     ///< alert the user (not used for errors)
 
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
@@ -157,7 +155,7 @@ void rig_interface::prepare(const drlog_context& context)
     data_bits(context.rig1_data_bits());
     stop_bits(context.rig1_stop_bits());
 
-    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN);
+    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN);     // !!
   }
 
   const int status { rig_open(_rigp) };
@@ -278,7 +276,7 @@ void rig_interface::rig_mode(const MODE m)
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-const frequency rig_interface::rig_frequency(void)
+frequency rig_interface::rig_frequency(void)
 { if (!_rig_connected)
     return _last_commanded_frequency;
   else
@@ -298,7 +296,7 @@ const frequency rig_interface::rig_frequency(void)
 }
 
 /// get frequency of VFO B
-const frequency rig_interface::rig_frequency_b(void)
+frequency rig_interface::rig_frequency_b(void)
 { if (!_rig_connected)
     return _last_commanded_frequency_b;
   else
@@ -376,14 +374,12 @@ void rig_interface::split_disable(void)
 
     This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
-const bool rig_interface::split_enabled(void)
+bool rig_interface::split_enabled(void)
 { if (!_rig_connected)
     return false;
 
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
-
- //   const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) };
 
     if (const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) }; transmit_vfo.length() >= 4)
       return (transmit_vfo[2] == '1');
@@ -398,9 +394,9 @@ const bool rig_interface::split_enabled(void)
 
   SAFELOCK(_rig);
 
-  const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) };
+//  const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) };
 
-  if (status != RIG_OK)
+  if (const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) }; status != RIG_OK)
   { _error_alert("Error getting SPLIT"s);
     return false;
   }
@@ -421,7 +417,7 @@ void rig_interface::baud_rate(const unsigned int rate)
 /*! \brief      Get baud rate
     \return     rig baud rate
 */
-const unsigned int rig_interface::baud_rate(void)
+unsigned int rig_interface::baud_rate(void)
 { SAFELOCK(_rig);
   return (_rigp ? _rigp->state.rigport.parm.serial.rate : 0);
 }
@@ -444,7 +440,7 @@ void rig_interface::data_bits(const unsigned int bits)
 /*! \brief      Get the number of data bits
     \return     number of data bits
 */
-const unsigned int rig_interface::data_bits(void)
+unsigned int rig_interface::data_bits(void)
 { SAFELOCK(_rig);
 
   return (_rigp ? _rigp->state.rigport.parm.serial.data_bits : 0);

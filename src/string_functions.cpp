@@ -41,7 +41,7 @@ constexpr char    LF_CHAR  { '\n' };      ///< LF as character
 
     This is actually quite difficult to do properly
 */
-const vector<string> from_csv(experimental::string_view line)
+vector<string> from_csv(experimental::string_view line)
 { constexpr char quote { '"' };
   constexpr char comma { ',' };
 
@@ -117,7 +117,7 @@ const vector<string> from_csv(experimental::string_view line)
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-const string duplicate_char(const string& s, const char c)
+string duplicate_char(const string& s, const char c)
 {
 // should try .find() followed by += repeatedly *****
 
@@ -189,7 +189,7 @@ string substring(const string& str, const size_t start_posn, const size_t length
     \param  include_seconds     whether to include the portion oft he string that designates seconds
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
-const string date_time_string(const bool include_seconds)
+string date_time_string(const bool include_seconds)
 { constexpr size_t TIME_BUF_LEN { 26 };
 
   const time_t now { time(NULL) };            // get the time from the kernel
@@ -218,7 +218,7 @@ const string date_time_string(const bool include_seconds)
 
     Uses strftime() to perform the formatting
 */
-const string format_time(const string& format, const tm* tmp)
+string format_time(const string& format, const tm* tmp)
 { constexpr size_t BUFLEN { 60 };
 
   char buf[BUFLEN];

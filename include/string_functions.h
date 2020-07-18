@@ -92,20 +92,20 @@ constexpr int STRING_UNDERFLOW            { -1 },    ///< Underflow
 
     This is actually quite difficult to do properly
 */
-const std::vector<std::string> from_csv(std::experimental::string_view line);
+std::vector<std::string> from_csv(std::experimental::string_view line);
 
 /*! \brief      Duplicate a particular character within a string
     \param  s   string in which characters are to be duplicated
     \param  c   character to be duplicated
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
-const std::string duplicate_char(const std::string& s, const char c = '"');
+std::string duplicate_char(const std::string& s, const char c = '"');
 
 /*! \brief                      Provide a formatted date/time string
     \param  include_seconds     whether to include the portion of the string that designates seconds
     \return                     current date and time in the format: YYYY-MM-DDTHH:MM or YYYY-MM-DDTHH:MM:SS
 */
-const std::string date_time_string(const bool include_seconds = !INCLUDE_SECONDS);
+std::string date_time_string(const bool include_seconds = !INCLUDE_SECONDS);
 
 /*! \brief          Convert struct tm pointer to formatted string
     \param  format  format to be used
@@ -114,7 +114,7 @@ const std::string date_time_string(const bool include_seconds = !INCLUDE_SECONDS
 
     Uses strftime() to perform the formatting
 */
-const std::string format_time(const std::string& format, const tm* tmp);
+std::string format_time(const std::string& format, const tm* tmp);
 
 /*! \brief      Generic conversion from string
     \param  s   string
@@ -123,7 +123,7 @@ const std::string format_time(const std::string& format, const tm* tmp);
     This is a complex no-op if type <i>T</i> is a string
 */
 template <class T>
-const T from_string(const std::string& s)
+T from_string(const std::string& s)
 { std::istringstream stream { s };
   T t;
      

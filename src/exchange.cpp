@@ -55,11 +55,8 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
       unordered_map<string /* call */, string /* prefill value */> call_value_map;
 
       for (const auto& line : lines)                                // each line should now be: callsign value (+ ignored later stuff)
-      { //const vector<string> this_pair { split_string(line, ' ') };
-
         if (const vector<string> this_pair { split_string(line, ' ') }; this_pair.size() >= 2)
           call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
-      }
 
       _db.insert( { to_upper(field_name), call_value_map } );
     }
@@ -78,16 +75,19 @@ void exchange_field_prefill::insert_prefill_filename_map(const map<string /* fie
     Returns the empty string if there are no prefill data for the field <i>field_name</i> and
     callsign <i>callsign</i>
 */
-const string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign)
+string exchange_field_prefill::prefill_data(const string& field_name, const string& callsign)
 { const auto it { _db.find(field_name) };
 
   if (it == _db.cend())
     return string();
 
   const unordered_map<string /* callsign */, string /* value */>& field_map   { it->second };
-  const auto                                                      callsign_it { field_map.find(callsign) };
 
-  return ( (callsign_it == field_map.cend()) ? string() : callsign_it->second );
+  return MUM_VALUE(field_map, callsign);
+
+//  const auto                                                      callsign_it { field_map.find(callsign) };
+
+//  return ( (callsign_it == field_map.cend()) ? string() : callsign_it->second );
 }
 
 ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)

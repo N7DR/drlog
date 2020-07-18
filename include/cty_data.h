@@ -259,19 +259,6 @@ public:
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
 };
 
-/*! \brief          Write a <i>map<key, value></i> object to an output stream
-    \param  ost     output stream
-    \param  mp      object to write
-    \return         the output stream
-*/
-//template <class T1, class T2>
-//std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
-//{ for (typename std::map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
-//    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
-//
-//  return ost;
-//}
-
 /*! \brief          Write a <i>cty_record</i> object to an output stream
     \param  ost     output stream
     \param  rec     object to write
