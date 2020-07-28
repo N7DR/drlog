@@ -38,7 +38,7 @@ using namespace std;
 
     <i>posn</i> is updated to point at the start of the next call
 */
-const string master_dta::_get_call(const string& contents, uint32_t& posn) const
+string master_dta::_get_call(const string& contents, uint32_t& posn) const
 { string rv;
 
   while ((posn < contents.length()) and static_cast<int>(contents[posn]) != 0)
@@ -181,7 +181,7 @@ trmaster_line::trmaster_line(const string& line)
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
 */
-const string trmaster_line::to_string(void) const
+string trmaster_line::to_string(void) const
 { string rv { call() };
 
   if (!section().empty())
@@ -234,7 +234,7 @@ const string trmaster_line::to_string(void) const
 
     New values (i.e., values in <i>trml</i>) take precedence if there's a conflict
 */
-const trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
+trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
 { trmaster_line rv(*this);                                  // copy the old line
 
 // check that the calls match
@@ -334,7 +334,7 @@ control characters are:
 
     Updates <i>posn</i> to point to the start of the next call
 */
-const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
+trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
 { constexpr int CTRL_Y { 25 };
 
   string callsign;
@@ -544,7 +544,7 @@ trmaster::trmaster(const string& filename)
 }
 
 // all the calls (in alphabetical order)
-const vector<string> trmaster::calls(void) const
+vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
 //  for (unordered_map<string, trmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
@@ -583,7 +583,7 @@ r = SKCC state/province/country
 
     Returns empty string if no field has the indicator <i>field_indicator</i>
 */
-const string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
+string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
 { for (vector<string>::const_iterator cit = fields.begin(); cit != fields.end(); ++cit)
   { if (starts_with(*cit, field_indicator))
       return (cit->substr(field_indicator.length()));
@@ -636,7 +636,7 @@ drmaster_line::drmaster_line(const string& line_or_call)
 }
 
 /// convert to string
-const string drmaster_line::to_string(void) const
+string drmaster_line::to_string(void) const
 { string rv;
 
   rv += call();
@@ -716,7 +716,7 @@ const string drmaster_line::to_string(void) const
 }
 
 // merge with another drmaster_line; new values take precedence if there's a conflict
-const drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
+drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 { if (call() != drml.call())
     return *this;
 
@@ -880,7 +880,7 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
 }
 
 /// all the calls (in alphabetical order)
-const vector<string> drmaster::calls(void) const
+vector<string> drmaster::calls(void) const
 { vector<string> rv;
 
   for (auto cit = _records.cbegin(); cit != _records.cend(); ++cit)
@@ -892,7 +892,7 @@ const vector<string> drmaster::calls(void) const
 }
 
 /// format for output
-const string drmaster::to_string(void) const
+string drmaster::to_string(void) const
 { vector<string> lines;
 
 //  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
@@ -942,7 +942,7 @@ void drmaster::operator+=(const drmaster_line& drml)
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
-const drmaster_line drmaster::operator[](const string& call) const
+drmaster_line drmaster::operator[](const string& call) const
 { const auto cit { _records.find(call) };
 
   return (cit == _records.cend() ? drmaster_line() : cit->second);

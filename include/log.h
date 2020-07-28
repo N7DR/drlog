@@ -1,4 +1,4 @@
-// $Id: log.h 159 2020-06-28 17:27:34Z  $
+// $Id: log.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -116,7 +116,7 @@ public:
     \param  call    target callsign
     \return         whether <i>call</i> has been worked
 */
-  inline const bool qso_b4(const std::string& call) const
+  inline bool qso_b4(const std::string& call) const
     { SAFELOCK(_log);
 
       return (_log.lower_bound(call) != _log.upper_bound(call)); 
@@ -127,14 +127,14 @@ public:
     \param  b       target band
     \return         whether <i>call</i> has been worked on <i>b</i>
 */
-  const bool qso_b4(const std::string& call, const BAND b) const;
+  bool qso_b4(const std::string& call, const BAND b) const;
 
 /*! \brief          Has a call been worked on a particular mode?
     \param  call    target callsign
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>m</i>
 */
-  const bool qso_b4(const std::string& call, const MODE m) const;
+  bool qso_b4(const std::string& call, const MODE m) const;
 
 /*! \brief          Has a call been worked on a particular band and mode?
     \param  call    target callsign
@@ -142,21 +142,21 @@ public:
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
 */
-  const bool qso_b4(const std::string& call, const BAND b, const MODE m) const;
+  bool qso_b4(const std::string& call, const BAND b, const MODE m) const;
   
 /*! \brief          Get a string list of bands on which a call is needed
     \param  call    target callsign
     \param  rules   rules for the contest
     \return         string list of bands on which a call is needed (separated by three spaces)
 */
-  const std::string call_needed(const std::string& call, const contest_rules& rules) const;
+  std::string call_needed(const std::string& call, const contest_rules& rules) const;
   
 /*! \brief          Would a QSO be a dupe, according to the rules?
     \param  qso     target QSO
     \param  rules   rules for the contest
     \return         whether <i>qso</i> would be a dupe
 */
-  const bool is_dupe(const QSO& qso, const contest_rules& rules) const;
+  bool is_dupe(const QSO& qso, const contest_rules& rules) const;
 
 /*! \brief          Would a QSO be a dupe, according to the rules?
     \param  call    target call
@@ -165,13 +165,13 @@ public:
     \param  rules   rules for the contest
     \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
 */
-  const bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
+  bool is_dupe(const std::string& call, const BAND b, const MODE m, const contest_rules& rules) const;
 
 /// return time-ordered container of QSOs
-  const std::list<QSO> as_list(void) const;
+  std::list<QSO> as_list(void) const;
 
 /// return time-ordered container of QSOs
-  const std::vector<QSO> as_vector(void) const;
+  std::vector<QSO> as_vector(void) const;
   
 /*! \brief          Return the QSOs, filtered by some criterion
     \param  pred    predicate to apply
@@ -180,7 +180,7 @@ public:
     The returned QSOs are in chronological order
 */
   template <class UnaryPredicate>
-  const std::vector<QSO> filter(UnaryPredicate pred) const
+  std::vector<QSO> filter(UnaryPredicate pred) const
   { std::vector<QSO> rv;
 
     SAFELOCK(_log);
@@ -194,14 +194,14 @@ public:
     \param  rules   rules for the contest
     \return         logbook with the dupes recalculated
 */
-  const logbook recalculate_dupes(const contest_rules& rules) const;
+  logbook recalculate_dupes(const contest_rules& rules) const;
   
 /*! \brief              Generate a Cabrillo log
     \param  context     the drlog context
     \param  score       score to be claimed
     \return             the Cabrillo log
 */
-  const std::string cabrillo_log(const drlog_context& context, const unsigned int score) const;
+  std::string cabrillo_log(const drlog_context& context, const unsigned int score) const;
   
 /*! \brief                          Read from a Cabrillo file
     \param  filename                name of Cabrillo file
@@ -228,18 +228,18 @@ public:
     }
 
 /// how many QSOs are in the log?
-  inline const size_t size(void) const
+  inline size_t size(void) const
     { SAFELOCK(_log);
 
       return _log.size();
     }
 
 /// how many QSOs are in the log?
-  inline const size_t n_qsos(void) const
+  inline size_t n_qsos(void) const
     { return size(); }
 
 /// is the log empty?
-  inline const bool empty(void) const
+  inline bool empty(void) const
     { SAFELOCK(_log);
 
       return _log.empty();
@@ -252,13 +252,13 @@ public:
 
     Returns empty string if anything goes wrong.
 */
-  const std::string exchange_field_value(const std::string& callsign, const std::string& exchange_field_name);
+  std::string exchange_field_value(const std::string& callsign, const std::string& exchange_field_name);
 
 /*! \brief          Return all the QSOs that contain an exchange field that matches a target
     \param  target  target string for exchange fields
     \return         all the QSOs that contain an exchange field that matches a target
 */
-  const std::vector<QSO> match_exchange(const std::string& target) const;
+  std::vector<QSO> match_exchange(const std::string& target) const;
 
 /// serialise logbook
   template<typename Archive>
@@ -302,25 +302,25 @@ public:
     { _win_size = _win.height(); }
 
 /// number of QSOs in the extract
-  inline const size_t size(void)
+  inline size_t size(void)
   { SAFELOCK(_extract);
     return _qsos.size();
   }
 
 /// is the extract empty?
-  inline const bool empty(void)
+  inline bool empty(void)
   { SAFELOCK(_extract);
     return _qsos.empty();
   }
 
 /// height of the associated window
-  inline const unsigned int win_size(void)
+  inline unsigned int win_size(void)
   { SAFELOCK(_extract);
     return _win_size;
   }
 
 /// QSOs contained in the extract
-  inline const std::deque<QSO> qsos(void)
+  inline std::deque<QSO> qsos(void)
   { SAFELOCK(_extract);
     return _qsos;
   }
@@ -404,7 +404,7 @@ public:
     \param  call    callsign
     \return         the number of QSLs from callsign <i>call</i>
 */
-  const unsigned int n_qsls(const std::string& call) const;
+  unsigned int n_qsls(const std::string& call) const;
 
 /*! \brief          Set the number of QSLs from a particular callsign
     \param  call    callsign
@@ -416,13 +416,13 @@ public:
     \param  call    callsign
     \return         the new number of QSLs from callsign <i>call</i>
 */
-  const unsigned int increment_n_qsls(const std::string& call);
+  unsigned int increment_n_qsls(const std::string& call);
 
 /*! \brief          Return total number of QSOs with a particular callsign
     \param  call    callsign
     \return         the number of QSOs with callsign <i>call</i>
 */
-  const unsigned int n_qsos(const std::string& call) const;
+  unsigned int n_qsos(const std::string& call) const;
 
 /*! \brief          Set the number of QSOs with a particular callsign
     \param  call    callsign
@@ -434,7 +434,7 @@ public:
     \param  call    callsign for which the number of QSOs should be incremented
     \return         number of QSOs associated with <i>call</i>
 */
-  const unsigned int increment_n_qsos(const std::string& call);
+  unsigned int increment_n_qsos(const std::string& call);
 
 /*! \brief          How many QSOs have taken place with a particular call on a particular band and mode
     \param  call    target callsign
@@ -442,7 +442,7 @@ public:
     \param  m       target mode
     \return         number of QSOs associated with <i>call</i> on band <i>b</i> and mode <i>m</i>
 */
-  const unsigned int n_qsos(const std::string& call, const BAND b, const MODE m) const;
+  unsigned int n_qsos(const std::string& call, const BAND b, const MODE m) const;
 
 /*! \brief          Increment the number of QSOs associated with a particular callsign, band and mode
     \param  call    target callsign
@@ -450,7 +450,7 @@ public:
     \param  m       target mode
     \return         number of QSOs associated with <i>call</i> on band <i>b</i> and mode <i>m</i> (following the increment)
 */
-  const unsigned int increment_n_qsos(const std::string& call, const BAND b, const MODE m);
+  unsigned int increment_n_qsos(const std::string& call, const BAND b, const MODE m);
 
 /*! \brief          Has a QSL ever been received for a particular call on a particular band and mode
     \param  call    target callsign
@@ -458,7 +458,7 @@ public:
     \param  m       target mode
     \return         Has a QSL ever been received for a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i>
 */
-  const bool confirmed(const std::string& call, const BAND b, const MODE m) const;
+  bool confirmed(const std::string& call, const BAND b, const MODE m) const;
 
 /*! \brief          Mark a QSL as being received for a particular call on a particular band and mode
     \param  call    target callsign

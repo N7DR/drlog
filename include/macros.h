@@ -1,4 +1,4 @@
-// $Id: macros.h 154 2020-03-05 15:36:24Z  $
+// $Id: macros.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,10 +37,10 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// Syntactic sugar for read/write access
 #if (!defined(READ_AND_WRITE))
 
-#define READ_AND_WRITE(y)                                       \
-/*! Read access to _##y */                                      \
-  [[nodiscard]] inline const decltype(_##y)& y(void) const { return _##y; }   \
-/*! Write access to _##y */                                     \
+#define READ_AND_WRITE(y)                                                    \
+/*! Read access to _##y */                                                   \
+  [[nodiscard]] inline decltype(_##y) y(void) const { return _##y; }  \
+/*! Write access to _##y */                                                  \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
 #endif    // !READ_AND_WRITE
@@ -48,10 +48,10 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// Syntactic sugar for read/write access with thread locking
 #if (!defined(SAFE_READ_AND_WRITE))
 
-#define SAFE_READ_AND_WRITE(y, z)                                           \
-/*! Read access to _##y */                                                  \
-  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }  \
-/*! Write access to _##y */                                                 \
+#define SAFE_READ_AND_WRITE(y, z)                                                  \
+/*! Read access to _##y */                                                         \
+  [[nodiscard]] inline decltype(_##y) y(void) const { SAFELOCK(z); return _##y; }  \
+/*! Write access to _##y */                                                        \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
 #endif    // !SAFE_READ_AND_WRITE
@@ -59,9 +59,9 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// Read and write with mutex that is part of the object
 #if (!defined(SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX))
 
-#define SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(y, z)                                           \
+#define SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(y, z)                       \
 /*! Read access to _##y */                                                  \
-  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }  \
+  [[nodiscard]] inline decltype(_##y) y(void) { SAFELOCK(z); return _##y; } \
 /*! Write access to _##y */                                                 \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
@@ -70,18 +70,18 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// Syntactic sugar for read-only access
 #if (!defined(READ))
 
-#define READ(y)                                                 \
-/*! Read-only access to _##y */                                 \
-  [[nodiscard]] inline const decltype(_##y)& y(void) const { return _##y; }
+#define READ(y)                                                       \
+/*! Read-only access to _##y */                                       \
+  [[nodiscard]] inline decltype(_##y) y(void) const { return _##y; }
 
 #endif    // !READ
 
 /// Syntactic sugar for read-only access with thread locking
 #if (!defined(SAFEREAD))
 
-#define SAFEREAD(y, z)                                                      \
-/*! Read-only access to _##y */                                             \
-  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
+#define SAFEREAD(y, z)                                                            \
+/*! Read-only access to _##y */                                                   \
+  [[nodiscard]] inline decltype(_##y) y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD
 
@@ -89,9 +89,9 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 #if (!defined(SAFE_READ))
 
 /// read with a mutex
-#define SAFE_READ(y, z)                                                      \
-/*! Read-only access to _##y */                                             \
-  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
+#define SAFE_READ(y, z)                                                           \
+/*! Read-only access to _##y */                                                   \
+  [[nodiscard]] inline decltype(_##y) y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ
 
@@ -100,7 +100,7 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 
 #define SAFEREAD_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
-  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
+  [[nodiscard]] inline decltype(_##y) y(void) { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD_WITH_INTERNAL_MUTEX
 
@@ -110,7 +110,7 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// read with an internal mutex
 #define SAFE_READ_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
-  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
+  [[nodiscard]] inline decltype(_##y) y(void) { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ_WITH_INTERNAL_MUTEX
 
@@ -118,7 +118,7 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 #if (!defined(WRITE))
 
 #define WRITE(y)                                       \
-/*! Write access to _##y */                                     \
+/*! Write access to _##y */                            \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
 #endif    // !READ_AND_WRITE
@@ -148,27 +148,11 @@ public: \
 // https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
 // https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
 template<class T>
-struct is_vector 
+struct is_int 
   { constexpr static bool value { false }; };
 
-template<class T>
-struct is_vector<std::vector<T>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_set 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_set<std::set<T>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_unordered_set 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_unordered_set<std::unordered_set<T>> 
+template<>
+struct is_int<int> 
   { constexpr static bool value { true }; };
 
 template<class T>
@@ -180,14 +164,46 @@ struct is_map<std::map<K, V>>
   { constexpr static bool value { true }; };
 
 template<class T>
+struct is_set 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_set<std::set<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
 struct is_unordered_map 
   { constexpr static bool value { false }; };
 
 template<class K, class V>
 struct is_unordered_map<std::unordered_map<K, V>> 
   { constexpr static bool value { true }; };
+
+template<class T>
+struct is_unordered_set 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_unordered_set<std::unordered_set<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+struct is_unsigned_int 
+  { constexpr static bool value { false }; };
+
+template<>
+struct is_unsigned_int<unsigned int> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+struct is_vector 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_vector<std::vector<T>> 
+  { constexpr static bool value { true }; };
   
-// current g++ does not support definition of concepts, even with -fconcepts
+// current g++ does not support definition of concepts, even with -fconcepts !!
 //template<typename T>
 //concept SET_TYPE = requires(T a) 
 //{ is_set<T>::value == true;
@@ -218,7 +234,7 @@ public:                                                \
     { std::get<0>(*this) = X;                          \
     }                                                  \
                                                        \
-  inline const a0 a1(void) const                       \
+  inline /* const */ a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(const a0 & var)                       \
@@ -239,13 +255,13 @@ public:                                                \
       std::get<1>(*this) = Y;                          \
     }                                                  \
                                                        \
-  inline const a0 a1(void) const                       \
+  inline /* const */ a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(const a0 & var)                       \
     { std::get<0>(*this) = var; }                      \
                                                        \
-  inline const b0 b1(void) const                       \
+  inline /* const */ b0 b1(void) const                       \
     { return std::get<1>(*this); }                     \
                                                        \
   inline void b1(const b0 & var)                       \
@@ -296,19 +312,19 @@ public:                                                \
                                                        \
   nm( void ) { }                                       \
                                                        \
-  inline const a0 a1(void) const                       \
+  inline /* const */ a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(a0 var)                               \
     { std::get<0>(*this) = var; }                      \
                                                        \
-  inline const b0 b1(void) const                       \
+  inline /* const */ b0 b1(void) const                       \
     { return std::get<1>(*this); }                     \
                                                        \
   inline void b1(b0 var)                               \
     { std::get<1>(*this) = var; }                      \
                                                        \
-  inline const c0 c1(void) const                       \
+  inline /* const */ c0 c1(void) const                       \
     { return std::get<2>(*this); }                     \
                                                        \
   inline void c1(c0 var)                               \
@@ -1032,6 +1048,15 @@ std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp
 template<class Input, class Function>
 inline Function FOR_ALL(Input& first, Function fn)
   { return (std::for_each(first.begin(), first.end(), fn)); }
+
+/*! \brief          Apply a function to all in a container
+    \param  first   container
+    \param  fn      function
+    \return         <i>fn</i>
+*/
+template<class Input, class Function>
+inline Function FOR_ALL(const Input& first, Function fn)
+  { return (std::for_each(first.cbegin(), first.cend(), fn)); }
 
 /*! \brief          Copy all in a container to another container
     \param  first   initial container

@@ -1,4 +1,4 @@
-// $Id: string_functions.h 158 2020-06-27 20:33:02Z  $
+// $Id: string_functions.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -136,7 +136,7 @@ T from_string(const std::string& s)
     \return         <i>val</i>converted to a string
 */
 template <class T>
-const std::string to_string(const T val)
+std::string to_string(const T val)
 { std::ostringstream stream;
                 
   stream << val;
@@ -169,7 +169,7 @@ inline std::string substring(const std::string& str, const size_t start_posn)
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-const std::string replace_char(const std::string& s, char old_char, char new_char);
+std::string replace_char(const std::string& s, char old_char, char new_char);
 
 /*! \brief              Replace every instance of one string with another
     \param  s           string on which to operate
@@ -177,7 +177,7 @@ const std::string replace_char(const std::string& s, char old_char, char new_cha
     \param  new_str     replacement string
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
-const std::string replace(const std::string& s, const std::string& old_str, const std::string& new_str);
+std::string replace(const std::string& s, const std::string& old_str, const std::string& new_str);
 
 /*! \brief              Replace part of a string with a byte-for-byte copy of an object
     \param  s           string on which to operate
@@ -188,7 +188,7 @@ const std::string replace(const std::string& s, const std::string& old_str, cons
     Will not return a string of length greater than <i>s</i>; will truncate to that length if necessary
 */
 template <typename T>
-[[nodiscard]] const std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
+[[nodiscard]] std::string replace_substring(const std::string& s, const size_t start_posn, const T& value)
 { std::string rv { s };
 
   constexpr size_t value_size { sizeof(value) };
@@ -196,7 +196,7 @@ template <typename T>
   u_char* cp { (u_char*)(&value) };
 
   for (size_t n = 0; n < value_size; ++n)
-  { if ( (start_posn + n) < rv.size())
+  { if ( (start_posn + n) < rv.size() )
       rv[start_posn + n] = cp[n];
   }
 
@@ -208,7 +208,7 @@ template <typename T>
     \param  ss  substring for which to search
     \return     whether <i>s</i> contains the substring <i>ss</i>
 */
-[[nodiscard]] inline const bool contains(const std::string& s, const std::string& ss)
+inline bool contains(const std::string& s, const std::string& ss)
   { return s.find(ss) != std::string::npos; }
 
 /*! \brief      Does a string contain a particular character?
@@ -216,27 +216,27 @@ template <typename T>
     \param  c   character for which to search
     \return     whether <i>s</i> contains the character <i>c</i>
 */
-[[nodiscard]] inline const bool contains(const std::string& s, const char c)
+inline bool contains(const std::string& s, const char c)
   { return s.find(c) != std::string::npos; }
 
 /*! \brief          Does a string contain any letters?
     \param  str     string to test
     \return         whether <i>str</i> contains any letters
 */
-[[nodiscard]] const bool contains_letter(const std::string& str);
+bool contains_letter(const std::string& str);
 
 /*! \brief          Does a string contain any upper case letters?
     \param  str     string to test
     \return         whether <i>str</i> contains any upper case letters
 */
-[[nodiscard]] inline const bool contains_upper_case_letter(const std::string& str)
+inline bool contains_upper_case_letter(const std::string& str)
   { return (str.find_first_of(UPPER_CASE_LETTERS) != std::string::npos); }
 
 /*! \brief          Does a string contain any digits?
     \param  str     string to test
     \return         whether <i>str</i> contains any digits
 */
-[[nodiscard]] const bool contains_digit(const std::string& str);
+bool contains_digit(const std::string& str);
 
 /*! \brief              Pad a string to a particular size
     \param  s           original string
@@ -247,7 +247,7 @@ template <typename T>
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-[[nodiscard]] const std::string pad_string(const std::string& s, const size_t len, const enum pad_direction pad_side = PAD_LEFT, const char pad_char = ' ');
+std::string pad_string(const std::string& s, const size_t len, const enum pad_direction pad_side = PAD_LEFT, const char pad_char = ' ');
 
 /*! \brief              Read the contents of a file into a single string
     \param  filename    name of file to be read
@@ -256,7 +256,7 @@ template <typename T>
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-[[nodiscard]] const std::string read_file(const std::string& filename);
+std::string read_file(const std::string& filename);
 
 /*! \brief              Read the contents of a file into a single string
     \param  path        the different directories to try, in order
@@ -266,7 +266,7 @@ template <typename T>
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-[[nodiscard]] const std::string read_file(const std::vector<std::string>& path, const std::string& filename);
+std::string read_file(const std::vector<std::string>& path, const std::string& filename);
 
 /*! \brief              Read the contents of a file into a single string
     \param  filename    name of file to be read
@@ -276,7 +276,7 @@ template <typename T>
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-[[nodiscard]] inline const std::string read_file(const std::string& filename, const std::vector<std::string>& path)
+inline std::string read_file(const std::string& filename, const std::vector<std::string>& path)
   { return read_file(path, filename); }
 
 /*! \brief              Write a string to a file
@@ -305,7 +305,7 @@ inline void write_file(const std::string& cs, const std::string& filename)
     If <i>n</i> is equal to or greater than the length of <i>s</i>, then
     the empty string is returned.
 */
-[[nodiscard]] inline const std::string remove_from_end(const std::string& s, const unsigned int n)
+inline std::string remove_from_end(const std::string& s, const unsigned int n)
   { return ( (n >= s.length()) ? std::string() : s.substr(0, s.length() - n) ); }
 
 /*! \brief              Split a string into components
@@ -313,14 +313,14 @@ inline void write_file(const std::string& cs, const std::string& filename)
     \param  separator   separator string (typically a single character)
     \return             vector containing the separate components
 */
-const std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
+std::vector<std::string> split_string(const std::string& cs, const std::string& separator);
 
 /*! \brief              Split a string into components
     \param  cs          original string
     \param  separator   separator character
     \return             vector containing the separate components
 */
-inline const std::vector<std::string> split_string(const std::string& cs, const char separator)
+inline std::vector<std::string> split_string(const std::string& cs, const char separator)
   { return split_string(cs, std::string(1, separator)); }
 
 /*! \brief                  Split a string into equal-length records
@@ -330,7 +330,7 @@ inline const std::vector<std::string> split_string(const std::string& cs, const 
 
     Any non-full record at the end is silently discarded
 */
-const std::vector<std::string> split_string(const std::string& cs, const unsigned int record_length);
+std::vector<std::string> split_string(const std::string& cs, const unsigned int record_length);
 
 /*! \brief                  Split a string into equal-length records
     \param  cs              original string
@@ -339,7 +339,7 @@ const std::vector<std::string> split_string(const std::string& cs, const unsigne
 
     Any non-full record at the end is silently discarded
 */
-inline const std::vector<std::string> split_string(const std::string& cs, const int record_length)
+inline std::vector<std::string> split_string(const std::string& cs, const int record_length)
   { return split_string(cs, static_cast<unsigned int>(record_length)); }
 
 /*! \brief      Squash repeated occurrences of a character
@@ -347,7 +347,7 @@ inline const std::vector<std::string> split_string(const std::string& cs, const 
     \param  c   character to squash
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
-const std::string squash(const std::string& cs, const char c = ' ');
+std::string squash(const std::string& cs, const char c = ' ');
 
 /*! \brief          Remove empty lines from a vector of lines
     \param  lines   the original vector of lines
@@ -355,14 +355,14 @@ const std::string squash(const std::string& cs, const char c = ' ');
 
     If the line contains anything, even just whitespace, it is not removed
 */
-const std::vector<std::string> remove_empty_lines(const std::vector<std::string>& lines);
+std::vector<std::string> remove_empty_lines(const std::vector<std::string>& lines);
 
 /*! \brief              Split a string into lines
     \param  cs          original string
     \param  eol_marker  EOL marker
     \return             vector containing the separate lines
 */
-inline const std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
+inline std::vector<std::string> to_lines(const std::string& cs, const std::string& eol_marker = EOL)
   { return split_string(cs, eol_marker); }
 
 /*! \brief      Remove all instances of a specific leading character
@@ -370,13 +370,13 @@ inline const std::vector<std::string> to_lines(const std::string& cs, const std:
     \param  c   leading character to remove (if present)
     \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
-const std::string remove_leading(const std::string& cs, const char c);
+std::string remove_leading(const std::string& cs, const char c);
 
 /*! \brief      Remove leading spaces
     \param  cs  original string
     \return     <i>cs</i> with any leading spaces removed
 */
-inline const std::string remove_leading_spaces(const std::string& cs)
+inline std::string remove_leading_spaces(const std::string& cs)
   { return remove_leading(cs, ' '); }
 
 /*! \brief      Remove all instances of a specific trailing character
@@ -384,35 +384,35 @@ inline const std::string remove_leading_spaces(const std::string& cs)
     \param  c   trailing character to remove (if present)
     \return     <i>cs</i> with any trailing octets with the value <i>c</i> removed
 */
-const std::string remove_trailing(const std::string& cs, const char c);
+std::string remove_trailing(const std::string& cs, const char c);
 
 /*! \brief      Remove trailing spaces
     \param  cs  original string
     \return     <i>cs</i> with any trailing spaces removed
 */
-inline const std::string remove_trailing_spaces(const std::string& cs)
+inline std::string remove_trailing_spaces(const std::string& cs)
   { return remove_trailing(cs, ' '); }
 
 /*! \brief      Remove leading and trailing spaces
     \param  cs  original string
     \return     <i>cs</i> with any leading or trailing spaces removed
 */
-inline const std::string remove_peripheral_spaces(const std::string& cs)
+inline std::string remove_peripheral_spaces(const std::string& cs)
   { return remove_trailing_spaces(remove_leading_spaces(cs)); }
 
 /*! \brief      Remove leading and trailing spaces
     \param  s   original string
     \return     <i>s</i> with any leading or trailing spaces removed
 */
-inline const std::string remove_peripheral_spaces(std::string& s)
-  { return remove_trailing_spaces(remove_leading_spaces(s)); }
+//inline std::string remove_peripheral_spaces(std::string& s)
+//  { return remove_trailing_spaces(remove_leading_spaces(s)); }
 
 /*! \brief      Remove leading and trailing spaces
     \param  t   container of strings
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
 */
 template <typename T>
-T remove_peripheral_spaces(T& t)
+T remove_peripheral_spaces(const T& t)
 { typename std::remove_const<T>::type rv;
 
   for_each(t.cbegin(), t.cend(), [&rv](const std::string& s) { rv.push_back(remove_peripheral_spaces(s)); } );
@@ -425,7 +425,7 @@ T remove_peripheral_spaces(T& t)
     \param  c   character to remove
     \return     <i>cs</i> with any leading or trailing instances of <i>c</i> removed
 */
-inline const std::string remove_peripheral_character(const std::string& cs, const char c)
+inline std::string remove_peripheral_character(const std::string& cs, const char c)
   { return remove_trailing(remove_leading(cs, c), c); }
 
 /*! \brief                  Remove all instances of a particular char from a string
@@ -433,14 +433,14 @@ inline const std::string remove_peripheral_character(const std::string& cs, cons
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
-const std::string remove_char(const std::string& cs, const char char_to_remove);
+std::string remove_char(const std::string& cs, const char char_to_remove);
 
 /*! \brief                  Remove all instances of a particular char from a string
     \param  s               original string
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
-inline const std::string remove_char(std::string& s, const char char_to_remove)
+inline std::string remove_char(std::string& s, const char char_to_remove)
   { return remove_char(static_cast<const std::string>(s), char_to_remove); }
 
 /*! \brief                  Remove all instances of a particular char from a container of strings
@@ -462,7 +462,7 @@ T remove_char(T& t, const char char_to_remove)
     \param  chars_to_remove     string whose characters are to be removed from <i>s</i>
     \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
 */
-const std::string remove_chars(const std::string& s, const std::string& chars_to_remove);
+std::string remove_chars(const std::string& s, const std::string& chars_to_remove);
 
 /*! \brief                      Remove all instances of particular characters from a string
     \param  cs                  original string
@@ -478,7 +478,7 @@ const std::string remove_chars(const std::string& s, const std::string& chars_to
     \param  delim_2         closing delimiter
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delim_1</i> and <i>delim_2</i>
 */
-const std::string remove_char_from_delimited_substrings(const std::string& cs, const char char_to_remove, const char delim_1, const char delim_2);
+std::string remove_char_from_delimited_substrings(const std::string& cs, const char char_to_remove, const char delim_1, const char delim_2);
 
 /*! \brief              Obtain a delimited substring
     \param  cs          original string
@@ -490,7 +490,7 @@ const std::string remove_char_from_delimited_substrings(const std::string& cs, c
     <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
     first delimited substring if more than one exists.
 */
-const std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2);
+std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2);
 
 /*! \brief              Obtain all occurrences of a delimited substring
     \param  cs          original string
@@ -500,28 +500,70 @@ const std::string delimited_substring(const std::string& cs, const char delim_1,
 
     Returned strings do not include the delimiters.
 */
-const std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2);
+std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2);
 
 /*! \brief          Join the elements of a string vector, using a provided separator
     \param  vec     vector of strings
     \param  sep     separator inserted between the elements of <i>vec</i>
     \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
 */
-const std::string join(const std::vector<std::string>& vec, const std::string& sep /* = " " */);
+//std::string join(const std::vector<std::string>& vec, const std::string& sep);
 
 /*! \brief          Join the elements of a string deque, using a provided separator
     \param  deq     deque of strings
     \param  sep     separator inserted between the elements of <i>vec</i>
     \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
 */
-const std::string join(const std::deque<std::string>& deq, const std::string& sep /* = " " */);
+//std::string join(const std::deque<std::string>& deq, const std::string& sep);
+#if 1
+template <typename T, typename U>
+std::string join(const T& ct, const U sep)
+  requires (std::is_same<typename T::value_type, std::string>::value == true)
+{ std::string rv;
+
+//  if (ct.empty())
+//    return rv;
+
+  for (auto cit = ct.cbegin(); cit != ct.end(); ++cit)
+  { if (cit != ct.cbegin())
+      rv += sep;
+
+    rv += (*cit);
+  }
+
+//  for (unsigned int n = 0; n < ct.size() - 1; ++n)
+//    rv += (ct[n] + sep);
+
+//  rv += ct[ct.size() - 1];
+  
+  return rv;
+}
+#endif
+
+#if 0
+template <typename T, typename U>
+std::string join(const T& ct, const U sep)
+  requires (std::is_same<typename T::value_type, std::string>::value == true) && (std::ForwardIterator<T>)
+{ std::string rv;
+
+  if (ct.empty())
+    return rv;
+
+  for (unsigned int n = 0; n < ct.size() - 1; ++n)
+    rv += (ct[n] + sep);
+
+  rv += ct[ct.size() - 1];
+  
+  return rv;
+}
+#endif
 
 /*! \brief  Create a string of a certain length, with all characters the same
     \param  c   Character that the string will contain
     \param  n   Length of string to be created
     \return String containing <i>n</i> copies of <i>c</i>
 */
-inline const std::string create_string(const char c, const int n = 1)
+inline std::string create_string(const char c, const int n = 1)
   { return std::string(n, c); }
 
 /*! \brief          Centre a string
@@ -529,7 +571,7 @@ inline const std::string create_string(const char c, const int n = 1)
     \param  width   final width of the centred string
     \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
 */
-const std::string create_centred_string(const std::string& str, const unsigned int width);
+std::string create_centred_string(const std::string& str, const unsigned int width);
 
 /*! \brief      Get the last character in a string
     \param  cs  source string
@@ -537,7 +579,7 @@ const std::string create_centred_string(const std::string& str, const unsigned i
 
     Throws exception if <i>cs</i> is empty
 */
-const char last_char(const std::string& cs);
+char last_char(const std::string& cs);
 
 /*! \brief      Get the penultimate character in a string
     \param  cs  source string
@@ -545,7 +587,7 @@ const char last_char(const std::string& cs);
 
     Throws exception if <i>cs</i> is empty or contains only one character
 */
-const char penultimate_char(const std::string& cs);
+char penultimate_char(const std::string& cs);
 
 /*! \brief      Get the antepenultimate character in a string
     \param  cs  source string
@@ -553,14 +595,14 @@ const char penultimate_char(const std::string& cs);
 
     Throws exception if <i>cs</i> contains fewer than two characters
 */
-const char antepenultimate_char(const std::string& cs);
+char antepenultimate_char(const std::string& cs);
 
 /*! \brief          Get the terminating part of a string
     \param  cs      original string
     \param  n       number of characters to return
     \return         the last <i>n</i> characters of <i>cs</i>
 */
-inline const std::string last(const std::string& cs, unsigned int n)
+inline std::string last(const std::string& cs, unsigned int n)
   { return (cs.length() < n ? cs : cs.substr(cs.length() - n)); }
 
 /*! \brief              Get an environment variable
@@ -569,43 +611,60 @@ inline const std::string last(const std::string& cs, unsigned int n)
 
     Returns the empty string if the variable <i>var_name</i> does not exist
 */
-const std::string get_environment_variable(const std::string& var_name);
+std::string get_environment_variable(const std::string& var_name);
 
 /*! \brief      Transform a string
     \param  cs  original string
     \param  pf  pointer to transformation function
     \return     <i>cs</i> with the transformation <i>*pf</i> applied
 */
-const std::string transform_string(const std::string& cs, int(*pf)(int));
+std::string transform_string(const std::string& cs, int(*pf)(int));
 
 /*! \brief      Convert string to upper case
     \param  cs  original string
     \return     <i>cs</i> converted to upper case
 */
-inline const std::string to_upper(const std::string& cs)
+inline std::string to_upper(const std::string& cs)
   { return transform_string(cs, std::toupper); }
 
 /*! \brief      Convert string to lower case
     \param  cs  original string
     \return     <i>cs</i> converted to lower case
 */
-inline const std::string to_lower(const std::string& cs)
+inline std::string to_lower(const std::string& cs)
   { return transform_string(cs, std::tolower); }
 
 /*! \brief      Does a string begin with a particular substring?
     \param  cs  string to test
     \param  ss  substring to look for
     \return     whether <i>cs</i> begins with <i>ss</i>
+
+    See https://stackoverflow.com/questions/1878001/how-do-i-check-if-a-c-stdstring-starts-with-a-certain-string-and-convert-a
 */
-inline const bool starts_with(const std::string& cs, const std::string& ss)
-  { return (cs.find(ss) == 0); }
+inline bool starts_with(const std::string& cs, const std::string& ss)
+  { return (cs.rfind(ss, 0) == 0); }
+
+/*! \brief      Does a string begin with one of a number of particular substrings?
+    \param  cs  string to test
+    \param  ss  substring to look for
+    \return     whether <i>cs</i> begins with <i>ss</i>
+*/
+template <typename T>
+bool starts_with(const std::string& cs, const T& ss)
+  requires (std::is_same<typename T::value_type, std::string>::value == true)
+{ for (const auto& str : ss)
+    if (starts_with(cs, str))
+      return true;
+
+  return false;
+}
 
 /*! \brief      Does a string begin with a particular substring?
     \param  cs  string to test
     \param  ss  substring to look for
     \return     whether <i>cs</i> begins with <i>ss</i>
 */
-inline const bool begins_with(const std::string& cs, const std::string& ss)
+inline bool begins_with(const std::string& cs, const std::string& ss)
   { return (starts_with(cs, ss) ); }
 
 /*! \brief      Does a string end with a particular substring?
@@ -613,14 +672,14 @@ inline const bool begins_with(const std::string& cs, const std::string& ss)
     \param  ss  substring to look for
     \return     whether <i>cs</i> ends with <i>ss</i>
 */
-inline const bool ends_with(const std::string& cs, const std::string& ss)
+inline bool ends_with(const std::string& cs, const std::string& ss)
   { return ( (cs.length() < ss.length()) ? false : ( cs.rfind(ss) == (cs.length() - ss.length()) ) ); }
 
 /*! \brief              Is a call a maritime mobile?
     \param  callsign    call to test
     \return             whether <i>callsign</i> appears to be a maritime mobile
 */
-inline const bool is_maritime_mobile(const std::string& callsign)
+inline bool is_maritime_mobile(const std::string& callsign)
   { return ( ends_with(to_upper(callsign), "/MM"s ) ); }
 
 /*! \brief          Convert an integer to a character-separated string
@@ -631,7 +690,7 @@ inline const bool is_maritime_mobile(const std::string& callsign)
     Uses comma as separator if <i>sep</i> is empty.
 */
 template <typename T>
-const std::string separated_string(const T n, const std::string& sep = ","s)
+std::string separated_string(const T n, const std::string& sep = ","s)
 { const char separator { (sep.empty() ? ',' : sep[0]) };
 
   std::string tmp { to_string(n) };
@@ -649,12 +708,13 @@ const std::string separated_string(const T n, const std::string& sep = ","s)
 
   return rv;
 }
+
 /*! \brief      Convert an integer to a comma-separated string
     \param  n   number to convert
     \return     <i>n</i> with the separator <i>,</i> separating each triplet
 */
 template <typename T>
-inline const std::string comma_separated_string(const T n)
+inline std::string comma_separated_string(const T n)
   { return separated_string(n); }
 
 /*! \brief                  Get location of start of next word
@@ -664,13 +724,13 @@ inline const std::string comma_separated_string(const T n)
 
     Returns <i>string::npos</i> if no word can be found
 */
-const size_t next_word_posn(const std::string& str, const size_t current_posn);
+size_t next_word_posn(const std::string& str, const size_t current_posn);
 
 /*! \brief      Get location of start all words
     \param  s   string to be analysed
     \return     positions of all the starts of words in <i>s</i>
 */
-const std::vector<size_t> starts_of_words(const std::string& s);
+std::vector<size_t> starts_of_words(const std::string& s);
 
 /*! \brief          Get nth word in a string
     \param  s       string to be analysed
@@ -680,7 +740,7 @@ const std::vector<size_t> starts_of_words(const std::string& s);
 
     Returns <i>string::npos</i> if there is no <i>n</i>th word
 */
-const std::string nth_word(const std::string& s, const unsigned int n, const unsigned int wrt = 0);
+std::string nth_word(const std::string& s, const unsigned int n, const unsigned int wrt = 0);
 
 /*! \brief          Get the actual length, in bytes, of a UTF-8-encoded string
     \param  str     UTF-8 string to be analysed
@@ -689,19 +749,19 @@ const std::string nth_word(const std::string& s, const unsigned int n, const uns
     See: https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
     TODO: generalise using locales/facets, instead of assuming UTF-8
 */
-const size_t n_chars(const std::string& str);
+size_t n_chars(const std::string& str);
 
 /*! \brief      Does a string contain a legal dotted-decimal IPv4 address
     \param  cs  original string
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
-const bool is_legal_ipv4_address(const std::string& cs);  
+bool is_legal_ipv4_address(const std::string& cs);  
 
 /*! \brief          Convert a four-byte value to a dotted decimal string
     \param  val     original value
     \return         dotted decimal string corresponding to <i>val</i>
 */
-const std::string convert_to_dotted_decimal(const uint32_t val);
+std::string convert_to_dotted_decimal(const uint32_t val);
 
 /*! \brief                  Is a string a legal value from a list?
     \param  value           target string
@@ -709,14 +769,14 @@ const std::string convert_to_dotted_decimal(const uint32_t val);
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-const bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator);
+bool is_legal_value(const std::string& value, const std::string& legal_values, const std::string& separator);
 
 /*! \brief          Is one call earlier than another, according to callsign sort order?
     \param  call1   first call
     \param  call2   second call
     \return         whether <i>call1</i> appears before <i>call2</i> in callsign sort order
 */
-const bool compare_calls(const std::string& call1, const std::string& call2);
+bool compare_calls(const std::string& call1, const std::string& call2);
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value
@@ -725,13 +785,13 @@ const bool compare_calls(const std::string& call1, const std::string& call2);
 
     Assumes that <i>str</i> is a number
 */
-const std::string decimal_places(const std::string& str, const int n);
+std::string decimal_places(const std::string& str, const int n);
 
 /*! \brief          Return the longest line from a vector of lines
     \param  lines   the lines to search
     \return         the longest line in the vector <i>lines</i>
 */
-const std::string longest_line(const std::vector<std::string>& lines);
+std::string longest_line(const std::vector<std::string>& lines);
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  str     string to be reformatted
@@ -740,7 +800,7 @@ const std::string longest_line(const std::vector<std::string>& lines);
 
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
-const std::string reformat_for_wprintw(const std::string& str, const int width);
+std::string reformat_for_wprintw(const std::string& str, const int width);
 
 /*! \brief          Deal with wprintw's idiotic insertion of newlines when reaching the right hand of a window
     \param  vecstr  vector of strings to be reformatted
@@ -749,21 +809,21 @@ const std::string reformat_for_wprintw(const std::string& str, const int width);
 
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
-const std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& vecstr, const int width);
+std::vector<std::string> reformat_for_wprintw(const std::vector<std::string>& vecstr, const int width);
 
 /*! \brief      Remove all instances of a particular substring from a string
     \param  cs  original string
     \param  ss  substring to be removed
     \return     <i>cs</i>, with all instances of <i>ss</i> removed
 */
-inline const std::string remove_substring(const std::string& cs, const std::string& ss)
+inline std::string remove_substring(const std::string& cs, const std::string& ss)
   { return ( contains(cs, ss) ? replace(cs, ss, std::string()) : cs ); }
 
 /*! \brief      Create a string of spaces
     \param  n   length of string to be created
     \return     string of <i>n</i> space characters
 */
-inline const std::string space_string(const int n)
+inline std::string space_string(const int n)
   { return (n > 0 ? create_string((char)32, n) : std::string()); }
 
 /*! \brief          Write a <i>vector<string></i> object to an output stream
@@ -780,7 +840,7 @@ std::ostream& operator<<(std::ostream& ost, const std::vector<std::string>& vec)
 
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
-const std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//");
+std::string remove_trailing_comment(const std::string& str, const std::string& comment_str = "//");
 
 /*! \brief              Add delimiters to a string
     \param  str         string
@@ -788,7 +848,7 @@ const std::string remove_trailing_comment(const std::string& str, const std::str
     \param  delim_2     closing delimiter
     \return             <i>str</i> preceded by <i>delim_1</i> and followed by <i>delim_2</i>
 */
-inline const std::string delimit(const std::string& str, const std::string& delim_1, const std::string& delim_2)
+inline std::string delimit(const std::string& str, const std::string& delim_1, const std::string& delim_2)
   { return (delim_1 + str + delim_2); }
 
 /*! \brief              Perform a case-insensitive search for a substring
@@ -799,7 +859,7 @@ inline const std::string delimit(const std::string& str, const std::string& deli
     
     Returns string::npos if <i>target</i> cannot be found
 */
-const size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn = 0);
+size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn = 0);
 
 // -------------------------------------- Errors  -----------------------------------
 

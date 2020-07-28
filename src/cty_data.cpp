@@ -1,4 +1,4 @@
-// $Id: cty_data.cpp 154 2020-03-05 15:36:24Z  $
+// $Id: cty_data.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -323,41 +323,42 @@ ostream& operator<<(ostream& ost, const location_info& info)
 
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
-const location_info guess_zones(const string& call, const location_info& li)
+location_info guess_zones(const string& call, const location_info& li)
 { location_info rv { li };
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
-   if (rv.canonical_prefix() == "VE"s)
-   { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
-     { rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, call[posn]))]);
-       rv.itu_zone(VE_ITU[from_string<unsigned int>(string(1, call[posn]))]);
-     }
-   }
-
+  if (rv.canonical_prefix() == "VE"s)
+  { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
+    { rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, call[posn]))]);
+      rv.itu_zone(VE_ITU[from_string<unsigned int>(string(1, call[posn]))]);
+    }
+  }
+  else
 // if it's a W, then make a guess as to the CQ and ITU zones
-   if (rv.canonical_prefix() == "K"s)
-   { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
-     { rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, call[posn]))]);
-       rv.itu_zone(W_ITU[from_string<unsigned int>(string(1, call[posn]))]);
+  { if (rv.canonical_prefix() == "K"s)
+    { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
+      { rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, call[posn]))]);
+        rv.itu_zone(W_ITU[from_string<unsigned int>(string(1, call[posn]))]);
 
 // lat/long for W zones
-       switch (rv.cq_zone())
-       { case 3:
-           rv.latitude_longitude(40.79, 115.54);
-           break;
+        switch (rv.cq_zone())
+        { case 3:
+            rv.latitude_longitude(40.79, 115.54);
+            break;
 
-         case 4:
-           rv.latitude_longitude(39.12, 101.98);
-           break;
+          case 4:
+            rv.latitude_longitude(39.12, 101.98);
+            break;
 
-         case 5:
-           rv.latitude_longitude(36.55, 79.65);
-           break;
-       }
-     }
-   }
+          case 5:
+            rv.latitude_longitude(36.55, 79.65);
+            break;
+        }
+      }
+    }
+  }
 
-   return rv;
+  return rv;
 }
 
 // -----------  location_database  ----------------
@@ -500,7 +501,11 @@ void location_database::_insert_alternatives(const location_info& info, const AC
   }
 }
 
-void location_database::_process_alternative(const cty_record& rec, /* LOCATION_DBTYPE& db, */ const enum ALTERNATIVES alt_type)
+/*! \brief              Process alternatives from a record
+    \param  rec         the record to process
+    \param  alt_type    type of alternatives to process
+*/
+void location_database::_process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type)
 { const ACI_DBTYPE& alts                  { alt_type == ALTERNATIVES::CALLSIGNS ? rec.alt_callsigns() : rec.alt_prefixes() };
   LOCATION_DBTYPE&  db                    { alt_type == ALTERNATIVES::CALLSIGNS ? _alt_call_db : _db };
   const bool        country_is_waedc_only { rec.waedc_country_only() };
@@ -601,7 +606,7 @@ void location_database::add_russian_database(const vector<string>& path, const s
     \param  callpart    call (or partial call)
     \return             location information corresponding to <i>call</i>
 */
-const location_info location_database::info(const string& callpart) const
+location_info location_database::info(const string& callpart) const
 { const string original_callsign { remove_peripheral_spaces(callpart) };
 
   string callsign { original_callsign };                  // make callsign mutable, for handling case of /n
@@ -988,7 +993,7 @@ auto location_database::countries(void) const -> unordered_set<string>
 }
 
 /// create a set of all the canonical prefixes for a particular continent
-const unordered_set<string> location_database::countries(const string& cont_target) const
+unordered_set<string> location_database::countries(const string& cont_target) const
 { const auto all_countries { countries() };
 
   unordered_set <string> rv;
@@ -1043,7 +1048,7 @@ drlog_qth_database::drlog_qth_database(const std::string& filename)
 };
 
 /// return all the entries with a particular ID
-const vector<drlog_qth_database_record> drlog_qth_database::id(const string& id_target) const
+vector<drlog_qth_database_record> drlog_qth_database::id(const string& id_target) const
 { vector<drlog_qth_database_record> rv;
 
   for (size_t n = 0; n < _db.size(); ++n)
@@ -1058,7 +1063,7 @@ const vector<drlog_qth_database_record> drlog_qth_database::id(const string& id_
     \param  initial_cq_zone     default value of CQ zone, if none is found
     \return                     CQ zone corresponding to <i>call</i>
 */
-const unsigned int drlog_qth_database::cq_zone(const string& call, const unsigned int initial_cq_zone) const
+unsigned int drlog_qth_database::cq_zone(const string& call, const unsigned int initial_cq_zone) const
 { for (size_t n = 0; n < _db.size(); ++n)
     if (_db[n].id() == call)
       return _db[n].get_cq_zone(initial_cq_zone);
@@ -1072,7 +1077,7 @@ const unsigned int drlog_qth_database::cq_zone(const string& call, const unsigne
     \param  initial_cq_zone     default value of CQ zone, if none is found
     \return                     CQ zone corresponding to call area <i>call_area</i> in country <i>country</i>
 */
-const unsigned int drlog_qth_database::cq_zone(const string& country, const unsigned int call_area, const unsigned int initial_cq_zone) const
+unsigned int drlog_qth_database::cq_zone(const string& country, const unsigned int call_area, const unsigned int initial_cq_zone) const
 { for (size_t n = 0; n < _db.size(); ++n)
     if (_db[n].id() == country and _db[n].get_area(10) == call_area)  // 10 is an invalid area
       return _db[n].get_cq_zone(initial_cq_zone);
@@ -1085,7 +1090,7 @@ const unsigned int drlog_qth_database::cq_zone(const string& country, const unsi
     \param  initial_latitude    default value of latitude, if none is found
     \return                     latitude corresponding to <i>call</i>
 */
-const float drlog_qth_database::latitude(const string& call, const float initial_latitude) const
+float drlog_qth_database::latitude(const string& call, const float initial_latitude) const
 { for (size_t n = 0; n < _db.size(); ++n)
     if (_db[n].id() == call)
       return _db[n].get_latitude(initial_latitude);

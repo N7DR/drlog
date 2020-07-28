@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 158 2020-06-27 20:33:02Z  $
+// $Id: string_functions.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -237,7 +237,7 @@ string format_time(const string& format, const tm* tmp)
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
 */
-const string replace_char(const string& s, char old_char, char new_char)
+string replace_char(const string& s, char old_char, char new_char)
 { string rv;
 
   FOR_ALL(s, [=, &rv] (const char c) { rv += ( (c == old_char) ? new_char : c ); } );
@@ -251,7 +251,7 @@ const string replace_char(const string& s, char old_char, char new_char)
     \param  new_str     replacement string
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
-const string replace(const string& s, const string& old_str, const string& new_str)
+string replace(const string& s, const string& old_str, const string& new_str)
 { string rv;
 
   size_t posn { 0 };
@@ -276,7 +276,7 @@ const string replace(const string& s, const string& old_str, const string& new_s
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-const string pad_string(const string& s, const size_t len, const enum pad_direction pad_side, const char pad_char)
+string pad_string(const string& s, const size_t len, const enum pad_direction pad_side, const char pad_char)
 { string rv { s };
 
   if (rv.length() >= len)
@@ -284,7 +284,7 @@ const string pad_string(const string& s, const size_t len, const enum pad_direct
   
   const size_t n_pad_chars { len - rv.length() };
   
-  const string pstring(n_pad_chars, pad_char);
+  const string pstring(n_pad_chars, pad_char);  // cannot use initializer-list
 
   return ( (pad_side == PAD_LEFT) ? pstring + rv : rv + pstring );
 }
@@ -296,7 +296,7 @@ const string pad_string(const string& s, const size_t len, const enum pad_direct
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-const string read_file(const string& filename)
+string read_file(const string& filename)
 {  //std::ifstream file("file.ignore");
    //std::string str{std::istreambuf_iterator<char>(file), {}};
 
@@ -377,7 +377,7 @@ const string read_file(const string& filename)
     Throws exception if the file does not exist, or if any
     of several bad things happen. Assumes that the file is a reasonable length.
 */
-const string read_file(const vector<string>& path, const string& filename)
+string read_file(const vector<string>& path, const string& filename)
 { for (const auto& this_path : path)
   { try
     { return read_file(this_path + "/"s + filename);
@@ -430,7 +430,7 @@ const string read_file(const vector<string>& path, const string& filename)
     \param  separator   separator string (typically a single character)
     \return             vector containing the separate components
 */
-const vector<string> split_string(const string& cs, const string& separator)
+vector<string> split_string(const string& cs, const string& separator)
 { size_t start_posn { 0 };
 
   vector<string> rv;
@@ -458,7 +458,7 @@ const vector<string> split_string(const string& cs, const string& separator)
 
     Any non-full record at the end is silently discarded
 */
-const vector<string> split_string(const string& cs, const unsigned int record_length)
+vector<string> split_string(const string& cs, const unsigned int record_length)
 { vector<string> rv;
 
   string cp { cs };
@@ -476,7 +476,7 @@ const vector<string> split_string(const string& cs, const unsigned int record_le
     \param  c   character to squash
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
-const string squash(const string& cs, const char c)
+string squash(const string& cs, const char c)
 { auto both_match = [=](const char lhs, const char rhs) { return ( (lhs == rhs) and (lhs == c) ); }; ///< do both match the target character?
 
   string rv { cs };
@@ -492,7 +492,7 @@ const string squash(const string& cs, const char c)
 
     If the line contains anything, even just whitespace, it is not removed
 */
-const vector<string> remove_empty_lines(const vector<string>& lines)
+vector<string> remove_empty_lines(const vector<string>& lines)
 { vector<string> rv;
 
   FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv.push_back(line); } );
@@ -505,7 +505,8 @@ const vector<string> remove_empty_lines(const vector<string>& lines)
     \param  sep     separator inserted between the elements of <i>vec</i>
     \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
 */
-const string join(const vector<string>& vec, const string& sep)
+#if 0
+string join(const vector<string>& vec, const string& sep)
 { string rv;
 
   if (vec.empty())
@@ -518,13 +519,15 @@ const string join(const vector<string>& vec, const string& sep)
   
   return rv;
 }
+#endif
 
 /*! \brief          Join the elements of a string deque, using a provided separator
     \param  deq     deque of strings
     \param  sep     separator inserted between the elements of <i>vec</i>
     \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
 */
-const string join(const deque<string>& deq, const string& sep)
+#if 0
+string join(const deque<string>& deq, const string& sep)
 { string rv;
 
   if (!deq.empty())
@@ -538,13 +541,14 @@ const string join(const deque<string>& deq, const string& sep)
   
   return rv;
 }
+#endif
 
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
     \param  c   leading character to remove (if present)
     \return     <i>cs</i> with any leading octets with the value <i>c</i> removed
 */
-const string remove_leading(const string& cs, const char c)
+string remove_leading(const string& cs, const char c)
 { if (cs.empty())
     return cs;
 
@@ -558,7 +562,7 @@ const string remove_leading(const string& cs, const char c)
     \param  c   trailing character to remove (if present)
     \return     <i>cs</i> with any trailing octets with the value <i>c</i> removed
 */
-const string remove_trailing(const string& cs, const char c)
+string remove_trailing(const string& cs, const char c)
 { string rv { cs };
 
   while (rv.length() && (rv[rv.length() - 1] == c))
@@ -572,7 +576,7 @@ const string remove_trailing(const string& cs, const char c)
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
-const string remove_char(const string& cs, const char char_to_remove)
+string remove_char(const string& cs, const char char_to_remove)
 { string rv { cs };
 
   rv.erase( remove(rv.begin(), rv.end(), char_to_remove), rv.end() );
@@ -587,7 +591,7 @@ const string remove_char(const string& cs, const char char_to_remove)
     \param  delim_2         closing delimiter
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delim_1</i> and <i>delim_2</i>
 */
-const string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
+string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
 { string rv;
 
   bool inside_delimiters { false };
@@ -613,7 +617,7 @@ const string remove_char_from_delimited_substrings(const string& cs, const char 
     \param  chars_to_remove     string whose characters are to be removed from <i>s</i>
     \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
 */
-const string remove_chars(const string& s, const string& chars_to_remove)
+string remove_chars(const string& s, const string& chars_to_remove)
 { string rv { s };
 
   rv.erase( remove_if(rv.begin(), rv.end(), [=](const char& c) { return chars_to_remove.find(c) != string::npos; } ), rv.end() );
@@ -645,7 +649,7 @@ const string remove_chars(const string& s, const string& chars_to_remove)
     <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
     first delimited substring if more than one exists.
 */
-const string delimited_substring(const string& cs, const char delim_1, const char delim_2)
+string delimited_substring(const string& cs, const char delim_1, const char delim_2)
 { const size_t posn_1 { cs.find(delim_1) };
   
   if (posn_1 == string::npos)
@@ -667,7 +671,7 @@ const string delimited_substring(const string& cs, const char delim_1, const cha
 
     Returned strings do not include the delimiters.
 */
-const vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2)
+vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2)
 { vector<string> rv;
 
   size_t start_posn { 0 };
@@ -696,7 +700,7 @@ const vector<string> delimited_substrings(const string& cs, const char delim_1, 
     \param  width   final width of the centred string
     \return         <i>str</i> centred in a string of spaces, with total size <i>width</i>,
 */
-const string create_centred_string(const string& str, const unsigned int width)
+string create_centred_string(const string& str, const unsigned int width)
 { const size_t len { str.length() };
 
   if (len > width)
@@ -717,7 +721,7 @@ const string create_centred_string(const string& str, const unsigned int width)
 
     Throws exception if <i>cs</i> is empty
 */
-const char last_char(const string& cs)
+char last_char(const string& cs)
 { if (cs.empty())
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character in empty string"s);
     
@@ -730,7 +734,7 @@ const char last_char(const string& cs)
 
     Throws exception if <i>cs</i> is empty or contains only one character
 */
-const char penultimate_char(const string& cs)
+char penultimate_char(const string& cs)
 { if (cs.length() < 2)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string"s);
     
@@ -743,7 +747,7 @@ const char penultimate_char(const string& cs)
 
     Throws exception if <i>cs</i> contains fewer than two characters
 */
-const char antepenultimate_char(const string& cs)
+char antepenultimate_char(const string& cs)
 { if (cs.length() < 3)
     throw string_function_error(STRING_BOUNDS_ERROR, "Attempt to access character beyond end of string"s);
     
@@ -756,7 +760,7 @@ const char antepenultimate_char(const string& cs)
 
     Returns the empty string if the variable does not exist
 */
-const string get_environment_variable(const string& var_name)
+string get_environment_variable(const string& var_name)
 { const char* cp { getenv(var_name.c_str()) };
 
   return ( cp ? string(cp) : string() );
@@ -767,7 +771,7 @@ const string get_environment_variable(const string& var_name)
     \param  pf  pointer to transformation function
     \return     <i>cs</i> with the transformation <i>*pf</i> applied
 */
-const string transform_string(const string& cs, int(*pf)(int))
+string transform_string(const string& cs, int(*pf)(int))
 { string rv { cs };
   
   transform(rv.begin(), rv.end(), rv.begin(), pf);
@@ -779,7 +783,7 @@ const string transform_string(const string& cs, int(*pf)(int))
     \param  s   string to be analysed
     \return     positions of all the starts of words in <i>s</i>
 */
-const vector<size_t> starts_of_words(const string& s)
+vector<size_t> starts_of_words(const string& s)
 { vector<size_t> rv;
 
   if (s.empty())
@@ -816,7 +820,7 @@ const vector<size_t> starts_of_words(const string& s)
 
     Returns <i>string::npos</i> if no word can be found
 */
-const size_t next_word_posn(const string& str, const size_t current_posn)
+size_t next_word_posn(const string& str, const size_t current_posn)
 { if (str.length() <= current_posn)
     return string::npos;
 
@@ -840,7 +844,7 @@ const size_t next_word_posn(const string& str, const size_t current_posn)
 
     Returns <i>string::npos</i> if there is no <i>n</i>th word
 */
-const string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
+string nth_word(const string& s, const unsigned int n, const unsigned int wrt)
 { string rv;
 
   if (n < wrt)
@@ -868,7 +872,7 @@ const string nth_word(const string& s, const unsigned int n, const unsigned int 
     See: https://stackoverflow.com/questions/4063146/getting-the-actual-length-of-a-utf-8-encoded-stdstring
     TODO: generalise using locales/facets, instead of assuming UTF-8
 */
-const size_t n_chars(const string& str)
+size_t n_chars(const string& str)
 { if (string(nl_langinfo(CODESET)) != "UTF-8"s)
     throw string_function_error(STRING_UNKNOWN_ENCODING, "Unknown character encoding: "s + string(nl_langinfo(CODESET)));
 
@@ -890,7 +894,7 @@ const size_t n_chars(const string& str)
     \param  cs  original string
     \return     whether <i>cs</i> contains a legal dotted decimal IPv4 address
 */
-const bool is_legal_ipv4_address(const string& cs)
+bool is_legal_ipv4_address(const string& cs)
 { static const string separator { "."s };
 
   const vector<string> fields { split_string(cs, separator) };
@@ -918,7 +922,7 @@ const bool is_legal_ipv4_address(const string& cs)
     \param  val     original value
     \return         dotted decimal string corresponding to <i>val</i>
 */
-const string convert_to_dotted_decimal(const uint32_t val)
+string convert_to_dotted_decimal(const uint32_t val)
 { static const string separator { "."s };
 
 // put into network order (so that we can guarantee the order of the octets in the long)
@@ -947,7 +951,7 @@ const string convert_to_dotted_decimal(const uint32_t val)
     \param  separator       separator in the string <i>legal_values</i>
     \return                 whether <i>value</i> appears in <i>legal_values</i>
 */
-const bool is_legal_value(const string& value, const string& legal_values, const string& separator)
+bool is_legal_value(const string& value, const string& legal_values, const string& separator)
 { const vector<string> vec { split_string(legal_values, separator) };
 
   return (find(vec.begin(), vec.end(), value) != vec.end());
@@ -958,7 +962,7 @@ const bool is_legal_value(const string& value, const string& legal_values, const
     \param  call2   second call
     \return         whether <i>call1</i> appears before <i>call2</i> in callsign sort order
 */
-const bool compare_calls(const string& call1, const string& call2)
+bool compare_calls(const string& call1, const string& call2)
 {
 /* callsign sort order
 
@@ -1017,9 +1021,9 @@ const bool compare_calls(const string& call1, const string& call2)
 
     This should be faster than the find_next_of() or C++ is_letter or similar generic functions
 */
-const bool contains_letter(const string& str)
+bool contains_letter(const string& str)
 { for (const char& c : str)
-    if ( (c >= 'A' and c <='Z') or (c >= 'a' and c <='z') )
+    if ( (c >= 'A' and c <= 'Z') or (c >= 'a' and c <= 'z') )
       return true;
 
   return false;
@@ -1031,9 +1035,9 @@ const bool contains_letter(const string& str)
 
     This should be faster than the find_next_of() or C++ is_digit or similar generic functions
 */
-const bool contains_digit(const string& str)
+bool contains_digit(const string& str)
 { for (const char& c : str)
-    if (c >= '0' and c <= '9' )
+    if (c >= '0' and c <= '9')
       return true;
 
   return false;
@@ -1046,7 +1050,7 @@ const bool contains_digit(const string& str)
 
     Assumes that <i>str</i> is a number
 */
-const string decimal_places(const string& str, const int n)
+string decimal_places(const string& str, const int n)
 {
 // for now, assume that it's a number
   if ( (str.length() >= 2) and (str[str.length() - 2] != '.') )
@@ -1065,7 +1069,7 @@ const string decimal_places(const string& str, const int n)
     \param  lines   the lines to search
     \return         the longest line in the vector <i>lines</i>
 */
-const string longest_line(const vector<string>& lines)
+string longest_line(const vector<string>& lines)
 { string rv;
 
   for (const string& line : lines)
@@ -1082,7 +1086,7 @@ const string longest_line(const vector<string>& lines)
 
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
-const string reformat_for_wprintw(const string& str, const int width)
+string reformat_for_wprintw(const string& str, const int width)
 { string rv;
 
   int since_last_newline { 0 };
@@ -1112,7 +1116,7 @@ const string reformat_for_wprintw(const string& str, const int width)
 
     See http://stackoverflow.com/questions/7540029/wprintw-in-ncurses-when-writing-a-newline-terminated-line-of-exactly-the-same
 */
-const vector<string> reformat_for_wprintw(const vector<string>& vecstr, const int width)
+vector<string> reformat_for_wprintw(const vector<string>& vecstr, const int width)
 { vector<string> rv;
 
   for (const auto& s : vecstr)
@@ -1146,7 +1150,7 @@ ostream& operator<<(ostream& ost, const vector<string>& vec)
 
     Generally it is expected that <i>str</i> is a single line (without the EOL marker)
 */
-const string remove_trailing_comment(const string& str, const string& comment_str)
+string remove_trailing_comment(const string& str, const string& comment_str)
 { const size_t posn { str.find(comment_str) };
 
   return ( (posn == string::npos) ? str : remove_trailing_spaces(substring(str, 0, posn)) );
@@ -1160,8 +1164,8 @@ const string remove_trailing_comment(const string& str, const string& comment_st
     
     Returns string::npos if <i>target</i> cannot be found
 */
-const size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn)
-{ auto it = str.cbegin();
+size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn)
+{ auto it { str.cbegin() };
 
   if (start_posn != 0)
     advance(it, start_posn);

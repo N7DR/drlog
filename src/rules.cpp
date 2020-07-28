@@ -1,4 +1,4 @@
-// $Id: rules.cpp 154 2020-03-05 15:36:24Z  $
+// $Id: rules.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -82,8 +82,8 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
 
     Return empty string if <i>field_name</i> is not a choice
 */
-const string choice_equivalents::other_choice(const std::string& field_name) const
-{ const auto posn = _choices.find(field_name);
+string choice_equivalents::other_choice(const std::string& field_name) const
+{ const auto posn { _choices.find(field_name) };
 
   return ( (posn == _choices.cend()) ? string() : posn->second );
 }
@@ -123,7 +123,7 @@ void exchange_field_values::add_value(const string& cv, const string& v)
 
     Returns 0 if the canonical value does not exist
 */
-const size_t exchange_field_values::n_values(const string& cv) const
+size_t exchange_field_values::n_values(const string& cv) const
 { const auto posn { _values.find(cv) };
 
   return ( (posn == _values.end()) ? 0 : posn->second.size() );
@@ -135,7 +135,7 @@ const size_t exchange_field_values::n_values(const string& cv) const
 
     Returns empty set if the canonical value does not exist
 */
-const set<std::string> exchange_field_values::values(const string& cv) const
+set<std::string> exchange_field_values::values(const string& cv) const
 { const auto posn { _values.find(cv) };
 
   return ( (posn == _values.end()) ? set<string>() : posn->second );
@@ -146,7 +146,7 @@ const set<std::string> exchange_field_values::values(const string& cv) const
 
     Returns empty set if there are no canonical values
 */
-const set<string> exchange_field_values::canonical_values(void) const
+set<string> exchange_field_values::canonical_values(void) const
 { set<string> rv;
 
   FOR_ALL(_values, [&rv] (const pair<string, set<string>>& psss) { rv.insert(psss.first); } );
@@ -159,7 +159,7 @@ const set<string> exchange_field_values::canonical_values(void) const
 
     Returns empty set if there are no canonical values
 */
-const set<string> exchange_field_values::all_values(void) const
+set<string> exchange_field_values::all_values(void) const
 { set<string> rv;
 
   for (const auto& cvv : _values)
@@ -172,7 +172,7 @@ const set<string> exchange_field_values::all_values(void) const
     \param  value   value to be tested
     \return         whether <i>value</i> is a legal value of any canonical value
 */
-const bool exchange_field_values::is_legal_value(const string& value) const
+bool exchange_field_values::is_legal_value(const string& value) const
 { for (const auto& cv : canonical_values())         // for each canonical value
   { if (is_legal_value(cv, value))
       return true;
@@ -186,7 +186,7 @@ const bool exchange_field_values::is_legal_value(const string& value) const
     \param  putative_value  value to test
     \return                 whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
-const bool exchange_field_values::is_legal_value(const string& cv, const string& putative_value) const
+bool exchange_field_values::is_legal_value(const string& cv, const string& putative_value) const
 { if (!is_legal_canonical_value(cv))
     return false;
 
@@ -205,7 +205,7 @@ const bool exchange_field_values::is_legal_value(const string& cv, const string&
 /*! \brief      Follow all trees to their leaves
     \return     the exchange field, expanded recursively into all possible choices
 */
-const vector<exchange_field> exchange_field::expand(void) const
+vector<exchange_field> exchange_field::expand(void) const
 { vector<exchange_field> rv;
 
   if (!is_choice())
@@ -305,7 +305,7 @@ void contest_rules::_parse_context_qthx(const drlog_context& context, location_d
 
     Uses the variable <i>_exch_values</i> to obtain the returned value
 */
-const set<string> contest_rules::_all_exchange_values(const string& field_name) const
+set<string> contest_rules::_all_exchange_values(const string& field_name) const
 { SAFELOCK(rules);
 
   const auto cit { FIND_IF(_exch_values, [=] (const exchange_field_values& efv) { return (efv.name() == field_name); } ) };
@@ -319,7 +319,7 @@ const set<string> contest_rules::_all_exchange_values(const string& field_name) 
     \param  expand_choices      whether to expand CHOICE fields
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
-const vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_prefix, const MODE m, const bool expand_choices) const
+vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_prefix, const MODE m, const bool expand_choices) const
 { if (canonical_prefix.empty())
     return vector<exchange_field>();
 
@@ -353,7 +353,7 @@ const vector<exchange_field> contest_rules::_exchange_fields(const string& canon
     \param  exchange_mults_vec  container of fields that are mults
     \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
 */
-const vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchange_fields , const vector<string>& exchange_mults_vec) const
+vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchange_fields , const vector<string>& exchange_mults_vec) const
 { vector<exchange_field> rv;
 
   for (const auto& field_name : exchange_fields)
@@ -895,7 +895,7 @@ void contest_rules::prepare(const drlog_context& context, location_database& loc
 /*! \brief      Get all the known names of exchange fields (for all modes)
     \return     all the known names of exchange fields (for all modes)
 */
-const set<string> contest_rules::all_known_field_names(void) const
+set<string> contest_rules::all_known_field_names(void) const
 { set<string> rv;
 
   SAFELOCK(rules);
@@ -919,7 +919,7 @@ const set<string> contest_rules::all_known_field_names(void) const
 
     Returned EFT("none") if <i>field_name</i> is unknown.
 */
-const EFT contest_rules::exchange_field_eft(const string& field_name) const
+EFT contest_rules::exchange_field_eft(const string& field_name) const
 { SAFELOCK(rules);
 
   const auto v { _exchange_field_eft.find(field_name) };
@@ -932,7 +932,7 @@ const EFT contest_rules::exchange_field_eft(const string& field_name) const
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-const vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
+vector<string> contest_rules::expanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
 { const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, true) };
 
   vector<string> rv;
@@ -947,7 +947,7 @@ const vector<string> contest_rules::expanded_exchange_field_names(const string& 
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-const vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
+vector<string> contest_rules::unexpanded_exchange_field_names(const string& canonical_prefix, const MODE m) const
 { const vector<exchange_field> vef { _exchange_fields(canonical_prefix, m, false) };
 
   vector<string> rv;
@@ -963,7 +963,7 @@ const vector<string> contest_rules::unexpanded_exchange_field_names(const string
 
     Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
 */
-const vector<string> contest_rules::exch_canonical_values(const string& field_name) const
+vector<string> contest_rules::exch_canonical_values(const string& field_name) const
 { vector<string> rv;
 
   { SAFELOCK(rules);
@@ -1021,7 +1021,7 @@ void contest_rules::add_exch_canonical_value(const string& field_name, const str
 
     Returns false if <i>field_name</i> is unrecognized
 */
-const bool contest_rules::is_canonical_value(const string& field_name, const string& putative_canonical_value) const
+bool contest_rules::is_canonical_value(const string& field_name, const string& putative_canonical_value) const
 { SAFELOCK(rules);
 
   for (const auto& exch_value : _exch_values)
@@ -1038,7 +1038,7 @@ const bool contest_rules::is_canonical_value(const string& field_name, const str
 
     Returns false if <i>field_name</i> is unrecognized. Supports regex exchanges.
 */
-const bool contest_rules::is_legal_value(const string& field_name, const string& putative_value) const
+bool contest_rules::is_legal_value(const string& field_name, const string& putative_value) const
 { SAFELOCK(rules);
 
   try
@@ -1060,7 +1060,7 @@ const bool contest_rules::is_legal_value(const string& field_name, const string&
 
     Returns <i>false</i> if <i>field_name</i> is unknown.
 */
-const bool contest_rules::exchange_field_is_regex(const string& field_name) const
+bool contest_rules::exchange_field_is_regex(const string& field_name) const
 { SAFELOCK(rules);
 
   try
@@ -1076,15 +1076,12 @@ const bool contest_rules::exchange_field_is_regex(const string& field_name) cons
   }
 }
 
-// std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< exchange field information
-
-
 /*! \brief              The permitted values for a field
     \param  field_name  name of an exchange field (received)
 
     Returns the empty set if the field <i>field_name</i> can take any value, or if it's a regex.
 */
-const set<string> contest_rules::exch_permitted_values(const string& field_name) const
+set<string> contest_rules::exch_permitted_values(const string& field_name) const
 { static const set<string> empty_set { };
 
   SAFELOCK(rules);
@@ -1099,12 +1096,15 @@ const set<string> contest_rules::exch_permitted_values(const string& field_name)
     \param  actual_value    actual received value of the field <i>field_name</i>
     \return                 Canonical value for the value <i>actual_value</i> for the field <i>field_name</i>
 
-    Returns <i>actual_value</i> if there are no canonical values.
-    Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>
+    Returns <i>actual_value</i> if there are no canonical values or if <i>actual_value</i> is empty
+    Returns the empty string if <i>actual_value</i> is not a legal value for <i>field_name</i>.
 */
-const string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
-{ if (field_name == "DOK"s)    // DOK is special because loads of actual_values map to the same value; keep the actual value
-    return actual_value;      // we convert to the single letter version elsewhere
+string contest_rules::canonical_value(const string& field_name, const string& actual_value) const
+{ if (actual_value.empty())
+    return actual_value;
+
+  if (field_name == "DOK"s)    // DOK is special because loads of actual_values map to the same value; keep the actual value
+    return actual_value;       // we convert to the single letter version elsewhere
 
   set<string> ss { exch_permitted_values(field_name) };
 
@@ -1124,9 +1124,11 @@ const string contest_rules::canonical_value(const string& field_name, const stri
   SAFELOCK(rules);
 
   const map<string, string>& p_to_c { _permitted_to_canonical.at(field_name) };  // we don't get here if field_name isn't valid
-  const auto                 cit    { p_to_c.find(actual_value) };
+  
+  return MUM_VALUE(p_to_c, actual_value, actual_value);
+//  const auto                 cit    { p_to_c.find(actual_value) };
 
-  return (cit == p_to_c.cend() ? actual_value : (cit->second));
+//  return (cit == p_to_c.cend() ? actual_value : (cit->second));
 }
 
 /*! \brief          Get the next mode in sequence
@@ -1136,7 +1138,7 @@ const string contest_rules::canonical_value(const string& field_name, const stri
     Cycles through the available modes.
     Currently supports only MODE_CW and MODE_SSB
 */
-const MODE contest_rules::next_mode(const MODE current_mode) const
+MODE contest_rules::next_mode(const MODE current_mode) const
 { SAFELOCK(rules);
 
   auto cit { _permitted_modes.find(current_mode) };
@@ -1160,7 +1162,7 @@ void contest_rules::add_permitted_band(const BAND b)
 }
 
 /// get the next band up
-const BAND contest_rules::next_band_up(const BAND current_band) const
+BAND contest_rules::next_band_up(const BAND current_band) const
 { SAFELOCK(rules);
 
   auto cit { find(_permitted_bands.begin(), _permitted_bands.end(), current_band) };
@@ -1191,7 +1193,7 @@ const BAND contest_rules::next_band_up(const BAND current_band) const
 }
 
 /// get the next band down
-const BAND contest_rules::next_band_down(const BAND current_band) const
+BAND contest_rules::next_band_down(const BAND current_band) const
 { SAFELOCK(rules);
 
   auto cit { find(_permitted_bands.begin(), _permitted_bands.end(), current_band) };
@@ -1229,7 +1231,7 @@ const BAND contest_rules::next_band_down(const BAND current_band) const
     \param  location_db     location database
     \return                 the (location-based) points for <i>qso</i>
 */
-const unsigned int contest_rules::points(const QSO& qso, location_database& location_db) const
+unsigned int contest_rules::points(const QSO& qso, location_database& location_db) const
 { const BAND b { qso.band() };
 
   if (!(_score_bands > b))    // no points if we're not scoring this band
@@ -1356,7 +1358,7 @@ void contest_rules::score_modes(const set<MODE>& new_modes)
 
     If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-const bool contest_rules::country_mults_used(const string& cp) const
+bool contest_rules::country_mults_used(const string& cp) const
 { SAFELOCK(rules);
 
   if (cp.empty())
@@ -1374,7 +1376,7 @@ const bool contest_rules::country_mults_used(const string& cp) const
 
     Returns <i>false</i> if <i>name</i> is unrecognised
 */
-const bool contest_rules::is_exchange_mult(const string& name) const
+bool contest_rules::is_exchange_mult(const string& name) const
 { SAFELOCK(rules);
 
   return ( find(_exchange_mults.cbegin(), _exchange_mults.cend(), name) != _exchange_mults.cend() );
@@ -1385,7 +1387,7 @@ const bool contest_rules::is_exchange_mult(const string& name) const
     \param  m       mode
     \return         whether the sent exchange for mode <i>m</i> includes a field with the name <i>str</i>
 */
-const bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m) const
+bool contest_rules::sent_exchange_includes(const std::string& str, const MODE m) const
 { SAFELOCK(rules);
 
   try
@@ -1405,7 +1407,7 @@ const bool contest_rules::sent_exchange_includes(const std::string& str, const M
     \param  canonical_prefix    country to test
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
-const bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
+bool contest_rules::is_exchange_field_used_for_country(const string& field_name, const string& canonical_prefix) const
 { SAFELOCK(rules);
 
   if (_exchange_field_eft.find(field_name)  == _exchange_field_eft.cend())
@@ -1426,7 +1428,7 @@ const bool contest_rules::is_exchange_field_used_for_country(const string& field
 }
 
 /// the names of all the possible exchange fields
-const set<string> contest_rules::exchange_field_names(void) const
+set<string> contest_rules::exchange_field_names(void) const
 { set<string> rv;
 
 //std::map<std::string /* field name */, EFT>   _exchange_field_eft;        ///< new place ( if NEW_CONSTRUCTOR is defined) for exchange field information
@@ -1439,9 +1441,9 @@ const set<string> contest_rules::exchange_field_names(void) const
 /*! \brief      The equivalent choices of exchange fields for a given mode and country?
     \param  m   mode
     \param  cp  canonical prefix of country
-    \return     all the equivalent firlds for mode <i>m</i> and country <i>cp</i>
+    \return     all the equivalent fields for mode <i>m</i> and country <i>cp</i>
 */
-const choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) const
+choice_equivalents contest_rules::equivalents(const MODE m, const string& cp) const
 { choice_equivalents rv;
 
   map<MODE, map<string, choice_equivalents>>::const_iterator cit_mode { _choice_exchange_equivalents.find(m) };
@@ -1500,7 +1502,7 @@ const choice_equivalents contest_rules::equivalents(const MODE m, const string& 
     \param  call    callsign for which the WPX prefix is desired
     \return         the WPX prefix corresponding to <i>call</i>
 */
-const string wpx_prefix(const string& call)
+string wpx_prefix(const string& call)
 {
 // callsign has to contain three characters
   if (call.length() < 3)
@@ -1603,7 +1605,7 @@ From SAC rules, the relevant countries are:
   Sweden 7S – 8S – SA – SB – SC – SD – SE – SF – SG – SH – SI – SJ – SK – SL – SM
   Iceland TF
 */
-const string sac_prefix(const string& call)
+string sac_prefix(const string& call)
 { static const unordered_set<string> scandinavian_countries { "JW"s, "JX"s, "LA"s, "OH"s, "OH0"s, "OJ0"s, "OX"s, "OY"s, "OZ"s, "SM"s, "TF"s };
 
   const string canonical_prefix { location_db.canonical_prefix(call) };
@@ -1631,8 +1633,9 @@ const string sac_prefix(const string& call)
 
     For example, the mult value for a DOK field with the value A01 is A.
     Currently, the only field name that precipitates special processing is DOK.
+    Adding IOTA.
 */
-const string MULT_VALUE(const string& field_name, const string& received_value)
+string MULT_VALUE(const string& field_name, const string& received_value)
 { if (field_name == "DOK"s)
   { if (!received_value.empty())
     { const auto posn { received_value.find_first_of(UPPER_CASE_LETTERS) };
@@ -1642,6 +1645,9 @@ const string MULT_VALUE(const string& field_name, const string& received_value)
     else        // should never happen: DOK with no value; might be empty if no value to guess
       return received_value;  // same as string()
   }
-  else
-    return received_value;
+
+  if (field_name == "IOTA"s)
+    return (substring(received_value, 0, 2) + pad_string(substring(received_value, 2), 3, PAD_LEFT, '0'));  // XXnnn
+
+  return received_value;
 }

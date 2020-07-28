@@ -1,4 +1,4 @@
-// $Id: multiplier.h 152 2019-08-21 20:23:38Z  $
+// $Id: multiplier.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -68,7 +68,7 @@ public:
 
     Returns false if the value <i>str</i> was already known
 */
-  inline const bool add_known(const std::string& str)
+  inline bool add_known(const std::string& str)
     { SAFELOCK(multiplier); return ( _used ? ( (_known.insert(str)).second ) : false ); }
 
 /*! \brief      Add a container of string values to the set of known values
@@ -76,7 +76,7 @@ public:
     \return     number of values added
 */
   template<typename T>
-  const unsigned int add_known(const T& k)
+  unsigned int add_known(const T& k)
     { unsigned int rv { 0 };
 
       SAFELOCK(multiplier);
@@ -118,7 +118,7 @@ public:
 
     Returns false if the value <i>str</i> is not known
 */
-  const bool add_worked(const std::string& str, const BAND b, const MODE m);
+  bool add_worked(const std::string& str, const BAND b, const MODE m);
 
 /*! \brief          Add a worked multiplier, even if it is unknown
     \param  str     value that has been worked
@@ -128,7 +128,7 @@ public:
 
     Makes <i>str</i> known if it was previously unknown
 */
-  const bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m);
+  bool unconditional_add_worked(const std::string& str, const BAND b, const MODE m);
 
 /*! \brief          Remove a worked multiplier
     \param  str     value to be removed
@@ -143,30 +143,30 @@ public:
     \param  str     value to test
     \return         whether <i>str</i> is a known multiplier value
 */
-  const bool is_known(const std::string& str) const;
+  bool is_known(const std::string& str) const;
 
 /*! \brief          Has a station been worked on a particular band and mode?
     \param  str     callsign to test
     \param  b       band to be tested
     \param  m       mode to be tested
 */
-  const bool is_worked(const std::string& str, const BAND b, const MODE m) const;
+  bool is_worked(const std::string& str, const BAND b, const MODE m) const;
 
 /*! \brief      Number of mults worked on a particular band and mode
     \param  b   band
     \param  m   mode
     \return     number of mults worked on band <i>b</i> and mode <i>m</i>
 */
-  const size_t n_worked(const BAND b, const MODE m) const;
+  size_t n_worked(const BAND b, const MODE m) const;
 
 /*! \brief      Number of mults worked on a particular band, regardless of mode
     \param  b   band
     \return     number of mults worked on band <i>b</i>
 */
-  const size_t n_worked(const BAND b) const;
+  size_t n_worked(const BAND b) const;
 
 /// Number of known mults
-  inline const size_t n_known(void) const
+  inline size_t n_known(void) const
     { SAFELOCK(multiplier);
 
       return _known.size();
@@ -177,7 +177,7 @@ public:
     \param  m   mode
     \return     all the mults worked on band <i>b</i> and mode <i>m</i>
 */
-  const std::set<std::string> worked(const int b, const int m) const;
+  std::set<std::string> worked(const int b, const int m) const;
 
 /// Set all bands and modes to state in which no mults have been worked
   inline void clear(void)

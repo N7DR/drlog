@@ -1,4 +1,4 @@
-// $Id: multiplier.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: multiplier.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,13 +25,6 @@ pt_mutex multiplier_mutex;          ///< mutex for all the multiplier objects
     \brief  encapsulate all the necessary stuff for a mult
 */
 
-/// default constructor
-//multiplier::multiplier(void) :
-//  _per_band(false),
-//  _per_mode(false),
-//  _used(false)
-//{ }
-
 /*! \brief          Remove a value from the known values
     \param  str     value to be removed
 
@@ -48,7 +41,7 @@ void multiplier::remove_known(const string& str)
     \param  str     value to test
     \return         whether <i>str</i> is a known multiplier value
 */
-const bool multiplier::is_known(const string& str) const
+bool multiplier::is_known(const string& str) const
 { SAFELOCK(multiplier);
 
   return (_used ? (_known > str) : false);
@@ -62,7 +55,7 @@ const bool multiplier::is_known(const string& str) const
 
     Returns false if the value <i>str</i> is not known
 */
-const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
+bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
 { SAFELOCK(multiplier);
 
   if ((_used) and is_known(str))                                          // add only known mults
@@ -96,7 +89,7 @@ const bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
 
     Makes <i>str</i> known if it was previously unknown
 */
-const bool multiplier::unconditional_add_worked(const string& str, const BAND b, const MODE m)
+bool multiplier::unconditional_add_worked(const string& str, const BAND b, const MODE m)
 { add_known(str);
 
   return add_worked(str, b, m);
@@ -122,7 +115,6 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     bool present { false };
 
     for (int n = MIN_BAND; n < MAX_BAND; ++n)
-//      present = present or (_worked[m_nr][n] < str);
       present |= (_worked[m_nr][n] > str);
 
     if (!present)
@@ -132,7 +124,6 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     present = false;
 
     for (int n = MIN_MODE; n < MAX_MODE; ++n)
-//      present = present or (_worked[n][b_nr] < str);
       present |= (_worked[n][b_nr] > str);
 
     if (!present)
@@ -152,7 +143,7 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
     \param  m       mode to test
     \return         whether <i>str</i> has been worked on band <i>b</i> and mode <i>m</i>
 */
-const bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
+bool multiplier::is_worked(const string& str, const BAND b, const MODE m) const
 { SAFELOCK(multiplier);
 
   if (!_used)
@@ -170,7 +161,7 @@ const bool multiplier::is_worked(const string& str, const BAND b, const MODE m) 
     \param  m   mode
     \return     number of mults worked on band <i>b</i> and mode <i>m</i>
 */
-const size_t multiplier::n_worked(const BAND b, const MODE m) const
+size_t multiplier::n_worked(const BAND b, const MODE m) const
 { SAFELOCK(multiplier);
 
   if (!_used)
@@ -187,7 +178,7 @@ const size_t multiplier::n_worked(const BAND b, const MODE m) const
     \param  b   band
     \return     number of mults worked on band <i>b</i>
 */
-const size_t multiplier::n_worked(const BAND b) const
+size_t multiplier::n_worked(const BAND b) const
 { SAFELOCK(multiplier);
 
   if (!_used)
@@ -203,7 +194,7 @@ const size_t multiplier::n_worked(const BAND b) const
     \param  m   mode
     \return     all the mults worked on band <i>b</i> and mode <i>m</i>
 */
-const set<string> multiplier::worked(const int b, const int m) const
+set<string> multiplier::worked(const int b, const int m) const
 { SAFELOCK(multiplier);
 
   if (!_used)

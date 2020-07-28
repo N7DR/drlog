@@ -1,4 +1,4 @@
-// $Id: scp.h 152 2019-08-21 20:23:38Z  $
+// $Id: scp.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -71,7 +71,7 @@ public:
     { init_from_calls(drm.calls()); }
 
 /// destructor
-  inline virtual ~scp_database(void) = default;
+//  inline virtual ~scp_database(void) = default;
 
 /// populate the database from a vector of calls
   inline void init_from_calls(const std::vector<std::string>& calls)
@@ -87,7 +87,7 @@ public:
   inline bool contains(const std::string& call)
     { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
 
-/// return SCP matches
+/// return SCP matches; cannot be const, as it might change the cache
   SCP_SET operator[](const std::string& key);
 
 /// empty the database; also clears the cache
@@ -125,7 +125,7 @@ public:
   inline scp_databases(void) = default;
 
 /// destructor
-  inline virtual ~scp_databases(void) = default;
+//  inline virtual ~scp_databases(void) = default;
 
 /// add a database to those that are consulted
   void add_db(scp_database& db);
@@ -138,7 +138,7 @@ public:
   void remove_call(const std::string& call);
 
 /// return matches
-  const SCP_SET operator[](const std::string& key);
+  SCP_SET operator[](const std::string& key);
 
 /// clear the cache; also clear the caches of any children
   void clear_cache(void);

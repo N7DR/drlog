@@ -1,4 +1,4 @@
-// $Id: exchange.h 154 2020-03-05 15:36:24Z  $
+// $Id: exchange.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -71,7 +71,7 @@ public:
     \param  field_name  field name to test
     \return             whether prefill data exist for the field <i>field_name</i>
 */
-  inline const bool prefill_data_exists(const std::string& field_name)
+  inline bool prefill_data_exists(const std::string& field_name)
     { return ( _db.empty() ? false : (_db.count(field_name) == 1) ); }
 
 /*! \brief              Get the prefill data for a particular field name and callsign
@@ -102,7 +102,7 @@ protected:
   bool           _is_mult;              ///< is this field a mult?
   std::string    _mult_value;           ///< actual value of the mult (if it is a mult)
   
-  std::optional<std::string> _mvalue;
+//  std::optional<std::string> _mvalue;
 
 public:
 
@@ -173,7 +173,7 @@ protected:
       <i>n</i>
       <i>n</i><i>precedence</i>
 */
-  [[nodiscard]] const bool _is_possible_serno(const std::string& str) const;
+  [[nodiscard]] bool _is_possible_serno(const std::string& str) const;
 
 /*! \brief          Does a string possibly contain a precedence?
     \param  str     string to check
@@ -190,13 +190,13 @@ protected:
     \param  str     string to check
     \return         whether <i>str</i> is a (two-digit) check
 */
-  [[nodiscard]] const bool _is_possible_check(const std::string& str) const;
+  bool _is_possible_check(const std::string& str) const;
 
 /*! \brief          Does a string contain a possible callsign?
     \param  str     string to check
     \return         whether <i>str</i> is a reasonable callsign
 */
-  inline const bool _is_possible_callsign(const std::string& str) const
+  inline bool _is_possible_callsign(const std::string& str) const
     { return ( (str.length() < 3) ? false : ( isalpha(str[0]) and contains_digit(str) ) ); }
 
 public:
@@ -271,11 +271,11 @@ public:
   READ(valid);                         ///< is the object valid? (i.e., was parsing successful?)
 
 /// is the object valid? (i.e., was parsing successful?)
-  inline const bool is_valid(void) const
+  inline bool is_valid(void) const
     { return valid(); }
 
 /// is a replacement call present?
-  inline const bool has_replacement_call(void) const
+  inline bool has_replacement_call(void) const
     { return (!_replacement_call.empty() ); }
 
 /*! \brief              Return the value of a particular field (addressed by name)
@@ -284,10 +284,10 @@ public:
 
     Returns empty string if <i>field_name</i> does not exist
 */
-  const std::string field_value(const std::string& field_name) const;
+  std::string field_value(const std::string& field_name) const;
 
 /// the number of fields
-  inline const size_t n_fields(void) const
+  inline size_t n_fields(void) const
     { return _fields.size(); }
 
 /*! \brief      Return the name of a field
@@ -296,7 +296,7 @@ public:
 
     Returns empty string if <i>n</i> is out of range
 */
-  inline const std::string field_name(const size_t n) const
+  inline std::string field_name(const size_t n) const
     { return (n >= _fields.size() ? std::string() : _fields[n].name()); }
 
 /*! \brief      Return the value of a particular field (addressed by number)
@@ -305,7 +305,7 @@ public:
 
     Returns empty string if <i>n</i> is out of range
 */
-  inline const std::string field_value(const size_t n) const
+  inline std::string field_value(const size_t n) const
     { return (n >= _fields.size() ? std::string() : _fields[n].value()); }
 
 /*! \brief      Is a field a mult?
@@ -314,7 +314,7 @@ public:
 
     Returns false if <i>n</i> is out of range
 */
-  inline const bool field_is_mult(const size_t n) const
+  inline bool field_is_mult(const size_t n) const
     { return (n >= _fields.size() ? false : _fields[n].is_mult()); }
 
 /*! \brief      Return the mult value of a field
@@ -323,7 +323,7 @@ public:
 
     Returns empty string if <i>n</i> is out of range
 */
-  inline const std::string mult_value(const size_t n) const
+  inline std::string mult_value(const size_t n) const
     { return (n >= _fields.size() ? std::string() : _fields[n].mult_value()); }
 
 /*! \brief          Return the names and values of matched fields
@@ -332,7 +332,7 @@ public:
 
     Any field names that represent a choice are resolved to the name of the actual matched field in the returned object
 */
-  const std::vector<parsed_exchange_field> chosen_fields(const contest_rules& rules) const;
+  std::vector<parsed_exchange_field> chosen_fields(const contest_rules& rules) const;
 
 /*! \brief                  Given several possible field names, choose one that fits the data
     \param  choice_name     the name of the choice field (e.g., "SOCIETY+ITU_ZONE"
@@ -343,7 +343,7 @@ public:
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-  const std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
+  std::string resolve_choice(const std::string& choice_name, const std::string& received_field,  const contest_rules& rules) const;
 };
 
 /*! \brief          Write a <i>parsed_exchange</i> object to an output stream
@@ -377,7 +377,7 @@ public:
 
     Returns empty string if no sensible guess can be made
 */
-  const std::string guess_value(const std::string& callsign, const std::string& field_name);
+  std::string guess_value(const std::string& callsign, const std::string& field_name);
 
 /*! \brief              Set a value in the database
     \param  callsign    callsign for the new entry
@@ -399,7 +399,7 @@ public:
   void set_values_from_file(const std::vector<std::string>& path, const std::string& filename, const std::string& field_name);
 
 /// return number of calls in the database
-  inline const size_t size(void) const
+  inline size_t size(void) const
     { return _db.size(); }
 };
 
@@ -437,7 +437,7 @@ protected:
 public:
 
 /// default constructor
-  inline EFT(void) = default;
+  EFT(void) = default;
 
 /*! \brief      construct from name
     \param  nm  name
@@ -471,14 +471,14 @@ public:
     \param  filename    name of file
     \return             whether a regex expression was read
 */
-  const bool read_regex_expression_file(const std::vector<std::string>& paths, const std::string& filename);
+  bool read_regex_expression_file(const std::vector<std::string>& paths, const std::string& filename);
 
 /*! \brief              Get info from .values file
     \param  path        paths to try
     \param  filename    name of file (without .values extension)
     \return             whether values were read
 */
-  const bool read_values_file(const std::vector<std::string>& path, const std::string& filename);
+  bool read_values_file(const std::vector<std::string>& path, const std::string& filename);
 
 /*! \brief              Parse and incorporate QTHX values from context
     \param  context     context for the contest
@@ -490,7 +490,7 @@ public:
     \param  str     string to test
     \return         whether <i>str</i> is a canonical value
 */
-  inline const bool is_canonical_value(const std::string& str) const
+  inline bool is_canonical_value(const std::string& str) const
     { return (_values.find(str)  != _values.end()); }
 
 /*! \brief                          Add a canonical value
@@ -523,13 +523,13 @@ public:
     \param  str     string to test
     \return         whether <i>str</i> is a legal value
 */
-  const bool is_legal_value(const std::string& str) const;
+  bool is_legal_value(const std::string& str) const;
 
 /*! \brief          What value should actually be logged for a given received value?
     \param  str     received value
     \return         value to be logged
 */
-  const std::string value_to_log(const std::string& str) const;
+  std::string value_to_log(const std::string& str) const;
 
 /*! \brief          Obtain canonical value corresponding to a given received value?
     \param  str     received value
@@ -537,10 +537,10 @@ public:
 
     Returns empty string if no equivalent canonical value can be found
 */
-  const std::string canonical_value(const std::string& str) const;
+  std::string canonical_value(const std::string& str) const;
 
 /// all the canonical values
-  const std::set<std::string> canonical_values(void) const;
+  std::set<std::string> canonical_values(void) const;
 
 /// serialise
   template<typename Archive>
@@ -598,7 +598,7 @@ public:
   READ(section);  ///< section
 
 /// does an instantiated object appear to be valid?
-  inline const bool valid(void) const
+  inline bool valid(void) const
     { return (!_serno.empty() and !_prec.empty() and !_call.empty() and !_check.empty() and !_section.empty() ); }
 };
 

@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 157 2020-05-21 18:14:13Z  $
+// $Id: cw_buffer.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -296,7 +296,7 @@ cw_buffer::cw_buffer(const string& filename, const unsigned int delay, const uns
     }
   }
   else    // RT scheduled thread
-  { int desired_thread_priority;
+  { int desired_thread_priority { 0 };  // set value to avoid an unwarranted compiler warning
     
     try
     { static thread_attribute cw_attr;   ///< attributes for the CW thread
@@ -350,11 +350,11 @@ void cw_buffer::speed(const unsigned int wpm)
   SAFELOCK(_speed);
 
   _wpm = new_wpm;
-  _usec = 1200000 / _wpm;
+  _usec = 1'200'000 / _wpm;
 }
 
 /// get the speed in wpm
-const unsigned int cw_buffer::speed(void)
+unsigned int cw_buffer::speed(void)
 { SAFELOCK(_speed);
 
   return _wpm;
@@ -370,7 +370,7 @@ void cw_buffer::ptt_delay(const unsigned int msec)
 }
 
 /// get the PTT delay in msec
-const unsigned int cw_buffer::ptt_delay(void)
+unsigned int cw_buffer::ptt_delay(void)
 { SAFELOCK(_speed);
 
   return _ptt_delay;
@@ -799,7 +799,7 @@ void cw_buffer::associate_rig(rig_interface* rigp)
 }
 
 /// is the buffer empty?
-const bool cw_buffer::empty(void)
+bool cw_buffer::empty(void)
 { SAFELOCK(_key_buffer);
 
   return _key_buffer.empty();
@@ -817,7 +817,7 @@ const bool cw_buffer::empty(void)
 
      Returns empty string if message number <i>n</i> does not exist
 */
-const string cw_messages::operator[](const int n)
+string cw_messages::operator[](const int n)
 { SAFELOCK(_messages);
 
   map<int, string>::const_iterator cit { _messages.find(n) };

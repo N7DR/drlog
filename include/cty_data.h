@@ -1,4 +1,4 @@
-// $Id: cty_data.h 154 2020-03-05 15:36:24Z  $
+// $Id: cty_data.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -151,7 +151,7 @@ public:
   alternative_country_info(const std::string& record, const std::string& canonical_prefix = std::string());
 
 /// destructor
-  inline virtual ~alternative_country_info(void) = default;
+//  inline virtual ~alternative_country_info(void) = default;
 
   READ(country);               ///< canonical country prefix
   READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
@@ -185,17 +185,17 @@ protected:
 
   using ACI_DBTYPE = std::unordered_map<std::string, alternative_country_info>;
 
-  ACI_DBTYPE   _alt_callsigns;         ///< alternative callsigns used by this country
-  ACI_DBTYPE   _alt_prefixes;          ///< alternative prefixes used by this country
-  std::string                                       _continent;             ///< two-letter abbreviation for continent
-  std::string                                       _country_name;          ///< official name of the country
-  unsigned int                                      _cq_zone;               ///< CQ zone
-  unsigned int                                      _itu_zone;              ///< ITU zone
-  float                                             _latitude;              ///< latitude in degrees (+ve north)
-  float                                             _longitude;             ///< longitude in degrees (+ve west)
-  std::string                                       _prefix;                ///< official DXCC prefix, in upper case
-  int                                               _utc_offset;            ///< local-time offset from UTC, in minutes
-  bool                                              _waedc_country_only;    ///< Is this only a country in the WAEDC (DARC) list?
+  ACI_DBTYPE    _alt_callsigns;         ///< alternative callsigns used by this country
+  ACI_DBTYPE    _alt_prefixes;          ///< alternative prefixes used by this country
+  std::string   _continent;             ///< two-letter abbreviation for continent
+  std::string   _country_name;          ///< official name of the country
+  unsigned int  _cq_zone;               ///< CQ zone
+  unsigned int  _itu_zone;              ///< ITU zone
+  float         _latitude;              ///< latitude in degrees (+ve north)
+  float         _longitude;             ///< longitude in degrees (+ve west)
+  std::string   _prefix;                ///< official DXCC prefix, in upper case
+  int           _utc_offset;            ///< local-time offset from UTC, in minutes
+  bool          _waedc_country_only;    ///< Is this only a country in the WAEDC (DARC) list?
 
 public:
   
@@ -208,7 +208,7 @@ public:
   cty_record(const std::string& record);
   
 /// destructor
-  inline virtual ~cty_record(void) = default;
+//  inline virtual ~cty_record(void) = default;
 
   READ(alt_callsigns);          ///< alternative callsigns used by this country
   READ(alt_prefixes);           ///< alternative prefixes used by this country
@@ -223,7 +223,7 @@ public:
   READ(waedc_country_only);     ///< Is this only a country in the WAEDC (DARC) list?
 
 /// return the canonical prefix for this country; prefixes such as "GM/s" or "JD/o" are rendered in upper case
-  inline const std::string canonical_prefix(void) const
+  inline std::string canonical_prefix(void) const
     { return prefix(); }
     
 /*! \brief          Remove an alternative callsign
@@ -246,14 +246,14 @@ public:
     \param  call    string to check
     \return         whether <i>call</i> is an alternative callsign
 */
-  inline const bool is_alternative_callsign(const std::string& call)
+  inline bool is_alternative_callsign(const std::string& call)
     { return (_alt_callsigns.find(call) != _alt_callsigns.end()); }
 
 /*! \brief  is a string an alternative prefix?
     \param  pfx    prefix to check
     \return        whether <i>pfx</i> is an alternative prefix
 */
-  inline const bool is_alternative_prefix(const std::string& pfx)
+  inline bool is_alternative_prefix(const std::string& pfx)
     { return (_alt_prefixes.find(pfx) != _alt_prefixes.end()); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
@@ -295,14 +295,14 @@ public:
   cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
 
 /// destructor
-  inline virtual ~cty_data(void) = default;
+//  inline virtual ~cty_data(void) = default;
     
 /// how many countries are present?
   inline unsigned int n_countries(void) const
     { return _data.size(); }
   
 /// return a record by number, wrt 0
-  inline const cty_record operator[](const unsigned int n) const
+  inline cty_record operator[](const unsigned int n) const
     { return _data.at(n); }
 };
 
@@ -410,7 +410,7 @@ public:
   { }
 
 /// destructor
-  inline virtual ~location_info(void) = default;
+//  inline virtual ~location_info(void) = default;
 
 /// location_info == location_info
   const bool operator==(const location_info& li) const;
@@ -463,7 +463,7 @@ std::ostream& operator<<(std::ostream& ost, const location_info& info);
 
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
-const location_info guess_zones(const std::string& call, const location_info& li);
+location_info guess_zones(const std::string& call, const location_info& li);
 
 #if 0
 // -----------  drlog_qth_database_record  ----------------
@@ -669,8 +669,11 @@ protected:
 //  void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
   void _insert_alternatives(const location_info& info, const ACI_DBTYPE& alternatives);
 
-  void _process_alternative(const cty_record& rec, /* LOCATION_DBTYPE& db, */const enum ALTERNATIVES alt_type);
-
+/*! \brief              Process alternatives from a record
+    \param  rec         the record to process
+    \param  alt_type    type of alternatives to process
+*/
+  void _process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type);
 
   mutable pt_mutex _location_database_mutex;  ///< to make location_database objects thread-safe;
    
@@ -698,6 +701,9 @@ public:
 */
 //  location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
 
+/// copy constructor
+  location_database(const location_database&) = delete;
+
 /*! \brief                  Prepare a default-constructed object for use
     \param  cty             cty.dat data
     \param  country_list    type of country list
@@ -718,7 +724,7 @@ public:
   void add_russian_database(const std::vector<std::string>& path, const std::string& filename);
 
 /// how large is the main database?
-  inline const size_t size(void) const
+  inline size_t size(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db.size() )); }
 
 /*! \brief          Add a call to the alt_call database
@@ -734,11 +740,11 @@ public:
     \param  callpart    call (or partial call)
     \return             location information corresponding to <i>call</i>
 */
-  const location_info info(const std::string& callpart) const;
+  location_info info(const std::string& callpart) const;
   
 /// return the database
 //  inline const std::map<std::string, location_info> db(void) const
-  inline const decltype(location_database::_db) db(void) const
+  inline decltype(location_database::_db) db(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
 /// create a set of all the canonical prefixes for countries
@@ -746,27 +752,27 @@ public:
   auto countries(void) const -> std::unordered_set<std::string>;
 
 /// create a set of all the canonical prefixes for a particular continent
-  const std::unordered_set<std::string> countries(const std::string& cont_target) const;
+  std::unordered_set<std::string> countries(const std::string& cont_target) const;
   
 /*! \brief              Get official name of the country associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             official name of the country corresponding to <i>callpart</i>
 */
-  inline const std::string country_name(const std::string& callpart) const
+  inline std::string country_name(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).country_name() )); }
 
 /*! \brief              Get CQ zone associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             CQ zone corresponding to <i>callpart</i>
 */
-  inline const unsigned int cq_zone(const std::string& callpart) const
+  inline unsigned int cq_zone(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).cq_zone() )); }
 
 /*! \brief              Get ITU zone associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             ITU zone corresponding to <i>callpart</i>
 */
-  inline const unsigned int itu_zone(const std::string& callpart) const
+  inline unsigned int itu_zone(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).itu_zone() )); }
 
 /*! \brief              Get the continent associated with a call or partial call
@@ -775,35 +781,35 @@ public:
 
     The returned continent is in the form of the two-letter code
 */
-  inline const std::string continent(const std::string& callpart) const
+  inline std::string continent(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).continent() )); }
 
 /*! \brief              Get the latitude for a call or partial call
     \param  callpart    call (or partial call)
     \return             latitude (in degrees) corresponding to <i>callpart</i> (+ve north)
 */
-  inline const float latitude(const std::string& callpart) const
+  inline float latitude(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).latitude() )); }
 
 /*! \brief              Get the longitude for a call or partial call
     \param  callpart    call (or partial call)
     \return             longitude (in degrees) corresponding to <i>callpart</i> (+ve west)
 */
-  inline const float longitude(const std::string& callpart) const
+  inline float longitude(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).longitude() )); }
 
 /*! \brief              Get the UTC offset for a call or partial call
     \param  callpart    call (or partial call)
     \return             UTC offset (in minutes) corresponding to <i>callpart</i>
 */
-  inline const int utc_offset(const std::string& callpart) const
+  inline int utc_offset(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).utc_offset() )); }
 
 /*! \brief              Get the canonical prefix for a call or partial call
     \param  callpart    call (or partial call)
     \return             canonical prefix corresponding to <i>callpart</i>
 */
-  inline const std::string canonical_prefix(const std::string& callpart) const
+  inline std::string canonical_prefix(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).canonical_prefix() )); }
 
 /*! \brief              Get name of the Russian district for a particular call or partial call
@@ -812,7 +818,7 @@ public:
 
     Returns the empty string if <i>callpart</i> is not Russian
 */
-  inline const std::string region_name(const std::string& callpart) const
+  inline std::string region_name(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
 
 /*! \brief              Get two-letter abbreviation for the Russian district for a particular call or partial call
@@ -821,7 +827,7 @@ public:
 
     Returns the empty string if <i>callpart</i> is not Russian
 */
-  inline const std::string region_abbreviation(const std::string& callpart) const
+  inline std::string region_abbreviation(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
 /// serialise

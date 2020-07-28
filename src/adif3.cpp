@@ -301,7 +301,7 @@ size_t adif3_field::import_and_eat(const std::string& str, const size_t start_po
 
     Result is valid ONLY if <i>str</i> contains only digits
 */ 
-const int adif3_record::_fast_string_to_int(const string& str) const
+int adif3_record::_fast_string_to_int(const string& str) const
 { static constexpr int zerochar { '0' };
 
   int rv { 0 };
@@ -351,10 +351,10 @@ size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
 /*! \brief      Convert to printable string
     \return     the canonical textual representation of the record
 
-    Returns just the end-of-record marker is the record is empty.
+    Returns just the end-of-record marker if the record is empty.
     Does not output import-only fields.
 */
-const string adif3_record::to_string(void) const
+string adif3_record::to_string(void) const
 { string rv;
 
   for (const auto& element : _elements)
@@ -371,26 +371,6 @@ const string adif3_record::to_string(void) const
   return rv;
 }
 
-/*! \brief      Return the value of a field
-    \param  str name of the field whose value is to be returned
-    \return     the value of the field <i>str</i>
-
-    Returns the empty string if the field <i>str</i> does not exist in the record 
-*/
-#if 0
-const string adif3_record::value(const string& str) const               // str is field name
-{ //return (_elements > to_upper(str)).second;
-
-  //const string uc { to_upper(str) };
-
-  return MUM_VALUE(_elements, to_upper(str)).value();
-
-//const auto cit { _elements.find( to_upper(str) ) };     // name is always stored in upper case
-
-//  return ( (cit == _elements.cend()) ? string() : cit->second.value() );
-}
-#endif
-
 /*! \brief                  Set the value of a field (which does not have to be extant in the record)
     \param  field_name      name of the field whose value is to be set
     \param  field_value     value to be set
@@ -399,7 +379,7 @@ const string adif3_record::value(const string& str) const               // str i
     <i>field_name</i> is converted to upper case when stored as <i>_name</i>
     <i>field_value</i> is validated and converted to standardised format (if applicable)
 */
-const bool adif3_record::value(const string& field_name, const string& field_value)
+bool adif3_record::value(const string& field_name, const string& field_value)
 { const adif3_field element        { field_name, field_value };
   const auto        [it, inserted] { _elements.insert( { element.name(), element } ) };
  
@@ -411,7 +391,7 @@ const bool adif3_record::value(const string& field_name, const string& field_val
     \param  rec2   second record
     \return        whether <i>record1</i> is chronologically before <i>record2</i> 
 */
-const bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
+bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
 { if (rec1.date() < rec2.date())
     return true;
     
@@ -470,34 +450,13 @@ adif3_file::adif3_file(const vector<string>& path, const string& filename)
   }
 }
 
-#if 0
-const adif3_record adif3_file::get_record(const adif3_record& rec) const
-{ const auto [begin_it, end_it] = _map_data.equal_range(rec.callsign());
-
-  for (auto it = begin_it; it != end_it; ++it)
-  { const adif3_record& this_rec { it->second };
-    
-    const bool found_it { ( (this_rec.callsign() == rec.callsign()) and
-                            (this_rec.date() == rec.date()) and
-                            (this_rec.time() == rec.time()) and
-                            (this_rec.band() == rec.band()) and
-                            (this_rec.mode() == rec.mode()) ) };
-
-    if (found_it)
-      return this_rec;
-  }
-  
-  return adif3_record();        // return empty record
-}
-#endif
-
 /*! \brief                  Return all the QSOs that match a call, band and mode
     \param      callsign    call to match
     \param      b           ADIF3 band to match
     \param      m           ADIF3 mode to match
     \return     filename    Return all the QSO records that match <i>callsign</i>, <i>b</i> and <i>m</i>
 */
-const std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, const string& b, const string& m) const
+std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, const string& b, const string& m) const
 { vector<adif3_record> rv;
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
@@ -514,7 +473,7 @@ const std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign
     \param      callsign    call to match
     \return     filename    Return all the QSO records that match <i>callsign</i>
 */
-const std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) const
+std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) const
 { vector<adif3_record> rv;
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
@@ -528,7 +487,7 @@ const std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign
     \param      str     string of contents of filae
     \return             position of first "<" after the end of the header
 */
-const size_t skip_adif3_header(const std::string& str)
+size_t skip_adif3_header(const std::string& str)
 { const auto posn_1 { case_insensitive_find(str, "<EOH>"s) };
 
   return ( (posn_1 == string::npos) ? 0 : (str.find("<"s, posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"

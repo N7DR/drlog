@@ -1,4 +1,4 @@
-// $Id: adif3.h 158 2020-06-27 20:33:02Z  $
+// $Id: adif3.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -43,19 +43,19 @@ constexpr int ADIF3_INVALID_VALUE       { -1 },    ///< Invalid value
 
 enum class ADIF3_DATA_TYPE { AWARD_LIST,
                              BOOLEAN,
+                             CHARACTER,
                              CREDIT_LIST,
+                             DATE,
                              DIGIT,
                              INTEGER,
-                             NUMBER,
-                             SPONSORED_AWARD_LIST,
-                             POSITIVE_INTEGER,
-                             CHARACTER,
-                             INTERNATIONAL_CHARACTER,
-                             DATE,
-                             TIME,
-                             IOTA_REFERENCE_NUMBER,
-                             STRING,
+                             INTERNATIONAL_CHARACTER,           // the "INTERNATIONAL" things are sheer idiocy; Unicode has been essentially universal for at least 15 years
                              INTERNATIONAL_STRING,
+                             IOTA_REFERENCE_NUMBER,
+                             NUMBER,
+                             POSITIVE_INTEGER,
+                             SPONSORED_AWARD_LIST,
+                             STRING,
+                             TIME,
                              MULTILINE_STRING,
                              INTERNATIONAL_MULTILINE_STRING,
                              ENUMERATION,                       // as if these "enumerations" have anything to do with numbers
@@ -144,7 +144,7 @@ public:
 
     Returns empty string if either the name or the value is empty
 */
-  inline const std::string to_string(const std::string& append_str = "\n"s) const
+  inline std::string to_string(const std::string& append_str = "\n"s) const
     { return ( (_name.empty() or _value.empty()) ? std::string() : ( "<"s + _name + ":"s + ::to_string(_value.length()) +">"s + _value + append_str) ); }
     
 /*! \brief              Import name and value from string, and return location past the end of the used part of the string
@@ -156,10 +156,6 @@ public:
     Returns string::npos if reads past the end of <i>str</i>
 */
   size_t import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* one past <EOR> */);
-
-/// adif3_field < adif3_field (needed for maps/sets)  ??
-//  inline const bool operator<(const adif3_field& v2) const
-//    { return (_name < v2._name); }
 };
 
 // ---------------------------------------------------  adif3_record -----------------------------------------
@@ -182,7 +178,7 @@ protected:
 
     Result is valid ONLY if <i>str</i> contains only digits
 */  
-  const int _fast_string_to_int(const std::string& str) const;            // convert a string to an int, assuming that the string contains just digits
+  int _fast_string_to_int(const std::string& str) const;            // convert a string to an int, assuming that the string contains just digits
 
 public:
 
@@ -203,7 +199,7 @@ public:
     Returns just the end-of-record marker is the record is empty.
     Does not output import-only fields.
 */
-  const std::string to_string(void) const;
+  std::string to_string(void) const;
 
 /*! \brief      Return the value of a field
     \param  str name of the field whose value is to be returned
@@ -222,38 +218,38 @@ public:
     <i>field_name</i> is converted to upper case when stored as <i>_name</i>
     <i>field_value</i> is validated and converted to standardised format (if applicable)
 */
-  const bool value(const std::string& field_name, const std::string& field_value);
+  bool value(const std::string& field_name, const std::string& field_value);
   
 /// return the ADIF3 value of the band (empty string if none) 
-  inline const std::string band(void) const
+  inline std::string band(void) const
     { return value("BAND"s); }
 
 /// return the ADIF3 value of the other station's callsign (empty string if none)
-  inline const std::string callsign(void) const
+  inline std::string callsign(void) const
     { return value("CALL"s); }
     
 /// return whether a QSL card is known to have been received
-  inline const bool confirmed(void) const
+  inline bool confirmed(void) const
     { return (value("QSL_RCVD"s) == "Y"s); }
 
  /// return the ADIF3 value of the date [YYYYMMDD] (empty string if none)   
-  inline const std::string date(void) const
+  inline std::string date(void) const
     { return value("QSO_DATE"s); }
 
 /// return the ADIF3 value of the date [YYYYMMDD] (zero if none)
-  inline const int idate(void) const        // YYYYMMDD
+  inline int idate(void) const        // YYYYMMDD
     { return _fast_string_to_int(date()); }
 
 /// return the ADIF3 value of the band (empty string if none)
-  inline const std::string mode(void) const
+  inline std::string mode(void) const
     { return value("MODE"s); }
 
 /// return the ADIF3 value of the time (empty string if none)
-  inline const std::string time(void) const
+  inline std::string time(void) const
     { return value("TIME_ON"s); }
 
 /// return whether the record is empty    
-  inline const bool empty(void) const
+  inline bool empty(void) const
     { return _elements.empty(); }
 };
 
@@ -262,7 +258,7 @@ public:
     \param  rec2   second record
     \return        whether <i>record1</i> is chronologically before <i>record2</i> 
 */
-const bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2);
+bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2);
   
 // ---------------------------------------------------  adif3_file -----------------------------------------
 
@@ -292,11 +288,6 @@ public:
     Returns empty object if a problem occurs
 */
   adif3_file(const std::vector<std::string>& path, const std::string& filename);
-  
-// is a QSO present? -1 => no, otherwise the index number
-//  const int is_present(const adif3_record& rec) const; 
-  
-//  const adif3_record get_record(const adif3_record& rec) const; 
 
 /*! \brief                  Return all the QSOs that match a call, band and mode
     \param      callsign    call to match
@@ -304,20 +295,20 @@ public:
     \param      m           ADIF3 mode to match
     \return     filename    Return all the QSO records that match <i>callsign</i>, <i>b</i> and <i>m</i>
 */  
-  const std::vector<adif3_record> matching_qsos(const std::string& callsign, const std::string& b, const std::string& m) const;
+  std::vector<adif3_record> matching_qsos(const std::string& callsign, const std::string& b, const std::string& m) const;
 
 /*! \brief                  Return all the QSOs that match a call
     \param      callsign    call to match
     \return     filename    Return all the QSO records that match <i>callsign</i>
 */
-  const std::vector<adif3_record> matching_qsos(const std::string& callsign) const;
+  std::vector<adif3_record> matching_qsos(const std::string& callsign) const;
 };
 
 /*! \brief              Return position at which to start processing the body of the file
     \param      str     string of contents of filae
     \return             position of first "<" after the end of the header
 */
-const size_t skip_adif3_header(const std::string& str);
+size_t skip_adif3_header(const std::string& str);
 
 // -------------------------------------- Errors  -----------------------------------
 

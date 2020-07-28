@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 155 2020-04-01 18:45:34Z  $
+// $Id: exchange.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -162,7 +162,7 @@ ostream& operator<<(ostream& ost, const parsed_exchange_field& pef)
       <i>n</i>
       <i>n</i><i>precedence</i>
 */
-const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
+bool parsed_ss_exchange::_is_possible_serno(const string& str) const
 { if (!contains_digit(str))
     return false;
 
@@ -187,7 +187,7 @@ const bool parsed_ss_exchange::_is_possible_serno(const string& str) const
     \param  str     string to check
     \return         whether <i>str</i> is a (two-digit) check
 */
-const bool parsed_ss_exchange::_is_possible_check(const string& str) const
+bool parsed_ss_exchange::_is_possible_check(const string& str) const
 { if (str.length() != 2)
     return false;
 
@@ -530,7 +530,7 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
 parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values, const bool truncate_received_values) :
   _replacement_call(),
   _valid(false)
-{ // ost << endl << "In parsed_exchange_constructor; truncate_received_values = " << boolalpha << truncate_received_values << endl;
+{ ost << endl << "In parsed_exchange_constructor; truncate_received_values = " << boolalpha << truncate_received_values << endl;
   
   static const string EMPTY_STRING;
 
@@ -876,7 +876,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 
     Returns empty string if <i>field_name</i> does not exist
 */
-const string parsed_exchange::field_value(const string& field_name) const
+string parsed_exchange::field_value(const string& field_name) const
 { for (const auto& field : _fields)
     if (field.name() == field_name)
       return field.value();
@@ -890,7 +890,7 @@ const string parsed_exchange::field_value(const string& field_name) const
 
     Any field names that represent a choice are resolved to the name of the actual matched field in the returned object
 */
-const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules& rules) const
+vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest_rules& rules) const
 { vector<parsed_exchange_field> rv;
 
   for (const auto& pef : _fields)
@@ -923,7 +923,7 @@ const vector<parsed_exchange_field> parsed_exchange::chosen_fields(const contest
     Returns the first field name in <i>choice_name</i> that fits the value of <i>received_field</i>.
     If there is no fit, then returns the empty string.
 */
-const string parsed_exchange::resolve_choice(const string& field_name, const string& received_value, const contest_rules& rules) const
+string parsed_exchange::resolve_choice(const string& field_name, const string& received_value, const contest_rules& rules) const
 { if (field_name.empty())
     return string();
 
@@ -988,7 +988,7 @@ ostream& operator<<(ostream& ost, const parsed_exchange& pe)
 
     Returns empty string if no sensible guess can be made
 */
-const string exchange_field_database::guess_value(const string& callsign, const string& field_name)
+string exchange_field_database::guess_value(const string& callsign, const string& field_name)
 { SAFELOCK(exchange_field_database);
 
 // first, check the database
@@ -1019,6 +1019,7 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 // no prior QSO; is it in the drmaster database?
   const drmaster_line drm_line { (*drm_p)[callsign] };
 
+// check to see if this is still useful
   auto get_qth = [&] (void)
     { if (drm_line.empty())
         return string();
@@ -1032,6 +1033,28 @@ const string exchange_field_database::guess_value(const string& callsign, const 
 
       return rv;
     };
+
+/*! \brief          Given a value, insert the corresponding canonical value into the database
+    \param  value   value of a field
+    \return         canonical value corresponding to <i>value</i>
+*/
+  auto insert_canonical_value = [&] (const string& value)
+    { const string rv { rules.canonical_value(field_name, value) };     // empty -> empty
+
+      _db.insert( { { callsign, field_name }, rv } );
+
+      return rv;
+    };
+
+/*! \brief          Given a value, insert the value as-is into the database
+    \param  value   value of a field
+    \return         canonical value corresponding to <i>value</i>
+*/
+//  auto insert_asis_value = [&] (const string& value)
+//    { _db.insert( { { callsign, field_name }, value } );
+//
+//      return value;
+//    };
 
   string rv;
 
@@ -1069,12 +1092,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       }
     }
 
-    if (!rv.empty())
-      rv = rules.canonical_value("160MSTATE"s, rv);
+    return insert_canonical_value(rv);
+    //if (!rv.empty())
+    //  rv = rules.canonical_value("160MSTATE"s, rv);
 
-    _db.insert( { { callsign, field_name }, rv } );
+    //_db.insert( { { callsign, field_name }, rv } );     // might insert empty string; the others don't allow empty strings, so need to think which is better
 
-    return rv;
+    //return rv;
   }
 
   if (field_name == "10MSTATE"s)
@@ -1107,12 +1131,15 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       }
     }
 
-    if (!rv.empty())
-    { rv = rules.canonical_value("10MSTATE"s, rv);
-      _db.insert( { { callsign, field_name }, rv } );
+    return insert_canonical_value(rv);
+//    if (!rv.empty())
+//    { return insert_canonical_value(rv);
 
-      return rv;
-    }
+      //rv = rules.canonical_value(field_name, rv);
+      //_db.insert( { { callsign, field_name }, rv } );
+
+      //return rv;
+//    }
   }
 
   if (field_name == "CHECK"s)
@@ -1121,12 +1148,15 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.check();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
+     return insert_canonical_value(rv); 
+//     if (!rv.empty())
+//      { return insert_canonical_value(rv);
 
-        return rv;
-      }
+        //rv = rules.canonical_value(field_name, rv);
+        //_db.insert( { { callsign, field_name }, rv } );
+
+        //return rv;
+//      }
     }
   }
 
@@ -1136,22 +1166,24 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.cq_zone();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value("CQZONE", rv);
-        _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);
+  //    if (!rv.empty())
+  //    { rv = rules.canonical_value(field_name, rv);
+ //      _db.insert( { { callsign, field_name }, rv } );
+//
+ //       return rv;
+ //     }
     }
 
 // no entry in drmaster database; can we determine from the location database?
     rv = to_string(location_db.cq_zone(callsign));
 
-    if (!rv.empty())    // should always be true
-    { _db.insert( { { callsign, field_name }, rv } );
-
-      return rv;
-    }
+    return insert_canonical_value(rv);
+ //   if (!rv.empty())    // should always be true
+ //   { _db.insert( { { callsign, field_name }, rv } );
+//
+//      return rv;
+//    }
   }
 
   if (field_name == "CWPOWER"s)
@@ -1160,12 +1192,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.cw_power();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);
+ //     if (!rv.empty())
+ //     { rv = rules.canonical_value(field_name, rv);
+ //       _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1175,11 +1208,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "DL"s)
     { rv = drm_line.qth();
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
+      return insert_canonical_value(rv);
 
-        return rv;
-      }
+ //     if (!rv.empty())
+ //     { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1196,11 +1231,12 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.grid();
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);    // I think that this should work
+//      if (!rv.empty())
+//      { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1210,11 +1246,29 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.qth();
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
+      return insert_canonical_value(rv);    // I think that this should work
 
-        return rv;
-      }
+//      if (!rv.empty())
+//      { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
+    }
+  }
+
+  if (field_name == "IOTA"s)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
+  { string rv;
+
+    if (!drm_line.empty())
+    { rv = drm_line.iota();
+
+      return insert_canonical_value(rv);    // I think that this should work
+
+//      if (!rv.empty())
+//      { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1224,23 +1278,26 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.itu_zone();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value("ITUZONE"s, rv);
-        _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);
+ //     if (!rv.empty())
+ //     { rv = rules.canonical_value(field_name, rv);
+ //       _db.insert( { { callsign, field_name }, rv } );
+//
+ //       return rv;
+ //     }
     }
 
 // no entry in drmaster database; can we determine from the location database?
     rv = to_string(location_db.itu_zone(callsign));
 
-    if (!rv.empty())    // should always be true
-    { rv = rules.canonical_value("ITUZONE"s, rv);
-      _db.insert( { { callsign, field_name }, rv } );
+    return insert_canonical_value(rv);
 
-      return rv;
-    }
+ //   if (!rv.empty())    // should always be true
+ //   { rv = rules.canonical_value(field_name, rv);
+ //     _db.insert( { { callsign, field_name }, rv } );
+//
+ //     return rv;
+ //   }
   }
 
   if (field_name == "JAPREF"s)
@@ -1249,12 +1306,14 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "JA"s)
     { rv = drm_line.qth();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
+      return insert_canonical_value(rv);
 
-        return rv;
-      }
+//      if (!rv.empty())
+//      { rv = rules.canonical_value(field_name, rv);
+//        _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1264,11 +1323,12 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.name();
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);    // I think that this should work
+ //     if (!rv.empty())
+ //     { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1278,12 +1338,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.precedence();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);    // I think that this should work 
+ //     if (!rv.empty())
+//      { rv = rules.canonical_value(field_name, rv);
+ //       _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1300,11 +1361,12 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.qth();
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+     return insert_canonical_value(rv);    // I think that this should work, but not absolutely certain 
+  //    if (!rv.empty())
+  //    { _db.insert( { { callsign, field_name }, rv } );
+//
+ //       return rv;
+ //     }
     }
   }
 
@@ -1319,22 +1381,25 @@ const string exchange_field_database::guess_value(const string& callsign, const 
       if (field_name == "RD2"s and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
         rv = substring(rv, 0, 2);
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
+      return insert_canonical_value(rv); 
 
-        return rv;
-      }
+ //     if (!rv.empty())
+ //     { rv = rules.canonical_value(field_name, rv);
+//        _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
 
 // no entry in drmaster database; can we determine from the location database?
     rv = location_db.region_abbreviation(callsign);
 
-    if (!rv.empty())    // should always be true
-    { _db.insert( { { callsign, field_name }, rv } );
-
-      return rv;
-    }
+    return insert_canonical_value(rv);    // I think that this should work, but not absolutely certain 
+//    if (!rv.empty())    // should always be true
+//    { _db.insert( { { callsign, field_name }, rv } );
+//
+//      return rv;
+//    }
   }
 
   if (field_name == "SECTION"s)
@@ -1343,12 +1408,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = to_upper(drm_line.section());
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);
+ //     if (!rv.empty())
+//      { rv = rules.canonical_value(field_name, rv);
+//        _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1358,11 +1424,12 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.skcc();
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);
+ //     if (!rv.empty())
+ //     { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1372,12 +1439,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.society();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);
+//      if (!rv.empty())
+//      { rv = rules.canonical_value(field_name, rv);
+//        _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1387,11 +1455,12 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.spc();
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+       return insert_canonical_value(rv);
+ //    if (!rv.empty())
+//      { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1401,12 +1470,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.ssb_power();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);
+ //     if (!rv.empty())
+ //     { rv = rules.canonical_value(field_name, rv);
+ //       _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1416,12 +1486,13 @@ const string exchange_field_database::guess_value(const string& callsign, const 
     if (!drm_line.empty())
     { rv = drm_line.qth();
 
-      if (!rv.empty())
-      { rv = rules.canonical_value(field_name, rv);
-        _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);
+ //     if (!rv.empty())
+//      { rv = rules.canonical_value(field_name, rv);
+//        _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
@@ -1442,17 +1513,16 @@ const string exchange_field_database::guess_value(const string& callsign, const 
           rv = rules.canonical_value(field_name, rv);
       }
 
-      if (!rv.empty())
-      { _db.insert( { { callsign, field_name }, rv } );
-
-        return rv;
-      }
+      return insert_canonical_value(rv);    // I think that this should work, but not absolutely certain
+ //     if (!rv.empty())
+//      { _db.insert( { { callsign, field_name }, rv } );
+//
+//        return rv;
+//      }
     }
   }
 
 // give up
-//  static const string empty_string;
-
   _db.insert( { { callsign, field_name }, EMPTY_STR } );  // so we find it next time
 
   return EMPTY_STR;
@@ -1487,10 +1557,7 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
     { const vector<string> lines { to_lines(to_upper(remove_char(contents, CR_CHAR))) };        // in case it's a silly Microsoft-format file
 
       for (unsigned int n = 0; n < lines.size(); ++n)
-//      for (auto line : lines)
-      { //string line = lines[n];
-        //line = replace_char(line, '\t', ' ');
-        const string         line   { squash(replace_char(lines[n], '\t', ' '), ' ') };
+      { const string         line   { squash(replace_char(lines[n], '\t', ' '), ' ') };
         const vector<string> tokens { remove_peripheral_spaces(split_string(line, SPACE_STR)) };
 
         if (tokens.size() == 2)
@@ -1514,7 +1581,7 @@ void exchange_field_database::set_values_from_file(const vector<string>& path, c
 
     Replaces [aA], [nN], [tT]
 */
-const string process_cut_digits(const string& input)
+string process_cut_digits(const string& input)
 { string rv { input };
 
   for (char& c : rv)
@@ -1576,7 +1643,7 @@ EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filen
     \param  filename    name of file
     \return             whether a regex expression was read
 */
-const bool EFT::read_regex_expression_file(const vector<string>& paths, const string& filename)
+bool EFT::read_regex_expression_file(const vector<string>& paths, const string& filename)
 { if (filename.empty())
     return false;
 
@@ -1617,7 +1684,7 @@ const bool EFT::read_regex_expression_file(const vector<string>& paths, const st
     \param  filename    name of file (without .values extension)
     \return             whether values were read
 */
-const bool EFT::read_values_file(const vector<string>& path, const string& filename)
+bool EFT::read_values_file(const vector<string>& path, const string& filename)
 { try
   { const vector<string> lines { to_lines(read_file(path, filename + ".values"s)) };
 
@@ -1734,7 +1801,7 @@ void EFT::add_legal_value(const string& cv, const string& new_value)
     \param  str     string to test
     \return         whether <i>str</i> is a legal value
 */
-const bool EFT::is_legal_value(const string& str) const
+bool EFT::is_legal_value(const string& str) const
 {
 // test regex first
   if (!_regex_expression.empty() and regex_match(str, _regex_expression))
@@ -1750,7 +1817,7 @@ const bool EFT::is_legal_value(const string& str) const
     \param  str     received value
     \return         value to be logged
 */
-const string EFT::value_to_log(const string& str) const
+string EFT::value_to_log(const string& str) const
 { const string rv { canonical_value(str) };
 
   return (rv.empty() ? str : rv);
@@ -1762,7 +1829,7 @@ const string EFT::value_to_log(const string& str) const
 
     Returns empty string if no equivalent canonical value can be found
 */
-const string EFT::canonical_value(const std::string& str) const
+string EFT::canonical_value(const std::string& str) const
 { const auto& it { _value_to_canonical.find(str) };
 
   if (it != _value_to_canonical.cend())
@@ -1775,7 +1842,7 @@ const string EFT::canonical_value(const std::string& str) const
 }
 
 /// all the canonical values
-const set<string> EFT::canonical_values(void) const
+set<string> EFT::canonical_values(void) const
 { set<string> rv;
 
   FOR_ALL(_values, [&rv] (const pair<string, set<string>>& pss) { rv.insert(pss.first); } );
@@ -1868,6 +1935,4 @@ sweepstakes_exchange::sweepstakes_exchange(const contest_rules& rules, const str
 //  auto is_serno = [](const string& target) { return serno_eft.is_legal_value(target); };
 //  auto is_prec = [](const string& target) { return prec_eft.is_legal_value(target); };
 //  auto is_section = [](const string& target) { return section_eft.is_legal_value(target); };
-
-
 }
