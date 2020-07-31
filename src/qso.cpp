@@ -942,12 +942,16 @@ string QSO::log_line(void)
 
   _log_line_fields.clear();    // make sure it's empty before we fill it
 
-  _log_line_fields.push_back("NUMBER"s);
-  _log_line_fields.push_back("DATE"s);
-  _log_line_fields.push_back("UTC"s);
-  _log_line_fields.push_back("MODE"s);
-  _log_line_fields.push_back("FREQUENCY"s);
-  _log_line_fields.push_back("CALLSIGN"s);
+  static const vector<string> log_fields { "NUMBER"s, "DATE"s, "UTC"s, "MODE"s, "FREQUENCY"s, "CALLSIGN"s };
+
+  FOR_ALL(log_fields, [=, this](const string& log_field) { _log_line_fields.push_back(log_field); } );
+
+//  _log_line_fields.push_back("NUMBER"s);
+//  _log_line_fields.push_back("DATE"s);
+//  _log_line_fields.push_back("UTC"s);
+//  _log_line_fields.push_back("MODE"s);
+//  _log_line_fields.push_back("FREQUENCY"s);
+//  _log_line_fields.push_back("CALLSIGN"s);
 
   for (const auto& exch_field : _sent_exchange)
     _log_line_fields.push_back("sent-"s + exch_field.first);
@@ -1074,6 +1078,5 @@ pair<string, string> next_name_value_pair(const string& str, size_t& posn)
   }
 
   posn = space_posn;
-
   return { name, value };
 }

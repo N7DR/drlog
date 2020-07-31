@@ -263,8 +263,7 @@ cty_data::cty_data(const string& filename)
     \param  filename    name of file
 */
 cty_data::cty_data(const vector<string>& path, const string& filename)
-{ //const string         entire_file { remove_char(remove_char(read_file(path, filename), LF_CHAR), CR_CHAR) };     // read file and remove EOL markers
-  const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };     // read file and remove EOL markers
+{ const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };     // read file and remove EOL markers
   const vector<string> records     { split_string(entire_file, ";"s) };                                        // split into records
 
   FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
@@ -300,6 +299,11 @@ void location_info::latitude_longitude(const float lat, const float lon)
   longitude(lon);
 }
 
+void location_info::zones(const unsigned int cqz, const unsigned int ituz)
+{ cq_zone(cqz);
+  itu_zone(ituz);
+}
+
 // ostream << location_info
 ostream& operator<<(ostream& ost, const location_info& info)
 { ost << "Country name: " << info.country_name() << endl
@@ -329,16 +333,20 @@ location_info guess_zones(const string& call, const location_info& li)
 // if it's a VE, then make a guess as to the CQ and ITU zones
   if (rv.canonical_prefix() == "VE"s)
   { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
-    { rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, call[posn]))]);
-      rv.itu_zone(VE_ITU[from_string<unsigned int>(string(1, call[posn]))]);
+    { rv.zones( VE_CQ[from_string<unsigned int>(string(1, call[posn]))], VE_ITU[from_string<unsigned int>(string(1, call[posn]))] );
+
+//      rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, call[posn]))]);
+//      rv.itu_zone(VE_ITU[from_string<unsigned int>(string(1, call[posn]))]);
     }
   }
   else
 // if it's a W, then make a guess as to the CQ and ITU zones
   { if (rv.canonical_prefix() == "K"s)
     { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
-      { rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, call[posn]))]);
-        rv.itu_zone(W_ITU[from_string<unsigned int>(string(1, call[posn]))]);
+      { rv.zones( VE_CQ[from_string<unsigned int>(string(1, call[posn]))], VE_ITU[from_string<unsigned int>(string(1, call[posn]))] );
+
+ //       rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, call[posn]))]);
+ //       rv.itu_zone(W_ITU[from_string<unsigned int>(string(1, call[posn]))]);
 
 // lat/long for W zones
         switch (rv.cq_zone())
@@ -424,8 +432,7 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
     
             location_info info { rec };
 
-            info.cq_zone(aci.cq_zone());        
-            info.itu_zone(aci.itu_zone());         
+            info.zones(aci.cq_zone(), aci.itu_zone());
             
             _db.insert( { prefix, info } );
           }
@@ -435,8 +442,7 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
             if (db_posn == _db.cend())    // if it's not already in the database
             { location_info info { rec };
 
-              info.cq_zone(aci.cq_zone());        
-              info.itu_zone(aci.itu_zone());         
+              info.zones(aci.cq_zone(), aci.itu_zone());
             
               _db.insert( { prefix, info } );
             }
@@ -452,30 +458,28 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
         const bool        country_is_waedc_only { rec.waedc_country_only() };
         
         for (ACI_DBTYPE::const_iterator cit = alt_callsigns.begin(); cit != alt_callsigns.end(); ++cit)
-        { const string callsign = cit->first;
-          const alternative_country_info& aci = cit->second;
+        { const string                    callsign { cit->first };
+          const alternative_country_info& aci      { cit->second };
         
           if (country_is_waedc_only)        // if country is WAEDC only and there's an entry already for this callsign, delete it before inserting
-          { const LOCATION_DBTYPE::const_iterator db_posn = _alt_call_db.find(callsign);
+          { const LOCATION_DBTYPE::const_iterator db_posn { _alt_call_db.find(callsign) };
           
             if (db_posn != _alt_call_db.end())
               _alt_call_db.erase(db_posn);
     
             location_info info(rec);
 
-            info.cq_zone(aci.cq_zone());        
-            info.itu_zone(aci.itu_zone());         
+            info.zones(aci.cq_zone(), aci.itu_zone());
             
             _alt_call_db.insert( { callsign, info } );
           }
           else                              // country is in DXCC list; don't add if there's an entry already for this callsign
-          { const auto db_posn = _alt_call_db.find(callsign);
+          { const auto db_posn { _alt_call_db.find(callsign) };
           
             if (db_posn == _alt_call_db.end())
             { location_info info(rec);
 
-              info.cq_zone(aci.cq_zone());        
-              info.itu_zone(aci.itu_zone()); 
+              info.zones(aci.cq_zone(), aci.itu_zone());
              
               _alt_call_db.insert( { callsign, info } );
             }
@@ -495,8 +499,10 @@ void location_database::_insert_alternatives(const location_info& info, const AC
 { location_info info_copy { info };
 
   for (const auto& [call_or_prefix, aci] : alternatives)
-  { info_copy.cq_zone(aci.cq_zone());
-    info_copy.itu_zone(aci.itu_zone());
+  { info_copy.zones(aci.cq_zone(), aci.itu_zone());
+
+//    info_copy.cq_zone(aci.cq_zone());
+//    info_copy.itu_zone(aci.itu_zone());
     _db.insert( { call_or_prefix, info_copy } );
   }
 }
@@ -513,8 +519,7 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
   auto add_to_database = [&db](const cty_record& rec, const alternative_country_info& aci, const string& prefix_or_callsign)
     { location_info info { rec };
 
-      info.cq_zone(aci.cq_zone());        
-      info.itu_zone(aci.itu_zone());         
+      info.zones(aci.cq_zone(), aci.itu_zone());
             
       db.insert( { prefix_or_callsign, info } );
     };
@@ -524,31 +529,14 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
     const alternative_country_info& aci                { cit->second };
         
     if (country_is_waedc_only)            // if country is WAEDC only and there's an entry already for this prefix or call, delete it before inserting
-    { //const auto db_posn { db.find(prefix_or_callsign) };
-          
-      if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn != db.cend())
+    { if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn != db.cend())
         db.erase(db_posn);
     
       add_to_database(rec, aci, prefix_or_callsign);
-      //location_info info { rec };
-
-      //info.cq_zone(aci.cq_zone());        
-      //info.itu_zone(aci.itu_zone());         
-            
-      //db.insert( { prefix_or_callsign, info } );
     }
     else                                  // country is in DXCC list; don't add if there's an entry already
-    { //const auto db_posn { db.find(prefix_or_callsign) };
-          
-      if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn == db.cend())    // if it's not already in the database
-      { add_to_database(rec, aci, prefix_or_callsign);
-        //location_info info { rec };
-
-        //info.cq_zone(aci.cq_zone());        
-        //info.itu_zone(aci.itu_zone());         
-            
-        //db.insert( { prefix_or_callsign, info } );
-      }
+    { if (const auto db_posn { db.find(prefix_or_callsign) }; db_posn == db.cend())    // if it's not already in the database
+        add_to_database(rec, aci, prefix_or_callsign);
     }
   }
 }
@@ -563,14 +551,6 @@ location_database::location_database(const string& filename, const COUNTRY_LIST 
 location_database::location_database(const cty_data& cty, const COUNTRY_LIST country_list)
 { _init(cty, country_list);
 }
-
-/// construct from CTY.DAT data, the definition of which country list to use and a secondary qth database
-#if 0
-location_database::location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary) :
-  _qth_db(secondary)
-{ _init(cty, country_list);
-}
-#endif
 
 /// prepare a default-constructed object for use
 void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list)
@@ -781,10 +761,13 @@ location_info location_database::info(const string& callpart) const
             if (map_it != _russian_db.end())
             { const russian_data_per_substring& data { map_it->second };
 
-              best_info.cq_zone(data.cq_zone());
-              best_info.itu_zone(data.itu_zone());
-              best_info.latitude(data.latitude());
-              best_info.longitude(data.longitude());
+              best_info.zones(data.cq_zone(), data.itu_zone());
+              best_info.latitude_longitude(data.latitude(), data.longitude());
+
+ //             best_info.cq_zone(data.cq_zone());
+ //             best_info.itu_zone(data.itu_zone());
+ //             best_info.latitude(data.latitude());
+ //             best_info.longitude(data.longitude());
               best_info.region_name(data.region_name());
               best_info.region_abbreviation(data.region_abbreviation());
             }
@@ -886,8 +869,9 @@ location_info location_database::info(const string& callpart) const
       unsigned int len   { 1 };
      
       while (len <= parts[0].length())
-      { string                               target  { parts[0].substr(0, len) };
-        /* map<string, location_info>::const_iterator */ const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
+      { string target  { parts[0].substr(0, len) };
+        
+        const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
      
         if (db_posn != _db.end())
         { len_0 = len;
@@ -900,8 +884,9 @@ location_info location_database::info(const string& callpart) const
       len = 1;
     
       while (len <= parts[1].length())
-      { string                               target  { parts[1].substr(0, len) };
-        /* map<string, location_info>::const_iterator */ const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
+      { string target  { parts[1].substr(0, len) };
+
+        const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
      
         if (db_posn != _db.end())
         { len_1 = len;

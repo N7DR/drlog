@@ -861,6 +861,21 @@ inline std::string delimit(const std::string& str, const std::string& delim_1, c
 */
 size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn = 0);
 
+#if 0
+https://stackoverflow.com/questions/650162/why-the-switch-statement-cannot-be-applied-on-strings
+constexpr unsigned int hash(const char *s, int off = 0) {                        
+    return !s[off] ? 5381 : (hash(s, off+1)*33) ^ s[off];                           
+}                                                                                
+
+switch( hash(str) ){
+case hash("one") : // do something
+case hash("two") : // do something
+}
+#endif
+
+constexpr long unsigned int STR_HASH(const char* str, int off = 0) 
+  { return !str[off] ? 5381 : (STR_HASH(str, off + 1) * 33) ^ str[off]; }                                                                                
+
 // -------------------------------------- Errors  -----------------------------------
 
 ERROR_CLASS(string_function_error);     ///< string_function error

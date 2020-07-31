@@ -390,85 +390,73 @@ trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& pos
        case 9 :             // ctrl-I
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { ituzone += contents[posn++];
-          }
+            { ituzone += contents[posn++]; }
           break;
 
        case 11 :             // ctrl-K
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { check += contents[posn++];
-          }
+            { check += contents[posn++]; }
           break;
 
        case 14 :             // ctrl-N
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { name += contents[posn++];
-          }
+            { name += contents[posn++]; }
           break;
 
        case 15 :             // ctrl-O
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { oldcall += contents[posn++];
-          }
+            { oldcall += contents[posn++]; }
           break;
 
        case 17 :             // ctrl-Q
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { qth += contents[posn++];
-          }
+            { qth += contents[posn++]; }
           break;
 
        case 19 :             // ctrl-S
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { speed += contents[posn++];
-          }
+            { speed += contents[posn++]; }
           break;
 
        case 20 :             // ctrl-T
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { ten_ten += contents[posn++];
-          }
+            { ten_ten += contents[posn++]; }
           break;
 
        case 21 :             // ctrl-U
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { user_1 += contents[posn++];
-          }
+            { user_1 += contents[posn++]; }
           break;
 
        case 22 :             // ctrl-V
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { user_2 += contents[posn++];
-          }
+            { user_2 += contents[posn++]; }
           break;
 
        case 23 :             // ctrl-W
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { user_3 += contents[posn++];
-          }
+            { user_3 += contents[posn++]; }
           break;
 
        case 24 :             // ctrl-X
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { user_4 += contents[posn++];
-          }
+            { user_4 += contents[posn++]; }
           break;
 
        case 25 :             // ctrl-Y
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-          { user_5 += contents[posn++];
-          }
+            { user_5 += contents[posn++]; }
           break;
 
        default:
@@ -548,8 +536,9 @@ vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
 //  for (unordered_map<string, trmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
-  for (const auto& rec : _records)
-    rv.push_back(rec.first);
+  FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
+//  for (const auto& rec : _records)
+//    rv.push_back(rec.first);
 
   sort(rv.begin(), rv.end());
 
@@ -827,10 +816,6 @@ void drmaster::_prepare_from_file_contents(const string& contents)
 */
 drmaster::drmaster(const string& filename)
 { if (!filename.empty())
-//    return;
-//
-//  const string contents      { read_file(filename) };      // throws exception if fails
-//
     _prepare_from_file_contents(read_file(filename));      // throws exception if fails
 }
 
@@ -843,10 +828,6 @@ drmaster::drmaster(const string& filename)
 */
 drmaster::drmaster(const vector<string>& path, const string& filename)
 { if (!filename.empty())
-//    return;
-//
-//  const string         contents { read_file(path, filename) };      // throws exception if fails
-//
     _prepare_from_file_contents(read_file(path, filename));      // throws exception if fails
 }
 
@@ -857,10 +838,6 @@ drmaster::drmaster(const vector<string>& path, const string& filename)
 */
 void drmaster::prepare(const string& filename)
 { if (!filename.empty())
-//    return;
-//
-//  const string         contents { read_file(filename) };      // throws exception if fails
-//
     _prepare_from_file_contents(read_file(filename));      // throws exception if fails
 }
 
@@ -872,10 +849,6 @@ void drmaster::prepare(const string& filename)
 */
 void drmaster::prepare(const vector<string>& path, const string& filename)
 { if (!filename.empty())
-//    return;
-//
-//  const string         contents { read_file(path, filename) };      // throws exception if fails
-//
     _prepare_from_file_contents(read_file(path, filename));      // throws exception if fails
 }
 
@@ -933,7 +906,6 @@ void drmaster::operator+=(const drmaster_line& drml)
     _records.erase(call);
     _records.insert( { call, old_drml });
   }
-
 }
 
 /*! \brief          Return the record for a particular call
@@ -942,8 +914,11 @@ void drmaster::operator+=(const drmaster_line& drml)
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
+#if 0
 drmaster_line drmaster::operator[](const string& call) const
-{ const auto cit { _records.find(call) };
+{ return MUM_VALUE(_records, call);
+  //const auto cit { _records.find(call) };
 
-  return (cit == _records.cend() ? drmaster_line() : cit->second);
+  //return (cit == _records.cend() ? drmaster_line() : cit->second);
 }
+#endif

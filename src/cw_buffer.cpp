@@ -820,7 +820,9 @@ bool cw_buffer::empty(void)
 string cw_messages::operator[](const int n)
 { SAFELOCK(_messages);
 
-  map<int, string>::const_iterator cit { _messages.find(n) };
+  return MUM_VALUE(_messages, n);
 
-  return (cit == _messages.cend() ? string() : cit->second);
+//  map<int, string>::const_iterator cit { _messages.find(n) };
+
+//  return (cit == _messages.cend() ? string() : cit->second);
 }

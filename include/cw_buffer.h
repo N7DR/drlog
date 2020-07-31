@@ -168,11 +168,11 @@ public:
     { _disabled_cw = !_disabled_cw; }
 
 /// is sending disabled?
-  inline const bool disabled(void) const
+  inline bool disabled(void) const
     { return _disabled_cw; }
 
 /// is sending enabled?
-  inline const bool enabled(void) const
+  inline bool enabled(void) const
     { return !disabled(); }
 
 /// assert PTT

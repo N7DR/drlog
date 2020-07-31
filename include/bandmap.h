@@ -571,7 +571,7 @@ public:
     { return _callsign.empty(); }
 
 /// a simple definition of whether there is useful information in the object
-  inline const bool valid(void) const
+  inline bool valid(void) const
     { return !empty(); }
 
 /*! \brief      Does this object match another bandmap_entry?
@@ -583,18 +583,18 @@ public:
   bool matches_bandmap_entry(const bandmap_entry& be) const;
    
 /// how long (in seconds) has it been since this entry was inserted into a bandmap?
-  inline const time_t time_since_inserted(void) const
+  inline time_t time_since_inserted(void) const
     { return (::time(NULL) - _time); }
 
 /// how long (in seconds) has it been since this entry or its predecessor was inserted into a bandmap?
-  inline const time_t time_since_this_or_earlier_inserted(void) const
+  inline time_t time_since_this_or_earlier_inserted(void) const
     { return ( ::time(NULL) - (_time_of_earlier_bandmap_entry ? _time_of_earlier_bandmap_entry : _time) ); }
 
 /*! \brief          Should this bandmap_entry be removed?
     \param  now     current time
     \return         whether this bandmap_entry has expired
 */
-  inline const bool should_prune(const time_t now = ::time(NULL)) const
+  inline bool should_prune(const time_t now = ::time(NULL)) const
     { return ( (_expiration_time < now) and !is_marker()); }
 
 /*! \brief              Re-mark the need/mult status
@@ -611,28 +611,28 @@ public:
     \param  be  other bandmap entry
     \return     difference in frequency between *this and <i>be</i>
 */
-  inline const frequency frequency_difference(const bandmap_entry& be) const
+  inline frequency frequency_difference(const bandmap_entry& be) const
     { return frequency(abs(be._freq.hz() - _freq.hz()), FREQUENCY_UNIT::HZ); }
 
 /*! \brief      Return the difference in frequency between two bandmap entries, in +ve hertz
     \param  be  other bandmap entry
     \return     absolute difference in hertz between frequency of *this and fequency of <i>be</i>
 */
-  inline const unsigned int absolute_frequency_difference(const bandmap_entry& be) const
+  inline unsigned int absolute_frequency_difference(const bandmap_entry& be) const
     { return static_cast<unsigned int>(abs(frequency_difference(be).hz())); }
 
 /*! \brief      Is this bandmap entry less than another one, using callsign order
     \param  be  other bandmap entry
     \return     whether *this is less than <i>be</i>, using callsign order
 */
-  inline const bool less_by_callsign(const bandmap_entry& be) const
+  inline bool less_by_callsign(const bandmap_entry& be) const
     { return (_callsign < be._callsign); }
 
 /*! \brief      Is this bandmap entry less than another one, using frequency order
     \param  be  other bandmap entry
     \return     whether *this is less than <i>be</i>, using frequency order
 */
-  inline const bool less_by_frequency(const bandmap_entry& be) const
+  inline bool less_by_frequency(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz()); }
 
 /*! \brief          Add a call to the associated posters
@@ -641,10 +641,10 @@ public:
 
     Does nothing if <i>call</i> is already a poster
 */
-  const unsigned int add_poster(const std::string& call);
+  unsigned int add_poster(const std::string& call);
 
 /// return all the posters as a space-separated string
-  const std::string posters_string(void) const;
+  std::string posters_string(void) const;
 
 /// guess the mode
   MODE putative_mode(void) const;
@@ -794,7 +794,7 @@ public:
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
 
 /// get the current bandmap filter
-  inline const bandmap_filter_type bandmap_filter(void)
+  inline bandmap_filter_type bandmap_filter(void)
   { SAFELOCK (_bandmap);
     return *(_filter_p);
   }
@@ -808,7 +808,7 @@ public:
   }
 
 /// the number of entries in the bandmap
-  inline const size_t size(void)
+  inline size_t size(void)
     { SAFELOCK(_bandmap);
       return _entries.size(); 
     }
@@ -1016,7 +1016,7 @@ public:
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline const bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
+  inline bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_all_time_first, dirn); }
 
 /*! \brief         Find the next needed that mateches the N7DR criteria up or down in frequency from the current location

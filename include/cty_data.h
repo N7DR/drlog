@@ -433,6 +433,12 @@ public:
 */
   void latitude_longitude(const float lat, const float lon);    // set both latitude and longitude at once
 
+/*! \brief          Set both CQ and ITU zones at once
+    \param  cqz     CQ zone
+    \param  utuz    ITU zone
+*/
+  void zones(const unsigned int cqz, const unsigned int ituz);
+
 /// archive using boost
    template<typename Archive>
    void serialize(Archive& ar, const unsigned version)

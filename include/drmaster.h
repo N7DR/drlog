@@ -412,7 +412,8 @@ public:
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
-  drmaster_line operator[](const std::string& call) const;
+  inline drmaster_line operator[](const std::string& call) const
+    { return MUM_VALUE(_records, call); }
   
 /*! \brief          Return the record for a particular call
     \param  call    target callsign

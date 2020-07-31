@@ -42,6 +42,11 @@ enum class POINTS { NORMAL,                       ///< points defined in configu
                   };
 
 /// Syntactic sugar for read-only access
+// CANNOT make this a non-const non-reference (to allow for move constructors) for reasons I don't understand
+// Exactly the same construction is used in drlog_context.h, without any problem
+// compiler complains about building a pair<const string, EFT>, which isn't mentioned anywhere in the source,
+// and the compiler error messages don't tell me exactly where the failure really occurs, although it seems to be
+// when compiling qtc.cpp; the compiler ponts to the forward declaration of class EFT, which makes no sense
 #define RULESREAD(y)          \
   inline const decltype(_##y)& y(void) const { SAFELOCK(rules); return _##y; }
 
@@ -279,7 +284,7 @@ public:
   READ_AND_WRITE(choice);              ///< equivalents if this is a choice
 
 /// is this field a choice?
-  inline const bool is_choice(void) const
+  inline bool is_choice(void) const
     { return !_choice.empty(); }
 
 /*! \brief      Follow all trees to their leaves
@@ -541,7 +546,7 @@ public:
 
     CHOICE fields ARE NOT expanded
 */
-  inline const std::vector<exchange_field> unexpanded_exch(const std::string& canonical_prefix, const MODE m) const
+  inline std::vector<exchange_field> unexpanded_exch(const std::string& canonical_prefix, const MODE m) const
     { return _exchange_fields(canonical_prefix, m, false); }
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
@@ -551,7 +556,7 @@ public:
 
     CHOICE fields ARE expanded
 */
-  inline const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
+  inline std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
     { return _exchange_fields(canonical_prefix, m, true); }
 
   RULESREAD(callsign_mults);                      ///< collection of types of mults based on callsign (e.g., "WPXPX")
@@ -648,7 +653,7 @@ public:
     \param  cp  canonical prefix of country to test
     \return     whether cp is a country mult
 */
-  inline const bool is_country_mult(const std::string& cp) const
+  inline bool is_country_mult(const std::string& cp) const
     { return country_mults_used(cp); }
 
 /*! \brief          Is an exchange field a mult?
@@ -681,7 +686,7 @@ public:
 
     Generally (perhaps always) this should be the opposite of <i>exchange_field_is_regex(field_name)</i>
 */
-  inline const bool exch_has_permitted_values(const std::string& field_name) const
+  inline bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
 
       return ( _permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend() );
@@ -732,23 +737,23 @@ public:
   bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
 
 /// number of permitted bands
-  inline const unsigned int n_bands(void) const
+  inline unsigned int n_bands(void) const
     { SAFELOCK(rules); return _permitted_bands.size(); }
 
 /// number of permitted modes
-  inline const unsigned int n_modes(void) const
+  inline unsigned int n_modes(void) const
     { SAFELOCK(rules); return _permitted_modes.size(); }
 
 /// do we allow multiple bands?
-  inline const bool multiple_bands(void) const
+  inline bool multiple_bands(void) const
     { return (n_bands() != 1); }
 
 /// do we allow multiple modes?
-  inline const bool multiple_modes(void) const
+  inline bool multiple_modes(void) const
     { return (n_modes() != 1); }
 
 /// number of country mults
-  inline const unsigned int n_country_mults(void) const
+  inline unsigned int n_country_mults(void) const
     { SAFELOCK(rules); return _country_mults.size(); }
     
 /*! \brief                  Points for a particular QSO
@@ -759,7 +764,7 @@ public:
   unsigned int points(const QSO& qso, location_database& location_db) const;
 
 /// human-readable string
-  const std::string to_string(void) const;
+  std::string to_string(void) const;
 
 /*! \brief          Does the sent exchange include a particular field?
     \param  str     name of field to test
@@ -769,7 +774,7 @@ public:
   bool sent_exchange_includes(const std::string& str, const MODE m) const;
 
 /// get the permitted bands as a set
-  inline const std::set<BAND> permitted_bands_set(void) const
+  inline std::set<BAND> permitted_bands_set(void) const
     { return std::set<BAND>(_permitted_bands.cbegin(), _permitted_bands.cend() ); }
 
 /*! \brief                      Is a particular field used for QSOs with a particular country?

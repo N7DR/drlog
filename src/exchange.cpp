@@ -595,7 +595,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 //    ost << "exchange_field_eft map: " << exchange_field_eft << endl;
 
 // remove any inappropriate RS(T)
-    auto pred_fn = [m] (pair<const string, EFT>& psE) { return ( ( psE.first == "RST"s and m != MODE_CW )  or
+    auto pred_fn = [m] (const pair<string, EFT>& psE) { return ( ( psE.first == "RST"s and m != MODE_CW )  or
                                                                  ( psE.first == "RS"s and m != MODE_SSB )
                                                                );
                                                       };
@@ -935,9 +935,7 @@ string parsed_exchange::resolve_choice(const string& field_name, const string& r
 
   for (const auto& choice: choices_vec)    // see Josuttis 2nd edition, p. 343
   { try
-    { //const EFT& eft { exchange_field_eft.at(choice) };
-
-      if (const EFT& eft { exchange_field_eft.at(choice) }; eft.is_legal_value(received_value))
+    { if (const EFT& eft { exchange_field_eft.at(choice) }; eft.is_legal_value(received_value))
         return choice;
     }
 
@@ -1020,6 +1018,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
   const drmaster_line drm_line { (*drm_p)[callsign] };
 
 // check to see if this is still useful
+#if 0
   auto get_qth = [&] (void)
     { if (drm_line.empty())
         return string();
@@ -1033,30 +1032,45 @@ string exchange_field_database::guess_value(const string& callsign, const string
 
       return rv;
     };
+#endif
 
-/*! \brief          Given a value, insert the corresponding canonical value into the database
-    \param  value   value of a field
-    \return         canonical value corresponding to <i>value</i>
+/*! \brief                          Given a value, insert the corresponding canonical or as-is value into the database
+    \param  value                   value of a field
+    \param  get_canonical_value     whether to convert <i>value</i> to its corresponding canonical value
+    \return                         <i>value</i> or canonical value corresponding to <i>value</i>, whichever was inserted
 */
-  auto insert_canonical_value = [&] (const string& value)
-    { const string rv { rules.canonical_value(field_name, value) };     // empty -> empty
+  auto insert_value = [&] (const string& value, const bool get_canonical_value = false)
+    { const string rv { get_canonical_value ? rules.canonical_value(field_name, value) : value};     // empty -> empty
 
       _db.insert( { { callsign, field_name }, rv } );
 
       return rv;
     };
 
-/*! \brief          Given a value, insert the value as-is into the database
-    \param  value   value of a field
-    \return         canonical value corresponding to <i>value</i>
-*/
-//  auto insert_asis_value = [&] (const string& value)
-//    { _db.insert( { { callsign, field_name }, value } );
-//
-//      return value;
-//    };
+  constexpr bool INSERT_CANONICAL_VALUE { true };
+
+  auto ve_area_to_province = [](const char call_area)
+    { if (!isdigit(call_area))
+        return string();
+
+       static const std::array<string, 10> abbreviations { { string(), "NS"s, "PQ"s, "ON"s, "MB"s, "SK"s, "AB"s, "BC"s, string(), "NB"s} };  // std:: qualifier needed because we have boost here as well
+
+       return abbreviations[call_area - '0'];    // convert to number
+    };
 
   string rv;
+
+#if 0
+https://stackoverflow.com/questions/650162/why-the-switch-statement-cannot-be-applied-on-strings
+constexpr unsigned int hash(const char *s, int off = 0) {                        
+    return !s[off] ? 5381 : (hash(s, off+1)*33) ^ s[off];                           
+}                                                                                
+
+switch( hash(str) ){
+case hash("one") : // do something
+case hash("two") : // do something
+}
+#endif
 
 // currently identical to 10MSTATE, except look up different value on the drmaster line
   if (field_name == "160MSTATE"s)
@@ -1070,35 +1084,20 @@ string exchange_field_database::guess_value(const string& callsign, const string
     }
 
     if (rv.empty() and ( location_db.canonical_prefix(callsign) == "VE"s) )  // can often guess province for VEs
-    { const string pfx { wpx_prefix(callsign) };
+    { static const map<string /* prefix */, string /* province */> province_map { { "VO1"s, "NF"s },
+                                                                                  { "VO2"s, "LB"s },
+                                                                                  { "VY2"s, "PE"s }
+                                                                                };
 
-      if (pfx == "VY2"s)
-        rv = "PE"s;
+      const string pfx { wpx_prefix(callsign) };
 
-      if (rv.empty() and (pfx == "VO1"s))
-        rv = "NF"s;
-
-      if (rv.empty() and (pfx == "VO2"s))
-        rv = "LB"s;
+      rv = MUM_VALUE(province_map, pfx);
 
       if (rv.empty())
-      { const char call_area { pfx[pfx.length() - 1] };
-
-        if (isdigit(call_area))
-        { static const std::array<string, 10> abbreviations { { string(), "NS"s, "PQ"s, "ON"s, "MB"s, "SK"s, "AB"s, "BC"s, string(), "NB"s} };  // std:: qualifier needed because we have boost here as well
-
-          rv = abbreviations[call_area - '0'];    // convert to number
-        }
-      }
+        rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
     }
 
-    return insert_canonical_value(rv);
-    //if (!rv.empty())
-    //  rv = rules.canonical_value("160MSTATE"s, rv);
-
-    //_db.insert( { { callsign, field_name }, rv } );     // might insert empty string; the others don't allow empty strings, so need to think which is better
-
-    //return rv;
+    return insert_value(rv, INSERT_CANONICAL_VALUE);
   }
 
   if (field_name == "10MSTATE"s)
@@ -1121,164 +1120,131 @@ string exchange_field_database::guess_value(const string& callsign, const string
         rv = "NF"s;
 
       if (rv.empty())
-      { const char call_area_c { pfx[pfx.length() - 1] };
-
-        if (isdigit(call_area_c))
-        { static const std::array<string, 10> abbreviations { { string(), "NS"s, "PQ"s, "ON"s, "MB"s, "SK"s, "AB"s, "BC"s, string(), "NB"s} };  // std:: qualifier needed because we have boost here as well
-
-          rv = abbreviations[call_area_c - '0'];    // convert to number
-        }
-      }
+        rv = ve_area_to_province( pfx[pfx.length() - 1] ); // call area is last character in prefix
     }
 
-    return insert_canonical_value(rv);
-//    if (!rv.empty())
-//    { return insert_canonical_value(rv);
-
-      //rv = rules.canonical_value(field_name, rv);
-      //_db.insert( { { callsign, field_name }, rv } );
-
-      //return rv;
-//    }
+    return insert_value(rv, INSERT_CANONICAL_VALUE);
   }
 
   if (field_name == "CHECK"s)
-  { string rv;
-
-    if (!drm_line.empty())
-    { rv = drm_line.check();
-
-     return insert_canonical_value(rv); 
-//     if (!rv.empty())
-//      { return insert_canonical_value(rv);
-
-        //rv = rules.canonical_value(field_name, rv);
-        //_db.insert( { { callsign, field_name }, rv } );
-
-        //return rv;
-//      }
-    }
-  }
+    return insert_value(drm_line.check()); 
 
   if (field_name == "CQZONE"s)
-  { string rv;
+  { string rv { drm_line.cq_zone() };
 
-    if (!drm_line.empty())
-    { rv = drm_line.cq_zone();
+    if (!rv.empty())
+      return insert_value(rv, INSERT_CANONICAL_VALUE);
 
-      return insert_canonical_value(rv);
-  //    if (!rv.empty())
-  //    { rv = rules.canonical_value(field_name, rv);
- //      _db.insert( { { callsign, field_name }, rv } );
-//
- //       return rv;
- //     }
-    }
-
-// no entry in drmaster database; can we determine from the location database?
-    rv = to_string(location_db.cq_zone(callsign));
-
-    return insert_canonical_value(rv);
- //   if (!rv.empty())    // should always be true
- //   { _db.insert( { { callsign, field_name }, rv } );
-//
-//      return rv;
-//    }
+// no entry in drmaster database; try the location database
+    return insert_value(to_string(location_db.cq_zone(callsign)), INSERT_CANONICAL_VALUE);
   }
 
   if (field_name == "CWPOWER"s)
-  { string rv;
+    return insert_value(drm_line.cw_power());
 
-    if (!drm_line.empty())
-    { rv = drm_line.cw_power();
-
-      return insert_canonical_value(rv);
- //     if (!rv.empty())
- //     { rv = rules.canonical_value(field_name, rv);
- //       _db.insert( { { callsign, field_name }, rv } );
-//
-//        return rv;
-//      }
-    }
-  }
-
-  if (field_name == "DOK"s)
-  { string rv;
-
-    if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "DL"s)
-    { rv = drm_line.qth();
-
-      return insert_canonical_value(rv);
-
- //     if (!rv.empty())
- //     { _db.insert( { { callsign, field_name }, rv } );
-//
-//        return rv;
-//      }
-    }
-  }
+  if ( (field_name == "DOK"s) and (location_db.canonical_prefix(callsign) == "DL"s) )
+    return insert_value(drm_line.qth());    // DL QTH is the DOK
 
   if (field_name == "FDEPT"s)
-  { const string rv { get_qth() };
-
-    if (!rv.empty())
-      return rv;
-  }
+    return insert_value(drm_line.qth());    // F (and French territories) QTH is the dept
 
   if (field_name == "GRID"s)
-  { string rv;
-
-    if (!drm_line.empty())
-    { rv = drm_line.grid();
-
-      return insert_canonical_value(rv);    // I think that this should work
-//      if (!rv.empty())
-//      { _db.insert( { { callsign, field_name }, rv } );
-//
-//        return rv;
-//      }
-    }
-  }
+    return insert_value(drm_line.grid());
 
   if (field_name == "HADXC"s)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
-  { string rv;
+ // { //string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.qth();
+    //if (!drm_line.empty())
+    //{ rv = drm_line.qth();
 
-      return insert_canonical_value(rv);    // I think that this should work
+      return insert_value(drm_line.qth());    // I think that this should work
 
 //      if (!rv.empty())
 //      { _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
-  if (field_name == "IOTA"s)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
+  if (field_name == "IOTA"s)
   { string rv;
 
-    if (!drm_line.empty())
+ //   if (!drm_line.empty())
     { rv = drm_line.iota();
 
-      return insert_canonical_value(rv);    // I think that this should work
+      if (rv.empty())
+      { static const unordered_map<string /* cp */, string /* IOTA number */> iota_map { { "CM"s,   "NA015"s },
+                                                                                         { "CY9"s,  "NA094"s },
+                                                                                         { "CY0"s,  "NA063"s },
+                                                                                         { "C6"s,   "NA001"s },
+                                                                                         { "EA6"s,  "EU004"s },
+                                                                                         { "FG"s,   "NA102"s },
+                                                                                         { "FJ"s,   "NA146"s },
+                                                                                         { "FM"s,   "NA107"s },
+                                                                                         { "FP"s,   "NA032"s },
+                                                                                         { "FS"s,   "NA105"s },
+                                                                                         { "G"s,    "EU005"s },
+                                                                                         { "GJ"s,   "EU013"s },
+                                                                                         { "GM"s,   "EU005"s },
+                                                                                         { "GW"s,   "EU005"s },
+                                                                                         { "HH"s,   "NA096"s },
+                                                                                         { "HI"s,   "NA096"s },
+                                                                                         { "HK0"s,  "NA033"s },
+                                                                                         { "IS"s,   "EU024"s },
+                                                                                         { "IT9"s,  "EU025"s }, // WAE country only
+                                                                                         { "JW"s,   "EU026"s },
+                                                                                         { "JX"s,   "EU022"s },
+                                                                                         { "J3"s,   "NA024"s },
+                                                                                         { "J6"s,   "NA108"s },
+                                                                                         { "J7"s,   "NA101"s },
+                                                                                         { "J8"s,   "NA109"s },
+                                                                                         { "KP1"s,  "NA098"s },
+                                                                                         { "KP2"s,  "NA106"s },
+                                                                                         { "KP4"s,  "NA099"s },
+                                                                                         { "KP5"s,  "NA095"s },
+                                                                                         { "OH0"s,  "EU002"s },
+                                                                                         { "OJ0"s,  "EU053"s },
+                                                                                         { "OX"s,   "NA018"s },
+                                                                                         { "OY"s,   "EU018"s },
+                                                                                         { "PJ5"s,  "NA145"s },
+                                                                                         { "R1FJ"s, "EU019"s },
+                                                                                         { "OX"s,   "NA018"s },
+                                                                                         { "SV5"s,  "EU001"s },
+                                                                                         { "SV9"s,  "EU015"s },
+                                                                                         { "TI9"s,  "NA012"s },
+                                                                                         { "TF"s,   "EU021"s },
+                                                                                         { "TK"s,   "EU014"s },
+                                                                                         { "VO1"s,  "NA027"s },
+                                                                                         { "VP2E"s, "NA022"s },
+                                                                                         { "VP2M"s, "NA103"s },
+                                                                                         { "VP2V"s, "NA023"s },
+                                                                                         { "VP9"s,  "NA005"s },
+                                                                                         { "VY2"s,  "NA029"s },
+                                                                                         { "V2"s,   "NA100"s },
+                                                                                         { "V4"s,   "NA104"s },
+                                                                                         { "XE4"s,  "NA030"s },
+                                                                                         { "YV0"s,  "NA020"s },
+                                                                                         { "ZF"s,   "NA016"s },
+                                                                                         { "6Y"s,   "NA097"s },
+                                                                                         { "8P"s,   "NA021"s },
+                                                                                         { "9H"s,   "EU023"s }
+                                                                                       };
 
-//      if (!rv.empty())
-//      { _db.insert( { { callsign, field_name }, rv } );
-//
-//        return rv;
-//      }
+        rv = MUM_VALUE(iota_map, location_db.canonical_prefix(callsign)); 
+      }
+
+      return insert_value(rv);    // I think that this should work
     }
   }
 
   if (field_name == "ITUZONE"s)
-  { string rv;
+  { //string rv;
 
     if (!drm_line.empty())
-    { rv = drm_line.itu_zone();
+    { //rv = drm_line.itu_zone();
 
-      return insert_canonical_value(rv);
+      return insert_value(drm_line.itu_zone(), INSERT_CANONICAL_VALUE);
  //     if (!rv.empty())
  //     { rv = rules.canonical_value(field_name, rv);
  //       _db.insert( { { callsign, field_name }, rv } );
@@ -1290,7 +1256,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
 // no entry in drmaster database; can we determine from the location database?
     rv = to_string(location_db.itu_zone(callsign));
 
-    return insert_canonical_value(rv);
+    return insert_value(rv, INSERT_CANONICAL_VALUE);
 
  //   if (!rv.empty())    // should always be true
  //   { rv = rules.canonical_value(field_name, rv);
@@ -1306,7 +1272,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "JA"s)
     { rv = drm_line.qth();
 
-      return insert_canonical_value(rv);
+      return insert_value(rv);
 
 //      if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
@@ -1323,7 +1289,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = drm_line.name();
 
-      return insert_canonical_value(rv);    // I think that this should work
+      return insert_value(rv);    // I think that this should work
  //     if (!rv.empty())
  //     { _db.insert( { { callsign, field_name }, rv } );
 //
@@ -1338,7 +1304,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = drm_line.precedence();
 
-      return insert_canonical_value(rv);    // I think that this should work 
+      return insert_value(rv);    // I think that this should work 
  //     if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
  //       _db.insert( { { callsign, field_name }, rv } );
@@ -1361,7 +1327,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = drm_line.qth();
 
-     return insert_canonical_value(rv);    // I think that this should work, but not absolutely certain 
+     return insert_value(rv, INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain 
   //    if (!rv.empty())
   //    { _db.insert( { { callsign, field_name }, rv } );
 //
@@ -1381,7 +1347,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
       if (field_name == "RD2"s and rv.length() > 2)      // allow for case when full 4-character RDA is in the drmaster file
         rv = substring(rv, 0, 2);
 
-      return insert_canonical_value(rv); 
+      return insert_value(rv); 
 
  //     if (!rv.empty())
  //     { rv = rules.canonical_value(field_name, rv);
@@ -1394,7 +1360,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
 // no entry in drmaster database; can we determine from the location database?
     rv = location_db.region_abbreviation(callsign);
 
-    return insert_canonical_value(rv);    // I think that this should work, but not absolutely certain 
+    return insert_value(rv);    // I think that this should work, but not absolutely certain 
 //    if (!rv.empty())    // should always be true
 //    { _db.insert( { { callsign, field_name }, rv } );
 //
@@ -1408,7 +1374,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = to_upper(drm_line.section());
 
-      return insert_canonical_value(rv);
+      return insert_value(rv);
  //     if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
 //        _db.insert( { { callsign, field_name }, rv } );
@@ -1424,7 +1390,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = drm_line.skcc();
 
-      return insert_canonical_value(rv);
+      return insert_value(rv);
  //     if (!rv.empty())
  //     { _db.insert( { { callsign, field_name }, rv } );
 //
@@ -1439,7 +1405,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = drm_line.society();
 
-      return insert_canonical_value(rv);
+      return insert_value(rv);
 //      if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
 //        _db.insert( { { callsign, field_name }, rv } );
@@ -1455,7 +1421,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = drm_line.spc();
 
-       return insert_canonical_value(rv);
+       return insert_value(rv);
  //    if (!rv.empty())
 //      { _db.insert( { { callsign, field_name }, rv } );
 //
@@ -1470,7 +1436,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = drm_line.ssb_power();
 
-      return insert_canonical_value(rv);
+      return insert_value(rv);
  //     if (!rv.empty())
  //     { rv = rules.canonical_value(field_name, rv);
  //       _db.insert( { { callsign, field_name }, rv } );
@@ -1486,7 +1452,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
     if (!drm_line.empty())
     { rv = drm_line.qth();
 
-      return insert_canonical_value(rv);
+      return insert_value(rv, INSERT_CANONICAL_VALUE);
  //     if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
 //        _db.insert( { { callsign, field_name }, rv } );
@@ -1513,7 +1479,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
           rv = rules.canonical_value(field_name, rv);
       }
 
-      return insert_canonical_value(rv);    // I think that this should work, but not absolutely certain
+      return insert_value(rv, INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain
  //     if (!rv.empty())
 //      { _db.insert( { { callsign, field_name }, rv } );
 //

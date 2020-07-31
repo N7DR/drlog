@@ -1106,6 +1106,9 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
   if (field_name == "DOK"s)    // DOK is special because loads of actual_values map to the same value; keep the actual value
     return actual_value;       // we convert to the single letter version elsewhere
 
+  if ((field_name == "IOTA"s) and actual_value.length() > 2)    // IOTA is special because there are so many possible received values, many of which are not canonical
+    return (substring(actual_value, 0, 2) + pad_string(substring(actual_value, 2), 3, PAD_LEFT, '0'));  // XXnnn
+
   set<string> ss { exch_permitted_values(field_name) };
 
   if (exch_permitted_values(field_name).empty())                         // if no permitted values => anything allowed
@@ -1646,7 +1649,7 @@ string MULT_VALUE(const string& field_name, const string& received_value)
       return received_value;  // same as string()
   }
 
-  if (field_name == "IOTA"s)
+  if ( (field_name == "IOTA"s) and (received_value.size() > 2) )
     return (substring(received_value, 0, 2) + pad_string(substring(received_value, 2), 3, PAD_LEFT, '0'));  // XXnnn
 
   return received_value;

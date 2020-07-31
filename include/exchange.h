@@ -173,7 +173,7 @@ protected:
       <i>n</i>
       <i>n</i><i>precedence</i>
 */
-  [[nodiscard]] bool _is_possible_serno(const std::string& str) const;
+  bool _is_possible_serno(const std::string& str) const;
 
 /*! \brief          Does a string possibly contain a precedence?
     \param  str     string to check
@@ -183,7 +183,7 @@ protected:
       <i>precedence</i>
       <i>n</i><i>precedence</i>
 */
-  [[nodiscard]] inline bool _is_possible_prec(const std::string& str) const
+  inline bool _is_possible_prec(const std::string& str) const
     { return ( (str.length() == 1) ? (legal_prec > last_char(str)) : (_is_possible_serno(str) and (legal_prec > last_char(str))) ); }
 
 /*! \brief          Does a string possibly contain a check?

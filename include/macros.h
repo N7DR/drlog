@@ -391,19 +391,19 @@ public:                                                                     \
                                                                             \
   nm( void ) { }                                                            \
                                                                             \
-  inline const a0 a1(void) const                                            \
+  inline /* const */ a0 a1(void) const                                            \
     { return std::get<0>(*this); }                                          \
                                                                             \
   inline void a1(a0 var)                                                    \
     { std::get<0>(*this) = var; }                                           \
                                                                             \
-  inline const b0 b1(void) const                                            \
+  inline /* const */ b0 b1(void) const                                            \
     { return std::get<1>(*this); }                                          \
                                                                             \
   inline void b1(b0 var)                                                    \
     { std::get<1>(*this) = var; }                                           \
                                                                             \
-  inline const c0 c1(void) const                                            \
+  inline /* const */ c0 c1(void) const                                            \
     { return std::get<2>(*this); }                                          \
                                                                             \
   inline void c1(c0 var)                                                    \
@@ -1151,12 +1151,12 @@ inline const T LIMIT(const T val, const U low_val, const V high_val)
 
 /// a version of floor() that returns a float instead of a double (not quite the same as floorf)
 template <typename T>
-inline const float ffloor(T val)
+inline float ffloor(T val)
   { return static_cast<float>(floor(val)); }
 
 /// a version of floor() that returns an int instead of a double (not quite the same as floorl)
 template <typename T>
-inline const int ifloor(T val)
+inline int ifloor(T val)
   { return static_cast<int>(floor(val)); }
 
 // define a hash function for pairs
