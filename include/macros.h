@@ -477,25 +477,25 @@ public:                                                                     \
                                                                             \
   nm( void ) { }                                                            \
                                                                             \
-  inline const a0 a1(void) const                                            \
+  inline /* const */ a0 a1(void) const                                            \
     { return std::get<0>(*this); }                                          \
                                                                             \
   inline void a1(a0 var)                                                    \
     { std::get<0>(*this) = var; }                                           \
                                                                             \
-  inline const b0 b1(void) const                                            \
+  inline /* const */ b0 b1(void) const                                            \
     { return std::get<1>(*this); }                                          \
                                                                             \
   inline void b1(b0 var)                                                    \
     { std::get<1>(*this) = var; }                                           \
                                                                             \
-  inline const c0 c1(void) const                                            \
+  inline /* const */ c0 c1(void) const                                            \
     { return std::get<2>(*this); }                                          \
                                                                             \
   inline void c1(c0 var)                                                    \
     { std::get<2>(*this) = var; }                                           \
                                                                             \
-  inline const d0 d1(void) const                                            \
+  inline /* const */ d0 d1(void) const                                            \
     { return std::get<3>(*this); }                                          \
                                                                             \
   inline void d1(d0 var)                                                    \
@@ -756,17 +756,6 @@ public:                                                                         
     { std::get<7>(*this) = var; }                                                           \
 }
 
-#if 0
-/*! \brief      Is an object a member of a set?
-    \param  s   set to be tested
-    \param  v   object to be tested for membership
-    \return     Whether <i>t</i> is a member of <i>s</i>
-*/
-template <class T>
-bool operator>(const std::set<T>& s, const T& v)
-  { return s.find(v) != s.cend(); }
-#endif
-
 /*! \brief      Is an object a member of a set or unordered_set?
     \param  s   set or unordered_set  to be tested
     \param  v   object to be tested for membership
@@ -776,53 +765,6 @@ template <class T, class U>
 bool operator>(const T& s, const U& v)
   requires (is_set<T>::value == true || is_unordered_set<T>::value == true) && (std::is_same<typename T::value_type, U>::value == true)
   { return s.find(v) != s.cend(); }
-
-#if 0
-/*! \brief      Is an object a member of an unordered set?
-    \param  s   unordered set to be tested
-    \param  v   object to be tested for membership
-    \return     Whether <i>t</i> is a member of <i>s</i>
-*/
-template <class T>
-bool operator>(const std::unordered_set<T>& s, const T& v)
-  { return s.find(v) != s.cend(); }
-#endif
-
-#if 0
-template <class K, class V>
-/*! \brief      Is an object a key of a map, and if so return the value
-    \param  m   map to be searched
-    \param  k   target key
-    \return     Whether <i>k</i> is a member of <i>m</i> and, if so the corresponding value
-    
-    // possibly should return variant instead
-*/
-std::pair<bool, V> operator>(const std::map<K, V>& m, const K& k) requires std::is_default_constructible<V>::value == true
-{ const auto cit { m.find(k) };
-
-  if (cit == m.cend())
-    return { false, V() };  // needs default constructor for K
-    
-  return { true, cit->second };
-}
-
-template <class K, class V>
-/*! \brief      Is an object a key of an unordered map, and if so return the value
-    \param  m   unordered map to be searched
-    \param  k   target key
-    \return     Whether <i>k</i> is a member of <i>m</i> and, if so the corresponding value
-    
-    // possibly should return variant instead
-*/
-std::pair<bool, V> operator>(const std::unordered_map<K, V>& m, const K& k) requires std::is_default_constructible<V>::value == true
-{ const auto cit { m.find(k) };
-
-  if (cit == m.cend())
-    return { false, V() };  // needs default constructor for V
-    
-  return { true, cit->second };
-}
-#endif
 
 /*! \brief      Is an object a key of a map or unordered_map, and if so return the value (or the default-constructed value)
     \param  m   map or unordered_map to be searched
@@ -835,13 +777,16 @@ template <class M, class K>
 std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
   requires (is_map<M>::value == true || is_unordered_map<M>::value == true) && std::is_same<typename M::key_type, K>::value == true && std::is_default_constructible<typename M::mapped_type>::value == true
 { using V = typename M::mapped_type;
+  using RT = std::pair<bool, typename M::mapped_type>;
 
   const auto cit { m.find(k) };
 
-  if (cit == m.cend())
-    return { false, V() };  // needs default constructor for V
+  return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
+
+//  if (cit == m.cend())
+//    return { false, V() };  // needs default constructor for V
     
-  return { true, cit->second };
+//  return { true, cit->second };
 }
 
 /*! \brief      Is an object a key of a map or unordered map; if so return the value, otherwise return a provided default
@@ -875,9 +820,6 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 
   return rv;
 }
-
-//using centiseconds = std::chrono::duration<long, std::centi>;
-//using deciseconds = std::chrono::duration<long, std::deci>;
 
 #if 0
 template <class D, class P> // P = parameter; D = data in the database
@@ -993,7 +935,7 @@ public:
     \param  n       number of times to add it
     \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
 */
-  const bool add(const T& val, const int n = 1)
+  bool add(const T& val, const int n = 1)
   { if (_values.find(val) == _values.end())
       _values.insert( { val, n } );
     else
@@ -1006,7 +948,7 @@ public:
     \param  val     target value
     \return         total number of times <i>value</i> has been added
 */
-  const unsigned int value(const T& val) const
+  unsigned int value(const T& val) const
     { return ( ( _values.find(val) == _values.cend() ) ? 0 : _values.at(val) ); }
 };
 
@@ -1136,7 +1078,7 @@ inline auto FIND_IF(const Input& v, UnaryPredicate pred) -> typename Input::cons
     \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
 */
 template <typename T>
-inline const T LIMIT(const T val, const T low_val, const T high_val)
+inline T LIMIT(const T val, const T low_val, const T high_val)
   { return (val < low_val ? low_val : (val > high_val ? high_val : val)); }
 
 /*! \brief              Bound a value within limits
@@ -1146,7 +1088,7 @@ inline const T LIMIT(const T val, const T low_val, const T high_val)
     \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
 */
 template <typename T, typename U, typename V>
-inline const T LIMIT(const T val, const U low_val, const V high_val)
+inline T LIMIT(const T val, const U low_val, const V high_val)
   { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
 
 /// a version of floor() that returns a float instead of a double (not quite the same as floorf)

@@ -34,23 +34,13 @@
 using namespace std::literals::string_literals;
 using namespace std::experimental::literals::string_view_literals;
 
-#if 0
-static const std::string EOL      = "\n";       ///< end-of-line marker as string
-static const char        EOL_CHAR = '\n';       ///< end-of-line marker as character
-#endif
-
+// the next five are defined in string_functions.cpp
 extern const std::string EOL;           ///< end-of-line marker as string
 extern const char        EOL_CHAR;      ///< end-of-line marker as character
 
 extern const std::string  LF;           ///< LF as string
 extern const std::string& LF_STR;       ///< LF as string
 extern const char         LF_CHAR;      ///< LF as character
-
-#if 0
-static const std::string  LF       = "\n";      ///< LF as string
-static const std::string& LF_STR   = LF;        ///< LF as string
-static const char         LF_CHAR  = '\n';      ///< LF as character
-#endif
 
 static const std::string  CR       { "\r"s };       ///< CR as string
 static const std::string& CR_STR   { CR };         ///< CR as string
@@ -62,10 +52,10 @@ static const std::string EMPTY_STR { };          ///< an empty string
 static const std::string FULL_STOP { "."s };       ///< full stop as string
 static const std::string SPACE_STR { " "s };       ///< space as string
 
-static const std::string CALLSIGN_CHARS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"s };                ///< convenient place to hold all characters that are legal in callsigns
-static const std::string DIGITS { "0123456789"s };                                                   ///< convenient place to hold all digits
-static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };  ///< convenient place to hold all digits and upper case letters
-static const std::string UPPER_CASE_LETTERS { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };                       ///< convenient place to hold all upper case letters
+static const std::string CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/"s };    ///< convenient place to hold all characters that are legal in callsigns
+static const std::string DIGITS                        { "0123456789"s };                               ///< convenient place to hold all digits
+static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };     ///< convenient place to hold all digits and upper case letters
+static const std::string UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };               ///< convenient place to hold all upper case letters
 
 constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
   
@@ -401,13 +391,6 @@ inline std::string remove_peripheral_spaces(const std::string& cs)
   { return remove_trailing_spaces(remove_leading_spaces(cs)); }
 
 /*! \brief      Remove leading and trailing spaces
-    \param  s   original string
-    \return     <i>s</i> with any leading or trailing spaces removed
-*/
-//inline std::string remove_peripheral_spaces(std::string& s)
-//  { return remove_trailing_spaces(remove_leading_spaces(s)); }
-
-/*! \brief      Remove leading and trailing spaces
     \param  t   container of strings
     \return     <i>t</i> with leading and trailing spaces removed from the individual elements
 */
@@ -440,8 +423,8 @@ std::string remove_char(const std::string& cs, const char char_to_remove);
     \param  char_to_remove  character to be removed from <i>cs</i>
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
-inline std::string remove_char(std::string& s, const char char_to_remove)
-  { return remove_char(static_cast<const std::string>(s), char_to_remove); }
+//inline std::string remove_char(std::string& s, const char char_to_remove)
+//  { return remove_char(static_cast<const std::string>(s), char_to_remove); }
 
 /*! \brief                  Remove all instances of a particular char from a container of strings
     \param  t               container of strings
@@ -509,20 +492,15 @@ std::vector<std::string> delimited_substrings(const std::string& cs, const char 
 */
 //std::string join(const std::vector<std::string>& vec, const std::string& sep);
 
-/*! \brief          Join the elements of a string deque, using a provided separator
-    \param  deq     deque of strings
+/*! \brief          Join the elements of a container of strings, using a provided separator
+    \param  ct      container of strings
     \param  sep     separator inserted between the elements of <i>vec</i>
     \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
 */
-//std::string join(const std::deque<std::string>& deq, const std::string& sep);
-#if 1
 template <typename T, typename U>
 std::string join(const T& ct, const U sep)
   requires (std::is_same<typename T::value_type, std::string>::value == true)
 { std::string rv;
-
-//  if (ct.empty())
-//    return rv;
 
   for (auto cit = ct.cbegin(); cit != ct.end(); ++cit)
   { if (cit != ct.cbegin())
@@ -531,14 +509,8 @@ std::string join(const T& ct, const U sep)
     rv += (*cit);
   }
 
-//  for (unsigned int n = 0; n < ct.size() - 1; ++n)
-//    rv += (ct[n] + sep);
-
-//  rv += ct[ct.size() - 1];
-  
   return rv;
 }
-#endif
 
 #if 0
 template <typename T, typename U>

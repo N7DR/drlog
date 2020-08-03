@@ -76,30 +76,24 @@ class trmaster_line
 protected:
 
   std::string   _call;                                          ///< callsign
-  int           _check;                                         ///< Sweepstakes check
-  int           _cq_zone;                                       ///< CQ zone
-  int           _foc;                                           ///< FOC membership number
+  int           _check { 0 };                                   ///< Sweepstakes check
+  int           _cq_zone { 0 };                                 ///< CQ zone
+  int           _foc { 0 };                                     ///< FOC membership number
   std::string   _grid;                                          ///< Maidenhead grid locator
-  int           _hit_count;                                     ///< nominal number of QSOs with this station
+  int           _hit_count { 0 };                               ///< nominal number of QSOs with this station
   std::string   _itu_zone;                                      ///< ITU zone (string because of the way TR treats HQ stations)
   std::string   _name;                                          ///< operator's name
   std::string   _old_call;                                      ///< operator's old call
   std::string   _qth;                                           ///< precise meaning depends on location of this station
   std::string   _section;                                       ///< ARRL section
   std::string   _speed;                                         ///< CW speed
-  int           _ten_ten;                                       ///< 10-X membership number
+  int           _ten_ten { 0 };                                 ///< 10-X membership number
   std::array<std::string, TRMASTER_N_USER_PARAMETERS> _user;    ///< user parameters
 
 public:
 
 /// default (empty) constructor
-  inline trmaster_line(void)  :
-    _check(0),
-    _cq_zone(0),
-    _foc(0),
-    _hit_count(0),
-    _ten_ten(0)
-    { }
+  trmaster_line(void) = default;
 
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file

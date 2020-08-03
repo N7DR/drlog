@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: exchange.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1152,38 +1152,25 @@ case hash("two") : // do something
     return insert_value(drm_line.grid());
 
   if (field_name == "HADXC"s)     // stupid HA DX membership number is (possibly) in the QTH field of an HA (making it useless for WAHUC)
- // { //string rv;
-
-    //if (!drm_line.empty())
-    //{ rv = drm_line.qth();
-
-      return insert_value(drm_line.qth());    // I think that this should work
-
-//      if (!rv.empty())
-//      { _db.insert( { { callsign, field_name }, rv } );
-//
-//        return rv;
-//      }
-//    }
-//  }
+    return insert_value(drm_line.qth());    // I think that this should work
 
   if (field_name == "IOTA"s)
-  { string rv;
+  { string rv { drm_line.iota() };
 
  //   if (!drm_line.empty())
-    { rv = drm_line.iota();
+ //   { rv = drm_line.iota();
 
-      if (rv.empty())
-      { static const unordered_map<string /* cp */, string /* IOTA number */> iota_map { { "CM"s,   "NA015"s },
-                                                                                         { "CY9"s,  "NA094"s },
-                                                                                         { "CY0"s,  "NA063"s },
-                                                                                         { "C6"s,   "NA001"s },
-                                                                                         { "EA6"s,  "EU004"s },
-                                                                                         { "FG"s,   "NA102"s },
-                                                                                         { "FJ"s,   "NA146"s },
-                                                                                         { "FM"s,   "NA107"s },
-                                                                                         { "FP"s,   "NA032"s },
-                                                                                         { "FS"s,   "NA105"s },
+    if (rv.empty())
+    { static const unordered_map<string /* cp */, string /* IOTA number */> iota_map { { "CM"s,   "NA015"s },
+                                                                                       { "CY9"s,  "NA094"s },
+                                                                                       { "CY0"s,  "NA063"s },
+                                                                                       { "C6"s,   "NA001"s },
+                                                                                       { "EA6"s,  "EU004"s },
+                                                                                       { "FG"s,   "NA102"s },
+                                                                                       { "FJ"s,   "NA146"s },
+                                                                                       { "FM"s,   "NA107"s },
+                                                                                       { "FP"s,   "NA032"s },
+                                                                                       { "FS"s,   "NA105"s },
                                                                                          { "G"s,    "EU005"s },
                                                                                          { "GJ"s,   "EU013"s },
                                                                                          { "GM"s,   "EU005"s },
@@ -1235,44 +1222,25 @@ case hash("two") : // do something
       }
 
       return insert_value(rv);    // I think that this should work
-    }
   }
 
   if (field_name == "ITUZONE"s)
-  { //string rv;
+  { string rv { drm_line.itu_zone() };
 
-    if (!drm_line.empty())
-    { //rv = drm_line.itu_zone();
+    if (!rv.empty())
+      return insert_value(rv, INSERT_CANONICAL_VALUE);
 
-      return insert_value(drm_line.itu_zone(), INSERT_CANONICAL_VALUE);
- //     if (!rv.empty())
- //     { rv = rules.canonical_value(field_name, rv);
- //       _db.insert( { { callsign, field_name }, rv } );
-//
- //       return rv;
- //     }
-    }
-
-// no entry in drmaster database; can we determine from the location database?
-    rv = to_string(location_db.itu_zone(callsign));
-
-    return insert_value(rv, INSERT_CANONICAL_VALUE);
-
- //   if (!rv.empty())    // should always be true
- //   { rv = rules.canonical_value(field_name, rv);
- //     _db.insert( { { callsign, field_name }, rv } );
-//
- //     return rv;
- //   }
+// no entry in drmaster database; try the location database
+    return insert_value(to_string(location_db.itu_zone(callsign)), INSERT_CANONICAL_VALUE);
   }
 
-  if (field_name == "JAPREF"s)
-  { string rv;
+  if ( (field_name == "JAPREF"s) and ( set<string> { "JA"s, "JD/M"s, "JD/O"s } > location_db.canonical_prefix(callsign) ) )
+ // { //string rv;
 
-    if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "JA"s)
-    { rv = drm_line.qth();
+ //   if (!drm_line.empty() and location_db.canonical_prefix(callsign) == "JA"s)
+//    { rv = drm_line.qth();
 
-      return insert_value(rv);
+      return insert_value(drm_line.qth());
 
 //      if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
@@ -1280,60 +1248,60 @@ case hash("two") : // do something
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
   if (field_name == "NAME"s)
-  { string rv;
+//  { //string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.name();
+    //if (!drm_line.empty())
+    //{ rv = drm_line.name();
 
-      return insert_value(rv);    // I think that this should work
+      return insert_value(drm_line.name());    // I think that this should work
  //     if (!rv.empty())
  //     { _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
   if (field_name == "PREC"s)
-  { string rv;
+ // { string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.precedence();
+ //   if (!drm_line.empty())
+ //   { rv = drm_line.precedence();
 
-      return insert_value(rv);    // I think that this should work 
+      return insert_value(drm_line.precedence());    // I think that this should work 
  //     if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
  //       _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
   if (starts_with(field_name, "QTHX["s))  // by the time we get here, the call should match the canonical prefix in the name of the exchange field
-  { const string canonical_prefix = delimited_substring(field_name, '[', ']');
+  { const string canonical_prefix { delimited_substring(field_name, '[', ']') };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { ost << "Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;
       return string();
     }
 
-    string rv;
+ //   string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.qth();
+ //   if (!drm_line.empty())
+ //   { rv = drm_line.qth();
 
-     return insert_value(rv, INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain 
+     return insert_value(drm_line.qth(), INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain 
   //    if (!rv.empty())
   //    { _db.insert( { { callsign, field_name }, rv } );
 //
  //       return rv;
  //     }
-    }
+//    }
   }
 
   if ((field_name == "RDA"s) or (field_name == "RD2"s))
@@ -1369,104 +1337,104 @@ case hash("two") : // do something
   }
 
   if (field_name == "SECTION"s)
-  { string rv;
+//  { string rv;
 
-    if (!drm_line.empty())
-    { rv = to_upper(drm_line.section());
+//    if (!drm_line.empty())
+//    { rv = to_upper(drm_line.section());
 
-      return insert_value(rv);
+      return insert_value(drm_line.section());
  //     if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
 //        _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
   if (field_name == "SKCCNO"s)               // shouldn't really get here, because there should be a pre-fill file
-  { string rv;
+//  { string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.skcc();
+ //   if (!drm_line.empty())
+ //   { rv = drm_line.skcc();
 
-      return insert_value(rv);
+      return insert_value(drm_line.skcc());
  //     if (!rv.empty())
  //     { _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
   if (field_name == "SOCIETY"s)
-  { string rv;
+ // { string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.society();
+ //   if (!drm_line.empty())
+ //   { rv = drm_line.society();
 
-      return insert_value(rv);
+      return insert_value(drm_line.society());
 //      if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
 //        _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
   if (field_name == "SPC"s)
-  { string rv;
+ // { string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.spc();
+ //   if (!drm_line.empty())
+//    { rv = drm_line.spc();
 
-       return insert_value(rv);
+       return insert_value(drm_line.spc());
  //    if (!rv.empty())
 //      { _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
   if (field_name == "SSBPOWER"s)
-  { string rv;
+ // { string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.ssb_power();
+ //   if (!drm_line.empty())
+ //   { rv = drm_line.ssb_power();
 
-      return insert_value(rv);
+      return insert_value(drm_line.ssb_power());
  //     if (!rv.empty())
  //     { rv = rules.canonical_value(field_name, rv);
  //       _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
   if (field_name == "UKEICODE"s)
-  { string rv;
+ // { string rv;
 
-    if (!drm_line.empty())
-    { rv = drm_line.qth();
+ //   if (!drm_line.empty())
+ //   { rv = drm_line.qth();
 
-      return insert_value(rv, INSERT_CANONICAL_VALUE);
+      return insert_value(drm_line.qth(), INSERT_CANONICAL_VALUE);
  //     if (!rv.empty())
 //      { rv = rules.canonical_value(field_name, rv);
 //        _db.insert( { { callsign, field_name }, rv } );
 //
 //        return rv;
 //      }
-    }
-  }
+//    }
+//  }
 
 // choices
   if (field_name == "ITUZONE+SOCIETY"s)    // IARU
   { string rv;
 
-    if (!drm_line.empty())
+ //   if (!drm_line.empty())
     { rv = drm_line.society();
 
       if (rv.empty())
@@ -1475,16 +1443,11 @@ case hash("two") : // do something
         if (rv.empty())  // no entry in drmaster database; can we determine from the location database?
           rv = to_string(location_db.itu_zone(callsign));
 
-        if (!rv.empty())
-          rv = rules.canonical_value(field_name, rv);
+ //       if (!rv.empty())
+ //         rv = rules.canonical_value(field_name, rv);
       }
 
       return insert_value(rv, INSERT_CANONICAL_VALUE);    // I think that this should work, but not absolutely certain
- //     if (!rv.empty())
-//      { _db.insert( { { callsign, field_name }, rv } );
-//
-//        return rv;
-//      }
     }
   }
 
@@ -1517,7 +1480,7 @@ void exchange_field_database::set_value(const string& callsign, const string& fi
 */
 void exchange_field_database::set_values_from_file(const vector<string>& path, const string& filename, const string& field_name)
 { try
-  { string contents { read_file(path, filename) };
+  { const string contents { read_file(path, filename) };
 
     if (!contents.empty())
     { const vector<string> lines { to_lines(to_upper(remove_char(contents, CR_CHAR))) };        // in case it's a silly Microsoft-format file
@@ -1796,10 +1759,15 @@ string EFT::value_to_log(const string& str) const
     Returns empty string if no equivalent canonical value can be found
 */
 string EFT::canonical_value(const std::string& str) const
-{ const auto& it { _value_to_canonical.find(str) };
+{ const string canonical { MUM_VALUE(_value_to_canonical, str) };
 
-  if (it != _value_to_canonical.cend())
-    return it->second;
+  if (!canonical.empty())
+    return canonical;
+
+//  const auto& it { _value_to_canonical.find(str) };
+
+//  if (it != _value_to_canonical.cend())
+//    return it->second;
 
   if (regex_match(str, _regex_expression))
     return str;

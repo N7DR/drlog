@@ -85,7 +85,9 @@ cty_record::cty_record(const string& record)
   
   _utc_offset = static_cast<int>(from_string<float>(fields[6]) * 60 + 0.5);  // convert to minutes
 
-  if ( (_utc_offset < -24 * 60) or (_utc_offset > 24 * 60) )                 // check that it's reasonable
+  constexpr int MAX_OFFSET { 24 * 60 };     // maximum UTC offset, in minutes
+
+  if ( (_utc_offset < -MAX_OFFSET) or (_utc_offset > MAX_OFFSET) )                 // check that it's reasonable
     throw cty_error(CTY_INVALID_UTC_OFFSET, "UTC offset = "s + fields[6] + " in record for "s + _country_name);
 
   _prefix = to_upper(fields[7]);  // so that, for example, JD/o -> JD/O
@@ -99,7 +101,7 @@ cty_record::cty_record(const string& record)
   _waedc_country_only = (_prefix[0] == '*');    // is this only on the WAEDC list?
   
   if (_waedc_country_only)
-    _prefix = _prefix.substr(1);
+    _prefix = _prefix.substr(1);        // remove the asterisk
 
 // now we have to get tricky... start by getting the presumptive alternative prefixes
   const vector<string> presumptive_prefixes { remove_peripheral_spaces(split_string(fields[8], ","s)) };
@@ -114,12 +116,10 @@ cty_record::cty_record(const string& record)
     vsp->push_back(candidate);
   }
 
-// remove the '=' from all the the alternative calls
-  FOR_ALL(alt_callsigns, [] (string& alt_callsign) { alt_callsign = remove_char(alt_callsign, '='); } );
+// remove the '=' from all the the alternative calls, moved to line 144
+//  FOR_ALL(alt_callsigns, [] (string& alt_callsign) { alt_callsign = remove_char(static_cast<const string&>(alt_callsign), '='); } );
 
-// save the alternative info; also modify the zone info now, since it will be faster later to retrieve it
-// directly from here than to check for zero here and then retrieve from the main record
-  
+ // set the zone info for an aci 
   auto set_zone_info = [](alternative_country_info& aci, const auto cq_info, const auto itu_info)
     { if (!aci.cq_zone())
         aci.cq_zone(cq_info);
@@ -128,31 +128,22 @@ cty_record::cty_record(const string& record)
         aci.itu_zone(itu_info);  
     };
 
+// save the alternative info; also modify the zone info now, since it will be faster later to retrieve it
+// directly from here than to check for zero here and then retrieve from the main record
+
   for (const auto& alt_prefix : alt_prefixes)
-  { alternative_country_info aci(alt_prefix, _prefix);
+  { alternative_country_info aci(alt_prefix, _prefix);  // alternative prefix, canonical prefix
 
     set_zone_info(aci, _cq_zone, _itu_zone);  
-
-//    if (!aci.cq_zone())
-//      aci.cq_zone(_cq_zone);
-    
-//    if (!aci.itu_zone())
-//      aci.itu_zone(_itu_zone);  
     
     _alt_prefixes.insert( { aci.identifier(), aci } );
   }
 
 // do the same for the alternative callsigns
-  for (const auto& alt_callsign : alt_callsigns)
-  { alternative_country_info aci(alt_callsign);
+  for (const auto& alt_callsign : alt_callsigns)        // alternative callsign, prefixed with "="
+  { alternative_country_info aci(remove_char(alt_callsign, '='));
 
     set_zone_info(aci, _cq_zone, _itu_zone);
-
-//    if (!aci.cq_zone())
-//      aci.cq_zone(_cq_zone);
-    
-//    if (!aci.itu_zone())
-//      aci.itu_zone(_itu_zone);  
   
     _alt_callsigns.insert( { aci.identifier(), aci } );
   }
@@ -195,16 +186,14 @@ ostream& operator<<(ostream& ost, const cty_record& rec)
             CTY files may contain "alias" information. This encapsulates that information.
 */
 
-/*! \brief                      Construct from a string
+/*! \brief                      Construct from a string and a canonical country prefix
     \param  record              record from which to construct the alternative information
     \param  canonical_prefix    canonical country prefix
-        
-  <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
-  is optional
+
+    <i>record</i> looks something like "=G4AMJ(14)[28]" or like "3H0(23)[42], where the delimited information
+    is optional
 */
 alternative_country_info::alternative_country_info(const string& record, const string& canonical_prefix) :
-  _cq_zone(0),
-  _itu_zone(0),
   _country(canonical_prefix)
 { if (const size_t end_identifier { record.find_first_of("(["s) }; end_identifier == string::npos)
     _identifier = record;                                // no change
@@ -251,11 +240,10 @@ ostream& operator<<(ostream& ost, const alternative_country_info& aci)
     \param  filename    name of file
 */
 cty_data::cty_data(const string& filename)
-{ //const string         entire_file { remove_char(remove_char(read_file(filename), LF_CHAR), CR_CHAR) };   // read file and remove EOL markers
-  const string         entire_file { remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) };   // read file and remove EOL markers
-  const vector<string> records     { split_string(entire_file, ";"s) };                                // split into records
+{ const string         entire_file { remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) };   // read file and remove EOL markers
+  const vector<string> records     { split_string(entire_file, ";"s) };                            // split into records
   
-  FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
+  FOR_ALL(records, [&] (const string& record) { /* _data. */push_back(static_cast<cty_record>(record)); } );
 }
 
 /*! \brief              Construct from a file
@@ -266,7 +254,7 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 { const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };     // read file and remove EOL markers
   const vector<string> records     { split_string(entire_file, ";"s) };                                        // split into records
 
-  FOR_ALL(records, [&] (const string& record) { _data.push_back(static_cast<cty_record>(record)); } );
+  FOR_ALL(records, [&] (const string& record) { /* _data. */push_back(static_cast<cty_record>(record)); } );
 }
 
 // -----------  location_info  ----------------
@@ -299,6 +287,10 @@ void location_info::latitude_longitude(const float lat, const float lon)
   longitude(lon);
 }
 
+/*! \brief          Set both CQ and ITU zones at once
+    \param  cqz     CQ zone
+    \param  ituz    ITU zone
+*/
 void location_info::zones(const unsigned int cqz, const unsigned int ituz)
 { cq_zone(cqz);
   itu_zone(ituz);
@@ -332,21 +324,14 @@ location_info guess_zones(const string& call, const location_info& li)
 
 // if it's a VE, then make a guess as to the CQ and ITU zones
   if (rv.canonical_prefix() == "VE"s)
-  { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
-    { rv.zones( VE_CQ[from_string<unsigned int>(string(1, call[posn]))], VE_ITU[from_string<unsigned int>(string(1, call[posn]))] );
-
-//      rv.cq_zone(VE_CQ[from_string<unsigned int>(string(1, call[posn]))]);
-//      rv.itu_zone(VE_ITU[from_string<unsigned int>(string(1, call[posn]))]);
-    }
+  { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)      // should always be true
+      rv.zones( VE_CQ[from_string<unsigned int>(string(1, call[posn]))], VE_ITU[from_string<unsigned int>(string(1, call[posn]))] );
   }
   else
 // if it's a W, then make a guess as to the CQ and ITU zones
   { if (rv.canonical_prefix() == "K"s)
-    { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)
-      { rv.zones( VE_CQ[from_string<unsigned int>(string(1, call[posn]))], VE_ITU[from_string<unsigned int>(string(1, call[posn]))] );
-
- //       rv.cq_zone(W_CQ[from_string<unsigned int>(string(1, call[posn]))]);
- //       rv.itu_zone(W_ITU[from_string<unsigned int>(string(1, call[posn]))]);
+    { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)    // should always be true
+      { rv.zones( W_CQ[from_string<unsigned int>(string(1, call[posn]))], W_ITU[from_string<unsigned int>(string(1, call[posn]))] );
 
 // lat/long for W zones
         switch (rv.cq_zone())
@@ -384,8 +369,9 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
 // re-organize the cty data according to the correct country list  
   switch (country_list)
   { case COUNTRY_LIST::DXCC:                                                       // use DXCC countries only
-    { for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      { const cty_record& rec { cty[n_country] };
+    { //for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
+      for (const cty_record& rec : cty)
+      { //const cty_record& rec { cty[n_country] };
     
         if (!rec.waedc_country_only())    // ignore WAEDC-only entries
         { const location_info info { rec };
@@ -404,8 +390,9 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
     case COUNTRY_LIST::WAEDC:
     {
 // start by copying all the useful information for all records      
-      for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      { const cty_record&   rec  { cty[n_country] };
+//      for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
+      for (const cty_record& rec : cty)
+      { //const cty_record&   rec  { cty[n_country] };
         const location_info info { rec };
 
 // insert the canonical entry for this country
@@ -607,6 +594,10 @@ location_info location_database::info(const string& callpart) const
     return db_posn->second;  
   }
 
+  auto insert_best_info = [=, this](const location_info& li) { _db_checked.insert( { callsign, li } );
+                                                                return li;
+                                                             };
+
 // see if it's some guy already in the db but now signing /QRP
   if (callsign.length() >= 5 and last(callsign, 4) == "/QRP"s)
   { const string target { substring(callsign, 0, callsign.length() - 4) };    // remove "/QRP"
@@ -614,27 +605,33 @@ location_info location_database::info(const string& callpart) const
     db_posn = _db_checked.find(target);
     
     if (db_posn != _db_checked.end())
-    { const location_info rv { db_posn->second };
+    { return insert_best_info(db_posn->second);
+
+      //const location_info rv { db_posn->second };
       
-      _db_checked.insert( { callsign, rv } );
-      return rv;
+      //_db_checked.insert( { callsign, rv } );
+      //return rv;
     }
 
 // try the alternative call db
     db_posn = _alt_call_db.find(target);
 
     if (db_posn != _alt_call_db.end())
-    { _db_checked.insert( { callsign, db_posn->second } );
-      return db_posn->second;
+    { return insert_best_info(db_posn->second);
+
+      //_db_checked.insert( { callsign, db_posn->second } );
+      //return db_posn->second;
     }
   }
 
 // /MM and /AM are in no country
   if (last(callsign, 3) == "/AM"s or last(callsign, 3) == "/MM"s)
-  { location_info rv;
+  { return insert_best_info(location_info());
+
+//    location_info rv;
   
-    _db_checked.insert( { callsign, rv } );
-    return rv;
+//    _db_checked.insert( { callsign, rv } );
+//    return rv;
   }
   
 // try to determine the canonical prefix
@@ -676,31 +673,36 @@ location_info location_database::info(const string& callpart) const
       len++;
     }
 
+   auto redefine_best = [this](const string& cp) { return pair { cp, _db.find(cp)->second }; }; 
+
 // Guantanamo Bay is a mess
     if (best_fit == "KG4"s and (callsign.length() != 5) )
-    { best_fit = "K"s;
-      best_info = _db.find(best_fit)->second;
-    }
+      tie(best_fit, best_info) = redefine_best("K"s);
+      //best_fit = "K"s;
+      //best_info = _db.find(best_fit)->second;
     
 // special stuff for Greek call areas
     if (best_fit == "SV"s and (penultimate_char(callsign) == '/') and isdigit(last_char(callsign)))
-    { const char lc = last_char(callsign);
+    { const char lc { last_char(callsign) };
     
       if (lc == '5')
-      { best_fit = "SV5"s;
-        best_info = _db.find(best_fit)->second;
+      { tie(best_fit, best_info) = redefine_best("SV5"s);
+        //best_fit = "SV5"s;
+        //best_info = _db.find(best_fit)->second;
       }
 
       if (lc == '9')
-      { best_fit = "SV9"s;
-        best_info = _db.find(best_fit)->second;
+      { tie(best_fit, best_info) = redefine_best("SV9"s);
+        //best_fit = "SV9"s;
+        //best_info = _db.find(best_fit)->second;
       }    
     }
     
 // and Ecuador
     if (best_fit == "HC"s and (penultimate_char(callsign) == '/') and (last_char(callsign) == '8'))
-    { best_fit = "HC8"s;
-      best_info = _db.find(best_fit)->second;
+    { tie(best_fit, best_info) = redefine_best("HC8"s);
+      //best_fit = "HC8"s;
+      //best_info = _db.find(best_fit)->second;
     }
     
     if (found_any_hits)                                 // return the best fit
@@ -763,11 +765,6 @@ location_info location_database::info(const string& callpart) const
 
               best_info.zones(data.cq_zone(), data.itu_zone());
               best_info.latitude_longitude(data.latitude(), data.longitude());
-
- //             best_info.cq_zone(data.cq_zone());
- //             best_info.itu_zone(data.itu_zone());
- //             best_info.latitude(data.latitude());
- //             best_info.longitude(data.longitude());
               best_info.region_name(data.region_name());
               best_info.region_abbreviation(data.region_abbreviation());
             }
@@ -800,15 +797,20 @@ location_info location_database::info(const string& callpart) const
      /* map<string, location_info>::const_iterator */ LOCATION_DBTYPE::const_iterator db_posn_0 { _db.find(parts[0]) };
      /* map<string, location_info>::const_iterator */ LOCATION_DBTYPE::const_iterator db_posn_1 { _db.find(parts[1]) };
      
-     const bool found_0 { (db_posn_0 != _db.end()) };
-     const bool found_1 { (db_posn_1 != _db.end()) };
+    const bool found_0 { (db_posn_0 != _db.end()) };
+    const bool found_1 { (db_posn_1 != _db.end()) };
+
+//    auto insert_best_info = [=, this](const location_info& li) { _db_checked.insert( { callsign, li } );
+//                                                                 return li;
+//                                                               };
 
      if (found_0 and !found_1)                        // first part had an exact match
-     { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+     { return insert_best_info( guess_zones(callsign, db_posn_0->second) );
+       //const location_info best_info { guess_zones(callsign, db_posn_0->second) };
 
-       _db_checked.insert( { callsign, best_info } );
+       //_db_checked.insert( { callsign, best_info } );
         
-       return best_info;
+       //return best_info;
      }
 
 // we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat
@@ -818,35 +820,42 @@ location_info location_database::info(const string& callpart) const
 
      if (found_1 and !found_0)                        // second part had an exact match
      { if (!(russian_long_prefixes > parts[1]))         // the normal case
-       { const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+       { return insert_best_info( guess_zones(callsign, db_posn_1->second) );
 
-         _db_checked.insert( { callsign, best_info } );
+         //const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+
+         //_db_checked.insert( { callsign, best_info } );
         
-         return best_info;
+         //return best_info;
        }
        else                                             // the pathological case, a call like "K4/RU4W"
-       { const location_info best_info { info(parts[0]) };  // recursive
+       { return insert_best_info( info(parts[0]) );
+         //const location_info best_info { info(parts[0]) };  // recursive
 
-         _db_checked.insert( { callsign, best_info } );
+         //_db_checked.insert( { callsign, best_info } );
 
-         return best_info;
+         //return best_info;
        }
      }
 
     if (found_0 and found_1)                      // both parts had an exact match (should never happen: KH6/KP2
     { if (parts[0].length() > parts[1].length())  // choose longest match
-      { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+      { return insert_best_info( guess_zones(callsign, db_posn_0->second) );
 
-        _db_checked.insert( { callsign, best_info } );
+        //const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+
+        //_db_checked.insert( { callsign, best_info } );
         
-        return best_info;
+        //return best_info;
       }
       else
-      { const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+      { return insert_best_info( guess_zones(callsign, db_posn_1->second) );
 
-        _db_checked.insert( { callsign, best_info } );
+       //const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+
+        //_db_checked.insert( { callsign, best_info } );
         
-        return best_info;
+        //return best_info;
       }
     }
 
@@ -897,19 +906,23 @@ location_info location_database::info(const string& callpart) const
       }
 
       if (len_0 > len_1)                // parts[0] was the better match
-      { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+      { return insert_best_info( guess_zones(callsign, db_posn_0->second) );
 
-        _db_checked.insert( { callsign, best_info } );
+        //const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+
+        //_db_checked.insert( { callsign, best_info } );
         
-        return best_info;
+        //return best_info;
       }
 
       if (len_1 > len_0)                // parts[1] was the better match
-      { const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+      { return insert_best_info( guess_zones(callsign, db_posn_1->second) );
 
-        _db_checked.insert( { callsign, best_info } );
+        //const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+
+        //_db_checked.insert( { callsign, best_info } );
         
-        return best_info;
+        //return best_info;
       }
       
 // they both match equally well; choose shortest
@@ -918,27 +931,30 @@ location_info location_database::info(const string& callpart) const
         return location_info();    // we know nothing about either part of the call
       
       if (parts[0].length() < parts[1].length())
-      { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+      { return insert_best_info( guess_zones(callsign, db_posn_0->second) );
+        //const location_info best_info { guess_zones(callsign, db_posn_0->second) };
         
-        _db_checked.insert( { callsign, best_info } );
+        //_db_checked.insert( { callsign, best_info } );
         
-        return best_info;
+        //return best_info;
       }
 
       if (parts[1].length() < parts[0].length())
-      { const location_info best_info { guess_zones(callsign, db_posn_1->second) };
+      { return insert_best_info( guess_zones(callsign, db_posn_1->second) );
+        //const location_info best_info { guess_zones(callsign, db_posn_1->second) };
 
-        _db_checked.insert( { callsign, best_info } );
+        //_db_checked.insert( { callsign, best_info } );
         
-        return best_info;
+        //return best_info;
       }
  
 // same length; arbitrarily choose the first
-      { const location_info best_info { guess_zones(callsign, db_posn_0->second) };
+      { return insert_best_info( guess_zones(callsign, db_posn_0->second) );
+        //const location_info best_info { guess_zones(callsign, db_posn_0->second) };
 
-        _db_checked.insert( { callsign, best_info } );
+        //_db_checked.insert( { callsign, best_info } );
         
-        return best_info;
+        //return best_info;
       }
     }
   }
@@ -1018,7 +1034,7 @@ drlog_qth_database::drlog_qth_database(const std::string& filename)
       if (elements[0] == "area"s)
         record.set_area(from_string<unsigned int>(elements[1]));  // problem is that I'm setting a returned object
 
-      if (elements[0] == "cq_zone"s)
+      if (elements[0] == "cq_zone"s)cty_data
         record.set_cq_zone(from_string<unsigned int>(elements[1]));
 
       if (elements[0] == "latitude"s)

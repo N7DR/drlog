@@ -135,17 +135,17 @@ class alternative_country_info
 protected:
 
   std::string  _country;                ///< canonical country prefix
-  unsigned int _cq_zone;                ///< alternative CQ zone
+  unsigned int _cq_zone  { 0 };         ///< alternative CQ zone
   std::string  _identifier;             ///< the alternative prefix or callsign
-  unsigned int _itu_zone;               ///< alternative ITU zone
+  unsigned int _itu_zone { 0 };         ///< alternative ITU zone
 
 public:
 
-/*! \brief                      Construct from a string and a country ID
+/*! \brief                      Construct from a string and a canonical country prefix
     \param  record              record from which to construct the alternative information
     \param  canonical_prefix    canonical country prefix
 
-    <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
+    <i>record</i> looks something like "=G4AMJ(14)[28]" or like "3H0(23)[42], where the delimited information
     is optional
 */
   alternative_country_info(const std::string& record, const std::string& canonical_prefix = std::string());
@@ -272,10 +272,10 @@ std::ostream& operator<<(std::ostream& ost, const cty_record& rec);
     \brief  All the data from a CTY.DAT file
 */
 
-class cty_data
+class cty_data : public std::vector<cty_record>
 {
 protected:
-  std::vector<cty_record>  _data;        ///< the (raw) data
+//  std::vector<cty_record>  _data;        ///< the (raw) data
 
 // all the alternative calls and prefixes (these are also maintained on a per-record basis)
   std::map<std::string, alternative_country_info> _alt_callsigns;    ///< key = alternative callsign
@@ -299,11 +299,11 @@ public:
     
 /// how many countries are present?
   inline unsigned int n_countries(void) const
-    { return _data.size(); }
+    { return /* _data. */size(); }
   
-/// return a record by number, wrt 0
+/// return a record by number, wrt 0, with range checking
   inline cty_record operator[](const unsigned int n) const
-    { return _data.at(n); }
+    { return /* _data.*/ this->at(n); }
 };
 
 // -----------  russian_data_per_substring  ----------------
@@ -431,11 +431,11 @@ public:
     \param  lat     latitude in degrees (+ve north)
     \param  lon     longitude in degrees (+ve west)
 */
-  void latitude_longitude(const float lat, const float lon);    // set both latitude and longitude at once
+  void latitude_longitude(const float lat, const float lon);
 
 /*! \brief          Set both CQ and ITU zones at once
     \param  cqz     CQ zone
-    \param  utuz    ITU zone
+    \param  ituz    ITU zone
 */
   void zones(const unsigned int cqz, const unsigned int ituz);
 

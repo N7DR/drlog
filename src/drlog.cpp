@@ -508,15 +508,13 @@ WRAPPER_2_NC(rig_status_info,
                rig_interface*, rigp);              ///< parameters for rig status
 
 // prepare for terminal I/O
-//screen monitor;                             ///< the ncurses screen;  declare at global scope solely so that its destructor is called when exit() is executed
 keyboard_queue keyboard;                    ///< queue of keyboard events
 
 // quick access to whether particular types of mults are in use; these are written only during start-up, so we don't bother to protect them
 bool callsign_mults_used { false };            ///< do the rules call for callsign mults?
 bool country_mults_used  { false };            ///< do the rules call for country mults?
 bool exchange_mults_used { false };            ///< do the rules call for exchange mults?
-
-bool mm_country_mults { false };
+bool mm_country_mults    { false };            ///< can /MM stns be country mults?
 
 /*! \brief                  Update the SCP or fuzzy window and vector of matches
     \param  matches         container of matches
@@ -554,16 +552,17 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_TYPE>>& ma
     if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
       tmp_exact_matches.push_back(callsign);
 
+    auto is_dupe = [](const string& call) { return logbk.is_dupe(call, safe_get_band(), safe_get_mode(), rules); };
+
     for (const auto& cs : vec_str)
     { if (cs != callsign)
-      { const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) };
+      { //const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) };
 
-        if (dupe)
+  //      if (const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) }; dupe)
+        if (is_dupe(cs))
           tmp_red_matches.push_back(cs);
         else
-        { //const bool qso_b4 { logbk.qso_b4(cs) };
-
-          if (const bool qso_b4 { logbk.qso_b4(cs) }; qso_b4)
+        { if (const bool qso_b4 { logbk.qso_b4(cs) }; qso_b4)
             tmp_green_matches.push_back(cs);
           else
             tmp_ordinary_matches.push_back(cs);
@@ -574,17 +573,13 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_TYPE>>& ma
     for (const auto& cs : tmp_exact_matches)
     { //const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) };
 
-      if (const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) }; dupe)
+  //    if (const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) }; dupe)
+      if (is_dupe(cs))
         match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
       else
       { const bool qso_b4 { logbk.qso_b4(cs) };
 
         match_vector.push_back( { cs, colours.add( (qso_b4 ? ACCEPT_COLOUR : win.fg()), win.bg() ) } );
-
- //       if (qso_b4)
- //         match_vector.push_back( { cs, colours.add(ACCEPT_COLOUR, win.bg()) } );
- //       else
-//          match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
       }
     }
 
@@ -1002,7 +997,7 @@ int main(int argc, char** argv)
         for (const auto& callsign : lines)
           FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
           
-        ost << "Read do not show file: " << context.do_not_show_filename() << endl;
+        ost << "Read and processed do not show file: " << context.do_not_show_filename() << endl;
       }
 
       catch (...)
@@ -1025,7 +1020,7 @@ int main(int argc, char** argv)
     my_bandmap_entry.source(BANDMAP_ENTRY_SOURCE::LOCAL);
     my_bandmap_entry.expiration_time(my_bandmap_entry.time() + MILLION);    // a million seconds in the future
 
-// possibly add a mode marker bandmap entry to each bandmap
+// possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
     if (context.mark_mode_break_points())
     { for (const auto& b : rules.permitted_bands())
       { bandmap& bm { bandmaps[b] };
@@ -1039,7 +1034,7 @@ int main(int argc, char** argv)
 
         bm += be;
 
-        bm.mode_marker_frequency(MODE_BREAK_POINT[b]);
+        bm.mode_marker_frequency(MODE_BREAK_POINT[b]);  // tel the bandmap that this is a mode marker
       }
     }
 
@@ -1048,15 +1043,14 @@ int main(int argc, char** argv)
 
 // static windows may contain either defined information or the contents of a file
     for (const auto& this_static_window : swindows)
-    { string contents { this_static_window.second.first };
-
+    { const string                      win_contents { this_static_window.second.first };
       const vector<window_information>& vec_win_info { this_static_window.second.second };
 
       for (const auto& winfo : vec_win_info)
       { window* window_p { new window() };
 
         window_p -> init(winfo);
-        static_windows_p.push_back( { contents, window_p } );
+        static_windows_p.push_back( { win_contents, window_p } );
       }
     }
 
@@ -1141,9 +1135,6 @@ int main(int argc, char** argv)
 // INDICES window
   win_indices.init(context.window_info("INDICES"s), WINDOW_NO_CURSOR);
 
-// INDICES LOOKUP TIME window
-//  win_indices_lookup_time.init(context.window_info("INDICES LOOKUP TIME"s), WINDOW_NO_CURSOR);
-
 // possibly get the indices data
   if (!context.geomagnetic_indices_command().empty())
   { static pthread_t get_indices_thread_id;
@@ -1188,14 +1179,14 @@ int main(int argc, char** argv)
   }
 
 // INDIVIDUAL QTC COUNT window
-  if (send_qtcs)
+  if (send_qtcs)                                                                        // only if it's a contest with QTCs
   { win_individual_qtc_count.init(context.window_info("INDIVIDUAL QTC COUNT"s), WINDOW_NO_CURSOR);
     win_individual_qtc_count <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
   }
 
 // INFO window
   win_info.init(context.window_info("INFO"s), WINDOW_NO_CURSOR);
-  win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                        // make it visible
+  win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                          // make it visible
 
 // LOCAL TIME window
   win_local_time.init(context.window_info("LOCAL TIME"s), WINDOW_NO_CURSOR);
@@ -1211,7 +1202,7 @@ int main(int argc, char** argv)
   extract.prepare();
 
   if (send_qtcs)
-    win_log_extract.process_input_function(process_QTC_input);
+    win_log_extract.process_input_function(process_QTC_input);  // set the input function for the window
 
 // MEMORIES window
   win_memories.init(context.window_info("MEMORIES"s), WINDOW_NO_CURSOR);
@@ -1258,7 +1249,7 @@ int main(int argc, char** argv)
 // REMAINING CALLSIGN MULTS window
   win_remaining_callsign_mults.init(context.window_info("REMAINING CALLSIGN MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
   if (restored_data)
-    update_remaining_callsign_mults_window(statistics, ""s, safe_get_band(), safe_get_mode());
+    update_remaining_callsign_mults_window(statistics, EMPTY_STR, safe_get_band(), safe_get_mode());
   else
     win_remaining_callsign_mults <= (context.remaining_callsign_mults_list());
 
@@ -1277,17 +1268,19 @@ int main(int argc, char** argv)
   }
 
 // REMAINING EXCHANGE MULTS window(s)
-  const vector<string> exchange_mult_window_names { context.window_name_contains("REMAINING EXCHANGE MULTS"s) };
+  { const string         window_name_start          { "REMAINING EXCHANGE MULTS"s };
+    const vector<string> exchange_mult_window_names { context.window_name_contains(window_name_start) };
 
-  for (auto& window_name : exchange_mult_window_names)
-  { const string exchange_mult_name { substring(window_name, 25) };
+    for (auto& window_name : exchange_mult_window_names)
+    { const string exchange_mult_name { substring(window_name, window_name_start.size() + 1 /* 25 */)  }; // skip the first part of the window name
 
-    window* wp { new window() };
+      window* wp { new window() };
 
-    wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-    win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
+      wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+      win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
 
-    (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values
+      (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values
+    }
   }
 
 // RIG window (rig status)
@@ -1366,7 +1359,7 @@ int main(int argc, char** argv)
 
 // possibly set the auto country mults and auto callsign mults thresholds
   if (context.auto_remaining_callsign_mults())
-  { const set<string>& callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+  { const set<string> callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
     for (const auto& callsign_mult_name : callsign_mults)
       acc_callsigns[callsign_mult_name].threshold(context.auto_remaining_callsign_mults_threshold());
@@ -1375,7 +1368,7 @@ int main(int argc, char** argv)
   if (context.auto_remaining_country_mults())
     acc_countries.threshold(context.auto_remaining_country_mults_threshold());
 
-// possibly set speed of internal keter
+// possibly set speed of internal keyer. Direct quote from N2IC: Contesters don't use internal keyers. [Message-ID: <515996A2.9060800@arrl.net>]
   try
   { if (context.sync_keyer())
       rig.keyer_speed(context.cw_speed());
@@ -1514,16 +1507,8 @@ int main(int argc, char** argv)
     }
   }
 
-// for now, require one of -clean or -rebuild
-// once data restoration works completely correctly, this requirement should be removed;
-// changing this is a low priority until serialization of unordered sets becomes possible
-//  if (cl.parameter_present("-clean"s) == cl.parameter_present("-rebuild"s))
-//  { ost << "Need exactly one of \"-clean\" or \"-rebuild\"" << endl;
-//    exit(-1);
-//  }
-
   const bool clean   { cl.parameter_present("-clean"s) };
-  const bool rebuild { !clean };
+  const bool rebuild { !clean };                            // => rebuild is the default
 
 // now we can restore data from the last run
 //  if (!cl.parameter_present("-clean"s))
@@ -1697,10 +1682,10 @@ int main(int argc, char** argv)
 // now delete the archive file if it exists, regardless of whether we've used it
     file_delete(context.archive_name());
 
-//    if (cl.parameter_present("-clean"s))                          // start with clean slate
-    if (clean)
+    if (clean)                                          // start with clean slate
     { int    index  { 0 };
-      string target { OUTPUT_FILENAME + "-"s + to_string(index) };
+
+      const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
 
       while (file_exists(target))
         file_delete(OUTPUT_FILENAME + "-"s + to_string(index++));
@@ -1740,9 +1725,9 @@ int main(int argc, char** argv)
       }
     }
 
-    enter_sap_mode();                   // explicitly enter SAP mode
-    win_active_p = &win_call;           // set the active window
-    win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;   // explicitly force the cursor into the call window
+    enter_sap_mode();                                       // explicitly enter SAP mode
+    win_active_p = &win_call;                               // set the active window
+    win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;    // explicitly force the cursor into the call window
 
 // some testing stuff
 //  keyboard.push_key_press("g4amt", 1000);  // hi, Terry
@@ -1843,12 +1828,12 @@ int main(int argc, char** argv)
 // force multithreaded
     keyboard.x_multithreaded(true);    // because we might perform an auto backup whilst doing other things with the display
 
-// everything is set up and running. Now we simply loop.
+// everything is set up and running. Now we simply loop and process the keystrokes.
     while (1)
     { while (keyboard.empty())
         sleep_for(10ms);
 
-      win_active_p -> process_input(keyboard.pop());
+      win_active_p -> process_input(keyboard.pop());    // does nothing if there is nothing in the keyboard buffer
     }
   }
 
@@ -1892,9 +1877,9 @@ void* display_date_and_time(void* vp)
 
   start_of_thread(THREAD_NAME);
 
-  int last_second { -1 };                       ///< so that we can tell when the time has changed
-  array<char, 26> buf;                          ///< buffer to hold the ASCII date/time info; see man page for gmtime()
-  string last_date;                             ///< ASCII version of the last date
+  int last_second { -1 };                       // so that we can tell when the time has changed
+  array<char, 26> buf;                          // buffer to hold the ASCII date/time info; see man page for gmtime()
+  string last_date;                             // ASCII version of the last date
 
   update_local_time();                          // update the LOCAL TIME window
 

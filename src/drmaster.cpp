@@ -518,7 +518,7 @@ trmaster::trmaster(const string& filename)
       if (_records.find(call) != _records.end())
         record += _records[call];
 
-      _records.insert(make_pair(call, record));
+      _records.insert( { call, record } );
     }
   }
   else              // not binary
@@ -535,10 +535,7 @@ trmaster::trmaster(const string& filename)
 vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
-//  for (unordered_map<string, trmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
   FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
-//  for (const auto& rec : _records)
-//    rv.push_back(rec.first);
 
   sort(rv.begin(), rv.end());
 
@@ -898,7 +895,7 @@ void drmaster::operator+=(const drmaster_line& drml)
 { const string call { drml.call() };
 
   if (_records.find(call) == _records.end())        // no pre-existing record
-    _records.insert(make_pair(call, drml));
+    _records.insert( { call, drml } );
   else
   { drmaster_line old_drml { _records[call] };
 
@@ -907,18 +904,3 @@ void drmaster::operator+=(const drmaster_line& drml)
     _records.insert( { call, old_drml });
   }
 }
-
-/*! \brief          Return the record for a particular call
-    \param  call    target callsign
-    \return         the record corresponding to <i>call</i>
-
-    Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
-*/
-#if 0
-drmaster_line drmaster::operator[](const string& call) const
-{ return MUM_VALUE(_records, call);
-  //const auto cit { _records.find(call) };
-
-  //return (cit == _records.cend() ? drmaster_line() : cit->second);
-}
-#endif
