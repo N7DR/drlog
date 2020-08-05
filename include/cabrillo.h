@@ -64,7 +64,7 @@ public:
     { _init_from_string(nm); }
     
 /// destructor
-  inline virtual ~cabrillo_tag_template(void) = default;
+//  inline virtual ~cabrillo_tag_template(void) = default;
 
 /// cabrillo_tag_template = string
   inline void operator=(const std::string& nm)
@@ -101,7 +101,7 @@ public:
   cabrillo_tag_templates(void);
     
 /// destructor
-  inline virtual ~cabrillo_tag_templates(void) = default;
+//  inline virtual ~cabrillo_tag_templates(void) = default;
 };
 
 #endif    // CABRILLO_H

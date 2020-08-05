@@ -427,6 +427,7 @@ void QSO::populate_from_log_line(const string& str)
 
     Currently unused
 */
+#if 0
 void QSO::new_populate_from_log_line(const string& str, const string& mycall)
 { if (str.empty())
     return;
@@ -477,6 +478,7 @@ void QSO::new_populate_from_log_line(const string& str, const string& mycall)
     return;
   }
 }
+#endif
 
 /// is any of the exchange fields a mult?
 bool QSO::is_exchange_mult(void) const

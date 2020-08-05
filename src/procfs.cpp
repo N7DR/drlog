@@ -18,7 +18,7 @@ using namespace   chrono;
     Currently, each access causes a new read from the procfs.
 */
 
-const vector<string> procfs::_statvec(void)
+vector<string> procfs::_statvec(void)
 { const system_clock::time_point now { system_clock::now() };
 
   if ( /* force or */ ( (now - _last_update_time) >  _minimum_interval) )      // update only if forced or if enough time has passed

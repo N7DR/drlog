@@ -47,18 +47,18 @@ enum class ADIF3_DATA_TYPE { AWARD_LIST,
                              CREDIT_LIST,
                              DATE,
                              DIGIT,
+                             ENUMERATION,                       // as if these "enumerations" have anything to do with numbers
                              INTEGER,
                              INTERNATIONAL_CHARACTER,           // the "INTERNATIONAL" things are sheer idiocy; Unicode has been essentially universal for at least 15 years
+                             INTERNATIONAL_MULTILINE_STRING,
                              INTERNATIONAL_STRING,
                              IOTA_REFERENCE_NUMBER,
+                             MULTILINE_STRING,
                              NUMBER,
                              POSITIVE_INTEGER,
                              SPONSORED_AWARD_LIST,
                              STRING,
                              TIME,
-                             MULTILINE_STRING,
-                             INTERNATIONAL_MULTILINE_STRING,
-                             ENUMERATION,                       // as if these "enumerations" have anything to do with numbers
                              ENUMERATION_ANT_PATH,
                              ENUMERATION_ARRL_SECT,
                              ENUMERATION_BAND,
@@ -108,12 +108,12 @@ protected:
 
 // private objects and collections providing legal values
 
-  static std::unordered_map<std::string /* field name */, ADIF3_DATA_TYPE /* corresponding data type */>         _element_type;             ///< map from field name to type
+  const static std::unordered_map<std::string /* field name */, ADIF3_DATA_TYPE /* corresponding data type */>         _element_type;             ///< map from field name to type
   static std::map<std::string /* field name */, std::pair<int, int> /* miniumum and maximum permitted values */> _positive_integer_range;   ///< map from field name to permitted range of values
 
 // soi-disant "enumeration" values (actually typically strings)
-  static std::unordered_set<std::string> _ENUMERATION_BAND;     ///< band values
-  static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, bool /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
+  const static std::unordered_set<std::string> _ENUMERATION_BAND;     ///< band values
+  const static std::unordered_map<int /* country number */, std::tuple<std::string /*country name */, std::string /* canonical prefix */, bool /* whether deleted */>> _ENUMERATION_DXCC_ENTITY_CODE; ///< mapping between country code and country info
   static std::unordered_set<std::string> _ENUMERATION_MODE;     ///< mode values
   static std::set<std::string> _ENUMERATION_QSL_RECEIVED;       ///< legal values of QSL_RCVD
 

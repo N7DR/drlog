@@ -103,7 +103,7 @@ public:
 /*! \brief      Get the detached state
     \return     whether the thread is DETACHED
 */
-  const bool detached(void) const;
+  bool detached(void) const;
 
 /*! \brief          Set the scheduling policy
     \param  policy  the requested policy
@@ -118,7 +118,7 @@ public:
   void policy(const int policy);
 
 /// get the scheduling policy
-  const int policy(void) const;
+  int policy(void) const;
 
 /*! \brief          Set the scope
     \param  scope   the requested scope
@@ -131,7 +131,7 @@ public:
   void scope(const int scope);
 
 /// get the scope
-  const int scope(void) const;
+  int scope(void) const;
 
 /*! \brief              Set the scheduling inheritance policy
     \param  ipolicy     the requested inheritance policy
@@ -146,7 +146,7 @@ public:
   void inheritance_policy(const int ipolicy);
 
 /// get the inheritance policy
-  const int inheritance_policy(void) const;
+  int inheritance_policy(void) const;
 
 /*! \brief          Set the stack size
     \param  size    the requested stack size, in bytes
@@ -157,13 +157,13 @@ public:
   void stack_size(const size_t size);
 
 /// get the stack size (in bytes)
-  const size_t stack_size(void) const;
+  size_t stack_size(void) const;
 
 /// maximum allowed priority for the scheduling policy
-  const int max_priority(void) const;
+  int max_priority(void) const;
 
 /// minimum allowed priority for the scheduling policy
-  const int min_priority(void) const;
+  int min_priority(void) const;
 
 /*! \brief              Set the scheduling priority for the scheduling policy
     \param  priority    the requested scheduling priority
@@ -176,7 +176,7 @@ public:
   void priority(const int priority);
 
 /// get the priority
-  const int priority(void) const;
+  int priority(void) const;
 
 /// get attributes
   inline const pthread_attr_t& attr(void) const  // note the reference

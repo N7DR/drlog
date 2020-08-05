@@ -45,7 +45,7 @@ constexpr float RTOD { 1.0f / DTOR };
 
     θ = atan2( sin(Δλ).cos(φ2), cos(φ1).sin(φ2) − sin(φ1).cos(φ2).cos(Δλ) )
 */
-const float distance(const float& lat1, const float& long1, const float& lat2, const float& long2)
+float distance(const float& lat1, const float& long1, const float& lat2, const float& long2)
 { const float delta_phi   { lat2 - lat1 };
   const float delta_phi_2 { delta_phi / 2 };
 
@@ -77,7 +77,7 @@ const float distance(const float& lat1, const float& long1, const float& lat2, c
 
     θ = atan2( sin(Δλ).cos(φ2), cos(φ1).sin(φ2) − sin(φ1).cos(φ2).cos(Δλ) )
 */
-const float bearing(const float& lat1, const float& long1, const float& lat2, const float& long2)
+float bearing(const float& lat1, const float& long1, const float& lat2, const float& long2)
 { const float lat1_rad         { lat1 * DTOR };
   const float lat2_rad         { lat2 * DTOR };
   const float delta_lambda_rad { (long2 - long1) * DTOR };
@@ -98,7 +98,7 @@ const float bearing(const float& lat1, const float& long1, const float& lat2, co
     If there is no sunset or sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
     or day at the given location
 */
-const string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset)
+string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset)
 { const string date_string { date_time_string().substr(0, 10) };
 
   const int year  { from_string<int>(date_string.substr(0, 4)) };
@@ -156,6 +156,7 @@ const string sunrise_or_sunset(const float& lat, const float& lon, const bool ca
   h /= 15;
 
   const float big_t { h + ra - (0.06571f * t) - 6.622f };
+
   float ut    { big_t - lnghour };
 
   if (ut > 24)

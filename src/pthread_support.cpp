@@ -229,7 +229,7 @@ void thread_attribute::detached(const bool b)
 /*! \brief      Get the detached state
     \return     whether the thread is DETACHED
 */
-const bool thread_attribute::detached(void) const
+bool thread_attribute::detached(void) const
 { int state;
 
   const int status { pthread_attr_getdetachstate(&_attr, &state) };
@@ -261,7 +261,7 @@ void thread_attribute::policy(const int policy)
 }
 
 /// get the scheduling policy
-const int thread_attribute::policy(void) const
+int thread_attribute::policy(void) const
 { int policy;
 
   const int status { pthread_attr_getschedpolicy(&_attr, &policy) };
@@ -291,7 +291,7 @@ void thread_attribute::scope(const int scope)
 }
 
 /// get the scope
-const int thread_attribute::scope(void) const
+int thread_attribute::scope(void) const
 { int scope;
 
   const int status { pthread_attr_getscope(&_attr, &scope) };
@@ -323,7 +323,7 @@ void thread_attribute::inheritance_policy(const int ipolicy)
 }
 
 /// get the inheritance policy
-const int thread_attribute::inheritance_policy(void) const
+int thread_attribute::inheritance_policy(void) const
 { int ipolicy;
 
   const int status { pthread_attr_getinheritsched(&_attr, &ipolicy) };
@@ -341,17 +341,17 @@ const int thread_attribute::inheritance_policy(void) const
     "[w]hen a stack is specified, the thread should also be created PTHREAD_CREATE_JOINABLE"
 */
 void thread_attribute::stack_size(const size_t size)
-{ const int status = pthread_attr_setstacksize(&_attr, size);
+{ const int status { pthread_attr_setstacksize(&_attr, size) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error setting stack size: " + to_string(size) + "status = " + to_string(status));
 }
 
 /// get the stack size (in bytes)
-const size_t thread_attribute::stack_size(void) const
+size_t thread_attribute::stack_size(void) const
 { size_t size;
 
-  const int status = pthread_attr_getstacksize(&_attr, &size);
+  const int status { pthread_attr_getstacksize(&_attr, &size) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: " + to_string(size) + "status = " + to_string(status));
@@ -360,10 +360,9 @@ const size_t thread_attribute::stack_size(void) const
 }
 
 /// maximum allowed priority for the scheduling policy
-const int thread_attribute::max_priority(void) const
-{ const int sched_policy = policy();
-
-  const int status = sched_get_priority_max(sched_policy);
+int thread_attribute::max_priority(void) const
+{ const int sched_policy { policy() };
+  const int status       { sched_get_priority_max(sched_policy) };
 
   if (status == -1)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting maximum priority for policy: " + to_string(sched_policy));
@@ -372,10 +371,9 @@ const int thread_attribute::max_priority(void) const
 }
 
 /// minimum allowed priority for the scheduling policy
-const int thread_attribute::min_priority(void) const
-{ const int sched_policy = policy();
-
-  const int status = sched_get_priority_min(sched_policy);
+int thread_attribute::min_priority(void) const
+{ const int sched_policy { policy() };
+  const int status       { sched_get_priority_min(sched_policy) };
 
   if (status == -1)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting minimum priority for policy: " + to_string(sched_policy));
@@ -392,25 +390,25 @@ const int thread_attribute::min_priority(void) const
     The scheduling policy has to be set before this is called.
 */
 void thread_attribute::priority(const int priority)
-{ int p = max(min_priority(), priority);
+{ //int p { max(min_priority(), priority) };
 
-  p = min(max_priority(), p);
+  const int p { min(max_priority(), max(min_priority(), priority)) };
 
   struct sched_param param;
 
   param.sched_priority = p;
 
-  const int status = pthread_attr_setschedparam(&_attr, &param);
+  const int status { pthread_attr_setschedparam(&_attr, &param) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error setting priority: " + to_string(priority) + "status = " + to_string(status));
 }
 
 /// get the priority
-const int thread_attribute::priority(void) const
+int thread_attribute::priority(void) const
 { struct sched_param param;
 
-  const int status = pthread_attr_getschedparam(&_attr, &param);
+  const int status { pthread_attr_getschedparam(&_attr, &param) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = " + to_string(status));
@@ -582,7 +580,7 @@ ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
 const bool attribute_detached(const pthread_attr_t& pa)
 { int state;
 
-  const int status = pthread_attr_getdetachstate(&pa, &state);
+  const int status { pthread_attr_getdetachstate(&pa, &state) };
 
   if (status)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute");
@@ -597,7 +595,7 @@ const bool attribute_detached(const pthread_attr_t& pa)
 const int attribute_policy(const pthread_attr_t& pa)
 { int policy;
 
-  const int status = pthread_attr_getschedpolicy(&pa, &policy);
+  const int status { pthread_attr_getschedpolicy(&pa, &policy) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: " + to_string(policy) + "status = " + to_string(status));
@@ -612,7 +610,7 @@ const int attribute_policy(const pthread_attr_t& pa)
 const int attribute_scope(const pthread_attr_t& pa)
 { int scope;
 
-  const int status = pthread_attr_getscope(&pa, &scope);
+  const int status { pthread_attr_getscope(&pa, &scope) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: " + to_string(scope) + "status = " + to_string(status));
@@ -627,7 +625,7 @@ const int attribute_scope(const pthread_attr_t& pa)
 const int attribute_inheritance_policy(const pthread_attr_t& pa)
 { int ipolicy;
 
-  const int status = pthread_attr_getinheritsched(&pa, &ipolicy);
+  const int status { pthread_attr_getinheritsched(&pa, &ipolicy) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: " + to_string(ipolicy) + "status = " + to_string(status));
@@ -642,7 +640,7 @@ const int attribute_inheritance_policy(const pthread_attr_t& pa)
 const size_t attribute_stack_size(const pthread_attr_t& pa)
 { size_t size;
 
-  const int status = pthread_attr_getstacksize(&pa, &size);
+  const int status { pthread_attr_getstacksize(&pa, &size) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: " + to_string(size) + "status = " + to_string(status));
@@ -655,9 +653,8 @@ const size_t attribute_stack_size(const pthread_attr_t& pa)
     \return     maximum allowed priority for the scheduling policy of <i>pa</i>
 */
 const int attribute_max_priority(const pthread_attr_t& pa)
-{ const int sched_policy = attribute_policy(pa);
-
-  const int status = sched_get_priority_max(sched_policy);
+{ const int sched_policy { attribute_policy(pa) };
+  const int status       { sched_get_priority_max(sched_policy) };
 
   if (status == -1)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting maximum priority for policy: " + to_string(sched_policy));
@@ -670,9 +667,8 @@ const int attribute_max_priority(const pthread_attr_t& pa)
     \return     minimum allowed priority for the scheduling policy of <i>pa</i>
 */
 const int attribute_min_priority(const pthread_attr_t& pa)
-{ const int sched_policy = attribute_policy(pa);
-
-  const int status = sched_get_priority_min(sched_policy);
+{ const int sched_policy { attribute_policy(pa) };
+  const int status       { sched_get_priority_min(sched_policy) };
 
   if (status == -1)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting minimum priority for policy: " + to_string(sched_policy));
@@ -687,7 +683,7 @@ const int attribute_min_priority(const pthread_attr_t& pa)
 const int attribute_priority(const pthread_attr_t& pa)
 { struct sched_param param;
 
-  const int status = pthread_attr_getschedparam(&pa, &param);
+  const int status { pthread_attr_getschedparam(&pa, &param) };
 
   if (status != 0)
     throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = " + to_string(status));

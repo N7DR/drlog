@@ -52,7 +52,7 @@ void adif3_field::_normalise(void)
 void adif3_field::_verify(void) const
 { switch (_type)
   { case ADIF3_DATA_TYPE::DATE :                                      // YYYYMMDD
-    { if (_value.find_first_not_of("01234567879"s) != string::npos)
+    { if (_value.find_first_not_of(DIGITS) != string::npos)
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
         
       if (_value.length() != 8)
@@ -92,8 +92,8 @@ void adif3_field::_verify(void) const
     }
     break;
 
-    case ADIF3_DATA_TYPE::ENUMERATION_DXCC_ENTITY_CODE :  // first treat as an integer
-    { if (_value.find_first_not_of("01234567879"s) != string::npos)
+    case ADIF3_DATA_TYPE::ENUMERATION_DXCC_ENTITY_CODE :
+    { if (_value.find_first_not_of(DIGITS) != string::npos)                         // check that it's an integer
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
 
       if (const int code { from_string<int>(_value) }; _ENUMERATION_DXCC_ENTITY_CODE.find(code) == _ENUMERATION_DXCC_ENTITY_CODE.cend())
@@ -167,7 +167,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     break;
     
     case ADIF3_DATA_TYPE::POSITIVE_INTEGER :      // an unsigned sequence of one or more Digits representing a decimal integer that has a value greater than 0.  Leading zeroes are allowed. 
-    { if (_value.find_first_not_of("01234567879"s) != string::npos)
+    { if (_value.find_first_not_of(DIGITS) != string::npos)
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
 
 // CQZ : 1..40
@@ -191,7 +191,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     case ADIF3_DATA_TYPE::TIME :          // HHMMSS or HHMM
     { const string& utc { _value };
       
-      if (utc.find_first_not_of("01234567879"s) != string::npos)
+      if (utc.find_first_not_of(DIGITS) != string::npos)
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
  
       if ( (utc.length() != 4) and (utc.length() != 6) )
@@ -226,7 +226,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
 adif3_field::adif3_field(const string& field_name, const string& field_value)
 { _name = (to_upper(field_name));
   
-  const auto it = _element_type.find(_name);
+  const auto it { _element_type.find(_name) };
 
   if (it == _element_type.end())
     throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name + " when creating ADIF3_FIELD with value: "s + field_value);
@@ -494,7 +494,7 @@ size_t skip_adif3_header(const std::string& str)
 }
 
 /// map from field name to type -- too many of these are silly for it to be worth making comment on individual sillinesses
-unordered_map<string, ADIF3_DATA_TYPE> adif3_field::_element_type
+const unordered_map<string, ADIF3_DATA_TYPE> adif3_field::_element_type
 { { "ADDRESS"s,                   ADIF3_DATA_TYPE::MULTILINE_STRING },
   { "AGE"s,                       ADIF3_DATA_TYPE::NUMBER },
   { "A_INDEX"s,                   ADIF3_DATA_TYPE::NUMBER },
@@ -655,14 +655,14 @@ map<std::string, pair<int, int>> adif3_field::_positive_integer_range
 };
 
 /// band values
-unordered_set<string> adif3_field::_ENUMERATION_BAND
+const unordered_set<string> adif3_field::_ENUMERATION_BAND
 { "2190m"s, "630m"s, "560m"s, "160m"s, "80m"s,    "60m"s, "40m"s,   "30m"s,   "20m"s,  "17m"s,
   "15m"s,   "12m"s,  "10m"s,  "6m"s,   "4m"s,     "2m"s,  "1.25m"s, "70cm"s,  "33cm"s, "23cm"s,
   "13cm"s,  "9cm"s,  "6cm"s,  "3cm"s,  "1.25cm"s, "6mm"s, "4mm"s,   "2.5mm"s, "2mm"s,  "1mm"s
 };
 
 /// mapping between country code and country info
-unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, bool /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
+const unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, bool /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
 { {  1  , { "CANADA"s,                                  "VE"s,    false } },
   {  2  , { "ABU AIL IS."s,                             ""s,      true  } },
   {  3  , { "AFGHANISTAN"s,                             "YA"s,    false } },

@@ -264,7 +264,7 @@ public:
     \param  received_values             the received values, in the order that they were received
     \param  truncate_received_values    whether to stop parsing when matches have all been found  *** IS THIS EVER USED WITH THE VALUE <i>TRUE</i>? ***
 */
-  parsed_exchange(const std::string& from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values, const bool truncate_received_values = false);
+  parsed_exchange(const std::string& from_callsign, const std::string& canonical_prefix, const contest_rules& rules, const MODE m, const std::vector<std::string>& received_values /* , const bool truncate_received_values = false */);
 
   READ(fields);                        ///< all the names, values and is_mult() indicators, in the same order as the exchange definition in the configuration file
   READ(replacement_call);              ///< a new callsign, intended to replace the one in the CALL window

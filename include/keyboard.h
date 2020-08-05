@@ -50,25 +50,25 @@ using key_code = unsigned int;                                          ///< syn
     \param  ks  the KeySym to test
     \return     whether <i>ks</i> is an upper-case letter
 */
-inline const bool is_upper_case_letter(const KeySym ks)
+inline bool is_upper_case_letter(const KeySym ks)
   { return ((ks >= XK_A) and (ks <= XK_Z)); }
 
 /*! \brief      Test whether a KeySym is a lower-case letter
     \param  ks  the KeySym to test
     \return     whether <i>ks</i> is a lower-case letter
 */
-inline const bool is_lower_case_letter(const KeySym ks)
+inline bool is_lower_case_letter(const KeySym ks)
   { return ((ks >= XK_a) and (ks <= XK_z)); }
 
 /*! \brief      Test whether a KeySym is a letter
     \param  ks  the KeySym to test
     \return     whether <i>ks</i> is a letter
 */
-inline const bool is_letter(const KeySym ks)
+inline bool is_letter(const KeySym ks)
   { return (is_upper_case_letter(ks) or is_lower_case_letter(ks)); }
 
 /// is a KeySym a digit? (Cannot name this function is_digit, becasue that is already in use.)
-inline const bool symbol_is_digit(const KeySym ks)
+inline bool symbol_is_digit(const KeySym ks)
   { return ((ks >= XK_0) and (ks <= XK_9)); }
 
 // -------------------------------------------------  keyboard_event  -----------------------------------
@@ -80,6 +80,7 @@ inline const bool symbol_is_digit(const KeySym ks)
 class keyboard_event
 {
 protected:
+
   key_code       _code;         ///< code for the relevant key
   key_event_type _event;        ///< the event
   std::string    _str;          ///< string version of the character
@@ -100,84 +101,83 @@ public:
 // PRIOR to the event: http://www.tronche.com/gui/x/xlib/events/keyboard-pointer/keyboard-pointer.html#XKeyEvent
 
 /// is one of the shift keys pressed?
-  inline const bool is_shifted(void) const
+  inline bool is_shifted(void) const
     { return (_xkey_state bitand ShiftMask); }
 
 /// is one of the control keys pressed?
-  inline const bool is_control(void) const
+  inline bool is_control(void) const
     { return (_xkey_state bitand ControlMask); }
 
 /// is one of the control keys pressed?
-  inline const bool is_ctrl(void) const
+  inline bool is_ctrl(void) const
     { return (is_control()); }
 
 /// is one of the alt keys pressed?
-  inline const bool is_alt(void) const
+  inline bool is_alt(void) const
     { return (_xkey_state bitand Mod1Mask); }
 
 /// is one of the control keys, but not one of the alt keys, pressed?
-  inline const bool is_control_and_not_alt(void) const
+  inline bool is_control_and_not_alt(void) const
     { return ( is_control() and !is_alt() ); }
 
 /// is one of the control keys, but not one of the alt keys, pressed?
-  inline const bool is_ctrl_and_not_alt(void) const
+  inline bool is_ctrl_and_not_alt(void) const
     { return is_control_and_not_alt(); }
 
 /// is one of the alt keys, but not one of the control keys, pressed?
-  inline const bool is_alt_and_not_control(void) const
+  inline bool is_alt_and_not_control(void) const
     { return ( is_alt() and !is_control() ); }
 
 /// is one of the alt keys, but not one of the control keys, pressed?
-  inline const bool is_alt_and_not_ctrl(void) const
+  inline bool is_alt_and_not_ctrl(void) const
     { return is_alt_and_not_control(); }
 
 /// are control and alt keys both pressed?
-  inline const bool is_alt_and_control(void) const
+  inline bool is_alt_and_control(void) const
     { return is_alt() and is_control(); }
 
 /// are control and alt keys both pressed?
-  inline const bool is_alt_and_ctrl(void) const
+  inline bool is_alt_and_ctrl(void) const
     { return is_alt_and_control(); }
 
 /// is the key unmodified? NB: Numlock is Mod2Mask (see xmodmap command), so we can't merely test _xkey_state against zero
-  inline const bool is_unmodified(void) const
+  inline bool is_unmodified(void) const
     { return ( (_xkey_state bitand (ShiftMask bitor ControlMask bitor Mod1Mask) ) == 0  ); }
 
 /// is the key modified?
-  inline const bool is_modified(void) const
+  inline bool is_modified(void) const
     { return !is_unmodified(); }
 
 /// is the key an upper case letter?
-  inline const bool is_upper_case_letter(void) const
+  inline bool is_upper_case_letter(void) const
     { return (is_unmodified() and ::is_upper_case_letter(_symbol)); }
 
 /// is the key a lower case letter?
-  inline const bool is_lower_case_letter(void) const
+  inline bool is_lower_case_letter(void) const
     { return (is_unmodified() and ::is_lower_case_letter(_symbol)); }
 
 /// is the key a letter?
-  inline const bool is_letter(void) const
+  inline bool is_letter(void) const
     { return (is_unmodified() and ::is_letter(_symbol)); }
 
 /// is the key a digit?
-  inline const bool is_digit(void) const
+  inline bool is_digit(void) const
     { return (is_unmodified() and symbol_is_digit(_symbol)); }
 
 /// does a character match the value of <i>_str</i>?
-  inline const bool is_char(const char c) const
+  inline bool is_char(const char c) const
      { return (is_unmodified() and (_str == create_string(c))); }
 
 /// does a character number match the value of <i>_str</i>?
-  inline const bool is_char(const int n) const
+  inline bool is_char(const int n) const
      { return (is_char(static_cast<char>(n))); }
 
 /// is a character a control character version of the character in <i>_str</i>?
-  /* inline */ const bool is_control(const char c) const;
+  bool is_control(const char c) const;
 
 /// is a character an alt version of the character in <i>_str</i>?
-  inline const bool is_alt(const char c) const
+  inline bool is_alt(const char c) const
     { return (is_alt() and (_str == create_string(c))); }
-//    { return (is_alt() and (_str == std::string(1, c))); }
 };
 
 // -------------------------------------  keyboard_queue  ---------------------------
@@ -221,17 +221,17 @@ public:
   keyboard_queue(void);
 
 /// destructor
-  virtual ~keyboard_queue(void) = default;
+//  virtual ~keyboard_queue(void) = default;
 
   SAFEREAD_WITH_INTERNAL_MUTEX(display_p, _keyboard);
   SAFEREAD_WITH_INTERNAL_MUTEX(window_id, _keyboard);
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(x_multithreaded, _keyboard);
 
 /// how many events are in the queue?
-  const size_t size(void) const;
+  size_t size(void) const;
 
 /// is the queue empty?
-  const bool empty(void) const;
+  bool empty(void) const;
 
 /// move any pending X keyboard events to the queue
   void process_events(void);
@@ -242,13 +242,13 @@ public:
     Does not remove the event from the queue.
     Returns the default keyboad_event() if the queue is empty.
 */
-  const keyboard_event peek(void);
+  keyboard_event peek(void);
 
 /// pop the frontmost event
-  const keyboard_event pop(void);
+  keyboard_event pop(void);
 
 /// get the event most recently popped
-  const keyboard_event last(void);
+  keyboard_event last(void);
 
 /*! \brief      Emulate the pressing of a character key
     \param  c   pressed character

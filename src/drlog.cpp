@@ -5418,8 +5418,6 @@ string bearing(const string& callsign)
   if (callsign.empty())
     return string();
 
-//  const float& lat1         { my_latitude };
-//  const float& long1        { my_longitude };
   const auto  [lat2, long2] { latitude_and_longitude(callsign) };
   const float b             { bearing(my_latitude, my_longitude, lat2, long2) };
   

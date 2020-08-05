@@ -18,22 +18,20 @@
 
 #include <string>
 
-//static const float KM_PER_MILE = 1.609344;                  ///< number of kilometres in a mile
-
 constexpr float KM_PER_MILE { 1.609344f };                  ///< number of kilometres in a mile
 
 /*! \brief              Convert miles to kilometres
     \param  dx_miles    distance in miles
     \return             <i>dx_miles</i> in kilometres
 */
-inline const float miles_to_kilometres(const float dx_miles)
+inline float miles_to_kilometres(const float dx_miles)
   { return (dx_miles * KM_PER_MILE); }
 
 /*! \brief          Convert kilometres to miles
     \param  dx_km   distance in kilometres
     \return         <i>dx_km</i> in miles
 */
-inline const float kilometres_to_miles(const float dx_km)
+inline float kilometres_to_miles(const float dx_km)
   { return (dx_km / KM_PER_MILE); }
 
 /*! \brief          Obtain bearing of target from source
@@ -45,7 +43,7 @@ inline const float kilometres_to_miles(const float dx_km)
 
     See http://www.movable-type.co.uk/scripts/latlong.html
 */
-const float bearing(const float& lat1, const float& long1, const float& lat2, const float& long2);
+float bearing(const float& lat1, const float& long1, const float& lat2, const float& long2);
 
 /*! \brief          Obtain distance in km between two locations
     \param  lat1    latitude of source, in degrees (+ve north)
@@ -56,7 +54,7 @@ const float bearing(const float& lat1, const float& long1, const float& lat2, co
 
     See http://www.movable-type.co.uk/scripts/latlong.html:
 */
-const float distance(const float& lat1, const float& long1, const float& lat2, const float& long2);
+float distance(const float& lat1, const float& long1, const float& lat2, const float& long2);
 
 /*! \brief                  Calculate the time of sunrise or sunset
     \param  lat             latitude of target, in degrees (+ve north)
@@ -68,7 +66,7 @@ const float distance(const float& lat1, const float& long1, const float& lat2, c
     If there is no sunset or sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
     or day at the given location
 */
-const std::string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset);
+std::string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset);
 
 /*! \brief          Calculate the time of sunrise
     \param  lat     latitude of target, in degrees (+ve north)
@@ -78,7 +76,7 @@ const std::string sunrise_or_sunset(const float& lat, const float& lon, const bo
     If there is no sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
     or day at the given location
 */
-inline const std::string sunrise(const float& lat, const float& lon)
+inline std::string sunrise(const float& lat, const float& lon)
   { return sunrise_or_sunset(lat, lon, false); }
 
 /*! \brief          Calculate the time of sunset
@@ -89,7 +87,7 @@ inline const std::string sunrise(const float& lat, const float& lon)
     If there is no sunset today, returns "DARK" or "LIGHT", according to whether is currently night
     or day at the given location
 */
-inline const std::string sunset(const float& lat, const float& lon)
+inline std::string sunset(const float& lat, const float& lon)
   { return sunrise_or_sunset(lat, lon, true); }
 
 #endif /* FUNCTIONS_H_ */

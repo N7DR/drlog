@@ -782,11 +782,6 @@ std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
   const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
-
-//  if (cit == m.cend())
-//    return { false, V() };  // needs default constructor for V
-    
-//  return { true, cit->second };
 }
 
 /*! \brief      Is an object a key of a map or unordered map; if so return the value, otherwise return a provided default
