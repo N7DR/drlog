@@ -530,8 +530,8 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
 parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values /* , const bool truncate_received_values */) :
   _replacement_call(),
   _valid(false)
-{ const bool truncate_received_values { false };
-  ost << endl << "In parsed_exchange_constructor; truncate_received_values = " << boolalpha << truncate_received_values << endl;
+{ //const bool truncate_received_values { false };
+  //ost << endl << "In parsed_exchange_constructor; truncate_received_values = " << boolalpha << truncate_received_values << endl;
   
   static const string EMPTY_STRING;
 
@@ -590,6 +590,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     copy_if(received_values.cbegin(), received_values.cend(), back_inserter(copy_received_values), [] (const string& str) { return !contains(str, "."); } );
   }
 
+#if 0
   if (truncate_received_values)
   { map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
 
@@ -648,6 +649,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
       ost << "Error: cannot find match for exchange field: " << rv0 << endl;
   }
   else        // !truncate received values
+#endif
   {
 // for each received field, which output fields does it match?
     map<int /* received field number */, set<string>> matches;

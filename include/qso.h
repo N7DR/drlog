@@ -248,7 +248,7 @@ public:
 
     Currently unused
 */
-  void new_populate_from_log_line(const std::string& str, const std::string& mycall);
+//  void new_populate_from_log_line(const std::string& str, const std::string& mycall);
 
 /*! \brief      QSO == QSO
     \param  q   target QSO

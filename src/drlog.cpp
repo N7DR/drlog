@@ -5050,8 +5050,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // fills some fields in the QSO
             qso.populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]));  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
-//            qso.new_populate_from_log_line(remove_peripheral_spaces(new_win_log_snapshot[n]), context.my_call());  // note that this doesn't fill all fields (e.g. _my_call), which are carried over from original QSO
-
             ost << "QSO after populate_from_log_line: " << qso << endl;
 
 // we can't assume anything about the mult status

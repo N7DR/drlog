@@ -421,65 +421,6 @@ void QSO::populate_from_log_line(const string& str)
   ost << "Ending populate_from_log_line(); QSO is now: " << *this << endl;
 }
 
-/*! \brief          NEW - Populate from a string (as visible in the log window)
-    \param  str     string from visible log window
-    \param  mycall  my callsign
-
-    Currently unused
-*/
-#if 0
-void QSO::new_populate_from_log_line(const string& str, const string& mycall)
-{ if (str.empty())
-    return;
-
-  const vector<string> fields { remove_peripheral_spaces(split_string(squash(str, ' '), SPACE_STR)) };
-
-// number, date, UTC, mode, frequency
-  number(from_string<unsigned int>(fields[0]));
-  date(fields[1]);
-  utc(fields[2]);
-  mode( (fields[3] == "CW"s ? MODE_CW : MODE_SSB) );
-  freq(fields[4]);
-
-  const double f { from_string<double>(_frequency_tx) };
-
-  const frequency freq(f);
-
-  band(static_cast<BAND>(freq));
-  callsign(fields[5]);
-  canonical_prefix(location_db.canonical_prefix(callsign()));
-  continent(location_db.continent(callsign()));
-  epoch_time(_to_epoch_time(date(), utc()));
-
-  my_call(mycall);
-
-// the sent exchange starts at fields[6]
-  vector<pair<string, string> > tmp_sent_exchange { context.sent_exchange(mode()) };
-
-  const size_t n_sent_fields { tmp_sent_exchange.size() };
-
-  for (size_t field_nr = 0; field_nr < n_sent_fields; ++field_nr)
-    tmp_sent_exchange[field_nr].second = fields[6 + field_nr];
-
-  sent_exchange(tmp_sent_exchange);
-
-//  size_t index = 6 + n_sent_fields;      // index into received fields
-  vector<string> exchange_field_values;
-
-  for (size_t index = 6 + n_sent_fields; index < fields.size(); ++index)    // there must be a faster way to do this, via the constructor
-    exchange_field_values.push_back(fields[index]);
-
-// for now, the last parameter is ignored. Try it this way to see if the results are good; if they
-// aren't, then we need to include a separate branch for "true" in the parsed_exchange constructor
-  const parsed_exchange pexch(callsign(), canonical_prefix(), rules, mode(), exchange_field_values, true);  // this is relatively slow, but we can't send anything until we know that we have a valid exchange
-
-  if (!pexch.valid())
-  { alert("Unable to parse exchange in log line"s);
-    return;
-  }
-}
-#endif
-
 /// is any of the exchange fields a mult?
 bool QSO::is_exchange_mult(void) const
 { for (const auto& field : _received_exchange)
