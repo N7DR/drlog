@@ -1,4 +1,4 @@
-// $Id: macros.h 161 2020-07-31 16:19:50Z  $
+// $Id: macros.h 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,17 +30,13 @@
 
 #include <cmath>
 
-// convenient definitions for use with chrono functions
-using centiseconds = std::chrono::duration<long, std::centi>;
-using deciseconds = std::chrono::duration<long, std::deci>;
-
 /// Syntactic sugar for read/write access
 #if (!defined(READ_AND_WRITE))
 
-#define READ_AND_WRITE(y)                                                    \
-/*! Read access to _##y */                                                   \
-  [[nodiscard]] inline decltype(_##y) y(void) const { return _##y; }  \
-/*! Write access to _##y */                                                  \
+#define READ_AND_WRITE(y)                                       \
+/*! Read access to _##y */                                      \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { return _##y; }   \
+/*! Write access to _##y */                                     \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
 #endif    // !READ_AND_WRITE
@@ -48,10 +44,10 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// Syntactic sugar for read/write access with thread locking
 #if (!defined(SAFE_READ_AND_WRITE))
 
-#define SAFE_READ_AND_WRITE(y, z)                                                  \
-/*! Read access to _##y */                                                         \
-  [[nodiscard]] inline decltype(_##y) y(void) const { SAFELOCK(z); return _##y; }  \
-/*! Write access to _##y */                                                        \
+#define SAFE_READ_AND_WRITE(y, z)                                           \
+/*! Read access to _##y */                                                  \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }  \
+/*! Write access to _##y */                                                 \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
 #endif    // !SAFE_READ_AND_WRITE
@@ -59,9 +55,9 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// Read and write with mutex that is part of the object
 #if (!defined(SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX))
 
-#define SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(y, z)                       \
+#define SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(y, z)                                           \
 /*! Read access to _##y */                                                  \
-  [[nodiscard]] inline decltype(_##y) y(void) { SAFELOCK(z); return _##y; } \
+  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }  \
 /*! Write access to _##y */                                                 \
   inline void y(const decltype(_##y)& n) { SAFELOCK(z); _##y = n; }
 
@@ -70,18 +66,18 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// Syntactic sugar for read-only access
 #if (!defined(READ))
 
-#define READ(y)                                                       \
-/*! Read-only access to _##y */                                       \
-  [[nodiscard]] inline decltype(_##y) y(void) const { return _##y; }
+#define READ(y)                                                 \
+/*! Read-only access to _##y */                                 \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { return _##y; }
 
 #endif    // !READ
 
 /// Syntactic sugar for read-only access with thread locking
 #if (!defined(SAFEREAD))
 
-#define SAFEREAD(y, z)                                                            \
-/*! Read-only access to _##y */                                                   \
-  [[nodiscard]] inline decltype(_##y) y(void) const { SAFELOCK(z); return _##y; }
+#define SAFEREAD(y, z)                                                      \
+/*! Read-only access to _##y */                                             \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD
 
@@ -89,9 +85,9 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 #if (!defined(SAFE_READ))
 
 /// read with a mutex
-#define SAFE_READ(y, z)                                                           \
-/*! Read-only access to _##y */                                                   \
-  [[nodiscard]] inline decltype(_##y) y(void) const { SAFELOCK(z); return _##y; }
+#define SAFE_READ(y, z)                                                      \
+/*! Read-only access to _##y */                                             \
+  [[nodiscard]] inline const decltype(_##y)& y(void) const { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ
 
@@ -100,7 +96,7 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 
 #define SAFEREAD_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
-  [[nodiscard]] inline decltype(_##y) y(void) { SAFELOCK(z); return _##y; }
+  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFEREAD_WITH_INTERNAL_MUTEX
 
@@ -110,7 +106,7 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 /// read with an internal mutex
 #define SAFE_READ_WITH_INTERNAL_MUTEX(y, z)                                                      \
 /*! Read-only access to _##y */                                             \
-  [[nodiscard]] inline decltype(_##y) y(void) { SAFELOCK(z); return _##y; }
+  [[nodiscard]] inline const decltype(_##y)& y(void) { SAFELOCK(z); return _##y; }
 
 #endif    // !SAFE_READ_WITH_INTERNAL_MUTEX
 
@@ -118,7 +114,7 @@ using deciseconds = std::chrono::duration<long, std::deci>;
 #if (!defined(WRITE))
 
 #define WRITE(y)                                       \
-/*! Write access to _##y */                            \
+/*! Write access to _##y */                                     \
   inline void y(const decltype(_##y)& n) { _##y = n; }
 
 #endif    // !READ_AND_WRITE
@@ -145,72 +141,6 @@ public: \
 
 #endif      // !ERROR_CLASS
 
-// https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
-// https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
-template<class T>
-struct is_int 
-  { constexpr static bool value { false }; };
-
-template<>
-struct is_int<int> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_map 
-  { constexpr static bool value { false }; };
-
-template<class K, class V>
-struct is_map<std::map<K, V>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_set 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_set<std::set<T>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_unordered_map 
-  { constexpr static bool value { false }; };
-
-template<class K, class V>
-struct is_unordered_map<std::unordered_map<K, V>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_unordered_set 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_unordered_set<std::unordered_set<T>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_unsigned_int 
-  { constexpr static bool value { false }; };
-
-template<>
-struct is_unsigned_int<unsigned int> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-struct is_vector 
-  { constexpr static bool value { false }; };
-
-template<class T>
-struct is_vector<std::vector<T>> 
-  { constexpr static bool value { true }; };
-  
-// current g++ does not support definition of concepts, even with -fconcepts !!
-//template<typename T>
-//concept SET_TYPE = requires(T a) 
-//{ is_set<T>::value == true;
-//    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
-//};
-
-
 // classes for tuples... it seems like there should be a way to do this with TMP,
 // but the level-breaking caused by the need to control textual names seems to make
 // this impossible without resorting to #defines. So since I don't immediately see
@@ -234,7 +164,7 @@ public:                                                \
     { std::get<0>(*this) = X;                          \
     }                                                  \
                                                        \
-  inline /* const */ a0 a1(void) const                       \
+  inline const a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(const a0 & var)                       \
@@ -255,13 +185,13 @@ public:                                                \
       std::get<1>(*this) = Y;                          \
     }                                                  \
                                                        \
-  inline /* const */ a0 a1(void) const                       \
+  inline const a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(const a0 & var)                       \
     { std::get<0>(*this) = var; }                      \
                                                        \
-  inline /* const */ b0 b1(void) const                       \
+  inline const b0 b1(void) const                       \
     { return std::get<1>(*this); }                     \
                                                        \
   inline void b1(const b0 & var)                       \
@@ -312,19 +242,19 @@ public:                                                \
                                                        \
   nm( void ) { }                                       \
                                                        \
-  inline /* const */ a0 a1(void) const                       \
+  inline const a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(a0 var)                               \
     { std::get<0>(*this) = var; }                      \
                                                        \
-  inline /* const */ b0 b1(void) const                       \
+  inline const b0 b1(void) const                       \
     { return std::get<1>(*this); }                     \
                                                        \
   inline void b1(b0 var)                               \
     { std::get<1>(*this) = var; }                      \
                                                        \
-  inline /* const */ c0 c1(void) const                       \
+  inline const c0 c1(void) const                       \
     { return std::get<2>(*this); }                     \
                                                        \
   inline void c1(c0 var)                               \
@@ -391,19 +321,19 @@ public:                                                                     \
                                                                             \
   nm( void ) { }                                                            \
                                                                             \
-  inline /* const */ a0 a1(void) const                                            \
+  inline const a0 a1(void) const                                            \
     { return std::get<0>(*this); }                                          \
                                                                             \
   inline void a1(a0 var)                                                    \
     { std::get<0>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ b0 b1(void) const                                            \
+  inline const b0 b1(void) const                                            \
     { return std::get<1>(*this); }                                          \
                                                                             \
   inline void b1(b0 var)                                                    \
     { std::get<1>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ c0 c1(void) const                                            \
+  inline const c0 c1(void) const                                            \
     { return std::get<2>(*this); }                                          \
                                                                             \
   inline void c1(c0 var)                                                    \
@@ -477,25 +407,25 @@ public:                                                                     \
                                                                             \
   nm( void ) { }                                                            \
                                                                             \
-  inline /* const */ a0 a1(void) const                                            \
+  inline const a0 a1(void) const                                            \
     { return std::get<0>(*this); }                                          \
                                                                             \
   inline void a1(a0 var)                                                    \
     { std::get<0>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ b0 b1(void) const                                            \
+  inline const b0 b1(void) const                                            \
     { return std::get<1>(*this); }                                          \
                                                                             \
   inline void b1(b0 var)                                                    \
     { std::get<1>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ c0 c1(void) const                                            \
+  inline const c0 c1(void) const                                            \
     { return std::get<2>(*this); }                                          \
                                                                             \
   inline void c1(c0 var)                                                    \
     { std::get<2>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ d0 d1(void) const                                            \
+  inline const d0 d1(void) const                                            \
     { return std::get<3>(*this); }                                          \
                                                                             \
   inline void d1(d0 var)                                                    \
@@ -756,49 +686,23 @@ public:                                                                         
     { std::get<7>(*this) = var; }                                                           \
 }
 
-/*! \brief      Is an object a member of a set or unordered_set?
-    \param  s   set or unordered_set  to be tested
+/*! \brief      Is an object a member of a set?
+    \param  s   set to be tested
     \param  v   object to be tested for membership
     \return     Whether <i>t</i> is a member of <i>s</i>
 */
-template <class T, class U>
-bool operator>(const T& s, const U& v)
-  requires (is_set<T>::value == true || is_unordered_set<T>::value == true) && (std::is_same<typename T::value_type, U>::value == true)
+template <class T>
+const bool operator<(const std::set<T>& s, const T& v)
   { return s.find(v) != s.cend(); }
 
-/*! \brief      Is an object a key of a map or unordered_map, and if so return the value (or the default-constructed value)
-    \param  m   map or unordered_map to be searched
-    \param  k   target key
-    \return     Whether <i>k</i> is a member of <i>m</i> and, if so the corresponding value (or the default-constructed value)
-    
-    // possibly should return variant instead
+/*! \brief      Is an object a member of an unordered set?
+    \param  s   unordered set to be tested
+    \param  v   object to be tested for membership
+    \return     Whether <i>t</i> is a member of <i>s</i>
 */
-template <class M, class K>
-std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
-  requires (is_map<M>::value == true || is_unordered_map<M>::value == true) && std::is_same<typename M::key_type, K>::value == true && std::is_default_constructible<typename M::mapped_type>::value == true
-{ using V = typename M::mapped_type;
-  using RT = std::pair<bool, typename M::mapped_type>;
-
-  const auto cit { m.find(k) };
-
-  return ( (cit == m.cend()) ? RT { false, V() } : RT { true, cit->second } );
-}
-
-/*! \brief      Is an object a key of a map or unordered map; if so return the value, otherwise return a provided default
-    \param  m   map or unordered map to be searched
-    \param  k   target key
-    \param  d   default
-    \return     if <i>k</i> is a member of <i>m</i>, the corresponding value, otherwise the default
-
-    The difference between this and ">" is that this does not tell you whether the key was found
-*/
-template <class C, class K>
-typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
-  requires (is_map<C>::value == true || is_unordered_map<C>::value == true) && std::is_same<typename C::key_type, K>::value == true /* && std::is_default_constructible<typename C::mapped_type>::value == true */
-{ const auto cit { m.find(k) };
-
-  return ( (cit == m.cend()) ? d : cit->second );
-}
+template <class T>
+const bool operator<(const std::unordered_set<T>& s, const T& v)
+  { return s.find(v) != s.cend(); }
 
 /*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
     \param  original_mapping    original mapping
@@ -815,6 +719,13 @@ auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type,
 
   return rv;
 }
+
+// syntactic suger for time-related use
+//typedef std::chrono::duration<long, std::centi> centiseconds;           ///< hundredths of a second
+//typedef std::chrono::duration<long, std::deci>  deciseconds;            ///< tenths of a second
+
+using centiseconds = std::chrono::duration<long, std::centi>;
+using deciseconds = std::chrono::duration<long, std::deci>;
 
 #if 0
 template <class D, class P> // P = parameter; D = data in the database
@@ -930,7 +841,7 @@ public:
     \param  n       number of times to add it
     \return         whether final number of times <i>value</i> has been added is at or greater than the threshold
 */
-  bool add(const T& val, const int n = 1)
+  const bool add(const T& val, const int n = 1)
   { if (_values.find(val) == _values.end())
       _values.insert( { val, n } );
     else
@@ -943,7 +854,7 @@ public:
     \param  val     target value
     \return         total number of times <i>value</i> has been added
 */
-  unsigned int value(const T& val) const
+  const unsigned int value(const T& val) const
     { return ( ( _values.find(val) == _values.cend() ) ? 0 : _values.at(val) ); }
 };
 
@@ -977,6 +888,8 @@ std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp
   return ost;
 }
 
+
+
 /*! \brief          Apply a function to all in a container
     \param  first   container
     \param  fn      function
@@ -985,15 +898,6 @@ std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp
 template<class Input, class Function>
 inline Function FOR_ALL(Input& first, Function fn)
   { return (std::for_each(first.begin(), first.end(), fn)); }
-
-/*! \brief          Apply a function to all in a container
-    \param  first   container
-    \param  fn      function
-    \return         <i>fn</i>
-*/
-template<class Input, class Function>
-inline Function FOR_ALL(const Input& first, Function fn)
-  { return (std::for_each(first.cbegin(), first.cend(), fn)); }
 
 /*! \brief          Copy all in a container to another container
     \param  first   initial container
@@ -1073,7 +977,7 @@ inline auto FIND_IF(const Input& v, UnaryPredicate pred) -> typename Input::cons
     \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
 */
 template <typename T>
-inline T LIMIT(const T val, const T low_val, const T high_val)
+inline const T LIMIT(const T val, const T low_val, const T high_val)
   { return (val < low_val ? low_val : (val > high_val ? high_val : val)); }
 
 /*! \brief              Bound a value within limits
@@ -1083,38 +987,17 @@ inline T LIMIT(const T val, const T low_val, const T high_val)
     \return             max(min(<i>val</i>, <i>max_val</i>), <i>min_val</i>)
 */
 template <typename T, typename U, typename V>
-inline T LIMIT(const T val, const U low_val, const V high_val)
+inline const T LIMIT(const T val, const U low_val, const V high_val)
   { return (val < static_cast<T>(low_val) ? static_cast<T>(low_val) : (val > static_cast<T>(high_val) ? static_cast<T>(high_val) : val)); }
 
 /// a version of floor() that returns a float instead of a double (not quite the same as floorf)
 template <typename T>
-inline float ffloor(T val)
+inline const float ffloor(T val)
   { return static_cast<float>(floor(val)); }
 
 /// a version of floor() that returns an int instead of a double (not quite the same as floorl)
 template <typename T>
-inline int ifloor(T val)
+inline const int ifloor(T val)
   { return static_cast<int>(floor(val)); }
-
-// define a hash function for pairs
-// http://stackoverflow.com/questions/13485979/hash-function-of-unordered-set/13486174#13486174
-// http://www.cplusplus.com/reference/functional/hash/
-// https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
-namespace std
-{ template <typename T, typename U>
-  struct hash< std::pair<T, U> >
-
-  { using result_type = size_t;
-
-    result_type operator()( const std::pair<T, U>& k ) const
-    { result_type res { 17 };
-            
-      res = res * 31 + hash<T>()( k.first );
-      res = res * 31 + hash<U>()( k.second );
-      
-      return res;
-    }
-  };
-}
 
 #endif    // MACROS_H

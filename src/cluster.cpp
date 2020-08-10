@@ -1,4 +1,4 @@
-// $Id: cluster.cpp 160 2020-07-25 16:01:11Z  $
+// $Id: cluster.cpp 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,13 +37,6 @@ pt_mutex buffer_mutex;                  ///< mutex for the cluster buffer
 pt_mutex monitored_posts_mutex;         ///< mutex for the monitored posts
 pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
 
-// parameters for the TCP connection
-constexpr unsigned int IDLE_SECS   { 300 };
-constexpr unsigned int RETRY_SECS  { 60 };
-constexpr unsigned int MAX_RETRIES { 2 };
-
-constexpr unsigned int CLUSTER_TIMEOUT { 2 };       // seconds
-
 // -----------  dx_cluster  ----------------
 
 /*! \class  dx_cluster
@@ -63,10 +56,10 @@ dx_cluster::dx_cluster(const drlog_context& context, const POSTING_SOURCE src) :
   _port(src == POSTING_SOURCE::CLUSTER ? context.cluster_port() : context.rbn_port()),              // choose the correct port
   _server(src == POSTING_SOURCE::CLUSTER ? context.cluster_server() : context.rbn_server()),        // choose the correct server
   _source(src),                                                                                     // set the source
-  _timeout(CLUSTER_TIMEOUT)                                                                                       // two-second timeout
-{ 
+  _timeout(2)                                                                                       // two-second timeout
+{
 // set the keepalive option
-  _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);
+  _connection.keep_alive(300, 60, 2);
   
   string buf;
 
@@ -134,9 +127,9 @@ new_socket:
     { ost << "Error closing socket" << endl;
     }
 
-    _connection.new_socket();                                       // get a new socket
-    _connection.keep_alive(IDLE_SECS, RETRY_SECS, MAX_RETRIES);     // set the keepalive option
-    _connection.bind(_my_ip);                                       // bind it to the correct IP address
+    _connection.new_socket();                  // get a new socket
+    _connection.keep_alive(300, 60, 2);        // set the keepalive option
+    _connection.bind(_my_ip);                  // bind it to the correct IP address
 
 // reconnect to the server
 reconnect:
@@ -183,7 +176,7 @@ void dx_cluster::reset(void)
 /*! \brief      Read from the cluster socket
     \return     the current bytes waiting on the cluster socket
 */
-string dx_cluster::read(void)
+const string dx_cluster::read(void)
 { string buf;
     
   try
@@ -191,13 +184,17 @@ string dx_cluster::read(void)
   }
     
   catch (const socket_support_error& e)
-  { if (e.code() != SOCKET_SUPPORT_TIMEOUT)    // an error that is not a timeout has to be handled
+  { //ost << "caught socket_support_error in read()" << endl;
+
+    if (e.code() != SOCKET_SUPPORT_TIMEOUT)    // an error that is not a timeout has to be handled
     {
 // error reading; try to reconnect
       ost << "Error reading from socket; attempting reconnection" << endl;
 
       _process_error();
     }  // be silent if it's just a timeout
+//    else
+//      ost << "tcp_socket_error timeout in reading dx_cluster: code = " << e.code() << "; reason = " << e.reason() << endl;
   }
 
   catch (const tcp_socket_error&)
@@ -216,7 +213,7 @@ string dx_cluster::read(void)
 /*! \brief      Read from the cluster socket
     \return     the information that has been read from the socket but has not yet been processed
 */
-string dx_cluster::get_unprocessed_input(void)
+const string dx_cluster::get_unprocessed_input(void)
 { string rv;
 
   { SAFELOCK(rbn_buffer);
@@ -252,7 +249,6 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
     if (!copy.empty() and isdigit(copy[0]))
     { try
       { size_t char_posn { copy.find(SPACE_STR) };
-
         size_t space_posn;
 
         if (char_posn != string::npos)
@@ -390,6 +386,11 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
     _band = static_cast<BAND>(_freq);
 }
 
+//const MODE dx_post:mode(void) const
+//{
+//  
+//}
+
 /*! \brief          Write a <i>dx_post</i> object to an output stream
     \param  ost     output stream
     \param  dxp     object to write
@@ -449,14 +450,19 @@ ostream& operator<<(ostream& ost, const monitored_posts_entry& mpe)
     \brief  Handle the monitoring of certain stations
 */
 
+/// constructor
+//monitored_posts::monitored_posts(void) :
+//  _is_dirty(false)
+//{ }
+
 /*! \brief              Is a particular call monitored?
     \param  callsign    call to be tested
     \return             whether <i>callsign</i> is being monitored
 */
-bool monitored_posts::is_monitored(const std::string& callsign) const
+const bool monitored_posts::is_monitored(const std::string& callsign) const
 { SAFELOCK(monitored_posts);
 
-  return (_callsigns > callsign);
+  return (_callsigns < callsign);
 }
 
 /*! \brief          Test a post, and possibly add to <i>_entries</i>
@@ -520,6 +526,10 @@ void monitored_posts::operator-=(const string& call_to_remove)
 // remove any entries that have this call
   const size_t original_size { _entries.size() };
 
+//  _entries.erase(remove_if(_entries.begin(), _entries.end(),
+//                   [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } ),
+//                 _entries.end() );
+
   REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.callsign() == call_to_remove); } );
 
   _is_dirty |= (original_size != _entries.size());
@@ -533,13 +543,17 @@ void monitored_posts::prune(void)
 
   const size_t original_size { _entries.size() };
 
+//  _entries.erase(remove_if(_entries.begin(), _entries.end(),
+//                 [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } ),
+//                 _entries.end() );
+
   REMOVE_IF_AND_RESIZE(_entries, [=] (monitored_posts_entry& mpe) { return (mpe.expiration() < now); } );
 
   _is_dirty |= (original_size != _entries.size());
 }
 
 /// convert to a vector of strings suitable for display in a window
-vector<string> monitored_posts::to_strings(void) const
+const vector<string> monitored_posts::to_strings(void) const
 { vector<string> rv;
 
   SAFELOCK(monitored_posts);

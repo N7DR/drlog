@@ -1,4 +1,4 @@
-// $Id: screen.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: screen.cpp 158 2020-06-27 20:33:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,10 +29,11 @@
 
 using namespace std;
 
-extern cpair colours;
 extern message_stream   ost;                        ///< for debugging, info
 
 // globals
+//cpair    colours;               ///< global repository for information about colour pairs
+extern cpair colours;
 pt_mutex screen_mutex;          ///< mutex for access to screen
 
 /*! \brief      Return a pair of colours
@@ -44,7 +45,7 @@ pt_mutex screen_mutex;          ///< mutex for access to screen
     I note that ncurses is inconsistent about the types used to hold colour pairs; the actual definition of COLOR_PAIR()
     defines the return value as an int, so that's what we use here
 */
-int COLOUR_PAIR(const PAIR_TYPE n)
+const int COLOUR_PAIR(const PAIR_TYPE n)
 { const int result { COLOR_PAIR(n) }; 
   
   if (result == ERR)
@@ -418,7 +419,7 @@ window& window::operator<(const vector<std::pair<string, PAIR_TYPE /* colour pai
 /*! \brief      Get cursor position
     \return     the current position of the cursor
 */
-cursor window::cursor_position(void)
+const cursor window::cursor_position(void)
 { if (!_wp)
     return cursor(0, 0);
     
@@ -645,6 +646,7 @@ window& window::scrolling(const bool enable_or_disable)
 
     Can't call it 'scroll' because there's a silly ncurses *macro* with the same name
 */
+
 window& window::scrollit(const int n_lines)
 { if (_wp)
   { SAFELOCK(screen);
@@ -693,7 +695,7 @@ window& operator<(window& win, const centre& c)
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
     Cannot be const, because because mvwinstr() silently moves the cursor and we then move it back
 */
-string window::read(int x, int y)
+const string window::read(int x, int y)
 { if (!_wp)
     return string();
   
@@ -718,7 +720,7 @@ string window::read(int x, int y)
 }
 
 /// line by line snapshot of all the contents; lines go from top to bottom
-vector<string> window::snapshot(void)
+const vector<string> window::snapshot(void)
 { vector<string> rv;
 
   for (size_t n = static_cast<size_t>(height() - 1); n < static_cast<size_t>(height()); --n)    // stops when n wraps to big number when decremented from zero
@@ -829,8 +831,10 @@ void window::show(void)
 /*! \brief      Obtain a readable description of the window properties
     \return     the window properties as a human-readable string
 */
-string window::properties(const string& name)
-{ string rv { "Window "s + (name.empty() ? EMPTY_STR : name + SPACE_STR) + "is "s + (defined() ? EMPTY_STR : "NOT "s) + "defined"s + EOL };
+const string window::properties(const string& name)
+{ string rv;
+
+  rv += "Window " + (name.empty() ? ""s : name + " "s) + "is "s + (defined() ? ""s : "NOT "s) + "defined"s + EOL;
   
   if (defined())
   { rv += "  x origin = " + to_string(_x) + EOL;
@@ -866,12 +870,14 @@ string window::properties(const string& name)
     \param  e   keyboard event to be processed
     \return     whether the event was processed
 */
-bool window::common_processing(const keyboard_event& e)
+const bool window::common_processing(const keyboard_event& e)
 { window& win { (*this) };
 
 // a..z A..Z
   if (e.is_letter())
-    return (win <= to_upper(e.str()), true);
+  { win <= to_upper(e.str());
+    return true;
+  }
 
 // 0..9
   if (e.is_digit())
@@ -944,7 +950,7 @@ bool window::common_processing(const keyboard_event& e)
     \param  p   foreground colour, background colour
     \return     the number of the colour pair
 */
-PAIR_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
+const PAIR_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
 { _colours.push_back(fgbg);
 
   const auto status { init_pair(static_cast<PAIR_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
@@ -965,7 +971,7 @@ PAIR_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
     If the pair is already known, returns the number of the known pair.
     Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
-PAIR_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
+const PAIR_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
 { const pair<COLOUR_TYPE, COLOUR_TYPE> fgbg { fg, bg };
 
   SAFELOCK(_colours);
@@ -982,7 +988,7 @@ PAIR_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
     \param  pair_nr     number of the pair
     \return             the foreground colour of the pair number <i>pair_nr</i>
 */
-COLOUR_TYPE cpair::fg(const PAIR_TYPE pair_nr) const
+const COLOUR_TYPE cpair::fg(const PAIR_TYPE pair_nr) const
 { short f;      // defined to be short in the man page for pair_content
   short b;      // defined to be short in the man page for pair_content
 
@@ -998,7 +1004,7 @@ COLOUR_TYPE cpair::fg(const PAIR_TYPE pair_nr) const
     \param  pair_nr     number of the pair
     \return             the background colour of the pair number <i>pair_nr</i>
 */
-COLOUR_TYPE cpair::bg(const PAIR_TYPE pair_nr) const
+const COLOUR_TYPE cpair::bg(const PAIR_TYPE pair_nr) const
 { short f;      // defined to be short in the man page for pair_content
   short b;      // defined to be short in the man page for pair_content
 
@@ -1014,7 +1020,7 @@ COLOUR_TYPE cpair::bg(const PAIR_TYPE pair_nr) const
     \param  str     name of a colour
     \return         the colour corresponding to <i>str</i>
 */
-COLOUR_TYPE string_to_colour(const string& str)
+const COLOUR_TYPE string_to_colour(const string& str)
 { static const map<string, COLOUR_TYPE> colour_map { { "BLACK"s,   COLOUR_BLACK },
                                                      { "BLUE"s,    COLOUR_BLUE },
                                                      { "CYAN"s,    COLOUR_CYAN },

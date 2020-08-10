@@ -38,8 +38,6 @@ class rate_meter
 {
 protected:
 
-  using VALUE_TYPE = std::pair<unsigned int /* n_qsos */, unsigned int /* points */>;
-
   std::map<time_t /* epoch time */, std::pair<unsigned int /* n_qsos */, unsigned int /* points */> > _data;    ///< number of QSOs and points at a particular time
 
   pt_mutex _rate_mutex;                                  ///< In order to lock the object
@@ -52,7 +50,7 @@ public:
     \param  np  number of points at epoch <i>t</i>
     \return     Whether insertion was successful
 */
-  inline bool insert(const time_t t, const unsigned int nq, const unsigned int np)
+  inline const bool insert(const time_t t, const unsigned int nq, const unsigned int np)
   { SAFELOCK(_rate);
     return _data.insert( { t, { nq, np } } ).second;
   }
@@ -62,7 +60,7 @@ public:
     \param  p   number of qsos and points at epoch <i>t</i>
     \return     Whether insertion was successful
 */
-  inline bool insert(const time_t t, const std::pair<unsigned int, unsigned int>& p)
+  inline const bool insert(const time_t t, const std::pair<unsigned int, unsigned int>& p)
   { SAFELOCK(_rate);
     return _data.insert( { t, p } ).second;
   }
@@ -74,13 +72,13 @@ public:
 
     Assumes that the number of QSOs is one greatert han the current number in <i>_data</i>
 */
-  bool insert(const time_t t, const unsigned int np)
+  const bool insert(const time_t t, const unsigned int np)
   { SAFELOCK(_rate);
     return _data.insert( { t, { (_data.size() + 1), np } } ).second;
   }
 
 /// number of values in <i>_data</i>
-  inline size_t size(void)
+  inline const size_t size(void)
   { SAFELOCK(_rate);
     return _data.size();
   }
@@ -92,13 +90,13 @@ public:
   }
 
 /// Return the number of QSOs at the current epoch
-  inline unsigned int current_qsos(void)
+  inline const unsigned int current_qsos(void)
   { SAFELOCK(_rate);
     return (_data.empty() ? 0 : (prev(_data.cend())->second).first);
   }
 
 /// Return the number of points at the current epoch
-  inline unsigned int current_score(void)
+  inline const unsigned int current_score(void)
   { SAFELOCK(_rate);
 
     return (_data.empty() ? 0 : (prev(_data.cend())->second).second);
@@ -107,18 +105,19 @@ public:
 /*! \brief      Return the number of QSOs and points at the current epoch
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-  /* std::pair<unsigned int, unsigned int> */ VALUE_TYPE current_qsos_and_score(void);
+  const std::pair<unsigned int, unsigned int> current_qsos_and_score(void);
 
 /// Return the number of QSOs at the epoch <i>t</i>
-  unsigned int qsos(const time_t t);
+  const unsigned int qsos(const time_t t);
 
 /// Return the number of points at the epoch <i>t</i>
-  unsigned int score(const time_t t);
+  const unsigned int score(const time_t t);
 
 /*! \brief      Return the number of QSOs and points at the epoch <i>t</i>
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-  std::pair<unsigned int, unsigned int> qsos_and_score(const time_t t);
+  const std::pair<unsigned int, unsigned int> qsos_and_score(const time_t t);
+
 
 /*! \brief                          Return the difference in number of QSOs and points between now and some time in the past
     \param  seconds_in_past         number of seconds in the past (i.e., from now) for which the result is desired
@@ -129,10 +128,10 @@ public:
     between now and the time represented by <i>seconds_in_past</i>. If <i>normalisation_period</i> is not zero,
     then normalises the differences to per <i>normalisation_rate</i> seconds.
 */
-  std::pair<unsigned int, unsigned int> calculate_rate(const int seconds_in_past, const unsigned int normalisation_period = 3600);
+  const std::pair<unsigned int, unsigned int> calculate_rate(const int seconds_in_past, const unsigned int normalisation_period = 3600);
 
 /// convert to printable string
-  std::string to_string(void);
+  const std::string to_string(void);
 
 /// serialize using boost
   template<typename Archive>

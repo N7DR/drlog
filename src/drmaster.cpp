@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: drmaster.cpp 155 2020-04-01 18:45:34Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,7 @@ using namespace std;
 
     <i>posn</i> is updated to point at the start of the next call
 */
-string master_dta::_get_call(const string& contents, uint32_t& posn) const
+const string master_dta::_get_call(const string& contents, uint32_t& posn) const
 { string rv;
 
   while ((posn < contents.length()) and static_cast<int>(contents[posn]) != 0)
@@ -181,7 +181,7 @@ trmaster_line::trmaster_line(const string& line)
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
 */
-string trmaster_line::to_string(void) const
+const string trmaster_line::to_string(void) const
 { string rv { call() };
 
   if (!section().empty())
@@ -234,7 +234,7 @@ string trmaster_line::to_string(void) const
 
     New values (i.e., values in <i>trml</i>) take precedence if there's a conflict
 */
-trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
+const trmaster_line trmaster_line::operator+(const trmaster_line& trml) const
 { trmaster_line rv(*this);                                  // copy the old line
 
 // check that the calls match
@@ -334,7 +334,7 @@ control characters are:
 
     Updates <i>posn</i> to point to the start of the next call
 */
-trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
+const trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& posn)
 { constexpr int CTRL_Y { 25 };
 
   string callsign;
@@ -390,73 +390,85 @@ trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& pos
        case 9 :             // ctrl-I
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { ituzone += contents[posn++]; }
+          { ituzone += contents[posn++];
+          }
           break;
 
        case 11 :             // ctrl-K
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { check += contents[posn++]; }
+          { check += contents[posn++];
+          }
           break;
 
        case 14 :             // ctrl-N
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { name += contents[posn++]; }
+          { name += contents[posn++];
+          }
           break;
 
        case 15 :             // ctrl-O
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { oldcall += contents[posn++]; }
+          { oldcall += contents[posn++];
+          }
           break;
 
        case 17 :             // ctrl-Q
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { qth += contents[posn++]; }
+          { qth += contents[posn++];
+          }
           break;
 
        case 19 :             // ctrl-S
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { speed += contents[posn++]; }
+          { speed += contents[posn++];
+          }
           break;
 
        case 20 :             // ctrl-T
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { ten_ten += contents[posn++]; }
+          { ten_ten += contents[posn++];
+          }
           break;
 
        case 21 :             // ctrl-U
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_1 += contents[posn++]; }
+          { user_1 += contents[posn++];
+          }
           break;
 
        case 22 :             // ctrl-V
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_2 += contents[posn++]; }
+          { user_2 += contents[posn++];
+          }
           break;
 
        case 23 :             // ctrl-W
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_3 += contents[posn++]; }
+          { user_3 += contents[posn++];
+          }
           break;
 
        case 24 :             // ctrl-X
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_4 += contents[posn++]; }
+          { user_4 += contents[posn++];
+          }
           break;
 
        case 25 :             // ctrl-Y
           ++posn;
           while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_5 += contents[posn++]; }
+          { user_5 += contents[posn++];
+          }
           break;
 
        default:
@@ -518,7 +530,7 @@ trmaster::trmaster(const string& filename)
       if (_records.find(call) != _records.end())
         record += _records[call];
 
-      _records.insert( { call, record } );
+      _records.insert(make_pair(call, record));
     }
   }
   else              // not binary
@@ -532,10 +544,12 @@ trmaster::trmaster(const string& filename)
 }
 
 // all the calls (in alphabetical order)
-vector<string> trmaster::calls(void) const
+const vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
-  FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
+//  for (unordered_map<string, trmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
+  for (const auto& rec : _records)
+    rv.push_back(rec.first);
 
   sort(rv.begin(), rv.end());
 
@@ -569,7 +583,7 @@ r = SKCC state/province/country
 
     Returns empty string if no field has the indicator <i>field_indicator</i>
 */
-string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
+const string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
 { for (vector<string>::const_iterator cit = fields.begin(); cit != fields.end(); ++cit)
   { if (starts_with(*cit, field_indicator))
       return (cit->substr(field_indicator.length()));
@@ -622,7 +636,7 @@ drmaster_line::drmaster_line(const string& line_or_call)
 }
 
 /// convert to string
-string drmaster_line::to_string(void) const
+const string drmaster_line::to_string(void) const
 { string rv;
 
   rv += call();
@@ -702,7 +716,7 @@ string drmaster_line::to_string(void) const
 }
 
 // merge with another drmaster_line; new values take precedence if there's a conflict
-drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
+const drmaster_line drmaster_line::operator+(const drmaster_line& drml) const
 { if (call() != drml.call())
     return *this;
 
@@ -813,6 +827,10 @@ void drmaster::_prepare_from_file_contents(const string& contents)
 */
 drmaster::drmaster(const string& filename)
 { if (!filename.empty())
+//    return;
+//
+//  const string contents      { read_file(filename) };      // throws exception if fails
+//
     _prepare_from_file_contents(read_file(filename));      // throws exception if fails
 }
 
@@ -825,6 +843,10 @@ drmaster::drmaster(const string& filename)
 */
 drmaster::drmaster(const vector<string>& path, const string& filename)
 { if (!filename.empty())
+//    return;
+//
+//  const string         contents { read_file(path, filename) };      // throws exception if fails
+//
     _prepare_from_file_contents(read_file(path, filename));      // throws exception if fails
 }
 
@@ -835,6 +857,10 @@ drmaster::drmaster(const vector<string>& path, const string& filename)
 */
 void drmaster::prepare(const string& filename)
 { if (!filename.empty())
+//    return;
+//
+//  const string         contents { read_file(filename) };      // throws exception if fails
+//
     _prepare_from_file_contents(read_file(filename));      // throws exception if fails
 }
 
@@ -846,11 +872,15 @@ void drmaster::prepare(const string& filename)
 */
 void drmaster::prepare(const vector<string>& path, const string& filename)
 { if (!filename.empty())
+//    return;
+//
+//  const string         contents { read_file(path, filename) };      // throws exception if fails
+//
     _prepare_from_file_contents(read_file(path, filename));      // throws exception if fails
 }
 
 /// all the calls (in alphabetical order)
-vector<string> drmaster::calls(void) const
+const vector<string> drmaster::calls(void) const
 { vector<string> rv;
 
   for (auto cit = _records.cbegin(); cit != _records.cend(); ++cit)
@@ -862,7 +892,7 @@ vector<string> drmaster::calls(void) const
 }
 
 /// format for output
-string drmaster::to_string(void) const
+const string drmaster::to_string(void) const
 { vector<string> lines;
 
 //  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
@@ -895,7 +925,7 @@ void drmaster::operator+=(const drmaster_line& drml)
 { const string call { drml.call() };
 
   if (_records.find(call) == _records.end())        // no pre-existing record
-    _records.insert( { call, drml } );
+    _records.insert(make_pair(call, drml));
   else
   { drmaster_line old_drml { _records[call] };
 
@@ -903,4 +933,17 @@ void drmaster::operator+=(const drmaster_line& drml)
     _records.erase(call);
     _records.insert( { call, old_drml });
   }
+
+}
+
+/*! \brief          Return the record for a particular call
+    \param  call    target callsign
+    \return         the record corresponding to <i>call</i>
+
+    Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
+*/
+const drmaster_line drmaster::operator[](const string& call) const
+{ const auto cit { _records.find(call) };
+
+  return (cit == _records.cend() ? drmaster_line() : cit->second);
 }

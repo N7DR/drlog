@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: socket_support.cpp 157 2020-05-21 18:14:13Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -389,8 +389,8 @@ void tcp_socket::send(const std::string& msg)
 /*! \brief      Simple receive
     \return     received string
 */
-string tcp_socket::read(void)
-{ constexpr unsigned int BUFLEN { 4096 };
+const string tcp_socket::read(void)
+{ /* static */ constexpr unsigned int BUFLEN { 4096 };
 
   char cp[BUFLEN];
   string rv;
@@ -419,7 +419,7 @@ string tcp_socket::read(void)
 
     Throws an exception if the read times out
 */
-string tcp_socket::read(const unsigned long timeout_secs)
+const string tcp_socket::read(const unsigned long timeout_secs)
 { string rv;
 
   struct timeval timeout { static_cast<time_t>(timeout_secs), 0L };
@@ -568,7 +568,7 @@ void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, c
 
     Throws socket_support_error(SOCKET_TIMEOUT) if the socket times out
 */
-string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply)
+const string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply)
 {
 // wait for response
   struct timeval timeout { /* sec */ timeout_in_tenths / 10, /* usec */ (timeout_in_tenths - timeout.tv_sec * 10) * 100000L };
@@ -657,7 +657,8 @@ void flush_read_socket(SOCKET& sock)
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr)
+//const sockaddr_storage socket_address(const unsigned long ip_address, const short port_nr)
+const sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr)
 { sockaddr_storage rv;
 
   sockaddr_in* sinp { (sockaddr_in*)(&rv) };
@@ -675,7 +676,7 @@ sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr)
   
     Throws socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL) if <i>ss</i> is not an IPv4 address
 */
-sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
+const sockaddr_in to_sockaddr_in(const sockaddr_storage& ss)
 { sockaddr_in rv;
 
   if (ss.ss_family != AF_INET)

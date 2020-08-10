@@ -34,6 +34,31 @@ void command_line::_init(void)
     _arg[n] = (string)(_argv[n]);
 }
 
+/*! \brief          Constructor
+    \param  argc    number of arguments
+    \param  argv    pointer to array of individual arguments
+*/
+//command_line::command_line(int argc, char** argv) :
+//  _argc(argc),
+//  _argv((char**)argv)
+//{ _init();
+//}
+
+/*! \brief      Copy constructor
+    \param  cl  object to be copied
+*/
+//command_line::command_line(const command_line& cl) :
+//  _argc(cl._argc),
+//  _argv(cl._argv)
+//{ _init();
+//}
+
+/*! \brief  Destructor
+*/
+//command_line::~command_line(void)
+//{ delete [] _arg;
+//}
+
 /// command_line = command_line
 void command_line::operator=(const command_line& cl)
 { _argc = cl._argc;
@@ -48,7 +73,7 @@ void command_line::operator=(const command_line& cl)
 /*! \brief  Obtain the base name of the program
     \return The base name of the program (i.e., with no "/" characters)
 */
-string command_line::base_program_name(void) const
+const string command_line::base_program_name(void) const
 { string rv { program_name() };
 
   const size_t posn { rv.find_last_of("/"s) };
@@ -65,7 +90,7 @@ string command_line::base_program_name(void) const
 
     If the value of <i>n</i> does not correspond to a parameter that was actually present, this functions throws an x_command_line_invalid_parameter()
 */
-string command_line::parameter(const unsigned int n) const
+const string command_line::parameter(const unsigned int n) const
 { if (n >= _argc)
     throw x_command_line_invalid_parameter();
 
@@ -133,7 +158,7 @@ void command_line::toupper(const unsigned int n)
 
     A "value" is something like a parameter to a -xxx option. If, for example, value_present("-xxx") is TRUE, it means that -xxx is present, and a value follows it
 */
-bool command_line::value_present(const string& s) const
+const bool command_line::value_present(const string& s) const
 { bool rv { false };
   
   for (int n = 1; n < n_parameters(); n++)    // < because last might be the actual value
@@ -148,7 +173,7 @@ bool command_line::value_present(const string& s) const
 
     A "value" is something like a parameter to a -xxx option. If, for example, the command line contains "-xxx burble", then value("-xxx") will return "burble"
 */
-string command_line::value(const string& s) const
+const string command_line::value(const string& s) const
 { if (!value_present(s))
     return string();
 
@@ -168,7 +193,7 @@ string command_line::value(const string& s) const
 
     A "parameter" is an actual parameter that appears on the command line.
 */
-bool command_line::parameter_present(const string& s) const
+const bool command_line::parameter_present(const string& s) const
 { bool rv { false };
   
   for (int n = 1; n <= n_parameters(); n++)

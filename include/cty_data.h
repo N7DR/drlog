@@ -1,4 +1,4 @@
-// $Id: cty_data.h 161 2020-07-31 16:19:50Z  $
+// $Id: cty_data.h 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -33,11 +33,6 @@
 /// country lists
 enum class COUNTRY_LIST { DXCC,     ///< DXCC list
                           WAEDC     ///< DARC WAEDC list
-                        };
-
-/// alterntive prexies and alternative callsigns are /almost/ the same
-enum class ALTERNATIVES { CALLSIGNS,
-                          PREFIXES
                         };
                        
 // error numbers
@@ -135,23 +130,23 @@ class alternative_country_info
 protected:
 
   std::string  _country;                ///< canonical country prefix
-  unsigned int _cq_zone  { 0 };         ///< alternative CQ zone
+  unsigned int _cq_zone;                ///< alternative CQ zone
   std::string  _identifier;             ///< the alternative prefix or callsign
-  unsigned int _itu_zone { 0 };         ///< alternative ITU zone
+  unsigned int _itu_zone;               ///< alternative ITU zone
 
 public:
 
-/*! \brief                      Construct from a string and a canonical country prefix
+/*! \brief                      Construct from a string and a country ID
     \param  record              record from which to construct the alternative information
     \param  canonical_prefix    canonical country prefix
 
-    <i>record</i> looks something like "=G4AMJ(14)[28]" or like "3H0(23)[42], where the delimited information
+    <i>record</i> looks something like "G4AMJ(14)[28]", where the delimited information
     is optional
 */
   alternative_country_info(const std::string& record, const std::string& canonical_prefix = std::string());
 
 /// destructor
-//  inline virtual ~alternative_country_info(void) = default;
+  inline virtual ~alternative_country_info(void) = default;
 
   READ(country);               ///< canonical country prefix
   READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
@@ -185,17 +180,17 @@ protected:
 
   using ACI_DBTYPE = std::unordered_map<std::string, alternative_country_info>;
 
-  ACI_DBTYPE    _alt_callsigns;         ///< alternative callsigns used by this country
-  ACI_DBTYPE    _alt_prefixes;          ///< alternative prefixes used by this country
-  std::string   _continent;             ///< two-letter abbreviation for continent
-  std::string   _country_name;          ///< official name of the country
-  unsigned int  _cq_zone;               ///< CQ zone
-  unsigned int  _itu_zone;              ///< ITU zone
-  float         _latitude;              ///< latitude in degrees (+ve north)
-  float         _longitude;             ///< longitude in degrees (+ve west)
-  std::string   _prefix;                ///< official DXCC prefix, in upper case
-  int           _utc_offset;            ///< local-time offset from UTC, in minutes
-  bool          _waedc_country_only;    ///< Is this only a country in the WAEDC (DARC) list?
+  ACI_DBTYPE   _alt_callsigns;         ///< alternative callsigns used by this country
+  ACI_DBTYPE   _alt_prefixes;          ///< alternative prefixes used by this country
+  std::string                                       _continent;             ///< two-letter abbreviation for continent
+  std::string                                       _country_name;          ///< official name of the country
+  unsigned int                                      _cq_zone;               ///< CQ zone
+  unsigned int                                      _itu_zone;              ///< ITU zone
+  float                                             _latitude;              ///< latitude in degrees (+ve north)
+  float                                             _longitude;             ///< longitude in degrees (+ve west)
+  std::string                                       _prefix;                ///< official DXCC prefix, in upper case
+  int                                               _utc_offset;            ///< local-time offset from UTC, in minutes
+  bool                                              _waedc_country_only;    ///< Is this only a country in the WAEDC (DARC) list?
 
 public:
   
@@ -208,7 +203,7 @@ public:
   cty_record(const std::string& record);
   
 /// destructor
-//  inline virtual ~cty_record(void) = default;
+  inline virtual ~cty_record(void) = default;
 
   READ(alt_callsigns);          ///< alternative callsigns used by this country
   READ(alt_prefixes);           ///< alternative prefixes used by this country
@@ -223,7 +218,7 @@ public:
   READ(waedc_country_only);     ///< Is this only a country in the WAEDC (DARC) list?
 
 /// return the canonical prefix for this country; prefixes such as "GM/s" or "JD/o" are rendered in upper case
-  inline std::string canonical_prefix(void) const
+  inline const std::string canonical_prefix(void) const
     { return prefix(); }
     
 /*! \brief          Remove an alternative callsign
@@ -246,18 +241,31 @@ public:
     \param  call    string to check
     \return         whether <i>call</i> is an alternative callsign
 */
-  inline bool is_alternative_callsign(const std::string& call)
+  inline const bool is_alternative_callsign(const std::string& call)
     { return (_alt_callsigns.find(call) != _alt_callsigns.end()); }
 
 /*! \brief  is a string an alternative prefix?
     \param  pfx    prefix to check
     \return        whether <i>pfx</i> is an alternative prefix
 */
-  inline bool is_alternative_prefix(const std::string& pfx)
+  inline const bool is_alternative_prefix(const std::string& pfx)
     { return (_alt_prefixes.find(pfx) != _alt_prefixes.end()); }
     
   friend class location_database;           // in order to maintain type of ACI_DBTYPE across classes
 };
+
+/*! \brief          Write a <i>map<key, value></i> object to an output stream
+    \param  ost     output stream
+    \param  mp      object to write
+    \return         the output stream
+*/
+//template <class T1, class T2>
+//std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
+//{ for (typename std::map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
+//    ost << "map[" << cit->first << "]: " << cit->second << std::endl;
+//
+//  return ost;
+//}
 
 /*! \brief          Write a <i>cty_record</i> object to an output stream
     \param  ost     output stream
@@ -272,10 +280,10 @@ std::ostream& operator<<(std::ostream& ost, const cty_record& rec);
     \brief  All the data from a CTY.DAT file
 */
 
-class cty_data : public std::vector<cty_record>
+class cty_data
 {
 protected:
-//  std::vector<cty_record>  _data;        ///< the (raw) data
+  std::vector<cty_record>  _data;        ///< the (raw) data
 
 // all the alternative calls and prefixes (these are also maintained on a per-record basis)
   std::map<std::string, alternative_country_info> _alt_callsigns;    ///< key = alternative callsign
@@ -295,15 +303,15 @@ public:
   cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
 
 /// destructor
-//  inline virtual ~cty_data(void) = default;
+  inline virtual ~cty_data(void) = default;
     
 /// how many countries are present?
   inline unsigned int n_countries(void) const
-    { return /* _data. */size(); }
+    { return _data.size(); }
   
-/// return a record by number, wrt 0, with range checking
-  inline cty_record operator[](const unsigned int n) const
-    { return /* _data.*/ this->at(n); }
+/// return a record by number, wrt 0
+  inline const cty_record operator[](const unsigned int n) const
+    { return _data.at(n); }
 };
 
 // -----------  russian_data_per_substring  ----------------
@@ -410,7 +418,7 @@ public:
   { }
 
 /// destructor
-//  inline virtual ~location_info(void) = default;
+  inline virtual ~location_info(void) = default;
 
 /// location_info == location_info
   const bool operator==(const location_info& li) const;
@@ -431,13 +439,7 @@ public:
     \param  lat     latitude in degrees (+ve north)
     \param  lon     longitude in degrees (+ve west)
 */
-  void latitude_longitude(const float lat, const float lon);
-
-/*! \brief          Set both CQ and ITU zones at once
-    \param  cqz     CQ zone
-    \param  ituz    ITU zone
-*/
-  void zones(const unsigned int cqz, const unsigned int ituz);
+  void latitude_longitude(const float lat, const float lon);    // set both latitude and longitude at once
 
 /// archive using boost
    template<typename Archive>
@@ -469,7 +471,171 @@ std::ostream& operator<<(std::ostream& ost, const location_info& info);
 
     Currently this supports just VE, VK and W for CQ zones, and VE for ITU zones
  */
-location_info guess_zones(const std::string& call, const location_info& li);
+const location_info guess_zones(const std::string& call, const location_info& li);
+
+#if 0
+// -----------  drlog_qth_database_record  ----------------
+
+/*! \class  drlog_qth_database_record
+    \brief  A record from the drlog-specific QTH-override database
+
+    I believe that this is currently unused.
+*/
+
+class drlog_qth_database_record
+{
+protected:
+
+  std::string         _id;          ///< ID for the record (typically, a callsign)
+  value<unsigned int> _area;        ///< call area
+  value<unsigned int> _cq_zone;     ///< CQ zone
+  value<float>        _latitude;    ///< latitude in degrees (+ve north)
+  value<float>        _longitude;   ///< longitude in degrees (+ve west)
+  
+public:
+  
+  READ_AND_WRITE(id);               ///< ID for the record (typically, a callsign)
+    
+/*! \brief      Get the call area
+    \return     the call area
+*/
+  inline const unsigned int get_area(const unsigned int def) const
+    { return _area.get(def); }
+    
+/*! \brief          Set the call area
+    \param  val     new value of call area
+*/
+  inline void set_area(const unsigned int val)
+    { _area.set(val); }
+
+/*! \brief      Get the CQ zone
+    \return     the CQ zone
+*/
+  inline const unsigned int get_cq_zone(const unsigned int def) const
+    { return _cq_zone.get(def); }
+    
+/*! \brief          Set the CQ zone
+    \param  val     new value of CQ zone
+*/
+  inline void set_cq_zone(const unsigned int val)
+    { _cq_zone.set(val); }    
+
+/*! \brief      Get the latitude
+    \return     the latitude
+*/
+  inline const float get_latitude(const float def) const
+    { return _latitude.get(def); }
+    
+/*! \brief          Set the latitude
+    \param  val     new value of latitude
+*/
+  inline void set_latitude(const float val)
+    { _latitude.set(val); }
+
+/*! \brief      Get the longitude
+    \return     the longitude
+*/
+  inline const float get_longitude(const float def) const
+    { return _longitude.get(def); }
+
+/*! \brief          Set the longitude
+    \param  val     new value of longitude
+*/
+  inline void set_longitude(const float val)
+    { _longitude.set(val); }    
+
+/// serialise
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version)
+    { ar & _id
+         & _area
+         & _cq_zone
+         & _latitude
+         & _longitude;
+    }
+};
+#endif
+
+#if 0
+// -----------  drlog_qth_database  ----------------
+
+/*! \class  drlog_qth_database
+    \brief  drlog-specific QTH-override database
+*/
+
+class drlog_qth_database
+{
+protected:
+  
+  std::vector<drlog_qth_database_record> _db;    ///< the database
+    
+public:
+  
+/// default constructor
+  drlog_qth_database(void) = default;
+
+/// construct from filename
+  drlog_qth_database(const std::string& filename);
+  
+/// return all the entries with a particular ID
+  const std::vector<drlog_qth_database_record> id(const std::string& id_target) const;
+
+/*! \brief                      Get the CQ zone corresponding to a call
+    \param  call                callsign
+    \param  initial_cq_zone     default value of CQ zone, if none is found
+    \return                     CQ zone corresponding to <i>call</i>
+*/
+  const unsigned int cq_zone(const std::string& call, const unsigned int initial_cq_zone) const;
+
+/*! \brief                      Get the CQ zone corresponding to a call area in a country
+    \param  country             country identifier
+    \param  call_area           call area (0 - 9)
+    \param  initial_cq_zone     default value of CQ zone, if none is found
+    \return                     CQ zone corresponding to call area <i>call_area</i> in country <i>country</i>
+*/
+  const unsigned int cq_zone(const std::string& country, const unsigned int call_area, const unsigned int initial_cq_zone) const;
+
+/*! \brief                      Get the latitude corresponding to a call
+    \param  call                callsign
+    \param  initial_latitude    default value of latitude, if none is found
+    \return                     latitude corresponding to <i>call</i>
+*/
+  const float latitude(const std::string& call, const float initial_latitude) const;
+
+/*! \brief                      Get the latitude corresponding to a call area in a country
+    \param  country             country identifier
+    \param  call_area           call area (0 - 9)
+    \param  initial_latitude    default value of latitude, if none is found
+    \return                     latitude corresponding to call area <i>call_area</i> in country <i>country</i>
+*/
+  const float latitude(const std::string& country, const unsigned int call_area, const float initial_latitude) const;
+ 
+/*! \brief                      Get the longitude corresponding to a call
+    \param  call                callsign
+    \param  initial_longitude   default value of longitude, if none is found
+    \return                     longitude in degrees corresponding to <i>call</i> (+ve west)
+*/
+  const float longitude(const std::string& call, const float initial_longitude) const;
+
+/*! \brief                      Get the longitude corresponding to a call area in a country
+    \param  country             country identifier
+    \param  call_area           call area (0 - 9)
+    \param  initial_longitude   default value of longitude, if none is found
+    \return                     longitude corresponding to call area <i>call_area</i> in country <i>country</i>
+*/
+  const float longitude(const std::string& country, const unsigned int call_area, const float initial_longitude) const;
+  
+/// number of records in the database
+  inline const size_t size(void) const
+    { return _db.size(); }
+
+/// serialise
+  template<typename Archive>
+  void serialize(Archive& ar, const unsigned version)
+    { ar & _db;
+    }
+};
+#endif
 
 // -----------  location_database  ----------------
 
@@ -511,14 +677,6 @@ protected:
 //  void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
   void _insert_alternatives(const location_info& info, const ACI_DBTYPE& alternatives);
 
-/*! \brief              Process alternatives from a record
-    \param  rec         the record to process
-    \param  alt_type    type of alternatives to process
-*/
-  void _process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type);
-
-//  void _insert_into_database(const cty_record& rec, LOCATION_DBTYPE& target_database);
-
   mutable pt_mutex _location_database_mutex;  ///< to make location_database objects thread-safe;
    
 public:
@@ -545,9 +703,6 @@ public:
 */
 //  location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
 
-/// copy constructor
-  location_database(const location_database&) = delete;
-
 /*! \brief                  Prepare a default-constructed object for use
     \param  cty             cty.dat data
     \param  country_list    type of country list
@@ -568,7 +723,7 @@ public:
   void add_russian_database(const std::vector<std::string>& path, const std::string& filename);
 
 /// how large is the main database?
-  inline size_t size(void) const
+  inline const size_t size(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db.size() )); }
 
 /*! \brief          Add a call to the alt_call database
@@ -584,11 +739,11 @@ public:
     \param  callpart    call (or partial call)
     \return             location information corresponding to <i>call</i>
 */
-  location_info info(const std::string& callpart) const;
+  const location_info info(const std::string& callpart) const;
   
 /// return the database
 //  inline const std::map<std::string, location_info> db(void) const
-  inline decltype(location_database::_db) db(void) const
+  inline const decltype(location_database::_db) db(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
 /// create a set of all the canonical prefixes for countries
@@ -596,27 +751,27 @@ public:
   auto countries(void) const -> std::unordered_set<std::string>;
 
 /// create a set of all the canonical prefixes for a particular continent
-  std::unordered_set<std::string> countries(const std::string& cont_target) const;
+  const std::unordered_set<std::string> countries(const std::string& cont_target) const;
   
 /*! \brief              Get official name of the country associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             official name of the country corresponding to <i>callpart</i>
 */
-  inline std::string country_name(const std::string& callpart) const
+  inline const std::string country_name(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).country_name() )); }
 
 /*! \brief              Get CQ zone associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             CQ zone corresponding to <i>callpart</i>
 */
-  inline unsigned int cq_zone(const std::string& callpart) const
+  inline const unsigned int cq_zone(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).cq_zone() )); }
 
 /*! \brief              Get ITU zone associated with a call or partial call
     \param  callpart    call (or partial call)
     \return             ITU zone corresponding to <i>callpart</i>
 */
-  inline unsigned int itu_zone(const std::string& callpart) const
+  inline const unsigned int itu_zone(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).itu_zone() )); }
 
 /*! \brief              Get the continent associated with a call or partial call
@@ -625,35 +780,35 @@ public:
 
     The returned continent is in the form of the two-letter code
 */
-  inline std::string continent(const std::string& callpart) const
+  inline const std::string continent(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).continent() )); }
 
 /*! \brief              Get the latitude for a call or partial call
     \param  callpart    call (or partial call)
     \return             latitude (in degrees) corresponding to <i>callpart</i> (+ve north)
 */
-  inline float latitude(const std::string& callpart) const
+  inline const float latitude(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).latitude() )); }
 
 /*! \brief              Get the longitude for a call or partial call
     \param  callpart    call (or partial call)
     \return             longitude (in degrees) corresponding to <i>callpart</i> (+ve west)
 */
-  inline float longitude(const std::string& callpart) const
+  inline const float longitude(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).longitude() )); }
 
 /*! \brief              Get the UTC offset for a call or partial call
     \param  callpart    call (or partial call)
     \return             UTC offset (in minutes) corresponding to <i>callpart</i>
 */
-  inline int utc_offset(const std::string& callpart) const
+  inline const int utc_offset(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).utc_offset() )); }
 
 /*! \brief              Get the canonical prefix for a call or partial call
     \param  callpart    call (or partial call)
     \return             canonical prefix corresponding to <i>callpart</i>
 */
-  inline std::string canonical_prefix(const std::string& callpart) const
+  inline const std::string canonical_prefix(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).canonical_prefix() )); }
 
 /*! \brief              Get name of the Russian district for a particular call or partial call
@@ -662,7 +817,7 @@ public:
 
     Returns the empty string if <i>callpart</i> is not Russian
 */
-  inline std::string region_name(const std::string& callpart) const
+  inline const std::string region_name(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_name() )); }
 
 /*! \brief              Get two-letter abbreviation for the Russian district for a particular call or partial call
@@ -671,7 +826,7 @@ public:
 
     Returns the empty string if <i>callpart</i> is not Russian
 */
-  inline std::string region_abbreviation(const std::string& callpart) const
+  inline const std::string region_abbreviation(const std::string& callpart) const
     { return (SAFELOCK_GET( _location_database_mutex, info(callpart).region_abbreviation() )); }
 
 /// serialise

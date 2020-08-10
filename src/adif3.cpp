@@ -5,13 +5,10 @@
 
 using namespace std;
 
-/*! \brief  place values into standardised forms as necessary
-
-    Assumes that names are in upper case
-*/
+// assume name is UC; fix values
 void adif3_field::_normalise(void)
 { static const string      zero_zero { "00"s };
-  static const set<string> uc_fields { "CALL"s, "MODE"s, "STATION_CALLSIGN"s };   ///< fields that have UC values
+  static const set<string> uc_values { "CALL"s, "MODE"s, "STATION_CALLSIGN"s };
   
   switch (_type)
   { case ADIF3_DATA_TYPE::ENUMERATION_BAND :
@@ -40,19 +37,17 @@ void adif3_field::_normalise(void)
     default :
       break;
   }
-
-// force some values into upper case
-  if (uc_fields > _name)
+  
+  if (uc_values < _name)
   { _value = to_upper(_value);
     return;
   }
 }
 
-/// verify that values are legal
 void adif3_field::_verify(void) const
 { switch (_type)
-  { case ADIF3_DATA_TYPE::DATE :                                      // YYYYMMDD
-    { if (_value.find_first_not_of(DIGITS) != string::npos)
+  { case ADIF3_DATA_TYPE::DATE :          // YYYYMMDD
+    { if (_value.find_first_not_of("01234567879"s) != string::npos)
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
         
       if (_value.length() != 8)
@@ -87,13 +82,13 @@ void adif3_field::_verify(void) const
     break;
       
     case ADIF3_DATA_TYPE::ENUMERATION_BAND :
-    { if (!(_ENUMERATION_BAND > to_lower(_value)))
+    { if (!(_ENUMERATION_BAND < to_lower(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
 
-    case ADIF3_DATA_TYPE::ENUMERATION_DXCC_ENTITY_CODE :
-    { if (_value.find_first_not_of(DIGITS) != string::npos)                         // check that it's an integer
+    case ADIF3_DATA_TYPE::ENUMERATION_DXCC_ENTITY_CODE :  // first treat as an integer
+    { if (_value.find_first_not_of("01234567879"s) != string::npos)
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid character in "s + _name + ": "s + _value);
 
       if (const int code { from_string<int>(_value) }; _ENUMERATION_DXCC_ENTITY_CODE.find(code) == _ENUMERATION_DXCC_ENTITY_CODE.cend())
@@ -102,13 +97,13 @@ void adif3_field::_verify(void) const
     break;
     
     case ADIF3_DATA_TYPE::ENUMERATION_MODE :
-    { if (!(_ENUMERATION_MODE > to_upper(_value)))
+    { if (!(_ENUMERATION_MODE < to_upper(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
  
     case ADIF3_DATA_TYPE::ENUMERATION_QSL_RECEIVED :
-    { if (!( _ENUMERATION_QSL_RECEIVED > to_upper(_value)))
+    { if (!( _ENUMERATION_QSL_RECEIVED < to_upper(_value)))
         throw adif3_error(ADIF3_INVALID_VALUE, "Invalid value in "s + _name + ": "s + _value);
     }
     break;
@@ -167,7 +162,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     break;
     
     case ADIF3_DATA_TYPE::POSITIVE_INTEGER :      // an unsigned sequence of one or more Digits representing a decimal integer that has a value greater than 0.  Leading zeroes are allowed. 
-    { if (_value.find_first_not_of(DIGITS) != string::npos)
+    { if (_value.find_first_not_of("01234567879"s) != string::npos)
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
 
 // CQZ : 1..40
@@ -191,7 +186,7 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
     case ADIF3_DATA_TYPE::TIME :          // HHMMSS or HHMM
     { const string& utc { _value };
       
-      if (utc.find_first_not_of(DIGITS) != string::npos)
+      if (utc.find_first_not_of("01234567879"s) != string::npos)
         throw adif3_error(ADIF3_INVALID_CHARACTER, "Invalid character in "s + _name + ": "s + _value);
  
       if ( (utc.length() != 4) and (utc.length() != 6) )
@@ -216,17 +211,10 @@ The fourth pair (extended square) encodes with base 10 and the digits "0" to "9"
   }
 }
 
-/*! \brief                  Construct from name and value
-    \param  field_name      name of field
-    \param  field_value     value of field
-
-    <i>field_name</i> is converted to upper case when stored as <i>_name</i>
-    <i>field_value</i> is validated and converted to standardised format (if applicable)
-*/
 adif3_field::adif3_field(const string& field_name, const string& field_value)
 { _name = (to_upper(field_name));
   
-  const auto it { _element_type.find(_name) };
+  const auto it = _element_type.find(_name);
 
   if (it == _element_type.end())
     throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name + " when creating ADIF3_FIELD with value: "s + field_value);
@@ -238,22 +226,22 @@ adif3_field::adif3_field(const string& field_name, const string& field_value)
   _normalise();
 }
 
-/*! \brief              Import name and value from string, and return location past the end of the used part of the string
-    \param  str         string from which to read
-    \param  start_posn  position in <i>str</i> at which to start parsing
-    \param  end_posn    one past the location at which to force and end to parsing, if necessary
-    \return             one past the last location to be used
-
-    Returns string::npos if reads past the end of <i>str</i>
-*/
 size_t adif3_field::import_and_eat(const std::string& str, const size_t start_posn, const size_t end_posn /* last char of <EOR> */)
-{ const auto posn_1 { str.find('<', start_posn) };
+{ size_t rv;
+  
+  const auto posn_1 { str.find('<', start_posn) };
 
   if (posn_1 == string::npos)        // could not find initial delimiter
     return string::npos;
+    
+//  if (posn_1 > end_posn)        // past the EOR?
+//    return posn_1;
       
-  const auto posn_2          { str.find('>', posn_1) };
-  const bool pointing_at_eor { (posn_2 == end_posn) };  
+  const auto posn_2 { str.find('>', posn_1) };
+  
+//  cout << "af, posn_2 = " << posn_2 << endl;
+  
+    const bool pointing_at_eor = (posn_2 == end_posn);  
 
   if (pointing_at_eor)
     return (posn_2 + 1);
@@ -262,6 +250,12 @@ size_t adif3_field::import_and_eat(const std::string& str, const size_t start_po
     return string::npos;
 
 // if it's the EOR, then jump out
+
+//  if (posn_1 > end_posn) or (posn_2 > end_posn)
+//    return posn_2;
+  
+//  cout << "af, posn_1 = " << posn_1 << ", posn_2 = " << posn_2 << endl;
+
   const string         descriptor_str { str.substr(posn_1 + 1, posn_2 - posn_1 -1) };
   const vector<string> fields         { split_string(descriptor_str, ":"s) };
 
@@ -276,52 +270,38 @@ size_t adif3_field::import_and_eat(const std::string& str, const size_t start_po
  
   const int    n_chars  { from_string<int>(fields[1]) };
   const string contents { str.substr(posn_2 + 1, n_chars) };
-  const size_t rv       { posn_2 + 1 + n_chars };        // eat the used text; should be one past the end of the value of this field
+  
+//  _value = contents;
+    
+ // cout << "_name = " << _name << ", _value = " << _value << endl;  
+    
+// eat the used text
+//    str = str.substr(posn_2 + 1 + n_chars);
+  rv = posn_2 + 1 + n_chars;        // should be one past the end of the value of this field
+  
+//  cout << "af: rv = " << rv << endl;
     
 // check validity
-  const auto it { _element_type.find(_name) };
+  const auto it = _element_type.find(_name);
 
   if (it == _element_type.end())
     throw adif3_error(ADIF3_UNKNOWN_TYPE, "Cannot find type for element: "s + _name);
     
   _type = it->second;
+  
   _value = contents;
     
   _verify();
   _normalise();
+ 
+//  cout << "af:import_and_eat() returning: " << rv << endl;
+//  cout << "char at that posn = " << str[rv] << endl;
   
   return rv;
 }  
 
-// ---------------------------------------------------  adif3_record -----------------------------------------
-
-/*! \brief          Convert a string to an int, assuming that the string contains just digits
-    \param  str     string to convert
-    \return         <i>str</i> rendered as an int
-
-    Result is valid ONLY if <i>str</i> contains only digits
-*/ 
-int adif3_record::_fast_string_to_int(const string& str) const
-{ static constexpr int zerochar { '0' };
-
-  int rv { 0 };
-
-  for (const char c : str)
-    rv = (rv * 10) + ((int)c - zerochar);
-
-  return rv; 
-}
-
-/*! \brief              Import record from string, and return location past the end of the used part of the string
-    \param  str         string from which to read
-    \param  posn        position in <i>str</i> at which to start parsing
-    \return             one past the last location to be used
-
-    Returns string::npos if reads past the end of <i>str</i>
-*/ 
 size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
-{ 
-// extract the text from the first "<" to the end of the first "eor"
+{ // extract the text from the first "<" to the end of the first "eor";
   const auto posn_1 { str.find('<', posn) };
 
   if (posn_1 == string::npos)        // could not find initial delimiter
@@ -332,33 +312,49 @@ size_t adif3_record::import_and_eat(const std::string& str, const size_t posn)
   if (posn_2 == string::npos)        // could not find end-of-record marker
     return string::npos;
   
+//  string record_str { str.substr(posn_1, posn_2 - posn_1 - 5) };
+  
   const size_t rv { ( (posn_2 + 1) >= str.length() ? string::npos : posn_2 + 1) };
+  
+//  cout << "rv = " << rv << endl;
+  
+//  cout << "char = " << str[posn_2] << endl;
   
   size_t start_posn { posn_1 };
   
   while (start_posn <= posn_2)
   { adif3_field element;
 
+//    cout << "start_posn before eating element = " << start_posn << endl;
+
     start_posn = element.import_and_eat(str, start_posn, posn_2);             // name is forced to upper case
     
+ //   cout << "start_posn after eating element = " << start_posn << endl;
+    
     if ( auto [it, inserted] = _elements.insert( { element.name(), element } ); !inserted)     // should always be inserted
+    { // https://stackoverflow.com/questions/2217878/c-stdset-update-is-tedious-i-cant-change-an-element-in-place/2217889
+      //auto node { _elements.extract(it) };
+      //node.value() = move(element.value());
+      //_elements.insert(move(node)); // insert the new one
       throw adif3_error(ADIF3_DUPLICATE_FIELD, "Duplicated field name: "s  + element.name());
+    }
+    
+//    cout << "end of loop; start_posn = " << start_posn << ", posn_2 = " << posn_2 << endl;
   }
+ 
+//  cout << "exited with start_posn = " << start_posn << ", returning rv = " << rv << endl;
+  
+//  exit(0);
   
   return rv;
 }
 
-/*! \brief      Convert to printable string
-    \return     the canonical textual representation of the record
-
-    Returns just the end-of-record marker if the record is empty.
-    Does not output import-only fields.
-*/
-string adif3_record::to_string(void) const
+// export
+const string adif3_record::to_string(void) const
 { string rv;
 
   for (const auto& element : _elements)
-  { if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only > dt ) )       // don't output if this type is import-only
+  { if (const ADIF3_DATA_TYPE dt { element.second.type() }; !( _import_only < dt ) )       // don't output if this type is import-only
     { switch (dt)
       { default :
           rv += element.second.to_string();    // output without any checks
@@ -371,17 +367,18 @@ string adif3_record::to_string(void) const
   return rv;
 }
 
-/*! \brief                  Set the value of a field (which does not have to be extant in the record)
-    \param  field_name      name of the field whose value is to be set
-    \param  field_value     value to be set
-    \return                 whether this was a new field
+const string adif3_record::value(const string& str) const               // str is field name
+{ const string uc = to_upper(str);
 
-    <i>field_name</i> is converted to upper case when stored as <i>_name</i>
-    <i>field_value</i> is validated and converted to standardised format (if applicable)
-*/
-bool adif3_record::value(const string& field_name, const string& field_value)
-{ const adif3_field element        { field_name, field_value };
-  const auto        [it, inserted] { _elements.insert( { element.name(), element } ) };
+  const auto cit = _elements.find(uc);
+
+  return ( (cit == _elements.cend()) ? string() : cit->second.value() );
+}
+
+const bool adif3_record::value(const string& field_name, const string& field_value)     // set value of a field, replacing if already exists, adding if it does not
+{ adif3_field element(field_name, field_value);
+  
+  const auto [it, inserted] = _elements.insert( { element.name(), element } );
  
   return inserted;
 }
@@ -391,7 +388,7 @@ bool adif3_record::value(const string& field_name, const string& field_value)
     \param  rec2   second record
     \return        whether <i>record1</i> is chronologically before <i>record2</i> 
 */
-bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
+const bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
 { if (rec1.date() < rec2.date())
     return true;
     
@@ -408,14 +405,8 @@ bool compare_adif3_records(const adif3_record& rec1, const adif3_record& rec2)
     \brief  all the ADIF3 records in a file
 */
 
-
-/*! \brief              Construct from file name
-    \param  filename    name of file to read
-
-    Throws exception if something goes wrong when reading the file
-*/
 adif3_file::adif3_file(const string& filename)
-{ const string contents { read_file(filename) };            // this might throw
+{ const string contents { read_file(filename) };
   
   size_t start_posn { skip_adif3_header(contents) };
   
@@ -431,12 +422,6 @@ adif3_file::adif3_file(const string& filename)
   }
 }
 
-/*! \brief              Construct from file name
-    \param  path        vector of directories in which to look
-    \param  filename    name of file to read
-
-    Returns empty object if a problem occurs
-*/
 adif3_file::adif3_file(const vector<string>& path, const string& filename)
 { for (const auto& this_path : path)
   { try
@@ -450,16 +435,47 @@ adif3_file::adif3_file(const vector<string>& path, const string& filename)
   }
 }
 
-/*! \brief                  Return all the QSOs that match a call, band and mode
-    \param      callsign    call to match
-    \param      b           ADIF3 band to match
-    \param      m           ADIF3 mode to match
-    \return     filename    Return all the QSO records that match <i>callsign</i>, <i>b</i> and <i>m</i>
-*/
-std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, const string& b, const string& m) const
+// is a QSO present? -1 => no, otherwise the index number
+const int adif3_file::is_present(const adif3_record& rec) const
+{ for (size_t n = 0; /* !found_it and */ n < size(); ++n)
+  { const adif3_record& this_rec = (*this)[n];
+  
+    const bool found_it = ( (this_rec.callsign() == rec.callsign()) and
+                            (this_rec.date() == rec.date()) and
+                            (this_rec.time() == rec.time()) and
+                            (this_rec.band() == rec.band()) and
+                            (this_rec.mode() == rec.mode()) );
+                 
+    if (found_it)
+      return static_cast<int>(n);
+  }
+  
+  return -1;
+}
+
+const adif3_record adif3_file::get_record(const adif3_record& rec) const
+{ const auto [begin_it, end_it] = _map_data.equal_range(rec.callsign());
+
+  for (auto it = begin_it; it != end_it; ++it)
+  { const adif3_record& this_rec = it->second;
+    
+    const bool found_it = ( (this_rec.callsign() == rec.callsign()) and
+                            (this_rec.date() == rec.date()) and
+                            (this_rec.time() == rec.time()) and
+                            (this_rec.band() == rec.band()) and
+                            (this_rec.mode() == rec.mode()) );
+
+    if (found_it)
+      return this_rec;
+  }
+  
+  return adif3_record();        // return empty record
+}
+
+const std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, const string& b, const string& m) const
 { vector<adif3_record> rv;
 
-  const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
+  const auto [begin_it, end_it] = _map_data.equal_range(callsign);
   
   for_each(begin_it, end_it, [=, &rv](const auto& map_entry) 
     { if ( (map_entry.second.band() == b) and (map_entry.second.mode() == m) ) 
@@ -469,32 +485,25 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, cons
   return rv;
 }
 
-/*! \brief                  Return all the QSOs that match a call
-    \param      callsign    call to match
-    \return     filename    Return all the QSO records that match <i>callsign</i>
-*/
-std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) const
+const std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) const
 { vector<adif3_record> rv;
 
-  const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
+  const auto [begin_it, end_it] = _map_data.equal_range(callsign);
   
   for_each(begin_it, end_it, [=, &rv](const auto& map_entry) { rv.push_back(map_entry.second); });
   
   return rv;
 }
 
-/*! \brief              Return position at which to start processing the body of the file
-    \param      str     string of contents of filae
-    \return             position of first "<" after the end of the header
-*/
-size_t skip_adif3_header(const std::string& str)
+/// return position at which to start processing the body of the file
+const size_t skip_adif3_header(const std::string& str)
 { const auto posn_1 { case_insensitive_find(str, "<EOH>"s) };
 
   return ( (posn_1 == string::npos) ? 0 : (str.find("<"s, posn_1 + 1)) ); // either start of file or first "<" after "<EOH>"
 }
 
-/// map from field name to type -- too many of these are silly for it to be worth making comment on individual sillinesses
-const unordered_map<string, ADIF3_DATA_TYPE> adif3_field::_element_type
+// too many of these are silly for it to be worth making comment on individual sillinesses
+unordered_map<string, ADIF3_DATA_TYPE> adif3_field::_element_type
 { { "ADDRESS"s,                   ADIF3_DATA_TYPE::MULTILINE_STRING },
   { "AGE"s,                       ADIF3_DATA_TYPE::NUMBER },
   { "A_INDEX"s,                   ADIF3_DATA_TYPE::NUMBER },
@@ -649,20 +658,20 @@ const unordered_map<string, ADIF3_DATA_TYPE> adif3_field::_element_type
   { "WEB"s,                       ADIF3_DATA_TYPE::STRING }
 };
 
-/// map from field name to permitted range of values
+set<ADIF3_DATA_TYPE> adif3_record::_import_only
+{ ADIF3_DATA_TYPE::AWARD_LIST };
+
 map<std::string, pair<int, int>> adif3_field::_positive_integer_range
 { { "CQZ", { 1, 40 } }
 };
 
-/// band values
-const unordered_set<string> adif3_field::_ENUMERATION_BAND
+unordered_set<string> adif3_field::_ENUMERATION_BAND
 { "2190m"s, "630m"s, "560m"s, "160m"s, "80m"s,    "60m"s, "40m"s,   "30m"s,   "20m"s,  "17m"s,
   "15m"s,   "12m"s,  "10m"s,  "6m"s,   "4m"s,     "2m"s,  "1.25m"s, "70cm"s,  "33cm"s, "23cm"s,
   "13cm"s,  "9cm"s,  "6cm"s,  "3cm"s,  "1.25cm"s, "6mm"s, "4mm"s,   "2.5mm"s, "2mm"s,  "1mm"s
 };
 
-/// mapping between country code and country info
-const unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, bool /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
+unordered_map<int /* country number */, tuple<string /*country name */, string /* canonical prefix */, bool /* whether deleted */>> adif3_field::_ENUMERATION_DXCC_ENTITY_CODE
 { {  1  , { "CANADA"s,                                  "VE"s,    false } },
   {  2  , { "ABU AIL IS."s,                             ""s,      true  } },
   {  3  , { "AFGHANISTAN"s,                             "YA"s,    false } },
@@ -1067,22 +1076,16 @@ const unordered_map<int /* country number */, tuple<string /*country name */, st
   {  522, { "REPUBLIC OF KOSOVO"s,                      "Z6",     false } }
 };
 
-/// mode values
 unordered_set<string> adif3_field::_ENUMERATION_MODE
-{ "AM"s,       "ARDOP"s,    "ATV"s,     "C4FM"s,   "CHIP"s,    "CLO"s,     "CONTESTI"s, "CW"s,       "DIGITALVOICE"s, "DOMINO"s, 
-  "DSTAR"s,    "FAX"s,      "FM"s,      "FSK441"s, "FT8"s,     "HELL"s,    "ISCAT"s,    "JT4"s,      "JT6M"s,         "JT9"s, 
-  "JT44"s,     "JT65"s,     "MFSK"s,    "MSK144"s, "MT63"s,    "OLIVIA"s,  "OPERA"s,    "PAC"s,      "PAX"s,          "PKT"s, 
-  "PSK"s,      "PSK2K"s,    "Q15"s,     "QRA64"s,  "ROS"s,     "RTTY"s,    "RTTYM"s,    "SSB"s,      "SSTV"s,         "T10"s, 
-  "THOR"s,     "THRB"s,     "TOR"s,     "V4"s,     "VOI"s,     "WINMOR"s,  "WSPR"s,     "AMTORFEC"s, "ASCI"s,         "CHIP64"s, 
-  "CHIP128"s,  "DOMINOF"s,  "FMHELL"s,  "FSK31"s,  "GTOR"s,    "HELL80"s,  "HFSK"s,     "JT4A"s,     "JT4B"s,         "JT4C"s, 
-  "JT4D"s,     "JT4E"s,     "JT4F"s,    "JT4G"s,   "JT65 "s,   "JT65 "s,   "JT65C"s,    "MFSK8"s,    "MFSK16"s,       "PAC2"s,
-  "PAC3"s,     "PAX2"s,     "PCW"s,     "PSK10"s,  "PSK31"s,   "PSK63"s,   "PSK63F"s,   "PSK125"s,   "PSKAM10"s,      "PSKAM31"s, 
-  "PSKAM50"s,  "PSKFEC31"s, "PSKHELL"s, "QPSK31"s, "QPSK63"s,  "QPSK125"s, "THRBX"s
+{ "AM"s, "ARDOP"s, "ATV"s, "C4FM"s, "CHIP"s, "CLO"s, "CONTESTI"s, "CW"s, "DIGITALVOICE"s, "DOMINO"s, 
+  "DSTAR"s, "FAX"s, "FM"s, "FSK441"s, "FT8"s, "HELL"s, "ISCAT"s, "JT4"s, "JT6M"s, "JT9"s, 
+  "JT44"s, "JT65"s, "MFSK"s, "MSK144"s, "MT63"s, "OLIVIA"s, "OPERA"s, "PAC"s, "PAX"s, "PKT"s, 
+  "PSK"s, "PSK2K"s, "Q15"s, "QRA64"s, "ROS"s, "RTTY"s, "RTTYM"s, "SSB"s, "SSTV"s, "T10"s, "THOR"s, 
+  "THRB"s, "TOR"s, "V4"s, "VOI"s, "WINMOR"s, "WSPR"s, "AMTORFEC"s, "ASCI"s, "CHIP64"s, "CHIP128"s, 
+  "DOMINOF"s, "FMHELL"s, "FSK31"s, "GTOR"s, "HELL80"s, "HFSK"s, "JT4A"s, "JT4B"s, "JT4C"s, "JT4D"s, 
+  "JT4E"s, "JT4F"s, "JT4G"s, "JT65 "s, "JT65 "s, "JT65C"s, "MFSK8"s, "MFSK16"s, "PAC2"s, "PAC3"s, 
+  "PAX2"s, "PCW"s, "PSK10"s, "PSK31"s, "PSK63"s, "PSK63F"s, "PSK125"s, "PSKAM10"s, "PSKAM31"s, "PSKAM50"s, 
+  "PSKFEC31"s, "PSKHELL"s, "QPSK31"s, "QPSK63"s, "QPSK125"s, "THRBX"s
 };
 
-/// legal values of QSL_RCVD
 set<string> adif3_field::_ENUMERATION_QSL_RECEIVED { "Y"s, "N"s, "R"s, "I"s, "V"s };
-
-/// fields that are not to be output
-set<ADIF3_DATA_TYPE> adif3_record::_import_only
-{ ADIF3_DATA_TYPE::AWARD_LIST };

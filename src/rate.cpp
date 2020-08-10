@@ -23,17 +23,17 @@ extern message_stream    ost;                ///< debugging/logging output
 /*! \brief      Return the number of QSOs and points at the current epoch
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-/* pair<unsigned int, unsigned int> */ rate_meter::VALUE_TYPE rate_meter::current_qsos_and_score(void)
+const pair<unsigned int, unsigned int> rate_meter::current_qsos_and_score(void)
 { SAFELOCK(_rate);
 
-//  if (_data.empty())
-//    return { 0, 0 };
+  if (_data.empty())
+    return { 0, 0 };
 
-  return ( _data.empty() ? VALUE_TYPE { 0, 0 } : prev(_data.cend())->second );
+  return prev(_data.cend())->second;
 }
 
 /// Return the number of QSOs at the epoch <i>t</i>
-unsigned int rate_meter::qsos(const time_t t)
+const unsigned int rate_meter::qsos(const time_t t)
 { const time_t now        { ::time(NULL) };                                     // time in seconds since the epoch
   const time_t query_time { min(now, t) };
 
@@ -42,15 +42,14 @@ unsigned int rate_meter::qsos(const time_t t)
 
   SAFELOCK(_rate);
 
-//  if (_data.empty())
-//    return 0;
+  if (_data.empty())
+    return 0;
 
-//  return ((_data.lower_bound(query_time)->second).first);
-  return ( _data.empty() ? 0 : ((_data.lower_bound(query_time)->second).first) );
+  return ((_data.lower_bound(query_time)->second).first);
 }
 
 /// Return the number of points at the epoch <i>t</i>
-unsigned int rate_meter::score(const time_t t)
+const unsigned int rate_meter::score(const time_t t)
 { const time_t now        { ::time(NULL) };                                     // time in seconds since the epoch
   const time_t query_time { min(now, t) };
 
@@ -59,16 +58,16 @@ unsigned int rate_meter::score(const time_t t)
 
   SAFELOCK(_rate);
 
-//  if (_data.empty())
- //   return 0;
+  if (_data.empty())
+    return 0;
 
-  return ( _data.empty() ? 0 : ((_data.lower_bound(query_time)->second).second) );
+  return ((_data.lower_bound(query_time)->second).second);
 }
 
 /*! \brief      Return the number of QSOs and points at the epoch <i>t</i>
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t)
+const pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t)
 { const time_t now        { ::time(NULL) };                                     // time in seconds since the epoch
   const time_t query_time { min(now, t) };
 
@@ -97,7 +96,7 @@ pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t)
     between now and the time represented by <i>seconds_in_past</i>. If <i>normalisation_period</i> is not zero,
     then normalises the differences to per <i>normalisation_rate</i> seconds.
 */
-pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seconds_in_past, const unsigned int normalisation_period)
+const pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seconds_in_past, const unsigned int normalisation_period)
 { SAFELOCK(_rate);  // don't allow any changes while we're performing this calculation
 
   const time_t                           now            { ::time(NULL) };
@@ -116,15 +115,18 @@ pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seconds_in
 }
 
 /// convert to printable string
-string rate_meter::to_string(void)
-{ string rv    { "Number of points in rate = "s + ::to_string(_data.size()) + EOL };
+const string rate_meter::to_string(void)
+{ string rv;
+
+  rv += "Number of points in rate = "s + ::to_string(_data.size()) + EOL;
+
   size_t index { 0 };
 
   for (auto datum : _data)
   { rv += "time = "s + ::to_string(datum.first) + "; n QSOs = "s + ::to_string(datum.second.first) + "; points = "s + ::to_string(datum.second.second);
 
     if (index++ != (_data.size() - 1) )
-      rv += EOL;
+        rv += EOL;
   }
 
   return rv;

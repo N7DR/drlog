@@ -71,23 +71,23 @@ public:
 
     If the value of <i>n</i> does not correspond to a parameter that was actually present, this functions throws an x_command_line_invalid_parameter()
 */
-  std::string parameter(const unsigned int n) const;
+  const std::string parameter(const unsigned int n) const;
 
 /*! \brief      Obtain the name of the program
     \return     the name of the program
 */
-  inline std::string program_name(void) const
+  inline const std::string program_name(void) const
     { return _arg[0]; }
 
 /*! \brief  Obtain the base name of the program
     \return The base name of the program (i.e., with no "/" characters)
 */
-  std::string base_program_name(void) const;
+  const std::string base_program_name(void) const;
 
 /*! \brief      Obtain the number of parameters passed to the program
     \return     the number of parameters
 */
-  inline int n_parameters(void) const
+  inline const int n_parameters(void) const
     { return (_argc - 1); }
 
 /*! \brief  Convert the entire command line to lower case
@@ -133,7 +133,7 @@ public:
 
     A "value" is something like a parameter to a -xxx option. If, for example, value_present("-xxx") is TRUE, it means that -xxx is present, and a value follows it
 */
-  bool value_present(const std::string& v) const;
+  const bool value_present(const std::string& v) const;
 
 /*! \brief          Return a particular value
     \param  v       value to return
@@ -141,7 +141,7 @@ public:
         
     A "value" is something like a parameter to a -xxx option. If, for example, the command line contains "-xxx burble", then value("-xxx") will return "burble"
 */
-  std::string value(const std::string& v) const;
+  const std::string value(const std::string& v) const;
 
 /*! \brief      Is a particular parameter present?
     \param  p   parameter for which to look
@@ -149,7 +149,7 @@ public:
         
     A "parameter" is an actual parameter that appears on the command line.
 */
-  bool parameter_present(const std::string& p) const;
+  const bool parameter_present(const std::string& p) const;
 };
 
 // ---------------------------  exceptions  ----------------------

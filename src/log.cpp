@@ -1,4 +1,4 @@
-// $Id: log.cpp 160 2020-07-25 16:01:11Z  $
+// $Id: log.cpp 156 2020-05-17 19:13:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,7 +39,7 @@ extern string VERSION;          ///< version string
     \param  q2  second QSO
     \return     whether <i>q1</i> is earlier than <i>q2</i>
 */
-inline bool qso_sort_by_time(const QSO& q1, const QSO& q2)
+inline const bool qso_sort_by_time(const QSO& q1, const QSO& q2)
   { return q1.earlier_than(q2); }
 
 /*! \brief      Add a QSO to the logbook
@@ -58,7 +58,7 @@ void logbook::operator+=(const QSO& q)
 
     If <i>n</i> is out of range, then returns an empty QSO
 */
-QSO logbook::operator[](const size_t n) const
+const QSO logbook::operator[](const size_t n) const
 { const static QSO empty_qso;
 
   SAFELOCK(_log);
@@ -95,7 +95,7 @@ void logbook::operator-=(const unsigned int n)
 
     If there are no QSOs with <i>call</i>, returns an empty vector
 */
-vector<QSO> logbook::worked(const string& call) const
+const vector<QSO> logbook::worked(const string& call) const
 { vector<QSO> rv;
 
   { SAFELOCK(_log);
@@ -112,7 +112,7 @@ vector<QSO> logbook::worked(const string& call) const
     \param  call    target callsign
     \return         number of times that <i>call</i> has been worked
 */
-unsigned int logbook::n_worked(const string& call) const
+const unsigned int logbook::n_worked(const string& call) const
 { SAFELOCK(_log);
 
   const auto range { _log.equal_range(call) };
@@ -125,7 +125,7 @@ unsigned int logbook::n_worked(const string& call) const
     \param  b       target band
     \return         whether <i>call</i> has been worked on <i>b</i>
 */
-bool logbook::qso_b4(const string& call, const BAND b) const
+const bool logbook::qso_b4(const string& call, const BAND b) const
 { SAFELOCK(_log);
   
   for (auto cit = _log.lower_bound(call); cit != _log.upper_bound(call); ++cit)
@@ -140,7 +140,7 @@ bool logbook::qso_b4(const string& call, const BAND b) const
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>m</i>
 */
-bool logbook::qso_b4(const string& call, const enum MODE m) const
+const bool logbook::qso_b4(const string& call, const enum MODE m) const
 { SAFELOCK(_log);
   
   for (auto cit = _log.lower_bound(call); cit != _log.upper_bound(call); ++cit)
@@ -156,7 +156,7 @@ bool logbook::qso_b4(const string& call, const enum MODE m) const
     \param  m       target mode
     \return         whether <i>call</i> has been worked on <i>b</i> and <i>m</i>
 */
-bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
+const bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 { SAFELOCK(_log);
   
   for (auto cit = _log.lower_bound(call); cit != _log.upper_bound(call); ++cit)
@@ -171,7 +171,7 @@ bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
     \param  rules   rules for the contest
     \return         string list of bands on which a call is needed (separated by three spaces)
 */
-string logbook::call_needed(const string& call, const contest_rules& rules) const
+const string logbook::call_needed(const string& call, const contest_rules& rules) const
 { string rv;
 
   for (const auto& b : rules.permitted_bands())
@@ -185,7 +185,7 @@ string logbook::call_needed(const string& call, const contest_rules& rules) cons
     \param  rules   rules for the contest
     \return         whether <i>qso</i> would be a dupe
 */
-bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
+const bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
 { bool rv { false };
 
   const string call { qso.call() };
@@ -222,7 +222,7 @@ bool logbook::is_dupe(const QSO& qso, const contest_rules& rules) const
     \param  rules   rules for the contest
     \return         whether a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i> would be a dupe
 */
-bool logbook::is_dupe(const string& call, const BAND b, const enum MODE m, const contest_rules& rules) const
+const bool logbook::is_dupe(const string& call, const BAND b, const enum MODE m, const contest_rules& rules) const
 { QSO qso;
 
 // create a bare-bones QSO
@@ -234,7 +234,7 @@ bool logbook::is_dupe(const string& call, const BAND b, const enum MODE m, const
 }
 
 /// return time-ordered list of qsos
-list<QSO> logbook::as_list(void) const
+const list<QSO> logbook::as_list(void) const
 { list<QSO> rv;
 
   { SAFELOCK(_log);
@@ -248,7 +248,7 @@ list<QSO> logbook::as_list(void) const
 }
 
 /// return time-ordered vector of qsos
-vector<QSO> logbook::as_vector(void) const
+const vector<QSO> logbook::as_vector(void) const
 { SAFELOCK(_log);
 
   return _log_vec;
@@ -258,7 +258,7 @@ vector<QSO> logbook::as_vector(void) const
     \param  rules   rules for the contest
     \return         logbook with the dupes recalculated
 */
-logbook logbook::recalculate_dupes(const contest_rules& rules) const
+const logbook logbook::recalculate_dupes(const contest_rules& rules) const
 { logbook rv;
   
   SAFELOCK(_log);
@@ -292,7 +292,7 @@ logbook logbook::recalculate_dupes(const contest_rules& rules) const
       http://wwrof.org/cabrillo/
     It remains thoroughly deficient.
 */
-string logbook::cabrillo_log(const drlog_context& context, const unsigned int score) const
+const string logbook::cabrillo_log(const drlog_context& context, const unsigned int score) const
 { string rv;
 
 // define a separate EOL for the Cabrillo file because JARL rejects logs that don't use CRLF, even though the
@@ -435,16 +435,15 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
     \param  cabrillo_qso_template   template for the Cabrillo QSOs
 */
 void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_template)
-{ static const vector<string> qso_markers { "QSO"s, "   "s };
+{ string file_contents { remove_char(read_file(filename), '\r') };
 
-  const vector<string> lines { to_lines(remove_char(read_file(filename), CR_CHAR)) };
+  const vector<string> lines { to_lines(file_contents) };
   
 /*
   CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1 
 */
   
   vector< vector< string> > individual_values;
-
   const vector<string> template_fields { split_string(cabrillo_qso_template, ","s) };         // colon-delimited values
   
   for (unsigned int n = 0; n < template_fields.size(); ++n)
@@ -454,9 +453,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
    
 // for each QSO line
   for (const auto& line : lines)
-  { //if (line.substr(0, 3) == "QSO"s or line.substr(0, 3) == "   "s)
-    //if (starts_with(line, "QSO"s) or starts_with(line, "   "s))
-    if (starts_with(line, qso_markers))
+  { if (line.substr(0, 3) == "QSO"s or line.substr(0, 3) == "   "s)
     { QSO qso;
   
 // go through the fields
@@ -505,6 +502,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
           qso.my_call(value);
     
 // transmitted exchange
+//        if (name.substr(0, 5) == "TEXCH"s)
         if (starts_with(name, "TEXCH"s))
         { const string field_name { name.substr(6) };
 
@@ -518,6 +516,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
           qso.callsign(value);
 
 // received exchange
+//        if (name.substr(0, 5) == "REXCH"s)
         if (starts_with(name, "REXCH"s))
         { const string field_name { name.substr(6) };
 
@@ -542,15 +541,12 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     \param  cabrillo_fields     names of Cabrillo fields
 */
 void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
-{ static const vector<string> qso_markers { "QSO"s, "   "s };
-
-  const vector<string> lines { to_lines(remove_char(read_file(filename), CR_CHAR)) };
+{ const vector<string> lines { to_lines(remove_char(read_file(filename), CR_CHAR)) };
 
   unsigned int last_qso_number { 0 };
 
   for (const auto& line : lines)
-  { //if (line.substr(0, 3) == "QSO"s or line.substr(0, 3) == "   "s)
-    if (starts_with(line, qso_markers))
+  { if (line.substr(0, 3) == "QSO"s or line.substr(0, 3) == "   "s)
     { QSO qso;
   
       const vector<string> fields { split_string(remove_peripheral_spaces(squash(line.substr(4))), SPACE_STR) };
@@ -637,7 +633,7 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
 
     Returns empty string if no returnable instance can be found
 */
-string logbook::exchange_field_value(const string& callsign, const string& exchange_field_name)
+const string logbook::exchange_field_value(const string& callsign, const string& exchange_field_name)
 { const vector<QSO> qsos { worked(callsign) };
 
   if (!qsos.empty())
@@ -657,7 +653,7 @@ string logbook::exchange_field_value(const string& callsign, const string& excha
 
     If <i>n</i> is out of range, then returns an empty QSO
 */
-vector<QSO> logbook::match_exchange(const string& target) const
+const vector<QSO> logbook::match_exchange(const string& target) const
 { vector<QSO> rv;
 
   for (const auto& qso : _log_vec)
@@ -683,7 +679,7 @@ void logbook::remove_last_qsos(const unsigned int n_to_remove)
 
     Does nothing and returns an empty QSO if there are no QSOs in the log
 */
-QSO logbook::remove_last_qso(void)
+const QSO logbook::remove_last_qso(void)
 { if (empty())
     return QSO();
 
@@ -796,7 +792,7 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
     \param  call    callsign
     \return         the number of QSLs from callsign <i>call</i>
 */
-unsigned int old_log::n_qsls(const string& call) const
+const unsigned int old_log::n_qsls(const string& call) const
 { const auto cit { _olog.find(call) };
 
   return (cit == _olog.cend() ? 0 : get<0>(cit->second));
@@ -821,7 +817,7 @@ void old_log::n_qsls(const string& call, const unsigned int n)
     \param  call    callsign
     \return         the new number of QSLs from callsign <i>call</i>
 */
-unsigned int old_log::increment_n_qsls(const string& call)
+const unsigned int old_log::increment_n_qsls(const string& call)
 { auto it { _olog.find(call) };
 
   if (it == _olog.end())
@@ -842,7 +838,7 @@ unsigned int old_log::increment_n_qsls(const string& call)
     \param  call    callsign
     \return         the number of QSOs with callsign <i>call</i>
 */
-unsigned int old_log::n_qsos(const string& call) const
+const unsigned int old_log::n_qsos(const string& call) const
 { const auto cit { _olog.find(call) };
 
   return (cit == _olog.cend() ? 0 : get<1>(cit->second));
@@ -867,7 +863,7 @@ void old_log::n_qsos(const string& call, const unsigned int n)
     \param  call    callsign for which the number of QSOs should be incremented
     \return         number of QSOs associated with with <i>call</i>
 */
-unsigned int old_log::increment_n_qsos(const string& call)
+const unsigned int old_log::increment_n_qsos(const string& call)
 { const auto it { _olog.find(call) };
 
   if (it == _olog.end())
@@ -890,7 +886,7 @@ unsigned int old_log::increment_n_qsos(const string& call)
     \param  m       target mode
     \return         number of QSOs associated with with <i>call</i> on band <i>b</i> and mode <i>m</i>
 */
-unsigned int old_log::n_qsos(const string& call, const BAND b, const MODE m) const
+const unsigned int old_log::n_qsos(const string& call, const BAND b, const MODE m) const
 { const auto cit { _olog.find(call) };
 
   return (cit == _olog.cend() ? 0 : get<3>(cit->second).count( { b, m } ));
@@ -902,7 +898,7 @@ unsigned int old_log::n_qsos(const string& call, const BAND b, const MODE m) con
     \param  m       target mode
     \return         number of QSOs associated with with <i>call</i> on band <i>b</i> and mode <i>m</i> (following the increment)
 */
-unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const MODE m)
+const unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const MODE m)
 { auto it { _olog.find(call) };
 
   if (it == _olog.end())
@@ -921,13 +917,13 @@ unsigned int old_log::increment_n_qsos(const string& call, const BAND b, const M
     \param  m       target mode
     \return         Has a QSL ever been received for a QSO with <i>call</i> on band <i>b</i> and mode <i>m</i>
 */
-bool old_log::confirmed(const string& call, const BAND b, const MODE m) const
+const bool old_log::confirmed(const string& call, const BAND b, const MODE m) const
 { const auto cit { _olog.find(call) };
 
   if (cit == _olog.cend())
     return false;
 
-  return (get<2>(cit->second) > ( pair<BAND, MODE>( { b, m } ) ) );
+  return (get<2>(cit->second) < ( pair<BAND, MODE>( { b, m } ) ) );
 }
 
 /*! \brief          Mark a QSL as being received for a particular call on a particular band and mode
