@@ -28,7 +28,7 @@ using namespace std;
 string qtc_entry::to_string(void) const
 { constexpr unsigned int CALL_WIDTH { 12 };
 
-  return (_utc + SPACE_STR + pad_string(_callsign, CALL_WIDTH, PAD_RIGHT) + SPACE_STR + _serno);
+  return (_utc + SPACE_STR + pad_string(_callsign, CALL_WIDTH, PAD_RIGHT) + SPACE_STR + _serno /* + " [ " + pad_string(::to_string(_my_serno), 4) + " ]" */);
 }
 
 // -----------------------------------  qtc_series  ----------------------------
@@ -372,7 +372,6 @@ void qtc_buffer::operator+=(const logbook& logbk)
 { const vector<QSO> qsos { logbk.as_vector() };
 
   FOR_ALL(qsos, [&] (const QSO& qso) { (*this) += qso; } );
-
 }
 
 /*! \brief          Add a QSO to the buffer
@@ -385,9 +384,18 @@ void qtc_buffer::operator+=(const QSO& qso)
 { if (qso.continent() == "EU"s)
   { const qtc_entry entry { qso };
 
-    if (_sent_qtcs.find(entry) == _sent_qtcs.end())
-    { if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) == _unsent_qtcs.end())
+//    ost << "testing QSO to see if it's been sent: " << qso << endl;
+
+//    if (_sent_qtcs.find(entry) == _sent_qtcs.end())
+    if (find(_sent_qtcs.begin(), _sent_qtcs.end(), entry) == _sent_qtcs.end())
+    { //ost << "QSO NOT IN SENT LIST" << endl;
+
+      if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) == _unsent_qtcs.end())
+ //     if (_unsent_qtcs.find(entry) == _unsent_qtcs.end())
+      { //ost << "QSO NOT IN UNSENT LIST" << endl;
         _unsent_qtcs.push_back(entry);
+        //ost << "Added entry to unsent list: " << entry.to_string() << endl;
+      }
     }
   }
 }
@@ -395,10 +403,14 @@ void qtc_buffer::operator+=(const QSO& qso)
 /*! \brief          Recreate the unsent list
     \param  logbk   logbook
 */
-void qtc_buffer::rebuild(const logbook& logbk)
-{ _unsent_qtcs.clear();
+void qtc_buffer::rebuild_unsent_list(const logbook& logbk)
+{ //ost << "Inside qtc_buffer::rebuild()" << endl;
+  _unsent_qtcs.clear();
 
   *this += logbk;
+  //ost << "Exiting qtc_buffer::rebuild()" << endl;
+
+  //ost << "unsent QTCs: " << endl << unsent_list_as_string() << endl;
 }
 
 /*! \brief                  Get a batch of QTC entries that may be sent to a particular destination
@@ -409,7 +421,7 @@ void qtc_buffer::rebuild(const logbook& logbk)
 vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target)
 { vector<qtc_entry> rv;
 
-  list<qtc_entry>::const_iterator cit { _unsent_qtcs.cbegin() };
+  auto cit { _unsent_qtcs.cbegin() };
 
   while ( (rv.size() != max_entries) and (cit != _unsent_qtcs.cend()) )
   { if (cit->callsign() != target)
@@ -424,19 +436,53 @@ vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries
     \param  entry   <i>qtc_entry</i> to transfer
 */
 void qtc_buffer::unsent_to_sent(const qtc_entry& entry)
-{ const auto it { find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) };
+{ //const auto it { find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) };
 
-  if (it != _unsent_qtcs.end())
-    _unsent_qtcs.erase(it);
+  //if (it != _unsent_qtcs.end())
+  //  _unsent_qtcs.erase(it);
 
-  _sent_qtcs.insert(entry);
+//  ost << "FIRST UNSENT ENTRY = " << *(_unsent_qtcs.begin()) << endl;
+//  ost << "THIS  UNSENT ENTRY = " << entry << endl;
+
+//  if (_unsent_qtcs.find(entry) != _unsent_qtcs.end())
+  if (find(_unsent_qtcs.begin(), _unsent_qtcs.end(), entry) != _unsent_qtcs.end())
+  { _unsent_qtcs.remove(entry);
+    //ost << "Removed entry from unsent set: " << entry.to_string() << endl;
+  }  
+
+  _sent_qtcs.push_back(entry);
+  //ost << "Added entry to sent list: " << entry.to_string() << endl;
 }
 
 /*! \brief      Transfer all the entries in a <i>qtc_series</i> from unsent status to sent status
     \param  qs  QTC entries to transfer
 */
 void qtc_buffer::unsent_to_sent(const qtc_series& qs)
-{ const vector<qtc_entry> sent_qtc_entries { qs.sent_qtc_entries() };
+{ //ost << "Inside qtc_buffer::unsent_to_sent(qtc_series)" << endl;
+
+  //ost << "size of qtc_series = " << qs.size() << ", # sent = " << qs.n_sent() << ", # unsent = " << qs.n_unsent() << endl;
+
+  const vector<qtc_entry> sent_qtc_entries { qs.sent_qtc_entries() };
 
   FOR_ALL(sent_qtc_entries, [&] (const qtc_entry& qe) { unsent_to_sent(qe); } );
+
+  //ost << "finished qtc_buffer::unsent_to_sent(qtc_series)" << endl;
+}
+
+/*! \brief      The unsent list in human-readable format
+    \return     the unsent list as a string
+*/
+string qtc_buffer::unsent_list_as_string(void) const
+{ string rv;
+
+  size_t nr { 1 };
+
+  for (const qtc_entry& qe : _unsent_qtcs)
+  { rv += pad_string(to_string(nr), 4) + ": "s + /* pad_string(to_string(qe.my_serno()), 4) + SPACE_STR + */ qe.utc() + SPACE_STR + pad_string(qe.callsign(), 13, PAD_RIGHT) + SPACE_STR + qe.serno();
+
+    if (nr++ != _unsent_qtcs.size())
+      rv += EOL; 
+  }
+
+  return rv;
 }

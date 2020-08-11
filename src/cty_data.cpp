@@ -662,7 +662,7 @@ location_info location_database::info(const string& callpart) const
     while (len <= callsign.length())
     { const string target { callsign.substr(0, len) };
 
-      /* map<string, location_info>::const_iterator */ /* const auto */ const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
+      const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
      
       if (db_posn != _db.end())
       { found_any_hits = true;
@@ -698,46 +698,7 @@ location_info location_database::info(const string& callpart) const
       tie(best_fit, best_info) = redefine_best("HC8"s);
     
     if (found_any_hits)                                 // return the best fit
-    { // bool found_in_secondary_database = false;
-         
-// look to see if there's an exact match in the secondary database
-#if 0
-      if (_qth_db.size())
-      { const vector<drlog_qth_database_record> subset = _qth_db.id(callsign);
-           
-        if (subset.size())
-        { found_in_secondary_database = true;
-          best_info.cq_zone(subset[0].get_cq_zone(best_info.cq_zone()));
-          best_info.latitude(subset[0].get_latitude(best_info.latitude()));
-          best_info.longitude(subset[0].get_longitude(best_info.longitude()));
-        }
-      }
-
-// look to see if there's a country+area match in the secondary database
-      if (_qth_db.size() and !found_in_secondary_database)
-      { const vector<drlog_qth_database_record> subset = _qth_db.id(best_info.canonical_prefix());
-           
-        if (subset.size())
-        { const size_t posn = callsign.find_last_of("0123456789");
-
-          if (posn != string::npos)
-          { const unsigned int target_area = from_string<unsigned int>(string(1, callsign[posn]));
-               
-            for (unsigned int area_nr = 0; area_nr < subset.size(); ++area_nr)
-            { const drlog_qth_database_record& record = subset[area_nr];
-
-              if (record.get_area(10) == target_area)
-              { best_info.cq_zone(record.get_cq_zone(best_info.cq_zone()));
-                best_info.latitude(record.get_latitude(best_info.latitude()));
-                best_info.longitude(record.get_longitude(best_info.longitude()));
-              }
-            }
-          }
-        }
-      }
-#endif
-
-      best_info = guess_zones(callsign, best_info);
+    { best_info = guess_zones(callsign, best_info);
 
 // insert Russian information
       static const set<string> RUSSIAN_COUNTRIES { "UA"s, "UA2"s, "UA9"s };
@@ -786,8 +747,8 @@ location_info location_database::info(const string& callpart) const
   if (parts.size() == 2)        // one slash
   {
 // see if either part matches anything in the initial database
-     /* map<string, location_info>::const_iterator */ LOCATION_DBTYPE::const_iterator db_posn_0 { _db.find(parts[0]) };
-     /* map<string, location_info>::const_iterator */ LOCATION_DBTYPE::const_iterator db_posn_1 { _db.find(parts[1]) };
+     LOCATION_DBTYPE::const_iterator db_posn_0 { _db.find(parts[0]) };
+     LOCATION_DBTYPE::const_iterator db_posn_1 { _db.find(parts[1]) };
      
     const bool found_0 { (db_posn_0 != _db.end()) };
     const bool found_1 { (db_posn_1 != _db.end()) };
@@ -828,11 +789,6 @@ location_info location_database::info(const string& callpart) const
     if (!found_0 and !found_1)    // neither matched exactly; use the one with the longest match
     {
 // length of match for part 0
-#if 0
-      unsigned int len_0 { 0 };
-      unsigned int len_1 { 0 };
-      unsigned int len   { 1 };
- #endif
     
       auto match_info = [this](const string& part)
         { unsigned int return_len { 0 };
@@ -844,12 +800,14 @@ location_info location_database::info(const string& callpart) const
           while (len <= part.length())
           { const string target { part.substr(0, len) };
 
-            const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
+ //           const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
 
-            if (db_posn != _db.end())
-            { return_len = len++;
+            if (const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) }; db_posn != _db.end())
+            { return_len = len;
               return_posn = db_posn;
             }
+
+            ++len;              // ?? *******
           }
 
           return pair<unsigned int, LOCATION_DBTYPE::const_iterator> { return_len, return_posn };
@@ -857,42 +815,6 @@ location_info location_database::info(const string& callpart) const
 
       const auto [ len_0, db_posn_0 ] = match_info(parts[0]);
       const auto [ len_1, db_posn_1 ] = match_info(parts[1]);
-
-#if 0
-      while (len <= parts[0].length())
-      { string target  { parts[0].substr(0, len) };
-        
-        const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
-     
-        if (db_posn != _db.end())
-        { len_0 = len;
-          db_posn_0 = db_posn;
-        }
-
-        ++len;
-      }
-    
-      len = 1;
-    
-      while (len <= parts[1].length())
-      { string target  { parts[1].substr(0, len) };
-
-        const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
-     
-        if (db_posn != _db.end())
-        { len_1 = len;
-          db_posn_1 = db_posn;
-        }
-
-        ++len;
-      }
-#endif
-
-//      if (len_0 > len_1)                // parts[0] was the better match
-//        return insert_best_info( guess_zones(callsign, db_posn_0->second) );
-
-//      if (len_1 > len_0)                // parts[1] was the better match
-//        return insert_best_info( guess_zones(callsign, db_posn_1->second) );
       
       if (len_0 != len_1)   // if one has a longer match, use it 
         return insert_best_info( guess_zones(callsign, (len_0 > len_1) ? db_posn_0->second : db_posn_1->second) );
@@ -904,12 +826,6 @@ location_info location_database::info(const string& callpart) const
       
       if (parts[0].length() == parts[1].length())
         return insert_best_info( guess_zones(callsign, (parts[0].length() < parts[1].length()) ? db_posn_0->second : db_posn_1->second) );
-
- //     if (parts[0].length() < parts[1].length())
- //       return insert_best_info( guess_zones(callsign, db_posn_0->second) );
-
-//      if (parts[1].length() < parts[0].length())
-//        return insert_best_info( guess_zones(callsign, db_posn_1->second) );
  
 // same length; arbitrarily choose the first
       return insert_best_info( guess_zones(callsign, db_posn_0->second) );

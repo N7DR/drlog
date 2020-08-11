@@ -1651,7 +1651,12 @@ int main(int argc, char** argv)
         exit(-1);
       }
 
+  //    ost << "About to add the entire logbook to the unsent buffer" << endl;
+
       qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
+
+ //     ost << "Finished adding the entire logbook to the unsent buffer" << endl
+ //         << "Number of unsent QTCs = " << qtc_buf.n_unsent_qsos() << "; number of sent QTCs = " << qtc_buf.n_sent_qsos() << endl;
 
       if (n_eu_qsos != qtc_buf.size())
         alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS"s);
@@ -1660,6 +1665,11 @@ int main(int argc, char** argv)
       const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
 
       FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+
+//      ost << "Finished moving unsent to sent" << endl
+//          << "Number of unsent QTCs = " << qtc_buf.n_unsent_qsos() << "; number of sent QTCs = " << qtc_buf.n_sent_qsos() << endl;
+
+//      ost << "unsent QTCS: " << endl << qtc_buf.unsent_list_as_string() << endl;
 
       statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
       statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
@@ -5103,7 +5113,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // the logbook is now rebuilt
         if (send_qtcs)
-        { qtc_buf.rebuild(logbk);
+        { qtc_buf.rebuild_unsent_list(logbk);
           update_qtc_queue_window();
         }
 

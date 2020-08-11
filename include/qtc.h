@@ -56,25 +56,32 @@ protected:
   std::string _callsign;     ///< other station
   std::string _serno;        ///< serial number sent by other station; width = 4
 
+//  int _my_serno;             ///< the serno sent by me, used for ordering
+
 public:
 
 /// default constructor
   inline qtc_entry(void) :
     _utc("0000"s),
     _callsign(),
-    _serno("0000"s)
+    _serno("0000"s)//,
+//    _my_serno(0)
   { }
 
 /// construct from a QSO
   inline explicit qtc_entry(const QSO& qso) :
     _utc(substring(qso.utc(), 0, 2) + substring(qso.utc(), 3, 2)),
     _callsign( (qso.continent() == "EU"s) ? qso.callsign() : std::string()),
-    _serno(pad_string(qso.received_exchange("SERNO"s), 4, PAD_RIGHT))    // force width to 4
-  { }
+    _serno(pad_string(qso.received_exchange("SERNO"s), 4, PAD_RIGHT))//,    // force width to 4
+//    _my_serno(from_string<int>(qso.sent_exchange("SERNO"s)))
+  { //ost << "_my_serno = " << _my_serno << std::endl;
+    //ost << "sent_exchange(SERNO) = " << qso.sent_exchange("SERNO"s) << std::endl;
+  }
 
   READ_AND_WRITE(utc);          ///< time of QSO: HHMM
   READ_AND_WRITE(callsign);     ///< other station
   READ(serno);                  ///< serial number sent by other station; width = 4
+//  READ(my_serno);               ///< the serno sent by me, used for ordering
 
 /*! \brief          Explicitly set the serial number sent by the other station
     \param  str     new serial number
@@ -92,10 +99,11 @@ public:
 
 /// qtc_entry == qtc_entry
   inline bool operator==(const qtc_entry& entry) const
-    { return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
+    { return ( /* (_my_serno == entry._my_serno) and */ (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
 
 /// qtc_entry < qtc_entry
   inline bool operator<(const qtc_entry& entry) const
+//    { return (_my_serno < entry._my_serno); }
     { return ( (_serno < entry._serno) or (_utc < entry._utc) or (_callsign < entry._callsign) ); }
 
 /// convert to printable string
@@ -121,6 +129,17 @@ public:
          & _serno;
     }
 };
+
+/*! \brief          Write a <i>qtc_entry</i> object to an output stream
+    \param  ost     output stream
+    \param  qe      object to write
+    \return         the output stream
+*/
+inline std::ostream& operator<<(std::ostream& ost, const qtc_entry& qe)
+{ ost << qe.to_string();
+
+  return ost;
+}
 
 // -----------------------------------  qtc_series  ----------------------------
 
@@ -300,7 +319,7 @@ class qtc_database
 {
 protected:
 
-  std::vector<qtc_series>    _qtc_db;       ///< the QTCs
+  std::vector<qtc_series>    _qtc_db;       ///< the QTCs, assumed to be in sent order
 
 public:
 
@@ -375,9 +394,14 @@ class qtc_buffer
 {
 protected:
 
-  std::list<qtc_entry> _unsent_qtcs;    ///< the unsent QTCs
+// it pains me, but I think that these both have to be lists; because there is no way
+// to put the values into chronological order (for a set), because the QTC file format
+// as defined by DARC does not contain the date of the QSO being sent, only the UTC
+//  std::list<qtc_entry> _unsent_qtcs;    ///< the unsent QTCs, in logbook order
+  std::list<qtc_entry> _unsent_qtcs;    ///< the unsent QTCs, in logbook order
 
-  std::set<qtc_entry> _sent_qtcs;       ///< unordered_set won't serialize
+//  std::set<qtc_entry> _sent_qtcs;       ///< unordered_set won't serialize
+  std::list<qtc_entry> _sent_qtcs;       ///< the sent QTCs, in the sent order
 
 public:
 
@@ -404,7 +428,7 @@ public:
 */
   void operator+=(const QSO&);
 
-/*! \brief          Remove a QTC if present in the unsent list
+/*! \brief          Remove a QTC if present in the unsent set
     \param  entry   QTC to remove
 */
   inline void operator-=(const qtc_entry& entry)
@@ -447,7 +471,12 @@ public:
 /*! \brief          Recreate the unsent list
     \param  logbk   logbook
 */
-  void rebuild(const logbook& logbk);
+  void rebuild_unsent_list(const logbook& logbk);
+
+/*! \brief      The unsent list in human-readable format
+    \return     the unsent list as a string (in chronological order)
+*/
+std::string unsent_list_as_string(void) const;
 
 /// serialise
   template<typename Archive>
