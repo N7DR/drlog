@@ -25,7 +25,7 @@ using namespace std;
 */
 
 /// convert to printable string
-const string qtc_entry::to_string(void) const
+string qtc_entry::to_string(void) const
 { constexpr unsigned int CALL_WIDTH { 12 };
 
   return (_utc + SPACE_STR + pad_string(_callsign, CALL_WIDTH, PAD_RIGHT) + SPACE_STR + _serno /* + " [ " + pad_string(::to_string(_my_serno), 4) + " ]" */);
@@ -41,7 +41,7 @@ const string qtc_entry::to_string(void) const
     \param  sent    whether to return the sent entries
     \return         if <i>sent</i> is <i>true</i>, return all the sent entries; otherwise retrun all the unsent entries
 */
-const vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
+vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
 { vector<qtc_entry> rv;
 
   FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv.push_back(pqeb.first); } );
@@ -53,7 +53,7 @@ const vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent)
     \param  param   entry to add, and whether the entry has been sent
     \return         whether <i>param</i> was actually added
 */
-const bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
+bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
 { const qtc_entry& entry { p.first };
   const bool       sent  { p.second };
 
@@ -71,7 +71,7 @@ const bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-const pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
+pair<qtc_entry, bool> qtc_series::operator[](const unsigned int n) const
 { static const pair<qtc_entry, bool> empty_return_value { };
 
   return ( (n < _qtc_entries.size()) ? _qtc_entries[n] : empty_return_value );
@@ -103,7 +103,7 @@ void qtc_series::mark_as_unsent(const unsigned int n)
 
     Returns an empty <i>qtc_entry</i> if no entries meet the criteria
 */
-const qtc_entry qtc_series::first_not_sent(const unsigned int posn)
+qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 { unsigned int index { posn };
 
   while (index < _qtc_entries.size())
@@ -119,7 +119,7 @@ const qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 /*! \brief      How many entries have been sent?
     \return     the number of entries that have been sent
 */
-const unsigned int qtc_series::n_sent(void) const
+unsigned int qtc_series::n_sent(void) const
 { unsigned int rv { 0 };
 
   FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool> & pqeb) { if (pqeb.second) rv++; } );
@@ -130,7 +130,7 @@ const unsigned int qtc_series::n_sent(void) const
 /*! \brief      How many entries have not been sent?
     \return     the number of entries that have not been sent
 */
-const unsigned int qtc_series::n_unsent(void) const
+unsigned int qtc_series::n_unsent(void) const
 { unsigned int rv { 0 };
 
   FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool> & pqeb) { if (!pqeb.second) rv++; } );
@@ -144,16 +144,13 @@ const unsigned int qtc_series::n_unsent(void) const
 
     Returns the empty string if entry number <i>n</i> does not exist
 */
-const string qtc_series::output_string(const unsigned int n) const
-{ //static const string SPACE(" ");
-  string rv;
-
-  if (n >= size())
-    return rv;
+string qtc_series::output_string(const unsigned int n) const
+{ if (n >= size())
+    return string();
 
   const qtc_entry qe { _qtc_entries[n].first };
 
-  rv = pad_string(_frequency, 5) + SPACE_STR;
+  string rv { pad_string(_frequency, 5) + SPACE_STR };
   rv += (_mode + SPACE_STR + _date + SPACE_STR + _utc + SPACE_STR);
   rv += substring(pad_string(_target, 13, PAD_RIGHT, ' '), 0, 13) + SPACE_STR;
 
@@ -171,7 +168,7 @@ const string qtc_series::output_string(const unsigned int n) const
 /*! \brief      Get a string representing all the entries
     \return     string describing all the <i>qtc_entry</i> elements
 */
-const string qtc_series::complete_output_string(void) const
+string qtc_series::complete_output_string(void) const
 { string rv;
 
   for (size_t n = 0; n < size(); ++n)
@@ -251,7 +248,7 @@ void qtc_database::operator+=(const qtc_series& q)
 
     Returns an empty series if <i>n</i> is out of bounds
 */
-const qtc_series qtc_database::operator[](size_t n)
+qtc_series qtc_database::operator[](size_t n)
 { if (n >= size())
     return qtc_series();
 
@@ -264,7 +261,7 @@ const qtc_series qtc_database::operator[](size_t n)
     \param   destination_callsign   the station to which the QTCs have been sent
     \return                         number of QTCs that have been sent to <i>destination_callsign</i>
 */
-const unsigned int qtc_database::n_qtcs_sent_to(const string& destination_callsign) const
+unsigned int qtc_database::n_qtcs_sent_to(const string& destination_callsign) const
 { unsigned int rv { 0 };
 
   SAFELOCK(qtc_database);
@@ -277,7 +274,7 @@ const unsigned int qtc_database::n_qtcs_sent_to(const string& destination_callsi
 /*! \brief                          Get the total number of QTC entries that have been sent
     \return                         the number of QTC entries that have been sent
 */
-const unsigned int qtc_database::n_qtc_entries_sent(void) const
+unsigned int qtc_database::n_qtc_entries_sent(void) const
 { unsigned int rv { 0 };
 
   FOR_ALL(_qtc_db, [&rv] (const qtc_series& QTC) { rv += QTC.size(); } );
@@ -421,7 +418,7 @@ void qtc_buffer::rebuild_unsent_list(const logbook& logbk)
     \param  target          station to which the QTC entries are to be sent
     \return                 the sendable QTC entries
 */
-const vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target)
+vector<qtc_entry> qtc_buffer::get_next_unsent_qtc(const unsigned int max_entries, const string& target)
 { vector<qtc_entry> rv;
 
   auto cit { _unsent_qtcs.cbegin() };

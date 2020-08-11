@@ -38,10 +38,10 @@ protected:
 
   std::vector<std::string>              _last_stat_vec;            ///< the last-retrieved stat_vec
 
-  inline const std::string _stat(void)
+  inline std::string _stat(void)
     { return read_file("/proc/"s + to_string(_pid) + "/stat"s); }
 
-  const std::vector<std::string> _statvec(void);                    // this does all the work
+  std::vector<std::string> _statvec(void);                    // this does all the work
 
 public:
 
@@ -165,145 +165,145 @@ public:
   using S   = std::string;
   using U   = unsigned int;
 
-  inline const D stat_pid(void)
+  inline D stat_pid(void)
     { return from_string<D>(_statvec()[0]); }
 
-  inline const S stat_comm(void)
+  inline S stat_comm(void)
     { return ( delimited_substring(_statvec()[1], '(', ')') ); }
 
-  inline const C stat_state(void)
+  inline C stat_state(void)
     { return (_statvec()[2][0]); }
 
-  inline const D stat_ppid(void)
+  inline D stat_ppid(void)
     { return from_string<D>(_statvec()[3]); }
 
-  inline const D stat_pprp(void)
+  inline D stat_pprp(void)
     { return from_string<D>(_statvec()[4]); }
 
-  inline const D stat_session(void)
+  inline D stat_session(void)
     { return from_string<D>(_statvec()[5]); }
 
-  inline const D stat_tty_nr(void)
+  inline D stat_tty_nr(void)
     { return from_string<D>(_statvec()[6]); }
 
-  inline const D stat_tpgid(void)
+  inline D stat_tpgid(void)
     { return from_string<D>(_statvec()[7]); }
 
-  inline const U stat_flags(void)
+  inline U stat_flags(void)
     { return from_string<U>(_statvec()[8]); }
 
-  inline const LU stat_minflt(void)
+  inline LU stat_minflt(void)
     { return from_string<LU>(_statvec()[9]); }
 
-  inline const LU stat_cminflt(void)
+  inline LU stat_cminflt(void)
     { return from_string<LU>(_statvec()[10]); }
 
-  inline const LU stat_majflt(void)
+  inline LU stat_majflt(void)
     { return from_string<LU>(_statvec()[11]); }
 
-  inline const LU stat_cmajflt(void)
+  inline LU stat_cmajflt(void)
     { return from_string<LU>(_statvec()[12]); }
 
-  inline const LU stat_utime(void)
+  inline LU stat_utime(void)
     { return from_string<LU>(_statvec()[13]); }
 
-  inline const LU stat_stime(void)
+  inline LU stat_stime(void)
     { return from_string<LU>(_statvec()[14]); }
 
-  inline const int64_t stat_cutime(void)
+  inline int64_t stat_cutime(void)
     { return from_string<int64_t>(_statvec()[15]); }
 
-  inline const LD stat_cstime(void)
+  inline LD stat_cstime(void)
     { return from_string<LD>(_statvec()[16]); }
 
-  inline const LD stat_priority(void)
+  inline LD stat_priority(void)
     { return from_string<LD>(_statvec()[17]); }
 
-  inline const LD stat_nice(void)
+  inline LD stat_nice(void)
     { return from_string<LD>(_statvec()[18]); }
 
-  inline const LD stat_num_threads(void)
+  inline LD stat_num_threads(void)
     { return from_string<LD>(_statvec()[19]); }
 
-  inline const LD stat_itrealvalue(void)
+  inline LD stat_itrealvalue(void)
     { return from_string<LD>(_statvec()[20]); }
 
-  inline const LLU stat_starttime(void)
+  inline LLU stat_starttime(void)
     { return from_string<LLU>(_statvec()[21]); }
 
-  inline const LU stat_vsize(void)
+  inline LU stat_vsize(void)
     { return from_string<LU>(_statvec()[22]); }
 
-  inline const LD stat_rss(void)
+  inline LD stat_rss(void)
     { return from_string<LD>(_statvec()[23]); }
 
-  inline const LU stat_rsslim(void)
+  inline LU stat_rsslim(void)
     { return from_string<LU>(_statvec()[24]); }
 
-  inline const LU stat_startcode(void)
+  inline LU stat_startcode(void)
     { return from_string<LU>(_statvec()[25]); }
 
-  inline const LU stat_endcode(void)
+  inline LU stat_endcode(void)
     { return from_string<LU>(_statvec()[26]); }
 
-  inline const LU stat_startstack(void)
+  inline LU stat_startstack(void)
     { return from_string<LU>(_statvec()[27]); }
 
-  inline const LU stat_kstkesp(void)
+  inline LU stat_kstkesp(void)
     { return from_string<LU>(_statvec()[28]); }
 
-  inline const LU stat_kstkeip(void)
+  inline LU stat_kstkeip(void)
     { return from_string<LU>(_statvec()[29]); }
 
-  inline const LU stat_wchan(void)
+  inline LU stat_wchan(void)
     { return from_string<LU>(_statvec()[34]); }
 
-  inline const LU stat_nswap(void)
+  inline LU stat_nswap(void)
     { return from_string<LU>(_statvec()[35]); }
 
-  inline const LU stat_cnswap(void)
+  inline LU stat_cnswap(void)
     { return from_string<LU>(_statvec()[36]); }
 
-  inline const D stat_exit_signal(void)
+  inline D stat_exit_signal(void)
     { return from_string<D>(_statvec()[37]); }
 
-  inline const U stat_rt_priority(void)
+  inline U stat_rt_priority(void)
     { return from_string<U>(_statvec()[39]); }
 
-  inline const U stat_policy(void)
+  inline U stat_policy(void)
     { return from_string<U>(_statvec()[40]); }
 
-  inline const LLU stat_delayacct_blkio_ticks(void)
+  inline LLU stat_delayacct_blkio_ticks(void)
     { return from_string<LLU>(_statvec()[41]); }
 
-  inline const LU stat_guest_time(void)
+  inline LU stat_guest_time(void)
     { return from_string<LU>(_statvec()[42]); }
 
-  inline const LD stat_cguest_time(void)
+  inline LD stat_cguest_time(void)
     { return from_string<LD>(_statvec()[43]); }
 
-  inline const LU stat_start_data(void)
+  inline LU stat_start_data(void)
     { return from_string<LU>(_statvec()[44]); }
 
-  inline const LU stat_end_data(void)
+  inline LU stat_end_data(void)
     { return from_string<LU>(_statvec()[45]); }
 
-  inline const LU stat_start_brk(void)
+  inline LU stat_start_brk(void)
     { return from_string<LU>(_statvec()[46]); }
 
-  inline const LU stat_arg_start(void)
+  inline LU stat_arg_start(void)
     { return from_string<LU>(_statvec()[47]); }
 
-  inline const LU stat_arg_end(void)
+  inline LU stat_arg_end(void)
     { return from_string<LU>(_statvec()[48]); }
 
-  inline const LU stat_env_start(void)
+  inline LU stat_env_start(void)
     { return from_string<LU>(_statvec()[49]); }
 
-  inline const LU stat_env_end(void)
+  inline LU stat_env_end(void)
     { return from_string<LU>(_statvec()[50]); }
 
-  inline const D stat_exit_code(void)
+  inline D stat_exit_code(void)
     { return from_string<D>(_statvec()[51]); }
 };
 

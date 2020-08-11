@@ -1,4 +1,4 @@
-// $Id: cw_buffer.h 152 2019-08-21 20:23:38Z  $
+// $Id: cw_buffer.h 161 2020-07-31 16:19:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -99,7 +99,7 @@ public:
   void speed(const unsigned int wpm);
 
 /// get the speed in wpm
-  const unsigned int speed(void);
+  unsigned int speed(void);
 
 /*! \brief          Set the PTT delay
     \param  msec    delay in milliseconds
@@ -107,7 +107,7 @@ public:
   void ptt_delay(const unsigned int msec);
 
 /// get the PTT delay in milliseconds
-  const unsigned int ptt_delay(void);
+  unsigned int ptt_delay(void);
 
 /*! \brief          Add a key-down interval, along with a subsequent gap
     \param  n       key-down interval (100 = 1 dot)
@@ -153,7 +153,7 @@ public:
   void associate_rig(rig_interface* rigp);
 
 /// is the buffer empty?
-  const bool empty(void);
+  bool empty(void);
 
 /// disable sending
   inline void disable(void)
@@ -168,11 +168,11 @@ public:
     { _disabled_cw = !_disabled_cw; }
 
 /// is sending disabled?
-  inline const bool disabled(void) const
+  inline bool disabled(void) const
     { return _disabled_cw; }
 
 /// is sending enabled?
-  inline const bool enabled(void) const
+  inline bool enabled(void) const
     { return !disabled(); }
 
 /// assert PTT
@@ -215,7 +215,7 @@ public:
 
     Returns empty string if message number <i>n</i> does not exist
 */
-  const std::string operator[](const int n);
+  std::string operator[](const int n);
 };
 
 #endif /* CWBUFFER_H */

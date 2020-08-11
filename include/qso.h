@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 // $Id: qso.h 163 2020-08-06 19:46:33Z  $
-=======
-// $Id: qso.h 152 2019-08-21 20:23:38Z  $
->>>>>>> 0a43fe059e6587fe915f47631dbfa4e529ab7fa9
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -77,14 +73,14 @@ protected:
 
     Works regardless of whether <i>field_name</i> includes an initial "received-" string
 */
-  const bool _is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules) const;
+  bool _is_received_field_optional(const std::string& field_name, const std::vector<exchange_field>& fields_from_rules) const;
 
 /*! \brief               Obtain the epoch time from a date and time in drlog format
     \param  date_str     date string in drlog format
     \param  utc_str      time string in drlog format
     \return              time in seconds since the UNIX epoch
 */
-  const time_t _to_epoch_time(const std::string& date_str, const std::string& utc_str) const;
+  time_t _to_epoch_time(const std::string& date_str, const std::string& utc_str) const;
 
 public:
   
@@ -92,7 +88,7 @@ public:
   QSO(void);
 
 /// destructor
-  inline ~QSO(void) = default;
+//  inline ~QSO(void) = default;
 
   READ_AND_WRITE(band);                 ///< band
   READ_AND_WRITE(callsign);             ///< call
@@ -110,7 +106,7 @@ public:
   READ_AND_WRITE(utc);                  ///< hh:mm:ss
 
 /// get TX frequency as a string
-  inline const decltype(_frequency_tx) freq(void) const
+  inline decltype(_frequency_tx) freq(void) const
     { return _frequency_tx; }
 
 /// set TX frequency from a string of the form xxxxx.y
@@ -126,7 +122,7 @@ public:
   READ(is_dupe);                        ///< is this QSO a dupe?
   
 /// is any exchange field a mult?
-  const bool is_exchange_mult(void) const;
+  bool is_exchange_mult(void) const;
 
 /*! \brief              Set a field to be an exchange mult
     \param  field_name  name of field
@@ -136,11 +132,11 @@ public:
   void set_exchange_mult(const std::string& field_name);
 
 /// synonym for callsign()
-  inline const std::string call(void) const
+  inline std::string call(void) const
     { return callsign(); }
 
 /// simple proxy for emptiness
-  inline const bool empty(void) const
+  inline bool empty(void) const
     { return callsign().empty(); }
     
 /// mark as dupe
@@ -152,11 +148,11 @@ public:
     { _is_dupe = false; }
     
 /// return a single date-and-time string
-  inline const std::string date_and_time(void) const
+  inline std::string date_and_time(void) const
     { return _date + "T"s + _utc; }
     
 /// is this QSO earlier than another one? 
-  inline const bool earlier_than(const QSO& qso) const
+  inline bool earlier_than(const QSO& qso) const
     { return (_epoch_time < qso.epoch_time()); }
     
 /*! \brief                          Re-format according to a Cabrillo template
@@ -165,10 +161,10 @@ public:
     Example template:
       CABRILLO QSO = FREQ:6:5:L, MODE:12:2, DATE:15:10, TIME:26:4, TCALL:31:13:R, TEXCH-RST:45:3:R, TEXCH-CQZONE:49:6:R, RCALL:56:13:R, REXCH-RST:70:3:R, REXCH-CQZONE:74:6:R, TXID:81:1
 */
-  const std::string cabrillo_format(const std::string& cabrillo_qso_template) const;
+  std::string cabrillo_format(const std::string& cabrillo_qso_template) const;
   
 /// format for writing to disk (in the actual drlog log)
-  const std::string verbose_format(void) const;  
+  std::string verbose_format(void) const;  
 
 /*! \brief              Read fields from a line in the disk log
     \param  context     drlog context
@@ -188,13 +184,13 @@ public:
     <i>rule_to_match</i> is from the configuration file, and looks like:
       [IOTA != -----]
 */
-  const bool exchange_match(const std::string& rule_to_match) const;
+  bool exchange_match(const std::string& rule_to_match) const;
 
 /*! \brief          Do the values of any of the exchange fields in the QSO match a target string?
     \param  target  target string
     \return         whether any of the exchange fields contain the value <i>target</i>
 */
-  const bool exchange_match_string(const std::string& target) const;
+  bool exchange_match_string(const std::string& target) const;
 
 /*! \brief              Return a single field from the received exchange
     \param  field_name  name of field to return
@@ -202,13 +198,13 @@ public:
 
     Returns the empty string if <i>field_name</i> is not found in the exchange
 */
-  const std::string received_exchange(const std::string& field_name) const;
+  std::string received_exchange(const std::string& field_name) const;
 
 /*! \brief              Is a particular field present in the received exchange?
     \param  field_name  name of field for whose presence to test
     \return             whether <i>field_name</i> is present
 */
-  inline const bool is_exchange_field_present(const std::string& field_name) const
+  inline bool is_exchange_field_present(const std::string& field_name) const
     { return !(received_exchange(field_name).empty()); }
 
 /*! \brief              Return a single field from the sent exchange
@@ -217,7 +213,7 @@ public:
 
     Returns the empty string if <i>field_name</i> is not found in the exchange
 */
-  const std::string sent_exchange(const std::string& field_name) const;
+  std::string sent_exchange(const std::string& field_name) const;
 
 /*! \brief              Return a single field from the sent exchange
     \param  field_name  name of field to return
@@ -225,21 +221,21 @@ public:
 
     Synonym for sent_exchange(<i>field_name</i>)
 */
-  inline const std::string sent_exchange_field(const std::string& field_name) const
+  inline std::string sent_exchange_field(const std::string& field_name) const
     { return sent_exchange(field_name); }
 
 /*! \brief              Does the sent exchange include a particular field?
     \param  field_name  name of field to test
     \return             whether the sent exchange includes the field <i>field_name</i>
 */
-  const bool sent_exchange_includes(const std::string& field_name) const;
+  bool sent_exchange_includes(const std::string& field_name) const;
 
 /*! \brief      Obtain string in format suitable for display in the LOG window
     \return     QSO formatted for writing into the LOG window
 
     Also populates <i>_log_line_fields</i> to match the returned string
 */
-  const std::string log_line(void);
+  std::string log_line(void);
 
 /*! \brief          Populate from a string (as visible in the log window)
     \param  str     string from visible log window
@@ -252,7 +248,7 @@ public:
 
     Currently unused
 */
-  void new_populate_from_log_line(const std::string& str, const std::string& mycall);
+//  void new_populate_from_log_line(const std::string& str, const std::string& mycall);
 
 /*! \brief      QSO == QSO
     \param  q   target QSO
@@ -260,7 +256,7 @@ public:
 
     Only "important" members are compared.
 */
-  const bool operator==(const QSO& q) const;
+  bool operator==(const QSO& q) const;
 
 /// serialise
   template<typename Archive>
@@ -301,7 +297,7 @@ std::ostream& operator<<(std::ostream& ost, const QSO& q);
     \param  qso_2   second QSO  name of field to test
     \return         whether <i>qso_1</i> is earlier than <i>qso_2</i>
 */
-inline const bool earlier(const QSO& qso_1, const QSO& qso_2)
+inline bool earlier(const QSO& qso_1, const QSO& qso_2)
   { return (qso_1.earlier_than(qso_2)); }
 
 /*! \brief          Obtain the next name and value from a drlog-format line
@@ -315,6 +311,6 @@ inline const bool earlier(const QSO& qso_1, const QSO& qso_2)
 
     The value of <i>posn</i> might be changed by this function.
 */
-const std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);
+std::pair<std::string, std::string> next_name_value_pair(const std::string& str, size_t& posn);
 
 #endif    // QSO_H

@@ -1,4 +1,4 @@
-// $Id: audio.cpp 157 2020-05-21 18:14:13Z  $
+// $Id: audio.cpp 161 2020-07-31 16:19:50Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -46,7 +46,7 @@ extern void         start_of_thread(const string& name);    ///< increase the co
 
     Returned value is based on the duration and the number of bytes to be read per second
 */
-const int64_t audio_recorder::_total_bytes_to_read(void)
+int64_t audio_recorder::_total_bytes_to_read(void)
 { int64_t total_bytes;
 
 // how many seconds to next time marker?
@@ -270,7 +270,8 @@ void audio_recorder::_set_params(void)
   _bits_per_frame = bits_per_sample * _hw_params.channels;
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
-  _audio_buf = (u_char *)malloc(_period_size_in_bytes);
+//  _audio_buf = (u_char *)malloc(_period_size_in_bytes);
+  _audio_buf = (u_char *)malloc(_period_size_in_bytes * 2); // try doubling the size of the ring buffer
 
   if (_audio_buf == NULL)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;
@@ -284,7 +285,7 @@ void audio_recorder::_set_params(void)
     \param  data    buffer in which to store the read data
     \return         total number of bytes read
 */
-const ssize_t audio_recorder::_pcm_read(u_char* data)
+ssize_t audio_recorder::_pcm_read(u_char* data)
 { size_t result { 0 };
   size_t count  { _period_size_in_frames };
 
@@ -292,12 +293,19 @@ const ssize_t audio_recorder::_pcm_read(u_char* data)
   { const ssize_t r { _readi_func(_handle, data, count) };
 
     if ( (r == -EAGAIN) or (r >= 0 and (size_t)r < count) )
-    { snd_pcm_wait(_handle, 100);
+    { snd_pcm_wait(_handle, 100);   // wait for 100 ms, then try again
     }
-    else if (r == -EPIPE)
-    { snd_pcm_recover(_handle, -EPIPE, 0);
-      ost << "WARNING: XRUN: snd_pcm_recover() CALLED" << endl;
-// ost << "XRUN()!!" << endl;
+    else if (r == -EPIPE)           // this means we have an overrun on capture; https://www.alsa-project.org/alsa-doc/alsa-lib/pcm.html
+    { if (++_xrun_counter == _xrun_threshhold)
+      { _error_alert("audio XRUN error count = "s + to_string(_xrun_threshhold));
+        _xrun_threshhold *= 2;
+      }
+
+// try this
+      snd_pcm_recover(_handle, -EPIPE, 0);
+      ost << "WARNING: snd_pcm_recover() CALLED" << endl;
+
+//      ost << "XRUN()!!" << endl;
     }
     else if (r == -ESTRPIPE)
     { ost << "SUSPEND()!!!" << endl;
@@ -328,6 +336,16 @@ void* audio_recorder::_static_capture(void* arg)
   arp->_capture(nullptr);
 
   return nullptr;
+}
+
+/*! \brief       Alert the user with a message
+    \param  msg  message for the user
+
+    Calls <i>_error_alert_function</i> to perform the actual alerting
+*/
+void audio_recorder::_error_alert(const string& msg)
+{ if (_error_alert_function)
+    (*_error_alert_function)(msg);
 }
 
 /*! \brief          Close the WAV file associated with a wav_file
@@ -479,40 +497,6 @@ goto create_file;
   return nullptr;       // should never get here
 }
 
-#if 0
-/// constructor
-audio_recorder::audio_recorder(void) :
-  _aborting(false),                         // we are not aborting a capture
-  _audio_buf(nullptr),                      // no buffer by default
-  _base_filename("drlog-audio"s),            // default output file
-  _buffer_frames(0),                        // no frames in buffer?
-  _buffer_time(0),                          // no time covered by buffer?
-  _file_type(AUDIO_FORMAT_WAVE),            // WAV format
-  _handle(nullptr),                         // no PCM handle
-  _info(nullptr),                           // explicitly set to uninitialised
-  _max_file_time(0),                        // no maximum duration (in seconds)
-  _period_size_in_frames(0),
-  _monotonic(false),                        // device cannot do monotonic timestamps
-  _n_channels(1),                           // monophonic
-  _open_mode(0),                            // blocking
-  _pcm_name("default"s),
-  _period_frames(0),
-  _period_time(0),
-  _readi_func(snd_pcm_readi),               // function to read interleaved frames (the only one that we actually use)
-  _readn_func(snd_pcm_readn),               // function to read non-interleaved frames
-  _recording(false),                        // initially, not recording
-  _record_count(9999999999),                // big number
-  _samples_per_second(8000),                // G.711 rate
-  _sample_format(SND_PCM_FORMAT_S16_LE),    // my soundcard doesn't support 8-bit formats such as SND_PCM_FORMAT_U8 :-(
-  _start_delay(1),
-  _stream(SND_PCM_STREAM_CAPTURE),          // we are capturing a stream
-  _time_limit(0),                           // no limit
-  _thread_number(0),
-  _writei_func(snd_pcm_writei),             // function to write interleaved frames
-  _writen_func(snd_pcm_writen)              // function to write non-interleaved frames
-{ }
-#endif
-
 /// initialise the object
 void audio_recorder::initialise(void)
 { snd_pcm_info_alloca(&_info);          // create an invalid snd_pcm_info_t
@@ -552,6 +536,7 @@ void audio_recorder::initialise(void)
   _hw_params = rhwparams;
 
   _set_params();
+  _initialised = true;      // flag that we don't need to initialise next time we start recording
 }
 
 /// public function to capture the audio
@@ -592,11 +577,6 @@ void wav_file::_write_buffer(void* bufp, const size_t buffer_size)
       throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing buffer to WAV file; buffer size =  "s + to_string(buffer_size));
   }
 }
-
-/// default constructor
-//wav_file::wav_file(void) :
-//  _is_buffered(false)
-//{ }
 
 /// open the file for writing
 void wav_file::open(void)
@@ -931,18 +911,18 @@ void data_chunk::write_to_file(FILE* fp) const
 */
 
 /// constructor
-fmt_chunk::fmt_chunk(void) :
-  _subchunk_1_size(16), // PCM
-  _audio_format(1),     // PCM
-  _num_channels(1),     // mono
-  _sample_rate(8000),   // 64 kbps
-  _bits_per_sample(8)   // 8-bit samples
-{ }
+//fmt_chunk::fmt_chunk(void) :
+//  _subchunk_1_size(16), // PCM
+//  _audio_format(1),     // PCM
+//  _num_channels(1),     // mono
+//  _sample_rate(8000),   // 64 kbps
+//  _bits_per_sample(8)   // 8-bit samples
+//{ }
 
 /*! \brief      Convert to a string that holds the fmt chunk in ready-to-use form
     \return     string containing the fmt chunk
 */
-const string fmt_chunk::to_string(void) const
+string fmt_chunk::to_string(void) const
 { string rv = "fmt " + create_string(' ', 20);
 
   rv = replace_substring(rv, 4, _subchunk_1_size);

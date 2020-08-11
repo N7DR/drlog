@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 158 2020-06-27 20:33:02Z  $
+// $Id: bandmap.cpp 161 2020-07-31 16:19:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -56,7 +56,7 @@ bandmap_filter_type BMF;                            ///< the global bandmap filt
     \param  bes     source of a bandmap entry
     \return         printable version of <i>bes</i>
 */
-const string to_string(const BANDMAP_ENTRY_SOURCE bes)
+string to_string(const BANDMAP_ENTRY_SOURCE bes)
 { switch (bes)
   { case BANDMAP_ENTRY_SOURCE::LOCAL :
       return "BANDMAP_ENTRY_LOCAL"s;
@@ -84,7 +84,7 @@ const string to_string(const BANDMAP_ENTRY_SOURCE bes)
     \param  callsign    the callsign to test
     \return             The number of posters associated with <i>callsign</i>
 */
-const unsigned int bandmap_buffer::n_posters(const string& callsign)
+unsigned int bandmap_buffer::n_posters(const string& callsign)
 { SAFELOCK(_bandmap_buffer);
 
   const auto cit { _data.find(callsign) };
@@ -99,7 +99,7 @@ const unsigned int bandmap_buffer::n_posters(const string& callsign)
 
     Creates an entry in the buffer if no entry for <i>callsign</i> exists
 */
-const unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
+unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
 { SAFELOCK(_bandmap_buffer);
 
   return _data[callsign].add(poster);
@@ -116,7 +116,7 @@ const unsigned int bandmap_buffer::add(const string& callsign, const string& pos
 
     The continents precede the canonical prefixes
 */
-const vector<string> bandmap_filter_type::filter(void) const
+vector<string> bandmap_filter_type::filter(void) const
 { vector<string> rv { _continents };
 
   rv.insert(rv.end(), _prefixes.cbegin(), _prefixes.cend());
@@ -131,12 +131,12 @@ const vector<string> bandmap_filter_type::filter(void) const
      if it's not already in the filter; otherwise it is removed.
 */
 void bandmap_filter_type::add_or_subtract(const string& str)
-{ vector<string>* vs_p { ( (CONTINENT_SET < str) ? &_continents : &_prefixes ) };          // create pointer to correct vector
+{ vector<string>* vs_p { ( (CONTINENT_SET > str) ? &_continents : &_prefixes ) };          // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
   for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss.insert(continent_or_prefix); } );  // create a copy of current values
 
-  if (ss < str)              // remove a value
+  if (ss > str)              // remove a value
     ss.erase(str);
   else                       // add a value
     ss.insert(str);
@@ -200,7 +200,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
   if (rules.n_country_mults())        // if country mults are used
   { clear_country_mult();
 
-    if (statistics.is_needed_country_mult(_callsign, _band, _mode))
+    if (statistics.is_needed_country_mult(_callsign, _band, _mode, rules))
       add_country_mult(_canonical_prefix);
 
     _is_needed_country_mult.status_is_known(true);
@@ -259,7 +259,7 @@ void bandmap_entry::calculate_mult_status(contest_rules& rules, running_statisti
 
     Used in += function.
 */
-const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
+bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 { if ((be.is_my_marker()) or is_my_marker())       // mustn't delete a valid call if we're updating my QRG
     return (_callsign == be._callsign);
 
@@ -274,7 +274,7 @@ const bool bandmap_entry::matches_bandmap_entry(const bandmap_entry& be) const
 
     <i>statistics</i> must be updated to be current before this is called
 */
-const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, running_statistics& statistics)
+bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, running_statistics& statistics)
 { const bool original_is_needed { _is_needed };
 
 // if this contest allows only one QSO with a station (e.g., SS)
@@ -299,7 +299,7 @@ const bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, 
 }
 
 /// guess the mode, based on the frequency
-const MODE bandmap_entry::putative_mode(void) const
+MODE bandmap_entry::putative_mode(void) const
 { if (source() == BANDMAP_ENTRY_SOURCE::RBN)
     return MODE_CW;
 
@@ -323,7 +323,7 @@ const MODE bandmap_entry::putative_mode(void) const
       2. worked and QSLed on this band/mode;
       3. worked and QSLed on another band/mode AND worked no more than 4 times in this band/mode
 */
-const bool bandmap_entry::matches_criteria(void) const
+bool bandmap_entry::matches_criteria(void) const
 { if (!is_needed())
     return false;               // skip any call that isn't needed
 
@@ -387,7 +387,7 @@ ostream& operator<<(ostream& ost, const bandmap_entry& be)
      Returns the nearest station within the guard band, or the null string if no call is found.
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
-const string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
+string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz)
 { if ( (target_frequency_in_khz < 1800) or (target_frequency_in_khz > 29700) )
   { ost << "WARNING: bandmap::_nearest_callsign called with frequency in kHz = " << target_frequency_in_khz << endl;
     return string();
@@ -514,7 +514,7 @@ void bandmap::_dirty_entries(void)
     or
         its source is RBN and the call is already present in the bandmap at the same QRG with the poster of <i>be</i>
 */
-const bool bandmap::_mark_as_recent(const bandmap_entry& be)
+bool bandmap::_mark_as_recent(const bandmap_entry& be)
 { if (_rbn_threshold == 1)
     return true;
 
@@ -550,7 +550,7 @@ void bandmap::operator+=(bandmap_entry& be)
   const string& callsign               { be.callsign() };
 
 // do not add if it's already been done recently, or matches several other conditions
-  bool add_it { !(_do_not_add < callsign) };
+  bool add_it { !(_do_not_add > callsign) };
 
   if (add_it)
     add_it = be.freq().is_within_ham_band();
@@ -655,7 +655,7 @@ void bandmap::prune(void)
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-const bandmap_entry bandmap::operator[](const string& str)
+bandmap_entry bandmap::operator[](const string& str)
 { SAFELOCK(_bandmap);
 
   const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == str); }) };
@@ -669,7 +669,7 @@ const bandmap_entry bandmap::operator[](const string& str)
 
     Returns the null string if <i>callsign</i> matches no entries in the bandmap
 */
-const bandmap_entry bandmap::substr(const string& str)
+bandmap_entry bandmap::substr(const string& str)
 { SAFELOCK(_bandmap);
 
   const auto cit { FIND_IF(_entries, [=] (const bandmap_entry& be) { return contains(be.callsign(), str); }) };
@@ -729,7 +729,7 @@ void bandmap::not_needed_country_mult(const string& canonical_prefix)
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-void bandmap::not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g. "WPXPX" */, const std::string& /* callsign */),
+void bandmap::not_needed_callsign_mult(/*const*/ std::string (*pf)(const std::string& /* e.g. "WPXPX" */, const std::string& /* callsign */),
                                        const std::string& mult_type /* e.g., "WPXPX" */,
                                        const std::string& callsign_mult_string /* e.g., SM1 */)
 { if (callsign_mult_string.empty() or mult_type.empty())
@@ -821,7 +821,7 @@ void bandmap::filter_show(const bool torf)
 }
 
 /// all the entries, after filtering has been applied
-const BM_ENTRIES bandmap::filtered_entries(void)
+BM_ENTRIES bandmap::filtered_entries(void)
 { if (!filter_enabled())
     return entries();
 
@@ -873,7 +873,7 @@ const BM_ENTRIES bandmap::filtered_entries(void)
 }
 
 /// all the entries, after the RBN threshold and filtering have been applied
-const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
+BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 {
   { SAFELOCK (_bandmap);
 
@@ -896,7 +896,7 @@ const BM_ENTRIES bandmap::rbn_threshold_and_filtered_entries(void)
 }
 
 /// all the entries, after the RBN threshold, filtering and culling have been applied
-const BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
+BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
 { SAFELOCK (_bandmap);
 
   switch (_cull_function)
@@ -922,7 +922,7 @@ const BM_ENTRIES bandmap::rbn_threshold_filtered_and_culled_entries(void)
      The return value can be tested with .empty() to see if a station was found.
      Applies filtering and the RBN threshold before searching for the next station.
 */
-const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
+bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn)
 { SAFELOCK(_bandmap);    // hold the lock so nothing changes while we scan the bandmap
 
   const BM_ENTRIES fe { displayed_entries() };
@@ -970,7 +970,7 @@ const bandmap_entry bandmap::needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIREC
     Applies filtering and the RBN threshold before searching for the next station.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn)
+bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn)
 { bandmap_entry rv;
 
   const BM_ENTRIES fe { displayed_entries() };
@@ -1027,7 +1027,7 @@ const bandmap_entry bandmap::next_station(const frequency& f, const enum BANDMAP
     Applies filtering and the RBN threshold before searching.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-const frequency bandmap::lowest_frequency(void)
+frequency bandmap::lowest_frequency(void)
 { const BM_ENTRIES bme { displayed_entries() };
 
   return (bme.empty() ? frequency() : bme.front().freq());
@@ -1039,14 +1039,14 @@ const frequency bandmap::lowest_frequency(void)
     Applies filtering and the RBN threshold before searching.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-const frequency bandmap::highest_frequency(void)
+frequency bandmap::highest_frequency(void)
 { const BM_ENTRIES bme { displayed_entries() };
 
   return (bme.empty() ? frequency() : bme.back().freq());
 }
 
 /// convert to a printable string
-const string bandmap::to_str(void)
+string bandmap::to_str(void)
 { string rv;
   BM_ENTRIES raw;
   BM_ENTRIES filtered;
@@ -1095,14 +1095,18 @@ const string bandmap::to_str(void)
      \param target_callsign     callsign to test
      \return                    whether <i>target_callsign</i> is present on the bandmap
 */
-const bool bandmap::is_present(const string& target_callsign)
+bool bandmap::is_present(const string& target_callsign)
 { SAFELOCK(_bandmap);
 
   return !(_entries.cend() == FIND_IF(_entries, [=] (const bandmap_entry& be) { return (be.callsign() == target_callsign); }));
 }
 
-// biq changes (is emptied) by this routine
-// other threads MUST NOT access biq while this is executing
+/*! \brief         Process an insertion queue, adding the elements to the bandmap
+    \param biq     insertion queue to process
+     
+    <i>biq</i> changes (is emptied) by this routine
+    other threads MUST NOT access biq while this is executing
+*/
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 { SAFELOCK(_bandmap);
 
@@ -1115,134 +1119,25 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
   }
 }
 
-// biq changes (is emptied) by this routine
-// other threads MUST NOT access biq while this is executing
+/*! \brief          Process an insertion queue, adding the elements to the bandmap
+    \param  biq     insertion queue to process
+    \param  w       window to which to write the revised bandmap
+     
+    <i>biq</i> changes (is emptied) by this routine
+    other threads MUST NOT access biq while this is executing
+*/
 void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w)
-{ SAFELOCK(_bandmap);
-
-  while (!biq.empty())
-  { bandmap_entry be { biq.front() };
-
-    *this += be;
-
-    biq.pop_front();
-  }
+{ process_insertion_queue(biq);
 
   w <= (*this);
 }
 
 /*! \brief          Write a <i>bandmap</i> object to a window
-    \param  win     window
-    \param  bm      object to write
+    \param  win     window to which to write
     \return         the window
 */
-window& operator<(window& win, bandmap& bm)
-{ return bm.write_to_window(win);       // need access to _bandmap_mutex
-
-#if 0  
-  constexpr int NOT_NEEDED_COLOUR          { COLOUR_BLACK };
-  constexpr int MULT_COLOUR                { COLOUR_GREEN };
-  constexpr int NOT_MULT_COLOUR            { COLOUR_BLUE };
-  constexpr int UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
-
-  const size_t maximum_number_of_displayable_entries { (win.width() / COLUMN_WIDTH) * win.height() };
-  const vector<int> fade_colours { bm.fade_colours() };
-
-// be very, very careful: don't call anything that locks _bandmap, as process_insertion_queue
-// locks _bandmap and then calls this routine
-
-// *****  NEED A NEW WAY TO HANDLE LOCKING FOR BANDMAPS -- this allows locking inversion *****
-
-  SAFELOCK(bandmap);                                        // in case multiple threads are trying to write a bandmap to the window
-
-  BM_ENTRIES entries { bm.displayed_entries() };    // automatically filter
-
-  const size_t start_entry { (entries.size() > maximum_number_of_displayable_entries) ? bm.column_offset() * win.height() : 0u };
-
-  win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < (bandmap_frequency_up ? WINDOW_ATTRIBUTES::CURSOR_BOTTOM_LEFT : WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT);
-
-  size_t index { 0 };    // keep track of where we are in the bandmap
-
-  for (const auto& be : entries)
-  { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-    { const string entry_str     { pad_string(pad_string(be.frequency_str(), 7)  + SPACE_STR + substring(be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH, PAD_RIGHT) };
-      const string frequency_str { substring(entry_str, 0, 7) };
-      const string callsign_str  { substring(entry_str, 8) };
-      const bool   is_marker     { be.is_marker() };
-  
-// change to the correct colour
-      const time_t age_since_original_inserted { be.time_since_this_or_earlier_inserted() };
-      const time_t age_since_this_inserted     { be.time_since_inserted() };
-      const time_t start_time                  { be.time() };                  // time it was inserted
-      const time_t expiration_time             { be.expiration_time() };
-      const float  fraction                    { static_cast<float>(age_since_this_inserted) / (expiration_time - start_time) };
-
-//      const vector<int> fade_colours { bm.fade_colours() };
-      const int         n_colours    { static_cast<int>(fade_colours().size()) };
-      const float       interval     { (1.0f / static_cast<float>(n_colours)) };
-      const int n_intervals { min(static_cast<int>(fraction / interval), n_colours - 1) };
-
-      int cpu = colours.add(fade_colours.at(n_intervals), win.bg());
-
-// mark in GREEN if less than two minutes since the original spot at this freq was inserted
-//      if (age_since_original_inserted < 120 and !be.is_my_marker() and !be.is_mode_marker() and (bm.recent_colour() != COLOUR_BLACK))
-      if (age_since_original_inserted < 120 and !be.is_marker() and (bm.recent_colour() != 16 /* COLOUR_BLACK */))
-        cpu = colours.add(bm.recent_colour(), win.bg());
-
-      if (is_marker)
-        cpu = colours.add(COLOUR_WHITE, 16);    // colours for markers
-
-// work out where to start the display of this call
-      const unsigned int x { ( (index  - start_entry) / win.height()) * COLUMN_WIDTH };
-    
-// check that there's room to display the entire entry
-      if ((win.width() - x) < COLUMN_WIDTH)
-        break;
-
-// get the right y ordinate
-      const unsigned int y { (bandmap_frequency_up ? 0 + (index - start_entry) % win.height()
-                                                   : (win.height() - 1) - (index - start_entry) % win.height()
-                             ) };
-
-// now work out the status colour
-      PAIR_TYPE status_colour { colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR) };                      // default
-
-      if (!is_marker)
-      { if (be.is_needed())
-        { if (be.mult_status_is_known())
-            status_colour = (be.is_needed_mult() ? colours.add(MULT_COLOUR, MULT_COLOUR) : colours.add(NOT_MULT_COLOUR, NOT_MULT_COLOUR));
-          else
-            status_colour = colours.add(UNKNOWN_MULT_STATUS_COLOUR, UNKNOWN_MULT_STATUS_COLOUR);
-        }
-      }
-
-// reverse the colour of the frequency if there are unseen entries lower or higher in frequency
-      const bool reverse { ( (start_entry != 0) and (start_entry == index) ) or
-                             (index == (start_entry + maximum_number_of_displayable_entries - 1) and (entries.size() > (index + 1))) };
-
-      win < cursor(x, y) < colour_pair(cpu);
-
-      if (reverse)
-        win < WINDOW_ATTRIBUTES::WINDOW_REVERSE;
-
-      win < frequency_str;
-
-      if (reverse)
-        win < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
-
-      win < colour_pair(status_colour) < SPACE_STR
-          < colour_pair(cpu) < callsign_str;
-    }
-
-    index++;
-  }
-
-  return win;
-#endif
-}
-
 window& bandmap::write_to_window(window& win)
-{ constexpr COLOUR_TYPE NOT_NEEDED_COLOUR          { 16 /* COLOUR_BLACK */ };
+{ constexpr COLOUR_TYPE NOT_NEEDED_COLOUR          { COLOUR_BLACK };
   constexpr COLOUR_TYPE MULT_COLOUR                { COLOUR_GREEN };
   constexpr COLOUR_TYPE NOT_MULT_COLOUR            { COLOUR_BLUE };
   constexpr COLOUR_TYPE UNKNOWN_MULT_STATUS_COLOUR { COLOUR_YELLOW };
@@ -1251,7 +1146,7 @@ window& bandmap::write_to_window(window& win)
 //  const vector<int> fade_colours { bm.fade_colours() };
 
 // be very, very careful: don't call anything that locks _bandmap, as process_insertion_queue
-// locks _bandmap and then calls this routine
+// locks _bandmap and then calls this routine -- I don't think that this is a relevant comment since this has been moved into the bandmap class
 
 // *****  NEED A NEW WAY TO HANDLE LOCKING FOR BANDMAPS -- this allows locking inversion *****
 

@@ -1,4 +1,4 @@
-// $Id: bandmap.h 158 2020-06-27 20:33:02Z  $
+// $Id: bandmap.h 161 2020-07-31 16:19:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -67,7 +67,7 @@ using BANDMAP_INSERTION_QUEUE = std::deque<bandmap_entry>;
     \param  bes     source of a bandmap entry
     \return         printable version of <i>bes</i>
 */
-const std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
+std::string to_string(const BANDMAP_ENTRY_SOURCE bes);
 
 // -----------   bandmap_buffer_entry ----------------
 
@@ -79,12 +79,12 @@ class bandmap_buffer_entry
 {
 protected:
 
-  std::set<std::string>  _posters;           ///< the posters
+  std::unordered_set<std::string>  _posters;           ///< the posters
 
 public:
 
 /// return the number of posters
-  [[nodiscard]] inline const unsigned int size(void) const
+  [[nodiscard]] inline unsigned int size(void) const
     { return _posters.size(); }
 
 /*! \brief              Add a new poster
@@ -93,7 +93,7 @@ public:
 
     Does nothing if <i>new_poster</i> is already present
 */
-  inline const unsigned int add(const std::string& new_poster)
+  inline unsigned int add(const std::string& new_poster)
     { return ( _posters.insert(new_poster), _posters.size() ); }
 };
 
@@ -128,7 +128,7 @@ public:
     \param  callsign    the callsign to test
     \return             The number of posters associated with <i>callsign</i>
 */
-  [[nodiscard]] const unsigned int n_posters(const std::string& callsign);
+  unsigned int n_posters(const std::string& callsign);
 
 /*! \brief              Associate a poster with a call
     \param  callsign    the callsign
@@ -137,13 +137,13 @@ public:
 
     Creates an entry in the buffer if no entry for <i>callsign</i> exists
 */
-  const unsigned int add(const std::string& callsign, const std::string& poster);
+  unsigned int add(const std::string& callsign, const std::string& poster);
 
 /*! \brief              Are there sufficient posters of a call to allow it to appear on the bandmap?
     \param  callsign    the callsign to test
     \return             Whether the number of posters associated with <i>callsign</i> is equal to or greater than the necessary minimum
 */
-  [[nodiscard]] inline const bool sufficient_posters(const std::string& callsign)
+  [[nodiscard]] inline bool sufficient_posters(const std::string& callsign)
     { return (n_posters(callsign) >= _min_posters); }
 };
 
@@ -175,11 +175,11 @@ public:
     { _values.insert(v); }
 
 /// is any value needed?
-  [[nodiscard]] inline const bool is_any_value_needed(void) const
+  [[nodiscard]] inline bool is_any_value_needed(void) const
     { return _is_needed; }
 
 /// is the status known?
-  [[nodiscard]] inline const bool is_status_known(void) const
+  [[nodiscard]] inline bool is_status_known(void) const
     { return _is_status_known; }
 
 /// is the status known?
@@ -187,14 +187,14 @@ public:
     { _is_status_known = torf; }
 
 /// return all the needed values (as a set)
-  [[nodiscard]] inline const std::set<T> values(void) const
+  [[nodiscard]] inline std::set<T> values(void) const
     { return _values; }
 
 /*! \brief      Add a needed value
     \param  v   needed value
     \return     whether <i>v</i> was actually inserted
 */
-  const bool add(const T& v)
+  bool add(const T& v)
   { _is_needed = true;
 
     return (_values.insert(v)).second;
@@ -204,7 +204,7 @@ public:
     \param  v   value to test
     \return     whether <i>v</i> is needed
 */
-  [[nodiscard]] const bool is_value_needed(const T& v) const
+  [[nodiscard]] bool is_value_needed(const T& v) const
   { if (!_is_needed)
       return false;
 
@@ -217,7 +217,7 @@ public:
 
     Doesn't remove <i>v</i> if no values are needed; does nothing if <i>v</i> is unknown
 */
-  const bool remove(const T& v)
+  bool remove(const T& v)
   { if (!_is_needed)
       return false;
 
@@ -319,7 +319,7 @@ public:
 
     The continents precede the canonical prefixes
 */
-  [[nodiscard]] const std::vector<std::string> filter(void) const;
+  std::vector<std::string> filter(void) const;
 
 /*!  \brief         Add a string to, or remove a string from, the filter
      \param str     string to add or subtract
@@ -384,7 +384,7 @@ public:
     \param  be  comparison bandmap_entry
     \return     whether <i>this</i> should be sorted earlier than <i>be</i>
 */
-  [[nodiscard]] inline const bool operator<(const bandmap_entry& be) const
+  [[nodiscard]] inline bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
   READ(band);                           ///< band
@@ -409,7 +409,7 @@ public:
   READ(frequency_str);                  ///< QRG (kHz, to 1 dp)
 
 /// do we need this call?
-  inline const bool is_needed(void) const
+  inline bool is_needed(void) const
     { return ( _is_needed and !is_marker() ); }    // we never need a marker, regardless of the value of _is_needed
 
   WRITE(is_needed);                     ///< do we need this call?
@@ -421,27 +421,27 @@ public:
   READ(time_of_earlier_bandmap_entry);  ///< time (in seconds since the epoch) of object that this object replaced
 
 /// was this bandmap_entry generated from the RBN?
-  inline const bool is_rbn(void) const
+  inline bool is_rbn(void) const
     { return (_source == BANDMAP_ENTRY_SOURCE::RBN); }
 
 /// does the call in this bandmap_entry match the value <i>str</i>?
-  inline const bool call_is(const std::string& str) const
+  inline bool call_is(const std::string& str) const
     { return (_callsign == str); }
 
 /// does this entry correspond to me?
-  inline const bool is_my_marker(void) const
+  inline bool is_my_marker(void) const
     { return call_is(MY_MARKER); }
 
 /// does this entry correspond to the mode marker?
-  inline const bool is_mode_marker(void) const
+  inline bool is_mode_marker(void) const
     { return call_is(MODE_MARKER); }
 
 /// does this entry correspond to either kind of marker?
-  inline const bool is_marker(void) const
+  inline bool is_marker(void) const
     { return is_my_marker() or is_mode_marker(); }
 
 /// inverse of is_marker()
-  inline const bool is_not_marker(void) const
+  inline bool is_not_marker(void) const
     { return !is_marker(); }
 
 /*! \brief              Calculate the mult status of this entry
@@ -453,27 +453,27 @@ public:
   void calculate_mult_status(contest_rules& rules, running_statistics& statistics);
 
 /// return the details of any callsign mults
-  inline const decltype(_is_needed_callsign_mult) is_needed_callsign_mult_details(void) const
+  inline decltype(_is_needed_callsign_mult) is_needed_callsign_mult_details(void) const
     { return _is_needed_callsign_mult; }
 
 /// return the details of a country mult
-  inline const decltype(_is_needed_country_mult) is_needed_country_mult_details(void) const
+  inline decltype(_is_needed_country_mult) is_needed_country_mult_details(void) const
     { return _is_needed_country_mult; }
 
 /// return the details of any exchange mults
-  inline const decltype(_is_needed_exchange_mult) is_needed_exchange_mult_details(void) const
+  inline decltype(_is_needed_exchange_mult) is_needed_exchange_mult_details(void) const
     { return _is_needed_exchange_mult; }
 
 /// is this a needed callsign mult?
-  inline const bool is_needed_callsign_mult(void) const
+  inline bool is_needed_callsign_mult(void) const
     { return _is_needed_callsign_mult.is_any_value_needed(); }
 
 /// is this a needed country mult?
-  inline const bool is_needed_country_mult(void) const
+  inline bool is_needed_country_mult(void) const
     { return _is_needed_country_mult.is_any_value_needed(); }
 
 /// is this a needed exchange mult?
-  inline const bool is_needed_exchange_mult(void) const
+  inline bool is_needed_exchange_mult(void) const
     { return _is_needed_exchange_mult.is_any_value_needed(); }
 
 /*! \brief          Add a value of callsign mult
@@ -498,7 +498,7 @@ public:
     \param  value   value of the mult
     \return         whether the mult was actually added
 */
-  inline const bool add_exchange_mult(const std::string& name, const std::string& value)
+  inline bool add_exchange_mult(const std::string& name, const std::string& value)
     { return (_is_needed_exchange_mult.add( { name, value } ) ); }
 
 /// remove all callsign mults
@@ -540,24 +540,24 @@ public:
     { _is_needed_exchange_mult.remove( { name, value } ); }
 
 /// is this a needed mult of any type?
-  inline const bool is_needed_mult(void) const
+  inline bool is_needed_mult(void) const
     { return is_needed_callsign_mult() or is_needed_country_mult() or is_needed_exchange_mult(); }
 
 // next three needed in order to pass as parameters to find_if, since I don't know how to choose among multiple overloaded functions
 
 /// do we need to work this call?
-  inline const bool is_stn_needed(void) const
+  inline bool is_stn_needed(void) const
     { return is_needed(); }
 
 ///  is this a needed mult?
-  inline const bool is_a_needed_mult(void) const
+  inline bool is_a_needed_mult(void) const
     { return is_needed_mult(); }
 
 /*! \brief          Does <i>_frequency_str</i> match a target value?
     \param  target  target value of <i>_frequency_str</i>
     \return         whether <i>_frequency</i> matches <i>target</i>
 */
-  inline const bool is_frequency_str(const std::string& target) const
+  inline bool is_frequency_str(const std::string& target) const
     { return (_frequency_str == target); }
 
 /*! \brief      Set <i>_frequency string</i> to a particular number of decimal places (in kHz)
@@ -567,11 +567,11 @@ public:
     { _frequency_str = decimal_places(_frequency_str, n); }
 
 /// a simple definition of whether there is no useful information in the object
-  inline const bool empty(void) const
+  inline bool empty(void) const
     { return _callsign.empty(); }
 
 /// a simple definition of whether there is useful information in the object
-  inline const bool valid(void) const
+  inline bool valid(void) const
     { return !empty(); }
 
 /*! \brief      Does this object match another bandmap_entry?
@@ -580,21 +580,21 @@ public:
 
     Used in += function.
 */
-  const bool matches_bandmap_entry(const bandmap_entry& be) const;
+  bool matches_bandmap_entry(const bandmap_entry& be) const;
    
 /// how long (in seconds) has it been since this entry was inserted into a bandmap?
-  inline const time_t time_since_inserted(void) const
+  inline time_t time_since_inserted(void) const
     { return (::time(NULL) - _time); }
 
 /// how long (in seconds) has it been since this entry or its predecessor was inserted into a bandmap?
-  inline const time_t time_since_this_or_earlier_inserted(void) const
+  inline time_t time_since_this_or_earlier_inserted(void) const
     { return ( ::time(NULL) - (_time_of_earlier_bandmap_entry ? _time_of_earlier_bandmap_entry : _time) ); }
 
 /*! \brief          Should this bandmap_entry be removed?
     \param  now     current time
     \return         whether this bandmap_entry has expired
 */
-  inline const bool should_prune(const time_t now = ::time(NULL)) const
+  inline bool should_prune(const time_t now = ::time(NULL)) const
     { return ( (_expiration_time < now) and !is_marker()); }
 
 /*! \brief              Re-mark the need/mult status
@@ -605,34 +605,34 @@ public:
 
     <i>statistics</i> must be updated to be current before this is called
 */
-  const bool remark(contest_rules& rules, call_history& q_history, running_statistics& statistics);
+  bool remark(contest_rules& rules, call_history& q_history, running_statistics& statistics);
 
 /*! \brief      Return the (absolute) difference in frequency between two bandmap entries
     \param  be  other bandmap entry
     \return     difference in frequency between *this and <i>be</i>
 */
-  inline const frequency frequency_difference(const bandmap_entry& be) const
+  inline frequency frequency_difference(const bandmap_entry& be) const
     { return frequency(abs(be._freq.hz() - _freq.hz()), FREQUENCY_UNIT::HZ); }
 
 /*! \brief      Return the difference in frequency between two bandmap entries, in +ve hertz
     \param  be  other bandmap entry
     \return     absolute difference in hertz between frequency of *this and fequency of <i>be</i>
 */
-  inline const unsigned int absolute_frequency_difference(const bandmap_entry& be) const
+  inline unsigned int absolute_frequency_difference(const bandmap_entry& be) const
     { return static_cast<unsigned int>(abs(frequency_difference(be).hz())); }
 
 /*! \brief      Is this bandmap entry less than another one, using callsign order
     \param  be  other bandmap entry
     \return     whether *this is less than <i>be</i>, using callsign order
 */
-  inline const bool less_by_callsign(const bandmap_entry& be) const
+  inline bool less_by_callsign(const bandmap_entry& be) const
     { return (_callsign < be._callsign); }
 
 /*! \brief      Is this bandmap entry less than another one, using frequency order
     \param  be  other bandmap entry
     \return     whether *this is less than <i>be</i>, using frequency order
 */
-  inline const bool less_by_frequency(const bandmap_entry& be) const
+  inline bool less_by_frequency(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz()); }
 
 /*! \brief          Add a call to the associated posters
@@ -641,31 +641,31 @@ public:
 
     Does nothing if <i>call</i> is already a poster
 */
-  const unsigned int add_poster(const std::string& call);
+  unsigned int add_poster(const std::string& call);
 
 /// return all the posters as a space-separated string
-  const std::string posters_string(void) const;
+  std::string posters_string(void) const;
 
 /// guess the mode
-  const MODE putative_mode(void) const;
+  MODE putative_mode(void) const;
 
 /// how many QSOs have we had (before this contest) with this callsign, band and mode?
   inline const unsigned int n_qsos(void) const
     { return olog.n_qsos(_callsign, _band, _mode); }
 
 /// is this call+band+mode an all-time first?
-  inline const bool is_all_time_first(void) const
+  inline bool is_all_time_first(void) const
     { return (n_qsos() == 0); }
 
 /// is this call+band+mode an all-time first and also a needed QSO?
-  inline const bool is_all_time_first_and_needed_qso(void) const
+  inline bool is_all_time_first_and_needed_qso(void) const
     { return (is_all_time_first() and is_needed()); }
 
 /// is this a needed call for which the call+band+mode is an all-time first, or have we received a qsl for this call+band+mode
-  inline const bool is_new_or_previously_qsled(void) const
+  inline bool is_new_or_previously_qsled(void) const
     { return (is_needed() and (is_all_time_first() or olog.confirmed(_callsign, _band, _mode))); }
 
-/*! \brief          Does this call match the N7DR custom driteria?
+/*! \brief          Does this call match the N7DR custom criteria?
     \return         whether the call matches the N7DR custom criteria
 
     Matches criteria:
@@ -675,7 +675,7 @@ public:
       2. worked and QSLed on this band/mode;
       3. worked and QSLed on another band/mode AND worked no more than 4 times in this band/mode
 */
-  const bool matches_criteria(void) const;
+  bool matches_criteria(void) const;
 
 /*! \brief          set the value of <i>_time_of_earlier_bandmap_entry</i> from an earlier <i>bandmap_entry</i>
     \param  old_be  earlier <i>bandmap_entry</i>
@@ -715,7 +715,7 @@ std::ostream& operator<<(std::ostream& ost, const bandmap_entry& be);
 // one can use complex workarounds (remove_copy_if and then re-assign back to the original container), but that's ugly and in any case
 // std::list seems to be fast enough
 using BM_ENTRIES      = std::list<bandmap_entry>;
-using PREDICATE_FUN_P = const bool (bandmap_entry::*)(void) const;
+using PREDICATE_FUN_P = bool (bandmap_entry::*)(void) const;
 
 // -----------  bandmap  ----------------
 
@@ -761,7 +761,7 @@ protected:
      or
        its source is RBN and the call is already present in the bandmap at the same QRG with the poster of <i>be</i>
 */
-  const bool _mark_as_recent(const bandmap_entry& be);
+  bool _mark_as_recent(const bandmap_entry& be);
 
 /*!  \brief                             Return the callsign closest to a particular frequency, if it is within the guard band
      \param bme                         band map entries
@@ -772,7 +772,7 @@ protected:
      Returns the nearest station within the guard band, or the null string if no call is found.
      As currently implemented, assumes that the entries are in order of monotonically increasing or decreasing frequency
 */
-  const std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
+  std::string _nearest_callsign(const BM_ENTRIES& bme, const float target_frequency_in_khz, const int guard_band_in_hz);
   
 public:
 
@@ -794,7 +794,7 @@ public:
   SAFE_READ_AND_WRITE_WITH_INTERNAL_MUTEX(mode_marker_frequency, _bandmap);             ///< the frequency of the mode marker
 
 /// get the current bandmap filter
-  inline const bandmap_filter_type bandmap_filter(void)
+  inline bandmap_filter_type bandmap_filter(void)
   { SAFELOCK (_bandmap);
     return *(_filter_p);
   }
@@ -808,7 +808,7 @@ public:
   }
 
 /// the number of entries in the bandmap
-  inline const size_t size(void)
+  inline size_t size(void)
     { SAFELOCK(_bandmap);
       return _entries.size(); 
     }
@@ -847,7 +847,7 @@ public:
 
     Returns the default bandmap_entry if <i>callsign</i> is not present in the bandmap
 */
-  const bandmap_entry operator[](const std::string& callsign);
+  bandmap_entry operator[](const std::string& callsign);
 
 /*! \brief              Return the first entry for a partial call
     \param  callsign    partial call for which the entry should be returned
@@ -855,7 +855,7 @@ public:
 
     Returns the null string if <i>callsign</i> matches no entries in the bandmap
 */
-  const bandmap_entry substr(const std::string& callsign);
+  bandmap_entry substr(const std::string& callsign);
 
 /*! \brief              Remove a call from the bandmap
     \param  callsign    call to be removed
@@ -883,7 +883,7 @@ public:
     \param  mult_type               name of mult type
     \param  callsign_mult_string    value of callsign mult value that is no longer a multiplier
 */
-  void not_needed_callsign_mult(const std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
+  void not_needed_callsign_mult(/*const*/ std::string (*pf)(const std::string& /* e.g., "WPXPX" */, const std::string& /* callsign */),
                                 const std::string& mult_type /* e.g., "WPXPX" */ , const std::string& callsign_mult_string /* e.g., "SM1" */);
 
 /*! \brief                          Set the needed callsign mult status of all matching callsign mults to <i>false</i>
@@ -904,7 +904,7 @@ public:
 // filter functions -- these affect all bandmaps, since there's just one (global) filter
 
 /// is the filter enabled?
-  inline const bool filter_enabled(void)
+  inline bool filter_enabled(void)
     { return _filter_p->enabled(); }
 
 /*! \brief          Enable or disable the filter
@@ -915,7 +915,7 @@ public:
   void filter_enabled(const bool torf);
 
 /// return all the countries and continents currently in the filter
-  inline const std::vector<std::string> filter(void)
+  inline std::vector<std::string> filter(void)
     { return _filter_p->filter(); }
 
 /*!  \brief         Add a string to, or remove a string from, the filter associated with this bandmap
@@ -928,30 +928,30 @@ public:
   void filter_add_or_subtract(const std::string& str);
 
 /// is the filter in hide mode? (as opposed to show)
-  inline const bool filter_hide(void) const
+  inline bool filter_hide(void) const
     { return _filter_p->hide(); }
 
 /// set or unset the filter to hide mode (as opposed to show)
   void filter_hide(const bool torf);
 
 /// is the filter in show mode? (as opposed to hide)
-  inline const bool filter_show(void) const
+  inline bool filter_show(void) const
     { return !_filter_p->hide(); }
 
 /// set or unset the filter to show mode (as opposed to hide)
   void filter_show(const bool torf);
 
 /// all the entries, after filtering has been applied
-  const BM_ENTRIES filtered_entries(void);
+  BM_ENTRIES filtered_entries(void);
 
 /// all the entries, after the RBN threshold and filtering have been applied
-  const BM_ENTRIES rbn_threshold_and_filtered_entries(void);
+  BM_ENTRIES rbn_threshold_and_filtered_entries(void);
 
 /// all the entries, after the RBN threshold, filtering and culling have been applied
-  const BM_ENTRIES rbn_threshold_filtered_and_culled_entries(void);
+  BM_ENTRIES rbn_threshold_filtered_and_culled_entries(void);
 
 /// synonym that creates the displayed calls
-  inline const BM_ENTRIES displayed_entries(void)
+  inline BM_ENTRIES displayed_entries(void)
     { return rbn_threshold_filtered_and_culled_entries(); }
 
 /// get the column offset
@@ -965,7 +965,7 @@ public:
     }
 
 /// get the number of columns across a window
-  inline const unsigned int n_columns(const window& win)
+  inline unsigned int n_columns(const window& win)
     { return ( (win.width() - 1) / COLUMN_WIDTH ); }
 
 /*!  \brief                             Find the station in the RBN threshold and filtered bandmap that is closest to a target frequency
@@ -976,10 +976,10 @@ public:
      Applies filtering and the RBN threshold before searching for the station. Returns the
      empty string if no station was found within the guard band.
 */
-  inline const std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
+  inline std::string nearest_rbn_threshold_and_filtered_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(rbn_threshold_and_filtered_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
-  inline const std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
+  inline std::string nearest_displayed_callsign(const float target_frequency_in_khz, const int guard_band_in_hz)
     { return _nearest_callsign(displayed_entries(), target_frequency_in_khz, guard_band_in_hz); }
 
 /*!  \brief         Find the next needed station up or down in frequency from the current location
@@ -990,7 +990,7 @@ public:
      The return value can be tested with .empty() to see if a station was found.
      Applies filtering and the RBN threshold before searching for the next station.
 */
-  const bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn);
+  bandmap_entry needed(PREDICATE_FUN_P fp, const enum BANDMAP_DIRECTION dirn);
 
 /*!  \brief         Find the next needed station (for a QSO) up or down in frequency from the current location
      \param dirn    direction in which to search
@@ -998,7 +998,7 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline const bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn)
+  inline bandmap_entry needed_qso(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_stn_needed, dirn); }
 
 /*!  \brief         Find the next needed multiplier up or down in frequency from the current location
@@ -1007,7 +1007,7 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline const bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
+  inline bandmap_entry needed_mult(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_a_needed_mult, dirn); }
 
 /*! \brief         Find the next needed all-time new call+band+mode up or down in frequency from the current location
@@ -1016,7 +1016,7 @@ public:
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline const bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
+  inline bandmap_entry needed_all_time_new(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_all_time_first, dirn); }
 
 /*! \brief         Find the next needed that mateches the N7DR criteria up or down in frequency from the current location
@@ -1025,7 +1025,7 @@ public:
 
     The return value can be tested with .empty() to see if a station was found
 */
-  inline const bandmap_entry matches_criteria(const enum BANDMAP_DIRECTION dirn)
+  inline bandmap_entry matches_criteria(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::matches_criteria, dirn); }
 
 /*!  \brief         Find the next needed stn that is also an all-time new call+band+mode, up or down in frequency from the current location
@@ -1034,7 +1034,7 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline const bandmap_entry needed_all_time_new_and_needed_qso(const enum BANDMAP_DIRECTION dirn)
+  inline bandmap_entry needed_all_time_new_and_needed_qso(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_all_time_first_and_needed_qso, dirn); }
 
 /*!  \brief         Find the next stn that has QSLed and that is also an all-time new call+band+mode, up or down in frequency from the current location
@@ -1043,7 +1043,7 @@ public:
 
      The return value can be tested with .empty() to see if a station was found
 */
-  inline const bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn)
+  inline bandmap_entry needed_all_time_new_or_qsled(const enum BANDMAP_DIRECTION dirn)
     { return needed(&bandmap_entry::is_new_or_previously_qsled, dirn); }
 
 /*! \brief          Find the next station up or down in frequency from a given frequency
@@ -1055,7 +1055,7 @@ public:
     Applies filtering and the RBN threshold before searching for the next station.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-  const bandmap_entry next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn);
+  bandmap_entry next_station(const frequency& f, const enum BANDMAP_DIRECTION dirn);
 
 /*! \brief      Get lowest frequency on the bandmap
     \return     lowest frequency on the bandmap
@@ -1063,7 +1063,7 @@ public:
     Applies filtering and the RBN threshold before searching.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-  const frequency lowest_frequency(void);
+  frequency lowest_frequency(void);
 
 /*! \brief      Get highest frequency on the bandmap
     \return     highest frequency on the bandmap
@@ -1071,15 +1071,15 @@ public:
     Applies filtering and the RBN threshold before searching.
     As currently implemented, assumes that entries are in increasing order of frequency.
 */
-  const frequency highest_frequency(void);
+  frequency highest_frequency(void);
 
 /*!  \brief             Was a call recently added?
      \param callsign    callsign to test
      \return            whether <i>callsign</i> was added since the bandmap was last pruned
 */
-  inline const bool is_recent_call(const std::string& callsign)
+  inline bool is_recent_call(const std::string& callsign)
     { SAFELOCK(_bandmap);
-      return (_recent_calls < callsign);
+      return (_recent_calls > callsign);
     }
 
 /*!  \brief             Add a call to the do-not-add list
@@ -1106,13 +1106,26 @@ public:
      \param target_callsign     callsign to test
      \return                    whether <i>target_callsign</i> is present on the bandmap
 */
-  const bool is_present(const std::string& target_callsign);
+  bool is_present(const std::string& target_callsign);
 
 /// convert to a printable string
-  const std::string to_str(void);
+  std::string to_str(void);
 
+/*! \brief         Process an insertion queue, adding the elements to the bandmap
+    \param biq     insertion queue to process
+     
+    <i>biq</i> changes (is emptied) by this routine
+    other threads MUST NOT access biq while this is executing
+*/
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
 
+/*! \brief          Process an insertion queue, adding the elements to the bandmap
+    \param  biq     insertion queue to process
+    \param  w       window to which to write the revised bandmap
+     
+    <i>biq</i> changes (is emptied) by this routine
+    other threads MUST NOT access biq while this is executing
+*/
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
 
   window& write_to_window(window& win);
@@ -1143,8 +1156,11 @@ public:
     \param  win     window
     \param  bm      object to write
     \return         the window
+
+    This is inside the bandmap class so that we have access to the bandmap mutex
 */
-window& operator<(window& win, bandmap& bm);
+inline window& operator<(window& win, bandmap& bm)
+  { return bm.write_to_window(win); }
 
 /*! \brief          Write a <i>bandmap</i> object to an output stream
     \param  ost     output stream
@@ -1153,21 +1169,6 @@ window& operator<(window& win, bandmap& bm);
 */
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
 
-// -----------  bandmap_insertion_queue  ----------------
-
-/*! \class  bandmap_insertion_queue
-    \brief  A queue of bandmap entries to be added to bandmaps
-*/
-#if 0
-class bandmap_insertion_queue : public std::deque<std::pair<BAND, bandmap_entry>>
-{
-protected:
-
-public:
-
-};
-#endif
-
-using BANDMAP_MEM_FUN_P = const bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
+using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 
 #endif    // BANDMAP_H

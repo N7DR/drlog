@@ -1,4 +1,4 @@
-// $Id: audio.h 154 2020-03-05 15:36:24Z  $
+// $Id: audio.h 161 2020-07-31 16:19:50Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -35,13 +35,6 @@ enum class AUDIO_FORMAT { DEFAULT = -1,
                           WAVE    = 2,
                           AU      = 3
                         };
-
-//enum AUDIO_FORMAT { AUDIO_FORMAT_DEFAULT = -1,
-//                    AUDIO_FORMAT_RAW     = 0,
-//                    AUDIO_FORMAT_VOC     = 1,
-//                    AUDIO_FORMAT_WAVE    = 2,
-//                    AUDIO_FORMAT_AU      = 3
-//                  };
 
 // Errors
 constexpr int AUDIO_UNABLE_TO_OPEN                { -1 },      ///< unable to open audio device
@@ -94,7 +87,7 @@ public:
 /*! \brief      Convert to string
     \return     the RIFF header as a string
 */
-  inline const std::string to_string(void) const
+  inline std::string to_string(void) const
     { return replace_substring(std::string("RIFF    WAVE"), 4, _chunk_size); }
 };
 
@@ -145,7 +138,7 @@ public:
   void close(void);
 
 /// return a dummy header string
-  inline const std::string header(void) const
+  inline std::string header(void) const
     { return riff_header().to_string(); }
 
 /*! \brief      Append a chunk
@@ -190,6 +183,7 @@ protected:
   snd_pcm_t*        _handle;                    ///< PCM handle
   PARAMS_STRUCTURE  _hw_params;                 ///< hardware parameters
   snd_pcm_info_t*   _info;                      ///< pointer to information structure that corresponds to <i>_handle</i>
+  bool              _initialised { false };     ///< has the hardware been initialised, ready for reading?
   int64_t           _max_file_time;             ///< maximum duration in seconds
   size_t            _period_size_in_bytes;      ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
   snd_pcm_uframes_t _period_size_in_frames;     ///< size of period; http://www.alsa-project.org/main/index.php/FramesPeriods
@@ -208,6 +202,8 @@ protected:
   pthread_t         _thread_id;                 ///< ID for the thread that plays the buffer
   unsigned int      _thread_number;             ///< number of the thread currently being used
   unsigned int      _time_limit;                ///< number of seconds to record
+  unsigned int      _xrun_counter { 0 };        ///< number of xrun errors
+  unsigned int      _xrun_threshhold { 1 };     ///< xrun target for displaying error message (doubled each time a message is written)
 
 // stuff for bext extension
 #if 0
@@ -226,20 +222,29 @@ protected:
   snd_pcm_sframes_t (*_writen_func)(snd_pcm_t *handle, void **bufs, snd_pcm_uframes_t size);            ///< function to write non-interleaved frames
 
 /// Declare, but do not define, copy constructor
-  audio_recorder(const audio_recorder&);
+//  audio_recorder(const audio_recorder&);
+
+// protected pointers to functions
+
+/*! \brief          Pointer to function used to alert the user to an error
+    \param  msg     message to be presented to the user
+*/
+  void (*_error_alert_function)(const std::string& msg) { nullptr };
+
+// protected functions
 
 /*! \brief          Read from the PCM device
     \param  data    buffer in which to store the read data
     \return         total number of bytes read
 */
-  const ssize_t _pcm_read(u_char* data);
+  ssize_t _pcm_read(u_char* data);
 
 /*! \brief      Calculate the total number of bytes to be read from the device
     \return     total number of bytes to be read from the sound board
 
     Returned value is based on the duration and the number of bytes to be read per second
 */
-  const int64_t _total_bytes_to_read(void);
+  int64_t _total_bytes_to_read(void);
 
 /*! \brief  Set the parameters for the recording
 
@@ -257,6 +262,13 @@ protected:
     \return         nullptr
 */
   static void* _static_capture(void*);
+
+/*! \brief       Alert the user with a message
+    \param  msg  message for the user
+
+    Calls <i>_error_alert_function</i> to perform the actual alerting
+*/
+  void _error_alert(const std::string& msg);
 
 public:
 
@@ -292,15 +304,19 @@ public:
     _writen_func(snd_pcm_writen)              // function to write non-interleaved frames
   { }
 
+  audio_recorder(const audio_recorder&) = delete;
+
 /// destructor
-  inline virtual ~audio_recorder(void) = default;
+//  inline virtual ~audio_recorder(void) = default;
 
   READ_AND_WRITE(base_filename);            ///< base name of output file
+  READ(initialised);                        ///< has the hardware been initialised, ready for reading?
   READ_AND_WRITE(max_file_time);            ///< maximum duration in seconds
   READ_AND_WRITE(n_channels);               ///< number of channels to record
   READ_AND_WRITE(pcm_name);                 ///< name of the PCM handle
   READ(recording);                          ///< whether the recorder is currently recording
   READ_AND_WRITE(samples_per_second);       ///< number of samples per second
+  READ(xrun_counter);                       ///< number of xrun errors
 
 // stuff for bext extension
 #if 0
@@ -327,6 +343,10 @@ public:
 
 /// public function to capture the audio
   void capture(void);
+
+/// register a function for alerting the user
+  inline void register_error_alert_function(void (*error_alert_function)(const std::string&) )
+    { _error_alert_function = error_alert_function; }
 };
 
 /*! \brief          Write a <i>PARAMS_STUCTURE</i> object to an output stream
@@ -519,16 +539,16 @@ protected:
   34        2   BitsPerSample    8 bits = 8, 16 bits = 16, etc.
 */
 
-  uint32_t  _subchunk_1_size;   ///< 16, for PCM (size of the remainder of the subchunk)
-  uint16_t  _audio_format;      ///< 1, for PCM
-  uint16_t  _num_channels;      ///< number of channels
-  uint32_t  _sample_rate;       ///< bits per second
-  uint16_t  _bits_per_sample;   ///< number of bits in a single sample
+  uint32_t  _subchunk_1_size { 16 };    ///< 16, for PCM (size of the remainder of the subchunk)
+  uint16_t  _audio_format    { 1 };     ///< 1, for PCM
+  uint16_t  _num_channels    { 1 };     ///< number of channels
+  uint32_t  _sample_rate     { 8000 };  ///< bits per second
+  uint16_t  _bits_per_sample { 8 };     ///< number of bits in a single sample
 
 public:
 
 /// constructor
-  fmt_chunk(void);
+  fmt_chunk(void) = default;
 
   READ_AND_WRITE(audio_format);         ///< indicates the format, 1 for PCM
   READ_AND_WRITE(num_channels);         ///< number of channels
@@ -538,17 +558,17 @@ public:
   READ(subchunk_1_size);                ///< size of the remainder of the subchunk; 16 for PCM
 
 /// the number of bytes occupied by the blocks of a single sample
-  inline const uint16_t block_align(void) const
+  inline uint16_t block_align(void) const
     { return _num_channels * _bits_per_sample / 8; }
 
 /// the number of bytes occupied per second
-  inline const uint32_t byte_rate(void) const
+  inline uint32_t byte_rate(void) const
     { return _sample_rate * block_align(); }
 
 /*! \brief      Convert to a string that holds the fmt chunk in ready-to-use form
     \return     string containing the fmt chunk
 */
-  const std::string to_string(void) const;
+  std::string to_string(void) const;
 
 /*! \brief      Write to a file
     \param  fp  file pointer

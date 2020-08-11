@@ -72,7 +72,7 @@ grid_square::grid_square(const string& gs)
     \param  putative_designation    the putative designation
     \return                         whether <i>putative_designation</i> is a valid designation of a Maidenhead square or subsquare
 */
-const bool is_valid_grid_designation(const string& putative_designation)
+bool is_valid_grid_designation(const string& putative_designation)
 { if (putative_designation.empty())
     return false;
   

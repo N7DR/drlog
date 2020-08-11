@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 158 2020-06-27 20:33:02Z  $
+// $Id: bands-modes.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -123,27 +123,6 @@ static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
                                                         };
 
 using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band and mode
-
-/// define a hash function for bandmode
-// http://stackoverflow.com/questions/13485979/hash-function-of-unordered-set/13486174#13486174
-// http://www.cplusplus.com/reference/functional/hash/
-// https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
-namespace std
-{ template <>
-  struct hash< bandmode >
-
-  { using result_type = size_t;
-
-    result_type operator()( const bandmode& k ) const
-    { result_type res { 17 };
-            
-      res = res * 31 + hash<BAND>()( k.first );
-      res = res * 31 + hash<MODE>()( k.second );
-      
-      return res;
-    }
-  };
-}
 
 // forward declaration
 class frequency;

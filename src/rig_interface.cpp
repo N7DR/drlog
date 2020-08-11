@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 157 2020-05-21 18:14:13Z  $
+// $Id: rig_interface.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,8 +37,6 @@ using namespace   this_thread;   // std::this_thread
 
 extern bool rig_is_split;
 
-//constexpr bool RESPONSE_EXPECTED { true };    ///< used to signal that a response is expected
-
 void alert(const string& msg, const bool show_time = true);     ///< alert the user (not used for errors)
 
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
@@ -49,7 +47,7 @@ void alert(const string& msg, const bool show_time = true);     ///< alert the u
  *
  * Another issue is that there is simply no good detailed description of the expected behaviour corresponding to many hamlib
  * functions (for example, the split-related functions -- e.g., CURR_VFO is defined simply as "the current VFO", but it plainly is not,
- * as a few test function calls quickly demonstrate); nor, indeed, is there a even description of the theoretical transceiver that is modelled by
+ * as a few test function calls quickly demonstrate); nor, indeed, is there even a description of the theoretical transceiver that is modelled by
  * hamlib. There doesn't even appear to be a guarantee that if a function is "successful" (i.e., does not return an error), it
  * will behave identically on all rigs.
  *
@@ -72,8 +70,8 @@ void alert(const string& msg, const bool show_time = true);     ///< alert the u
  *   6. What is the precise definition of "busy"?
  *
  *   All in all, the only thing to do seems to be to throw commands at the K3 and hope that they stick. It is impractical to
- *   check each time whether a command was executed, because the documentation says that certain (undefined) commands might take as
- *   long as half a second to execute if the K3 is "busy".
+ *   check each time whether a command was executed, because the documentation says that certain commands (which it does not define)
+ *   might take as long as half a second to execute if the K3 is "busy".
  *
  *   The fundamental problem in all this is that the protocol has no concept of a transaction. It is unclear why simple 1980s-era
  *   protocols are still being used to exchange information with rigs. Baud rates now are fast enough that, even for serial lines, real
@@ -129,20 +127,6 @@ void* rig_interface::_static_poll_thread_function(void* this_p)
     \brief  The interface to a rig
 */
 
-/// default constructor
-//rig_interface::rig_interface (void) :
-//  _error_alert_function(nullptr),       // no default error handler
-//  _last_commanded_frequency(),          // no last-commanded frequency
-//  _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
-//  _last_commanded_mode(MODE_CW),        // last commanded mode was CW
-//  _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
-//  _port_name(),                         // no default port
-//  _rigp(nullptr),                       // no rig connected
-//  _rig_connected(false),                // no rig connected
-//  _rig_poll_interval(1000),             // poll once per second
-//  _status(frequency(14000), MODE_CW)    // 14MHz, CW
-//{ }
-
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
 */
@@ -171,7 +155,7 @@ void rig_interface::prepare(const drlog_context& context)
     data_bits(context.rig1_data_bits());
     stop_bits(context.rig1_stop_bits());
 
-    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN);
+    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN);     // !!
   }
 
   const int status { rig_open(_rigp) };
@@ -252,41 +236,39 @@ void rig_interface::rig_mode(const MODE m)
 
     int status;
 
-    {
 // hamlib, for reasons I can't even guess at, sets both the mode and the bandwidth in a single command
-      pbwidth_t tmp_bandwidth;
-      rmode_t tmp_mode;
+    pbwidth_t tmp_bandwidth;
+    rmode_t tmp_mode;
+
+    { SAFELOCK(_rig);
+      status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
+    }
+
+    if (status != RIG_OK)
+      _error_alert("Error getting mode prior to setting mode");
+    else
+    { switch (tmp_mode)
+      { case RIG_MODE_CW:
+          last_cw_bandwidth = tmp_bandwidth;
+          break;
+
+        case RIG_MODE_LSB:
+        case RIG_MODE_USB:
+          last_ssb_bandwidth = tmp_bandwidth;
+          break;
+
+        default:
+          break;
+      }
 
       { SAFELOCK(_rig);
-        status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
+        const pbwidth_t new_bandwidth { ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth ) };
+
+        status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
       }
 
       if (status != RIG_OK)
-        _error_alert("Error getting mode prior to setting mode");
-      else
-      { switch (tmp_mode)
-        { case RIG_MODE_CW:
-            last_cw_bandwidth = tmp_bandwidth;
-            break;
-
-          case RIG_MODE_LSB:
-          case RIG_MODE_USB:
-            last_ssb_bandwidth = tmp_bandwidth;
-            break;
-
-          default:
-            break;
-        }
-
-        { SAFELOCK(_rig);
-          const pbwidth_t new_bandwidth { ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth ) };
-
-          status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
-        }
-
-        if (status != RIG_OK)
-          _error_alert("Error setting mode"s);
-      }
+        _error_alert("Error setting mode"s);
     }
   }
 }
@@ -294,7 +276,7 @@ void rig_interface::rig_mode(const MODE m)
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-const frequency rig_interface::rig_frequency(void)
+frequency rig_interface::rig_frequency(void)
 { if (!_rig_connected)
     return _last_commanded_frequency;
   else
@@ -302,9 +284,9 @@ const frequency rig_interface::rig_frequency(void)
 
     SAFELOCK(_rig);
 
-    const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) };
+//    const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) }; status != RIG_OK)
     { _error_alert("Error getting frequency"s);
       return _last_commanded_frequency;
     }
@@ -314,7 +296,7 @@ const frequency rig_interface::rig_frequency(void)
 }
 
 /// get frequency of VFO B
-const frequency rig_interface::rig_frequency_b(void)
+frequency rig_interface::rig_frequency_b(void)
 { if (!_rig_connected)
     return _last_commanded_frequency_b;
   else
@@ -322,9 +304,9 @@ const frequency rig_interface::rig_frequency_b(void)
 
     SAFELOCK(_rig);
 
-    const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) };
+ //   const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) }; status != RIG_OK)
     { _error_alert("Error getting frequency of VFO B"s);
       return _last_commanded_frequency_b;
     }
@@ -392,16 +374,14 @@ void rig_interface::split_disable(void)
 
     This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
-const bool rig_interface::split_enabled(void)
+bool rig_interface::split_enabled(void)
 { if (!_rig_connected)
     return false;
 
   if (_model == RIG_MODEL_K3)
   { SAFELOCK(_rig);
 
-    const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) };
-
-    if (transmit_vfo.length() >= 4)
+    if (const string transmit_vfo { raw_command("FT;"s, RESPONSE_EXPECTED) }; transmit_vfo.length() >= 4)
       return (transmit_vfo[2] == '1');
 
     _error_alert("Unable to determine whether rig is SPLIT"s);
@@ -414,9 +394,9 @@ const bool rig_interface::split_enabled(void)
 
   SAFELOCK(_rig);
 
-  const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) };
+//  const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) };
 
-  if (status != RIG_OK)
+  if (const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) }; status != RIG_OK)
   { _error_alert("Error getting SPLIT"s);
     return false;
   }
@@ -437,7 +417,7 @@ void rig_interface::baud_rate(const unsigned int rate)
 /*! \brief      Get baud rate
     \return     rig baud rate
 */
-const unsigned int rig_interface::baud_rate(void)
+unsigned int rig_interface::baud_rate(void)
 { SAFELOCK(_rig);
   return (_rigp ? _rigp->state.rigport.parm.serial.rate : 0);
 }
@@ -460,7 +440,7 @@ void rig_interface::data_bits(const unsigned int bits)
 /*! \brief      Get the number of data bits
     \return     number of data bits
 */
-const unsigned int rig_interface::data_bits(void)
+unsigned int rig_interface::data_bits(void)
 { SAFELOCK(_rig);
 
   return (_rigp ? _rigp->state.rigport.parm.serial.data_bits : 0);
@@ -484,14 +464,14 @@ void rig_interface::stop_bits(const unsigned int bits)
 /*! \brief      Get the number of stop bits
     \return     number of stop bits
 */
-const unsigned int rig_interface::stop_bits(void)
+unsigned int rig_interface::stop_bits(void)
 { SAFELOCK(_rig);
 
   return (_rigp ? _rigp->state.rigport.parm.serial.stop_bits : 0);
 }
 
 /// get the rig's mode
-const MODE rig_interface::rig_mode(void)
+MODE rig_interface::rig_mode(void)
 { if (!_rig_connected)
     return _last_commanded_mode;
   else
@@ -550,7 +530,7 @@ void rig_interface::rit(const int hz)
 }
 
 /// get rit offset (in Hz)
-const int rig_interface::rit(void)
+int rig_interface::rit(void)
 { if (_model == RIG_MODEL_K3)
   { //const string value { raw_command("RO;"s, 8) };
     const string value { raw_command("RO;"s, RESPONSE_EXPECTED) };
@@ -567,9 +547,9 @@ const int rig_interface::rit(void)
 
     shortfreq_t hz;
 
-    const int status { rig_get_rit(_rigp, RIG_VFO_CURR, &hz) };
+ //   const int status { rig_get_rit(_rigp, RIG_VFO_CURR, &hz) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_get_rit(_rigp, RIG_VFO_CURR, &hz) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while getting RIT offset"s);
 
     return static_cast<int>(hz);
@@ -578,7 +558,7 @@ const int rig_interface::rit(void)
 
 /*! \brief  Turn rit on
 
-    This is a kludge, since hamlib brilliantly equates an offset of zero with rit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
 void rig_interface::rit_enable(void)
 { if (_model == RIG_MODEL_K3)
@@ -589,7 +569,7 @@ void rig_interface::rit_enable(void)
 
 /*! \brief  Turn rit off
 
-    This is a kludge, since hamlib brilliantly equates an offset of zero with rit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
 */
 void rig_interface::rit_disable(void)
 { if (_model == RIG_MODEL_K3)
@@ -599,7 +579,7 @@ void rig_interface::rit_disable(void)
 }
 
 /// is rit enabled?
-const bool rig_interface::rit_enabled(void)
+bool rig_interface::rit_enabled(void)
 { switch (_model)
   { case RIG_MODEL_K3 :
     { const string response { raw_command("RT;"s, RESPONSE_EXPECTED) };
@@ -619,7 +599,7 @@ const bool rig_interface::rit_enabled(void)
 
 /*! \brief  Turn xit on
 
-    This is a kludge, since hamlib brilliantly equates an offset of zero with xit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with xit turned off (!)
 */
 void rig_interface::xit_enable(void)
 { if (_model == RIG_MODEL_K3)
@@ -630,7 +610,7 @@ void rig_interface::xit_enable(void)
 
 /*! \brief  Turn xit off
 
-    This is a kludge, since hamlib brilliantly equates an offset of zero with xit turned off (!)
+    This is a kludge, as hamlib equates an offset of zero with xit turned off (!)
 */
 void rig_interface::xit_disable(void)
 { if (_model == RIG_MODEL_K3)
@@ -640,7 +620,7 @@ void rig_interface::xit_disable(void)
 }
 
 /// is xit enabled?
-const bool rig_interface::xit_enabled(void)
+bool rig_interface::xit_enabled(void)
 { switch (_model)
   { case RIG_MODEL_K3 :
     { const string response { raw_command("XT;"s, RESPONSE_EXPECTED) };
@@ -685,14 +665,14 @@ void rig_interface::xit(const int hz)
 }
 
 /// get xit offset (in Hz)
-const int rig_interface::xit(void)
+int rig_interface::xit(void)
 { shortfreq_t hz;
 
   SAFELOCK(_rig);
 
-  const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) };
+//  const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) };
 
-  if (status != RIG_OK)
+  if (const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) }; status != RIG_OK)
     throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error obtaining XIT offset"s);
 
   return static_cast<int>(hz);
@@ -706,9 +686,9 @@ void rig_interface::lock(void)
     raw_command("LK1;"s, 0);
   else
   { const int v      { 1 };
-    const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) };
+//    const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error locking VFO"s);
   }
 }
@@ -721,9 +701,9 @@ void rig_interface::unlock(void)
     raw_command("LK0;"s, 0);
   else
   { const int v      { 0 };
-    const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) };
+ //   const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error unlocking VFO"s);
   }
 }
@@ -737,7 +717,7 @@ void rig_interface::sub_receiver(const bool b)
 }
 
 /// is sub-receiver on?
-const bool rig_interface::sub_receiver(void)
+bool rig_interface::sub_receiver(void)
 { if (_model == RIG_MODEL_K3)
   { try
     { const string str { raw_command("SB;"s, true) };
@@ -769,7 +749,7 @@ void rig_interface::sub_receiver_toggle(void)
 }
 
 /// return most recent rig status
-const rig_status rig_interface::status(void)
+rig_status rig_interface::status(void)
 { SAFELOCK(_rig);
 
   return _status;
@@ -791,15 +771,15 @@ void rig_interface::keyer_speed(const int wpm)
 
     v.i = wpm;
 
-    const int status { rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v) };
+//    const int status { rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error setting keyer speed"s);
   }
 }
 
 /// get the keyer speed in WPM
-const int rig_interface::keyer_speed(void)
+int rig_interface::keyer_speed(void)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
@@ -810,15 +790,14 @@ const int rig_interface::keyer_speed(void)
   else
   { value_t v;
 
-    const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) };
+//    const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting keyer speed"s);
 
     return v.i;
   }
 }
-
 
 #if 0
 // explicit K3 commands
@@ -1176,7 +1155,7 @@ const string rig_interface::raw_command(const string& cmd, const unsigned int ex
 #endif
 
 /// is the VFO locked?
-const bool rig_interface::is_locked(void)
+bool rig_interface::is_locked(void)
 { if (_model == RIG_MODEL_K3)
   { const string status_str  { raw_command("LK;"s, 4) };
     const char   status_char { (status_str.length() >= 3 ? status_str[2] : '0') };  // default is unlocked
@@ -1188,9 +1167,9 @@ const bool rig_interface::is_locked(void)
 
     int v;
     
-    const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) };
+//    const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting lock status"s);
 
     return (v == 1);
@@ -1200,7 +1179,7 @@ const bool rig_interface::is_locked(void)
 /*! \brief      Get the bandwidth in Hz
     \return     the current audio bandwidth, in hertz
 */
-const int rig_interface::bandwidth(void)
+int rig_interface::bandwidth(void)
 { if (!_rig_connected)
     return 0;
 
@@ -1214,7 +1193,7 @@ const int rig_interface::bandwidth(void)
     \param  m   mode
     \return     the rig's most recent frequency for band <i>b</i> and mode <i>m</i>.
 */
-const frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
+frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
 { SAFELOCK(_rig);
 
   const auto cit { _last_frequency.find( { b, m } ) };
@@ -1240,7 +1219,7 @@ void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequen
     (This is, unfortunately, just one example of the unreliability of the K3 in responding to commands. I could write a book;
     or at least a paper.)
 */
-const bool rig_interface::is_transmitting(void)
+bool rig_interface::is_transmitting(void)
 { if (_rig_connected)
   { bool rv { true };                                        // default: be paranoid
 
@@ -1264,7 +1243,7 @@ const bool rig_interface::is_transmitting(void)
 /*! \brief      Is the rig in TEST mode?
     \return     whether the rig is currently in TEST mode
 */
-const bool rig_interface::test(void)
+bool rig_interface::test(void)
 { if (_model == RIG_MODEL_DUMMY)
     return true;
 
@@ -1308,7 +1287,7 @@ void rig_interface::test(const bool b)
 /*! \brief      Which VFO is currently used for transmitting?
     \return     the VFO that is currently set to be used when transmitting
 */
-const VFO rig_interface::tx_vfo(void)
+VFO rig_interface::tx_vfo(void)
 { if (!_rig_connected)
     return VFO_A;
 
@@ -1361,12 +1340,10 @@ void rig_interface::bandwidth_b(const unsigned int hz)
 
     Works only with K3
 */
-#if 1
-const bool rig_interface::rx_ant(void)
+bool rig_interface::rx_ant(void)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)
-    {// const string result { raw_command("AR;"s, RESPONSE) };
-      const string result = raw_command("AR;", true);
+    { const string result { raw_command("AR;", true) };
 
       if ( (result != "AR0;"s) and (result != "AR1;"s) )
         ost << "ERROR in rx_ant(): result = " << result << endl;
@@ -1377,31 +1354,6 @@ const bool rig_interface::rx_ant(void)
 
   return false;
 }
-#endif
-#if 0
-const bool rig_interface::rx_ant(void)
-{ if (_model == RIG_MODEL_K3)
-  { try
-    { const string str { raw_command("AR;"s, true) };
-
-      if (str.length() < 3)
-        throw rig_interface_error(RIG_UNEXPECTED_RESPONSE, "RX ANT rhort response"s);
-
-      return (str[2] == '1');
-    }
-
-    catch (const rig_interface_error& e)
-    { throw e;
-    }
-
-    catch (...)
-    { throw rig_interface_error(RIG_MISC_ERROR, "Error getting RX ANT status"s);
-    }
-  }
-
-  return false;    // keep compiler happy
-}
-#endif
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna
@@ -1443,7 +1395,7 @@ void rig_interface::base_state(void)
     \param  e   hamlib error code
     \return     Printable string corresponding to error code <i>e</i>
 */
-const string hamlib_error_code_to_string(const int e)
+string hamlib_error_code_to_string(const int e)
 { switch (e)
   { case RIG_OK :
       return "No error, operation completed sucessfully"s;

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 // $Id: drmaster.h 163 2020-08-06 19:46:33Z  $
-=======
-// $Id: drmaster.h 156 2020-05-17 19:13:15Z  $
->>>>>>> 0a43fe059e6587fe915f47631dbfa4e529ab7fa9
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -51,7 +47,7 @@ protected:
 
     <i>posn</i> is updated to point at the start of the next call
 */
-  const std::string _get_call(const std::string& contents, uint32_t& posn) const;
+  std::string _get_call(const std::string& contents, uint32_t& posn) const;
 
 public:
 
@@ -63,7 +59,7 @@ public:
 /*! \brief      Get all the calls
     \return     all the calls from the file
 */
-  inline const std::vector<std::string> calls(void) const
+  inline std::vector<std::string> calls(void) const
     { return _calls; }
 };
 
@@ -80,30 +76,24 @@ class trmaster_line
 protected:
 
   std::string   _call;                                          ///< callsign
-  int           _check;                                         ///< Sweepstakes check
-  int           _cq_zone;                                       ///< CQ zone
-  int           _foc;                                           ///< FOC membership number
+  int           _check { 0 };                                   ///< Sweepstakes check
+  int           _cq_zone { 0 };                                 ///< CQ zone
+  int           _foc { 0 };                                     ///< FOC membership number
   std::string   _grid;                                          ///< Maidenhead grid locator
-  int           _hit_count;                                     ///< nominal number of QSOs with this station
+  int           _hit_count { 0 };                               ///< nominal number of QSOs with this station
   std::string   _itu_zone;                                      ///< ITU zone (string because of the way TR treats HQ stations)
   std::string   _name;                                          ///< operator's name
   std::string   _old_call;                                      ///< operator's old call
   std::string   _qth;                                           ///< precise meaning depends on location of this station
   std::string   _section;                                       ///< ARRL section
   std::string   _speed;                                         ///< CW speed
-  int           _ten_ten;                                       ///< 10-X membership number
+  int           _ten_ten { 0 };                                 ///< 10-X membership number
   std::array<std::string, TRMASTER_N_USER_PARAMETERS> _user;    ///< user parameters
 
 public:
 
 /// default (empty) constructor
-  inline trmaster_line(void)  :
-    _check(0),
-    _cq_zone(0),
-    _foc(0),
-    _hit_count(0),
-    _ten_ten(0)
-    { }
+  trmaster_line(void) = default;
 
 /*! \brief          Construct from a TRMASTER.ASC line
     \param  line    line from the TRMASTER.ASC file
@@ -111,12 +101,12 @@ public:
   explicit trmaster_line(const std::string& line);
 
 /// destructor
-  inline virtual ~trmaster_line(void) = default;
+//  inline virtual ~trmaster_line(void) = default;
 
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
 */
-  const std::string to_string(void) const;
+  std::string to_string(void) const;
 
   READ_AND_WRITE(call);                       ///< callsign
   READ_AND_WRITE(check);                      ///< Sweepstakes check
@@ -135,7 +125,7 @@ public:
 /*! \brief      Test for emptiness
     \return     whether the object is empty
 */
-  inline const bool empty(void) const
+  inline bool empty(void) const
     { return _call.empty(); }
 
 /*! \brief      Set a user parameter
@@ -149,7 +139,7 @@ public:
         \param  n  parameter number (with respect to 1)
         \return  the string associated with user parameter <i>n</i> (with respect to 1)
 */
-  inline const std::string user(const int n) const
+  inline std::string user(const int n) const
     { return _user[n - 1]; }
 
 /*! \brief          Merge with another trmaster_line
@@ -158,7 +148,7 @@ public:
 
     New values (i.e., values in <i>trml</i>) take precedence if there's a conflict
 */
-  const trmaster_line operator+(const trmaster_line& trml) const;
+  trmaster_line operator+(const trmaster_line& trml) const;
 
 /*! \brief      Merge with another trmaster_line
     \param  ln  line to be merged
@@ -195,7 +185,7 @@ protected:
 
     Updates <i>posn</i> to point to the start of the next call
 */
-  const trmaster_line _get_binary_record(const std::string& contents, uint32_t& posn);
+  trmaster_line _get_binary_record(const std::string& contents, uint32_t& posn);
 
 public:
 
@@ -207,7 +197,7 @@ public:
   explicit trmaster(const std::string& filename = "trmaster.asc"s);
 
 /// all the calls (in alphabetical order)
-  const std::vector<std::string> calls(void) const;
+  std::vector<std::string> calls(void) const;
 };
 
 // -----------------------------------------------------  drmaster_line  ---------------------------------
@@ -255,7 +245,7 @@ protected:
 
     Returns empty string if no field has the indicator <i>field_indicator</i>
 */
-  const std::string _extract_field(const std::vector<std::string>& fields, const std::string& field_indicator);
+  std::string _extract_field(const std::vector<std::string>& fields, const std::string& field_indicator);
 
 public:
 
@@ -270,10 +260,10 @@ public:
   explicit drmaster_line(const std::string& line_or_call);
 
 /// destructor
-  inline virtual ~drmaster_line(void) = default;
+//  inline /* virtual */ ~drmaster_line(void) = default;
 
 /// convert to a string
-  const std::string to_string(void) const;
+  std::string to_string(void) const;
 
 // the usual get/set functions
   READ_AND_WRITE(call);                                            ///< callsign
@@ -295,7 +285,7 @@ public:
     { _user[n - 1] = v; }
 
 /// get user parameters; wrt 1
-  inline const std::string user(const int n) const
+  inline std::string user(const int n) const
     { return _user[n - 1]; }
 
 /// set hit count
@@ -314,7 +304,7 @@ public:
   READ_AND_WRITE(state_10);                                        ///< for ARRL 10m contest; W, VE and XE only
 
 /// merge with another drmaster_line; new values take precedence if there's a conflict
-  const drmaster_line operator+(const drmaster_line&) const;
+  drmaster_line operator+(const drmaster_line&) const;
 
 /// merge with another drmaster_line; new values take precedence if there's a conflict
   inline void operator+=(const drmaster_line& ln)
@@ -325,7 +315,7 @@ public:
     { hit_count(::to_string(1 + from_string<int>(hit_count()))); }
 
 /// is the line empty?
-  inline const bool empty(void) const
+  inline bool empty(void) const
     { return _call.empty(); }
 };
 
@@ -387,10 +377,10 @@ public:
   void prepare(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
 
 /// all the calls (in alphabetical order)
-  const std::vector<std::string> calls(void) const;
+  std::vector<std::string> calls(void) const;
 
 /// format for output
-  const std::string to_string(void) const;
+  std::string to_string(void) const;
 
 /*! \brief          Add a callsign.
     \param  call    call to add
@@ -407,7 +397,7 @@ public:
   void operator+=(const drmaster_line& drml);
 
 /// the number of records
-  inline const size_t size(void) const
+  inline size_t size(void) const
     { return _records.size(); }
 
 /*! \brief          Return the record for a particular call
@@ -416,7 +406,8 @@ public:
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
-  const drmaster_line operator[](const std::string& call) const;
+  inline drmaster_line operator[](const std::string& call) const
+    { return MUM_VALUE(_records, call); }
   
 /*! \brief          Return the record for a particular call
     \param  call    target callsign
@@ -424,7 +415,7 @@ public:
 
     Returns empty <i>drmaster_line</i> object if no record corresponds to callsign <i>call</i>
 */
-  inline const drmaster_line data(const std::string& call) const
+  inline drmaster_line data(const std::string& call) const
     { return ((*this)[call]); }
 
 /*! \brief          Remove a call
@@ -447,7 +438,7 @@ public:
     \param  call    target callsign
     \return         whether <i>call</i> is present
 */
-  inline const bool contains(const std::string& call) const
+  inline bool contains(const std::string& call) const
     { return ( _records.find(call) != _records.cend() ); }
 };
 

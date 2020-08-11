@@ -1,4 +1,4 @@
-// $Id: drlog_context.cpp 158 2020-06-27 20:33:02Z  $
+// $Id: drlog_context.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -291,8 +291,8 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // CALL HISTORY BANDS
     if (LHS == "CALL HISTORY BANDS"s)
-    { const string bands_str = rhs;
-      const vector<string> bands_str_vec = remove_peripheral_spaces(split_string(bands_str, ","s));
+    { const string bands_str { rhs };
+      const vector<string> bands_str_vec { remove_peripheral_spaces(split_string(bands_str, ","s)) };
       
       for (const auto& band_str : bands_str_vec)
         _call_history_bands.insert(BAND_FROM_NAME[band_str]); 
@@ -569,10 +569,6 @@ void drlog_context::_process_configuration_file(const string& filename)
     if (LHS == "KEYER PORT"s)
       _keyer_port = rhs;
 
-// LIMIT OLD QSOS
-    if (LHS == "LIMIT OLD QSOS"s)
-      _limit_old_qsos = from_string<decltype(_limit_old_qsos)>(rhs);
-
 // LOG
     if ( (LHS == "LOG"s) and !rhs.empty() )
       _logfile = rhs;
@@ -699,6 +695,10 @@ void drlog_context::_process_configuration_file(const string& filename)
 // OLD ADIF LOG NAME
     if (LHS == "OLD ADIF LOG NAME"s)
       _old_adif_log_name = rhs;
+
+// OLD QSO AGE LIMIT
+    if (LHS == "OLD QSO AGE LIMIT"s)
+      _old_qso_age_limit = from_string<decltype(_old_qso_age_limit)>(rhs);
 
 // PATH
     if (LHS == "PATH"s)
@@ -1188,7 +1188,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
       if (window_info.size() >= 5)
       { const string name { window_info[0] };
 
-        window_information winfo;
+        window_information winfo; // designated initializers not supported in current g++
 
         winfo.x(from_string<int>(window_info[1]));
         winfo.y(from_string<int>(window_info[2]));
@@ -1404,7 +1404,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 
     if (actual_modes.size() == 1)
     { try
-      { if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ) < _cabrillo_qso_template)
+      { if (set<string>( { "ARRL DX"s, "CQ WW"s, "JIDX"s} ) > _cabrillo_qso_template)
         {  const string key { _cabrillo_qso_template + ( (actual_modes[0] == "CW"s) ?  " CW"s : " SSB"s) };
 
           _cabrillo_qso_template = cabrillo_qso_templates.at(key);
@@ -1460,17 +1460,17 @@ drlog_context::drlog_context(const std::string& filename)
     \param  name    name of window
     \return         location, size and colour information
 */
-const window_information drlog_context::window_info(const string& name) const
-{ const auto cit { _windows.find(name) };
-
-  return (cit == _windows.cend() ? window_information() : cit->second);
-}
+//window_information drlog_context::window_info(const string& name) const
+//{ const auto cit { _windows.find(name) };
+//
+//  return (cit == _windows.cend() ? window_information() : cit->second);
+//}
 
 /*! \brief          Get all the windows whose name contains a particular substring
     \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
 */
-const vector<string> drlog_context::window_name_contains(const string& substr) const
+vector<string> drlog_context::window_name_contains(const string& substr) const
 { vector<string> rv;
 
   for (auto cit = _windows.cbegin(); cit != _windows.cend(); ++cit)
@@ -1485,7 +1485,7 @@ const vector<string> drlog_context::window_name_contains(const string& substr) c
     \param  f   frequency to test
     \return     whether <i>f</i> is in any marked range for the mode <i>m</i>
 */
-const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
+bool drlog_context::mark_frequency(const MODE m, const frequency& f)
 { SAFELOCK(_context);
 
   try
@@ -1509,7 +1509,7 @@ const bool drlog_context::mark_frequency(const MODE m, const frequency& f)
     \param  m   mode
     \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
 */
-const string drlog_context::points_string(const BAND b, const MODE m) const
+string drlog_context::points_string(const BAND b, const MODE m) const
 { SAFELOCK(_context);
 
   const auto& pbb { _per_band_points[m] };
@@ -1543,7 +1543,7 @@ const string drlog_context::points(const std::string& exchange_field, const BAND
 /*! \brief      Get all the names in the sent exchange
     \return     the names of all the fields in the sent exchange
 */
-const vector<string> drlog_context::sent_exchange_names(void) const
+vector<string> drlog_context::sent_exchange_names(void) const
 { vector<string> rv;
 
   for (const auto& [name, value] : _sent_exchange)
@@ -1556,7 +1556,7 @@ const vector<string> drlog_context::sent_exchange_names(void) const
     \param  m   target mode
     \return     the names of all the fields in the sent exchange for mode <i>m</i>
 */
-const vector<string> drlog_context::sent_exchange_names(const MODE m) const
+vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 
   const std::vector<std::pair<std::string, std::string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
@@ -1571,7 +1571,7 @@ const vector<string> drlog_context::sent_exchange_names(const MODE m) const
     \param  m   target mode
     \return     the names and values of all the fields in the sent exchange when the mode is <i>m</i>
 */
-const decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)        // doxygen complains about the decltype; I have no idea why
+decltype(drlog_context::_sent_exchange) drlog_context::sent_exchange(const MODE m)        // doxygen complains about the decltype; I have no idea why
 { SAFELOCK(_context);
 
   decltype(_sent_exchange) rv { ( (m == MODE_CW) ? _sent_exchange_cw : _sent_exchange_ssb) };

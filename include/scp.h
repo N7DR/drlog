@@ -1,4 +1,4 @@
-// $Id: scp.h 152 2019-08-21 20:23:38Z  $
+// $Id: scp.h 161 2020-07-31 16:19:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,7 +26,6 @@
 // forward declaration
 class scp_databases;
 
-//typedef std::unordered_set<std::string> SCP_SET;    ///< define the type of set used in SCP functions
 using SCP_SET = std::unordered_set<std::string>;    ///< define the type of set used in SCP functions
 
 // -----------  scp_database  ----------------
@@ -42,7 +41,7 @@ class scp_database
 {
 protected:
 
-  std::map<std::string  /* two characters */, SCP_SET /* calls that contain the two characters */ >  _db;    ///< the main database;
+  std::unordered_map<std::string /* two characters */, SCP_SET /* calls that contain the two characters */ > _db;   ///< the main database;
 
 // a one-shot cache; I'm far from convinced that this is useful,
 // because an ordinary cache-miss lookup is so fast
@@ -72,7 +71,7 @@ public:
     { init_from_calls(drm.calls()); }
 
 /// destructor
-  inline virtual ~scp_database(void) = default;
+//  inline virtual ~scp_database(void) = default;
 
 /// populate the database from a vector of calls
   inline void init_from_calls(const std::vector<std::string>& calls)
@@ -82,14 +81,14 @@ public:
   void add_call(const std::string& call);
   
 /// remove a call from the database; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
-  const unsigned int remove_call(const std::string& call);
+  unsigned int remove_call(const std::string& call);
 
 /// is a call in the database?
-  inline const bool contains(const std::string& call)
-    { return (call.empty() ? false : (_db[substring(call, 0, 2)] < call) ); }
+  inline bool contains(const std::string& call)
+    { return (call.empty() ? false : (_db[substring(call, 0, 2)] > call) ); }
 
-/// return SCP matches
-  const SCP_SET operator[](const std::string& key);
+/// return SCP matches; cannot be const, as it might change the cache
+  SCP_SET operator[](const std::string& key);
 
 /// empty the database; also clears the cache
   void clear(void);
@@ -126,7 +125,7 @@ public:
   inline scp_databases(void) = default;
 
 /// destructor
-  inline virtual ~scp_databases(void) = default;
+//  inline virtual ~scp_databases(void) = default;
 
 /// add a database to those that are consulted
   void add_db(scp_database& db);
@@ -139,7 +138,7 @@ public:
   void remove_call(const std::string& call);
 
 /// return matches
-  const SCP_SET operator[](const std::string& key);
+  SCP_SET operator[](const std::string& key);
 
 /// clear the cache; also clear the caches of any children
   void clear_cache(void);

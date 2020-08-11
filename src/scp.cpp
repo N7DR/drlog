@@ -1,4 +1,4 @@
-// $Id: scp.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: scp.cpp 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,7 +43,7 @@ void scp_database::add_call(const string& call)
 }
 
 /// remove a call; returns 0 or 1 depending on whether a call is actually removed (1 => a call was removed)
-const unsigned int scp_database::remove_call(const std::string& call)
+unsigned int scp_database::remove_call(const std::string& call)
 { unsigned int rv { 0 };
 
   if (call.length() >= 2)
@@ -57,8 +57,8 @@ const unsigned int scp_database::remove_call(const std::string& call)
   return rv;
 }
 
-/// return SCP matches
-const SCP_SET scp_database::operator[](const string& key)
+/// return SCP matches; cannot be const, as it might change the cache
+SCP_SET scp_database::operator[](const string& key)
 { if (key.length() < 2)
     return SCP_SET();
   
@@ -119,8 +119,8 @@ void scp_database::clear_cache(void)
 void scp_databases::remove_call(const string& call)
 { bool removed { false };
 
-  for (size_t n = 0; (n < _vec.size() and !removed); ++n)  // in priority order
-  { const size_t rev { _vec.size() - 1 - n };                // reverse the order
+  for (size_t n = 0; (n < _vec.size() and !removed); ++n)   // in priority order
+  { const size_t rev { _vec.size() - 1 - n };               // reverse the order
 
     removed = _vec[rev]->remove_call(call);
   }
@@ -133,7 +133,7 @@ void scp_databases::add_db(scp_database& db)
 }
 
 /// return matches
-const SCP_SET scp_databases::operator[](const string& key)
+SCP_SET scp_databases::operator[](const string& key)
 { if (key.length() < 2)
     return SCP_SET();
 

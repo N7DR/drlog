@@ -1,4 +1,4 @@
-// $Id: rules.h 154 2020-03-05 15:36:24Z  $
+// $Id: rules.h 161 2020-07-31 16:19:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,6 +42,11 @@ enum class POINTS { NORMAL,                       ///< points defined in configu
                   };
 
 /// Syntactic sugar for read-only access
+// CANNOT make this a non-const non-reference (to allow for move constructors) for reasons I don't understand
+// Exactly the same construction is used in drlog_context.h, without any problem
+// compiler complains about building a pair<const string, EFT>, which isn't mentioned anywhere in the source,
+// and the compiler error messages don't tell me exactly where the failure really occurs, although it seems to be
+// when compiling qtc.cpp; the compiler ponts to the forward declaration of class EFT, which makes no sense
 #define RULESREAD(y)          \
   inline const decltype(_##y)& y(void) const { SAFELOCK(rules); return _##y; }
 
@@ -95,17 +100,17 @@ public:
 
     Return empty string if <i>field_name</i> is not a choice
 */
-  const std::string other_choice(const std::string& field_name) const;
+  std::string other_choice(const std::string& field_name) const;
 
 /*! \brief              Is a field a choice?
     \param  field_name  current field name
     \return             whether there is an alternative field for <i>field_name</i>
 */
-  inline const bool is_choice(const std::string& field_name) const
+  inline bool is_choice(const std::string& field_name) const
     { return (_choices.find(field_name) != _choices.cend() ); }
 
 /// return the inverse of whether there are any choices
-  inline const bool empty(void) const
+  inline bool empty(void) const
     { return _choices.empty(); }
 
 /// serialise
@@ -153,7 +158,7 @@ public:
   { }
 
 /// destructor
-  inline virtual ~exchange_field_values(void) = default;
+//  inline virtual ~exchange_field_values(void) = default;
 
   READ_AND_WRITE(name);             ///< name of the exchange field
   READ_AND_WRITE(values);           ///< associate legal values with a canonical value
@@ -180,10 +185,10 @@ public:
 
     Returns 0 if the canonical value does not exist
 */
-  const size_t n_values(const std::string& cv) const;
+  size_t n_values(const std::string& cv) const;
 
 /// Get the number of canonical values
-  inline const size_t n_canonical_values(void) const
+  inline size_t n_canonical_values(void) const
     { return _values.size(); }
 
 /*! \brief      Get all the canonical values
@@ -191,7 +196,7 @@ public:
 
     Returns empty set if there are no canonical values
 */
-  const std::set<std::string> canonical_values(void) const;
+  std::set<std::string> canonical_values(void) const;
 
 /*! \brief      Get all the legal values for a single canonical value
     \param  cv  canonical value
@@ -199,41 +204,41 @@ public:
 
     Returns empty set if the canonical value does not exist
 */
-  const std::set<std::string> values(const std::string& cv) const;
+  std::set<std::string> values(const std::string& cv) const;
 
 /*! \brief      Get all the legal values (for all canonical values)
     \return     all possible legal values for all canonical values
 
     Returns empty set if there are no canonical values
 */
-  const std::set<std::string> all_values(void) const;
+  std::set<std::string> all_values(void) const;
 
 /*! \brief                      Is a string a known canonical value?
     \param  putative_cv_value   string to test
     \return                     whether <i>putative_cv_value</i> is a canonical value
 */
-  inline const bool canonical_value_present(const std::string& putative_cv_value) const
+  inline bool canonical_value_present(const std::string& putative_cv_value) const
     { return (_values.find(putative_cv_value) != _values.cend()); }
 
 /*! \brief                      Is a string a known canonical value? Synonym for canonical_value_present()
     \param  putative_cv_value   string to test
     \return                     whether <i>putative_cv_value</i> is a canonical value
 */
-  inline const bool is_legal_canonical_value(const std::string& putative_cv_value) const
+  inline bool is_legal_canonical_value(const std::string& putative_cv_value) const
     { return canonical_value_present(putative_cv_value); }
 
 /*! \brief          Is a string a legal value (for any canonical value)
     \param  value   value to be tested
     \return         whether <i>value</i> is a legal value of any canonical value
 */
-  const bool is_legal_value(const std::string& value) const;
+  bool is_legal_value(const std::string& value) const;
 
 /*! \brief                  Is a particular value legal for a given canonical value?
     \param  cv              canonical value
     \param  putative_value  value to test
     \return                 Whether <i>putative_value</i> is a legal value for the canonical value <i>cv</i>
 */
-  const bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
+  bool is_legal_value(const std::string& cv, const std::string& putative_value) const;
 
 /// serialise
   template<typename Archive>
@@ -279,16 +284,16 @@ public:
   READ_AND_WRITE(choice);              ///< equivalents if this is a choice
 
 /// is this field a choice?
-  inline const bool is_choice(void) const
+  inline bool is_choice(void) const
     { return !_choice.empty(); }
 
 /*! \brief      Follow all trees to their leaves
     \return     the exchange field, expanded recursively into all possible choices
 */
-  const std::vector<exchange_field> expand(void) const;
+ std::vector<exchange_field> expand(void) const;
 
 /// exchange_field < exchange_field
-  inline const bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to work
+  inline bool operator<(const exchange_field& ef) const   // needed for set<exchange_field> to work
     { return (_name < ef.name()); }
 
 /// serialise
@@ -439,7 +444,7 @@ protected:
 
     Uses the variable <i>_exch_values</i> to obtain the returned value
 */
-  const std::set<std::string> _all_exchange_values(const std::string& field_name) const;
+  std::set<std::string> _all_exchange_values(const std::string& field_name) const;
 
 /*! \brief                  Initialize an object that was created from the default constructor
     \param  context         context for this contest
@@ -454,7 +459,7 @@ protected:
     \param  exchange_mults_vec  container of fields that are mults
     \return                     container of detailed information about each exchange field in <i>exchange_fields</i>
 */
-  const std::vector<exchange_field> _inner_parse(const std::vector<std::string>& exchange_fields , const std::vector<std::string>& exchange_mults_vec) const;
+  std::vector<exchange_field> _inner_parse(const std::vector<std::string>& exchange_fields , const std::vector<std::string>& exchange_mults_vec) const;
 
 /*! \brief              Parse all the "exchange [xx] = " lines from context
     \param  context     drlog context
@@ -478,7 +483,7 @@ protected:
     \param  expand_choices      whether to expand CHOICE fields
     \return                     the exchange fields associated with <i>canonical_prefix</i>
 */
-  const std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const bool expand_choices) const;
+  std::vector<exchange_field> _exchange_fields(const std::string& canonical_prefix, const MODE m, const bool expand_choices) const;
 
 public:
   
@@ -491,9 +496,9 @@ public:
 */
   contest_rules(const drlog_context& context, location_database& location_db);
   
-/*! \brief              Prepare for use an object that was created from the default constructor
-    \param  context     context for this contest
-    \param  location_db location database
+/*! \brief                  Prepare for use an object that was created from the default constructor
+    \param  context         context for this contest
+    \param  location_db     location database
 */
   void prepare(const drlog_context& context, location_database& location_db);
     
@@ -505,14 +510,14 @@ public:
   inline void add_permitted_mode(const MODE mode)
     { SAFELOCK(rules); _permitted_modes.insert(mode); }
     
-/*! \brief          Get the next mode in sequence
+/*! \brief                  Get the next mode in sequence
     \param  current_mode    the current mode
     \return                 the mode after <i>current_mode</i>
 
     Cycles through the available modes.
     Currently supports only MODE_CW and MODE_SSB
 */
-  const MODE next_mode(const MODE current_mode) const;
+  MODE next_mode(const MODE current_mode) const;
 
 /*! \brief      Add a band to those permitted in the contest
     \param  b   band to add
@@ -522,10 +527,10 @@ public:
   void add_permitted_band(const BAND b);
 
 /// get the next band that is higher in frequency than a given band
-  const BAND next_band_up(const BAND current_band) const;
+  BAND next_band_up(const BAND current_band) const;
 
 /// get the next band that is lower in frequency than a given band
-  const BAND next_band_down(const BAND current_band) const;
+  BAND next_band_down(const BAND current_band) const;
   
   RULESREAD(bonus_countries);                     ///< countries that are eligible for bonus points
   RULESREAD(permitted_bands);                     ///< bands allowed in this contest
@@ -541,7 +546,7 @@ public:
 
     CHOICE fields ARE NOT expanded
 */
-  inline const std::vector<exchange_field> unexpanded_exch(const std::string& canonical_prefix, const MODE m) const
+  inline std::vector<exchange_field> unexpanded_exch(const std::string& canonical_prefix, const MODE m) const
     { return _exchange_fields(canonical_prefix, m, false); }
 
 /*! \brief                      Get the expected exchange fields for a particular canonical prefix
@@ -551,7 +556,7 @@ public:
 
     CHOICE fields ARE expanded
 */
-  inline const std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
+  inline std::vector<exchange_field> expanded_exch(const std::string& canonical_prefix, const MODE m) const
     { return _exchange_fields(canonical_prefix, m, true); }
 
   RULESREAD(callsign_mults);                      ///< collection of types of mults based on callsign (e.g., "WPXPX")
@@ -589,24 +594,24 @@ public:
 
     Returns EFT("none") if <i>field_name</i> is unknown.
 */
-  const EFT exchange_field_eft(const std::string& field_name) const;
+  EFT exchange_field_eft(const std::string& field_name) const;
 
 /*! \brief                      Get the expanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-  const std::vector<std::string> expanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
+  std::vector<std::string> expanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
 
 /*! \brief                      Get the unexpanded names of the exchange fields for a particular canonical prefix and mode
     \param  canonical_prefix    canonical prefix
     \param  m                   mode
     \return                     the exchange field names associated with <i>canonical_prefix</i> and <i>m</i>
 */
-  const std::vector<std::string> unexpanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
+  std::vector<std::string> unexpanded_exchange_field_names(const std::string& canonical_prefix, const MODE m) const;
 
 /// Return all the known names of exchange fields
-  const std::set<std::string> all_known_field_names(void) const;
+  std::set<std::string> all_known_field_names(void) const;
 
 /// Restore the original set of bands to be scored (from the configuration file)
   inline void restore_original_score_bands(void)
@@ -642,13 +647,13 @@ public:
 
     If <i>cp</i> is empty, then tests whether any countries are mults.
 */
-  const bool country_mults_used(const std::string& cp = std::string()) const;
+  bool country_mults_used(const std::string& cp = std::string()) const;
 
 /*! \brief      Do the country mults (if any) include a particular country?
     \param  cp  canonical prefix of country to test
     \return     whether cp is a country mult
 */
-  inline const bool is_country_mult(const std::string& cp) const
+  inline bool is_country_mult(const std::string& cp) const
     { return country_mults_used(cp); }
 
 /*! \brief          Is an exchange field a mult?
@@ -657,7 +662,7 @@ public:
 
     Returns <i>false</i> if <i>name</i> is unrecognised
 */
-  const bool is_exchange_mult(const std::string& name) const;
+  bool is_exchange_mult(const std::string& name) const;
 
 /*! \brief              All the canonical values for a particular exchange field
     \param  field_name  name of an exchange field (received)
@@ -665,7 +670,7 @@ public:
 
     Returns empty vector if no acceptable values are found (e.g., RST, RS, SERNO)
 */
-  const std::vector<std::string> exch_canonical_values(const std::string& field_name) const;
+  std::vector<std::string> exch_canonical_values(const std::string& field_name) const;
 
 /*! \brief              The permitted values for a particular exchange field
     \param  field_name  name of an exchange field (received)
@@ -673,7 +678,7 @@ public:
 
     Returns empty set if the field can take any value, or if it's a regex.
 */
-  const std::set<std::string> exch_permitted_values(const std::string& field_name) const;
+  std::set<std::string> exch_permitted_values(const std::string& field_name) const;
 
 /*! \brief              Is a particular exchange field limited to only permitted values?
     \param  field_name  name of an exchange field (received)
@@ -681,7 +686,7 @@ public:
 
     Generally (perhaps always) this should be the opposite of <i>exchange_field_is_regex(field_name)</i>
 */
-  inline const bool exch_has_permitted_values(const std::string& field_name) const
+  inline bool exch_has_permitted_values(const std::string& field_name) const
     { SAFELOCK(rules);
 
       return ( _permitted_exchange_values.find(field_name) != _permitted_exchange_values.cend() );
@@ -693,7 +698,7 @@ public:
 
     Returns <i>false</i> if <i>field_name</i> is unknown.
 */
-  const bool exchange_field_is_regex(const std::string& field_name) const;
+  bool exchange_field_is_regex(const std::string& field_name) const;
 
 /*! \brief                  A canonical value
     \param  field_name      name of an exchange field (received)
@@ -702,7 +707,7 @@ public:
 
     Returns the received value if there are no canonical values
 */
-  const std::string canonical_value(const std::string& field_name, const std::string& actual_value) const;
+  std::string canonical_value(const std::string& field_name, const std::string& actual_value) const;
 
 /*! \brief                          Add a canonical value for a particular exchange field
     \param  field_name              name of an exchange field (received)
@@ -720,7 +725,7 @@ public:
 
     Returns false if <i>field_name</i> is unrecognized
 */
-  const bool is_canonical_value(const std::string& field_name, const std::string& putative_canonical_value) const;
+  bool is_canonical_value(const std::string& field_name, const std::string& putative_canonical_value) const;
 
 /*! \brief                  Is a particular string a legal value for a particular exchange field?
     \param  field_name      name of an exchange field (received)
@@ -729,26 +734,26 @@ public:
 
     Returns false if <i>field_name</i> is unrecognized. Supports regex exchanges.
 */
-  const bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
+  bool is_legal_value(const std::string& field_name, const std::string& putative_value) const;
 
 /// number of permitted bands
-  inline const unsigned int n_bands(void) const
+  inline unsigned int n_bands(void) const
     { SAFELOCK(rules); return _permitted_bands.size(); }
 
 /// number of permitted modes
-  inline const unsigned int n_modes(void) const
+  inline unsigned int n_modes(void) const
     { SAFELOCK(rules); return _permitted_modes.size(); }
 
 /// do we allow multiple bands?
-  inline const bool multiple_bands(void) const
+  inline bool multiple_bands(void) const
     { return (n_bands() != 1); }
 
 /// do we allow multiple modes?
-  inline const bool multiple_modes(void) const
+  inline bool multiple_modes(void) const
     { return (n_modes() != 1); }
 
 /// number of country mults
-  inline const unsigned int n_country_mults(void) const
+  inline unsigned int n_country_mults(void) const
     { SAFELOCK(rules); return _country_mults.size(); }
     
 /*! \brief                  Points for a particular QSO
@@ -756,20 +761,20 @@ public:
     \param  location_db     location database
     \return                 the (location-based) points for <i>qso</i>
 */
-  const unsigned int points(const QSO& qso, location_database& location_db) const;
+  unsigned int points(const QSO& qso, location_database& location_db) const;
 
 /// human-readable string
-  const std::string to_string(void) const;
+  std::string to_string(void) const;
 
 /*! \brief          Does the sent exchange include a particular field?
     \param  str     name of field to test
     \param  m       mode
     \return         whether the sent exchange for mode <i>m</i> includes a field with the name <i>str</i>
 */
-  const bool sent_exchange_includes(const std::string& str, const MODE m) const;
+  bool sent_exchange_includes(const std::string& str, const MODE m) const;
 
 /// get the permitted bands as a set
-  inline const std::set<BAND> permitted_bands_set(void) const
+  inline std::set<BAND> permitted_bands_set(void) const
     { return std::set<BAND>(_permitted_bands.cbegin(), _permitted_bands.cend() ); }
 
 /*! \brief                      Is a particular field used for QSOs with a particular country?
@@ -777,17 +782,17 @@ public:
     \param  canonical_prefix    country to test
     \return                     whether the field <i>field_name</i> is used when the country's canonical prefix is <i>canonical_prefix</i>
 */
-  const bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
+  bool is_exchange_field_used_for_country(const std::string& field_name, const std::string& canonical_prefix) const;
 
 /// the names of all the possible exchange fields
-  const std::set<std::string> exchange_field_names(void) const;
+  std::set<std::string> exchange_field_names(void) const;
 
 /*! \brief      The equivalent choices of exchange fields for a given mode and country?
     \param  m   mode
     \param  cp  canonical prefix of country
     \return     all the equivalent firlds for mode <i>m</i> and country <i>cp</i>
 */
-  const choice_equivalents equivalents(const MODE m, const std::string& cp) const;
+  choice_equivalents equivalents(const MODE m, const std::string& cp) const;
 
 /// read from and write to disk
   template<typename Archive>
@@ -816,6 +821,7 @@ public:
          & _my_country
          & _my_cq_zone
          & _my_grid
+         & _my_itu_zone
          & _original_score_bands
          & _original_score_modes
          & _per_band_country_mult_factor
@@ -828,12 +834,11 @@ public:
          & _received_exchange
          & _score_bands
          & _score_modes
-         & _sent_exchange_names
-         & _work_if_different_band
-         & _work_if_different_mode
-         & _my_itu_zone
          & _send_qtcs
-         & _uba_bonus;
+         & _sent_exchange_names
+         & _uba_bonus
+         & _work_if_different_band
+         & _work_if_different_mode;
     }
 };
 
@@ -841,7 +846,7 @@ public:
     \param  call    callsign for which the WPX prefix is desired
     \return         the WPX prefix corresponding to <i>call</i>
 */
-const std::string wpx_prefix(const std::string& call);
+std::string wpx_prefix(const std::string& call);
 
 /*! \brief          The SAC prefix for a particular call
     \param  call    call for which the prefix is to be calculated
@@ -849,7 +854,7 @@ const std::string wpx_prefix(const std::string& call);
 
     The SAC rules as written do not allow for weird prefixes such as LA100, etc.
 */
-const std::string sac_prefix(const std::string& call);
+std::string sac_prefix(const std::string& call);
 
 /*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?
     \param  field_name      name of the field
@@ -858,7 +863,7 @@ const std::string sac_prefix(const std::string& call);
 
     For example, the mult value in WAG for a DOK field with the value A01 is A.
 */
-const std::string MULT_VALUE(const std::string& field_name, const std::string& received_value);
+std::string MULT_VALUE(const std::string& field_name, const std::string& received_value);
 
 #endif    // RULES_H
 

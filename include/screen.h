@@ -1,4 +1,4 @@
-// $Id: screen.h 158 2020-06-27 20:33:02Z  $
+// $Id: screen.h 161 2020-07-31 16:19:50Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -97,7 +97,7 @@ extern pt_mutex screen_mutex;                   ///< mutex for the screen
     I note that ncurses is inconsistent about the types used to hold colour pairs; the actual definition of COLOR_PAIR()
     defines the return value as an int, so that's what we use here
 */
-const int COLOUR_PAIR(const PAIR_TYPE n);
+int COLOUR_PAIR(const PAIR_TYPE n);
 
 // -----------  cursor  ----------------
 
@@ -122,7 +122,7 @@ protected:
     \param  p   foreground colour, background colour
     \return     the number of the colour pair
 */
-  const PAIR_TYPE _add_to_vector(const std::pair<COLOUR_TYPE, COLOUR_TYPE>& p);
+  PAIR_TYPE _add_to_vector(const std::pair<COLOUR_TYPE, COLOUR_TYPE>& p);
 
 public:
 
@@ -137,19 +137,19 @@ public:
     If the pair is already known, returns the number of the known pair.
     Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
-  const PAIR_TYPE add(const COLOUR_TYPE fg, const COLOUR_TYPE bg);
+  PAIR_TYPE add(const COLOUR_TYPE fg, const COLOUR_TYPE bg);
 
 /*! \brief              Get the foreground colour of a pair
     \param  pair_nr     number of the pair
     \return             the foreground colour of the pair number <i>pair_nr</i>
 */
-  const COLOUR_TYPE fg(const PAIR_TYPE pair_nr) const;
+  COLOUR_TYPE fg(const PAIR_TYPE pair_nr) const;
 
 /*! \brief              Get the background colour of a pair
     \param  pair_nr     number of the pair
     \return             the background colour of the pair number <i>pair_nr</i>
 */
-  const COLOUR_TYPE bg(const PAIR_TYPE pair_nr) const;
+  COLOUR_TYPE bg(const PAIR_TYPE pair_nr) const;
 };
 
 // -----------  screen  ----------------
@@ -224,7 +224,7 @@ class window
 {
 protected:
   
-  std::string   _name               { ""s };    ///< (optional) name of window
+  std::string   _name               { EMPTY_STR };    ///< (optional) name of window
   
   unsigned int  _column_width;      ///< width of columns
   int           _cursor_x;          ///< used to hold x cursor
@@ -345,7 +345,7 @@ public:
 /*! \brief      Is the window usable?
     \return     whether the window is usable
 */
-  inline const bool defined(void) const
+  inline bool defined(void) const
     { return (_wp != nullptr); }
 
 /*! \brief      Is the window usable?
@@ -353,7 +353,7 @@ public:
 
     Synonym for defined()
 */
-  inline const bool valid(void) const
+  inline bool valid(void) const
     { return defined(); }
 
 /*! \brief          Move the logical cursor
@@ -380,7 +380,7 @@ public:
 /*! \brief      Get cursor position
     \return     the current position of the cursor
 */
-  const cursor cursor_position(void);
+  cursor cursor_position(void);
 
 /*! \brief                      Control scrolling
     \param  enable_or_disable   whether to enable scrolling
@@ -403,7 +403,7 @@ public:
 /*! \brief      Is scrolling enabled?
     \return     whether scrolling is enabled
 */
-  inline const bool scrolling(void) const
+  inline bool scrolling(void) const
     { return _scrolling; }
 
 /*! \brief              scroll a window
@@ -432,20 +432,20 @@ public:
   void show(void);
 
 /// is the panel hidden?
-  inline const bool hidden(void) const
+  inline bool hidden(void) const
     { return (_pp ? static_cast<bool>(panel_hidden(_pp)) : false); }
 
 /*! \brief      Is the window hidden?
     \return     whether the window is hidden
 */
-  inline const bool is_hidden(void) const
+  inline bool is_hidden(void) const
     { return hidden(); }
 
 /*! \brief      Character processing that is the same in multiple windows
     \param  e   keyboard event to be processed
     \return     whether the event was processed
 */
-  const bool common_processing(const keyboard_event& e);
+  bool common_processing(const keyboard_event& e);
 
 /*! \brief      define the <= operator to be the same as <, except that it causes a refresh at the end of the operation
     \param  t   the object to be output
@@ -571,7 +571,7 @@ public:
     By default reads the entirety of the bottom line.
     Limits both <i>x</i> and <i>y</i> to valid values for the window before reading the line.
 */
-  const std::string read(int x = 0, int y = 0);
+  std::string read(int x = 0, int y = 0);
 
 /*! \brief              Read a line
     \param  line_nr     number of line to read (0 is bottommost row)
@@ -579,13 +579,13 @@ public:
 
     Limits <i>line_nr</i> to a valid value for the window before reading the line.
 */
-  inline const std::string getline(const int line_nr = 0)
+  inline std::string getline(const int line_nr = 0)
     { return read(0, line_nr); }
 
 /*! \brief      Obtain a line-by-line snapshot of all the contents; lines go from top to bottom
     \return     a line-by-line snapshot of all the contents; element [0] is the top line
 */
-  const std::vector<std::string> snapshot(void);
+  std::vector<std::string> snapshot(void);
 
 /*! \brief              Is a line empty?
     \param  line_nr     number of line to test (0 is bottommost row)
@@ -594,7 +594,7 @@ public:
     Removes any blank spaces before testing.
     Limits <i>line_nr</i> to a valid value for the window before testing the line.
 */
-  inline const bool line_empty(const int line_nr = 0)
+  inline bool line_empty(const int line_nr = 0)
     { return remove_peripheral_spaces(getline(line_nr)).empty(); }
 
 /*! \brief              Clear a line
@@ -633,7 +633,7 @@ public:
     }
 
 /// is the window empty?
-  inline const bool empty(void)
+  inline bool empty(void)
     { return remove_peripheral_spaces(read()).empty(); }
 
 /// toggle the hide/show status of the cursor
@@ -657,7 +657,7 @@ public:
     
     Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
 */
-const std::string properties(const std::string& name = ""s);
+std::string properties(const std::string& name = ""s);
 
 // http://stackoverflow.com/questions/1154212/how-could-i-print-the-contents-of-any-container-in-a-generic-way 
 /* I do not understand why this template is not used in:   win_remaining_mults < (context.remaining_country_mults_list());
@@ -739,13 +739,13 @@ inline window& operator<(window& win, const COLOURS& CP)
   { return win.set_colour_pair(colours.add(CP.fg(), CP.bg())); }
 
 /// obtain colour pair corresponding to foreground and background colours
-inline const int FGBG(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
+inline int FGBG(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
   { return COLOUR_PAIR(colours.add(fg, bg)); }
 
 /*! \brief          Convert the name of a colour to a colour
     \param  str     name of a colour
     \return         the colour corresponding to <i>str</i>
 */
-const COLOUR_TYPE string_to_colour(const std::string& str);
+COLOUR_TYPE string_to_colour(const std::string& str);
 
 #endif    // SCREEN_H

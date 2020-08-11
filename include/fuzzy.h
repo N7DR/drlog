@@ -1,4 +1,4 @@
-// $Id: fuzzy.h 152 2019-08-21 20:23:38Z  $
+// $Id: fuzzy.h 160 2020-07-25 16:01:11Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,7 +46,7 @@ protected:
     The purpose of this is to include calls with more or fewer characters than the boundaries
     into the correct element of the <i>_db</i> array
 */
-  inline const size_t _to_valid_size(const size_t sz) const
+  inline size_t _to_valid_size(const size_t sz) const
     { return std::max(std::min(sz, MAX_FUZZY_SIZE), MIN_FUZZY_SIZE); }
 
 public:
@@ -67,7 +67,7 @@ public:
   explicit fuzzy_database(const drmaster& drm);
   
 /// destructor
-  inline virtual ~fuzzy_database(void) = default;
+//  inline virtual ~fuzzy_database(void) = default;
 
 /*! \brief          Add the calls in a vector to the database
     \param  calls   calls to be added
@@ -91,15 +91,15 @@ public:
 
     Does nothing and returns <i>false</i> if <i>call</i> is not in the database
 */
-  inline const bool remove_call(const std::string& call)
+  inline bool remove_call(const std::string& call)
     { return ( (_db[ _to_valid_size(call.length()) ].erase(call)) != 0 ); }
 
 /*! \brief          Is a call in the database?
     \param  call    call to be removed
     \return         whether <i>call</i> is present in the database
 */
-  inline const bool contains(const std::string& call) const
-    { return (_db[ _to_valid_size(call.length()) ] < call); }
+  inline bool contains(const std::string& call) const
+    { return (_db[ _to_valid_size(call.length()) ] > call); }
   
 /*! \brief          Return matches
     \param  key     basic call against which to compare
@@ -107,7 +107,7 @@ public:
 
     This would use regex, except that g++ doesn't support that yet :-( :-(
 */
-  const std::set<std::string> operator[](const std::string& key) const;
+  std::set<std::string> operator[](const std::string& key) const;
 
 /// empty the database
   inline void clear(void)
@@ -132,7 +132,7 @@ public:
   inline fuzzy_databases(void) = default;
 
 /// destructor
-  inline virtual ~fuzzy_databases(void) = default;
+//  inline virtual ~fuzzy_databases(void) = default;
 
 /// add a database to those that are consulted
   inline void add_db(fuzzy_database& db)
@@ -149,7 +149,7 @@ public:
     \param  key     basic call against which to compare
     \return         all fuzzy matches in all databases for <i>key</i>
 */
-  const std::set<std::string> operator[](const std::string& key);
+  std::set<std::string> operator[](const std::string& key);
 };
 
 #endif    // FUZZY_H
