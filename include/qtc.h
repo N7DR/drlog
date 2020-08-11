@@ -1,4 +1,4 @@
-// $Id: qtc.h 161 2020-07-31 16:19:50Z  $
+// $Id: qtc.h 152 2019-08-21 20:23:38Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,7 +32,7 @@ using namespace std::literals::string_literals;
 // error numbers
 constexpr int QTC_INVALID_FORMAT            { -1 };   ///< error reading from file
 
-constexpr bool QTC_SENT   { true };                   ///< QTC has been sent
+constexpr bool QTC_SENT   { true };                     ///< QTC has been sent
 constexpr bool QTC_UNSENT { false };                  ///< QTC has not been sent
 
 // from http://www.kkn.net/~trey/cabrillo/qso-template.html:
@@ -90,35 +90,43 @@ public:
     { _serno = pad_string(str, 4, PAD_RIGHT); }
 
 /// qtc_entry == qso
-  inline bool operator==(const QSO& qso) const
+  inline const bool operator==(const QSO& qso) const
     { return ( *this == qtc_entry { qso } ); }
 
 /// qtc_entry != qso
-  inline bool operator!=(const QSO& qso) const
+  inline const bool operator!=(const QSO& qso) const
     { return !(*this == qso); }
 
 /// qtc_entry == qtc_entry
+<<<<<<< HEAD
   inline bool operator==(const qtc_entry& entry) const
     { return ( /* (_my_serno == entry._my_serno) and */ (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
 
 /// qtc_entry < qtc_entry
   inline bool operator<(const qtc_entry& entry) const
 //    { return (_my_serno < entry._my_serno); }
+=======
+  inline const bool operator==(const qtc_entry& entry) const
+    { return ( (_serno == entry._serno) and (_utc == entry._utc) and (_callsign == entry._callsign) ); }
+
+/// qtc_entry < qtc_entry
+  inline const bool operator<(const qtc_entry& entry) const
+>>>>>>> 0a43fe059e6587fe915f47631dbfa4e529ab7fa9
     { return ( (_serno < entry._serno) or (_utc < entry._utc) or (_callsign < entry._callsign) ); }
 
 /// convert to printable string
-  std::string to_string(void) const;
+  const std::string to_string(void) const;
 
 /// return the length of the printable string
-  inline size_t size(void) const
+  inline const size_t size(void) const
     { return to_string().size(); }
 
 /// does a qtc_entry contain a non-empty call?
-  inline bool empty(void) const
+  inline const bool empty(void) const
     { return _callsign.empty(); }
 
 /// is a qtc_entry valid?
-  inline bool valid(void) const
+  inline const bool valid(void) const
     { return !empty(); }
 
 /// serialise
@@ -166,7 +174,7 @@ protected:
     \param  sent    whether to return the sent entries
     \return         if <i>sent</i> is <i>true</i>, return all the sent entries; otherwise return all the unsent entries
 */
-  std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const bool sent) const;
+  const std::vector<qtc_entry> _sent_or_unsent_qtc_entries(const bool sent) const;
 
 public:
 
@@ -193,7 +201,7 @@ public:
   READ_AND_WRITE(source);             ///< my call
 
 /// synonym for getting target
-  inline decltype(_target) destination(void) const
+  inline const decltype(_target) destination(void) const
     { return target(); }
 
 /// synonym for setting target
@@ -205,15 +213,15 @@ public:
     { *this = qtc_series(); }
 
 /// return all the sent QTCs
-  inline std::vector<qtc_entry> sent_qtc_entries(void) const
+  inline const std::vector<qtc_entry> sent_qtc_entries(void) const
     { return _sent_or_unsent_qtc_entries(true); }
 
 /// return all the unsent QTCs
-  inline std::vector<qtc_entry> unsent_qtc_entries(void) const
+  inline const std::vector<qtc_entry> unsent_qtc_entries(void) const
     { return _sent_or_unsent_qtc_entries(false); }
 
 /// return frequency in form xxxxx.y (kHz)
-  inline std::string frequency_str(void) const
+  inline const std::string frequency_str(void) const
     { return _frequency; }
 
 /// set frequency in form xxxxx.y (kHz)
@@ -225,18 +233,18 @@ public:
     { _frequency = f.display_string(); }
 
 /// return the number of qtc_entries in the series
-  inline size_t size(void) const
+  inline const size_t size(void) const
     { return _qtc_entries.size(); }
 
 /// are there zero qtc_entries in the series?
-  inline bool empty(void) const
+  inline const bool empty(void) const
     { return _qtc_entries.empty(); }
 
 /*! \brief          Add a qtc_entry
     \param  param   entry to add, and whether the entry has been sent
     \return         whether <i>param</i> was actually added
 */
-  bool operator+=(const std::pair<qtc_entry, bool>& param);
+  const bool operator+=(const std::pair<qtc_entry, bool>& param);
 
 /*! \brief      Return an entry
     \param  n   index number to return (wrt 0)
@@ -244,7 +252,7 @@ public:
 
     Returns empty pair if <i>n</i> is out of bounds.
 */
-  std::pair<qtc_entry, bool> operator[](const unsigned int n) const;
+  const std::pair<qtc_entry, bool> operator[](const unsigned int n) const;
 
 /*! \brief      Mark a particular entry as having been sent
     \param  n   index number to mark (wrt 0)
@@ -266,7 +274,7 @@ public:
 
     Returns an empty <i>qtc_entry</i> if no entries meet the criteria
 */
-  qtc_entry first_not_sent(const unsigned int posn = 0);
+  const qtc_entry first_not_sent(const unsigned int posn = 0);
 
 /*! \brief      Get a string representing a particular entry
     \param  n   number of the entry (wrt 0)
@@ -274,22 +282,22 @@ public:
 
     Returns the empty string if entry number <i>n</i> does not exist
 */
-  std::string output_string(const unsigned int n) const;
+  const std::string output_string(const unsigned int n) const;
 
 /*! \brief      Get a string representing all the entries
     \return     string describing all the <i>qtc_entry</i> elements
 */
-  std::string complete_output_string(void) const;
+  const std::string complete_output_string(void) const;
 
 /*! \brief      How many entries have been sent?
     \return     the number of entries that have been sent
 */
-  unsigned int n_sent(void) const;
+  const unsigned int n_sent(void) const;
 
 /*! \brief      How many entries have not been sent?
     \return     the number of entries that have not been sent
 */
-  unsigned int n_unsent(void) const;
+  const unsigned int n_unsent(void) const;
 
 /// serialise
   template<typename Archive>
@@ -341,7 +349,7 @@ public:
 /*! \brief      Get the number of QTCs in the database
     \return     the number of QTCs in the database
 */
-  inline size_t n_qtcs(void) const
+  inline const size_t n_qtcs(void) const
     { SAFELOCK(qtc_database);
 
       return _qtc_db.size();
@@ -352,7 +360,7 @@ public:
 
     Synonym for n_qtcs()
 */
-  inline size_t size(void) const
+  inline const size_t size(void) const
     { return n_qtcs(); }
 
 /*! \brief      Get one of the series in the database
@@ -361,18 +369,18 @@ public:
 
     Returns an empty series if <i>n</i> is out of bounds
 */
-  qtc_series operator[](size_t n);
+const qtc_series operator[](size_t n);
 
 /*! \brief                          Get the number of QTCs that have been sent to a particular station
     \param   destination_callsign   the station to which the QTCs have been sent
     \return                         number of QTCs that have been sent to <i>destination_callsign</i>
 */
-  unsigned int n_qtcs_sent_to(const std::string& destination_callsign) const;
+  const unsigned int n_qtcs_sent_to(const std::string& destination_callsign) const;
 
 /*! \brief                          Get the total number of QTC entries that have been sent
     \return                         the number of QTC entries that have been sent
 */
-  unsigned int n_qtc_entries_sent(void) const;
+  const unsigned int n_qtc_entries_sent(void) const;
 
 // read from file
   void read(const std::string& filename);
@@ -410,7 +418,7 @@ public:
     \param  target          station to which the QTC entries are to be sent
     \return                 the sendable QTC entries
 */
-  std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string());
+  const std::vector<qtc_entry> get_next_unsent_qtc(const unsigned int max_entries = 10, const std::string& target = std::string());
 
 /*! \brief          Add all unsent QSOs from a logbook to the buffer
     \param  logbk   logbook
@@ -453,19 +461,19 @@ public:
 /*! \brief      How many QTC QSOs have been sent?
     \return     the number of QSOs that have been sent in QTCs
 */
-  inline unsigned int n_sent_qsos(void) const
+  inline const unsigned int n_sent_qsos(void) const
     { return _sent_qtcs.size(); }
 
 /*! \brief      How many unsent QTC QSOs are there?
     \return     the number of QSOs that have not yet been sent in QTCs
 */
-  inline unsigned int n_unsent_qsos(void) const
+  inline const unsigned int n_unsent_qsos(void) const
     { return _unsent_qtcs.size(); }
 
 /*! \brief      How large is the database?
     \return     the total number of QSOs, both sent and unsent, in the database
 */
-  inline unsigned int size(void) const
+  inline const unsigned int size(void) const
     { return ( n_sent_qsos() + n_unsent_qsos() ); }
 
 /*! \brief          Recreate the unsent list
@@ -489,5 +497,26 @@ std::string unsent_list_as_string(void) const;
 // -------------------------------------- Errors  -----------------------------------
 
 ERROR_CLASS(qtc_error);         ///< Errors related to QTC processing
+
+#if 0
+/*! \class  qtc_error
+    \brief  Errors related to QTC processing
+*/
+
+class qtc_error : public x_error
+{
+protected:
+
+public:
+
+/*! \brief  Construct from error code and reason
+  \param  n Error code
+  \param  s Reason
+*/
+  inline qtc_error(const int n, const std::string& s) :
+    x_error(n, s)
+  { }
+};
+#endif
 
 #endif /* QTC_H */

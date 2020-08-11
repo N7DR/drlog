@@ -1,4 +1,4 @@
-// $Id: cluster.h 160 2020-07-25 16:01:11Z  $
+// $Id: cluster.h 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -67,17 +67,17 @@ public:
 /*! \brief      Read from the cluster socket
     \return     the current bytes waiting on the cluster socket
 */
-  std::string read(void);
+  const std::string read(void);
   
 /*! \brief      Read from the cluster socket
     \return     the information that has been read from the socket but has not yet been processed
 */
-  std::string get_unprocessed_input(void);
+  const std::string get_unprocessed_input(void);
   
 /*! \brief          Send a message to the cluster
     \param  msg     the message to be sent
 */
-  inline void send(const std::string& msg = CRLF)
+  inline void send(const std::string& msg = "\r\n"s)
     { _connection.send(msg); }
 
   READ(source);        ///< source for postings
@@ -110,7 +110,7 @@ protected:
   bool                  _valid;             ///< is it a valid post?
     
 /// does the frequency appear to be valid? Nothing fancy needed here
-  inline bool _valid_frequency(void) const
+  inline const bool _valid_frequency(void) const
     { return (_freq.khz() >= 1'800 and _freq.khz() <= 29'700); }
 
 public:
@@ -123,7 +123,7 @@ public:
   dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
   
 /// destructor
-//  inline virtual ~dx_post(void) = default;
+  inline virtual ~dx_post(void) = default;
 
   READ(band);                   ///< band of post
   READ(callsign);               ///< callsign that was heard
@@ -137,6 +137,8 @@ public:
   READ(source);                 ///< source of the post (POSTING_CLUSTER or POSTING_RBN)
   READ(time_processed);         ///< time (relative to the UNIX epoch) at which we processed the post
   READ(valid);                  ///< is it a valid post?
+  
+//  const MODE mode(void) const;
 };
 
 /*! \brief          Write a <i>dx_post</i> object to an output stream
@@ -174,7 +176,7 @@ public:
   READ(frequency_str);      ///< frequency in format xxxxx.y [kHz]
 
 /// convert to a string suitable for display in a window
-  inline std::string to_string(void) const
+  inline const std::string to_string(void) const
     { return ( pad_string(_frequency_str, 7, PAD_LEFT) + " "s + _callsign ); }
 };
 
@@ -218,7 +220,7 @@ public:
     \param  callsign    call to be tested
     \return             whether <i>callsign</i> is being monitored
 */
-  bool is_monitored(const std::string& callsign) const;
+  const bool is_monitored(const std::string& callsign) const;
 
 /*! \brief          Test a post, and possibly add to <i>_entries</i>
     \param  post    post to be tested
@@ -239,7 +241,7 @@ public:
   void prune(void);
 
 /// convert to strings suitable for display in a window
-  std::vector<std::string> to_strings(void) const;
+  const std::vector<std::string> to_strings(void) const;
 };
 
 #endif    // CLUSTER_H

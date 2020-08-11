@@ -78,7 +78,7 @@ memory_information::memory_information(const std::chrono::system_clock::duration
     \param  force   whether to force reading of /proc/meminfo regardless of <i>_last_update_time</i> and <i>_minimum_interval</i>
     \return         the state of the object as a printable string
 */
-string memory_information::to_string(const bool force)
+const string memory_information::to_string(const bool force)
 { _get_meminfo(force);
 
   const string rv =   "Total             = "s + comma_separated_string(mem_total()) + EOL
@@ -129,3 +129,4 @@ string memory_information::to_string(const bool force)
 
   return rv;
 }
+

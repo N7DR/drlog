@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 161 2020-07-31 16:19:50Z  $
+// $Id: drlog_context.h 158 2020-06-27 20:33:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,7 +34,7 @@ extern pt_mutex _context_mutex;             ///< mutex for the drlog context
 
 /// Syntactic sugar for read-only access
 #define CONTEXTREAD(y)          \
-  inline decltype(_##y) y(void) const { SAFELOCK(_context); return _##y; }
+  inline const decltype(_##y)& y(void) const { SAFELOCK(_context); return _##y; }
 
 // -----------  drlog_context  ----------------
 
@@ -167,6 +167,7 @@ protected:
   std::string                                  _keyer_port                              { };                            ///< the device that is to be used as a keyer
 
  // uint8_t                                      _limit_old_qsos                          { 0 };                          ///< include old QSOs newer than this value (in years) [0 => all no limit]  
+  unsigned int                                      _limit_old_qsos                          { 0 };                          ///< include old QSOs newer than this value (in years) [0 => all no limit]  
   std::string                                  _logfile                                 { "drlog.dat"s };               ///< name of the log file
   unsigned int                                      _long_t                                  { 0 };                          ///< whether and amount to extend length of initial Ts in serial number
 
@@ -199,7 +200,6 @@ protected:
   unsigned int                                 _n_memories                              { 0 };                          ///< number of rig memories
 
   std::string                                  _old_adif_log_name                       { };                            ///< name of ADIF file that contains old QSOs
-  unsigned int                                 _old_qso_age_limit                       { 0 };                          ///< include old QSOs newer than this value (in years) [0 => all no limit]  
 
   std::vector<std::string>                     _path                                    { "."s };                       ///< comma-separated list of directories to search, in order
   std::map<BAND, int>                          _per_band_country_mult_factor            { };                            ///< country mult factor structure for each band
@@ -315,7 +315,7 @@ public:
     \param  mult_name   name of the exchange mult
     \return             whether the remaining values of the exchange mult <i>mult_name</i> are auto generated
 */
-  inline bool auto_remaining_exchange_mults(const std::string& mult_name) const
+  inline const bool auto_remaining_exchange_mults(const std::string& mult_name) const
     { SAFELOCK(_context);
 
       return (_auto_remaining_exchange_mults.find(mult_name) != _auto_remaining_exchange_mults.end() );
@@ -334,7 +334,7 @@ public:
   CONTEXTREAD(bandmap_filter_foreground_colour); ///< colour of foreground in the bandmap filter
 
 /// is the bandmap filter set to hide? (If not, then it's set to show)
-  inline bool bandmap_filter_hide(void) const
+  inline const bool bandmap_filter_hide(void) const
     { return !bandmap_filter_show(); }
 
   CONTEXTREAD(bandmap_filter_hide_colour);       ///< background colour when bandmap filter is in hide mode
@@ -425,7 +425,7 @@ public:
     \param  m   target mode
     \return     guard band for mode <i>m</i>, in Hz
 */
-  unsigned int guard_band(const MODE m)
+  const unsigned int guard_band(const MODE m)
   { SAFELOCK(_context);
 
     const auto cit { _guard_band.find(m) };
@@ -440,6 +440,7 @@ public:
 
   CONTEXTREAD(keyer_port);                   ///< the device that is to be used as a keyer
 
+  CONTEXTREAD(limit_old_qsos);               ///< whether to include only old QSOs from the last ten years 
   CONTEXTREAD(logfile);                      ///< name of the log file
   CONTEXTREAD(long_t);                       ///< whether to extend length of initial Ts in serial number
 
@@ -469,7 +470,6 @@ public:
   CONTEXTREAD(n_memories);                   ///< number of rig memories
 
   CONTEXTREAD(old_adif_log_name);            ///< name of ADIF file that contains old QSOs
-  CONTEXTREAD(old_qso_age_limit);            ///< include old QSOs newer than this value (in years) [0 => all no limit]  
 
   CONTEXTREAD(path);                         ///< directories to search, in order
   CONTEXTREAD(per_band_country_mult_factor); ///< country mult factor structure for each band
@@ -516,13 +516,13 @@ public:
   CONTEXTREAD(score_bands);                      ///< which bands are going to be scored?
   CONTEXTREAD(score_modes);                      ///< which modes are going to be scored?
   CONTEXTREAD(screen_snapshot_file);             ///< base name of file for screenshot
-  CONTEXTREAD(screen_snapshot_on_exit);          ///< whether to take a screenshot on exit
+  CONTEXTREAD(screen_snapshot_on_exit);           ///< whether to take a screenshot on exit
 
 /*! \brief      Get names and values of sent exchange fields for a particular mode
     \param  m   target mode
     \return     the names and values of all the fields in the sent exchange when the mode is <i>m</i>
 */
-  decltype(_sent_exchange) sent_exchange(const MODE m);        // doxygen complains about the decltype; I have no idea why
+  const decltype(_sent_exchange) sent_exchange(const MODE m);        // doxygen complains about the decltype; I have no idea why
 
   CONTEXTREAD(sent_exchange_cw);                 ///< names and values of sent exchange fields, CW
   CONTEXTREAD(sent_exchange_ssb);                ///< names and values of sent exchange fields, SSB
@@ -549,7 +549,7 @@ public:
     \param  m   mode
     \return     the points string corresponding to band <i>b</i> and mode <i>m</i>
 */
-  std::string points_string(const BAND b, const MODE m) const;
+  const std::string points_string(const BAND b, const MODE m) const;
 
 #if 0
 /*! \brief                  Get the points string for a particular band and mode, if a particular exchange field is present
@@ -565,13 +565,12 @@ public:
     \param  name    name of window
     \return         location, size and colour information
 */
-  inline window_information window_info(const std::string& name) const
-    { return MUM_VALUE(_windows, name); }
+  const window_information window_info(const std::string& name) const;
 
 /*! \brief          Get a vector of the names of the legal bands for the contest (e.g., "160", "80", etc.)
     \return         the bands that are legal for the context
 */
-  inline std::vector<std::string> band_names(void) const
+  inline const std::vector<std::string> band_names(void) const
   { SAFELOCK(_context);
     return split_string(_bands, ","s);
   }
@@ -579,19 +578,19 @@ public:
 /*! \brief          Get a vector of the names of the legal modes for the contest (e.g., "CW", "SSB", etc.)
     \return         the modes that are legal for the context
 */
-  inline std::vector<std::string> mode_names(void) const
+  inline const std::vector<std::string> mode_names(void) const
   { SAFELOCK(_context);
     return split_string(_modes, ","s);
   }
 
 /// how many bands are used in this contest?
-  inline unsigned int n_bands(void) const
+  inline const unsigned int n_bands(void) const
   { SAFELOCK(_context);
     return band_names().size();
   }
 
 /// how many modes are used in this contest?
-  inline unsigned int n_modes(void) const
+  inline const unsigned int n_modes(void) const
   { SAFELOCK(_context);
     return mode_names().size();
   }
@@ -600,25 +599,25 @@ public:
     \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
 */
-  std::vector<std::string> window_name_contains(const std::string& substr) const;
+  const std::vector<std::string> window_name_contains(const std::string& substr) const;
 
 /*! \brief      Is a particular frequency within any marked range?
     \param  m   mode
     \param  f   frequency to test
     \return     whether <i>f</i> is in any marked range for the mode <i>m</i>
 */
-  bool mark_frequency(const MODE, const frequency& f);
+  const bool mark_frequency(const MODE, const frequency& f);
 
 /*! \brief      Get all the field names in the sent exchange
     \return     the names of all the fields in the sent exchange
 */
-  std::vector<std::string> sent_exchange_names(void) const;
+  const std::vector<std::string> sent_exchange_names(void) const;
 
 /*! \brief      Get all the field names in the exchange sent for a particular mode
     \param  m   target mode
     \return     the names of all the fields in the sent exchange for mode <i>m</i>
 */
-  std::vector<std::string> sent_exchange_names(const MODE m) const;
+  const std::vector<std::string> sent_exchange_names(const MODE m) const;
 
 /// swap QSL and ALTERNATIVE QSL messages
   inline void swap_qsl_messages(void)
@@ -627,7 +626,7 @@ public:
   }
 
 /// are multiple modes permitted?
-  inline bool multiple_modes(void) const
+  inline const bool multiple_modes(void) const
   { SAFELOCK(_context);
     return (_modes.size() != 1);
   }

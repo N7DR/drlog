@@ -30,9 +30,13 @@ extern message_stream           ost;    ///< for debugging, info
 
 /// is a character a control character version of the character in <i>_str</i>?
 // this is complicated because c might not be a letter
-bool keyboard_event::is_control(const char c) const
+const bool keyboard_event::is_control(const char c) const
 { if (is_control())
-  { if ( (c >= 'a') and (c <= 'z') )  // if it's a letter
+  { //const int i = static_cast<int>(c);
+
+    //ost << "i = " << i << std::endl;
+
+    if ( (c >= 'a') and (c <= 'z') )  // if it's a letter
       return (_str == create_string(c - 'a' + 1));
     else
       return (_str == string(1, c));
@@ -292,14 +296,14 @@ void keyboard_queue::process_events(void)
 }
 
 /// how many events are in the queue?
-size_t keyboard_queue::size(void) const
+const size_t keyboard_queue::size(void) const
 { SAFELOCK(_keyboard);
 
   return _events.size();
 }
 
 /// is the queue empty?
-bool keyboard_queue::empty(void) const
+const bool keyboard_queue::empty(void) const
 { try
   { SAFELOCK(_keyboard);
 
@@ -318,17 +322,17 @@ bool keyboard_queue::empty(void) const
     Does not remove the event from the queue.
     Returns the default keyboad_event() if the queue is empty.
 */
-keyboard_event keyboard_queue::peek(void)
+const keyboard_event keyboard_queue::peek(void)
 { SAFELOCK (_keyboard);
 
   return (!_events.empty() ? _events.front() : keyboard_event());
 }
 
 /// pop the frontmost event
-keyboard_event keyboard_queue::pop(void)
+const keyboard_event keyboard_queue::pop(void)
 { SAFELOCK(_keyboard);
 
-  keyboard_event rv { peek() };
+  keyboard_event rv = peek();
 
   if (!_events.empty())
   { _events.pop_front();
@@ -339,7 +343,7 @@ keyboard_event keyboard_queue::pop(void)
 }
 
 /// get the event most recently popped
-keyboard_event keyboard_queue::last(void)
+const keyboard_event keyboard_queue::last(void)
 { SAFELOCK(_keyboard);
 
   return _last_event;

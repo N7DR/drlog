@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 160 2020-07-25 16:01:11Z  $
+// $Id: rig_interface.h 156 2020-05-17 19:13:15Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -10,7 +10,10 @@
 
 /*! \file   rig_interface.h
 
-    Classes and functions related to transferring information between the computer and the rig.
+    Classes and functions related to transferring information
+    between the computer and the rig.
+
+    The more I spend time here, the more I think that it was a mistake to use hamlib :-(
 */
 
 #ifndef RIG_INTERFACE_H
@@ -75,15 +78,6 @@ protected:
   rig_status                                    _status;                        ///< most recent rig frequency and mode from the periodic poll
   pthread_t                                     _thread_id;                     ///< ID for the thread that polls the rig for status
 
-// protected pointers to functions
-
-/*! \brief          Pointer to function used to alert the user to an error
-    \param  msg     message to be presented to the user
-*/
-  void (*_error_alert_function)(const std::string& msg) { nullptr };
-
-// protected functions
-
 /*! \brief      Thread function to poll rig for status, forever
     \param  vp  unused (should be nullptr)
     \return     nullptr
@@ -101,8 +95,13 @@ protected:
 /*! \brief      Allow direct access to the underlying file descriptor used to communicate with the rig
     \return     the file descriptor associated with the rig
 */
-  inline int _file_descriptor(void) const
+  inline const int _file_descriptor(void) const
     { return (_rigp->state.rigport.fd); }
+
+/*! \brief          Pointer to function used to alert the user to an error
+    \param  msg     message to be presented to the user
+*/
+  void (*_error_alert_function)(const std::string& msg);
 
 /*! \brief       Alert the user with a message
     \param  msg  message for the user
@@ -119,13 +118,13 @@ public:
     _last_commanded_frequency(),          // no last-commanded frequency
     _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
     _last_commanded_mode(MODE_CW),        // last commanded mode was CW
+//    _model(RIG_MODEL_DUMMY),              // dummy because we don't know what the rig actually is yet
     _port_name(),                         // no default port
     _rigp(nullptr),                       // no rig connected
+//    _rig_connected(false),                // no rig connected
     _rig_poll_interval(1000),             // poll once per second
     _status(frequency(14000), MODE_CW)    // 14MHz, CW
   { }
-
-  rig_interface(const rig_interface&) = delete;
 
 /// destructor
   inline virtual ~rig_interface(void) = default;
@@ -138,7 +137,7 @@ public:
 /*! \brief      Is a rig ready for use?
     \return     whether a rig is available
 */
-  inline bool valid(void) const
+  inline const bool valid(void) const
     { return (_rigp != nullptr); }
 
 /*! \brief          Set baud rate
@@ -149,7 +148,7 @@ public:
 /*! \brief      Get baud rate
     \return     rig baud rate
 */
-  unsigned int baud_rate(void);
+  const unsigned int baud_rate(void);
 
 /*! \brief          Set the number of data bits (7 or 8)
     \param  bits    the number of data bits to which the rig should be set
@@ -161,7 +160,7 @@ public:
 /*! \brief      Get the number of data bits
     \return     number of data bits
 */
-  unsigned int data_bits(void);
+  const unsigned int data_bits(void);
 
 /*! \brief          Set the number of stop bits (1 or 2)
     \param  bits    the number of stop bits to which the rig should be set
@@ -173,7 +172,7 @@ public:
 /*! \brief      Get the number of stop bits
     \return     number of stop bits
 */
-  unsigned int stop_bits(void);
+  const unsigned int stop_bits(void);
 
 /*! \brief      Set frequency of VFO A
     \param  f   new frequency of VFO A
@@ -193,7 +192,7 @@ public:
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-  frequency rig_frequency(void);
+  const frequency rig_frequency(void);
 
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
@@ -209,7 +208,7 @@ public:
   void rig_frequency_b(const frequency& f);
 
 /// get frequency of VFO B
-  frequency rig_frequency_b(void);
+  const frequency rig_frequency_b(void);
 
 /// set frequency of VFO B to match that of VFO A
   inline void rig_frequency_a_to_b(void)
@@ -224,7 +223,7 @@ public:
             of any of this, not all backends are guaranteed to behave the same.
 
             Hence we use the explicit K3 command, since at least we know what that is supposed to do on that rig.
-            (With the caveat that, because there is no proper transactional processing of K3 commands, any or all of
+            (With the caveat that since there is no proper transactional processing of K3 commands, any of all of
             this could fail silently. All we can do is to throw the commands at the rig and hope that they work.)
 */
   void split_enable(void);
@@ -237,10 +236,10 @@ public:
 
                 This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
-  bool split_enabled(void);
+  const bool split_enabled(void);
 
 /// get mode
-  MODE rig_mode(void);
+  const MODE rig_mode(void);
 
 /*! \brief      Set mode
     \param  m   new mode
@@ -252,7 +251,7 @@ public:
 /*! \brief      Is the rig in TEST mode?
     \return     whether the rig is currently in TEST mode
 */
-  bool test(void);
+  const bool test(void);
 
 /*! \brief      Explicitly put the rig into or out of TEST mode
     \param  b   whether to enter TEST mode
@@ -267,23 +266,23 @@ public:
   void rit(const int hz);
 
 /// get rit offset (in Hz)
-  int rit(void);
+  const int rit(void);
 
 /*! \brief  Turn rit on
 
-    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
+    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
 */
   void rit_enable(void);
 
 /*! \brief  Turn rit off
 
-    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
+    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
 */
   void rit_disable(void);
 
 /*! \brief  Turn rit off
 
-    This is a kludge, as hamlib equates an offset of zero with rit turned off (!)
+    This is a kludge, since hamlib equates an offset of zero with rit turned off (!)
 */
   inline void disable_rit(void)
     { rit_disable(); }
@@ -293,7 +292,7 @@ public:
     { rit_enable(); }
 
 /// is rit enabled?
-  bool rit_enabled(void);
+  const bool rit_enabled(void);
 
 /*! \brief      Set xit offset (in Hz)
     \param  hz  offset in Hz
@@ -303,42 +302,42 @@ public:
   void xit(const int hz);
 
 /// get xit offset (in Hz)
-  int xit(void);
+  const int xit(void);
 
 /*! \brief  Turn xit on
 
-    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
+    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
 */
   void xit_enable(void);
 
 /*! \brief  Turn xit off
 
-    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
+    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
 */
   void xit_disable(void);
 
 /*! \brief  Turn xit off
 
-    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
+    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
 */
   inline void disable_xit(void)
     { xit_disable(); }
 
 /// is xit enabled?
-  bool xit_enabled(void);
+  const bool xit_enabled(void);
 
 /*! \brief  Turn xit on
 
-    This is a kludge, as hamlib equates a zero offset with xit disabled (!)
+    This is a kludge, since hamlib equates a zero offset with xit disabled (!)
 */
   inline void enable_xit(void)
     { xit_enable(); }
 
 /// get the rig's frequency and mode
-  rig_status status(void);                              // most recent rig status
+  const rig_status status(void);                              // most recent rig status
 
 /// is the VFO locked?
-  bool is_locked(void);
+  const bool is_locked(void);
 
 /// lock the VFO
   void lock(void);
@@ -352,7 +351,7 @@ public:
   void sub_receiver(const bool);
 
 /// is sub-receiver on?
-  bool sub_receiver(void);
+  const bool sub_receiver(void);
 
 /// is sub-receiver on?
   inline const bool sub_receiver_enabled(void)
@@ -374,7 +373,7 @@ public:
     { sub_receiver_toggle(); }
 
 /// get the bandwidth in Hz
-  int bandwidth(void);
+  const int bandwidth(void);
 
 /*! \brief          Set the keyer speed
     \param  wpm     keyer speed in WPM
@@ -382,7 +381,7 @@ public:
   void keyer_speed(const int wpm);
 
 /// get the keyer speed in WPM
-  int keyer_speed(void);
+  const int keyer_speed(void);
 
 // explicit K3 commands
 #if !defined(NEW_RAW_COMMAND)
@@ -407,7 +406,7 @@ public:
     \param  m   mode
     \return     the rig's most recent frequency for band <i>b</i> and mode <i>m</i>.
 */
-  frequency get_last_frequency(const BAND b, const MODE m);
+  const frequency get_last_frequency(const BAND b, const MODE m);
 
 /*! \brief      Set a new value for the most recent frequency for a particular band and mode
     \param  b   band
@@ -421,7 +420,7 @@ public:
     With the K3, this is unreliable: the routine frequently takes the _error_alert() path, even if the rig is not transmitting.
     (This is, unfortunately, just one example of the basic unreliability of the K3 in responding to commands.)
 */
-  bool is_transmitting(void);
+  const bool is_transmitting(void);
 
 /*! \brief                          Register a function for alerting the user
     \param  error_alert_function    pointer to function for alerting the user
@@ -431,7 +430,7 @@ public:
 /*! \brief      Which VFO is currently used for transmitting?
     \return     the VFO that is currently set to be used when transmitting
 */
-  VFO tx_vfo(void);
+  const VFO tx_vfo(void);
 
 /*! \brief      Set the bandwidth of VFO A
     \param  hz  desired bandwidth, in Hz
@@ -457,7 +456,7 @@ public:
 
     Works only with K3
 */
-  bool rx_ant(void);
+  const bool rx_ant(void);
 
 /*! \brief          Control use of the RX antenna
     \param  torf    whether to use the RX antenna
@@ -479,7 +478,7 @@ public:
     \param  e   hamlib error code
     \return     Printable string corresponding to error code <i>e</i>
 */
-std::string hamlib_error_code_to_string(const int e);
+const std::string hamlib_error_code_to_string(const int e);
 
 // -------------------------------------- Errors  -----------------------------------
 

@@ -55,14 +55,14 @@ public:
 
     Distance is between the centres of the two grid squares
 */
-  inline float operator-(const grid_square& gs) const
+  inline const float operator-(const grid_square& gs) const
     { return distance(_latitude, _longitude, gs._latitude, gs._longitude); }
 
 /*! \brief      Calculate bearing to another grid square
     \param  gs  other grid square
     \return     bearing of <i>gs</i>, in degrees from *this
 */
-  inline float bearing(const grid_square& gs) const
+  inline const float bearing(const grid_square& gs) const
     { return ::bearing(_latitude, _longitude, gs._latitude, gs._longitude); }
   
 /// serialise
@@ -78,6 +78,6 @@ public:
     \param  putative_designation    the putative designation
     \return                         whether <i>putative_designation</i> is a valid designation of a Maidenhead square or subsquare
 */
-bool is_valid_grid_designation(const std::string& putative_designation);
+const bool is_valid_grid_designation(const std::string& putative_designation);
 
 #endif // GRID_H

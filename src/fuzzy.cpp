@@ -1,4 +1,4 @@
-// $Id: fuzzy.cpp 160 2020-07-25 16:01:11Z  $
+// $Id: fuzzy.cpp 153 2019-09-01 14:27:02Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -57,7 +57,7 @@ fuzzy_database::fuzzy_database(const drmaster& drm)
 
     This would use regex, except that g++ doesn't support that yet :-( :-(
 */
-set<string> fuzzy_database::operator[](const string& key) const
+const set<string> fuzzy_database::operator[](const string& key) const
 { if (key.length() < 3)
     return set<string>();
   
@@ -110,7 +110,7 @@ void fuzzy_databases::remove_call(const string& call)
     \param  key     basic call against which to compare
     \return         all fuzzy matches in all databases for <i>key</i>
 */
-set<string> fuzzy_databases::operator[](const string& key)
+const set<string> fuzzy_databases::operator[](const string& key)
 { if (key.length() < 3)
     return set<string>();
 

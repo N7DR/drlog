@@ -1,4 +1,4 @@
-// $Id: socket_support.h 161 2020-07-31 16:19:50Z  $
+// $Id: socket_support.h 154 2020-03-05 15:36:24Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -69,7 +69,7 @@ using SOCKET = int;
     \param  error_number    socket error number
     \return                 error string that corresponds to <i>error_number</i>
 */
-inline std::string socket_error_name(const int error_number)
+inline const std::string socket_error_name(const int error_number)
   { return strerror(error_number); }
 
 /*! \brief                              Read a socket
@@ -80,7 +80,7 @@ inline std::string socket_error_name(const int error_number)
   
     Throws socket_support_error(SOCKET_TIMEOUT) if the socket times out
 */
-std::string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply);
+const std::string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply);
 
 /*! \brief          Flush a readable socket
     \param  sock    socket to flush
@@ -94,7 +94,7 @@ void flush_read_socket(SOCKET& sock);
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr = 0);
+const sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr = 0);
 
 /*! \brief                          Generate a sockaddr_storage from an address and port
     \param  dotted_decimal_address  IP address as a dotted decimal
@@ -103,14 +103,14 @@ sockaddr_storage socket_address(const uint32_t ip_address, const short port_nr =
 
     The returned sockaddr_storage is really a sockaddr_in, since this works only with IPv4
 */
-inline sockaddr_storage socket_address(const std::string& dotted_decimal_address, const short port_nr = 0)
+inline const sockaddr_storage socket_address(const std::string& dotted_decimal_address, const short port_nr = 0)
   { return socket_address(inet_addr(dotted_decimal_address.c_str()), port_nr); }
 
 /*! \brief          Extract port from a sockaddr_in
     \param  sin     sockaddr_in
     \return         port number
 */
-inline unsigned int port(const sockaddr_in& sin)
+inline const unsigned int port(const sockaddr_in& sin)
   { return ntohs((unsigned int)(sin.sin_port)); }
 
 /*! \brief          Extract port from a sockaddr
@@ -119,14 +119,14 @@ inline unsigned int port(const sockaddr_in& sin)
 
     Assumes that the sockaddr is for the Internet family
 */
-inline unsigned int port(const sockaddr& sin)
+inline const unsigned int port(const sockaddr& sin)
   { return ntohs((unsigned int)(((sockaddr_in*)(&sin))->sin_port)); }
 
 /*! \brief          Extract address from a sockaddr_in
     \param  sin     sockaddr_in
     \return         dotted decimal string
 */
-inline std::string dotted_decimal_address(const sockaddr_in& sin)
+inline const std::string dotted_decimal_address(const sockaddr_in& sin)
   { return (inet_ntoa(sin.sin_addr)); }
 
 /*! \brief          Extract address from a sockaddr
@@ -135,7 +135,7 @@ inline std::string dotted_decimal_address(const sockaddr_in& sin)
 
     Assumes that the sockaddr is for the Internet family
 */
-inline std::string dotted_decimal_address(const sockaddr& sin)
+inline const std::string dotted_decimal_address(const sockaddr& sin)
   { return (inet_ntoa(((sockaddr_in*)(&sin))->sin_addr)); }
 
 /*! \brief                  Bind a socket to an address
@@ -143,14 +143,14 @@ inline std::string dotted_decimal_address(const sockaddr& sin)
     \param  local_address   address to which to bind <i>sock</i>
     \return                 value returned from bind() system call
 */
-inline int bind(SOCKET& sock, const sockaddr_in& local_address)
+inline const int bind(SOCKET& sock, const sockaddr_in& local_address)
   { return bind(sock, (sockaddr*)&local_address, sizeof(sockaddr_in)); }
 
 /*! \brief      Create a host-order 32-bit IP address
     \param  s   IP address as a dotted decimal
     \return     IP address in host order in a single variable
 */
-inline uint32_t host_order_inet_addr(const std::string& s)
+inline const uint32_t host_order_inet_addr(const std::string& s)
   { return ntohl(inet_addr(s.c_str())); }             // inet_addr returns network order
 
 /*! \brief      Convert a sockaddr_storage to a sockaddr_in
@@ -159,7 +159,7 @@ inline uint32_t host_order_inet_addr(const std::string& s)
   
     Throws socket_support_error(SOCKET_SUPPORT_WRONG_PROTOCOL) if <i>ss</i> is not an IPv4 address
 */
-sockaddr_in to_sockaddr_in(const sockaddr_storage& ss);
+const sockaddr_in to_sockaddr_in(const sockaddr_storage& ss);
 
 /*! \brief          Write a <i>sockaddr_in</i> object to an output stream
     \param  ost     output stream
@@ -299,7 +299,7 @@ public:
 /*! \brief   Get the encapsulated socket
     \return  the socket that is encapsulated by the object
 */
-  inline SOCKET socket(void) const
+  inline const SOCKET socket(void) const
     { return _sock; }
 
 /// force closure in destructor even if it's a pre-existing socket
@@ -316,7 +316,7 @@ public:
 /*! \brief      Simple receive
     \return     received string
 */
-  std::string read(void);
+  const std::string read(void);
 
 /*! \brief                  Simple receive
     \param  timeout_secs    timeout in seconds
@@ -324,7 +324,7 @@ public:
         
     Throws an exception if the read times out
 */
-  std::string read(const unsigned long timeout_secs);
+const std::string read(const unsigned long timeout_secs);
   
 /*! \brief              Set the idle time before a keep-alive is sent
     \param  seconds     time to wait idly before a keep-alive is sent
