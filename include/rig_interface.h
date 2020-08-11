@@ -11,6 +11,8 @@
 /*! \file   rig_interface.h
 
     Classes and functions related to transferring information between the computer and the rig.
+
+    The user must be a member of the dialout group in order to use the serial port.
 */
 
 #ifndef RIG_INTERFACE_H

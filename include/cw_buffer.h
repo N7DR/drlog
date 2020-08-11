@@ -11,6 +11,13 @@
 /*! \file   cw_buffer.h
 
     Classes and functions related to sending CW
+
+    If real-time scheduling is desired/needed, then it is best to set:
+      ulimit -Sr unlimited
+
+    and have:
+      <user>            hard    rtprio          unlimited
+    in /etc/security/limits.conf
 */
 
 #ifndef CWBUFFER_H

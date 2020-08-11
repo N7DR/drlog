@@ -1693,7 +1693,7 @@ int main(int argc, char** argv)
     file_delete(context.archive_name());
 
     if (clean)                                          // start with clean slate
-    { int    index  { 0 };
+    { int index { 0 };
 
       const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
 
@@ -2585,19 +2585,19 @@ void* prune_bandmap(void* vp)
     \param  e   keyboard event to process
 */
 /*  KP numbers -- CW messages
-    ALT-K -- toggle CW
-    ALT-M -- change mode
-    ALT-Q -- send QTC
-    CTRL-C -- EXIT (same as .QUIT)
-    CTRL-F -- find matches for exchange in log
-    CTRL-I -- refresh geomagnetic indices
-    CTRL-Q -- swap QSL and QUICK QSL messages
-    CTRL-S -- send to scratchpad
-    ESCAPE
-    F10 -- toggle filter_remaining_country_mults
-    F11 -- band map filtering
+    ALT-K    -- toggle CW
+    ALT-M    -- change mode
+    ALT-Q    -- send QTC
     ALT-KP_4 -- decrement bandmap column offset
     ALT-KP_6 -- increment bandmap column offset
+    CTRL-C   -- EXIT (same as .QUIT)
+    CTRL-F   -- find matches for exchange in log
+    CTRL-I   -- refresh geomagnetic indices
+    CTRL-Q   -- swap QSL and QUICK QSL messages
+    CTRL-S   -- send to scratchpad
+    ESCAPE
+    F10      -- toggle filter_remaining_country_mults
+    F11      -- band map filtering
     ENTER, ALT-ENTER
     CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
     KP ENTER -- send CQ #2
@@ -2607,6 +2607,7 @@ void* prune_bandmap(void* vp)
     ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
     CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
     ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
+//    KEYPAD-DOWN-ARROW, KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
     SHIFT (RIT control)
     ALT-Y -- delete last QSO
     CURSOR UP -- go to log window
@@ -2649,16 +2650,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = process_backspace(win);
 
 // . + -
-  if (!processed and ( (e.is_char('.') or e.is_char('-')) or (e.is_unmodified() and ( (e.symbol() == XK_KP_Add) or (e.symbol() == XK_KP_Subtract)) )))
-  { win <= e.str();
-    processed = true;
-  }
+  if (!processed and ( e.is_char('.') or (e.symbol() == XK_minus) or (e.is_unmodified() and ( (e.symbol() == XK_KP_Add)) ))) // XK_KP_Subtract is now CW bandwidth toggle
+    processed = (win <= e.str(), true);
 
 // need comma and asterisk for rescore options, backslash for scratchpad
   if (!processed and (e.is_char(',') or e.is_char('*') or e.is_char('\\')))
-  { win <= e.str();
-    processed = true;
-  }
+    processed = (win <= e.str(), true);
 
 // question mark, which is displayed in response to pressing the equals sign
   if (!processed and e.is_unmodified() and e.is_char('='))
@@ -3606,6 +3603,13 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
+// and unmodified: // KEYPAD-DOWN-ARROW, KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
+//  if (!processed and e.is_unmodified() and ( (e.symbol() == XK_KP_2) or (e.symbol() == XK_KP_8)
+//                                              or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
+//  { update_quick_qsy();
+//    processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+//  }
+
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are testudine
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
@@ -4169,6 +4173,26 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { ost << e.reason() << endl;
       }
     }
+  }
+
+// KP- -- toggle 50Hz/200Hz bandwidth id on CW
+  if (!processed and e.is_unmodified() and e.symbol() == XK_KP_Subtract)
+  { if (safe_get_mode() == MODE_CW)
+    { const int current_bw = rig.bandwidth();
+
+      switch (current_bw)
+      { case 50 :
+        default :
+          rig.bandwidth(200);
+          break;
+
+        case 200 :
+          rig.bandwidth(50);
+          break;
+      }      
+    }
+
+    processed = true;
   }
 
 // finished processing a keypress

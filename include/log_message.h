@@ -94,4 +94,3 @@ public:
 };
 
 #endif    // LOG_MESSAGE_H
-

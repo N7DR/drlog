@@ -8,10 +8,12 @@
 // Copyright owners:
 //    N7DR
 
-/*!     \file   parallel_port.h
+/*! \file   parallel_port.h
 
-        Classes and functions related to controlling a parallel port
-        Uses the libieee1284 library
+    Classes and functions related to controlling a parallel port
+    Uses the libieee1284 library
+
+    The user must be a member of the lp group in order to use the serial port.
 */
 
 #ifndef PARALLEL_PORT_H
