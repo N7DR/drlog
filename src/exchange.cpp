@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 160 2020-07-25 16:01:11Z  $
+// $Id: exchange.cpp 163 2020-08-06 19:46:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

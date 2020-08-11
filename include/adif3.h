@@ -1,4 +1,4 @@
-// $Id: adif3.h 161 2020-07-31 16:19:50Z  $
+// $Id: adif3.h 163 2020-08-06 19:46:33Z  $
 
 // Released under the GNU Public License, version 2
 
@@ -48,17 +48,6 @@ enum class ADIF3_DATA_TYPE { AWARD_LIST,
                              DATE,
                              DIGIT,
                              ENUMERATION,                       // as if these "enumerations" have anything to do with numbers
-                             INTEGER,
-                             INTERNATIONAL_CHARACTER,           // the "INTERNATIONAL" things are sheer idiocy; Unicode has been essentially universal for at least 15 years
-                             INTERNATIONAL_MULTILINE_STRING,
-                             INTERNATIONAL_STRING,
-                             IOTA_REFERENCE_NUMBER,
-                             MULTILINE_STRING,
-                             NUMBER,
-                             POSITIVE_INTEGER,
-                             SPONSORED_AWARD_LIST,
-                             STRING,
-                             TIME,
                              ENUMERATION_ANT_PATH,
                              ENUMERATION_ARRL_SECT,
                              ENUMERATION_BAND,
@@ -77,9 +66,20 @@ enum class ADIF3_DATA_TYPE { AWARD_LIST,
                              ENUMERATION_SECONDARY_ADMINISTRATIVE_SUBDIVISION,
                              GRID_SQUARE,
                              GRID_SQUARE_LIST,
+                             INTEGER,
+                             INTERNATIONAL_CHARACTER,           // the "INTERNATIONAL" things are sheer idiocy; Unicode has been essentially universal for at least 15 years
+                             INTERNATIONAL_MULTILINE_STRING,
+                             INTERNATIONAL_STRING,
+                             IOTA_REFERENCE_NUMBER,
                              LOCATION,
+                             MULTILINE_STRING,
+                             NUMBER,
+                             POSITIVE_INTEGER,
                              SECONDARY_SUBDIVISION_LIST,
                              SOTA_REFERENCE,
+                             SPONSORED_AWARD_LIST,
+                             STRING,
+                             TIME,
                              N_TYPES
                            };                       ///< ADIF3 types of data
 

@@ -1,4 +1,4 @@
-// $Id: rate.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: rate.cpp 163 2020-08-06 19:46:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,13 +23,13 @@ extern message_stream    ost;                ///< debugging/logging output
 /*! \brief      Return the number of QSOs and points at the current epoch
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-/* pair<unsigned int, unsigned int> */ rate_meter::VALUE_TYPE rate_meter::current_qsos_and_score(void)
+/* pair<unsigned int, unsigned int> */ rate_meter::PAIR_NQSOS_POINTS rate_meter::current_qsos_and_score(void)
 { SAFELOCK(_rate);
 
 //  if (_data.empty())
 //    return { 0, 0 };
 
-  return ( _data.empty() ? VALUE_TYPE { 0, 0 } : prev(_data.cend())->second );
+  return ( _data.empty() ? PAIR_NQSOS_POINTS { 0, 0 } : prev(_data.cend())->second );
 }
 
 /// Return the number of QSOs at the epoch <i>t</i>
@@ -68,7 +68,7 @@ unsigned int rate_meter::score(const time_t t)
 /*! \brief      Return the number of QSOs and points at the epoch <i>t</i>
     \return     pair.first is the number of QSOs; pair.second is the number of points
 */
-pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t)
+rate_meter::PAIR_NQSOS_POINTS rate_meter::qsos_and_score(const time_t t)
 { const time_t now        { ::time(NULL) };                                     // time in seconds since the epoch
   const time_t query_time { min(now, t) };
 
@@ -97,7 +97,7 @@ pair<unsigned int, unsigned int> rate_meter::qsos_and_score(const time_t t)
     between now and the time represented by <i>seconds_in_past</i>. If <i>normalisation_period</i> is not zero,
     then normalises the differences to per <i>normalisation_rate</i> seconds.
 */
-pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seconds_in_past, const unsigned int normalisation_period)
+auto rate_meter::calculate_rate(const int seconds_in_past, const unsigned int normalisation_period) -> PAIR_NQSOS_POINTS
 { SAFELOCK(_rate);  // don't allow any changes while we're performing this calculation
 
   const time_t                           now            { ::time(NULL) };
@@ -106,7 +106,7 @@ pair<unsigned int, unsigned int> rate_meter::calculate_rate(const int seconds_in
   if (seconds_in_past <= 0)
     return current_values;
 
-  const pair<unsigned int, unsigned int> old_values { qsos_and_score(now - seconds_in_past) };
+  const PAIR_NQSOS_POINTS old_values { qsos_and_score(now - seconds_in_past) };
 
   if (normalisation_period == 0)
     return { current_values.first - old_values.first, current_values.second - old_values.second };
