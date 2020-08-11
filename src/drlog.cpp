@@ -1693,7 +1693,7 @@ int main(int argc, char** argv)
     file_delete(context.archive_name());
 
     if (clean)                                          // start with clean slate
-    { int    index  { 0 };
+    { int index { 0 };
 
       const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
 
