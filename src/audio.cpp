@@ -80,6 +80,8 @@ int64_t audio_recorder::_total_bytes_to_read(void)
     Much of this is converted (more or less slavishly) from aplay.c. Probably much of this
     function could be elided, but the lack of explanation of what's going on in aplay.c [i.e., it's
     undocumented magic] means that it's safer, at least for now, to leave it in.
+
+    Most of the comments belong to aplay.c, not me.
 */
 void audio_recorder::_set_params(void)
 { snd_pcm_hw_params_t* params   { nullptr };
@@ -587,7 +589,7 @@ void wav_file::open(void)
     throw audio_error(AUDIO_WAV_OPEN_ERROR, "Error opening WAV file: " +_name);
   }
 
-  const string header_str = header();   // write a place holder for the real (final) header
+  const string header_str { header() };   // write a place holder for the real (final) header
 
   if (fwrite(header_str.c_str(), header_str.size(), 1, _fp) != 1)
   { ost << "Error writing header for WAV file: " << _name << endl;
@@ -607,17 +609,17 @@ void wav_file::close(void)
 
   fseek(_fp, 0, SEEK_END);
 
-  const uint32_t length = ftell(_fp);
-  const uint32_t length_for_riff = (length - 8);
+  const uint32_t length          { static_cast<uint32_t>(ftell(_fp)) };
+  const uint32_t length_for_riff { (length - 8) };
 
-  int status = fseek(_fp, 4, SEEK_SET);      // go to byte #4
+  int status { fseek(_fp, 4, SEEK_SET) };      // go to byte #4
 
   if (status != 0)
   { ost << "Error seeking in file: " << _name << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error closing WAV file: " +_name);
   }
 
-  int bytes_written = fwrite( (char*)&length_for_riff, 1, 4, _fp);
+  size_t bytes_written { fwrite( (char*)&length_for_riff, 1, 4, _fp) };
 
   if (bytes_written != 4)
   { ost << "Error writing length in RIFF chunk in file: " << _name << endl;
@@ -625,7 +627,7 @@ void wav_file::close(void)
   }
 
 // put correct length into data chunk... assumes no bext chunk
-  const uint32_t length_for_data_chunk = (length - 44);
+  const uint32_t length_for_data_chunk { (length - 44) };
 
   status = fseek(_fp, 40, SEEK_SET);      // go to byte #40
 
@@ -868,7 +870,7 @@ data_chunk::data_chunk(u_char* d, const uint32_t n_bytes) :
     \param  fp  file pointer
 */
 void data_chunk::write_to_file(FILE* fp) const
-{ const string id("data");
+{ const string id { "data"s };
 
   if (fwrite(id.data(), id.size(), 1, fp) != 1)
   { ost << "Error writing data chunk ID in WAV file" << endl;
@@ -910,15 +912,6 @@ void data_chunk::write_to_file(FILE* fp) const
   34        2   BitsPerSample    8 bits = 8, 16 bits = 16, etc.
 */
 
-/// constructor
-//fmt_chunk::fmt_chunk(void) :
-//  _subchunk_1_size(16), // PCM
-//  _audio_format(1),     // PCM
-//  _num_channels(1),     // mono
-//  _sample_rate(8000),   // 64 kbps
-//  _bits_per_sample(8)   // 8-bit samples
-//{ }
-
 /*! \brief      Convert to a string that holds the fmt chunk in ready-to-use form
     \return     string containing the fmt chunk
 */
@@ -940,7 +933,7 @@ string fmt_chunk::to_string(void) const
     \param  fp  file pointer
 */
 void fmt_chunk::write_to_file(FILE* fp) const
-{ const string str = to_string();
+{ const string str { to_string() };
 
   if (fwrite(str.c_str(), str.size(), 1, fp) != 1)
   { ost << "Error writing fmt chunk in WAV file" << endl;

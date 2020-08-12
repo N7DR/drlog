@@ -2224,6 +2224,7 @@ void* process_rbn_info(void* vp)
   start_of_thread(THREAD_NAME);
 
   constexpr unsigned int POLL_INTERVAL { 10 };      // seconds between processing passes
+  constexpr float        MAX_FREQ_SKEW { 0.8 };     // maximum change in frequency considered as NOT a QSY, in kHz 
 
 // get access to the information that's been passed to the thread
   cluster_info*                    cip              { static_cast<cluster_info*>(vp) };
@@ -2247,6 +2248,7 @@ void* process_rbn_info(void* vp)
   const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
 
   deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
+  deque<pair<string, frequency>> recent_mult_calls_1;                             // the queue of recent calls posted to the mult window
 
   const int highlight_colour { static_cast<int>(colours.add(COLOUR_WHITE, COLOUR_RED)) };             // colour that will mark that we are processing a ten-second pass
   const int original_colour  { static_cast<int>(colours.add(cluster_line_win.fg(), cluster_line_win.bg())) };
@@ -2316,7 +2318,8 @@ void* process_rbn_info(void* vp)
             { const BAND               cur_band    { safe_get_band() };
               const string&            dx_callsign { post.callsign() };
               const string&            poster      { post.poster() };
-              const pair<string, BAND> target      { dx_callsign, dx_band };
+//              const pair<string, BAND> target      { dx_callsign, dx_band };
+              const pair<string, frequency> target_1    { dx_callsign, post.freq() };
 
               bandmap_entry be { (post.source() == POSTING_SOURCE::CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
 
@@ -2361,19 +2364,30 @@ void* process_rbn_info(void* vp)
 
                 be.calculate_mult_status(rules, statistics);
 
-                const bool is_recent_call      { ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() ) };
+//                const bool is_recent_call      { ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() ) };
+
+                bool is_recent_call_1 { false };
+
+                for (const auto& call_entry : recent_mult_calls_1)      // look to see if this is already in the deque
+                  if (!is_recent_call_1)
+                    is_recent_call_1 = (call_entry.first == target_1.first) and (target_1.second.difference(call_entry.second) <= MAX_FREQ_SKEW); // allow for frequency skew
+
                 const bool is_me               { (be.callsign() == context.my_call()) };
                 const bool is_interesting_mode { (rules.score_modes() > be.mode()) };
 
 // CLUSTER MULT window
                 if (cluster_mult_win.defined())
-                { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
+                { if (is_interesting_mode and !is_recent_call_1 and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
                   { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
                     { cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
-                      recent_mult_calls.push_back(target);
+ //                     recent_mult_calls.push_back(target);
+                      recent_mult_calls_1.push_back(target_1);
 
-                      while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
-                        recent_mult_calls.pop_front();
+ //                     while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
+ //                       recent_mult_calls.pop_front();
+
+                      while (recent_mult_calls_1.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
+                        recent_mult_calls_1.pop_front();
 
                       cluster_mult_win < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
 
@@ -2659,9 +2673,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // question mark, which is displayed in response to pressing the equals sign
   if (!processed and e.is_unmodified() and e.is_char('='))
-  { win <= "?"s;
-    processed = true;
-  }
+    processed = (win <= "?"s, true);
 
   const string call_contents { remove_peripheral_spaces(win.read()) };
   const BAND   cur_band      { safe_get_band() };

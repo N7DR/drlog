@@ -295,6 +295,9 @@ public:
   inline const bool operator>=(const frequency& f) const
     { return (_hz >= f._hz); }
 
+/// difference in two frequencies, always +ve
+  frequency difference(const frequency& f2) const;
+
 /// serialise
   template<typename Archive>
   void serialize(Archive& ar, const unsigned version)

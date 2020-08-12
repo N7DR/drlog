@@ -198,3 +198,9 @@ const bool frequency::is_within_ham_band(void) const
  return ( (_hz >= 1'800'000) and (_hz <= 2'000'000) );    // check if BAND_160, because that's the returned band if frequency is outside a band
 }
 
+/// difference in two frequencies, always +ve
+frequency frequency::difference(const frequency& f2) const
+{ const unsigned int d = ( (hz() > f2.hz()) ? hz() - f2.hz() : f2.hz() - hz() );
+
+  return frequency(d);
+}
