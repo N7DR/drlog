@@ -200,7 +200,11 @@ const bool frequency::is_within_ham_band(void) const
 
 /// difference in two frequencies, always +ve
 frequency frequency::difference(const frequency& f2) const
-{ const unsigned int d = ( (hz() > f2.hz()) ? hz() - f2.hz() : f2.hz() - hz() );
+{ frequency rv;
 
-  return frequency(d);
+  const unsigned int d { ( (hz() > f2.hz()) ? hz() - f2.hz() : f2.hz() - hz() ) };
+
+  rv.hz(d);
+
+  return rv;
 }
