@@ -46,7 +46,7 @@ enum class POINTS { NORMAL,                       ///< points defined in configu
 // Exactly the same construction is used in drlog_context.h, without any problem
 // compiler complains about building a pair<const string, EFT>, which isn't mentioned anywhere in the source,
 // and the compiler error messages don't tell me exactly where the failure really occurs, although it seems to be
-// when compiling qtc.cpp; the compiler ponts to the forward declaration of class EFT, which makes no sense
+// when compiling qtc.cpp; the compiler ponts to the forward declaration of class EFT, which makes no sense to me
 #define RULESREAD(y)          \
   inline const decltype(_##y)& y(void) const { SAFELOCK(rules); return _##y; }
 
@@ -534,6 +534,9 @@ public:
   BAND next_band_down(const BAND current_band) const;
   
   RULESREAD(bonus_countries);                     ///< countries that are eligible for bonus points
+
+//  inline const decltype(_bonus_countries) bonus_countries(void) const { SAFELOCK(rules); return _bonus_countries; }
+
   RULESREAD(permitted_bands);                     ///< bands allowed in this contest
   RULESREAD(permitted_modes);                     ///< modes allowed in this contest
 

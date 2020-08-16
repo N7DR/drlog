@@ -130,7 +130,7 @@ public:
   rig_interface(const rig_interface&) = delete;
 
 /// destructor
-  /* inline virtual */ ~rig_interface(void) = default;
+  ~rig_interface(void) = default;
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
@@ -200,7 +200,7 @@ public:
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-  inline const frequency rig_frequency_a(void)
+  inline frequency rig_frequency_a(void)
     { return rig_frequency(); }
 
 /*! \brief      Set frequency of VFO B

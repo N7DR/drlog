@@ -800,22 +800,6 @@ int main(int argc, char** argv)
 
     const drmaster& drm { *drm_p };
 
-// read (optional) secondary QTH database
-#if 0
-    drlog_qth_database* qth_db_p { nullptr };
-
-    try
-    { qth_db_p = new drlog_qth_database();
-    }
-
-    catch (...)
-    { cerr << "Error reading secondary QTH file" << endl;
-      exit(-1);
-    }
-
-    const drlog_qth_database& qth_db { *qth_db_p };
-#endif
-
 // location database
     try
     { location_db.prepare(country_data, context.country_list() /*, qth_db */);
@@ -888,6 +872,8 @@ int main(int argc, char** argv)
     win_message < WINDOW_ATTRIBUTES::WINDOW_BOLD <= "";                                       // use bold in this window
 
 // is there a log of old QSOs?
+//    ost << "is there a log of old QSOs?" << endl;
+
     if (!context.old_adif_log_name().empty())
       adif3_build_old_log();
 
@@ -8307,6 +8293,15 @@ pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const
   return { adif3_record(), -1 };
 };
 
+pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_record>& vqsos, const int target_idate, const int index_last_marked_qso)
+{ if (index_last_marked_qso != static_cast<int>(vqsos.size() - 1))                                    // make sure the last marked qso wasn't the last qso in the vector
+    for (int n = index_last_marked_qso + 1; n < static_cast<int>(vqsos.size()); ++n)
+      if ( (vqsos[n].idate() >= target_idate) or vqsos[n].confirmed())
+        return { vqsos[n], n };
+      
+  return { adif3_record(), -1 };
+};
+
 /*! \brief Build the old log info from an ADIF3 file
 
   If context.old_qso_age_limit() is non-zero (here, N), the algorithm is a bit tricky:
@@ -8318,9 +8313,14 @@ pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const
           repeat steps 3 and 3a until past current date
       4. If most recent marked QSO is more than N years old, don't add any QSOs to the old log;
       5.   else add the marked QSO and any more recent ones to the old log
+
+
+ How about the case where we received a QSL for a non-marked QSO? Maybe make that marked? After all,
+if we received a QSL -- even if I didn't send one -- that should count for something.
 */
 void adif3_build_old_log(void)
-{ 
+{ //ost << "Inside adif3_build_old_log()" << endl;
+
 // calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
   const string dts            { date_time_string() };
   const string today          { substring(dts, 0, 4) + substring(dts, 5, 2) + substring(dts, 8, 2) };
@@ -8329,6 +8329,9 @@ void adif3_build_old_log(void)
   const string cutoff_date    { to_string(from_string<int>(today) - (old_qso_limit * 10000)) }; // date before which QSOs don't count
   const bool   limit_old_qsos { old_qso_limit != 0 };  // whether to limit old qsos
   
+//  ost << "limit_old_qsos = " << boolalpha << limit_old_qsos << endl;
+//  ost << "old_qso_limit = " << old_qso_limit << endl;
+
   auto add_record_to_olog = [](const adif3_record& rec)
     { const string callsign { rec.callsign() };
       const BAND   b        { BAND_FROM_ADIF3_NAME[rec.band()] };
@@ -8390,8 +8393,9 @@ void adif3_build_old_log(void)
               { idate_last_marked_qso = last_marked_qso.idate();
                 forward_idate_limit = idate_last_marked_qso + (old_qso_limit * 10000);      // forward the required number of years
 
-                rec_index = first_qso_after(vrec, forward_idate_limit);                     // rec_index is pair: record and index of the record
-      
+//                rec_index = first_qso_after(vrec, forward_idate_limit);                     // rec_index is pair: record and index of the record
+                rec_index = first_qso_after_or_confirmed_qso(vrec, forward_idate_limit, index_last_marked_qso);                     // rec_index is pair: record and index of the record
+     
                 if (rec_index.second != -1)
                 { last_marked_qso = rec_index.first;        // next marked QSO
                   index_last_marked_qso = rec_index.second; // index of next marked QSO

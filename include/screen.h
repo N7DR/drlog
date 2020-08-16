@@ -168,7 +168,7 @@ public:
   screen(void);
 
 /// destructor
-  inline virtual ~screen(void)
+  inline /* virtual */ ~screen(void)
     { endwin(); }
 };
 
@@ -303,7 +303,7 @@ public:
   window(const window&) = delete;
 
 /// destructor
-  /* virtual */ ~window(void);
+  ~window(void);
 
 /*! \brief          Initialise using position and size information from the configuration file
     \param  wi      window position and size
