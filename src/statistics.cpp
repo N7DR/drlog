@@ -1,4 +1,4 @@
-// $Id: statistics.cpp 160 2020-07-25 16:01:11Z  $
+// $Id: statistics.cpp 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -308,7 +308,7 @@ void running_statistics::prepare(const cty_data& country_data, const drlog_conte
 
 // country mults
   if (_country_mults_used)
-  { const set<string> country_mults { rules.country_mults() };
+  { const unordered_set<string> country_mults { rules.country_mults() };
 
     _country_multipliers.used(!country_mults.empty() or context.auto_remaining_country_mults());  // should always be true
     _country_multipliers.per_band(rules.country_mults_per_band());
@@ -378,48 +378,6 @@ bool running_statistics::is_needed_callsign_mult(const string& mult_name, const 
     \param  callsign    call to test
     \param  b           band to test
     \param  m           mode to test
-    \return             whether the country in which <i>callsign</i> is located is needed as a mult on band <i>b</i> and mode <i>m</i>
-    
-    Note that this does not take into account whether the country is actually a mult in the contest. Currently, this must be checked
-    before this function is called. Perhaps we should include the rules as a parameter and perform the check here?
-*/
-#if 0
-bool running_statistics::is_needed_country_mult(const string& callsign, const BAND b, const MODE m)
-{ try
-  { SAFELOCK(statistics);
-
-    const string canonical_prefix { _location_db.canonical_prefix(callsign) };
-
-    bool is_needed_mult;
-
-//    ost << "_auto_country_mults = " << _auto_country_mults << endl;
-
-    if (_auto_country_mults)
-      is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
-    else
-    { const bool prefix_is_a_mult { _country_multipliers.is_known(canonical_prefix) };
-    
-//      ost << "prefix_is_a_mult = " << prefix_is_a_mult << endl;
-
-      if (prefix_is_a_mult)
-        is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));
-      else                                                                              // not a mult
-        is_needed_mult = false;
-    }
-
-    return is_needed_mult;
-  }
-  
-  catch (const location_error& e)
-  { return false;
-  }
-}
-#endif
-
-/*! \brief              Do we still need to work a particular country as a mult on a particular band and mode?
-    \param  callsign    call to test
-    \param  b           band to test
-    \param  m           mode to test
     \param  rules       rules for this contest
     \return             whether the country in which <i>callsign</i> is located is needed as a mult on band <i>b</i> and mode <i>m</i>
 */
@@ -437,9 +395,7 @@ bool running_statistics::is_needed_country_mult(const string& callsign, const BA
     if (_auto_country_mults)
       is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));       // we should count the mult even if it hasn't been seen enough times to be known yet
     else
-    { //const bool prefix_is_a_mult { _country_multipliers.is_known(canonical_prefix) };
-
-      if (const bool prefix_is_a_mult { _country_multipliers.is_known(canonical_prefix) }; prefix_is_a_mult)
+    { if (const bool prefix_is_a_mult { _country_multipliers.is_known(canonical_prefix) }; prefix_is_a_mult)
         is_needed_mult = !(_country_multipliers.is_worked(canonical_prefix, b, m));
       else                                                                              // not a mult
         is_needed_mult = false;
@@ -561,7 +517,8 @@ bool running_statistics::add_known_exchange_mult(const string& name, const strin
     \param  name    name of the exchange multiplier
     \return         all the known legal values of <i>name</i>
 */
-set<string> running_statistics::known_exchange_mult_values(const string& name)
+//set<string> running_statistics::known_exchange_mult_values(const string& name)
+MULTIPLIER_VALUES running_statistics::known_exchange_mult_values(const string& name)
 { SAFELOCK(statistics);
 
   for (const auto& psm : _exchange_multipliers)
@@ -569,7 +526,7 @@ set<string> running_statistics::known_exchange_mult_values(const string& name)
       return psm.second.known();
   }
 
-  return set<string>();
+  return MULTIPLIER_VALUES();
 }
 
 /*! \brief                  Add a worked exchange mult
@@ -749,7 +706,7 @@ unsigned int running_statistics::points(const contest_rules& rules) const
     \param  m           target mode
     \return             all the worked values of the callsign mult <i>mult_name</i> on band <i>b</i> and mode <i>m</i>
 */
-set<string> running_statistics::worked_callsign_mults(const string& mult_name, const BAND b, const MODE m)
+MULTIPLIER_VALUES running_statistics::worked_callsign_mults(const string& mult_name, const BAND b, const MODE m)
 { SAFELOCK(statistics);
 
   if (mult_name == string() and _callsign_multipliers.size() == 1)
@@ -757,7 +714,7 @@ set<string> running_statistics::worked_callsign_mults(const string& mult_name, c
 
   const auto& cit { _callsign_multipliers.find(mult_name) };
 
-  return ( (cit == _callsign_multipliers.cend()) ? set<string>() : cit->second.worked(b, m) );
+  return ( (cit == _callsign_multipliers.cend()) ? MULTIPLIER_VALUES() : cit->second.worked(b, m) );
 }
 
 /*! \brief      Worked exchange mults for a particular band and mode -- &&& THINK ABOUT THIS
@@ -765,8 +722,9 @@ set<string> running_statistics::worked_callsign_mults(const string& mult_name, c
     \param  m   target mode
     \return     all the values of all country mults worked on band <i>b</i> and mode <i>m</i>
 */
-map<string /* field name */, set<string> /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
-{ map<string, set<string> > rv;
+//map<string /* field name */, set<string> /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
+map<string /* field name */, MULTIPLIER_VALUES /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
+{ map<string, MULTIPLIER_VALUES> rv;
 
   SAFELOCK(statistics);
 
@@ -993,7 +951,7 @@ unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& ru
     \return     the number of exchange mults worked on band <i>b</i> and mode <i>m</i>
 */
 unsigned int running_statistics::n_worked_exchange_mults(const BAND b, const MODE m) const
-{ const map<string, set<string> > worked { worked_exchange_mults(b, m) };
+{ const map<string, MULTIPLIER_VALUES> worked { worked_exchange_mults(b, m) };
 
   unsigned int rv { 0 };
 

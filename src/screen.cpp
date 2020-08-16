@@ -1,4 +1,4 @@
-// $Id: screen.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: screen.cpp 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,7 +44,7 @@ pt_mutex screen_mutex;          ///< mutex for access to screen
     I note that ncurses is inconsistent about the types used to hold colour pairs; the actual definition of COLOR_PAIR()
     defines the return value as an int, so that's what we use here
 */
-int COLOUR_PAIR(const PAIR_TYPE n)
+int COLOUR_PAIR(const PAIR_NUMBER_TYPE n)
 { const int result { COLOR_PAIR(n) }; 
   
   if (result == ERR)
@@ -376,15 +376,15 @@ window& window::operator<(const vector<string>& v)
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
-window& window::operator<(const vector<std::pair<string, PAIR_TYPE /* colour pair number */ > >& vec)     // bizarrely, doxygen complains if I remove the std:: qualifier
+window& window::operator<(const vector<std::pair<string, PAIR_NUMBER_TYPE /* colour pair number */ > >& vec)     // bizarrely, doxygen complains if I remove the std:: qualifier
 { if (!_wp)
     return *this;
 
   unsigned int idx { 0 };
 
   for (const auto& psi : vec)
-  { const string&    str { psi.first };
-    const PAIR_TYPE& cp  { psi.second };
+  { const string&           str { psi.first };
+    const PAIR_NUMBER_TYPE& cp  { psi.second };
 
 // see if there's enough room on this line
     cursor_position();
@@ -448,7 +448,7 @@ window& window::move_cursor_relative(const int delta_x, const int delta_y)
     \param  pair_nr     number of the new colour pair
     \return             the window
 */
-window& window::set_colour_pair(const PAIR_TYPE pair_nr)
+window& window::set_colour_pair(const PAIR_NUMBER_TYPE pair_nr)
 { if (_wp)
   { SAFELOCK(screen);  
 
@@ -875,21 +875,15 @@ bool window::common_processing(const keyboard_event& e)
 
 // 0..9
   if (e.is_digit())
-  { win <= e.str();
-    return true;
-  }
+    return (win <= e.str(), true);
 
 // /
   if (e.is_unmodified() and e.is_char('/'))
-  { win <= e.str();
-    return true;
-  }
+    return (win <= e.str(), true);
 
 // '
   if (e.is_unmodified() and e.is_char('\''))
-  { win <= e.str();
-    return true;
-  }
+    return (win <= e.str(), true);
 
 // DELETE
   if (e.is_unmodified() and e.symbol() == XK_Delete)
@@ -903,33 +897,24 @@ bool window::common_processing(const keyboard_event& e)
   { const string contents { win.read() };
     const size_t posn     { contents.find_last_not_of(SPACE_STR) };
 
-    win <= cursor(posn + 1, 0);
-    return true;
+    return (win <= cursor(posn + 1, 0), true);
   }
 
 // HOME
   if (e.is_unmodified() and e.symbol() == XK_Home)
-  { win <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
-    return true;
-  }
+    return (win <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE, true);
 
 // CURSOR LEFT
   if (e.is_unmodified() and e.symbol() == XK_Left)
-  { win <= cursor_relative(-1, 0);
-    return true;
-  }
+    return (win <= cursor_relative(-1, 0), true);
 
 // CURSOR RIGHT
   if (e.is_unmodified() and e.symbol() == XK_Right)
-  { win <= cursor_relative(1, 0);     // ncurses fills the window with spaces; we can't differentiate between those and any we might have added ourself
-    return true;
-  }
+    return (win <= cursor_relative(1, 0), true);     // ncurses fills the window with spaces; we can't differentiate between those and any we might have added ourself
 
 // INSERT -- toggle insert mode
   if (e.is_unmodified() and e.symbol() == XK_Insert)
-  { win.insert(!win.insert());
-    return true;
-  }
+    return (win.insert(!win.insert()), true);
 
   return false;
 }
@@ -944,17 +929,17 @@ bool window::common_processing(const keyboard_event& e)
     \param  p   foreground colour, background colour
     \return     the number of the colour pair
 */
-PAIR_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
+PAIR_NUMBER_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
 { _colours.push_back(fgbg);
 
-  const auto status { init_pair(static_cast<PAIR_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
+  const auto status { init_pair(static_cast<PAIR_NUMBER_TYPE>(_colours.size()), fgbg.first, fgbg.second) };
 
   if (status == ERR)
   { ost << "Error returned from init_pair with parameters: " << _colours.size() << ", " << fgbg.first << ", " << fgbg.second << endl;
     throw exception();
   }
 
-  return static_cast<PAIR_TYPE>(_colours.size());
+  return static_cast<PAIR_NUMBER_TYPE>(_colours.size());
 }
 
 /*! \brief      Add a pair of colours
@@ -965,7 +950,7 @@ PAIR_TYPE cpair::_add_to_vector(const pair<COLOUR_TYPE, COLOUR_TYPE>& fgbg)
     If the pair is already known, returns the number of the known pair.
     Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
-PAIR_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
+PAIR_NUMBER_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
 { const pair<COLOUR_TYPE, COLOUR_TYPE> fgbg { fg, bg };
 
   SAFELOCK(_colours);
@@ -975,14 +960,14 @@ PAIR_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
 
   const auto it { find(_colours.begin(), _colours.end(), fgbg) };
 
-  return ( (it == _colours.end()) ? _add_to_vector(fgbg) : static_cast<PAIR_TYPE>( distance(_colours.begin(), it) + 1));
+  return ( (it == _colours.end()) ? _add_to_vector(fgbg) : static_cast<PAIR_NUMBER_TYPE>( distance(_colours.begin(), it) + 1));
 }
 
 /*! \brief              Get the foreground colour of a pair
     \param  pair_nr     number of the pair
     \return             the foreground colour of the pair number <i>pair_nr</i>
 */
-COLOUR_TYPE cpair::fg(const PAIR_TYPE pair_nr) const
+COLOUR_TYPE cpair::fg(const PAIR_NUMBER_TYPE pair_nr) const
 { short f;      // defined to be short in the man page for pair_content
   short b;      // defined to be short in the man page for pair_content
 
@@ -998,7 +983,7 @@ COLOUR_TYPE cpair::fg(const PAIR_TYPE pair_nr) const
     \param  pair_nr     number of the pair
     \return             the background colour of the pair number <i>pair_nr</i>
 */
-COLOUR_TYPE cpair::bg(const PAIR_TYPE pair_nr) const
+COLOUR_TYPE cpair::bg(const PAIR_NUMBER_TYPE pair_nr) const
 { short f;      // defined to be short in the man page for pair_content
   short b;      // defined to be short in the man page for pair_content
 
@@ -1026,9 +1011,8 @@ COLOUR_TYPE string_to_colour(const string& str)
                                                    };
 
   const string s   { to_upper(remove_peripheral_spaces(str)) };
-  const auto   cit { colour_map.find(s) };
 
-  if (cit != colour_map.cend())
+  if (const auto cit { colour_map.find(s) }; cit != colour_map.cend())
     return cit->second;
 
 // should change this so it works with a colour name and not just a number
@@ -1041,5 +1025,5 @@ COLOUR_TYPE string_to_colour(const string& str)
   if (s.find_first_not_of(DIGITS) == string::npos)  // if all digits
     return from_string<COLOUR_TYPE>(s);
 
-  return COLOUR_BLACK;    // default (NB this is dangerous in the current 64-bit buggy version of ncurses; should probably return 16 if this is 64 bits)
+  return COLOUR_BLACK;
 }

@@ -1,4 +1,4 @@
-// $Id: rules.h 161 2020-07-31 16:19:50Z  $
+// $Id: rules.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -371,7 +371,8 @@ protected:
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
   std::unordered_set<std::string>     _countries;                     ///< collection of canonical prefixes for all the valid countries
-  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
+//  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
+  std::unordered_set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
   bool                                _mm_country_mults;              ///< can /MM QSOs be mults?

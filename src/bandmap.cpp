@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: bandmap.cpp 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -1190,14 +1190,14 @@ window& bandmap::write_to_window(window& win)
       const float  interval                    { (1.0f / static_cast<float>(n_colours)) };
       const int    n_intervals                 { min(static_cast<int>(fraction / interval), n_colours - 1) };
 
-      PAIR_TYPE cpu = colours.add(fade_colours().at(n_intervals), win.bg());
+      PAIR_NUMBER_TYPE cpu { colours.add(fade_colours().at(n_intervals), win.bg()) };
 
 // mark in GREEN if less than two minutes since the original spot at this freq was inserted
       if (age_since_original_inserted < 120 and !be.is_marker() and (recent_colour() != 16 /* COLOUR_BLACK */))
         cpu = colours.add(recent_colour(), win.bg());
 
       if (is_marker)
-        cpu = colours.add(COLOUR_WHITE, 16 /* COLOUR_BLACK */);    // colours for markers
+        cpu = colours.add(COLOUR_WHITE, COLOUR_BLACK);    // colours for markers
 
 // work out where to start the display of this call
       const unsigned int x { static_cast<unsigned int>( ( (index  - start_entry) / win.height()) * COLUMN_WIDTH ) };
@@ -1211,7 +1211,7 @@ window& bandmap::write_to_window(window& win)
                                                                               : (win.height() - 1) - (index - start_entry) % win.height() ) ) };
 
 // now work out the status colour
-      PAIR_TYPE status_colour { colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR) };                      // default
+      PAIR_NUMBER_TYPE status_colour { colours.add(NOT_NEEDED_COLOUR, NOT_NEEDED_COLOUR) };                      // default
 
       if (!is_marker)
       { if (be.is_needed())

@@ -1,4 +1,4 @@
-// $Id: statistics.h 160 2020-07-25 16:01:11Z  $
+// $Id: statistics.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -166,17 +166,6 @@ public:
     Does nothing and returns false if <i>str</i> is already known
 */
   bool add_known_country_mult(const std::string& str, const contest_rules& rules);
-
-/*! \brief              Do we still need to work a particular country as a mult on a particular band and a particular mode?
-    \param  callsign    call to test
-    \param  b           band to test
-    \param  m           mode to test
-    \return             whether the country corresponding <i>callsign</i> still needs to be worked on band <i>b</i> and mode <i>m</i>.
-    
-    Note that this does not take into account whether the country is actually a mult in the contest. Currently, this must be checked
-    before this function is called. Perhaps we should include the rules as a parameter and perform the check here?
-*/
- // bool is_needed_country_mult(const std::string& callsign, const BAND b, const MODE m);
   
 /*! \brief              Do we still need to work a particular country as a mult on a particular band and a particular mode?
     \param  callsign    call to test
@@ -211,7 +200,7 @@ public:
     \param  name    name of the exchange multiplier
     \return         All the known legal values of <i>name</i>
 */
-  std::set<std::string> known_exchange_mult_values(const std::string& name);
+  MULTIPLIER_VALUES known_exchange_mult_values(const std::string& name);
 
 /*! \brief                          Do we still need to work a particular exchange mult on a particular band and mode?
     \param  exchange_field_name     name of the target exchange field
@@ -251,26 +240,27 @@ public:
     \param  m           mode
     \return             callsign mults worked on band <i>b</i> and mode <i>m</i>
 */
-  std::set<std::string> worked_callsign_mults(const std::string& mult_name, const BAND b, const MODE m);
+  MULTIPLIER_VALUES worked_callsign_mults(const std::string& mult_name, const BAND b, const MODE m);
 
 /*! \brief      Worked country mults for a particular band and mode
     \param  b   target band
     \param  m   target mode
     \return     all the worked country mults on band <i>b</i> and mode <i>m</i>
 */
-  inline const std::set<std::string> worked_country_mults(const BAND b, const MODE m)
+  inline MULTIPLIER_VALUES worked_country_mults(const BAND b, const MODE m)
   { SAFELOCK(statistics);
     return ( _country_multipliers.worked(b, m) );
   }
 
 /// all the known country mults
-  inline const std::set<std::string> known_country_mults(void)
+  inline MULTIPLIER_VALUES known_country_mults(void)
+//  inline const auto known_country_mults(void)
   { SAFELOCK(statistics);
     return _country_multipliers.known();
   }
 
 /// the number of known country mults
-  inline const size_t n_known_country_mults(void) const
+  inline size_t n_known_country_mults(void) const
   { SAFELOCK(statistics);
     return _country_multipliers.n_known();
   }
@@ -280,7 +270,7 @@ public:
     \param  m   mode
     \return     all the exchange mults worked on band <i>b</i> and mode <i>m</i>
 */
-  std::map<std::string /* field name */, std::set<std::string> /* values */ > worked_exchange_mults(const BAND b, const MODE m) const;
+  std::map<std::string /* field name */, MULTIPLIER_VALUES /* values */ > worked_exchange_mults(const BAND b, const MODE m) const;
 
 /*! \brief                                  Is a particular string a known callsign mult name?
     \param  putative_callsign_mult_name     string to test

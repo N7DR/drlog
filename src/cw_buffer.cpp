@@ -1,4 +1,4 @@
-// $Id: cw_buffer.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: cw_buffer.cpp 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -176,11 +176,13 @@ void* cw_buffer::_play(void*)
 // execute special command
       if (next_action == 0)
       { bool got_command      { false };
+
         int  command;
+
         int  time_out_counter { 0 };
 
         while (!got_command and (time_out_counter < 5))      // 5 millisecond time-out
-        { bool buffer_is_empty = false;
+        { bool buffer_is_empty { false };
 
           { SAFELOCK(_key_buffer);
 
@@ -828,8 +830,4 @@ string cw_messages::operator[](const int n)
 { SAFELOCK(_messages);
 
   return MUM_VALUE(_messages, n);
-
-//  map<int, string>::const_iterator cit { _messages.find(n) };
-
-//  return (cit == _messages.cend() ? string() : cit->second);
 }

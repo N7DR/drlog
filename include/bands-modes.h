@@ -1,4 +1,4 @@
-// $Id: bands-modes.h 160 2020-07-25 16:01:11Z  $
+// $Id: bands-modes.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -99,16 +99,16 @@ constexpr unsigned int N_MODES         { NUMBER_OF_MODES };     ///< how many mo
 constexpr unsigned int ALL_MODES       { N_MODES };             ///< indicator used to mean "all modes"
 
 /// mode names
-static std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW"s,
-                                                                "SSB"s,
-                                                                "RTTY"s
-                                                            } };
+static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW"s,
+                                                                      "SSB"s,
+                                                                      "RTTY"s
+                                                                 } };
 
 /// generate the mode from a name
-static std::map<std::string, MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
-                                                    { "SSB"s,  MODE_SSB },
-                                                    { "RTTY"s, MODE_RTTY }
-                                                  };
+static const std::map<std::string, MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },
+                                                          { "SSB"s,  MODE_SSB },
+                                                          { "RTTY"s, MODE_RTTY }
+                                                        };
 
 static const std::map<BAND, std::string> BOTTOM_OF_BAND { { BAND_160, "1800"s },
                                                           { BAND_80,  "3500"s },
@@ -127,7 +127,7 @@ using bandmode = std::pair<BAND, MODE>;    ///< tuple for encapsulating a band a
 // forward declaration
 class frequency;
 
-extern std::map<bandmode, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band and per-mode
+extern const std::unordered_map<bandmode, frequency > DEFAULT_FREQUENCIES;    ///< default frequencies, per-band and per-mode
 
 /*!  \brief     Convert a frequency to a band
      \param  f  frequency
@@ -225,37 +225,37 @@ public:
     { _hz = n; }
 
 /// get frequency in Hz
-  inline const int Hz(void) const
+  inline int Hz(void) const
     { return static_cast<int>(_hz); }
 
 /// get frequency in Hz; provided only because g++ gives a compile-time error if one actually uses Hz()
-  inline const int hz(void) const
+  inline int hz(void) const
     { return static_cast<int>(_hz); }
 
 /// get frequency in kHz
-  inline const float kHz(void) const
+  inline float kHz(void) const
     { return static_cast<float>(_hz) / 1000; }
 
 /// get frequency in kHz
-  inline const float khz(void) const
+  inline float khz(void) const
     { return static_cast<float>(_hz) / 1000; }
 
 /// get frequency in MHz
-  inline const float MHz(void) const
+  inline float MHz(void) const
     { return static_cast<float>(_hz) / 1'000'000; }
 
 /// get frequency in MHz (even though I shudder at the use of "m" to mean "mega")
-  inline const float mhz(void) const
+  inline float mhz(void) const
     { return static_cast<float>(_hz) / 1'000'000; }
 
 /// get frequency in kHz, rounded to the nearest kHz
-  inline const int rounded_kHz(void) const
+  inline int rounded_kHz(void) const
     { return static_cast<int>(kHz() + 0.5); }
 
 /*! \brief      Return string suitable for use in bandmap
     \return     string of the frequency in kHz, to one decimal place ([x]xxxx.y)
 */
-  const std::string display_string(void) const;
+  std::string display_string(void) const;
 
 /*! \brief      Convert to BAND
     \return     BAND in which the frequency is located
@@ -266,33 +266,33 @@ public:
     { return to_BAND(hz()); }
 
 /// is the frequency within a band?
-  const bool is_within_ham_band(void) const;
+  bool is_within_ham_band(void) const;
 
 /// return lower band edge that corresponds to frequency
-  const frequency lower_band_edge(void) const;
+  frequency lower_band_edge(void) const;
 
 /// frequency == frequency
-  inline const bool operator==(const frequency& f) const
+  inline bool operator==(const frequency& f) const
     { return (_hz == f._hz); }
 
 /// frequency != frequency
-  inline const bool operator!=(const frequency& f) const
+  inline bool operator!=(const frequency& f) const
     { return !(*this == f); }
 
 /// frequency < frequency
-  inline const bool operator<(const frequency& f) const
+  inline bool operator<(const frequency& f) const
     { return (_hz < f._hz); }
 
 /// frequency <= frequency
-  inline const bool operator<=(const frequency& f) const
+  inline bool operator<=(const frequency& f) const
     { return (_hz <= f._hz); }
 
 /// frequency > frequency
-  inline const bool operator>(const frequency& f) const
+  inline bool operator>(const frequency& f) const
     { return (_hz > f._hz); }
 
 /// frequency >= frequency
-  inline const bool operator>=(const frequency& f) const
+  inline bool operator>=(const frequency& f) const
     { return (_hz >= f._hz); }
 
 /// difference in two frequencies, always +ve
@@ -311,14 +311,14 @@ public:
 
      Frequency may be in Hz, kHz or MHz.
 */
-inline const BAND to_BAND(const std::string& str)
+inline BAND to_BAND(const std::string& str)
   { return to_BAND(frequency(str).hz()); }
 
 /*!  \brief     Convert a frequency to a band
      \param  f  frequency to convert
      \return    band corresponding to <i>f</i>
 */
-inline const BAND to_BAND(const frequency& f)
+inline BAND to_BAND(const frequency& f)
   { return to_BAND(f.hz()); }
 
 /*!  \brief     Convert a frequency to a printable string
@@ -327,7 +327,7 @@ inline const BAND to_BAND(const frequency& f)
 
      Appends " Hz" to the numerical frequency.
 */
-inline const std::string to_string(const frequency& f)
+inline std::string to_string(const frequency& f)
   { return (comma_separated_string(f.hz()) + " Hz"s); }
 
 /// mode break points; CW below the break point, SSB above it
@@ -342,4 +342,5 @@ static std::map<BAND, frequency> MODE_BREAK_POINT { { BAND_160, frequency(1'900)
                                                     { BAND_12,  frequency(24'910) },
                                                     { BAND_10,  frequency(28'300) }
                                                   };
+
 #endif /* BANDSMODES_H */

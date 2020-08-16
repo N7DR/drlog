@@ -1,4 +1,4 @@
-// $Id: screen.h 161 2020-07-31 16:19:50Z  $
+// $Id: screen.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -73,8 +73,8 @@ constexpr unsigned int WINDOW_INSERT    { 2 };        ///< INSERT mode
 
 // the tests at https://invisible-island.net/ncurses/ncurses-examples.html, ftp://ftp.invisible-island.net/ncurses-examples/ncurses-examples.tar.gz
 // use NCURSES_COLOR_T as a synonym for short, which is 16 bits. Ditto for NCURSES_PAIR_T.
-using COLOUR_TYPE = short;
-using PAIR_TYPE   = short;
+using COLOUR_TYPE        = short;
+using PAIR_NUMBER_TYPE   = short;
 
 /// allow English spelling for colour names; silly documentation is present so that doxygen doesn't complain
 constexpr COLOUR_TYPE COLOUR_BLACK   { COLOR_BLACK },         ///< black
@@ -97,7 +97,7 @@ extern pt_mutex screen_mutex;                   ///< mutex for the screen
     I note that ncurses is inconsistent about the types used to hold colour pairs; the actual definition of COLOR_PAIR()
     defines the return value as an int, so that's what we use here
 */
-int COLOUR_PAIR(const PAIR_TYPE n);
+int COLOUR_PAIR(const PAIR_NUMBER_TYPE n);
 
 // -----------  cursor  ----------------
 
@@ -122,7 +122,7 @@ protected:
     \param  p   foreground colour, background colour
     \return     the number of the colour pair
 */
-  PAIR_TYPE _add_to_vector(const std::pair<COLOUR_TYPE, COLOUR_TYPE>& p);
+  PAIR_NUMBER_TYPE _add_to_vector(const std::pair<COLOUR_TYPE, COLOUR_TYPE>& p);
 
 public:
 
@@ -137,19 +137,19 @@ public:
     If the pair is already known, returns the number of the known pair.
     Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
-  PAIR_TYPE add(const COLOUR_TYPE fg, const COLOUR_TYPE bg);
+  PAIR_NUMBER_TYPE add(const COLOUR_TYPE fg, const COLOUR_TYPE bg);
 
 /*! \brief              Get the foreground colour of a pair
     \param  pair_nr     number of the pair
     \return             the foreground colour of the pair number <i>pair_nr</i>
 */
-  COLOUR_TYPE fg(const PAIR_TYPE pair_nr) const;
+  COLOUR_TYPE fg(const PAIR_NUMBER_TYPE pair_nr) const;
 
 /*! \brief              Get the background colour of a pair
     \param  pair_nr     number of the pair
     \return             the background colour of the pair number <i>pair_nr</i>
 */
-  COLOUR_TYPE bg(const PAIR_TYPE pair_nr) const;
+  COLOUR_TYPE bg(const PAIR_NUMBER_TYPE pair_nr) const;
 };
 
 // -----------  screen  ----------------
@@ -303,7 +303,7 @@ public:
   window(const window&) = delete;
 
 /// destructor
-  virtual ~window(void);
+  /* virtual */ ~window(void);
 
 /*! \brief          Initialise using position and size information from the configuration file
     \param  wi      window position and size
@@ -516,7 +516,7 @@ public:
 
     Wraps words to new lines. Stops writing if there's insufficient room for the next string.
 */
-  window& operator<(const std::vector<std::pair<std::string /* callsign */, PAIR_TYPE /* colour pair number */ > >& vec);
+  window& operator<(const std::vector<std::pair<std::string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >& vec);
 
 /*! \brief      Write an unsigned integer to a window
     \param  n   unsigned integer to write
@@ -543,7 +543,7 @@ public:
     \param  pair_nr     number of the new colour pair
     \return             the window
 */
-  window& set_colour_pair(const PAIR_TYPE pair_nr);
+  window& set_colour_pair(const PAIR_NUMBER_TYPE pair_nr);
 
 /*! \brief                      Set the default colours
     \param  foreground_colour   foreground colour
@@ -717,7 +717,7 @@ WRAPPER_2(centre, std::string, s, int, y);
 window& operator<(window& win, const centre& c);
 
 /// utterly trivial class for changing colour to a colour pair
-WRAPPER_1(colour_pair, PAIR_TYPE, pair_nr);
+WRAPPER_1(colour_pair, PAIR_NUMBER_TYPE, pair_nr);
 
 /*! \brief          Change the colours of a window
     \param  win     target window

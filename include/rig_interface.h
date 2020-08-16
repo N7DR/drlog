@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 160 2020-07-25 16:01:11Z  $
+// $Id: rig_interface.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -63,19 +63,19 @@ class rig_interface
 {
 protected:
 
-  frequency                                     _last_commanded_frequency;      ///< last frequency to which the rig was commanded to QSY
-  frequency                                     _last_commanded_frequency_b;    ///< last frequency to which VFO B was commanded to QSY
-  MODE                                          _last_commanded_mode;           ///< last mode into which the rig was commanded
-  std::map< std::pair <BAND, MODE>, frequency > _last_frequency;                ///< last-used frequencies on per-band, per-mode basis
-  rig_model_t                                   _model { RIG_MODEL_DUMMY };     ///< hamlib model
-  hamlib_port_t                                 _port;                          ///< hamlib port
-  std::string                                   _port_name;                     ///< name of port
-  RIG*                                          _rigp;                          ///< hamlib handle
-  bool                                          _rig_connected { false };       ///< is a rig connected?
-  pt_mutex                                      _rig_mutex;                     ///< mutex for all operations
-  unsigned int                                  _rig_poll_interval;             ///< interval between polling for rig status, in milliseconds
-  rig_status                                    _status;                        ///< most recent rig frequency and mode from the periodic poll
-  pthread_t                                     _thread_id;                     ///< ID for the thread that polls the rig for status
+  frequency                               _last_commanded_frequency;      ///< last frequency to which the rig was commanded to QSY
+  frequency                               _last_commanded_frequency_b;    ///< last frequency to which VFO B was commanded to QSY
+  MODE                                    _last_commanded_mode;           ///< last mode into which the rig was commanded
+  std::unordered_map<bandmode, frequency> _last_frequency;                ///< last-used frequencies on per-band, per-mode basis
+  rig_model_t                             _model { RIG_MODEL_DUMMY };     ///< hamlib model
+  hamlib_port_t                           _port;                          ///< hamlib port
+  std::string                             _port_name;                     ///< name of port
+  RIG*                                    _rigp;                          ///< hamlib handle
+  bool                                    _rig_connected { false };       ///< is a rig connected?
+  pt_mutex                                _rig_mutex;                     ///< mutex for all operations
+  unsigned int                            _rig_poll_interval;             ///< interval between polling for rig status, in milliseconds
+  rig_status                              _status;                        ///< most recent rig frequency and mode from the periodic poll
+  pthread_t                               _thread_id;                     ///< ID for the thread that polls the rig for status
 
 // protected pointers to functions
 
@@ -130,7 +130,7 @@ public:
   rig_interface(const rig_interface&) = delete;
 
 /// destructor
-  inline virtual ~rig_interface(void) = default;
+  /* inline virtual */ ~rig_interface(void) = default;
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
@@ -357,7 +357,7 @@ public:
   bool sub_receiver(void);
 
 /// is sub-receiver on?
-  inline const bool sub_receiver_enabled(void)
+  inline bool sub_receiver_enabled(void)
     { return sub_receiver(); }
 
 /// enable the sub-receiver
@@ -405,18 +405,36 @@ public:
 #endif
 
 /*! \brief      Get the most recent frequency for a particular band and mode
+    \param  bm  band and mode
+    \return     the rig's most recent frequency for bandmode <i>bm</i>
+
+     Returns empty frequency() if the most recent frequency for the band and mode has not been set (should never happen) 
+*/
+  frequency get_last_frequency(const bandmode bm);
+
+/*! \brief      Get the most recent frequency for a particular band and mode
     \param  b   band
     \param  m   mode
     \return     the rig's most recent frequency for band <i>b</i> and mode <i>m</i>.
+
+    Returns empty frequency() if the most recent frequency for the band and mode has not been set (should never happen)  
 */
-  frequency get_last_frequency(const BAND b, const MODE m);
+  inline frequency get_last_frequency(const BAND b, const MODE m)
+    { return get_last_frequency( { b, m } ); }
+
+/*! \brief      Set a new value for the most recent frequency for a particular band and mode
+    \param  bm  band and mode
+    \param  f   frequency
+*/
+  void set_last_frequency(const bandmode bm, const frequency& f);
 
 /*! \brief      Set a new value for the most recent frequency for a particular band and mode
     \param  b   band
     \param  m   mode
     \param  f   frequency
 */
-  void set_last_frequency(const BAND b, const MODE m, const frequency& f) noexcept;
+  inline void set_last_frequency(const BAND b, const MODE m, const frequency& f)
+    { set_last_frequency( { b, m }, f ); }
 
 /*! \brief Is the rig transmitting?
 

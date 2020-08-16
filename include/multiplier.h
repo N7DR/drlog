@@ -1,4 +1,4 @@
-// $Id: multiplier.h 161 2020-07-31 16:19:50Z  $
+// $Id: multiplier.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -35,11 +35,13 @@ extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
     \brief  encapsulate necessary stuff for a mult
 */
 
+using MULTIPLIER_VALUES = std::unordered_set<std::string>;
+
 class multiplier
 {
 protected:
 
-  std::set<std::string>                                            _known      { };     ///< all the (currently) known possible values
+  MULTIPLIER_VALUES                                            _known      { };     ///< all the (currently) known possible values
 
   bool                                                             _per_band   { false };  ///< is this multiplier accumulated per band?
   bool                                                             _per_mode   { false };  ///< is this multiplier accumulated per mode?
@@ -50,7 +52,8 @@ protected:
    However, "worked" as used as an access verb really means "do I need this mult"? Thus,
    writes and reads to/from _worked from outside the object are non-trivial.
 */
-  std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
+//  std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
+  std::array< std::array< MULTIPLIER_VALUES /* values */, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
 
 public:
 
@@ -177,7 +180,7 @@ public:
     \param  m   mode
     \return     all the mults worked on band <i>b</i> and mode <i>m</i>
 */
-  std::set<std::string> worked(const int b, const int m) const;
+  MULTIPLIER_VALUES worked(const int b, const int m) const;
 
 /// Set all bands and modes to state in which no mults have been worked
   inline void clear(void)

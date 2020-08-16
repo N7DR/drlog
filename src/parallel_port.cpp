@@ -1,4 +1,4 @@
-// $Id: parallel_port.cpp 153 2019-09-01 14:27:02Z  $
+// $Id: parallel_port.cpp 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -92,9 +92,3 @@ parallel_port::parallel_port(const string& filename)
   if (status != E1284_OK)
     throw parallel_port_error(PARALLEL_PORT_UNABLE_TO_CLAIM, "Cannot claim parallel port "s + filename + "."s);
 }
-
-/// destructor -- closes the port
-//parallel_port::~parallel_port(void)
-//{ ieee1284_free_ports(&_list_from_library);
-//}
-

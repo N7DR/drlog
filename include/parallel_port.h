@@ -1,4 +1,4 @@
-// $Id: parallel_port.h 153 2019-09-01 14:27:02Z  $
+// $Id: parallel_port.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -122,7 +122,7 @@ public:
   explicit parallel_port(const std::string& filename);
 
 /// destructor -- closes the port
-  inline virtual ~parallel_port(void)
+  inline /* virtual */ ~parallel_port(void)
     { ieee1284_free_ports(&_list_from_library); }
 
 /*! \brief                  Set control lines

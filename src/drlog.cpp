@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 163 2020-08-06 19:46:33Z  $
+// $Id: drlog.cpp 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -111,6 +111,7 @@ bool   calculate_exchange_mults(QSO& qso, const contest_rules& rules);          
 string callsign_mult_value(const string& callsign_mult_name, const string& callsign);     ///< Obtain value corresponding to a type of callsign mult from a callsign
 bool   change_cw_speed(const keyboard_event& e);                                          ///< change CW speed as function of keyboard event
 void   cw_speed(const unsigned int new_speed);                                            ///< Set speed of computer keyer
+bool   cw_toggle_bandwidth(void);                                                         ///< Toggle 50Hz/200Hz bandwidth if on CW
 
 bool   debug_dump(void);                                                                            ///< Dump useful information to disk
 MODE   default_mode(const frequency& f);                                                            ///< get the default mode on a frequency
@@ -142,7 +143,7 @@ bool is_needed_qso(const string& callsign, const BAND b, const MODE m);         
 
 pair<float, float> latitude_and_longitude(const string& callsign);    ///< obtain latitude and longtide associated with a call
 
-string match_callsign(const vector<pair<string /* callsign */, PAIR_TYPE /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
+string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >& matches);   ///< Get best fuzzy or SCP match
 
 void populate_win_call_history(const string& str);                                      ///< Populate the QSO/QSL call history window
 void populate_win_info(const string& str);                                              ///< Populate the information window
@@ -476,8 +477,8 @@ scp_database  scp_db,                           ///< static SCP database from fi
 scp_databases scp_dbs;                          ///< container for the SCP databases
 
 // foreground = ACCEPT_COLOUR => worked on a different band and OK to work on this band; foreground = REJECT_COLOUR => dupe
-vector<pair<string /* callsign */, PAIR_TYPE /* colour pair number */ > > scp_matches;    ///< SCP matches
-vector<pair<string /* callsign */, PAIR_TYPE /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
+vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > scp_matches;    ///< SCP matches
+vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > > fuzzy_matches;  ///< fuzzy matches
 
 fuzzy_database  fuzzy_db,                       ///< static fuzzy database from file
                 fuzzy_dynamic_db;               ///< dynamic SCP database from QSOs
@@ -533,7 +534,7 @@ bool mm_country_mults    { false };            ///< can /MM stns be country mult
     Might want to put red matches after green matches
 */
 template <typename T>
-void update_matches_window(const T& matches, vector<pair<string, PAIR_TYPE>>& match_vector, window& win, const string& callsign)
+void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYPE>>& match_vector, window& win, const string& callsign)
 { if (callsign.length() >= context.match_minimum())
   {
 // put in right order and also get the colours right
@@ -966,7 +967,7 @@ int main(int argc, char** argv)
 
 // see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
       if (current_band != static_cast<BAND>(rig.rig_frequency()))
-      { rig.rig_frequency(DEFAULT_FREQUENCIES[ { current_band, current_mode } ]);
+      { rig.rig_frequency(DEFAULT_FREQUENCIES.at({ current_band, current_mode }));
         sleep_for(seconds(2));                                                       // give time for things to settle on the rig
       }
     }
@@ -2241,8 +2242,6 @@ void* process_rbn_info(void* vp)
   const bool rbn_beacons            { context.rbn_beacons() };
   const int  my_cluster_mult_colour { string_to_colour("COLOUR_17"s) }; // the colour of my call in the CLUSTER MULT window
 
-//  constexpr size_t QUEUE_SIZE { 100 };        // size of queue of recent calls posted to the mult window
-
   string unprocessed_input;             // data from the cluster that have not yet been processed by this thread
 
   const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
@@ -2318,8 +2317,7 @@ void* process_rbn_info(void* vp)
             { const BAND               cur_band    { safe_get_band() };
               const string&            dx_callsign { post.callsign() };
               const string&            poster      { post.poster() };
-//              const pair<string, BAND> target      { dx_callsign, dx_band };
-              const pair<string, frequency> target_1    { dx_callsign, post.freq() };
+              const pair<string, frequency> target    { dx_callsign, post.freq() };
 
               bandmap_entry be { (post.source() == POSTING_SOURCE::CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
 
@@ -2364,32 +2362,26 @@ void* process_rbn_info(void* vp)
 
                 be.calculate_mult_status(rules, statistics);
 
-//                const bool is_recent_call      { ( find(recent_mult_calls.cbegin(), recent_mult_calls.cend(), target) != recent_mult_calls.cend() ) };
-
-                bool is_recent_call_1 { false };
+                bool is_recent_call { false };
 
                 for (const auto& call_entry : recent_mult_calls_1)      // look to see if this is already in the deque
-                  if (!is_recent_call_1)
-                    is_recent_call_1 = (call_entry.first == target_1.first) and (target_1.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
+                  if (!is_recent_call)
+                    is_recent_call = (call_entry.first == target.first) and (target.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
 
                 const bool is_me               { (be.callsign() == context.my_call()) };
                 const bool is_interesting_mode { (rules.score_modes() > be.mode()) };
 
 // CLUSTER MULT window
                 if (cluster_mult_win.defined())
-                { if (is_interesting_mode and !is_recent_call_1 and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
+                { if (is_interesting_mode and !is_recent_call and (be.is_needed_callsign_mult() or be.is_needed_country_mult() or be.is_needed_exchange_mult() or is_me))            // if it's a mult and not recently posted...
                   { if (location_db.continent(poster) == my_continent)                                                      // heard on our continent?
                     { const size_t QUEUE_SIZE { static_cast<size_t>(cluster_mult_win.height()) };        // make the queue the same as the height of the window
 
                       cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
- //                     recent_mult_calls.push_back(target);
-                      recent_mult_calls_1.push_back(target_1);
+                      recent_mult_calls.push_back(target);
 
- //                     while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
- //                       recent_mult_calls.pop_front();
-
-                      while (recent_mult_calls_1.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
-                        recent_mult_calls_1.pop_front();
+                      while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
+                        recent_mult_calls.pop_front();
 
                       cluster_mult_win < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
 
@@ -2475,7 +2467,7 @@ void* process_rbn_info(void* vp)
       const unsigned int        n_colours    { static_cast<unsigned int>(fade_colours.size()) };
       const float               interval     { 1.0f / n_colours };
 
-      const PAIR_TYPE default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
+      const PAIR_NUMBER_TYPE default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
 
 // oldest to newest
       for (size_t n = 0; n < entries.size(); ++n)
@@ -2491,7 +2483,7 @@ void* process_rbn_info(void* vp)
         n_intervals = min(n_intervals, n_colours - 1);
         n_intervals = (n_colours - 1) - n_intervals;
 
-        const PAIR_TYPE cpu { colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg()) };
+        const PAIR_NUMBER_TYPE cpu { colours.add(fade_colours.at(n_intervals), win_monitored_posts.bg()) };
 
         win_monitored_posts < colour_pair(cpu)
                             < entries[n].to_string() < colour_pair(default_colours);
@@ -2600,24 +2592,25 @@ void* prune_bandmap(void* vp)
     \param  wp  pointer to window associated with the event
     \param  e   keyboard event to process
 */
-/*  KP numbers -- CW messages
-    ALT-K    -- toggle CW
-    ALT-M    -- change mode
-    ALT-Q    -- send QTC
-    ALT-KP_4 -- decrement bandmap column offset
-    ALT-KP_6 -- increment bandmap column offset
-    CTRL-C   -- EXIT (same as .QUIT)
-    CTRL-F   -- find matches for exchange in log
-    CTRL-I   -- refresh geomagnetic indices
-    CTRL-Q   -- swap QSL and QUICK QSL messages
-    CTRL-S   -- send to scratchpad
-    ESCAPE
-    F10      -- toggle filter_remaining_country_mults
-    F11      -- band map filtering
-    ENTER, ALT-ENTER
-    CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
-    KP ENTER -- send CQ #2
+/*  KP numbers    -- CW messages
+    ALT-K         -- toggle CW
+    ALT-M         -- change mode
+    ALT-Q         -- send QTC
+    ALT-KP_4      -- decrement bandmap column offset
+    ALT-KP_6      -- increment bandmap column offset
+    CTRL-C        -- EXIT (same as .QUIT)
+    CTRL-F        -- find matches for exchange in log
+    CTRL-I        -- refresh geomagnetic indices
+    CTRL-Q        -- swap QSL and QUICK QSL messages
+    CTRL-S        -- send to scratchpad
+    CTRL-ENTER    -- assume it's a call or partial call and go to the call if it's in the bandmap
     CTRL-KP-ENTER -- look for, and then display, entry in all the bandmaps
+    ESCAPE
+    F10           -- toggle filter_remaining_country_mults
+    F11           -- band map filtering
+    ENTER, ALT-ENTER
+    KP ENTER      -- send CQ #2
+    KP-           -- toggle 50Hz/200Hz bandwidth if on CW
     SPACE -- generally, dupe check
     ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
     ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
@@ -2713,10 +2706,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       safe_set_band(new_band);
 
-      frequency last_frequency { rig.get_last_frequency(new_band, cur_mode) };  // go to saved frequency for this band/mode (if any)
+      const bandmode bmode { new_band, cur_mode };
+
+      frequency last_frequency { rig.get_last_frequency(bmode) };  // go to saved frequency for this band/mode (if any)
 
       if (last_frequency.hz() == 0)
-        last_frequency = DEFAULT_FREQUENCIES[ { new_band, cur_mode } ];
+        last_frequency = DEFAULT_FREQUENCIES.at(bmode);
 
       rig.rig_frequency(last_frequency);
 
@@ -2735,7 +2730,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       win_bandmap <= bm;
 
 // is there a station close to our frequency?
-//      const string nearby_callsign { bm.nearest_rbn_threshold_and_filtered_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
       const string nearby_callsign { bm.nearest_displayed_callsign(last_frequency.khz(), context.guard_band(cur_mode)) };
 
       display_nearby_callsign(nearby_callsign);  // clears NEARBY window if call is empty
@@ -2745,7 +2739,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       update_remaining_country_mults_window(statistics, new_band, cur_mode);
       update_remaining_exchange_mults_windows(rules, statistics, new_band, cur_mode);
 
-//      win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
       display_bandmap_filter(bm);
     }
 
@@ -2764,7 +2757,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
     safe_set_mode(new_mode);
 
-    rig.rig_frequency(rig.get_last_frequency(cur_band, new_mode).hz() ? rig.get_last_frequency(cur_band, new_mode) : DEFAULT_FREQUENCIES[ { cur_band, new_mode } ]);
+    const bandmode bmode { cur_band, new_mode };
+
+    rig.rig_frequency(rig.get_last_frequency(bmode).hz() ? rig.get_last_frequency(bmode) : DEFAULT_FREQUENCIES.at(bmode));
     rig.rig_mode(new_mode);
 
     display_band_mode(win_band_mode, cur_band, new_mode);
@@ -4189,25 +4184,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
   }
 
-// KP- -- toggle 50Hz/200Hz bandwidth id on CW
+// KP- -- toggle 50Hz/200Hz bandwidth if on CW
   if (!processed and e.is_unmodified() and e.symbol() == XK_KP_Subtract)
-  { if (safe_get_mode() == MODE_CW)
-    { const int current_bw = rig.bandwidth();
-
-      switch (current_bw)
-      { case 50 :
-        default :
-          rig.bandwidth(200);
-          break;
-
-        case 200 :
-          rig.bandwidth(50);
-          break;
-      }      
-    }
-
-    processed = true;
-  }
+    processed = cw_toggle_bandwidth();
 
 // finished processing a keypress
   if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
@@ -4254,6 +4233,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     CTRL-B -- fast bandwidth
     F4 -- swap contents of CALL and BCALL windows, EXCHANGE and BEXCHANGE windows
     ALT-R -- toggle RX antenna
+    KP-           -- toggle 50Hz/200Hz bandwidth if on CW
 */
 void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 {
@@ -4550,10 +4530,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             allow_for_callsign_mults(qso);
 
 // get the current list of country mults
-            const set<string> old_worked_country_mults { statistics.worked_country_mults(cur_band, cur_mode) };
+            const MULTIPLIER_VALUES old_worked_country_mults { statistics.worked_country_mults(cur_band, cur_mode) };
 
 // and any exchange multipliers
-            const map<string /* field name */, set<string> /* values */ >  old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
+            const map<string /* field name */, MULTIPLIER_VALUES /* values */ >  old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
             const vector<exchange_field>                                   exchange_fields           { rules.expanded_exch(canonical_prefix, qso.mode()) };
 
             for (const auto& exch_field : exchange_fields)
@@ -4600,14 +4580,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             }
 
 // was the just-logged QSO an exchange mult?
-            const map<string /* field name */, set<string> /* values */ >  new_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
+            const map<string /* field name */, MULTIPLIER_VALUES /* values */ >  new_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
 
             bool no_exchange_mults_this_qso { true };
 
-            for (map<string, set<string> >::const_iterator cit = old_worked_exchange_mults.begin(); cit != old_worked_exchange_mults.end() and no_exchange_mults_this_qso; ++cit)
+            for (map<string, MULTIPLIER_VALUES>::const_iterator cit = old_worked_exchange_mults.begin(); cit != old_worked_exchange_mults.end() and no_exchange_mults_this_qso; ++cit)
             { const size_t old_size { (cit->second).size() };
 
-              map<string, set<string> >::const_iterator ncit { new_worked_exchange_mults.find(cit->first) };
+              map<string, MULTIPLIER_VALUES>::const_iterator ncit { new_worked_exchange_mults.find(cit->first) };
 
               if (ncit != new_worked_exchange_mults.end())    // should never be equal
               { const size_t new_size { (ncit->second).size() };
@@ -4625,10 +4605,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
               { set<string> difference;
 
                 const auto         tmp            { old_worked_exchange_mults.find(current_exchange_mult.first) };
-                const set<string>& current_values { current_exchange_mult.second };
+                const MULTIPLIER_VALUES& current_values { current_exchange_mult.second };
 
                 if (tmp != old_worked_exchange_mults.end())
-                { const set<string>& old_values { tmp->second };
+                { const MULTIPLIER_VALUES& old_values { tmp->second };
 
                   set_difference(current_values.begin(), current_values.end(), old_values.begin(), old_values.end(), inserter(difference, difference.end()));
                 }
@@ -5003,6 +4983,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   { rig.toggle_rx_ant();
     processed = update_rx_ant_window();
   }
+
+// KP- -- toggle 50Hz/200Hz bandwidth if on CW
+  if (!processed and e.is_unmodified() and e.symbol() == XK_KP_Subtract)
+    processed = cw_toggle_bandwidth();
 }
 
 /*! \brief      Process input to the (editable) LOG window
@@ -5345,7 +5329,7 @@ void enter_cq_or_sap_mode(const DRLOG_MODE new_mode)
     \param  m           current mode
 */
 void update_remaining_callsign_mults_window(running_statistics& statistics, const string& mult_name, const BAND b, const MODE m)
-{ const set<string> worked_callsign_mults { statistics.worked_callsign_mults(mult_name, b, m) };
+{ const MULTIPLIER_VALUES worked_callsign_mults { statistics.worked_callsign_mults(mult_name, b, m) };
 
 // the original list of callsign mults
   set<string> original;
@@ -5368,11 +5352,11 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   copy(original.cbegin(), original.cend(), back_inserter(vec_str));
   sort(vec_str.begin(), vec_str.end(), compare_calls);    // need to change the collation order
 
-  vector<pair<string /* prefix */, PAIR_TYPE /* colour pair number */ > > vec;
+  vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
   for (const auto& canonical_prefix : vec_str)
-  { const bool      is_needed          { ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() ) };
-    const PAIR_TYPE colour_pair_number { colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : context.worked_mults_colour() ), win_remaining_callsign_mults.bg()) };
+  { const bool             is_needed          { ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() ) };
+    const PAIR_NUMBER_TYPE colour_pair_number { colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : context.worked_mults_colour() ), win_remaining_callsign_mults.bg()) };
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
   }
@@ -5386,8 +5370,8 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
     \param  m           current mode
 */
 void update_remaining_country_mults_window(running_statistics& statistics, const BAND b, const MODE m)
-{ const set<string> worked_country_mults { statistics.worked_country_mults(b, m) };
-  const set<string> known_country_mults  { statistics.known_country_mults() };
+{ const MULTIPLIER_VALUES worked_country_mults { statistics.worked_country_mults(b, m) };
+  const MULTIPLIER_VALUES known_country_mults  { statistics.known_country_mults() };
 
 // put in right order and get the colours right
   vector<string> vec_str;
@@ -5395,11 +5379,11 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   copy(known_country_mults.cbegin(), known_country_mults.cend(), back_inserter(vec_str));
   sort(vec_str.begin(), vec_str.end(), compare_calls);    // non-default collation order
 
-  vector<pair<string /* country */, PAIR_TYPE /* colour pair number */ > > vec;
+  vector<pair<string /* country */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
   for (const auto& canonical_prefix : vec_str)
-  { const bool      is_needed          { worked_country_mults.find(canonical_prefix) == worked_country_mults.cend() };
-    const PAIR_TYPE colour_pair_number { colours.add( is_needed ? win_remaining_country_mults.fg() : context.worked_mults_colour(), win_remaining_country_mults.bg()) };
+  { const bool             is_needed          { worked_country_mults.find(canonical_prefix) == worked_country_mults.cend() };
+    const PAIR_NUMBER_TYPE colour_pair_number { colours.add( is_needed ? win_remaining_country_mults.fg() : context.worked_mults_colour(), win_remaining_country_mults.bg()) };
 
     vec.push_back( { canonical_prefix, colour_pair_number } );
   }
@@ -5422,17 +5406,17 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
 
 // map<string /* name */, window*>     win_remaining_exch_mults_p; ///< map from name of an exchange mult to a pointer to the corresponding window
 
-  const set<string>    known_exchange_values_set { statistics.known_exchange_mult_values(exch_mult_name) };
+  const MULTIPLIER_VALUES    known_exchange_values_set { statistics.known_exchange_mult_values(exch_mult_name) };
   const vector<string> known_exchange_values     { known_exchange_values_set.cbegin(), known_exchange_values_set.cend() };
 
   window& win { ( *(win_remaining_exch_mults_p[exch_mult_name]) ) };
 
 // get the colours right
-  vector<pair<string /* exch value */, PAIR_TYPE /* colour pair number */ > > vec;
+  vector<pair<string /* exch value */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
   for (const auto& known_value : known_exchange_values)
-  { const bool      is_needed          { statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m) };
-    const PAIR_TYPE colour_pair_number { ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(context.worked_mults_colour(),  win.bg())) };
+  { const bool             is_needed          { statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m) };
+    const PAIR_NUMBER_TYPE colour_pair_number { ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(context.worked_mults_colour(),  win.bg())) };
 
     vec.push_back( { known_value, colour_pair_number } );
   }
@@ -5559,7 +5543,7 @@ void populate_win_info(const string& callsign)
 
       if (!all_country_mults.empty() or context.auto_remaining_country_mults())
       { if (all_country_mults > canonical_prefix)                                           // all_country_mults is from rules, and has all the valid mults for the contest
-        { const set<string> known_country_mults { statistics.known_country_mults() };
+        { const MULTIPLIER_VALUES known_country_mults { statistics.known_country_mults() };
 
           line = pad_string("Country ["s + canonical_prefix + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
 
@@ -6306,7 +6290,7 @@ void exit_drlog(void)
     the operator would agree. In the absence of an obvious candidate for "best match", the
     empty string is returned.
 */
-string match_callsign(const vector<pair<string /* callsign */, PAIR_TYPE /* colour pair number */ > >& matches)
+string match_callsign(const vector<pair<string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >& matches)
 { string new_callsign;
 
   if ((matches.size() == 1) and (colours.fg(matches[0].second) != REJECT_COLOUR))
@@ -7343,7 +7327,7 @@ void display_nearby_callsign(const string& callsign)
     const int  background { win_nearby.bg() };
 
 // in what colour should we display this call?
-    PAIR_TYPE colour_pair_number { colours.add(foreground, background) };
+    PAIR_NUMBER_TYPE colour_pair_number { colours.add(foreground, background) };
 
     if (!worked)
       colour_pair_number = colours.add(ACCEPT_COLOUR,  background);
@@ -7595,13 +7579,13 @@ void update_qsls_window(const string& str)
     win_qsls < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= "QSLs: "s;
 
     if (callsign.length() >= 3)
-    { const unsigned int n_qsls                   { olog.n_qsls(callsign) };
-      const unsigned int n_qsos                   { olog.n_qsos(callsign) };
-      const unsigned int n_qsos_this_band_mode    { olog.n_qsos(callsign, b, m) };
-      const bool         confirmed_this_band_mode { olog.confirmed(callsign, b, m) };
-      const PAIR_TYPE    default_colour_pair      { colours.add(win_qsls.fg(), win_qsls.bg()) };
+    { const unsigned int     n_qsls                   { olog.n_qsls(callsign) };
+      const unsigned int     n_qsos                   { olog.n_qsos(callsign) };
+      const unsigned int     n_qsos_this_band_mode    { olog.n_qsos(callsign, b, m) };
+      const bool             confirmed_this_band_mode { olog.confirmed(callsign, b, m) };
+      const PAIR_NUMBER_TYPE default_colour_pair      { colours.add(win_qsls.fg(), win_qsls.bg()) };
  
-      PAIR_TYPE new_colour_pair     { default_colour_pair };
+      PAIR_NUMBER_TYPE new_colour_pair     { default_colour_pair };
 
       if ( (n_qsls == 0) and (n_qsos != 0) )
         new_colour_pair = colours.add(COLOUR_RED, win_qsls.bg());
@@ -7736,7 +7720,7 @@ bool toggle_cw(void)
     Updates WPM window
 */
 bool change_cw_speed(const keyboard_event& e)
-{ bool rv { false };
+{ //bool rv { false };
 
   if (cw_p)
   { int change { (e.is_control() ? 1 : static_cast<int>(cw_speed_change)) };
@@ -7745,10 +7729,10 @@ bool change_cw_speed(const keyboard_event& e)
       change = -change;
 
     cw_speed(cw_p->speed() - change);  // effective immediately
-    rv = true;
+    return true;
   }
 
-  return rv;
+  return false;
 }
 
 /*! \brief          Send a string to the SCRATCHPAD window
@@ -8308,20 +8292,12 @@ void do_not_show(const string& callsign)
   }
 }
 
-#if 0
-const pair<adif3_record, int> first_qso_after(const vector<adif3_record>& matching_qsos, const string& target_date)
-{ for (int n = 0; n < static_cast<int>(matching_qsos.size()); ++n)
-    if (matching_qsos[n].date() >= target_date)
-      return { matching_qsos[n], n };
-      
-  return { adif3_record(), -1 };
-};
-#endif
-
 /*! \brief                  Find the first QSO in a chronological vector of ADIF3 records that occurs on or after a target date
     \param  vqsos           chronological vector of QSOs
     \param  target_idate    target date [YYYYMMDD]
     \return                 first QSO in <i>vqsos</i> whose date is on or after <i>idate</i>, and index of the QSO into <i>vqsos</i>
+
+    A returned index of -1 implies that there are no QSOs after the target date 
 */
 pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const int target_idate)
 { for (int n = 0; n < static_cast<int>(vqsos.size()); ++n)
@@ -8356,7 +8332,7 @@ void adif3_build_old_log(void)
   auto add_record_to_olog = [](const adif3_record& rec)
     { const string callsign { rec.callsign() };
       const BAND   b        { BAND_FROM_ADIF3_NAME[rec.band()] };
-      const MODE   m        { MODE_FROM_NAME[rec.mode()] };
+      const MODE   m        { MODE_FROM_NAME.at(rec.mode()) };
 
       olog.increment_n_qsos(callsign);
       olog.increment_n_qsos(callsign, b, m);
@@ -8389,19 +8365,19 @@ void adif3_build_old_log(void)
           if (!matching_qsos.empty())       // should always be true
           { sort(matching_qsos.begin(), matching_qsos.end(), compare_adif3_records);    // in chronological order
 
-            unordered_map<bandmode, vector<adif3_record>> bm_records;
+            unordered_map<bandmode, vector<adif3_record>> bmode_records;
 
             for (const auto& rec : matching_qsos)
-            { const bandmode bm { BAND_FROM_ADIF3_NAME.at(rec.band()), MODE_FROM_NAME.at(rec.mode()) };
+            { const bandmode bmode { BAND_FROM_ADIF3_NAME.at(rec.band()), MODE_FROM_NAME.at(rec.mode()) };
 
-              if (auto it { bm_records.find(bm) }; it == bm_records.end())
-                bm_records.insert( { bm, { rec } } );
+              if (auto it { bmode_records.find(bmode) }; it == bmode_records.end())
+                bmode_records.insert( { bmode, { rec } } );
               else
                 it->second.push_back(rec);
             }
 
 // now for each differemt band/mode
-            for ( const auto& [bm, vrec] : bm_records )
+            for ( const auto& [bmode, vrec] : bmode_records )
             { adif3_record last_marked_qso       { vrec[0] };
               int          index_last_marked_qso { 0 };
 
@@ -8413,7 +8389,7 @@ void adif3_build_old_log(void)
               do
               { idate_last_marked_qso = last_marked_qso.idate();
                 forward_idate_limit = idate_last_marked_qso + (old_qso_limit * 10000);      // forward the required number of years
-      
+
                 rec_index = first_qso_after(vrec, forward_idate_limit);                     // rec_index is pair: record and index of the record
       
                 if (rec_index.second != -1)
@@ -8503,4 +8479,16 @@ bool is_daylight(const string& sunrise_time, const string& sunset_time, const st
 
 //  ost << current_time << ": error calculating whether daylight for S/R, SS/CUR =: " <<  sunrise_time << ", " << sunset_time << ", " << current_time << endl;
   return false;  // should never reach here
+}
+
+/*! \brief      Toggle 50Hz/200Hz bandwidth if on CW
+    \return     true
+
+    Sets bandwidth to 200 Hz if it's not 50 Hz
+*/
+bool cw_toggle_bandwidth(void)
+{ if (safe_get_mode() == MODE_CW)
+    rig.bandwidth( (rig.bandwidth() == 200) ? 50 : 200 );
+
+  return true;
 }

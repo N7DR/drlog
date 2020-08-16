@@ -1,4 +1,4 @@
-// $Id: bandmap.h 161 2020-07-31 16:19:50Z  $
+// $Id: bandmap.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -650,7 +650,7 @@ public:
   MODE putative_mode(void) const;
 
 /// how many QSOs have we had (before this contest) with this callsign, band and mode?
-  inline const unsigned int n_qsos(void) const
+  inline unsigned int n_qsos(void) const
     { return olog.n_qsos(_callsign, _band, _mode); }
 
 /// is this call+band+mode an all-time first?

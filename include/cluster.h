@@ -1,4 +1,4 @@
-// $Id: cluster.h 160 2020-07-25 16:01:11Z  $
+// $Id: cluster.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -123,7 +123,7 @@ public:
   dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
   
 /// destructor
-//  inline virtual ~dx_post(void) = default;
+  ~dx_post(void) = default;
 
   READ(band);                   ///< band of post
   READ(callsign);               ///< callsign that was heard

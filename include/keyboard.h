@@ -1,4 +1,4 @@
-// $Id: keyboard.h 163 2020-08-06 19:46:33Z  $
+// $Id: keyboard.h 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,8 +39,6 @@ extern message_stream ost;                  ///< for debugging, info
 enum key_event_type { KEY_PRESS,
                       KEY_RELEASE
                     };
-
-//typedef unsigned int key_code;                                          ///< syntactic sugar
 
 using key_code = unsigned int;                                          ///< syntactic sugar
 
@@ -221,7 +219,7 @@ public:
   keyboard_queue(void);
 
 /// destructor
-//  virtual ~keyboard_queue(void) = default;
+  ~keyboard_queue(void) = default;
 
   SAFEREAD_WITH_INTERNAL_MUTEX(display_p, _keyboard);
   SAFEREAD_WITH_INTERNAL_MUTEX(window_id, _keyboard);

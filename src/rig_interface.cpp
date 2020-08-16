@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 160 2020-07-25 16:01:11Z  $
+// $Id: rig_interface.cpp 164 2020-08-16 19:57:42Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -285,8 +285,6 @@ frequency rig_interface::rig_frequency(void)
 
     SAFELOCK(_rig);
 
-//    const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) };
-
     if (const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) }; status != RIG_OK)
     { _error_alert("Error getting frequency"s);
       return _last_commanded_frequency;
@@ -304,8 +302,6 @@ frequency rig_interface::rig_frequency_b(void)
   { freq_t hz;
 
     SAFELOCK(_rig);
-
- //   const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) };
 
     if (const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) }; status != RIG_OK)
     { _error_alert("Error getting frequency of VFO B"s);
@@ -339,9 +335,9 @@ void rig_interface::split_enable(void)
   }
 
 // not a K3
-  const int status { rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B) };  // magic parameters
+//  const int status { rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B) };  // magic parameters
 
-  if (status != RIG_OK)
+  if ( const int status { rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B) }; status != RIG_OK)  // magic parameters
     _error_alert("Error executing SPLIT command"s);
   else
     rig_is_split = true;
@@ -394,8 +390,6 @@ bool rig_interface::split_enabled(void)
   vfo_t  tx_vfo;
 
   SAFELOCK(_rig);
-
-//  const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) };
 
   if (const int status { rig_get_split_vfo(_rigp, RIG_VFO_B, &split_mode, &tx_vfo) }; status != RIG_OK)
   { _error_alert("Error getting SPLIT"s);
@@ -548,8 +542,6 @@ int rig_interface::rit(void)
 
     shortfreq_t hz;
 
- //   const int status { rig_get_rit(_rigp, RIG_VFO_CURR, &hz) };
-
     if (const int status { rig_get_rit(_rigp, RIG_VFO_CURR, &hz) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error while getting RIT offset"s);
 
@@ -671,8 +663,6 @@ int rig_interface::xit(void)
 
   SAFELOCK(_rig);
 
-//  const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) };
-
   if (const int status { rig_get_xit(_rigp, RIG_VFO_CURR, &hz ) }; status != RIG_OK)
     throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error obtaining XIT offset"s);
 
@@ -687,7 +677,6 @@ void rig_interface::lock(void)
     raw_command("LK1;"s, 0);
   else
   { const int v      { 1 };
-//    const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) };
 
     if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error locking VFO"s);
@@ -702,7 +691,6 @@ void rig_interface::unlock(void)
     raw_command("LK0;"s, 0);
   else
   { const int v      { 0 };
- //   const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) };
 
     if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error unlocking VFO"s);
@@ -772,8 +760,6 @@ void rig_interface::keyer_speed(const int wpm)
 
     v.i = wpm;
 
-//    const int status { rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v) };
-
     if (const int status { rig_set_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error setting keyer speed"s);
   }
@@ -791,54 +777,12 @@ int rig_interface::keyer_speed(void)
   else
   { value_t v;
 
-//    const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) };
-
     if (const int status { rig_get_level(_rigp, RIG_VFO_CURR, RIG_LEVEL_KEYSPD, &v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting keyer speed"s);
 
     return v.i;
   }
 }
-
-#if 0
-// explicit K3 commands
-const string rig_interface::raw_command(const string& cmd, const unsigned int msec)
-{ struct rig_state* rs_p = &(_rigp->state);
-  struct rig_state& rs   = *rs_p;
-  const int fd           = _file_descriptor();
-  char* c_in             = new char [1000];
-  int n_read             = 0;
-
-  { SAFELOCK(_rig_access);
-
-    serial_flush(&rs_p->rigport);
-    write(fd, cmd.c_str(), cmd.length());
-    _msec_sleep(msec);
-    n_read = read(fd, c_in, 500);
-  }
-
-  if (n_read >= 0)
-  { c_in[n_read] = static_cast<char>(0);
-
-    const string rv(c_in);
-    delete [] c_in;
-
-    return rv;
-  }
-
-  delete [] c_in;
-  return string();
-}
-
-// is the VFO locked?
-const bool rig_interface::is_locked(void)
-{ const string status_str = raw_command("LK;");
-
-  const char status_char = (status_str.length() >= 3 ? status_str[2] : '0');  // default is unlocked
-
-  return (status_char == '1');
-}
-#endif    // 0
 
 // explicit K3 commands
 #if !defined(NEW_RAW_COMMAND)
@@ -1167,8 +1111,6 @@ bool rig_interface::is_locked(void)
   { SAFELOCK(_rig);
 
     int v;
-    
-//    const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) };
 
     if (const int status { rig_get_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, &v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error getting lock status"s);
@@ -1190,10 +1132,25 @@ int rig_interface::bandwidth(void)
 }
 
 /*! \brief      Get the most recent frequency for a particular band and mode
+    \param  bm  band and mode
+    \return     the rig's most recent frequency for bandmode <i>bm</i>
+*/
+frequency rig_interface::get_last_frequency(const bandmode bm)
+{ SAFELOCK(_rig);
+
+  return MUM_VALUE(_last_frequency, bm);    // returns empty frequency if not prsent in the map
+
+//  const auto cit { _last_frequency.find( { b, m } ) };
+
+//  return ( ( cit == _last_frequency.cend() ) ? frequency() : cit->second );    // return 0 if there's no last frequency
+}
+
+/*! \brief      Get the most recent frequency for a particular band and mode
     \param  b   band
     \param  m   mode
     \return     the rig's most recent frequency for band <i>b</i> and mode <i>m</i>.
 */
+#if 0
 frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
 { SAFELOCK(_rig);
 
@@ -1201,16 +1158,29 @@ frequency rig_interface::get_last_frequency(const BAND b, const MODE m)
 
   return ( ( cit == _last_frequency.cend() ) ? frequency() : cit->second );    // return 0 if there's no last frequency
 }
+#endif
 
 /*! \brief      Set a new value for the most recent frequency for a particular band and mode
     \param  b   band
     \param  m   mode
     \param  f   frequency
 */
-void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequency& f) noexcept
+#if 0
+void rig_interface::set_last_frequency(const BAND b, const MODE m, const frequency& f)
 { SAFELOCK(_rig);
 
   _last_frequency[ { b, m } ] = f;
+}
+#endif
+
+/*! \brief      Set a new value for the most recent frequency for a particular band and mode
+    \param  bm  band and mode
+    \param  f   frequency
+*/
+void rig_interface::set_last_frequency(const bandmode bm, const frequency& f)
+{ SAFELOCK(_rig);
+
+  _last_frequency[bm] = f;
 }
 
 /*! \brief      Is the rig transmitting?
