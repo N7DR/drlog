@@ -874,585 +874,593 @@ int main(int argc, char** argv)
 // is there a log of old QSOs?
 //    ost << "is there a log of old QSOs?" << endl;
 
-    if (!context.old_adif_log_name().empty())
-      adif3_build_old_log();
+    { thread thr;
+
+      bool running_old_log_thread { false };
+
+      if (!context.old_adif_log_name().empty())
+      { //adif3_build_old_log();
+        thr = move(thread(adif3_build_old_log));
+        running_old_log_thread = true;
+//        thr.detach();
+      }
 
 // make some things available file-wide
 // make callsign parser available now that we can create it
-    CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context.path(), context.exchange_fields_filename(), context, location_db);
+      CALLSIGN_EFT = EFT(CALLSIGN_EFT.name(), context.path(), context.exchange_fields_filename(), context, location_db);
 
-    send_qtcs = rules.send_qtcs();    // grab it once
-    n_modes = rules.n_modes();        // grab this once too
+      send_qtcs = rules.send_qtcs();    // grab it once
+      n_modes = rules.n_modes();        // grab this once too
 
 // define types of mults that are in use; after this point these should be treated as read-only
-    callsign_mults_used = rules.callsign_mults_used();
-    country_mults_used = rules.country_mults_used();
-    exchange_mults_used = rules.exchange_mults_used();
-    mm_country_mults = rules.mm_country_mults();
+      callsign_mults_used = rules.callsign_mults_used();
+      country_mults_used = rules.country_mults_used();
+      exchange_mults_used = rules.exchange_mults_used();
+      mm_country_mults = rules.mm_country_mults();
 
 // possibly get a list of IARU society exchanges; note that we normally do this with a prefill file instead
-    if (!context.society_list_filename().empty())
-      exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY"s);
+      if (!context.society_list_filename().empty())
+        exchange_db.set_values_from_file(context.path(), context.society_list_filename(), "SOCIETY"s);
 
 // possibly test regex exchanges; this will exit if it executes
-    if (cl.value_present("-test-exchanges"s))
-      test_exchange_templates(rules, cl.value("-test-exchanges"s));
+      if (cl.value_present("-test-exchanges"s))
+        test_exchange_templates(rules, cl.value("-test-exchanges"s));
 
 // real-time statistics
-    try
-    { statistics.prepare(country_data, context, rules);
-    }
-
-    catch (...)
-    { cerr << "Error generating real-time statistics" << endl;
-      exit(-1);
-    }
-
-// possibly open communication with the rig
-    rig.register_error_alert_function(rig_error_alert);
-
-    if (!context.rig1_port().empty() and !context.rig1_type().empty())
-    { try
-      { rig.prepare(context);
-      }
-      
-      catch (const rig_interface_error& e)
-      { const string msg { "Error initialising rig; error code = " + to_string(e.code()) + ", reason = " + e.reason() };
-      
-        alert(msg, false);
-        ost << msg << endl;
-        exit(-1);
-      }
-    }
-    
-// possibly put rig into TEST mode
-    if (context.test())
-      rig.test(true);
-
-// possibly set up CW buffer
-    if (contains(to_upper(context.modes()), "CW"s) and !context.keyer_port().empty())
-    { try
-      { cw_p = new cw_buffer(context.keyer_port(), context.ptt_delay(), context.cw_speed(), context.cw_priority());
-      }
-
-      catch (const parallel_port_error& e)
-      { ost << "Failed to open CW port: " << e.reason() << endl;
-        exit(-1);
-      }
-
-      if (rig.valid())
-        cw_p->associate_rig(&rig);
-
-      cwm = cw_messages(context.messages());
-    }
-
-// set the initial band and mode from the configuration file
-    if (context.qsy_on_startup())
-    { safe_set_band( (rules.score_bands().size() == 1) ? *(rules.score_bands().cbegin()) : context.start_band() );
-      safe_set_mode( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
-
-// see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
-      if (current_band != static_cast<BAND>(rig.rig_frequency()))
-      { rig.rig_frequency(DEFAULT_FREQUENCIES.at({ current_band, current_mode }));
-        sleep_for(seconds(2));                                                       // give time for things to settle on the rig
-      }
-    }
-    else                // do not QSY on startup
-    { safe_set_band(to_BAND(rig.rig_frequency()));
-      safe_set_mode( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
-    }
-
-// the rig might have changed mode if we just changed bands
-    if (current_mode != rig.rig_mode())
-      rig.rig_mode(current_mode);
-
-    fast_cw_bandwidth();    // set to default SAP bandwidth if on CW
-    rig.base_state();
-
-// configure bandmaps so user's call does not display
-    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
-
-// ditto for other calls in the do-not-show list
-    for (const auto& callsign : context.do_not_show())
-      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
-
-// ditto for other calls in the do-not-show file
-    if (!context.do_not_show_filename().empty())
-    { try
-      { const vector<string> lines { remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), context.do_not_show_filename())))) };
-
-        for (const auto& callsign : lines)
-          FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
-          
-        ost << "Read and processed do not show file: " << context.do_not_show_filename() << endl;
+      try
+      { statistics.prepare(country_data, context, rules);
       }
 
       catch (...)
-      { ost << "Fatal error: unable to read do-not-show file: " << context.do_not_show_filename() << endl;
+      { cerr << "Error generating real-time statistics" << endl;
         exit(-1);
       }
-    }
+
+// possibly open communication with the rig
+      rig.register_error_alert_function(rig_error_alert);
+
+      if (!context.rig1_port().empty() and !context.rig1_type().empty())
+      { try
+        { rig.prepare(context);
+        }
+      
+        catch (const rig_interface_error& e)
+        { const string msg { "Error initialising rig; error code = " + to_string(e.code()) + ", reason = " + e.reason() };
+      
+          alert(msg, false);
+          ost << msg << endl;
+          exit(-1);
+        }
+      }
+    
+// possibly put rig into TEST mode
+      if (context.test())
+        rig.test(true);
+
+// possibly set up CW buffer
+      if (contains(to_upper(context.modes()), "CW"s) and !context.keyer_port().empty())
+      { try
+        { cw_p = new cw_buffer(context.keyer_port(), context.ptt_delay(), context.cw_speed(), context.cw_priority());
+        }
+
+        catch (const parallel_port_error& e)
+        { ost << "Failed to open CW port: " << e.reason() << endl;
+          exit(-1);
+        }
+
+        if (rig.valid())
+          cw_p->associate_rig(&rig);
+
+        cwm = cw_messages(context.messages());
+      }
+
+// set the initial band and mode from the configuration file
+      if (context.qsy_on_startup())
+      { safe_set_band( (rules.score_bands().size() == 1) ? *(rules.score_bands().cbegin()) : context.start_band() );
+        safe_set_mode( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
+
+// see if the rig is on the right band and mode (as defined in the configuration file), and, if not, then move it
+        if (current_band != static_cast<BAND>(rig.rig_frequency()))
+        { rig.rig_frequency(DEFAULT_FREQUENCIES.at({ current_band, current_mode }));
+          sleep_for(seconds(2));                                                       // give time for things to settle on the rig
+        }
+      }
+      else                // do not QSY on startup
+      { safe_set_band(to_BAND(rig.rig_frequency()));
+        safe_set_mode( (rules.score_modes().size() == 1) ? *(rules.score_modes().cbegin()) : context.start_mode() );
+      }
+
+// the rig might have changed mode if we just changed bands
+      if (current_mode != rig.rig_mode())
+        rig.rig_mode(current_mode);
+
+      fast_cw_bandwidth();    // set to default SAP bandwidth if on CW
+      rig.base_state();
+
+// configure bandmaps so user's call does not display
+      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(my_call); } );
+
+// ditto for other calls in the do-not-show list
+      for (const auto& callsign : context.do_not_show())
+        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+
+// ditto for other calls in the do-not-show file
+      if (!context.do_not_show_filename().empty())
+      { try
+        { const vector<string> lines { remove_peripheral_spaces(to_lines(to_upper(read_file(context.path(), context.do_not_show_filename())))) };
+
+          for (const auto& callsign : lines)
+            FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.do_not_add(callsign); } );
+          
+          ost << "Read and processed do not show file: " << context.do_not_show_filename() << endl;
+        }
+
+        catch (...)
+        { ost << "Fatal error: unable to read do-not-show file: " << context.do_not_show_filename() << endl;
+          exit(-1);
+        }
+      }
 
 // set the RBN threshold for each bandmap
-    if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
-      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
+      if (rbn_threshold != 1)        // 1 is the default in a pristine bandmap, so may be no need to change
+        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.rbn_threshold(rbn_threshold); } );
 
 // set the initial cull function for each bandmap
-    if (const int cull_function { context.bandmap_cull_function() }; cull_function)
-      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
+      if (const int cull_function { context.bandmap_cull_function() }; cull_function)
+        FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.cull_function(cull_function); } );
 
 // initialise some immutable information in my_bandmap_entry; do not bother to acquire the lock
 // this must be the only place that we access my_bandmap_entry outside the update_based_on_frequency_change() function
-    my_bandmap_entry.callsign(MY_MARKER);
-    my_bandmap_entry.source(BANDMAP_ENTRY_SOURCE::LOCAL);
-    my_bandmap_entry.expiration_time(my_bandmap_entry.time() + MILLION);    // a million seconds in the future
+      my_bandmap_entry.callsign(MY_MARKER);
+      my_bandmap_entry.source(BANDMAP_ENTRY_SOURCE::LOCAL);
+      my_bandmap_entry.expiration_time(my_bandmap_entry.time() + MILLION);    // a million seconds in the future
 
 // possibly add a mode marker bandmap entry to each bandmap (only in multi-mode contests)
-    if (context.mark_mode_break_points())
-    { for (const auto& b : rules.permitted_bands())
-      { bandmap& bm { bandmaps[b] };
+      if (context.mark_mode_break_points())
+      { for (const auto& b : rules.permitted_bands())
+        { bandmap& bm { bandmaps[b] };
 
-        bandmap_entry be;
+          bandmap_entry be;
 
-        be.callsign(MODE_MARKER);
-        be.source(BANDMAP_ENTRY_SOURCE::LOCAL);
-        be.expiration_time(be.time() + MILLION);        // expiration is a long time in the future
-        be.freq(MODE_BREAK_POINT[b]);
+          be.callsign(MODE_MARKER);
+          be.source(BANDMAP_ENTRY_SOURCE::LOCAL);
+          be.expiration_time(be.time() + MILLION);        // expiration is a long time in the future
+          be.freq(MODE_BREAK_POINT[b]);
 
-        bm += be;
+          bm += be;
 
-        bm.mode_marker_frequency(MODE_BREAK_POINT[b]);  // tel the bandmap that this is a mode marker
+          bm.mode_marker_frequency(MODE_BREAK_POINT[b]);  // tel the bandmap that this is a mode marker
+        }
       }
-    }
 
 // create and populate windows; do static windows first
-    const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows { context.static_windows() };
+      const map<string /* name */, pair<string /* contents */, vector<window_information> > >& swindows { context.static_windows() };
 
 // static windows may contain either defined information or the contents of a file
-    for (const auto& this_static_window : swindows)
-    { const string                      win_contents { this_static_window.second.first };
-      const vector<window_information>& vec_win_info { this_static_window.second.second };
+      for (const auto& this_static_window : swindows)
+      { const string                      win_contents { this_static_window.second.first };
+        const vector<window_information>& vec_win_info { this_static_window.second.second };
 
-      for (const auto& winfo : vec_win_info)
-      { window* window_p { new window() };
+        for (const auto& winfo : vec_win_info)
+        { window* window_p { new window() };
 
-        window_p -> init(winfo);
-        static_windows_p.push_back( { win_contents, window_p } );
+          window_p -> init(winfo);
+          static_windows_p.push_back( { win_contents, window_p } );
+        }
+      }
+
+      for (auto& swin : static_windows_p)
+        *(swin.second) <= reformat_for_wprintw(swin.first, swin.second->width());       // display contents of the static window, working around wprintw weirdness
+
+// BAND/MODE window
+      win_band_mode.init(context.window_info("BAND/MODE"s), WINDOW_NO_CURSOR);
+
+// BATCH MESSAGES window
+      win_batch_messages.init(context.window_info("BATCH MESSAGES"s), WINDOW_NO_CURSOR);
+
+      if (!context.batch_messages_file().empty())
+      { try
+        { const vector<string> messages { to_lines(read_file(context.path(), context.batch_messages_file())) };
+
+          string current_message;
+
+          SAFELOCK(batch_messages);
+
+          for (const auto& messages_line : messages)
+          { if (!messages_line.empty())
+            { if (contains(messages_line, "["s))
+                current_message = delimited_substring(messages_line, '[', ']');       // extract this batch message
+              else
+                batch_messages.insert( { remove_peripheral_spaces(messages_line) /* callsign */, current_message } );               // associate this message with the callsign on the line
+            }
+         }
+
+          ost << "read " << batch_messages.size() << " batch messages" << endl;
+        }
+
+       catch (...)
+        { cerr << "Unable to read batch messages file: " << context.batch_messages_file() << endl;
+          exit(-1);
+        }
+      }
+
+// BCALL window
+    win_bcall.init(context.window_info("BCALL"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
+    win_bcall < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;
+//  win_call.process_input_function(process_CALL_input);
+
+// BEST DX window
+    win_best_dx.init(context.window_info("BEST DX"s), WINDOW_NO_CURSOR);
+    win_best_dx.enable_scrolling();
+
+// BEXCHANGE window
+    win_bexchange.init(context.window_info("BEXCHANGE"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
+    win_bexchange <= WINDOW_ATTRIBUTES::WINDOW_BOLD;
+//  win_exchange.process_input_function(process_EXCHANGE_input);
+
+// CALL window
+    win_call.init(context.window_info("CALL"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
+    win_call < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;
+    win_call.process_input_function(process_CALL_input);
+
+// CALL HISTORY window
+    win_call_history.init(context.window_info("CALL HISTORY"s), WINDOW_NO_CURSOR);
+    win_call_history <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                        // make it visible
+
+// CLUSTER LINE window
+    win_cluster_line.init(context.window_info("CLUSTER LINE"s), WINDOW_NO_CURSOR);
+
+// DATE window
+    win_date.init(context.window_info("DATE"s), WINDOW_NO_CURSOR);
+
+// DRLOG MODE window
+    win_drlog_mode.init(context.window_info("DRLOG MODE"s), WINDOW_NO_CURSOR);
+
+// EXCHANGE window
+    win_exchange.init(context.window_info("EXCHANGE"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
+    win_exchange <= WINDOW_ATTRIBUTES::WINDOW_BOLD;
+    win_exchange.process_input_function(process_EXCHANGE_input);
+
+// FUZZY window
+    win_fuzzy.init(context.window_info("FUZZY"s), WINDOW_NO_CURSOR);
+
+// GRID window
+    win_grid.init(context.window_info("GRID"s), WINDOW_NO_CURSOR);
+
+// INDICES window
+    win_indices.init(context.window_info("INDICES"s), WINDOW_NO_CURSOR);
+
+// possibly get the indices data
+    if (!context.geomagnetic_indices_command().empty())
+    { static pthread_t get_indices_thread_id;
+
+      static string cmd { context.geomagnetic_indices_command() };
+
+      try
+      { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices"s);
+      }
+
+      catch (const pthread_error& e)
+      { ost << e.reason() << endl;
       }
     }
 
-    for (auto& swin : static_windows_p)
-      *(swin.second) <= reformat_for_wprintw(swin.first, swin.second->width());       // display contents of the static window, working around wprintw weirdness
+// INDIVIDUAL MESSAGES window
+    win_individual_messages.init(context.window_info("INDIVIDUAL MESSAGES"s), WINDOW_NO_CURSOR);
 
-// BAND/MODE window
-    win_band_mode.init(context.window_info("BAND/MODE"s), WINDOW_NO_CURSOR);
-
-// BATCH MESSAGES window
-    win_batch_messages.init(context.window_info("BATCH MESSAGES"s), WINDOW_NO_CURSOR);
-
-    if (!context.batch_messages_file().empty())
+    if (!context.individual_messages_file().empty())
     { try
-      { const vector<string> messages { to_lines(read_file(context.path(), context.batch_messages_file())) };
+      { const vector<string> messages { to_lines(read_file(context.path(), context.individual_messages_file())) };
 
-        string current_message;
-
-        SAFELOCK(batch_messages);
+        SAFELOCK(individual_messages);
 
         for (const auto& messages_line : messages)
-        { if (!messages_line.empty())
-          { if (contains(messages_line, "["s))
-              current_message = delimited_substring(messages_line, '[', ']');       // extract this batch message
-            else
-              batch_messages.insert( { remove_peripheral_spaces(messages_line) /* callsign */, current_message } );               // associate this message with the callsign on the line
+        { vector<string> fields { split_string(messages_line, ":"s) };
+
+          if (!fields.empty())
+          { const string& callsign { fields[0] };
+            const size_t  posn     { messages_line.find(":"s) };
+
+            if (posn != messages_line.length() - 1)    // if the colon isn't the last character
+              individual_messages.insert( { callsign, remove_peripheral_spaces(substring(messages_line, posn + 1)) /* message */ } );
           }
         }
-
-        ost << "read " << batch_messages.size() << " batch messages" << endl;
       }
 
       catch (...)
-      { cerr << "Unable to read batch messages file: " << context.batch_messages_file() << endl;
+      { cerr << "Unable to read individual messages file: " << context.individual_messages_file() << endl;
         exit(-1);
       }
     }
 
-// BCALL window
-  win_bcall.init(context.window_info("BCALL"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
-  win_bcall < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;
-//  win_call.process_input_function(process_CALL_input);
-
-// BEST DX window
-  win_best_dx.init(context.window_info("BEST DX"s), WINDOW_NO_CURSOR);
-  win_best_dx.enable_scrolling();
-
-// BEXCHANGE window
-  win_bexchange.init(context.window_info("BEXCHANGE"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_NO_CURSOR);
-  win_bexchange <= WINDOW_ATTRIBUTES::WINDOW_BOLD;
-//  win_exchange.process_input_function(process_EXCHANGE_input);
-
-// CALL window
-  win_call.init(context.window_info("CALL"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
-  win_call < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;
-  win_call.process_input_function(process_CALL_input);
-
-// CALL HISTORY window
-  win_call_history.init(context.window_info("CALL HISTORY"s), WINDOW_NO_CURSOR);
-  win_call_history <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                        // make it visible
-
-// CLUSTER LINE window
-  win_cluster_line.init(context.window_info("CLUSTER LINE"s), WINDOW_NO_CURSOR);
-
-// DATE window
-  win_date.init(context.window_info("DATE"s), WINDOW_NO_CURSOR);
-
-// DRLOG MODE window
-  win_drlog_mode.init(context.window_info("DRLOG MODE"s), WINDOW_NO_CURSOR);
-
-// EXCHANGE window
-  win_exchange.init(context.window_info("EXCHANGE"s), COLOUR_YELLOW, COLOUR_MAGENTA, WINDOW_INSERT);
-  win_exchange <= WINDOW_ATTRIBUTES::WINDOW_BOLD;
-  win_exchange.process_input_function(process_EXCHANGE_input);
-
-// FUZZY window
-  win_fuzzy.init(context.window_info("FUZZY"s), WINDOW_NO_CURSOR);
-
-// GRID window
-  win_grid.init(context.window_info("GRID"s), WINDOW_NO_CURSOR);
-
-// INDICES window
-  win_indices.init(context.window_info("INDICES"s), WINDOW_NO_CURSOR);
-
-// possibly get the indices data
-  if (!context.geomagnetic_indices_command().empty())
-  { static pthread_t get_indices_thread_id;
-
-    static string cmd { context.geomagnetic_indices_command() };
-
-    try
-    { create_thread(&get_indices_thread_id, &(attr_detached.attr()), get_indices, static_cast<void*>(&cmd), "indices"s);
+// INDIVIDUAL QTC COUNT window
+    if (send_qtcs)                                                                        // only if it's a contest with QTCs
+    { win_individual_qtc_count.init(context.window_info("INDIVIDUAL QTC COUNT"s), WINDOW_NO_CURSOR);
+      win_individual_qtc_count <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
     }
 
-    catch (const pthread_error& e)
-    { ost << e.reason() << endl;
+// INFO window
+    win_info.init(context.window_info("INFO"s), WINDOW_NO_CURSOR);
+    win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                          // make it visible
+
+// LOCAL TIME window
+    win_local_time.init(context.window_info("LOCAL TIME"s), WINDOW_NO_CURSOR);
+
+// LOG window
+    win_log.init(context.window_info("LOG"s), WINDOW_NO_CURSOR);
+    win_log.enable_scrolling();
+    win_log.process_input_function(process_LOG_input);
+
+// LOG EXTRACT window; also used for QTCs
+    win_log_extract.init(context.window_info("LOG EXTRACT"s), WINDOW_NO_CURSOR);
+    editable_log.prepare();                       // now we can size the editable log
+    extract.prepare();
+
+    if (send_qtcs)
+      win_log_extract.process_input_function(process_QTC_input);  // set the input function for the window
+
+// MEMORIES window
+    win_memories.init(context.window_info("MEMORIES"s), WINDOW_NO_CURSOR);
+
+// MULT VALUE window
+    win_mult_value.init(context.window_info("MULT VALUE"s), WINDOW_NO_CURSOR);
+    update_mult_value();
+
+// NEARBY window
+    win_nearby.init(context.window_info("NEARBY"s), WINDOW_NO_CURSOR);
+
+// POST MONITOR window
+    win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
+    mp.max_entries(win_monitored_posts.height());
+  
+// QUICK QSY window
+    win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
+    win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
+                  <= pad_string(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
+  
+// QSLs window
+    win_qsls.init(context.window_info("QSLS"s), WINDOW_NO_CURSOR);
+    update_qsls_window();
+
+// QSO NUMBER window
+    win_qso_number.init(context.window_info("QSO NUMBER"s), WINDOW_NO_CURSOR);
+    win_qso_number <= pad_string(to_string(next_qso_number), win_qso_number.width());
+
+// QTC QUEUE window
+    win_qtc_queue.init(context.window_info("QTC QUEUE"s), WINDOW_NO_CURSOR);
+
+// QTC STATUS window
+    win_qtc_status.init(context.window_info("QTC STATUS"s), WINDOW_NO_CURSOR);
+    win_qtc_status <= "Last QTC: None";
+
+// RATE window
+    win_rate.init(context.window_info("RATE"s), WINDOW_NO_CURSOR);
+    update_rate_window();
+
+// RECORDING STATUS window
+    win_recording_status.init(context.window_info("RECORDING STATUS"s), WINDOW_NO_CURSOR);
+    update_recording_status_window();
+
+// REMAINING CALLSIGN MULTS window
+    win_remaining_callsign_mults.init(context.window_info("REMAINING CALLSIGN MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+    if (restored_data)
+      update_remaining_callsign_mults_window(statistics, EMPTY_STR, safe_get_band(), safe_get_mode());
+    else
+      win_remaining_callsign_mults <= (context.remaining_callsign_mults_list());
+
+// REMAINING COUNTRY MULTS window
+    win_remaining_country_mults.init(context.window_info("REMAINING COUNTRY MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+    if (restored_data)
+      update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
+    else
+    { const set<string> set_from_context { context.remaining_country_mults_list() };
+      const string&     target_continent { *(set_from_context.cbegin()) };                  // set might contain a continent instead of countries
+
+      if ((set_from_context.size() == 1) and (CONTINENT_SET > target_continent))
+        win_remaining_country_mults <= location_db.countries(target_continent);       // all the countries in the continent
+      else
+        win_remaining_country_mults <= (context.remaining_country_mults_list());
     }
-  }
 
-// INDIVIDUAL MESSAGES window
-  win_individual_messages.init(context.window_info("INDIVIDUAL MESSAGES"s), WINDOW_NO_CURSOR);
+// REMAINING EXCHANGE MULTS window(s)
+    { const string         window_name_start          { "REMAINING EXCHANGE MULTS"s };
+      const vector<string> exchange_mult_window_names { context.window_name_contains(window_name_start) };
 
-  if (!context.individual_messages_file().empty())
-  { try
-    { const vector<string> messages { to_lines(read_file(context.path(), context.individual_messages_file())) };
+      for (auto& window_name : exchange_mult_window_names)
+      { const string exchange_mult_name { substring(window_name, window_name_start.size() + 1 /* 25 */)  }; // skip the first part of the window name
 
-      SAFELOCK(individual_messages);
+        window* wp { new window() };
 
-      for (const auto& messages_line : messages)
-      { vector<string> fields { split_string(messages_line, ":"s) };
+        wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+        win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
 
-        if (!fields.empty())
-        { const string& callsign { fields[0] };
-          const size_t  posn     { messages_line.find(":"s) };
-
-          if (posn != messages_line.length() - 1)    // if the colon isn't the last character
-            individual_messages.insert( { callsign, remove_peripheral_spaces(substring(messages_line, posn + 1)) /* message */ } );
-        }
+        (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values
       }
     }
 
-    catch (...)
-    { cerr << "Unable to read individual messages file: " << context.individual_messages_file() << endl;
-      exit(-1);
-    }
-  }
-
-// INDIVIDUAL QTC COUNT window
-  if (send_qtcs)                                                                        // only if it's a contest with QTCs
-  { win_individual_qtc_count.init(context.window_info("INDIVIDUAL QTC COUNT"s), WINDOW_NO_CURSOR);
-    win_individual_qtc_count <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
-  }
-
-// INFO window
-  win_info.init(context.window_info("INFO"s), WINDOW_NO_CURSOR);
-  win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                                          // make it visible
-
-// LOCAL TIME window
-  win_local_time.init(context.window_info("LOCAL TIME"s), WINDOW_NO_CURSOR);
-
-// LOG window
-  win_log.init(context.window_info("LOG"s), WINDOW_NO_CURSOR);
-  win_log.enable_scrolling();
-  win_log.process_input_function(process_LOG_input);
-
-// LOG EXTRACT window; also used for QTCs
-  win_log_extract.init(context.window_info("LOG EXTRACT"s), WINDOW_NO_CURSOR);
-  editable_log.prepare();                       // now we can size the editable log
-  extract.prepare();
-
-  if (send_qtcs)
-    win_log_extract.process_input_function(process_QTC_input);  // set the input function for the window
-
-// MEMORIES window
-  win_memories.init(context.window_info("MEMORIES"s), WINDOW_NO_CURSOR);
-
-// MULT VALUE window
-  win_mult_value.init(context.window_info("MULT VALUE"s), WINDOW_NO_CURSOR);
-  update_mult_value();
-
-// NEARBY window
-  win_nearby.init(context.window_info("NEARBY"s), WINDOW_NO_CURSOR);
-
-// POST MONITOR window
-  win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
-  mp.max_entries(win_monitored_posts.height());
-  
-// QUICK QSY window
-  win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
-  win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                <= pad_string(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
-  
-// QSLs window
-  win_qsls.init(context.window_info("QSLS"s), WINDOW_NO_CURSOR);
-  update_qsls_window();
-
-// QSO NUMBER window
-  win_qso_number.init(context.window_info("QSO NUMBER"s), WINDOW_NO_CURSOR);
-  win_qso_number <= pad_string(to_string(next_qso_number), win_qso_number.width());
-
-// QTC QUEUE window
-  win_qtc_queue.init(context.window_info("QTC QUEUE"s), WINDOW_NO_CURSOR);
-
-// QTC STATUS window
-  win_qtc_status.init(context.window_info("QTC STATUS"s), WINDOW_NO_CURSOR);
-  win_qtc_status <= "Last QTC: None";
-
-// RATE window
-  win_rate.init(context.window_info("RATE"s), WINDOW_NO_CURSOR);
-  update_rate_window();
-
-// RECORDING STATUS window
-  win_recording_status.init(context.window_info("RECORDING STATUS"s), WINDOW_NO_CURSOR);
-  update_recording_status_window();
-
-// REMAINING CALLSIGN MULTS window
-  win_remaining_callsign_mults.init(context.window_info("REMAINING CALLSIGN MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-  if (restored_data)
-    update_remaining_callsign_mults_window(statistics, EMPTY_STR, safe_get_band(), safe_get_mode());
-  else
-    win_remaining_callsign_mults <= (context.remaining_callsign_mults_list());
-
-// REMAINING COUNTRY MULTS window
-  win_remaining_country_mults.init(context.window_info("REMAINING COUNTRY MULTS"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-  if (restored_data)
-    update_remaining_country_mults_window(statistics, safe_get_band(), safe_get_mode());
-  else
-  { const set<string> set_from_context { context.remaining_country_mults_list() };
-    const string&     target_continent { *(set_from_context.cbegin()) };                  // set might contain a continent instead of countries
-
-    if ((set_from_context.size() == 1) and (CONTINENT_SET > target_continent))
-      win_remaining_country_mults <= location_db.countries(target_continent);       // all the countries in the continent
-    else
-      win_remaining_country_mults <= (context.remaining_country_mults_list());
-  }
-
-// REMAINING EXCHANGE MULTS window(s)
-  { const string         window_name_start          { "REMAINING EXCHANGE MULTS"s };
-    const vector<string> exchange_mult_window_names { context.window_name_contains(window_name_start) };
-
-    for (auto& window_name : exchange_mult_window_names)
-    { const string exchange_mult_name { substring(window_name, window_name_start.size() + 1 /* 25 */)  }; // skip the first part of the window name
-
-      window* wp { new window() };
-
-      wp->init(context.window_info(window_name), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-      win_remaining_exch_mults_p.insert( { exchange_mult_name, wp } );
-
-      (*wp) <= rules.exch_canonical_values(exchange_mult_name);                                   // display all the canonical values
-    }
-  }
-
 // RIG window (rig status)
-  win_rig.init(context.window_info("RIG"s), WINDOW_NO_CURSOR);
+    win_rig.init(context.window_info("RIG"s), WINDOW_NO_CURSOR);
 
 // RX ANT window
-  win_rx_ant.init(context.window_info("RX ANT"s), WINDOW_NO_CURSOR);
+    win_rx_ant.init(context.window_info("RX ANT"s), WINDOW_NO_CURSOR);
 
 // SCORE window
-  win_score.init(context.window_info("SCORE"s), WINDOW_NO_CURSOR);
-  update_score_window(statistics.points(rules));
+    win_score.init(context.window_info("SCORE"s), WINDOW_NO_CURSOR);
+    update_score_window(statistics.points(rules));
 
 // SCORE BANDS window
-  win_score_bands.init(context.window_info("SCORE BANDS"s), WINDOW_NO_CURSOR);
-  { const set<BAND> score_bands { rules.score_bands() };
+    win_score_bands.init(context.window_info("SCORE BANDS"s), WINDOW_NO_CURSOR);
+    { const set<BAND> score_bands { rules.score_bands() };
 
-    string bands_str;
+      string bands_str;
 
-    FOR_ALL(score_bands, [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
+      FOR_ALL(score_bands, [&bands_str] (const BAND b) { bands_str += (BAND_NAME[b] + SPACE_STR); } );
 
-    win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= bands_str;
-  }
+      win_score_bands < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Bands: "s <= bands_str;
+    }
 
 // SCORE MODES window
-  win_score_modes.init(context.window_info("SCORE MODES"s), WINDOW_NO_CURSOR);
-  { const set<MODE> score_modes { rules.score_modes() };
+    win_score_modes.init(context.window_info("SCORE MODES"s), WINDOW_NO_CURSOR);
+    { const set<MODE> score_modes { rules.score_modes() };
 
-    string modes_str;
+      string modes_str;
 
-    FOR_ALL(score_modes, [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
+      FOR_ALL(score_modes, [&modes_str] (const MODE m) { modes_str += (MODE_NAME[m] + SPACE_STR); } );
 
-    win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= modes_str;
-  }
+      win_score_modes < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Score Modes: "s <= modes_str;
+    }
 
 // SCP window
-  win_scp.init(context.window_info("SCP"s), WINDOW_NO_CURSOR);
+    win_scp.init(context.window_info("SCP"s), WINDOW_NO_CURSOR);
 
 // SCRATCHPAD window
-  win_scratchpad.init(context.window_info("SCRATCHPAD"s), WINDOW_NO_CURSOR);
-  win_scratchpad.enable_scrolling();
+    win_scratchpad.init(context.window_info("SCRATCHPAD"s), WINDOW_NO_CURSOR);
+    win_scratchpad.enable_scrolling();
 
 // SENT RST window
 //  win_sent_rst.init(context.window_info("SENT RST"), WINDOW_NO_CURSOR);
 
 // SERIAL NUMBER window
-  win_serial_number.init(context.window_info("SERIAL NUMBER"s), WINDOW_NO_CURSOR);
-  win_serial_number <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
+    win_serial_number.init(context.window_info("SERIAL NUMBER"s), WINDOW_NO_CURSOR);
+    win_serial_number <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
 
 // SRSS window
-  win_srss.init(context.window_info("SRSS"s), WINDOW_NO_CURSOR);
-  win_srss <= ( "SR/SS: "s + sunrise(my_latitude, my_longitude) + "/"s + sunset(my_latitude, my_longitude) );
+    win_srss.init(context.window_info("SRSS"s), WINDOW_NO_CURSOR);
+    win_srss <= ( "SR/SS: "s + sunrise(my_latitude, my_longitude) + "/"s + sunset(my_latitude, my_longitude) );
 
 // SUMMARY window
-  win_summary.init(context.window_info("SUMMARY"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
-  display_statistics(statistics.summary_string(rules));
+    win_summary.init(context.window_info("SUMMARY"s), COLOUR_WHITE, COLOUR_BLUE, WINDOW_NO_CURSOR);
+    display_statistics(statistics.summary_string(rules));
 
 // SYSTEM MEMORY window
-  win_system_memory.init(context.window_info("SYSTEM MEMORY"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
-  update_system_memory();
+    win_system_memory.init(context.window_info("SYSTEM MEMORY"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
+    update_system_memory();
 
 // TITLE window
-  win_title.init(context.window_info("TITLE"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
-  win_title <= centre(context.contest_name(), 0);
+    win_title.init(context.window_info("TITLE"s), COLOUR_BLACK, COLOUR_GREEN, WINDOW_NO_CURSOR);
+    win_title <= centre(context.contest_name(), 0);
 
 // TIME window
-  win_time.init(context.window_info("TIME"s), WINDOW_NO_CURSOR);  // WHITE / BLACK are default anyway, so don't actually need them
+    win_time.init(context.window_info("TIME"s), WINDOW_NO_CURSOR);  // WHITE / BLACK are default anyway, so don't actually need them
 
 // WPM window
-  if (rules.permitted_modes() > MODE_CW)                                    // don't have a WPM window if CW is not permitted, even if the window is defined in the config file
-  { win_wpm.init(context.window_info("WPM"s), WINDOW_NO_CURSOR);
-    win_wpm <= ( to_string(context.cw_speed()) + " WPM"s );
+    if (rules.permitted_modes() > MODE_CW)                                    // don't have a WPM window if CW is not permitted, even if the window is defined in the config file
+    { win_wpm.init(context.window_info("WPM"s), WINDOW_NO_CURSOR);
+      win_wpm <= ( to_string(context.cw_speed()) + " WPM"s );
 
-    if (cw_p)
-      cw_p->speed(context.cw_speed());                    // set computer keyer speed
-  }
+      if (cw_p)
+        cw_p->speed(context.cw_speed());                    // set computer keyer speed
+    }
 
 // possibly set the auto country mults and auto callsign mults thresholds
-  if (context.auto_remaining_callsign_mults())
-  { const set<string> callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
+    if (context.auto_remaining_callsign_mults())
+    { const set<string> callsign_mults { rules.callsign_mults() };           ///< collection of types of mults based on callsign (e.g., "WPXPX")
 
-    for (const auto& callsign_mult_name : callsign_mults)
-      acc_callsigns[callsign_mult_name].threshold(context.auto_remaining_callsign_mults_threshold());
-  }
+      for (const auto& callsign_mult_name : callsign_mults)
+        acc_callsigns[callsign_mult_name].threshold(context.auto_remaining_callsign_mults_threshold());
+    }
 
-  if (context.auto_remaining_country_mults())
-    acc_countries.threshold(context.auto_remaining_country_mults_threshold());
+    if (context.auto_remaining_country_mults())
+      acc_countries.threshold(context.auto_remaining_country_mults_threshold());
 
 // possibly set speed of internal keyer. Direct quote from N2IC: Contesters don't use internal keyers. [Message-ID: <515996A2.9060800@arrl.net>]
-  try
-  { if (context.sync_keyer())
-      rig.keyer_speed(context.cw_speed());
-  }
+    try
+    { if (context.sync_keyer())
+        rig.keyer_speed(context.cw_speed());
+    }
 
-  catch (const rig_interface_error& e)
-  { alert("Error setting CW speed on rig"s);
-  }
+    catch (const rig_interface_error& e)
+    { alert("Error setting CW speed on rig"s);
+    }
 
-  display_band_mode(win_band_mode, safe_get_band(), safe_get_mode());
+    display_band_mode(win_band_mode, safe_get_band(), safe_get_mode());
 
 // start to display the date and time
-  try
-  { create_thread(&thread_id_display_date_and_time, &(attr_detached.attr()), display_date_and_time, NULL, "date/time"s);
-  }
-
-  catch (const pthread_error& e)
-  { ost << e.reason() << endl;
-    exit(-1);
-  }
-
-// start to display the rig status (in the RIG window); also get rig frequency for bandmap
-  rig_status_info rig_status_thread_parameters(1000 /* poll time */, &rig);         // poll rig once per second
-
-  try
-  { create_thread(&thread_id_rig_status, &(attr_detached.attr()), display_rig_status, &rig_status_thread_parameters, "rig status"s);
-  }
-
-  catch (const pthread_error& e)
-  { ost << e.reason() << endl;
-    exit(-1);
-  }
-
-// CLUSTER MULT window
-  win_cluster_mult.init(context.window_info("CLUSTER MULT"s), WINDOW_NO_CURSOR);
-  win_cluster_mult.enable_scrolling();
-
-// CLUSTER SCREEN window
-  win_cluster_screen.init(context.window_info("CLUSTER SCREEN"s), WINDOW_NO_CURSOR);
-  win_cluster_screen.enable_scrolling();
-
-// RBN LINE window
-  win_rbn_line.init(context.window_info("RBN LINE"s), WINDOW_NO_CURSOR);
-
-// BANDMAP window
-  win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
-
-// set recent and fade colours for each bandmap
-  { const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
-    const COLOUR_TYPE         rc { context.bandmap_recent_colour() };
-
-    FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.fade_colours(fc);
-                                          bm.recent_colour(rc);
-                                        } );
-  }
-
-// create thread to prune the bandmaps every minute
-  { static pthread_t thread_id_4;
-    static bandmap_info bandmap_info_for_thread { &win_bandmap, &bandmaps };
-
     try
-    { create_thread(&thread_id_4, &(attr_detached.attr()), prune_bandmap, (void*)(&bandmap_info_for_thread), "prune bandmap"s);
+    { create_thread(&thread_id_display_date_and_time, &(attr_detached.attr()), display_date_and_time, NULL, "date/time"s);
     }
 
     catch (const pthread_error& e)
     { ost << e.reason() << endl;
       exit(-1);
     }
-  }
+
+// start to display the rig status (in the RIG window); also get rig frequency for bandmap
+    rig_status_info rig_status_thread_parameters(1000 /* poll time */, &rig);         // poll rig once per second
+
+    try
+    { create_thread(&thread_id_rig_status, &(attr_detached.attr()), display_rig_status, &rig_status_thread_parameters, "rig status"s);
+    }
+
+    catch (const pthread_error& e)
+    { ost << e.reason() << endl;
+      exit(-1);
+    }
+
+// CLUSTER MULT window
+    win_cluster_mult.init(context.window_info("CLUSTER MULT"s), WINDOW_NO_CURSOR);
+    win_cluster_mult.enable_scrolling();
+
+// CLUSTER SCREEN window
+    win_cluster_screen.init(context.window_info("CLUSTER SCREEN"s), WINDOW_NO_CURSOR);
+    win_cluster_screen.enable_scrolling();
+
+// RBN LINE window
+    win_rbn_line.init(context.window_info("RBN LINE"s), WINDOW_NO_CURSOR);
+
+// BANDMAP window
+    win_bandmap.init(context.window_info("BANDMAP"s), WINDOW_NO_CURSOR);
+
+// set recent and fade colours for each bandmap
+    { const vector<COLOUR_TYPE> fc { context.bandmap_fade_colours() };
+      const COLOUR_TYPE         rc { context.bandmap_recent_colour() };
+
+      FOR_ALL(bandmaps, [=] (bandmap& bm) { bm.fade_colours(fc);
+                                            bm.recent_colour(rc);
+                                          } );
+    }
+
+// create thread to prune the bandmaps every minute
+    { static pthread_t thread_id_4;
+      static bandmap_info bandmap_info_for_thread { &win_bandmap, &bandmaps };
+
+      try
+      { create_thread(&thread_id_4, &(attr_detached.attr()), prune_bandmap, (void*)(&bandmap_info_for_thread), "prune bandmap"s);
+      }
+
+      catch (const pthread_error& e)
+      { ost << e.reason() << endl;
+        exit(-1);
+      }
+    }
 
 // BANDMAP FILTER window
-  win_bandmap_filter.init(context.window_info("BANDMAP FILTER"s), WINDOW_NO_CURSOR);
+    win_bandmap_filter.init(context.window_info("BANDMAP FILTER"s), WINDOW_NO_CURSOR);
 
 // set up correct colours for bandmap filter window
-  if (!context.bandmap_filter_enabled())
-    win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
-  else
-    win_bandmap_filter.default_colours(win_bandmap_filter.fg(), (context.bandmap_filter_hide() ? context.bandmap_filter_hide_colour() : context.bandmap_filter_show_colour()));
+    if (!context.bandmap_filter_enabled())
+      win_bandmap_filter.default_colours(win_bandmap_filter.fg(), context.bandmap_filter_disabled_colour());
+    else
+      win_bandmap_filter.default_colours(win_bandmap_filter.fg(), (context.bandmap_filter_hide() ? context.bandmap_filter_hide_colour() : context.bandmap_filter_show_colour()));
 
-  BAND cur_band { safe_get_band() };
-  MODE cur_mode { safe_get_mode() };
+    BAND cur_band { safe_get_band() };
+    MODE cur_mode { safe_get_mode() };
 
-  if (bandmaps.size() > static_cast<int>(cur_band))     // should always be true; test is to ensure next line is OK
-  { bandmap& bm { bandmaps[cur_band] };                   // use map for current band, so column offset is correct
+    if (bandmaps.size() > static_cast<int>(cur_band))     // should always be true; test is to ensure next line is OK
+    { bandmap& bm { bandmaps[cur_band] };                   // use map for current band, so column offset is correct
 
-    bm.filter_enabled(context.bandmap_filter_enabled());
-    bm.filter_hide(context.bandmap_filter_hide());
+      bm.filter_enabled(context.bandmap_filter_enabled());
+      bm.filter_hide(context.bandmap_filter_hide());
 
-    const vector<string>& original_filter { context.bandmap_filter() };
+      const vector<string>& original_filter { context.bandmap_filter() };
 
-    FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
+      FOR_ALL(original_filter, [&bm] (const string& filter) { bm.filter_add_or_subtract(filter); } );  // incorporate each filter string
 
-    display_bandmap_filter(bm);
-  }
+      display_bandmap_filter(bm);
+    }
 
 // BANDMAP SIZE window
-  win_bandmap_size.init(context.window_info("BANDMAP SIZE"s), WINDOW_NO_CURSOR);
+    win_bandmap_size.init(context.window_info("BANDMAP SIZE"s), WINDOW_NO_CURSOR);
 
   // read a Cabrillo log
   //  logbook cablog;
@@ -1484,18 +1492,18 @@ int main(int argc, char** argv)
   //  win_call < WINDOW_CLEAR < CURSOR_START_OF_LINE <= vec.size();
 
 // backup the last-used log, if one exists
-  { if (const string filename { context.logfile() }; file_exists(filename))
-    { int index { 0 };
+    { if (const string filename { context.logfile() }; file_exists(filename))
+      { int index { 0 };
 
-      while (file_exists(filename + "-"s + to_string(index)))
-        index++;
+        while (file_exists(filename + "-"s + to_string(index)))
+          index++;
 
-      file_copy(filename, filename + "-"s + to_string(index));
+        file_copy(filename, filename + "-"s + to_string(index));
+      }
     }
-  }
 
-  const bool clean   { cl.parameter_present("-clean"s) };
-  const bool rebuild { !clean };                            // => rebuild is the default
+    const bool clean   { cl.parameter_present("-clean"s) };
+    const bool rebuild { !clean };                            // => rebuild is the default
 
 // now we can restore data from the last run
 //  if (!cl.parameter_present("-clean"s))
@@ -1508,223 +1516,223 @@ int main(int argc, char** argv)
 //        alert("No archive data present"s);
 //    }
 //    else     // rebuild
-  if (rebuild)
-  { ost << "rebuilding from: " << context.logfile() << endl;
+    if (rebuild)
+    { ost << "rebuilding from: " << context.logfile() << endl;
 
-    string file;
-
-    try
-    { file = read_file(context.logfile());    // in current directory
-    }
-
-    catch (...)
-    { alert("Error reading log file: " + context.logfile());
-    }
-
-    if (!file.empty())
-    { static const string rebuilding_msg { "Rebuilding..."s };
-
-      win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= rebuilding_msg;
-
-      const vector<string> lines { to_lines(file) };
-
-      for (const auto& line : lines)
-      { QSO qso;
-
-        qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
-
-// callsign mults
-        allow_for_callsign_mults(qso);
-
-// possibly add the call to the known prefixes
-        update_known_callsign_mults(qso.callsign());
-
-// country mults
-        update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
-        qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules) );
-
-// add exchange info for this call to the exchange db
-        const vector<received_field>& received_exchange { qso.received_exchange() };
-
-        for (const auto& exchange_field : received_exchange)
-        { if (!(variable_exchange_fields > exchange_field.name()))
-            exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
-        }
-
-        statistics.add_qso(qso, logbk, rules);
-        logbk += qso;
-        rate.insert(qso.epoch_time(), statistics.points(rules));
-      }
-
-// rebuild the history
-      rebuild_history(logbk, rules, statistics, q_history, rate);
-
-// rescore the log
-      rescore(rules);
-      update_rate_window();
-
-      scp_dynamic_db.clear();       // clears cache of parent
-      fuzzy_dynamic_db.clear();
-
-      const vector<QSO> qso_vec { logbk.as_vector() };
-
-      for (const auto& qso : qso_vec)
-      { const string& callsign { qso.callsign() };
-
-        if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
-          scp_dynamic_db.add_call(callsign);
-
-        if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
-          fuzzy_dynamic_db.add_call(callsign);
-      }
-
-      if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
-        win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
-    }
-
-// octothorpe
-    if (logbk.size() >= 1)
-    { //const QSO& last_qso { logbk[logbk.size()] };    // wrt 1
-
-      if (const QSO& last_qso { logbk[logbk.size()] }; rules.sent_exchange_includes("SERNO"s, last_qso.mode()))   // logbook is wrt 1
-        octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO"s)) + 1;
-    }
-    else
-      octothorpe = 1;
-//    }
-
-// display most-recent lines from log
-    editable_log.recent_qsos(logbk, true);
-
-// correct QSO number (and octothorpe)
-    if (!logbk.empty())
-    { next_qso_number = logbk[logbk.n_qsos()].number() /* logbook is wrt 1 */  + 1;
-      win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
-      win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
-
-// go to band and mode of last QSO
-      const QSO& last_qso { logbk[logbk.size()] };
-      const BAND b        { last_qso.band() };
-      const MODE m        { last_qso.mode() };
-
-      rig.rig_frequency(frequency(last_qso.freq()));
-      rig.rig_mode(m);
-
-      safe_set_mode(m);
-      safe_set_band(b);
-
-      cur_band = b;
-      cur_mode = m;
-
-      rig.base_state();  // turn off RIT, split, sub-rx
-    }
-
-    update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
-    update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-    update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
-
-// QTCs
-    if (send_qtcs)
-    {
-// number of EU QSOs from logbook
-      const size_t n_eu_qsos { logbk.filter([] (const QSO& q) { return (q.continent() == "EU"s); } ).size() };
+      string file;
 
       try
-      { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
+      { file = read_file(context.logfile());    // in current directory
       }
 
-      catch (const qtc_error& e)
-      { ost << "Error reading QTC file: " << e.reason() << endl;
-        exit(-1);
+      catch (...)
+      { alert("Error reading log file: " + context.logfile());
       }
 
-  //    ost << "About to add the entire logbook to the unsent buffer" << endl;
+      if (!file.empty())
+      { static const string rebuilding_msg { "Rebuilding..."s };
 
-      qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
+        win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= rebuilding_msg;
+
+        const vector<string> lines { to_lines(file) };
+
+        for (const auto& line : lines)
+        { QSO qso;
+
+          qso.populate_from_verbose_format(context, line, rules, statistics);  // updates exchange mults if auto
+
+// callsign mults
+          allow_for_callsign_mults(qso);
+
+// possibly add the call to the known prefixes
+          update_known_callsign_mults(qso.callsign());
+
+// country mults
+          update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
+          qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules) );
+
+// add exchange info for this call to the exchange db
+          const vector<received_field>& received_exchange { qso.received_exchange() };
+
+          for (const auto& exchange_field : received_exchange)
+          { if (!(variable_exchange_fields > exchange_field.name()))
+              exchange_db.set_value(qso.callsign(), exchange_field.name(), exchange_field.value());   // add it to the database of exchange fields
+          }
+
+          statistics.add_qso(qso, logbk, rules);
+          logbk += qso;
+          rate.insert(qso.epoch_time(), statistics.points(rules));
+        }
+
+// rebuild the history
+        rebuild_history(logbk, rules, statistics, q_history, rate);
+
+// rescore the log
+        rescore(rules);
+        update_rate_window();
+
+        scp_dynamic_db.clear();       // clears cache of parent
+        fuzzy_dynamic_db.clear();
+
+        const vector<QSO> qso_vec { logbk.as_vector() };
+
+        for (const auto& qso : qso_vec)
+        { const string& callsign { qso.callsign() };
+
+          if (!scp_db.contains(callsign) and !scp_dynamic_db.contains(callsign))
+            scp_dynamic_db.add_call(callsign);
+
+          if (!fuzzy_db.contains(callsign) and !fuzzy_dynamic_db.contains(callsign))
+            fuzzy_dynamic_db.add_call(callsign);
+        }
+
+        if (remove_peripheral_spaces(win_message.read()) == rebuilding_msg)    // clear MESSAGE window if we're showing the "rebuilding" message
+          win_message <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+      }
+
+// octothorpe
+      if (logbk.size() >= 1)
+      { if (const QSO& last_qso { logbk[logbk.size()] }; rules.sent_exchange_includes("SERNO"s, last_qso.mode()))   // logbook is wrt 1
+          octothorpe = from_string<unsigned int>(last_qso.sent_exchange("SERNO"s)) + 1;
+      }
+      else
+        octothorpe = 1;
+
+// display most-recent lines from log
+      editable_log.recent_qsos(logbk, true);
+
+// correct QSO number (and octothorpe)
+      if (!logbk.empty())
+      { next_qso_number = logbk[logbk.n_qsos()].number() /* logbook is wrt 1 */  + 1;
+        win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
+        win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
+
+// go to band and mode of last QSO
+        const QSO& last_qso { logbk[logbk.size()] };
+        const BAND b        { last_qso.band() };
+        const MODE m        { last_qso.mode() };
+
+        rig.rig_frequency(frequency(last_qso.freq()));
+        rig.rig_mode(m);
+
+        safe_set_mode(m);
+        safe_set_band(b);
+
+        cur_band = b;
+        cur_mode = m;
+
+        rig.base_state();  // turn off RIT, split, sub-rx
+      }
+
+      update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
+      update_remaining_country_mults_window(statistics, cur_band, cur_mode);
+      update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
+
+// QTCs
+      if (send_qtcs)
+      {
+// number of EU QSOs from logbook
+        const size_t n_eu_qsos { logbk.filter([] (const QSO& q) { return (q.continent() == "EU"s); } ).size() };
+
+        try
+        { qtc_db.read(context.qtc_filename());    // it is not an error if the file doesn't exist
+        }
+
+        catch (const qtc_error& e)
+        { ost << "Error reading QTC file: " << e.reason() << endl;
+          exit(-1);
+        }
+
+        qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
 
  //     ost << "Finished adding the entire logbook to the unsent buffer" << endl
  //         << "Number of unsent QTCs = " << qtc_buf.n_unsent_qsos() << "; number of sent QTCs = " << qtc_buf.n_sent_qsos() << endl;
 
-      if (n_eu_qsos != qtc_buf.size())
-        alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS"s);
+        if (n_eu_qsos != qtc_buf.size())
+          alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS"s);
 
 // move the sent ones to the sent buffer
-      const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
+        const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
 
-      FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
+        FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
 
 //      ost << "Finished moving unsent to sent" << endl
 //          << "Number of unsent QTCs = " << qtc_buf.n_unsent_qsos() << "; number of sent QTCs = " << qtc_buf.n_sent_qsos() << endl;
 
 //      ost << "unsent QTCS: " << endl << qtc_buf.unsent_list_as_string() << endl;
 
-      statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
-      statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
+        statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
+        statistics.qtc_qsos_unsent(qtc_buf.n_unsent_qsos());
 
-      if (!vec_qs.empty())
-      { const qtc_series& last_qs { vec_qs[vec_qs.size() - 1] };
+        if (!vec_qs.empty())
+        { const qtc_series& last_qs { vec_qs[vec_qs.size() - 1] };
 
-        win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Last QTC: "s < last_qs.id() < " to "s <= last_qs.target();
+          win_qtc_status < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "Last QTC: "s < last_qs.id() < " to "s <= last_qs.target();
+        }
+
+        update_qtc_queue_window();
       }
-
-      update_qtc_queue_window();
-    }
 
 // display the current statistics
-      display_statistics(statistics.summary_string(rules));
-      update_score_window(statistics.points(rules));
-      update_mult_value();
-    }
+        display_statistics(statistics.summary_string(rules));
+        update_score_window(statistics.points(rules));
+        update_mult_value();
+      }
 
 // now delete the archive file if it exists, regardless of whether we've used it
-    file_delete(context.archive_name());
+      file_delete(context.archive_name());
 
-    if (clean)                                          // start with clean slate
-    { int index { 0 };
+      if (clean)                                          // start with clean slate
+      { int index { 0 };
 
-      const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
+        const string target { OUTPUT_FILENAME + "-"s + to_string(index) };
 
-      while (file_exists(target))
-        file_delete(OUTPUT_FILENAME + "-"s + to_string(index++));
+        while (file_exists(target))
+          file_delete(OUTPUT_FILENAME + "-"s + to_string(index++));
 
-      file_truncate(context.logfile());
-      file_truncate(context.archive_name());
+        file_truncate(context.logfile());
+        file_truncate(context.archive_name());
 
-      if (send_qtcs)
-        file_truncate(context.qtc_filename());
-    }
+        if (send_qtcs)
+          file_truncate(context.qtc_filename());
+      }
 
 // now we can start the cluster/RBN threads, since we know what we've worked if this was a rebuild
-    if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
-    { static pthread_t spawn_thread_id;
+      if (!context.cluster_server().empty() and !context.cluster_username().empty() and !context.my_ip().empty())
+      { static pthread_t spawn_thread_id;
 
-      try
-      { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_dx_cluster, nullptr, "cluster spawn"s);
-      }
+        try
+        { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_dx_cluster, nullptr, "cluster spawn"s);
+        }
 
-      catch (const pthread_error& e)
-      { ost << e.reason() << endl;
-        exit(-1);
+        catch (const pthread_error& e)
+        { ost << e.reason() << endl;
+          exit(-1);
+        }
       }
-    }
 
 // ditto for the RBN
-    if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
-    { static pthread_t spawn_thread_id;
+      if (!context.rbn_server().empty() and !context.rbn_username().empty() and !context.my_ip().empty())
+      { static pthread_t spawn_thread_id;
 
-      try
-      { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_rbn, nullptr, "RBN spawn"s);
+        try
+        { create_thread(&spawn_thread_id, &(attr_detached.attr()), spawn_rbn, nullptr, "RBN spawn"s);
+        }
+
+        catch (const pthread_error& e)
+        { ost << e.reason() << endl;
+          exit(-1);
+        }
       }
 
-      catch (const pthread_error& e)
-      { ost << e.reason() << endl;
-        exit(-1);
-      }
+      enter_sap_mode();                                       // explicitly enter SAP mode
+      win_active_p = &win_call;                               // set the active window
+      win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;    // explicitly force the cursor into the call window
+
+// if necessary, wait for the adif23 old log information to finish building
+      if (running_old_log_thread)
+        thr.join();
     }
-
-    enter_sap_mode();                                       // explicitly enter SAP mode
-    win_active_p = &win_call;                               // set the active window
-    win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;    // explicitly force the cursor into the call window
 
 // some testing stuff
 //  keyboard.push_key_press("g4amt", 1000);  // hi, Terry
@@ -8293,6 +8301,14 @@ pair<adif3_record, int> first_qso_after(const vector<adif3_record>& vqsos, const
   return { adif3_record(), -1 };
 };
 
+/*! \brief                          Find the first QSO in a chronological vector of ADIF3 records that occurs on or after a target date; or the first confirmed QSO after a given index number
+    \param  vqsos                   chronological vector of QSOs
+    \param  target_idate            target date [YYYYMMDD]
+    \param  index_last_marked_qso   the index of the most recently marked QSO
+    \return                         first QSO in <i>vqsos</i> whose date is on or after <i>idate</i>, and index of the QSO into <i>vqsos</i>
+
+    A returned index of -1 implies that there are no QSOs after the target date, and no confirmed QSOs after the index <i>index_last_marked_qso</i>
+*/
 pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_record>& vqsos, const int target_idate, const int index_last_marked_qso)
 { if (index_last_marked_qso != static_cast<int>(vqsos.size() - 1))                                    // make sure the last marked qso wasn't the last qso in the vector
     for (int n = index_last_marked_qso + 1; n < static_cast<int>(vqsos.size()); ++n)
@@ -8307,9 +8323,9 @@ pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_reco
   If context.old_qso_age_limit() is non-zero (here, N), the algorithm is a bit tricky:
     on a per-call per-band per-mode basis:
       1. Find oldest QSO; mark it;
-      2. Go forward N years
+      2. Go forward N years, marking confirmed QSOs
       3. if not past current date, find oldest QSO past the date found in 2; mark it
-          3a. Go forward N years
+          3a. Go forward N years, marking confirmed QSOs
           repeat steps 3 and 3a until past current date
       4. If most recent marked QSO is more than N years old, don't add any QSOs to the old log;
       5.   else add the marked QSO and any more recent ones to the old log
@@ -8319,8 +8335,7 @@ pair<adif3_record, int> first_qso_after_or_confirmed_qso(const vector<adif3_reco
 if we received a QSL -- even if I didn't send one -- that should count for something.
 */
 void adif3_build_old_log(void)
-{ //ost << "Inside adif3_build_old_log()" << endl;
-
+{
 // calculate current and (roughly) 10-years-ago dates [note that we are probably running this shortly prior to a date change, so it's not precise]      
   const string dts            { date_time_string() };
   const string today          { substring(dts, 0, 4) + substring(dts, 5, 2) + substring(dts, 8, 2) };
@@ -8328,9 +8343,6 @@ void adif3_build_old_log(void)
   const auto   old_qso_limit  { context.old_qso_age_limit() };         // number of years
   const string cutoff_date    { to_string(from_string<int>(today) - (old_qso_limit * 10000)) }; // date before which QSOs don't count
   const bool   limit_old_qsos { old_qso_limit != 0 };  // whether to limit old qsos
-  
-//  ost << "limit_old_qsos = " << boolalpha << limit_old_qsos << endl;
-//  ost << "old_qso_limit = " << old_qso_limit << endl;
 
   auto add_record_to_olog = [](const adif3_record& rec)
     { const string callsign { rec.callsign() };

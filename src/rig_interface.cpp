@@ -335,8 +335,6 @@ void rig_interface::split_enable(void)
   }
 
 // not a K3
-//  const int status { rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B) };  // magic parameters
-
   if ( const int status { rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B) }; status != RIG_OK)  // magic parameters
     _error_alert("Error executing SPLIT command"s);
   else
