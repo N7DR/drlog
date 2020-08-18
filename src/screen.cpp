@@ -882,8 +882,8 @@ bool window::common_processing(const keyboard_event& e)
     return (win <= e.str(), true);
 
 // '
-  if (e.is_unmodified() and e.is_char('\''))
-    return (win <= e.str(), true);
+  //if (e.is_unmodified() and e.is_char('\''))
+  //  return (win <= e.str(), true);
 
 // DELETE
   if (e.is_unmodified() and e.symbol() == XK_Delete)

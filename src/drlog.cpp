@@ -3606,12 +3606,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
-// and unmodified: // KEYPAD-DOWN-ARROW, KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
-//  if (!processed and e.is_unmodified() and ( (e.symbol() == XK_KP_2) or (e.symbol() == XK_KP_8)
-//                                              or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
-//  { update_quick_qsy();
-//    processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
-//  }
+// and unmodified: // KEYPAD-/, KEYPAD-*: up or down to next stn that matches the N7DR criteria
+  if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )
+  { //ost << "PROCESSING CHAR:" << (e.is_char(';') ? ";" : "'") << endl;
+    update_quick_qsy();
+    processed = process_bandmap_function(&bandmap::matches_criteria, e.is_char(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
+  }
 
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are testudine
