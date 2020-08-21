@@ -98,7 +98,8 @@ float bearing(const float& lat1, const float& long1, const float& lat2, const fl
     If there is no sunset or sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
     or day at the given location
 */
-string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset)
+//string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset)
+string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss)
 { const string date_string { date_time_string().substr(0, 10) };
 
   const int year  { from_string<int>(date_string.substr(0, 4)) };
@@ -112,7 +113,8 @@ string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sun
 
   const float longitude { lon };     // change in sign not necessary
   const float lnghour   { longitude / 15 };
-  const float t         { n + (( (calc_sunset ? 18 : 6) - lnghour) / 24) };
+ // const float t         { n + (( (calc_sunset ? 18 : 6) - lnghour) / 24) };
+  const float t         { n + (( ((srss == SRSS::SUNSET) ? 18 : 6) - lnghour) / 24) };
 
   const float m { (0.9856f * t) - 3.289f };
 
@@ -151,7 +153,8 @@ string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sun
   if (cos_h < -1)
     return "LIGHT"s;     // always light
 
-  float h { (calc_sunset ? (acos(cos_h) * RTOD) : (360 - acos(cos_h) * RTOD)) };
+//  float h { (calc_sunset ? (acos(cos_h) * RTOD) : (360 - acos(cos_h) * RTOD)) };
+  float h { (srss == SRSS::SUNSET ? (acos(cos_h) * RTOD) : (360 - acos(cos_h) * RTOD)) };
 
   h /= 15;
 

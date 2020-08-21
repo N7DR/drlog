@@ -56,6 +56,10 @@ float bearing(const float& lat1, const float& long1, const float& lat2, const fl
 */
 float distance(const float& lat1, const float& long1, const float& lat2, const float& long2);
 
+enum class SRSS { SUNRISE,
+                  SUNSET
+                };
+
 /*! \brief                  Calculate the time of sunrise or sunset
     \param  lat             latitude of target, in degrees (+ve north)
     \param  lon             longitude of target, in degrees (+ve east)
@@ -66,7 +70,8 @@ float distance(const float& lat1, const float& long1, const float& lat2, const f
     If there is no sunset or sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
     or day at the given location
 */
-std::string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset);
+//std::string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset);
+std::string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss);
 
 /*! \brief          Calculate the time of sunrise
     \param  lat     latitude of target, in degrees (+ve north)
@@ -77,7 +82,7 @@ std::string sunrise_or_sunset(const float& lat, const float& lon, const bool cal
     or day at the given location
 */
 inline std::string sunrise(const float& lat, const float& lon)
-  { return sunrise_or_sunset(lat, lon, false); }
+  { return sunrise_or_sunset(lat, lon, SRSS::SUNRISE); }
 
 /*! \brief          Calculate the time of sunset
     \param  lat     latitude of target, in degrees (+ve north)
@@ -88,6 +93,6 @@ inline std::string sunrise(const float& lat, const float& lon)
     or day at the given location
 */
 inline std::string sunset(const float& lat, const float& lon)
-  { return sunrise_or_sunset(lat, lon, true); }
+  { return sunrise_or_sunset(lat, lon, SRSS::SUNSET); }
 
 #endif /* FUNCTIONS_H_ */

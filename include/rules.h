@@ -19,6 +19,7 @@
 #include "bands-modes.h"
 #include "cty_data.h"
 #include "drlog_context.h"
+//#include "exchange.h"
 #include "grid.h"
 #include "macros.h"
 #include "pthread_support.h"
@@ -31,10 +32,6 @@
 
 extern pt_mutex  rules_mutex;                           ///< mutex for rules
 
-// forward declarations
-class EFT;
-class QSO;
-
 /// Some contests have unusual point structures
 enum class POINTS { NORMAL,                       ///< points defined in configuration file
                     IARU,                         ///< IARU contest
@@ -42,13 +39,14 @@ enum class POINTS { NORMAL,                       ///< points defined in configu
                   };
 
 /// Syntactic sugar for read-only access
-// CANNOT make this a non-const non-reference (to allow for move constructors) for reasons I don't understand
-// Exactly the same construction is used in drlog_context.h, without any problem
-// compiler complains about building a pair<const string, EFT>, which isn't mentioned anywhere in the source,
-// and the compiler error messages don't tell me exactly where the failure really occurs, although it seems to be
-// when compiling qtc.cpp; the compiler ponts to the forward declaration of class EFT, which makes no sense to me
+// CANNOT make this a non-const non-reference (to allow for move constructors). There is a circularity that
+// needs fixing, to do with rules.h, exchange.h and MULT_VALUE. 
 #define RULESREAD(y)          \
   inline const decltype(_##y)& y(void) const { SAFELOCK(rules); return _##y; }
+
+// forward declarations
+class EFT;
+class QSO;
 
 // -------------------------  choice_equivalents  ---------------------------
 
@@ -372,7 +370,7 @@ protected:
 
   std::unordered_set<std::string>     _countries;                     ///< collection of canonical prefixes for all the valid countries
 //  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
-  std::unordered_set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
+  std::unordered_set<std::string>     _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
   bool                                _mm_country_mults;              ///< can /MM QSOs be mults?

@@ -66,6 +66,13 @@ enum class DRLOG_MODE { CQ,         ///< I'm calling the other station
                         SAP         ///< the other station is calling me
                       };
 
+//constexpr bool FORCE_KNOWN    { true },    // whether to force a country mult as known; used in update_known_callsign_mults()
+//               NO_FORCE_KNOWN { false };
+
+enum class KNOWN_MULT { FORCE_KNOWN,         // whether to force a callsign or country mult as known; used in update_known_callsign/callsign_mults()
+                        NO_FORCE_KNOWN
+                      };
+
 // needed for WRAPPER_3 definition of memory_entry
 ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
 { ost << ( dm == DRLOG_MODE::CQ ? 'C' : 'S');
@@ -85,7 +92,7 @@ static const set<string> variable_exchange_fields { "SERNO"s };  ///< mutable ex
 constexpr bool DISPLAY_EXTRACT        { true },                       ///< display log extracts
                DO_NOT_DISPLAY_EXTRACT { !DISPLAY_EXTRACT };           ///< do not display log extracts
 
-constexpr bool FORCE_THRESHOLD { true };                              ///< for forcing accumulator to threshold
+//constexpr bool FORCE_THRESHOLD { true };                              ///< for forcing accumulator to threshold
 constexpr int  MILLION         { 1'000'000 };                         // syntactic sugar
 
 // define class for memory entries
@@ -172,7 +179,7 @@ bool   send_to_scratchpad(const string& str);                                   
 void   start_recording(audio_recorder& audio, const drlog_context& context);    ///< start audio recording
 void   start_of_thread(const string& name);                                     ///< Increase the counter for the number of running threads
 void   stop_recording(audio_recorder& audio);                                   ///< stop audio recording
-string sunrise_or_sunset(const string& callsign, const bool calc_sunset);       ///< Calculate the sunrise or sunset time for a station
+string sunrise_or_sunset(const string& callsign, const SRSS srss);              ///< Calculate the sunrise or sunset time for a station
 bool   swap_rit_xit(void);                                                      ///< Swap the states of RIT and XIT
 
 void test_exchange_templates(const contest_rules&, const string& test_filename);    ///< Debug exchange templates
@@ -187,12 +194,12 @@ void update_based_on_frequency_change(const frequency& f, const MODE m);        
 void update_batch_messages_window(const string& callsign = string());                                                   ///< Update the batch_messages window with the message (if any) associated with a call
 void update_best_dx(const grid_square& dx_gs, const string& callsign);                                                  ///< Update bext DX window, if it exists
 void update_individual_messages_window(const string& callsign = string());                                              ///< Update the individual_messages window with the message (if any) associated with a call
-void update_known_callsign_mults(const string& callsign, const bool force_known = false);                               ///< Possibly add a new callsign mult
-bool update_known_country_mults(const string& callsign, const bool force_known = false);                                ///< Possibly add a new country to the known country mults
+void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);    ///< Possibly add a new callsign mult
+bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known = KNOWN_MULT::NO_FORCE_KNOWN);     ///< Possibly add a new country to the known country mults
 void update_local_time(void);                                                                                           ///< Write the current local time to <i>win_local_time</i>
 void update_mult_value(void);                                                                                           ///< Calculate the value of a mult and update <i>win_mult_value</i>
 void update_quick_qsy(void);                                                                                            ///< update value of <i>quick_qsy_info</i> and <i>win_quick_qsy</i>
-void update_qsls_window(const string& = "");                                                                            ///< QSL information from old QSOs
+void update_qsls_window(const string& = EMPTY_STR);                                                                            ///< QSL information from old QSOs
 void update_qtc_queue_window(void);                                                                                     ///< the head of the QTC queue
 void update_rate_window(void);                                                                                          ///< Update the QSO and score values in <i>win_rate</i>
 void update_recording_status_window(void);                                                                              ///< update the RECORDING STATUS window
@@ -638,7 +645,7 @@ inline string serial_number_string(const unsigned int n)
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
 inline string sunrise(const string& callsign)
-  { return sunrise_or_sunset(callsign, false); }
+  { return sunrise_or_sunset(callsign, SRSS::SUNRISE); }
 
 /*! \brief              Calculate the sunset time for a station
     \param  callsign    call of the station for which sunset is desired
@@ -647,7 +654,7 @@ inline string sunrise(const string& callsign)
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
 inline string sunset(const string& callsign)
-  { return sunrise_or_sunset(callsign, true); }
+  { return sunrise_or_sunset(callsign, SRSS::SUNSET); }
 
 /*! \brief              Update the fuzzy window with matches for a particular call
     \param  callsign    callsign against which to generate the fuzzy matches
@@ -1548,7 +1555,7 @@ int main(int argc, char** argv)
           update_known_callsign_mults(qso.callsign());
 
 // country mults
-          update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
+          update_known_country_mults(qso.callsign(), KNOWN_MULT::FORCE_KNOWN);
           qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules) );
 
 // add exchange info for this call to the exchange db
@@ -3359,7 +3366,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         }
 
         update_known_callsign_mults(callsign);
-        update_known_country_mults(callsign, FORCE_THRESHOLD);
+        update_known_country_mults(callsign, KNOWN_MULT::FORCE_KNOWN);
 
         win_exchange <= exchange_str;
 
@@ -3537,7 +3544,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       {
 // possibly add the call to known mults
         update_known_callsign_mults(current_contents);
-        update_known_country_mults(current_contents, FORCE_THRESHOLD);
+        update_known_country_mults(current_contents, KNOWN_MULT::FORCE_KNOWN);
 
         bandmap_entry be;                        // default source is BANDMAP_ENTRY_LOCAL
 
@@ -3607,8 +3614,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   }
 
 // and unmodified: // KEYPAD-/, KEYPAD-*: up or down to next stn that matches the N7DR criteria
-  if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )
-  { //ost << "PROCESSING CHAR:" << (e.is_char(';') ? ";" : "'") << endl;
+  if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  { //ost << "PROCESSING CHAR:" << (e.is_char(';') ? ";" : "'") << endl;
     update_quick_qsy();
     processed = process_bandmap_function(&bandmap::matches_criteria, e.is_char(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
@@ -4515,7 +4521,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // is this a country mult?
             if (country_mults_used and (all_country_mults > qso.canonical_prefix()))  // is it even possible that this is a country mult?
             { if (mm_country_mults or !is_maritime_mobile(qso.call()))
-              { update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);                                      // does nothing if not auto remaining country mults
+              { update_known_country_mults(qso.callsign(), KNOWN_MULT::FORCE_KNOWN);                                      // does nothing if not auto remaining country mults
                 qso.is_country_mult( statistics.is_needed_country_mult(qso.callsign(), cur_band, cur_mode, rules) );     // set whether it's a country mult
               }
             }
@@ -4570,7 +4576,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
             if (old_worked_country_mults.size() != statistics.worked_country_mults(cur_band, cur_mode).size())
             { update_remaining_country_mults_window(statistics, cur_band, cur_mode);
-              update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
+              update_known_country_mults(qso.callsign(), KNOWN_MULT::FORCE_KNOWN);
             }
 
 // was the just-logged QSO an exchange mult?
@@ -5080,7 +5086,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 
 // we can't assume anything about the mult status
             update_known_callsign_mults(qso.callsign());
-            update_known_country_mults(qso.callsign(), FORCE_THRESHOLD);
+            update_known_country_mults(qso.callsign(), KNOWN_MULT::FORCE_KNOWN);
 
 // is this a country mult?
             qso.is_country_mult(statistics.is_needed_country_mult(qso.callsign(), qso.band(), qso.mode(), rules));
@@ -5460,9 +5466,10 @@ string bearing(const string& callsign)
 
     Returns "DARK" if it's always dark, and "LIGHT" if it's always light
  */
-string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
+//string sunrise_or_sunset(const string& callsign, const bool calc_sunset)
+string sunrise_or_sunset(const string& callsign, const SRSS srss)
 { const auto   [lat, lon] { latitude_and_longitude(callsign) };
-  const string rv         { sunrise_or_sunset(lat, lon, calc_sunset) };
+  const string rv         { sunrise_or_sunset(lat, lon, srss) };
 
   return rv;
 }
@@ -5785,8 +5792,9 @@ void* simulator_thread(void* vp)
     known callsign mults.
 
     Does not add the mult if the mult is unknown, unless <i>force_known</i> is known
+    force_known is always CALLSIGN_MULT::NO_FORCE_KNOWN in all known contests
 */
-void update_known_callsign_mults(const string& callsign, const bool force_known)
+void update_known_callsign_mults(const string& callsign, const KNOWN_MULT force_known)
 { if (callsign.empty())
     return;
 
@@ -5804,7 +5812,7 @@ void update_known_callsign_mults(const string& callsign, const bool force_known)
           { SAFELOCK(known_callsign_mults);
 
             if (context.auto_remaining_callsign_mults())
-            { if ( acc_callsigns[callsign_mult_name].add(prefix, force_known ? context.auto_remaining_callsign_mults_threshold() : 1) )
+            { if ( acc_callsigns[callsign_mult_name].add(prefix, (force_known == KNOWN_MULT::FORCE_KNOWN) ? context.auto_remaining_callsign_mults_threshold() : 1) )
                 known_callsign_mults.insert(prefix);
             }
           }
@@ -5841,7 +5849,7 @@ void update_known_callsign_mults(const string& callsign, const bool force_known)
     Adds only if REMAINING COUNTRY MULTS has been set to AUTO in the configuration file,
     and if the accumulator has reached the threshold
 */
-bool update_known_country_mults(const string& callsign, const bool force_known)
+bool update_known_country_mults(const string& callsign, const KNOWN_MULT force_known)
 { if (callsign.empty())
     return false;
 
@@ -5850,7 +5858,7 @@ bool update_known_country_mults(const string& callsign, const bool force_known)
   if (context.auto_remaining_country_mults())
   { const string canonical_prefix { location_db.canonical_prefix(callsign) };
 
-    if ( acc_countries.add(canonical_prefix, force_known ? context.auto_remaining_country_mults_threshold() : 1) )
+    if ( acc_countries.add(canonical_prefix, (force_known == KNOWN_MULT::FORCE_KNOWN) ? context.auto_remaining_country_mults_threshold() : 1) )
       rv = statistics.add_known_country_mult(canonical_prefix, rules);   // don't add if the rules don't recognise it as a country mult
   }
 

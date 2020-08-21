@@ -156,7 +156,15 @@ void rig_interface::prepare(const drlog_context& context)
     data_bits(context.rig1_data_bits());
     stop_bits(context.rig1_stop_bits());
 
-    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN);     // !!
+    if (_port_name.size() >= (FILPATHLEN - 2))                        // ridiculous C-ism
+    { const string msg { "Port name is too long: "s + _port_name };
+
+      _error_alert(msg);
+      ost << msg << endl;
+      exit(-1);
+    }
+
+    strncpy(_rigp->state.rigport.pathname, _port_name.c_str(), FILPATHLEN - 1);     // !! -1 to remove compiler warning about length
   }
 
   const int status { rig_open(_rigp) };
