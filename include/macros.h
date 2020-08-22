@@ -1117,4 +1117,10 @@ namespace std
   };
 }
 
+// generate a set from a vector, done here because the vector MUST NOT be generated twice 
+// (e.g., by returning a member of a class twice), because then the iterators might not match
+template <typename T>
+inline std::set<T> SET_FROM_VECTOR(const std::vector<T>& v)
+  { return std::set<T> { v.cbegin(), v.cend() }; }
+
 #endif    // MACROS_H

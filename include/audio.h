@@ -347,6 +347,10 @@ public:
 /// register a function for alerting the user
   inline void register_error_alert_function(void (*error_alert_function)(const std::string&) )
     { _error_alert_function = error_alert_function; }
+
+/// register a function for handling low-level ALSA errors (to prevent them from appearing on the screen)
+//  inline void register_alsa_error_function(void (*error_alert_function)(const std::string&) )
+
 };
 
 /*! \brief          Write a <i>PARAMS_STUCTURE</i> object to an output stream

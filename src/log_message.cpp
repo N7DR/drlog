@@ -38,4 +38,16 @@ message_stream::message_stream(const string& filename, const string& error_name)
 
   _ost.open(filename);
   _err.open(error_name);
+
+// we need to redirect stderr so that any messages sent there by libraries (ALSA, I'm looking at you)
+// don't show up on the screen. Direct them error file defined in the message_stream object.
+// there is a function -- int snd_lib_error_set_handler (snd_lib_error_handler_t handler) -- that
+// can change the ALSA error handler, but it requires a function with the signature 
+// typedef void(* snd_lib_error_handler_t) (const char *file, int line, const char *function, int err, const char *fmt,...) 
+// and I don't know how easily to do this since it's a variadic C function.	
+
+// so instead we'll just assume that the ALSA default writes to stderr, and will redirect that here
+
+// https://stackoverflow.com/questions/998162/is-it-possible-to-disable-stderr-in-c
+  freopen("stderr-output", "w", stderr);
 }

@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 164 2020-08-16 19:57:42Z  $
+// $Id: drlog.cpp 165 2020-08-22 16:19:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -378,7 +378,8 @@ EFT CALLSIGN_EFT("CALLSIGN"s);           ///< EFT used in constructor for parsed
 */
 bool ok_to_poll_k3 { true };                  ///< is it safe to poll the K3?
 
-const string OUTPUT_FILENAME { "output.txt"s };     ///< file to which debugging output is directed
+const string OUTPUT_FILENAME { "output.txt"s };    ///< file to which debugging output is directed
+//const string OUTPUT_FILENAME { "error.txt"s };     ///< file to which low-level errors are directed
 
 message_stream ost { OUTPUT_FILENAME };                ///< message stream for debugging output
 
@@ -465,7 +466,7 @@ dx_cluster*     rbn_p { nullptr };      ///< pointer to RBN information
 location_database location_db;              ///< global location database
 rig_interface rig;                          ///< rig control
 
-thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute for threads
+static thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute for threads
 
 window* win_active_p      { &win_call };          ///< start with the CALL window active
 window* last_active_win_p { nullptr };            ///< keep track of the last window that was active, before the current one
@@ -1987,7 +1988,7 @@ void* display_date_and_time(void* vp)
       if ( (last_second % 60 == 0) and (structured_time.tm_min == 0) )
       { if (context.auto_screenshot())
         { static pthread_t auto_screenshot_thread_id;
-          static string filename;
+          static string    filename;
 
           filename = "auto-screenshot-"s + dts.substr(0, 13) + "-"s + dts.substr(14);   // replace : with -
 
@@ -2249,7 +2250,9 @@ void* process_rbn_info(void* vp)
 
   string unprocessed_input;             // data from the cluster that have not yet been processed by this thread
 
-  const set<BAND> permitted_bands { rules.permitted_bands().cbegin(), rules.permitted_bands().cend() };
+//  const vector<BAND> permitted_bands_vec { rules.permitted_bands() };
+//  const set<BAND> permitted_bands_set { permitted_bands.begin(), permitted_bands.end() }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
+  const set<BAND> permitted_bands_set { SET_FROM_VECTOR(permitted_bands) }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
 
   deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
   deque<pair<string, frequency>> recent_mult_calls_1;                             // the queue of recent calls posted to the mult window
@@ -2318,11 +2321,11 @@ void* process_rbn_info(void* vp)
             if (mp.is_monitored(post.callsign()))
               mp += post;
 
-            if (permitted_bands > dx_band)              // process only if is on a band we care about
-            { const BAND               cur_band    { safe_get_band() };
-              const string&            dx_callsign { post.callsign() };
-              const string&            poster      { post.poster() };
-              const pair<string, frequency> target    { dx_callsign, post.freq() };
+            if (permitted_bands_set > dx_band)              // process only if is on a band we care about
+            { const BAND                    cur_band    { safe_get_band() };
+              const string&                 dx_callsign { post.callsign() };
+              const string&                 poster      { post.poster() };
+              const pair<string, frequency> target      { dx_callsign, post.freq() };
 
               bandmap_entry be { (post.source() == POSTING_SOURCE::CLUSTER) ? BANDMAP_ENTRY_SOURCE::CLUSTER : BANDMAP_ENTRY_SOURCE::RBN };
 
@@ -2331,7 +2334,6 @@ void* process_rbn_info(void* vp)
               
               if (rules.score_modes() > be.mode())
               { be.frequency_str_decimal_places(1);
-
                 be.expiration_time(post.time_processed() + ( post.source() == POSTING_SOURCE::CLUSTER ? (context.bandmap_decay_time_cluster() * 60) :
                                                                                                         (context.bandmap_decay_time_rbn() * 60 ) ) );
                 be.is_needed( is_needed_qso(dx_callsign, dx_band, be.mode()) );   // do we still need this guy?
@@ -6709,12 +6711,12 @@ void* spawn_rbn(void* vp)
   }
 
   static cluster_info rbn_info_for_thread(&win_rbn_line, &win_cluster_mult, rbn_p, &statistics, &location_db, &win_bandmap, &bandmaps);
-  static pthread_t thread_id_2;
-  static pthread_t thread_id_3;
+  static pthread_t thread_id_4;
+  static pthread_t thread_id_5;
 
   try
-  { create_thread(&thread_id_2, &(attr_detached.attr()), get_cluster_info, (void*)(rbn_p), "RBN read"s);
-    create_thread(&thread_id_3, &(attr_detached.attr()), process_rbn_info, (void*)(&rbn_info_for_thread), "RBN process"s);
+  { create_thread(&thread_id_4, &(attr_detached.attr()), get_cluster_info, (void*)(rbn_p), "RBN read"s);
+    create_thread(&thread_id_5, &(attr_detached.attr()), process_rbn_info, (void*)(&rbn_info_for_thread), "RBN process"s);
   }
 
   catch (const pthread_error& e)

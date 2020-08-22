@@ -1,4 +1,4 @@
-// $Id: functions.cpp 163 2020-08-06 19:46:33Z  $
+// $Id: functions.cpp 165 2020-08-22 16:19:06Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
