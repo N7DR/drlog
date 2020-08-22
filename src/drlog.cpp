@@ -172,10 +172,11 @@ memory_entry recall_memory(const unsigned int n);   ///< recall a memory
 void rescore(const contest_rules& rules);           ///< Rescore the entire contest
 void restore_data(const string& archive_filename);  ///< Extract the data from the archive file
 void rig_error_alert(const string& msg);            ///< Alert the user to a rig-related error
-bool rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
+//bool rit_control(const keyboard_event& e);          ///< Control RIT using the SHIFT keys
 
 void   send_qtc_entry(const qtc_entry& qe, const bool logit);                   ///< send a single QTC entry (on CW)
 bool   send_to_scratchpad(const string& str);                                   ///< Send a string to the SCRATCHPAD window
+bool   shift_control(const keyboard_event& e);                                  ///< Control RIT or main QRG using the SHIFT keys
 void   start_recording(audio_recorder& audio, const drlog_context& context);    ///< start audio recording
 void   start_of_thread(const string& name);                                     ///< Increase the counter for the number of running threads
 void   stop_recording(audio_recorder& audio);                                   ///< stop audio recording
@@ -3628,7 +3629,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // SHIFT (RIT control)
 // RIT changes via hamlib, at least on the K3, are testudine
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
-    processed = rit_control(e);
+    processed = shift_control(e);
 
 // ALT-Y -- delete last QSO
   if (!processed and e.is_alt('y'))
@@ -4737,7 +4738,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // SHIFT -- RIT control
 // RIT changes via hamlib, at least on the K3, are *very* slow
   if (!processed and (e.event() == KEY_PRESS) and ( (e.symbol() == XK_Shift_L) or (e.symbol() == XK_Shift_R) ) )
-    processed = rit_control(e);
+    processed = shift_control(e);
 
 // ALT-S -- toggle sub receiver
   if (!processed and e.is_alt('s'))
@@ -6363,14 +6364,16 @@ bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
 
     RIT changes via hamlib, at least on the K3, are *very* slow
 */
-bool rit_control(const keyboard_event& e)
+bool shift_control(const keyboard_event& e)
 { const int change { (e.symbol() == XK_Shift_L ? -shift_delta : shift_delta) };
 
   try
-  { int last_rit { rig.rit() };
+  { //int last_rit { rig.rit() };
 
     if (rig.rit_enabled())
-    { ok_to_poll_k3 = false;                // stop polling a K3
+    { int last_rit { rig.rit() };
+
+      ok_to_poll_k3 = false;                // stop polling a K3
 
       do
       { rig.rit(last_rit + change);                 // this takes forever through hamlib
@@ -6381,6 +6384,25 @@ bool rit_control(const keyboard_event& e)
       } while (keyboard.empty());                      // the next event should be a key-release, but anything will do
 
       ok_to_poll_k3 = true;             // restart polling a K3
+    }
+    else  // main frequency, not RIT
+    { if (active_window_name() == "CALL"s) 
+      { frequency last_qrg { rig.rig_frequency() };
+
+        ok_to_poll_k3 = false;                // stop polling a K3
+
+        do
+        { const frequency new_qrg { static_cast<double>(last_qrg.hz() + change) };
+
+          rig.rig_frequency(new_qrg);
+          last_qrg = new_qrg;
+
+          if (shift_poll)
+            sleep_for(milliseconds(shift_poll));
+        } while (keyboard.empty());                      // the next event should be a key-release, but anything will do
+
+        ok_to_poll_k3 = true;             // restart polling a K3
+      }
     }
   }
 
