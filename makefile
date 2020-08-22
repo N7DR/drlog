@@ -69,6 +69,9 @@ include/drmaster.h : include/macros.h include/string_functions.h
 include/exchange.h : include/macros.h include/pthread_support.h include/rules.h
 	touch include/exchange.h
 	
+include/exchange_field_template.h : include/drlog_context.h
+	touch include/exchange_field_template.h
+
 # functions.h has no dependencies
 
 include/fuzzy.h : include/drmaster.h
@@ -115,7 +118,7 @@ include/rate.h : include/log_message.h include/pthread_support.h
 include/rig_interface.h : include/bands-modes.h include/drlog_context.h include/macros.h include/pthread_support.h include/x_error.h
 	touch include/rig_interface.h
 	
-include/rules.h : include/bands-modes.h	include/cty_data.h include/drlog_context.h include/grid.h include/macros.h \
+include/rules.h : include/bands-modes.h	include/cty_data.h include/drlog_context.h include/exchange_field_template.h include/grid.h include/macros.h \
                   include/pthread_support.h include/serialization.h
 	touch include/rules.h
 	
@@ -192,10 +195,13 @@ src/drlog_error.cpp : include/drlog_error.h
 src/drmaster.cpp : include/drmaster.h
 	touch src/drmaster.cpp
 	
-src/exchange.cpp : include/cty_data.h include/diskfile.h include/drmaster.h include/exchange.h include/log.h \
+src/exchange.cpp : include/cty_data.h include/diskfile.h include/drmaster.h include/exchange.h include/log.h include/exchange_field_template.h \
                    include/string_functions.h
 	touch src/exchange.cpp
 	
+src/exchange_field_template.cpp : include/exchange_field_template.h
+	touch src/exchange_field_template.cpp
+
 src/functions.cpp : include/functions.h include/log_message.h include/string_functions.h
 	touch src/functions.cpp
 	
@@ -312,6 +318,9 @@ bin/drmaster.o : src/drmaster.cpp
 bin/exchange.o : src/exchange.cpp
 	$(CC) $(CFLAGS) -o $@ src/exchange.cpp
 
+bin/exchange_field_template.o : src/exchange_field_template.cpp
+	$(CC) $(CFLAGS) -o $@ src/exchange_field_template.cpp
+
 bin/functions.o : src/functions.cpp
 	$(CC) $(CFLAGS) -o $@ src/functions.cpp
 
@@ -387,7 +396,7 @@ bin/x_error.o : src/x_error.cpp
 bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
             bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
             bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
-            bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
+            bin/exchange_field_template.o bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
             bin/log_message.o bin/memory.o bin/multiplier.o bin/parallel_port.o \
             bin/procfs.o bin/pthread_support.o bin/qso.o \
             bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
@@ -396,7 +405,7 @@ bin/drlog : bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo
 	$(CC) $(LINKFLAGS) bin/adif3.o bin/audio.o bin/bandmap.o bin/bands-modes.o bin/cabrillo.o \
 	bin/cluster.o bin/command_line.o bin/cty_data.o bin/cw_buffer.o bin/diskfile.o \
 	bin/drlog.o bin/drlog_context.o bin/drlog_error.o bin/drmaster.o bin/exchange.o \
-	bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
+	bin/exchange_field_template.o bin/functions.o bin/fuzzy.o bin/grid.o bin/keyboard.o bin/log.o \
 	bin/log_message.o bin/memory.o bin/multiplier.o bin/parallel_port.o \
 	bin/procfs.o bin/pthread_support.o bin/qso.o \
 	bin/qtc.o bin/rate.o bin/rig_interface.o bin/rules.o bin/scp.o \
