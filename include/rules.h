@@ -19,7 +19,7 @@
 #include "bands-modes.h"
 #include "cty_data.h"
 #include "drlog_context.h"
-//#include "exchange.h"
+#include "exchange_field_template.h"
 #include "grid.h"
 #include "macros.h"
 #include "pthread_support.h"
@@ -42,10 +42,10 @@ enum class POINTS { NORMAL,                       ///< points defined in configu
 // CANNOT make this a non-const non-reference (to allow for move constructors). There is a circularity that
 // needs fixing, to do with rules.h, exchange.h and MULT_VALUE. 
 #define RULESREAD(y)          \
-  inline const decltype(_##y)& y(void) const { SAFELOCK(rules); return _##y; }
+  inline decltype(_##y) y(void) const { SAFELOCK(rules); return _##y; }
 
 // forward declarations
-class EFT;
+//class EFT;
 class QSO;
 
 // -------------------------  choice_equivalents  ---------------------------

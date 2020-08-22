@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/regex.hpp>    // because libstdc++ support for regex is currently essentially nonexistent, even though it's in the standard
+//#include <boost/regex.hpp>    // because libstdc++ support for regex is currently essentially nonexistent, even though it's in the standard
 
 class exchange_field_template;                  ///< forward declaration
 
@@ -403,6 +403,8 @@ public:
     { return _db.size(); }
 };
 
+
+#if 0
 // -------------------------  EFT  ---------------------------
 
 /*! \class  EFT
@@ -560,6 +562,7 @@ public:
     \return         the output stream
 */
 std::ostream& operator<<(std::ostream& ost, const EFT& eft);
+#endif  // EFT 0
 
 // -------------------------  sweepstakes_exchange  ---------------------------
 

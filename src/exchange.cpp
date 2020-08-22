@@ -17,12 +17,13 @@
 #include "diskfile.h"
 #include "drmaster.h"
 #include "exchange.h"
+#include "exchange_field_template.h"
 #include "log.h"
 #include "string_functions.h"
 
 #include <array>
 
-using namespace boost;                  // for regex
+//using namespace boost;                  // for regex
 using namespace std;
 
 extern contest_rules           rules;                               ///< the rules for this contest
@@ -1382,6 +1383,7 @@ string process_cut_digits(const string& input)
   return rv;
 }
 
+#if 0
 // -------------------------  EFT  ---------------------------
 
 /*! \class  EFT
@@ -1683,6 +1685,7 @@ ostream& operator<<(ostream& ost, const EFT& eft)
 
   return ost;
 }
+#endif // 0 -- EFT
 
 // -------------------------  sweepstakes_exchange  ---------------------------
 

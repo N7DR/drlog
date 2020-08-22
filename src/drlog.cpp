@@ -1738,7 +1738,9 @@ int main(int argc, char** argv)
 
 // if necessary, wait for the adif23 old log information to finish building
       if (running_old_log_thread)
-        thr.join();
+      { thr.join();
+        alert("Completed build of old log"s);
+      }
     }
 
 // some testing stuff
@@ -1839,6 +1841,8 @@ int main(int argc, char** argv)
 
 // force multithreaded
     keyboard.x_multithreaded(true);    // because we might perform an auto backup whilst doing other things with the display
+
+    alert("drlog READY"s);
 
 // everything is set up and running. Now we simply loop and process the keystrokes.
     while (1)
