@@ -116,7 +116,7 @@ protected:
 
   std::vector< std::pair< COLOUR_TYPE, COLOUR_TYPE> > _colours;    ///< the (globally) used colour pairs
 
-  pt_mutex _colours_mutex;                         ///< allow thread-safe access
+  pt_mutex _colours_mutex { "CPAIR COLOURS"s };                         ///< allow thread-safe access
 
 /*! \brief      Private function to add a new pair of colours
     \param  p   foreground colour, background colour
@@ -135,7 +135,7 @@ public:
     \return         the number of the colour pair
 
     If the pair is already known, returns the number of the known pair.
-    Note the pair number 0 cannot be changed, so we ignore it here and start counting from one
+    Note that the pair number 0 cannot be changed, so we ignore it here and start counting from one
 */
   PAIR_NUMBER_TYPE add(const COLOUR_TYPE fg, const COLOUR_TYPE bg);
 

@@ -55,7 +55,7 @@ void print_error_and_exit(const string& line)
     \brief  The variables and constants that comprise the context for drlog
 */
 
-pt_mutex _context_mutex;                    ///< mutex for the context
+pt_mutex _context_mutex { "DRLOG CONTEXT"s };                    ///< mutex for the context
 
 /*! \brief              Set the value of points, using the POINTS [CW|SSB] command
     \param  command     the complete line from the configuration file

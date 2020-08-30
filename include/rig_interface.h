@@ -72,7 +72,7 @@ protected:
   std::string                             _port_name;                     ///< name of port
   RIG*                                    _rigp;                          ///< hamlib handle
   bool                                    _rig_connected { false };       ///< is a rig connected?
-  pt_mutex                                _rig_mutex;                     ///< mutex for all operations
+  pt_mutex                                _rig_mutex { "RIG INTERFACE"s };                     ///< mutex for all operations
   unsigned int                            _rig_poll_interval;             ///< interval between polling for rig status, in milliseconds
   rig_status                              _status;                        ///< most recent rig frequency and mode from the periodic poll
   pthread_t                               _thread_id;                     ///< ID for the thread that polls the rig for status

@@ -27,7 +27,7 @@ using namespace std;
 
 extern message_stream ost;      ///< for debugging and logging
 
-pt_mutex statistics_mutex;      ///< mutex for the (singleton) running_statistics object
+pt_mutex statistics_mutex { "STATISTICS"s };      ///< mutex for the (singleton) running_statistics object
 
 constexpr unsigned int FIRST_FIELD_WIDTH { 10 };         ///< width of first field
 constexpr unsigned int FIELD_WIDTH       { 6 };          ///< width of other fields

@@ -17,7 +17,7 @@
 
 using namespace std;
 
-pt_mutex multiplier_mutex;          ///< mutex for all the multiplier objects
+pt_mutex multiplier_mutex { "MULTIPLIER"s };          ///< one mutex for all the multiplier objects
 
 // -----------  multiplier  ----------------
 

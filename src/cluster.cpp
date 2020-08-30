@@ -33,9 +33,9 @@ extern pt_mutex thread_check_mutex;     ///< mutex for controlling threads
 
 extern bool exiting;                    ///< is the program exiting?
 
-pt_mutex buffer_mutex;                  ///< mutex for the cluster buffer
-pt_mutex monitored_posts_mutex;         ///< mutex for the monitored posts
-pt_mutex rbn_buffer_mutex;              ///< mutex for the RBN buffer
+pt_mutex buffer_mutex          { "CLUSTER BUFFER"s };                  ///< mutex for the cluster buffer
+pt_mutex monitored_posts_mutex { "MONITORED POSTS"s };         ///< mutex for the monitored posts
+pt_mutex rbn_buffer_mutex      { "RBN BUFFER"s };              ///< mutex for the RBN buffer
 
 // parameters for the TCP connection
 constexpr unsigned int IDLE_SECS   { 300 };

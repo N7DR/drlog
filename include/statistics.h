@@ -360,7 +360,7 @@ class call_history
 protected:
 
   std::map<std::string, std::set<bandmode> > _history;              ///< container for the history
-  pt_mutex                                   _history_mutex;        ///< mutex for the container
+  pt_mutex                                   _history_mutex { "DEFAULT CALL HISTORY"s };        ///< mutex for the container
 
 public:
 

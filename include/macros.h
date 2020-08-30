@@ -230,11 +230,11 @@ protected:                                             \
                                                        \
 public:                                                \
                                                        \
-  nm( a0 X )                                           \
+  explicit nm( const a0 & X )                                           \
     { std::get<0>(*this) = X;                          \
     }                                                  \
                                                        \
-  inline /* const */ a0 a1(void) const                       \
+  inline a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(const a0 & var)                       \
@@ -255,13 +255,13 @@ public:                                                \
       std::get<1>(*this) = Y;                          \
     }                                                  \
                                                        \
-  inline /* const */ a0 a1(void) const                       \
+  inline a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(const a0 & var)                       \
     { std::get<0>(*this) = var; }                      \
                                                        \
-  inline /* const */ b0 b1(void) const                       \
+  inline b0 b1(void) const                       \
     { return std::get<1>(*this); }                     \
                                                        \
   inline void b1(const b0 & var)                       \
@@ -310,24 +310,24 @@ public:                                                \
       std::get<2>(*this) = Z;                          \
     }                                                  \
                                                        \
-  nm( void ) { }                                       \
+  nm(void) = default;                                       \
                                                        \
-  inline /* const */ a0 a1(void) const                       \
+  inline a0 a1(void) const                       \
     { return std::get<0>(*this); }                     \
                                                        \
-  inline void a1(a0 var)                               \
+  inline void a1(const a0 & var)                               \
     { std::get<0>(*this) = var; }                      \
                                                        \
-  inline /* const */ b0 b1(void) const                       \
+  inline b0 b1(void) const                       \
     { return std::get<1>(*this); }                     \
                                                        \
-  inline void b1(b0 var)                               \
+  inline void b1(const b0 & var)                               \
     { std::get<1>(*this) = var; }                      \
                                                        \
-  inline /* const */ c0 c1(void) const                       \
+  inline c0 c1(void) const                       \
     { return std::get<2>(*this); }                     \
                                                        \
-  inline void c1(c0 var)                               \
+  inline void c1(const c0 & var)                               \
     { std::get<2>(*this) = var; }                      \
 };                                                     \
                                                        \
@@ -389,24 +389,24 @@ public:                                                                     \
       std::get<2>(*this) = Z;                                               \
     }                                                                       \
                                                                             \
-  nm( void ) { }                                                            \
+  nm(void) = default;                                                           \
                                                                             \
-  inline /* const */ a0 a1(void) const                                            \
+  inline a0 a1(void) const                                            \
     { return std::get<0>(*this); }                                          \
                                                                             \
-  inline void a1(a0 var)                                                    \
+  inline void a1(const a0 & var)                                                    \
     { std::get<0>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ b0 b1(void) const                                            \
+  inline b0 b1(void) const                                            \
     { return std::get<1>(*this); }                                          \
                                                                             \
-  inline void b1(b0 var)                                                    \
+  inline void b1(const b0 & var)                                                    \
     { std::get<1>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ c0 c1(void) const                                            \
+  inline c0 c1(void) const                                            \
     { return std::get<2>(*this); }                                          \
                                                                             \
-  inline void c1(c0 var)                                                    \
+  inline void c1(const c0 & var)                                                    \
     { std::get<2>(*this) = var; }                                           \
                                                                             \
     template<typename Archive>                                              \
@@ -475,30 +475,30 @@ public:                                                                     \
       std::get<3>(*this) = A;                                               \
     }                                                                       \
                                                                             \
-  nm( void ) { }                                                            \
+  nm(void) = default;                                                            \
                                                                             \
-  inline /* const */ a0 a1(void) const                                            \
+  inline a0 a1(void) const                                            \
     { return std::get<0>(*this); }                                          \
                                                                             \
-  inline void a1(a0 var)                                                    \
+  inline void a1(const a0 & var)                                                    \
     { std::get<0>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ b0 b1(void) const                                            \
+  inline b0 b1(void) const                                            \
     { return std::get<1>(*this); }                                          \
                                                                             \
-  inline void b1(b0 var)                                                    \
+  inline void b1(const b0 & var)                                                    \
     { std::get<1>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ c0 c1(void) const                                            \
+  inline c0 c1(void) const                                            \
     { return std::get<2>(*this); }                                          \
                                                                             \
-  inline void c1(c0 var)                                                    \
+  inline void c1(const c0 & var)                                                    \
     { std::get<2>(*this) = var; }                                           \
                                                                             \
-  inline /* const */ d0 d1(void) const                                            \
+  inline d0 d1(void) const                                            \
     { return std::get<3>(*this); }                                          \
                                                                             \
-  inline void d1(d0 var)                                                    \
+  inline void d1(const d0 & var)                                                    \
     { std::get<3>(*this) = var; }                                           \
                                                                             \
 template<typename Archive>                                                  \
@@ -537,7 +537,7 @@ public:                                                                     \
       std::get<4>(*this) = B;                                               \
     }                                                                       \
                                                                             \
-  nm(void) { }                                                              \
+  nm(void) = default;                                                              \
                                                                             \
   inline a0 a1(void) const                                                  \
     { return std::get<0>(*this); }                                          \

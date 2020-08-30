@@ -33,7 +33,7 @@ extern cpair colours;
 extern message_stream   ost;                        ///< for debugging, info
 
 // globals
-pt_mutex screen_mutex;          ///< mutex for access to screen
+pt_mutex screen_mutex { "SCREEN"s };          ///< mutex for access to screen
 
 /*! \brief      Return a pair of colours
     \param  n   pair number

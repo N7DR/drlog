@@ -93,7 +93,7 @@ public:
     { }
 
 /// destructor
-  virtual ~thread_attribute(void);
+  ~thread_attribute(void);
 
 /*! \brief      Set the detached state
     \param  b   whether to set to DETACHED (true) or JOINABLE (false)
@@ -179,7 +179,7 @@ public:
   int priority(void) const;
 
 /// get attributes
-  inline const pthread_attr_t& attr(void) const  // note the reference
+  inline const pthread_attr_t& attr(void) const  // note the const reference
     { return _attr; }
 };
 
@@ -201,49 +201,49 @@ std::ostream& operator<<(std::ostream& ost, const pthread_attr_t& pa);
     \param  pa  C-style attributes
     \return     whether <i>pa</i> is DETACHED
 */
-const bool attribute_detached(const pthread_attr_t& pa);
+bool attribute_detached(const pthread_attr_t& pa);
 
 /*! \brief      Get the scheduling policy of C-style attributes
     \param  pa  C-style attributes
     \return     the scheduling policy associated with <i>pa</i>
 */
-const int attribute_policy(const pthread_attr_t& pa);
+int attribute_policy(const pthread_attr_t& pa);
 
 /*! \brief      Get the scope of C-style attributes
     \param  pa  C-style attributes
     \return     the scope associated with <i>pa</i>
 */
-const int attribute_scope(const pthread_attr_t& pa);
+int attribute_scope(const pthread_attr_t& pa);
 
 /*! \brief      Get the inheritance policy of C-style attributes
     \param  pa  C-style attributes
     \return     the inheritance policy associated with <i>pa</i>
 */
-const int attribute_inheritance_policy(const pthread_attr_t& pa);
+int attribute_inheritance_policy(const pthread_attr_t& pa);
 
 /*! \brief      Get the stack size of C-style attributes
     \param  pa  C-style attributes
     \return     the stack size associated with <i>pa</i>, in bytes
 */
-const size_t attribute_stack_size(const pthread_attr_t& pa);
+size_t attribute_stack_size(const pthread_attr_t& pa);
 
 /*! \brief      Get the maximum allowed priority for the scheduling policy of C-style attributes
     \param  pa  C-style attributes
     \return     maximum allowed priority for the scheduling policy of <i>pa</i>
 */
-const int attribute_max_priority(const pthread_attr_t& pa);
+int attribute_max_priority(const pthread_attr_t& pa);
 
 /*! \brief      Get the minimum allowed priority for the scheduling policy of C-style attributes
     \param  pa  C-style attributes
     \return     minimum allowed priority for the scheduling policy of <i>pa</i>
 */
-const int attribute_min_priority(const pthread_attr_t& pa);
+int attribute_min_priority(const pthread_attr_t& pa);
 
 /*! \brief      Get the priority of C-style attributes
     \param  pa  C-style attributes
     \return     the priority associated with <i>pa</i>
 */
-const int attribute_priority(const pthread_attr_t& pa);
+int attribute_priority(const pthread_attr_t& pa);
 
 // -------------------------------------------  thread_specific_data  -----------------------
 
@@ -307,18 +307,18 @@ protected:
 public:
 
 /// constructor
-  inline pt_mutex(void)
-    { pthread_mutex_init(&_mutex, NULL); }
+//  inline pt_mutex(void)
+//    { pthread_mutex_init(&_mutex, NULL); }
     
   inline explicit pt_mutex(const std::string& nm) :
     _name(nm)
-  { pthread_mutex_init(&_mutex, NULL); }
+    { pthread_mutex_init(&_mutex, NULL); }
     
 /// forbid copying
   pt_mutex(const pt_mutex&) = delete;
 
 /// destructor
-  virtual ~pt_mutex(void);
+  /* virtual */ ~pt_mutex(void);
 
 /// lock the mutex
   void lock(void);
@@ -327,11 +327,11 @@ public:
   void unlock(void);
 
 /// get the thread ID
-  inline const pthread_t thread_id(void) const
+  inline pthread_t thread_id(void) const
     { return _thread_id; }
     
 /// get the name
-  inline const std::string name(void) const
+  inline std::string name(void) const
     { return _name; }
 
   friend class pt_condition_variable;       ///< needs access to details of the mutex
@@ -356,11 +356,11 @@ public:
     { pthread_mutexattr_init(&_mutexattr); }
 
 /// destructor
-  inline virtual ~pt_mutex_attributes(void)
+  inline ~pt_mutex_attributes(void)
     { pthread_mutexattr_destroy(&_mutexattr); }
 
 /// get the priority ceiling
-  const int priority_ceiling(void) const;
+  int priority_ceiling(void) const;
 
 /*! \brief      Set the priority ceiling
     \param  pc  new priority ceiling
@@ -368,12 +368,12 @@ public:
   void priority_ceiling(const int pc);
 
 /// get the protocol
-  const int protocol(void) const;
+  int protocol(void) const;
   
 /*! \brief      Set the protocol name
     \param  pc  new protocol name
 */
-  const std::string protocol_name(void) const;
+  std::string protocol_name(void) const;
 
 /*! \brief      Set the protocol
     \param  pr  new protocol
@@ -381,10 +381,10 @@ public:
   void protocol(const int pr);
 
 /// get the type
-  const int type(void) const;
+  int type(void) const;
   
 /// get the name of the type
-  const std::string type_name(void) const;
+  std::string type_name(void) const;
 
 /*! \brief      Set the type
     \param  ty  new type
@@ -423,7 +423,7 @@ public:
   explicit pt_condition_variable(pt_mutex& mtx);
    
 /// destructor
-  inline virtual ~pt_condition_variable(void)
+  inline ~pt_condition_variable(void)
     { pthread_cond_destroy(&_cond); }
 
 /*! \brief          Set the value of the associated mutex
@@ -444,7 +444,7 @@ public:
     \param  n_secs  number of seconds to wait
     \return         whether the wait timed-out
 */
-  const bool wait(const unsigned int n_secs);
+  bool wait(const unsigned int n_secs);
 
 /*! \brief  Signal the condition variable
 
@@ -481,7 +481,7 @@ public:
     \param  ptm     mutex to be locked
     \param  name    name of mutex
 */
-  safelock(pt_mutex& ptm, const std::string& name);
+  explicit safelock(pt_mutex& ptm, const std::string& name = std::string());
 
 /// forbid copying
   safelock(const safelock&) = delete;
@@ -508,7 +508,7 @@ public:
   pthread_error_messages(void);
 
 /// Destructor
-  inline virtual ~pthread_error_messages(void) = default;
+  ~pthread_error_messages(void) = default;
 
 /*!  \brief             Add a reason message to the list of possible error messages
      \param  code       reason code
@@ -519,7 +519,7 @@ public:
 };
 
 /// How many threads belong to this process?
-const unsigned int n_threads(void);
+unsigned int n_threads(void);
 
 extern const pthread_error_messages pthread_error_message;    ///< pthread error messages
 
@@ -529,7 +529,7 @@ extern const pthread_error_messages pthread_error_message;    ///< pthread error
     \return     <i>v</i>, following a lock and unlock
 */
 template <class T>
-const T SAFELOCK_GET(pt_mutex& m, const T& v)
+/* const */ T SAFELOCK_GET(pt_mutex& m, const T& v)
 { safelock safelock_z(m, "SAFELOCK_GET"s);
 
   return v;

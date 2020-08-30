@@ -285,7 +285,7 @@ protected:
 
   std::deque<QSO> _qsos;                    ///< QSOs contained in the extract
 
-  pt_mutex _extract_mutex;                  ///< mutex for thread safety
+  pt_mutex _extract_mutex { "LOG EXTRACT"s };                  ///< mutex for thread safety
 
 public:
 

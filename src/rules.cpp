@@ -25,7 +25,7 @@
 
 using namespace std;
 
-pt_mutex rules_mutex;                   ///< mutex for the contest_rules object
+pt_mutex rules_mutex { "RULES"s };                   ///< mutex for the contest_rules object
 
 extern const set<string> CONTINENT_SET; ///< the abbreviations for the continents
 extern message_stream ost;              ///< for debugging and logging

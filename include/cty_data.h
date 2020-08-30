@@ -519,7 +519,7 @@ protected:
 
 //  void _insert_into_database(const cty_record& rec, LOCATION_DBTYPE& target_database);
 
-  mutable pt_mutex _location_database_mutex;  ///< to make location_database objects thread-safe;
+  mutable pt_mutex _location_database_mutex { "LOCATION DATABASE"s };  ///< to make location_database objects thread-safe;
    
 public:
 

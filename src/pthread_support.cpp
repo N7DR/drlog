@@ -344,7 +344,7 @@ void thread_attribute::stack_size(const size_t size)
 { const int status { pthread_attr_setstacksize(&_attr, size) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error setting stack size: " + to_string(size) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error setting stack size: "s + to_string(size) + "status = "s + to_string(status));
 }
 
 /// get the stack size (in bytes)
@@ -354,7 +354,7 @@ size_t thread_attribute::stack_size(void) const
   const int status { pthread_attr_getstacksize(&_attr, &size) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: " + to_string(size) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: "s + to_string(size) + "status = "s + to_string(status));
 
   return size;
 }
@@ -365,7 +365,7 @@ int thread_attribute::max_priority(void) const
   const int status       { sched_get_priority_max(sched_policy) };
 
   if (status == -1)
-    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting maximum priority for policy: " + to_string(sched_policy));
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting maximum priority for policy: "s + to_string(sched_policy));
 
   return status;
 }
@@ -376,7 +376,7 @@ int thread_attribute::min_priority(void) const
   const int status       { sched_get_priority_min(sched_policy) };
 
   if (status == -1)
-    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting minimum priority for policy: " + to_string(sched_policy));
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting minimum priority for policy: "s + to_string(sched_policy));
 
   return status;
 }
@@ -401,7 +401,7 @@ void thread_attribute::priority(const int priority)
   const int status { pthread_attr_setschedparam(&_attr, &param) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error setting priority: " + to_string(priority) + "status = " + to_string(status));
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error setting priority: "s + to_string(priority) + "status = "s + to_string(status));
 }
 
 /// get the priority
@@ -411,7 +411,7 @@ int thread_attribute::priority(void) const
   const int status { pthread_attr_getschedparam(&_attr, &param) };
 
   if (status != 0)
-    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = " + to_string(status));
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = "s + to_string(status));
 
   return param.sched_priority;
 }
@@ -433,19 +433,19 @@ ostream& operator<<(ostream& ost, const thread_attribute& ta)
 
   switch (policy)
   { case SCHED_FIFO :
-      policy_str = "SCHED_FIFO";
+      policy_str = "SCHED_FIFO"s;
       break;
 
     case SCHED_OTHER :
-      policy_str = "SCHED_OTHER";
+      policy_str = "SCHED_OTHER"s;
       break;
 
     case SCHED_RR :
-      policy_str = "SCHED_RR";
+      policy_str = "SCHED_RR"s;
       break;
 
     default :
-      policy_str = "UNKNOWN";
+      policy_str = "UNKNOWN"s;
   }
 
   ost << policy_str << endl
@@ -456,15 +456,15 @@ ostream& operator<<(ostream& ost, const thread_attribute& ta)
 
   switch (scope)
   { case PTHREAD_SCOPE_PROCESS :
-      scope_str = "PTHREAD_SCOPE_PROCESS";
+      scope_str = "PTHREAD_SCOPE_PROCESS"s;
       break;
 
     case PTHREAD_SCOPE_SYSTEM :
-      scope_str = "PTHREAD_SCOPE_SYSTEM";
+      scope_str = "PTHREAD_SCOPE_SYSTEM"s;
       break;
 
     default :
-      scope_str = "UNKNOWN";
+      scope_str = "UNKNOWN"s;
   }
 
   ost << scope_str << endl
@@ -475,15 +475,15 @@ ostream& operator<<(ostream& ost, const thread_attribute& ta)
 
   switch (ipolicy)
   { case PTHREAD_EXPLICIT_SCHED :
-      ipolicy_str = "PTHREAD_EXPLICIT_SCHED";
+      ipolicy_str = "PTHREAD_EXPLICIT_SCHED"s;
       break;
 
     case PTHREAD_INHERIT_SCHED :
-      ipolicy_str = "PTHREAD_INHERIT_SCHED";
+      ipolicy_str = "PTHREAD_INHERIT_SCHED"s;
       break;
 
     default :
-      ipolicy_str = "UNKNOWN";
+      ipolicy_str = "UNKNOWN"s;
   }
 
   ost << ipolicy_str << endl
@@ -511,19 +511,19 @@ ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
 
   switch (tpolicy)
   { case SCHED_FIFO :
-    policy_str = "SCHED_FIFO";
+    policy_str = "SCHED_FIFO"s;
     break;
 
     case SCHED_OTHER :
-      policy_str = "SCHED_OTHER";
+      policy_str = "SCHED_OTHER"s;
       break;
 
     case SCHED_RR :
-      policy_str = "SCHED_RR";
+      policy_str = "SCHED_RR"s;
       break;
 
     default :
-      policy_str = "UNKNOWN";
+      policy_str = "UNKNOWN"s;
   }
 
   ost << policy_str << endl
@@ -534,15 +534,15 @@ ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
 
   switch (tscope)
   { case PTHREAD_SCOPE_PROCESS :
-      scope_str = "PTHREAD_SCOPE_PROCESS";
+      scope_str = "PTHREAD_SCOPE_PROCESS"s;
       break;
 
     case PTHREAD_SCOPE_SYSTEM :
-      scope_str = "PTHREAD_SCOPE_SYSTEM";
+      scope_str = "PTHREAD_SCOPE_SYSTEM"s;
       break;
 
     default :
-      scope_str = "UNKNOWN";
+      scope_str = "UNKNOWN"s;
   }
 
   ost << scope_str << endl
@@ -553,15 +553,15 @@ ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
 
   switch (ipolicy)
   { case PTHREAD_EXPLICIT_SCHED :
-      ipolicy_str = "PTHREAD_EXPLICIT_SCHED";
+      ipolicy_str = "PTHREAD_EXPLICIT_SCHED"s;
       break;
 
     case PTHREAD_INHERIT_SCHED :
-      ipolicy_str = "PTHREAD_INHERIT_SCHED";
+      ipolicy_str = "PTHREAD_INHERIT_SCHED"s;
       break;
 
     default :
-      ipolicy_str = "UNKNOWN";
+      ipolicy_str = "UNKNOWN"s;
   }
 
   ost << ipolicy_str << endl
@@ -577,13 +577,13 @@ ostream& operator<<(ostream& ost, const pthread_attr_t& pa)
     \param  pa  C-style attributes
     \return     whether <i>pa</i> is DETACHED
 */
-const bool attribute_detached(const pthread_attr_t& pa)
+bool attribute_detached(const pthread_attr_t& pa)
 { int state;
 
-  const int status { pthread_attr_getdetachstate(&pa, &state) };
+//  const int status { pthread_attr_getdetachstate(&pa, &state) };
 
-  if (status)
-    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute");
+  if (const int status { pthread_attr_getdetachstate(&pa, &state) }; status)
+    throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute"s);
 
   return (state == PTHREAD_CREATE_DETACHED);
 }
@@ -592,13 +592,13 @@ const bool attribute_detached(const pthread_attr_t& pa)
     \param  pa  C-style attributes
     \return     the scheduling policy associated with <i>pa</i>
 */
-const int attribute_policy(const pthread_attr_t& pa)
+int attribute_policy(const pthread_attr_t& pa)
 { int policy;
 
-  const int status { pthread_attr_getschedpolicy(&pa, &policy) };
+//  const int status { pthread_attr_getschedpolicy(&pa, &policy) };
 
-  if (status != 0)
-    throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: " + to_string(policy) + "status = " + to_string(status));
+  if (const int status { pthread_attr_getschedpolicy(&pa, &policy) }; status != 0)
+    throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: "s + to_string(policy) + "status = "s + to_string(status));
 
   return policy;
 }
@@ -607,13 +607,13 @@ const int attribute_policy(const pthread_attr_t& pa)
     \param  pa  C-style attributes
     \return     the scope associated with <i>pa</i>
 */
-const int attribute_scope(const pthread_attr_t& pa)
+int attribute_scope(const pthread_attr_t& pa)
 { int scope;
 
-  const int status { pthread_attr_getscope(&pa, &scope) };
+//  const int status { pthread_attr_getscope(&pa, &scope) };
 
-  if (status != 0)
-    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: " + to_string(scope) + "status = " + to_string(status));
+  if (const int status { pthread_attr_getscope(&pa, &scope) }; status != 0)
+    throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: "s + to_string(scope) + "status = "s + to_string(status));
 
   return scope;
 }
@@ -622,13 +622,13 @@ const int attribute_scope(const pthread_attr_t& pa)
     \param  pa  C-style attributes
     \return     the inheritance policy associated with <i>pa</i>
 */
-const int attribute_inheritance_policy(const pthread_attr_t& pa)
+int attribute_inheritance_policy(const pthread_attr_t& pa)
 { int ipolicy;
 
-  const int status { pthread_attr_getinheritsched(&pa, &ipolicy) };
+//  const int status { pthread_attr_getinheritsched(&pa, &ipolicy) };
 
-  if (status != 0)
-    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: " + to_string(ipolicy) + "status = " + to_string(status));
+  if (const int status { pthread_attr_getinheritsched(&pa, &ipolicy) }; status != 0)
+    throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: "s + to_string(ipolicy) + "status = "s + to_string(status));
 
   return ipolicy;
 }
@@ -637,13 +637,13 @@ const int attribute_inheritance_policy(const pthread_attr_t& pa)
     \param  pa  C-style attributes
     \return     the stack size associated with <i>pa</i>, in bytes
 */
-const size_t attribute_stack_size(const pthread_attr_t& pa)
+size_t attribute_stack_size(const pthread_attr_t& pa)
 { size_t size;
 
-  const int status { pthread_attr_getstacksize(&pa, &size) };
+//  const int status { pthread_attr_getstacksize(&pa, &size) };
 
-  if (status != 0)
-    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: " + to_string(size) + "status = " + to_string(status));
+  if (const int status { pthread_attr_getstacksize(&pa, &size) }; status != 0)
+    throw pthread_error(PTHREAD_STACK_SIZE_ERROR, "Error getting stack size: "s + to_string(size) + "status = "s + to_string(status));
 
   return size;
 }
@@ -652,12 +652,12 @@ const size_t attribute_stack_size(const pthread_attr_t& pa)
     \param  pa  C-style attributes
     \return     maximum allowed priority for the scheduling policy of <i>pa</i>
 */
-const int attribute_max_priority(const pthread_attr_t& pa)
+int attribute_max_priority(const pthread_attr_t& pa)
 { const int sched_policy { attribute_policy(pa) };
   const int status       { sched_get_priority_max(sched_policy) };
 
   if (status == -1)
-    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting maximum priority for policy: " + to_string(sched_policy));
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting maximum priority for policy: "s + to_string(sched_policy));
 
   return status;
 }
@@ -666,12 +666,12 @@ const int attribute_max_priority(const pthread_attr_t& pa)
     \param  pa  C-style attributes
     \return     minimum allowed priority for the scheduling policy of <i>pa</i>
 */
-const int attribute_min_priority(const pthread_attr_t& pa)
+int attribute_min_priority(const pthread_attr_t& pa)
 { const int sched_policy { attribute_policy(pa) };
   const int status       { sched_get_priority_min(sched_policy) };
 
   if (status == -1)
-    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting minimum priority for policy: " + to_string(sched_policy));
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting minimum priority for policy: "s + to_string(sched_policy));
 
   return status;
 }
@@ -680,13 +680,13 @@ const int attribute_min_priority(const pthread_attr_t& pa)
     \param  pa  C-style attributes
     \return     the priority associated with <i>pa</i>
 */
-const int attribute_priority(const pthread_attr_t& pa)
+int attribute_priority(const pthread_attr_t& pa)
 { struct sched_param param;
 
-  const int status { pthread_attr_getschedparam(&pa, &param) };
+//  const int status { pthread_attr_getschedparam(&pa, &param) };
 
-  if (status != 0)
-    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = " + to_string(status));
+  if (const int status { pthread_attr_getschedparam(&pa, &param) }; status != 0)
+    throw pthread_error(PTHREAD_PRIORITY_ERROR, "Error getting priority; status = "s + to_string(status));
 
   return param.sched_priority;
 }
@@ -776,12 +776,12 @@ void pt_mutex::unlock(void)
 */
 
 /// get the priority ceiling
-const int pt_mutex_attributes::priority_ceiling(void) const
+int pt_mutex_attributes::priority_ceiling(void) const
 { int rv;
   
-  const int status { pthread_mutexattr_getprioceiling(&_mutexattr, &rv) };
+//  const int status { pthread_mutexattr_getprioceiling(&_mutexattr, &rv) };
   
-  if (status)
+  if (const int status { pthread_mutexattr_getprioceiling(&_mutexattr, &rv) }; status)
     throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR GETTING MUTEX PRIORITY CEILING: "s  + to_string(status));
     
   return rv;
@@ -791,38 +791,38 @@ const int pt_mutex_attributes::priority_ceiling(void) const
     \param  pc  new priority ceiling
 */
 void pt_mutex_attributes::priority_ceiling(const int pc)
-{ const int status { pthread_mutexattr_setprioceiling(&_mutexattr, pc) }; 
+{ //const int status { pthread_mutexattr_setprioceiling(&_mutexattr, pc) }; 
 
-  if (status)
+  if (const int status { pthread_mutexattr_setprioceiling(&_mutexattr, pc) }; status)
     throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR SETTING MUTEX PRIORITY CEILING: "s  + to_string(status));
 }
 
 /// get the protocol
-const int pt_mutex_attributes::protocol(void) const
+int pt_mutex_attributes::protocol(void) const
 { int rv;
   
-  const int status { pthread_mutexattr_getprotocol(&_mutexattr, &rv) };
+  //const int status { pthread_mutexattr_getprotocol(&_mutexattr, &rv) };
   
-  if (status)
+  if (const int status { pthread_mutexattr_getprotocol(&_mutexattr, &rv) }; status)
     throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR GETTING MUTEX PROTOCOL: "s  + to_string(status));
 
   return rv;
 }
 
 /// get the protocol name
-const string pt_mutex_attributes::protocol_name(void) const
+string pt_mutex_attributes::protocol_name(void) const
 { switch (protocol())
   { case PTHREAD_PRIO_NONE :
-      return "PTHREAD_PRIO_NONE";
+      return "PTHREAD_PRIO_NONE"s;
       
     case PTHREAD_PRIO_INHERIT :
-      return "PTHREAD_PRIO_INHERIT";
+      return "PTHREAD_PRIO_INHERIT"s;
       
     case PTHREAD_PRIO_PROTECT :
-      return "PTHREAD_PRIO_PROTECT";
+      return "PTHREAD_PRIO_PROTECT"s;
       
     default :
-      return "UNKNOWN";
+      return "UNKNOWN"s;
   }
 }
 
@@ -830,45 +830,45 @@ const string pt_mutex_attributes::protocol_name(void) const
     \param  pr  new protocol
 */
 void pt_mutex_attributes::protocol(const int pr)
-{ const int status { pthread_mutexattr_setprotocol(&_mutexattr, pr) }; 
+{ //const int status { pthread_mutexattr_setprotocol(&_mutexattr, pr) }; 
 
-  if (status)
+  if (const int status { pthread_mutexattr_setprotocol(&_mutexattr, pr) }; status)
     throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR SETTING MUTEX PROTOCOL: "s  + to_string(status));
 }
 
 /// get the type
-const int pt_mutex_attributes::type(void) const
+int pt_mutex_attributes::type(void) const
 { int rv;
   
-  const int status { pthread_mutexattr_gettype(&_mutexattr, &rv) };
+//  const int status { pthread_mutexattr_gettype(&_mutexattr, &rv) };
 
-  if (status)
+  if (const int status { pthread_mutexattr_gettype(&_mutexattr, &rv) }; status)
     throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR GETTING MUTEX TYPE: "s  + to_string(status));
     
   return rv;
 }
 
 /// get the name of the type
-const string pt_mutex_attributes::type_name(void) const
+string pt_mutex_attributes::type_name(void) const
 { const int t { type() };
 
-  string rv { ( (t == PTHREAD_MUTEX_DEFAULT) ? "PTHREAD_MUTEX_DEFAULT = " : string() ) };
+  string rv { ( (t == PTHREAD_MUTEX_DEFAULT) ? "PTHREAD_MUTEX_DEFAULT = "s : string() ) };
   
   switch (t)
   { case PTHREAD_MUTEX_NORMAL :
-      return rv + "PTHREAD_MUTEX_NORMAL";
+      return rv + "PTHREAD_MUTEX_NORMAL"s;
       
     case PTHREAD_MUTEX_ERRORCHECK :
-      return rv + "PTHREAD_MUTEX_ERRORCHECK";
+      return rv + "PTHREAD_MUTEX_ERRORCHECK"s;
       
     case PTHREAD_MUTEX_RECURSIVE :
-      return rv + "PTHREAD_MUTEX_RECURSIVE";
+      return rv + "PTHREAD_MUTEX_RECURSIVE"s;
       
 //    case PTHREAD_MUTEX_DEFAULT :          same as PTHREAD_MUTEX_NORMAL
 //      return "PTHREAD_MUTEX_DEFAULT";
 
     default :
-      return rv + "UNKNOWN";
+      return rv + "UNKNOWN"s;
   }
 }
 
@@ -876,9 +876,9 @@ const string pt_mutex_attributes::type_name(void) const
     \param  ty  new type
 */
 void pt_mutex_attributes::type(const int ty)
-{ const int status {  pthread_mutexattr_settype(&_mutexattr, ty) };
+{ //const int status {  pthread_mutexattr_settype(&_mutexattr, ty) };
 
-  if (status)
+  if (const int status {  pthread_mutexattr_settype(&_mutexattr, ty) }; status)
     throw pthread_error(PTHREAD_MUTEX_ATTR_GET_SET_ERROR, "ERROR SETTING MUTEX TYPE: "s  + to_string(status));
 }
 
@@ -918,9 +918,9 @@ void pt_condition_variable::wait(void)
 
 execute_wait:
   try
-  { const int status {  pthread_cond_wait(&_cond, &(_mutex_p->_mutex)) };
+  { //const int status {  pthread_cond_wait(&_cond, &(_mutex_p->_mutex)) };
 
-    if (status != 0)
+    if (const int status {  pthread_cond_wait(&_cond, &(_mutex_p->_mutex)) }; status != 0)
       throw pthread_error(PTHREAD_CONDVAR_WAIT_ERROR, "Error waiting on condition variable");
   }
 
@@ -940,13 +940,13 @@ execute_wait:
     \param  n_secs  number of seconds to wait
     \return         whether the wait timed-out
 */
-const bool pt_condition_variable::wait(const unsigned int n_secs)
+bool pt_condition_variable::wait(const unsigned int n_secs)
 { if (_mutex_p == NULL)
     throw pthread_error(PTHREAD_INVALID_MUTEX, "pointer to mutex is NULL in timed wait() function");
 
   struct timespec timeout { static_cast<__time_t>(time(NULL) + n_secs), 0 };
 
-  int status { pthread_cond_timedwait(&_cond, &(_mutex_p->_mutex), &timeout) };
+  const int status { pthread_cond_timedwait(&_cond, &(_mutex_p->_mutex), &timeout) };
 
 // ETIMEDOUT is not defined in Linux
   return (status != 0);
@@ -1026,7 +1026,7 @@ safelock::~safelock(void)
 }
 
 /// How many threads belong to this process?
-const unsigned int n_threads(void)
+unsigned int n_threads(void)
 { const pid_t          pid      { getpid() };
   const string         filename { "/proc/"s + to_string(pid) + "/status"s };
   const string         contents { read_file(filename) };

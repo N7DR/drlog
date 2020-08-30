@@ -226,7 +226,7 @@ window& operator<(window& win, const qtc_series& qs)
         \brief All QTCs
 */
 
-pt_mutex qtc_database_mutex;                            ///< mutex to allow correct locking
+pt_mutex qtc_database_mutex { "QTC DATABASE"s };                            ///< mutex to allow correct locking
 
 /*! \brief      Add a series of QTCs to the database
     \param  q   the series of QTCs to be added

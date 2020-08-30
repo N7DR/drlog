@@ -113,7 +113,7 @@ protected:
 
   std::map<std::string /* call */, bandmap_buffer_entry>  _data;    ///< the database
 
-  pt_mutex _bandmap_buffer_mutex;                                   ///< mutex for thread-safe access
+  pt_mutex _bandmap_buffer_mutex { "BANDMAP BUFFER"s };                                   ///< mutex for thread-safe access
 
 public:
 
@@ -717,6 +717,10 @@ std::ostream& operator<<(std::ostream& ost, const bandmap_entry& be);
 using BM_ENTRIES      = std::list<bandmap_entry>;
 using PREDICATE_FUN_P = bool (bandmap_entry::*)(void) const;
 
+class bandmap;
+
+using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
+
 // -----------  bandmap  ----------------
 
 /*! \class  bandmap
@@ -778,6 +782,7 @@ public:
 
 /// default constructor
   inline bandmap(void) :
+    _bandmap_mutex { "DEFAULT BANDMAP"s },
     _column_offset(0),
     _cull_function(0),
     _filtered_entries_dirty(false),
@@ -1119,7 +1124,7 @@ public:
 */
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq);
 
-/*! \brief          Process an insertion queue, adding the elements to the bandmap
+/*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
     \param  biq     insertion queue to process
     \param  w       window to which to write the revised bandmap
      
@@ -1129,6 +1134,8 @@ public:
   void process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq, window& w);
 
   window& write_to_window(window& win);
+
+  friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);
 
 /// serialize using boost
   template<typename Archive>
@@ -1169,6 +1176,6 @@ inline window& operator<(window& win, bandmap& bm)
 */
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
 
-using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
+//using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 
 #endif    // BANDMAP_H

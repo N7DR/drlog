@@ -61,15 +61,20 @@ using namespace   this_thread;   // std::this_thread
 //extern cpair colours;                       ///< program-wide definitions of colour pairs in use
 extern const set<string> CONTINENT_SET;     ///< two-letter abbreviations of continents
 
+/// active window
+enum class ACTIVE_WINDOW { CALL,
+                           EXCHANGE,
+                           LOG,             // last five QSOs          
+                           LOG_EXTRACT      // used for QTCs
+                         };
+
 /// drlog mode
 enum class DRLOG_MODE { CQ,         ///< I'm calling the other station
                         SAP         ///< the other station is calling me
                       };
 
-//constexpr bool FORCE_KNOWN    { true },    // whether to force a country mult as known; used in update_known_callsign_mults()
-//               NO_FORCE_KNOWN { false };
-
-enum class KNOWN_MULT { FORCE_KNOWN,         // whether to force a callsign or country mult as known; used in update_known_callsign/callsign_mults()
+/// whether to force a callsign or country mult as known; used in update_known_callsign/callsign_mults()
+enum class KNOWN_MULT { FORCE_KNOWN,
                         NO_FORCE_KNOWN
                       };
 
@@ -92,7 +97,6 @@ static const set<string> variable_exchange_fields { "SERNO"s };  ///< mutable ex
 constexpr bool DISPLAY_EXTRACT        { true },                       ///< display log extracts
                DO_NOT_DISPLAY_EXTRACT { !DISPLAY_EXTRACT };           ///< do not display log extracts
 
-//constexpr bool FORCE_THRESHOLD { true };                              ///< for forcing accumulator to threshold
 constexpr int  MILLION         { 1'000'000 };                         // syntactic sugar
 
 // define class for memory entries
@@ -176,6 +180,8 @@ void rig_error_alert(const string& msg);            ///< Alert the user to a rig
 
 void   send_qtc_entry(const qtc_entry& qe, const bool logit);                   ///< send a single QTC entry (on CW)
 bool   send_to_scratchpad(const string& str);                                   ///< Send a string to the SCRATCHPAD window
+void   set_active_window(const ACTIVE_WINDOW aw);                               ///< Set the window that is receiving input
+//void   set_active_window(const window* wp);                                     ///< Set the window that is receiving input
 bool   shift_control(const keyboard_event& e);                                  ///< Control RIT or main QRG using the SHIFT keys
 void   start_recording(audio_recorder& audio, const drlog_context& context);    ///< start audio recording
 void   start_of_thread(const string& name);                                     ///< Increase the counter for the number of running threads
@@ -251,50 +257,50 @@ MODE safe_get_mode(void);                             ///< get value of <i>curre
 // mostly these are essentially RO, so locking is overkill; but we do it anyway,
 // otherwise Murphy dictates that we'll hit a race condition at the worst possible time
 
-pt_mutex alert_mutex;                       ///< mutex for the user alert
+pt_mutex alert_mutex { "USER ALERT"s };                       ///< mutex for the user alert
 time_t   alert_time { 0 };                  ///< time of last alert
 
-pt_mutex                      batch_messages_mutex;   ///< mutex for batch messages
+pt_mutex                      batch_messages_mutex { "BATCH MESSAGES"s };   ///< mutex for batch messages
 unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
 
-pt_mutex  cq_mode_frequency_mutex;          ///< mutex for the frequency in CQ mode
+pt_mutex  cq_mode_frequency_mutex { "CQ MODE FREQUENCY"s };          ///< mutex for the frequency in CQ mode
 frequency cq_mode_frequency;                ///< frequency in CQ mode
 
-pt_mutex dupe_check_mutex;                  ///< mutex for <i>last_call_inserted_with_space</i>
+pt_mutex dupe_check_mutex { "DUPE CHECK"s };                  ///< mutex for <i>last_call_inserted_with_space</i>
 string   last_call_inserted_with_space;     ///< call inserted in bandmap by hitting the space bar; probably should be per band
 
-pt_mutex            individual_messages_mutex;  ///< mutex for individual messages
+pt_mutex            individual_messages_mutex { "INDIVIDUAL MESSAGES"s };  ///< mutex for individual messages
 map<string, string> individual_messages;        ///< individual messages associated with calls
 
-pt_mutex  last_exchange_mutex;              ///< mutex for getting and setting the last sent exchange
+pt_mutex  last_exchange_mutex { "LAST EXCHANGE"s };              ///< mutex for getting and setting the last sent exchange
 string    last_exchange;                    ///< the last sent exchange
 
-pt_mutex  my_bandmap_entry_mutex;          ///< mutex for changing frequency or bandmap info
+pt_mutex  my_bandmap_entry_mutex { "BANDMAP ENTRY"s };          ///< mutex for changing frequency or bandmap info
 time_t    time_last_qsy { time_t(NULL) };  ///< time of last QSY
 
-pt_mutex            thread_check_mutex;                     ///< mutex for controlling threads; both the following variables are under this mutex
+pt_mutex            thread_check_mutex { "THREAD CHECK"s };                     ///< mutex for controlling threads; both the following variables are under this mutex
 int                 n_running_threads { 0 };                ///< how many additional threads are running?
 bool                exiting { false };                      ///< is the program exiting?
 bool                exiting_rig_status { false };           ///< turn off the display-rig_status thread first
 set<string>         thread_names;                           ///< the names of the threads
 
-pt_mutex            current_band_mutex;                     ///< mutex for setting/getting the current band
+pt_mutex            current_band_mutex { "CURRENT BAND"s };                     ///< mutex for setting/getting the current band
 BAND                current_band;                           ///< the current band
 
-pt_mutex            current_mode_mutex;                     ///< mutex for setting/getting the current mode
+pt_mutex            current_mode_mutex { "CURRENT MODE"s };                     ///< mutex for setting/getting the current mode
 MODE                current_mode;                           ///< the current mode
 
-pt_mutex            drlog_mode_mutex;                       ///< mutex for accessing <i>drlog_mode</i>
+pt_mutex            drlog_mode_mutex { "DRLOG_MODE"s };                       ///< mutex for accessing <i>drlog_mode</i>
 DRLOG_MODE          drlog_mode { DRLOG_MODE::SAP };         ///< CQ or SAP
 DRLOG_MODE          a_drlog_mode;                           ///< used when SO1R
 
-pt_mutex            known_callsign_mults_mutex;             ///< mutex for the callsign mults we know about in AUTO mode
+pt_mutex            known_callsign_mults_mutex { "KNOWN CALLSIGN MULTS"s };             ///< mutex for the callsign mults we know about in AUTO mode
 set<string>         known_callsign_mults;                   ///< callsign mults we know about in AUTO mode
 
 bandmap_entry       my_bandmap_entry;                       ///< last bandmap entry that refers to me (usually from poll)
 
 pt_condition_variable frequency_change_condvar;             ///< condvar associated with updating windows related to a frequency change
-pt_mutex              frequency_change_condvar_mutex;       ///< mutex associated with frequency_change_condvar
+pt_mutex              frequency_change_condvar_mutex { "FREQUENCY CHANGE CONDVAR"s };       ///< mutex associated with frequency_change_condvar
 
 // global variables
 
@@ -453,7 +459,7 @@ log_extract editable_log(win_log);          ///< the most recent QSOs
 log_extract extract(win_log_extract);       ///< earlier QSOs with a station
 
 // some windows are accessed from multiple threads
-pt_mutex band_mode_mutex;                   ///< mutex for win_band_mode
+pt_mutex band_mode_mutex { "BAND/MODE WINDOW"s };                   ///< mutex for win_band_mode
 //pt_mutex bandmap_mutex;                     ///< mutex for win_bandmap
 
 cw_messages cwm;                            ///< pre-defined CW messages
@@ -467,10 +473,12 @@ dx_cluster*     rbn_p { nullptr };      ///< pointer to RBN information
 location_database location_db;              ///< global location database
 rig_interface rig;                          ///< rig control
 
-static thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute for threads
+/* static */ thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute for threads
 
-window* win_active_p      { &win_call };          ///< start with the CALL window active
-window* last_active_win_p { nullptr };            ///< keep track of the last window that was active, before the current one
+window*       win_active_p        { &win_call };            ///< start with the CALL window active
+//window*       last_active_win_p   { nullptr };              ///< keep track of the last window that was active, before the current one
+ACTIVE_WINDOW active_window       { ACTIVE_WINDOW::CALL };  ///< start with the CALL window active
+ACTIVE_WINDOW last_active_window  { ACTIVE_WINDOW::CALL };  ///< start with the CALL window active
 
 array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one bandmap per band
 array<BANDMAP_INSERTION_QUEUE, NUMBER_OF_BANDS>  bandmap_insertion_queues;  ///< one queue per band
@@ -1735,7 +1743,8 @@ int main(int argc, char** argv)
       }
 
       enter_sap_mode();                                       // explicitly enter SAP mode
-      win_active_p = &win_call;                               // set the active window
+//      win_active_p = &win_call;                               // set the active window
+//      active_window = ACTIVE_WINDOW::CALL;
       win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;    // explicitly force the cursor into the call window
 
 // if necessary, wait for the adif23 old log information to finish building
@@ -3381,7 +3390,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           win_exchange < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < SPACE_STR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
         win_exchange.insert(true);          // force EXCHANGE window into INSERT mode
-        win_active_p = &win_exchange;
+ //       win_active_p = &win_exchange;
+ //       active_window = ACTIVE_WINDOW::EXCHANGE;
+        set_active_window(ACTIVE_WINDOW::EXCHANGE);
       }
 
 // add to bandmap if we're in SAP mode
@@ -3719,7 +3730,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   const bool cursor_down { (e.is_unmodified() and e.symbol() == XK_Down) }; ///< is the event a CURSOR DOWN?
   const bool cursor_up   { (e.is_unmodified() and e.symbol() == XK_Up) }; ///< is the event a CURSOR DOWN?
 
-  static bool in_scp_matching { false };          ///< are we walking through the calls?
+  static bool in_scp_matching { false };  ///< are we walking through the calls?
   static int  scp_index       { -1 };     ///< index into matched calls
 
   if (!cursor_down and !cursor_up)                 // clear memory of walking through matched calls every time we press a different key
@@ -3731,7 +3742,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and cursor_up and !in_scp_matching)
   { ost << "ENTERING EDITABLE LOG WINDOW" << endl;
   
-    win_active_p = &win_log;
+//    win_active_p = &win_log;
+//    active_window = ACTIVE_WINDOW::LOG;
+    set_active_window(ACTIVE_WINDOW::LOG);
 
     win_log_snapshot = win_log.snapshot();
     win_log.toggle_hidden();
@@ -3859,8 +3872,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-Q -- send QTC
   if (!processed and e.is_alt('q') and send_qtcs)
-  { last_active_win_p = win_active_p;
-    win_active_p = &win_log_extract;
+  { //last_active_win_p = win_active_p;
+    last_active_window = active_window;
+    set_active_window(ACTIVE_WINDOW::LOG_EXTRACT);
+
+//    win_active_p = &win_log_extract;
     sending_qtc_series = false;       // initialise variable
     win_active_p-> process_input(e);  // reprocess the alt-q
 
@@ -4093,21 +4109,23 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       }
 
 // put cursor in correct window
-      if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to the CALL window
-      { const size_t posn { call_contents.find(SPACE_STR) };                    // first empty space
+      if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to CALL window
+      { const size_t posn { call_contents.find(SPACE_STR) };            // first empty space
 
         win_call.move_cursor(posn, 0);
         win_call.refresh();
-        win_active_p = &win_call;
+ //       win_active_p = &win_call;
+        set_active_window(ACTIVE_WINDOW::CALL);
         win_exchange.move_cursor(0, 0);
       }
-      else
-      { const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };                    // first empty space
+      else                                                              // go to EXCHANGE window
+      { const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };  // first empty space
 
         if (posn != string::npos)
         { win_exchange.move_cursor(posn + 1, 0);
           win_exchange.refresh();
-          win_active_p = &win_exchange;
+ //         win_active_p = &win_exchange;
+          set_active_window(ACTIVE_WINDOW::EXCHANGE);
         }
       }
     }
@@ -4196,9 +4214,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     processed = cw_toggle_bandwidth();
 
 // finished processing a keypress
-  if (processed and win_active_p == &win_call)  // we might have changed the active window (if sending a QTC)
+  if (processed and (win_active_p == &win_call))  // we might have changed the active window (if sending a QTC)
   { if (win_call.empty())
-    { win_call.insert(true);                     // force INSERT mode
+    { win_call.insert(true);                       // force INSERT mode
       win_info <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win_batch_messages <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
       win_call_history <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
@@ -4292,7 +4310,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // go back to the call window
     if (!processed)
-    { win_active_p = &win_call;
+    { //win_active_p = &win_call;
+      set_active_window(ACTIVE_WINDOW::CALL);
       processed = (win_call <= WINDOW_ATTRIBUTES::CURSOR_END_OF_LINE, true);
     }
   }
@@ -4574,7 +4593,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             display_statistics(statistics.summary_string(rules));
             update_score_window(statistics.points(rules));
 
-            win_active_p = &win_call;                                       // switch to the CALL window
+//            win_active_p = &win_call;                                       // switch to the CALL window
+            set_active_window(ACTIVE_WINDOW::CALL);
             win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
 // remaining mults: callsign, country, exchange
@@ -4611,7 +4631,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
             { for (const auto& current_exchange_mult : new_worked_exchange_mults)
               { set<string> difference;
 
-                const auto         tmp            { old_worked_exchange_mults.find(current_exchange_mult.first) };
+                const auto               tmp            { old_worked_exchange_mults.find(current_exchange_mult.first) };
                 const MULTIPLIER_VALUES& current_values { current_exchange_mult.second };
 
                 if (tmp != old_worked_exchange_mults.end())
@@ -4628,9 +4648,11 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // writing to disk is slow, so start the QTC now, if applicable
             if (send_qtc)
             { sending_qtc_series = false;           // initialise variable
-              last_active_win_p = win_active_p;     // this is now CALL
-              win_active_p = &win_log_extract;
-              win_active_p-> process_input(e);      // reprocess the alt-q
+//              last_active_win_p = win_active_p;     // this is now CALL
+//              win_active_p = &win_log_extract;
+              last_active_window = active_window;
+              set_active_window(ACTIVE_WINDOW::LOG_EXTRACT);
+              win_active_p->process_input(e);       // reprocess the alt-q
             }
 
 // write to disk
@@ -4964,11 +4986,12 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // put cursor in correct window
       if (remove_peripheral_spaces(win_exchange.read()).empty())        // go to the CALL window
-      { const size_t posn { call_contents.find(SPACE_STR) };                    // first empty space
+      { const size_t posn { call_contents.find(SPACE_STR) };            // first empty space
 
         win_call.move_cursor(posn, 0);
         win_call.refresh();
-        win_active_p = &win_call;
+//        win_active_p = &win_call;
+        set_active_window(ACTIVE_WINDOW::CALL);
         win_exchange.move_cursor(0, 0);
       }
       else
@@ -4977,7 +5000,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         if (posn != string::npos)
         { win_exchange.move_cursor(posn + 1, 0);
           win_exchange.refresh();
-          win_active_p = &win_exchange;
+ //         win_active_p = &win_exchange;
+          set_active_window(ACTIVE_WINDOW::EXCHANGE);
         }
       }
     }
@@ -5229,7 +5253,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         }
       }
 
-      win_active_p = &win_call;
+ //     win_active_p = &win_call;
+      set_active_window(ACTIVE_WINDOW::CALL);
       win_call < WINDOW_ATTRIBUTES::WINDOW_REFRESH;
     }
 
@@ -5247,7 +5272,8 @@ void process_LOG_input(window* wp, const keyboard_event& e)
   if (!processed and e.symbol() == XK_Escape)
   {
 // go back to CALL window, without making any changes
-    win_active_p = &win_call;
+//    win_active_p = &win_call;
+    set_active_window(ACTIVE_WINDOW::CALL);
 
     win_log.hide_cursor();
     editable_log.recent_qsos(logbk, true);
@@ -6368,9 +6394,7 @@ bool shift_control(const keyboard_event& e)
 { const int change { (e.symbol() == XK_Shift_L ? -shift_delta : shift_delta) };
 
   try
-  { //int last_rit { rig.rit() };
-
-    if (rig.rit_enabled())
+  { if (rig.rit_enabled())
     { int last_rit { rig.rit() };
 
       ok_to_poll_k3 = false;                // stop polling a K3
@@ -6386,7 +6410,7 @@ bool shift_control(const keyboard_event& e)
       ok_to_poll_k3 = true;             // restart polling a K3
     }
     else  // main frequency, not RIT
-    { if (active_window_name() == "CALL"s) 
+    { if (active_window == ACTIVE_WINDOW::CALL)         // don't do anything if we aren't in the CALL window
       { frequency last_qrg { rig.rig_frequency() };
 
         ok_to_poll_k3 = false;                // stop polling a K3
@@ -7034,13 +7058,15 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     if (destination_callsign.empty())  // we have no destination
     { alert("No valid destination for QTC"s);
-      win_active_p = &win_call;
+ //     win_active_p = &win_call;
+      set_active_window(ACTIVE_WINDOW::CALL);
       processed = true;
     }
 
     if (!processed and location_db.continent(destination_callsign) != EU)    // send QTCs only to EU stations
     { alert("No EU destination for QTC"s);
-      win_active_p = &win_call;
+ //     win_active_p = &win_call;
+      set_active_window(ACTIVE_WINDOW::CALL);
       processed = true;
     }
 
@@ -7051,7 +7077,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     if (!processed and n_already_sent >= MAX_QTC_ENTRIES_PER_STN)
     { alert(to_string(MAX_QTC_ENTRIES_PER_STN) + " QSOs already sent to "s + destination_callsign);
-      win_active_p = &win_call;
+ //     win_active_p = &win_call;
+      set_active_window(ACTIVE_WINDOW::CALL);
       processed = true;
     }
 
@@ -7063,7 +7090,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     if (!processed and qtc_entries_to_send.empty())
     { alert("No QSOs available to send to "s + destination_callsign);
-      win_active_p = &win_call;
+ //     win_active_p = &win_call;
+      set_active_window(ACTIVE_WINDOW::CALL);
       processed = true;
     }
 
@@ -7078,7 +7106,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // check that we still have entries (this should always pass)
       if (series.empty())
       { alert("Error: empty QTC object for "s + destination_callsign);
-        win_active_p = &win_call;
+ //       win_active_p = &win_call;
+        set_active_window(ACTIVE_WINDOW::CALL);
         processed = true;
       }
       else                                      // OK; we're going to send at least one QTC
@@ -7175,7 +7204,11 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // log the QTC series
       append_to_file(context.qtc_filename(), series.complete_output_string());
 
-      win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+ //     win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+ //     if (win_active_p == &win_call)                        // kludge for now because of prior line; perhaps build a s_a_w(window*)?
+ //       set_active_window(ACTIVE_WINDOW::CALL);
+ //     set_active_window(last_active_win_p ? last_active_win_p : &win_call);
+      set_active_window(last_active_window);
 
 // update statistics, summary and QTC queue window
       statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
@@ -7204,7 +7237,11 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       append_to_file(context.qtc_filename(), series.complete_output_string());
 
-      win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+ //     win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+ //     if (win_active_p == &win_call)                        // kludge for now because of prior line; perhaps build a s_a_w(window*)?
+ //       set_active_window(ACTIVE_WINDOW::CALL);
+ //     set_active_window(last_active_win_p ? last_active_win_p : &win_call);
+      set_active_window(last_active_window);
 
 // update statistics and summary window
       statistics.qtc_qsos_sent(qtc_buf.n_sent_qsos());
@@ -7216,7 +7253,12 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-      win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+  //    win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
+  //    if (win_active_p == &win_call)                        // kludge for now because of prior line; perhaps build a s_a_w(window*)?
+  //      set_active_window(ACTIVE_WINDOW::CALL);
+  //    set_active_window(last_active_win_p ? last_active_win_p : &win_call);
+      set_active_window(last_active_window);
+
       display_statistics(statistics.summary_string(rules));
     }
 
@@ -7320,7 +7362,23 @@ void cw_speed(const unsigned int new_speed)
 
 /// return the name of the active window in printable form
 string active_window_name(void)
-{ string name { "UNKNOWN"s };
+{ switch (active_window)
+  { case ACTIVE_WINDOW::CALL :
+      return "CALL"s;
+
+    case ACTIVE_WINDOW::EXCHANGE :
+      return "EXCHANGE"s;
+
+    case ACTIVE_WINDOW::LOG :
+      return "LOG"s;
+
+    case ACTIVE_WINDOW::LOG_EXTRACT :
+      return "LOG EXTRACT"s;
+  }
+
+  return "UNKNOWN"s;        // keep the silly compiler happy
+#if 0
+  string name { "UNKNOWN"s };
 
   if (win_active_p == &win_call)
     name = "CALL"s;
@@ -7334,6 +7392,7 @@ string active_window_name(void)
   }
 
   return name;
+#endif
 }
 
 /*! \brief              Display a callsign in the NEARBY window, in the correct colour
@@ -7691,14 +7750,17 @@ bool process_keypress_F5(void)
 
       win_call.move_cursor(posn, 0);
       win_call.refresh();
-      win_active_p = &win_call;
+//      win_active_p = &win_call;
+      set_active_window(ACTIVE_WINDOW::CALL);
+
       win_exchange.move_cursor(0, 0);
     }
     else
     { if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)    // posn of first empty space
       { win_exchange.move_cursor(posn + 1, 0);
         win_exchange.refresh();
-        win_active_p = &win_exchange;
+ //       win_active_p = &win_exchange;
+        set_active_window(ACTIVE_WINDOW::EXCHANGE);
       }
     }
   }
@@ -7750,9 +7812,7 @@ bool toggle_cw(void)
     Updates WPM window
 */
 bool change_cw_speed(const keyboard_event& e)
-{ //bool rv { false };
-
-  if (cw_p)
+{ if (cw_p)
   { int change { (e.is_control() ? 1 : static_cast<int>(cw_speed_change)) };
 
     if (e.symbol() == XK_Prior)
@@ -7817,7 +7877,8 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
   SAFELOCK(my_bandmap_entry);
 
   const bool changed_frequency { (f.display_string() != my_bandmap_entry.freq().display_string()) };
-  const bool in_call_window    { (win_active_p == &win_call) };  // never update call window if we aren't in it
+//  const bool in_call_window    { (win_active_p == &win_call) };  // never update call window if we aren't in it
+  const bool in_call_window    { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
 
   if (changed_frequency)
   { time_last_qsy = time(NULL); // record the time for possible change in state of audio recording
@@ -7878,11 +7939,27 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
     \param  fn_p    pointer to function
     \param  dirn    direction in which the function is to be applied
     \return         always returns true
+
+    This is a friend function to the bandmap class, to allow us to lock the bandmap here
 */
 bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn)
 { bandmap& bm { bandmaps[safe_get_band()] };
 
-// should lock the bm here?
+// should lock the bm here? Not sure if this will fix the (non-fatal) race condition... :-(
+// not certain exactly what sequence leads to the race
+
+/*
+ nope, doesn't fix it; I /think/ I've seen ity happen once since installing this. But will
+ keep this here and try to watch carefully what happens, to try to be sure that it's not fixed.
+
+  it /seems/ to be when doing a keyboard-based QSY (e.g. with ; or ') at the same time
+  as processing an rbn-based update...
+
+  the QSY is performed and the bm is updated on screen, including the QSY, but a moment later the bm
+  is rewritten without the QSY [I think]
+
+*/
+  safelock bm_lock(bm._bandmap_mutex); // this seems to lock everything; presumably, a race condition with the mutexes
 
   if (const bandmap_entry be { (bm.*fn_p)( dirn ) }; !be.empty())  // get and process the next non-empty stn/mult, according to the function
   { rig.rig_frequency(be.freq());
@@ -8544,3 +8621,52 @@ bool cw_toggle_bandwidth(void)
 
   return true;
 }
+
+/*! \brief      Set the window that is receiving input
+    \param  aw  the active window
+*/
+void set_active_window(const ACTIVE_WINDOW aw)
+{ active_window = aw;
+
+  switch (aw)
+  { case ACTIVE_WINDOW::CALL :
+      win_active_p = &win_call;
+      break;
+
+    case ACTIVE_WINDOW::EXCHANGE :
+      win_active_p = &win_exchange;
+      break;
+
+    case ACTIVE_WINDOW::LOG :
+      win_active_p = &win_log;
+      break;
+
+    case ACTIVE_WINDOW::LOG_EXTRACT :
+      win_active_p = &win_log_extract;
+      break;
+  }
+}
+
+#if 0
+/*! \brief      Set the window that is receiving input
+    \param  wp  pointer to the active window
+*/
+void set_active_window(const window* wp)
+{ if (wp == &win_call)
+    active_window = ACTIVE_WINDOW::CALL;
+  else
+  { if (wp == &win_exchange)
+      active_window = ACTIVE_WINDOW::EXCHANGE;
+    else
+    { if (wp == &win_log)
+        active_window = ACTIVE_WINDOW::LOG;
+      else
+      { if (wp == &win_log_extract)
+          active_window = ACTIVE_WINDOW::LOG_EXTRACT;
+        else                    // major problem, undefined address
+          throw exception();
+      }
+    }
+  }
+}
+#endif

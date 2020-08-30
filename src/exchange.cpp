@@ -34,7 +34,7 @@ extern logbook                 logbk;                               ///< the (gl
 extern exchange_field_prefill  prefill_data;                        ///< exchange prefill data from external files
 extern bool                    require_dot_in_replacement_call;     ///< whether a dot is required to mark a replacement callsign
 
-pt_mutex exchange_field_database_mutex; ///< mutex for access to the exchange field database
+pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mutex for access to the exchange field database
 
 // -------------------------  exchange_field_prefill  ---------------------------
 

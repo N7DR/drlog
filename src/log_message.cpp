@@ -25,7 +25,8 @@ using namespace std;
     The file <i>error_name</i> is used if a failure is detected when writing to <i>filename</i>.
     An extant file called <i>filename</i> is renamed, not overwritten
 */
-message_stream::message_stream(const string& filename, const string& error_name)
+message_stream::message_stream(const string& filename, const string& error_name) :
+  _message_stream_mutex("MESSAGE STREAM"s)
 { if (file_exists(filename))
   { int    index  { 0 };
     string target { filename + "-"s + to_string(index) };

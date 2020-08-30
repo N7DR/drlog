@@ -184,7 +184,7 @@ protected:
   bool              _force_closure;             ///< force closure of socket in destructor, even for a pre-existing socket
   bool              _preexisting_socket;        ///< whether <i>_sock</i> exists outside the object
   SOCKET            _sock;                      ///< encapsulated socket
-  pt_mutex          _tcp_socket_mutex;          ///< mutex to control access
+  pt_mutex          _tcp_socket_mutex { "UNNAMED TCP SOCKET"s };          ///< mutex to control access
   unsigned int      _timeout_in_tenths;         ///< timeout in tenths of a second (currently unimplemented)
 
 /*! \brief          Copy constructor

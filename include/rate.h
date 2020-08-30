@@ -42,7 +42,7 @@ protected:
 
   std::map<time_t /* epoch time */, PAIR_NQSOS_POINTS > _data;    ///< number of QSOs and points at a particular time
 
-  pt_mutex _rate_mutex;                                  ///< In order to lock the object
+  pt_mutex _rate_mutex { "DEFAULT RATE METER"s };                                  ///< In order to lock the object
 
 public:
 

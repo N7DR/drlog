@@ -1119,7 +1119,7 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
   }
 }
 
-/*! \brief          Process an insertion queue, adding the elements to the bandmap
+/*! \brief          Process an insertion queue, adding the elements to the bandmap, and writing to a window
     \param  biq     insertion queue to process
     \param  w       window to which to write the revised bandmap
      

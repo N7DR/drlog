@@ -23,7 +23,7 @@
 
 using namespace std;
 
-pt_mutex _log_mutex;            ///< mutex for the log
+pt_mutex _log_mutex { "LOG"s };            ///< mutex for the log
 
 extern message_stream ost;      ///< for debugging, info
 extern string VERSION;          ///< version string
