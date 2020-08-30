@@ -13,7 +13,7 @@
 
 /*! \file   cluster.h
 
-    Classes and functions related to a DX cluster and the reverse beacon network
+    Classes and functions related to a DX cluster and the Reverse Beacon Network
 */
 
 #include "drlog_context.h"

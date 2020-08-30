@@ -70,6 +70,12 @@ public:
 */
   void add(const std::string& ch1, const std::string& ch2);
 
+/*! \brief              Add a pair of equivalent fields
+    \param  ch1_ch2     pair: first element of choice, second element of choice
+*/
+  inline void add(const std::pair<std::string, std::string>& ch1_ch2)
+    { add(ch1_ch2.first, ch1_ch2.second); }
+
 /*! \brief          Add a pair of equivalent fields
     \param  chvec   A two-element vector of equivalent fields
 

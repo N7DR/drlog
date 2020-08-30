@@ -10,7 +10,7 @@
 
 /*! \file   cluster.cpp
 
-    Classes and functions related to a DX cluster
+    Classes and functions related to a DX cluster and the Reverse Beacon Network
 */
 
 #include "cluster.h"
@@ -33,7 +33,7 @@ extern pt_mutex thread_check_mutex;     ///< mutex for controlling threads
 
 extern bool exiting;                    ///< is the program exiting?
 
-pt_mutex buffer_mutex          { "CLUSTER BUFFER"s };                  ///< mutex for the cluster buffer
+pt_mutex buffer_mutex          { "CLUSTER BUFFER"s };          ///< mutex for the cluster buffer
 pt_mutex monitored_posts_mutex { "MONITORED POSTS"s };         ///< mutex for the monitored posts
 pt_mutex rbn_buffer_mutex      { "RBN BUFFER"s };              ///< mutex for the RBN buffer
 
@@ -326,9 +326,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
               _canonical_prefix = li.canonical_prefix();
               _continent = li.continent();
-
               _mode_str = fields[5];
-
               _valid = true;
               _time_processed = ::time(NULL);
             }
@@ -337,9 +335,9 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
         if (!_valid)
         { const string copy       { remove_leading_spaces(substring(received_info, 6)) };
-          const size_t colon_posn { copy.find(":"s) };
+          //const size_t colon_posn { copy.find(":"s) };
 
-          if (colon_posn != string::npos)
+          if (const size_t colon_posn { copy.find(":"s) }; colon_posn != string::npos)
           { _poster = copy.substr(0, colon_posn);
 
             size_t char_posn  { copy.find_first_not_of(SPACE_STR, colon_posn + 1) };

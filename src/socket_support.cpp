@@ -164,7 +164,7 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
     if (status)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
     
-    const struct linger lgr = { 1, 0 };
+    const struct linger lgr { 1, 0 };
 
     status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
 
@@ -181,13 +181,16 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
       while (!connected)            // repeat until success
       { try
         { if (is_legal_ipv4_address(destination_ip_address_or_fqdn))
-            destination(destination_ip_address_or_fqdn, destination_port, TIMEOUT);
+          { destination(destination_ip_address_or_fqdn, destination_port, TIMEOUT);
+            rename_mutex("TCP: "s + destination_ip_address_or_fqdn + ":"s + to_string(destination_port));
+          }
           else                                                                // FQDN was passed instead of dotted decimal
           {
 // resolve the name
             const string dotted_decimal { name_to_dotted_decimal(destination_ip_address_or_fqdn, 10) };       // up to ten attempts at one-second intervals
 
             destination(dotted_decimal, destination_port, TIMEOUT );
+            rename_mutex("TCP: "s + dotted_decimal + ":"s + to_string(destination_port));
           }
 
           connected = true;
@@ -256,7 +259,7 @@ void tcp_socket::new_socket(void)
     if (status)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
     
-    const struct linger lgr = { 1, 0 };
+    const struct linger lgr { 1, 0 };
 
     status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
 
@@ -399,7 +402,7 @@ string tcp_socket::read(void)
   SAFELOCK(_tcp_socket);
 
   do
-  { status  = ::recv(_sock, cp, BUFLEN, 0);
+  { status = ::recv(_sock, cp, BUFLEN, 0);
 
     if (status == -1)
       throw tcp_socket_error(TCP_SOCKET_ERROR_IN_RECV);
@@ -444,10 +447,7 @@ string tcp_socket::read(const unsigned long timeout_secs)
   switch (socket_status)
   { case 0:                    // timeout
     { if (timeout_secs)        // don't signal timeout if we weren't given a duration to wait
-      { //ost << "Throwing SOCKET_SUPPORT_TIMEOUT; timeout in read() after " << to_string(timeout_secs) << " seconds" << endl;
-        //throw exception();
         throw socket_support_error(SOCKET_SUPPORT_TIMEOUT, "Timeout after "s + to_string(timeout_secs) + " seconds"s);
-      }
       break;
     }
 
@@ -486,13 +486,13 @@ string tcp_socket::read(const unsigned long timeout_secs)
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::idle_time(const unsigned int seconds)
-{ constexpr int optlen { sizeof(int) };
+{ //constexpr int optlen { sizeof(int) };
 
   const int optval { static_cast<int>(seconds) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, optlen) };
+  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) };
 
   if (status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting idle time"s);
@@ -502,13 +502,13 @@ void tcp_socket::idle_time(const unsigned int seconds)
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::retry_time(const unsigned int seconds)
-{ /* static */ constexpr int optlen { sizeof(int) };
+{ //constexpr int optlen { sizeof(int) };
 
   const int optval { static_cast<int>(seconds) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, optlen) };
+  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, sizeof(optval)) };
 
   if (status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting retry time"s);
@@ -518,13 +518,13 @@ void tcp_socket::retry_time(const unsigned int seconds)
     \param  n   maximum number of retries
 */
 void tcp_socket::max_retries(const unsigned int n)
-{ constexpr int optlen { sizeof(int) };
+{ //constexpr int optlen { sizeof(int) };
 
   const int optval { static_cast<int>(n) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, optlen) };
+  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, sizeof(optval)) };
 
   if (status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting maximum number of retries"s);
@@ -534,13 +534,13 @@ void tcp_socket::max_retries(const unsigned int n)
     \param  torf    whether to use keep-alives
 */
 void tcp_socket::keep_alive(const bool torf)
-{ constexpr int optlen { sizeof(int) };
+{ //constexpr int optlen { sizeof(int) };
 
   const int optval { torf ? 1 : 0 };
   
   SAFELOCK(_tcp_socket);
 
-  const int status { setsockopt(socket(), SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) };
+  const int status { setsockopt(socket(), SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) };
 
   if (status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error to control keep-alive"s);

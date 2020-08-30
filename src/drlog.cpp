@@ -725,8 +725,8 @@ int main(int argc, char** argv)
   }
 
 // rename the mutexes in the bandmaps
-//array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one 
-  for (std::remove_const<decltype(NUMBER_OF_BANDS)>::type n { 0 }; n < NUMBER_OF_BANDS; ++n)
+//array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one  remove_const_t<decltype(n_tries)>
+  for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
     bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
 
   command_line cl              { argc, argv };                                                              ///< for parsing the command line

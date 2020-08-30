@@ -420,19 +420,32 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_freq
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
+
+    If <i>be</i> is my marker, the frequency is slightly decreased so that it will always appear below any
+    other entries at the same QRG
 */
 void bandmap::_insert(const bandmap_entry& be)
-{ bool inserted { false };
+{ static bandmap_entry my_marker_copy;          // needed if be is my marker
+ 
+  if (be.is_my_marker())
+  { my_marker_copy = be;
+
+    my_marker_copy.freq(frequency(my_marker_copy.freq().hz() - 1));     // make it 1Hz less than actual value 
+  }
+
+  const bandmap_entry* bep { be.is_my_marker() ? &my_marker_copy : &be };   // point to the right bandmap_entry object
+
+  bool inserted { false };
 
   SAFELOCK(_bandmap);
 
   for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
-  { if (it->freq().hz() > be.freq().hz())
-      inserted = ( _entries.insert(it, be), true );
+  { if (it->freq().hz() > bep->freq().hz())
+      inserted = ( _entries.insert(it, *bep), true );
   }
 
   if (!inserted)
-    _entries.push_back(be);    // this frequency is higher than any currently in the bandmap
+    _entries.push_back(*bep);    // this frequency is higher than any currently in the bandmap
 }
 
 /*!  \brief     Mark filtered and rbn/filtered entries as dirty

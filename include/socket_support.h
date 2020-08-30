@@ -352,6 +352,9 @@ public:
     \param  n       maximum number of retries
 */
   void keep_alive(const unsigned int idle, const unsigned int retry, const unsigned int n);
+
+  inline void rename_mutex(const std::string& new_name)
+    { _tcp_socket_mutex.rename(new_name); }
 };
 
 /*! \brief              Convert a name to a dotted decimal IP address

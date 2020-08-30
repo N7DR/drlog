@@ -25,7 +25,7 @@
 
 using namespace std;
 
-pt_mutex rules_mutex { "RULES"s };                   ///< mutex for the contest_rules object
+pt_mutex rules_mutex { "RULES"s };      ///< mutex for the contest_rules object
 
 extern const set<string> CONTINENT_SET; ///< the abbreviations for the continents
 extern message_stream ost;              ///< for debugging and logging
@@ -42,7 +42,6 @@ using MSI = std::map<std::string, unsigned int>;                    ///< syntact
 
     Assumes that CHOICEs are in pairs
 */
-
 
 /*! \brief          Add a pair of equivalent fields
     \param  ch1     first element of choice
@@ -631,14 +630,13 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { const string& prefix              { qth_vec_field.first };
       const vector<exchange_field>& vef { qth_vec_field.second };
 
-
       vector<exchange_field> expanded_vef;
 
       for (const auto& field : vef)
       { if (!field.is_choice())
           expanded_vef.push_back(field);
         else
-        { auto& choice_equivalents_this_mode_and_cp { choice_equivalents_this_mode[prefix] };     // map<prefix, choice_equivalents>; null porefix implies applies to all
+        { auto& choice_equivalents_this_mode_and_cp { choice_equivalents_this_mode[prefix] };     // map<prefix, choice_equivalents>; null prefix implies applies to all
 
           choice_equivalents_this_mode_and_cp.add(field.name());
 

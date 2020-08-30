@@ -145,6 +145,12 @@ public: \
 
 #endif      // !ERROR_CLASS
 
+#if (!defined(FORTYPE))
+
+#define FORTYPE(x) remove_const_t<decltype(x)>
+
+#endif    // !FORTYPE
+
 // https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
 // https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
 template<class T>
@@ -1122,5 +1128,13 @@ namespace std
 template <typename T>
 inline std::set<T> SET_FROM_VECTOR(const std::vector<T>& v)
   { return std::set<T> { v.cbegin(), v.cend() }; }
+
+/*! \brief      Sort the contents of a container
+    \param  v   container
+    \param  f   sort function
+*/
+template <typename C, typename F>
+inline void SORT(C& v, F f)
+  { std::sort(v.begin(), v.end(), f); }
 
 #endif    // MACROS_H

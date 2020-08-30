@@ -103,7 +103,8 @@ vector<QSO> logbook::worked(const string& call) const
     for_each(_log.lower_bound(call), _log.upper_bound(call), [&rv] (const pair<string, QSO>& qso) { rv.push_back(qso.second); } );
   }
 
-  sort(rv.begin(), rv.end(), qso_sort_by_time);    // put in chronological order
+//  sort(rv.begin(), rv.end(), qso_sort_by_time);    // put in chronological order
+  SORT(rv, qso_sort_by_time);    // put in chronological order
 
   return rv;
 }

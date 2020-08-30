@@ -747,13 +747,16 @@ protected:
   decltype(_entries)              _rbn_threshold_filtered_and_culled_entries; ///< entries, with the RBN threshold, filter and cull function applied
   std::unordered_set<std::string> _recent_calls;                              ///< calls recently added
   COLOUR_TYPE                     _recent_colour;                             ///< colour to use for entries < 120 seconds old (if black, then not used)
-  uint32_t                        _verno;                                     /// < version number
+  uint32_t                        _verno;                                     ///< version number (not currently used, I believe)
 
 ///  Mark filtered and rbn/filtered entries as dirty
   void _dirty_entries(void);
 
 /*!  \brief     Insert a bandmap_entry
      \param be  entry to add
+
+    If <i>be</i> is my marker, the frequency is slightly decreased so that it will always appear below any
+    other entries at the same QRG
 */
   void _insert(const bandmap_entry& be);
 
