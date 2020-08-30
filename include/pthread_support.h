@@ -300,7 +300,7 @@ class pt_mutex
 protected:
 
   pthread_mutex_t           _mutex;                         ///< Encapsulated mutex
-  std::string               _name           { "NONE"s };    ///< name of mutex
+  std::string               _name           { "NONE"s };    ///< name of mutex; this should really be atomic, but string is not trivially copyable; cud use an array of char instead?
   pthread_t                 _thread_id;                     ///< ID of the thread that owns the locked mutex
   thread_specific_data<int> _tsd_refcount;                  ///< reference counter for recursive locking
 
@@ -333,6 +333,9 @@ public:
 /// get the name
   inline std::string name(void) const
     { return _name; }
+
+/// rename
+  void rename(const std::string& new_name);  
 
   friend class pt_condition_variable;       ///< needs access to details of the mutex
 };

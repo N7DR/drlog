@@ -769,6 +769,13 @@ void pt_mutex::unlock(void)
   }
 }
 
+/// rename
+void pt_mutex::rename(const string& new_name)
+{ //lock();
+  _name = new_name;
+  //unlock();
+}
+
 // --------------------------------------------  pt_mutex_attributes  ----------------------------------
 
 /*! \class  pt_mutex_attributes

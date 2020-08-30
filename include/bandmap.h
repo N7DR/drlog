@@ -1135,6 +1135,9 @@ public:
 
   window& write_to_window(window& win);
 
+  inline void rename_mutex(const std::string& new_name)
+    { _bandmap_mutex.rename(new_name); }
+
   friend bool process_bandmap_function(BANDMAP_MEM_FUN_P fn_p, const BANDMAP_DIRECTION dirn);
 
 /// serialize using boost

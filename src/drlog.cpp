@@ -724,6 +724,11 @@ int main(int argc, char** argv)
     VERSION = "Unknown version "s + VERSION;  // because VERSION may be used elsewhere
   }
 
+// rename the mutexes in the bandmaps
+//array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one 
+  for (std::remove_const<decltype(NUMBER_OF_BANDS)>::type n { 0 }; n < NUMBER_OF_BANDS; ++n)
+    bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
+
   command_line cl              { argc, argv };                                                              ///< for parsing the command line
   const string config_filename { (cl.value_present("-c"s) ? cl.value("-c"s) : "logcfg.dat"s) };
 
@@ -7874,23 +7879,38 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // It does not, however, ensure that this routine doesn't execute simultaneously from two
 // threads. To do that would require holding a lock for a very long time, and would nest
 // lock acquisitions dangerously
-  SAFELOCK(my_bandmap_entry);
 
-  const bool changed_frequency { (f.display_string() != my_bandmap_entry.freq().display_string()) };
-//  const bool in_call_window    { (win_active_p == &win_call) };  // never update call window if we aren't in it
+// &&&  SAFELOCK(my_bandmap_entry);
+  bandmap_entry mbe_copy;
+
+  { SAFELOCK(my_bandmap_entry);
+    
+    mbe_copy = my_bandmap_entry;
+  }
+
+//  const bool changed_frequency { (f.display_string() != my_bandmap_entry.freq().display_string()) };
+  const bool changed_frequency { (f.display_string() != mbe_copy.freq().display_string()) };
   const bool in_call_window    { (active_window == ACTIVE_WINDOW::CALL) };  // never update call window if we aren't in it
 
   if (changed_frequency)
   { time_last_qsy = time(NULL); // record the time for possible change in state of audio recording
-    my_bandmap_entry.freq(f);   // also updates the band
-    display_band_mode(win_band_mode, my_bandmap_entry.band(), my_bandmap_entry.mode());
+//    my_bandmap_entry.freq(f);   // also updates the band
+//    display_band_mode(win_band_mode, my_bandmap_entry.band(), my_bandmap_entry.mode());
+    mbe_copy.freq(f);   // also updates the band
+    display_band_mode(win_band_mode, mbe_copy.band(), mbe_copy.mode());
 
-    bandmap& bm { bandmaps[my_bandmap_entry.band()] };
+//    bandmap& bm { bandmaps[my_bandmap_entry.band()] };
+    bandmap& bm { bandmaps[mbe_copy.band()] };
 
-    bm += my_bandmap_entry;
+    bm += mbe_copy;
+
+    { SAFELOCK(my_bandmap_entry);
+    
+      my_bandmap_entry = mbe_copy;
+    }
+
     win_bandmap <= bm;       // move this outside the SAFELOCK?
 
-//    win_bandmap_filter < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < "["s < to_string(bm.column_offset()) < "] "s <= bm.filter();
     display_bandmap_filter(bm);
 
 // is there a station close to our frequency?
