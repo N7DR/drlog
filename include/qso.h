@@ -113,6 +113,9 @@ public:
   inline void freq(const decltype(_frequency_tx)& str)
     { _frequency_tx = str; }
   
+/// set TX frequency and band from a string of the form xxxxx.y
+  void freq_and_band(const decltype(_frequency_tx)& str);
+
   READ_AND_WRITE(epoch_time);           ///< time in seconds since the UNIX epoch
 
   READ_AND_WRITE(received_exchange);    ///< names do not include the REXCH-

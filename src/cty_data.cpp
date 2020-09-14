@@ -32,6 +32,12 @@ constexpr array<int, 10> W_CQ                  { 4, 5, 5, 5, 5, 4, 3, 3, 4, 4 };
 constexpr array<int, 10> VE_ITU                { 8 /* probably not correct */, 9, 4, 4, 3, 3, 2, 2, 4, 9 } ;    ///< default ITU zones for VE call areas; 0 to 9
 constexpr array<int, 10> W_ITU                 { 7, 8, 4, 4, 4, 7, 6, 6, 4, 4 };                                ///< default ITU zones for W call areas; 0 to 9
 
+// decltype(cty_record::_cq_zone) is protected
+constexpr unsigned int MIN_CQ_ZONE  { 1 };      ///< minimum CQ zone number
+constexpr unsigned int MAX_CQ_ZONE  { 40 };     ///< maximum CQ zone number
+constexpr unsigned int MIN_ITU_ZONE { 1 };      ///< minimum ITU zone number
+constexpr unsigned int MAX_ITU_ZONE { 90 };     ///< maximum ITU zone number
+
 // -----------  cty_record  ----------------
 
 /*! \class  cty_record
@@ -59,11 +65,11 @@ cty_record::cty_record(const string& record)
   _country_name = fields[0];
 
   _cq_zone = from_string<int>(fields[1]);
-  if (_cq_zone < 1 or _cq_zone > 40)
+  if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
     throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in record for "s + _country_name);
   
   _itu_zone = from_string<int>(fields[2]);
-  if (_itu_zone < 1 or _itu_zone > 90)
+  if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
     throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in record for "s + _country_name);
 
   _continent = fields[3];
@@ -203,14 +209,14 @@ alternative_country_info::alternative_country_info(const string& record, const s
     if (const string cq_zone_str { delimited_substring(record, '(', ')') }; !cq_zone_str.empty())
     { _cq_zone = from_string<int>(cq_zone_str);
 
-      if (_cq_zone < 1 or _cq_zone > 40)
+      if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
   
     if (const string itu_zone_str { delimited_substring(record, '[', ']') }; !itu_zone_str.empty())
     { _itu_zone = from_string<int>(itu_zone_str);
 
-      if (_itu_zone < 1 or _itu_zone > 90)
+      if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
         throw cty_error(CTY_INVALID_ITU_ZONE, "ITU zone = "s + to_string(_itu_zone) + " in alternative record for "s + _identifier);
     }
   }

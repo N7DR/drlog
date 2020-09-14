@@ -74,13 +74,7 @@ string running_statistics::_summary_string(const contest_rules& rules, const set
 { const set<MODE>    permitted_modes { rules.permitted_modes() };
   const vector<BAND> permitted_bands { rules.permitted_bands() };
 
- // string line;
   string rv;
-
-// add a number to the line if array size is not unity
-//  auto add_all_bands = [&line] (const unsigned int sz, const unsigned int n) { if (sz != 1)
-//                                                                                 line += pad_string(to_string(n), FIELD_WIDTH);
-//                                                                             };
 
   { SAFELOCK(statistics);
 
@@ -364,8 +358,8 @@ bool running_statistics::is_needed_callsign_mult(const string& mult_name, const 
   const auto cit { _callsign_multipliers.find(mult_name) };
 
   if (cit != _callsign_multipliers.cend())                          // should always be true
-  { const      multiplier& mult { cit->second };
-    const bool worked           { mult.is_worked(mult_value, b, m) };
+  { const multiplier& mult   { cit->second };
+    const bool        worked { mult.is_worked(mult_value, b, m) };
 
     return !(worked);
   }
@@ -722,7 +716,6 @@ MULTIPLIER_VALUES running_statistics::worked_callsign_mults(const string& mult_n
     \param  m   target mode
     \return     all the values of all country mults worked on band <i>b</i> and mode <i>m</i>
 */
-//map<string /* field name */, set<string> /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
 map<string /* field name */, MULTIPLIER_VALUES /* values */ > running_statistics::worked_exchange_mults(const BAND b, const MODE m) const
 { map<string, MULTIPLIER_VALUES> rv;
 
@@ -894,8 +887,8 @@ unsigned int running_statistics::n_worked_callsign_mults(const contest_rules& ru
     \return         the number of country mults worked
 */
 unsigned int running_statistics::n_worked_country_mults(const contest_rules& rules) const
-{ const set<BAND>&      score_bands                  { rules.score_bands() };
-  const map<BAND, int>& per_band_country_mult_factor { rules.per_band_country_mult_factor() };
+{ const set<BAND>      score_bands                  { rules.score_bands() };
+  const map<BAND, int> per_band_country_mult_factor { rules.per_band_country_mult_factor() };
 
   unsigned int rv { 0 };
 
@@ -1108,7 +1101,7 @@ bool call_history::worked_on_another_mode(const string& s, const MODE m)
     \param  m   mode not to include
     \return     whether <i>s</i> has been worked on a band and mode other than <i>b</i> and <i>m</i>
 */
-bool call_history::worked_on_another_band_and_mode(const std::string& s, const BAND b, const MODE m)
+bool call_history::worked_on_another_band_and_mode(const string& s, const BAND b, const MODE m)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)

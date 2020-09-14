@@ -45,9 +45,9 @@ constexpr bool RESPONSE_EXPECTED    { true },               ///< raw K3 command 
                NO_RESPONSE_EXPECTED { !RESPONSE_EXPECTED }; ///< raw K3 command does not expect a response
 
 /// the two VFOs
-enum VFO { VFO_A = 0,                       ///< VFO A
-           VFO_B                            ///< VFO B
-         };
+enum class VFO { A,                       ///< VFO A
+                 B                        ///< VFO B
+               };
 
 // ---------------------------------------- rig_status -------------------------
 
@@ -63,19 +63,19 @@ class rig_interface
 {
 protected:
 
-  frequency                               _last_commanded_frequency;      ///< last frequency to which the rig was commanded to QSY
-  frequency                               _last_commanded_frequency_b;    ///< last frequency to which VFO B was commanded to QSY
-  MODE                                    _last_commanded_mode;           ///< last mode into which the rig was commanded
-  std::unordered_map<bandmode, frequency> _last_frequency;                ///< last-used frequencies on per-band, per-mode basis
-  rig_model_t                             _model { RIG_MODEL_DUMMY };     ///< hamlib model
-  hamlib_port_t                           _port;                          ///< hamlib port
-  std::string                             _port_name;                     ///< name of port
-  RIG*                                    _rigp;                          ///< hamlib handle
-  bool                                    _rig_connected { false };       ///< is a rig connected?
-  pt_mutex                                _rig_mutex { "RIG INTERFACE"s };                     ///< mutex for all operations
-  unsigned int                            _rig_poll_interval;             ///< interval between polling for rig status, in milliseconds
-  rig_status                              _status;                        ///< most recent rig frequency and mode from the periodic poll
-  pthread_t                               _thread_id;                     ///< ID for the thread that polls the rig for status
+  frequency                               _last_commanded_frequency;                                    ///< last frequency to which the rig was commanded to QSY
+  frequency                               _last_commanded_frequency_b;                                  ///< last frequency to which VFO B was commanded to QSY
+  MODE                                    _last_commanded_mode         { MODE_CW };                     ///< last mode into which the rig was commanded
+  std::unordered_map<bandmode, frequency> _last_frequency;                                              ///< last-used frequencies on per-band, per-mode basis
+  rig_model_t                             _model                       { RIG_MODEL_DUMMY };             ///< hamlib model
+  hamlib_port_t                           _port;                                                        ///< hamlib port
+  std::string                             _port_name;                                                   ///< name of port
+  RIG*                                    _rigp                        { nullptr };                     ///< hamlib handle
+  bool                                    _rig_connected               { false };                       ///< is a rig connected?
+  pt_mutex                                _rig_mutex                   { "RIG INTERFACE"s };            ///< mutex for all operations
+  unsigned int                            _rig_poll_interval           { 1'000 };                       ///< interval between polling for rig status, in milliseconds
+  rig_status                              _status                      { frequency(14'000), MODE_CW };  ///< most recent rig frequency and mode from the periodic poll
+  pthread_t                               _thread_id;                                                   ///< ID for the thread that polls the rig for status
 
 // protected pointers to functions
 
@@ -113,24 +113,36 @@ protected:
 */
   void _error_alert(const std::string& msg);
 
+/*! \brief      Set frequency of a VFO
+    \param  f   new frequency
+    \param  v   VFO
+
+    Does nothing if <i>f</i> is not within a ham band
+*/
+  void _rig_frequency(const frequency&, const VFO v);
+
+/*! \brief      Get the frequency of a VFO
+    \param  v   VFO
+    \return     frequency of v
+*/
+  frequency _rig_frequency(const VFO v);
+
 public:
 
 /// default constructor
   rig_interface (void) :
-    _error_alert_function(nullptr),       // no default error handler
+//    _error_alert_function(nullptr),       // no default error handler
     _last_commanded_frequency(),          // no last-commanded frequency
     _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
-    _last_commanded_mode(MODE_CW),        // last commanded mode was CW
-    _port_name(),                         // no default port
-    _rigp(nullptr),                       // no rig connected
-    _rig_poll_interval(1000),             // poll once per second
-    _status(frequency(14000), MODE_CW)    // 14MHz, CW
+//    _last_commanded_mode(MODE_CW),        // last commanded mode was CW
+    _port_name()                         // no default port
+//    _rigp(nullptr),                       // no rig connected
+//    _rig_poll_interval(1000),             // poll once per second
+//    _status(frequency(14000), MODE_CW)    // 14MHz, CW
   { }
 
+// no copy constructor
   rig_interface(const rig_interface&) = delete;
-
-/// destructor
-  ~rig_interface(void) = default;
 
 /*! \brief              Prepare rig for use
     \param  context     context for the contest
@@ -182,26 +194,26 @@ public:
 
     Does nothing if <i>f</i> is not within a ham band
 */
-  void rig_frequency(const frequency& f);
+  void rig_frequency_a(const frequency& f);
 
 /*! \brief      Set frequency of VFO A
     \param  f   new frequency of VFO A
 
     Does nothing if <i>f</i> is not within a ham band
 */
-  inline void rig_frequency_a(const frequency& f)
-    { rig_frequency(f); }
+  inline void rig_frequency(const frequency& f)
+    { rig_frequency_a(f); }
 
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-  frequency rig_frequency(void);
+  frequency rig_frequency_a(void);
 
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-  inline frequency rig_frequency_a(void)
-    { return rig_frequency(); }
+  inline frequency rig_frequency(void)
+    { return rig_frequency_a(); }
 
 /*! \brief      Set frequency of VFO B
     \param  f   new frequency of VFO B

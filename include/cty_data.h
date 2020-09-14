@@ -41,20 +41,20 @@ enum class ALTERNATIVES { CALLSIGNS,
                         };
                        
 // error numbers
-constexpr int CTY_INCORRECT_NUMBER_OF_FIELDS       { -1 },    ///< Wrong number of fields in a record
-              CTY_INVALID_CQ_ZONE                  { -2 },    ///< Invalid CQ zone
-              CTY_INVALID_ITU_ZONE                 { -3 },    ///< Invalid ITU zone
-              CTY_INVALID_CONTINENT                { -4 },    ///< Invalid continent
-              CTY_INVALID_LATITUDE                 { -5 },    ///< Invalid latitude
-              CTY_INVALID_LONGITUDE                { -6 },    ///< Invalid longitude
-              CTY_INVALID_UTC_OFFSET               { -7 },    ///< Invalid UTC offset
-              CTY_INVALID_PREFIX                   { -8 };    ///< Invalid country prefix
+constexpr int CTY_INCORRECT_NUMBER_OF_FIELDS { -1 },    ///< Wrong number of fields in a record
+              CTY_INVALID_CQ_ZONE            { -2 },    ///< Invalid CQ zone
+              CTY_INVALID_ITU_ZONE           { -3 },    ///< Invalid ITU zone
+              CTY_INVALID_CONTINENT          { -4 },    ///< Invalid continent
+              CTY_INVALID_LATITUDE           { -5 },    ///< Invalid latitude
+              CTY_INVALID_LONGITUDE          { -6 },    ///< Invalid longitude
+              CTY_INVALID_UTC_OFFSET         { -7 },    ///< Invalid UTC offset
+              CTY_INVALID_PREFIX             { -8 };    ///< Invalid country prefix
           
-constexpr int LOCATION_NO_PREFIX_MATCH             { -1 },    ///< unable to find a prefix match in the database
-              LOCATION_TOO_MANY_SLASHES            { -2 };    ///< more than two slashes in the call
+constexpr int LOCATION_NO_PREFIX_MATCH       { -1 },    ///< unable to find a prefix match in the database
+              LOCATION_TOO_MANY_SLASHES      { -2 };    ///< more than two slashes in the call
 
-constexpr int RUSSIAN_INVALID_SUBSTRING            { -1 },    ///< source substring does not match target line in constructor
-              RUSSIAN_INVALID_FORMAT               { -2 };    ///< format of file is invalid
+constexpr int RUSSIAN_INVALID_SUBSTRING      { -1 },    ///< source substring does not match target line in constructor
+              RUSSIAN_INVALID_FORMAT         { -2 };    ///< format of file is invalid
 
 #if 0
 // -----------  value ----------------
@@ -135,9 +135,9 @@ class alternative_country_info
 protected:
 
   std::string  _country;                ///< canonical country prefix
-  unsigned int _cq_zone  { 0 };         ///< alternative CQ zone
+  unsigned int _cq_zone     { 0 };      ///< alternative CQ zone
   std::string  _identifier;             ///< the alternative prefix or callsign
-  unsigned int _itu_zone { 0 };         ///< alternative ITU zone
+  unsigned int _itu_zone    { 0 };      ///< alternative ITU zone
 
 public:
 
@@ -149,9 +149,6 @@ public:
     is optional
 */
   alternative_country_info(const std::string& record, const std::string& canonical_prefix = std::string());
-
-/// destructor
-//  inline virtual ~alternative_country_info(void) = default;
 
   READ(country);               ///< canonical country prefix
   READ_AND_WRITE(cq_zone);     ///< alternative CQ zone
@@ -206,9 +203,6 @@ public:
     possible errors, but we do test for the most obvious ones.
 */
   cty_record(const std::string& record);
-  
-/// destructor
-//  inline virtual ~cty_record(void) = default;
 
   READ(alt_callsigns);          ///< alternative callsigns used by this country
   READ(alt_prefixes);           ///< alternative prefixes used by this country
@@ -275,7 +269,6 @@ std::ostream& operator<<(std::ostream& ost, const cty_record& rec);
 class cty_data : public std::vector<cty_record>
 {
 protected:
-//  std::vector<cty_record>  _data;        ///< the (raw) data
 
 // all the alternative calls and prefixes (these are also maintained on a per-record basis)
   std::map<std::string, alternative_country_info> _alt_callsigns;    ///< key = alternative callsign
@@ -293,13 +286,10 @@ public:
     \param  filename    name of file
 */
   cty_data(const std::vector<std::string>& path, const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
-
-/// destructor
-//  inline virtual ~cty_data(void) = default;
     
 /// how many countries are present?
   inline unsigned int n_countries(void) const
-    { return /* _data. */size(); }
+    { return size(); }
   
 /// return a record by number, wrt 0, with range checking
   inline cty_record operator[](const unsigned int n) const

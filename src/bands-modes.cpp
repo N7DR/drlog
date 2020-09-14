@@ -129,26 +129,28 @@ frequency frequency::lower_band_edge(void) const
                                                { BAND_10,  frequency(28.0) }
                                              };
 
-  const BAND b { BAND(*this) };
+//  const BAND b { BAND(*this) };
 
-  return MUM_VALUE(edge_map, b, frequency(0.0));
+  return MUM_VALUE(edge_map, BAND(*this), frequency(0.0));
 }
 
 /// is the frequency within a band?
 bool frequency::is_within_ham_band(void) const
-{ const BAND b { BAND(*this) };
+{ return ( (BAND(*this) != BAND_160) or ( (_hz >= 1'800'000) and (_hz <= 2'000'000) ) );    // check if BAND_160, because that's the returned band if frequency is outside a band
 
-  if (b != BAND_160)
-    return true;
+//  const BAND b { BAND(*this) };
 
- return ( (_hz >= 1'800'000) and (_hz <= 2'000'000) );    // check if BAND_160, because that's the returned band if frequency is outside a band
+//  if (b != BAND_160)
+//    return true;
+
+// return ( (_hz >= 1'800'000) and (_hz <= 2'000'000) );    // check if BAND_160, because that's the returned band if frequency is outside a band
 }
 
 /// difference in two frequencies, always +ve
 frequency frequency::difference(const frequency& f2) const
 { frequency rv;
 
-  const int d { ( (hz() > f2.hz()) ? hz() - f2.hz() : f2.hz() - hz() ) };
+  const int d { ( (hz() > f2.hz()) ? (hz() - f2.hz()) : (f2.hz() - hz()) ) };
 
   rv.hz(d);
 

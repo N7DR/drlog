@@ -106,6 +106,16 @@ QSO::QSO(void) :
           pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');             // yyyy-mm-dd
 }
 
+/// set TX frequency and band from a string of the form xxxxx.y
+void QSO::freq_and_band(const decltype(_frequency_tx)& str)
+{ freq(str);
+
+  const unsigned int qrg      { from_string<unsigned int>(str) };
+  const BAND         qrg_band { static_cast<BAND>(frequency(qrg)) };
+
+  band(qrg_band);
+}
+
 /*! \brief              Read fields from a line in the disk log
     \param  context     drlog context
     \param  str         string from log file

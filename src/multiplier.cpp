@@ -63,8 +63,7 @@ bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
     const int m_nr { static_cast<int>(m) };
 
     auto& pb { _worked[m_nr] };
-
-    bool rv { (pb[b_nr].insert(str)).second };  // BAND, MODE
+    bool rv  { (pb[b_nr].insert(str)).second };  // BAND, MODE
 
     if (rv)
     { pb[ANY_BAND].insert(str);        // ANY_BAND, MODE
@@ -114,7 +113,7 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
 // is it still present in any band for this mode?
     bool present { false };
 
-    for (int n = MIN_BAND; n < MAX_BAND; ++n)
+    for (int n {MIN_BAND}; n < MAX_BAND; ++n)
       present |= (_worked[m_nr][n] > str);
 
     if (!present)
@@ -123,7 +122,7 @@ void multiplier::remove_worked(const string& str, const BAND b, const MODE m)
 // is it still present in any mode for this band?
     present = false;
 
-    for (int n = MIN_MODE; n < MAX_MODE; ++n)
+    for (int n {MIN_MODE}; n < MAX_MODE; ++n)
       present |= (_worked[n][b_nr] > str);
 
     if (!present)
@@ -167,9 +166,9 @@ size_t multiplier::n_worked(const BAND b, const MODE m) const
   if (!_used)
     return 0;
 
-  const int b_nr { static_cast<int>(b) };
-  const int m_nr { static_cast<int>(m) };
-  const auto& pb { _worked[m_nr] };
+  const int   b_nr { static_cast<int>(b) };
+  const int   m_nr { static_cast<int>(m) };
+  const auto& pb   { _worked[m_nr] };
 
   return pb[b_nr].size();
 }

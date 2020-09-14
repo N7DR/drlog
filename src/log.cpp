@@ -103,7 +103,6 @@ vector<QSO> logbook::worked(const string& call) const
     for_each(_log.lower_bound(call), _log.upper_bound(call), [&rv] (const pair<string, QSO>& qso) { rv.push_back(qso.second); } );
   }
 
-//  sort(rv.begin(), rv.end(), qso_sort_by_time);    // put in chronological order
   SORT(rv, qso_sort_by_time);    // put in chronological order
 
   return rv;
@@ -129,7 +128,7 @@ unsigned int logbook::n_worked(const string& call) const
 bool logbook::qso_b4(const string& call, const BAND b) const
 { SAFELOCK(_log);
   
-  for (auto cit = _log.lower_bound(call); cit != _log.upper_bound(call); ++cit)
+  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
     if (cit->second.band() == b)
       return true;
   
@@ -144,7 +143,7 @@ bool logbook::qso_b4(const string& call, const BAND b) const
 bool logbook::qso_b4(const string& call, const enum MODE m) const
 { SAFELOCK(_log);
   
-  for (auto cit = _log.lower_bound(call); cit != _log.upper_bound(call); ++cit)
+  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
     if (cit->second.mode() == m)
       return true;
   
@@ -160,7 +159,7 @@ bool logbook::qso_b4(const string& call, const enum MODE m) const
 bool logbook::qso_b4(const string& call, const BAND b, const enum MODE m) const
 { SAFELOCK(_log);
   
-  for (auto cit = _log.lower_bound(call); cit != _log.upper_bound(call); ++cit)
+  for (auto cit { _log.lower_bound(call) }; cit != _log.upper_bound(call); ++cit)
     if ((cit->second.band() == b) and (cit->second.mode() == m))
       return true;
   
@@ -265,10 +264,14 @@ logbook logbook::recalculate_dupes(const contest_rules& rules) const
   SAFELOCK(_log);
 
   for (auto qso : _log_vec)
-  { if (rv.is_dupe(qso, rules))
-      qso.dupe();
-    else
-      qso.undupe();
+  { auto fn_p { ( (rv.is_dupe(qso, rules)) ? &QSO::dupe : &QSO::undupe ) };  
+
+    (qso.*fn_p)();
+
+ //  if (rv.is_dupe(qso, rules))
+ //     qso.dupe();
+ //   else
+ //     qso.undupe();
       
     rv += qso;
   }
@@ -300,13 +303,15 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 // specification is silent as to what constitutes an EOL marker. The FAQ (why would a specification need
 // an FAQ if it were properly specified?) implies that the EOL of the underlying OS on the system that creates
 // the Cabrillo file should be accepted by the contest sponsor.
-  string EOL_STRING { LF };
+//  string EOL_STRING { LF };
 
-  if (context.cabrillo_eol() == "CR"s)
-    EOL_STRING = CR;
+//  if (context.cabrillo_eol() == "CR"s)
+//    EOL_STRING = CR;
 
-  if (context.cabrillo_eol() == "CRLF"s)
-    EOL_STRING = CRLF;
+//  if (context.cabrillo_eol() == "CRLF"s)
+//    EOL_STRING = CRLF;
+
+  const string EOL_STRING { (context.cabrillo_eol() == "CR"s) ? CR : ( (context.cabrillo_eol() == "CRLF"s) ? CRLF : LF ) };
 
 // this goes first
   rv += "START-OF-LOG: 3.0"s + EOL_STRING;
@@ -436,7 +441,7 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
     \param  cabrillo_qso_template   template for the Cabrillo QSOs
 */
 void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_template)
-{ static const vector<string> qso_markers { "QSO"s, "   "s };
+{ static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
   const vector<string> lines { to_lines(remove_char(read_file(filename), CR_CHAR)) };
   
@@ -455,9 +460,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
    
 // for each QSO line
   for (const auto& line : lines)
-  { //if (line.substr(0, 3) == "QSO"s or line.substr(0, 3) == "   "s)
-    //if (starts_with(line, "QSO"s) or starts_with(line, "   "s))
-    if (starts_with(line, qso_markers))
+  { if (starts_with(line, qso_markers))
     { QSO qso;
   
 // go through the fields
@@ -470,12 +473,14 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
       
 // frequency
         if (name == "FREQ"s)
-        { qso.freq(value);
-    
-          const unsigned int _frequency { from_string<unsigned int>(value) };
-          const BAND         _band      { static_cast<BAND>(frequency(_frequency)) };
+        { qso.freq_and_band(value);
 
-          qso.band(_band);
+//          qso.freq(value);
+    
+//          const unsigned int _frequency { from_string<unsigned int>(value) };
+//          const BAND         _band      { static_cast<BAND>(frequency(_frequency)) };
+
+//          qso.band(_band);
         }
       
 // mode
@@ -543,18 +548,17 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
     \param  cabrillo_fields     names of Cabrillo fields
 */
 void logbook::read_cabrillo(const string& filename, const vector<string>& cabrillo_fields)
-{ static const vector<string> qso_markers { "QSO"s, "   "s };
+{ static const vector<string> qso_markers { "QSO"s, "   "s };   // lines that represent QSOs start with one of these strings
 
   const vector<string> lines { to_lines(remove_char(read_file(filename), CR_CHAR)) };
 
   unsigned int last_qso_number { 0 };
 
   for (const auto& line : lines)
-  { //if (line.substr(0, 3) == "QSO"s or line.substr(0, 3) == "   "s)
-    if (starts_with(line, qso_markers))
+  { if (starts_with(line, qso_markers))
     { QSO qso;
   
-      const vector<string> fields { split_string(remove_peripheral_spaces(squash(line.substr(4))), SPACE_STR) };
+      const vector<string> fields { split_string(remove_peripheral_spaces(squash(line.substr(4))), SPACE_STR) }; // skip first four characters
       
       for (unsigned int m = 0; m < fields.size(); ++m)
         ost << m << ": *" << fields[m] << "*" << endl; 
@@ -566,11 +570,12 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
 
 // frequency
         if (name == "FREQ"s)
-        { qso.freq(value);
+        { qso.freq_and_band(value);
+          //qso.freq(value);
     
-          const unsigned int _frequency { from_string<unsigned int>(value) };
+          //const unsigned int _frequency { from_string<unsigned int>(value) };
 
-          qso.band(to_BAND(_frequency));
+          //qso.band(to_BAND(_frequency));
         }
 
 // mode

@@ -166,7 +166,12 @@ public:
 /*! \brief          Constructor
     \param  post    post from cluster or RBN
 */
-  explicit monitored_posts_entry(const dx_post& post);
+  explicit monitored_posts_entry(const dx_post& post) :
+    _callsign(post.callsign()),
+    _frequency_str(post.frequency_str()),
+    _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
+    _band(post.band())
+  { }
 
   READ(band);               ///< band
   READ(callsign);           ///< callsign

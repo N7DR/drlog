@@ -91,6 +91,59 @@ void rig_interface::_error_alert(const string& msg)
     (*_error_alert_function)(msg);
 }
 
+/*! \brief      Set frequency of a VFO
+    \param  f   new frequency
+    \param  v   VFO
+
+    Does nothing if <i>f</i> is not within a ham band
+*/
+void rig_interface::_rig_frequency(const frequency& f, const VFO v)
+{ if (f.is_within_ham_band())
+  { switch (v)
+    { case VFO::A :
+        _last_commanded_frequency = f;
+        break;
+
+      case VFO::B :
+        _last_commanded_frequency_b = f;
+        break;
+    }
+
+    if (_rig_connected)
+    { int status;
+
+      { SAFELOCK(_rig);
+
+        status = rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz());
+      }
+
+      if (status != RIG_OK)
+        _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
+    }
+  }
+}
+
+/*! \brief      Get the frequency of a VFO
+    \param  v   VFO
+    \return     frequency of v
+*/
+frequency rig_interface::_rig_frequency(const VFO v)
+{ if (!_rig_connected)
+    return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b);
+  else
+  { freq_t hz;
+
+    SAFELOCK(_rig);
+
+    if (const int status { rig_get_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_CURR : RIG_VFO_B ), &hz) }; status != RIG_OK)
+    { _error_alert("Error getting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
+      return ( (v == VFO::A) ? _last_commanded_frequency : _last_commanded_frequency_b) ;
+    }
+
+    return frequency(hz);
+  }
+}
+
 /*! \brief      Thread function used to poll rig for status, forever
     \param  vp  unused (should be nullptr)
     \return     nullptr
@@ -185,7 +238,9 @@ void rig_interface::prepare(const drlog_context& context)
 
     Does nothing if <i>f</i> is not within a ham band
 */
-void rig_interface::rig_frequency(const frequency& f)
+void rig_interface::rig_frequency_a(const frequency& f)
+  { _rig_frequency(f, VFO::A); }
+#if 0
 { if (f.is_within_ham_band())
   { _last_commanded_frequency = f;
 
@@ -202,6 +257,7 @@ void rig_interface::rig_frequency(const frequency& f)
     }
   }
 }
+#endif
 
 /*! \brief      Set frequency of VFO B
     \param  f   new frequency of VFO B
@@ -209,6 +265,8 @@ void rig_interface::rig_frequency(const frequency& f)
     Does nothing if <i>f</i> is not within a ham band
 */
 void rig_interface::rig_frequency_b(const frequency& f)
+  { _rig_frequency(f, VFO::B); }
+#if 0
 { if (f.is_within_ham_band())
   { _last_commanded_frequency_b = f;
 
@@ -225,6 +283,7 @@ void rig_interface::rig_frequency_b(const frequency& f)
     }
   }
 }
+#endif
 
 /*! \brief      Set mode
     \param  m   new mode
@@ -271,7 +330,7 @@ void rig_interface::rig_mode(const MODE m)
       }
 
       { SAFELOCK(_rig);
-        const pbwidth_t new_bandwidth { ( m == MODE_SSB ? last_ssb_bandwidth : last_cw_bandwidth ) };
+        const pbwidth_t new_bandwidth { ( (m == MODE_SSB) ? last_ssb_bandwidth : last_cw_bandwidth ) };
 
         status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
       }
@@ -285,7 +344,9 @@ void rig_interface::rig_mode(const MODE m)
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-frequency rig_interface::rig_frequency(void)
+frequency rig_interface::rig_frequency_a(void)
+  { return _rig_frequency(VFO::A); } 
+#if 0
 { if (!_rig_connected)
     return _last_commanded_frequency;
   else
@@ -301,9 +362,12 @@ frequency rig_interface::rig_frequency(void)
     return frequency(hz);
   }
 }
+#endif
 
 /// get frequency of VFO B
 frequency rig_interface::rig_frequency_b(void)
+  { return _rig_frequency(VFO::B); }
+#if 0
 { if (!_rig_connected)
     return _last_commanded_frequency_b;
   else
@@ -319,6 +383,7 @@ frequency rig_interface::rig_frequency_b(void)
     return frequency(hz);
   }
 }
+#endif
 
 /*! \brief  Enable split operation
 
@@ -453,7 +518,7 @@ unsigned int rig_interface::data_bits(void)
     Throws exception if <i>bits</i> is not 1 or 2
 */
 void rig_interface::stop_bits(const unsigned int bits)
-{ if (bits < 1 or bits > 2)
+{ if ( (bits < 1) or (bits > 2) )
     throw rig_interface_error(RIG_INVALID_STOP_BITS, "Attempt to set invalid number of stop bits: "s + to_string(bits));
 
   SAFELOCK(_rig);
@@ -481,9 +546,9 @@ MODE rig_interface::rig_mode(void)
 
     SAFELOCK(_rig);
 
-    const int status { rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w) };
+//    const int status { rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w) };
 
-    if (status != RIG_OK)
+    if (const int status { rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w) }; status != RIG_OK)
     { _error_alert("Error getting mode"s);
       return _last_commanded_mode;
     }
@@ -1266,9 +1331,9 @@ void rig_interface::test(const bool b)
 */
 VFO rig_interface::tx_vfo(void)
 { if (!_rig_connected)
-    return VFO_A;
+    return VFO::A;
 
-  return (split_enabled() ? VFO_B : VFO_A);  // this is the recommended procedure from the hamlib reflector
+  return (split_enabled() ? VFO::B : VFO::A);  // this is the recommended procedure from the hamlib reflector
 // I think this is ridiculous, because it does not allow for the case where the rig is in reverse split,
 // with the TX on A and RX on B.
 

@@ -151,6 +151,7 @@ string qtc_series::output_string(const unsigned int n) const
   const qtc_entry qe { _qtc_entries[n].first };
 
   string rv { pad_string(_frequency, 5) + SPACE_STR };
+
   rv += (_mode + SPACE_STR + _date + SPACE_STR + _utc + SPACE_STR);
   rv += substring(pad_string(_target, 13, PAD_RIGHT, ' '), 0, 13) + SPACE_STR;
 
@@ -346,7 +347,6 @@ void qtc_database::read(const string& filename)
       qe.callsign(fields[8]);
       qe.serno(fields[9]);
 
- //     series += pair<qtc_entry, bool>( { qe, QTC_SENT } );
       series += { qe, QTC_SENT };
     }
   }
@@ -447,7 +447,7 @@ string qtc_buffer::unsent_list_as_string(void) const
   size_t nr { 1 };
 
   for (const qtc_entry& qe : _unsent_qtcs)
-  { rv += pad_string(to_string(nr), 4) + ": "s + /* pad_string(to_string(qe.my_serno()), 4) + SPACE_STR + */ qe.utc() + SPACE_STR + pad_string(qe.callsign(), 13, PAD_RIGHT) + SPACE_STR + qe.serno();
+  { rv += pad_string(to_string(nr), 4) + ": "s + qe.utc() + SPACE_STR + pad_string(qe.callsign(), 13, PAD_RIGHT) + SPACE_STR + qe.serno();
 
     if (nr++ != _unsent_qtcs.size())
       rv += EOL; 

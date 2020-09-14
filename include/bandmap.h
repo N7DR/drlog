@@ -30,15 +30,6 @@
 #include <string>
 #include <utility>
 
-/* On a slow machine you might want to undefine BBML. The cost will be the introduction of a
-   (non-dangerous) race condition in that if you QSY by pressing CTRL-ALT-KP-8 or some similar
-   way, the QSY might occur and then be reverted if some other operation on the bandmap was
-   under way at the same time.
-   
-   BBML stands for "big bandmap lock".
-*/
-//#define BBML
-
 /// possible sources for bandmap entries
 enum class BANDMAP_ENTRY_SOURCE { LOCAL,
                                   CLUSTER,
@@ -84,7 +75,7 @@ protected:
 public:
 
 /// return the number of posters
-  [[nodiscard]] inline unsigned int size(void) const
+  inline unsigned int size(void) const
     { return _posters.size(); }
 
 /*! \brief              Add a new poster
@@ -113,12 +104,12 @@ protected:
 
   std::map<std::string /* call */, bandmap_buffer_entry>  _data;    ///< the database
 
-  pt_mutex _bandmap_buffer_mutex { "BANDMAP BUFFER"s };                                   ///< mutex for thread-safe access
+  pt_mutex _bandmap_buffer_mutex { "BANDMAP BUFFER"s };             ///< mutex for thread-safe access
 
 public:
 
 /// default constructor
-  inline bandmap_buffer(const unsigned int n_posters = 1) :
+  inline explicit bandmap_buffer(const unsigned int n_posters = 1) :
     _min_posters(n_posters)
   { }
 
@@ -143,7 +134,7 @@ public:
     \param  callsign    the callsign to test
     \return             Whether the number of posters associated with <i>callsign</i> is equal to or greater than the necessary minimum
 */
-  [[nodiscard]] inline bool sufficient_posters(const std::string& callsign)
+  inline bool sufficient_posters(const std::string& callsign)
     { return (n_posters(callsign) >= _min_posters); }
 };
 

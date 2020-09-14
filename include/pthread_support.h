@@ -57,7 +57,7 @@ constexpr int PTHREAD_LOCK_ERROR                      { -1 },       ///< Error l
               PTHREAD_MUTEX_ATTR_GET_SET_ERROR        { -15 };      ///< Error getting or setting a mutex attribute
 
 // attributes that can be set at the time that a thread_attribute object is created
-constexpr unsigned int PTHREAD_DETACHED     { 1 };        ///< detached pthread
+constexpr unsigned int PTHREAD_DETACHED { 1 };        ///< detached pthread
 
 // -------------------------------------------  thread_attribute  -----------------------
 
@@ -291,7 +291,6 @@ public:
 /*! \class  pt_mutex
     \brief  Encapsulate a pthread_mutex_t
   
-    pt_mutex objects should be declared in global scope.
     This class implements a recursive mutex
 */
 
@@ -306,10 +305,9 @@ protected:
 
 public:
 
-/// constructor
-//  inline pt_mutex(void)
-//    { pthread_mutex_init(&_mutex, NULL); }
-    
+/*! \brief      Constructor
+    \param  nm  Name of the mutex (now required, so that it is available in stack traces)
+*/
   inline explicit pt_mutex(const std::string& nm) :
     _name(nm)
     { pthread_mutex_init(&_mutex, NULL); }
@@ -318,7 +316,7 @@ public:
   pt_mutex(const pt_mutex&) = delete;
 
 /// destructor
-  /* virtual */ ~pt_mutex(void);
+  ~pt_mutex(void);
 
 /// lock the mutex
   void lock(void);
@@ -350,7 +348,7 @@ class pt_mutex_attributes
 {
 protected:
 
-  pthread_mutexattr_t         _mutexattr;         ///< Encapsulated mutexsttr object
+  pthread_mutexattr_t _mutexattr;         ///< Encapsulated mutexattr object
 
 public:
 
@@ -480,9 +478,9 @@ protected:
 
 public:
 
-/*! \brief          Construct from a named mutex
+/*! \brief          Construct from a mutex
     \param  ptm     mutex to be locked
-    \param  name    name of mutex
+    \param  name    name of safelock (defaults to name of mutex)
 */
   explicit safelock(pt_mutex& ptm, const std::string& name = std::string());
 
@@ -532,7 +530,7 @@ extern const pthread_error_messages pthread_error_message;    ///< pthread error
     \return     <i>v</i>, following a lock and unlock
 */
 template <class T>
-/* const */ T SAFELOCK_GET(pt_mutex& m, const T& v)
+T SAFELOCK_GET(pt_mutex& m, const T& v)
 { safelock safelock_z(m, "SAFELOCK_GET"s);
 
   return v;

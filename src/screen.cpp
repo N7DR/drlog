@@ -228,6 +228,10 @@ void window::init(const window_information& wi, const unsigned int flags)
 void window::init(const window_information& wi, const COLOUR_TYPE fg, const COLOUR_TYPE bg, const unsigned int flags)
 { _init(wi, flags);
 
+  _fg = (wi.colours_set() ? string_to_colour(wi.fg_colour()) : fg);
+  _bg = (wi.colours_set() ? string_to_colour(wi.bg_colour()) : bg);
+
+#if 0
   if (wi.colours_set())
   { _fg = string_to_colour(wi.fg_colour());
     _bg = string_to_colour(wi.bg_colour());
@@ -236,7 +240,7 @@ void window::init(const window_information& wi, const COLOUR_TYPE fg, const COLO
   { _fg = fg;
     _bg = bg;
   }
-
+#endif
   _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
 
   (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
@@ -297,16 +301,19 @@ window& window::operator<(const string& s)
     Wraps words to new lines.
     Stops writing if there's insufficient room for the next string.
 */
+#if 0
 window& window::operator<(const set<string>& ss)
 { if (!_wp)
     return *this;
 
   vector<string> v { ss.cbegin(), ss.cend() };
 
-  sort(v.begin(), v.end(), compare_calls);
+//  sort(v.begin(), v.end(), compare_calls);
+  SORT(v, compare_calls);
 
   return (*this < v);
 }
+#endif
 
 /*! \brief          Write an unordered set of strings to a window
     \param  ss      set to write
@@ -318,16 +325,19 @@ window& window::operator<(const set<string>& ss)
 
     This is exactly the same as for a set.
 */
+#if 0
 window& window::operator<(const unordered_set<string>& ss)
 { if (!_wp)
     return *this;
 
   vector<string> v { ss.cbegin(), ss.cend() };
 
-  sort(v.begin(), v.end(), compare_calls);
+//  sort(v.begin(), v.end(), compare_calls);
+  SORT(v, compare_calls);
 
   return (*this < v);
 }
+#endif
 
 /*! \brief      Write a vector of strings to a window
     \param  v   vector to write

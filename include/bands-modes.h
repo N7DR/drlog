@@ -99,10 +99,10 @@ constexpr unsigned int N_MODES         { NUMBER_OF_MODES };     ///< how many mo
 constexpr unsigned int ALL_MODES       { N_MODES };             ///< indicator used to mean "all modes"
 
 /// mode names
-static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { { "CW"s,
-                                                                      "SSB"s,
-                                                                      "RTTY"s
-                                                                 } };
+static const std::array<std::string, NUMBER_OF_MODES> MODE_NAME = { "CW"s,
+                                                                    "SSB"s,
+                                                                    "RTTY"s
+                                                                  };
 
 /// generate the mode from a name
 static const std::map<std::string, MODE> MODE_FROM_NAME { { "CW"s,   MODE_CW },

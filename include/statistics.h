@@ -254,7 +254,6 @@ public:
 
 /// all the known country mults
   inline MULTIPLIER_VALUES known_country_mults(void)
-//  inline const auto known_country_mults(void)
   { SAFELOCK(statistics);
     return _country_multipliers.known();
   }
@@ -359,8 +358,8 @@ class call_history
 {
 protected:
 
-  std::map<std::string, std::set<bandmode> > _history;              ///< container for the history
-  pt_mutex                                   _history_mutex { "DEFAULT CALL HISTORY"s };        ///< mutex for the container
+  std::map<std::string, std::set<bandmode> > _history;                                      ///< container for the history
+  pt_mutex                                   _history_mutex { "DEFAULT CALL HISTORY"s };    ///< mutex for the container
 
 public:
 

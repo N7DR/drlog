@@ -24,7 +24,6 @@
 
 using namespace std;
 
-//extern pt_mutex                      bandmap_mutex;          ///< used when writing to the bandmap window
 extern pt_mutex                      batch_messages_mutex;   ///< mutex for batch messages
 extern unordered_map<string, string> batch_messages;         ///< batch messages associated with calls
 extern bandmap_buffer                bm_buffer;              ///< global control buffer for all the bandmaps

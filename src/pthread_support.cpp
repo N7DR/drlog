@@ -140,9 +140,7 @@ const pthread_error_messages pthread_error_message;     ///< object to hold erro
     The first four parameters are passed without change to <i>pthread_create</i>
 */
 void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg, const string& thread_name)
-{ const int status { pthread_create(thread, attr, start_routine, arg) };
-
-  if (status != 0)
+{ if (const int status { pthread_create(thread, attr, start_routine, arg) }; status != 0)
   { string errname;
 
     switch (status)
@@ -182,9 +180,7 @@ void create_thread(pthread_t *thread, const pthread_attr_t *attr, void *(*start_
     Supports only the PTHREAD_DETACHED attribute
 */
 thread_attribute::thread_attribute(const unsigned int initial_attributes)
-{ const int status { pthread_attr_init(&_attr) };             // man page says that this always succeeds and returns 0
-
-  if (status)
+{ if (const int status { pthread_attr_init(&_attr) }; status)             // man page says that this always succeeds and returns 0
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_init(): error number = "s + to_string(status));
 
   if (initial_attributes bitand PTHREAD_DETACHED)
@@ -208,21 +204,15 @@ thread_attribute::thread_attribute(const pthread_t tid)
 
 /// destructor
 thread_attribute::~thread_attribute(void)
-{ const int status { pthread_attr_destroy(&_attr) };
-
-  if (status)
+{ if (const int status { pthread_attr_destroy(&_attr) }; status)
     ost << "Failure in pthread_attr_destroy(); Error "  << PTHREAD_ATTR_ERROR << "; status = " << status << endl;
-      
-  // throw pthread_error(PTHREAD_ATTR_ERROR, "Failure in pthread_attr_destroy()"s);  // don't throw in destructor
 }
 
 /*! \brief      Set the detached state
     \param  b   whether to set to DETACHED (true) or JOINABLE (false)
 */
 void thread_attribute::detached(const bool b)
-{ const int status { pthread_attr_setdetachstate(&_attr, (b ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE)) };
-
-  if (status)
+{ if (const int status { pthread_attr_setdetachstate(&_attr, (b ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE)) }; status)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure setting detached state of attribute"s);
 }
 
@@ -232,9 +222,7 @@ void thread_attribute::detached(const bool b)
 bool thread_attribute::detached(void) const
 { int state;
 
-  const int status { pthread_attr_getdetachstate(&_attr, &state) };
-
-  if (status)
+  if (const int status { pthread_attr_getdetachstate(&_attr, &state) }; status)
     throw pthread_error(PTHREAD_ATTR_ERROR, "Failure getting detached state of attribute"s);
 
   return (state == PTHREAD_CREATE_DETACHED);
@@ -254,9 +242,7 @@ void thread_attribute::policy(const int policy)
 { if ( (policy != SCHED_FIFO) and (policy != SCHED_RR) )
     throw pthread_error(PTHREAD_UNRECOGNISED_POLICY, "Unrecognised thread policy: "s + to_string(policy));
 
-  const int status { pthread_attr_setschedpolicy(&_attr, policy) };
-
-  if (status != 0)
+  if (const int status { pthread_attr_setschedpolicy(&_attr, policy) }; status != 0)
     throw pthread_error(PTHREAD_POLICY_ERROR, "Error setting policy: "s + to_string(policy) + "status = "s + to_string(status));
 }
 
@@ -284,9 +270,9 @@ void thread_attribute::scope(const int scope)
 { if ( (scope != SCHED_FIFO) and (scope != SCHED_RR) )
     throw pthread_error(PTHREAD_UNRECOGNISED_SCOPE, "Unrecognised thread scope: "s + to_string(scope));
 
-  const int status { pthread_attr_setscope(&_attr, scope) };
+// const int status { pthread_attr_setscope(&_attr, scope) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_setscope(&_attr, scope) }; status != 0)
     throw pthread_error(PTHREAD_SCOPE_ERROR, "Error setting scope: "s + to_string(scope) + "status = "s + to_string(status));
 }
 
@@ -294,9 +280,9 @@ void thread_attribute::scope(const int scope)
 int thread_attribute::scope(void) const
 { int scope;
 
-  const int status { pthread_attr_getscope(&_attr, &scope) };
+//  const int status { pthread_attr_getscope(&_attr, &scope) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_getscope(&_attr, &scope) }; status != 0)
     throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: "s + to_string(scope) + "status = "s + to_string(status));
 
   return scope;
@@ -316,9 +302,9 @@ void thread_attribute::inheritance_policy(const int ipolicy)
 { if ( (ipolicy != PTHREAD_EXPLICIT_SCHED) and (ipolicy != PTHREAD_INHERIT_SCHED) )
     throw pthread_error(PTHREAD_UNRECOGNISED_INHERITANCE_POLICY, "Unrecognised thread inheritance policy: "s + to_string(ipolicy));
 
-  const int status { pthread_attr_setinheritsched(&_attr, ipolicy) };
+//  const int status { pthread_attr_setinheritsched(&_attr, ipolicy) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_setinheritsched(&_attr, ipolicy) }; status != 0)
     throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error setting inheritance policy: "s + to_string(ipolicy) + "status = "s + to_string(status));
 }
 
@@ -326,9 +312,9 @@ void thread_attribute::inheritance_policy(const int ipolicy)
 int thread_attribute::inheritance_policy(void) const
 { int ipolicy;
 
-  const int status { pthread_attr_getinheritsched(&_attr, &ipolicy) };
+//  const int status { pthread_attr_getinheritsched(&_attr, &ipolicy) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_getinheritsched(&_attr, &ipolicy) }; status != 0)
     throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: "s + to_string(ipolicy) + "status = "s + to_string(status));
 
   return ipolicy;
@@ -970,44 +956,12 @@ void pt_condition_variable::signal(void)
 
 // -------------------------------------- safelock ------------------------
 
-/*! \brief          Construct from a named mutex
+/*! \brief          Construct from a mutex
     \param  ptm     mutex to be locked
-    \param  name    name of mutex
+    \param  name    name of safelock (defaults to name of mutex)
 */
-
-/*
-(gdb) bt
-#0  0xb7726cf9 in __kernel_vsyscall ()
-#1  0xb6ee5dd0 in __libc_signal_restore_set (set=0xbf8fa340) at ../sysdeps/unix/sysv/linux/nptl-signals.h:79
-#2  __GI_raise (sig=6) at ../sysdeps/unix/sysv/linux/raise.c:48
-#3  0xb6ee7297 in __GI_abort () at abort.c:89
-#4  0xb71592ff in __gnu_cxx::__verbose_terminate_handler() () from /usr/lib/i386-linux-gnu/libstdc++.so.6
-#5  0xb7156ea4 in ?? () from /usr/lib/i386-linux-gnu/libstdc++.so.6
-#6  0xb7156f1d in std::terminate() () from /usr/lib/i386-linux-gnu/libstdc++.so.6
-#7  0xb715722e in __cxa_rethrow () from /usr/lib/i386-linux-gnu/libstdc++.so.6
-#8  0x007588b9 in safelock::safelock (this=0xbf8fa688, ptm=..., name="_keyboard") at ../src/pthread_support.cpp:864
-#9  0x0073aaf6 in keyboard_queue::empty (this=0x939340 <keyboard>) at ../src/keyboard.cpp:207
-#10 0x005c4506 in main (argc=4, argv=0xbf8fd9e4) at ../src/drlog.cpp:1786
-(gdb)
-*/
-
-/*
-(gdb) bt
-#0  0xb7752cf9 in __kernel_vsyscall ()
-#1  0xb6f11dd0 in __libc_signal_restore_set (set=0xbfdde7c0) at ../sysdeps/unix/sysv/linux/nptl-signals.h:79
-#2  __GI_raise (sig=6) at ../sysdeps/unix/sysv/linux/raise.c:48
-#3  0xb6f13297 in __GI_abort () at abort.c:89
-#4  0xb71852ff in __gnu_cxx::__verbose_terminate_handler() () from /usr/lib/i386-linux-gnu/libstdc++.so.6
-#5  0xb7182ea4 in ?? () from /usr/lib/i386-linux-gnu/libstdc++.so.6
-#6  0xb7182f1d in std::terminate() () from /usr/lib/i386-linux-gnu/libstdc++.so.6
-#7  0xb718322e in __cxa_rethrow () from /usr/lib/i386-linux-gnu/libstdc++.so.6
-#8  0x00741e5f in safelock::safelock (this=0xbfddeb08, ptm=..., name="_keyboard") at ../src/pthread_support.cpp:881
-#9  0x007240ae in keyboard_queue::empty (this=0x9233a0 <keyboard>) at ../src/keyboard.cpp:207
-#10 0x005ad51f in main (argc=4, argv=0xbfde1e94) at ../src/drlog.cpp:1796
-*/
-
 safelock::safelock(pt_mutex& ptm, const string& name) :
- _name(name)
+ _name(name.empty() ? ptm.name() : name)
 { try
   { _ptm_p = &ptm;
     _ptm_p->lock();

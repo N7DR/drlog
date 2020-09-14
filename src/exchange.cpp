@@ -23,7 +23,6 @@
 
 #include <array>
 
-//using namespace boost;                  // for regex
 using namespace std;
 
 extern contest_rules           rules;                               ///< the rules for this contest
@@ -85,10 +84,6 @@ string exchange_field_prefill::prefill_data(const string& field_name, const stri
   const unordered_map<string /* callsign */, string /* value */>& field_map   { it->second };
 
   return MUM_VALUE(field_map, callsign);
-
-//  const auto                                                      callsign_it { field_map.find(callsign) };
-
-//  return ( (callsign_it == field_map.cend()) ? string() : callsign_it->second );
 }
 
 ostream& operator<<(ostream& ost, const exchange_field_prefill& epf)
@@ -170,7 +165,7 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
   bool possible { true };
 
 // check all except the last character
-  for (size_t n = 0; n < str.length() - 1; ++n)
+  for (size_t n = 0; n < str.length() - 1; ++n) // note the "<" and -1
     if (possible)
       possible = (isdigit(str[n]));
 
@@ -192,12 +187,12 @@ bool parsed_ss_exchange::_is_possible_check(const string& str) const
 { if (str.length() != 2)
     return false;
 
-  { for (size_t n = 0; n < str.length() - 1; ++n)
-      if (!isdigit(str[n]))
-        return false;
-
-    return true;
-  }
+//  { for (size_t n = 0; n < str.length() - 1; ++n)
+//      if (!isdigit(str[n]))
+//        return false;
+//
+//    return true;
+//  }
 
   return ( isdigit(str[0]) and isdigit(str[1]) );
 }
@@ -246,6 +241,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   }
 
   vector<INDEX_TYPE> possible_prec;
+
   index = 0;
 
   for (const auto& field : copy_received_fields)
@@ -256,6 +252,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   }
 
   vector<INDEX_TYPE> possible_check;
+
   index = 0;
 
   for (const auto& field : copy_received_fields)
@@ -266,6 +263,7 @@ parsed_ss_exchange::parsed_ss_exchange(const string& call, const vector<string>&
   }
 
   vector<INDEX_TYPE> possible_callsigns;
+
   index = 0;
 
   for (const auto& field : copy_received_fields)

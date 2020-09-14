@@ -77,19 +77,18 @@ void drlog_context::_set_points(const string& command, const MODE m)
   if (!str_vec.empty())
   { const string lhs { str_vec[0] };
 
-    string tmp_points_str;
+ //   string tmp_points_str;
     
-    auto& pbb { _per_band_points[m] };
+ //   auto& pbb { _per_band_points[m] };
 
-    if (!contains(lhs, "["s) or contains(lhs, "[*]"s))            // for all bands
+    if (auto& pbb { _per_band_points[m] }; !contains(lhs, "["s) or contains(lhs, "[*]"s))            // for all bands
     { for (unsigned int n = 0; n < NUMBER_OF_BANDS; ++n)
         pbb.insert( { static_cast<BAND>(n), RHS } );
     }
     else                                                        // not all bands
     { const size_t left_bracket_posn  { lhs.find('[') };
       const size_t right_bracket_posn { lhs.find(']') };
-
-      const bool valid { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
+      const bool   valid              { (left_bracket_posn != string::npos) and (right_bracket_posn != string::npos) and (left_bracket_posn < right_bracket_posn) };
 
       if (valid)
       { const string bands_str     { lhs.substr(left_bracket_posn + 1, (right_bracket_posn - left_bracket_posn - 1)) };
@@ -1314,8 +1313,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
 // a big switch to convert from text in the configuration file to a KeySym, which is what we use as the key in the message map
 // this could be more efficient by generating a container of all the legal keysym names and then comparing the target to all those.
 // The latter is now what we do. The legal names are in key_names.
-        const string                           target { to_lower(message_info[2]) };
-//        const map<string, int>::const_iterator cit    { key_names.find(target) };
+        const string target { to_lower(message_info[2]) };
 
         if (const auto& cit { key_names.find(target) }; cit != key_names.cend())
         { const vector<string> vec_str { split_string(testline, "="s) };
@@ -1332,9 +1330,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
           { ost << "found equivalent key name: " << cit2->second << endl;
 
             const string alternative { cit2->second };
-//            const map<string, int>::const_iterator cit                { key_names.find(alternative) };
 
- //           if (cit != key_names.cend())
             if (const auto& cit { key_names.find(alternative) }; cit != key_names.cend())
             { const int& keysym { cit->second };
 
@@ -1456,16 +1452,6 @@ drlog_context::drlog_context(const std::string& filename)
   }
 }
 
-/*! \brief          Get the information pertaining to a particular window
-    \param  name    name of window
-    \return         location, size and colour information
-*/
-//window_information drlog_context::window_info(const string& name) const
-//{ const auto cit { _windows.find(name) };
-//
-//  return (cit == _windows.cend() ? window_information() : cit->second);
-//}
-
 /*! \brief          Get all the windows whose name contains a particular substring
     \param  substr  substring for which to search
     \return         all the window names that include <i>substr</i>
@@ -1559,7 +1545,7 @@ vector<string> drlog_context::sent_exchange_names(void) const
 vector<string> drlog_context::sent_exchange_names(const MODE m) const
 { vector<string> rv;
 
-  const std::vector<std::pair<std::string, std::string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
+  const vector<pair<string, string> >* ptr_vec_pss { (m == MODE_CW ? &_sent_exchange_cw : &_sent_exchange_ssb) };
 
   for (const auto& pss : *ptr_vec_pss)
     rv.push_back(pss.first);

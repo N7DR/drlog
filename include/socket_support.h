@@ -192,7 +192,7 @@ protected:
   
     Protected function ensures that the socket cannot be copied
 */
-  tcp_socket(const tcp_socket& obj);
+//  tcp_socket(const tcp_socket& obj);
 
 /*! \brief close the socket
 */
@@ -229,7 +229,9 @@ public:
 
 /*! \brief  Destructor
 */
-  virtual ~tcp_socket(void);
+  /* virtual */ ~tcp_socket(void);
+
+  tcp_socket(const tcp_socket& obj) = delete;
 
   READ_AND_WRITE(timeout_in_tenths);                       ///< RW access to timeout_in_tenths
 

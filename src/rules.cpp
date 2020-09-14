@@ -28,7 +28,8 @@ using namespace std;
 pt_mutex rules_mutex { "RULES"s };      ///< mutex for the contest_rules object
 
 extern const set<string> CONTINENT_SET; ///< the abbreviations for the continents
-extern message_stream ost;              ///< for debugging and logging
+
+extern message_stream    ost;           ///< for debugging and logging
 extern location_database location_db;   ///< location information
 
 extern void alert(const string& msg, const bool show_time = true);  ///< Alert the user
@@ -81,11 +82,11 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
 
     Return empty string if <i>field_name</i> is not a choice
 */
-string choice_equivalents::other_choice(const std::string& field_name) const
-{ const auto posn { _choices.find(field_name) };
-
-  return ( (posn == _choices.cend()) ? string() : posn->second );
-}
+//string choice_equivalents::other_choice(const std::string& field_name) const
+//{ const auto posn { _choices.find(field_name) };
+//
+//  return ( (posn == _choices.cend()) ? string() : posn->second );
+//}
 
 // -------------------------  exchange_field_values  ---------------------------
 
@@ -125,7 +126,7 @@ void exchange_field_values::add_value(const string& cv, const string& v)
 size_t exchange_field_values::n_values(const string& cv) const
 { const auto posn { _values.find(cv) };
 
-  return ( (posn == _values.end()) ? 0 : posn->second.size() );
+  return ( (posn == _values.cend()) ? 0 : posn->second.size() );
 }
 
 /*! \brief      Get all the legal values for a single canonical value
@@ -134,11 +135,13 @@ size_t exchange_field_values::n_values(const string& cv) const
 
     Returns empty set if the canonical value does not exist
 */
-set<std::string> exchange_field_values::values(const string& cv) const
-{ const auto posn { _values.find(cv) };
+//set<std::string> exchange_field_values::values(const string& cv) const
+//{ //const auto posn { _values.find(cv) };
 
-  return ( (posn == _values.end()) ? set<string>() : posn->second );
-}
+  //return ( (posn == _values.end()) ? set<string>() : posn->second );
+
+//  return MUM_VALUE(_values, cv);
+//}
 
 /*! \brief      Get all the canonical values
     \return     all the canonical values
@@ -376,7 +379,8 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
         }
 
 // put into alphabetical order
-        sort(choice_fields.begin(), choice_fields.end());
+//        sort(choice_fields.begin(), choice_fields.end());
+        SORT(choice_fields);
 
         for (auto& choice_field_name : choice_fields)
           full_name += choice_field_name + "+"s;
@@ -972,7 +976,8 @@ vector<string> contest_rules::exch_canonical_values(const string& field_name) co
 
         FOR_ALL(m, [&rv] (const map<string, set<string> >::value_type& mss) { rv.push_back(mss.first); } );  // Josuttis 2nd ed., p. 338
 
-        sort(rv.begin(), rv.end());
+ //       sort(rv.begin(), rv.end());
+        SORT(rv);
       }
     }
   }

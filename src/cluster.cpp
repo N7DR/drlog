@@ -335,8 +335,7 @@ dx_post::dx_post(const std::string& received_info, location_database& db, const 
 
         if (!_valid)
         { const string copy       { remove_leading_spaces(substring(received_info, 6)) };
-          //const size_t colon_posn { copy.find(":"s) };
-
+  
           if (const size_t colon_posn { copy.find(":"s) }; colon_posn != string::npos)
           { _poster = copy.substr(0, colon_posn);
 
@@ -420,12 +419,12 @@ ostream& operator<<(ostream& ost, const dx_post& dxp)
 /*! \brief          Constructor
     \param  post    post from cluster or RBN
 */
-monitored_posts_entry::monitored_posts_entry(const dx_post& post) :
-  _callsign(post.callsign()),
-  _frequency_str(post.frequency_str()),
-  _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
-  _band(post.band())
-{ }
+//monitored_posts_entry::monitored_posts_entry(const dx_post& post) :
+//  _callsign(post.callsign()),
+//  _frequency_str(post.frequency_str()),
+//  _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
+//  _band(post.band())
+//{ }
 
 /*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream
     \param  ost     output stream
@@ -467,7 +466,7 @@ void monitored_posts::operator+=(const dx_post& post)
 
   SAFELOCK(monitored_posts);
 
-  for (deque<monitored_posts_entry>::iterator it = _entries.begin(); (!stop_search and (it != _entries.end())); ++it)
+  for (deque<monitored_posts_entry>::iterator it { _entries.begin() }; (!stop_search and (it != _entries.end())); ++it)
   { monitored_posts_entry& old_mpe { *it };
 
     if ( (mpe.callsign() == old_mpe.callsign()) and (mpe.band() == old_mpe.band()) )

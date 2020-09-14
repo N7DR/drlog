@@ -48,9 +48,9 @@ void tcp_socket::_close_the_socket(void)
 { if (_sock)
   { SAFELOCK(_tcp_socket);
 
-    const int status = ::close(_sock);
+//    const int status { ::close(_sock) };
   
-    if (status == -1)
+    if (const int status { ::close(_sock) }; status == -1)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_CLOSE, strerror(errno));
   }
 }
@@ -65,14 +65,14 @@ tcp_socket::tcp_socket(void)  :
 { try
   { 
 // enable re-use
-    static const int on { 1 };
+    const int on { 1 };
 
     int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };  // char* cast is needed for Windows
 
     if (status)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting SO_REUSEADDR"s);
 
-    const struct linger lgr = { 1, 0 };
+    const struct linger lgr { 1, 0 };
 
     status = setsockopt(_sock, SOL_SOCKET, SO_LINGER, (char*)&lgr, sizeof(lgr) );  // char* cast is needed for Windows
 
@@ -103,7 +103,7 @@ tcp_socket::tcp_socket(SOCKET* sp) :
     { _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 // enable re-use
-      static const int on { 1 };
+      const int on { 1 };
 
       int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };    // char* cast is needed for Windows
 
@@ -252,7 +252,7 @@ void tcp_socket::new_socket(void)
     _sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 // enable re-use
-    static const int on { 1 };
+    const int on { 1 };
 
     int status { setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) };      // char* cast is needed for Windows
 
@@ -278,9 +278,9 @@ void tcp_socket::new_socket(void)
 void tcp_socket::bind(const sockaddr_storage& local_address)
 { SAFELOCK(_tcp_socket);
 
-  const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) };
+//  const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) };
 
-  if (status)
+  if (const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) }; status)
     throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Errno = "s + to_string(errno) + "; "s + strerror(errno));
 
   _bound_address = local_address;
@@ -571,7 +571,7 @@ void tcp_socket::keep_alive(const unsigned int idle, const unsigned int retry, c
 string read_socket(SOCKET& in_socket, const int timeout_in_tenths, const int buffer_length_for_reply)
 {
 // wait for response
-  struct timeval timeout { /* sec */ timeout_in_tenths / 10, /* usec */ (timeout_in_tenths - timeout.tv_sec * 10) * 100000L };
+  struct timeval timeout { /* sec */ timeout_in_tenths / 10, /* usec */ (timeout_in_tenths - timeout.tv_sec * 10) * 100'000L };
 
   fd_set ps_set;
 
@@ -640,7 +640,7 @@ void flush_read_socket(SOCKET& sock)
   { recvfrom(sock, socket_buffer, 1024, 0, (sockaddr*)&ps_sockaddr, &from_length); 
 
 // reset the timeout
-    timeout =  { 0, 0 };
+    timeout = { 0, 0 };
 
 // and the set
     FD_ZERO(&ps_set);

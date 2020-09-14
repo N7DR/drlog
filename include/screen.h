@@ -490,6 +490,30 @@ public:
 */
   window& operator<(const std::vector<std::string>& v);
 
+/*! \brief          Write a set or unordered set of strings to a window
+    \param  sus     set/unordered set to write
+    \return         the window
+
+    The set/unordered set is written in callsign order.
+    Wraps words to new lines.
+    Stops writing if there's insufficient room for the next string.
+*/
+template <class T>
+window& operator<(const T& sus)
+  requires (is_set_v<T> == true || is_unordered_set_v<T> == true) && (std::is_same_v<typename T::value_type, std::string> == true)
+{ if (!_wp)
+    return *this;
+
+  std::vector<std::string> v { sus.cbegin(), sus.cend() };
+
+//  sort(v.begin(), v.end(), compare_calls);
+  SORT(v, compare_calls);
+
+  return (*this < v);
+}
+
+//  window& operator<(const std::set<std::string>& ss);
+
 /*! \brief          Write a set of strings to a window
     \param  ss      set to write
     \return         the window
@@ -498,17 +522,7 @@ public:
     Wraps words to new lines.
     Stops writing if there's insufficient room for the next string.
 */
-  window& operator<(const std::set<std::string>& ss);
-
-/*! \brief          Write a set of strings to a window
-    \param  ss      set to write
-    \return         the window
-
-    The set is written in callsign order.
-    Wraps words to new lines.
-    Stops writing if there's insufficient room for the next string.
-*/
-  window& operator<(const std::unordered_set<std::string>& ss);
+//  window& operator<(const std::unordered_set<std::string>& ss);
 
 /*! \brief          Write a vector of strings with possible different colours to a window
     \param  vec     vector of pairs <string, int [colour number]> to write
@@ -518,26 +532,28 @@ public:
 */
   window& operator<(const std::vector<std::pair<std::string /* callsign */, PAIR_NUMBER_TYPE /* colour pair number */ > >& vec);
 
-/*! \brief      Write an unsigned integer to a window
-    \param  n   unsigned integer to write
+/*! \brief      Write an integral type to a window
+    \param  n   value to write
     \return     the window
 */
-  inline window& operator<(const unsigned int n)
+template <class T>
+window& operator<(const T n)
+  requires (std::is_integral_v<T> == true)
     { return (*this < to_string(n)); }
 
 /*! \brief      Write an integer to a window
     \param  n   integer to write
     \return     the window
 */
-  inline window& operator<(const int n)
-    { return (*this < to_string(n)); }
+//  inline window& operator<(const int n)
+//    { return (*this < to_string(n)); }
 
 /*! \brief      Write a uint64_t to a window
     \param  n   uint64_t to write
     \return     the window
 */
-  inline window& operator<(const uint64_t n)
-    { return (*this < to_string(n)); }
+//  inline window& operator<(const uint64_t n)
+//    { return (*this < to_string(n)); }
   
 /*! \brief              Set the colour pair
     \param  pair_nr     number of the new colour pair
@@ -657,7 +673,7 @@ public:
     
     Cannot be const, as it uses snapshot, which internally moves the cursor and restores it
 */
-std::string properties(const std::string& name = ""s);
+std::string properties(const std::string& name = std::string());
 
 // http://stackoverflow.com/questions/1154212/how-could-i-print-the-contents-of-any-container-in-a-generic-way 
 /* I do not understand why this template is not used in:   win_remaining_mults < (context.remaining_country_mults_list());

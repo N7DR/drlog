@@ -104,7 +104,8 @@ public:
 
     Return empty string if <i>field_name</i> is not a choice
 */
-  std::string other_choice(const std::string& field_name) const;
+  inline std::string other_choice(const std::string& field_name) const
+    { return MUM_VALUE(_choices, field_name); }
 
 /*! \brief              Is a field a choice?
     \param  field_name  current field name
@@ -208,7 +209,8 @@ public:
 
     Returns empty set if the canonical value does not exist
 */
-  std::set<std::string> values(const std::string& cv) const;
+  inline std::set<std::string> values(const std::string& cv) const
+    { return MUM_VALUE(_values, cv); }
 
 /*! \brief      Get all the legal values (for all canonical values)
     \return     all possible legal values for all canonical values

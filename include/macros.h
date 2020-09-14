@@ -151,6 +151,10 @@ public: \
 
 #endif    // !FORTYPE
 
+// ---------------------------------------------------------------------------
+
+// several useful type-related functions
+
 // https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
 // https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
 template<class T>
@@ -169,6 +173,9 @@ template<class K, class V>
 struct is_map<std::map<K, V>> 
   { constexpr static bool value { true }; };
 
+template< class T>
+inline constexpr bool is_map_v = is_map<T>::value;
+
 template<class T>
 struct is_set 
   { constexpr static bool value { false }; };
@@ -176,6 +183,9 @@ struct is_set
 template<class T>
 struct is_set<std::set<T>> 
   { constexpr static bool value { true }; };
+
+template< class T>
+inline constexpr bool is_set_v = is_set<T>::value;
 
 template<class T>
 struct is_unordered_map 
@@ -185,6 +195,9 @@ template<class K, class V>
 struct is_unordered_map<std::unordered_map<K, V>> 
   { constexpr static bool value { true }; };
 
+template< class T>
+inline constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
+
 template<class T>
 struct is_unordered_set 
   { constexpr static bool value { false }; };
@@ -192,6 +205,39 @@ struct is_unordered_set
 template<class T>
 struct is_unordered_set<std::unordered_set<T>> 
   { constexpr static bool value { true }; };
+
+template< class T>
+inline constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
+
+template<class T>
+struct is_sus 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_sus<std::set<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+struct is_sus<std::unordered_set<T>> 
+  { constexpr static bool value { true }; };
+
+template< class T>
+inline constexpr bool is_sus_v = is_sus<T>::value;
+
+template<class T>
+struct is_mum 
+  { constexpr static bool value { false }; };
+
+template<class K, class V>
+struct is_mum<std::map<K, V>> 
+  { constexpr static bool value { true }; };
+
+template<class K, class V>
+struct is_mum<std::unordered_map<K, V>> 
+  { constexpr static bool value { true }; };
+
+template< class T>
+inline constexpr bool is_mum_v = is_mum<T>::value;
 
 template<class T>
 struct is_unsigned_int 
@@ -216,6 +262,7 @@ struct is_vector<std::vector<T>>
 //    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
 //};
 
+// ---------------------------------------------------------------------------
 
 // classes for tuples... it seems like there should be a way to do this with TMP,
 // but the level-breaking caused by the need to control textual names seems to make
@@ -769,19 +816,21 @@ public:                                                                         
 */
 template <class T, class U>
 bool operator>(const T& s, const U& v)
-  requires (is_set<T>::value == true || is_unordered_set<T>::value == true) && (std::is_same<typename T::value_type, U>::value == true)
+//  requires (is_set<T>::value == true || is_unordered_set<T>::value == true) && (std::is_same<typename T::value_type, U>::value == true)
+  requires (is_sus_v<T>) && (std::is_same_v<typename T::value_type, U>)
   { return s.find(v) != s.cend(); }
 
-/*! \brief      Is an object a key of a map or unordered_map, and if so return the value (or the default-constructed value)
+/*! \brief      Is an object a key of a map or unordered_map and, if so, return the value (or the default-constructed value)
     \param  m   map or unordered_map to be searched
     \param  k   target key
-    \return     Whether <i>k</i> is a member of <i>m</i> and, if so the corresponding value (or the default-constructed value)
+    \return     Whether <i>k</i> is a member of <i>m</i> and, if so, the corresponding value (or the default-constructed value)
     
     // possibly should return variant instead
 */
 template <class M, class K>
 std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
-  requires (is_map<M>::value == true || is_unordered_map<M>::value == true) && std::is_same<typename M::key_type, K>::value == true && std::is_default_constructible<typename M::mapped_type>::value == true
+//  requires (is_map<M>::value == true || is_unordered_map<M>::value == true) && std::is_same<typename M::key_type, K>::value == true && std::is_default_constructible<typename M::mapped_type>::value == true
+  requires (is_mum_v<M>) && (std::is_same_v<typename M::key_type, K>) && (std::is_default_constructible_v<typename M::mapped_type>)
 { using V = typename M::mapped_type;
   using RT = std::pair<bool, typename M::mapped_type>;
 
@@ -800,7 +849,8 @@ std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
 */
 template <class C, class K>
 typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
-  requires (is_map<C>::value == true || is_unordered_map<C>::value == true) && std::is_same<typename C::key_type, K>::value == true /* && std::is_default_constructible<typename C::mapped_type>::value == true */
+//  requires (is_map<C>::value == true || is_unordered_map<C>::value == true) && std::is_same<typename C::key_type, K>::value == true /* && std::is_default_constructible<typename C::mapped_type>::value == true */
+  requires (is_mum_v<C>) && (std::is_same_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : cit->second );
@@ -1020,26 +1070,15 @@ template <class Input, class UnaryPredicate>
 inline void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
   { first.erase(std::remove_if(first.begin(), first.end(), pred), first.end()); }
 
-// https://stackoverflow.com/questions/800955/remove-if-equivalent-for-stdmap
-// there should be some way to choose this function instead of the prior one, based on
-// traits, but I can't figure out a way to tell whether T is a map
-//template< typename ContainerT, typename PredicateT >
-//void MAP_REMOVE_IF( ContainerT& items, const PredicateT& predicate ) {
-//  for( auto it = items.begin(); it != items.end(); ) {
-//    if( predicate(*it) ) it = items.erase(it);
-//    else ++it;
-//  }
-//};
-
-/*! \brief          Remove map values that match a predicate, and resize the map
+/*! \brief          Remove map/unordered map values that match a predicate, and resize the map
     \param  items   map
     \param  pred    predicate to apply
-
-    Does not work for maps
 */
-template< typename K, typename V, typename PredicateT >
-void REMOVE_IF_AND_RESIZE( std::map<K, V>& items, const PredicateT& pred )
-{ for( auto it = items.begin(); it != items.end(); )
+template<typename M, typename PredicateT>
+//  requires (is_map<M>::value == true || is_unordered_map<M>::value == true)
+  requires (is_mum_v<M>)
+void REMOVE_IF_AND_RESIZE(M& items, const PredicateT& pred)
+{ for( auto it { items.begin() }; it != items.end(); )
   { if( pred(*it) )
       it = items.erase(it);
     else
@@ -1133,8 +1172,16 @@ inline std::set<T> SET_FROM_VECTOR(const std::vector<T>& v)
     \param  v   container
     \param  f   sort function
 */
-template <typename C, typename F>
-inline void SORT(C& v, F f)
+//template <typename C, typename F>
+//inline void SORT(C& v, F f)
+//  { std::sort(v.begin(), v.end(), f); }
+
+/*! \brief      Sort the contents of a container
+    \param  v   container
+    \param  f   sort function
+*/
+template <typename C, typename F = std::less<>>
+inline void SORT(C& v, F f = F())
   { std::sort(v.begin(), v.end(), f); }
 
 #endif    // MACROS_H
