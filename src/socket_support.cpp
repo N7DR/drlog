@@ -1,4 +1,4 @@
-// $Id: socket_support.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: socket_support.cpp 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,7 +37,8 @@ using namespace   chrono;        // std::chrono
 using namespace   this_thread;   // std::this_thread
 
 extern message_stream ost;                                              ///< for debugging and logging
-extern void alert(const string& msg, const bool show_time = true);      ///< function to alert the user
+
+extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
 
 constexpr int SOCKET_ERROR { -1 };            ///< error return from various socket-related system functions
 
@@ -47,8 +48,6 @@ constexpr int SOCKET_ERROR { -1 };            ///< error return from various soc
 void tcp_socket::_close_the_socket(void)
 { if (_sock)
   { SAFELOCK(_tcp_socket);
-
-//    const int status { ::close(_sock) };
   
     if (const int status { ::close(_sock) }; status == -1)
       throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_CLOSE, strerror(errno));
@@ -57,11 +56,11 @@ void tcp_socket::_close_the_socket(void)
 
 /// default constructor
 tcp_socket::tcp_socket(void)  :
-  _destination_is_set(false),
-  _force_closure(false),
+//  _destination_is_set(false),
+//  _force_closure(false),
   _preexisting_socket(false),
-  _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
-  _timeout_in_tenths(600)                     // 1 minute
+  _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
+//  _timeout_in_tenths(600)                     // 1 minute
 { try
   { 
 // enable re-use
@@ -92,10 +91,10 @@ tcp_socket::tcp_socket(void)  :
     Acts as default constructor if passed pointer is nullptr
 */
 tcp_socket::tcp_socket(SOCKET* sp) :
-  _destination_is_set(false),
-  _force_closure(false),
-  _preexisting_socket(true),
-  _timeout_in_tenths(600)                     // 1 minute
+//  _destination_is_set(false),
+//  _force_closure(false),
+  _preexisting_socket(true)
+//  _timeout_in_tenths(600)                     // 1 minute
 { if (sp)
     _sock = *sp;
   else                          // sp is nullptr
@@ -131,11 +130,11 @@ tcp_socket::tcp_socket(SOCKET* sp) :
     \param  sock    socket
 */
 tcp_socket::tcp_socket(SOCKET sock) :
-  _destination_is_set(false),
-  _force_closure(false),
+//  _destination_is_set(false),
+//  _force_closure(false),
   _preexisting_socket(true),
-  _sock(sock),
-  _timeout_in_tenths(600)                     // 1 minute
+  _sock(sock)
+//  _timeout_in_tenths(600)                     // 1 minute
 {  }
 
 /*! \brief                                  Construct and initialise with useful values
@@ -148,11 +147,11 @@ tcp_socket::tcp_socket(const string& destination_ip_address_or_fqdn,
                        const unsigned int destination_port, 
                        const string& source_address,
                        const unsigned int retry_time_in_seconds) :
-  _destination_is_set(false),
-  _force_closure(false),
+//  _destination_is_set(false),
+//  _force_closure(false),
   _preexisting_socket(false),
-  _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)),
-  _timeout_in_tenths(600)                    // 1 minute
+  _sock(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
+//  _timeout_in_tenths(600)                    // 1 minute
 { 
   try
   { 
@@ -278,8 +277,6 @@ void tcp_socket::new_socket(void)
 void tcp_socket::bind(const sockaddr_storage& local_address)
 { SAFELOCK(_tcp_socket);
 
-//  const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) };
-
   if (const int status { ::bind(_sock, (sockaddr*)&local_address, sizeof(local_address)) }; status)
     throw socket_support_error(SOCKET_SUPPORT_BIND_ERROR, "Errno = "s + to_string(errno) + "; "s + strerror(errno));
 
@@ -393,7 +390,7 @@ void tcp_socket::send(const std::string& msg)
     \return     received string
 */
 string tcp_socket::read(void)
-{ constexpr unsigned int BUFLEN { 4096 };
+{ constexpr unsigned int BUFLEN { 4096 };       // a decent size for a read buffer
 
   char cp[BUFLEN];
   string rv;
@@ -457,9 +454,9 @@ string tcp_socket::read(const unsigned long timeout_secs)
     }
 
     default:                   // response is waiting to be read
-    { constexpr int BUFSIZE { 4096 };
+    { constexpr int BUFSIZE { 4096 };   // a reasonable size for a buffer
 
-      char cp[BUFSIZE];    // a reasonable sized buffer
+      char cp[BUFSIZE];
       int status;
   
       do
@@ -486,15 +483,13 @@ string tcp_socket::read(const unsigned long timeout_secs)
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::idle_time(const unsigned int seconds)
-{ //constexpr int optlen { sizeof(int) };
-
-  const int optval { static_cast<int>(seconds) };
+{ const int optval { static_cast<int>(seconds) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) };
+//  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) };
 
-  if (status)
+  if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPIDLE, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting idle time"s);
 }
 
@@ -502,15 +497,13 @@ void tcp_socket::idle_time(const unsigned int seconds)
     \param  seconds     time to wait idly before a keep-alive is sent
 */
 void tcp_socket::retry_time(const unsigned int seconds)
-{ //constexpr int optlen { sizeof(int) };
-
-  const int optval { static_cast<int>(seconds) };
+{ const int optval { static_cast<int>(seconds) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, sizeof(optval)) };
+//  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, sizeof(optval)) };
 
-  if (status)
+  if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPINTVL, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting retry time"s);
 }
 
@@ -518,15 +511,13 @@ void tcp_socket::retry_time(const unsigned int seconds)
     \param  n   maximum number of retries
 */
 void tcp_socket::max_retries(const unsigned int n)
-{ //constexpr int optlen { sizeof(int) };
-
-  const int optval { static_cast<int>(n) };
+{ const int optval { static_cast<int>(n) };
   
   SAFELOCK(_tcp_socket);
 
-  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, sizeof(optval)) };
+//  const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, sizeof(optval)) };
 
-  if (status)
+  if (const int status { setsockopt(socket(), IPPROTO_TCP, TCP_KEEPCNT, &optval, sizeof(optval)) }; status)
     throw tcp_socket_error(TCP_SOCKET_UNABLE_TO_SET_OPTION, "Error setting maximum number of retries"s);
 }
 

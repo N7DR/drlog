@@ -1,4 +1,4 @@
-// $Id: cluster.h 164 2020-08-16 19:57:42Z  $
+// $Id: cluster.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -60,7 +60,7 @@ public:
   dx_cluster(const drlog_context& context, const POSTING_SOURCE src);
   
 /// destructor
-  virtual ~dx_cluster(void);
+  /* virtual */ ~dx_cluster(void);
 
   dx_cluster(const dx_cluster&) = delete;       /// forbid copying
   
@@ -123,7 +123,7 @@ public:
   dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
   
 /// destructor
-  ~dx_post(void) = default;
+//  ~dx_post(void) = default;
 
   READ(band);                   ///< band of post
   READ(callsign);               ///< callsign that was heard

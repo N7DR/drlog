@@ -1,4 +1,4 @@
-// $Id: rules.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: rules.cpp 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -124,9 +124,11 @@ void exchange_field_values::add_value(const string& cv, const string& v)
     Returns 0 if the canonical value does not exist
 */
 size_t exchange_field_values::n_values(const string& cv) const
-{ const auto posn { _values.find(cv) };
+{ //return MUMF_VALUE(_values, cv, &set<string>::size, /* static_cast<size_t>(*/ 0 /* ) */);
+  return MUMF_VALUE(_values, cv, &set<string>::size);
+  //const auto posn { _values.find(cv) };
 
-  return ( (posn == _values.cend()) ? 0 : posn->second.size() );
+  //return ( (posn == _values.cend()) ? 0 : posn->second.size() );
 }
 
 /*! \brief      Get all the legal values for a single canonical value

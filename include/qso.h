@@ -1,4 +1,4 @@
-// $Id: qso.h 163 2020-08-06 19:46:33Z  $
+// $Id: qso.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,27 +44,27 @@ class QSO
 {
 protected:
   
-  enum BAND                                         _band;              ///< band
-  std::string                                       _callsign;          ///< call
-  std::string                                       _canonical_prefix;  ///< canonical prefix of country; NOT automatically set when callsign is set
-  std::string                                       _comment;           ///< comment to be carried with QSO (unused)
-  std::string                                       _continent;         ///< continent; NOT automatically set when callsign is set
-  std::string                                       _date;              ///< yyyy-mm-dd
-  time_t                                            _epoch_time;        ///< time in seconds since the UNIX epoch
-  std::string                                       _frequency_rx;      ///< RX frequency in form xxxxx.y (kHz)
-  std::string                                       _frequency_tx;      ///< TX frequency in form xxxxx.y (kHz)
-  bool                                              _is_country_mult;   ///< is this QSO a country mult?
-  bool                                              _is_dupe;           ///< is this QSO a dupe?
-  bool                                              _is_prefix_mult;    ///< is this QSO a prefix mult?
-  std::vector<std::string>                          _log_line_fields;   ///< separate fields from the log line
-  enum MODE                                         _mode;              ///< mode
-  std::string                                       _my_call;           ///< my call
-  unsigned int                                      _number;            ///< qso number
-  unsigned int                                      _points;            ///< points for this QSO (unused)
-  std::string                                       _prefix;            ///< prefix, according to the contest's definition
-  std::vector<received_field>                       _received_exchange; ///< names do not include the REXCH-
-  std::vector<std::pair<std::string, std::string> > _sent_exchange;     ///< vector<pair<name, value>>; names do not include the TEXCH-
-  std::string                                       _utc;               ///< hh:mm:ss
+  enum BAND                                         _band;                          ///< band
+  std::string                                       _callsign;                      ///< call
+  std::string                                       _canonical_prefix;              ///< canonical prefix of country; NOT automatically set when callsign is set
+  std::string                                       _comment;                       ///< comment to be carried with QSO (unused)
+  std::string                                       _continent;                     ///< continent; NOT automatically set when callsign is set
+  std::string                                       _date;                          ///< yyyy-mm-dd
+  time_t                                            _epoch_time;                    ///< time in seconds since the UNIX epoch
+  std::string                                       _frequency_rx;                  ///< RX frequency in form xxxxx.y (kHz)
+  std::string                                       _frequency_tx;                  ///< TX frequency in form xxxxx.y (kHz)
+  bool                                              _is_country_mult { false };     ///< is this QSO a country mult?
+  bool                                              _is_dupe         { false };     ///< is this QSO a dupe?
+  bool                                              _is_prefix_mult  { false };     ///< is this QSO a prefix mult?
+  std::vector<std::string>                          _log_line_fields;               ///< separate fields from the log line
+  enum MODE                                         _mode;                          ///< mode
+  std::string                                       _my_call;                       ///< my call
+  unsigned int                                      _number;                        ///< qso number
+  unsigned int                                      _points          { 1 };         ///< points for this QSO (unused)
+  std::string                                       _prefix;                        ///< prefix, according to the contest's definition
+  std::vector<received_field>                       _received_exchange;             ///< names do not include the REXCH-
+  std::vector<std::pair<std::string, std::string> > _sent_exchange;                 ///< vector<pair<name, value>>; names do not include the TEXCH-
+  std::string                                       _utc;                           ///< hh:mm:ss
   
 /*! \brief                      Is a particular field that might be received as part of the exchange optional?
     \param  field_name          the name of the field
@@ -86,9 +86,6 @@ public:
   
 /// constructor; automatically fills in the current date and time
   QSO(void);
-
-/// destructor
-//  inline ~QSO(void) = default;
 
   READ_AND_WRITE(band);                 ///< band
   READ_AND_WRITE(callsign);             ///< call
@@ -244,14 +241,6 @@ public:
     \param  str     string from visible log window
 */
   void populate_from_log_line(const std::string& str);
-
-/*! \brief          NEW - Populate from a string (as visible in the log window)
-    \param  str     string from visible log window
-    \param  mycall  my callsign
-
-    Currently unused
-*/
-//  void new_populate_from_log_line(const std::string& str, const std::string& mycall);
 
 /*! \brief      QSO == QSO
     \param  q   target QSO

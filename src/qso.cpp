@@ -1,4 +1,4 @@
-// $Id: qso.cpp 163 2020-08-06 19:46:33Z  $
+// $Id: qso.cpp 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -33,7 +33,7 @@ extern drlog_context        context;        ///< configuration context
 extern location_database    location_db;    ///< location database
 extern message_stream       ost;            ///< for debugging, info
 
-extern void alert(const string& msg, const bool show_time = true);       ///< alert the user
+extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user
 
 bool         QSO_DISPLAY_COUNTRY_MULT { true };   ///< whether to display country mults in log window (may be changed in config file)
 unsigned int QSO_MULT_WIDTH           { 5 };      ///< default width of QSO mult fields in log window
@@ -68,8 +68,7 @@ bool QSO::_is_received_field_optional(const string& field_name, const vector<exc
     \return              time in seconds since the UNIX epoch
 */
 time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) const
-{
-  struct tm time_struct;
+{ struct tm time_struct;
 
   time_struct.tm_sec  = from_string<int>(utc_str.substr(6, 2));
   time_struct.tm_min  = from_string<int>(utc_str.substr(3, 2));
@@ -85,20 +84,18 @@ time_t QSO::_to_epoch_time(const string& date_str, const string& utc_str) const
 
 /// constructor
 QSO::QSO(void) :
-  _epoch_time(time(NULL)),          // now
-  _is_country_mult(false),          // not a country mult
-  _is_dupe(false),                  // not a dupe
-  _is_prefix_mult(false),           // not a prefix mult
-  _points(1)                        // unused
-{ struct tm    structured_time;
+  _epoch_time(time(NULL))          // now
+{ constexpr int BUFSIZE { 26 };     // see man page for asctime_r
+
+  struct tm    structured_time;
 
   gmtime_r(&_epoch_time, &structured_time);     // convert to UTC
   
-  array<char, 26> buf;                          // buffer to hold the ASCII date/time info; see man page for gmtime()
+  array<char, BUFSIZE> buf;                          // buffer to hold the ASCII date/time info; see man page for gmtime()
   
   asctime_r(&structured_time, buf.data());      // convert to ASCII
 
-  const string ascii_time(buf.data(), 26);
+  const string ascii_time(buf.data(), BUFSIZE);
   
   _utc  = ascii_time.substr(11, 8);                                                     // hh:mm:ss
   _date = to_string(structured_time.tm_year + 1900) + "-" +
@@ -159,9 +156,8 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     if (!processed and (name == "frequency"s))               // old version
     { _frequency_tx = value;
 
-      const double f { from_string<double>(_frequency_tx) };
-
-      const frequency freq(f);
+      const double    f    { from_string<double>(_frequency_tx) };
+      const frequency freq { f };
 
       processed = ( _band = static_cast<BAND>(freq), true );
     }
@@ -170,9 +166,8 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     { _frequency_tx = value;
 
       if (!_frequency_tx.empty())
-      { const double f { from_string<double>(_frequency_tx) };
-
-        const frequency freq(f);
+      { const double    f    { from_string<double>(_frequency_tx) };
+        const frequency freq { f };
 
         _band = static_cast<BAND>(freq);
       }
@@ -199,10 +194,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = ( _my_call = value, true );
 
     if (!processed and (starts_with(name, "sent-"s)))
-    { //_sent_exchange.push_back( { to_upper(name.substr(5)), value } );
-      //processed = true;
       processed = ( _sent_exchange.push_back( { to_upper(name.substr(5)), value } ), true );
-    }
 
     if (!processed and (starts_with(name, "received-"s)))
     { const string name_upper { to_upper(name.substr(9)) };
@@ -233,41 +225,8 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
     \param  str     string from visible log window
 */
 void QSO::populate_from_log_line(const string& str)
-{ ost << "Inside populate_from_log_line(); initial QSO is:" << *this << endl;
-  ost << "string = *" << str << "*" << endl;
-
-#if 0
-  from rules.h:
-  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _expanded_received_exchange;    ///< details of the received exchange fields; choices expanded; key = string() is default exchange
-  std::map<MODE, std::map<std::string /* canonical prefix */, std::vector<exchange_field>>> _received_exchange;           ///< details of the received exchange fields; choices not expanded; key = string() is default exchange
-#endif
-
-//  const vector<string> expanded = rules.expanded_exchange_field_names(_canonical_prefix, _mode);
-
-//  ost << "expanded received exchange from rules:" << endl;
-
-//  for (const auto& fn : expanded)
-//    ost << fn << endl;
-
-//  const vector<string> unexpanded = rules.unexpanded_exchange_field_names(_canonical_prefix, _mode);
-
-//  ost << "UNexpanded received exchange from rules:" << endl;
-
-//  for (const auto& fn : unexpanded)
-//    ost << fn << endl;
-
-//  map<string, string> alternative_choice;
-
-//  for (const auto& fn : unexpanded)
-//    if (contains(fn, "+"))
-//    { ost << "Field " << fn << " is a CHOICE" << endl;
-
- //     vector<string> choices = split_string(fn, "+");
-
-// assume just two choices
- //     alternative_choice[choices[0]] = choices[1];
- //     alternative_choice[choices[1]] = choices[0];
-//    }
+{ //ost << "Inside populate_from_log_line(); initial QSO is:" << *this << endl;
+  //ost << "string = *" << str << "*" << endl;
 
 // separate the line into fields
   const vector<string> vec { remove_peripheral_spaces(split_string(squash(str, ' '), SPACE_STR)) };
@@ -293,6 +252,7 @@ void QSO::populate_from_log_line(const string& str)
 
   for (size_t n = 0; ( (n < vec.size()) and (n < _log_line_fields.size()) ); ++n)
   { ost << "Processing log_line field number " << n << endl;
+    const string& field_value { vec[n] };
 
     bool processed { false };
 
@@ -301,38 +261,29 @@ void QSO::populate_from_log_line(const string& str)
     ost << "log_line field field name " << field << endl;
 
     if (!processed and (field == "NUMBER"s))
-    { _number = from_string<decltype(_number)>(vec[n]);
-      processed = true;
-    }
+      processed = (_number = from_string<decltype(_number)>(field_value), true);
 
     if (!processed and (field == "DATE"s))
-    { _date = vec[n];
-      processed = true;
-    }
+      processed = (_date = field_value, true);
 
     if (!processed and (field == "UTC"s))
-    { _utc = vec[n];
-      processed = true;
-    }
+      processed = (_utc = field_value, true);
 
     if (!processed and (field == "MODE"s))
-    { _mode = ( (vec[n] == "CW"s) ? MODE_CW : MODE_SSB);
-      processed = true;
-    }
+      processed = (_mode = ( (field_value == "CW"s) ? MODE_CW : MODE_SSB), true);
 
     if (!processed and (field == "FREQUENCY"s))
-    { _frequency_tx = vec[n];
+    { _frequency_tx = field_value;
 
-      const double f { from_string<double>(_frequency_tx) };
+      const double    f    { from_string<double>(_frequency_tx) };
+      const frequency freq { f };
 
-      const frequency freq(f);
-
-      _band = static_cast<BAND>(freq);
-      processed = true;
+      processed = (_band = static_cast<BAND>(freq), true);
+//      processed = true;
     }
 
     if (!processed and (field == "CALLSIGN"s))
-    { _callsign = vec[n];
+    { _callsign = field_value;
       _canonical_prefix = location_db.canonical_prefix(_callsign);
       _continent = location_db.continent(_callsign);
 
@@ -341,7 +292,7 @@ void QSO::populate_from_log_line(const string& str)
 
     if (!processed and (starts_with(field, "sent-"s)))
     { if (sent_index < _sent_exchange.size())
-        _sent_exchange[sent_index++].second = vec[n];
+        _sent_exchange[sent_index++].second = field_value;
       processed = true;
     }
 
@@ -356,26 +307,22 @@ void QSO::populate_from_log_line(const string& str)
         _received_exchange[received_index++].value(string());
 
         if (received_index < _received_exchange.size())
-          _received_exchange[received_index++].value(vec[n]);  // assume that only one field is optional
+          _received_exchange[received_index++].value(field_value);  // assume that only one field is optional
       }
       else
       { if (received_index < _received_exchange.size())
         { ost << "NOT OPTIONAL" << endl;
-          ost << "About to assign: received_index = " << received_index << "; value = " << vec[n] << endl;
+          ost << "About to assign: received_index = " << received_index << "; value = " << field_value << endl;
 
           ost << "Original received exchange[received_index]: " << _received_exchange[received_index] << endl << endl;
 
           bool is_legal = rules.is_legal_value(substring(field, 9), vec[n]);
 
-          ost << vec[n] << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " << _received_exchange[received_index].name() << endl;
-          ost << vec[n] << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring(field, 9) << endl;
-
-//          const auto& ec = rules.equivalents(_mode, _canonical_prefix);
-
-//          const bool field_is_choice = !ec.empty();
+          ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " << _received_exchange[received_index].name() << endl;
+          ost << field_value << " IS " << (is_legal ? "" : "NOT ") << "a legal value for " <<  substring(field, 9) << endl;
 
 // if the field is a CHOICE and the value isn't legal, for the original choice, see if it's valid for the other
-          if (!rules.is_legal_value(substring(field, 9), vec[n]))
+          if (!rules.is_legal_value(substring(field, 9), field_value))
           { const string&             original_field_name { _received_exchange[received_index].name() };
             const choice_equivalents& ec                  { rules.equivalents(_mode, _canonical_prefix) };
 
@@ -386,29 +333,15 @@ void QSO::populate_from_log_line(const string& str)
 
               _received_exchange[received_index].name(alternative_choice_field_name);
 
-              if (!rules.is_legal_value(alternative_choice_field_name, vec[n]))
+              if (!rules.is_legal_value(alternative_choice_field_name, field_value))
               { ost << "UNABLE TO PARSE REVISED EXCHANGE CORRECTLY" << endl;
 
                 alert("Unable to parse exchange; making ad hoc decision");
               }
             }
-//            else
-
-
-
-//            auto posn = alternative_choice.find(original_field_name);
-
-//            if (posn != alternative_choice.end())
-//              _received_exchange[received_index].name(posn->second);
-
-//            if (!rules.is_legal_value(substring(field, 9), _received_exchange[received_index].value()))
-//            { ost << "UNABLE TO PARSE REVISED EXCHANGE CORRECTLY" << endl;
-
-//              alert("Unable to parse exchange; making ad hoc decision");
-//            }
           }
 
-          _received_exchange[received_index++].value(vec[n]);
+          _received_exchange[received_index++].value(field_value);
 
           ost << "Assigned: " << _received_exchange[received_index - 1] << endl;
 
@@ -424,8 +357,6 @@ void QSO::populate_from_log_line(const string& str)
     }
   }
 
-//  _canonical_prefix = location_db.canonical_prefix(_callsign);
-//  _continent = location_db.continent(_callsign);
   _epoch_time = _to_epoch_time(_date, _utc);
 
   ost << "Ending populate_from_log_line(); QSO is now: " << *this << endl;
@@ -715,7 +646,7 @@ bool QSO::exchange_match(const string& rule_to_match) const
   { ost << "Number of tokens = " << tokens.size() << endl;
   }
   else                          // three tokens
-  { const string& exchange_field_name { remove_peripheral_spaces(tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
+  { const string exchange_field_name { remove_peripheral_spaces(tokens[0]) };                     // does not include the REXCH-, since it's taken directly from the logcfg.dat file
 
     string exchange_field_value;                                   // default is empty field
 
@@ -898,13 +829,6 @@ string QSO::log_line(void)
   static const vector<string> log_fields { "NUMBER"s, "DATE"s, "UTC"s, "MODE"s, "FREQUENCY"s, "CALLSIGN"s };
 
   FOR_ALL(log_fields, [=, this](const string& log_field) { _log_line_fields.push_back(log_field); } );
-
-//  _log_line_fields.push_back("NUMBER"s);
-//  _log_line_fields.push_back("DATE"s);
-//  _log_line_fields.push_back("UTC"s);
-//  _log_line_fields.push_back("MODE"s);
-//  _log_line_fields.push_back("FREQUENCY"s);
-//  _log_line_fields.push_back("CALLSIGN"s);
 
   for (const auto& exch_field : _sent_exchange)
     _log_line_fields.push_back("sent-"s + exch_field.first);

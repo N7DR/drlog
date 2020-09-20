@@ -1,4 +1,4 @@
-// $Id: socket_support.h 161 2020-07-31 16:19:50Z  $
+// $Id: socket_support.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -180,12 +180,12 @@ protected:
 
   sockaddr_storage  _bound_address;             ///< address to which port is bound
   sockaddr_storage  _destination;               ///< destination
-  bool              _destination_is_set;        ///< is the destination known?
-  bool              _force_closure;             ///< force closure of socket in destructor, even for a pre-existing socket
+  bool              _destination_is_set { false };                  ///< is the destination known?
+  bool              _force_closure      { false };                  ///< force closure of socket in destructor, even for a pre-existing socket
   bool              _preexisting_socket;        ///< whether <i>_sock</i> exists outside the object
   SOCKET            _sock;                      ///< encapsulated socket
-  pt_mutex          _tcp_socket_mutex { "UNNAMED TCP SOCKET"s };          ///< mutex to control access
-  unsigned int      _timeout_in_tenths;         ///< timeout in tenths of a second (currently unimplemented)
+  pt_mutex          _tcp_socket_mutex  { "UNNAMED TCP SOCKET"s };   ///< mutex to control access
+  unsigned int      _timeout_in_tenths { 600 };                     ///< timeout in tenths of a second = 1 minute (currently unimplemented)
 
 /*! \brief          Copy constructor
     \param  obj     object to be copied

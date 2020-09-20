@@ -1,4 +1,4 @@
-// $Id: drmaster.cpp 163 2020-08-06 19:46:33Z  $
+// $Id: drmaster.cpp 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -70,7 +70,8 @@ master_dta::master_dta(const string& filename)
     tmp_calls.push_back(_get_call(contents, pointer));      // modified pointer
 
 // remove duplicates
-  sort(tmp_calls.begin(), tmp_calls.end());
+//  sort(tmp_calls.begin(), tmp_calls.end());
+  SORT(tmp_calls);
 
   vector<string>::iterator pos { unique(tmp_calls.begin(), tmp_calls.end()) };
 
@@ -363,105 +364,105 @@ trmaster_line trmaster::_get_binary_record(const string& contents, uint32_t& pos
           { section += contents[posn++]; }
         break;
 
-       case 3 :             // ctrl-C
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { cqzone += contents[posn++]; }
-          break;
+      case 3 :             // ctrl-C
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { cqzone += contents[posn++]; }
+        break;
 
-       case 6 :             // ctrl-F
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { foc += contents[posn++]; }
-          break;
+      case 6 :             // ctrl-F
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { foc += contents[posn++]; }
+        break;
 
-       case 7 :             // ctrl-G
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { grid += contents[posn++]; }
-          break;
+      case 7 :             // ctrl-G
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { grid += contents[posn++]; }
+        break;
 
-       case 8 :             // ctrl-H
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { hits += contents[posn++]; }
-          break;
+      case 8 :             // ctrl-H
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { hits += contents[posn++]; }
+        break;
 
-       case 9 :             // ctrl-I
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { ituzone += contents[posn++]; }
-          break;
+      case 9 :             // ctrl-I
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { ituzone += contents[posn++]; }
+        break;
 
-       case 11 :             // ctrl-K
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { check += contents[posn++]; }
-          break;
+      case 11 :             // ctrl-K
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { check += contents[posn++]; }
+        break;
 
-       case 14 :             // ctrl-N
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { name += contents[posn++]; }
-          break;
+      case 14 :             // ctrl-N
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { name += contents[posn++]; }
+        break;
 
-       case 15 :             // ctrl-O
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { oldcall += contents[posn++]; }
-          break;
+      case 15 :             // ctrl-O
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { oldcall += contents[posn++]; }
+        break;
 
-       case 17 :             // ctrl-Q
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { qth += contents[posn++]; }
-          break;
+      case 17 :             // ctrl-Q
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { qth += contents[posn++]; }
+        break;
 
-       case 19 :             // ctrl-S
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { speed += contents[posn++]; }
-          break;
+      case 19 :             // ctrl-S
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { speed += contents[posn++]; }
+        break;
 
-       case 20 :             // ctrl-T
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { ten_ten += contents[posn++]; }
-          break;
+      case 20 :             // ctrl-T
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { ten_ten += contents[posn++]; }
+        break;
 
-       case 21 :             // ctrl-U
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_1 += contents[posn++]; }
-          break;
+      case 21 :             // ctrl-U
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { user_1 += contents[posn++]; }
+        break;
 
-       case 22 :             // ctrl-V
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_2 += contents[posn++]; }
-          break;
+      case 22 :             // ctrl-V
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { user_2 += contents[posn++]; }
+        break;
 
-       case 23 :             // ctrl-W
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_3 += contents[posn++]; }
-          break;
+      case 23 :             // ctrl-W
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { user_3 += contents[posn++]; }
+        break;
 
-       case 24 :             // ctrl-X
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_4 += contents[posn++]; }
-          break;
+      case 24 :             // ctrl-X
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { user_4 += contents[posn++]; }
+        break;
 
-       case 25 :             // ctrl-Y
-          ++posn;
-          while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
-            { user_5 += contents[posn++]; }
-          break;
+      case 25 :             // ctrl-Y
+        ++posn;
+        while ((posn < contents.length()) and static_cast<int>(contents[posn]) > CTRL_Y)
+          { user_5 += contents[posn++]; }
+        break;
 
-       default:
-         ++posn;
-         break;
+      default:
+        ++posn;
+        break;
     }
   }
 
@@ -537,7 +538,8 @@ vector<string> trmaster::calls(void) const
 
   FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
 
-  sort(rv.begin(), rv.end());
+  //sort(rv.begin(), rv.end());
+  SORT(rv);
 
   return rv;
 }
@@ -570,7 +572,7 @@ r = SKCC state/province/country
     Returns empty string if no field has the indicator <i>field_indicator</i>
 */
 string drmaster_line::_extract_field(const vector<string>& fields, const std::string& field_indicator)
-{ for (vector<string>::const_iterator cit = fields.begin(); cit != fields.end(); ++cit)
+{ for (vector<string>::const_iterator cit = fields.cbegin(); cit != fields.cend(); ++cit)
   { if (starts_with(*cit, field_indicator))
       return (cit->substr(field_indicator.length()));
   }
@@ -856,7 +858,8 @@ vector<string> drmaster::calls(void) const
   for (auto cit = _records.cbegin(); cit != _records.cend(); ++cit)
     rv.push_back(cit->first);
 
-  sort(rv.begin(), rv.end());
+//  sort(rv.begin(), rv.end());
+  SORT(rv);
 
   return rv;
 }
@@ -866,10 +869,11 @@ string drmaster::to_string(void) const
 { vector<string> lines;
 
 //  for (map<string, drmaster_line>::const_iterator cit = _records.begin(); cit != _records.end(); ++cit)
-  for (auto cit = _records.cbegin(); cit != _records.cend(); ++cit)
+  for (auto cit { _records.cbegin() }; cit != _records.cend(); ++cit)
     lines.push_back((cit->second).to_string() + EOL);
 
-  sort(lines.begin(), lines.end());
+//  sort(lines.begin(), lines.end());
+  SORT(lines);
 
   return ( join(lines, string()) );            // don't add the default (space) separator
 }

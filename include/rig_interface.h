@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 166 2020-08-22 20:59:30Z  $
+// $Id: rig_interface.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -194,7 +194,8 @@ public:
 
     Does nothing if <i>f</i> is not within a ham band
 */
-  void rig_frequency_a(const frequency& f);
+  inline void rig_frequency_a(const frequency& f)
+    { _rig_frequency(f, VFO::A); }
 
 /*! \brief      Set frequency of VFO A
     \param  f   new frequency of VFO A
@@ -207,7 +208,8 @@ public:
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-  frequency rig_frequency_a(void);
+  inline frequency rig_frequency_a(void)
+    { return _rig_frequency(VFO::A); }
 
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
@@ -220,10 +222,12 @@ public:
 
     Does nothing if <i>f</i> is not within a ham band
 */
-  void rig_frequency_b(const frequency& f);
+  inline void rig_frequency_b(const frequency& f)
+    { _rig_frequency(f, VFO::B); }
 
 /// get frequency of VFO B
-  frequency rig_frequency_b(void);
+  inline frequency rig_frequency_b(void)
+    { return _rig_frequency(VFO::B); }
 
 /// set frequency of VFO B to match that of VFO A
   inline void rig_frequency_a_to_b(void)

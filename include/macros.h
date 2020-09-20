@@ -1,4 +1,4 @@
-// $Id: macros.h 166 2020-08-22 20:59:30Z  $
+// $Id: macros.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -11,7 +11,7 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#undef NEW_RAW_COMMAND  // experiment to try to improve the reliability of the awful rig interface
+#undef NEW_RAW_COMMAND  // experiment to try to improve the reliability of the awful K3 interface
 
 /*! \file   macros.h
 
@@ -33,6 +33,13 @@
 // convenient definitions for use with chrono functions
 using centiseconds = std::chrono::duration<long, std::centi>;
 using deciseconds = std::chrono::duration<long, std::deci>;
+
+// define enum classes used in more than one file
+
+// used for whether to display time in alert()
+enum class SHOW_TIME { SHOW,
+                       NO_SHOW
+                     };
 
 /// Syntactic sugar for read/write access
 #if (!defined(READ_AND_WRITE))
@@ -254,7 +261,18 @@ struct is_vector
 template<class T>
 struct is_vector<std::vector<T>> 
   { constexpr static bool value { true }; };
-  
+ 
+template<class T>
+struct is_string 
+  { constexpr static bool value { false }; };
+
+template<>
+struct is_string<std::string> 
+  { constexpr static bool value { true }; };
+
+template< class T>
+inline constexpr bool is_string_v = is_string<T>::value;
+ 
 // current g++ does not support definition of concepts, even with -fconcepts !!
 //template<typename T>
 //concept SET_TYPE = requires(T a) 
@@ -283,11 +301,10 @@ protected:                                             \
                                                        \
 public:                                                \
                                                        \
-  explicit nm( const a0 & X )                                           \
-    { std::get<0>(*this) = X;                          \
-    }                                                  \
+  explicit nm( const a0 & X )                          \
+    { std::get<0>(*this) = X; }                        \
                                                        \
-  inline a0 a1(void) const                       \
+  inline a0 a1(void) const                             \
     { return std::get<0>(*this); }                     \
                                                        \
   inline void a1(const a0 & var)                       \
@@ -849,12 +866,26 @@ std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
 */
 template <class C, class K>
 typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapped_type& d = typename C::mapped_type())
-//  requires (is_map<C>::value == true || is_unordered_map<C>::value == true) && std::is_same<typename C::key_type, K>::value == true /* && std::is_default_constructible<typename C::mapped_type>::value == true */
   requires (is_mum_v<C>) && (std::is_same_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : cit->second );
 }
+
+/*! \brief      Is an object a key of a map or unordered map; if so return the result of executoing a member function on the value, otherwise return a provided default
+    \param  m   map or unordered map to be searched
+    \param  k   target key
+    \param  pf  pointer to member function to be executed
+    \param  d   default value
+    \return     if <i>k</i> is a member of <i>m</i>, the result of executing <i>pf</i> in the corresponding value, otherwise the default
+*/
+template <class C, class K, class PF, class MT = typename C::mapped_type, class RT = std::invoke_result_t<PF, MT>>
+auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
+  requires (is_mum_v<C>) && (std::is_same_v<typename C::key_type, K>)
+{ const auto cit { m.find(k) };
+
+  return ( (cit == m.cend()) ? d : (cit->second.*pf)() );
+} 
 
 /*! \brief                      Invert a mapping from map<T, set<T> > to map<T, set<T> >, where final keys are the elements of the original set
     \param  original_mapping    original mapping
@@ -969,7 +1000,7 @@ class accumulator
 {
 protected:
 
-  std::map<T, unsigned int> _values;                ///< all the known values, with the number of times it's been added
+  std::map<T, unsigned int> _values;                ///< all the known values, with the number of times each has been added
   unsigned int              _threshold;             ///< threshold value
 
 public:
@@ -1012,7 +1043,7 @@ public:
 */
 template <class T1, class T2>
 std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
-{ for (typename std::map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
+{ for (typename std::map<T1, T2>::const_iterator cit = mp.cbegin(); cit != mp.cend(); ++cit)
     ost << "map[" << cit->first << "]: " << cit->second << std::endl;
 
   return ost;
@@ -1027,13 +1058,13 @@ std::ostream& operator<<(std::ostream& ost, const std::map<T1, T2>& mp)
 */
 template <class T1, class T2>
 std::ostream& operator<<(std::ostream& ost, const std::unordered_map<T1, T2>& mp)
-{ for (typename std::unordered_map<T1, T2>::const_iterator cit = mp.begin(); cit != mp.end(); ++cit)
+{ for (typename std::unordered_map<T1, T2>::const_iterator cit = mp.cbegin(); cit != mp.cend(); ++cit)
     ost << "unordered_map[" << cit->first << "]: " << cit->second << std::endl;
 
   return ost;
 }
 
-/*! \brief          Apply a function to all in a container
+/*! \brief          Apply a function to all in a (non-const) container
     \param  first   container
     \param  fn      function
     \return         <i>fn</i>
@@ -1042,7 +1073,7 @@ template<class Input, class Function>
 inline Function FOR_ALL(Input& first, Function fn)
   { return (std::for_each(first.begin(), first.end(), fn)); }
 
-/*! \brief          Apply a function to all in a container
+/*! \brief          Apply a function to all in a const container
     \param  first   container
     \param  fn      function
     \return         <i>fn</i>

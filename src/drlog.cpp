@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 166 2020-08-22 20:59:30Z  $
+// $Id: drlog.cpp 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -78,6 +78,11 @@ enum class KNOWN_MULT { FORCE_KNOWN,
                         NO_FORCE_KNOWN
                       };
 
+/// whether the alert() function should include the time -- alert should be in a separate .h file so that this defn can be included in several other files
+//enum class SHOW_TIME { SHOW,
+//                       NO_SHOW
+//                     };
+
 // needed for WRAPPER_3 definition of memory_entry
 ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
 { ost << ( dm == DRLOG_MODE::CQ ? 'C' : 'S');
@@ -111,7 +116,7 @@ deque<memory_entry> memories;
 string active_window_name(void);                                  ///< Return the name of the active window in printable form
 void   add_qso(const QSO& qso);                                   ///< Add a QSO into the all the objects that need to know about it
 void   adif3_build_old_log(void);                                 ///< build the old log from an ADIF3 file
-void   alert(const string& msg, const bool show_time = true);     ///< Alert the user
+void   alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW/* const bool show_time = true */);     ///< Alert the user
 void   allow_for_callsign_mults(QSO& qso);                        ///< Add info to QSO if callsign mults are in use; may change qso
 void   archive_data(void);                                        ///< Send data to the archive file
 void   audio_error_alert(const string& msg);                      ///< Alert the user to an audio-related error
@@ -473,10 +478,9 @@ dx_cluster*     rbn_p { nullptr };      ///< pointer to RBN information
 location_database location_db;              ///< global location database
 rig_interface rig;                          ///< rig control
 
-/* static */ thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute for threads
+thread_attribute attr_detached { PTHREAD_DETACHED };   ///< default attribute for threads
 
 window*       win_active_p        { &win_call };            ///< start with the CALL window active
-//window*       last_active_win_p   { nullptr };              ///< keep track of the last window that was active, before the current one
 ACTIVE_WINDOW active_window       { ACTIVE_WINDOW::CALL };  ///< start with the CALL window active
 ACTIVE_WINDOW last_active_window  { ACTIVE_WINDOW::CALL };  ///< start with the CALL window active
 
@@ -558,7 +562,8 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
     vector<string> vec_str;
 
     copy(matches.cbegin(), matches.cend(), back_inserter(vec_str));
-    sort(vec_str.begin(), vec_str.end(), compare_calls);
+//    sort(vec_str.begin(), vec_str.end(), compare_calls);
+    SORT(vec_str, compare_calls);
     match_vector.clear();
 
 // put an exact match at the front (this will never happen with a fuzzy match)
@@ -574,9 +579,10 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
 
     for (const auto& cs : vec_str)
     { if (cs != callsign)
-      { //const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) };
+      { vector<string>& tmp_matches { (is_dupe(cs) ? tmp_red_matches : ( logbk.qso_b4(cs) ? tmp_green_matches : tmp_ordinary_matches)) };
 
-  //      if (const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) }; dupe)
+        tmp_matches.push_back(cs);
+/*
         if (is_dupe(cs))
           tmp_red_matches.push_back(cs);
         else
@@ -585,14 +591,12 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
           else
             tmp_ordinary_matches.push_back(cs);
         }
+*/
       }
     }
 
     for (const auto& cs : tmp_exact_matches)
-    { //const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) };
-
-  //    if (const bool dupe { logbk.is_dupe(cs, safe_get_band(), safe_get_mode(), rules) }; dupe)
-      if (is_dupe(cs))
+    { if (is_dupe(cs))
         match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
       else
       { const bool qso_b4 { logbk.qso_b4(cs) };
@@ -725,7 +729,6 @@ int main(int argc, char** argv)
   }
 
 // rename the mutexes in the bandmaps
-//array<bandmap, NUMBER_OF_BANDS>                  bandmaps;                  ///< one  remove_const_t<decltype(n_tries)>
   for (FORTYPE(NUMBER_OF_BANDS) n { 0 }; n < NUMBER_OF_BANDS; ++n)
     bandmaps[n].rename_mutex("BANDMAP: "s + BAND_NAME.at(n));
 
@@ -893,18 +896,14 @@ int main(int argc, char** argv)
     win_message.init(context.window_info("MESSAGE"s), WINDOW_NO_CURSOR);
     win_message < WINDOW_ATTRIBUTES::WINDOW_BOLD <= "";                                       // use bold in this window
 
-// is there a log of old QSOs?
-//    ost << "is there a log of old QSOs?" << endl;
-
+// is there a log of old QSOs? If so, read and process it (in a separate thread)
     { thread thr;
 
       bool running_old_log_thread { false };
 
       if (!context.old_adif_log_name().empty())
-      { //adif3_build_old_log();
-        thr = move(thread(adif3_build_old_log));
+      { thr = move(thread(adif3_build_old_log));
         running_old_log_thread = true;
-//        thr.detach();
       }
 
 // make some things available file-wide
@@ -949,8 +948,9 @@ int main(int argc, char** argv)
         catch (const rig_interface_error& e)
         { const string msg { "Error initialising rig; error code = " + to_string(e.code()) + ", reason = " + e.reason() };
       
-          alert(msg, false);
+          alert(msg, SHOW_TIME::NO_SHOW);
           ost << msg << endl;
+          sleep_for(seconds(5));
           exit(-1);
         }
       }
@@ -2966,7 +2966,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
       { const unsigned int new_qrs { from_string<unsigned int>(substring(command, 8)) };
 
         context.qtc_qrs(new_qrs);
-        alert((string)"QTC QRS set to: "s + to_string(new_qrs), false);
+        alert((string)"QTC QRS set to: "s + to_string(new_qrs), SHOW_TIME::NO_SHOW);
       }
 
 // .QUIT
@@ -3537,7 +3537,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
 
     results = original_contents + ( results.empty() ? ": No posts found"s : ( ": "s + results ) );
-    alert(results, false);
+    alert(results, SHOW_TIME::NO_SHOW);
 
     processed = true;
   }
@@ -4010,7 +4010,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // CTRL-Q -- swap QSL and QUICK QSL messages
   if (!processed and (e.is_control('q')))
   { context.swap_qsl_messages();
-    alert("QSL messages swapped"s, false);
+    alert("QSL messages swapped"s, SHOW_TIME::NO_SHOW);
     processed = true;
   }
 
@@ -5388,7 +5388,8 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   vector<string> vec_str;
 
   copy(original.cbegin(), original.cend(), back_inserter(vec_str));
-  sort(vec_str.begin(), vec_str.end(), compare_calls);    // need to change the collation order
+//  sort(vec_str.begin(), vec_str.end(), compare_calls);    // need to change the collation order
+  SORT(vec_str, compare_calls);
 
   vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
@@ -5415,7 +5416,8 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   vector<string> vec_str;
 
   copy(known_country_mults.cbegin(), known_country_mults.cend(), back_inserter(vec_str));
-  sort(vec_str.begin(), vec_str.end(), compare_calls);    // non-default collation order
+//  sort(vec_str.begin(), vec_str.end(), compare_calls);    // non-default collation order
+  SORT(vec_str, compare_calls);
 
   vector<pair<string /* country */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
 
@@ -6046,7 +6048,7 @@ string hhmmss(void)
 
     Also logs the message (always with the time)
 */
-void alert(const string& msg, const bool show_time)
+void alert(const string& msg, const SHOW_TIME show_time/* const bool show_time */)
 {
   { SAFELOCK(alert);
     alert_time = ::time(NULL);
@@ -6056,7 +6058,7 @@ void alert(const string& msg, const bool show_time)
 
   win_message < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-  if (show_time)
+  if (show_time == SHOW_TIME::SHOW)
     win_message < now < SPACE_STR;
 
   win_message <= msg;
@@ -6671,7 +6673,7 @@ void* p3_screenshot_thread(void* vp)
   long     tmp                 { 0 };
 
   for (size_t n = 0; n < image.length() - 2; ++n)
-    tmp += static_cast<unsigned char>(image[n]);
+    tmp += static_cast<int>(static_cast<unsigned char>(image[n]));
 
   calculated_checksum = static_cast<uint16_t>(tmp % 65536);
 //  ost << "tmp: " << tmp << " " << hex << tmp << " " << dec << tmp % 65536 << " " << hex << tmp % 65536 << dec << endl;
@@ -6830,16 +6832,6 @@ string dump_screen(const string& dump_filename)
     return "ERROR"s;
   }
 
-//  const bool viewable = (win_attr.map_state == IsViewable);
-  
-//  ost << "Window is " << (viewable ? "" : "NOT ") << "viewable" << endl;
-
-// try holding the lock until we're finished
-//  if (multithreaded)
-//    XUnlockDisplay(display_p);
-
-//  ost << "XAllPlanes() = " << XAllPlanes() << endl;
-
   const int width  { win_attr.width };
   const int height { win_attr.height };
   
@@ -6912,9 +6904,6 @@ string dump_screen(const string& dump_filename)
 */
 
   png::image< png::rgb_pixel > image(width, height);
-
-//  png::image< png::rgb_pixel > image1();
-
 
   constexpr unsigned int FF         { 0xff };
   constexpr unsigned int BLUE_MASK  { FF };
@@ -7063,14 +7052,12 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     if (destination_callsign.empty())  // we have no destination
     { alert("No valid destination for QTC"s);
- //     win_active_p = &win_call;
       set_active_window(ACTIVE_WINDOW::CALL);
       processed = true;
     }
 
     if (!processed and location_db.continent(destination_callsign) != EU)    // send QTCs only to EU stations
     { alert("No EU destination for QTC"s);
- //     win_active_p = &win_call;
       set_active_window(ACTIVE_WINDOW::CALL);
       processed = true;
     }
@@ -7082,7 +7069,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     if (!processed and n_already_sent >= MAX_QTC_ENTRIES_PER_STN)
     { alert(to_string(MAX_QTC_ENTRIES_PER_STN) + " QSOs already sent to "s + destination_callsign);
- //     win_active_p = &win_call;
       set_active_window(ACTIVE_WINDOW::CALL);
       processed = true;
     }
@@ -7095,7 +7081,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
     if (!processed and qtc_entries_to_send.empty())
     { alert("No QSOs available to send to "s + destination_callsign);
- //     win_active_p = &win_call;
       set_active_window(ACTIVE_WINDOW::CALL);
       processed = true;
     }
@@ -7111,7 +7096,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // check that we still have entries (this should always pass)
       if (series.empty())
       { alert("Error: empty QTC object for "s + destination_callsign);
- //       win_active_p = &win_call;
         set_active_window(ACTIVE_WINDOW::CALL);
         processed = true;
       }
@@ -7382,22 +7366,6 @@ string active_window_name(void)
   }
 
   return "UNKNOWN"s;        // keep the silly compiler happy
-#if 0
-  string name { "UNKNOWN"s };
-
-  if (win_active_p == &win_call)
-    name = "CALL"s;
-  else
-  { if (win_active_p == &win_exchange)
-      name = "EXCHANGE"s;
-    else
-    { if (win_active_p == &win_log_extract)
-        name = "LOG EXTRACT"s;
-    }
-  }
-
-  return name;
-#endif
 }
 
 /*! \brief              Display a callsign in the NEARBY window, in the correct colour
@@ -7755,7 +7723,6 @@ bool process_keypress_F5(void)
 
       win_call.move_cursor(posn, 0);
       win_call.refresh();
-//      win_active_p = &win_call;
       set_active_window(ACTIVE_WINDOW::CALL);
 
       win_exchange.move_cursor(0, 0);
@@ -7764,7 +7731,6 @@ bool process_keypress_F5(void)
     { if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)    // posn of first empty space
       { win_exchange.move_cursor(posn + 1, 0);
         win_exchange.refresh();
- //       win_active_p = &win_exchange;
         set_active_window(ACTIVE_WINDOW::EXCHANGE);
       }
     }
@@ -8119,7 +8085,9 @@ bool process_backspace(window& win)
     note that the code there contains an extra right curly bracket
  */
 string run_external_command(const string& cmd)
-{ array<char, 128> buffer;
+{ constexpr size_t BUFLEN { 128 };      // reasonable size for read buffer
+
+  array<char, BUFLEN> buffer;
   string result;
   unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
@@ -8141,9 +8109,9 @@ void* get_indices(void* vp)    ///< Get SFI, A, K
   { start_of_thread("get indices"s);
 
     try
-    { const string* cmd_p { (string*)vp };
-      const string& cmd   { *cmd_p };
-      const string indices { run_external_command(cmd) };
+    { const string* cmd_p   { (string*)vp };
+      const string& cmd     { *cmd_p };
+      const string  indices { run_external_command(cmd) };
 
       win_indices < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < "Last lookup at: " < substring(hhmmss(), 0, 5) < EOL
                   <= indices;
@@ -8200,7 +8168,7 @@ void update_best_dx(const grid_square& dx_gs, const string& callsign)
       if (distance_in_units >= greatest_distance)
       { string str { pad_string(comma_separated_string(static_cast<int>(distance_in_units + 0.5)), 6, PAD_LEFT) };
 
-        str = pad_string( (str + " "s + callsign), win_best_dx.width(), PAD_RIGHT);
+        str = pad_string( (str + SPACE_STR + callsign), win_best_dx.width(), PAD_RIGHT);
 
         win_best_dx < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN <= str;
 
@@ -8407,7 +8375,7 @@ void do_not_show(const string& callsign)
   if (!context.do_not_show_filename().empty())
   { const auto do_not_add_set { bandmaps[0].do_not_add() };   // any old bandmap will do for this
 
-    set<string, decltype(&compare_calls)> output_set(compare_calls);
+    set<string, decltype(&compare_calls)> output_set(compare_calls);    // define the ordering to be callsign order
   
     for (const auto& callsign : do_not_add_set)
       output_set.insert(callsign);
@@ -8491,12 +8459,12 @@ void adif3_build_old_log(void)
       }
     };
 
-  alert("reading old log file: "s + context.old_adif_log_name(), false);
+  alert("reading old log file: "s + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
   
   try
   { const adif3_file old_adif3_log(context.path(),  context.old_adif_log_name());
 
-    alert("read " + comma_separated_string(to_string(old_adif3_log.size())) + " ADIF records from file: " + context.old_adif_log_name(), false);
+    alert("read " + comma_separated_string(to_string(old_adif3_log.size())) + " ADIF records from file: " + context.old_adif_log_name(), SHOW_TIME::NO_SHOW);
     
     if (!limit_old_qsos)
       for (const adif3_record& rec : old_adif3_log)
@@ -8511,7 +8479,8 @@ void adif3_build_old_log(void)
         { vector<adif3_record> matching_qsos { old_adif3_log.matching_qsos(callsign) }; // don't make const because it's going to be sorted
 
           if (!matching_qsos.empty())       // should always be true
-          { sort(matching_qsos.begin(), matching_qsos.end(), compare_adif3_records);    // in chronological order
+          { //sort(matching_qsos.begin(), matching_qsos.end(), compare_adif3_records);    // in chronological order
+            SORT(matching_qsos, compare_adif3_records);
 
             unordered_map<bandmode, vector<adif3_record>> bmode_records;
 
@@ -8666,27 +8635,3 @@ void set_active_window(const ACTIVE_WINDOW aw)
       break;
   }
 }
-
-#if 0
-/*! \brief      Set the window that is receiving input
-    \param  wp  pointer to the active window
-*/
-void set_active_window(const window* wp)
-{ if (wp == &win_call)
-    active_window = ACTIVE_WINDOW::CALL;
-  else
-  { if (wp == &win_exchange)
-      active_window = ACTIVE_WINDOW::EXCHANGE;
-    else
-    { if (wp == &win_log)
-        active_window = ACTIVE_WINDOW::LOG;
-      else
-      { if (wp == &win_log_extract)
-          active_window = ACTIVE_WINDOW::LOG_EXTRACT;
-        else                    // major problem, undefined address
-          throw exception();
-      }
-    }
-  }
-}
-#endif

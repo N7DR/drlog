@@ -1,4 +1,4 @@
-// $Id: string_functions.h 163 2020-08-06 19:46:33Z  $
+// $Id: string_functions.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -139,7 +139,8 @@ std::string to_string(const T val)
     \param  length      length of substring to be extracted
     \return             substring of length <i>length</i>, starting at position <i>start_posn</i>
 
-    Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception
+    Operates like <i>str.substr(start_posn, length)</i>, except does not throw a range exception.
+    Compiler error if one uses str.size() - start_posn as a default length; value may not be calculated from other parameters
 */
 std::string substring(const std::string& str, const size_t start_posn, const size_t length);
 
@@ -278,15 +279,6 @@ inline std::string read_file(const std::string& filename, const std::vector<std:
 inline void write_file(const std::string& cs, const std::string& filename)
   { std::ofstream(filename.c_str(), std::ofstream::binary) << cs; }
 
-/*! \brief              Write a string to a file
-    \param  cs          string to be written to file
-    \param  filename    name of file to be written
-
-    Throws exception if the file cannot be written
-*/
-//inline void append_to_file(const std::string& cs, const std::string& filename)
-//  { std::ofstream(filename.c_str(), std::ofstream::binary | std::ios_base::app) << cs; }
-
 /*! \brief      Remove characters from the end of a string
     \param  s   original string
     \param  n   number of chars to remove
@@ -418,14 +410,6 @@ inline std::string remove_peripheral_character(const std::string& cs, const char
 */
 std::string remove_char(const std::string& cs, const char char_to_remove);
 
-/*! \brief                  Remove all instances of a particular char from a string
-    \param  s               original string
-    \param  char_to_remove  character to be removed from <i>cs</i>
-    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
-*/
-//inline std::string remove_char(std::string& s, const char char_to_remove)
-//  { return remove_char(static_cast<const std::string>(s), char_to_remove); }
-
 /*! \brief                  Remove all instances of a particular char from a container of strings
     \param  t               container of strings
     \param  char_to_remove  character to be removed from <i>cs</i>
@@ -485,24 +469,17 @@ std::string delimited_substring(const std::string& cs, const char delim_1, const
 */
 std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2);
 
-/*! \brief          Join the elements of a string vector, using a provided separator
-    \param  vec     vector of strings
-    \param  sep     separator inserted between the elements of <i>vec</i>
-    \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
-*/
-//std::string join(const std::vector<std::string>& vec, const std::string& sep);
-
 /*! \brief          Join the elements of a container of strings, using a provided separator
     \param  ct      container of strings
     \param  sep     separator inserted between the elements of <i>vec</i>
-    \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
+    \return         all the elements of <i>ct</i>, concatenated, but with <i>sep</i> inserted between elements
 */
 template <typename T, typename U>
 std::string join(const T& ct, const U sep)
-  requires (std::is_same<typename T::value_type, std::string>::value == true)
+  requires (is_string_v<typename T::value_type>)
 { std::string rv;
 
-  for (auto cit = ct.cbegin(); cit != ct.end(); ++cit)
+  for (auto cit { ct.cbegin() }; cit != ct.cend(); ++cit)
   { if (cit != ct.cbegin())
       rv += sep;
 
@@ -511,24 +488,6 @@ std::string join(const T& ct, const U sep)
 
   return rv;
 }
-
-#if 0
-template <typename T, typename U>
-std::string join(const T& ct, const U sep)
-  requires (std::is_same<typename T::value_type, std::string>::value == true) && (std::ForwardIterator<T>)
-{ std::string rv;
-
-  if (ct.empty())
-    return rv;
-
-  for (unsigned int n = 0; n < ct.size() - 1; ++n)
-    rv += (ct[n] + sep);
-
-  rv += ct[ct.size() - 1];
-  
-  return rv;
-}
-#endif
 
 /*! \brief  Create a string of a certain length, with all characters the same
     \param  c   Character that the string will contain
@@ -618,12 +577,13 @@ inline bool starts_with(const std::string& cs, const std::string& ss)
 
 /*! \brief      Does a string begin with one of a number of particular substrings?
     \param  cs  string to test
-    \param  ss  substring to look for
-    \return     whether <i>cs</i> begins with <i>ss</i>
+    \param  ss  substrings to look for
+    \return     whether <i>cs</i> begins with any of the entries in <i>ss</i>
 */
 template <typename T>
 bool starts_with(const std::string& cs, const T& ss)
-  requires (std::is_same<typename T::value_type, std::string>::value == true)
+//  requires (std::is_same<typename T::value_type, std::string>::value == true)
+  requires (is_string_v<typename T::value_type>)
 { for (const auto& str : ss)
     if (starts_with(cs, str))
       return true;

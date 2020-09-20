@@ -1,4 +1,4 @@
-// $Id: rules.h 166 2020-08-22 20:59:30Z  $
+// $Id: rules.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -39,13 +39,10 @@ enum class POINTS { NORMAL,                       ///< points defined in configu
                   };
 
 /// Syntactic sugar for read-only access
-// CANNOT make this a non-const non-reference (to allow for move constructors). There is a circularity that
-// needs fixing, to do with rules.h, exchange.h and MULT_VALUE. 
 #define RULESREAD(y)          \
   inline decltype(_##y) y(void) const { SAFELOCK(rules); return _##y; }
 
 // forward declarations
-//class EFT;
 class QSO;
 
 // -------------------------  choice_equivalents  ---------------------------
@@ -161,9 +158,6 @@ public:
     _name(nm),
     _values(mss)
   { }
-
-/// destructor
-//  inline virtual ~exchange_field_values(void) = default;
 
   READ_AND_WRITE(name);             ///< name of the exchange field
   READ_AND_WRITE(values);           ///< associate legal values with a canonical value
@@ -377,7 +371,6 @@ protected:
   bool                                _callsign_mults_used;      ///< are callsign mults used?
 
   std::unordered_set<std::string>     _countries;                     ///< collection of canonical prefixes for all the valid countries
-//  std::set<std::string>               _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   std::unordered_set<std::string>     _country_mults;                 ///< collection of canonical prefixes of all the valid country multipliers
   bool                                _country_mults_per_band;        ///< are country mults counted per-band?
   bool                                _country_mults_per_mode;        ///< are country mults counted per-mode?
@@ -495,7 +488,7 @@ protected:
 public:
   
 /// default constructor
-  contest_rules(void);      // can't put the code here because the defn of EFT is incomplete at this point
+  contest_rules(void);
 
 /*! \brief              Construct an object ready for use
     \param  context     context for this contest

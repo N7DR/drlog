@@ -1,4 +1,4 @@
-// $Id: cty_data.h 163 2020-08-06 19:46:33Z  $
+// $Id: cty_data.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -55,72 +55,6 @@ constexpr int LOCATION_NO_PREFIX_MATCH       { -1 },    ///< unable to find a pr
 
 constexpr int RUSSIAN_INVALID_SUBSTRING      { -1 },    ///< source substring does not match target line in constructor
               RUSSIAN_INVALID_FORMAT         { -2 };    ///< format of file is invalid
-
-#if 0
-// -----------  value ----------------
-
-/*! \class  value
-    \brief  A single value that may or may not be valid
-*/
-
-template <typename T>
-class value
-{
-protected:
-
-  bool     _is_valid { false }; ///< is the value valid?
-  T        _val;                ///< the encapsulated value
-    
-public:
-  
-/// default constructor
-//  value(void) :
-//    _is_valid(false)
-//  { }
-  value(void) = default;
-  
-/// construct from a value
-  explicit value(T v) :
-    _is_valid(true),
-    _val(v)
-  { }
-  
-/// return value if valid, otherwise a default
-  T operator()(T def) const
-    { return (_is_valid ? _val : def); }
-
-/// return value if valid, otherwise a default
-  T get(T def) const
-    { return (_is_valid ? _val : def); }
-
-/// return the value, regardless of whether it's valid
-  T operator()(void) const
-    { return _val; }
-    
-/// is the value valid?
-  const bool is_valid(void) const
-    { return _is_valid; }
-    
-/// set value
-  void set(T v)
-    { _is_valid = true;
-      _val = v;
-    }
-    
-/// value = *something*
-  void operator=(T v)
-  { _is_valid = true;
-    _val = v;
-  }
-
-/// serialise
-  template<typename Archive>
-  void serialize(Archive& ar, const unsigned version)
-    { ar & _is_valid
-         & _val;
-    }
-};
-#endif
 
 // -----------  alternative_country_info  ----------------
 
@@ -202,7 +136,7 @@ public:
     The string is assumed to contain a single record. We don't catch all
     possible errors, but we do test for the most obvious ones.
 */
-  cty_record(const std::string& record);
+  explicit cty_record(const std::string& record);
 
   READ(alt_callsigns);          ///< alternative callsigns used by this country
   READ(alt_prefixes);           ///< alternative prefixes used by this country
@@ -279,7 +213,7 @@ public:
 /*! \brief              Construct from a file
     \param  filename    name of file
 */
-  cty_data(const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
+  explicit cty_data(const std::string& filename = "cty.dat"s);   // somewhere along the way the default name changed from CTY.DAT
 
 /*! \brief              Construct from a file
     \param  path        directories in which to search for <i>filename</i>, in order
@@ -293,7 +227,7 @@ public:
   
 /// return a record by number, wrt 0, with range checking
   inline cty_record operator[](const unsigned int n) const
-    { return /* _data.*/ this->at(n); }
+    { return this->at(n); }
 };
 
 // -----------  russian_data_per_substring  ----------------
@@ -398,9 +332,6 @@ public:
     _longitude(rec.longitude()),
     _utc_offset(rec.utc_offset())
   { }
-
-/// destructor
-//  inline virtual ~location_info(void) = default;
 
 /// location_info == location_info
   const bool operator==(const location_info& li) const;
@@ -520,20 +451,13 @@ public:
     \param  filename        name of cty.dat file
     \param  country_list    type of country list
 */
-  location_database(const std::string& filename, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
+  explicit location_database(const std::string& filename, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
 
 /*! \brief                  Constructor
     \param  cty             cty.dat data
     \param  country_list    type of country list
 */
-  location_database(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
-
-/*! \brief                  Constructor
-    \param  cty             cty.dat data
-    \param  country_list    type of country list
-    \param  secondary       secondary QTH database
-*/
-//  location_database(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
+  explicit location_database(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
 
 /// copy constructor
   location_database(const location_database&) = delete;
@@ -543,13 +467,6 @@ public:
     \param  country_list    type of country list
 */
   void prepare(const cty_data& cty, const COUNTRY_LIST country_list = COUNTRY_LIST::DXCC);
-
-/*! \brief                  Prepare a default-constructed object for use
-    \param  cty             cty.dat data
-    \param  country_list    type of country list
-    \param  secondary       secondary QTH database
-*/
-//  void prepare(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary);
 
 /*! \brief              Add Russian information
     \param  path        vector of directories to check for file <i>filename</i>
@@ -577,12 +494,10 @@ public:
   location_info info(const std::string& callpart) const;
   
 /// return the database
-//  inline const std::map<std::string, location_info> db(void) const
   inline decltype(location_database::_db) db(void) const
     { return (SAFELOCK_GET( _location_database_mutex, _db )); }
 
 /// create a set of all the canonical prefixes for countries
-//  const std::unordered_set<std::string> countries(void) const;
   auto countries(void) const -> std::unordered_set<std::string>;
 
 /// create a set of all the canonical prefixes for a particular continent
@@ -672,7 +587,6 @@ public:
       ar & _db
          & _alt_call_db
          & _db_checked;
-//         & _qth_db;
     }
     
   friend class russian_data;    // in order to keep consistent definitions of database types
@@ -699,7 +613,6 @@ protected:
 
   using RUSSIAN_DBTYPE  = decltype(location_database::_russian_db);
 
- // std::map<std::string /* substring */, russian_data_per_substring> _data;          ///< map substring to the matching data
   RUSSIAN_DBTYPE _data;          ///< map substring to the matching data
 
 public:

@@ -1,4 +1,4 @@
-// $Id: log.h 161 2020-07-31 16:19:50Z  $
+// $Id: log.h 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -53,6 +53,8 @@ protected:
 // use in a multi station
   std::multimap<std::string, QSO>  _log;        ///< map version of log; key is callsign; cannot use unordered_multimap; we need call ordering
   std::vector<QSO>                 _log_vec;    ///< vector (chronological) version of log
+
+  void _modify_qso_with_name_and_value(QSO& qso, const std::string& name, const std::string& value);  
 
 public:
   
@@ -382,7 +384,7 @@ template <typename T>
 // -----------  old_log  ----------------
 
 /*! \class old_log
-    \brief An old ADIF log
+    \brief An old ADIF3 log
 
     Not thread safe.
 */
@@ -397,7 +399,7 @@ protected:
                                  std::set< std::pair< BAND, MODE > >,     /* set of band/mode from which QSLs have been received */
                                  std::multiset< std::pair< BAND, MODE > > /* QSOs per band/mode */
                                >
-                    > _olog;    ///< ADIF log of old QSOs (used for QSLs)
+                    > _olog;    ///< ADIF3 log of old QSOs (used for QSLs)
 public:
 
 /*! \brief          Return total number of QSLs from a particular callsign

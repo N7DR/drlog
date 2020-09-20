@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 165 2020-08-22 16:19:06Z  $
+// $Id: rig_interface.cpp 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,7 @@ using namespace   this_thread;   // std::this_thread
 
 extern bool rig_is_split;
 
-void alert(const string& msg, const bool show_time = true);     ///< alert the user (not used for errors)
+extern void alert(const string& msg, const SHOW_TIME show_time = SHOW_TIME::SHOW);     ///< alert the user (not used for errors)
 
 /* The current version of Hamlib seems to be both slow and unreliable with the K3. Anent unreliability, for example, the is_locked() function
  * as written below causes the entire program to freeze (presumably some kind of blocking or threading issue in the current version of hamlib).
@@ -238,52 +238,16 @@ void rig_interface::prepare(const drlog_context& context)
 
     Does nothing if <i>f</i> is not within a ham band
 */
-void rig_interface::rig_frequency_a(const frequency& f)
-  { _rig_frequency(f, VFO::A); }
-#if 0
-{ if (f.is_within_ham_band())
-  { _last_commanded_frequency = f;
-
-    if (_rig_connected)
-    { int status;
-
-      { SAFELOCK(_rig);
-
-        status = rig_set_freq(_rigp, RIG_VFO_A, f.hz());
-      }
-
-      if (status != RIG_OK)
-        _error_alert("Error setting A frequency"s);
-    }
-  }
-}
-#endif
+//void rig_interface::rig_frequency_a(const frequency& f)
+//  { _rig_frequency(f, VFO::A); }
 
 /*! \brief      Set frequency of VFO B
     \param  f   new frequency of VFO B
 
     Does nothing if <i>f</i> is not within a ham band
 */
-void rig_interface::rig_frequency_b(const frequency& f)
-  { _rig_frequency(f, VFO::B); }
-#if 0
-{ if (f.is_within_ham_band())
-  { _last_commanded_frequency_b = f;
-
-    if (_rig_connected)
-    { int status;
-
-      { SAFELOCK(_rig);
-
-        status = rig_set_freq(_rigp, RIG_VFO_B, f.hz());
-      }
-
-      if (status != RIG_OK)
-        _error_alert("Error setting B frequency"s);
-    }
-  }
-}
-#endif
+//void rig_interface::rig_frequency_b(const frequency& f)
+//  { _rig_frequency(f, VFO::B); }
 
 /*! \brief      Set mode
     \param  m   new mode
@@ -344,46 +308,12 @@ void rig_interface::rig_mode(const MODE m)
 /*! \brief      Get the frequency of VFO A
     \return     frequency of VFO A
 */
-frequency rig_interface::rig_frequency_a(void)
-  { return _rig_frequency(VFO::A); } 
-#if 0
-{ if (!_rig_connected)
-    return _last_commanded_frequency;
-  else
-  { freq_t hz;
-
-    SAFELOCK(_rig);
-
-    if (const int status { rig_get_freq(_rigp, RIG_VFO_CURR, &hz) }; status != RIG_OK)
-    { _error_alert("Error getting frequency"s);
-      return _last_commanded_frequency;
-    }
-
-    return frequency(hz);
-  }
-}
-#endif
+//frequency rig_interface::rig_frequency_a(void)
+//  { return _rig_frequency(VFO::A); } 
 
 /// get frequency of VFO B
-frequency rig_interface::rig_frequency_b(void)
-  { return _rig_frequency(VFO::B); }
-#if 0
-{ if (!_rig_connected)
-    return _last_commanded_frequency_b;
-  else
-  { freq_t hz;
-
-    SAFELOCK(_rig);
-
-    if (const int status { rig_get_freq(_rigp, RIG_VFO_B, &hz) }; status != RIG_OK)
-    { _error_alert("Error getting frequency of VFO B"s);
-      return _last_commanded_frequency_b;
-    }
-
-    return frequency(hz);
-  }
-}
-#endif
+//frequency rig_interface::rig_frequency_b(void)
+//  { return _rig_frequency(VFO::B); }
 
 /*! \brief  Enable split operation
 
@@ -408,7 +338,7 @@ void rig_interface::split_enable(void)
   }
 
 // not a K3
-  if ( const int status { rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B) }; status != RIG_OK)  // magic parameters
+  if (const int status { rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_ON, RIG_VFO_B) }; status != RIG_OK)  // magic parameters
     _error_alert("Error executing SPLIT command"s);
   else
     rig_is_split = true;
@@ -429,9 +359,9 @@ void rig_interface::split_disable(void)
 
 // not a K3
 //  const int status = rig_set_split_vfo(_rigp, RIG_VFO_CURR, RIG_SPLIT_OFF, RIG_VFO_A);    // do not delete this line, in case we ever need to use this version instead of the following line
-  const int status { rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A) };         // the line above also works
+//  const int status { rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A) };     // the line above also works
 
-  if (status != RIG_OK)
+  if (const int status { rig_set_split_vfo(_rigp, RIG_VFO_A, RIG_SPLIT_OFF, RIG_VFO_A) }; status != RIG_OK)
     _error_alert("Error executing SPLIT command"s);
   else
     rig_is_split = false;
@@ -545,8 +475,6 @@ MODE rig_interface::rig_mode(void)
     pbwidth_t w;
 
     SAFELOCK(_rig);
-
-//    const int status { rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w) };
 
     if (const int status { rig_get_mode(_rigp, RIG_VFO_CURR, &m, &w) }; status != RIG_OK)
     { _error_alert("Error getting mode"s);
@@ -868,7 +796,9 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
 
   const int fd           { _file_descriptor() };
 
-  static array<char, 1000> c_in;
+  constexpr int INBUF_SIZE { 1000 };        // size of input buffer
+
+  static array<char, INBUF_SIZE> c_in;
 
   unsigned int total_read         { 0 };
 
@@ -901,7 +831,15 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
     sleep_for(milliseconds(100));
 
     fd_set set;
-    struct timeval timeout;
+    struct timeval timeout;  // time_t (seconds), long (microseconds)
+
+    auto set_timeout = [=, &set, &timeout](const time_t sec, const long usec)
+      { FD_ZERO(&set);    // clear the set
+        FD_SET(fd, &set); // add the file descriptor to the set
+
+        timeout.tv_sec = sec;
+        timeout.tv_usec = usec;
+      };
 
     int counter { 0 };
 
@@ -915,15 +853,17 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
         const int n_secs { n_bits / static_cast<int>(baud_rate() )};
 
         while (!completed and (counter < (n_secs + 5)) )    // add 5 extra seconds
-        { FD_ZERO(&set);    // clear the set
-          FD_SET(fd, &set); // add the file descriptor to the set
+        { set_timeout(1, 0);
 
-          timeout.tv_sec = 1;
-          timeout.tv_usec = 0;
+//          FD_ZERO(&set);    // clear the set
+//          FD_SET(fd, &set); // add the file descriptor to the set
 
-          int status { select(fd + 1, &set, NULL, NULL, &timeout) };
+//          timeout.tv_sec = 1;
+//          timeout.tv_usec = 0;
 
-          if (status == -1)
+ //         int status { select(fd + 1, &set, NULL, NULL, &timeout) };
+
+          if (int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
             ost << "Error in select() in raw_command()" << endl;
           else
           { if (status == 0)
@@ -957,18 +897,20 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
       { static int rig_communication_failures { 0 };
 
         while (!completed and (counter < MAX_ATTEMPTS) )
-        { FD_ZERO(&set);    // clear the set
-          FD_SET(fd, &set); // add the file descriptor to the set
+        { set_timeout(0, TIMEOUT_MICROSECONDS);
 
-          timeout.tv_sec = 0;
-          timeout.tv_usec = TIMEOUT_MICROSECONDS;
+ //         FD_ZERO(&set);    // clear the set
+//          FD_SET(fd, &set); // add the file descriptor to the set
+
+//          timeout.tv_sec = 0;
+//          timeout.tv_usec = TIMEOUT_MICROSECONDS;
 
           if (counter)                          // we've already slept the first time through
             sleep_for(milliseconds(50));
 
-          int status { select(fd + 1, &set, NULL, NULL, &timeout) };
+ //         int status { select(fd + 1, &set, NULL, NULL, &timeout) };
 
-          if (status == -1)
+          if (const int status { select(fd + 1, &set, NULL, NULL, &timeout) }; status == -1)
             ost << "Error in select() in raw_command()" << endl;
           else
           { if (status == 0)                // possibly a timeout error
@@ -991,7 +933,7 @@ const string rig_interface::raw_command(const string& cmd, const bool response_e
                 }
               }
 
-              const ssize_t n_read { read(fd, c_in.data(), 500) };        // read a maximum of 500 characters
+              const ssize_t n_read { read(fd, c_in.data(), INBUF_SIZE / 2) };   // read a maximum of 500 characters inot the static array; halve to provide margin of error
 
               if (n_read > 0)                      // should always be true
               { total_read += n_read;

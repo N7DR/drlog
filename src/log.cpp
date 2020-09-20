@@ -1,4 +1,4 @@
-// $Id: log.cpp 160 2020-07-25 16:01:11Z  $
+// $Id: log.cpp 167 2020-09-19 19:43:49Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -41,6 +41,60 @@ extern string VERSION;          ///< version string
 */
 inline bool qso_sort_by_time(const QSO& q1, const QSO& q2)
   { return q1.earlier_than(q2); }
+
+void logbook::_modify_qso_with_name_and_value(QSO& qso, const string& name, const string& value)
+{ 
+// frequency
+  if (name == "FREQ"s)
+    qso.freq_and_band(value);
+
+// mode
+  if (name == "MODE"s)
+  { if (value == "CW"s)
+      qso.mode(MODE_CW);
+
+    if (value == "SSB"s)
+      qso.mode(MODE_SSB);
+//    if (value == "RTTY")
+//      qso.mode(MODE_DIGI);
+  }
+
+// date
+  if (name == "DATE"s)
+    qso.date(value);
+
+// time
+  if (name == "TIME"s)
+    qso.utc( (value.length() == 5) ? (value.substr(0, 2) + value.substr(3, 2)) : value ); // handle hh:mm and hhmm formats
+
+// tcall
+  if (name == "TCALL"s)
+    qso.my_call(value);
+
+// transmitted exchange
+  if (starts_with(name, "TEXCH"s))
+  { const string field_name { name.substr(6) };
+
+    vector<pair<string, string> > current_sent_exchange { qso.sent_exchange() }; // do in two steps in order to remove constness of returned value
+  
+    qso.sent_exchange((current_sent_exchange.push_back( { field_name, value } ), current_sent_exchange));
+  }
+
+// rcall
+  if (name == "RCALL"s)
+    qso.callsign(value);
+
+// received exchange
+  if (starts_with(name, "REXCH"s))
+  { const string field_name { name.substr(6) };
+
+    vector<received_field> current_received_exchange { qso.received_exchange() }; // do in two steps in order to remove constness of returned value
+
+// should have a function in the QSO class to add a field to the exchange
+    current_received_exchange.push_back( { field_name, value, false, false });
+    qso.received_exchange(current_received_exchange);
+  }
+}
 
 /*! \brief      Add a QSO to the logbook
     \param  q   QSO to add
@@ -305,12 +359,6 @@ string logbook::cabrillo_log(const drlog_context& context, const unsigned int sc
 // the Cabrillo file should be accepted by the contest sponsor.
 //  string EOL_STRING { LF };
 
-//  if (context.cabrillo_eol() == "CR"s)
-//    EOL_STRING = CR;
-
-//  if (context.cabrillo_eol() == "CRLF"s)
-//    EOL_STRING = CRLF;
-
   const string EOL_STRING { (context.cabrillo_eol() == "CR"s) ? CR : ( (context.cabrillo_eol() == "CRLF"s) ? CRLF : LF ) };
 
 // this goes first
@@ -471,17 +519,11 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
         const unsigned int    len  { from_string<unsigned int>(vec[2]) };
         const string          value { ( line.length() >= (posn + 1) ? remove_peripheral_spaces(line.substr(posn, len)) : string()) };
       
+        _modify_qso_with_name_and_value(qso, name, value);
+#if 0
 // frequency
         if (name == "FREQ"s)
-        { qso.freq_and_band(value);
-
-//          qso.freq(value);
-    
-//          const unsigned int _frequency { from_string<unsigned int>(value) };
-//          const BAND         _band      { static_cast<BAND>(frequency(_frequency)) };
-
-//          qso.band(_band);
-        }
+          qso.freq_and_band(value);
       
 // mode
         if (name == "MODE"s)
@@ -500,10 +542,11 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
 
 // time
         if (name == "TIME"s)
-        { if (value.length() == 5)
-            qso.utc(value.substr(0, 2) + value.substr(3, 2));    // handle hh:mm format
-          else
-            qso.utc(value);                                      // hhmm
+        { qso.utc( (value.length() == 5) ? (value.substr(0, 2) + value.substr(3, 2)) : value ); // handle hh:mm and hhmm formats
+//          if (value.length() == 5)
+//            qso.utc(value.substr(0, 2) + value.substr(3, 2));    // handle hh:mm format
+//          else
+//            qso.utc(value);                                      // hhmm
         }
 
 // tcall
@@ -533,6 +576,7 @@ void logbook::read_cabrillo(const string& filename, const string& cabrillo_qso_t
           current_received_exchange.push_back( { field_name, value, false, false });
           qso.received_exchange(current_received_exchange);
         }
+#endif
 
 // don't do TXID since we don't really need that (and there's currently nowhere in QSO to put it)
       }
@@ -568,15 +612,11 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
       { const string name  { cabrillo_fields[n] };
         const string value { (n < fields.size() ? remove_peripheral_spaces(fields[n]) : string()) };
 
+        _modify_qso_with_name_and_value(qso, name, value);
+#if 0
 // frequency
         if (name == "FREQ"s)
-        { qso.freq_and_band(value);
-          //qso.freq(value);
-    
-          //const unsigned int _frequency { from_string<unsigned int>(value) };
-
-          //qso.band(to_BAND(_frequency));
-        }
+          qso.freq_and_band(value);
 
 // mode
         if (name == "MODE"s)
@@ -602,7 +642,6 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
           qso.my_call(value);
     
 // transmitted exchange
-//        if (name.substr(0, 5) == "TEXCH"s)
         if (starts_with(name, "TEXCH"s))
         { const string field_name { name.substr(6) };
 
@@ -616,7 +655,6 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
           qso.callsign(value);
 
 // received exchange
-//        if (name.substr(0, 5) == "REXCH"s)
         if (starts_with(name, "REXCH"s))
         { const string field_name { name.substr(6) };
 
@@ -626,6 +664,7 @@ void logbook::read_cabrillo(const string& filename, const vector<string>& cabril
           current_received_exchange.push_back( { field_name, value, false, false } );
           qso.received_exchange(current_received_exchange);
         }
+#endif
 
 // don't do TXID since we don't really need that (and there's currently nowhere in QSO to put it)
       }
@@ -793,7 +832,7 @@ void log_extract::match_exchange(const logbook& lgbook, const string& target)
 // -----------  old_log  ----------------
 
 /*! \class  old_log
-    \brief  An old ADIF log
+    \brief  An old ADIF3 log
 
     Not thread safe, so create once and then never change.
 */
