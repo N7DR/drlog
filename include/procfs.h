@@ -169,7 +169,7 @@ public:
     { return from_string<D>(_statvec()[0]); }
 
   inline S stat_comm(void)
-    { return ( delimited_substring(_statvec()[1], '(', ')') ); }
+    { return ( delimited_substring(_statvec()[1], '(', ')', DELIMITERS::DROP) ); }
 
   inline C stat_state(void)
     { return (_statvec()[2][0]); }

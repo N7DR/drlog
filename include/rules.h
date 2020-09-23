@@ -184,7 +184,8 @@ public:
 
     Returns 0 if the canonical value does not exist
 */
-  size_t n_values(const std::string& cv) const;
+  size_t n_values(const std::string& cv) const
+    { return MUMF_VALUE(_values, cv, &std::set<std::string>::size); }
 
 /// Get the number of canonical values
   inline size_t n_canonical_values(void) const
@@ -435,8 +436,8 @@ protected:
   grid_square                                  _my_grid;             ///< Maidenhead locator
   unsigned int                                 _my_itu_zone;         ///< ITU zone
 
-  bool                                         _send_qtcs;           ///< whether to send QTCs
-  bool                                         _uba_bonus;           ///< the UBA contests have weird bonus points
+  bool                                         _send_qtcs { false };           ///< whether to send QTCs
+  bool                                         _uba_bonus { false };           ///< the UBA contests have weird bonus points
 
 /*! \brief              Private function used to obtain all the understood values for a particular exchange field
     \param  field_name  name of the field for which the understood values are required

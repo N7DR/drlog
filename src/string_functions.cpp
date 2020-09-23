@@ -436,9 +436,7 @@ vector<string> split_string(const string& cs, const string& separator)
   vector<string> rv;
 
   while (start_posn < cs.length())
-  { //unsigned long posn { cs.find(separator, start_posn) };
-
-    if (unsigned long posn { cs.find(separator, start_posn) }; posn == string::npos)                       // no more separators
+  { if (unsigned long posn { cs.find(separator, start_posn) }; posn == string::npos)                       // no more separators
     { rv.push_back(cs.substr(start_posn));
       start_posn = cs.length();
     }
@@ -500,49 +498,6 @@ vector<string> remove_empty_lines(const vector<string>& lines)
   return rv;
 }
 
-/*! \brief          Join the elements of a string vector, using a provided separator
-    \param  vec     vector of strings
-    \param  sep     separator inserted between the elements of <i>vec</i>
-    \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
-*/
-#if 0
-string join(const vector<string>& vec, const string& sep)
-{ string rv;
-
-  if (vec.empty())
-    return rv;
-
-  for (unsigned int n = 0; n < vec.size() - 1; ++n)
-    rv += (vec[n] + sep);
-
-  rv += vec[vec.size() - 1];
-  
-  return rv;
-}
-#endif
-
-/*! \brief          Join the elements of a string deque, using a provided separator
-    \param  deq     deque of strings
-    \param  sep     separator inserted between the elements of <i>vec</i>
-    \return         all the elements of <i>vec</i>, concatenated, but with <i>sep</i> inserted between elements
-*/
-#if 0
-string join(const deque<string>& deq, const string& sep)
-{ string rv;
-
-  if (!deq.empty())
-  { for (unsigned int n = 0; n < deq.size(); ++n)
-    { rv += deq[n];
-
-      if (n != deq.size() - 1)
-        rv += sep;
-    }
-  }
-  
-  return rv;
-}
-#endif
-
 /*! \brief      Remove all instances of a specific leading character
     \param  cs  original string
     \param  c   leading character to remove (if present)
@@ -590,6 +545,12 @@ string remove_char(const string& cs, const char char_to_remove)
     \param  delim_1         opening delimiter
     \param  delim_2         closing delimiter
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed from inside substrings delimited by <i>delim_1</i> and <i>delim_2</i>
+
+    delimiters are kept in the output
+
+    should replace this by a method that uses find()
+    or for each found delimited substring, execute remove_char
+    or build vector of delimited substrings, then remove char from them, then recombine
 */
 string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
 { string rv;
@@ -625,31 +586,18 @@ string remove_chars(const string& s, const string& chars_to_remove)
   return rv;
 }
 
-/*! \brief                      Remove all instances of particular characters from a string
+/*! \brief                      Obtain a delimited substring
     \param  cs                  original string
-    \param  chars_to_remove     vector whose elements are to be removed from <i>s</i>
-    \return                     <i>s</i> with all instances of the characters in <i>chars_to_remove</i> removed
-*/
-//string remove_chars(const string& cs, const vector<char>& chars_to_remove)
-//{ string rv { cs };
-  
-//  for (const char c : chars_to_remove)
-//    rv = remove_char(rv, c);
-      
-//  return rv;
-//}
-
-/*! \brief              Obtain a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             substring between <i>delim_1</i> and <i>delim_2</i>
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
   
     Returns the empty string if the delimiters do not exist, or if
     <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
     first delimited substring if more than one exists.
 */
-string delimited_substring(const string& cs, const char delim_1, const char delim_2)
+string delimited_substring(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
 { const size_t posn_1 { cs.find(delim_1) };
   
   if (posn_1 == string::npos)
@@ -660,18 +608,17 @@ string delimited_substring(const string& cs, const char delim_1, const char deli
   if (posn_2 == string::npos)
     return string();
   
-  return cs.substr(posn_1 + 1, posn_2 - posn_1 - 1);
+  return ( (return_delimiters == DELIMITERS::DROP) ? cs.substr(posn_1 + 1, posn_2 - posn_1 - 1) : cs.substr(posn_1, posn_2 - posn_1) ) ;
 }
 
-/*! \brief              Obtain all occurrences of a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
-
-    Returned strings do not include the delimiters.
+/*! \brief                      Obtain all occurrences of a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
 */
-vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2)
+vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
 { vector<string> rv;
 
   size_t start_posn { 0 };
@@ -688,7 +635,11 @@ vector<string> delimited_substrings(const string& cs, const char delim_1, const 
     if (posn_2 == string::npos)
       return rv;                            // no more ending delimiters
 
-    rv.push_back( sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1) );
+    if (return_delimiters == DELIMITERS::KEEP)
+      rv.push_back( sstring.substr(posn_1, posn_2 - posn_1) );
+    else
+      rv.push_back( sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1) );
+
     start_posn = posn_2 + 1;
   }
 
@@ -1092,7 +1043,7 @@ string reformat_for_wprintw(const string& str, const int width)
   int since_last_newline { 0 };
 
   for (size_t posn = 0; posn < str.length(); ++posn)
-  { const char& c { str[posn] };
+  { const char c { str[posn] };
 
     if (c != EOL_CHAR)
     { rv += c;

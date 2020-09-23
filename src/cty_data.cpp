@@ -206,14 +206,14 @@ alternative_country_info::alternative_country_info(const string& record, const s
   else
   { _identifier = substring(record, 0, end_identifier);      // read up to the first delimiter
   
-    if (const string cq_zone_str { delimited_substring(record, '(', ')') }; !cq_zone_str.empty())
+    if (const string cq_zone_str { delimited_substring(record, '(', ')', DELIMITERS::DROP) }; !cq_zone_str.empty())
     { _cq_zone = from_string<int>(cq_zone_str);
 
       if (_cq_zone < MIN_CQ_ZONE or _cq_zone > MAX_CQ_ZONE)
         throw cty_error(CTY_INVALID_CQ_ZONE, "CQ zone = "s + to_string(_cq_zone) + " in alternative record for "s + _identifier);
     }
   
-    if (const string itu_zone_str { delimited_substring(record, '[', ']') }; !itu_zone_str.empty())
+    if (const string itu_zone_str { delimited_substring(record, '[', ']', DELIMITERS::DROP) }; !itu_zone_str.empty())
     { _itu_zone = from_string<int>(itu_zone_str);
 
       if (_itu_zone < MIN_ITU_ZONE or _itu_zone > MAX_ITU_ZONE)
@@ -897,7 +897,7 @@ russian_data_per_substring::russian_data_per_substring(const string& ss, const s
   _sstring(ss)
 {
 // check that the prefix matches the line
-  const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","s)) };
+  const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
 
   if (find(substrings.cbegin(), substrings.cend(), ss) == substrings.cend())
     throw russian_error(RUSSIAN_INVALID_SUBSTRING, "Substring "s + ss + " not found"s);
@@ -962,7 +962,7 @@ russian_data::russian_data(const vector<string>& path, const string& filename)
 
     for (const auto& line : lines)
     { if (!starts_with(line, "//"s))
-      { const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']'), ","s)) };
+      { const vector<string> substrings { remove_peripheral_spaces(split_string(delimited_substring(line, '[', ']', DELIMITERS::DROP), ","s)) };
 
         for (const auto& sstring : substrings)
           _data.insert( { sstring, russian_data_per_substring(sstring, line) } );

@@ -283,7 +283,7 @@ class log_extract
 protected:
 
   window& _win;                                 ///< window associated with the log extract  (NB, during construction, _win will be constructed first)
-  size_t  _win_size;                            ///< height of the associated window
+  size_t  _win_size { 0 };                      ///< height of the associated window
 
   std::deque<QSO> _qsos;                        ///< QSOs contained in the extract
 
@@ -295,9 +295,9 @@ public:
     \param  w               window to be used by this extract
 */
   explicit inline log_extract(window& w) :
-    _win(w),
-    _win_size(0)                                  // don't set the size yet, since the size of w may not be set
-  { }
+    _win(w) //,
+//    _win_size(0)                                  // don't set the size yet, since the size of w may not be set
+  { }                                       // don't set the size yet, since the size of w may not be set
 
 /// prepare for use; this MUST be called before the object is used
   inline void prepare(void)
@@ -372,14 +372,16 @@ public:
 */
   void match_exchange(const logbook& lgbook, const std::string& target);
 
-/// log_extract = <i>something</i>
+/// log_extract = <i>container of QSOs</i>
 template <typename T>
   void operator=(const T& t)
+  requires (std::is_same_v<typename T::value_type, QSO>)
   { SAFELOCK(_extract);
     _qsos.clear();
     copy(t.cbegin(), t.cend(), back_inserter(_qsos));
   }
 };
+
 
 // -----------  old_log  ----------------
 

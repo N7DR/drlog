@@ -868,9 +868,9 @@ unsigned int running_statistics::n_worked_callsign_mults(const contest_rules& ru
   SAFELOCK(statistics);
 
   for (const auto& sm : _callsign_multipliers)
-  { const multiplier& mult { sm.second };
+  { //const multiplier& mult { sm.second };
 
-    if (mult.per_band())
+    if (const multiplier& mult { sm.second }; mult.per_band())
     { for (const auto& b : permitted_bands)
         if (score_bands > b)
           rv += mult.n_worked(b);
@@ -912,9 +912,9 @@ unsigned int running_statistics::n_worked_exchange_mults(const contest_rules& ru
   SAFELOCK(statistics);
 
   for (const auto& em : _exchange_multipliers)
-  { const multiplier& mult { em.second };
+  { //const multiplier& mult { em.second };
 
-    if (mult.per_mode())
+    if (const multiplier& mult { em.second }; mult.per_mode())
     { for (const auto& m : permitted_modes)
       { if (mult.per_band())
         { for (const auto& b : permitted_bands)
@@ -1006,9 +1006,9 @@ bool call_history::worked(const string& s, const BAND b)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
-  { const string& call { pssbm.first };
+  { //const string& call { pssbm.first };
 
-    if (s == call)
+    if (const string& call { pssbm.first }; s == call)
     { for (const auto& bm : pssbm.second)
       { if (bm.first == b)
           return true;
@@ -1028,9 +1028,9 @@ bool call_history::worked(const string& s, const MODE m)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
-  { const string& call { pssbm.first };
+  { //const string& call { pssbm.first };
 
-    if (s == call)
+    if (const string& call { pssbm.first }; s == call)
     { for (const auto& bm : pssbm.second)
       { if (bm.second == m)
           return true;
@@ -1060,9 +1060,9 @@ bool call_history::worked_on_another_band(const string& s, const BAND b)
 { SAFELOCK(_history);
 
   for (const auto& pssbm : _history)
-  { const string& call { pssbm.first };
+  { //const string& call { pssbm.first };
 
-    if (s == call)
+    if (const string& call { pssbm.first }; s == call)
     { for (const auto& bm : pssbm.second)
       { if (bm.first != b)
           return true;

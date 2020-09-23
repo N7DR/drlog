@@ -1006,7 +1006,7 @@ string exchange_field_database::guess_value(const string& callsign, const string
 
 // if it's a QTHX, then don't go any further if the country doesn't match
   if (starts_with(field_name, "QTHX["s))
-  { const string canonical_prefix { delimited_substring(field_name, '[', ']') };
+  { const string canonical_prefix { delimited_substring(field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { _db.insert( { { callsign, field_name }, string() } );                     // so that it can be found immediately in future
@@ -1241,7 +1241,7 @@ case hash("two") : // do something
     return insert_value(drm_line.precedence());    // I think that this should work 
 
   if (starts_with(field_name, "QTHX["s))  // by the time we get here, the call should match the canonical prefix in the name of the exchange field
-  { const string canonical_prefix { delimited_substring(field_name, '[', ']') };
+  { const string canonical_prefix { delimited_substring(field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
     { ost << "Failure to match callsign with canonical prefix in exchange_field_database::guess_value(); field name = " <<  field_name << ", callsign = " << callsign << endl;

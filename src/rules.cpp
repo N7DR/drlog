@@ -123,26 +123,12 @@ void exchange_field_values::add_value(const string& cv, const string& v)
 
     Returns 0 if the canonical value does not exist
 */
-size_t exchange_field_values::n_values(const string& cv) const
-{ //return MUMF_VALUE(_values, cv, &set<string>::size, /* static_cast<size_t>(*/ 0 /* ) */);
-  return MUMF_VALUE(_values, cv, &set<string>::size);
+//size_t exchange_field_values::n_values(const string& cv) const
+//{ //return MUMF_VALUE(_values, cv, &set<string>::size, /* static_cast<size_t>(*/ 0 /* ) */);
+ // return MUMF_VALUE(_values, cv, &set<string>::size);
   //const auto posn { _values.find(cv) };
 
   //return ( (posn == _values.cend()) ? 0 : posn->second.size() );
-}
-
-/*! \brief      Get all the legal values for a single canonical value
-    \param  cv  canonical value
-    \return     all the legal values corresponding to the canonical value <i>cv</i>
-
-    Returns empty set if the canonical value does not exist
-*/
-//set<std::string> exchange_field_values::values(const string& cv) const
-//{ //const auto posn { _values.find(cv) };
-
-  //return ( (posn == _values.end()) ? set<string>() : posn->second );
-
-//  return MUM_VALUE(_values, cv);
 //}
 
 /*! \brief      Get all the canonical values
@@ -194,7 +180,7 @@ bool exchange_field_values::is_legal_value(const string& cv, const string& putat
 { if (!is_legal_canonical_value(cv))
     return false;
 
-  const auto         posn { _values.find(cv) };               // must be true if we get here
+  const auto         posn { _values.find(cv) };               // must be != cend() if we get here
   const set<string>& ss   { posn->second };
 
   return ( ss.find(putative_value) != ss.cend() );
@@ -346,8 +332,6 @@ vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_p
   { ost << "Out of Range error in contest_rules::_exchange_fields: " << oor.what() << endl;
     ost << "canonical prefix = " << canonical_prefix << ", mode = " << MODE_NAME[m] << ", expand_choices = " << boolalpha << expand_choices << endl;
 
-//    throw;  // I want to see how we get here
-
     return vector<exchange_field>();
   }
 }
@@ -367,7 +351,7 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
     if (is_choice)
     { const vector<string> choice_vec { split_string(field_name, ":"s) };
 
-      string full_name;                 // pseudo name of the choice
+ //     string full_name;                 // pseudo name of the choice
 
       if (choice_vec.size() == 2)       // true if legal
       { vector<string> choice_fields { remove_peripheral_spaces(split_string(choice_vec[1], "/"s)) };
@@ -383,6 +367,8 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 // put into alphabetical order
 //        sort(choice_fields.begin(), choice_fields.end());
         SORT(choice_fields);
+
+        string full_name;                 // A+B pseudo name of the choice
 
         for (auto& choice_field_name : choice_fields)
           full_name += choice_field_name + "+"s;
@@ -427,7 +413,7 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
 void contest_rules::_parse_context_exchange(const drlog_context& context)
 {
 // generate vector of all permitted exchange fields
-  map<string, vector<string>> permitted_exchange_fields;  // use a map so that each value is inserted only once
+  map<string /* canonical prefix */, vector<string>> permitted_exchange_fields;  // use a map so that each value is inserted only once
 
   const auto& per_country_exchanges { context.exchange_per_country() };
 
@@ -466,32 +452,46 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
 
     vector<exchange_field> vef { _inner_parse(vs, exchange_mults_vec) };
 
-    vector<exchange_field> vef_rst;
-    vector<exchange_field> vef_rs;
+// force the field name to <i>final_field_name</i> if it is <i>initial_field_name</i>
+    auto vef_rs_rst = [=](const string& initial_field_name, const string& final_field_name)
+      { vector<exchange_field> rv;
 
+        for (auto ef : vef)
+        { if (ef.name() == initial_field_name)
+            ef.name(final_field_name);
+
+          rv.push_back(ef);
+        }
+
+        return rv;
+      };
+
+//    vector<exchange_field> vef_rst;
+//    vector<exchange_field> vef_rs;
+//
 // adjust RST/RS to match mode; ideally we would have done this later, when
 // it would be far simpler to iterate through the map, changing values, but
-// g++'s bizarre restriction that values of maps cannot be altered in-place
+// g++'s restriction that values of maps cannot be altered in-place
 // makes it easier to do it now
 
 // RST
-    for (auto ef : vef)
-    { if (ef.name() == "RS"s)
-        ef.name("RST"s);
-
-      vef_rst.push_back(ef);
-    }
+//    for (auto ef : vef)
+//    { if (ef.name() == "RS"s)
+//        ef.name("RST"s);
+//
+//      vef_rst.push_back(ef);
+//    }
 
 // RS
-    for (auto ef : vef)
-    { if (ef.name() == "RST"s)
-        ef.name("RS"s);
+//    for (auto ef : vef)
+//    { if (ef.name() == "RST"s)
+//        ef.name("RS"s);
+//
+//      vef_rs.push_back(ef);
+//    }
 
-      vef_rs.push_back(ef);
-    }
-
-    single_mode_rv_rst.insert( {  mpef.first, vef_rst } );
-    single_mode_rv_rs.insert( {  mpef.first, vef_rs } );
+    single_mode_rv_rst.insert( { mpef.first, vef_rs_rst("RS"s, "RST"s) } ); // force to RTS
+    single_mode_rv_rs.insert( { mpef.first, vef_rs_rst("RST"s, "RS"s) } );  // force to RS
   }
 
   for (const auto& m : _permitted_modes)
@@ -721,7 +721,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // country
               if (!processed and !fields[1].empty())
               { if (contains(fields[1], "["s))    // possible multiple countries
-                { const string countries { delimited_substring(fields[1], '[', ']') };  // delimiter is now spaces, as commas have been removed
+                { const string countries { delimited_substring(fields[1], '[', ']', DELIMITERS::DROP) };  // delimiter is now spaces, as commas have been removed
 
                   if (!countries.empty())
                   { const vector<string> country_vec { remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' ')) };  // use space instead of comma because we've already split on commas
@@ -748,7 +748,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // [field-name]:points
           if (fields.size() == 2)
           { const string& f0                     { fields[0] };
-            const string  inside_square_brackets { delimited_substring(f0, '[', ']') };
+            const string  inside_square_brackets { delimited_substring(f0, '[', ']', DELIMITERS::DROP) };
 
             if (!inside_square_brackets.empty())
             { const set<string> all_exchange_field_names { exchange_field_names() };
@@ -1631,7 +1631,7 @@ string sac_prefix(const string& call)
   if (digits.empty())
     return string();    // to handle case of something like "SM" as the passed call, which happens as a call is being typed
 
-  return ( (canonical_prefix != "OH0"s and canonical_prefix != "OJ0"s) ? (canonical_prefix + digits) : canonical_prefix );
+  return ( (canonical_prefix != "OH0"s and canonical_prefix != "OJ0"s) ? (canonical_prefix + digits[0]) : canonical_prefix );   // use first digit
 }
 
 /*! \brief                  Given a received value of a particular multiplier field, what is the actual mult value?

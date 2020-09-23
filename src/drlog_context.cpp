@@ -370,7 +370,7 @@ void drlog_context::_process_configuration_file(const string& filename)
             _per_band_country_mult_factor.insert( { static_cast<BAND>(n), from_string<int>(tmp_str) } );
         }
         else    // not all bands
-        { const string         bands_str { delimited_substring(lhs, '[', ']') };
+        { const string         bands_str { delimited_substring(lhs, '[', ']', DELIMITERS::DROP) };
           const vector<string> bands     { remove_peripheral_spaces(split_string(bands_str, ","s)) };
 
           for (const auto b_str: bands)
@@ -450,7 +450,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // EXCHANGE[
     if (starts_with(testline, "EXCHANGE["s))
-    { const string         country_list { delimited_substring(LHS, '[', ']') };
+    { const string         country_list { delimited_substring(LHS, '[', ']', DELIMITERS::DROP) };
       const vector<string> countries    { remove_peripheral_spaces(split_string(country_list, ',')) };
 
       FOR_ALL(countries, [&] (const string& str) { _exchange_per_country.insert( { str, RHS } ); } );
@@ -483,7 +483,7 @@ void drlog_context::_process_configuration_file(const string& filename)
 // EXCHANGE PREFILL FILE
 //   exchange prefill file = [ exchange-field-name, filename ]
     if ( (LHS == "EXCHANGE PREFILL FILE"s) or (LHS == "EXCHANGE PREFILL FILES"s) )
-    { const vector<string> files { remove_peripheral_spaces(delimited_substrings(rhs, '[', ']')) };
+    { const vector<string> files { remove_peripheral_spaces(delimited_substrings(rhs, '[', ']', DELIMITERS::DROP)) };
 
       for (const auto& file : files)
       { const vector<string> fields { remove_peripheral_spaces(split_string(file, ","s)) };
@@ -789,7 +789,7 @@ void drlog_context::_process_configuration_file(const string& filename)
     { const vector<string> fields { remove_peripheral_spaces(split_string(testline, "="s)) };
 
       if (fields.size() == 2)
-      { const string         canonical_prefix { delimited_substring(fields[0], '[', ']') };
+      { const string         canonical_prefix { delimited_substring(fields[0], '[', ']', DELIMITERS::DROP) };
         const vector<string> values           { remove_peripheral_spaces(split_string(RHS, ","s)) };
         const set<string>    ss               { values.cbegin(), values.cend() };
 
@@ -1253,7 +1253,7 @@ QSO:  3799 PH 2000-11-26 0711 N6TW          59  03     JT1Z          59  23     
             { string contents { _static_windows[name].first };
 
               if (contents.size() >= 2)
-                contents = delimited_substring(contents, '"', '"');
+                contents = delimited_substring(contents, '"', '"', DELIMITERS::DROP);
 
               vector<string> lines { to_lines(contents) };
 

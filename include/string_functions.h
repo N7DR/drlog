@@ -64,6 +64,11 @@ enum pad_direction { PAD_LEFT,                  ///< pad to the left
                      PAD_RIGHT                  ///< pad to the right
                    };
 
+/// treatment of delimiters when manipulating string
+enum class DELIMITERS { KEEP,                   ///< include the delimiters in the output
+                        DROP                    ///< do not include the delimiters in the output
+                      };
+
 // error numbers
 constexpr int STRING_UNDERFLOW            { -1 },    ///< Underflow
               STRING_UNEXPECTED_CHARACTER { -2 },    ///< Unexpected character found in string
@@ -447,27 +452,27 @@ std::string remove_chars(const std::string& s, const std::string& chars_to_remov
 */
 std::string remove_char_from_delimited_substrings(const std::string& cs, const char char_to_remove, const char delim_1, const char delim_2);
 
-/*! \brief              Obtain a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             substring between <i>delim_1</i> and <i>delim_2</i>
+/*! \brief                      Obtain a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     substring between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
   
     Returns the empty string if the delimiters do not exist, or if
     <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
     first delimited substring if more than one exists.
 */
-std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2);
+std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters);
 
-/*! \brief              Obtain all occurrences of a delimited substring
-    \param  cs          original string
-    \param  delim_1     opening delimiter
-    \param  delim_2     closing delimiter
-    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
-
-    Returned strings do not include the delimiters.
+/*! \brief                      Obtain all occurrences of a delimited substring
+    \param  cs                  original string
+    \param  delim_1             opening delimiter
+    \param  delim_2             closing delimiter
+    \param  return_delimiters   whether to keep delimiters in the returned value
+    \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
 */
-std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2);
+std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters);
 
 /*! \brief          Join the elements of a container of strings, using a provided separator
     \param  ct      container of strings

@@ -1091,7 +1091,7 @@ int main(int argc, char** argv)
           for (const auto& messages_line : messages)
           { if (!messages_line.empty())
             { if (contains(messages_line, "["s))
-                current_message = delimited_substring(messages_line, '[', ']');       // extract this batch message
+                current_message = delimited_substring(messages_line, '[', ']', DELIMITERS::DROP);       // extract this batch message
               else
                 batch_messages.insert( { remove_peripheral_spaces(messages_line) /* callsign */, current_message } );               // associate this message with the callsign on the line
             }

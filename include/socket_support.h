@@ -187,13 +187,6 @@ protected:
   pt_mutex          _tcp_socket_mutex  { "UNNAMED TCP SOCKET"s };   ///< mutex to control access
   unsigned int      _timeout_in_tenths { 600 };                     ///< timeout in tenths of a second = 1 minute (currently unimplemented)
 
-/*! \brief          Copy constructor
-    \param  obj     object to be copied
-  
-    Protected function ensures that the socket cannot be copied
-*/
-//  tcp_socket(const tcp_socket& obj);
-
 /*! \brief close the socket
 */
   void _close_the_socket(void);
@@ -229,8 +222,9 @@ public:
 
 /*! \brief  Destructor
 */
-  /* virtual */ ~tcp_socket(void);
+  ~tcp_socket(void);
 
+/// copy constructor
   tcp_socket(const tcp_socket& obj) = delete;
 
   READ_AND_WRITE(timeout_in_tenths);                       ///< RW access to timeout_in_tenths
