@@ -188,13 +188,13 @@ class keyboard_queue
 {
 protected:
 
-  Display*                    _display_p;           ///< the X display pointer
-  std::deque<keyboard_event>  _events;              ///< the actual queue
-  keyboard_event              _last_event;          ///< the event most recently removed from the queue
-  Window                      _window_id;           ///< the X window ID
-  bool                        _x_multithreaded;     ///< do we permit multiple threads in X?
+  Display*                    _display_p       { nullptr };             ///< the X display pointer
+  std::deque<keyboard_event>  _events          { };                     ///< the actual queue
+  keyboard_event              _last_event      { };                     ///< the event most recently removed from the queue
+  Window                      _window_id       { 0 };                   ///< the X window ID
+  bool                        _x_multithreaded { true };                ///< do we permit multiple threads in X?
 
-  mutable pt_mutex _keyboard_mutex { "keyboard queue" };                 ///< mutex to keep the object thread-safe
+  mutable pt_mutex _keyboard_mutex             { "keyboard queue" };    ///< mutex to keep the object thread-safe
 
 /*! \brief                  X error handler
     \param  display_p       pointer to X display

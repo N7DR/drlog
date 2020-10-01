@@ -227,6 +227,7 @@ void rig_interface::prepare(const drlog_context& context)
 
     _error_alert(msg);
     ost << msg << endl;
+    throw rig_interface_error(RIG_UNABLE_TO_OPEN, "Error opening rig: " + rig_type);
   }
 
   if ((status == RIG_OK) and (_model != RIG_MODEL_DUMMY))

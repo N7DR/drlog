@@ -160,10 +160,12 @@ public: \
 
 // ---------------------------------------------------------------------------
 
-// several useful type-related functions
+// a fairly large number of useful type-related functions
 
 // https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
 // https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
+
+// is a type int?
 template<class T>
 struct is_int 
   { constexpr static bool value { false }; };
@@ -172,6 +174,7 @@ template<>
 struct is_int<int> 
   { constexpr static bool value { true }; };
 
+// is a type a map?
 template<class T>
 struct is_map 
   { constexpr static bool value { false }; };
@@ -183,6 +186,7 @@ struct is_map<std::map<K, V>>
 template< class T>
 inline constexpr bool is_map_v = is_map<T>::value;
 
+// is a type a set?
 template<class T>
 struct is_set 
   { constexpr static bool value { false }; };
@@ -194,6 +198,7 @@ struct is_set<std::set<T>>
 template< class T>
 inline constexpr bool is_set_v = is_set<T>::value;
 
+// is a type an unordered map?
 template<class T>
 struct is_unordered_map 
   { constexpr static bool value { false }; };
@@ -205,6 +210,7 @@ struct is_unordered_map<std::unordered_map<K, V>>
 template< class T>
 inline constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
 
+// is a type an unordered set?
 template<class T>
 struct is_unordered_set 
   { constexpr static bool value { false }; };

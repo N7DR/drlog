@@ -152,6 +152,13 @@ void window::_init(const window_information& wi, const unsigned int flags)
   { SAFELOCK(screen);
 
     _wp = newwin(_height, _width, LINES - _y /* - 1 */ - _height, /*COLS - */_x);
+
+    if (!_wp)
+    { ost << "Error creating window; aborting" << endl;
+      sleep(2);
+      exit(-1);
+    }
+
     keypad(_wp, true);
 
     _pp = new_panel(_wp);
@@ -183,6 +190,13 @@ window::window(const window_information& wi, const unsigned int flags) :
   { SAFELOCK(screen);
 
     _wp = newwin(_height, _width, LINES - _y - _height, _x);
+
+    if (!_wp)
+    { ost << "Error creating window; aborting" << endl;
+      sleep(2);
+      exit(-1);
+    }
+
     keypad(_wp, true);
     _pp = new_panel(_wp);
 
@@ -231,16 +245,6 @@ void window::init(const window_information& wi, const COLOUR_TYPE fg, const COLO
   _fg = (wi.colours_set() ? string_to_colour(wi.fg_colour()) : fg);
   _bg = (wi.colours_set() ? string_to_colour(wi.bg_colour()) : bg);
 
-#if 0
-  if (wi.colours_set())
-  { _fg = string_to_colour(wi.fg_colour());
-    _bg = string_to_colour(wi.bg_colour());
-  }
-  else
-  { _fg = fg;
-    _bg = bg;
-  }
-#endif
   _default_colours(COLOUR_PAIR(colours.add(_fg, _bg)));
 
   (*this) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;                  // clear the window (this also correctly sets the background on the screen)
@@ -292,52 +296,6 @@ window& window::operator<(const string& s)
   
   return *this;
 }
-
-/*! \brief          Write a set of strings to a window
-    \param  ss      set to write
-    \return         the window
-
-    The set is written in callsign order.
-    Wraps words to new lines.
-    Stops writing if there's insufficient room for the next string.
-*/
-#if 0
-window& window::operator<(const set<string>& ss)
-{ if (!_wp)
-    return *this;
-
-  vector<string> v { ss.cbegin(), ss.cend() };
-
-//  sort(v.begin(), v.end(), compare_calls);
-  SORT(v, compare_calls);
-
-  return (*this < v);
-}
-#endif
-
-/*! \brief          Write an unordered set of strings to a window
-    \param  ss      set to write
-    \return         the window
-
-    The set is written in callsign order.
-    Wraps words to new lines.
-    Stops writing if there's insufficient room for the next string.
-
-    This is exactly the same as for a set.
-*/
-#if 0
-window& window::operator<(const unordered_set<string>& ss)
-{ if (!_wp)
-    return *this;
-
-  vector<string> v { ss.cbegin(), ss.cend() };
-
-//  sort(v.begin(), v.end(), compare_calls);
-  SORT(v, compare_calls);
-
-  return (*this < v);
-}
-#endif
 
 /*! \brief      Write a vector of strings to a window
     \param  v   vector to write
@@ -731,7 +689,7 @@ string window::read(int x, int y)
 vector<string> window::snapshot(void)
 { vector<string> rv;
 
-  for (size_t n = static_cast<size_t>(height() - 1); n < static_cast<size_t>(height()); --n)    // stops when n wraps to big number when decremented from zero
+  for (size_t n { static_cast<size_t>(height() - 1) }; n < static_cast<size_t>(height()); --n)    // stops when n wraps to big number when decremented from zero
     rv.push_back(getline(n));
 
   return rv;
@@ -973,37 +931,55 @@ PAIR_NUMBER_TYPE cpair::add(const COLOUR_TYPE fg, const COLOUR_TYPE bg)
   return ( (it == _colours.end()) ? _add_to_vector(fgbg) : static_cast<PAIR_NUMBER_TYPE>( distance(_colours.begin(), it) + 1));
 }
 
+/*! \brief              Get the foreground and background colours of a pair
+    \param  pair_nr     number of the pair
+    \return             the foreground and background colours of the pair number <i>pair_nr</i>
+*/
+pair<COLOUR_TYPE, COLOUR_TYPE> cpair::fgbg(const PAIR_NUMBER_TYPE pair_nr) const
+{ short f;      // defined to be short in the man page for pair_content
+  short b;      // defined to be short in the man page for pair_content
+
+  if (const auto status { pair_content(pair_nr, &f, &b) }; status == ERR)
+    ost << "Error extracting colours from colour pair number " << pair_nr << endl;
+
+  return { static_cast<COLOUR_TYPE>(f), static_cast<COLOUR_TYPE>(b) };
+}
+
 /*! \brief              Get the foreground colour of a pair
     \param  pair_nr     number of the pair
     \return             the foreground colour of the pair number <i>pair_nr</i>
 */
+#if 0
 COLOUR_TYPE cpair::fg(const PAIR_NUMBER_TYPE pair_nr) const
 { short f;      // defined to be short in the man page for pair_content
   short b;      // defined to be short in the man page for pair_content
 
-  const auto status { pair_content(pair_nr, &f, &b) };
+//  const auto status { pair_content(pair_nr, &f, &b) };
   
-  if (status == ERR)
+  if (const auto status { pair_content(pair_nr, &f, &b) }; status == ERR)
     ost << "Error extracting foreground colour from colour pair number " << pair_nr << endl;
 
   return static_cast<COLOUR_TYPE>(f);
 }
+#endif
 
 /*! \brief              Get the background colour of a pair
     \param  pair_nr     number of the pair
     \return             the background colour of the pair number <i>pair_nr</i>
 */
+#if 0
 COLOUR_TYPE cpair::bg(const PAIR_NUMBER_TYPE pair_nr) const
 { short f;      // defined to be short in the man page for pair_content
   short b;      // defined to be short in the man page for pair_content
 
-  const auto status { pair_content(pair_nr, &f, &b) };
+//  const auto status { pair_content(pair_nr, &f, &b) };
 
-  if (status == ERR)
+  if (const auto status { pair_content(pair_nr, &f, &b) }; status == ERR)
     ost << "Error extracting background colour from colour pair number " << pair_nr << endl;
 
   return static_cast<COLOUR_TYPE>(b);
 }
+#endif
 
 /*! \brief          Convert the name of a colour to a colour
     \param  str     name of a colour

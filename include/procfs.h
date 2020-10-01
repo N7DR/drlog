@@ -46,7 +46,7 @@ protected:
 public:
 
 /// constructor
-  inline procfs(const std::chrono::system_clock::duration min_int = 1s) :
+  inline explicit procfs(const std::chrono::system_clock::duration min_int = 1s) :
     _pid(getpid())
   { }
 

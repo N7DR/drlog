@@ -139,17 +139,25 @@ public:
 */
   PAIR_NUMBER_TYPE add(const COLOUR_TYPE fg, const COLOUR_TYPE bg);
 
+/*! \brief              Get the foreground and background colours of a pair
+    \param  pair_nr     number of the pair
+    \return             the foreground and background colours of the pair number <i>pair_nr</i>
+*/
+  std::pair<COLOUR_TYPE, COLOUR_TYPE> fgbg(const PAIR_NUMBER_TYPE pair_nr) const;
+
 /*! \brief              Get the foreground colour of a pair
     \param  pair_nr     number of the pair
     \return             the foreground colour of the pair number <i>pair_nr</i>
 */
-  COLOUR_TYPE fg(const PAIR_NUMBER_TYPE pair_nr) const;
+  inline COLOUR_TYPE fg(const PAIR_NUMBER_TYPE pair_nr) const
+    { return fgbg(pair_nr).first; }
 
 /*! \brief              Get the background colour of a pair
     \param  pair_nr     number of the pair
     \return             the background colour of the pair number <i>pair_nr</i>
 */
-  COLOUR_TYPE bg(const PAIR_NUMBER_TYPE pair_nr) const;
+  inline COLOUR_TYPE bg(const PAIR_NUMBER_TYPE pair_nr) const
+    { return fgbg(pair_nr).second; }
 };
 
 // -----------  screen  ----------------
@@ -168,7 +176,7 @@ public:
   screen(void);
 
 /// destructor
-  inline /* virtual */ ~screen(void)
+  inline ~screen(void)
     { endwin(); }
 };
 
@@ -230,15 +238,15 @@ protected:
   int           _cursor_x;          ///< used to hold x cursor
   int           _cursor_y;          ///< used to hold y cursor
   bool          _echoing;           ///< whether echoing characters
-  int           _height;            ///< height
+  int           _height { 0 };            ///< height
   bool          _hidden_cursor;     ///< whether to hide the cursor
   bool          _insert;            ///< whether in insert mode (default = false)
   bool          _leaveok;           ///< whether leaveok is set
   bool          _scrolling;         ///< whether scrolling is enabled
   bool          _vertical;          ///< whether containers of strings are to be displayed vertically
-  int           _width;             ///< width
-  int           _x;                 ///< x of origin (in proper coordinates)
-  int           _y;                 ///< y of origin (in proper coordinates)
+  int           _width  { 0 };          ///< width
+  int           _x      { 0 };          ///< x of origin (in proper coordinates)
+  int           _y      { 0 };          ///< y of origin (in proper coordinates)
   
   WINDOW* _wp;                  ///< ncurses handle
   PANEL*  _pp;                  ///< panel associated with this window
@@ -275,10 +283,6 @@ public:
 */
   inline explicit window(const std::string& win_name = ""s, const unsigned int flags = 0) :
     _name(win_name),
-    _x(0),
-    _y(0),
-    _width(0),
-    _height(0),
     _vertical(false),
     _column_width(0),
     _wp(nullptr),
@@ -500,7 +504,8 @@ public:
 */
 template <class T>
 window& operator<(const T& sus)
-  requires (is_set_v<T> == true || is_unordered_set_v<T> == true) && (std::is_same_v<typename T::value_type, std::string> == true)
+//  requires (is_set_v<T> == true || is_unordered_set_v<T> == true) && (std::is_same_v<typename T::value_type, std::string> == true)
+  requires (is_sus_v<T>) && (std::is_same_v<typename T::value_type, std::string>)
 { if (!_wp)
     return *this;
 

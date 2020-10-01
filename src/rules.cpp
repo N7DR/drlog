@@ -76,18 +76,6 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
     add(ch1_ch2);
 }
 
-/*! \brief              Return the other choice of a pair
-    \param  field_name  current field name
-    \return             alternative choice for the field name
-
-    Return empty string if <i>field_name</i> is not a choice
-*/
-//string choice_equivalents::other_choice(const std::string& field_name) const
-//{ const auto posn { _choices.find(field_name) };
-//
-//  return ( (posn == _choices.cend()) ? string() : posn->second );
-//}
-
 // -------------------------  exchange_field_values  ---------------------------
 
 /*! \class  exchange_field_values
@@ -116,20 +104,6 @@ void exchange_field_values::add_value(const string& cv, const string& v)
 
   _values[cv].insert(v);
 }
-
-/*! \brief      Number of possible values for a particular canonical value
-    \param  cv  canonical value
-    \return     number of possible values for the canonical value <i>cv</i>
-
-    Returns 0 if the canonical value does not exist
-*/
-//size_t exchange_field_values::n_values(const string& cv) const
-//{ //return MUMF_VALUE(_values, cv, &set<string>::size, /* static_cast<size_t>(*/ 0 /* ) */);
- // return MUMF_VALUE(_values, cv, &set<string>::size);
-  //const auto posn { _values.find(cv) };
-
-  //return ( (posn == _values.cend()) ? 0 : posn->second.size() );
-//}
 
 /*! \brief      Get all the canonical values
     \return     all the canonical values
@@ -323,9 +297,10 @@ vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_p
     if (cit != exchange.cend())
       return cit->second;
 
-    cit = exchange.find(string());
+    return MUM_VALUE(exchange, string());
+//    cit = exchange.find(string());
 
-    return ( (cit == exchange.cend()) ? vector<exchange_field>() : cit->second );
+//    return ( (cit == exchange.cend()) ? vector<exchange_field>() : cit->second );
   }
 
   catch (std::out_of_range& oor)
@@ -351,8 +326,6 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
     if (is_choice)
     { const vector<string> choice_vec { split_string(field_name, ":"s) };
 
- //     string full_name;                 // pseudo name of the choice
-
       if (choice_vec.size() == 2)       // true if legal
       { vector<string> choice_fields { remove_peripheral_spaces(split_string(choice_vec[1], "/"s)) };
 
@@ -365,7 +338,6 @@ vector<exchange_field> contest_rules::_inner_parse(const vector<string>& exchang
         }
 
 // put into alphabetical order
-//        sort(choice_fields.begin(), choice_fields.end());
         SORT(choice_fields);
 
         string full_name;                 // A+B pseudo name of the choice

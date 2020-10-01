@@ -949,7 +949,7 @@ int main(int argc, char** argv)
         { const string msg { "Error initialising rig; error code = " + to_string(e.code()) + ", reason = " + e.reason() };
       
           alert(msg, SHOW_TIME::NO_SHOW);
-          ost << msg << endl;
+ //         ost << msg << endl;
           sleep_for(seconds(5));
           exit(-1);
         }
@@ -4280,6 +4280,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
   if (!processed and e.is_char(' '))
     processed = (win <= e.str(), true);
 
+// APOSTROPHE
+  if (!processed and e.is_char('\''))
+    processed = (win <= e.str(), true);
+
 // CW messages
   if (!processed and cw_p and (safe_get_mode() == MODE_CW))
   { if (e.is_unmodified() and (keypad_numbers > e.symbol()) )
@@ -4354,8 +4358,13 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     string new_rst;
 
 // figure out whether we have sent a different RST (in SKCC)
-    if (contains(exchange_contents, "'"s))
-    { const size_t last_apostrophe { exchange_contents.find_last_of("'"s) };
+
+//    ost << "original exchange_contents = " << exchange_contents << endl;
+
+    const string rst_character { "'"s };    // apostrophe
+
+    if (contains(exchange_contents, rst_character))
+    { const size_t last_apostrophe { exchange_contents.find_last_of(rst_character) };
       const size_t next_space      { exchange_contents.find_first_of(SPACE_STR, last_apostrophe + 1) };
 
       size_t word_length;
@@ -4367,6 +4376,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
       new_rst = substring(exchange_contents, last_apostrophe + 1, word_length);
 
+//      ost << "new RST = " << new_rst << endl;
+
 // remove all fields containing an apostrophe
       const vector<string> fields { split_string(exchange_contents, ' ') };
       vector<string> new_fields;
@@ -4377,6 +4388,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
       exchange_field_values = new_fields;
       exchange_contents = join(new_fields, SPACE_STR);
+
+//      ost << "exchange contents = " << exchange_contents << endl;
     }
 
     string from_callsign { call_contents };

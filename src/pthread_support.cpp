@@ -250,9 +250,9 @@ void thread_attribute::policy(const int policy)
 int thread_attribute::policy(void) const
 { int policy;
 
-  const int status { pthread_attr_getschedpolicy(&_attr, &policy) };
+//  const int status { pthread_attr_getschedpolicy(&_attr, &policy) };
 
-  if (status != 0)
+  if (const int status { pthread_attr_getschedpolicy(&_attr, &policy) }; status != 0)
     throw pthread_error(PTHREAD_POLICY_ERROR, "Error getting policy: "s + to_string(policy) + "status = "s + to_string(status));
 
   return policy;
@@ -270,8 +270,6 @@ void thread_attribute::scope(const int scope)
 { if ( (scope != SCHED_FIFO) and (scope != SCHED_RR) )
     throw pthread_error(PTHREAD_UNRECOGNISED_SCOPE, "Unrecognised thread scope: "s + to_string(scope));
 
-// const int status { pthread_attr_setscope(&_attr, scope) };
-
   if (const int status { pthread_attr_setscope(&_attr, scope) }; status != 0)
     throw pthread_error(PTHREAD_SCOPE_ERROR, "Error setting scope: "s + to_string(scope) + "status = "s + to_string(status));
 }
@@ -279,8 +277,6 @@ void thread_attribute::scope(const int scope)
 /// get the scope
 int thread_attribute::scope(void) const
 { int scope;
-
-//  const int status { pthread_attr_getscope(&_attr, &scope) };
 
   if (const int status { pthread_attr_getscope(&_attr, &scope) }; status != 0)
     throw pthread_error(PTHREAD_SCOPE_ERROR, "Error getting scope: "s + to_string(scope) + "status = "s + to_string(status));
@@ -302,8 +298,6 @@ void thread_attribute::inheritance_policy(const int ipolicy)
 { if ( (ipolicy != PTHREAD_EXPLICIT_SCHED) and (ipolicy != PTHREAD_INHERIT_SCHED) )
     throw pthread_error(PTHREAD_UNRECOGNISED_INHERITANCE_POLICY, "Unrecognised thread inheritance policy: "s + to_string(ipolicy));
 
-//  const int status { pthread_attr_setinheritsched(&_attr, ipolicy) };
-
   if (const int status { pthread_attr_setinheritsched(&_attr, ipolicy) }; status != 0)
     throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error setting inheritance policy: "s + to_string(ipolicy) + "status = "s + to_string(status));
 }
@@ -311,8 +305,6 @@ void thread_attribute::inheritance_policy(const int ipolicy)
 /// get the inheritance policy
 int thread_attribute::inheritance_policy(void) const
 { int ipolicy;
-
-//  const int status { pthread_attr_getinheritsched(&_attr, &ipolicy) };
 
   if (const int status { pthread_attr_getinheritsched(&_attr, &ipolicy) }; status != 0)
     throw pthread_error(PTHREAD_INHERITANCE_POLICY_ERROR, "Error getting inheritance policy: "s + to_string(ipolicy) + "status = "s + to_string(status));

@@ -122,10 +122,7 @@ cty_record::cty_record(const string& record)
     vsp->push_back(candidate);
   }
 
-// remove the '=' from all the the alternative calls, moved to line 144
-//  FOR_ALL(alt_callsigns, [] (string& alt_callsign) { alt_callsign = remove_char(static_cast<const string&>(alt_callsign), '='); } );
-
- // set the zone info for an aci 
+// set the zone info for an aci 
   auto set_zone_info = [](alternative_country_info& aci, const auto cq_info, const auto itu_info)
     { if (!aci.cq_zone())
         aci.cq_zone(cq_info);
@@ -146,8 +143,8 @@ cty_record::cty_record(const string& record)
   }
 
 // do the same for the alternative callsigns
-  for (const auto& alt_callsign : alt_callsigns)        // alternative callsign, prefixed with "="
-  { alternative_country_info aci(remove_char(alt_callsign, '='));
+  for (const auto& alt_callsign : alt_callsigns)                   // alternative callsign, prefixed with "="
+  { alternative_country_info aci(remove_char(alt_callsign, '='));  // remove the '=' from the alternative call
 
     set_zone_info(aci, _cq_zone, _itu_zone);
   
@@ -375,11 +372,8 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
 // re-organize the cty data according to the correct country list  
   switch (country_list)
   { case COUNTRY_LIST::DXCC:                                                       // use DXCC countries only
-    { //for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      for (const cty_record& rec : cty)
-      { //const cty_record& rec { cty[n_country] };
-    
-        if (!rec.waedc_country_only())    // ignore WAEDC-only entries
+    { for (const cty_record& rec : cty)
+      { if (!rec.waedc_country_only())    // ignore WAEDC-only entries
         { const location_info info { rec };
 
 // insert the canonical entry for this country
@@ -398,98 +392,16 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
     case COUNTRY_LIST::WAEDC:
     {
 // start by copying all the useful information for all records      
-//      for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
       for (const cty_record& rec : cty)
-      { //const cty_record&   rec  { cty[n_country] };
-        const location_info info { rec };
+      { const location_info info { rec };
 
 // insert the canonical entry for this country
         _db.insert( { info.canonical_prefix(), info } );
-//        _insert_into_database(rec, _db);
 
-         _process_alternative(rec, ALTERNATIVES::CALLSIGNS);
-         _process_alternative(rec, ALTERNATIVES::PREFIXES);
+        _process_alternative(rec, ALTERNATIVES::CALLSIGNS);
+        _process_alternative(rec, ALTERNATIVES::PREFIXES);
       }
       
-// TRY _process_alternative *****
-
-
-#if 0
-// now do the alternative prefixes
-//      for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      for (const cty_record& rec : cty)
-      { //const cty_record& rec                   { cty[n_country] };
-        const ACI_DBTYPE& alt_prefixes          { rec.alt_prefixes() };
-        const bool        country_is_waedc_only { rec.waedc_country_only() };
-        
-        for (auto cit = alt_prefixes.cbegin(); cit != alt_prefixes.cend(); ++cit)
-        { const string&                   prefix { cit->first };
-          const alternative_country_info& aci    { cit->second };
-        
-          if (country_is_waedc_only)            // if country is WAEDC only and there's an entry already for this prefix, delete it before inserting
-          { const auto db_posn { _db.find(prefix) };
-          
-            if (db_posn != _db.end())
-              _db.erase(db_posn);
-    
-            location_info info { rec };
-
-            info.zones(aci.cq_zone(), aci.itu_zone());
-            
-            _db.insert( { prefix, info } );
-          }
-          else                                  // country is in DXCC list; don't add if there's an entry already
-          { const auto db_posn { _db.find(prefix) };
-          
-            if (db_posn == _db.end())    // if it's not already in the database
-            { location_info info { rec };
-
-              info.zones(aci.cq_zone(), aci.itu_zone());
-            
-              _db.insert( { prefix, info } );
-            }
-          }
-        }
-      }
-
-// do essentially the same for the alternative callsigns -- we should just make this a callable private function and call it twice;
-// these go into the _alt_call_db
-//      for (unsigned int n_country = 0; n_country < cty.n_countries(); ++n_country)
-      for (const cty_record& rec : cty)
-      { //const cty_record& rec                   { cty[n_country] };
-        const ACI_DBTYPE& alt_callsigns         { rec.alt_callsigns() };
-        const bool        country_is_waedc_only { rec.waedc_country_only() };
-        
-        for (ACI_DBTYPE::const_iterator cit = alt_callsigns.begin(); cit != alt_callsigns.end(); ++cit)
-        { const string                    callsign { cit->first };
-          const alternative_country_info& aci      { cit->second };
-        
-          if (country_is_waedc_only)        // if country is WAEDC only and there's an entry already for this callsign, delete it before inserting
-          { const LOCATION_DBTYPE::const_iterator db_posn { _alt_call_db.find(callsign) };
-          
-            if (db_posn != _alt_call_db.end())
-              _alt_call_db.erase(db_posn);
-    
-            location_info info(rec);
-
-            info.zones(aci.cq_zone(), aci.itu_zone());
-            
-            _alt_call_db.insert( { callsign, info } );
-          }
-          else                              // country is in DXCC list; don't add if there's an entry already for this callsign
-          { const auto db_posn { _alt_call_db.find(callsign) };
-          
-            if (db_posn == _alt_call_db.end())
-            { location_info info(rec);
-
-              info.zones(aci.cq_zone(), aci.itu_zone());
-             
-              _alt_call_db.insert( { callsign, info } );
-            }
-          }
-        }
-      }
-#endif     
       break;
     }    
   }

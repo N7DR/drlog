@@ -41,18 +41,17 @@ class multiplier
 {
 protected:
 
-  MULTIPLIER_VALUES                                            _known      { };     ///< all the (currently) known possible values
+  MULTIPLIER_VALUES _known      { };     ///< all the (currently) known possible values
 
-  bool                                                             _per_band   { false };  ///< is this multiplier accumulated per band?
-  bool                                                             _per_mode   { false };  ///< is this multiplier accumulated per mode?
+  bool              _per_band   { false };  ///< is this multiplier accumulated per band?
+  bool              _per_mode   { false };  ///< is this multiplier accumulated per mode?
 
-  bool                                                             _used       { false };      ///< is this object in use?
+  bool              _used       { false };      ///< is this object in use?
 
 /* Stored in the _worked array is the precise detail of what has been worked and where.
    However, "worked" as used as an access verb really means "do I need this mult"? Thus,
    writes and reads to/from _worked from outside the object are non-trivial.
 */
-//  std::array< std::array< std::set< std::string /* values */>, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
   std::array< std::array< MULTIPLIER_VALUES /* values */, N_BANDS + 1>, N_MODES + 1 > _worked;  ///< the worked strings; the last entry in each row and column is for ANY_BAND/MODE
 
 public:

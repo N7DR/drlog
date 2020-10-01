@@ -65,6 +65,7 @@ protected:
   unsigned int                                 _auto_remaining_country_mults_threshold  { 1 };                          ///< number of times a canonical prefix must be seen before it becomes known
   std::set<std::string>                        _auto_remaining_exchange_mults           { };                            ///< the exchange mults for which we auto-generate the values
   bool                                         _auto_screenshot                         { false };                      ///< do we create a screenshot every hour?
+
   int                                          _bandmap_cull_function                   { 0 };                          ///< number of the bandmap cull function
   unsigned int                                 _bandmap_decay_time_local                { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (local entries)
   unsigned int                                 _bandmap_decay_time_cluster              { 60 };                         ///< time (in minutes) for an entry to age off the bandmap (cluster entries)
@@ -143,7 +144,7 @@ protected:
   std::string                                  _do_not_show_filename                    { };                            ///< filename containing calls (one per line) not to be shown
   std::string                                  _drmaster_filename                       { "drmaster"s };                ///< filename of drmaster file
 
-  std::string                                  _exchange                                { "RST" };                      ///< comma-delimited received exchange
+  std::string                                  _exchange                                { "RST"s };                      ///< comma-delimited received exchange
   std::string                                  _exchange_cq                             { };                            ///< exchange in CQ mode
   std::string                                  _exchange_fields_filename                { };                            ///< file that holds regex templates of exchange fields
   std::string                                  _exchange_mults                          { };                            ///< comma-delimited exchange fields that are mults
@@ -166,9 +167,8 @@ protected:
 
   std::string                                  _keyer_port                              { };                            ///< the device that is to be used as a keyer
 
- // uint8_t                                      _limit_old_qsos                          { 0 };                          ///< include old QSOs newer than this value (in years) [0 => all no limit]  
   std::string                                  _logfile                                 { "drlog.dat"s };               ///< name of the log file
-  unsigned int                                      _long_t                                  { 0 };                          ///< whether and amount to extend length of initial Ts in serial number
+  unsigned int                                 _long_t                                  { 0 };                          ///< whether and amount to extend length of initial Ts in serial number
 
   std::map<MODE, std::vector<std::pair<frequency, frequency>>> _mark_frequencies        { };                            ///< frequency ranges to be marked on-screen
   bool                                         _mark_mode_break_points                  { false };                      ///< whether to mark the mode break points on the bandmap
@@ -201,8 +201,8 @@ protected:
   std::string                                  _old_adif_log_name                       { };                            ///< name of ADIF file that contains old QSOs
   unsigned int                                 _old_qso_age_limit                       { 0 };                          ///< include old QSOs newer than this value (in years) [0 => all no limit]  
 
-  std::vector<std::string>                     _path                                    { "."s };                       ///< comma-separated list of directories to search, in order
-  std::map<BAND, int>                          _per_band_country_mult_factor            { };                            ///< country mult factor structure for each band
+  std::vector<std::string>                         _path                                { "."s };                       ///< comma-separated list of directories to search, in order
+  std::map<BAND, int>                              _per_band_country_mult_factor        { };                            ///< country mult factor structure for each band
   std::array<std::map<BAND, std::string>, N_MODES> _per_band_points                     { };                            ///< points structure for each band and mode
 //  std::map<std::string /* exchange field */, decltype(_per_band_points) > _per_band_points_with_exchange_field;              ///< points structure for each band and mode, if a particular exchange field is present
 

@@ -92,13 +92,13 @@ int keyboard_queue::_x_error_handler(Display* display_p, XErrorEvent* error_even
       << "  request code : " << static_cast<int>(error_event_p->request_code) << endl
       << "  minor code   : " << static_cast<int>(error_event_p->minor_code) << endl;
 
-    constexpr int BUF_SIZE { 4096 };
+  constexpr int BUF_SIZE { 4096 };
 
-    char buf[BUF_SIZE];
+  char buf[BUF_SIZE];
 
-    XGetErrorText(error_event_p->display, error_event_p->error_code, &buf[0], BUF_SIZE);
+  XGetErrorText(error_event_p->display, error_event_p->error_code, &buf[0], BUF_SIZE);
     
-    ost << "Error text : " << buf << endl;
+  ost << "Error text : " << buf << endl;
 
   sleep(2);
   exit(-1);
@@ -133,10 +133,10 @@ void* runit(void* vp)
 }
 
 /// default constructor
-keyboard_queue::keyboard_queue(void) :
-  _display_p(nullptr),
-  _window_id(0),
-  _x_multithreaded(true)        // to be safe, until we're sure we aren't running the simulator
+keyboard_queue::keyboard_queue(void) //:
+//  _display_p(nullptr),
+//  _window_id(0),
+//  _x_multithreaded(true)        // to be safe, until we're sure we aren't running the simulator
 {
 // write a message, pause, then exit
   auto delayed_exit = [] (const string& msg, const unsigned int delay_in_seconds)

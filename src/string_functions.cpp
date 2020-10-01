@@ -548,12 +548,45 @@ string remove_char(const string& cs, const char char_to_remove)
 
     delimiters are kept in the output
 
-    should replace this by a method that uses find()
-    or for each found delimited substring, execute remove_char
-    or build vector of delimited substrings, then remove char from them, then recombine
+//    should replace this by a method that uses find()
+//    or for each found delimited substring, execute remove_char
+//    or build vector of delimited substrings, then remove char from them, then recombine
 */
 string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
 { string rv;
+
+  size_t start_posn { 0 };
+
+  while (true)
+  { size_t posn_1 { cs.find(delim_1, start_posn) };
+
+    if (posn_1 == string::npos)
+      return (rv + cs.substr(start_posn));
+
+// we found the first delimiter
+    size_t posn_2 { cs.find(delim_2, posn_1 + 1) };
+
+// if there is no matching second delimiter, pretend second delimiter is at end
+    if (posn_2 == string::npos)
+      return (rv + remove_char(substring(cs, posn_1), char_to_remove));
+
+// we have matching delimiters
+    size_t substr_length   { posn_2 - posn_1 + 1 };
+    string modified_substr { remove_char(substring(cs, posn_1, substr_length), char_to_remove) };  // keeps the delimiters in the string
+
+    rv += ( cs.substr(start_posn, posn_1) + modified_substr );
+
+    start_posn = posn_2 + 1;
+
+    if (start_posn >= cs.length())
+      return rv;
+  }
+
+// should never get here
+  return rv;
+
+#if 0
+  string rv;
 
   bool inside_delimiters { false };
 
@@ -571,6 +604,7 @@ string remove_char_from_delimited_substrings(const string& cs, const char char_t
   }
 
   return rv;
+#endif
 }
 
 /*! \brief                      Remove all instances of particular characters from a string
