@@ -1,4 +1,4 @@
-// $Id: string_functions.h 167 2020-09-19 19:43:49Z  $
+// $Id: string_functions.h 168 2020-10-07 18:34:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -587,7 +587,6 @@ inline bool starts_with(const std::string& cs, const std::string& ss)
 */
 template <typename T>
 bool starts_with(const std::string& cs, const T& ss)
-//  requires (std::is_same<typename T::value_type, std::string>::value == true)
   requires (is_string_v<typename T::value_type>)
 { for (const auto& str : ss)
     if (starts_with(cs, str))
@@ -653,6 +652,14 @@ std::string separated_string(const T n, const std::string& sep = ","s)
 template <typename T>
 inline std::string comma_separated_string(const T n)
   { return separated_string(n); }
+
+/*! \brief      Convert an integer to a comma-separated string
+    \param  n   number to convert
+    \return     <i>n</i> with the separator <i>,</i> separating each triplet
+*/
+template <typename T>
+inline std::string css(const T n)
+  { return comma_separated_string(n); }
 
 /*! \brief                  Get location of start of next word
     \param  str             string which the next word is to be found
@@ -797,6 +804,14 @@ inline std::string delimit(const std::string& str, const std::string& delim_1, c
     Returns string::npos if <i>target</i> cannot be found
 */
 size_t case_insensitive_find(const std::string& str, const std::string& target, const size_t start_posn = 0);
+
+/*! \brief              Truncate a string immediately prior to the first occurrence of a particular character
+    \param  str         string to truncate
+    \param  c           target character
+    \return             <i>str</i> truncated immediately prior to <i>c</i> (if <i>c</i> is present; otherwise <i>str</i>)
+*/
+inline std::string truncate_before_first(const std::string& str, const char c)
+  { return (substring(str, 0, str.find(c))); }
 
 #if 0
 https://stackoverflow.com/questions/650162/why-the-switch-statement-cannot-be-applied-on-strings

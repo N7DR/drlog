@@ -1,4 +1,4 @@
-// $Id: macros.h 167 2020-09-19 19:43:49Z  $
+// $Id: macros.h 168 2020-10-07 18:34:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -222,6 +222,7 @@ struct is_unordered_set<std::unordered_set<T>>
 template< class T>
 inline constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
 
+// is a type a set or unordered set?
 template<class T>
 struct is_sus 
   { constexpr static bool value { false }; };
@@ -237,6 +238,7 @@ struct is_sus<std::unordered_set<T>>
 template< class T>
 inline constexpr bool is_sus_v = is_sus<T>::value;
 
+// is a type a map or unordered map?
 template<class T>
 struct is_mum 
   { constexpr static bool value { false }; };
@@ -252,6 +254,7 @@ struct is_mum<std::unordered_map<K, V>>
 template< class T>
 inline constexpr bool is_mum_v = is_mum<T>::value;
 
+// is a type unsigned int?
 template<class T>
 struct is_unsigned_int 
   { constexpr static bool value { false }; };
@@ -260,6 +263,7 @@ template<>
 struct is_unsigned_int<unsigned int> 
   { constexpr static bool value { true }; };
 
+// is a type a vector?
 template<class T>
 struct is_vector 
   { constexpr static bool value { false }; };
@@ -267,7 +271,10 @@ struct is_vector
 template<class T>
 struct is_vector<std::vector<T>> 
   { constexpr static bool value { true }; };
- 
+
+template<class T>
+inline constexpr bool is_vector_v = is_vector<T>::value;
+
 template<class T>
 struct is_string 
   { constexpr static bool value { false }; };
@@ -1209,16 +1216,17 @@ inline std::set<T> SET_FROM_VECTOR(const std::vector<T>& v)
     \param  v   container
     \param  f   sort function
 */
-//template <typename C, typename F>
-//inline void SORT(C& v, F f)
-//  { std::sort(v.begin(), v.end(), f); }
-
-/*! \brief      Sort the contents of a container
-    \param  v   container
-    \param  f   sort function
-*/
 template <typename C, typename F = std::less<>>
 inline void SORT(C& v, F f = F())
   { std::sort(v.begin(), v.end(), f); }
+
+/*! \brief              Add an element to a vector
+    \param  v1          destination vector
+    \param  element     element to append
+*/
+template <typename V, typename E>
+inline void operator+=(V& v1, const E& element)
+  requires is_vector_v<V> && (std::is_same_v<typename V::value_type, E>)
+  { v1.push_back(element); }
 
 #endif    // MACROS_H

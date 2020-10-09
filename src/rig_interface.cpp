@@ -1,4 +1,4 @@
-// $Id: rig_interface.cpp 167 2020-09-19 19:43:49Z  $
+// $Id: rig_interface.cpp 168 2020-10-07 18:34:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -234,22 +234,6 @@ void rig_interface::prepare(const drlog_context& context)
     _rig_connected = true;
 }
 
-/*! \brief      Set frequency of VFO A
-    \param  f   new frequency of VFO A
-
-    Does nothing if <i>f</i> is not within a ham band
-*/
-//void rig_interface::rig_frequency_a(const frequency& f)
-//  { _rig_frequency(f, VFO::A); }
-
-/*! \brief      Set frequency of VFO B
-    \param  f   new frequency of VFO B
-
-    Does nothing if <i>f</i> is not within a ham band
-*/
-//void rig_interface::rig_frequency_b(const frequency& f)
-//  { _rig_frequency(f, VFO::B); }
-
 /*! \brief      Set mode
     \param  m   new mode
 
@@ -305,16 +289,6 @@ void rig_interface::rig_mode(const MODE m)
     }
   }
 }
-
-/*! \brief      Get the frequency of VFO A
-    \return     frequency of VFO A
-*/
-//frequency rig_interface::rig_frequency_a(void)
-//  { return _rig_frequency(VFO::A); } 
-
-/// get frequency of VFO B
-//frequency rig_interface::rig_frequency_b(void)
-//  { return _rig_frequency(VFO::B); }
 
 /*! \brief  Enable split operation
 
@@ -676,7 +650,7 @@ void rig_interface::lock(void)
   if (_model == RIG_MODEL_K3)
     raw_command("LK1;"s, 0);
   else
-  { const int v      { 1 };
+  { constexpr int v { 1 };
 
     if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error locking VFO"s);
@@ -690,7 +664,7 @@ void rig_interface::unlock(void)
   if (_model == RIG_MODEL_K3)
     raw_command("LK0;"s, 0);
   else
-  { const int v      { 0 };
+  { constexpr int v { 0 };
 
     if (const int status { rig_set_func(_rigp, RIG_VFO_CURR, RIG_FUNC_LOCK, v) }; status != RIG_OK)
       throw rig_interface_error(RIG_HAMLIB_ERROR, "Hamlib error unlocking VFO"s);

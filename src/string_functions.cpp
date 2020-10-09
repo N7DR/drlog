@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 161 2020-07-31 16:19:50Z  $
+// $Id: string_functions.cpp 168 2020-10-07 18:34:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -553,7 +553,10 @@ string remove_char(const string& cs, const char char_to_remove)
 //    or build vector of delimited substrings, then remove char from them, then recombine
 */
 string remove_char_from_delimited_substrings(const string& cs, const char char_to_remove, const char delim_1, const char delim_2)
-{ string rv;
+{ 
+#if 1
+// this should be faster than the next one
+  string rv;
 
   size_t start_posn { 0 };
 
@@ -584,6 +587,7 @@ string remove_char_from_delimited_substrings(const string& cs, const char char_t
 
 // should never get here
   return rv;
+#endif
 
 #if 0
   string rv;
@@ -655,10 +659,17 @@ string delimited_substring(const string& cs, const char delim_1, const char deli
 vector<string> delimited_substrings(const string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters)
 { vector<string> rv;
 
-  size_t start_posn { 0 };
+  size_t start_posn { 0 };      // start posn is, and remains global (i.e., wrt cs)
+
+//  ost << "cs: " << cs << endl;
+//  ost << "start delim = " << delim_1 << ", end delim = " << delim_2 << endl;
+
+//  int counter { 0 };
 
   while ( (start_posn < cs.length() and !substring(cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
-  { const string& sstring { substring(cs, start_posn) };
+  { //ost << "start_posn = " << start_posn << endl;
+
+    const string& sstring { substring(cs, start_posn) };
     const size_t  posn_1  { sstring.find(delim_1) };
 
     if (posn_1 == string::npos)             // no more starting delimiters
@@ -674,7 +685,10 @@ vector<string> delimited_substrings(const string& cs, const char delim_1, const 
     else
       rv.push_back( sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1) );
 
-    start_posn = posn_2 + 1;
+    start_posn += (posn_2 + 1);   // remember, start_posn is global
+
+ //   if (counter++ > 10)
+ //     exit(-1);
   }
 
   return rv;

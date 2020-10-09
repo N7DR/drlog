@@ -53,7 +53,7 @@ public:
   inline exchange_field_prefill(void) = default;
 
 /*! \brief                          Constructor
-    \param  prefill_filename_map    map of fields and filenames
+    \param  prefill_filename_map    map of fields to filenames
 */
   inline explicit exchange_field_prefill(const std::map<std::string /* field name */, std::string /* filename */>& prefill_filename_map)
     { insert_prefill_filename_map(prefill_filename_map); }
@@ -61,7 +61,7 @@ public:
   READ(db);                                 ///< all the data
 
 /*! \brief                          Populate with data taken from a prefill filename map
-    \param  prefill_filename_map    map of fields and filenames
+    \param  prefill_filename_map    map of fields to filenames
 */
   void insert_prefill_filename_map(const std::map<std::string, std::string>& prefill_filename_map);
 
@@ -188,7 +188,8 @@ protected:
     \param  str     string to check
     \return         whether <i>str</i> is a (two-digit) check
 */
-  bool _is_possible_check(const std::string& str) const;
+  inline bool _is_possible_check(const std::string& str) const
+    { return ( (str.length() == 2) ? ( isdigit(str[0]) and isdigit(str[1]) ) : false ); }
 
 /*! \brief          Does a string contain a possible callsign?
     \param  str     string to check

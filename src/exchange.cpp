@@ -1,4 +1,4 @@
-// $Id: exchange.cpp 167 2020-09-19 19:43:49Z  $
+// $Id: exchange.cpp 168 2020-10-07 18:34:59Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,21 +42,39 @@ pt_mutex exchange_field_database_mutex { "EXCHANGE FIELD DATABASE"s }; ///< mute
 */
 
 /*! \brief                          Populate with data taken from a prefill filename map
-    \param  prefill_filename_map    map of fields and filenames
+    \param  prefill_filename_map    map of fields to filenames
 */
 void exchange_field_prefill::insert_prefill_filename_map(const map<string /* field name */, string /* filename */>& prefill_filename_map)
 { for (const auto& this_pair : prefill_filename_map)
   { const string& field_name { this_pair.first };
-    const string& filename   { this_pair.second };
+    const string  filename   { truncate_before_first(this_pair.second, ':') };  // ":" is used to define the columns to read, if they aren't the first two 
 
     try
     { const vector<string> lines { to_lines( to_upper( squash( replace_char( remove_char(read_file(filename), CR_CHAR ), '\t', ' ') ) ) ) }; // read, remove CRs, tabs to spaces, squash, to lines
 
       unordered_map<string /* call */, string /* prefill value */> call_value_map;
 
-      for (const auto& line : lines)                                // each line should now be: callsign value (+ ignored later stuff)
-        if (const vector<string> this_pair { split_string(line, ' ') }; this_pair.size() >= 2)
-          call_value_map.insert( { this_pair[0], this_pair[1] } );  // ignore any fields after the first two
+// figure out the columns to be read; column numbers in the config file are wrt 1
+      unsigned int call_column  { 0 };
+      unsigned int field_column { 1 };
+
+ #if 1
+      if (contains(this_pair.second, ":"s))
+      { const vector<string> fields = split_string(this_pair.second, ":"s);
+
+        if (fields.size() != 3)
+        { ost << "Error in config file when defining prefill file: incorrect number of colons" << endl;
+          exit(-1);
+        }
+
+        call_column = from_string<unsigned int>(fields[1]) - 1;      // adjust to wrt 0
+        field_column = from_string<unsigned int>(fields[2]) - 1;     // adjust to wrt 0
+      }
+#endif
+
+      for (const auto& line : lines)                                // each line should now be space-separated columns
+        if (const vector<string> this_pair { split_string(line, ' ') }; this_pair.size() > max(call_column, field_column))
+          call_value_map.insert( { this_pair.at(call_column), this_pair.at(field_column) } );
 
       _db.insert( { to_upper(field_name), call_value_map } );
     }
@@ -183,19 +201,14 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
     \param  str     string to check
     \return         whether <i>str</i> is a (two-digit) check
 */
-bool parsed_ss_exchange::_is_possible_check(const string& str) const
-{ if (str.length() != 2)
-    return false;
+//bool parsed_ss_exchange::_is_possible_check(const string& str) const
+//{ return ( (str.length() == 2) ? ( isdigit(str[0]) and isdigit(str[1]) ) : false ); }
 
-//  { for (size_t n = 0; n < str.length() - 1; ++n)
-//      if (!isdigit(str[n]))
-//        return false;
-//
-//    return true;
-//  }
+//  if (str.length() != 2)
+//    return false;
 
-  return ( isdigit(str[0]) and isdigit(str[1]) );
-}
+//  return ( isdigit(str[0]) and isdigit(str[1]) );
+//}
 
 /*! \brief                      Constructor
     \param  call                callsign
@@ -529,10 +542,7 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
 parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values /* , const bool truncate_received_values */) :
   _replacement_call(),
   _valid(false)
-{ //const bool truncate_received_values { false };
-  //ost << endl << "In parsed_exchange_constructor; truncate_received_values = " << boolalpha << truncate_received_values << endl;
-  
-  static const string EMPTY_STRING;
+{ static const string EMPTY_STRING;
 
   extern bool is_ss;                    // Sweepstakes is special; this is set to the correct value by drlog.cpp
 
@@ -563,8 +573,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
   set<string> optional_field_names;
 
   FOR_ALL(exchange_template, [&] (const exchange_field& ef) { if (ef.is_optional())
-                                                              { optional_field_names.insert(ef.name());
-                                                              }
+                                                                optional_field_names.insert(ef.name());
                                                             } );
 #if 0
   if (!optional_field_names.empty())
@@ -860,10 +869,7 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
 // this means that we can't use a DOK.values file, because the received DOK will get changed here
     if (_valid)
       FOR_ALL(_fields, [=] (parsed_exchange_field& pef) { pef.value(rules.canonical_value(pef.name(), pef.value())); } );
-
   }  // end of !truncate received values
-  
-//  ost << endl << "Leaving parsed_exchange_constructor" << endl;
 }
 
 #undef FIELD_NUMBER
@@ -1009,8 +1015,11 @@ string exchange_field_database::guess_value(const string& callsign, const string
   { const string canonical_prefix { delimited_substring(field_name, '[', ']', DELIMITERS::DROP) };
 
     if (canonical_prefix != location_db.canonical_prefix(callsign))
-    { _db.insert( { { callsign, field_name }, string() } );                     // so that it can be found immediately in future
-      return string();
+    { //const string rv { };
+
+      _db.insert( { { callsign, field_name }, EMPTY_STR } );                     // so that it can be found immediately in future
+ 
+      return EMPTY_STR;
     }
   }
 
@@ -1168,16 +1177,16 @@ case hash("two") : // do something
                                                                                        { "FM"s,   "NA107"s },
                                                                                        { "FP"s,   "NA032"s },
                                                                                        { "FS"s,   "NA105"s },
-                                                                                         { "G"s,    "EU005"s },
-                                                                                         { "GJ"s,   "EU013"s },
-                                                                                         { "GM"s,   "EU005"s },
-                                                                                         { "GW"s,   "EU005"s },
-                                                                                         { "HH"s,   "NA096"s },
-                                                                                         { "HI"s,   "NA096"s },
-                                                                                         { "HK0"s,  "NA033"s },
-                                                                                         { "IS"s,   "EU024"s },
-                                                                                         { "IT9"s,  "EU025"s }, // WAE country only
-                                                                                         { "JW"s,   "EU026"s },
+                                                                                       { "G"s,    "EU005"s },
+                                                                                       { "GJ"s,   "EU013"s },
+                                                                                       { "GM"s,   "EU005"s },
+                                                                                       { "GW"s,   "EU005"s },
+                                                                                       { "HH"s,   "NA096"s },
+                                                                                       { "HI"s,   "NA096"s },
+                                                                                       { "HK0"s,  "NA033"s },
+                                                                                       { "IS"s,   "EU024"s },
+                                                                                       { "IT9"s,  "EU025"s }, // WAE country only
+                                                                                       { "JW"s,   "EU026"s },
                                                                                          { "JX"s,   "EU022"s },
                                                                                          { "J3"s,   "NA024"s },
                                                                                          { "J6"s,   "NA108"s },
@@ -1380,310 +1389,6 @@ string process_cut_digits(const string& input)
 
   return rv;
 }
-
-#if 0
-// -------------------------  EFT  ---------------------------
-
-/*! \class  EFT
-    \brief  Manage a single exchange field
-
-        <i>EFT</i> stands for "exchange field template"
-*/
-
-/*! \brief      construct from name
-    \param  nm  name
-
-                Assumes not a mult. Object is not ready for use, except to test the name, after this constructor.
-*/
-EFT::EFT(const string& nm) :
-  _is_mult(false),
-  _name(nm)
-{ }
-
-/*! \brief                  Construct from several parameters
-    \param  nm              name
-    \param  path            path for the regex and values files
-    \param  regex_filename  name of file that contains the regex filter
-    \param  context         context for the contest
-    \param  location_db     location database
-
-    Object is fully ready for use after this constructor.
-*/
-EFT::EFT(const string& nm, const vector<string>& path, const string& regex_filename,
-    const drlog_context& context, location_database& location_db) :
-  _is_mult(false),
-  _name(nm)
-{ read_regex_expression_file(path, regex_filename);
-  read_values_file(path, nm);
-  parse_context_qthx(context, location_db);
-
-  const vector<string> exchange_mults {  remove_peripheral_spaces(split_string(context.exchange_mults(), ","s)) };
-
-  _is_mult = (find(exchange_mults.cbegin(), exchange_mults.cend(), _name) != exchange_mults.cend());  // correct value of is_mult
-}
-
-/*! \brief              Get regex expression from file
-    \param  paths       paths to try
-    \param  filename    name of file
-    \return             whether a regex expression was read
-*/
-bool EFT::read_regex_expression_file(const vector<string>& paths, const string& filename)
-{ if (filename.empty())
-    return false;
-
-  try
-  { const vector<string> lines { to_lines(read_file(paths, filename)) };
-
-    bool found_it { false };
-
-    for (const auto& line : lines)
-    { if (!found_it and !line.empty())
-      { const vector<string> fields { split_string(line, ":"s) };
-
-// a bit complex because ":" may appear in the regex
-        if (fields.size() >= 2)
-        { const string field_name { remove_peripheral_spaces(fields[0]) };
-          const size_t posn       { line.find(":"s) };
-          const string regex_str  { remove_peripheral_spaces(substring(line, posn + 1)) };
-
-          if (field_name == _name)
-          { _regex_expression = regex(regex_str);
-            found_it = true;
-          }
-        }
-      }
-    }
-  }
-
-  catch (...)
-  { ost << "error trying to read exchange field template file " << filename << endl;
-    return false;
-  }
-
-  return (!_regex_expression.empty());
-}
-
-/*! \brief              Get info from .values file
-    \param  path        paths to try
-    \param  filename    name of file (without .values extension)
-    \return             whether values were read
-*/
-bool EFT::read_values_file(const vector<string>& path, const string& filename)
-{ try
-  { const vector<string> lines { to_lines(read_file(path, filename + ".values"s)) };
-
-    for (const auto& line : lines)
-    { set<string> equivalent_values;    // includes the canonical
-
-      if (!line.empty() and line[0] != ';' and !starts_with(line, "//"s) ) // ";" and "//" introduce comments
-      { if (contains(line, "="s) )
-        { const vector<string> lhsrhs { split_string(line, "="s) };
-          const string         lhs    { remove_peripheral_spaces(lhsrhs[0]) };
-
-          equivalent_values.insert(lhs);                  // canonical value
-
-          if (lhsrhs.size() != 1)
-          { const string&        rhs                         { lhsrhs[1] };
-            const vector<string> remaining_equivalent_values { remove_peripheral_spaces(split_string(rhs, ","s)) };
-
-            COPY_ALL(remaining_equivalent_values, inserter(equivalent_values, equivalent_values.begin()));
-
-            _values.insert( { lhs, equivalent_values } );
-            add_legal_values(lhs, equivalent_values);
-          }
-        }
-        else    // no "="
-        { const string str { remove_peripheral_spaces(line) };
-
-          if (!str.empty())
-          { _values.insert( { str, /* set<string> */ { str } } );
-            add_canonical_value(str);
-          }
-        }
-      }
-    }
-  }
-
-  catch (...)
-  { return false;
-  }
-
-  return (!_values.empty());
-}
-
-/*! \brief                  Parse and incorporate QTHX values from context
-    \param  context         context for the contest
-    \param  location_db     location database
-*/
-void EFT::parse_context_qthx(const drlog_context& context, location_database& location_db)
-{ if (!starts_with(_name, "QTHX["s))
-    return;
-
-  const auto& context_qthx { context.qthx() };  // map; key = canonical prefix; value = set of legal values
-
-  if (context_qthx.empty())
-    return;
-
-  for (const auto& this_qthx : context_qthx)
-  { const string canonical_prefix { location_db.canonical_prefix(this_qthx.first) };
-
-    if (canonical_prefix == location_db.canonical_prefix(delimited_substring(_name, '[', ']')))
-    { const set<string>& ss { this_qthx.second };
-
-      for (const auto& this_value : ss)
-      { if (!contains(this_value, "|"s))
-          add_canonical_value(this_value);
-        else                                  // "|" is used to indicate alternative but equivalent values in the configuration file
-        { const vector<string> equivalent_values { remove_peripheral_spaces(split_string(this_value, "|"s)) };
-
-          if (!equivalent_values.empty())
-            add_canonical_value(equivalent_values[0]);
-
-          for (size_t n = 1; n < equivalent_values.size(); ++n)
-            add_legal_value(equivalent_values[0], equivalent_values[n]);
-        }
-      }
-    }
-  }
-}
-
-/*! \brief                          Add a canonical value
-    \param  new_canonical_value     string to add
-
-    Does nothing if <i>new_canonical_value</i> is already known
-*/
-void EFT::add_canonical_value(const string& new_canonical_value)
-{ if (!is_canonical_value(new_canonical_value))
-    _values.insert( { new_canonical_value, { new_canonical_value } } );
-
-  _legal_non_regex_values.insert(new_canonical_value);
-  _value_to_canonical.insert( { new_canonical_value, new_canonical_value } );
-}
-
-/*! \brief              Add a legal value that corresponds to a canonical value
-    \param  cv          canonical value
-    \param  new_value   value that correspond to <i>cv</i>
-
-    Does nothing if <i>new_value</i> is already known. Adds <i>cv</i> as a
-    canonical value if necessary.
-*/
-void EFT::add_legal_value(const string& cv, const string& new_value)
-{ if (!is_canonical_value(cv))
-    add_canonical_value(cv);
-
-  const auto& it { _values.find(cv) };
-
-  auto& ss { it->second };
-
-  ss.insert(new_value);
-
-  _legal_non_regex_values.insert(new_value);
-  _value_to_canonical.insert( { new_value, cv } );
-}
-
-/*! \brief          Is a string a legal value?
-    \param  str     string to test
-    \return         whether <i>str</i> is a legal value
-*/
-bool EFT::is_legal_value(const string& str) const
-{
-// test regex first
-  if (!_regex_expression.empty() and regex_match(str, _regex_expression))
-    return true;
-
-  if (!_values.empty())
-    return (_legal_non_regex_values > str);
-
-  return false;
-}
-
-/*! \brief          What value should actually be logged for a given received value?
-    \param  str     received value
-    \return         value to be logged
-*/
-string EFT::value_to_log(const string& str) const
-{ const string rv { canonical_value(str) };
-
-  return (rv.empty() ? str : rv);
-}
-
-/*! \brief          Obtain canonical value corresponding to a given received value
-    \param  str     received value
-    \return         canonical value equivalent to <i>str</i>
-
-    Returns empty string if no equivalent canonical value can be found
-*/
-string EFT::canonical_value(const std::string& str) const
-{ const string canonical { MUM_VALUE(_value_to_canonical, str) };
-
-  if (!canonical.empty())
-    return canonical;
-
-//  const auto& it { _value_to_canonical.find(str) };
-
-//  if (it != _value_to_canonical.cend())
-//    return it->second;
-
-  return ( regex_match(str, _regex_expression) ? str : string() );  // by defn, a regex match is a canonical value
-
-//  if (regex_match(str, _regex_expression))
-//    return str;
-
-//  return string();
-}
-
-/// all the canonical values
-set<string> EFT::canonical_values(void) const
-{ set<string> rv;
-
-  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& pss) { rv.insert(pss.first); } );
-
-  return rv;
-}
-
-/// ostream << EFT
-ostream& operator<<(ostream& ost, const EFT& eft)
-{ ost << "EFT name: " << eft.name() << endl
-      << "  is_mult: " << eft.is_mult() << endl
-      << "  regex_expression: " << eft.regex_expression() << endl;
-
-//const map<string,                        /* a canonical field value */
-//         set                             /* each equivalent value is a member of the set, including the canonical value */
-//          <string                       /* indistinguishable legal values */
-//          >> values = eft.values();
-  const auto values { eft.values() };
-
-  for (const auto& sss : values)
-  { ost << "  canonical value = " << sss.first << endl;
-
-    const auto& ss { sss.second };
-
-    for (const auto& s : ss)
-      ost << "  value = " << s << endl;
-  }
-
-  const auto v { eft.legal_non_regex_values() };
-
-  if (!v.empty())
-  { ost << "  legal_non_regex_values : ";
-    for (const auto& str : v)
-      ost << "  " << str;
-
-    ost << endl;
-  }
-
-  const auto vcv { eft.value_to_canonical() };
-
-  if (!vcv.empty())
-  { ost << "  v -> cv : " << endl;
-
-    for (const auto& pss : vcv)
-      ost << "    " << pss.first << " -> " << pss.second << endl;
-  }
-
-  return ost;
-}
-#endif // 0 -- EFT
 
 // -------------------------  sweepstakes_exchange  ---------------------------
 
