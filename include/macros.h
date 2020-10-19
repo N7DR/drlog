@@ -227,8 +227,8 @@ template<class T>
 struct is_sus 
   { constexpr static bool value { false }; };
 
-template<class T>
-struct is_sus<std::set<T>> 
+template<class T, class C>
+struct is_sus<std::set<T, C>> 
   { constexpr static bool value { true }; };
 
 template<class T>

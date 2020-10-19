@@ -21,6 +21,7 @@
 #include "macros.h"
 #include "pthread_support.h"
 #include "serialization.h"
+#include "string_functions.h"
 
 #include <array>
 #include <set>
@@ -35,7 +36,20 @@ extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
     \brief  encapsulate necessary stuff for a mult
 */
 
-using MULTIPLIER_VALUES = std::unordered_set<std::string>;
+//bool compare_calls(const std::string& call1, const std::string& call2);
+
+//using MULTIPLIER_VALUES = std::unordered_set<std::string>;
+//#include <type_traits>
+//using Cmp = std::integral_constant<decltype(&compare_calls), &compare_calls>;
+
+//struct lex_compare {
+//    bool operator() (const std::string& lhs, const std::string& rhs) const 
+//    { return compare_calls(lhs, rhs);
+//    }
+//};
+//using MULTIPLIER_VALUES = std::set<std::string, call_comparison>;
+//using MULTIPLIER_VALUES = std::set<std::string, std::integral_constant<decltype(&compare_calls), &compare_calls>>;
+using MULTIPLIER_VALUES = std::set<std::string, CALL_COMPARISON>;   // multiplier values are in call order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator
 
 class multiplier
 {

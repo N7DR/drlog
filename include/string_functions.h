@@ -722,6 +722,9 @@ bool is_legal_value(const std::string& value, const std::string& legal_values, c
 */
 bool compare_calls(const std::string& call1, const std::string& call2);
 
+// https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator
+using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare calls
+
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value
     \param  n       number of decimal places
