@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 168 2020-10-07 18:34:59Z  $
+// $Id: drlog.cpp 169 2020-10-18 17:16:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -949,7 +949,6 @@ int main(int argc, char** argv)
         { const string msg { "Error initialising rig; error code = " + to_string(e.code()) + ", reason = " + e.reason() };
       
           alert(msg, SHOW_TIME::NO_SHOW);
- //         ost << msg << endl;
           sleep_for(seconds(5));
           exit(-1);
         }
@@ -1667,9 +1666,6 @@ int main(int argc, char** argv)
 
         qtc_buf += logbk;  // add all the QSOs in the log to the unsent buffer
 
- //     ost << "Finished adding the entire logbook to the unsent buffer" << endl
- //         << "Number of unsent QTCs = " << qtc_buf.n_unsent_qsos() << "; number of sent QTCs = " << qtc_buf.n_sent_qsos() << endl;
-
         if (n_eu_qsos != qtc_buf.size())
           alert("WARNING: INCONSISTENT NUMBER OF QTC-ABLE QSOS"s);
 
@@ -1677,9 +1673,6 @@ int main(int argc, char** argv)
         const vector<qtc_series>& vec_qs { qtc_db.qtc_db() };    ///< the QTC series
 
         FOR_ALL(vec_qs, [] (const qtc_series& qs) { qtc_buf.unsent_to_sent(qs); } );
-
-//      ost << "Finished moving unsent to sent" << endl
-//          << "Number of unsent QTCs = " << qtc_buf.n_unsent_qsos() << "; number of sent QTCs = " << qtc_buf.n_sent_qsos() << endl;
 
 //      ost << "unsent QTCS: " << endl << qtc_buf.unsent_list_as_string() << endl;
 
@@ -2269,8 +2262,8 @@ void* process_rbn_info(void* vp)
 //  const set<BAND> permitted_bands_set { permitted_bands.begin(), permitted_bands.end() }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
   const set<BAND> permitted_bands_set { SET_FROM_VECTOR(permitted_bands) }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
 
-  deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
-  deque<pair<string, frequency>> recent_mult_calls_1;                             // the queue of recent calls posted to the mult window
+//  deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
+  deque<pair<string, frequency>> recent_mult_calls;                             // the queue of recent calls posted to the mult window
 
   const int highlight_colour { static_cast<int>(colours.add(COLOUR_WHITE, COLOUR_RED)) };             // colour that will mark that we are processing a ten-second pass
   const int original_colour  { static_cast<int>(colours.add(cluster_line_win.fg(), cluster_line_win.bg())) };
@@ -2386,7 +2379,9 @@ void* process_rbn_info(void* vp)
 
                 bool is_recent_call { false };
 
-                for (const auto& call_entry : recent_mult_calls_1)      // look to see if this is already in the deque
+//                ost << "size of recent_mult_calls_1 = " << recent_mult_calls_1.size() << endl;
+
+                for (const auto& call_entry : recent_mult_calls)      // look to see if this is already in the deque
                   if (!is_recent_call)
                     is_recent_call = (call_entry.first == target.first) and (target.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
 

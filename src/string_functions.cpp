@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 168 2020-10-07 18:34:59Z  $
+// $Id: string_functions.cpp 169 2020-10-18 17:16:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,9 +54,7 @@ vector<string> from_csv(experimental::string_view line)
   bool inside_value { false };
 
   while (posn < line.size())
-  { //const char this_char { line[posn] };
-
-    if (const char this_char { line[posn] }; this_char == quote)
+  { if (const char this_char { line[posn] }; this_char == quote)
     { if (inside_value)               // we're inside a field
       { if (posn < line.size() - 1)   // make sure there's at least one unread character
         { const char next_char { line[posn + 1] };
@@ -118,36 +116,21 @@ vector<string> from_csv(experimental::string_view line)
     \return     <i>s</i>, modified so that every instance of <i>c</i> is doubled
 */
 string duplicate_char(const string& s, const char c)
-{
-// should try .find() followed by += repeatedly *****
+{ size_t start_posn { 0 };
+  size_t next_posn  { 0 };
+  string rv         { };
 
-#if 1 
-//  { 
+  do
+  { next_posn = s.find(c, start_posn);
 
-    size_t start_posn { 0 };
+    if (next_posn != string::npos)
+    { rv += s.substr(start_posn, next_posn - start_posn + 1);
+      rv += c;
+      start_posn = next_posn + 1;
+    }
+  } while (next_posn != string::npos);
 
-    size_t next_posn;
-    string rv;
-
-    do
-    { next_posn = s.find(c, start_posn);
-
-      if (next_posn != string::npos)
-      { rv += s.substr(start_posn, next_posn - start_posn + 1);
-        rv += c;
-        start_posn = next_posn + 1;
-      }
-    } while (next_posn != string::npos);
-
-    rv += s.substr(start_posn);
-//  }
-#endif
-
-//  const string dupe_str { create_string(c, 2) };
-
-//  string rv;
-
-//  FOR_ALL(s, [=, &rv] (const char cc) { ( (cc == c) ? rv += dupe_str : rv += cc ); } );
+  rv += s.substr(start_posn);
 
   return rv;
 }
@@ -168,22 +151,6 @@ string substring(const string& str, const size_t start_posn, const size_t length
 
   return string();
 }
-
-/*! \brief              Safe version of the substr() member function
-    \param  str         string on which to operate
-    \param  start_posn  position at which to start operation
-    \return             substring starting at position <i>start_posn</i>
-
-    Operates like <i>str.substr(start_posn)</i>, except does not throw a range exception
-*/
-//string substring(const string& str, const size_t start_posn)
-//{ if (str.size() > start_posn)
-//    return str.substr(start_posn);
-//
-//  ost << "range problem in substring(); str = " << str << ", string length = " << str.length() << ", start_posn = " << start_posn << endl;    // log the problem
-//
-//  return string();
-//}
 
 /*! \brief                      Provide a formatted date/time string
     \param  include_seconds     whether to include the portion oft he string that designates seconds
@@ -252,9 +219,8 @@ string replace_char(const string& s, char old_char, char new_char)
     \return             <i>s</i>, with every instance of <i>old_str</i> replaced by <i>new_str</i>
 */
 string replace(const string& s, const string& old_str, const string& new_str)
-{ string rv;
-
-  size_t posn { 0 };
+{ string rv        { };
+  size_t posn      { 0 };
   size_t last_posn { 0 };
 
   while ((posn = s.find(old_str, last_posn)) != string::npos)
@@ -307,6 +273,8 @@ string read_file(const string& filename)
 //  std::string str(sz, '\0');
 //  file.read(&str[0], sz);
 
+// start by performing a bunch of checks
+
   FILE* fp { fopen(filename.c_str(), "rb") };
 
   if (!fp)
@@ -327,46 +295,11 @@ string read_file(const string& filename)
   if (is_directory)
     throw string_function_error(STRING_FILE_IS_DIRECTORY, filename + " is a directory"s);
 
-//  return string { std::istreambuf_iterator<char>( ifstream (filename)), {} };
-
+// now perform the actual read
   std::ifstream file { filename };
   std::string   str  {std::istreambuf_iterator<char>(file), {} };
 
   return str;
-
-#if 0
-// get the length of the file
-  fseek(fp, 0, SEEK_END);
-  unsigned long file_length = ftell(fp);
-  
-// go to the start
-  if (file_length)
-  { fseek(fp, 0, SEEK_SET);
-
-// create a buffer to hold the contents
-    unsigned char* buf = new unsigned char [file_length];
-  
-// read and close the file
-    const size_t nread = fread(buf, file_length, 1, fp);
-
-    if (nread != 1)
-    { fclose(fp);
-      delete [] buf;
-      throw exception();
-    }
-
-    fclose(fp);
-
-    const string rv((const char*)(buf), file_length);    // convert to a real string
-
-    delete [] buf;                                       // delete the buffer that held the file
-    return rv;
-  }
-  else
-    fclose(fp);
-
-  return string();
-#endif
 }
 
 /*! \brief              Read the contents of a file into a single string

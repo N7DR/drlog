@@ -1,4 +1,4 @@
-// $Id: rig_interface.h 167 2020-09-19 19:43:49Z  $
+// $Id: rig_interface.h 169 2020-10-18 17:16:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -63,13 +63,13 @@ class rig_interface
 {
 protected:
 
-  frequency                               _last_commanded_frequency;                                    ///< last frequency to which the rig was commanded to QSY
-  frequency                               _last_commanded_frequency_b;                                  ///< last frequency to which VFO B was commanded to QSY
+  frequency                               _last_commanded_frequency    { };                             ///< last frequency to which the rig was commanded to QSY
+  frequency                               _last_commanded_frequency_b  { };                             ///< last frequency to which VFO B was commanded to QSY
   MODE                                    _last_commanded_mode         { MODE_CW };                     ///< last mode into which the rig was commanded
   std::unordered_map<bandmode, frequency> _last_frequency;                                              ///< last-used frequencies on per-band, per-mode basis
   rig_model_t                             _model                       { RIG_MODEL_DUMMY };             ///< hamlib model
   hamlib_port_t                           _port;                                                        ///< hamlib port
-  std::string                             _port_name;                                                   ///< name of port
+  std::string                             _port_name                   { };                             ///< name of port
   RIG*                                    _rigp                        { nullptr };                     ///< hamlib handle
   bool                                    _rig_connected               { false };                       ///< is a rig connected?
   pt_mutex                                _rig_mutex                   { "RIG INTERFACE"s };            ///< mutex for all operations
@@ -130,16 +130,12 @@ protected:
 public:
 
 /// default constructor
-  rig_interface (void) :
-//    _error_alert_function(nullptr),       // no default error handler
-    _last_commanded_frequency(),          // no last-commanded frequency
-    _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
-//    _last_commanded_mode(MODE_CW),        // last commanded mode was CW
-    _port_name()                         // no default port
-//    _rigp(nullptr),                       // no rig connected
-//    _rig_poll_interval(1000),             // poll once per second
-//    _status(frequency(14000), MODE_CW)    // 14MHz, CW
-  { }
+  rig_interface(void) = default;
+//  rig_interface (void) :
+//    _last_commanded_frequency(),          // no last-commanded frequency
+//    _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
+//    _port_name()                         // no default port
+//  { }
 
 // no copy constructor
   rig_interface(const rig_interface&) = delete;

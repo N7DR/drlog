@@ -1,4 +1,4 @@
-// $Id: exchange.h 167 2020-09-19 19:43:49Z  $
+// $Id: exchange.h 169 2020-10-18 17:16:44Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
