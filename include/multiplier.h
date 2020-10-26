@@ -1,4 +1,4 @@
-// $Id: multiplier.h 168 2020-10-07 18:34:59Z  $
+// $Id: multiplier.h 170 2020-10-26 16:44:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -36,8 +36,6 @@ extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
     \brief  encapsulate necessary stuff for a mult
 */
 
-//bool compare_calls(const std::string& call1, const std::string& call2);
-
 //using MULTIPLIER_VALUES = std::unordered_set<std::string>;
 //#include <type_traits>
 //using Cmp = std::integral_constant<decltype(&compare_calls), &compare_calls>;
@@ -49,7 +47,8 @@ extern pt_mutex multiplier_mutex;   ///< mutex for multiplier objects
 //};
 //using MULTIPLIER_VALUES = std::set<std::string, call_comparison>;
 //using MULTIPLIER_VALUES = std::set<std::string, std::integral_constant<decltype(&compare_calls), &compare_calls>>;
-using MULTIPLIER_VALUES = std::set<std::string, CALL_COMPARISON>;   // multiplier values are in call order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator
+using MULTIPLIER_VALUES = std::set<std::string, MULT_COMPARISON>;   // multiplier values are in call order; https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator;
+// modified to put zones in correct order
 
 class multiplier
 {

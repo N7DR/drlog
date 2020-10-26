@@ -1,4 +1,4 @@
-// $Id: rules.cpp 168 2020-10-07 18:34:59Z  $
+// $Id: rules.cpp 170 2020-10-26 16:44:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -294,13 +294,12 @@ vector<exchange_field> contest_rules::_exchange_fields(const string& canonical_p
 
     auto cit { exchange.find(canonical_prefix) };
 
-    if (cit != exchange.cend())
-      return cit->second;
+    return ( (cit == exchange.cend()) ? MUM_VALUE(exchange, string()) : cit->second );
 
-    return MUM_VALUE(exchange, string());
-//    cit = exchange.find(string());
+//    if (cit != exchange.cend())
+//      return cit->second;
 
-//    return ( (cit == exchange.cend()) ? vector<exchange_field>() : cit->second );
+//    return MUM_VALUE(exchange, string());
   }
 
   catch (std::out_of_range& oor)
@@ -390,7 +389,7 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
   const auto& per_country_exchanges { context.exchange_per_country() };
 
   for (const auto& pce : per_country_exchanges)
-    permitted_exchange_fields.insert( { pce.first,  remove_peripheral_spaces(split_string(pce.second, ","s)) } );   // unexpanded choice
+    permitted_exchange_fields.insert( { pce.first, remove_peripheral_spaces(split_string(pce.second, ","s)) } );   // unexpanded choice
 
   for (const auto& pce : per_country_exchanges)
   { const vector<string> vs { remove_peripheral_spaces(split_string(pce.second, ","s)) };
@@ -438,31 +437,12 @@ void contest_rules::_parse_context_exchange(const drlog_context& context)
         return rv;
       };
 
-//    vector<exchange_field> vef_rst;
-//    vector<exchange_field> vef_rs;
-//
 // adjust RST/RS to match mode; ideally we would have done this later, when
 // it would be far simpler to iterate through the map, changing values, but
 // g++'s restriction that values of maps cannot be altered in-place
 // makes it easier to do it now
 
-// RST
-//    for (auto ef : vef)
-//    { if (ef.name() == "RS"s)
-//        ef.name("RST"s);
-//
-//      vef_rst.push_back(ef);
-//    }
-
-// RS
-//    for (auto ef : vef)
-//    { if (ef.name() == "RST"s)
-//        ef.name("RS"s);
-//
-//      vef_rs.push_back(ef);
-//    }
-
-    single_mode_rv_rst.insert( { mpef.first, vef_rs_rst("RS"s, "RST"s) } ); // force to RTS
+    single_mode_rv_rst.insert( { mpef.first, vef_rs_rst("RS"s, "RST"s) } ); // force to RST
     single_mode_rv_rs.insert( { mpef.first, vef_rs_rst("RST"s, "RS"s) } );  // force to RS
   }
 

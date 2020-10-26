@@ -1,4 +1,4 @@
-// $Id: macros.h 169 2020-10-18 17:16:44Z  $
+// $Id: macros.h 170 2020-10-26 16:44:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -183,7 +183,7 @@ template<class K, class V>
 struct is_map<std::map<K, V>> 
   { constexpr static bool value { true }; };
 
-template< class T>
+template<class T>
 inline constexpr bool is_map_v = is_map<T>::value;
 
 // is a type a set?
@@ -227,8 +227,8 @@ template<class T>
 struct is_sus 
   { constexpr static bool value { false }; };
 
-template<class T, class C>
-struct is_sus<std::set<T, C>> 
+template<class T, class C, class A>
+struct is_sus<std::set<T, C, A>> 
   { constexpr static bool value { true }; };
 
 template<class T>

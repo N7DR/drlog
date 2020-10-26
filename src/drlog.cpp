@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 169 2020-10-18 17:16:44Z  $
+// $Id: drlog.cpp 170 2020-10-26 16:44:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -3282,15 +3282,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 // need to figure out a way to generalise all this
           if (exf.is_choice())
           { if (exf.name() == "ITUZONE+SOCIETY"s)
-            { //const string society_guess { exchange_db.guess_value(contents, "SOCIETY"s) };
-
-              string iaru_guess { exchange_db.guess_value(contents, "SOCIETY"s) };      // start with guessing it's a society
+            { string iaru_guess { exchange_db.guess_value(contents, "SOCIETY"s) };      // start with guessing it's a society
 
               if (iaru_guess.empty())
-              { //const string itu_zone_guess { to_upper(exchange_db.guess_value(contents, "ITUZONE"s)) };
-
                 iaru_guess = to_upper(exchange_db.guess_value(contents, "ITUZONE"s));   // try ITU zone if no society
-              }
 
               exchange_str += iaru_guess;
               processed_field = true;
@@ -3320,8 +3315,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
               { exchange_str += guess;
                 processed_field = true;
               }
-
-//              processed_field = true;
             }
           }
 
@@ -3336,13 +3329,11 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           if (!processed_field and !no_default_rst and (exf.name() == "RST"s) and !exf.is_optional())
           { exchange_str += ( (cur_mode == MODE_CW) ? "599 "s : "59 "s );
-
             processed_field = true;
           }
 
           if (!processed_field and exf.name() == "RS"s)
           { exchange_str += "59 "s;
-
             processed_field = true;
           }
 
@@ -3357,13 +3348,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           if (!processed_field)
           { if (!(variable_exchange_fields > exf.name()))    // if not a variable field
-            { //ost << "About to generate guess" << endl;
-
-              //ost << "Guessed value from exchange db = " << exchange_db.guess_value(contents, exf.name()) << endl;
-
-              const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) };
-
-              //ost << "Generated guess = *" << guess << "*" << endl;
+            { const string guess { rules.canonical_value(exf.name(), exchange_db.guess_value(contents, exf.name())) };
 
               if (!guess.empty())
               { if ((exf.name() == "RDA"s) and (guess.length() == 2))  // RDA guess might just have first two characters
@@ -3390,8 +3375,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
           win_exchange < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < SPACE_STR <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
         win_exchange.insert(true);          // force EXCHANGE window into INSERT mode
- //       win_active_p = &win_exchange;
- //       active_window = ACTIVE_WINDOW::EXCHANGE;
         set_active_window(ACTIVE_WINDOW::EXCHANGE);
       }
 
@@ -3420,10 +3403,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-ENTER -- assume it's a call or partial call and go to the call if it's in the bandmap
   if (!processed and e.is_control() and (e.symbol() == XK_Return))
-  { //quick_qsy_info = get_frequency_and_mode();
-  
-    //ost << "quick_qsy_info = " << quick_qsy_info.first.display_string() << ", " << MODE_NAME[quick_qsy_info.second] << endl;
-    update_quick_qsy();
+  { update_quick_qsy();
   
     bool found_call { false };
 
@@ -3440,9 +3420,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         possible_mode_change(be.freq());
       };
 
-// assume it's a call -- look for the same call in the current bandmap
-// *** currently this is not just the displayed calls; the following #if 1 corrects this
-#if 1
+// assume it's a call -- look for the same call in the current bandmap, as displayed
     bandmap_entry be;               // default entry
 
     const BM_ENTRIES entries { bandmaps[safe_get_band()].displayed_entries() };
@@ -3466,27 +3444,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         ctrl_enter_activity(be);
       }
     }
-
-#else
-
-    bandmap_entry be { bandmaps[safe_get_band()][original_contents] };
-
-    if (!(be.callsign().empty()))
-    { found_call = true;
-
-      ctrl_enter_activity(be);
-    }
-    else    // didn't find an exact match; try a substring search
-    { be = bandmaps[safe_get_band()].substr(original_contents);
-
-      if (!(be.callsign().empty()))     // if we found a match
-      { found_call = true;
-        win_call < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= be.callsign();  // put callsign into CALL window
-
-        ctrl_enter_activity(be);
-      }
-    }
-#endif
 
     if (found_call)
     { const string callsign { be.callsign() };
@@ -3603,37 +3560,33 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
   if (!processed and (e.is_control_and_not_alt() or e.is_alt_and_not_control()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-  { //quick_qsy_info = get_frequency_and_mode();
-    update_quick_qsy();
+  { update_quick_qsy();
     processed = process_bandmap_function(e.is_control() ? &bandmap::needed_qso : &bandmap::needed_mult, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
 // CTRL-ALT-LEFT-ARROW, CTRL-ALT-RIGHT-ARROW
   if (!processed and (e.is_control() and e.is_alt()) and ( (e.symbol() == XK_Left) or (e.symbol() == XK_Right)))
-  { //quick_qsy_info = get_frequency_and_mode();
-    update_quick_qsy();
+  { update_quick_qsy();
     processed = process_bandmap_function(&bandmap::needed_all_time_new_and_needed_qso, (e.symbol() == XK_Left) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
 // ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_4) or (e.symbol() == XK_KP_6)
                                                                           or  (e.symbol() == XK_KP_Left) or (e.symbol() == XK_KP_Right) ) )
-  { //quick_qsy_info = get_frequency_and_mode();
-    update_quick_qsy();
+  { update_quick_qsy();
     processed = process_bandmap_function(&bandmap::needed_all_time_new_or_qsled, (e.symbol() == XK_KP_Left or e.symbol() == XK_KP_4) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
 // ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
   if (!processed and e.is_alt_and_control() and ( (e.symbol() == XK_KP_2) or (e.symbol() == XK_KP_8)
                                                                           or  (e.symbol() == XK_KP_Down) or (e.symbol() == XK_KP_Up) ) )
-  { //quick_qsy_info = get_frequency_and_mode();
-    update_quick_qsy();
+  { update_quick_qsy();
     processed = process_bandmap_function(&bandmap::matches_criteria, (e.symbol() == XK_KP_Down or e.symbol() == XK_KP_2) ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 
 // and unmodified: // KEYPAD-/, KEYPAD-*: up or down to next stn that matches the N7DR criteria
-  if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  { //ost << "PROCESSING CHAR:" << (e.is_char(';') ? ";" : "'") << endl;
-    update_quick_qsy();
+  if (!processed and e.is_unmodified() and ( e.is_char(';') or e.is_char('\'') ) )  
+  { update_quick_qsy();
     processed = process_bandmap_function(&bandmap::matches_criteria, e.is_char(';') ? BANDMAP_DIRECTION::DOWN : BANDMAP_DIRECTION::UP);
   }
 

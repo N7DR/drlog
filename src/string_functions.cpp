@@ -947,6 +947,14 @@ bool compare_calls(const string& call1, const string& call2)
   return (l1 < l2);
 }
 
+bool compare_mults(const string& mult1, const string& mult2)
+{ if ( (mult1.size() == 2) and isdigit(mult1[0]) and isdigit(mult1[1]) and
+       (mult2.size() == 2) and isdigit(mult2[0]) and isdigit(mult2[1]) )
+    return (mult1 < mult2);
+  else
+    return compare_calls(mult1, mult2);
+}
+
 /*! \brief          Does a string contain any letters?
     \param  str     string to test
     \return         whether <i>str</i> contains any letters

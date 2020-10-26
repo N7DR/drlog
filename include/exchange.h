@@ -1,4 +1,4 @@
-// $Id: exchange.h 169 2020-10-18 17:16:44Z  $
+// $Id: exchange.h 170 2020-10-26 16:44:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -95,22 +95,21 @@ class parsed_exchange_field
 {
 protected:
 
-  std::string    _name;                 ///< field name
-  std::string    _value;                ///< field value
-  bool           _is_mult;              ///< is this field a mult?
-  std::string    _mult_value;           ///< actual value of the mult (if it is a mult)
-  
-//  std::optional<std::string> _mvalue;
+  std::string    _name       { };           ///< field name
+  std::string    _value      { };           ///< field value
+  bool           _is_mult    { false };     ///< is this field a mult?
+  std::string    _mult_value { };           ///< actual value of the mult (if it is a mult)
 
 public:
 
 /// default constructor
-  inline parsed_exchange_field(void) :
-    _name(),
-    _value(),
-    _is_mult(false),
-    _mult_value()
-  { }
+  parsed_exchange_field(void) = default;
+//  inline parsed_exchange_field(void) :
+//    _name(),
+//    _value(),
+//    _is_mult(false),
+//    _mult_value()
+//  { }
 
 /*! \brief      Constructor
     \param  nm  field name

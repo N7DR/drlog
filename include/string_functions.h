@@ -1,4 +1,4 @@
-// $Id: string_functions.h 169 2020-10-18 17:16:44Z  $
+// $Id: string_functions.h 170 2020-10-26 16:44:33Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -722,8 +722,11 @@ bool is_legal_value(const std::string& value, const std::string& legal_values, c
 */
 bool compare_calls(const std::string& call1, const std::string& call2);
 
+bool compare_mults(const std::string& mult1, const std::string& mult2);
+
 // https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator
 using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare calls
+using MULT_COMPARISON = std::integral_constant<decltype(&compare_mults), &compare_mults>;   // type that knows how to compare mult strings (for exchange mults)
 
 /*! \brief          Return a number with a particular number of decimal places
     \param  str     initial value
