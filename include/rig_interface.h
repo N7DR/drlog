@@ -49,6 +49,11 @@ enum class VFO { A,                       ///< VFO A
                  B                        ///< VFO B
                };
 
+using DRLOG_CLOCK     = std::chrono::system_clock;
+//using DRLOG_TIMEPOINT = DRLOG_CLOCK::time_point;
+
+//constexpr std::chrono::milliseconds QRG_GUARD_TIME_MS { 1000 };     // guard time for QRG changes, in milliseconds
+
 // ---------------------------------------- rig_status -------------------------
 
 WRAPPER_2(rig_status, frequency, freq, MODE, mode);     ///< the status of a rig
@@ -76,6 +81,8 @@ protected:
   unsigned int                            _rig_poll_interval           { 1'000 };                       ///< interval between polling for rig status, in milliseconds
   rig_status                              _status                      { frequency(14'000), MODE_CW };  ///< most recent rig frequency and mode from the periodic poll
   pthread_t                               _thread_id;                                                   ///< ID for the thread that polls the rig for status
+
+//  DRLOG_TIMEPOINT                         _time_last_commanded_frequency { };                           ///< time of most recent frequency command (defaults to the epoch)
 
 // protected pointers to functions
 

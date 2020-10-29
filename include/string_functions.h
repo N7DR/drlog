@@ -722,10 +722,15 @@ bool is_legal_value(const std::string& value, const std::string& legal_values, c
 */
 bool compare_calls(const std::string& call1, const std::string& call2);
 
+/*! \brief          Is the value of one mult earlier than another?
+    \param  mult1   first mult value
+    \param  mult2   second mult value
+    \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order  (used for exchange mults)
+*/
 bool compare_mults(const std::string& mult1, const std::string& mult2);
 
 // https://stackoverflow.com/questions/2620862/using-custom-stdset-comparator
-using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare calls
+//using CALL_COMPARISON = std::integral_constant<decltype(&compare_calls), &compare_calls>;   // type that knows how to compare calls
 using MULT_COMPARISON = std::integral_constant<decltype(&compare_mults), &compare_mults>;   // type that knows how to compare mult strings (for exchange mults)
 
 /*! \brief          Return a number with a particular number of decimal places

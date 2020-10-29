@@ -2725,9 +2725,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       const bandmode bmode { new_band, cur_mode };
 
-      frequency last_frequency { rig.get_last_frequency(bmode) };  // go to saved frequency for this band/mode (if any)
+      frequency last_frequency { rig.get_last_frequency(bmode) };   // go to saved frequency for this band/mode (if any)
 
-      if (last_frequency.hz() == 0)
+      if (last_frequency.hz() == 0)                                 // go to default frequency if there is no prior frequency for this band
         last_frequency = DEFAULT_FREQUENCIES.at(bmode);
 
       rig.rig_frequency(last_frequency);
@@ -5405,10 +5405,8 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
 { if (win_remaining_exch_mults_p.find(exch_mult_name) == win_remaining_exch_mults_p.cend())
     return;
 
-// map<string /* name */, window*>     win_remaining_exch_mults_p; ///< map from name of an exchange mult to a pointer to the corresponding window
-
-  const MULTIPLIER_VALUES    known_exchange_values_set { statistics.known_exchange_mult_values(exch_mult_name) };
-  const vector<string> known_exchange_values     { known_exchange_values_set.cbegin(), known_exchange_values_set.cend() };
+  const MULTIPLIER_VALUES known_exchange_values_set { statistics.known_exchange_mult_values(exch_mult_name) };
+  const vector<string>    known_exchange_values     { known_exchange_values_set.cbegin(), known_exchange_values_set.cend() };
 
   window& win { ( *(win_remaining_exch_mults_p[exch_mult_name]) ) };
 

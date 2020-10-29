@@ -98,7 +98,10 @@ void rig_interface::_error_alert(const string& msg)
     Does nothing if <i>f</i> is not within a ham band
 */
 void rig_interface::_rig_frequency(const frequency& f, const VFO v)
-{ if (f.is_within_ham_band())
+{ //std::chrono::milliseconds RETRY_TIME = min( milliseconds(1), (QRG_GUARD_TIME_MS / 10) );
+  constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(10) };
+
+  if (f.is_within_ham_band())
   { switch (v)
     { case VFO::A :
         _last_commanded_frequency = f;
@@ -110,15 +113,29 @@ void rig_interface::_rig_frequency(const frequency& f, const VFO v)
     }
 
     if (_rig_connected)
-    { int status;
+    { SAFELOCK(_rig);           // hold the lock until we have received confirmation that the frequency is correct
 
-      { SAFELOCK(_rig);
+      bool retry { true };
 
-        status = rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz());
+      while (retry)
+      { int status;
+
+        { //SAFELOCK(_rig);
+
+          status = rig_set_freq(_rigp, ( (v == VFO::A) ? RIG_VFO_A : RIG_VFO_B ), f.hz());
+        }
+
+ //       if (status == RIG_OK)
+ //         _time_last_commanded_frequency = DRLOG_CLOCK::now();
+ //       else
+        if (status != RIG_OK)
+          _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
+
+        if (_rig_frequency(v) != f)     // explicitly check the frequency
+          sleep_for(RETRY_TIME);
+        else
+          retry = false;
       }
-
-      if (status != RIG_OK)
-        _error_alert("Error setting frequency of VFO "s + ((v == VFO::A) ? "A"s : "B"s));
     }
   }
 }
@@ -243,19 +260,23 @@ void rig_interface::rig_mode(const MODE m)
 { static pbwidth_t last_cw_bandwidth  { 200 };
   static pbwidth_t last_ssb_bandwidth { 1800 };
 
+  constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(10) };
+
   _last_commanded_mode = m;
 
   if (_rig_connected)
-  { rmode_t hamlib_m { RIG_MODE_CW };
+  { 
+// set correct hamlib mode 
+    rmode_t hamlib_m { RIG_MODE_CW };
 
     if (m == MODE_SSB)
       hamlib_m = ( (rig_frequency().mhz() < 10) ? RIG_MODE_LSB : RIG_MODE_USB );
 
     int status;
 
-// hamlib, for reasons I can't even guess at, sets both the mode and the bandwidth in a single command
+// hamlib, for reasons I can't guess, sets both the mode and the bandwidth in a single command
     pbwidth_t tmp_bandwidth;
-    rmode_t tmp_mode;
+    rmode_t   tmp_mode;
 
     { SAFELOCK(_rig);
       status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
@@ -264,7 +285,7 @@ void rig_interface::rig_mode(const MODE m)
     if (status != RIG_OK)
       _error_alert("Error getting mode prior to setting mode");
     else
-    { switch (tmp_mode)
+    {  switch (tmp_mode)
       { case RIG_MODE_CW:
           last_cw_bandwidth = tmp_bandwidth;
           break;
@@ -278,14 +299,33 @@ void rig_interface::rig_mode(const MODE m)
           break;
       }
 
-      { SAFELOCK(_rig);
-        const pbwidth_t new_bandwidth { ( (m == MODE_SSB) ? last_ssb_bandwidth : last_cw_bandwidth ) };
+      bool retry { true };
 
-        status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, ( (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth)) ;
+      SAFELOCK(_rig);       // hold the lock until we receive positive confirmation that the rig is properly set to correct mode and bandwidth
+
+      while (retry)
+      { //SAFELOCK(_rig);
+        const pbwidth_t new_bandwidth    { ( (m == MODE_SSB) ? last_ssb_bandwidth : last_cw_bandwidth ) };
+        const pbwidth_t bandwidth_to_set { (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth };
+
+        status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, bandwidth_to_set) ;
+
+        if (status != RIG_OK)
+          _error_alert("Error setting mode"s);
+
+        status = rig_get_mode(_rigp, RIG_VFO_CURR, &tmp_mode, &tmp_bandwidth);
+
+        if (status != RIG_OK)
+          _error_alert("Error getting mode after setting mode"s);
+
+        if ( (tmp_mode != hamlib_m) or (tmp_bandwidth != new_bandwidth) )    // explicitly check the mode and bandwidth
+          sleep_for(RETRY_TIME);
+        else
+          retry = false;
       }
 
-      if (status != RIG_OK)
-        _error_alert("Error setting mode"s);
+//      if (status != RIG_OK)
+//        _error_alert("Error setting mode"s);
     }
   }
 }

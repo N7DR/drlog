@@ -947,10 +947,15 @@ bool compare_calls(const string& call1, const string& call2)
   return (l1 < l2);
 }
 
+/*! \brief          Is the value of one mult earlier than another?
+    \param  mult1   first mult value
+    \param  mult2   second mult value
+    \return         whether <i>mult1</i> appears before <i>mult2</i> in displayed mult value sort order  (used for exchange mults)
+*/
 bool compare_mults(const string& mult1, const string& mult2)
-{ if ( (mult1.size() == 2) and isdigit(mult1[0]) and isdigit(mult1[1]) and
+{ if ( (mult1.size() == 2) and isdigit(mult1[0]) and isdigit(mult1[1]) and      // if two 2-digit numeric values (such as zones)
        (mult2.size() == 2) and isdigit(mult2[0]) and isdigit(mult2[1]) )
-    return (mult1 < mult2);
+    return (mult1 < mult2);                                                     // simple string comparison
   else
     return compare_calls(mult1, mult2);
 }

@@ -63,7 +63,7 @@ bool multiplier::add_worked(const string& str, const BAND b, const MODE m)
     const int m_nr { static_cast<int>(m) };
 
     auto& pb { _worked[m_nr] };
-    bool rv  { (pb[b_nr].insert(str)).second };  // BAND, MODE
+    bool  rv { (pb[b_nr].insert(str)).second };  // BAND, MODE
 
     if (rv)
     { pb[ANY_BAND].insert(str);        // ANY_BAND, MODE

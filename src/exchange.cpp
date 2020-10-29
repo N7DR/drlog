@@ -197,19 +197,6 @@ bool parsed_ss_exchange::_is_possible_serno(const string& str) const
   return possible;
 }
 
-/*! \brief          Does a string contain a possible check?
-    \param  str     string to check
-    \return         whether <i>str</i> is a (two-digit) check
-*/
-//bool parsed_ss_exchange::_is_possible_check(const string& str) const
-//{ return ( (str.length() == 2) ? ( isdigit(str[0]) and isdigit(str[1]) ) : false ); }
-
-//  if (str.length() != 2)
-//    return false;
-
-//  return ( isdigit(str[0]) and isdigit(str[1]) );
-//}
-
 /*! \brief                      Constructor
     \param  call                callsign
     \param  received_fields     separated strings from the exchange
@@ -539,7 +526,7 @@ void parsed_exchange::_assign_unambiguous_fields(deque<TRIPLET>& unassigned_tupl
     \param  received_values             the received values, in the order that they were received
     \param  truncate_received_values    whether to stop parsing when matches have all been found  *** IS THIS EVER USED? ***
 */
-parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values /* , const bool truncate_received_values */) :
+parsed_exchange::parsed_exchange(const string& from_callsign, const string& canonical_prefix, const contest_rules& rules, const MODE m, const vector<string>& received_values) :
   _replacement_call(),
   _valid(false)
 { static const string EMPTY_STRING;
@@ -598,66 +585,6 @@ parsed_exchange::parsed_exchange(const string& from_callsign, const string& cano
     copy_if(received_values.cbegin(), received_values.cend(), back_inserter(copy_received_values), [] (const string& str) { return !contains(str, "."); } );
   }
 
-#if 0
-  if (truncate_received_values)
-  { map<string /* field name */, EFT>  exchange_field_eft { rules.exchange_field_eft() };  // EFTs have the choices already expanded
-
-//    ost << "exchange_field_eft map: " << exchange_field_eft << endl;
-
-// remove any inappropriate RS(T)
-    auto pred_fn = [m] (const pair<string, EFT>& psE) { return ( ( psE.first == "RST"s and m != MODE_CW )  or
-                                                                 ( psE.first == "RS"s and m != MODE_SSB )
-                                                               );
-                                                      };
-
-    REMOVE_IF_AND_RESIZE(exchange_field_eft, pred_fn);
-
-//    ost << "NEW exchange_field_eft map: " << exchange_field_eft << endl;
-
-//  std::map<std::string /* canonical prefix */, std::set<std::string> /* exchange field names */>  _per_country_exchange_fields;
-
-    const vector<string> exchange_field_names { rules.unexpanded_exchange_field_names(canonical_prefix, m) };
-
-    for (const auto& efn : exchange_field_names)
-      ost << " exchange field for " << canonical_prefix << " from rules: " << efn << endl;
-
-    map<string /* field name */, string /* value */> result_map;
-
-    const string rv0 { received_values[0] };
-
-    bool found_match { false };
-
-    for (auto cit = exchange_field_names.cbegin(); !found_match and cit != exchange_field_names.cend(); ++cit)
-    { if (const string exchange_field_name { *cit }; contains(exchange_field_name, "+"s))    // if a choice
-      { const vector<string> choices_vec { split_string(exchange_field_name, '+') };
-
-        for (auto it = choices_vec.begin(); it != choices_vec.end(); )    // see Josuttis 2nd edition, p. 343
-        { const EFT& eft { exchange_field_eft.at(*it) };
-
-          if (eft.is_legal_value(rv0))
-          { result_map[*it] = rv0;
-            found_match = true;
-            it = choices_vec.end();
-          }
-          else
-            it++;
-        }
-      }
-      else        // not a choice
-      { const EFT& eft { exchange_field_eft.at(exchange_field_name) };
-
-        if (eft.is_legal_value(rv0))
-        { result_map[exchange_field_name] = rv0;
-          found_match = true;
-        }
-      }
-    }
-
-    if (!found_match)
-      ost << "Error: cannot find match for exchange field: " << rv0 << endl;
-  }
-  else        // !truncate received values
-#endif
   {
 // for each received field, which output fields does it match?
     map<int /* received field number */, set<string>> matches;
