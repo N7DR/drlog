@@ -416,8 +416,6 @@ protected:
   mutable LOCATION_DBTYPE _db_checked;  ///< call- or prefix-associated info -- a cache of all previously checked calls
 
   RUSSIAN_DBTYPE _russian_db;  ///< Russian substring-indexed info
-  
-//  drlog_qth_database                   _qth_db;      ///< additional database
 
 /*! \brief                  Initialise the database
     \param  cty             cty.dat data
@@ -429,7 +427,6 @@ protected:
     \param  info            the original location information
     \param  alternatives    alternative country information
 */
-//  void _insert_alternatives(const location_info& info, const std::map<std::string, alternative_country_info>& alternatives);
   void _insert_alternatives(const location_info& info, const ACI_DBTYPE& alternatives);
 
 /*! \brief              Process alternatives from a record
@@ -437,8 +434,6 @@ protected:
     \param  alt_type    type of alternatives to process
 */
   void _process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type);
-
-//  void _insert_into_database(const cty_record& rec, LOCATION_DBTYPE& target_database);
 
   mutable pt_mutex _location_database_mutex { "LOCATION DATABASE"s };  ///< to make location_database objects thread-safe;
    

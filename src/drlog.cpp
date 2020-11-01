@@ -78,11 +78,6 @@ enum class KNOWN_MULT { FORCE_KNOWN,
                         NO_FORCE_KNOWN
                       };
 
-/// whether the alert() function should include the time -- alert should be in a separate .h file so that this defn can be included in several other files
-//enum class SHOW_TIME { SHOW,
-//                       NO_SHOW
-//                     };
-
 // needed for WRAPPER_3 definition of memory_entry
 ostream& operator<<(ostream& ost, const DRLOG_MODE& dm)
 { ost << ( dm == DRLOG_MODE::CQ ? 'C' : 'S');
@@ -250,14 +245,6 @@ void* spawn_rbn(void*);                                                     ///<
 BAND safe_get_band(void);                             ///< get value of <i>current_band</i>
 MODE safe_get_mode(void);                             ///< get value of <i>current_mode</i>
 
-// more forward declarations (dependent on earlier ones)
-//bool is_needed_qso(const string& callsign, const BAND b, const MODE m);                   ///<   Is a callsign needed on a particular band and mode?
-
-//void update_remaining_callsign_mults_window(running_statistics&, const string& mult_name, const BAND b, const MODE m);  ///< Update the REMAINING CALLSIGN MULTS window for a particular mult
-//void update_remaining_country_mults_window(running_statistics&, const BAND b, const MODE m);                        ///< Update the REMAINING COUNTRY MULTS window
-//void update_remaining_exch_mults_window(const string& mult_name, const contest_rules& rules, running_statistics& statistics, const BAND b, const MODE m);   ///< Update the REMAINING EXCHANGE MULTS window for a particular mult
-//void update_remaining_exchange_mults_windows(const contest_rules&, running_statistics&, const BAND b, const MODE m);    ///< Update the REMAINING EXCHANGE MULTS windows for all exchange mults with windows
-
 // values that are used by multiple threads
 // mostly these are essentially RO, so locking is overkill; but we do it anyway,
 // otherwise Murphy dictates that we'll hit a race condition at the worst possible time
@@ -321,7 +308,6 @@ bool                    bandmap_frequency_up { false };             ///< whether
 bool                    best_dx_is_in_miles;                        ///< whether unit for BEST DX window is miles
 bandmap_buffer          bm_buffer;                                  ///< global control buffer for all the bandmaps
 
-
 set<BAND>               call_history_bands;                         ///< bands displayed in CALL HISTORY window
 drlog_context           context;                                    ///< context taken from configuration file
 unsigned int            cw_speed_change;                            ///< amount to change CW speed when pressing PAGE UP or PAGE DOWN
@@ -353,10 +339,11 @@ grid_square             my_grid;                                    ///< what is
 float                   my_latitude;                                ///< my latitude in degrees (north +ve)
 float                   my_longitude;                               ///< my longitude in degrees (east +ve)
 
-unsigned int            next_qso_number { 1 };                ///< actual number of next QSO
-bool                    no_default_rst { false };             ///< do we not assign a default received RST?
-unsigned int            n_modes { 0 };                        ///< number of modes allowed in the contest
-unsigned int            n_memories { 0 };                     ///< number of memeories on the rig
+unordered_map<string, string> names;                                ///< map from call to name
+unsigned int                  next_qso_number { 1 };                ///< actual number of next QSO
+bool                          no_default_rst { false };             ///< do we not assign a default received RST?
+unsigned int                  n_modes { 0 };                        ///< number of modes allowed in the contest
+unsigned int                  n_memories { 0 };                     ///< number of memeories on the rig
 
 unsigned int            octothorpe { 1 };                   ///< serial number of next QSO
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
@@ -414,9 +401,10 @@ window win_band_mode,                   ///< the band and mode indicator
        win_date,                        ///< the date
        win_drlog_mode,                  ///< indicate whether in CQ or SAP mode
        win_exchange,                    ///< QSO exchange received from other station
-       win_log_extract,                 ///< to show earlier QSOs
        win_fuzzy,                       ///< fuzzy lookups
        win_grid,                        ///< grid square
+       win_log_extract,                 ///< to show earlier QSOs
+       win_name,                        ///< name of operator
        win_indices,                     ///< geomagnetic indices
 //       win_indices_lookup_time,         ///< HH:MM of last geomagnetic indices lookup
        win_individual_messages,         ///< messages from the individual messages file
@@ -562,7 +550,6 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
     vector<string> vec_str;
 
     copy(matches.cbegin(), matches.cend(), back_inserter(vec_str));
-//    sort(vec_str.begin(), vec_str.end(), compare_calls);
     SORT(vec_str, compare_calls);
     match_vector.clear();
 
@@ -582,16 +569,6 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
       { vector<string>& tmp_matches { (is_dupe(cs) ? tmp_red_matches : ( logbk.qso_b4(cs) ? tmp_green_matches : tmp_ordinary_matches)) };
 
         tmp_matches.push_back(cs);
-/*
-        if (is_dupe(cs))
-          tmp_red_matches.push_back(cs);
-        else
-        { if (const bool qso_b4 { logbk.qso_b4(cs) }; qso_b4)
-            tmp_green_matches.push_back(cs);
-          else
-            tmp_ordinary_matches.push_back(cs);
-        }
-*/
       }
     }
 
@@ -862,6 +839,14 @@ int main(int argc, char** argv)
 
     fuzzy_dbs += fuzzy_db;            // incorporate into multiple-database version
     fuzzy_dbs += fuzzy_dynamic_db;    // add the (empty) dynamic fuzzy database
+
+// possibly build name database from the drmaster information (not the same as the names used in exchanges)
+    if (context.window_info("NAME"s).defined())    // does the config file define a NAME window?
+    { const vector<string> drm_calls { drm.unordered_calls() };   // we don't need them to be ordered
+
+      for (const auto& this_call : drm_calls)
+        names[this_call] = drm[this_call].name();
+    }
 
 // define the rules for this contest
     try
@@ -1226,6 +1211,9 @@ int main(int argc, char** argv)
 // MULT VALUE window
     win_mult_value.init(context.window_info("MULT VALUE"s), WINDOW_NO_CURSOR);
     update_mult_value();
+
+// NAME window (for names from drmaster file; not the same as when name is in the exchange)
+    win_name.init(context.window_info("NAME"s), WINDOW_NO_CURSOR);
 
 // NEARBY window
     win_nearby.init(context.window_info("NEARBY"s), WINDOW_NO_CURSOR);
@@ -5480,6 +5468,7 @@ string sunrise_or_sunset(const string& callsign, const SRSS srss)
       CALL HISTORY
       GRID
       INDIVIDUAL QTC COUNT
+      NAME
  */
 void populate_win_info(const string& callsign)
 { if (win_call_history.valid())
@@ -5501,6 +5490,17 @@ void populate_win_info(const string& callsign)
       win_grid < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= grid_name;
   }
 
+  if (!names.empty())    // if we have some names from the drmaster file
+  { win_name < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
+
+//    const string this_name { MUM_VALUE(names, callsign) };
+
+    if (const string this_name { MUM_VALUE(names, callsign) }; !this_name.empty())
+      win_name < this_name;
+
+    win_name.refresh();
+  }
+  
   const string name_str { location_db.country_name(callsign) };            // name of the country
 
   if (to_upper(name_str) != "NONE"s)

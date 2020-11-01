@@ -532,14 +532,14 @@ trmaster::trmaster(const string& filename)
   }
 }
 
-// all the calls (in alphabetical order)
+// all the calls (in callsign order)
 vector<string> trmaster::calls(void) const
 { vector<string> rv;
 
   FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
 
   //sort(rv.begin(), rv.end());
-  SORT(rv);
+  SORT(rv, compare_calls);      // added compare_calls 201101
 
   return rv;
 }
@@ -853,13 +853,25 @@ void drmaster::prepare(const vector<string>& path, const string& filename)
 
 /// all the calls (in alphabetical order)
 vector<string> drmaster::calls(void) const
-{ vector<string> rv;
+{ vector<string> rv(_records.size());
 
   for (auto cit = _records.cbegin(); cit != _records.cend(); ++cit)
     rv.push_back(cit->first);
 
 //  sort(rv.begin(), rv.end());
-  SORT(rv);
+  SORT(rv, compare_calls);      // added compare_calls 201101
+
+  return rv;
+}
+
+/// all the calls (in random order)
+vector<string> drmaster::unordered_calls(void) const
+{ vector<string> rv(_records.size());
+
+  FOR_ALL(_records, [&rv](const auto& rec) { rv.push_back(rec.first); } );
+
+  //sort(rv.begin(), rv.end());
+  //SORT(rv, compare_calls);      // added compare_calls 201101
 
   return rv;
 }

@@ -214,6 +214,9 @@ public:
   READ_AND_WRITE(bg_colour);        ///< name of background colour
 
   READ_AND_WRITE(colours_set);      ///< have the colours been set explicitly?
+
+  inline bool defined(void) const   ///< is the information different from the default?
+    { return (_w != 0); }
 };
 
 // -----------  window  ----------------

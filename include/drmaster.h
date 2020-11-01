@@ -376,8 +376,11 @@ public:
 */
   void prepare(const std::vector<std::string>& path, const std::string& filename = "drmaster"s);
 
-/// all the calls (in alphabetical order)
+/// all the calls (in callsign order)
   std::vector<std::string> calls(void) const;
+
+/// all the calls (in random order)
+  std::vector<std::string> unordered_calls(void) const;
 
 /// format for output
   std::string to_string(void) const;

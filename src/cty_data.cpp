@@ -328,7 +328,37 @@ location_info guess_zones(const string& call, const location_info& li)
 // if it's a VE, then make a guess as to the CQ and ITU zones
   if (rv.canonical_prefix() == "VE"s)
   { if (const size_t posn { call.find_last_of(DIGITS) }; posn != string::npos)      // should always be true
-      rv.zones( VE_CQ[from_string<unsigned int>(string(1, call[posn]))], VE_ITU[from_string<unsigned int>(string(1, call[posn]))] );
+    { const unsigned call_digit { from_string<unsigned int>(string(1, call[posn])) };
+
+      rv.zones(VE_CQ[call_digit], VE_ITU[call_digit]);
+
+// lat/long for VEs; for now, assume VE, not VY or VO
+      switch (call_digit)
+      { case 2 : 
+          rv.latitude_longitude(45.57, 73.62);              // Montreal
+          break;
+
+        case 3 : 
+          rv.latitude_longitude(46.52, 80.97);              // Sudbury
+          break;
+
+        case 4 : 
+          rv.latitude_longitude(49.88, 97.15);              // Winnipeg
+          break;
+
+        case 5 : 
+          rv.latitude_longitude(52.15, 106.67);             // Saskatoon
+          break;
+
+        case 6 : 
+          rv.latitude_longitude(51.03, 114.09);             // Calgary
+          break;
+
+        case 7 : 
+          rv.latitude_longitude(49.31, 123.04);             // Vancouver
+          break;
+      }
+    }
   }
   else
 // if it's a W, then make a guess as to the CQ and ITU zones
@@ -338,15 +368,15 @@ location_info guess_zones(const string& call, const location_info& li)
 
 // lat/long for W zones
         switch (rv.cq_zone())
-        { case 3:
+        { case 3 :
             rv.latitude_longitude(40.79, 115.54);
             break;
 
-          case 4:
+          case 4 :
             rv.latitude_longitude(39.12, 101.98);
             break;
 
-          case 5:
+          case 5 :
             rv.latitude_longitude(36.55, 79.65);
             break;
         }
@@ -421,22 +451,14 @@ void location_database::_insert_alternatives(const location_info& info, const AC
   }
 }
 
-#if 0
-void location_database::_insert_into_database(const cty_record& rec, LOCATION_DBTYPE& target_database)
-{ const location_info info { rec };
-
-  target_database.insert( { info.canonical_prefix(), info } );
-}
-#endif
-
 /*! \brief              Process alternatives from a record
     \param  rec         the record to process
     \param  alt_type    type of alternatives to process
 */
 void location_database::_process_alternative(const cty_record& rec, const enum ALTERNATIVES alt_type)
-{ const ACI_DBTYPE& alts                  { alt_type == ALTERNATIVES::CALLSIGNS ? rec.alt_callsigns() : rec.alt_prefixes() };
+{ const ACI_DBTYPE& alts { alt_type == ALTERNATIVES::CALLSIGNS ? rec.alt_callsigns() : rec.alt_prefixes() };
 
-  LOCATION_DBTYPE&  db                    { alt_type == ALTERNATIVES::CALLSIGNS ? _alt_call_db : _db };
+  LOCATION_DBTYPE& db { alt_type == ALTERNATIVES::CALLSIGNS ? _alt_call_db : _db };
 
   const bool country_is_waedc_only { rec.waedc_country_only() };
     
@@ -480,14 +502,6 @@ location_database::location_database(const cty_data& cty, const COUNTRY_LIST cou
 void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list)
 { _init(cty, country_list);
 }
-
-/// prepare a default-constructed object for use
-#if 0
-void location_database::prepare(const cty_data& cty, const COUNTRY_LIST country_list, const drlog_qth_database& secondary)
-{ _qth_db = secondary;
-  _init(cty, country_list);
-}
-#endif
 
 /*! \brief              Add Russian information
     \param  path        vector of directories to check for file <i>filename</i>
