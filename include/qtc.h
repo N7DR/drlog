@@ -52,31 +52,23 @@ class qtc_entry
 {
 protected:
 
-  std::string _utc;          ///< time of QSO: HHMM
-  std::string _callsign;     ///< other station
-  std::string _serno;        ///< serial number sent by other station; width = 4
+  std::string _utc      { "0000"s };    ///< time of QSO: HHMM
+  std::string _callsign { };            ///< other station
+  std::string _serno    { "0000"s };    ///< serial number sent by other station; width = 4
 
 //  int _my_serno;             ///< the serno sent by me, used for ordering
 
 public:
 
 /// default constructor
-  inline qtc_entry(void) :
-    _utc("0000"s),
-    _callsign(),
-    _serno("0000"s)//,
-//    _my_serno(0)
-  { }
+  qtc_entry(void) = default;
 
 /// construct from a QSO
   inline explicit qtc_entry(const QSO& qso) :
     _utc(substring(qso.utc(), 0, 2) + substring(qso.utc(), 3, 2)),
     _callsign( (qso.continent() == "EU"s) ? qso.callsign() : std::string()),
-    _serno(pad_string(qso.received_exchange("SERNO"s), 4, PAD_RIGHT))//,    // force width to 4
-//    _my_serno(from_string<int>(qso.sent_exchange("SERNO"s)))
-  { //ost << "_my_serno = " << _my_serno << std::endl;
-    //ost << "sent_exchange(SERNO) = " << qso.sent_exchange("SERNO"s) << std::endl;
-  }
+    _serno(pad_right(qso.received_exchange("SERNO"s), 4))                    // force width to 4
+  { }
 
   READ_AND_WRITE(utc);          ///< time of QSO: HHMM
   READ_AND_WRITE(callsign);     ///< other station
@@ -87,7 +79,7 @@ public:
     \param  str     new serial number
 */
   inline void serno(const std::string& str)
-    { _serno = pad_string(str, 4, PAD_RIGHT); }
+    { _serno = pad_right(str, 4); }
 
 /// qtc_entry == qso
   inline bool operator==(const QSO& qso) const
@@ -104,7 +96,7 @@ public:
 /// qtc_entry < qtc_entry
   inline bool operator<(const qtc_entry& entry) const
 //    { return (_my_serno < entry._my_serno); }
-    { return ( (_serno < entry._serno) or (_utc < entry._utc) or (_callsign < entry._callsign) ); }
+    { return ( (_serno < entry._serno) or (_utc < entry._utc) or (_callsign < entry._callsign) ); }     // is this right?
 
 /// convert to printable string
   std::string to_string(void) const;

@@ -119,7 +119,7 @@ cty_record::cty_record(const string& record)
   for (const auto& candidate : presumptive_prefixes)
   { vector<string>* vsp { ( contains(candidate, "="s) ? &alt_callsigns : &alt_prefixes ) };  // callsigns are marked with an '='
   
-    vsp->push_back(candidate);
+    (*vsp) += candidate;
   }
 
 // set the zone info for an aci 
@@ -139,7 +139,8 @@ cty_record::cty_record(const string& record)
 
     set_zone_info(aci, _cq_zone, _itu_zone);  
     
-    _alt_prefixes.insert( { aci.identifier(), aci } );
+//    _alt_prefixes.insert( { aci.identifier(), aci } );
+    _alt_prefixes += { aci.identifier(), aci };
   }
 
 // do the same for the alternative callsigns
@@ -148,7 +149,7 @@ cty_record::cty_record(const string& record)
 
     set_zone_info(aci, _cq_zone, _itu_zone);
   
-    _alt_callsigns.insert( { aci.identifier(), aci } );
+    _alt_callsigns += { aci.identifier(), aci };
   }
 }
 
@@ -246,7 +247,7 @@ cty_data::cty_data(const string& filename)
 { const string         entire_file { remove_chars(read_file(filename), { LF_CHAR, CR_CHAR } ) };   // read file and remove EOL markers
   const vector<string> records     { split_string(entire_file, ";"s) };                            // split into records
   
-  FOR_ALL(records, [&] (const string& record) { /* _data. */push_back(static_cast<cty_record>(record)); } );
+  FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );    // applies to base class
 }
 
 /*! \brief              Construct from a file
@@ -254,10 +255,10 @@ cty_data::cty_data(const string& filename)
     \param  filename    name of file
 */
 cty_data::cty_data(const vector<string>& path, const string& filename)
-{ const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };     // read file and remove EOL markers
-  const vector<string> records     { split_string(entire_file, ";"s) };                                        // split into records
+{ const string         entire_file { remove_chars(read_file(path, filename), { LF_CHAR, CR_CHAR} ) };   // read file and remove EOL markers
+  const vector<string> records     { split_string(entire_file, ";"s) };                                 // split into records
 
-  FOR_ALL(records, [&] (const string& record) { /* _data. */push_back(static_cast<cty_record>(record)); } );
+  FOR_ALL(records, [&] (const string& record) { push_back(static_cast<cty_record>(record)); } );        // applies to base class
 }
 
 // -----------  location_info  ----------------
@@ -269,7 +270,7 @@ cty_data::cty_data(const vector<string>& path, const string& filename)
 */
 
 /// location_info == location_info
-const bool location_info::operator==(const location_info& li) const
+bool location_info::operator==(const location_info& li) const
 { return ( (_canonical_prefix == li._canonical_prefix) and
            (_continent == li._continent) and
            (_country_name == li._country_name) and
@@ -407,8 +408,8 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
         { const location_info info { rec };
 
 // insert the canonical entry for this country
-          _db.insert( { info.canonical_prefix(), info } );
-        
+//          _db.insert( { info.canonical_prefix(), info } );
+          _db += { info.canonical_prefix(), info };        
           //_insert_into_database(rec, _db);
 
 // insert other prefixes and calls in the same country
@@ -426,7 +427,8 @@ void location_database::_init(const cty_data& cty, const COUNTRY_LIST country_li
       { const location_info info { rec };
 
 // insert the canonical entry for this country
-        _db.insert( { info.canonical_prefix(), info } );
+ //       _db.insert( { info.canonical_prefix(), info } );
+        _db += { info.canonical_prefix(), info };
 
         _process_alternative(rec, ALTERNATIVES::CALLSIGNS);
         _process_alternative(rec, ALTERNATIVES::PREFIXES);
@@ -445,10 +447,7 @@ void location_database::_insert_alternatives(const location_info& info, const AC
 { location_info info_copy { info };
 
   for (const auto& [call_or_prefix, aci] : alternatives)
-  { info_copy.zones(aci.cq_zone(), aci.itu_zone());
-
-    _db.insert( { call_or_prefix, info_copy } );
-  }
+    _db += { call_or_prefix, ( info_copy.zones(aci.cq_zone(), aci.itu_zone()), info_copy) };
 }
 
 /*! \brief              Process alternatives from a record
@@ -467,7 +466,7 @@ void location_database::_process_alternative(const cty_record& rec, const enum A
 
       info.zones(aci.cq_zone(), aci.itu_zone());
             
-      db.insert( { prefix_or_callsign, info } );
+      db += { prefix_or_callsign, info };
     };
     
   for (auto cit = alts.cbegin(); cit != alts.cend(); ++cit)
@@ -531,7 +530,7 @@ location_info location_database::info(const string& callpart) const
   
   SAFELOCK(_location_database);
 
-  LOCATION_DBTYPE::const_iterator db_posn = _db_checked.find(callsign);
+  LOCATION_DBTYPE::const_iterator db_posn { _db_checked.find(callsign) };
 
 // it's easy if there's already an entry
   if (db_posn != _db_checked.end())
@@ -541,11 +540,11 @@ location_info location_database::info(const string& callpart) const
   db_posn = _alt_call_db.find(callsign);
 
   if (db_posn != _alt_call_db.end())
-  { _db_checked.insert( { callsign, db_posn->second } );
+  { _db_checked += { callsign, db_posn->second };
     return db_posn->second;  
   }
 
-  auto insert_best_info = [=, this](const location_info& li) { _db_checked.insert( { callsign, li } );
+  auto insert_best_info = [=, this](const location_info& li) { _db_checked += { callsign, li };
                                                                 return li;
                                                              };
 
@@ -657,7 +656,7 @@ location_info location_database::info(const string& callpart) const
         }
       }
 
-      _db_checked.insert( { original_callsign, best_info } );
+      _db_checked += { original_callsign, best_info };
        
       return best_info;
     }
@@ -679,14 +678,13 @@ location_info location_database::info(const string& callpart) const
   if (parts.size() == 2)        // one slash
   {
 // see if either part matches anything in the initial database
-     LOCATION_DBTYPE::const_iterator db_posn_0 { _db.find(parts[0]) };
-     LOCATION_DBTYPE::const_iterator db_posn_1 { _db.find(parts[1]) };
-     
-    const bool found_0 { (db_posn_0 != _db.end()) };
-    const bool found_1 { (db_posn_1 != _db.end()) };
+    const LOCATION_DBTYPE::const_iterator db_posn_0 { _db.find(parts[0]) };
+    const LOCATION_DBTYPE::const_iterator db_posn_1 { _db.find(parts[1]) };
+    const bool                            found_0   { (db_posn_0 != _db.end()) };
+    const bool                            found_1   { (db_posn_1 != _db.end()) };
 
     if (found_0 and !found_1)                        // first part had an exact match
-     return insert_best_info( guess_zones(callsign, db_posn_0->second) );
+      return insert_best_info( guess_zones(callsign, db_posn_0->second) );
 
 // we have to deal with stupid calls like K4/RU4W, where the second part is an entry in cty.dat
 // add them on a case by case basis, rather than using all possible long prefixes listed in cty.dat, since this
@@ -732,14 +730,12 @@ location_info location_database::info(const string& callpart) const
           while (len <= part.length())
           { const string target { part.substr(0, len) };
 
- //           const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) };
-
             if (const LOCATION_DBTYPE::const_iterator db_posn { _db.find(target) }; db_posn != _db.end())
             { return_len = len;
               return_posn = db_posn;
             }
 
-            ++len;              // ?? *******
+            ++len;
           }
 
           return pair<unsigned int, LOCATION_DBTYPE::const_iterator> { return_len, return_posn };
@@ -775,7 +771,7 @@ location_info location_database::info(const string& callpart) const
     const location_info best_info { info(target) };   // recursive, so we need ref count in safelock
     
     _db_checked.erase(target);
-    _db_checked.insert( { callsign, best_info } );
+    _db_checked += { callsign, best_info };
         
     return best_info;   
   }

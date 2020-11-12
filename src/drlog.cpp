@@ -560,7 +560,7 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
     vector<string> tmp_ordinary_matches;                // variable in which to build interim ordered matches
 
     if (find(vec_str.begin(), vec_str.end(), callsign) != vec_str.end())
-      tmp_exact_matches.push_back(callsign);
+      tmp_exact_matches += callsign;
 
     auto is_dupe = [](const string& call) { return logbk.is_dupe(call, safe_get_band(), safe_get_mode(), rules); };
 
@@ -568,28 +568,28 @@ void update_matches_window(const T& matches, vector<pair<string, PAIR_NUMBER_TYP
     { if (cs != callsign)
       { vector<string>& tmp_matches { (is_dupe(cs) ? tmp_red_matches : ( logbk.qso_b4(cs) ? tmp_green_matches : tmp_ordinary_matches)) };
 
-        tmp_matches.push_back(cs);
+        tmp_matches += cs;
       }
     }
 
     for (const auto& cs : tmp_exact_matches)
     { if (is_dupe(cs))
-        match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
+        match_vector += { cs, colours.add(REJECT_COLOUR, win.bg()) };
       else
       { const bool qso_b4 { logbk.qso_b4(cs) };
 
-        match_vector.push_back( { cs, colours.add( (qso_b4 ? ACCEPT_COLOUR : win.fg()), win.bg() ) } );
+        match_vector += { cs, colours.add( (qso_b4 ? ACCEPT_COLOUR : win.fg()), win.bg() ) };
       }
     }
 
     for (const auto& cs : tmp_green_matches)
-      match_vector.push_back( { cs, colours.add(ACCEPT_COLOUR, win.bg()) } );
+      match_vector += { cs, colours.add(ACCEPT_COLOUR, win.bg()) };
 
     for (const auto& cs : tmp_ordinary_matches)
-      match_vector.push_back( { cs, colours.add(win.fg(), win.bg()) } );
+      match_vector += { cs, colours.add(win.fg(), win.bg()) };
 
     for (const auto& cs : tmp_red_matches)
-      match_vector.push_back( { cs, colours.add(REJECT_COLOUR, win.bg()) } );
+      match_vector += { cs, colours.add(REJECT_COLOUR, win.bg()) };
 
     win < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= match_vector;
   }
@@ -627,7 +627,7 @@ pair<frequency, MODE> get_frequency_and_mode(void)
     \return     <i>n</i> as a zero-padded string of three digits, or a four-digit string if <i>n</i> is greater than 999
 */
 inline string serial_number_string(const unsigned int n)
-  { return ( (n < 1000) ? pad_string(to_string(n), 3, PAD_LEFT, '0') : to_string(n) ); }
+  { return ( (n < 1000) ? pad_leftz(n, 3) : to_string(n) ); }
 
 /*! \brief              Calculate the sunrise time for a station
     \param  callsign    call of the station for which sunset is desired
@@ -1225,7 +1225,7 @@ int main(int argc, char** argv)
 // QUICK QSY window
     win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
     win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                  <= pad_string(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
+                  <= pad_left(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
   
 // QSLs window
     win_qsls.init(context.window_info("QSLS"s), WINDOW_NO_CURSOR);
@@ -1233,7 +1233,7 @@ int main(int argc, char** argv)
 
 // QSO NUMBER window
     win_qso_number.init(context.window_info("QSO NUMBER"s), WINDOW_NO_CURSOR);
-    win_qso_number <= pad_string(to_string(next_qso_number), win_qso_number.width());
+    win_qso_number <= pad_left(to_string(next_qso_number), win_qso_number.width());
 
 // QTC QUEUE window
     win_qtc_queue.init(context.window_info("QTC QUEUE"s), WINDOW_NO_CURSOR);
@@ -1331,7 +1331,7 @@ int main(int argc, char** argv)
 
 // SERIAL NUMBER window
     win_serial_number.init(context.window_info("SERIAL NUMBER"s), WINDOW_NO_CURSOR);
-    win_serial_number <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
+    win_serial_number <= pad_left(serial_number_string(octothorpe), win_serial_number.width());
 
 // SRSS window
     win_srss.init(context.window_info("SRSS"s), WINDOW_NO_CURSOR);
@@ -1613,8 +1613,8 @@ int main(int argc, char** argv)
 // correct QSO number (and octothorpe)
       if (!logbk.empty())
       { next_qso_number = logbk[logbk.n_qsos()].number() /* logbook is wrt 1 */  + 1;
-        win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
-        win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
+        win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(next_qso_number), win_qso_number.width());
+        win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(serial_number_string(octothorpe), win_serial_number.width());
 
 // go to band and mode of last QSO
         const QSO& last_qso { logbk[logbk.size()] };
@@ -2142,7 +2142,7 @@ void* display_rig_status(void* vp)
           { const int rit_xit_value { from_string<int>(substring(status_str, RIT_XIT_OFFSET_ENTRY, RIT_XIT_OFFSET_LENGTH)) };
 
             rit_xit_str += (status_str[RIT_XIT_PM_ENTRY] + to_string(rit_xit_value));
-            rit_xit_str = pad_string(rit_xit_str, RIT_XIT_DISPLAY_LENGTH);
+            rit_xit_str = pad_left(rit_xit_str, RIT_XIT_DISPLAY_LENGTH);
           }
 
           if (rit_xit_str.empty())
@@ -2161,7 +2161,7 @@ void* display_rig_status(void* vp)
 
           win_rig < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT
                   < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_BOLD)
-                  < pad_string(f.display_string(), 7)
+                  < pad_left(f.display_string(), 7)
                   < ( rig_is_split ? WINDOW_ATTRIBUTES::WINDOW_NOP : WINDOW_ATTRIBUTES::WINDOW_NORMAL)
                   < ( (rig_status_thread_parameters.rigp()->is_locked()) ? "L "s : "  "s )
                   < mode_str
@@ -2396,7 +2396,7 @@ void* process_rbn_info(void* vp)
                       if (is_me)
                         cluster_mult_win < COLOURS(COLOUR_YELLOW, my_cluster_mult_colour);  // darkish blue
 
-                      const string frequency_str { pad_string(be.frequency_str(), 7) };
+                      const string frequency_str { pad_left(be.frequency_str(), 7) };
 
 // highlight it if it's on our current band
                       if ( (dx_band == cur_band) or is_me)
@@ -2405,7 +2405,7 @@ void* process_rbn_info(void* vp)
                       if (is_me)
                         cluster_mult_win < WINDOW_ATTRIBUTES::WINDOW_BOLD;            // call in bold darkish blue
 
-                      cluster_mult_win < pad_string(frequency_str + SPACE_STR + dx_callsign, cluster_mult_win.width(), PAD_RIGHT);  // display it -- removed refresh
+                      cluster_mult_win < pad_right(frequency_str + SPACE_STR + dx_callsign, cluster_mult_win.width());  // display it -- removed refresh
 
                       if (is_me)
                         cluster_mult_win < COLOURS(fg_colour, bg_colour);
@@ -3622,12 +3622,12 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         if (octothorpe)
           octothorpe--;
 
-        win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(serial_number_string(octothorpe), win_serial_number.width());
+        win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(serial_number_string(octothorpe), win_serial_number.width());
 
         if (next_qso_number)
           next_qso_number--;
 
-        win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
+        win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(next_qso_number), win_qso_number.width());
 
         update_remaining_callsign_mults_window(statistics, string(), cur_band, cur_mode);
         update_remaining_country_mults_window(statistics, cur_band, cur_mode);
@@ -3765,33 +3765,25 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-KP+ -- increment octothorpe
   if (!processed and e.is_alt_and_not_ctrl() and e.symbol() == XK_KP_Add)
-    processed = ( win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width()), true );
+    processed = ( win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(serial_number_string(++octothorpe), win_serial_number.width()), true );
 
 // ALT-KP- -- decrement octothorpe
   if (!processed and e.is_alt_and_not_ctrl() and e.symbol() == XK_KP_Subtract)
-    processed = ( win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(serial_number_string(--octothorpe), win_serial_number.width()), true );
+    processed = ( win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(serial_number_string(--octothorpe), win_serial_number.width()), true );
 
 // CTRL-KP+ -- increment qso number
   if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Add)
-    processed = ( win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(++next_qso_number), win_qso_number.width()), true );
+    processed = ( win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(++next_qso_number), win_qso_number.width()), true );
 
 // CTRL-KP- -- decrement qso number
   if (!processed and e.is_ctrl_and_not_alt() and e.symbol() == XK_KP_Subtract)
-    processed = ( win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(--next_qso_number), win_qso_number.width()), true );
+    processed = ( win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(--next_qso_number), win_qso_number.width()), true );
 
 // KP Del -- remove from bandmap and add to do-not-add list and file (like .REMOVE)
   if (!processed and e.symbol() == XK_KP_Delete)
   { do_not_show(original_contents);
 
-  //  FOR_ALL(bandmaps, [=] (bandmap& bm) { bm -= original_contents;
-  //                                        bm.do_not_add(original_contents);
-  //                                      } );
-
     processed = ( win_bandmap <= (bandmaps[safe_get_band()]), true );
-    
-// add to do not show file if it exists
- //   if (!context.do_not_show_filename().empty())
- //     append_to_file(original_contents + EOL, context.do_not_show_filename());
   }
 
 // ` -- SWAP RIT and XIT
@@ -3804,7 +3796,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // CTRL-P -- dump screen
   if (!processed and e.is_control('p'))
-//    processed = (!(dump_screen().empty()));  // dump_screen returns a string, so processed is true
     processed = (dump_screen(), true);
 
 // ALT-D -- debug dump
@@ -4514,7 +4505,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
 // and any exchange multipliers
             const map<string /* field name */, MULTIPLIER_VALUES /* values */ >  old_worked_exchange_mults { statistics.worked_exchange_mults(cur_band, cur_mode) };
-            const vector<exchange_field>                                   exchange_fields           { rules.expanded_exch(canonical_prefix, qso.mode()) };
+            const vector<exchange_field>                                         exchange_fields           { rules.expanded_exch(canonical_prefix, qso.mode()) };
 
             for (const auto& exch_field : exchange_fields)
             { const string& name { exch_field.name() };
@@ -4546,8 +4537,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 // display the current statistics
             display_statistics(statistics.summary_string(rules));
             update_score_window(statistics.points(rules));
-
-//            win_active_p = &win_call;                                       // switch to the CALL window
             set_active_window(ACTIVE_WINDOW::CALL);
             win_call <= WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE;
 
@@ -4565,7 +4554,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
             bool no_exchange_mults_this_qso { true };
 
-            for (map<string, MULTIPLIER_VALUES>::const_iterator cit = old_worked_exchange_mults.begin(); cit != old_worked_exchange_mults.end() and no_exchange_mults_this_qso; ++cit)
+            for (map<string, MULTIPLIER_VALUES>::const_iterator cit { old_worked_exchange_mults.begin() }; cit != old_worked_exchange_mults.end() and no_exchange_mults_this_qso; ++cit)
             { const size_t old_size { (cit->second).size() };
 
               map<string, MULTIPLIER_VALUES>::const_iterator ncit { new_worked_exchange_mults.find(cit->first) };
@@ -4595,15 +4584,14 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
                 }
 
                 if (!difference.empty())  // assume that there's at most one entry
-                  exchange_mults_this_qso.insert( { current_exchange_mult.first, *(difference.begin()) } );
+ //                 exchange_mults_this_qso.insert( { current_exchange_mult.first, *(difference.begin()) } );
+                  exchange_mults_this_qso += { current_exchange_mult.first, *(difference.begin()) };
               }
             }
 
 // writing to disk is slow, so start the QTC now, if applicable
             if (send_qtc)
             { sending_qtc_series = false;           // initialise variable
-//              last_active_win_p = win_active_p;     // this is now CALL
-//              win_active_p = &win_log_extract;
               last_active_window = active_window;
               set_active_window(ACTIVE_WINDOW::LOG_EXTRACT);
               win_active_p->process_input(e);       // reprocess the alt-q
@@ -4682,9 +4670,9 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
           win_bandmap <= bandmap_this_band;
 
 // keep track of QSO number
-          win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(serial_number_string(++octothorpe), win_serial_number.width());
+          win_serial_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(serial_number_string(++octothorpe), win_serial_number.width());
           next_qso_number = logbk.n_qsos() + 1;
-          win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
+          win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(next_qso_number), win_qso_number.width());
 
           display_call_info(qso.callsign(), DO_NOT_DISPLAY_EXTRACT);
           update_mult_value();
@@ -4800,7 +4788,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       { if (original_posn.x() >= static_cast<int>(word_posn[word_posn.size() - 1]))  // at or after start of last word
           win <= cursor(last_filled_posn + 2, original_posn.y());
         else
-        { for (size_t index = 0; index < word_posn.size(); ++index)
+        { for (size_t index { 0 }; index < word_posn.size(); ++index)
           { if (static_cast<int>(word_posn[index]) == original_posn.x())        // at the start of a word (but not the last word)
             { win <= cursor(word_posn[index + 1], original_posn.y());
               break;
@@ -4839,9 +4827,6 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         if (end_current_word != string::npos)  // word is followed by space
         { string new_contents { (start_current_word != 0) ? substring(contents, 0, start_current_word) : string() };
 
- //         if (start_current_word != 0)
- //           new_contents = substring(contents, 0, start_current_word);
-
           new_contents += substring(contents, end_current_word + 1);
 
           win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < new_contents <= cursor(start_current_word, original_posn.y());
@@ -4856,12 +4841,8 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
         }
       }
       else  // we are at a space
-      { //const size_t next_start { next_word_posn(contents, original_posn.x()) };
-
-        if (const size_t next_start { next_word_posn(contents, original_posn.x()) }; next_start != string::npos)
-        { //const size_t next_end { contents.find_first_of(SPACE_STR, next_start) };
-
-          if (const size_t next_end { contents.find_first_of(SPACE_STR, next_start) }; next_end != string::npos)    // there is a complete word following
+      { if (const size_t next_start { next_word_posn(contents, original_posn.x()) }; next_start != string::npos)
+        { if (const size_t next_end { contents.find_first_of(SPACE_STR, next_start) }; next_end != string::npos)    // there is a complete word following
           { const string new_contents { substring(contents, 0, next_start) + substring(contents, next_end + 1) };
 
             win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < new_contents <= cursor(original_posn.x() + 1, original_posn.y());
@@ -4944,17 +4925,15 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
 
         win_call.move_cursor(posn, 0);
         win_call.refresh();
-//        win_active_p = &win_call;
         set_active_window(ACTIVE_WINDOW::CALL);
         win_exchange.move_cursor(0, 0);
       }
       else
-      { const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };                    // first empty space
+      { //const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) };                    // first empty space
 
-        if (posn != string::npos)
+        if (const size_t posn { exchange_contents.find_last_of(DIGITS_AND_UPPER_CASE_LETTERS) }; posn != string::npos)  // first empty space
         { win_exchange.move_cursor(posn + 1, 0);
           win_exchange.refresh();
- //         win_active_p = &win_exchange;
           set_active_window(ACTIVE_WINDOW::EXCHANGE);
         }
       }
@@ -5012,7 +4991,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // has anything been changed?
       bool changed { false };
 
-      for (size_t n = 0; !changed and n < new_win_log_snapshot.size(); ++n)
+      for (size_t n { 0 }; !changed and n < new_win_log_snapshot.size(); ++n)
         changed = (new_win_log_snapshot[n] != win_log_snapshot[n]);
 
       if (changed)
@@ -5020,7 +4999,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
 // get the original QSOs that were in the window
         int number_of_qsos_in_original_window { 0 };
 
-        for (size_t n = 0; n < win_log_snapshot.size(); ++n)
+        for (size_t n { 0 }; n < win_log_snapshot.size(); ++n)
           if (!remove_peripheral_spaces(win_log_snapshot[n]).empty())
             number_of_qsos_in_original_window++;
 
@@ -5029,7 +5008,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         unsigned int qso_number  { static_cast<unsigned int>(logbk.size()) };
         unsigned int n_to_remove { 0 };
 
-        for (size_t n = 0; n < win_log_snapshot.size(); ++n)
+        for (size_t n { 0 }; n < win_log_snapshot.size(); ++n)
         { if (remove_peripheral_spaces(win_log_snapshot[win_log_snapshot.size() - 1 - n]).empty())
             original_qsos.push_front(QSO());
           else
@@ -5149,7 +5128,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         scp_dynamic_db.clear();     // clears cache of parent
         fuzzy_dynamic_db.clear();
 
-        const vector<QSO> qso_vec = logbk.as_vector();
+        const vector<QSO> qso_vec { logbk.as_vector() };
 
         for (const auto& qso : qso_vec)
         { const string& callsign { qso.callsign() };
@@ -5177,7 +5156,7 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         update_remaining_exchange_mults_windows(rules, statistics, cur_band, cur_mode);
 
         next_qso_number = logbk.n_qsos() + 1;
-        win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_string(to_string(next_qso_number), win_qso_number.width());
+        win_qso_number < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE <= pad_left(to_string(next_qso_number), win_qso_number.width());
 
 // perform any changes to the bandmaps;
 // there is trickiness here because of threading
@@ -5207,7 +5186,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
         }
       }
 
- //     win_active_p = &win_call;
       set_active_window(ACTIVE_WINDOW::CALL);
       win_call < WINDOW_ATTRIBUTES::WINDOW_REFRESH;
     }
@@ -5226,7 +5204,6 @@ void process_LOG_input(window* wp, const keyboard_event& e)
   if (!processed and e.symbol() == XK_Escape)
   {
 // go back to CALL window, without making any changes
-//    win_active_p = &win_call;
     set_active_window(ACTIVE_WINDOW::CALL);
 
     win_log.hide_cursor();
@@ -5337,7 +5314,6 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   vector<string> vec_str;
 
   copy(original.cbegin(), original.cend(), back_inserter(vec_str));
-//  sort(vec_str.begin(), vec_str.end(), compare_calls);    // need to change the collation order
   SORT(vec_str, compare_calls);
 
   vector<pair<string /* prefix */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
@@ -5346,7 +5322,7 @@ void update_remaining_callsign_mults_window(running_statistics& statistics, cons
   { const bool             is_needed          { ( worked_callsign_mults.find(canonical_prefix) == worked_callsign_mults.end() ) };
     const PAIR_NUMBER_TYPE colour_pair_number { colours.add( ( is_needed ? win_remaining_callsign_mults.fg() : context.worked_mults_colour() ), win_remaining_callsign_mults.bg()) };
 
-    vec.push_back( { canonical_prefix, colour_pair_number } );
+    vec += { canonical_prefix, colour_pair_number };
   }
 
   win_remaining_callsign_mults < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT <= vec;
@@ -5365,7 +5341,6 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   vector<string> vec_str;
 
   copy(known_country_mults.cbegin(), known_country_mults.cend(), back_inserter(vec_str));
-//  sort(vec_str.begin(), vec_str.end(), compare_calls);    // non-default collation order
   SORT(vec_str, compare_calls);
 
   vector<pair<string /* country */, PAIR_NUMBER_TYPE /* colour pair number */ > > vec;
@@ -5374,7 +5349,7 @@ void update_remaining_country_mults_window(running_statistics& statistics, const
   { const bool             is_needed          { worked_country_mults.find(canonical_prefix) == worked_country_mults.cend() };
     const PAIR_NUMBER_TYPE colour_pair_number { colours.add( is_needed ? win_remaining_country_mults.fg() : context.worked_mults_colour(), win_remaining_country_mults.bg()) };
 
-    vec.push_back( { canonical_prefix, colour_pair_number } );
+    vec += { canonical_prefix, colour_pair_number };
   }
 
   win_remaining_country_mults < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT <= vec;
@@ -5405,7 +5380,7 @@ void update_remaining_exch_mults_window(const string& exch_mult_name, const cont
   { const bool             is_needed          { statistics.is_needed_exchange_mult(exch_mult_name, known_value, b, m) };
     const PAIR_NUMBER_TYPE colour_pair_number { ( is_needed ? colours.add(win.fg(), win.bg()) : colours.add(context.worked_mults_colour(),  win.bg())) };
 
-    vec.push_back( { known_value, colour_pair_number } );
+    vec += { known_value, colour_pair_number };
   }
 
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::WINDOW_TOP_LEFT <= vec;
@@ -5493,8 +5468,6 @@ void populate_win_info(const string& callsign)
   if (!names.empty())    // if we have some names from the drmaster file
   { win_name < WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-//    const string this_name { MUM_VALUE(names, callsign) };
-
     if (const string this_name { MUM_VALUE(names, callsign) }; !this_name.empty())
       win_name < this_name;
 
@@ -5510,7 +5483,7 @@ void populate_win_info(const string& callsign)
     const bool   daylight     { is_daylight(sunrise_time, sunset_time, current_time) };
 
     win_info < cursor(0, win_info.height() - 2) < location_db.canonical_prefix(callsign) < ": "s
-                                                < pad_string(bearing(callsign), 5)       < SPACE_STR
+                                                < pad_left(bearing(callsign), 5)         < SPACE_STR
                                                 < sunrise_time                           < "/"s      < sunset_time
                                                 < (daylight ? "(D)"s : "(N)"s);
 
@@ -5524,17 +5497,17 @@ void populate_win_info(const string& callsign)
     int next_y_value { win_info.height() - 3 };                 // keep track of where we are vertically in the window
 
     const vector<BAND>& permitted_bands { rules.permitted_bands() };
-    const set<MODE>& permitted_modes    { rules.permitted_modes() };
+    const set<MODE>&    permitted_modes { rules.permitted_modes() };
 
     for (const auto& this_mode : permitted_modes)
     { if (n_modes > 1)
         win_info < cursor(0, next_y_value--) < WINDOW_ATTRIBUTES::WINDOW_REVERSE < create_centred_string(MODE_NAME[this_mode], win_info.width()) < WINDOW_ATTRIBUTES::WINDOW_NORMAL;
 
 // QSOs
-      string line { pad_string("QSO"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ') };
+      string line { pad_right("QSO"s, FIRST_FIELD_WIDTH) };
 
       for (const auto& b : permitted_bands)
-        line += pad_string( ( q_history.worked(callsign, b, this_mode) ? "-"s : BAND_NAME[b] ), FIELD_WIDTH);
+        line += pad_left( ( q_history.worked(callsign, b, this_mode) ? "-"s : BAND_NAME[b] ), FIELD_WIDTH);
 
       win_info < cursor(0, next_y_value--) < line;
 
@@ -5545,14 +5518,14 @@ void populate_win_info(const string& callsign)
       { if (all_country_mults > canonical_prefix)                                           // all_country_mults is from rules, and has all the valid mults for the contest
         { const MULTIPLIER_VALUES known_country_mults { statistics.known_country_mults() };
 
-          line = pad_string("Country ["s + canonical_prefix + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+          line = pad_right("Country ["s + canonical_prefix + "]"s, FIRST_FIELD_WIDTH);
 
           for (const auto& b : permitted_bands)
           { const string per_band_indicator { (known_country_mults > canonical_prefix) ? (statistics.is_needed_country_mult(callsign, b, this_mode, rules) ? BAND_NAME[b] : "-"s )
                                                                                        : BAND_NAME.at(b)
                                             };
 
-            line += pad_string(per_band_indicator, FIELD_WIDTH);
+            line += pad_left(per_band_indicator, FIELD_WIDTH);
           }
 
           win_info < cursor(0, next_y_value--) < line;
@@ -5566,10 +5539,10 @@ void populate_win_info(const string& callsign)
       { if (const bool output_this_mult { rules.is_exchange_field_used_for_country(exch_mult_field, canonical_prefix) }; output_this_mult)
         { const string exch_mult_value { exchange_db.guess_value(callsign, exch_mult_field) };    // make best guess as to to value of this field
 
-          line = pad_string(exch_mult_field + " ["s + exch_mult_value + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+          line = pad_right(exch_mult_field + " ["s + exch_mult_value + "]"s, FIRST_FIELD_WIDTH);
 
           for (const auto& b : permitted_bands)
-            line += pad_string( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? BAND_NAME.at(b) : "-"s ), FIELD_WIDTH);
+            line += pad_left( ( statistics.is_needed_exchange_mult(exch_mult_field, exch_mult_value, b, this_mode) ? BAND_NAME.at(b) : "-"s ), FIELD_WIDTH);
 
           win_info < cursor(0, next_y_value-- ) < line;
         }
@@ -5602,10 +5575,10 @@ void populate_win_info(const string& callsign)
         SET_CALLSIGN_MULT_VALUE(callsign_mult_value, (callsign_mult == "WPXPX"s), wpx_prefix, callsign);                                                          // WPX
 
         if (!callsign_mult_value.empty())
-        { line = pad_string(callsign_mult + " ["s + callsign_mult_value + "]"s, FIRST_FIELD_WIDTH, PAD_RIGHT, ' ');
+        { line = pad_right(callsign_mult + " ["s + callsign_mult_value + "]"s, FIRST_FIELD_WIDTH);
 
           for (const auto& b : bands)
-            line += pad_string( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? BAND_NAME[b] : "-"s ), FIELD_WIDTH);
+            line += pad_left( ( statistics.is_needed_callsign_mult(callsign_mult, callsign_mult_value, b, this_mode) ? BAND_NAME[b] : "-"s ), FIELD_WIDTH);
 
           win_info < cursor(0, next_y_value-- ) < line;
         }
@@ -5633,7 +5606,7 @@ string expand_cw_message(const string& msg)
   { string octothorpe_str { to_string(octothorpe) };
 
     if (!context.short_serno())
-      octothorpe_str = pad_string(octothorpe_str, (octothorpe < 1000 ? 3 : 4), PAD_LEFT, 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
+      octothorpe_str = pad_left(octothorpe_str, (octothorpe < 1000 ? 3 : 4), 'T');  // always send at least three characters in a serno, because predictability in exchanges is important
 
     if (serno_spaces)
     { const string spaces { create_string('^', serno_spaces) };
@@ -5657,7 +5630,7 @@ string expand_cw_message(const string& msg)
       bool found_all { false };
       int  n_found   { 0 };
 
-      for (size_t n = 0; !found_all and (n < octothorpe_str.size() - 1); ++n)
+      for (size_t n { 0 }; !found_all and (n < octothorpe_str.size() - 1); ++n)
       { if (!found_all and octothorpe_str[n] == 'T')
         { octothorpe_str[n] = char_to_send;
           found_all = (++n_found == n_to_find);
@@ -5719,7 +5692,7 @@ void* simulator_thread(void* vp)
 
   const unsigned int n_qso_limit { static_cast<unsigned int>(max_n_qsos ? max_n_qsos : trl.number_of_qsos()) };    // either apply a limit or run them all
 
-  for (unsigned int n = 0; n < n_qso_limit; ++n)
+  for (unsigned int n { 0 }; n < n_qso_limit; ++n)
   { const tr_record& rec           { trl.read(n) };
     const string     str_frequency { rec.frequency() };
 
@@ -6044,18 +6017,18 @@ void update_rate_window(void)
   
   const vector<unsigned int> rate_periods { context.rate_periods() };    // in minutes
 
-  string rate_str { pad_string(EMPTY_STR, RATE_PERIOD_WIDTH) + pad_string("Qs"s, QS_WIDTH) + pad_string("Score"s, SCORE_WIDTH) };
+  string rate_str { pad_left(EMPTY_STR, RATE_PERIOD_WIDTH) + pad_left("Qs"s, QS_WIDTH) + pad_left("Score"s, SCORE_WIDTH) };
 
   if (rate_str.length() != static_cast<unsigned int>(win_rate.width()))    // LF is added automatically if a string fills a line
     rate_str += LF;
 
   for (const auto& rate_period : rate_periods)
-  { string str { pad_string(to_string(rate_period), RATE_PERIOD_WIDTH, PAD_RIGHT) };
+  { string str { pad_right(to_string(rate_period), RATE_PERIOD_WIDTH) };
 
     const pair<unsigned int, unsigned int> qs { rate.calculate_rate(rate_period * 60, context.normalise_rate() ? 3600 : 0) };
 
-    str += pad_string(to_string(qs.first), QS_WIDTH);
-    str += pad_string(separated_string(qs.second, TS), SCORE_WIDTH);
+    str += pad_left(to_string(qs.first), QS_WIDTH);
+    str += pad_left(separated_string(qs.second, TS), SCORE_WIDTH);
 
     rate_str += (str + (str.length() == static_cast<unsigned int>(win_rate.width()) ? EMPTY_STR : LF) );      // LF is added automatically if a string fills a line
   }
@@ -6066,7 +6039,8 @@ void update_rate_window(void)
 
 /// Thread function to reset the RBN or cluster connection
 void* reset_connection(void* vp)
-{ // no start_of_thread for this one, as it's all asynchronous
+{ 
+// no start_of_thread for this one, as it's all asynchronous
   dx_cluster* rbn_p { static_cast<dx_cluster*>(vp) };
 
   rbn_p->reset();
@@ -6101,7 +6075,7 @@ bool calculate_exchange_mults(QSO& qso, const contest_rules& rules)
         rv = true;
     }
 
-    new_received_exchange.push_back(field);  // leave it unchanged
+    new_received_exchange += field;  // leave it unchanged
   }
 
   qso.received_exchange(new_received_exchange);
@@ -6448,6 +6422,7 @@ void add_qso(const QSO& qso)
 
 // add to the rates
   rate.insert(qso.epoch_time(), statistics.points(rules));
+//  rate += { qso.epoch_time(), statistics.points(rules) };
 }
 
 /*! \brief              Update the individual_messages window with the message (if any) associated with a call
@@ -6805,11 +6780,7 @@ string dump_screen(const string& dump_filename)
 
   int int_x_y { 0 };
 
-//  ost << "  parameters = " << display_p << ", " << window_id << ", " << int_x_y << ", " << int_x_y << ", " << width << ", " << height << ", " << AllPlanes << ", " << ZPixmap << endl;
-
   XImage* xim_p { XGetImage(display_p, window_id, int_x_y, int_x_y, width, height, AllPlanes, ZPixmap) };
-  
-//  ost << "Returned from XGetImage" << endl;
   
   if (multithreaded)
     XUnlockDisplay(display_p);
@@ -6973,8 +6944,8 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
   static unsigned int total_qtcs_to_send;
   static unsigned int qtcs_sent;
-  static string qtc_id;
-  static qtc_series series;
+  static string       qtc_id;
+  static qtc_series   series;
   static unsigned int original_cw_speed;
 
   static const string EU { "EU"s };
@@ -7152,10 +7123,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 // log the QTC series
       append_to_file(context.qtc_filename(), series.complete_output_string());
 
- //     win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
- //     if (win_active_p == &win_call)                        // kludge for now because of prior line; perhaps build a s_a_w(window*)?
- //       set_active_window(ACTIVE_WINDOW::CALL);
- //     set_active_window(last_active_win_p ? last_active_win_p : &win_call);
       set_active_window(last_active_window);
 
 // update statistics, summary and QTC queue window
@@ -7185,10 +7152,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       append_to_file(context.qtc_filename(), series.complete_output_string());
 
- //     win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
- //     if (win_active_p == &win_call)                        // kludge for now because of prior line; perhaps build a s_a_w(window*)?
- //       set_active_window(ACTIVE_WINDOW::CALL);
- //     set_active_window(last_active_win_p ? last_active_win_p : &win_call);
       set_active_window(last_active_window);
 
 // update statistics and summary window
@@ -7201,10 +7164,6 @@ void process_QTC_input(window* wp, const keyboard_event& e)
 
       (*win_active_p) <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
 
-  //    win_active_p = (last_active_win_p ? last_active_win_p : &win_call);
-  //    if (win_active_p == &win_call)                        // kludge for now because of prior line; perhaps build a s_a_w(window*)?
-  //      set_active_window(ACTIVE_WINDOW::CALL);
-  //    set_active_window(last_active_win_p ? last_active_win_p : &win_call);
       set_active_window(last_active_window);
 
       display_statistics(statistics.summary_string(rules));
@@ -7252,7 +7211,7 @@ void process_QTC_input(window* wp, const keyboard_event& e)
   if (!processed and ( (e.is_char('n')) or (e.is_char('s'))))
   { if (cw)
     { if (const int qtc_nr { static_cast<int>(qtcs_sent) - 1 }; ( (qtc_nr >= 0) and (qtc_nr < static_cast<int>(series.size())) ))
-      { const string serno { pad_string(remove_leading(remove_peripheral_spaces(series[qtc_nr].first.serno()), '0'), 3, PAD_LEFT, 'T') };
+      { const string serno { pad_left(remove_leading(remove_peripheral_spaces(series[qtc_nr].first.serno()), '0'), 3, 'T') };
 
         send_msg(serno);
       }
@@ -7398,7 +7357,7 @@ void test_exchange_templates(const contest_rules& rules, const string& test_file
 
       for (const auto& field_name : field_names)
         if (const EFT exchange_field_eft { field_name }; exchange_field_eft.is_legal_value(target))
-          matches.push_back(field_name);
+          matches += field_name;
 
       ost << "matches for " << target << ": " << endl;
 
@@ -7504,7 +7463,7 @@ void display_statistics(const string& summary_str)
 void p3_span(const unsigned int khz_span)
 { if (context.p3())
   { if (khz_span >= 2 and khz_span <= 200)
-    { const string span_str { pad_string(to_string(khz_span * 10), 6, PAD_LEFT, '0') };
+    { const string span_str { pad_leftz((khz_span * 10), 6) };
 
       rig.raw_command("#SPN"s + span_str + ";"s);
     }
@@ -7617,15 +7576,15 @@ void update_qsls_window(const string& str)
       if (new_colour_pair != default_colour_pair)
         win_qsls.set_colour_pair(new_colour_pair);
 
-      win_qsls < pad_string(to_string(n_qsls), 3, PAD_LEFT, '0')
+      win_qsls < pad_leftz(n_qsls, 3)
                < colour_pair(default_colour_pair) < "/"s
-               < colour_pair(new_colour_pair) < pad_string(to_string(n_qsos), 3, PAD_LEFT, '0')
+               < colour_pair(new_colour_pair) < pad_leftz(n_qsos, 3)
                < colour_pair(default_colour_pair) < "/"s;
 
       if (n_qsos_this_band_mode != 0)
         win_qsls < colour_pair(colours.add( (confirmed_this_band_mode ? COLOUR_GREEN : COLOUR_RED), win_qsls.bg() ) );
 
-      win_qsls <= pad_string(to_string(n_qsos_this_band_mode), 3, PAD_LEFT, '0');
+      win_qsls <= pad_leftz(n_qsos_this_band_mode, 3);
 
       win_qsls.set_colour_pair(default_colour_pair);
     }
@@ -7712,7 +7671,7 @@ void update_qtc_queue_window(void)
     win_qtc_queue.move_cursor(0, win_height - 1);
 
     for (const auto& qe : qtc_entries_to_send)
-      win_qtc_queue <  reformat_for_wprintw(pad_string(to_string(index++), 2) + SPACE_STR + qe.to_string(), win_qtc_queue.width());
+      win_qtc_queue <  reformat_for_wprintw(pad_left(to_string(index++), 2) + SPACE_STR + qe.to_string(), win_qtc_queue.width());
   }
 
   win_qtc_queue.refresh();
@@ -7805,7 +7764,6 @@ void update_based_on_frequency_change(const frequency& f, const MODE m)
 // threads. To do that would require holding a lock for a very long time, and would nest
 // lock acquisitions dangerously
 
-// &&&  SAFELOCK(my_bandmap_entry);
   bandmap_entry mbe_copy;
 
   { SAFELOCK(my_bandmap_entry);
@@ -8125,9 +8083,9 @@ void update_best_dx(const grid_square& dx_gs, const string& callsign)
         distance_in_units = kilometres_to_miles(distance_in_units);
 
       if (distance_in_units >= greatest_distance)
-      { string str { pad_string(comma_separated_string(static_cast<int>(distance_in_units + 0.5)), 6, PAD_LEFT) };
+      { string str { pad_left(css(static_cast<int>(distance_in_units + 0.5)), 6) };
 
-        str = pad_string( (str + SPACE_STR + callsign), win_best_dx.width(), PAD_RIGHT);
+        str = pad_right( (str + SPACE_STR + callsign), win_best_dx.width());
 
         win_best_dx < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN <= str;
 
@@ -8155,15 +8113,14 @@ void populate_win_call_history(const string& callsign)
     for (const auto b : call_history_bands /* permitted_bands */)
     { const cursor c_posn { 0, line_nr++ };
 
-      win_call_history < c_posn < pad_string(BAND_NAME[b], 3);            // low band is on bottom
+      win_call_history < c_posn < pad_left(BAND_NAME[b], 3);            // low band is on bottom
 
       for (const auto m : call_history_modes /* permitted_modes*/ )
       { const unsigned int n_qsos           { olog.n_qsos(callsign, b, m) };
         const int          fg               { ( (n_qsos == 0) ?  COLOUR_WHITE : ( olog.confirmed(callsign, b, m) ? COLOUR_GREEN : COLOUR_RED ) ) };
         const auto         this_colour_pair { colours.add(fg, bg) };
 
-        win_call_history < colour_pair(this_colour_pair) < pad_string(to_string(n_qsos), 4)
-                         < colour_pair(default_colour_pair);
+        win_call_history < colour_pair(this_colour_pair) < pad_left(to_string(n_qsos), 4) < colour_pair(default_colour_pair);
       }
     }
 
@@ -8203,8 +8160,8 @@ void display_memories(void)
   for (const auto& me : memories)
   { const cursor c_posn { 0, line_nr-- };
 
-    win_memories < c_posn < to_string(number++) < " "s < (me.freq()).display_string()
-                          < pad_string(MODE_NAME[me.mode()], 5)
+    win_memories < c_posn < to_string(number++) < SPACE_STR < (me.freq()).display_string()
+                          < pad_left(MODE_NAME[me.mode()], 5)
                           < (me.drlog_mode() == DRLOG_MODE::CQ ? "  CQ"s : "  SAP"s);
   }
 
@@ -8218,7 +8175,7 @@ void update_score_window(const unsigned int score)
 { const static string RUBRIC { "Score: "s };
 
   win_score < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < RUBRIC
-            <= (pad_string(separated_string(score, TS), win_score.width() - RUBRIC.length()));
+            <= (pad_left(separated_string(score, TS), win_score.width() - RUBRIC.length()));
 }
 
 /*! \brief      Update the BANDMAP FILTER window
@@ -8265,7 +8222,7 @@ void update_quick_qsy(void)
 { quick_qsy_info = get_frequency_and_mode();
 
   win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                <= pad_string(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
+                <= pad_left(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
 }
 
 /// update the window containing the sizes of the bandmaps
@@ -8279,8 +8236,8 @@ void update_bandmap_size_window(void)
     for (const auto b : permitted_bands)
     { const cursor c_posn { 0, line_nr++ };
 
-      win_bandmap_size < c_posn < pad_string(BAND_NAME[b], 3)            // low band is on bottom
-                       < pad_string(to_string(bandmaps[b].displayed_entries().size()), 5);
+      win_bandmap_size < c_posn < pad_left(BAND_NAME[b], 3)            // low band is on bottom
+                       < pad_left(to_string(bandmaps[b].displayed_entries().size()), 5);
     }
 
     win_bandmap_size.refresh();
@@ -8337,7 +8294,7 @@ void do_not_show(const string& callsign)
     set<string, decltype(&compare_calls)> output_set(compare_calls);    // define the ordering to be callsign order
   
     for (const auto& callsign : do_not_add_set)
-      output_set.insert(callsign);
+      output_set += callsign;
     
     ofstream outfile(context.do_not_show_filename());
     
@@ -8447,9 +8404,11 @@ void adif3_build_old_log(void)
             { const bandmode bmode { BAND_FROM_ADIF3_NAME.at(rec.band()), MODE_FROM_NAME.at(rec.mode()) };
 
               if (auto it { bmode_records.find(bmode) }; it == bmode_records.end())
-                bmode_records.insert( { bmode, { rec } } );
+//                bmode_records.insert( { bmode, { rec } } );
+                bmode_records += { bmode, { rec } };
               else
-                it->second.push_back(rec);
+//                it->second.push_back(rec);
+                it->second += rec;
             }
 
 // now for each differemt band/mode
@@ -8464,10 +8423,8 @@ void adif3_build_old_log(void)
 
               do
               { idate_last_marked_qso = last_marked_qso.idate();
-                forward_idate_limit = idate_last_marked_qso + (old_qso_limit * 10000);      // forward the required number of years
-
-//                rec_index = first_qso_after(vrec, forward_idate_limit);                     // rec_index is pair: record and index of the record
-                rec_index = first_qso_after_or_confirmed_qso(vrec, forward_idate_limit, index_last_marked_qso);                     // rec_index is pair: record and index of the record
+                forward_idate_limit = ( idate_last_marked_qso + (old_qso_limit * 10'000) );                         // forward the required number of years
+                rec_index = first_qso_after_or_confirmed_qso(vrec, forward_idate_limit, index_last_marked_qso); // rec_index is pair: record and index of the record
      
                 if (rec_index.second != -1)
                 { last_marked_qso = rec_index.first;        // next marked QSO
@@ -8476,7 +8433,7 @@ void adif3_build_old_log(void)
               } while ( (forward_idate_limit < itoday) and (rec_index.second != -1) );
 
               if (last_marked_qso.date() >= cutoff_date)  // one or more QSOs are sufficiently recent to add to the old log
-                for (int n = index_last_marked_qso; n < static_cast<int>(vrec.size()); ++n)
+                for (int n { index_last_marked_qso }; n < static_cast<int>(vrec.size()); ++n)
                   add_record_to_olog(vrec[n]);
             }
           }
@@ -8511,10 +8468,10 @@ void adif3_build_old_log(void)
 void send_qtc_entry(const qtc_entry& qe, const bool logit)
 { if (cw_p)
   { const string space { (context.qtc_double_space() ? "  "s : SPACE_STR) };
-    const string serno { pad_string(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, PAD_LEFT, 'T') };
+    const string serno { pad_left(remove_leading(remove_peripheral_spaces(qe.serno()), '0'), 3, 'T') };
     const string msg   { qe.utc() + space + qe.callsign() + space + serno };
 
-    (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed will be back to full speed before the message is sent
+    (*cw_p) << msg;  // don't use cw_speed because that executes asynchronously, so the speed would be back to full speed before the message is sent
     
     if (logit)
       ost << "QTC sent: " << msg << endl;
@@ -8554,7 +8511,6 @@ bool is_daylight(const string& sunrise_time, const string& sunset_time, const st
   if (sunset_time < sunrise_time)
     return !( (current_time > sunset_time) and (current_time < sunrise_time) );
 
-//  ost << current_time << ": error calculating whether daylight for S/R, SS/CUR =: " <<  sunrise_time << ", " << sunset_time << ", " << current_time << endl;
   return false;  // should never reach here
 }
 

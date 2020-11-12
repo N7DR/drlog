@@ -90,7 +90,8 @@ void choice_equivalents::add_if_choice(const string& ch1_ch2)  // add "FIELD1+FI
 */
 void exchange_field_values::add_canonical_value(const string& cv)
 { if (_values.find(cv) == _values.end())
-    _values.insert( { cv, set<string>( { cv } ) } );
+//    _values.insert( { cv, set<string>( { cv } ) } );
+    _values += { cv, set<string>( { cv } ) };
 }
 
 /*! \brief      Add a possible value
@@ -102,7 +103,8 @@ void exchange_field_values::add_canonical_value(const string& cv)
 void exchange_field_values::add_value(const string& cv, const string& v)
 { add_canonical_value(cv);
 
-  _values[cv].insert(v);
+//  _values[cv].insert(v);
+  _values[cv] += v;
 }
 
 /*! \brief      Get all the canonical values
@@ -113,7 +115,7 @@ void exchange_field_values::add_value(const string& cv, const string& v)
 set<string> exchange_field_values::canonical_values(void) const
 { set<string> rv;
 
-  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& psss) { rv.insert(psss.first); } );
+  FOR_ALL(_values, [&rv] (const pair<string, set<string>>& psss) { rv += psss.first; } );
 
   return rv;
 }
@@ -173,7 +175,7 @@ vector<exchange_field> exchange_field::expand(void) const
 { vector<exchange_field> rv;
 
   if (!is_choice())
-  { rv.push_back(*this);
+  { rv += (*this);
     return rv;
   }
 
@@ -181,7 +183,8 @@ vector<exchange_field> exchange_field::expand(void) const
   for (const auto& this_choice : _choice)
   { const vector<exchange_field>& vec { this_choice.expand() };   // recursive
 
-    COPY_ALL(vec, back_inserter(rv));          // append to rv
+//    COPY_ALL(vec, back_inserter(rv));          // append to rv
+    rv += vec;
   }
 
   return rv;
@@ -202,7 +205,7 @@ ostream& operator<<(ostream& ost, const exchange_field& exch_f)
   { ost << endl
         << "CHOICE: " << endl;
 
-    for (size_t n = 0; n < exch_f.choice().size(); ++n)
+    for (size_t n { 0 }; n < exch_f.choice().size(); ++n)
     { ost << exch_f.choice()[n];
 
       if (n != exch_f.choice().size() - 1)
@@ -476,7 +479,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   _uba_bonus = context.uba_bonus();
 
   if (_uba_bonus)
-    _bonus_countries.insert("ON"s);                  // weird UBA scoring adds bonus for QSOs with ON
+    _bonus_countries += "ON"s;                  // weird UBA scoring adds bonus for QSOs with ON
 
 // generate the country mults; the value from context is either "ALL" or "NONE" or a comma-separated list
   if (context.country_mults_filter() == "NONE"s)
@@ -487,7 +490,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     else
     { const vector<string> countries { remove_peripheral_spaces(split_string(context.country_mults_filter(), ","s)) };
 
-      FOR_ALL(countries, [this] (const string& str) { _country_mults.insert(str); } );
+      FOR_ALL(countries, [this] (const string& prefix) { _country_mults += prefix; } );
     }
   }
 
@@ -529,17 +532,18 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
 // the sent exchange
   if (_permitted_modes > MODE_CW)
-    _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_cw().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_CW) } );
+//    _sent_exchange_names.insert( { MODE_CW, context.sent_exchange_cw().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_CW) } );
+    _sent_exchange_names += { MODE_CW, context.sent_exchange_cw().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_CW) };
 
   if (_permitted_modes > MODE_SSB)
-    _sent_exchange_names.insert( { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) } );
+    _sent_exchange_names += { MODE_SSB, context.sent_exchange_ssb().empty() ? context.sent_exchange_names() : context.sent_exchange_names(MODE_SSB) };
 
 // add the permitted bands
   const vector<string> bands_vec { remove_peripheral_spaces( split_string(context.bands(), ","s) ) };
 
   for (const auto& str : bands_vec)
   { try
-    { _permitted_bands.push_back(BAND_FROM_NAME.at(str));
+    { _permitted_bands += BAND_FROM_NAME.at(str);
     }
 
     catch (...)
@@ -556,20 +560,20 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     for (const char c : UPPER_CASE_LETTERS)
       dok_values.add_canonical_value(create_string(c));
 
-    _exch_values.push_back(dok_values);
+    _exch_values += dok_values;
   }
 
 // create expanded version
   for (const string& unexpanded_exchange_mult_name : _exchange_mults)
-  { if (!begins_with(unexpanded_exchange_mult_name, "CHOICE:"s))
-      _expanded_exchange_mults.push_back(unexpanded_exchange_mult_name);
+  { if (!begins_with(unexpanded_exchange_mult_name, "CHOICE:"s))            // not a choice
+      _expanded_exchange_mults += unexpanded_exchange_mult_name;
     else
     { const string str                     { substring(str, 7) };                                   // remove "CHOICE:"
       const vector<string> expanded_choice { remove_peripheral_spaces(split_string(str, "/"s)) };
 
       for (const string& this_expanded_name : expanded_choice)
         if (find(_expanded_exchange_mults.begin(), _expanded_exchange_mults.end(), this_expanded_name) == _expanded_exchange_mults.end() )
-          _expanded_exchange_mults.push_back(this_expanded_name);
+          _expanded_exchange_mults += this_expanded_name;
     }
   }
 
@@ -580,8 +584,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 // build expanded version of _received_exchange, and _choice_exchange_equivalents
   for (const auto& m : _permitted_modes)
   { map<string, vector<exchange_field>> expanded_exch;
-    auto& unexpanded_exch { _received_exchange.at(m) };
 
+    auto& unexpanded_exch              { _received_exchange.at(m) };
     auto& choice_equivalents_this_mode { _choice_exchange_equivalents[m] };     // map<prefix, choice_equivalents>
 
     for (const auto& qth_vec_field : unexpanded_exch)
@@ -592,21 +596,22 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
 
       for (const auto& field : vef)
       { if (!field.is_choice())
-          expanded_vef.push_back(field);
+          expanded_vef += field;
         else
         { auto& choice_equivalents_this_mode_and_cp { choice_equivalents_this_mode[prefix] };     // map<prefix, choice_equivalents>; null prefix implies applies to all
 
           choice_equivalents_this_mode_and_cp.add(field.name());
 
-          ost << "Added CHOICE field in rules::_init() for cp [" << prefix << "] : " << field << endl;
+ //         ost << "Added CHOICE field in rules::_init() for cp [" << prefix << "] : " << field << endl;
 
           const vector<exchange_field> vec { field.expand() };
 
-          copy(vec.cbegin(), vec.cend(), back_inserter(expanded_vef));
+//          copy(vec.cbegin(), vec.cend(), back_inserter(expanded_vef));
+          expanded_vef += vec;
         }
       }
 
-      expanded_exch.insert( { prefix, expanded_vef } );
+      expanded_exch += { prefix, expanded_vef };
     }
 
     _expanded_received_exchange.insert( { m, expanded_exch} );
@@ -615,7 +620,7 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
     { const vector<exchange_field>& vef { psvef.second };
 
       for (const auto& ef : vef)
-        _exchange_field_eft.insert( { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) } );
+        _exchange_field_eft += { ef.name(), EFT(ef.name(), context.path(), context.exchange_fields_filename(), context, location_db) };
     }
   }
 
@@ -627,11 +632,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
   { auto& pb { _points[m] };
 
     for (const auto& b : _permitted_bands)
-    { pb.insert( { b, EMPTY_PS } );  // default is no points
+    { pb += { b, EMPTY_PS };  // default is no points
 
       points_structure points_this_band;
-      MSI continent_points_this_band;
-      MSI country_points_this_band;
+      MSI              continent_points_this_band;
+      MSI              country_points_this_band;
 
 // parse the config file
       string context_points { context.points_string(b, m) };
@@ -678,11 +683,11 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
                   if (!countries.empty())
                   { const vector<string> country_vec { remove_peripheral_spaces(split_string(remove_peripheral_spaces(squash(countries)), ' ')) };  // use space instead of comma because we've already split on commas
 
-                    FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band.insert( { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) } ); } );
+                    FOR_ALL(country_vec, [&] (const string& country) { country_points_this_band += { location_db.canonical_prefix(country), from_string<unsigned int>(fields[2]) }; } );
                   }
                 }
                 else
-                  country_points_this_band.insert( { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) } );
+                  country_points_this_band += { location_db.canonical_prefix(fields[1]), from_string<unsigned int>(fields[2]) };
 
                 points_this_band.country_points(country_points_this_band);
 
@@ -708,10 +713,10 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
               if (!all_exchange_field_names.empty())
               {  const auto cit { all_exchange_field_names.find(inside_square_brackets) };
 
-                if (cit != all_exchange_field_names.cend())  // if found a valid exchange field name (as opposed to a name with a condition)
+                if (cit != all_exchange_field_names.cend())              // if found a valid exchange field name (as opposed to a name with a condition)
                 { const int n_points { from_string<int>(fields[1]) };    // the value after the colon
 
-                  _exchange_present_points.insert( { inside_square_brackets, n_points } );    // there is just one value for all bands and modes; this will overwrite any previous value
+                  _exchange_present_points += { inside_square_brackets, n_points };    // there is just one value for all bands and modes; this will overwrite any previous value
                 }
               }
             }
@@ -737,7 +742,8 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
       for (const auto& ef: vec_1)
       { const vector<exchange_field> vec { ef.expand() };
 
-        copy(vec.cbegin(), vec.cend(), back_inserter(leaves_vec));
+ //       copy(vec.cbegin(), vec.cend(), back_inserter(leaves_vec));
+        leaves_vec += vec;
       }
     }
   }
@@ -778,40 +784,40 @@ void contest_rules::_init(const drlog_context& context, location_database& locat
           { vector<string> lhsrhs { split_string(line, "="s) };
 
             lhs = remove_peripheral_spaces(lhsrhs[0]);
-            equivalent_values.insert(lhs);                  // canonical value
+            equivalent_values += lhs;                  // canonical value
 
             if (lhsrhs.size() != 1)
             { const string&        rhs                         { lhsrhs[1] };
               const vector<string> remaining_equivalent_values { remove_peripheral_spaces(split_string(rhs, ","s)) };
 
-              FOR_ALL(remaining_equivalent_values, [&] (const string& rev) { equivalent_values.insert(rev); });
+              FOR_ALL(remaining_equivalent_values, [&] (const string& rev) { equivalent_values += rev; });
 
-              map_canonical_to_all.insert( { lhs, equivalent_values });
+              map_canonical_to_all += { lhs, equivalent_values };
             }
           }
           else    // no "="
           { const string str { remove_peripheral_spaces(line) };
 
             if (!str.empty())
-              map_canonical_to_all.insert( { str, set<string>{ str } } );
+              map_canonical_to_all += { str, set<string>{ str } };
           }
         }
       }
 // processed all lines
-      _exch_values.push_back( { field_name, map_canonical_to_all } );    // pair<string, map<string, set<string> > >
+      _exch_values += { field_name, map_canonical_to_all };         // pair<string, map<string, set<string> > >
     }
     else
-      _exch_values.push_back( { field_name, map<string, set<string> >() } );    // pair<string, map<string, set<string> > >
+      _exch_values += { field_name, map<string, set<string> >() };  // pair<string, map<string, set<string> > >
   }
 
 // generate the sets of all acceptable values
   const set<string> field_names { all_known_field_names() };
 
-  FOR_ALL(field_names, [&] (const string& field_name) { _permitted_exchange_values.insert( { field_name, _all_exchange_values(field_name) } ); });
+  FOR_ALL(field_names, [&] (const string& field_name) { _permitted_exchange_values += { field_name, _all_exchange_values(field_name) }; });
 
 // generate all the mappings from permitted to canonical values
-  for (auto cit = _exch_values.cbegin(); cit != _exch_values.cend(); ++cit)
-    _permitted_to_canonical.insert( { cit->name(), INVERT_MAPPING(cit->values()) } );
+  for (auto cit { _exch_values.cbegin() }; cit != _exch_values.cend(); ++cit)
+    _permitted_to_canonical += { cit->name(), INVERT_MAPPING(cit->values()) };
 }
 
 /// default constructor
@@ -1064,7 +1070,7 @@ string contest_rules::canonical_value(const string& field_name, const string& ac
     return actual_value;       // we convert to the single letter version elsewhere
 
   if ((field_name == "IOTA"s) and actual_value.length() > 2)    // IOTA is special because there are so many possible received values, many of which are not canonical
-    return (substring(actual_value, 0, 2) + pad_string(substring(actual_value, 2), 3, PAD_LEFT, '0'));  // XXnnn
+    return (substring(actual_value, 0, 2) + pad_left(substring(actual_value, 2), 3, '0'));  // XXnnn
 
   set<string> ss { exch_permitted_values(field_name) };
 
@@ -1607,7 +1613,7 @@ string MULT_VALUE(const string& field_name, const string& received_value)
   }
 
   if ( (field_name == "IOTA"s) and (received_value.size() > 2) )
-    return (substring(received_value, 0, 2) + pad_string(substring(received_value, 2), 3, PAD_LEFT, '0'));  // XXnnn
+    return (substring(received_value, 0, 2) + pad_left(substring(received_value, 2), 3, '0'));  // XXnnn
 
   return received_value;
 }

@@ -98,9 +98,7 @@ QSO::QSO(void) :
   const string ascii_time(buf.data(), BUFSIZE);
   
   _utc  = ascii_time.substr(11, 8);                                                     // hh:mm:ss
-  _date = to_string(structured_time.tm_year + 1900) + "-" +
-          pad_string(to_string(structured_time.tm_mon + 1), 2, PAD_LEFT, '0') + "-" +
-          pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0');             // yyyy-mm-dd
+  _date = to_string(structured_time.tm_year + 1900) + "-"s + pad_leftz((structured_time.tm_mon + 1), 2) + "-"s + pad_leftz(structured_time.tm_mday, 2);   // yyyy-mm-dd
 }
 
 /// set TX frequency and band from a string of the form xxxxx.y
@@ -130,7 +128,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
   vector<pair<string, string> > name_value;
 
   while (cur_posn != string::npos)
-    name_value.push_back(next_name_value_pair(str, cur_posn));
+    name_value += next_name_value_pair(str, cur_posn);
 
   _sent_exchange.clear();
   _received_exchange.clear();
@@ -194,7 +192,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       processed = ( _my_call = value, true );
 
     if (!processed and (starts_with(name, "sent-"s)))
-      processed = ( _sent_exchange.push_back( { to_upper(name.substr(5)), value } ), true );
+      processed = ( _sent_exchange += { to_upper(name.substr(5)), value }, true );
 
     if (!processed and (starts_with(name, "received-"s)))
     { const string name_upper { to_upper(name.substr(9)) };
@@ -212,7 +210,7 @@ void QSO::populate_from_verbose_format(const drlog_context& context, const strin
       const bool           is_mult { is_possible_mult ? statistics.is_needed_exchange_mult(name_upper, value, _band, _mode) : false };
       const received_field rf      { name_upper, value , is_possible_mult, is_mult };
 
-      _received_exchange.push_back(rf);
+      _received_exchange += rf;
       processed = true;
     }
   }
@@ -279,7 +277,6 @@ void QSO::populate_from_log_line(const string& str)
       const frequency freq { f };
 
       processed = (_band = static_cast<BAND>(freq), true);
-//      processed = true;
     }
 
     if (!processed and (field == "CALLSIGN"s))
@@ -399,7 +396,7 @@ string QSO::cabrillo_format(const string& cabrillo_qso_template) const
   { const vector<string> template_fields { split_string(cabrillo_qso_template, ","s) };         // colon-delimited values
   
     for (const auto& template_field : template_fields)
-      individual_values.push_back(split_string(remove_peripheral_spaces(template_field), ":"s));
+      individual_values += split_string(remove_peripheral_spaces(template_field), ":"s);
   
     for (const auto& value : individual_values)
     { const unsigned int last_char_posn { from_string<unsigned int>(value[1]) + from_string<unsigned int>(value[2]) - 1 };
@@ -414,18 +411,18 @@ string QSO::cabrillo_format(const string& cabrillo_qso_template) const
   record.replace(0, 4, "QSO:"s);             // put into record
   
 // go through every possibility for every field
-  for (unsigned int n = 0; n < individual_values.size(); ++n)
+  for (unsigned int n { 0 }; n < individual_values.size(); ++n)
   { const vector<string>& vec  { individual_values[n] };
     const string          name { vec[0] };
     const unsigned int    posn { from_string<unsigned int>(vec[1]) - 1 };
     const unsigned int    len  { from_string<unsigned int>(vec[2]) };
 
-    pad_direction pdirn    { PAD_LEFT };
-    char          pad_char { ' ' };
+    PAD  pdirn    { PAD::LEFT };
+    char pad_char { ' ' };
       
     if (vec.size() == 4)
     { if (vec[3][0] == 'R')
-        pdirn = PAD_RIGHT;
+        pdirn = PAD::RIGHT;
 
       if (vec[3].size() == 2)    // if we define a pad char
         pad_char = vec[3][1];
@@ -584,34 +581,34 @@ string QSO::verbose_format(void) const
   constexpr int BAND_WIDTH      { 3 };
   constexpr int FREQUENCY_WIDTH { 7 };
 
-  static const map<string /* tx field name */, pair< int /* width */, pad_direction> > TX_WIDTH { { "sent-RST"s,    { 3, PAD_LEFT } },
-                                                                                                  { "sent-CQZONE"s, { 2, PAD_LEFT } }
-                                                                                                };
+  static const map<string /* tx field name */, pair< int /* width */, PAD> > TX_WIDTH { { "sent-RST"s,    { 3, PAD::LEFT } },
+                                                                                        { "sent-CQZONE"s, { 2, PAD::LEFT } }
+                                                                                      };
 
-  static const map<string /* tx field name */, pair< int /* width */, pad_direction> > RX_WIDTH { { "received-RST"s,    { 3, PAD_LEFT } },
-                                                                                                  { "received-CQZONE"s, { 2, PAD_LEFT } }
-                                                                                                };
+  static const map<string /* tx field name */, pair< int /* width */, PAD> > RX_WIDTH { { "received-RST"s,    { 3, PAD::LEFT } },
+                                                                                        { "received-CQZONE"s, { 2, PAD::LEFT } }
+                                                                                      };
 
   string rv;
 
   rv = "QSO: "s;
   
-  rv += "number="s + pad_string(to_string(_number), NUMBER_WIDTH);
+  rv += "number="s + pad_left(to_string(_number), NUMBER_WIDTH);
   rv += " date="s + _date;
   rv += " utc="s + _utc;
-  rv += " hiscall="s + pad_string(_callsign, CALLSIGN_WIDTH, PAD_RIGHT);
-  rv += " mode="s + pad_string(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH, PAD_RIGHT);
-  rv += " band="s + pad_string(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH, PAD_RIGHT);
-  rv += " frequency-tx="s + pad_string(_frequency_tx, FREQUENCY_WIDTH, PAD_RIGHT);
-  rv += " frequency-rx="s + pad_string( (_frequency_rx.empty() ? "0"s : _frequency_rx), FREQUENCY_WIDTH, PAD_RIGHT );
-  rv += " mycall="s + pad_string(_my_call, CALLSIGN_WIDTH, PAD_RIGHT);
+  rv += " hiscall="s + pad_right(_callsign, CALLSIGN_WIDTH);
+  rv += " mode="s + pad_right(remove_peripheral_spaces(MODE_NAME[_mode]), MODE_WIDTH);
+  rv += " band="s + pad_right(remove_peripheral_spaces(BAND_NAME[_band]), BAND_WIDTH);
+  rv += " frequency-tx="s + pad_right(_frequency_tx, FREQUENCY_WIDTH);
+  rv += " frequency-rx="s + pad_right( (_frequency_rx.empty() ? "0"s : _frequency_rx), FREQUENCY_WIDTH );
+  rv += " mycall="s + pad_right(_my_call, CALLSIGN_WIDTH);
 
   for (const auto& exch_field : _sent_exchange)
   { const string name  { "sent-"s + exch_field.first };
     const auto   cit   { TX_WIDTH.find(name) };
     const string value { (cit == TX_WIDTH.cend() ? exch_field.second : pad_string(exch_field.second, cit->second.first, cit->second.second)) };
   
-    rv += SPACE_STR + name + "="s + value;
+    rv += (SPACE_STR + name + "="s + value);
   } 
 
   for (const auto& field : _received_exchange)
@@ -619,7 +616,7 @@ string QSO::verbose_format(void) const
     const auto   cit   { RX_WIDTH.find(name) };
     const string value { (cit == RX_WIDTH.cend() ? field.value() : pad_string(field.value(), cit->second.first, cit->second.second)) };
 
-    rv += SPACE_STR + name + "="s + value;
+    rv += (SPACE_STR + name + "="s + value);
   }
 
   rv += " points="s + to_string(_points);
@@ -768,15 +765,15 @@ string QSO::log_line(void)
 
   static const string empty_prefix_str { space_string(PREFIX_FIELD_LENGTH) };
 
-  string rv { pad_string(to_string(number()), NUMBER_FIELD_LENGTH) };
+  string rv { pad_left(to_string(number()), NUMBER_FIELD_LENGTH) };
 
-  rv += pad_string(date(), DATE_FIELD_LENGTH);
-  rv += pad_string(utc(), UTC_FIELD_LENGTH);
-  rv += pad_string(MODE_NAME[mode()], MODE_FIELD_LENGTH);
-  rv += pad_string(freq(), FREQUENCY_FIELD_LENGTH);
-  rv += pad_string(pad_string(callsign(), CALL_FIELD_LENGTH, PAD_RIGHT), CALL_FIELD_LENGTH + 1);
+  rv += pad_left(date(), DATE_FIELD_LENGTH);
+  rv += pad_left(utc(), UTC_FIELD_LENGTH);
+  rv += pad_left(MODE_NAME[mode()], MODE_FIELD_LENGTH);
+  rv += pad_left(freq(), FREQUENCY_FIELD_LENGTH);
+  rv += pad_left(pad_right(callsign(), CALL_FIELD_LENGTH), CALL_FIELD_LENGTH + 1);
 
-  FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += SPACE_STR + se.second; });
+  FOR_ALL(_sent_exchange, [&] (pair<string, string> se) { rv += (SPACE_STR + se.second); });
 
 // print in same order they are present in the config file
   for (const auto& field : _received_exchange)
@@ -794,7 +791,7 @@ string QSO::log_line(void)
       {
       }
 
-      rv += (SPACE_STR + pad_string(field.value(), field_width));
+      rv += (SPACE_STR + pad_left(field.value(), field_width));
     }
   }
 
@@ -802,11 +799,11 @@ string QSO::log_line(void)
 
 // callsign mult
   if (_is_prefix_mult)
-    rv += pad_string(_prefix, PREFIX_FIELD_LENGTH);
+    rv += pad_left(_prefix, PREFIX_FIELD_LENGTH);
 
 // country mult
-  if (QSO_DISPLAY_COUNTRY_MULT)                                                         // set in drlog_context when parsing the config file
-    rv += (_is_country_mult ? pad_string(_canonical_prefix, PREFIX_FIELD_LENGTH, PAD_LEFT) : empty_prefix_str);    // sufficient for VP2E
+  if (QSO_DISPLAY_COUNTRY_MULT)                                                                         // set in drlog_context when parsing the config file
+    rv += (_is_country_mult ? pad_left(_canonical_prefix, PREFIX_FIELD_LENGTH) : empty_prefix_str);     // sufficient for VP2E
 
 // exchange mult
   for (const auto& field : _received_exchange)
@@ -821,21 +818,21 @@ string QSO::log_line(void)
     catch (...)
     { }
 
-    rv += (field.is_mult() ? pad_string(MULT_VALUE(name, field.value()), field_width + 1) : EMPTY_STR);  // TODO: think about a way to make this in a different colour
+    rv += (field.is_mult() ? pad_left(MULT_VALUE(name, field.value()), field_width + 1) : EMPTY_STR);  // TODO: think about a way to make this in a different colour
   }
 
   _log_line_fields.clear();    // make sure it's empty before we fill it
 
   static const vector<string> log_fields { "NUMBER"s, "DATE"s, "UTC"s, "MODE"s, "FREQUENCY"s, "CALLSIGN"s };
 
-  FOR_ALL(log_fields, [=, this](const string& log_field) { _log_line_fields.push_back(log_field); } );
+  FOR_ALL(log_fields, [=, this](const string& log_field) { _log_line_fields += log_field; } );
 
   for (const auto& exch_field : _sent_exchange)
-    _log_line_fields.push_back("sent-"s + exch_field.first);
+    _log_line_fields += ("sent-"s + exch_field.first);
 
   for (const auto& field : _received_exchange)
   { if (field.name() != "CALL"s)                               // SS is special
-      _log_line_fields.push_back("received-"s + field.name());
+      _log_line_fields += ("received-"s + field.name());
   }
 
   return rv;
@@ -926,23 +923,23 @@ pair<string, string> next_name_value_pair(const string& str, size_t& posn)
 { static const pair<string, string> empty_pair;
 
   if (posn >= str.size())
-    return ( posn = string::npos, empty_pair);
+    return (posn = string::npos, empty_pair);
 
   const size_t first_char_posn { str.find_first_not_of(SPACE_STR, posn) };
 
   if (first_char_posn == string::npos)
-    return ( posn = string::npos, empty_pair);
+    return (posn = string::npos, empty_pair);
 
   const size_t equals_posn { str.find("="s, first_char_posn) };
 
   if (equals_posn == string::npos)
-    return ( posn = string::npos, empty_pair);
+    return (posn = string::npos, empty_pair);
 
   const string name                  { remove_peripheral_spaces(str.substr(first_char_posn, equals_posn - first_char_posn)) };
   const size_t value_first_char_posn { str.find_first_not_of(SPACE_STR, equals_posn + 1) };
 
   if (value_first_char_posn == string::npos)
-    return ( posn = string::npos, empty_pair);
+    return (posn = string::npos, empty_pair);
 
   const size_t space_posn { str.find(SPACE_STR, value_first_char_posn) };
   const string value      { (space_posn == string::npos) ? str.substr(value_first_char_posn)

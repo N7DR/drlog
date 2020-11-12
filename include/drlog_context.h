@@ -289,7 +289,7 @@ public:
   inline drlog_context(void) = default;
 
 /// construct from file
-  drlog_context( const std::string& filename );
+  drlog_context(const std::string& filename);
 
   drlog_context(const drlog_context&) = delete;         ///< disallow copying
 

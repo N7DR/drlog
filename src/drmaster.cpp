@@ -587,9 +587,9 @@ string drmaster_line::_extract_field(const vector<string>& fields, const std::st
 */
 drmaster_line::drmaster_line(const string& line_or_call)
 { const vector<string> fields   { split_string(line_or_call, SPACE_STR) };
-  const size_t         n_fields { fields.size() };
+//  const size_t         n_fields { fields.size() };
 
-  if (n_fields == 0)
+  if (const size_t n_fields { fields.size() }; n_fields == 0)
     return;
 
   _call = to_upper(fields[0]);

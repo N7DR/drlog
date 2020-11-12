@@ -260,7 +260,7 @@ void rig_interface::rig_mode(const MODE m)
 { static pbwidth_t last_cw_bandwidth  { 200 };
   static pbwidth_t last_ssb_bandwidth { 1800 };
 
-  constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(10) };
+  constexpr std::chrono::milliseconds RETRY_TIME { milliseconds(10) };  // wait time if a retry is necessary
 
   _last_commanded_mode = m;
 
@@ -304,8 +304,7 @@ void rig_interface::rig_mode(const MODE m)
       SAFELOCK(_rig);       // hold the lock until we receive positive confirmation that the rig is properly set to correct mode and bandwidth
 
       while (retry)
-      { //SAFELOCK(_rig);
-        const pbwidth_t new_bandwidth    { ( (m == MODE_SSB) ? last_ssb_bandwidth : last_cw_bandwidth ) };
+      { const pbwidth_t new_bandwidth    { ( (m == MODE_SSB) ? last_ssb_bandwidth : last_cw_bandwidth ) };
         const pbwidth_t bandwidth_to_set { (tmp_mode == hamlib_m) ? tmp_bandwidth : new_bandwidth };
 
         status = rig_set_mode(_rigp, RIG_VFO_CURR, hamlib_m, bandwidth_to_set) ;
@@ -318,14 +317,11 @@ void rig_interface::rig_mode(const MODE m)
         if (status != RIG_OK)
           _error_alert("Error getting mode after setting mode"s);
 
-        if ( (tmp_mode != hamlib_m) or (tmp_bandwidth != new_bandwidth) )    // explicitly check the mode and bandwidth
+        if ( (tmp_mode != hamlib_m) or (tmp_bandwidth != new_bandwidth) )   // explicitly check the mode and bandwidth
           sleep_for(RETRY_TIME);
         else
-          retry = false;
+          retry = false;                                                    // we're done
       }
-
-//      if (status != RIG_OK)
-//        _error_alert("Error setting mode"s);
     }
   }
 }
@@ -403,7 +399,7 @@ bool rig_interface::split_enabled(void)
 
 // not a K3
   split_t split_mode;
-  vfo_t  tx_vfo;
+  vfo_t   tx_vfo;
 
   SAFELOCK(_rig);
 
@@ -523,7 +519,7 @@ void rig_interface::rit(const int hz)
       raw_command("RC;"s);
     else
     { const int    positive_hz { abs(hz) };
-      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0') };
+      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s) + pad_left(to_string(positive_hz), 4, '0') };
 
       raw_command("RO"s + hz_str + ";"s);
     }
@@ -656,7 +652,7 @@ void rig_interface::xit(const int hz)
       raw_command("RC;"s);
     else
     { const int    positive_hz { abs(hz) };
-      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_string(to_string(positive_hz), 4, PAD_LEFT, '0') };
+      const string hz_str      { ( (hz >= 0) ? "+"s : "-"s ) + pad_left(to_string(positive_hz), 4, '0') };
 
       raw_command("RO"s + hz_str + ";"s);
     }
@@ -765,7 +761,7 @@ void rig_interface::keyer_speed(const int wpm)
 { SAFELOCK(_rig);
 
   if (_model == RIG_MODEL_K3)
-  { string cmd { "KS"s + pad_string(to_string(wpm), 3, PAD_LEFT, '0') + ";"s };
+  { string cmd { "KS"s + pad_left(to_string(wpm), 3, '0') + ";"s };
 
     raw_command(cmd, 0);
   }
@@ -1314,7 +1310,7 @@ VFO rig_interface::tx_vfo(void)
 void rig_interface::bandwidth_a(const unsigned int hz)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { const string k3_bw_units { pad_string(to_string( (hz + 5) / 10 ), 4, PAD_LEFT, '0') };
+    { const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
 
       raw_command("BW"s + k3_bw_units + ";"s);
     }
@@ -1327,7 +1323,7 @@ void rig_interface::bandwidth_a(const unsigned int hz)
 void rig_interface::bandwidth_b(const unsigned int hz)
 { if (_rig_connected)
   { if (_model == RIG_MODEL_K3)                             // astonishingly, there is no hamlib function to do this
-    { const string k3_bw_units { pad_string(to_string( (hz + 5) / 10 ), 4, PAD_LEFT, '0') };
+    { const string k3_bw_units { pad_left(to_string( (hz + 5) / 10 ), 4, '0') };
 
       raw_command("BW$"s + k3_bw_units + ";"s);
     }

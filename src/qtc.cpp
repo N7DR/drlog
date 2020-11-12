@@ -28,7 +28,7 @@ using namespace std;
 string qtc_entry::to_string(void) const
 { constexpr unsigned int CALL_WIDTH { 12 };
 
-  return (_utc + SPACE_STR + pad_string(_callsign, CALL_WIDTH, PAD_RIGHT) + SPACE_STR + _serno);
+  return (_utc + SPACE_STR + pad_right(_callsign, CALL_WIDTH) + SPACE_STR + _serno);
 }
 
 // -----------------------------------  qtc_series  ----------------------------
@@ -44,7 +44,8 @@ string qtc_entry::to_string(void) const
 vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
 { vector<qtc_entry> rv;
 
-  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv.push_back(pqeb.first); } );
+//  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv.push_back(pqeb.first); } );
+  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv += pqeb.first; } );
 
   return rv;
 }
@@ -58,7 +59,9 @@ bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
   const bool       sent  { p.second };
 
   if (entry.valid() and (entry.callsign() != _target))
-  { _qtc_entries.push_back( { entry, sent });
+  { //_qtc_entries.push_back( { entry, sent });
+    //_qtc_entries += pair<qtc_entry, bool>({ entry, sent });
+    _qtc_entries += { entry, sent };
     return true;
   }
 
@@ -150,17 +153,17 @@ string qtc_series::output_string(const unsigned int n) const
 
   const qtc_entry qe { _qtc_entries[n].first };
 
-  string rv { pad_string(_frequency, 5) + SPACE_STR };
+  string rv { pad_left(_frequency, 5) + SPACE_STR };
 
   rv += (_mode + SPACE_STR + _date + SPACE_STR + _utc + SPACE_STR);
-  rv += substring(pad_string(_target, 13, PAD_RIGHT, ' '), 0, 13) + SPACE_STR;
+  rv += substring(pad_right(_target, 13), 0, 13) + SPACE_STR;
 
   const vector<string> qtc_ser { split_string(_id, "/"s) };
 
-  rv += pad_string(qtc_ser[0], 3, PAD_LEFT, '0') + "/"s + pad_string(qtc_ser[1], 2, PAD_LEFT, '0') + create_string(' ', 5);
-  rv += substring(pad_string(_source, 13, PAD_RIGHT, ' '), 0, 13) + SPACE_STR;
+  rv += pad_left(qtc_ser[0], 3, '0') + "/"s + pad_left(qtc_ser[1], 2, '0') + create_string(' ', 5);
+  rv += substring(pad_right(_source, 13), 0, 13) + SPACE_STR;
   rv += qe.utc() + SPACE_STR;
-  rv += substring(pad_string(qe.callsign(), 13, PAD_RIGHT, ' '), 0, 13) + SPACE_STR;
+  rv += substring(pad_right(qe.callsign(), 13), 0, 13) + SPACE_STR;
   rv += qe.serno();
 
   return rv;
@@ -170,7 +173,7 @@ string qtc_series::output_string(const unsigned int n) const
     \return     string describing all the <i>qtc_entry</i> elements
 */
 string qtc_series::complete_output_string(void) const
-{ string rv;
+{ string rv { };
 
   for (size_t n = 0; n < size(); ++n)
   { if (_qtc_entries[n].second)
@@ -197,7 +200,7 @@ window& operator<(window& win, const qtc_series& qs)
   win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT;
 
 // write the column separators
-  for (int y = 0; y < win.height(); ++y)
+  for (int y { 0 }; y < win.height(); ++y)
     win < cursor(COLUMN_WIDTH, y) < colour_pair(colours.add(GAP_COLOUR, GAP_COLOUR)) < "  ";
 
   size_t index { 0 };    // keep track of where we are in vector of entries
@@ -240,7 +243,7 @@ void qtc_database::operator+=(const qtc_series& q)
   if (q_copy.id().empty())
     q_copy.id( to_string(_qtc_db.size() + 1) + "/"s + to_string(q.size()) );
 
-  _qtc_db.push_back(q_copy);
+  _qtc_db += q_copy;
 }
 
 /*! \brief      Get one of the series in the database
@@ -313,7 +316,7 @@ void qtc_database::read(const string& filename)
       last_id = id;
 
     if (id != last_id)       // new ID?
-    { _qtc_db.push_back(series);
+    { _qtc_db += series;
 
 // do stuff, then:
       last_id = id;    // ready to process the new ID
@@ -353,7 +356,7 @@ void qtc_database::read(const string& filename)
 
 // add the last series to the database
   if (!lines.empty())
-    _qtc_db.push_back(series);
+    _qtc_db += series;
 }
 
 // -----------------------------------  qtc_buffer  ----------------------------
@@ -447,7 +450,7 @@ string qtc_buffer::unsent_list_as_string(void) const
   size_t nr { 1 };
 
   for (const qtc_entry& qe : _unsent_qtcs)
-  { rv += pad_string(to_string(nr), 4) + ": "s + qe.utc() + SPACE_STR + pad_string(qe.callsign(), 13, PAD_RIGHT) + SPACE_STR + qe.serno();
+  { rv += pad_string(to_string(nr), 4) + ": "s + qe.utc() + SPACE_STR + pad_string(qe.callsign(), 13, PAD::RIGHT) + SPACE_STR + qe.serno();
 
     if (nr++ != _unsent_qtcs.size())
       rv += EOL; 

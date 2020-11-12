@@ -334,7 +334,7 @@ public:
   { }
 
 /// location_info == location_info
-  const bool operator==(const location_info& li) const;
+  bool operator==(const location_info& li) const;
 
   READ(canonical_prefix);      ///< official prefix
   READ(continent);             ///< two-letter abbreviation for continent
@@ -480,7 +480,7 @@ public:
     Overwrites any extant entry with <i>call</i> as the key
 */
   inline void add_alt_call(const std::string& call, const location_info& li)
-    { _alt_call_db.insert( { call, li } ); }
+    { _alt_call_db += { call, li }; }
 
 /*! \brief              Get location information for a particular call or partial call
     \param  callpart    call (or partial call)
@@ -606,7 +606,7 @@ class russian_data
 {
 protected:
 
-  using RUSSIAN_DBTYPE  = decltype(location_database::_russian_db);
+  using RUSSIAN_DBTYPE = decltype(location_database::_russian_db);
 
   RUSSIAN_DBTYPE _data;          ///< map substring to the matching data
 

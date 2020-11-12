@@ -138,11 +138,6 @@ public:
 
 /// default constructor
   rig_interface(void) = default;
-//  rig_interface (void) :
-//    _last_commanded_frequency(),          // no last-commanded frequency
-//    _last_commanded_frequency_b(),        // no last-commanded frequency for VFO B
-//    _port_name()                         // no default port
-//  { }
 
 // no copy constructor
   rig_interface(const rig_interface&) = delete;
@@ -256,7 +251,7 @@ public:
 /*! \brief      Is split enabled?
     \return     whether split is enabled on the rig
 
-                This interrogates the rig; it neither reads not writes the variable rig_is_split
+    This interrogates the rig; it neither reads not writes the variable rig_is_split
 */
   bool split_enabled(void);
 

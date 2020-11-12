@@ -60,7 +60,7 @@ public:
   dx_cluster(const drlog_context& context, const POSTING_SOURCE src);
   
 /// destructor
-  /* virtual */ ~dx_cluster(void);
+  ~dx_cluster(void);
 
   dx_cluster(const dx_cluster&) = delete;       /// forbid copying
   
@@ -111,7 +111,7 @@ protected:
     
 /// does the frequency appear to be valid? Nothing fancy needed here
   inline bool _valid_frequency(void) const
-    { return (_freq.khz() >= 1'800 and _freq.khz() <= 29'700); }
+    { return ( (_freq.khz() >= 1'800) and (_freq.khz() <= 29'700) ); }
 
 public:
     
@@ -121,9 +121,6 @@ public:
     \param  post_source     the origin of the post
 */
   dx_post(const std::string& received_info, location_database& db, const enum POSTING_SOURCE post_source);
-  
-/// destructor
-//  ~dx_post(void) = default;
 
   READ(band);                   ///< band of post
   READ(callsign);               ///< callsign that was heard
@@ -180,7 +177,7 @@ public:
 
 /// convert to a string suitable for display in a window
   inline std::string to_string(void) const
-    { return ( pad_string(_frequency_str, 7, PAD_LEFT) + " "s + _callsign ); }
+    { return ( pad_left(_frequency_str, 7) + SPACE_STR + _callsign ); }
 };
 
 /*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream

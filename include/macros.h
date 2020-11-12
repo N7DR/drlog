@@ -162,6 +162,9 @@ public: \
 
 // a fairly large number of useful type-related functions
 
+template<typename T>
+using base_type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+
 // https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
 // https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
 
@@ -174,6 +177,9 @@ template<>
 struct is_int<int> 
   { constexpr static bool value { true }; };
 
+template<class T>
+constexpr bool is_int_v { is_int<T>::value };
+
 // is a type a map?
 template<class T>
 struct is_map 
@@ -184,7 +190,7 @@ struct is_map<std::map<K, V>>
   { constexpr static bool value { true }; };
 
 template<class T>
-inline constexpr bool is_map_v = is_map<T>::value;
+constexpr bool is_map_v = is_map<T>::value;
 
 // is a type a set?
 template<class T>
@@ -196,7 +202,7 @@ struct is_set<std::set<T>>
   { constexpr static bool value { true }; };
 
 template< class T>
-inline constexpr bool is_set_v = is_set<T>::value;
+constexpr bool is_set_v = is_set<T>::value;
 
 // is a type an unordered map?
 template<class T>
@@ -208,7 +214,7 @@ struct is_unordered_map<std::unordered_map<K, V>>
   { constexpr static bool value { true }; };
 
 template< class T>
-inline constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
+constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
 
 // is a type an unordered set?
 template<class T>
@@ -220,7 +226,7 @@ struct is_unordered_set<std::unordered_set<T>>
   { constexpr static bool value { true }; };
 
 template< class T>
-inline constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
+constexpr bool is_unordered_set_v = is_unordered_set<T>::value;
 
 // is a type a set or unordered set?
 template<class T>
@@ -236,7 +242,7 @@ struct is_sus<std::unordered_set<T>>
   { constexpr static bool value { true }; };
 
 template< class T>
-inline constexpr bool is_sus_v = is_sus<T>::value;
+constexpr bool is_sus_v = is_sus<T>::value;
 
 // is a type a map or unordered map?
 template<class T>
@@ -251,8 +257,46 @@ template<class K, class V>
 struct is_mum<std::unordered_map<K, V>> 
   { constexpr static bool value { true }; };
 
+template<class T>
+constexpr bool is_mum_v { is_map_v<T> or is_unordered_map_v<T> };
+
+// is a type a multimap or unordered multimap?
+template<class T>
+struct is_multimap 
+  { constexpr static bool value { false }; };
+
+template<class K, class V>
+struct is_multimap<std::multimap<K, V>> 
+  { constexpr static bool value { true }; };
+  
+template<class T>
+constexpr bool is_multimap_v { is_multimap<T>::value };
+
+template<class T>
+struct is_unordered_multimap 
+  { constexpr static bool value { false }; };
+
+template<class K, class V>
+struct is_unordered_multimap<std::unordered_multimap<K, V>> 
+  { constexpr static bool value { true }; };
+  
+template<class T>
+constexpr bool is_unordered_multimap_v { is_unordered_multimap<T>::value };
+
+template<class T>
+constexpr bool is_mmumm_v { is_multimap_v<T> or is_unordered_multimap_v<T> };
+
+// is a type a string?
+template<class T>
+struct is_string 
+  { constexpr static bool value { false }; };
+
+template<>
+struct is_string<std::string> 
+  { constexpr static bool value { true }; };
+
 template< class T>
-inline constexpr bool is_mum_v = is_mum<T>::value;
+constexpr bool is_string_v = is_string<T>::value;
 
 // is a type unsigned int?
 template<class T>
@@ -273,19 +317,8 @@ struct is_vector<std::vector<T>>
   { constexpr static bool value { true }; };
 
 template<class T>
-inline constexpr bool is_vector_v = is_vector<T>::value;
+constexpr bool is_vector_v = is_vector<T>::value;
 
-template<class T>
-struct is_string 
-  { constexpr static bool value { false }; };
-
-template<>
-struct is_string<std::string> 
-  { constexpr static bool value { true }; };
-
-template< class T>
-inline constexpr bool is_string_v = is_string<T>::value;
- 
 // current g++ does not support definition of concepts, even with -fconcepts !!
 //template<typename T>
 //concept SET_TYPE = requires(T a) 
@@ -1049,6 +1082,29 @@ public:
 
 // convenient syntactic sugar for some STL functions
 
+/*! \brief              Add an element to a MUM
+    \param  m           destination MUM
+    \param  element     element to insert
+*/
+template <typename C, typename K, typename V>
+inline void operator+=(C& mum, std::pair<K, V>&& element)
+  requires ( (is_mum_v<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>)) or
+             (is_mmumm_v<C> and (std::is_same_v<typename C::key_type, K>) and (std::is_same_v<typename C::mapped_type, V>))
+           )
+  { mum.emplace(std::move(element)); }
+
+/*! \brief              Add an element to a MUM
+    \param  m           destination MUM
+    \param  element     element to insert
+*/
+/* The perceived "wisdom" is that requires clauses are clearer than SFINAE,. In this casem that is clearly untrue.
+    Compare this to the above function, where I purposefully used requires clauses to achieve the same result
+*/
+template <typename C>
+inline void operator+=(C& mum, const std::pair<typename C::key_type, typename C::mapped_type>& il)
+  requires (is_mum_v<C> or is_mmumm_v<C>)
+  { mum.emplace(il); }
+
 /*! \brief          Write a <i>map<key, value></i> object to an output stream
     \param  ost     output stream
     \param  mp      object to write
@@ -1220,13 +1276,120 @@ template <typename C, typename F = std::less<>>
 inline void SORT(C& v, F f = F())
   { std::sort(v.begin(), v.end(), f); }
 
+/*! \brief              Add an element to a set or unordered set
+    \param  sus         destination set or unordered set
+    \param  element     element to insert
+*/
+template <typename C, typename T>
+inline void operator+=(C& sus, T&& element)
+  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
+  { sus.insert(std::forward<T>(element)); }
+
+/*! \brief              Add an element to a set or unordered set
+    \param  sus         destination set or unordered set
+    \param  element     element to insert
+*/
+template <typename C, typename T>
+inline void operator+=(C& sus, const T& element)
+  requires is_sus_v<C> and (std::is_same_v<typename C::value_type, base_type<T>>)
+  { sus.insert(element); }
+
+/*! \brief              Add an element to a set
+    \param  s           destination set
+    \param  element     element to insert
+*/
+template <typename F, typename S>
+inline void operator+=(std::set<std::pair<F, S>>& s, const std::pair<F, S>& element)
+  { s.insert(element); }
+
+/*! \brief        Append one vector to another
+    \param  dest  destination vector
+    \param  src   source vector
+    \return       <i>dest</i> with <i>src</i> appended
+*/
+template <typename V>
+  requires (is_vector_v<V>)
+inline void operator+=(V& dest, V&& src)
+  { dest.reserve(dest.size() + src.size());
+    dest.insert(dest.end(), src.begin(), src.end());
+  }
+
+/*! \brief        Append one vector to another
+    \param  dest  destination vector
+    \param  src   source vector
+    \return       <i>dest</i> with <i>src</i> appended
+*/
+template <typename V>
+  requires (is_vector_v<V>)
+inline void operator+=(V& dest, const V& src)
+  { dest.reserve(dest.size() + src.size());
+    dest.insert(dest.end(), src.begin(), src.end());
+  }
+
+/*! \brief        Concatenate two vectors
+    \param  dest  destination vector
+    \param  src   source vector
+    \return       <i>dest</i> with <i>src</i> appended
+*/
+template <typename V>
+  requires (is_vector_v<V>)
+V operator+(const V& v1, V&& v2)
+{ V rv(v1.size() + v2.size());
+
+  rv = v1;
+  rv += std::forward<V>(v2);
+  
+  return rv;
+}
+
+/*! \brief        Concatenate two vectors
+    \param  dest  destination vector
+    \param  src   source vector
+    \return       <i>dest</i> with <i>src</i> appended
+*/
+template <typename V>
+  requires (is_vector_v<V>)
+V operator+(const V& v1, const V& v2)
+{ V rv(v1.size() + v2.size());
+
+  rv = v1;
+  rv += v2;
+  
+  return rv;
+}
+
+/*! \brief              Add an element to a vector
+    \param  dest        destination vector
+    \param  element     element to append
+    \return             <i>dest</i> with <i>element</i> appended
+*/
+template <typename V, typename E>
+auto operator+(const V& v1, E&& element) -> V
+  requires is_vector_v<V> and (std::is_same_v<typename V::value_type, base_type<E>>)
+{ V rv(v1.size() + 1);
+
+  rv = v1;
+  rv.emplace_back(std::forward<E>(element));
+  
+  return rv; 
+}
+
+/*! \brief              Add an element to a vector
+    \param  v1          destination vector
+    \param  element     element to append
+*/
+template <typename V>
+inline void operator+=(V& v1, typename V::value_type&& element)
+  requires is_vector_v<V>
+{ v1.emplace_back(std::forward<typename V::value_type>(element)); }
+
 /*! \brief              Add an element to a vector
     \param  v1          destination vector
     \param  element     element to append
 */
 template <typename V, typename E>
 inline void operator+=(V& v1, const E& element)
-  requires is_vector_v<V> && (std::is_same_v<typename V::value_type, E>)
-  { v1.push_back(element); }
+  requires is_vector_v<V> and (std::is_convertible_v<E, typename V::value_type>)
+{ v1.push_back(element); }
 
 #endif    // MACROS_H

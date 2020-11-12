@@ -215,7 +215,8 @@ public:
 
   READ_AND_WRITE(colours_set);      ///< have the colours been set explicitly?
 
-  inline bool defined(void) const   ///< is the information different from the default?
+/// is the information different from the default?
+  inline bool defined(void) const
     { return (_w != 0); }
 };
 
@@ -237,21 +238,21 @@ protected:
   
   std::string   _name               { EMPTY_STR };    ///< (optional) name of window
   
-  unsigned int  _column_width;      ///< width of columns
-  int           _cursor_x;          ///< used to hold x cursor
-  int           _cursor_y;          ///< used to hold y cursor
-  bool          _echoing;           ///< whether echoing characters
-  int           _height { 0 };            ///< height
-  bool          _hidden_cursor;     ///< whether to hide the cursor
-  bool          _insert;            ///< whether in insert mode (default = false)
-  bool          _leaveok;           ///< whether leaveok is set
-  bool          _scrolling;         ///< whether scrolling is enabled
-  bool          _vertical;          ///< whether containers of strings are to be displayed vertically
-  int           _width  { 0 };          ///< width
-  int           _x      { 0 };          ///< x of origin (in proper coordinates)
-  int           _y      { 0 };          ///< y of origin (in proper coordinates)
+  unsigned int  _column_width;                  ///< width of columns
+  int           _cursor_x;                      ///< used to hold x cursor
+  int           _cursor_y;                      ///< used to hold y cursor
+  bool          _echoing;                       ///< whether echoing characters
+  int           _height         { 0 };          ///< height
+  bool          _hidden_cursor;                 ///< whether to hide the cursor
+  bool          _insert;                        ///< whether in insert mode (default = false)
+  bool          _leaveok;                       ///< whether leaveok is set
+  bool          _scrolling;                     ///< whether scrolling is enabled
+  bool          _vertical       { false };      ///< whether containers of strings are to be displayed vertically
+  int           _width          { 0 };          ///< width
+  int           _x              { 0 };          ///< x of origin (in proper coordinates)
+  int           _y              { 0 };          ///< y of origin (in proper coordinates)
   
-  WINDOW* _wp;                  ///< ncurses handle
+  WINDOW* _wp                   { nullptr };    ///< ncurses handle
   PANEL*  _pp;                  ///< panel associated with this window
 
   int    _sx;                   ///< system cursor x value
@@ -284,11 +285,9 @@ public:
 
     The window is not ready for use after this constructor: it still needs to be initialised.
 */
-  inline explicit window(const std::string& win_name = ""s, const unsigned int flags = 0) :
+  inline explicit window(const std::string& win_name = EMPTY_STR, const unsigned int flags = 0) :
     _name(win_name),
-    _vertical(false),
     _column_width(0),
-    _wp(nullptr),
     _scrolling(false),
     _hidden_cursor(flags bitand WINDOW_NO_CURSOR),
     _insert(flags bitand WINDOW_INSERT),
@@ -507,8 +506,7 @@ public:
 */
 template <class T>
 window& operator<(const T& sus)
-//  requires (is_set_v<T> == true || is_unordered_set_v<T> == true) && (std::is_same_v<typename T::value_type, std::string> == true)
-  requires (is_sus_v<T>) && (std::is_same_v<typename T::value_type, std::string>)
+  requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, std::string>)
 { if (!_wp)
     return *this;
 
@@ -519,18 +517,6 @@ window& operator<(const T& sus)
 
   return (*this < v);
 }
-
-//  window& operator<(const std::set<std::string>& ss);
-
-/*! \brief          Write a set of strings to a window
-    \param  ss      set to write
-    \return         the window
-
-    The set is written in callsign order.
-    Wraps words to new lines.
-    Stops writing if there's insufficient room for the next string.
-*/
-//  window& operator<(const std::unordered_set<std::string>& ss);
 
 /*! \brief          Write a vector of strings with possible different colours to a window
     \param  vec     vector of pairs <string, int [colour number]> to write
@@ -546,7 +532,7 @@ window& operator<(const T& sus)
 */
 template <class T>
 window& operator<(const T n)
-  requires (std::is_integral_v<T> == true)
+  requires (std::is_integral_v<T>)
     { return (*this < to_string(n)); }
 
 /*! \brief      Write an integer to a window

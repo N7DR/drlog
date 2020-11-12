@@ -115,13 +115,16 @@ unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
 
     The continents precede the canonical prefixes
 */
+#if 0
 vector<string> bandmap_filter_type::filter(void) const
-{ vector<string> rv { _continents };
+{ //vector<string> rv { _continents };
 
-  rv.insert(rv.end(), _prefixes.cbegin(), _prefixes.cend());
+  //rv.insert(rv.end(), _prefixes.cbegin(), _prefixes.cend());
 
-  return rv;
+  //return rv;
+  return (_continents + _prefixes);
 }
+#endif
 
 /*!  \brief         Add a string to, or remove a string from, the filter
      \param str     string to add or subtract
@@ -1187,7 +1190,7 @@ window& bandmap::write_to_window(window& win)
 
   for (const auto& be : entries)
   { if ( (index >= start_entry) and (index < (start_entry + maximum_number_of_displayable_entries) ) )
-    { const string entry_str     { pad_string(pad_string(be.frequency_str(), 7)  + SPACE_STR + substring(be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH, PAD_RIGHT) };
+    { const string entry_str     { pad_right(pad_left(be.frequency_str(), 7) + SPACE_STR + substring(be.callsign(), 0, MAX_CALLSIGN_WIDTH), COLUMN_WIDTH) };
       const string frequency_str { substring(entry_str, 0, 7) };
       const string callsign_str  { substring(entry_str, 8) };
       const bool   is_marker     { be.is_marker() };

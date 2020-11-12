@@ -64,13 +64,13 @@ vector<string> from_csv(experimental::string_view line)
             this_value += quote;
           }
           else                        // it's the end of the value
-          { rv.push_back(this_value);
+          { rv += this_value;
             inside_value = false;
             posn++;
           }
         }
         else                          // there are no more unread characters; declare this as the end
-        { rv.push_back(this_value);
+        { rv += this_value;
           inside_value = false;
           posn++;
         }
@@ -89,17 +89,17 @@ vector<string> from_csv(experimental::string_view line)
       else
       { if (this_char == comma)
         { if (posn < line.size() - 1)   // make sure there's at least one unread character
-          { const char next_char { line[posn + 1] };
+          { //const char next_char { line[posn + 1] };
 
-            if (next_char == comma)
-            { rv.push_back(string());   // empty value
+            if (const char next_char { line[posn + 1] }; next_char == comma)
+            { rv += string();   // empty value
               posn++;
             }
             else
               posn++;
           }
           else                        // we've finished with a comma; this is really an error, we just assume an empty last field
-          { rv.push_back(string());   // empty value
+          { rv += string();   // empty value
             posn++;
           }
         }
@@ -171,11 +171,9 @@ string date_time_string(const bool include_seconds)
 
   const string ascii_time { buf.data(), TIME_BUF_LEN };
   const string _utc       { ascii_time.substr(11, (include_seconds ? 8 : 5)) };                            // hh:mm[:ss]
-  const string _date      { to_string(structured_time.tm_year + 1900) + "-" +
-                              pad_string(to_string(structured_time.tm_mon + 1), 2, PAD_LEFT, '0') + "-" +
-                              pad_string(to_string(structured_time.tm_mday), 2, PAD_LEFT, '0') };          // yyyy-mm-dd
+  const string _date      { to_string(structured_time.tm_year + 1900) + "-"s + pad_leftz((structured_time.tm_mon + 1), 2) + "-"s + pad_leftz(structured_time.tm_mday, 2) };   // yyyy-mm-dd
 
-  return (_date + "T" + _utc);
+  return (_date + "T"s + _utc);
 }
 
 /*! \brief          Convert struct tm pointer to formatted string
@@ -190,9 +188,9 @@ string format_time(const string& format, const tm* tmp)
 
   char buf[BUFLEN];
 
-  const size_t nchars { strftime(buf, BUFLEN, format.c_str(), tmp) };
+//  const size_t nchars { strftime(buf, BUFLEN, format.c_str(), tmp) };
 
-  if (!nchars)
+  if (const size_t nchars { strftime(buf, BUFLEN, format.c_str(), tmp) }; !nchars)
     throw string_function_error(STRING_CONVERSION_FAILURE, "Unable to format time");
 
   return string(buf);
@@ -203,9 +201,11 @@ string format_time(const string& format, const tm* tmp)
     \param  old_char    character to be replaced
     \param  new_char    replacement character
     \return             <i>s</i>, with every instance of <i>old_char</i> replaced by <i>new_char</i>
+
+    Probably faster to use a more complicated algorithm with "find", as in the following function
 */
 string replace_char(const string& s, char old_char, char new_char)
-{ string rv;
+{ string rv { };
 
   FOR_ALL(s, [=, &rv] (const char c) { rv += ( (c == old_char) ? new_char : c ); } );
 
@@ -242,7 +242,7 @@ string replace(const string& s, const string& old_str, const string& new_str)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-string pad_string(const string& s, const size_t len, const enum pad_direction pad_side, const char pad_char)
+string pad_string(const string& s, const size_t len, const PAD pad_side, const char pad_char)
 { string rv { s };
 
   if (rv.length() >= len)
@@ -252,7 +252,7 @@ string pad_string(const string& s, const size_t len, const enum pad_direction pa
   
   const string pstring(n_pad_chars, pad_char);  // cannot use initializer-list
 
-  return ( (pad_side == PAD_LEFT) ? pstring + rv : rv + pstring );
+  return ( (pad_side == PAD::LEFT) ? (pstring + rv) : (rv + pstring) );
 }
 
 /*! \brief              Read the contents of a file into a single string
@@ -263,19 +263,7 @@ string pad_string(const string& s, const size_t len, const enum pad_direction pa
     of several bad things happen. Assumes that the file is a reasonable length.
 */
 string read_file(const string& filename)
-{  //std::ifstream file("file.ignore");
-   //std::string str{std::istreambuf_iterator<char>(file), {}};
-
-
-//  std::ifstream file("file.ignore", std::ios::ate);
-//  auto sz = file.tellg();
-//  file.seekg(0);
-//  std::string str(sz, '\0');
-//  file.read(&str[0], sz);
-
-// start by performing a bunch of checks
-
-  FILE* fp { fopen(filename.c_str(), "rb") };
+{ FILE* fp { fopen(filename.c_str(), "rb") };
 
   if (!fp)
     throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename);
@@ -285,9 +273,9 @@ string read_file(const string& filename)
 // check that the file is not a directory  
   struct stat stat_buffer;
 
-  const int status { ::stat(filename.c_str(), &stat_buffer) };
+//  const int status { ::stat(filename.c_str(), &stat_buffer) };
 
-  if (status)
+  if (const int status { ::stat(filename.c_str(), &stat_buffer) }; status)
     throw string_function_error(STRING_UNABLE_TO_STAT_FILE, "Unable to stat file: "s + filename);
 
   const bool is_directory { ( (stat_buffer.st_mode bitand S_IFDIR) != 0 ) };
@@ -323,40 +311,6 @@ string read_file(const vector<string>& path, const string& filename)
 
   throw string_function_error(STRING_INVALID_FILE, "Cannot open file: "s + filename + " with non-trivial path"s);
 }
-
-/*! \brief              Write a string to a (binary) file
-    \param  cs          string to write
-    \param  filename    name of file to be written
-
-    Throws exception if the file cannot be written
-*/
-
-//void write_file(const string& cs, const string& filename)
-//{ //ofstream outfile(filename.c_str(), ofstream::binary);
-
-  //outfile << cs;
-
-//  ofstream(filename.c_str(), ofstream::binary) << cs;
-
-#if 0
-  FILE* fp = fopen(filename.c_str(), "wb");
-
-  if (fp == 0)
-    throw string_function_error(STRING_UNWRITEABLE_FILE, "Cannot write to file: " + filename);
-
-  if (cs.length())
-  { char* cp = new char [cs.length()];
-
-    for (unsigned int n = 0; n < cs.length(); ++n)
-      cp[n] = cs[n];
-
-    fwrite(cp, cs.length(), 1, fp);
-    delete [] cp;
-  }
-
-  fclose(fp);
-#endif
-//}
 
 /*! \brief              Split a string into components
     \param  cs          original string
@@ -594,15 +548,8 @@ vector<string> delimited_substrings(const string& cs, const char delim_1, const 
 
   size_t start_posn { 0 };      // start posn is, and remains global (i.e., wrt cs)
 
-//  ost << "cs: " << cs << endl;
-//  ost << "start delim = " << delim_1 << ", end delim = " << delim_2 << endl;
-
-//  int counter { 0 };
-
   while ( (start_posn < cs.length() and !substring(cs, start_posn).empty()) )  // initial test so substring() doesn't write to output
-  { //ost << "start_posn = " << start_posn << endl;
-
-    const string& sstring { substring(cs, start_posn) };
+  { const string& sstring { substring(cs, start_posn) };
     const size_t  posn_1  { sstring.find(delim_1) };
 
     if (posn_1 == string::npos)             // no more starting delimiters
@@ -619,9 +566,6 @@ vector<string> delimited_substrings(const string& cs, const char delim_1, const 
       rv.push_back( sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1) );
 
     start_posn += (posn_2 + 1);   // remember, start_posn is global
-
- //   if (counter++ > 10)
- //     exit(-1);
   }
 
   return rv;

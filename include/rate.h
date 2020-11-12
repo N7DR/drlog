@@ -68,6 +68,14 @@ public:
   }
 
 /*! \brief      Insert information into <i>_data</i>
+    \param  tp  epoch, number of qsos and points at epoch
+*/
+  void operator+=(const std::pair<time_t, PAIR_NQSOS_POINTS>& tp)
+  { SAFELOCK(_rate);
+    _data.insert(tp);
+  }
+
+/*! \brief      Insert information into <i>_data</i>
     \param  t   epoch
     \param  np  number of points at epoch <i>t</i>
     \return     Whether insertion was successful

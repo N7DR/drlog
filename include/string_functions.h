@@ -60,9 +60,12 @@ static const std::string UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUV
 constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
   
 /// directions in which a string can be padded
-enum pad_direction { PAD_LEFT,                  ///< pad to the left
-                     PAD_RIGHT                  ///< pad to the right
-                   };
+//enum pad_direction { PAD_LEFT,                  ///< pad to the left
+//                     PAD_RIGHT                  ///< pad to the right
+//                   };
+enum class PAD { LEFT,                  ///< pad to the left
+                 RIGHT                  ///< pad to the right
+               };
 
 /// treatment of delimiters when manipulating string
 enum class DELIMITERS { KEEP,                   ///< include the delimiters in the output
@@ -137,6 +140,15 @@ std::string to_string(const T val)
   stream << val;
   return stream.str();
 }
+
+/*! \brief          No-op conversion to string
+    \param  val     value to convert
+    \return         <i>val</i>
+*/
+template <class T>
+  requires is_string_v<T>
+inline std::string to_string(const T& val)
+  { return val; }
 
 /*! \brief              Safe version of the substr() member function
     \param  str         string on which to operate
@@ -243,7 +255,50 @@ bool contains_digit(const std::string& str);
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-std::string pad_string(const std::string& s, const size_t len, const enum pad_direction pad_side = PAD_LEFT, const char pad_char = ' ');
+std::string pad_string(const std::string& s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
+
+//template <typename T>
+//std::string pad_string(const T& s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ')
+//  { return pad_string(to_string(s), len, pad_side, pad_char); }
+
+/*! \brief              Left pad a string to a particular size
+    \param  s           original string
+    \param  len         length of returned string
+    \param  pad_char    character with which to pad
+    \return             left padded version of <i>s</i>
+  
+    If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
+*/
+//inline std::string pad_left(const std::string& s, const size_t len, const char pad_char = ' ')
+//  { return pad_string(s, len, PAD::LEFT, pad_char); }
+template <typename T>
+inline std::string pad_left(const T& s, const size_t len, const char pad_char = ' ')
+  { return pad_string(to_string(s), len, PAD::LEFT, pad_char); }
+
+//template <typename T>
+//  requires (std::is_integral_v<T>)
+//std::string pad_left(const T& s, const size_t len, const char pad_char = '0')
+//  { return qpad_left(to_string(s), len, pad_char); }
+
+/*! \brief              Left pad an integer type with zeroes to a particular size
+    \param  s           integer value
+    \return             left padded version of <i>s</i> rendered as a string and left padded with zeroes
+*/
+template <typename T>
+  requires (std::is_integral_v<T>)
+inline std::string pad_leftz(const T& s, const size_t len)
+  { return pad_left(s, len, '0'); }
+
+/*! \brief              Right pad a string to a particular size
+    \param  s           original string
+    \param  len         length of returned string
+    \param  pad_char    character with which to pad
+    \return             right padded version of <i>s</i>
+  
+    If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
+*/
+inline std::string pad_right(const std::string& s, const size_t len, const char pad_char = ' ')
+  { return pad_string(s, len, PAD::RIGHT, pad_char); }
 
 /*! \brief              Read the contents of a file into a single string
     \param  filename    name of file to be read

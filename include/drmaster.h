@@ -76,9 +76,9 @@ class trmaster_line
 protected:
 
   std::string   _call;                                          ///< callsign
-  int           _check { 0 };                                   ///< Sweepstakes check
-  int           _cq_zone { 0 };                                 ///< CQ zone
-  int           _foc { 0 };                                     ///< FOC membership number
+  int           _check     { 0 };                               ///< Sweepstakes check
+  int           _cq_zone   { 0 };                               ///< CQ zone
+  int           _foc       { 0 };                               ///< FOC membership number
   std::string   _grid;                                          ///< Maidenhead grid locator
   int           _hit_count { 0 };                               ///< nominal number of QSOs with this station
   std::string   _itu_zone;                                      ///< ITU zone (string because of the way TR treats HQ stations)
@@ -87,7 +87,7 @@ protected:
   std::string   _qth;                                           ///< precise meaning depends on location of this station
   std::string   _section;                                       ///< ARRL section
   std::string   _speed;                                         ///< CW speed
-  int           _ten_ten { 0 };                                 ///< 10-X membership number
+  int           _ten_ten   { 0 };                               ///< 10-X membership number
   std::array<std::string, TRMASTER_N_USER_PARAMETERS> _user;    ///< user parameters
 
 public:
@@ -99,9 +99,6 @@ public:
     \param  line    line from the TRMASTER.ASC file
 */
   explicit trmaster_line(const std::string& line);
-
-/// destructor
-//  inline virtual ~trmaster_line(void) = default;
 
 /*! \brief      Convert to a string
     \return     the line as a string suitable for use in a TRMASTER file
@@ -258,9 +255,6 @@ public:
     Constructs an object that contains only the call if <i>line_or_call</i> contains a call
 */
   explicit drmaster_line(const std::string& line_or_call);
-
-/// destructor
-//  inline /* virtual */ ~drmaster_line(void) = default;
 
 /// convert to a string
   std::string to_string(void) const;

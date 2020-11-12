@@ -98,7 +98,6 @@ float bearing(const float& lat1, const float& long1, const float& lat2, const fl
     If there is no sunset or sunrise today, returns "DARK" or "LIGHT", according to whether is currently night
     or day at the given location
 */
-//string sunrise_or_sunset(const float& lat, const float& lon, const bool calc_sunset)
 string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss)
 { const string date_string { date_time_string().substr(0, 10) };
 
@@ -113,7 +112,6 @@ string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss)
 
   const float longitude { lon };     // change in sign not necessary
   const float lnghour   { longitude / 15 };
- // const float t         { n + (( (calc_sunset ? 18 : 6) - lnghour) / 24) };
   const float t         { n + (( ((srss == SRSS::SUNSET) ? 18 : 6) - lnghour) / 24) };
 
   const float m { (0.9856f * t) - 3.289f };
@@ -143,8 +141,6 @@ string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss)
 
   float cos_h { static_cast<float>((cos (90.9 * DTOR) - (sindec * sin(lat * DTOR))) / (cosdec * cos(lat * DTOR))) };
 
-//  ost << "cos_h = " << cos_h << endl;
-
 // 171128 swap DARK and LIGHT
 // 190528 swap back: OX3XR in CQ WPX CW was returning DARK
   if (cos_h > 1)
@@ -153,7 +149,6 @@ string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss)
   if (cos_h < -1)
     return "LIGHT"s;     // always light
 
-//  float h { (calc_sunset ? (acos(cos_h) * RTOD) : (360 - acos(cos_h) * RTOD)) };
   float h { (srss == SRSS::SUNSET ? (acos(cos_h) * RTOD) : (360 - acos(cos_h) * RTOD)) };
 
   h /= 15;
@@ -178,5 +173,6 @@ string sunrise_or_sunset(const float& lat, const float& lon, const SRSS srss)
   if (hrs >= 24)
     hrs -= 24;
 
-  return ( pad_string(to_string(hrs), 2, PAD_LEFT, '0') + ":"s + pad_string(to_string(mins), 2, PAD_LEFT, '0') );
+//  return ( pad_string(to_string(hrs), 2, PAD::LEFT, '0') + ":"s + pad_string(to_string(mins), 2, PAD::LEFT, '0') );
+  return ( pad_leftz(hrs, 2) + ":"s + pad_leftz(mins, 2) );
 }

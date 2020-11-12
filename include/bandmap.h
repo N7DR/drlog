@@ -85,7 +85,7 @@ public:
     Does nothing if <i>new_poster</i> is already present
 */
   inline unsigned int add(const std::string& new_poster)
-    { return ( _posters.insert(new_poster), _posters.size() ); }
+    { return ( _posters += new_poster, _posters.size() ); }
 };
 
 // -----------   bandmap_buffer ----------------
@@ -163,14 +163,14 @@ public:
 */
   inline explicit needed_mult_details(const T& v) :
     _is_needed(true)
-    { _values.insert(v); }
+    { _values += v; }
 
 /// is any value needed?
-  [[nodiscard]] inline bool is_any_value_needed(void) const
+  inline bool is_any_value_needed(void) const
     { return _is_needed; }
 
 /// is the status known?
-  [[nodiscard]] inline bool is_status_known(void) const
+  inline bool is_status_known(void) const
     { return _is_status_known; }
 
 /// is the status known?
@@ -178,7 +178,7 @@ public:
     { _is_status_known = torf; }
 
 /// return all the needed values (as a set)
-  [[nodiscard]] inline std::set<T> values(void) const
+  inline std::set<T> values(void) const
     { return _values; }
 
 /*! \brief      Add a needed value
@@ -195,7 +195,7 @@ public:
     \param  v   value to test
     \return     whether <i>v</i> is needed
 */
-  [[nodiscard]] bool is_value_needed(const T& v) const
+  bool is_value_needed(const T& v) const
   { if (!_is_needed)
       return false;
 
@@ -287,18 +287,15 @@ class bandmap_filter_type
 {
 protected:
 
-  std::vector<std::string>  _continents;     ///< continents to filter
-  bool                      _enabled;        ///< is bandmap filtering enabled?
-  bool                      _hide;           ///< are we in hide mode? (as opposed to show)
-  std::vector<std::string>  _prefixes;       ///< canonical country prefixes to filter
+  std::vector<std::string>  _continents;                ///< continents to filter
+  bool                      _enabled     { false };     ///< is bandmap filtering enabled?
+  bool                      _hide        { true };      ///< are we in hide mode? (as opposed to show)
+  std::vector<std::string>  _prefixes;                  ///< canonical country prefixes to filter
 
 public:
 
 /// default constructor
-  inline bandmap_filter_type(void) :
-    _enabled(false),
-    _hide(true)
-    { }
+  bandmap_filter_type(void) = default;
 
   READ(continents);                             ///< continents to filter
   READ_AND_WRITE(enabled);                      ///< is bandmap filtering enabled?
@@ -310,7 +307,8 @@ public:
 
     The continents precede the canonical prefixes
 */
-  std::vector<std::string> filter(void) const;
+  inline std::vector<std::string> filter(void) const
+    { return (_continents + _prefixes); } 
 
 /*!  \brief         Add a string to, or remove a string from, the filter
      \param str     string to add or subtract
@@ -344,18 +342,18 @@ protected:
   std::string                                               _callsign;                          ///< call
   std::string                                               _canonical_prefix;                  ///< canonical prefix corresponding to the call
   std::string                                               _continent;                         ///< continent corresponding to the call
-  time_t                                                    _expiration_time;                   ///< time at which this entry expires (in seconds since the epoch)
+  time_t                                                    _expiration_time  { 0 };                   ///< time at which this entry expires (in seconds since the epoch)
   frequency                                                 _freq;                              ///< QRG
   std::string                                               _frequency_str;                     ///< QRG (kHz, to 1 dp)
-  bool                                                      _is_needed;                         ///< do we need this call?
+  bool                                                      _is_needed { true };                         ///< do we need this call?
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_callsign_mult;           ///< details of needed callsign mults
   needed_mult_details<std::string>                          _is_needed_country_mult;            ///< details of needed country mults
   needed_mult_details<std::pair<std::string, std::string>>  _is_needed_exchange_mult;           ///< details of needed exchange mults
   enum MODE                                                 _mode;                              ///< mode
-  bool                                                      _mult_status_is_known;              ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
+  bool                                                      _mult_status_is_known { false };              ///< whether the multiplier status is known; true only after calculate_mult_status() has been called
   enum BANDMAP_ENTRY_SOURCE                                 _source;                            ///< the source of this entry
   time_t                                                    _time;                              ///< time (in seconds since the epoch) at which the object was created
-  time_t                                                    _time_of_earlier_bandmap_entry;     ///< time of bandmap_entry that this bandmap_entry replaced; 0 => not a replacement
+  time_t                                                    _time_of_earlier_bandmap_entry { 0 };     ///< time of bandmap_entry that this bandmap_entry replaced; 0 => not a replacement
 
 public:
 
@@ -363,19 +361,19 @@ public:
     \param  s   source of the entry (default is BANDMAP_ENTRY_LOCAL)
 */
   explicit inline bandmap_entry(const BANDMAP_ENTRY_SOURCE s = BANDMAP_ENTRY_SOURCE::LOCAL) :
-    _expiration_time(0),                  // no expiration time
-    _is_needed(true),                     // the entry is needed
-    _mult_status_is_known(false),         // multiplier status is unknown
+//    _expiration_time(0),                  // no expiration time
+//    _is_needed(true),                     // the entry is needed
+//    _mult_status_is_known(false),         // multiplier status is unknown
     _source(s),                           // source is as given in <i>s</i>
-    _time(::time(NULL)),                  // now
-    _time_of_earlier_bandmap_entry(0)     // no earlier bandmap entry
+    _time(::time(NULL))                  // now
+//    _time_of_earlier_bandmap_entry(0)     // no earlier bandmap entry
   { }
 
 /*! \brief      Define the sorting criterion to be applied to a pair of bandmap entries: sort by frequency
     \param  be  comparison bandmap_entry
     \return     whether <i>this</i> should be sorted earlier than <i>be</i>
 */
-  [[nodiscard]] inline bool operator<(const bandmap_entry& be) const
+  inline bool operator<(const bandmap_entry& be) const
     { return (_freq.hz() < be._freq.hz() ); }
 
   READ(band);                           ///< band
