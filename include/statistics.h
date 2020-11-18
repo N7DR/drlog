@@ -43,17 +43,17 @@ class running_statistics
 protected:
   
   std::map<std::string /* mult name */, multiplier>                 _callsign_multipliers;  ///< callsign multipliers (supports more than one)
-  bool                                                              _callsign_mults_used;   ///< are callsign mults used? Copied from rules
+  bool                                                              _callsign_mults_used { false };   ///< are callsign mults used? Copied from rules
 
   multiplier                                                        _country_multipliers;   ///< country multipliers
-  bool                                                              _country_mults_used;    ///< are country mults used? Copied from rules
-  bool                                                              _auto_country_mults;    ///< can the list of country multipliers change?
+  bool                                                              _country_mults_used { false };    ///< are country mults used? Copied from rules
+  bool                                                              _auto_country_mults { false };    ///< can the list of country multipliers change?
 
   std::vector<std::pair<std::string /* field name */, multiplier> > _exchange_multipliers;  ///< exchange multipliers; vector so we can keep the correct order
-  bool                                                              _exchange_mults_used;   ///< are country mults used? Copied from rules
+  bool                                                              _exchange_mults_used { false };   ///< are country mults used? Copied from rules
   std::set<std::string>                                             _exch_mult_fields;      ///< names of the exch fields that are mults
 
-  bool                                                              _include_qtcs;          ///< do we include QTC information?
+  bool                                                              _include_qtcs { false };          ///< do we include QTC information?
 
   location_database                                                 _location_db;           ///< database for location-based lookups
 
@@ -87,11 +87,6 @@ public:
 
 /// default constructor
   inline running_statistics(void) :
-    _auto_country_mults(false),
-    _callsign_mults_used(false),
-    _country_mults_used(false),
-    _exchange_mults_used(false),
-    _include_qtcs(false),
     _n_dupes( { {} } ),
     _n_qsos( { {} } ),              // Josuttis 2nd ed., p.262 -- initializes all elements with zero
     _qso_points( { {} } ),
@@ -105,7 +100,7 @@ public:
     \param  rules           rules for this contest
 */
   inline running_statistics(const cty_data& country_data, const drlog_context& context, /* const */ contest_rules& rules) :
-    _auto_country_mults(false),
+//    _auto_country_mults(false),
     _callsign_mults_used(rules.callsign_mults_used()),
     _country_mults_used(rules.country_mults_used()),
     _exchange_mults_used(rules.exchange_mults_used()),

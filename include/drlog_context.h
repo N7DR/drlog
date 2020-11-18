@@ -1,4 +1,4 @@
-// $Id: drlog_context.h 168 2020-10-07 18:34:59Z  $
+// $Id: drlog_context.h 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -250,7 +250,8 @@ protected:
   std::vector<std::pair<std::string, std::string> > _sent_exchange_cw                   { };                            ///< names and values of sent exchange fields, CW
   std::vector<std::pair<std::string, std::string> > _sent_exchange_ssb                  { };                            ///< names and values of sent exchange fields, SSB
   unsigned int                                 _serno_spaces                            { 0 };                          ///< number of half-length spaces to insert when sending serno
-  unsigned int                                 _shift_delta                             { 10 };                         ///< how many hertz to QSY per poll of the shift key
+  unsigned int                                 _shift_delta_cw                          { 10 };                         ///< how many hertz to QSY per poll of the shift key on CW
+  unsigned int                                 _shift_delta_ssb                         { 100 };                        ///< how many hertz to QSY per poll of the shift key on SSB
   unsigned int                                 _shift_poll                              { 50 };                         ///< how frequently to poll the shift key during an RIT QSY, in milliseconds
   bool                                         _short_serno                             { false };                      ///< whether to omit leading Ts
   std::string                                  _society_list_filename                   { };                            ///< name of file containing IARU society exchanges
@@ -527,7 +528,8 @@ public:
   CONTEXTREAD(sent_exchange_cw);                 ///< names and values of sent exchange fields, CW
   CONTEXTREAD(sent_exchange_ssb);                ///< names and values of sent exchange fields, SSB
   CONTEXTREAD(serno_spaces);                     ///< number of half-length spaces
-  CONTEXTREAD(shift_delta);                      ///< how many Hertz to QSY per poll of the shift key
+  CONTEXTREAD(shift_delta_cw);                   ///< how many hertz to QSY per poll of the shift key on CW
+  CONTEXTREAD(shift_delta_ssb);                  ///< how many hertz to QSY per poll of the shift key on SSB
   CONTEXTREAD(shift_poll);                       ///< how frequently is the shift key polled during an RIT QSY, in milliseconds
   CONTEXTREAD(short_serno);                      ///< whether to omit leading Ts
   CONTEXTREAD(society_list_filename);            ///< name of file containing IARU society exchanges

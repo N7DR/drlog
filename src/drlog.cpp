@@ -1,4 +1,4 @@
-// $Id: drlog.cpp 170 2020-10-26 16:44:33Z  $
+// $Id: drlog.cpp 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -343,7 +343,7 @@ unordered_map<string, string> names;                                ///< map fro
 unsigned int                  next_qso_number { 1 };                ///< actual number of next QSO
 bool                          no_default_rst { false };             ///< do we not assign a default received RST?
 unsigned int                  n_modes { 0 };                        ///< number of modes allowed in the contest
-unsigned int                  n_memories { 0 };                     ///< number of memeories on the rig
+unsigned int                  n_memories { 0 };                     ///< number of memories on the rig
 
 unsigned int            octothorpe { 1 };                   ///< serial number of next QSO
 old_log                 olog;                               ///< old (ADIF) log containing QSO and QSL information
@@ -357,10 +357,11 @@ bool                    require_dot_in_replacement_call;    ///< whether a dot i
 bool                    restored_data { false };            ///< did we restore from an archive?
 bool                    rig_is_split { false };             ///< is the rig in split mode?
 
-bool                    sending_qtc_series { false };         ///< am I senting a QTC series?
-unsigned int            serno_spaces { 0 };                   ///< number of additional half-spaces in serno
-int                     shift_delta;                        ///< step size for changing RIT (forced positive)
-unsigned int            shift_poll  { 0 };                     ///< polling interval for SHIFT keys
+bool                    sending_qtc_series { false };       ///< am I senting a QTC series?
+unsigned int            serno_spaces { 0 };                 ///< number of additional half-spaces in serno
+int                     shift_delta_cw;                     ///< step size for changing RIT (forced positive) -- CW
+int                     shift_delta_ssb;                    ///< step size for changing RIT (forced positive) -- SSB
+unsigned int            shift_poll  { 0 };                  ///< polling interval for SHIFT keys
 running_statistics      statistics;                         ///< all the QSO statistics to date
 
 // QTC variables
@@ -757,7 +758,8 @@ int main(int argc, char** argv)
     rbn_threshold                   = context.rbn_threshold();
     require_dot_in_replacement_call = context.require_dot_in_replacement_call();
     serno_spaces                    = context.serno_spaces();
-    shift_delta                     = static_cast<int>(context.shift_delta());  // forced positive int
+    shift_delta_cw                  = static_cast<int>(context.shift_delta_cw());  // forced positive int
+    shift_delta_ssb                 = static_cast<int>(context.shift_delta_ssb());  // forced positive int
     shift_poll                      = context.shift_poll();
 
     prefill_data.insert_prefill_filename_map(context.exchange_prefill_files());   
@@ -879,7 +881,7 @@ int main(int argc, char** argv)
 
 // MESSAGE window (do this as early as is reasonable so that it's available for messages)
     win_message.init(context.window_info("MESSAGE"s), WINDOW_NO_CURSOR);
-    win_message < WINDOW_ATTRIBUTES::WINDOW_BOLD <= "";                                       // use bold in this window
+    win_message < WINDOW_ATTRIBUTES::WINDOW_BOLD <= EMPTY_STR;                                       // use bold in this window
 
 // is there a log of old QSOs? If so, read and process it (in a separate thread)
     { thread thr;
@@ -1035,7 +1037,7 @@ int main(int argc, char** argv)
 
           bm += be;
 
-          bm.mode_marker_frequency(MODE_BREAK_POINT[b]);  // tel the bandmap that this is a mode marker
+          bm.mode_marker_frequency(MODE_BREAK_POINT[b]);  // tell the bandmap that this is a mode marker
         }
       }
 
@@ -1051,7 +1053,7 @@ int main(int argc, char** argv)
         { window* window_p { new window() };
 
           window_p -> init(winfo);
-          static_windows_p.push_back( { win_contents, window_p } );
+          static_windows_p += { win_contents, window_p };
         }
       }
 
@@ -1077,7 +1079,7 @@ int main(int argc, char** argv)
             { if (contains(messages_line, "["s))
                 current_message = delimited_substring(messages_line, '[', ']', DELIMITERS::DROP);       // extract this batch message
               else
-                batch_messages.insert( { remove_peripheral_spaces(messages_line) /* callsign */, current_message } );               // associate this message with the callsign on the line
+                batch_messages += { remove_peripheral_spaces(messages_line) /* callsign */, current_message };               // associate this message with the callsign on the line
             }
          }
 
@@ -1168,7 +1170,7 @@ int main(int argc, char** argv)
             const size_t  posn     { messages_line.find(":"s) };
 
             if (posn != messages_line.length() - 1)    // if the colon isn't the last character
-              individual_messages.insert( { callsign, remove_peripheral_spaces(substring(messages_line, posn + 1)) /* message */ } );
+              individual_messages += { callsign, remove_peripheral_spaces(substring(messages_line, posn + 1)) /* message */ };
           }
         }
       }
@@ -1220,12 +1222,12 @@ int main(int argc, char** argv)
 
 // POST MONITOR window
     win_monitored_posts.init(context.window_info("POST MONITOR"s), WINDOW_NO_CURSOR);
-    mp.max_entries(win_monitored_posts.height());
+    mp.max_entries(win_monitored_posts.height());               // set the size of the queue
   
 // QUICK QSY window
     win_quick_qsy.init(context.window_info("QUICK QSY"s), WINDOW_NO_CURSOR);
     win_quick_qsy < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE
-                  <= pad_left(quick_qsy_info.first.display_string(), 7) + " "s + MODE_NAME[quick_qsy_info.second];  
+                  <= pad_left(quick_qsy_info.first.display_string(), 7) + SPACE_STR + MODE_NAME[quick_qsy_info.second];  
   
 // QSLs window
     win_qsls.init(context.window_info("QSLS"s), WINDOW_NO_CURSOR);
@@ -2246,12 +2248,9 @@ void* process_rbn_info(void* vp)
 
   string unprocessed_input;             // data from the cluster that have not yet been processed by this thread
 
-//  const vector<BAND> permitted_bands_vec { rules.permitted_bands() };
-//  const set<BAND> permitted_bands_set { permitted_bands.begin(), permitted_bands.end() }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
   const set<BAND> permitted_bands_set { SET_FROM_VECTOR(permitted_bands) }; // mustn't call rules.permitted_bands() twice, because the iterators might not match
 
-//  deque<pair<string, BAND>> recent_mult_calls;                                    // the queue of recent calls posted to the mult window
-  deque<pair<string, frequency>> recent_mult_calls;                             // the queue of recent calls posted to the mult window
+  deque<pair<string, frequency>> recent_mult_calls;                             // the queue of recent calls posted to the mult window (can't be a std::queue)
 
   const int highlight_colour { static_cast<int>(colours.add(COLOUR_WHITE, COLOUR_RED)) };             // colour that will mark that we are processing a ten-second pass
   const int original_colour  { static_cast<int>(colours.add(cluster_line_win.fg(), cluster_line_win.bg())) };
@@ -2280,7 +2279,7 @@ void* process_rbn_info(void* vp)
 
 // I don't understand why the scrolling occurs automatically... in particular,
 // I don't know what causes it to scroll
-      for (unsigned int n = 0; n < lines.size(); ++n)
+      for (size_t n { 0 }; n < lines.size(); ++n)
       { win_cluster_screen < lines[n];                       // THIS causes the scroll, but I don't know why
 
         if ( (n != lines.size() - 1) or (no_cr[no_cr.length() - 1] == LF_CHAR) )
@@ -2367,8 +2366,6 @@ void* process_rbn_info(void* vp)
 
                 bool is_recent_call { false };
 
-//                ost << "size of recent_mult_calls_1 = " << recent_mult_calls_1.size() << endl;
-
                 for (const auto& call_entry : recent_mult_calls)      // look to see if this is already in the deque
                   if (!is_recent_call)
                     is_recent_call = (call_entry.first == target.first) and (target.second.difference(call_entry.second).hz() <= MAX_FREQ_SKEW); // allow for frequency skew
@@ -2383,10 +2380,10 @@ void* process_rbn_info(void* vp)
                     { const size_t QUEUE_SIZE { static_cast<size_t>(cluster_mult_win.height()) };        // make the queue the same as the height of the window
 
                       cluster_mult_win_was_changed = true;             // keep track of the fact that we're about to write changes to the window
-                      recent_mult_calls.push_back(target);
+                      recent_mult_calls += target;
 
                       while (recent_mult_calls.size() > QUEUE_SIZE)    // keep the list of recent calls to a reasonable size
-                        recent_mult_calls.pop_front();
+                        recent_mult_calls--;
 
                       cluster_mult_win < WINDOW_ATTRIBUTES::CURSOR_TOP_LEFT < WINDOW_ATTRIBUTES::WINDOW_SCROLL_DOWN;
 
@@ -2425,15 +2422,15 @@ void* process_rbn_info(void* vp)
                       bm_buffer.add(be.callsign(), post.poster());
 
                       if (bm_buffer.sufficient_posters(be.callsign()))
-                      { bandmap_insertion_queues[dx_band].push_back(be);
-                        changed_bands.insert(dx_band);          // prepare to display the bandmap if we just made a change for this band
+                      { bandmap_insertion_queues[dx_band] += be;
+                        changed_bands += dx_band;          // prepare to display the bandmap if we just made a change for this band
                       }
 
                       break;
 
                     default :
-                      bandmap_insertion_queues[dx_band].push_back(be);
-                      changed_bands.insert(dx_band);      // prepare to display the bandmap if we just made a change for this band
+                      bandmap_insertion_queues[dx_band] += be;
+                      changed_bands += dx_band;      // prepare to display the bandmap if we just made a change for this band
                   }
                 }
               }
@@ -2475,7 +2472,7 @@ void* process_rbn_info(void* vp)
       const PAIR_NUMBER_TYPE default_colours { colours.add(win_monitored_posts.fg(), win_monitored_posts.bg()) };
 
 // oldest to newest
-      for (size_t n = 0; n < entries.size(); ++n)
+      for (size_t n { 0 }; n < entries.size(); ++n)
       { win_monitored_posts < cursor(0, y++);
 
 // correct colour COLOUR_159, COLOUR_155, COLOUR_107, COLOUR_183
@@ -2603,6 +2600,8 @@ void* prune_bandmap(void* vp)
     ALT-Q         -- send QTC
     ALT-KP_4      -- decrement bandmap column offset
     ALT-KP_6      -- increment bandmap column offset
+    ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
+    ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
     CTRL-C        -- EXIT (same as .QUIT)
     CTRL-F        -- find matches for exchange in log
     CTRL-I        -- refresh geomagnetic indices
@@ -2616,9 +2615,9 @@ void* prune_bandmap(void* vp)
     ENTER, ALT-ENTER
     KP ENTER      -- send CQ #2
     KP-           -- toggle 50Hz/200Hz bandwidth if on CW
+    KP-           -- centre RIT if on SSB and RIT is on
     SPACE -- generally, dupe check
-    ALT-CTRL-LEFT-ARROW, ALT-CTRL-RIGHT-ARROW: up or down to next stn with zero QSOs on this band and mode. Uses filtered bandmap
-    ALT-CTRL-KEYPAD-LEFT-ARROW, ALT-CTRL-KEYPAD-RIGHT-ARROW: up or down to next stn with zero QSOs, or who has previously QSLed on this band and mode. Uses filtered bandmap
+
     CTRL-LEFT-ARROW, CTRL-RIGHT-ARROW, ALT-LEFT_ARROW, ALT-RIGHT-ARROW: up or down to next needed QSO or next needed mult. Uses filtered bandmap
     ALT-CTRL-KEYPAD-DOWN-ARROW, ALT-CTRL-KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
 //    KEYPAD-DOWN-ARROW, KEYPAD-UP-ARROW: up or down to next stn that matches the N7DR criteria
@@ -2999,7 +2998,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           for (const auto& band_str : bands_str)
           { try
-            { score_bands.insert(BAND_FROM_NAME.at(band_str));
+            { score_bands += BAND_FROM_NAME.at(band_str);
             }
 
             catch (...)
@@ -3042,7 +3041,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
           for (const auto& mode_str : modes_str)
           { try
-            { score_modes.insert(MODE_FROM_NAME.at(mode_str));
+            { score_modes += MODE_FROM_NAME.at(mode_str);
             }
 
             catch (...)
@@ -3063,7 +3062,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         string modes_str;
 
         for (const auto& m : score_modes)
-          modes_str += (MODE_NAME[m] + " "s);
+          modes_str += (MODE_NAME[m] + SPACE_STR);
 
         win_score_modes < WINDOW_ATTRIBUTES::WINDOW_CLEAR < "Score Modes: "s <= modes_str;
 
@@ -3217,7 +3216,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         win < WINDOW_ATTRIBUTES::WINDOW_CLEAR < WINDOW_ATTRIBUTES::CURSOR_START_OF_LINE < (contents + " DUPE"s) <= posn;
 
-        extract = logbk.worked( callsign );
+        extract = logbk.worked(callsign);
         extract.display();
 
         bandmap_entry be;
@@ -3345,7 +3344,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
                 { exchange_str += (guess + SPACE_STR);
 
                   if (exf.is_mult())                 // save the expected value of this field
-                    mult_exchange_field_value.insert( { exf.name(), guess } );
+                    mult_exchange_field_value += { exf.name(), guess };
                 }
               }
             }
@@ -3467,9 +3466,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     for (const auto& b : permitted_bands)
     { bandmap& bm { bandmaps[b] };        // use current bandmap to make it easier to display column offset
 
-      const bandmap_entry be { bm[original_contents] };
+ //     const bandmap_entry be { bm[original_contents] };
 
-      if (!be.empty())
+      if (const bandmap_entry be { bm[original_contents] }; !be.empty())
       { if (!results.empty())
           results += SPACE_STR;
         results += be.frequency_str();
@@ -3609,10 +3608,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         update_rate_window();
 
         if (!scp_db.contains(qso.callsign()))
-          scp_dbs.remove_call(qso.callsign());
+          scp_dbs -= qso.callsign();
 
         if (!fuzzy_db.contains(qso.callsign()))
-          fuzzy_dbs.remove_call(qso.callsign());
+          fuzzy_dbs -= qso.callsign();
 
 // display the current statistics
         display_statistics(statistics.summary_string(rules));
@@ -3654,7 +3653,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         if (!disk_log_lines.empty())
         { FILE* fp { fopen(context.logfile().c_str(), "w") };
 
-          for (size_t n = 0; n < disk_log_lines.size() - 1; ++n)  // don't include last QSO
+          for (size_t n { 0 }; n < disk_log_lines.size() - 1; ++n)  // don't include last QSO
           { const string line_to_write { disk_log_lines[n] + EOL };
 
             fwrite(line_to_write.c_str(), line_to_write.length(), 1, fp);
@@ -3683,8 +3682,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
   if (!processed and cursor_up and !in_scp_matching)
   { ost << "ENTERING EDITABLE LOG WINDOW" << endl;
   
-//    win_active_p = &win_log;
-//    active_window = ACTIVE_WINDOW::LOG;
     set_active_window(ACTIVE_WINDOW::LOG);
 
     win_log_snapshot = win_log.snapshot();
@@ -3721,10 +3718,10 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
       if (scp_index == -1)                  // if we haven't created the list of matches
       { all_matches.clear();
-        FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
+        FOR_ALL(scp_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
 
 // add fuzzy matches
-        FOR_ALL(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches.push_back(psi.first); } );
+        FOR_ALL(fuzzy_matches, [] (const pair<string, int>& psi) { all_matches += psi.first; } );
       }
 
       if (!all_matches.empty())                         // if there are some matches
@@ -3804,11 +3801,8 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // ALT-Q -- send QTC
   if (!processed and e.is_alt('q') and send_qtcs)
-  { //last_active_win_p = win_active_p;
-    last_active_window = active_window;
+  { last_active_window = active_window;
     set_active_window(ACTIVE_WINDOW::LOG_EXTRACT);
-
-//    win_active_p = &win_log_extract;
     sending_qtc_series = false;       // initialise variable
     win_active_p-> process_input(e);  // reprocess the alt-q
 
@@ -3955,9 +3949,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
 // F1 -- first step in SAP QSO during run
   if (!processed and (e.symbol() == XK_F1))
-  { //const string contents = remove_peripheral_spaces(win.read());
-
-    if (!original_contents.empty())
+  { if (!original_contents.empty())
     {
 // assume it's a call -- look for the same call in the current bandmap
       bandmap_entry be { bandmaps[safe_get_band()][original_contents] };
@@ -3968,7 +3960,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         rig.rig_frequency_b(be.freq());
         win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
 
-        if (old_b_band != to_BAND(be.freq()))  // stupid K3 swallows sub-receiver command if it's changed bands
+        if (old_b_band != to_BAND(be.freq()))  // stupid K3 swallows sub-receiver command if it's changed bands; may be able to remove this now
           sleep_for(milliseconds(100));
 
         rig.sub_receiver_enable();
@@ -3982,7 +3974,7 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         win_bcall < WINDOW_ATTRIBUTES::WINDOW_CLEAR <= be.callsign();
 
-        if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows sub-receiver command if it's changed bands
+        if (old_b_band != to_BAND(be.freq())) // stupid K3 swallows sub-receiver command if it's changed bands; may be able to remove this now
           sleep_for(milliseconds(100));
 
         rig.sub_receiver_enable();
@@ -4046,7 +4038,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
 
         win_call.move_cursor(posn, 0);
         win_call.refresh();
- //       win_active_p = &win_call;
         set_active_window(ACTIVE_WINDOW::CALL);
         win_exchange.move_cursor(0, 0);
       }
@@ -4056,7 +4047,6 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         if (posn != string::npos)
         { win_exchange.move_cursor(posn + 1, 0);
           win_exchange.refresh();
- //         win_active_p = &win_exchange;
           set_active_window(ACTIVE_WINDOW::EXCHANGE);
         }
       }
@@ -4141,9 +4131,24 @@ void process_CALL_input(window* wp, const keyboard_event& e)
     }
   }
 
-// KP- -- toggle 50Hz/200Hz bandwidth if on CW
+// KP- -- toggle 50Hz/200Hz bandwidth if on CW;
+// KP- -- centre RIT if on SSB and RIT is on
   if (!processed and e.is_unmodified() and e.symbol() == XK_KP_Subtract)
-    processed = cw_toggle_bandwidth();
+  { switch (safe_get_mode())
+    { case MODE_CW :
+        processed = cw_toggle_bandwidth();
+        break;
+
+      case MODE_SSB :
+        if (rig.rit_enabled())
+          rig.rit(0);
+        processed = true;
+        break;
+
+      default :
+        processed = true;
+    }
+  }
 
 // finished processing a keypress
   if (processed and (win_active_p == &win_call))  // we might have changed the active window (if sending a QTC)
@@ -4159,9 +4164,9 @@ void process_CALL_input(window* wp, const keyboard_event& e)
         win_grid <= WINDOW_ATTRIBUTES::WINDOW_CLEAR;
     }
     else
-    { const string current_contents { remove_peripheral_spaces(win.read()) };
+    { //const string current_contents { remove_peripheral_spaces(win.read()) };
 
-      if (current_contents != original_contents)
+      if (const string current_contents { remove_peripheral_spaces(win.read()) }; current_contents != original_contents)
       { display_call_info(current_contents);
 
         if (!in_scp_matching)
@@ -4697,6 +4702,10 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
     { start_recording(audio, context);
       alert("audio recording started due to activity"s);
     }
+
+// if on SSB and using RIT, centre the RIT
+    if ( (safe_get_mode() == MODE_SSB) and rig.rit_enabled() )
+      rig.rit(0);
   }        // end ENTER [log_the_qso]
 
 // SHIFT -- RIT control
@@ -4818,7 +4827,7 @@ void process_EXCHANGE_input(window* wp, const keyboard_event& e)
       if (!is_space)
       { size_t start_current_word { 0 };
 
-        for (size_t n = 0; n < word_posn.size(); ++n)
+        for (size_t n { 0 }; n < word_posn.size(); ++n)
           if (static_cast<int>(word_posn[n]) <= original_posn.x())
             start_current_word = word_posn[n];
 
@@ -6331,7 +6340,8 @@ bool is_needed_qso(const string& callsign, const BAND b, const MODE m)
     RIT changes via hamlib, at least on the K3, are *very* slow
 */
 bool shift_control(const keyboard_event& e)
-{ const int change { (e.symbol() == XK_Shift_L ? -shift_delta : shift_delta) };
+{ const int shift_delta { (safe_get_mode() == MODE_CW) ? shift_delta_cw : shift_delta_ssb };    // get the right shift for the mode
+  const int change      { (e.symbol() == XK_Shift_L)   ? -shift_delta   : shift_delta };        // are we going up or down in QRG?
 
   try
   { if (rig.rit_enabled())
@@ -8141,7 +8151,7 @@ void insert_memory(void)
     me.mode(safe_get_mode());
     me.drlog_mode(drlog_mode);
 
-    memories.push_front(me);
+    memories.push_front(me);        // NB this deque is pushed to front, popped from back
 
     while (memories.size() > n_memories)
       memories.pop_back();

@@ -1,4 +1,4 @@
-// $Id: bandmap.h 167 2020-09-19 19:43:49Z  $
+// $Id: bandmap.h 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,6 +27,7 @@
 
 #include <array>
 #include <list>
+#include <queue>
 #include <string>
 #include <utility>
 
@@ -52,7 +53,7 @@ extern old_log             olog;                                ///< old (ADIF) 
 
 constexpr unsigned int COLUMN_WIDTH { 19 };           ///< width of a column in the bandmap window
 
-using BANDMAP_INSERTION_QUEUE = std::deque<bandmap_entry>;
+using BANDMAP_INSERTION_QUEUE = std::queue<bandmap_entry>;
 
 /*! \brief          Printable version of the name of a bandmap_entry source
     \param  bes     source of a bandmap entry
@@ -720,15 +721,15 @@ class bandmap
 {
 protected:
 
-  pt_mutex                        _bandmap_mutex;                             ///< mutex for this bandmap
-  int                             _column_offset;                             ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
-  int                             _cull_function;                             ///< cull function number to apply
+  pt_mutex                        _bandmap_mutex          { "DEFAULT BANDMAP"s };      ///< mutex for this bandmap
+  int                             _column_offset          { 0 };                       ///< number of columns to offset start of displayed entries; used if there are two many entries to display them all
+  int                             _cull_function          { 0 };                       ///< cull function number to apply
   std::unordered_set<std::string> _do_not_add;                                ///< do not add these calls
   BM_ENTRIES                      _entries;                                   ///< all the entries
   std::vector<COLOUR_TYPE>        _fade_colours;                              ///< the colours to use as entries age
   decltype(_entries)              _filtered_entries;                          ///< entries, with the filter applied
-  bool                            _filtered_entries_dirty;                    ///< is the filtered version dirty?
-  bandmap_filter_type*            _filter_p;                                  ///< pointer to a bandmap filter
+  bool                            _filtered_entries_dirty { false };          ///< is the filtered version dirty?
+  bandmap_filter_type*            _filter_p               { &BMF };                         ///< pointer to a bandmap filter
   frequency                       _mode_marker_frequency;                     ///< the frequency of the mode marker
   unsigned int                    _rbn_threshold;                             ///< number of posters needed before a station appears in the bandmap
   decltype(_entries)              _rbn_threshold_and_filtered_entries;        ///< entries, with the filter and RBN threshold applied
@@ -774,11 +775,6 @@ public:
 
 /// default constructor
   inline bandmap(void) :
-    _bandmap_mutex { "DEFAULT BANDMAP"s },
-    _column_offset(0),
-    _cull_function(0),
-    _filtered_entries_dirty(false),
-    _filter_p(&BMF),
     _mode_marker_frequency(frequency(0)),
     _rbn_threshold(1),
     _rbn_threshold_and_filtered_entries_dirty(false),
@@ -1170,7 +1166,5 @@ inline window& operator<(window& win, bandmap& bm)
     \return         the output stream
 */
 std::ostream& operator<<(std::ostream& ost, bandmap& bm);
-
-//using BANDMAP_MEM_FUN_P = bandmap_entry (bandmap::*)(const enum BANDMAP_DIRECTION);    ///< allow other files to access some functions in a useful, simple  manner; has to be at end, after bandmap defined
 
 #endif    // BANDMAP_H

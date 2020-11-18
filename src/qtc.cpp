@@ -44,7 +44,6 @@ string qtc_entry::to_string(void) const
 vector<qtc_entry> qtc_series::_sent_or_unsent_qtc_entries(const bool sent) const
 { vector<qtc_entry> rv;
 
-//  FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv.push_back(pqeb.first); } );
   FOR_ALL(_qtc_entries, [&] (const pair<qtc_entry, bool>& pqeb) { if ( (sent ? pqeb.second : !pqeb.second) ) rv += pqeb.first; } );
 
   return rv;
@@ -59,9 +58,7 @@ bool qtc_series::operator+=(const pair<qtc_entry, bool>& p)
   const bool       sent  { p.second };
 
   if (entry.valid() and (entry.callsign() != _target))
-  { //_qtc_entries.push_back( { entry, sent });
-    //_qtc_entries += pair<qtc_entry, bool>({ entry, sent });
-    _qtc_entries += { entry, sent };
+  { _qtc_entries += { entry, sent };
     return true;
   }
 
@@ -125,7 +122,7 @@ qtc_entry qtc_series::first_not_sent(const unsigned int posn)
 unsigned int qtc_series::n_sent(void) const
 { unsigned int rv { 0 };
 
-  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool> & pqeb) { if (pqeb.second) rv++; } );
+  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool>& pqeb) { if (pqeb.second) rv++; } );
 
   return rv;
 }
@@ -136,7 +133,7 @@ unsigned int qtc_series::n_sent(void) const
 unsigned int qtc_series::n_unsent(void) const
 { unsigned int rv { 0 };
 
-  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool> & pqeb) { if (!pqeb.second) rv++; } );
+  FOR_ALL(_qtc_entries, [&rv] (const pair<qtc_entry, bool>& pqeb) { if (!pqeb.second) rv++; } );
 
   return rv;
 }
@@ -175,7 +172,7 @@ string qtc_series::output_string(const unsigned int n) const
 string qtc_series::complete_output_string(void) const
 { string rv { };
 
-  for (size_t n = 0; n < size(); ++n)
+  for (size_t n { 0 }; n < size(); ++n)
   { if (_qtc_entries[n].second)
       rv += (output_string(n) + EOL);
   }
@@ -209,8 +206,7 @@ window& operator<(window& win, const qtc_series& qs)
 
   for (const auto& pr : qtc_entries)
   { const string entry_str { pr.first.to_string() };
-
-    int cpu { static_cast<int>(colours.add(win.fg(), pr.second ? COLOUR_RED : win.bg())) };
+    const int    cpu       { static_cast<int>(colours.add(win.fg(), pr.second ? COLOUR_RED : win.bg())) };
 
 // work out where to start the display of this call
     const unsigned int x { static_cast<unsigned int>( (index / win.height()) * (COLUMN_WIDTH + COLUMN_GAP) ) };

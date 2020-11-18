@@ -94,6 +94,15 @@ public:
   inline bool remove_call(const std::string& call)
     { return ( (_db[ _to_valid_size(call.length()) ].erase(call)) != 0 ); }
 
+/*! \brief          Remove a call from the database
+    \param  call    call to be removed
+    \return         whether <i>call</i> was actually removed
+
+    Does nothing and returns <i>false</i> if <i>call</i> is not in the database
+*/
+//  inline bool operator-=(const std::string& call)
+//    { return remove_call(call); }
+
 /*! \brief          Is a call in the database?
     \param  call    call to be removed
     \return         whether <i>call</i> is present in the database
@@ -129,10 +138,7 @@ protected:
 public:
 
 /// default constructor
-  inline fuzzy_databases(void) = default;
-
-/// destructor
-//  inline virtual ~fuzzy_databases(void) = default;
+  fuzzy_databases(void) = default;
 
 /// add a database to those that are consulted
   inline void add_db(fuzzy_database& db)
@@ -144,6 +150,10 @@ public:
 
 /// remove a call ... goes through databases in reverse priority order until a removal is successful
   void remove_call(const std::string& call);
+
+/// remove a call ... goes through databases in reverse priority order until a removal is successful
+  inline void operator-=(const std::string& call)
+    { remove_call(call); }
 
 /*! \brief          Return matches
     \param  key     basic call against which to compare

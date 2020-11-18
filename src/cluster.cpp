@@ -416,16 +416,6 @@ ostream& operator<<(ostream& ost, const dx_post& dxp)
     \brief  An entry in the container of monitored posts
 */
 
-/*! \brief          Constructor
-    \param  post    post from cluster or RBN
-*/
-//monitored_posts_entry::monitored_posts_entry(const dx_post& post) :
-//  _callsign(post.callsign()),
-//  _frequency_str(post.frequency_str()),
-//  _expiration(post.time_processed() + MONITORED_POSTS_DURATION),
-//  _band(post.band())
-//{ }
-
 /*! \brief          Write a <i>monitored_posts_entry</i> object to an output stream
     \param  ost     output stream
     \param  mpe     object to write
@@ -482,17 +472,18 @@ void monitored_posts::operator+=(const dx_post& post)
   }
 
   if (stop_search and !found_call_and_band)
-  { _entries.push_back(mpe);
+  { _entries += mpe;
     _is_dirty = true;
   }
 
   if (!stop_search)
-  { _entries.push_back(mpe);
+  { _entries += mpe;
     _is_dirty = true;
   }
 
   while (_entries.size() > _max_entries)  // should happen only once at most
-  { _entries.pop_front();
+  { //_entries.pop_front();
+    _entries--;
     _is_dirty = true;                     // should be unnecessary, since should already be true
   }
 }

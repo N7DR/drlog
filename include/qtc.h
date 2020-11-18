@@ -1,4 +1,4 @@
-// $Id: qtc.h 164 2020-08-16 19:57:42Z  $
+// $Id: qtc.h 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

@@ -426,7 +426,7 @@ adif3_file::adif3_file(const string& filename)
     
     if (start_posn != string::npos)
     { push_back(rec);
-      _map_data.insert( { rec.callsign(), rec } );
+      _map_data += { rec.callsign(), rec };
     }
   }
 }
@@ -463,7 +463,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign, cons
   
   for_each(begin_it, end_it, [=, &rv](const auto& map_entry) 
     { if ( (map_entry.second.band() == b) and (map_entry.second.mode() == m) ) 
-        rv.push_back(map_entry.second); 
+        rv += map_entry.second; 
     });
   
   return rv;
@@ -478,7 +478,7 @@ std::vector<adif3_record> adif3_file::matching_qsos(const string& callsign) cons
 
   const auto [begin_it, end_it] { _map_data.equal_range(callsign) };
   
-  for_each(begin_it, end_it, [=, &rv](const auto& map_entry) { rv.push_back(map_entry.second); });
+  for_each(begin_it, end_it, [=, &rv](const auto& map_entry) { rv += map_entry.second; });
   
   return rv;
 }

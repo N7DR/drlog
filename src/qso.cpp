@@ -1,4 +1,4 @@
-// $Id: qso.cpp 167 2020-09-19 19:43:49Z  $
+// $Id: qso.cpp 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html

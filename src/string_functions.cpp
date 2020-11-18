@@ -1,4 +1,4 @@
-// $Id: string_functions.cpp 169 2020-10-18 17:16:44Z  $
+// $Id: string_functions.cpp 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -18,6 +18,7 @@
 
 #include <cctype>
 #include <cstdio>
+#include <iomanip>
 
 #include <langinfo.h>
 
@@ -89,9 +90,7 @@ vector<string> from_csv(experimental::string_view line)
       else
       { if (this_char == comma)
         { if (posn < line.size() - 1)   // make sure there's at least one unread character
-          { //const char next_char { line[posn + 1] };
-
-            if (const char next_char { line[posn + 1] }; next_char == comma)
+          { if (const char next_char { line[posn + 1] }; next_char == comma)
             { rv += string();   // empty value
               posn++;
             }
@@ -188,8 +187,6 @@ string format_time(const string& format, const tm* tmp)
 
   char buf[BUFLEN];
 
-//  const size_t nchars { strftime(buf, BUFLEN, format.c_str(), tmp) };
-
   if (const size_t nchars { strftime(buf, BUFLEN, format.c_str(), tmp) }; !nchars)
     throw string_function_error(STRING_CONVERSION_FAILURE, "Unable to format time");
 
@@ -224,7 +221,7 @@ string replace(const string& s, const string& old_str, const string& new_str)
   size_t last_posn { 0 };
 
   while ((posn = s.find(old_str, last_posn)) != string::npos)
-  { rv += s.substr(last_posn, posn - last_posn) + new_str;
+  { rv += (s.substr(last_posn, posn - last_posn) + new_str);
     last_posn = posn + old_str.length();
   }
 
@@ -272,8 +269,6 @@ string read_file(const string& filename)
 
 // check that the file is not a directory  
   struct stat stat_buffer;
-
-//  const int status { ::stat(filename.c_str(), &stat_buffer) };
 
   if (const int status { ::stat(filename.c_str(), &stat_buffer) }; status)
     throw string_function_error(STRING_UNABLE_TO_STAT_FILE, "Unable to stat file: "s + filename);
@@ -324,11 +319,11 @@ vector<string> split_string(const string& cs, const string& separator)
 
   while (start_posn < cs.length())
   { if (unsigned long posn { cs.find(separator, start_posn) }; posn == string::npos)                       // no more separators
-    { rv.push_back(cs.substr(start_posn));
+    { rv += cs.substr(start_posn);
       start_posn = cs.length();
     }
     else                                            // at least one separator
-    { rv.push_back(cs.substr(start_posn, posn - start_posn));
+    { rv += cs.substr(start_posn, posn - start_posn);
       start_posn = posn + separator.length();
     }
   }
@@ -349,7 +344,7 @@ vector<string> split_string(const string& cs, const unsigned int record_length)
   string cp { cs };
 
   while (cp.length() >= record_length)
-  { rv.push_back(cp.substr(0, record_length));
+  { rv += cp.substr(0, record_length);
     cp = cp.substr(record_length);
   }
 
@@ -380,7 +375,7 @@ string squash(const string& cs, const char c)
 vector<string> remove_empty_lines(const vector<string>& lines)
 { vector<string> rv;
 
-  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv.push_back(line); } );
+  FOR_ALL(lines, [&rv] (const string& line) { if (!line.empty()) rv += line; } );
 
   return rv;
 }
@@ -407,7 +402,7 @@ string remove_leading(const string& cs, const char c)
 string remove_trailing(const string& cs, const char c)
 { string rv { cs };
 
-  while (rv.length() && (rv[rv.length() - 1] == c))
+  while (rv.length() and (rv[rv.length() - 1] == c))
     rv = rv.substr(0, rv.length() - 1);
   
   return rv;
@@ -561,9 +556,9 @@ vector<string> delimited_substrings(const string& cs, const char delim_1, const 
       return rv;                            // no more ending delimiters
 
     if (return_delimiters == DELIMITERS::KEEP)
-      rv.push_back( sstring.substr(posn_1, posn_2 - posn_1) );
+      rv += sstring.substr(posn_1, posn_2 - posn_1);
     else
-      rv.push_back( sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1) );
+      rv += sstring.substr(posn_1 + 1, posn_2 - posn_1 - 1);
 
     start_posn += (posn_2 + 1);   // remember, start_posn is global
   }
@@ -1062,4 +1057,126 @@ size_t case_insensitive_find(const std::string& str, const std::string& target, 
   const auto posn { search(it, str.cend (), target.cbegin(), target.cend(), [](const char ch1, const char ch2) { return toupper(ch1) == toupper(ch2); } ) };
 
   return ( (posn == str.cend()) ? string::npos : distance(it, posn) + start_posn);
+}
+
+/*! \brief              Get the base portion of a call
+    \param  callsign    original callsign
+    \return             the base portion of <i>callsign</i>
+
+    For example, a call such as VP9/G4AMJ/P returns G4AMJ.
+*/
+string base_call(const string& callsign)
+{ if (!contains(callsign, '/'))
+    return callsign;
+
+// it contains at least one slash
+  const vector<string> portions { split_string(callsign, '/') };
+
+  string rv;
+
+  for (const string& str : portions)
+    if (str.length() > rv.length())
+      rv = str;
+
+  return rv;
+}
+
+/*! \brief      Provide a formatted date string: YYYYMMDD
+    \return     current UTC date in the format: YYYYMMDD
+*/
+string YYYYMMDD(void)
+{ const string dts { date_time_string() };
+
+  return (dts.substr(0, 4) + dts.substr(5, 2) + dts.substr(8, 2));
+}
+
+/*! \brief      Remove all instances of several substrings (sequentially) from a string
+    \param  cs  original string
+    \param  vs  vector of substrings to be removed, in that order
+    \return     <i>cs</i>, with all instances of the elements of <i>vs</i> removed, applied in order
+*/
+string remove_substrings(const string& cs, const vector<string>& vs)
+{ string rv { cs };
+  
+  for (const std::string& ss : vs)
+    rv = remove_substring(rv, ss);
+      
+  return rv; 
+}
+
+/*! \brief              Obtain a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             substring between <i>delim_1</i> and <i>delim_2</i>
+  
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+string delimited_substring(const string& cs, const string& delim_1, const string& delim_2)
+{ const size_t posn_1 { cs.find(delim_1) };
+  
+  if (posn_1 == string::npos)
+    return string();  
+  
+  const size_t posn_2 { cs.find(delim_2, posn_1 + delim_1.length()) };
+  
+  if (posn_2 == string::npos)
+    return string();
+  
+  return cs.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length());
+}
+
+/*! \brief              Obtain all occurrences of a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
+*/
+vector<string> delimited_substrings(const string& cs, const string& delim_1, const string& delim_2)
+{ vector<string> rv;
+
+  size_t cs_start_posn { 0 };
+
+  while (!substring(cs, cs_start_posn).empty())
+  { const string sstring { substring(cs, cs_start_posn) };
+    const size_t posn_1  { sstring.find(delim_1) };
+
+    if (posn_1 == string::npos)             // no more starting delimiters
+      return rv;
+
+    const size_t posn_2 { sstring.find(delim_2, posn_1 + delim_1.length()) };
+
+    if (posn_2 == string::npos)
+      return rv;                            // no more ending delimiters
+
+    rv.push_back( sstring.substr(posn_1 + delim_1.length(), posn_2 - posn_1 - delim_1.length()) );
+    cs_start_posn += (posn_2 + delim_2.length());
+  }
+
+  return rv;
+}
+
+/*! \brief          Return position in a string at the end of a target string, if present
+    \param  str     string to search
+    \param  target  string to find
+    \return         position in <>str</i> after the end of <i>target</i>
+
+    Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
+    is the conclusion of <i>str</i>
+*/
+//const size_t find_and_go_to_end_of(const std::string& str, const std::string& target)
+size_t find_and_go_to_end_of(const experimental::string_view str, const experimental::string_view target)
+{ size_t posn { str.find(target) };
+
+  if (posn == string::npos)
+    return string::npos;
+
+  const size_t ts { target.size() };
+
+  if ( (posn + ts) == str.size())
+    return string::npos;
+
+  return (posn + ts);
 }

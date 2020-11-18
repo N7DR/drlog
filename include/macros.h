@@ -1,4 +1,4 @@
-// $Id: macros.h 170 2020-10-26 16:44:33Z  $
+// $Id: macros.h 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <queue>
 #include <map>
 #include <set>
 #include <tuple>
@@ -168,6 +169,18 @@ using base_type = typename std::remove_cv<typename std::remove_reference<T>::typ
 // https://stackoverflow.com/questions/12042824/how-to-write-a-type-trait-is-container-or-is-vector
 // https://wandbox.org/permlink/D6Nf3Sb7PHjP6SrN
 
+// is a type a deque?
+template<class T>
+struct is_deque
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_deque<std::deque<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+constexpr bool is_deque_v = is_deque<T>::value;
+
 // is a type int?
 template<class T>
 struct is_int 
@@ -180,6 +193,18 @@ struct is_int<int>
 template<class T>
 constexpr bool is_int_v { is_int<T>::value };
 
+// is a type a list?
+template<class T>
+struct is_list 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_list<std::list<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+constexpr bool is_list_v = is_list<T>::value;
+
 // is a type a map?
 template<class T>
 struct is_map 
@@ -191,6 +216,18 @@ struct is_map<std::map<K, V>>
 
 template<class T>
 constexpr bool is_map_v = is_map<T>::value;
+
+// is a type a queue?
+template<class T>
+struct is_queue 
+  { constexpr static bool value { false }; };
+
+template<class T>
+struct is_queue<std::queue<T>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+constexpr bool is_queue_v = is_queue<T>::value;
 
 // is a type a set?
 template<class T>
@@ -215,6 +252,22 @@ struct is_unordered_map<std::unordered_map<K, V>>
 
 template< class T>
 constexpr bool is_unordered_map_v = is_unordered_map<T>::value;
+
+// is a type a map or unordered map?
+template<class T>
+struct is_mum 
+  { constexpr static bool value { false }; };
+
+template<class K, class V>
+struct is_mum<std::map<K, V>> 
+  { constexpr static bool value { true }; };
+
+template<class K, class V>
+struct is_mum<std::unordered_map<K, V>> 
+  { constexpr static bool value { true }; };
+
+template<class T>
+constexpr bool is_mum_v { is_map_v<T> or is_unordered_map_v<T> };
 
 // is a type an unordered set?
 template<class T>
@@ -243,22 +296,6 @@ struct is_sus<std::unordered_set<T>>
 
 template< class T>
 constexpr bool is_sus_v = is_sus<T>::value;
-
-// is a type a map or unordered map?
-template<class T>
-struct is_mum 
-  { constexpr static bool value { false }; };
-
-template<class K, class V>
-struct is_mum<std::map<K, V>> 
-  { constexpr static bool value { true }; };
-
-template<class K, class V>
-struct is_mum<std::unordered_map<K, V>> 
-  { constexpr static bool value { true }; };
-
-template<class T>
-constexpr bool is_mum_v { is_map_v<T> or is_unordered_map_v<T> };
 
 // is a type a multimap or unordered multimap?
 template<class T>
@@ -306,6 +343,9 @@ struct is_unsigned_int
 template<>
 struct is_unsigned_int<unsigned int> 
   { constexpr static bool value { true }; };
+
+template<class T>
+constexpr bool is_unsigned_int_v = is_unsigned_int<T>::value;
 
 // is a type a vector?
 template<class T>
@@ -879,8 +919,7 @@ public:                                                                         
 */
 template <class T, class U>
 bool operator>(const T& s, const U& v)
-//  requires (is_set<T>::value == true || is_unordered_set<T>::value == true) && (std::is_same<typename T::value_type, U>::value == true)
-  requires (is_sus_v<T>) && (std::is_same_v<typename T::value_type, U>)
+  requires (is_sus_v<T>) and (std::is_same_v<typename T::value_type, U>)
   { return s.find(v) != s.cend(); }
 
 /*! \brief      Is an object a key of a map or unordered_map and, if so, return the value (or the default-constructed value)
@@ -892,8 +931,7 @@ bool operator>(const T& s, const U& v)
 */
 template <class M, class K>
 std::pair<bool, typename M::mapped_type> operator>(const M& m, const K& k)
-//  requires (is_map<M>::value == true || is_unordered_map<M>::value == true) && std::is_same<typename M::key_type, K>::value == true && std::is_default_constructible<typename M::mapped_type>::value == true
-  requires (is_mum_v<M>) && (std::is_same_v<typename M::key_type, K>) && (std::is_default_constructible_v<typename M::mapped_type>)
+  requires (is_mum_v<M>) and (std::is_same_v<typename M::key_type, K>) and (std::is_default_constructible_v<typename M::mapped_type>)
 { using V = typename M::mapped_type;
   using RT = std::pair<bool, typename M::mapped_type>;
 
@@ -918,7 +956,7 @@ typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapp
   return ( (cit == m.cend()) ? d : cit->second );
 }
 
-/*! \brief      Is an object a key of a map or unordered map; if so return the result of executoing a member function on the value, otherwise return a provided default
+/*! \brief      Is an object a key of a map or unordered map; if so return the result of executing a member function on the value, otherwise return a provided default
     \param  m   map or unordered map to be searched
     \param  k   target key
     \param  pf  pointer to member function to be executed
@@ -927,7 +965,7 @@ typename C::mapped_type MUM_VALUE(const C& m, const K& k, const typename C::mapp
 */
 template <class C, class K, class PF, class MT = typename C::mapped_type, class RT = std::invoke_result_t<PF, MT>>
 auto MUMF_VALUE(const C& m, const K& k, PF pf, RT d = RT { } ) -> RT
-  requires (is_mum_v<C>) && (std::is_same_v<typename C::key_type, K>)
+  requires (is_mum_v<C>) and (std::is_same_v<typename C::key_type, K>)
 { const auto cit { m.find(k) };
 
   return ( (cit == m.cend()) ? d : (cit->second.*pf)() );
@@ -941,7 +979,7 @@ template <typename M>  // M = map<T, set<T> >
 auto INVERT_MAPPING(const M& original_mapping) -> std::map<typename M::key_type, typename M::key_type>
 { std::map<typename M::key_type, typename M::key_type> rv;
 
-  for (auto cit = original_mapping.cbegin(); cit != original_mapping.cend(); ++cit)
+  for (auto cit { original_mapping.cbegin() }; cit != original_mapping.cend(); ++cit)
   { for (const auto& p : cit->second)
       rv.insert( { p, cit->first } );
   }
@@ -1175,7 +1213,6 @@ inline void REMOVE_IF_AND_RESIZE(Input& first, UnaryPredicate pred)
     \param  pred    predicate to apply
 */
 template<typename M, typename PredicateT>
-//  requires (is_map<M>::value == true || is_unordered_map<M>::value == true)
   requires (is_mum_v<M>)
 void REMOVE_IF_AND_RESIZE(M& items, const PredicateT& pred)
 { for( auto it { items.begin() }; it != items.end(); )
@@ -1374,7 +1411,7 @@ auto operator+(const V& v1, E&& element) -> V
   return rv; 
 }
 
-/*! \brief              Add an element to a vector
+/*! \brief              Append an element to a vector
     \param  v1          destination vector
     \param  element     element to append
 */
@@ -1383,7 +1420,7 @@ inline void operator+=(V& v1, typename V::value_type&& element)
   requires is_vector_v<V>
 { v1.emplace_back(std::forward<typename V::value_type>(element)); }
 
-/*! \brief              Add an element to a vector
+/*! \brief              Append an element to a vector
     \param  v1          destination vector
     \param  element     element to append
 */
@@ -1391,5 +1428,91 @@ template <typename V, typename E>
 inline void operator+=(V& v1, const E& element)
   requires is_vector_v<V> and (std::is_convertible_v<E, typename V::value_type>)
 { v1.push_back(element); }
+
+/*! \brief              Append an element to a list
+    \param  l1          destination list
+    \param  element     element to append
+*/
+template <typename L>
+inline void operator+=(L& l1, typename L::value_type&& element)
+  requires is_list_v<L>
+{ l1.emplace_back(std::forward<typename L::value_type>(element)); }
+
+/*! \brief              Append an element to a list
+    \param  l1          destination list
+    \param  element     element to append
+*/
+template <typename L, typename E>
+inline void operator+=(L& l1, const E& element)
+  requires is_list_v<L> and (std::is_convertible_v<E, typename L::value_type>)
+{ l1.push_back(element); }
+
+/*! \brief      Insert an element into a list
+    \param  l1  destination list
+    \param  pr  location and value to insert
+*/
+template <typename L>
+//  using pair_type = std::pair<typename L::const_iterator, typename L::value_type>
+inline void operator+=(L& l1, std::pair<typename L::const_iterator, typename L::value_type>&& pr)
+  requires is_list_v<L>
+{ l1.insert(std::forward<typename L::const_iterator>(pr.first), std::forward<typename L::value_type>(pr.second)); }
+
+/*! \brief      Insert an element into a list
+    \param  l1  destination list
+    \param  pr  location and value to insert
+*/
+template <typename L>
+//  using pair_type = std::pair<typename L::const_iterator, typename L::value_type>
+inline void operator+=(L& l1, const std::pair<typename L::const_iterator, typename L::value_type>& pr)
+  requires is_list_v<L>
+{ l1.insert(pr.first, pr.second); }
+
+/*! \brief              Append an element to a queue
+    \param  q1          destination queue
+    \param  element     element to append
+*/
+template <typename Q>
+inline void operator+=(Q& q1, typename Q::value_type&& element)
+  requires is_queue_v<Q>
+{ q1.emplace(std::forward<typename Q::value_type>(element)); }
+
+/*! \brief              Append an element to a queue
+    \param  q1          destination queue
+    \param  element     element to append
+*/
+template <typename Q, typename E>
+inline void operator+=(Q& q1, const E& element)
+  requires is_queue_v<Q> and (std::is_convertible_v<E, typename Q::value_type>)
+{ q1.push(element); }
+
+/*! \brief              Append an element to a deque
+    \param  d1          destination deque
+    \param  element     element to append
+*/
+template <typename D>
+inline void operator+=(D& d1, typename D::value_type&& element)
+  requires is_deque_v<D>
+{ d1.emplace_back(std::forward<typename D::value_type>(element)); }
+
+/*! \brief              Append an element to a deque
+    \param  D1          destination deque
+    \param  element     element to append
+*/
+template <typename D, typename E>
+inline void operator+=(D& d1, const E& element)
+  requires is_deque_v<D> and (std::is_convertible_v<E, typename D::value_type>)
+{ d1.push_back(element); }
+
+/*! \brief              Remove and call destructor on front element of deque 
+    \param  D1          destination deque
+
+    Does nothing if the deque is empty
+*/
+template <typename D>
+void operator--(D& d1, int) // int for post-decrement
+  requires is_deque_v<D>
+{ if (!d1.empty())
+    d1.pop_front();
+}
 
 #endif    // MACROS_H

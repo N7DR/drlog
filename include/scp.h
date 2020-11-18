@@ -124,9 +124,6 @@ public:
 /// default constructor
   inline scp_databases(void) = default;
 
-/// destructor
-//  inline virtual ~scp_databases(void) = default;
-
 /// add a database to those that are consulted
   void add_db(scp_database& db);
 
@@ -136,6 +133,10 @@ public:
 
 /// remove a call ... goes through databases in *reverse* priority order until a removal is successful
   void remove_call(const std::string& call);
+
+/// remove a call ... goes through databases in *reverse* priority order until a removal is successful
+  inline void operator-=(const std::string& call)
+    { remove_call(call); }
 
 /// return matches
   SCP_SET operator[](const std::string& key);

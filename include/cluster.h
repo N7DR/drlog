@@ -1,4 +1,4 @@
-// $Id: cluster.h 167 2020-09-19 19:43:49Z  $
+// $Id: cluster.h 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -199,11 +199,11 @@ class monitored_posts
 {
 protected:
 
-  std::set<std::string> _callsigns;             ///< monitored calls
-  bool                  _is_dirty   { false };  ///< whether info has changed since last output
-  unsigned int          _max_entries;           ///< number of displayable entries
+  std::set<std::string> _callsigns   { };           ///< monitored calls
+  bool                  _is_dirty    { false };     ///< whether info has changed since last output
+  unsigned int          _max_entries { 0 };         ///< number of displayable entries
 
-  std::deque<monitored_posts_entry> _entries;          ///< calls monitored within past MONITORED_POSTS_DURATION seconds
+  std::deque<monitored_posts_entry> _entries;       ///< calls monitored within past MONITORED_POSTS_DURATION seconds; basically a queue, but needs erase() capability
 
 public:
 

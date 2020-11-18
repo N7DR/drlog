@@ -906,7 +906,17 @@ void drlog_context::_process_configuration_file(const string& filename)
 
 // SHIFT DELTA
     if (LHS == "SHIFT DELTA"s)
-      _shift_delta = from_string<decltype(_shift_delta)>(rhs);
+    { _shift_delta_cw = from_string<decltype(_shift_delta_cw)>(rhs);
+      _shift_delta_ssb = _shift_delta_cw;
+    }
+
+// SHIFT DELTA CW
+    if (LHS == "SHIFT DELTA CW"s)
+      _shift_delta_cw = from_string<decltype(_shift_delta_cw)>(rhs);
+
+// SHIFT DELTA SSB
+    if (LHS == "SHIFT DELTA SSB"s)
+      _shift_delta_ssb = from_string<decltype(_shift_delta_ssb)>(rhs);
 
 // SHIFT POLL
     if (LHS == "SHIFT POLL"s)

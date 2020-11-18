@@ -1,4 +1,4 @@
-// $Id: bandmap.cpp 167 2020-09-19 19:43:49Z  $
+// $Id: bandmap.cpp 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -110,22 +110,6 @@ unsigned int bandmap_buffer::add(const string& callsign, const string& poster)
     \brief  Control bandmap filtering
 */
 
-/*! \brief      All the continents and canonical prefixes that are currently being filtered
-    \return     all the continents and canonical prefixes that are currently being filtered
-
-    The continents precede the canonical prefixes
-*/
-#if 0
-vector<string> bandmap_filter_type::filter(void) const
-{ //vector<string> rv { _continents };
-
-  //rv.insert(rv.end(), _prefixes.cbegin(), _prefixes.cend());
-
-  //return rv;
-  return (_continents + _prefixes);
-}
-#endif
-
 /*!  \brief         Add a string to, or remove a string from, the filter
      \param str     string to add or subtract
 
@@ -136,16 +120,17 @@ void bandmap_filter_type::add_or_subtract(const string& str)
 { vector<string>* vs_p { ( (CONTINENT_SET > str) ? &_continents : &_prefixes ) };          // create pointer to correct vector
   set<string> ss;                                                                        // temporary place to build new container of strings
 
-  for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss.insert(continent_or_prefix); } );  // create a copy of current values
+  for_each(vs_p->cbegin(), vs_p->cend(), [&ss] (const string& continent_or_prefix) { ss += continent_or_prefix; } );  // create a copy of current values
 
   if (ss > str)              // remove a value
     ss.erase(str);
   else                       // add a value
-    ss.insert(str);
+    ss += str;
 
   vs_p->clear();                                        // empty it
   copy(ss.begin(), ss.end(), back_inserter(*vs_p));     // copy the new strings to the correct destination
-  sort((*vs_p).begin(), (*vs_p).end(), compare_calls);  // make it easy for humans
+//  sort((*vs_p).begin(), (*vs_p).end(), compare_calls);  // make it easy for humans
+  SORT(*vs_p, compare_calls);  // make it easy for humans
 }
 
 // -----------  bandmap_entry  ----------------
@@ -289,7 +274,7 @@ bool bandmap_entry::remark(contest_rules& rules, call_history& q_history, runnin
   else
    _is_needed = !q_history.worked(_callsign, _band);
 
-// multi-mode contests ***
+// multi-mode contests
   const bool original_is_needed_callsign_mult { is_needed_callsign_mult() };
   const bool original_is_needed_country_mult  { is_needed_country_mult() };
   const bool original_is_needed_exchange_mult { is_needed_exchange_mult() };
@@ -402,7 +387,7 @@ string bandmap::_nearest_callsign(const BM_ENTRIES& bme, const float target_freq
 
   string rv;
 
-  for (BM_ENTRIES::const_iterator cit = bme.cbegin(); (!finish_looking and cit != bme.cend()); ++cit)
+  for (BM_ENTRIES::const_iterator cit { bme.cbegin() }; (!finish_looking and cit != bme.cend()); ++cit)
   { const float difference     { cit->freq().kHz() - target_frequency_in_khz };
     const float abs_difference { fabs(difference) };
 
@@ -435,19 +420,22 @@ void bandmap::_insert(const bandmap_entry& be)
     my_marker_copy.freq(frequency(my_marker_copy.freq().hz() - 1));     // make it 1Hz less than actual value 
   }
 
-  const bandmap_entry* bep { be.is_my_marker() ? &my_marker_copy : &be };   // point to the right bandmap_entry object
-
+//  const bandmap_entry* bep { be.is_my_marker() ? &my_marker_copy : &be };   // point to the right bandmap_entry object
+  const bandmap_entry& ber { be.is_my_marker() ? my_marker_copy : be };   // point to the right bandmap_entry object
+  
   bool inserted { false };
 
   SAFELOCK(_bandmap);
 
-  for (BM_ENTRIES::iterator it = _entries.begin(); !inserted and it != _entries.end(); ++it)
-  { if (it->freq().hz() > bep->freq().hz())
-      inserted = ( _entries.insert(it, *bep), true );
+// insert it in the right place in the list
+  for (BM_ENTRIES::iterator it { _entries.begin() }; (!inserted and (it != _entries.end())); ++it)
+  { if (it->freq().hz() > ber.freq().hz())
+//      inserted = ( _entries.insert(it, *bep), true );
+      inserted = ( _entries += { it, ber }, true );
   }
 
   if (!inserted)
-    _entries.push_back(*bep);    // this frequency is higher than any currently in the bandmap
+    _entries += (ber);    // this frequency is higher than any currently in the bandmap
 }
 
 /*!  \brief     Mark filtered and rbn/filtered entries as dirty
@@ -1130,7 +1118,7 @@ void bandmap::process_insertion_queue(BANDMAP_INSERTION_QUEUE& biq)
 
     *this += be;
 
-    biq.pop_front();
+    biq.pop();
   }
 }
 

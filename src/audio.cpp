@@ -272,8 +272,8 @@ void audio_recorder::_set_params(void)
   _bits_per_frame = bits_per_sample * _hw_params.channels;
   _period_size_in_bytes = _period_size_in_frames * _bits_per_frame / 8;
 
-//  _audio_buf = (u_char *)malloc(_period_size_in_bytes);
-  _audio_buf = (u_char *)malloc(_period_size_in_bytes * 2); // try doubling the size of the ring buffer
+  _audio_buf = (u_char *)malloc(_period_size_in_bytes);
+//  _audio_buf = (u_char *)malloc(_period_size_in_bytes * 2); // try doubling the size of the ring buffer
 
   if (_audio_buf == NULL)
   { ost << "ERROR: out of memory for " << _pcm_name << endl;
@@ -374,7 +374,6 @@ void* audio_recorder::_capture(void*)
 
   const string thread_name { "_capture_"s + to_string(_thread_number++) };
 
-//  start_of_thread("_capture");
   start_of_thread(thread_name);
 
   _aborting = false;
@@ -933,9 +932,9 @@ string fmt_chunk::to_string(void) const
     \param  fp  file pointer
 */
 void fmt_chunk::write_to_file(FILE* fp) const
-{ const string str { to_string() };
+{ //const string str { to_string() };
 
-  if (fwrite(str.c_str(), str.size(), 1, fp) != 1)
+  if (const string str { to_string() }; fwrite(str.c_str(), str.size(), 1, fp) != 1)
   { ost << "Error writing fmt chunk in WAV file" << endl;
     throw audio_error(AUDIO_WAV_WRITE_ERROR, "Error writing fmt chunk in WAV file");
   }

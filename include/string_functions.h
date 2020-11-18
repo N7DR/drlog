@@ -1,4 +1,4 @@
-// $Id: string_functions.h 170 2020-10-26 16:44:33Z  $
+// $Id: string_functions.h 171 2020-11-15 16:02:32Z  $
 
 // Released under the GNU Public License, version 2
 //   see: https://www.gnu.org/licenses/gpl-2.0.html
@@ -56,6 +56,8 @@ static const std::string CALLSIGN_CHARS                { "0123456789ABCDEFGHIJKL
 static const std::string DIGITS                        { "0123456789"s };                               ///< convenient place to hold all digits
 static const std::string DIGITS_AND_UPPER_CASE_LETTERS { "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };     ///< convenient place to hold all digits and upper case letters
 static const std::string UPPER_CASE_LETTERS            { "ABCDEFGHIJKLMNOPQRSTUVWXYZ"s };               ///< convenient place to hold all upper case letters
+
+constexpr char SPACE_CHAR { ' ' };
 
 constexpr bool INCLUDE_SECONDS { true };             ///< whether to include seconds in date_time_string()
   
@@ -255,11 +257,7 @@ bool contains_digit(const std::string& str);
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-std::string pad_string(const std::string& s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ');
-
-//template <typename T>
-//std::string pad_string(const T& s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = ' ')
-//  { return pad_string(to_string(s), len, pad_side, pad_char); }
+std::string pad_string(const std::string& s, const size_t len, const enum PAD pad_side = PAD::LEFT, const char pad_char = SPACE_CHAR);
 
 /*! \brief              Left pad a string to a particular size
     \param  s           original string
@@ -269,16 +267,9 @@ std::string pad_string(const std::string& s, const size_t len, const enum PAD pa
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-//inline std::string pad_left(const std::string& s, const size_t len, const char pad_char = ' ')
-//  { return pad_string(s, len, PAD::LEFT, pad_char); }
 template <typename T>
-inline std::string pad_left(const T& s, const size_t len, const char pad_char = ' ')
+inline std::string pad_left(const T& s, const size_t len, const char pad_char = SPACE_CHAR)
   { return pad_string(to_string(s), len, PAD::LEFT, pad_char); }
-
-//template <typename T>
-//  requires (std::is_integral_v<T>)
-//std::string pad_left(const T& s, const size_t len, const char pad_char = '0')
-//  { return qpad_left(to_string(s), len, pad_char); }
 
 /*! \brief              Left pad an integer type with zeroes to a particular size
     \param  s           integer value
@@ -297,7 +288,7 @@ inline std::string pad_leftz(const T& s, const size_t len)
   
     If <i>s</i> is already longer than <i>len</i>, then <i>s</i> is returned.
 */
-inline std::string pad_right(const std::string& s, const size_t len, const char pad_char = ' ')
+inline std::string pad_right(const std::string& s, const size_t len, const char pad_char = SPACE_CHAR)
   { return pad_string(s, len, PAD::RIGHT, pad_char); }
 
 /*! \brief              Read the contents of a file into a single string
@@ -389,7 +380,7 @@ inline std::vector<std::string> split_string(const std::string& cs, const int re
     \param  c   character to squash
     \return     <i>cs</i>, but with all consecutive instances of <i>c</i> converted to a single instance
 */
-std::string squash(const std::string& cs, const char c = ' ');
+std::string squash(const std::string& cs, const char c = SPACE_CHAR);
 
 /*! \brief          Remove empty lines from a vector of lines
     \param  lines   the original vector of lines
@@ -419,7 +410,7 @@ std::string remove_leading(const std::string& cs, const char c);
     \return     <i>cs</i> with any leading spaces removed
 */
 inline std::string remove_leading_spaces(const std::string& cs)
-  { return remove_leading(cs, ' '); }
+  { return remove_leading(cs, SPACE_CHAR); }
 
 /*! \brief      Remove all instances of a specific trailing character
     \param  cs  original string
@@ -469,6 +460,14 @@ inline std::string remove_peripheral_character(const std::string& cs, const char
     \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
 */
 std::string remove_char(const std::string& cs, const char char_to_remove);
+
+/*! \brief                  Remove all instances of a particular char from a string
+    \param  s               original string
+    \param  char_to_remove  character to be removed from <i>cs</i>
+    \return                 <i>cs</i> with all instances of <i>char_to_remove</i> removed
+*/
+inline std::string remove_char(std::string& s, const char char_to_remove)
+  { return remove_char(static_cast<const std::string>(s), char_to_remove); }
 
 /*! \brief                  Remove all instances of a particular char from a container of strings
     \param  t               container of strings
@@ -520,6 +519,18 @@ std::string remove_char_from_delimited_substrings(const std::string& cs, const c
 */
 std::string delimited_substring(const std::string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters);
 
+/*! \brief              Obtain a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             substring between <i>delim_1</i> and <i>delim_2</i>
+  
+    Returns the empty string if the delimiters do not exist, or if
+    <i>delim_2</i> does not appear after <i>delim_1</i>. Returns only the
+    first delimited substring if more than one exists.
+*/
+std::string delimited_substring(const std::string& cs, const std::string& delim_1, const std::string& delim_2);
+
 /*! \brief                      Obtain all occurrences of a delimited substring
     \param  cs                  original string
     \param  delim_1             opening delimiter
@@ -528,6 +539,14 @@ std::string delimited_substring(const std::string& cs, const char delim_1, const
     \return                     all substrings between <i>delim_1</i> and <i>delim_2</i>, possibly including the delimiters
 */
 std::vector<std::string> delimited_substrings(const std::string& cs, const char delim_1, const char delim_2, const DELIMITERS return_delimiters);
+
+/*! \brief              Obtain all occurrences of a delimited substring
+    \param  cs          original string
+    \param  delim_1     opening delimiter
+    \param  delim_2     closing delimiter
+    \return             all substrings between <i>delim_1</i> and <i>delim_2</i>
+*/
+std::vector<std::string> delimited_substrings(const std::string& cs, const std::string& delim_1, const std::string& delim_2);
 
 /*! \brief          Join the elements of a container of strings, using a provided separator
     \param  ct      container of strings
@@ -878,6 +897,37 @@ size_t case_insensitive_find(const std::string& str, const std::string& target, 
 */
 inline std::string truncate_before_first(const std::string& str, const char c)
   { return (substring(str, 0, str.find(c))); }
+
+/*! \brief          Return position in a string at the end of a target string, if present
+    \param  str     string to search
+    \param  target  string to find
+    \return         position in <>str</i> after the end of <i>target</i>
+
+    Returns string::npos if <i>target</i> is not a substring of <i>str</i> OR if <i>target</i>
+    is the conclusion of <i>str</i>
+*/
+//const size_t find_and_go_to_end_of(const std::string& str, const std::string& target);
+size_t find_and_go_to_end_of(const std::experimental::string_view str, const std::experimental::string_view target);
+
+/*! \brief              Get the base portion of a call
+    \param  callsign    original callsign
+    \return             the base portion of <i>callsign</i>
+
+    For example, a call such as VP9/G4AMJ/P returns G4AMJ.
+*/
+std::string base_call(const std::string& callsign);
+
+/*! \brief                      Provide a formatted date string: YYYYMMDD
+    \return                     current UTC date in the format: YYYYMMDD
+*/
+std::string YYYYMMDD(void);
+
+/*! \brief      Remove all instances of several substrings (sequentially) from a string
+    \param  cs  original string
+    \param  vs  vector of substrings to be removed, in that order
+    \return     <i>cs</i>, with all instances of the elements of <i>vs</i> removed, applied in order
+*/
+std::string remove_substrings(const std::string& cs, const std::vector<std::string>& vs);
 
 #if 0
 https://stackoverflow.com/questions/650162/why-the-switch-statement-cannot-be-applied-on-strings
